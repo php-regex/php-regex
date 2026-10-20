@@ -256,6 +256,30 @@ final class RouteConflictAnalyzerTest extends TestCase
             'overlaps' => 0,
         ];
 
+        yield 'a disjoint pair before a conflict of the same earlier route' => [
+            'routes' => [
+                ['blog_id', '/blog/{id}', ['id' => '\\d+'], false],
+                ['blog_slug', '/blog/{slug}', ['slug' => '[a-z]+'], false],
+                ['blog_number', '/blog/{number}', ['number' => '[0-9]+'], false],
+            ],
+            'probes' => ['/blog/7' => 'blog_id', '/blog/post' => 'blog_slug'],
+            'conflicts' => [['shadowed', 'blog_id', 'blog_number']],
+            'shadowed' => 1,
+            'overlaps' => 0,
+        ];
+
+        yield 'a carved-out pair before a conflict of the same earlier route' => [
+            'routes' => [
+                ['user_list', '/users/list', [], false],
+                ['user_show', '/users/{id}', [], false],
+                ['user_list_again', '/users/list', [], false],
+            ],
+            'probes' => ['/users/list' => 'user_list', '/users/7' => 'user_show'],
+            'conflicts' => [['shadowed', 'user_list', 'user_list_again'], ['shadowed', 'user_show', 'user_list_again']],
+            'shadowed' => 2,
+            'overlaps' => 0,
+        ];
+
         yield 'static prefixes that cannot share a path' => [
             'routes' => [
                 ['blog', '/blog/{slug}', [], false],
@@ -379,6 +403,36 @@ final class RouteConflictAnalyzerTest extends TestCase
 
         $this->assertSame([], $report->skippedRoutes);
         $this->assertSame(['odd_host'], $report->routesWithUnsupportedHosts);
+    }
+
+    #[Test]
+    public function test_the_counts_say_how_far_each_pair_was_compared(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('first', new Route('/pages/{name}', [], ['name' => '[a-z]+']));
+        $collection->add('second', new Route('/pages/{slug}', [], ['slug' => '[a-z]+']));
+        $collection->add('number', new Route('/pages/{id}', [], ['id' => '\d+']));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame(3, $report->stats['path_intersections']);
+        $this->assertSame(1, $report->stats['path_subsets']);
+        $this->assertSame(1, $report->stats['equivalent']);
+        $this->assertTrue($report->conflicts[0]['equivalent']);
+        $this->assertSame(['Equivalent route patterns.', 'Less specific route declared BEFORE more specific route.'], $report->conflicts[0]['notes']);
+    }
+
+    #[Test]
+    public function test_an_overlap_is_not_marked_equivalent(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('blog_slug', new Route('/blog/{slug}', [], ['slug' => '[a-z]+']));
+        $collection->add('blog_id', new Route('/blog/{id}', [], ['id' => '\d+|new']));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertFalse($report->conflicts[0]['equivalent']);
+        $this->assertSame(0, $report->stats['equivalent']);
     }
 }
 

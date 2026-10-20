@@ -171,6 +171,65 @@ final class AnalyzerViewsTest extends TestCase
         $this->assertMatchesRegularExpression('/Skipped file \S*missing\.yaml\s*:\s*File not found\./', $display);
     }
 
+    #[Test]
+    public function test_a_verbose_security_command_counts_the_pairs_it_compared_and_skipped(): void
+    {
+        $path = $this->makeProject([
+            'security.yaml' => "security:\n    access_control:\n        - { path: '^/(a)\\1', roles: ROLE_A }\n        - { path: ^/admin, roles: ROLE_B }\n",
+        ]).'/security.yaml';
+
+        $tester = new CommandTester($this->securityCommand());
+        $tester->execute(['--config' => [$path], '--skip-firewalls' => true], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE]);
+        $display = $tester->getDisplay();
+
+        $this->assertMatchesRegularExpression('/Pairs total\s*:\s*1\b/', $display);
+        $this->assertMatchesRegularExpression('/Pairs skipped \(complexity\)\s*:\s*1\b/', $display);
+        $this->assertStringNotContainsString('security config files were skipped', $display);
+    }
+
+    #[Test]
+    public function test_a_verbose_security_command_names_every_file_it_skipped(): void
+    {
+        $project = $this->makeProject(['security.yaml' => "security:\n    access_control: [{ path: ^/admin }]\n"]);
+
+        $tester = new CommandTester($this->securityCommand());
+        $tester->execute(['--config' => [$project.'/one.yaml', $project.'/two.yaml', $project.'/security.yaml']], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE]);
+        $display = $tester->getDisplay();
+
+        $this->assertStringContainsString('2 security config files were skipped.', $display);
+        $this->assertMatchesRegularExpression('/Skipped file \S*one\.yaml\s*:\s*File not found\./', $display);
+        $this->assertMatchesRegularExpression('/Skipped file \S*two\.yaml\s*:\s*File not found\./', $display);
+    }
+
+    /**
+     * Without a kernel, the locations are written from the working directory.
+     */
+    #[Test]
+    public function test_the_security_command_writes_locations_from_the_working_directory(): void
+    {
+        $project = $this->enterProject(['security.yaml' => self::SECURITY]);
+
+        $tester = new CommandTester($this->securityCommand());
+        $tester->execute(['--config' => [$project.'/security.yaml']]);
+        $display = $tester->getDisplay();
+
+        $this->assertStringContainsString('#1 (security.yaml:6)', $display);
+        $this->assertStringNotContainsString($project, $display);
+    }
+
+    #[Test]
+    public function test_a_configuration_with_no_entry_is_reported_in_the_access_section(): void
+    {
+        $path = $this->makeProject(['security.yaml' => "security: ~\n"]).'/security.yaml';
+
+        $tester = new CommandTester($this->analyzeCommand(null));
+        $status = $tester->execute(['--only' => ['security'], '--config' => [$path], '--format' => 'json']);
+
+        $this->assertSame(Command::SUCCESS, $status);
+        $this->assertStringContainsString('"id": "security_access"', $tester->getDisplay());
+        $this->assertStringContainsString('No security configuration entries found.', $tester->getDisplay());
+    }
+
     /**
      * The sections and what follows them, from the header of the first
      * one: everything but the banner and the progress line regex:analyze

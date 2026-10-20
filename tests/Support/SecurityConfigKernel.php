@@ -43,6 +43,7 @@ final class SecurityConfigKernel extends Kernel
     public function registerContainerConfiguration(LoaderInterface $loader): void
     {
         $loader->load($this->projectDirectory.'/config/{packages}/*.{yaml,php}', 'glob');
+        $loader->load($this->projectDirectory.'/config/{packages}/'.$this->environment.'/*.{yaml,php}', 'glob');
         $loader->load($this->projectDirectory.'/config/{services}.{yaml,php}', 'glob');
     }
 

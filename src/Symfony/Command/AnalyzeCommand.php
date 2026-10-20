@@ -200,8 +200,6 @@ final class AnalyzeCommand extends Command
             try {
                 $analyzed = $analyzer->analyze($context);
             } catch (SecurityConfigException $e) {
-                $progressBar?->clear();
-
                 return $this->refuse($output, $io, $json, $e->getMessage(), JsonDocument::STAGE_CONFIG);
             }
 

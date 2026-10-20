@@ -196,6 +196,99 @@ final class SecurityConfigKernelTest extends TestCase
     }
 
     #[Test]
+    public function test_an_entry_is_located_in_the_environment_file_that_writes_it(): void
+    {
+        $project = $this->makeProject([
+            'config/packages/security.yaml' => "security:\n    firewalls:\n        main: { pattern: ^/ }\n",
+            'config/packages/test/security.yaml' => "security:\n    access_control:\n        - { path: ^/admin, roles: ROLE_ADMIN }\n",
+        ]);
+
+        $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
+        $this->assertNotNull($config);
+
+        $this->assertSame([[$project.'/config/packages/test/security.yaml', 3]], array_map(static fn (array $rule): array => [$rule['file'], $rule['line']], $config['accessControl']));
+        $this->assertSame([[$project.'/config/packages/security.yaml', 3]], array_map(static fn (array $firewall): array => [$firewall['file'], $firewall['line']], $config['firewalls']));
+    }
+
+    #[Test]
+    public function test_an_entry_of_a_php_file_is_located_under_its_key_and_not_in_a_comment(): void
+    {
+        $project = $this->makeProject([
+            'config/packages/security.php' => <<<'PHP'
+                <?php
+
+                use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+                return static function (ContainerConfigurator $container): void {
+                    $container->extension('security', [
+                        'firewalls' => [
+                            'admin' => ['pattern' => '^/admin', 'context' => 'domain', 'provider' => 'mainland'],
+                            'main' => ['lazy' => true],
+                        ],
+                        // '^/admin' is the back office
+                        'access_control' => [
+                            ['path' => '^/admin', 'roles' => 'ROLE_ADMIN'],
+                        ],
+                    ]);
+                };
+                PHP,
+        ]);
+
+        $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($project));
+        $this->assertNotNull($config);
+
+        $this->assertSame(13, $config['accessControl'][0]['line']);
+        $this->assertSame(['admin' => 8, 'main' => 9], array_column($config['firewalls'], 'line', 'name'));
+    }
+
+    #[Test]
+    public function test_an_environment_variable_in_a_path_is_resolved(): void
+    {
+        $_ENV['PHPREGEX_TEST_ADMIN_PATH'] = '^/back-office';
+
+        try {
+            $config = (new SecurityConfigExtractor())->extractFromKernel(new SecurityConfigKernel($this->makeProject([
+                'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n        - { path: '%env(PHPREGEX_TEST_ADMIN_PATH)%' }\n",
+            ])));
+        } finally {
+            unset($_ENV['PHPREGEX_TEST_ADMIN_PATH']);
+        }
+
+        $this->assertNotNull($config);
+        $this->assertSame('^/back-office', $config['accessControl'][0]['path']);
+    }
+
+    #[Test]
+    public function test_a_parameter_that_is_no_string_is_an_error(): void
+    {
+        $kernel = new SecurityConfigKernel($this->makeProject([
+            'config/services.yaml' => "parameters:\n    admin_paths: [^/a, ^/b]\n",
+            'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n        - { path: '%admin_paths%' }\n",
+        ]));
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('The security configuration value "%admin_paths%" does not resolve to a string.');
+
+        (new SecurityConfigExtractor())->extractFromKernel($kernel);
+    }
+
+    /**
+     * The configuration is read from a copy of the kernel: the kernel the
+     * command runs in keeps its bundles and its container as they were.
+     */
+    #[Test]
+    public function test_the_kernel_read_is_left_untouched(): void
+    {
+        $kernel = new SecurityConfigKernel($this->makeProject([
+            'config/packages/security.yaml' => "security:\n".self::FIREWALLS,
+        ]));
+
+        (new SecurityConfigExtractor())->extractFromKernel($kernel);
+
+        $this->assertSame([], $kernel->getBundles());
+    }
+
+    #[Test]
     public function test_an_entry_no_file_writes_has_no_location(): void
     {
         $project = $this->makeProject([
@@ -277,10 +370,13 @@ final class SecurityConfigKernelTest extends TestCase
             'config/packages/security.yaml' => "security:\n".self::FIREWALLS."    access_control:\n        - { path: '%missing_path%' }\n",
         ]));
 
-        $this->expectException(SecurityConfigException::class);
-        $this->expectExceptionMessageIsOrContains('missing_path');
-
-        (new SecurityConfigExtractor())->extractFromKernel($kernel);
+        try {
+            (new SecurityConfigExtractor())->extractFromKernel($kernel);
+            $this->fail('A parameter the kernel does not define was read.');
+        } catch (SecurityConfigException $e) {
+            $this->assertStringStartsWith('The security configuration value "%missing_path%" cannot be resolved: ', $e->getMessage());
+            $this->assertInstanceOf(\Throwable::class, $e->getPrevious());
+        }
     }
 
     #[Test]
@@ -290,10 +386,14 @@ final class SecurityConfigKernelTest extends TestCase
             'config/packages/security.yaml' => "security:\n    access_control:\n        - { path: ^/admin, unknown_key: true }\n",
         ]));
 
-        $this->expectException(SecurityConfigException::class);
-        $this->expectExceptionMessageIsOrContains('unknown_key');
-
-        (new SecurityConfigExtractor())->extractFromKernel($kernel);
+        try {
+            (new SecurityConfigExtractor())->extractFromKernel($kernel);
+            $this->fail('A configuration the security bundle refuses was read.');
+        } catch (SecurityConfigException $e) {
+            $this->assertStringStartsWith('The security configuration is invalid: ', $e->getMessage());
+            $this->assertStringContainsString('unknown_key', $e->getMessage());
+            $this->assertInstanceOf(\Throwable::class, $e->getPrevious());
+        }
     }
 
     /**
@@ -429,6 +529,18 @@ final class SecurityConfigKernelTest extends TestCase
         $status = $tester->execute([]);
 
         $this->assertSame(Command::SUCCESS, $status);
+        $this->assertStringContainsString('No security configuration found.', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function test_the_analyze_command_reports_a_missing_security_configuration_in_the_access_section(): void
+    {
+        $kernel = new SecurityConfigKernel($this->makeProject(['config/services.yaml' => "parameters: {}\n"]), withSecurityBundle: false);
+
+        $tester = new CommandTester(self::analyzeCommand($kernel));
+        $tester->execute(['--format' => 'json', '--only' => ['SECURITY']]);
+
+        $this->assertStringContainsString('"id": "security_access"', $tester->getDisplay());
         $this->assertStringContainsString('No security configuration found.', $tester->getDisplay());
     }
 

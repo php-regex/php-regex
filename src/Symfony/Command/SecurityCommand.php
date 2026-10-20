@@ -108,8 +108,10 @@ final class SecurityCommand extends Command
             return Command::INVALID;
         }
 
+        // Without a kernel, the files are found and named from the working
+        // directory.
         $context = new AnalysisContext(
-            $this->kernel?->getProjectDir() ?? (getcwd() ?: null),
+            $this->kernel?->getProjectDir(),
             $this->kernel?->getEnvironment(),
             (bool) $input->getOption('show-overlaps'),
             $this->normalizeStringList($input, 'config'),

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Security;
 
+use PHPRegex\Parser\Engine\LibraryPcre;
 use Symfony\Component\Config\Definition\Exception\Exception as ConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -120,7 +121,7 @@ final class SecurityConfigExtractor
         try {
             $processed = (new Processor())->processConfiguration($configuration, $configs);
         } catch (ConfigurationException $e) {
-            throw new SecurityConfigException('The security configuration is invalid: '.$e->getMessage(), 0, $e);
+            throw new SecurityConfigException('The security configuration is invalid: '.$e->getMessage(), previous: $e);
         }
 
         $parameters = $container->getParameterBag();
@@ -128,10 +129,10 @@ final class SecurityConfigExtractor
             try {
                 $resolved = $container->resolveEnvPlaceholders($parameters->unescapeValue($parameters->resolveValue($value)), true);
             } catch (DependencyInjectionException $e) {
-                throw new SecurityConfigException(\sprintf('The security configuration value "%s" cannot be resolved: %s', $value, $e->getMessage()), 0, $e);
+                throw new SecurityConfigException(\sprintf('The security configuration value "%s" cannot be resolved: %s', $value, $e->getMessage()), previous: $e);
             }
 
-            return self::text($resolved) ?? throw new SecurityConfigException(\sprintf('The security configuration value "%s" does not resolve to a string.', $value));
+            return self::text($resolved) ?? throw self::notAString($value);
         };
 
         return $this->build([$processed], $locator->locate($kernel->getProjectDir(), $kernel->getEnvironment()), $resolve);
@@ -156,7 +157,7 @@ final class SecurityConfigExtractor
         try {
             $data = Yaml::parseFile($path, Yaml::PARSE_CONSTANT | Yaml::PARSE_CUSTOM_TAGS);
         } catch (ParseException $e) {
-            throw new SecurityConfigException(\sprintf('The security file "%s" cannot be read: %s', $path, $e->getMessage()), 0, $e);
+            throw new SecurityConfigException(\sprintf('The security file "%s" cannot be read: %s', $path, $e->getMessage()), previous: $e);
         }
 
         $data = \is_array($data) ? $data : [];
@@ -169,18 +170,19 @@ final class SecurityConfigExtractor
             }
         }
 
-        $parameters = new ParameterBag(\is_array($data['parameters'] ?? null) ? $data['parameters'] : []);
+        // The parameters a value may use: a scalar. A list or a tagged value
+        // (a service closure, a tagged iterator) is never a path.
+        $declared = \is_array($data['parameters'] ?? null) ? $data['parameters'] : [];
+        $parameters = new ParameterBag(array_filter($declared, \is_scalar(...)));
         $resolve = static function (string $value) use ($parameters, $container, $path): string {
             while (true) {
                 try {
-                    $resolved = $parameters->unescapeValue($parameters->resolveValue($value));
-
-                    return self::text($resolved) ?? throw new SecurityConfigException(\sprintf('The security configuration value "%s" does not resolve to a string.', $value));
+                    return self::text($parameters->unescapeValue($parameters->resolveValue($value))) ?? throw self::notAString($value);
                 } catch (ParameterNotFoundException $e) {
                     $name = $e->getKey();
                     $found = null !== $container && $container->hasParameter($name) ? $container->getParameter($name) : null;
                     if (!\is_scalar($found)) {
-                        throw new SecurityConfigException(\sprintf('The parameter "%s" used in "%s" is defined neither in the file nor in the application.', $name, $path), 0, $e);
+                        throw new SecurityConfigException(\sprintf('The parameter "%s" used in "%s" is defined neither in the file nor in the application.', $name, $path), previous: $e);
                     }
 
                     $parameters->set($name, $found);
@@ -257,9 +259,9 @@ final class SecurityConfigExtractor
                 $accessControl[] = $this->accessRule([
                     'path' => self::text($rule['path'] ?? null),
                     'host' => self::text($rule['host'] ?? null),
-                    'roles' => self::listOf($rule['roles'] ?? $rule['role'] ?? null, true),
-                    'methods' => self::listOf($rule['methods'] ?? $rule['method'] ?? null, true),
-                    'ips' => self::listOf($rule['ips'] ?? $rule['ip'] ?? null, false),
+                    'roles' => self::listOf($rule['roles'] ?? null),
+                    'methods' => self::listOf($rule['methods'] ?? null),
+                    'ips' => self::listOf($rule['ips'] ?? null),
                     'allowIf' => self::text($rule['allow_if'] ?? null),
                     'requestMatcher' => self::text($rule['request_matcher'] ?? null),
                     'requiresChannel' => self::text($rule['requires_channel'] ?? null),
@@ -269,7 +271,7 @@ final class SecurityConfigExtractor
             // A later configuration adds to a firewall an earlier one declared.
             $declared = $config['firewalls'] ?? null;
             foreach (\is_array($declared) ? $declared : [] as $name => $firewall) {
-                $firewalls[(string) $name] = array_replace($firewalls[(string) $name] ?? [], \is_array($firewall) ? $firewall : []);
+                $firewalls[$name] = array_replace($firewalls[$name] ?? [], \is_array($firewall) ? $firewall : []);
             }
         }
 
@@ -278,8 +280,9 @@ final class SecurityConfigExtractor
             // As the security bundle reads it: a list of patterns is one
             // alternation.
             $pattern = $firewall['pattern'] ?? null;
+            $single = self::text($pattern);
             $firewallRules[] = $this->firewallRule((string) $name, [
-                'patterns' => \is_array($pattern) ? self::listOf($pattern, false) : array_values(array_filter([self::text($pattern)], \is_string(...))),
+                'patterns' => \is_array($pattern) ? self::listOf($pattern) : (null === $single ? [] : [$single]),
                 'alternation' => \is_array($pattern),
                 'requestMatcher' => self::text($firewall['request_matcher'] ?? null),
             ], $sources, $taken, $resolve);
@@ -291,7 +294,7 @@ final class SecurityConfigExtractor
     /**
      * @param array{path: ?string, host: ?string, roles: list<string>, methods: list<string>, ips: list<string>, allowIf: ?string, requestMatcher: ?string, requiresChannel: ?string} $rule
      * @param list<array{file: string, lines: array<int, string>}>                                                                                                                    $sources
-     * @param array<string, true>                                                                                                                                                     $taken
+     * @param array<int, array<int, bool>>                                                                                                                                            $taken
      * @param \Closure(string): string                                                                                                                                                $resolve
      *
      * @return AccessControlRule
@@ -322,7 +325,7 @@ final class SecurityConfigExtractor
     /**
      * @param array{patterns: list<string>, alternation: bool, requestMatcher: ?string} $firewall
      * @param list<array{file: string, lines: array<int, string>}>                      $sources
-     * @param array<string, true>                                                       $taken
+     * @param array<int, array<int, bool>>                                              $taken
      * @param \Closure(string): string                                                  $resolve
      *
      * @return FirewallRule
@@ -396,14 +399,12 @@ final class SecurityConfigExtractor
     {
         $sources = [];
         foreach ($files as $file) {
-            $lines = is_readable($file) ? file($file, \FILE_IGNORE_NEW_LINES) : false;
             $sources[] = [
                 'file' => $file,
-                'lines' => array_map(static function (string $line): string {
-                    $trimmed = ltrim($line, " \t");
-
-                    return str_starts_with($trimmed, '#') || str_starts_with($trimmed, '//') ? '' : $line;
-                }, $lines ?: []),
+                'lines' => array_map(
+                    static fn (string $line): string => 1 === LibraryPcre::match('~^\s*(?:#|//)~', $line) ? '' : $line,
+                    @file($file, \FILE_IGNORE_NEW_LINES) ?: [],
+                ),
             ];
         }
 
@@ -415,7 +416,7 @@ final class SecurityConfigExtractor
      * such line is taken (an alias repeats an entry), the first one taken.
      *
      * @param list<array{file: string, lines: array<int, string>}> $sources
-     * @param array<string, true>                                  $taken
+     * @param array<int, array<int, bool>>                         $taken    the lines taken, by source and line
      * @param list<\Closure(string): bool>                         $matchers in the order to try them
      *
      * @return array{0: string, 1: int}
@@ -424,14 +425,13 @@ final class SecurityConfigExtractor
     {
         foreach ([true, false] as $free) {
             foreach ($matchers as $matches) {
-                foreach ($sources as $source) {
+                foreach ($sources as $at => $source) {
                     foreach ($source['lines'] as $index => $line) {
-                        $at = $source['file'].':'.$index;
-                        if (($free && isset($taken[$at])) || !$matches($line)) {
+                        if (($free && ($taken[$at][$index] ?? false)) || !$matches($line)) {
                             continue;
                         }
 
-                        $taken[$at] = true;
+                        $taken[$at][$index] = true;
 
                         return [$source['file'], $index + 1];
                     }
@@ -455,67 +455,29 @@ final class SecurityConfigExtractor
             return [];
         }
 
-        $spellings = array_values(array_unique([$value, str_replace('\\', '\\\\', $value)]));
-        $writes = static function (string $line) use ($spellings): bool {
-            foreach ($spellings as $spelling) {
-                if (str_contains($line, $spelling)) {
-                    return true;
-                }
-            }
+        $writes = static fn (string $line): bool => str_contains($line, $value) || str_contains($line, str_replace('\\', '\\\\', $value));
 
-            return false;
-        };
+        // The key as YAML (path:), a PHP array ('path' =>) or a config
+        // builder (->path() write it, and not as the end of a longer name:
+        // admin_path: writes no path. The key is one of the bundle's own.
+        $keyed = '~(?<!\w)'.$key.'\s*(?::|=>|\()~';
 
         return [
-            static fn (string $line): bool => $writes($line) && self::writesKey($line, $key),
+            static fn (string $line): bool => $writes($line) && 1 === LibraryPcre::match($keyed, str_replace(['"', "'"], '', $line)),
             $writes,
         ];
     }
 
     /**
-     * A line that opens the entry of this name: a YAML key, an XML
-     * attribute, a PHP string.
+     * A line that opens the entry of this name: a YAML key, quoted or not,
+     * or a PHP string.
      *
      * @return \Closure(string): bool
      */
     private static function keyMatcher(string $name): \Closure
     {
-        return static function (string $line) use ($name): bool {
-            $trimmed = ltrim($line, " \t");
-            foreach ([$name.':', "'".$name."':", '"'.$name.'":'] as $key) {
-                if (str_starts_with($trimmed, $key)) {
-                    return true;
-                }
-            }
-
-            return str_contains($line, '"'.$name.'"') || str_contains($line, "'".$name."'");
-        };
-    }
-
-    /**
-     * Whether the line writes this key: in YAML (key:), XML (key="), PHP
-     * ('key' =>) or a config builder (->key(), and not as the end of a
-     * longer name: admin_path: writes no path.
-     */
-    private static function writesKey(string $line, string $key): bool
-    {
-        foreach ([$key.':', $key.'=', "'".$key."'", '"'.$key.'"', '->'.$key.'('] as $spelling) {
-            $offset = 0;
-            while (false !== $position = strpos($line, $spelling, $offset)) {
-                if (0 === $position || !self::isNameByte($line[$position - 1])) {
-                    return true;
-                }
-
-                $offset = $position + 1;
-            }
-        }
-
-        return false;
-    }
-
-    private static function isNameByte(string $byte): bool
-    {
-        return '_' === $byte || ($byte >= 'a' && $byte <= 'z') || ($byte >= 'A' && $byte <= 'Z') || ($byte >= '0' && $byte <= '9');
+        return static fn (string $line): bool => str_starts_with(str_replace(['"', "'"], '', ltrim($line, " \t")), $name.':')
+            || str_contains($line, "'".$name."'");
     }
 
     /**
@@ -530,21 +492,27 @@ final class SecurityConfigExtractor
         return \is_int($value) || \is_float($value) ? (string) $value : null;
     }
 
+    private static function notAString(string $value): SecurityConfigException
+    {
+        return new SecurityConfigException(\sprintf('The security configuration value "%s" does not resolve to a string.', $value));
+    }
+
     private static function filled(?string $value): ?string
     {
         return null === $value || '' === trim($value, " \t\n\r\0\x0B") ? null : $value;
     }
 
     /**
-     * A list of roles, methods or addresses. A string of roles or methods is
-     * split on its commas, as the security bundle splits it.
+     * A list of roles, methods, addresses or patterns. A string of roles,
+     * methods or addresses is split on its commas, as the security bundle
+     * splits it.
      *
      * @return list<string>
      */
-    private static function listOf(mixed $value, bool $splitString): array
+    private static function listOf(mixed $value): array
     {
         if (\is_string($value)) {
-            $value = $splitString ? explode(',', $value) : [$value];
+            $value = explode(',', $value);
         }
 
         $items = [];

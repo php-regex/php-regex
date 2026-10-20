@@ -213,6 +213,20 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
         $this->assertSame(0, $report->stats['path_subsets']);
     }
 
+    #[Test]
+    public function test_a_disjoint_pair_does_not_stop_the_comparison_of_its_earlier_rule(): void
+    {
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/admin'),
+            self::rule(path: '^/shop$', line: 4),
+            self::rule(path: '^/admin/users', line: 5),
+        ], true);
+
+        $this->assertSame(3, $report->stats['path_intersections']);
+        $this->assertSame(1, $report->stats['path_subsets']);
+        $this->assertSame(['^/admin', '^/admin/users'], [$report->conflicts[0]['rule']['path'], $report->conflicts[0]['conflict']['path']]);
+    }
+
     /**
      * @param list<string> $roles
      *

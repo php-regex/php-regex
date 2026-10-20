@@ -221,7 +221,7 @@ final class SecurityAnalyzer implements AnalyzerInterface
                 'Host intersections' => $report->stats['host_intersections'] ?? 0,
                 'Path intersections' => $report->stats['path_intersections'] ?? 0,
                 'Path subset checks' => $report->stats['path_subsets'] ?? 0,
-                'Pairs skipped (complexity)' => $report->stats['skipped_pairs'] ?? 0,
+                'Pairs skipped (complexity)' => $report->stats['skipped_pairs'],
             ];
             foreach ($report->skippedRules as $skip) {
                 $location = $this->formatLocation($pathHelper, $skip['file'], $skip['line']);
