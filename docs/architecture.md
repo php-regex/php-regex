@@ -218,22 +218,30 @@ When `--jobs` is used and `pcntl_fork` is available, both extraction and analysi
 
 ## Layers
 
-The code falls into layers, each allowed to use only those below it, and
-[deptrac](https://github.com/deptrac/deptrac) checks the rule on every change
-(`composer deptrac`):
+The code falls into layers, each allowed to use only the layers listed before
+it, and [deptrac](https://github.com/deptrac/deptrac) checks the rule on every
+change (`composer deptrac`). The last column is what each package's
+`composer.json` requires, and a test fails when a package imports a sibling it
+does not require, or requires one it does not import:
 
 | layer | what it holds | may use |
 |---|---|---|
 | core | lexer, parser, nodes, validation, `RegexParser`, `PcreTarget`, cache, the shared tree analyses, the normalized form (`Hir`) | nothing |
 | explain | explanations, highlighting, diagrams | core |
-| optimizer | `Optimizer` and the optimizing visitors | core, automata |
 | generator | sample and test-case generation | core |
 | automata | the solver: equivalence, intersection, subset | core |
 | ReDoS | ReDoS analysis | core |
 | transpiler | JavaScript, HTML `pattern` attribute and Python output | core |
+| optimizer | `Optimizer`, the optimizing visitors and the ReDoS repair | core, automata, ReDoS |
 | linter | lint rules, pattern extraction, reports | core, explain, optimizer, automata, ReDoS |
-| toolkit | the `Regex` facade | every library above |
-| CLI, language server, bridges | applications and integrations | the toolkit and the libraries |
+| toolkit | the `Regex` facade | every library above but automata |
+| CLI | the `regex` command | the toolkit and every library but generator |
+| language server | the `regex-lsp` server | the toolkit, core, explain, ReDoS, linter |
+| PHPUnit bridge | the regex assertions | the toolkit, core, ReDoS |
+| Symfony and Laravel bridges | the bundle, the service provider, the validation rules | the toolkit and every library but explain and generator |
+| PHPStan bridge | the PHPStan rules | core, automata, optimizer, ReDoS, linter |
+| Psalm bridge | the Psalm plugin | core, automata, linter |
+| Rector bridge | the Rector rules | core, automata |
 
 What reads a pattern below the facade takes a `RegexParser`; `Regex::parser()`
 gives the one a facade uses.
@@ -255,8 +263,13 @@ Limits are enforced in `ParserOptions`:
 When you add a new PCRE construct, you typically update:
 
 - `src/Parser/Node/*` to define a node
-- `src/Parser/Syntax/TokenParser.php` and `src/Parser/Lexer.php` to recognize syntax
-- `src/Parser/NodeVisitorInterface.php` and every visitor that implements it, to support traversal
-- Tests and fixtures for valid/invalid cases
+- `src/Parser/Token/TokenType.php`, `src/Parser/Lexer.php` and `src/Parser/Syntax/TokenParser.php` to recognize syntax
+- `src/Parser/PcreFeature.php` when the syntax depends on the PCRE2 release
+- `src/Parser/NodeVisitorInterface.php` and every visitor that implements it, in every package
+- the cache version, `AstSerializer` and `ast.schema.json`
+- Tests checked against the engine, for valid and invalid cases
 
-See [docs/extending.md](extending.md) for the full workflow.
+[Extending](extending.md#adding-a-pcre-construct) walks through the steps and
+lists every place a node touches, with the test that fails when one is
+missed. [Adding a Lint Rule](adding-a-lint-rule.md) does the same for a lint
+rule.
