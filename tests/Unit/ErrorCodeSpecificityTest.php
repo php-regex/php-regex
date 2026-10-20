@@ -688,6 +688,9 @@ final class ErrorCodeSpecificityTest extends TestCase
             str_contains($pattern, '(?[') => PcreFeature::ExtendedCharClass,
             str_contains($pattern, '(*scs:') => PcreFeature::ScanSubstring,
             1 === preg_match('/\(\?(?:R|[+-]?\d+)\(/', $pattern) => PcreFeature::CallsReturnCaptureGroups,
+            // A named call no ")" ends is a group left open from that release,
+            // a name left open before it (SubroutineParserTest pins both).
+            1 === preg_match('/\(\?(?:&|P>)[A-Za-z_]\w*\}/', $pattern) => PcreFeature::CallsReturnCaptureGroups,
             1 === preg_match('/\{(?: |,)/', $pattern) => PcreFeature::OpenAndPaddedRepeatCounts,
             str_contains($pattern, '[\\N{') => PcreFeature::NamedCharacterBraceRefusedInClass,
             1 === preg_match('/\(\?<\w{33,128}\W/', $pattern) => PcreFeature::LongGroupNames,

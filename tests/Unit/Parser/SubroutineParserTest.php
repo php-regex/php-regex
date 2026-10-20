@@ -13,16 +13,16 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Node\SubroutineNode;
-use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class SubroutineParserTest extends TestCase
 {
-    use PhpUnitForwardCompat;
-
     public function test_parse_recursion(): void
     {
         $regex = Regex::create();
@@ -71,12 +71,39 @@ final class SubroutineParserTest extends TestCase
         $this->assertSame('P>', $ast->pattern->syntax);
     }
 
-    public function test_throws_on_incomplete_subroutine(): void
+    /**
+     * A name no ")" ends is a name left open up to PCRE2 10.46, a group left
+     * open from 10.47, where a call may go on with the groups it returns
+     * (pcre2test 10.32 to 10.49: "syntax error in subpattern name (missing
+     * terminator?)", error 142, up to 10.46; "missing closing parenthesis",
+     * error 114, from 10.47; at the same offset).
+     */
+    #[DataProvider('provideCallsLeftOpen')]
+    public function test_throws_on_incomplete_subroutine(string $pattern, string $release, ErrorCode $code, string $message, int $offset): void
     {
-        $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Expected ) to close subroutine call');
-        $regex = Regex::create();
-        // The regex must be validly delimited for the parser to run
-        $regex->parse('/(?&name/i');
+        try {
+            RegexParser::create(['cache' => null, 'pcre_version' => $release])->parse($pattern);
+            $this->fail(\sprintf('%s must be refused on PCRE2 %s.', $pattern, $release));
+        } catch (ParserException $e) {
+            $this->assertSame($code, $e->errorCode, \sprintf('%s on PCRE2 %s: %s', $pattern, $release, $e->getMessage()));
+            $this->assertStringContainsString($message, $e->getMessage(), \sprintf('%s on PCRE2 %s', $pattern, $release));
+            $this->assertSame($offset, $e->position, \sprintf('%s on PCRE2 %s', $pattern, $release));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, release: string, code: ErrorCode, message: string, offset: int}>
+     */
+    public static function provideCallsLeftOpen(): iterable
+    {
+        foreach (['/(?&name/i' => 7, '/(?&L}/' => 4, '/(?P>a}/' => 5] as $pattern => $offset) {
+            foreach (['10.40', '10.46'] as $release) {
+                yield \sprintf('%s, PCRE2 %s', $pattern, $release) => ['pattern' => $pattern, 'release' => $release, 'code' => ErrorCode::GroupNameUnterminated, 'message' => 'Missing ")" to close subroutine call', 'offset' => $offset];
+            }
+
+            foreach (['10.47', '10.49'] as $release) {
+                yield \sprintf('%s, PCRE2 %s', $pattern, $release) => ['pattern' => $pattern, 'release' => $release, 'code' => ErrorCode::GroupUnclosed, 'message' => 'Expected ) to close subroutine call', 'offset' => $offset];
+            }
+        }
     }
 }
