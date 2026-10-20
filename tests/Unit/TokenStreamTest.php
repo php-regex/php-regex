@@ -122,12 +122,26 @@ final class TokenStreamTest extends TestCase
         ];
         $stream = new TokenStream($tokens, 'a');
 
+        // Past the end, the stream's own end-of-pattern token, which stands
+        // where the pattern ends.
         $peekFar = $stream->peek(5);
-        $this->assertSame(TokenType::Eof, $peekFar->type);
-        $this->assertSame(5, $peekFar->position);
+        $this->assertSame($tokens[1], $peekFar);
+        $this->assertSame(1, $peekFar->position);
 
         $peekBack = $stream->peek(-5);
         $this->assertSame(TokenType::Eof, $peekBack->type);
+    }
+
+    public function test_peek_past_a_list_no_end_token_closes_stands_at_its_end(): void
+    {
+        $stream = new TokenStream([new Token(TokenType::Literal, 'ab', 0, 2)], 'ab');
+
+        $peekFar = $stream->peek(3);
+        $this->assertSame(TokenType::Eof, $peekFar->type);
+        $this->assertSame(2, $peekFar->position);
+
+        $this->assertSame(TokenType::Eof, (new TokenStream([], ''))->peek()->type);
+        $this->assertSame(0, (new TokenStream([], ''))->peek()->position);
     }
 
     public function test_getters_expose_pattern_and_tokens(): void

@@ -81,6 +81,11 @@ final class TokenStream
         $this->position = $position;
     }
 
+    /**
+     * The token $offset tokens from the cursor. Past the end, the
+     * end-of-pattern token that closes the list, or one where the last token
+     * ends when none does: never one at a token index read as an offset.
+     */
     public function peek(int $offset = 1): Token
     {
         $targetPos = $this->position + $offset;
@@ -90,7 +95,12 @@ final class TokenStream
         }
 
         if ($targetPos > $this->maxPosition) {
-            return new Token(TokenType::Eof, '', $targetPos);
+            $last = $this->tokens[$this->maxPosition] ?? null;
+            if (null !== $last && TokenType::Eof === $last->type) {
+                return $last;
+            }
+
+            return new Token(TokenType::Eof, '', $last?->end() ?? 0);
         }
 
         return $this->tokens[$targetPos];
