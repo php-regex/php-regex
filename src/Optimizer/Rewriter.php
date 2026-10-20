@@ -131,8 +131,6 @@ final class Rewriter extends AbstractNodeVisitor
      */
     private \WeakMap $ungroupedRepeats;
 
-    private readonly int $minQuantifierCount;
-
     public function __construct(
         private readonly bool $optimizeDigits = true,
         private readonly bool $optimizeWord = true,
@@ -150,7 +148,11 @@ final class Rewriter extends AbstractNodeVisitor
          * This can make verbose (/x) patterns harder to read.
          */
         private readonly bool $factorize = false,
-        int $minQuantifierCount = 4,
+        /**
+         * How many repetitions of an item become a count, at least 2, as
+         * OptimizerOptions checks.
+         */
+        private readonly int $minQuantifierCount = 4,
         /**
          * The LC_CTYPE locale the pattern runs under, when it is known:
          * "\w" stands for "[a-zA-Z0-9_]" under "C" and "POSIX" only, and
@@ -158,7 +160,6 @@ final class Rewriter extends AbstractNodeVisitor
          */
         private readonly ?string $locale = null,
     ) {
-        $this->minQuantifierCount = max(2, $minQuantifierCount);
         $this->charSetAnalyzer = new CharSetAnalyzer();
         $this->ungroupedRepeats = new \WeakMap();
         // Read again from the flags of each pattern visited whole.

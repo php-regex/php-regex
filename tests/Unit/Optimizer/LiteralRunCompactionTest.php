@@ -40,6 +40,20 @@ final class LiteralRunCompactionTest extends TestCase
         }
     }
 
+    /**
+     * The count is the one the options give, at least 2 there: the rewriter
+     * takes it as given.
+     */
+    #[Test]
+    public function test_a_run_compacts_from_the_count_the_options_give(): void
+    {
+        $optimizer = new Optimizer(RegexParser::create());
+
+        $this->assertSame('/a{2}b/', $optimizer->optimize('/aab/', ['min_quantifier_count' => 2])->optimized);
+        $this->assertSame('/aab/', $optimizer->optimize('/aab/', ['min_quantifier_count' => 3])->optimized);
+        $this->assertSame('/(?:ab){2}/', $optimizer->optimize('/(?:ab)(?:ab)/', ['min_quantifier_count' => 2])->optimized);
+    }
+
     #[Test]
     public function test_a_plain_run_still_compacts(): void
     {
