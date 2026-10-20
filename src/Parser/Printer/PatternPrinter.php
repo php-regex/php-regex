@@ -200,7 +200,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     /**
      * Cached \Q...\E regions of $source.
      *
-     * @var array<array{0: int, 1: int}>|null
+     * @var list<array{int, int}>|null
      */
     private ?array $quotedSpans = null;
 
@@ -436,7 +436,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $this->quotedSpans = null;
         $this->sourcePattern = $node->pattern;
 
-        $body = $node->delimiter.self::controlBackslashesSpelled(
+        $body = DelimiterBrackets::spelledToEnd(
             $this->ignorableText(0, $node->pattern->getStartPosition())
             .$node->pattern->accept($this)
             .$this->ignorableText($node->pattern->getEndPosition(), null),
@@ -444,14 +444,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             $this->closingDelimiter,
         );
 
-        // A body ending in an odd run of backslashes, "\c\" for one, would
-        // escape the closing delimiter: PHP pairs backslashes as it looks for
-        // it. An empty "\E", which PCRE ignores, closes the run.
-        if (1 === (\strlen($body) - \strlen(rtrim($body, '\\'))) % 2) {
-            $body .= '\\E';
-        }
-
-        return $body.$this->closingDelimiter.$node->flags;
+        return $node->delimiter.$body.$this->closingDelimiter.$node->flags;
     }
 
     #[\Override]
@@ -1229,7 +1222,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      * delimiter, quoted as the run writes it: PHP counts that bracket, and
      * would not count it spelled "\{", which a verb name, a lookbehind, a
      * class or a comment may need to balance one of theirs (see
-     * bracketsAsWritten). Null for any other literal.
+     * DelimiterBrackets::asWritten). Null for any other literal.
      */
     private function quotedRunAsWritten(LiteralNode $node): ?string
     {
@@ -1416,59 +1409,11 @@ final class PatternPrinter extends AbstractNodeVisitor
     /**
      * Offsets of the \Q...\E regions of the source.
      *
-     * @return array<array{0: int, 1: int}>
+     * @return list<array{int, int}>
      */
     private function quotedSpans(): array
     {
-        if (null !== $this->quotedSpans) {
-            return $this->quotedSpans;
-        }
-
-        // A comment, a verb name or a callout string holds text: a "\Q" in
-        // one opens no quote.
-        $texts = [];
-        $unused = [];
-        if (null !== $this->sourcePattern) {
-            self::bracketSpans($this->sourcePattern, '', $texts, $unused);
-            usort($texts, static fn (array $a, array $b): int => $a[0] <=> $b[0]);
-        }
-
-        $spans = [];
-        $source = (string) $this->source;
-        $length = \strlen($source);
-        $offset = 0;
-        $text = 0;
-        $count = \count($texts);
-
-        // Only a backslash that starts an escape opens a quote: "\\Q" is an
-        // escaped backslash, then "Q", and "\c\Q" is control-backslash.
-        while (false !== ($start = strpos($source, '\\', $offset))) {
-            while ($text < $count && $texts[$text][1] <= $start) {
-                $text++;
-            }
-
-            if ($text < $count && $texts[$text][0] <= $start) {
-                $offset = $texts[$text][1];
-
-                continue;
-            }
-
-            // "\c" at the end of the pattern, the letter "c" on PHP 7.3 and
-            // 7.4, takes no character after it.
-            $escape = $source[$start + 1] ?? '';
-            if ('Q' !== $escape) {
-                $offset = min($length, $start + ('c' === $escape ? 3 : 2));
-
-                continue;
-            }
-
-            $end = strpos($source, '\\E', $start + 2);
-            $stop = false === $end ? $length : $end + 2;
-            $spans[] = [$start, $stop];
-            $offset = $stop;
-        }
-
-        return $this->quotedSpans = $spans;
+        return $this->quotedSpans ??= DelimiterBrackets::quotedSpans((string) $this->source, $this->sourcePattern);
     }
 
     /**
@@ -2050,7 +1995,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         if (self::MODE_COMPACT === $this->mode) {
-            [$this->keptComments, $this->keptQuotedBrackets] = $this->bracketsAsWritten($node, true);
+            [$this->keptComments, $this->keptQuotedBrackets] = DelimiterBrackets::asWritten($node, $this->source, $this->quotedSpans(), true);
 
             // A "(?#...)" ends at the first ")": a "#" comment holding the
             // one the balance needs cannot become one.
@@ -2067,7 +2012,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $this->renderRoot($node, str_replace('x', '', $node->flags), false);
         }
 
-        [, $this->keptQuotedBrackets] = $this->bracketsAsWritten($node, false);
+        [, $this->keptQuotedBrackets] = DelimiterBrackets::asWritten($node, $this->source, $this->quotedSpans(), false);
 
         $shallow = self::groupDepth($node->pattern) <= self::MAX_DEPTH;
         if (null !== $written && false === strpbrk($written, "\n\r") && $shallow && $this->columns($written) <= $this->width) {
@@ -2348,17 +2293,12 @@ final class PatternPrinter extends AbstractNodeVisitor
         // PHP pairs bracket delimiters by counting them: a dropped comment
         // may leave one alone, a kept one hold the partner of a literal.
         if (null !== $this->bracketMark) {
-            $body = $this->literalBracketsBalanced($body, $this->bracketMark);
+            $body = DelimiterBrackets::markedBalanced($body, $this->bracketMark, $node->delimiter, $this->closingDelimiter);
         } elseif (self::MODE_PRETTY !== $this->mode && $node->delimiter !== $this->closingDelimiter) {
-            $body = self::balancedBrackets($body, $node->delimiter, $this->closingDelimiter);
+            $body = DelimiterBrackets::balanced($body, $node->delimiter, $this->closingDelimiter);
         }
 
-        $body = $node->delimiter.self::controlBackslashesSpelled($body, $node->delimiter, $this->closingDelimiter);
-        if (1 === (\strlen($body) - \strlen(rtrim($body, '\\'))) % 2) {
-            $body .= '\\E';
-        }
-
-        return $body.$tail.$this->closingDelimiter.$flags;
+        return $node->delimiter.DelimiterBrackets::spelledToEnd($body, $node->delimiter, $this->closingDelimiter).$tail.$this->closingDelimiter.$flags;
     }
 
     /**
@@ -3214,399 +3154,10 @@ final class PatternPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * The comments a compacted pattern keeps for its bracket delimiter, by
-     * object id, each with the text its "(?#...)" holds. PHP finds where
-     * such a pattern ends by counting its brackets, skipping the escaped
-     * ones, and some brackets take no backslash: those of a verb name or a
-     * callout string, "(*MARK:\{)" names "\{", the "<" of "(?<=" and "(?<!",
-     * the "[" that opens a class. A comment holding the bracket that pairs,
-     * in the source, with one of those stays: a "(?#...)" as written, a "#"
-     * comment as a "(?#...)" holding only its brackets, as the rest of its
-     * text, a ")" included, may not stand in one; a bracket of either left
-     * pairing with nothing goes. Should dropping the other comments still
-     * leave such a bracket alone, every bracket of every comment stays,
-     * which gives back the balance of the source.
-     *
-     * A bracket of a "\Q...\E" run is counted too, and would not be once
-     * respelled "\{": the run is kept as written where the bracket pairs,
-     * among those the output holds, with one that is not quoted; elsewhere
-     * it is respelled. Laid out, the pattern keeps every comment.
-     *
-     * Returns the comments compact keeps, by object id, each with the text
-     * its "(?#...)" holds, and the offsets of the quoted brackets kept as
-     * written.
-     *
-     * @return array{array<int, string>, array<int, true>}
-     */
-    private function bracketsAsWritten(RegexNode $node, bool $dropsComments): array
-    {
-        $opening = $node->delimiter;
-        $closing = $this->closingDelimiter;
-        $spans = [];
-        if ($opening === $closing || null === $this->source) {
-            return [[], []];
-        }
-
-        $quotedSpans = $this->quotedSpans();
-        if (!$dropsComments && [] === $quotedSpans) {
-            return [[], []];
-        }
-
-        $literals = [];
-        self::bracketSpans($node->pattern, $opening.$closing, $spans, $literals);
-
-        // The brackets PHP counts, each with the comment that holds it, if
-        // any, and whether a "\Q...\E" run holds it. A plain literal bracket
-        // may take a backslash, which balancedBrackets adds where PHP would
-        // not pair it: it has no owner. Any other bracket, a name's, a
-        // group's, a class's, a repeat's, is written as is: its owner is
-        // true.
-        usort($spans, static fn (array $a, array $b): int => $a[0] <=> $b[0]);
-        $tokens = [];
-        $span = 0;
-        $quote = 0;
-        $found = false;
-        $count = \count($spans);
-        $quotes = \count($quotedSpans);
-        $length = \strlen($this->source);
-        // A line break, a tab, a vertical tab or a form feed parts a quoted
-        // run the output writes (see quotedRunPieces): each part is a run.
-        $stops = "\\\n\r\t\v\f".$opening.$closing;
-        $break = -1;
-        for ($i = strcspn($this->source, $stops); $i < $length; $i += 1 + strcspn($this->source, $stops, $i + 1)) {
-            if (str_contains("\n\r\t\v\f", $this->source[$i])) {
-                $break = $i;
-
-                continue;
-            }
-
-            if ('\\' === $this->source[$i]) {
-                $i++;
-
-                continue;
-            }
-
-            while ($span < $count && $spans[$span][1] <= $i) {
-                $span++;
-            }
-
-            while ($quote < $quotes && $quotedSpans[$quote][1] <= $i) {
-                $quote++;
-            }
-
-            $owner = $span < $count && $spans[$span][0] <= $i ? $spans[$span][2] : null;
-            $quoted = null === $owner && $quote < $quotes && $quotedSpans[$quote][0] <= $i;
-            if (null === $owner && !$quoted && !isset($literals[$i])) {
-                $owner = true;
-            }
-
-            $found = $found || true === $owner;
-            $tokens[] = [$opening === $this->source[$i], $owner, $i, $quoted, $quoted ? max($quotedSpans[$quote][0], $break) : -1];
-        }
-
-        if ($dropsComments && !$found) {
-            return [[], []];
-        }
-
-        // The comments that stay: those holding the partner of a bracket
-        // written as is. A comment keeps all of its brackets, a "#" one as a
-        // "(?#...)" does: those it would drop could leave the others paired
-        // elsewhere.
-        $whole = [];
-        $partners = self::bracketPartners(array_column($tokens, 0));
-        foreach ($tokens as $index => [, $owner]) {
-            $partner = $partners[$index];
-            $comment = null === $partner ? null : $tokens[$partner][1];
-            if (true === $owner && $comment instanceof CommentNode) {
-                $whole[spl_object_id($comment)] = true;
-            }
-        }
-
-        $all = !$dropsComments;
-        $stays = static function (CommentNode|bool|null $owner) use (&$all, $whole): bool {
-            return !$owner instanceof CommentNode || $all || isset($whole[spl_object_id($owner)]);
-        };
-
-        // Paired as PHP pairs the brackets the output holds, a quoted one is
-        // respelled where it stands alone or with another quoted one: taking
-        // away pairs whose two brackets go leaves every other pair as it
-        // was. Kept, it pairs with a bracket written as is, or with a literal
-        // one balancedBrackets leaves alone. A run is written whole: kept,
-        // it keeps each of its brackets, and each one's quoted partner keeps
-        // its own run.
-        $quotedKept = static function () use ($tokens, $stays): array {
-            $present = [];
-            foreach ($tokens as $token) {
-                if ($token[3] || $stays($token[1])) {
-                    $present[] = $token;
-                }
-            }
-
-            $runs = [];
-            $pending = [];
-            $partners = self::bracketPartners(array_column($present, 0));
-            foreach ($present as $index => [, , , $quoted, $run]) {
-                if ($quoted) {
-                    $runs[$run][] = $index;
-                    $partner = $partners[$index];
-                    if (null !== $partner && !$present[$partner][3]) {
-                        $pending[] = $run;
-                    }
-                }
-            }
-
-            $keptRuns = [];
-            while (null !== ($run = array_pop($pending))) {
-                if (isset($keptRuns[$run])) {
-                    continue;
-                }
-
-                $keptRuns[$run] = true;
-                foreach ($runs[$run] as $index) {
-                    $partner = $partners[$index];
-                    if (null !== $partner && $present[$partner][3]) {
-                        $pending[] = $present[$partner][4];
-                    }
-                }
-            }
-
-            $kept = [];
-            foreach ($present as [, , $offset, $quoted, $run]) {
-                if ($quoted && isset($keptRuns[$run])) {
-                    $kept[$offset] = true;
-                }
-            }
-
-            return $kept;
-        };
-
-        $quoted = $quotedKept();
-        $alone = [];
-        $trimmed = [];
-        if (!$all) {
-            $left = [];
-            foreach ($tokens as $index => [$isOpening, $owner, $offset, $isQuoted]) {
-                if ($isQuoted ? isset($quoted[$offset]) : $stays($owner)) {
-                    $left[] = [$isOpening, $owner, $index, $isQuoted];
-                }
-            }
-
-            // A bracket written as is, or one of a quoted run kept whole,
-            // left alone: every comment bracket stays.
-            $leftPartners = self::bracketPartners(array_column($left, 0));
-            foreach ($left as $index => [, $owner, , $isQuoted]) {
-                if ((true === $owner || $isQuoted) && null === $leftPartners[$index]) {
-                    $all = true;
-                    $quoted = $quotedKept();
-
-                    break;
-                }
-            }
-
-            // A comment bracket left alone pairs with nothing PHP counts:
-            // it goes, which leaves every other pair as it was, and its
-            // comment keeps only the brackets that pair.
-            foreach ($all ? [] : $left as $index => [, $owner, $token]) {
-                if ($owner instanceof CommentNode && null === $leftPartners[$index]) {
-                    $alone[$token] = true;
-                    $trimmed[spl_object_id($owner)] = true;
-                }
-            }
-        }
-
-        $kept = [];
-        foreach ($dropsComments ? $tokens : [] as $index => [$isOpening, $owner]) {
-            if (!$owner instanceof CommentNode || !$stays($owner) || isset($alone[$index])) {
-                continue;
-            }
-
-            $id = spl_object_id($owner);
-            if (!$owner->extended && !isset($trimmed[$id])) {
-                $kept[$id] = strtr($owner->comment, "\r\n", '  ');
-            } else {
-                $kept[$id] = ($kept[$id] ?? '').($isOpening ? $opening : $closing);
-            }
-        }
-
-        return [$kept, $quoted];
-    }
-
-    /**
-     * Collect, in the order of the tree, the spans of the comments, with the
-     * comment, and of the verbs and string callouts, with true: a "\Q" in a
-     * name opens no quote. Collect too the offsets of the plain literals
-     * that are one of $brackets.
-     *
-     * @param list<array{int, int, CommentNode|true}> $spans
-     * @param array<int, true>                        $literals
-     */
-    private static function bracketSpans(NodeInterface $node, string $brackets, array &$spans, array &$literals): void
-    {
-        if ($node instanceof CommentNode) {
-            $spans[] = [$node->getStartPosition(), $node->getEndPosition(), $node];
-
-            return;
-        }
-
-        if ($node instanceof PcreVerbNode || ($node instanceof CalloutNode && \is_string($node->identifier))) {
-            $spans[] = [$node->getStartPosition(), $node->getEndPosition(), true];
-
-            return;
-        }
-
-        if ($node instanceof LiteralNode && 1 === \strlen($node->value) && str_contains($brackets, $node->value)) {
-            $literals[$node->getStartPosition()] = true;
-        }
-
-        if (!$node instanceof ExtendedCharClassNode) {
-            foreach ($node->getChildren() as $child) {
-                self::bracketSpans($child, $brackets, $spans, $literals);
-            }
-        }
-    }
-
-    /**
-     * Pair brackets as balancedBrackets does, a closing one with the last
-     * opening one still open: for each, the index of its partner, or null.
-     *
-     * @param array<int, bool> $opens whether each bracket opens
-     *
-     * @return array<int, int|null>
-     */
-    private static function bracketPartners(array $opens): array
-    {
-        $partners = [];
-        $open = [];
-        foreach ($opens as $index => $isOpening) {
-            $partners[$index] = null;
-            if ($isOpening) {
-                $open[] = $index;
-            } elseif ([] !== $open) {
-                $partner = array_pop($open);
-                $partners[$index] = $partner;
-                $partners[$partner] = $index;
-            }
-        }
-
-        return $partners;
-    }
-
-    /**
-     * Escape the delimiter brackets PHP would not pair once comments are
-     * dropped, "{a(?#{)b}c}" compacted for one: PHP counts the brackets of
-     * a body, skipping the escaped ones, to find where it ends.
-     */
-    private static function balancedBrackets(string $body, string $opening, string $closing): string
-    {
-        $open = [];
-        $unpaired = [];
-        $length = \strlen($body);
-        for ($i = 0; $i < $length; $i++) {
-            $character = $body[$i];
-            if ('\\' === $character) {
-                $i += self::escapeLength($body, $i) - 1;
-            } elseif ($closing === $character) {
-                if ([] === $open) {
-                    $unpaired[] = $i;
-                } else {
-                    array_pop($open);
-                }
-            } elseif ($opening === $character) {
-                $open[] = $i;
-            }
-        }
-
-        $unpaired = array_merge($unpaired, $open);
-        rsort($unpaired);
-        foreach ($unpaired as $offset) {
-            $body = substr_replace($body, '\\', $offset, 0);
-        }
-
-        return $body;
-    }
-
-    /**
-     * The length of the escape a backslash at $offset opens, as PCRE reads
-     * it: two characters, or three for "\c", which takes the next one, a
-     * backslash included.
-     */
-    private static function escapeLength(string $body, int $offset): int
-    {
-        return 'c' === ($body[$offset + 1] ?? '') ? 3 : 2;
-    }
-
-    /**
-     * PHP finds the end of a pattern pairing each backslash with the
-     * character after it, where PCRE reads "\c\" as one control character:
-     * after it, PHP reads "\\" where PCRE reads a backslash escaping the
-     * next character, and "\)" where PCRE reads ")". When the two readings
-     * disagree on where the pattern ends, each "\c\" before a backslash or
-     * a delimiter is spelled "\x1C", and a delimiter that would then end
-     * the pattern is escaped, as PCRE read it as a literal.
-     */
-    private static function controlBackslashesSpelled(string $body, string $opening, string $closing): string
-    {
-        if (self::endsWhereWritten($body, $opening, $closing)) {
-            return $body;
-        }
-
-        $spelled = '';
-        $length = \strlen($body);
-        for ($i = 0; $i < $length; $i++) {
-            if ('\\' !== $body[$i]) {
-                $spelled .= $body[$i];
-
-                continue;
-            }
-
-            $next = $body[$i + 3] ?? '';
-            if ('c' === ($body[$i + 1] ?? '') && '\\' === ($body[$i + 2] ?? '') && '' !== $next && str_contains('\\'.$opening.$closing, $next)) {
-                $spelled .= '\\x1C'.($opening === $closing && '\\' !== $next ? '\\' : '');
-                $i += 2;
-
-                continue;
-            }
-
-            $escape = self::escapeLength($body, $i);
-            $spelled .= substr($body, $i, $escape);
-            $i += $escape - 1;
-        }
-
-        return $spelled;
-    }
-
-    /**
-     * Whether PHP, pairing each backslash with the character after it, reads
-     * the whole body before the closing delimiter: no closing delimiter
-     * stands bare in it, or, for brackets, every one pairs.
-     */
-    private static function endsWhereWritten(string $body, string $opening, string $closing): bool
-    {
-        $depth = 0;
-        $length = \strlen($body);
-        for ($i = 0; $i < $length; $i++) {
-            $character = $body[$i];
-            if ('\\' === $character) {
-                $i++;
-            } elseif ($closing === $character) {
-                if ($opening === $closing || 0 === $depth) {
-                    return false;
-                }
-
-                $depth--;
-            } elseif ($opening === $character) {
-                $depth++;
-            }
-        }
-
-        return 0 === $depth;
-    }
-
-    /**
      * What pretty printing writes for the backslash of a literal bracket of
      * the delimiter, null for any other character: the mark, then "Q" where
      * the bracket cannot stand unescaped, "(", ")" and "[" outside a class,
-     * "]" in one. literalBracketsBalanced reads it back.
+     * "]" in one. DelimiterBrackets::markedBalanced reads it back.
      */
     private function bracketMarkFor(string $character): ?string
     {
@@ -3616,103 +3167,6 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         return $this->bracketMark.(str_contains($this->inCharClass ? ']' : '()[', $character) ? 'Q' : '');
-    }
-
-    /**
-     * Pretty printing: PHP counts the brackets of the delimiter written as
-     * is, a comment's, a name's, a group's or a class's, wherever they
-     * stand. Those pair among themselves first; a literal bracket marked by
-     * bracketMarkFor then comes back counted where it pairs with one left
-     * alone, and escaped otherwise, which PHP does not count. Counted, it
-     * stands unescaped, or quoted, "\Q(\E", where unescaped it would mean
-     * something else: a "(", a ")" or a "[" outside a class, a "]" in one,
-     * a "{" that would open a repeat, "{2}", "{,3}" or "{ 1, 2 }", or end
-     * an escape, "\x{", a "[" before ":", "." or "=", which would open a
-     * POSIX class.
-     *
-     * @param non-empty-string $mark
-     */
-    private function literalBracketsBalanced(string $body, string $mark): string
-    {
-        $tokens = [];
-        $bare = [];
-        $length = \strlen($body);
-        $markLength = \strlen($mark);
-        $repeat = '/\G\{[ \t]*+(?:[0-9]++[ \t]*+(?:,[ \t]*+[0-9]*+[ \t]*+)?|,[ \t]*+[0-9]++[ \t]*+)(?:'.preg_quote($mark, '/').'Q?)?\}/';
-        $i = 0;
-        while ($i < $length) {
-            if (0 === substr_compare($body, $mark, $i, $markLength)) {
-                $at = $i + $markLength;
-                $quoted = 'Q' === $body[$at];
-                $bracket = $body[$quoted ? $at + 1 : $at];
-                $bare[$i] = !$quoted && match ($bracket) {
-                    '{' => 1 !== LibraryPcre::match($repeat, $body, $matches, 0, $at)
-                        && !($i >= 2 && '\\' === $body[$i - 2] && Ascii::isAlpha($body[$i - 1])),
-                    '[' => !str_contains(':.=', $body[$at + 1] ?? ':'),
-                    default => true,
-                };
-                $tokens[] = [$i, $this->delimiter === $bracket, true];
-                $i = $quoted ? $at + 2 : $at + 1;
-
-                continue;
-            }
-
-            // A backslash and the character it escapes are one step.
-            $character = $body[$i];
-            if ('\\' === $character) {
-                $i += self::escapeLength($body, $i);
-
-                continue;
-            }
-
-            if ($this->delimiter === $character || $this->closingDelimiter === $character) {
-                $tokens[] = [$i, $this->delimiter === $character, false];
-            }
-            $i++;
-        }
-
-        // The brackets written as is, paired among themselves.
-        $fixed = array_keys(array_filter($tokens, static fn (array $token): bool => !$token[2]));
-        $fixedPartners = self::bracketPartners(array_map(static fn (int $index): bool => $tokens[$index][1], $fixed));
-        $alone = [];
-        foreach ($fixed as $position => $index) {
-            if (null === $fixedPartners[$position]) {
-                $alone[$index] = true;
-            }
-        }
-
-        // A literal opening one goes with a closing one left alone after
-        // it, a literal closing one with an opening one left alone before.
-        $unescaped = [];
-        $literalOpenings = [];
-        $openingsAlone = 0;
-        foreach ($tokens as $index => [$offset, $isOpening, $isLiteral]) {
-            if ($isLiteral && $isOpening) {
-                $literalOpenings[] = $offset;
-            } elseif ($isLiteral && $openingsAlone > 0) {
-                $openingsAlone--;
-                $unescaped[$offset] = true;
-            } elseif (isset($alone[$index]) && $isOpening) {
-                $openingsAlone++;
-            } elseif (isset($alone[$index]) && [] !== $literalOpenings) {
-                $unescaped[array_pop($literalOpenings)] = true;
-            }
-        }
-
-        $result = '';
-        $from = 0;
-        while (false !== ($at = strpos($body, $mark, $from))) {
-            $bracketAt = $at + $markLength + ('Q' === $body[$at + $markLength] ? 1 : 0);
-            $bracket = $body[$bracketAt];
-            $result .= substr($body, $from, $at - $from).match (true) {
-                !isset($unescaped[$at]) => '\\'.$bracket,
-                $bare[$at] => $bracket,
-                default => '\\Q'.$bracket.'\\E',
-            };
-            $from = $bracketAt + 1;
-        }
-
-        return $result.substr($body, $from);
     }
 
     /**
