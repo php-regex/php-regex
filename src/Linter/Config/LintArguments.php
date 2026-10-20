@@ -41,7 +41,6 @@ final class LintArguments
         public readonly int $minSavings,
         public readonly string $verbosity,
         public readonly string $format,
-        public readonly bool $quiet,
         public readonly bool $checkRedos,
         public readonly bool $checkValidation,
         public readonly bool $checkOptimizations,
@@ -81,7 +80,6 @@ final class LintArguments
         ?int $minSavings = null,
         ?string $verbosity = null,
         ?string $format = null,
-        ?bool $quiet = null,
         ?bool $checkRedos = null,
         ?bool $checkValidation = null,
         ?bool $checkOptimizations = null,
@@ -107,7 +105,6 @@ final class LintArguments
             minSavings: $minSavings ?? $this->minSavings,
             verbosity: $verbosity ?? $this->verbosity,
             format: $format ?? $this->format,
-            quiet: $quiet ?? $this->quiet,
             checkRedos: $checkRedos ?? $this->checkRedos,
             checkValidation: $checkValidation ?? $this->checkValidation,
             checkOptimizations: $checkOptimizations ?? $this->checkOptimizations,
@@ -159,11 +156,6 @@ final class LintArguments
         $format = $defaults['format'] ?? 'console';
         if (!\is_string($format) || '' === $format) {
             $format = 'console';
-        }
-
-        $quiet = $defaults['quiet'] ?? false;
-        if (!\is_bool($quiet)) {
-            $quiet = false;
         }
 
         $checkRedos = $defaults['checkRedos'] ?? false;
@@ -300,7 +292,6 @@ final class LintArguments
             minSavings: $minSavings,
             verbosity: $verbosity,
             format: $format,
-            quiet: $quiet,
             checkRedos: $checkRedos,
             checkValidation: $checkValidation,
             checkOptimizations: $checkOptimizations,

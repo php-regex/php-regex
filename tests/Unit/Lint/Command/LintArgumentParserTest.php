@@ -47,8 +47,9 @@ final class LintArgumentParserTest extends TestCase
         $this->assertSame(2, $arguments->minSavings);
         $this->assertSame(3, $arguments->jobs);
         $this->assertSame('json', $arguments->format);
+        // The verbosity alone says the run is quiet.
         $this->assertSame(OutputConfiguration::VERBOSITY_QUIET, $arguments->verbosity);
-        $this->assertTrue($arguments->quiet);
+        $this->assertFalse(property_exists($arguments, 'quiet'));
         $this->assertFalse($arguments->checkRedos);
         $this->assertTrue($arguments->checkValidation);
         $this->assertFalse($arguments->checkOptimizations);

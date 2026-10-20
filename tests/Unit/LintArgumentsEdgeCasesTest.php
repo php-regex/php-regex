@@ -59,7 +59,7 @@ final class LintArgumentsEdgeCasesTest extends TestCase
         yield 'paths' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(paths: ['lib']), 'changes' => ['paths' => ['lib']]];
         yield 'exclude' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(exclude: ['build']), 'changes' => ['exclude' => ['build']]];
         yield 'minSavings' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(minSavings: 9), 'changes' => ['minSavings' => 9]];
-        yield 'verbosity and quiet' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(verbosity: 'debug', quiet: false), 'changes' => ['verbosity' => 'debug', 'quiet' => false]];
+        yield 'verbosity' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(verbosity: 'debug'), 'changes' => ['verbosity' => 'debug']];
         yield 'format' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(format: 'json'), 'changes' => ['format' => 'json']];
         yield 'checkRedos and redosMode' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(checkRedos: false, redosMode: 'confirmed'), 'changes' => ['checkRedos' => false, 'redosMode' => 'confirmed']];
         yield 'checkValidation' => ['copy' => static fn (LintArguments $arguments): LintArguments => $arguments->with(checkValidation: true), 'changes' => ['checkValidation' => true]];
@@ -94,7 +94,6 @@ final class LintArgumentsEdgeCasesTest extends TestCase
             minSavings: 3,
             verbosity: 'quiet',
             format: 'github',
-            quiet: true,
             checkRedos: true,
             checkValidation: false,
             checkOptimizations: false,

@@ -39,7 +39,7 @@ final class LintArgumentsTest extends TestCase
         $this->assertSame(1, $arguments->minSavings);
         $this->assertSame(OutputConfiguration::VERBOSITY_NORMAL, $arguments->verbosity);
         $this->assertSame('console', $arguments->format);
-        $this->assertFalse($arguments->quiet);
+        $this->assertNotSame(OutputConfiguration::VERBOSITY_QUIET, $arguments->verbosity);
         $this->assertFalse($arguments->checkRedos); // ReDoS is disabled by default
         $this->assertTrue($arguments->checkValidation);
         $this->assertTrue($arguments->checkOptimizations);

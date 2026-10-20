@@ -128,7 +128,7 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertSame(2, $arguments->minSavings);
         $this->assertSame(OutputConfiguration::VERBOSITY_QUIET, $arguments->verbosity);
         $this->assertSame('json', $arguments->format);
-        $this->assertTrue($arguments->quiet);
+        $this->assertFalse(property_exists($arguments, 'quiet'));
         $this->assertFalse($arguments->checkRedos);
         $this->assertFalse($arguments->checkValidation);
         $this->assertFalse($arguments->checkOptimizations);

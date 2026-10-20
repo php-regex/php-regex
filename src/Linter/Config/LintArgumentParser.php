@@ -46,7 +46,7 @@ final class LintArgumentParser
             }
 
             if ('--quiet' === $arg || '-q' === $arg) {
-                $arguments = $this->withVerbosity($arguments, OutputConfiguration::VERBOSITY_QUIET, true);
+                $arguments = $this->withVerbosity($arguments, OutputConfiguration::VERBOSITY_QUIET);
 
                 continue;
             }
@@ -403,12 +403,9 @@ final class LintArgumentParser
     /**
      * @param "debug"|"normal"|"quiet"|"verbose" $verbosity
      */
-    private function withVerbosity(LintArguments $arguments, string $verbosity, bool $quiet = false): LintArguments
+    private function withVerbosity(LintArguments $arguments, string $verbosity): LintArguments
     {
-        return $arguments->with(
-            verbosity: $verbosity,
-            quiet: $quiet ?: $arguments->quiet,
-        );
+        return $arguments->with(verbosity: $verbosity);
     }
 
     /**
