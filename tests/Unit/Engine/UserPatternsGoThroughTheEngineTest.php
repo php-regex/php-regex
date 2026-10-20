@@ -86,7 +86,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
         'src/Explain/RailroadLayoutVisitor.php',
         'src/Generator/SampleGenerator.php',
         'src/Parser/Validation/Validator.php',
-        'src/Parser/Syntax/TokenParser.php',
+        'src/Parser/Syntax/Callout.php',
         'src/Toolkit/Regex.php',
         'src/Parser/ParserOptions.php',
         'src/Parser/RegexParser.php',
