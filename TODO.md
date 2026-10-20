@@ -218,15 +218,14 @@ Integrations:
 - The printer writes a quantifier before the comments that sit between an
   atom and it; under `#`, where a `\c\` hides the delimiter in such a
   comment, PHP then reads the printed pattern differently.
-- A ReDoS verdict "safe (proven)" is false where a lookaround in a loop
-  holds a loop: `/^(?:(?=a+)a)+$/` takes quadratic time (about 600 ms on
-  40,000 `a`, four times longer each time the subject doubles) because
-  the body of the lookaround runs again at each position; the proof must
-  count that work or not claim linear.
-- `(*sr:)` parses as a verb, not an empty script run; the character-set
-  analysis gives an unknown set for a script run; `(?<=a|a)` in a loop is
-  flagged critical by the heuristic, which does not see that a lookaround
-  runs on its own.
+- The character-set analysis gives an unknown set for a script run.
+- A proven polynomial degree does not add what a lookahead in a loop reads
+  again: `/^(?:(?!a*a*b)a)*$/` is proven of degree 2 (its upper bound says
+  3) and takes cubic time, 1.0, 8.6 and 122 ms on 200, 400 and 800 `a` and
+  a `!`. The witness of the body's own ambiguity holds: the class is right,
+  the degree short. A lookahead that reads a run but stops at once,
+  `(?=a+?)`, or that holds where the loop could go on, `(?!a+)` before
+  `a`, loses its linear proof: telling when a body stops would keep it.
 - The railroad layout, the solver's internal methods on its public class,
   and the semantic facts (nullability, length ranges, flag scope) read
   from one layer instead of five copies; the Rewriter split.

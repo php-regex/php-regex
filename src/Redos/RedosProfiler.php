@@ -372,9 +372,21 @@ final class RedosProfiler extends AbstractNodeVisitor
         $wasAtomic = $this->inAtomicGroup;
         $previous = $this->previousNode;
         $next = $this->nextNode;
+        $depths = [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth];
         $isAtomicGroup = GroupType::Atomic === $node->type;
         if ($isAtomicGroup) {
             $this->inAtomicGroup = true;
+        }
+
+        // A lookaround runs on its own, from where it stands, and holds
+        // without being tried again: what its body may read in two ways is
+        // its own risk, its loops nested from none, whatever the groups
+        // around it. "(*napla:...)" and "(?*...)" are backtracked into.
+        if ('*' !== $node->flags && \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true)) {
+            $this->reportReread($node);
+            $this->unboundedQuantifierDepth = 0;
+            $this->totalQuantifierDepth = 0;
+            $this->inAtomicGroup = false;
         }
 
         $this->previousNode = null;
@@ -383,6 +395,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->previousNode = $previous;
         $this->nextNode = $next;
 
+        [$this->unboundedQuantifierDepth, $this->totalQuantifierDepth] = $depths;
         $this->inAtomicGroup = $wasAtomic;
 
         return $isAtomicGroup ? $this->reduceSeverity($severity, RedosSeverity::Low) : $severity;
@@ -601,6 +614,40 @@ final class RedosProfiler extends AbstractNodeVisitor
     public function visitCallout(CalloutNode $node): RedosSeverity
     {
         return RedosSeverity::Safe;
+    }
+
+    /**
+     * In a loop, a lookaround holding an unbounded repeat reads the subject
+     * again from each position the loop gives: quadratic. Only a lookahead
+     * can hold one, and a lookbehind through a lookahead it holds.
+     */
+    private function reportReread(GroupNode $node): void
+    {
+        if ($this->unboundedQuantifierDepth > 0 && $this->holdsUnboundedRepeat($node->child)) {
+            $this->addVulnerability(
+                RedosSeverity::Medium,
+                'A lookaround in a repeated group runs again at each repetition, and the unbounded repeat inside it reads the subject again from there: the cost grows with the square of the length. Move the lookaround out of the loop, or bound what it reads.',
+                $node,
+                'Check the condition once, before the loop, or bound the repeat inside the lookaround.',
+                RedosConfidence::Medium,
+                'Medium false-positive risk; the cost depends on how far the lookaround reads from each position.',
+            );
+        }
+    }
+
+    private function holdsUnboundedRepeat(NodeInterface $node): bool
+    {
+        if ($node instanceof QuantifierNode && $this->isUnbounded($node->quantifier)) {
+            return true;
+        }
+
+        foreach ($this->getChildren($node) as $child) {
+            if ($this->holdsUnboundedRepeat($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -10,6 +10,8 @@ CHANGELOG
    that reads, on the same characters, into a loop of a lookahead's body (as
    in `/^(?:(?=a+)a)+$/`, quadratic) refuses the proof, and `abstractions`
    lists `lookaround at offset N read again at each step of a loop`.
+ * The structural heuristics read a lookaround as running on its own, and
+   report a lookaround holding an unbounded repeat inside a loop.
  * A `RedosAnalysis` that proves one attempt linear carries no `findings`,
    `hotspots` or `recommendations`, and its `vulnerablePart`, `trigger`,
    `falsePositiveRisk`, `suggestedRewrite` and `culpritNode` are `null`: the

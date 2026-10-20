@@ -36,6 +36,7 @@ use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Finding;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosConfidence;
@@ -222,6 +223,76 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         // A loop of the block counts as no loop of the pattern around it.
         $outside = $messages('/^(?:c(?(DEFINE)(?<x>a+)))+$/');
         $this->assertNotContains('critical a+: Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).', $outside);
+    }
+
+    /**
+     * A lookaround runs on its own, atomic once it holds: what its body may
+     * read in two ways is not tried again by the loop around it. Its own
+     * loops nest from none, and a lookahead holding an unbounded repeat in
+     * a loop reads the subject again at each step, quadratic, not
+     * exponential.
+     *
+     * Engine (PHP 8.4.26 / PCRE2 10.49, without the JIT): /^a(?:(?<=a|a)a)+$/
+     * on "a" x n . "!" takes 0.68, 1.38, 2.82, 5.56 ms from n = 16,000;
+     * /^(?:(?=a+)a)+$/ 1.07, 4.15, 16.2, 73.8 ms from n = 2,000.
+     */
+    public function test_a_lookaround_runs_on_its_own(): void
+    {
+        $profile = static function (string $pattern): array {
+            $profiler = new RedosProfiler();
+            RegexParser::create()->parse($pattern)->accept($profiler);
+            $result = $profiler->getResult();
+
+            return [$result['severity'], array_map(
+                static fn (Finding $finding): string => $finding->severity->value.' '.$finding->pattern.': '.$finding->message,
+                $result['findings'],
+            )];
+        };
+
+        [$severity, $findings] = $profile('/^a(?:(?<=a|a)a)+$/');
+        $this->assertSame(RedosSeverity::Medium, $severity);
+        $this->assertSame(['medium (?:(?<=a|a)a)+: Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...).'], $findings);
+
+        foreach (['/^(?:(?!b|b)a)+$/', '/^(?:(?=a|a)a)+$/', '/^(?:(?<!b|b)a)+$/'] as $pattern) {
+            [$severity, $findings] = $profile($pattern);
+            $this->assertSame(RedosSeverity::Medium, $severity, $pattern);
+            $this->assertCount(1, $findings, $pattern);
+        }
+
+        // Its bounded repeats nest in none of the loops around it, only in
+        // its own.
+        $this->assertSame([], $profile('/^(?:(?<=a{2})b){3}$/')[1]);
+        $this->assertSame(['low a{2}: Nested bounded quantifiers detected. May cause polynomial backtracking. Consider simplifying the pattern or using atomic groups (?>...).'], $profile('/^(?:(?=(?:a{2}){2})a){3}$/')[1]);
+
+        // An atomic group around it hides nothing of its body, which
+        // exhausts the backtrack limit on "a" x 30 . "!b".
+        $this->assertSame(RedosSeverity::Critical, $profile('/^(?>(?=(a+)+b))a/')[0]);
+
+        $reread = static fn (string $lookaround): string => 'medium '.$lookaround.': A lookaround in a repeated group runs again at each repetition, and the unbounded repeat inside it reads the subject again from there: the cost grows with the square of the length. Move the lookaround out of the loop, or bound what it reads.';
+        [$severity, $findings] = $profile('/^(?:(?=a+)a)+$/');
+        $this->assertSame(RedosSeverity::Medium, $severity);
+        $this->assertContains($reread('(?=a+)'), $findings);
+        $this->assertNotContains('critical a+: Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).', $findings);
+
+        // A negative lookahead reads as far; so does a lookahead a lookbehind
+        // holds; an atomic group around it changes nothing (1.10, 4.21,
+        // 16.4, 70.1 ms from n = 2,000).
+        $this->assertContains($reread('(?!a+b)'), $profile('/^(?:(?!a+b)a)+$/')[1]);
+        $this->assertContains($reread('(?<=a(?=a+))'), $profile('/^a(?:(?<=a(?=a+))a)+$/')[1]);
+        $this->assertContains($reread('(?=a+)'), $profile('/^(?:(?>(?=a+)a))+$/')[1]);
+
+        // Outside a loop, or bounded, the lookahead reads once, or little.
+        $this->assertNotContains($reread('(?=a+)'), $profile('/^(?=a+)a+$/')[1]);
+        $this->assertNotContains($reread('(?=a{2})'), $profile('/^(?:(?=a{2})a)+$/')[1]);
+
+        // A non-atomic lookaround is backtracked into: the loop around it
+        // tries its alternatives again.
+        $this->assertSame(RedosSeverity::Critical, $profile('/^(?:(*napla:a|a)a)+$/')[0]);
+
+        // What the body itself may read in two ways stays its own risk.
+        [$severity, $findings] = $profile('/^(?:(?=(a+)+b)a)+$/');
+        $this->assertSame(RedosSeverity::Critical, $severity);
+        $this->assertContains('critical a+: Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).', $findings);
     }
 
     public function test_capture_length_and_quantifier_bounds_helpers(): void
