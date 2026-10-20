@@ -486,11 +486,11 @@ final class Rewriter extends AbstractNodeVisitor
 
         // "\d" is the ten ASCII digits under every locale, as C's isdigit()
         // is; with Unicode properties it matches every decimal digit, as
-        // U+0663. "\w" is never written for "[a-zA-Z0-9_]": with Unicode
-        // properties it matches every letter, and without them PHP builds
-        // its table from LC_CTYPE once a program calls setlocale(), where a
-        // Latin-1 locale makes it take "\xE9": only a locale known to be
-        // C or POSIX lets it stand for the class.
+        // U+0663. "\w" stands for "[a-zA-Z0-9_]" only under a locale known
+        // to be C or POSIX: with Unicode properties it matches every
+        // letter, and without them PHP builds its table from LC_CTYPE once
+        // a program calls setlocale(), where a Latin-1 locale makes it take
+        // "\xE9".
         if ($this->optimizeDigits && !$this->unicodeProperties && 1 === \count($parts)) {
             $part = $parts[0];
             if ($part instanceof RangeNode && $part->start instanceof LiteralNode && $part->end instanceof LiteralNode) {
@@ -695,8 +695,9 @@ final class Rewriter extends AbstractNodeVisitor
     /**
      * PCRE2 makes a character repeated right before a group repeated
      * possessively from zero, or an atomic group that can match empty,
-     * possessive, as if the group could not be skipped: "\.a+(?:-b)?+a" misses ".aaaa", which "\.(?:a)+(?:-b)?+a"
-     * matches. A repeat whose group the rewrite dropped gets it back there.
+     * possessive, as if the group could not be skipped: "\.a+(?:-b)?+a"
+     * misses ".aaaa", which "\.(?:a)+(?:-b)?+a" matches. A repeat whose
+     * group the rewrite dropped gets it back there.
      *
      * @param list<NodeInterface> $children
      *
