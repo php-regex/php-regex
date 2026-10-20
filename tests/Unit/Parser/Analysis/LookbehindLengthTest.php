@@ -179,6 +179,30 @@ final class LookbehindLengthTest extends TestCase
     }
 
     /**
+     * pcre2test 10.33 "Max lookbehind": the longest branch measured to its
+     * end, a group's too; none past an item of no bound.
+     */
+    #[Test]
+    #[DataProvider('provideLongestBranches')]
+    public function test_the_longest_branch_is_the_longest_measured_to_its_end(string $pattern, int $expected): void
+    {
+        [$regex, $lookbehind] = $this->lookbehind($pattern);
+        $measure = new LookbehindLength(GroupIndex::of($regex->pattern), false, true);
+        $measure->branch($lookbehind->child);
+
+        $this->assertSame($expected, $measure->longestBranch());
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: int}>
+     */
+    public static function provideLongestBranches(): iterable
+    {
+        yield 'a group repeated zero times' => ['pattern' => '/(?<=(?:abc|xyz){0}d)x/', 'expected' => 3];
+        yield 'nothing measured past an unbounded item' => ['pattern' => '/(?<=a+(?:bcde))x/', 'expected' => 0];
+    }
+
+    /**
      * @return array{RegexNode, GroupNode}
      */
     private function lookbehind(string $pattern): array

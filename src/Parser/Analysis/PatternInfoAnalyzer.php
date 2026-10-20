@@ -127,6 +127,8 @@ final class PatternInfoAnalyzer
      * It does not meet one past a "(*ACCEPT)" or a "(*FAIL)" that ends the
      * branch, in a DEFINE group from PCRE2 10.35, or in a lookahead before
      * 10.34; inside a lookahead it meets, it measures every lookbehind.
+     * Before 10.34 the longest branch it measures for them counts, of a
+     * group too.
      *
      * @param list<GroupNode> $outermost the lookbehinds outside any other
      */
@@ -148,6 +150,7 @@ final class PatternInfoAnalyzer
             },
             inLookaheads: $target->supports(PcreFeature::LookbehindInLookaheadMeasured),
             skipsDefine: $target->supports(PcreFeature::DefineSkippedInLookbehind),
+            wrapsLengths: !$target->supports(PcreFeature::LookbehindLengthOverflowRefused),
         );
 
         $max = 0;
@@ -161,11 +164,17 @@ final class PatternInfoAnalyzer
             $measured[$id] = true;
 
             foreach ($lookbehind->child instanceof AlternationNode ? $lookbehind->child->alternatives : [$lookbehind->child] as $branch) {
-                $max = max($max, $measure->branch($branch)[0][1] ?? 0);
+                // A branch the target refuses as too long counts for nothing.
+                [$length, , $tooLong] = $measure->branch($branch);
+                if (null === $tooLong) {
+                    $max = max($max, $length[1] ?? 0);
+                }
             }
         }
 
-        return $max;
+        // Before PCRE2 10.34 every branch measured counts, of a group in a
+        // lookbehind or one it calls too.
+        return $target->supports(PcreFeature::LongestLookbehindCountsItsBranchesOnly) ? $max : max($max, $measure->longestBranch());
     }
 
     /**

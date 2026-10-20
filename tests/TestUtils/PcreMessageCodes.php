@@ -32,8 +32,7 @@ final class PcreMessageCodes
 {
     public const CODES = [
         // The wording of the older releases the suite runs on: PCRE2 10.40 to 10.44.
-        // Up to 10.33 a lookbehind too long is "not fixed length" too.
-        'lookbehind assertion is not fixed length' => ['regex.lookbehind.unbounded', 'regex.lookbehind.variable_length_not_supported', 'regex.lookbehind.too_long'],
+        'lookbehind assertion is not fixed length' => ['regex.lookbehind.unbounded', 'regex.lookbehind.variable_length_not_supported'],
         'assertion expected after (?( or (?(?C)' => ['regex.conditional.assertion_expected'],
         'digits missing in \\x{} or \\o{} or \\N{U+}' => ['regex.escape.digits_missing'],
         '\\ at end of pattern' => ['regex.escape.trailing_backslash'],
@@ -179,8 +178,6 @@ final class PcreMessageCodes
      * it: the first and the last of those releases, null for no bound.
      */
     public const RELEASES = [
-        // Up to 10.33 a lookbehind too long is "not fixed length" too.
-        'lookbehind assertion is not fixed length' => ['regex.lookbehind.too_long' => [null, '10.33']],
         // The extended classes and the lists of groups arrived in 10.45; from
         // 10.47 an alphabetic name the pattern ends with misses its ")".
         'missing closing parenthesis' => ['regex.extended_class.unclosed_paren' => ['10.45', null], 'regex.verb.unclosed' => ['10.47', null]],
@@ -200,7 +197,7 @@ final class PcreMessageCodes
         $codes = [];
         foreach (self::CODES[$message] ?? [] as $code) {
             [$first, $last] = self::RELEASES[$message][$code] ?? [null, null];
-            if ((null === $first || version_compare($release, $first, '>=')) && (null === $last || version_compare($release, $last, '<='))) {
+            if (self::within($release, $first, $last)) {
                 $codes[] = $code;
             }
         }
@@ -245,5 +242,13 @@ final class PcreMessageCodes
         }
 
         return false === $compiled ? ($warning ?? '') : null;
+    }
+
+    /**
+     * Whether the release is one of $first to $last, null for no bound.
+     */
+    private static function within(string $release, ?string $first, ?string $last): bool
+    {
+        return (null === $first || version_compare($release, $first, '>=')) && (null === $last || version_compare($release, $last, '<='));
     }
 }

@@ -351,7 +351,8 @@ final class PatternInfoAnalyzerTest extends TestCase
      * lookbehind". PCRE2 measures the lookbehinds the pattern holds outside
      * any other, and those it meets while measuring one: not after a
      * "(*ACCEPT)" or a "(*FAIL)" that ends the branch, nor in a DEFINE group
-     * from 10.35, nor in a lookahead before 10.34.
+     * from 10.35, nor in a lookahead before 10.34. Before 10.34 it reports
+     * the longest branch it measures for them, of a group too.
      *
      * @return iterable<string, array{pattern: string, expected: array<string, int>}>
      */
@@ -378,6 +379,16 @@ final class PatternInfoAnalyzerTest extends TestCase
         yield 'after an accept, reached through a call' => ['pattern' => '/(?<=(*ACCEPT)((?<=abcd)))(?<=(?1))/', 'expected' => ['10.32' => 4, '10.49' => 4]];
         yield 'in a DEFINE group outside any lookbehind' => ['pattern' => '/(?(DEFINE)(?<=abcd))/', 'expected' => ['10.35' => 4, '10.49' => 4]];
         yield 'after a commit' => ['pattern' => '/(?<=(*COMMIT)(?<=abcd))/', 'expected' => ['10.32' => 4, '10.49' => 4]];
+        // Before 10.34 PCRE2 counts every branch it measures for a
+        // lookbehind, those of a group in it or of a group it calls too.
+        yield 'group called and repeated zero times' => ['pattern' => '/(?<n>ab)(c)(?<!(?2){0})/', 'expected' => ['10.32' => 1, '10.33' => 1, '10.34' => 0, '10.49' => 0]];
+        yield 'longer group repeated zero times' => ['pattern' => '/(?<=(?:abc|xyz){0}d)/', 'expected' => ['10.32' => 3, '10.33' => 3, '10.34' => 1, '10.49' => 1]];
+        yield 'branch of a group ended by an accept, repeated zero times' => ['pattern' => '/(?<=(?:abcd(*ACCEPT)efgh){0}x)/', 'expected' => ['10.33' => 4, '10.34' => 1]];
+        yield 'condition repeated zero times' => ['pattern' => '/(?<=(?(?=a)bcd|efg){0}x)/', 'expected' => ['10.33' => 3, '10.35' => 1]];
+        yield 'group called from two lookbehinds' => ['pattern' => '/(abcde)(?<=(?1){0}x)(?<=(?1){0}y)/', 'expected' => ['10.32' => 5, '10.34' => 1]];
+        // A lookbehind valid only as its length wraps past 2^31, which it
+        // does before 10.34: the group of 65535 is the longest branch.
+        yield 'lookbehind whose length wraps around' => ['pattern' => '/(a{65535})(b{2048})(?<=\\1{65535}\\2{64})/', 'expected' => ['10.32' => 65535, '10.33' => 65535]];
         yield 'met outside any lookbehind and through a call' => ['pattern' => '/(?<=(?1))((?<=ab)c)/', 'expected' => ['10.32' => 2, '10.35' => 2, '10.49' => 2]];
     }
 

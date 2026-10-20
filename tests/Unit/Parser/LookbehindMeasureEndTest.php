@@ -123,6 +123,10 @@ final class LookbehindMeasureEndTest extends TestCase
         yield 'branch that wraps below zero before an empty repeat' => ['pattern' => '/(?<=(?:a{65535}){65535}b{0})/', 'outcomes' => ['10.32' => 0, '10.33' => 0]];
         yield 'group branch that wraps below zero' => ['pattern' => '/(?<=(?:(?:a{65535}){65535})x)/', 'outcomes' => ['10.32' => 0, '10.33' => 0]];
         yield 'unbounded lookbehind after a branch that wrapped' => ['pattern' => '/(?<=(?:a{40000}){65534}(?<=c+))/', 'outcomes' => ['10.32' => 23, '10.33' => 23]];
+        // Up to 10.34 the first byte of a character of several bytes that
+        // opens a DEFINE group is skipped, and the repeat of the last one
+        // has no fixed length.
+        yield 'DEFINE group opened by an optional two-byte character' => ['pattern' => '/(?<=(?(DEFINE)é?a{65535}b)c?)/', 'outcomes' => ['10.32' => 0, '10.34' => 0]];
         yield 'counted lookbehind after a condition that wrapped' => ['pattern' => '/(?<=(?(?=x)a{40000}bc){65534}((?<=a{0}.?){1}bc{0}\\d{0}){1,2})(?<=c+)/', 'outcomes' => ['10.32' => 30, '10.33' => 30]];
     }
 
@@ -177,6 +181,12 @@ final class LookbehindMeasureEndTest extends TestCase
         yield 'item past the limit in an alphabetic lookbehind' => ['pattern' => '/(*plb:a{65535}b?)/', 'offsets' => ['10.33' => 2, '10.42' => 2, '10.49' => 2], 'code' => ErrorCode::LookbehindTooLong];
         yield 'branch past a 32-bit length' => ['pattern' => '/(?<=(?:a{65535}){65535})/', 'offsets' => ['10.34' => 0, '10.49' => 0], 'code' => ErrorCode::LookbehindTooLong];
         yield 'repeat past a 32-bit length before an unbounded lookbehind' => ['pattern' => '/(?<=(?:a{40000}){65534}(?<=c+))/', 'offsets' => ['10.34' => 0, '10.42' => 0, '10.49' => 0], 'code' => ErrorCode::LookbehindTooLong];
+        // Without u a character of several bytes is that many items, the
+        // repeat taking the last: its first bytes count before the repeat.
+        yield 'two-byte character repeated zero times past the limit' => ['pattern' => '/(?<=a{65534}é{0})/', 'offsets' => ['10.32' => 0, '10.42' => 0, '10.43' => 0, '10.49' => 0], 'code' => ErrorCode::LookbehindTooLong];
+        yield 'three-byte character repeated zero times past the limit' => ['pattern' => '/(?<=a{65533}€{0})/', 'offsets' => ['10.32' => 0, '10.49' => 0], 'code' => ErrorCode::LookbehindTooLong];
+        yield 'octal escape and a digit repeated zero times past the limit' => ['pattern' => '/(?<=a{65534}\\1000{0})/', 'offsets' => ['10.32' => 0, '10.49' => 0], 'code' => ErrorCode::LookbehindTooLong];
+        yield 'optional two-byte character past the limit' => ['pattern' => '/(?<=a{65534}é?)/', 'offsets' => ['10.32' => 0, '10.42' => 0, '10.43' => 0], 'code' => ErrorCode::LookbehindTooLong];
         yield 'character past the limit in UTF mode' => ['pattern' => '/(?<=\\x{100}{65535}b?)/u', 'offsets' => ['10.32' => 0, '10.42' => 0, '10.43' => 0], 'code' => ErrorCode::LookbehindTooLong];
         // Each branch of a condition is measured, and counted.
         yield 'conditions of one branch past the budget' => ['pattern' => '/(a)(?<='.str_repeat('(?(1)a)', 2001).')/', 'offsets' => ['10.32' => 3, '10.42' => 3, '10.43' => 3, '10.49' => 3], 'code' => ErrorCode::LookbehindTooComplex];

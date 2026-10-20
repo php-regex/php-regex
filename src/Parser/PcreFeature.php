@@ -71,6 +71,11 @@ enum PcreFeature
     case LookbehindLengthOverflowRefused;
 
     /**
+     * The longest lookbehind reported is the longest branch of a lookbehind, where it was the longest branch measured for one, of a group or a called group too.
+     */
+    case LongestLookbehindCountsItsBranchesOnly;
+
+    /**
      * "(?*" and "(?<*" spell the non-atomic lookarounds.
      */
     case NonAtomicAssertionShortSyntax;
@@ -311,7 +316,8 @@ enum PcreFeature
             self::PossessiveRepeatOnceIsAtomic,
             self::NonAtomicAssertionNames,
             self::LookbehindInLookaheadMeasured,
-            self::LookbehindLengthOverflowRefused => '10.34',
+            self::LookbehindLengthOverflowRefused,
+            self::LongestLookbehindCountsItsBranchesOnly => '10.34',
             self::NonAtomicAssertionShortSyntax,
             self::GroupHoldingItsOwnReferenceBacktracks,
             self::RepeatedAssertionKeepsItsCount,

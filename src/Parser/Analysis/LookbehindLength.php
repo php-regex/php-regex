@@ -130,6 +130,12 @@ final class LookbehindLength
     private ?int $tooLong = null;
 
     /**
+     * The longest branch measured to its end, of a lookbehind or of a group
+     * one holds or calls.
+     */
+    private int $longestBranch = 0;
+
+    /**
      * @param bool                                                               $unicode        whether lengths count characters
      * @param bool                                                               $variableLength whether the PCRE2 judged (10.43+) measures a group repeated zero times as empty
      * @param (\Closure(GroupNode, array<int, true>): void)|null                 $onLookaround   told of a lookaround met inside a branch
@@ -185,6 +191,16 @@ final class LookbehindLength
             $this->measuredLookbehinds[$id] = $this->called;
         }
         $this->called += $calledAround;
+    }
+
+    /**
+     * The longest branch measured to its end so far, of a lookbehind or of a
+     * group one holds or calls: what PCRE2 reports as the longest lookbehind
+     * before 10.34.
+     */
+    public function longestBranch(): int
+    {
+        return $this->longestBranch;
     }
 
     /**
@@ -255,7 +271,15 @@ final class LookbehindLength
     private function branchOf(NodeInterface $branch, array $expanding): array
     {
         $length = $this->of($branch, $expanding);
-        if ($this->unfixed || null === $length[1] || ($length[1] >= 0 && $length[1] <= self::MAX_BRANCH_LENGTH)) {
+        if ($this->unfixed || null === $length[1]) {
+            return $length;
+        }
+
+        if ($length[1] >= 0 && $length[1] <= self::MAX_BRANCH_LENGTH) {
+            if ($length[1] > $this->longestBranch) {
+                $this->longestBranch = $length[1];
+            }
+
             return $length;
         }
 
@@ -307,8 +331,9 @@ final class LookbehindLength
      */
     private function measure(NodeInterface $node, array $expanding, int $before): array
     {
-
         if ($node instanceof SequenceNode) {
+            // A sequence inside another, as the bytes of a character without
+            // "u", goes on with the branch that holds it.
             [$min, $max] = [0, 0];
             foreach ($node->children as $child) {
                 // "(*ACCEPT)" and "(*FAIL)" end the branch: PCRE measures
@@ -317,7 +342,8 @@ final class LookbehindLength
                     break;
                 }
 
-                [$childMin, $childMax] = $this->of($child, $expanding, $max);
+                $reached = $this->wrapsLengths ? self::wrap($before + $max) : $before + $max;
+                [$childMin, $childMax] = $this->of($child, $expanding, $reached);
                 if ($this->wrapsLengths) {
                     $min = self::wrap($min + $childMin);
                     $max = null === $childMax ? null : self::wrap($max + $childMax);
@@ -328,7 +354,12 @@ final class LookbehindLength
 
                 // PCRE stops measuring at the first item it cannot bound, and
                 // at the first that takes the branch past the limit.
-                if (null === $max || $this->unfixed || null !== $this->tooLong || ($max > self::MAX_BRANCH_LENGTH && $this->passes($max))) {
+                if (null === $max || $this->unfixed || null !== $this->tooLong) {
+                    break;
+                }
+
+                $reached = $this->wrapsLengths ? self::wrap($before + $max) : $before + $max;
+                if ($reached > self::MAX_BRANCH_LENGTH && $this->passes($reached)) {
                     break;
                 }
             }
@@ -541,6 +572,11 @@ final class LookbehindLength
     {
         $branches = $node->content instanceof AlternationNode ? $node->content->alternatives : [$node->content];
         $items = $branches[0] instanceof SequenceNode ? $branches[0]->children : [$branches[0]];
+        // The bytes of a character without "u" are items of their own: only
+        // the first is skipped.
+        while (($items[0] ?? null) instanceof SequenceNode) {
+            $items = [...$items[0]->children, ...\array_slice($items, 1)];
+        }
         $first = $items[0] ?? null;
         $rest = new SequenceNode(\array_slice($items, 1), $node->startPosition, $node->endPosition);
 

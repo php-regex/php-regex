@@ -285,6 +285,7 @@ and a target has it from the release it arrived in on
 | `NonAtomicAssertionNames` | 10.34 | The non-atomic lookarounds: "(*napla:", "(*naplb:" and their long forms. |
 | `LookbehindInLookaheadMeasured` | 10.34 | A lookbehind inside a lookahead met while a lookbehind is measured is measured too, where the lookahead was skipped whole. |
 | `LookbehindLengthOverflowRefused` | 10.34 | A lookbehind branch whose length passes what a 32-bit integer holds is too long, where its length wrapped around. |
+| `LongestLookbehindCountsItsBranchesOnly` | 10.34 | The longest lookbehind reported is the longest branch of a lookbehind, where it was the longest branch measured for one, of a group or a called group too. |
 | `NonAtomicAssertionShortSyntax` | 10.35 | "(?*" and "(?<*" spell the non-atomic lookarounds. |
 | `GroupHoldingItsOwnReferenceBacktracks` | 10.35 | A group that holds a reference to itself may be backtracked into, where it was atomic. |
 | `RepeatedAssertionKeepsItsCount` | 10.35 | A repeated assertion runs as many times as its count asks, where it ran once. |
@@ -335,8 +336,8 @@ and a target has it from the release it arrived in on
 
 Where a verdict of the library departs from the target's PCRE2:
 
-- **A DEFINE group that opens with a group, on PCRE2 10.32 to 10.34** (PHP
-  7.3 and 7.4). These releases step over one item too many of their
+- **A DEFINE group in a lookbehind, or one that opens with a group, on
+  PCRE2 10.32 to 10.34** (PHP 7.3 and 7.4). These releases step over one item too many of their
   internal form of the pattern after `(?(DEFINE)`, both when they measure a
   lookbehind and when they look for the lookbehinds to measure. The library
   follows the item skipped, but not what comes of it where that item opens
@@ -352,10 +353,13 @@ Where a verdict of the library departs from the target's PCRE2:
   10.32, 10.33 and here. A lookbehind that opens a DEFINE group is never
   measured: `(?(DEFINE)(?<=b+))` compiles on 10.32 to 10.34, and on 10.34 so
   does `(?<=(?=(?(DEFINE)(?<=b+))))`, both refused here at the inner
-  lookbehind, as from 10.35. Which lookbehinds `maxLookbehind` counts, and
-  how long, follows the same reading as the verdict, not theirs: those
-  releases also count words of their internal form as characters after the
-  item skipped, and `pcre2test` 10.32 to 10.34 give
+  lookbehind, as from 10.35. Where the item skipped carries words of data,
+  as a call, a reference by name, a property, a verb with a name or a
+  callout, those releases read the words left as characters:
+  `(?<=(?(DEFINE)\p{L}a{65535}))` and `(?<=(?(DEFINE)(?1)a{65534}))(x)` are
+  too long there and compile here. For `maxLookbehind` too, a DEFINE group
+  inside a lookbehind on those releases is measured as the library reads
+  it, not as they do, and `pcre2test` 10.32 to 10.34 give
   `(?<=(?(DEFINE)(?<=abcd)))` a "Max lookbehind" of 6, the library 4.
   Reproducing this would mean replaying that internal form of the pattern;
   PCRE2 10.35 fixed it.

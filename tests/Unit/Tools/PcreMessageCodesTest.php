@@ -33,10 +33,12 @@ final class PcreMessageCodesTest extends TestCase
      */
     public static function provideCodesHeldToReleases(): iterable
     {
-        // Up to 10.33 a lookbehind too long is "not fixed length" too:
-        // "(X{65535})(?<=\1{32770})" in the 10.32 and 10.33 suites.
-        yield 'too long, not fixed length, on 10.33' => ['message' => 'lookbehind assertion is not fixed length', 'code' => 'regex.lookbehind.too_long', 'release' => '10.33', 'allowed' => true];
-        yield 'too long, not fixed length, on 10.34' => ['message' => 'lookbehind assertion is not fixed length', 'code' => 'regex.lookbehind.too_long', 'release' => '10.34', 'allowed' => false];
+        // Up to 10.33 a lookbehind whose length wraps around past 2^31,
+        // "(X{65535})(?<=\1{32770})" in the 10.32 and 10.33 suites, has no
+        // fixed length, as the library reads it too: "too long" is never
+        // reported under that message.
+        yield 'length wrapped around, not fixed length, on 10.33' => ['message' => 'lookbehind assertion is not fixed length', 'code' => 'regex.lookbehind.variable_length_not_supported', 'release' => '10.33', 'allowed' => true];
+        yield 'length wrapped around, not fixed length, on 10.34' => ['message' => 'lookbehind assertion is not fixed length', 'code' => 'regex.lookbehind.variable_length_not_supported', 'release' => '10.34', 'allowed' => true];
         // The extended classes and the lists of groups arrived in 10.45.
         yield 'extended class left open on 10.44' => ['message' => 'missing closing parenthesis', 'code' => 'regex.extended_class.unclosed_paren', 'release' => '10.44', 'allowed' => false];
         yield 'extended class left open on 10.45' => ['message' => 'missing closing parenthesis', 'code' => 'regex.extended_class.unclosed_paren', 'release' => '10.45', 'allowed' => true];
