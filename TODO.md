@@ -218,11 +218,6 @@ Integrations:
   (a group dropped while a quantifier still applies to it); the `word`
   rewrite turns `[a-zA-Z0-9_]` into `\w` without `u`, which a locale widens;
   the ReDoS repair trusts an unverified rewrite.
-- The transpiler: the Python target drops the body of `(?i:...)`, shifts
-  group numbers with its atomic emulation, never adds `re.ASCII`, and
-  emits `\Z`, `\z` and `\G` wrongly; the JS target silently differs on
-  `$`, `.`, `^` under `m` and `\d` under `u`, refuses `/a$/D` and `\z`,
-  and emits quantified lookarounds JS refuses.
 - The explainers: `/é/u` explained as `'\xC3'`, `^` and `$` always "of a
   line", `\d` and `\w` called ASCII under `u`, `\X`, `\N` and `\C` unknown,
   `(?(1)...)` described as a back reference; the text and HTML wording
