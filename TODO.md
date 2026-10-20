@@ -143,37 +143,6 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
 - Under `u`, `\pé` is "malformed \P or \p sequence" at offset 3 up to
   10.46, inside the `é` (4 from 10.47); the library says 4 on every
   release, and 5 for 4 in `[\pé]`.
-- A name nothing closes in a call by name, `(?<n>a)(?&n )` or
-  `(?<n>a)(?P>n )`, is "syntax error in subpattern name (missing
-  terminator?)" from 10.33 to 10.46, at the offset the library gives, where
-  the library says `regex.group.unclosed`. Without UTF, `(?<n>a)(?&é)` is
-  "subpattern name expected" at 10 on every release (the library says
-  `regex.group.unclosed`), and so are `(?<n>a)(?&١)` and `(?<n>a)(?P>١)`
-  (the library says `regex.group.name_invalid`).
-- From 10.47 a pattern too large, `(?:a){65535}`, is refused at offset 0;
-  the library says 12.
-- A `\p{` or `\P{` no `}` closes in a class hides an earlier error in it up
-  to 10.44: `[z-aa-\p{L]` is "range out of order" at offset 3, the library
-  says 8 (invalid range); on every release `([z-a\P{]` is offset 4 (5 from
-  10.47), the library says 9 (malformed property).
-- The lexer reads no POSIX item whose name holds a backslash, `[:\d-z:]`:
-  from 10.45 `[[:\d-z:]]` is "unknown POSIX class name" at offset 9 and
-  `[a-[:\d-z:]]` "invalid range in character class" at offset 11, where the
-  library refuses the `\d-z` inside at 6 and 8.
-- Without `u`, a range ending on a multibyte character ends on its first
-  byte: `[a-é-a]` is "range out of order" on every release (offset 6, 7
-  from 10.47), the library accepts it.
-- Up to 10.44 a quoted hyphen starts a range: `([\Q-\E--\pL]` misses its `)`
-  at 13 (the range `-` to `-`, then `\pL`), the library says 11.
-- From 10.47 a surrogate in braces the pattern ends in, `\x{D800 ` or
-  `\N{U+D800 ` under UTF, is "disallowed Unicode code point" at the end of
-  its digits (8 for `\x{D800 `); the library says
-  `regex.unicode.invalid_digit`, one byte later on 10.47.
-- Under UTF the letters and digits of a name are those of the release's
-  Unicode tables: `(?<a>x)\k<𖫀>/u` (U+16AC0, a digit from Unicode 14) is
-  "subpattern name expected" on 10.33 to 10.37, where the library says
-  `regex.group.name_invalid`; `(?<aࡰ>x)/u` is refused at 4 on 10.33 to
-  10.38 and accepted by the library.
 - PHP 7.3 without `X` (10.32) reads `\P` ending a range from a `[` as its
   letter: `[^a[-\P{]a)` is "range out of order" at offset 6 (php:7.3-cli),
   the library says 11 (class left open), reading `\P{` as a property no `}`
