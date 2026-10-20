@@ -24,7 +24,9 @@ use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
- * Console output formatter with ANSI colors and verbosity levels.
+ * The console report of `regex lint`, in ANSI colors when the terminal
+ * takes them, at the verbosity asked for: the patterns with their issues
+ * and their suggested rewrites, each rewrite shown as a diff.
  *
  * @phpstan-import-type OptimizationEntry from LintReport
  * @phpstan-import-type LintResult from LintReport
@@ -32,24 +34,11 @@ use PHPRegex\Parser\Text\DisplayEscaper;
  *
  * @internal
  */
-class ConsoleFormatter extends AbstractOutputFormatter
+final class ConsoleFormatter extends AbstractOutputFormatter
 {
-    // ANSI color codes
-    private const RESET = "\033[0m";
-    private const RED = "\033[31m";
-    private const GREEN = "\033[32m";
-    private const YELLOW = "\033[33m";
-    private const BLACK = "\033[30m";
-    private const CYAN = "\033[36m";
-    private const WHITE = "\033[37m";
-    private const GRAY = "\033[90m";
-    private const BOLD = "\033[1m";
-    private const BG_RED = "\033[41m";
-    private const BG_GREEN = "\033[42m";
-    private const BG_YELLOW = "\033[43m";
-    private const BG_CYAN = "\033[46m";
-    private const BG_GRAY = "\033[100m";
-    private const ARROW_LABEL = '↳';
+    private readonly AnsiMarkup $markup;
+
+    private readonly ConsoleLayout $layout;
 
     public function __construct(
         private readonly ?AnalysisService $analysisService = null,
@@ -58,6 +47,8 @@ class ConsoleFormatter extends AbstractOutputFormatter
         private readonly ?LinkFormatter $linkFormatter = null,
     ) {
         parent::__construct($config);
+        $this->markup = new AnsiMarkup($config->ansi);
+        $this->layout = new ConsoleLayout($this->markup);
     }
 
     public function format(LintReport $report): string
@@ -67,18 +58,11 @@ class ConsoleFormatter extends AbstractOutputFormatter
         }
 
         $parts = [];
-        $groupedResults = $this->groupResults($report->results);
-
-        foreach ($groupedResults as $results) {
+        foreach ($this->groupResults($report->results) as $results) {
             foreach ($results as $result) {
-                $pattern = ConsoleResultText::pattern($result);
                 $parts[] = $this->formatPatternContext($result);
-                /** @var array<LintIssue> $issues */
-                $issues = $result['issues'] ?? [];
-                $parts[] = $this->formatIssues($issues, $pattern);
-                /** @var array<OptimizationEntry> $optimizations */
-                $optimizations = $result['optimizations'] ?? [];
-                $parts[] = $this->formatOptimizations($optimizations);
+                $parts[] = $this->formatIssues($result['issues'], ConsoleResultText::pattern($result));
+                $parts[] = $this->formatOptimizations($result['optimizations']);
                 $parts[] = \PHP_EOL;
             }
         }
@@ -87,65 +71,51 @@ class ConsoleFormatter extends AbstractOutputFormatter
     }
 
     /**
-     * @param array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int, parserFallbacks?: int, notAnalyzed?: int} $stats
+     * @phpstan-param LintStats $stats
      */
     public function getSummary(array $stats): string
     {
-        return $this->formatSummary($stats);
+        return $this->layout->summary($stats);
     }
 
-    /**
-     * Format footer.
-     */
     public function formatFooter(): string
     {
-        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
-
-        return '  '.$this->dim($message.'https://github.com/php-regex/php-regex').\PHP_EOL.\PHP_EOL;
+        return '  '.$this->markup->style('If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex', ConsoleStyle::Muted).\PHP_EOL.\PHP_EOL;
     }
 
     private function formatQuiet(LintReport $report): string
     {
-        $errors = $report->stats['errors'];
-        $warnings = $report->stats['warnings'];
-
-        if ($errors > 0) {
-            return \sprintf('FAIL: %s, %s.'.\PHP_EOL,
-                LintSummary::errors($report->stats), LintSummary::failureCounts($report->stats));
+        if ($report->stats['errors'] > 0) {
+            return \sprintf('FAIL: %s, %s.'.\PHP_EOL, LintSummary::errors($report->stats), LintSummary::failureCounts($report->stats));
         }
 
-        return \sprintf('%s: %s, %d optimizations available.'.\PHP_EOL,
-            $warnings > 0 ? 'WARN' : 'PASS', LintSummary::passCounts($report->stats), $report->stats['optimizations']);
+        return \sprintf('%s: %s, %d optimizations available.'.\PHP_EOL, $report->stats['warnings'] > 0 ? 'WARN' : 'PASS', LintSummary::passCounts($report->stats), $report->stats['optimizations']);
     }
 
     /**
-     * Format pattern context information.
+     * The file and line of a result, its pattern on the next line, and
+     * where the pattern was found when the source names it.
      *
      * @phpstan-param LintResult $result
      */
     private function formatPatternContext(array $result): string
     {
         $pattern = ConsoleResultText::pattern($result);
-        $file = (string) ($result['file'] ?? '');
-        $line = (int) ($result['line'] ?? 0);
+        $file = $result['file'];
+        $line = $result['line'];
         $column = (int) ($result['column'] ?? 0);
         $location = $result['location'] ?? null;
 
-        $hasLocation = \is_string($location) && '' !== $location;
-
-        // Build a compact file:line prefix, e.g. "src/Console/Command.php:679",
-        // the file name in display form, on one line.
+        // A compact "src/Console/Command.php:679" prefix, the file name in
+        // display form, on one line.
         $prefix = '';
         if ('' !== $file && $line > 0) {
-            $fileLine = ReportSpelling::displayField($file).':'.$line;
+            $prefix = ReportSpelling::displayField($file).':'.$line;
             if ($column > 1) {
-                $fileLine .= ':'.$column;
+                $prefix .= ':'.$column;
             }
             if ('' !== $this->ide && null !== $this->linkFormatter) {
-                $penLink = $this->formatPenLink($file, $line, $column > 0 ? $column : 1);
-                $prefix = $fileLine.' '.$penLink;
-            } else {
-                $prefix = $fileLine;
+                $prefix .= ' '.$this->formatPenLink($file, $line, $column > 0 ? $column : 1);
             }
         } elseif ('' !== $file) {
             $prefix = ReportSpelling::displayField($file);
@@ -153,50 +123,40 @@ class ConsoleFormatter extends AbstractOutputFormatter
             $prefix = (string) $line;
         }
 
-        // Always wrap: show file:line, then the pattern on the next indented line.
-
-        if (null !== $pattern && '' !== $pattern) {
-            $formatted = $this->formatPatternForDisplay($pattern);
-            $label = '' !== $prefix ? $this->color($prefix, self::CYAN.self::BOLD) : $this->color('(pattern)', self::CYAN.self::BOLD);
-
-            // Wrap: show file:line, then the pattern on the next indented line.
-            $output = '  '.$label.\PHP_EOL;
-            $output .= '      '.$this->color('→ ', self::CYAN.self::BOLD).$formatted.\PHP_EOL;
-        } else {
-            $label = '' !== $prefix ? $this->color($prefix, self::CYAN.self::BOLD) : $this->color('(pattern unavailable)', self::CYAN.self::BOLD);
-            $output = '  '.$label.\PHP_EOL;
+        $hasPattern = null !== $pattern && '' !== $pattern;
+        $label = '' !== $prefix ? $prefix : ($hasPattern ? '(pattern)' : '(pattern unavailable)');
+        $output = '  '.$this->markup->style($label, ConsoleStyle::AccentBold).\PHP_EOL;
+        if ($hasPattern) {
+            $output .= '      '.$this->markup->style('→ ', ConsoleStyle::AccentBold).$this->formatPatternForDisplay($pattern).\PHP_EOL;
         }
 
-        if ($hasLocation) {
-            $output .= \sprintf('     %s'.\PHP_EOL, $this->color(self::ARROW_LABEL.' '.ReportSpelling::displayField($location), self::CYAN));
+        if (\is_string($location) && '' !== $location) {
+            $output .= '     '.$this->markup->style(ConsoleLayout::ARROW.' '.ReportSpelling::displayField($location), ConsoleStyle::Accent).\PHP_EOL;
         }
 
         return $output;
     }
 
     /**
-     * Format issues for a result.
-     *
      * @phpstan-param array<LintIssue> $issues
      */
     private function formatIssues(array $issues, ?string $pattern): string
     {
         $parts = [];
-
         foreach ($issues as $issue) {
-            $issueType = $issue->severity->level();
-            $badge = $this->issueBadge($issueType);
-            $parts[] = $this->displaySingleIssue($badge, ConsoleResultText::messageWithSnippet($issue, $pattern));
+            $parts[] = $this->layout->issue($this->layout->issueBadge($issue->severity->level()), ConsoleResultText::messageWithSnippet($issue, $pattern));
 
             // An invalid pattern shows the fix its validation names; a ReDoS
             // error its hint, which opens on the evidence, and a lint rule
             // at Error its fix.
             $hint = null !== $issue->validation ? $issue->validation->hint : $issue->hint;
-            if (\is_string($hint) && '' !== $hint && $this->config->shouldShowHints()) {
-                $formattedHint = ReportSpelling::displayText($this->formatHint($hint));
-                if ('' !== $formattedHint) {
-                    $parts[] = \sprintf('         %s'.\PHP_EOL, $this->dim(self::ARROW_LABEL.' '.$formattedHint));
-                }
+            if (null === $hint || '' === $hint || !$this->config->shouldShowHints()) {
+                continue;
+            }
+
+            $hint = ReportSpelling::displayText($this->formatHint($hint));
+            if ('' !== $hint) {
+                $parts[] = $this->layout->hint($hint);
             }
         }
 
@@ -204,176 +164,88 @@ class ConsoleFormatter extends AbstractOutputFormatter
     }
 
     /**
-     * Format optimizations for a result.
-     *
      * @phpstan-param array<OptimizationEntry> $optimizations
      */
     private function formatOptimizations(array $optimizations): string
     {
-        if (!$this->config->shouldShowOptimizations() || empty($optimizations)) {
+        if (!$this->config->shouldShowOptimizations()) {
             return '';
         }
 
         $parts = [];
-
-        foreach ($optimizations as $opt) {
-            $parts[] = \sprintf('    %s'.\PHP_EOL,
-                $this->badge('TIP', self::BLACK, self::BG_CYAN),
-            );
-
-            $optimization = $opt['optimization'];
-            if (!$optimization instanceof OptimizationResult) {
-                continue;
+        foreach ($optimizations as $entry) {
+            $parts[] = $this->layout->tip();
+            // An entry a caller built by hand may hold no rewrite: its badge
+            // stands alone.
+            if ($entry['optimization'] instanceof OptimizationResult) {
+                $parts[] = $this->formatOptimizationDiff($entry['optimization']);
             }
-
-            $parts[] = $this->formatOptimizationDiff($optimization->original, $optimization->optimized);
         }
 
         return implode('', $parts);
     }
 
-    private function formatOptimizationDiff(string $original, string $optimized): string
+    /**
+     * A rewrite on one line as the two lines it changes, the part they
+     * share dimmed; a pattern under x as the lines of the layout it keeps.
+     */
+    private function formatOptimizationDiff(OptimizationResult $optimization): string
     {
-        if ($this->shouldUseMultilineDiff($original, $optimized)) {
+        $original = $optimization->original;
+        $optimized = $optimization->optimized;
+        if (self::isExtendedModePattern($original) || self::isExtendedModePattern($optimized)) {
             return $this->formatMultilineDiff($original, $optimized);
         }
 
-        $diff = $this->computeSimpleDiff(
-            $this->escapeControlChars($original),
-            $this->escapeControlChars($optimized),
-        );
+        [$old, $new] = $this->computeSimpleDiff(DisplayEscaper::escape($original), DisplayEscaper::escape($optimized));
 
-        return \sprintf('         %s%s'.\PHP_EOL,
-            $this->color('- ', self::RED),
-            $diff['old'],
-        ).\sprintf('         %s%s'.\PHP_EOL,
-            $this->color('+ ', self::GREEN),
-            $diff['new'],
-        );
+        return $this->formatDiffLine('-', $old, ConsoleStyle::Error).$this->formatDiffLine('+', $new, ConsoleStyle::Success);
     }
 
+    /**
+     * Every line is printed with its marker, none elided: a diff that
+     * elides invites pasting a truncated rewrite.
+     */
     private function formatMultilineDiff(string $old, string $new): string
     {
         // Each line is spelled in its pattern's mode, so no character that
         // moves or hides text reaches the terminal raw; the tabs that only
         // lay the pattern out are shown as the indent they are.
-        $oldLines = array_map(static fn (string $line): string => ReportSpelling::displayFragment($line, $old), $this->splitLines(ReportSpelling::expandLayoutTabs($old)));
-        $newLines = array_map(static fn (string $line): string => ReportSpelling::displayFragment($line, $new), $this->splitLines(ReportSpelling::expandLayoutTabs($new)));
+        $oldLines = array_map(static fn (string $line): string => ReportSpelling::displayFragment($line, $old), self::splitLines(ReportSpelling::expandLayoutTabs($old)));
+        $newLines = array_map(static fn (string $line): string => ReportSpelling::displayFragment($line, $new), self::splitLines(ReportSpelling::expandLayoutTabs($new)));
 
-        $ops = $this->diffLines($oldLines, $newLines);
-        if (empty($ops)) {
-            return '';
-        }
-
-        // Nothing is ever hidden: a diff that elides invites pasting a
-        // truncated rewrite, so every line is printed with its marker.
         $output = '';
-        $index = 0;
-        $opCount = \count($ops);
-
-        while ($index < $opCount) {
-            $op = $ops[$index];
-
-            if ('equal' === $op['type']) {
-                $output .= $this->formatDiffLine(' ', $op['line'], self::GRAY, true);
-                $index++;
+        $block = [];
+        foreach (LineDiff::lines($oldLines, $newLines) as $op) {
+            if ('equal' !== $op['type']) {
+                $block[] = $op;
 
                 continue;
-            }
-
-            $block = [];
-            while ($index < $opCount && 'equal' !== $ops[$index]['type']) {
-                $block[] = $ops[$index];
-                $index++;
             }
 
             $output .= $this->formatDiffChangeBlock($block);
+            $block = [];
+            $output .= $this->formatDiffLine(' ', $this->markup->style($op['line'], ConsoleStyle::Muted), ConsoleStyle::Muted);
         }
 
-        return $output;
+        return $output.$this->formatDiffChangeBlock($block);
     }
 
-    private function formatDiffLine(string $sign, string $line, string $signColor, bool $dimLine = false): string
+    private function formatDiffLine(string $sign, string $line, ConsoleStyle $signStyle): string
     {
-        $content = $dimLine ? $this->dim($line) : $line;
-
-        return \sprintf('         %s%s'.\PHP_EOL,
-            $this->color($sign.' ', $signColor),
-            $content,
-        );
-    }
-
-    private function formatDiffSeparator(): string
-    {
-        return \sprintf('         %s'.\PHP_EOL, $this->dim('---'));
+        return '         '.$this->markup->style($sign.' ', $signStyle).$line.\PHP_EOL;
     }
 
     /**
-     * @param array<int, string> $oldLines
-     * @param array<int, string> $newLines
+     * The lines a change deletes, then those it inserts, a line deleted and
+     * a line inserted paired in order and diffed against each other.
      *
-     * @return array<int, array{type: string, line: string}>
-     */
-    private function diffLines(array $oldLines, array $newLines): array
-    {
-        $oldCount = \count($oldLines);
-        $newCount = \count($newLines);
-
-        $lcs = array_fill(0, $oldCount + 1, array_fill(0, $newCount + 1, 0));
-        for ($i = 1; $i <= $oldCount; $i++) {
-            for ($j = 1; $j <= $newCount; $j++) {
-                if ($oldLines[$i - 1] === $newLines[$j - 1]) {
-                    $lcs[$i][$j] = $lcs[$i - 1][$j - 1] + 1;
-                } else {
-                    $lcs[$i][$j] = max($lcs[$i - 1][$j], $lcs[$i][$j - 1]);
-                }
-            }
-        }
-
-        $ops = [];
-        $i = $oldCount;
-        $j = $newCount;
-
-        while ($i > 0 || $j > 0) {
-            if ($i > 0 && $j > 0 && $oldLines[$i - 1] === $newLines[$j - 1]) {
-                $ops[] = ['type' => 'equal', 'line' => $oldLines[$i - 1]];
-                $i--;
-                $j--;
-
-                continue;
-            }
-
-            if ($j > 0) {
-                if (0 === $i) {
-                    $ops[] = ['type' => 'insert', 'line' => $newLines[$j - 1]];
-                    $j--;
-
-                    continue;
-                }
-
-                if ($lcs[$i][$j - 1] >= $lcs[$i - 1][$j]) {
-                    $ops[] = ['type' => 'insert', 'line' => $newLines[$j - 1]];
-                    $j--;
-
-                    continue;
-                }
-            }
-
-            $ops[] = ['type' => 'delete', 'line' => $oldLines[$i - 1]];
-            $i--;
-        }
-
-        return array_reverse($ops);
-    }
-
-    /**
-     * @param array<int, array{type: string, line: string}> $block
+     * @param list<array{type: string, line: string}> $block
      */
     private function formatDiffChangeBlock(array $block): string
     {
         $deletes = [];
         $inserts = [];
-
         foreach ($block as $op) {
             if ('delete' === $op['type']) {
                 $deletes[] = $op['line'];
@@ -382,48 +254,33 @@ class ConsoleFormatter extends AbstractOutputFormatter
             }
         }
 
-        $deleteLines = [];
-        $insertLines = [];
-        $pairCount = min(\count($deletes), \count($inserts));
-
-        for ($i = 0; $i < $pairCount; $i++) {
-            $diff = $this->computeSimpleDiff($deletes[$i], $inserts[$i]);
-            $deleteLines[] = $this->formatDiffLine('-', $diff['old'], self::RED);
-            $insertLines[] = $this->formatDiffLine('+', $diff['new'], self::GREEN);
+        $deleteLines = '';
+        $insertLines = '';
+        foreach ($deletes as $index => $delete) {
+            $line = isset($inserts[$index]) ? $this->computeSimpleDiff($delete, $inserts[$index])[0] : $this->markup->style($delete, ConsoleStyle::Error);
+            $deleteLines .= $this->formatDiffLine('-', $line, ConsoleStyle::Error);
+        }
+        foreach ($inserts as $index => $insert) {
+            $line = isset($deletes[$index]) ? $this->computeSimpleDiff($deletes[$index], $insert)[1] : $this->markup->style($insert, ConsoleStyle::Success);
+            $insertLines .= $this->formatDiffLine('+', $line, ConsoleStyle::Success);
         }
 
-        for ($i = $pairCount, $count = \count($deletes); $i < $count; $i++) {
-            $deleteLines[] = $this->formatDiffLine('-', $this->color($deletes[$i], self::RED), self::RED);
-        }
+        $separator = '' !== $deleteLines && '' !== $insertLines ? '         '.$this->markup->style('---', ConsoleStyle::Muted).\PHP_EOL : '';
 
-        for ($i = $pairCount, $count = \count($inserts); $i < $count; $i++) {
-            $insertLines[] = $this->formatDiffLine('+', $this->color($inserts[$i], self::GREEN), self::GREEN);
-        }
-
-        $separator = (!empty($deleteLines) && !empty($insertLines)) ? $this->formatDiffSeparator() : '';
-
-        return implode('', $deleteLines).$separator.implode('', $insertLines);
+        return $deleteLines.$separator.$insertLines;
     }
 
     /**
-     * @return array<int, string>
+     * @return list<string>
      */
-    private function splitLines(string $text): array
+    private static function splitLines(string $text): array
     {
         $normalized = str_replace(["\r\n", "\r"], "\n", $text);
-        if ('' === $normalized) {
-            return [];
-        }
 
-        return explode("\n", $normalized);
+        return '' === $normalized ? [] : explode("\n", $normalized);
     }
 
-    private function shouldUseMultilineDiff(string $old, string $new): bool
-    {
-        return $this->isExtendedModePattern($old) || $this->isExtendedModePattern($new);
-    }
-
-    private function isExtendedModePattern(string $pattern): bool
+    private static function isExtendedModePattern(string $pattern): bool
     {
         try {
             [, $flags] = PatternParser::extractPatternAndFlags($pattern);
@@ -434,143 +291,50 @@ class ConsoleFormatter extends AbstractOutputFormatter
         return str_contains($flags, 'x');
     }
 
-    private function escapeControlChars(string $text): string
-    {
-        return DisplayEscaper::escape($text);
-    }
-
     /**
-     * Compute a diff between two strings by finding common prefix and suffix,
-     * highlighting only the differing middle parts and dimming common spans.
+     * Two lines with only what changed between them highlighted: the
+     * prefix and the suffix both share dimmed.
      *
-     * @return array{old: string, new: string}
+     * @return array{string, string}
      */
     private function computeSimpleDiff(string $old, string $new): array
     {
         if ($old === $new) {
-            return ['old' => $old, 'new' => $new];
+            return [$old, $new];
         }
 
-        $oldLen = \strlen($old);
-        $newLen = \strlen($new);
+        [$prefixLength, $suffixLength] = LineDiff::affixes($old, $new);
+        $prefix = substr($old, 0, $prefixLength);
+        $suffix = substr($old, \strlen($old) - $suffixLength);
+        $dimPrefix = '' === $prefix ? '' : $this->markup->style($prefix, ConsoleStyle::Muted);
+        $dimSuffix = '' === $suffix ? '' : $this->markup->style($suffix, ConsoleStyle::Muted);
+        $middleOld = substr($old, $prefixLength, \strlen($old) - $prefixLength - $suffixLength);
+        $middleNew = substr($new, $prefixLength, \strlen($new) - $prefixLength - $suffixLength);
 
-        // Find common prefix
-        $prefixLen = 0;
-        $minLen = min($oldLen, $newLen);
-        while ($prefixLen < $minLen && $old[$prefixLen] === $new[$prefixLen]) {
-            $prefixLen++;
-        }
-
-        // Find common suffix
-        $suffixLen = 0;
-        $maxSuffix = min($oldLen - $prefixLen, $newLen - $prefixLen);
-        while ($suffixLen < $maxSuffix && $old[$oldLen - 1 - $suffixLen] === $new[$newLen - 1 - $suffixLen]) {
-            $suffixLen++;
-        }
-
-        // Extract middle parts
-        $middleOld = substr($old, $prefixLen, $oldLen - $prefixLen - $suffixLen);
-        $middleNew = substr($new, $prefixLen, $newLen - $prefixLen - $suffixLen);
-
-        // Build colored strings
-        $prefix = substr($old, 0, $prefixLen);
-        $suffix = substr($old, $oldLen - $suffixLen);
-
-        $dimPrefix = '' === $prefix ? '' : $this->dim($prefix);
-        $dimSuffix = '' === $suffix ? '' : $this->dim($suffix);
-
-        $coloredOld = $dimPrefix.$this->color($middleOld, self::RED.self::BOLD).$dimSuffix;
-        $coloredNew = $dimPrefix.$this->color($middleNew, self::GREEN.self::BOLD).$dimSuffix;
-
-        return ['old' => $coloredOld, 'new' => $coloredNew];
+        return [
+            $dimPrefix.$this->markup->style($middleOld, ConsoleStyle::ErrorBold).$dimSuffix,
+            $dimPrefix.$this->markup->style($middleNew, ConsoleStyle::SuccessBold).$dimSuffix,
+        ];
     }
 
     /**
-     * Format summary statistics.
-     *
-     * @phpstan-param LintStats $stats
-     */
-    private function formatSummary(array $stats): string
-    {
-        $output = \PHP_EOL;
-
-        $errors = (int) $stats['errors'];
-        $warnings = (int) $stats['warnings'];
-        $optimizations = (int) $stats['optimizations'];
-
-        if ($errors > 0) {
-            $output .= \sprintf('  %s %s%s'.\PHP_EOL,
-                $this->badge('FAIL', self::WHITE, self::BG_RED),
-                $this->color(LintSummary::errors($stats), self::RED.self::BOLD),
-                $this->dim(', '.LintSummary::failureCounts($stats).'.'),
-            );
-        } elseif ($warnings > 0) {
-            $output .= \sprintf('  %s %s%s'.\PHP_EOL,
-                $this->badge('PASS', self::BLACK, self::BG_YELLOW),
-                $this->color(LintSummary::passCounts($stats), self::YELLOW.self::BOLD),
-                $this->dim(\sprintf(', %d optimizations available.', $optimizations)),
-            );
-        } else {
-            $output .= \sprintf('  %s %s%s'.\PHP_EOL,
-                $this->badge('PASS', self::WHITE, self::BG_GREEN),
-                $this->color(LintSummary::passCounts($stats), self::GREEN.self::BOLD),
-                $this->dim(\sprintf(', %d optimizations available.', $optimizations)),
-            );
-        }
-
-        return $output;
-    }
-
-    private function displaySingleIssue(string $badge, string $message): string
-    {
-        $lines = explode("\n", $message);
-        $firstLine = array_shift($lines) ?? '';
-
-        $output = \sprintf(
-            '    %s %s'.\PHP_EOL,
-            $badge,
-            $this->color($firstLine, self::WHITE),
-        );
-
-        if (!empty($lines)) {
-            foreach ($lines as $index => $line) {
-                $prefix = 0 === $index ? self::ARROW_LABEL : ' ';
-                $output .= \sprintf(
-                    '         %s %s'.\PHP_EOL,
-                    $this->dim($prefix),
-                    $this->dim(ConsoleResultText::withoutLineLabels($line)),
-                );
-            }
-        }
-
-        return $output;
-    }
-
-    /**
-     * Format pen emoji with IDE link.
+     * The pen that links the file in the editor, as an OSC 8 hyperlink.
      */
     private function formatPenLink(string $file, int $line, int $column): string
     {
-        // Use LinkFormatter to get the URL, but convert Symfony href format to ANSI escape sequences
+        // The link formatter gives a console tag, <href=URL>✏️</>: its URL
+        // goes into the escape sequence the terminal reads.
         $href = $this->linkFormatter?->format($file, $line, '✏️', $column);
-
-        // Extract URL from Symfony href format: <href=URL>✏️</>
         if (LibraryPcre::match('/<href=([^>]+)>/', (string) $href, $matches)) {
-            $url = $matches[1];
-
-            return "\e]8;;{$url}\e\\✏️\e]8;;\e\\";
+            return "\e]8;;{$matches[1]}\e\\✏️\e]8;;\e\\";
         }
 
         return '✏️';
     }
 
-    // getPenLabel() is intentionally omitted in this formatter. The plain
-    // console output does not currently render a clickable "pen" link; this
-    // responsibility is handled by the SymfonyConsoleFormatter bridge.
-
     private function safelyHighlightBody(string $body, string $flags, string $delimiter): ?string
     {
-        if (!$this->analysisService || !$this->config->ansi) {
+        if (null === $this->analysisService || !$this->config->ansi) {
             return null;
         }
 
@@ -582,199 +346,45 @@ class ConsoleFormatter extends AbstractOutputFormatter
     }
 
     /**
-     * Format pattern for display.
-     *
-     * The linter output must be text-preserving: the pattern shown in the
-     * console should match exactly what was found in the source file.
-     *
-     * We try the AST-based highlighter first for better syntax highlighting,
-     * falling back to a lightweight regex-based highlighter if parsing fails.
-     * Both preserve the exact characters while adding ANSI color codes to
-     * delimiters, flags, and pattern elements.
+     * The pattern as it was found in the source, highlighted when the
+     * terminal takes colors: the parser's highlighter first, the text one
+     * when the body does not parse or would not read back the same. Neither
+     * changes a character.
      */
     private function formatPatternForDisplay(string $pattern): string
     {
-        // Escape control characters to prevent visual layout issues
+        // Control characters are escaped, so none lays the line out.
         $pattern = DisplayEscaper::escape($pattern);
-
-        // No ANSI: return the escaped pattern exactly as we received it.
         if (!$this->config->ansi) {
             return $pattern;
         }
 
-        // Try to split /body/flags or {body}flags so we can color the
-        // delimiters and flags without touching the body itself.
-        $parts = $this->splitPatternWithFlags($pattern);
+        // The delimiters and the flags are colored apart from the body; a
+        // pattern of no known structure is shown as it is.
+        $parts = self::splitPatternWithFlags($pattern);
         if (null === $parts) {
-            // Unknown structure (e.g. missing delimiters) – fall back to
-            // returning the raw pattern unchanged, just to be safe.
             return $pattern;
         }
 
-        $delimiter = $parts['delimiter'];
-        $closingDelimiter = $parts['closingDelimiter'];
-        $flags = $parts['flags'];
+        ['delimiter' => $delimiter, 'closingDelimiter' => $closingDelimiter, 'flags' => $flags, 'body' => $body] = $parts;
 
-        // Recompute the last closing-delimiter position so we can slice out
-        // the body without interpreting escapes. This mirrors the behavior of
-        // PatternParser but never alters the bytes.
-        $lastPos = strrpos($pattern, $closingDelimiter);
-        if (false === $lastPos || 0 === $lastPos) {
-            return $pattern;
-        }
-        $body = substr($pattern, 1, $lastPos - 1);
-
-        // Try the AST-based highlighter first for better highlighting, then
-        // fall back to the lightweight, text-preserving highlighter if it fails.
-        // Both never change characters in the pattern; they only wrap segments in
-        // ANSI color codes.
         $highlightedBody = $this->safelyHighlightBody($body, $flags, $delimiter);
-        if (null === $highlightedBody) {
-            $highlightedBody = $this->highlightPatternBodyPreservingText($body);
-        } elseif ($this->stripAnsi($highlightedBody) !== $body) {
-            $highlightedBody = $this->highlightPatternBodyPreservingText($body);
+        if (null === $highlightedBody || $this->stripAnsi($highlightedBody) !== $body) {
+            $highlightedBody = (new TextPreservingHighlighter($this->markup))->highlight($body);
         }
 
-        $open = $this->color($delimiter, self::CYAN.self::BOLD);
-        $close = $this->color($closingDelimiter, self::CYAN.self::BOLD);
+        $highlighted = $this->markup->style($delimiter, ConsoleStyle::AccentBold).$highlightedBody.$this->markup->style($closingDelimiter, ConsoleStyle::AccentBold);
 
-        if ('' === $flags) {
-            return $open.$highlightedBody.$close;
-        }
-
-        return $open.$highlightedBody.$close.$this->color($flags, self::CYAN);
+        return '' === $flags ? $highlighted : $highlighted.$this->markup->style($flags, ConsoleStyle::Accent);
     }
 
     /**
-     * Very small regex highlighter that operates directly on the pattern body
-     * without changing any of its characters.
+     * A pattern of the form /body/flags or {body}flags split into its
+     * parts, the bytes untouched; null when it has no delimiters.
      *
-     * It understands only a subset of PCRE syntax (escapes, character
-     * classes, grouping, anchors, and basic quantifiers), but that is enough
-     * to give a pleasant visual layout while guaranteeing the printed text is
-     * identical to the source.
+     * @return array{delimiter: string, closingDelimiter: string, flags: string, body: string}|null
      */
-    private function highlightPatternBodyPreservingText(string $body): string
-    {
-        if (!$this->config->ansi || '' === $body) {
-            return $body;
-        }
-
-        $len = \strlen($body);
-        $out = '';
-        $inClass = false;
-        $escaped = false;
-
-        for ($i = 0; $i < $len; $i++) {
-            $ch = $body[$i];
-
-            if ($escaped) {
-                // Render "\\X" as a single green escape sequence.
-                $out .= $this->color('\\'.$ch, self::GREEN);
-                $escaped = false;
-
-                continue;
-            }
-
-            if ('\\' === $ch) {
-                $escaped = true;
-
-                continue;
-            }
-
-            if ($inClass) {
-                if (']' === $ch) {
-                    $inClass = false;
-                    $out .= $this->color(']', self::CYAN);
-
-                    continue;
-                }
-
-                // Inside a character class we don't try to be clever; just
-                // echo characters as-is to avoid mis-highlighting.
-                $out .= $ch;
-
-                continue;
-            }
-
-            if ('[' === $ch) {
-                $inClass = true;
-                $out .= $this->color('[', self::CYAN);
-
-                continue;
-            }
-
-            // Grouping and structural meta-chars.
-            if ('(' === $ch || ')' === $ch || '|' === $ch || '.' === $ch) {
-                $out .= $this->color($ch, self::CYAN);
-
-                continue;
-            }
-
-            // Simple quantifiers.
-            if ('+' === $ch || '*' === $ch || '?' === $ch) {
-                $out .= $this->color($ch, self::YELLOW);
-
-                continue;
-            }
-
-            // Bounded quantifier like {2} or {1,3}.
-            if ('{' === $ch) {
-                $j = $i + 1;
-                while ($j < $len && Ascii::isDigit($body[$j])) {
-                    $j++;
-                }
-
-                $isQuant = false;
-                if ($j < $len && '}' === $body[$j]) {
-                    $isQuant = true;
-                } elseif ($j < $len && ',' === $body[$j]) {
-                    $j++;
-                    while ($j < $len && Ascii::isDigit($body[$j])) {
-                        $j++;
-                    }
-                    if ($j < $len && '}' === $body[$j]) {
-                        $isQuant = true;
-                    }
-                }
-
-                if ($isQuant) {
-                    $segment = substr($body, $i, $j - $i + 1);
-                    $out .= $this->color($segment, self::YELLOW);
-                    $i = $j;
-
-                    continue;
-                }
-
-                $out .= '{';
-
-                continue;
-            }
-
-            // Anchors.
-            if ('^' === $ch || '$' === $ch) {
-                $out .= $this->color($ch, self::CYAN);
-
-                continue;
-            }
-
-            $out .= $ch;
-        }
-
-        if ($escaped) {
-            // Trailing backslash with no following char; just output it.
-            $out .= '\\';
-        }
-
-        return $out;
-    }
-
-    /**
-     * Split a regex pattern of the form /body/flags or {body}flags into its components.
-     *
-     * @return array{delimiter: string, closingDelimiter: string, flags: string}|null
-     */
-    private function splitPatternWithFlags(string $pattern): ?array
+    private static function splitPatternWithFlags(string $pattern): ?array
     {
         if ('' === $pattern) {
             return null;
@@ -789,7 +399,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
             return null;
         }
 
-        // PCRE supports paired delimiters like {^pattern$}i, (pattern)i, etc.
+        // PCRE takes paired delimiters: {^pattern$}i, (pattern)i and so on.
         $closingDelimiter = match ($delimiter) {
             '{' => '}',
             '(' => ')',
@@ -802,62 +412,17 @@ class ConsoleFormatter extends AbstractOutputFormatter
         if (false === $lastDelimiterPos || 0 === $lastDelimiterPos) {
             return null;
         }
-        $flags = substr($pattern, $lastDelimiterPos + 1);
 
         return [
             'delimiter' => $delimiter,
             'closingDelimiter' => $closingDelimiter,
-            'flags' => $flags,
+            'flags' => substr($pattern, $lastDelimiterPos + 1),
+            'body' => substr($pattern, 1, $lastDelimiterPos - 1),
         ];
-    }
-
-    /**
-     * Get badge for issue type.
-     */
-    private function issueBadge(string $type): string
-    {
-        return match ($type) {
-            'error' => $this->badge('FAIL', self::WHITE, self::BG_RED),
-            'warning' => $this->badge('WARN', self::BLACK, self::BG_YELLOW),
-            'info' => $this->badge('INFO', self::WHITE, self::BG_GRAY),
-            default => $this->badge('INFO', self::WHITE, self::BG_GRAY),
-        };
-    }
-
-    /**
-     * Create a badge with colors.
-     */
-    private function badge(string $text, string $fg, string $bg): string
-    {
-        if (!$this->config->ansi) {
-            return \sprintf('%-4s', $text);
-        }
-
-        return $this->color(' '.$text.' ', $bg.$fg.self::BOLD);
-    }
-
-    /**
-     * Apply color to text.
-     */
-    private function color(string $text, string $color): string
-    {
-        if (!$this->config->ansi) {
-            return $text;
-        }
-
-        return $color.$text.self::RESET;
     }
 
     private function stripAnsi(string $text): string
     {
         return LibraryPcre::replace('/\e\\[[0-9;]*m/', '', $text) ?? $text;
-    }
-
-    /**
-     * Apply dim color to text.
-     */
-    private function dim(string $text): string
-    {
-        return $this->color($text, self::GRAY);
     }
 }

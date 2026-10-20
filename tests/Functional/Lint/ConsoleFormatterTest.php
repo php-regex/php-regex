@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Lint;
 
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
+use PHPRegex\Linter\Formatter\LineDiff;
 use PHPUnit\Framework\TestCase;
 
 final class ConsoleFormatterTest extends TestCase
@@ -30,11 +31,7 @@ final class ConsoleFormatterTest extends TestCase
 
     public function test_diff_lines_marks_inserts_and_deletes(): void
     {
-        $formatter = new ConsoleFormatter();
-        $method = new \ReflectionMethod(ConsoleFormatter::class, 'diffLines');
-
-        /** @var array<int, array{type: string, line: string}> $ops */
-        $ops = $method->invoke($formatter, ['a', 'b'], ['a', 'c']);
+        $ops = LineDiff::lines(['a', 'b'], ['a', 'c']);
         $this->assertIsArray($ops);
         $types = array_map(static fn (array $op) => $op['type'], $ops);
 

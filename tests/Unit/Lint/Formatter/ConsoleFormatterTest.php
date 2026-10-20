@@ -14,8 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Formatter\AnsiMarkup;
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
+use PHPRegex\Linter\Formatter\LineDiff;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPRegex\Linter\Formatter\TextPreservingHighlighter;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
@@ -570,8 +573,7 @@ final class ConsoleFormatterTest extends TestCase
 
     public function test_diff_lines_handles_insert_when_old_empty(): void
     {
-        $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: false));
-        $ops = $this->invokePrivate($formatter, 'diffLines', [], ['added']);
+        $ops = LineDiff::lines([], ['added']);
 
         $this->assertIsArray($ops);
         $this->assertArrayHasKey(0, $ops);
@@ -636,27 +638,27 @@ final class ConsoleFormatterTest extends TestCase
 
     public function test_highlight_pattern_body_preserving_text_branches(): void
     {
-        $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: true));
+        $highlighter = new TextPreservingHighlighter(new AnsiMarkup(true));
 
-        $this->assertSame('', $this->invokePrivate($formatter, 'highlightPatternBodyPreservingText', ''));
-        $this->assertSame('plain', $this->invokePrivate($formatter, 'highlightPatternBodyPreservingText', 'plain'));
+        $this->assertSame('', $highlighter->highlight(''));
+        $this->assertSame('plain', $highlighter->highlight('plain'));
 
         $body = '([a]+){2,3}^$';
-        $output = $this->invokePrivate($formatter, 'highlightPatternBodyPreservingText', $body);
+        $output = $highlighter->highlight($body);
         $this->assertIsString($output);
-        $this->assertStringContainsString('^', (string) $output);
+        $this->assertStringContainsString('^', $output);
 
-        $output = $this->invokePrivate($formatter, 'highlightPatternBodyPreservingText', 'a{2}');
+        $output = $highlighter->highlight('a{2}');
         $this->assertIsString($output);
-        $this->assertStringContainsString('{', (string) $output);
+        $this->assertStringContainsString('{', $output);
 
-        $output = $this->invokePrivate($formatter, 'highlightPatternBodyPreservingText', 'a{b');
+        $output = $highlighter->highlight('a{b');
         $this->assertIsString($output);
-        $this->assertStringContainsString('{', (string) $output);
+        $this->assertStringContainsString('{', $output);
 
-        $output = $this->invokePrivate($formatter, 'highlightPatternBodyPreservingText', '\\');
+        $output = $highlighter->highlight('\\');
         $this->assertIsString($output);
-        $this->assertStringContainsString('\\', (string) $output);
+        $this->assertStringContainsString('\\', $output);
     }
 
     public function test_split_pattern_with_flags_handles_pairs_and_invalid(): void

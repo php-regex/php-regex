@@ -14,9 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Formatter\ConsoleLayout;
 use PHPRegex\Linter\Formatter\ConsoleTagFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\Formatter\TagMarkup;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
@@ -454,15 +456,10 @@ final class ConsoleTagFormatterReportTest extends TestCase
 
     public function test_display_single_issue_handles_multiline_messages(): void
     {
-        $analysis = new AnalysisService(RegexParser::create());
-        $relativePathHelper = new RelativePathHelper('/app');
-        $linkFormatter = new LinkFormatter(null, $relativePathHelper);
-        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
-
         $badge = '<bg=gray;fg=white;options=bold> INFO </>';
         $message = "Top line\nLine 12: details\nMore";
 
-        $output = $this->invokePrivate($formatter, 'displaySingleIssue', [$badge, $message]);
+        $output = (new ConsoleLayout(new TagMarkup()))->issue($badge, $message);
 
         $this->assertIsString($output);
         $this->assertStringContainsString('details', (string) $output);

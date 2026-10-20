@@ -23,37 +23,41 @@ use PHPRegex\Parser\Text\DisplayEscaper;
  * The console report of the framework bridges' regex:lint, in console tags.
  *
  * Laravel builds its console on Symfony's, so both bridges render the report
- * the same way. The text it quotes is escaped as Symfony Console's
- * OutputFormatter::escape() escapes it, so the report needs no console to be
- * built.
- *
- * @internal
+ * the same way. The parts it shares with `regex lint`'s report are the
+ * console layout's, in tags; the file label links to the editor, and a
+ * suggested rewrite is shown as its two patterns.
  *
  * @phpstan-import-type OptimizationEntry from LintReport
  * @phpstan-import-type LintResult from LintReport
- * @phpstan-import-type LintStats from LintReport
+ *
+ * @internal
  */
 final class ConsoleTagFormatter implements OutputFormatterInterface
 {
-    private const ARROW_LABEL = "\u{21B3}";
+    private readonly TagMarkup $markup;
+
+    private readonly ConsoleLayout $layout;
 
     public function __construct(
         private readonly AnalysisService $analysis,
         private readonly LinkFormatter $linkFormatter,
         private readonly bool $decorated = true,
-    ) {}
+    ) {
+        $this->markup = new TagMarkup();
+        $this->layout = new ConsoleLayout($this->markup);
+    }
 
     public function format(LintReport $report): string
     {
-        $parts = [];
-
-        if (!empty($report->results)) {
-            $parts[] = $this->renderResults($report->results);
+        $output = '';
+        foreach ($report->results as $result) {
+            $output .= $this->displayPatternContext($result);
+            $output .= $this->displayIssues($result['issues'], ConsoleResultText::pattern($result));
+            $output .= $this->displayOptimizations($result['optimizations']);
+            $output .= \PHP_EOL;
         }
 
-        $parts[] = $this->renderSummary($report->stats);
-
-        return implode('', $parts);
+        return $output.$this->layout->summary($report->stats);
     }
 
     public function formatError(string $message): string
@@ -62,57 +66,24 @@ final class ConsoleTagFormatter implements OutputFormatterInterface
     }
 
     /**
-     * @phpstan-param array<LintResult> $results
-     */
-    private function renderResults(array $results): string
-    {
-        $parts = [];
-
-        foreach ($results as $result) {
-            $parts[] = $this->renderResultCard($result);
-        }
-
-        return implode('', $parts);
-    }
-
-    /**
-     * @phpstan-param LintResult $result
-     */
-    private function renderResultCard(array $result): string
-    {
-        /** @var array<LintIssue> $issues */
-        $issues = $result['issues'] ?? [];
-        /** @var array<OptimizationEntry> $optimizations */
-        $optimizations = $result['optimizations'] ?? [];
-        $pattern = ConsoleResultText::pattern($result);
-
-        $output = '';
-        $output .= $this->displayPatternContext($result);
-        $output .= $this->displayIssues($issues, $pattern);
-        $output .= $this->displayOptimizations($optimizations);
-        $output .= \PHP_EOL;
-
-        return $output;
-    }
-
-    /**
+     * The file and line of a result, linked to the editor, its pattern on
+     * the next line, and where the pattern was found when the source names
+     * it.
+     *
      * @phpstan-param LintResult $result
      */
     private function displayPatternContext(array $result): string
     {
         $pattern = ConsoleResultText::pattern($result);
-        $line = (int) $result['line'];
+        $line = $result['line'];
         $column = (int) ($result['column'] ?? 0);
-        $file = (string) $result['file'];
+        $file = $result['file'];
         $location = $result['location'] ?? null;
 
-        $hasLocation = \is_string($location) && '' !== $location;
-
-        $relPath = $this->linkFormatter->getRelativePath($file);
-        if (!str_starts_with($relPath, '/')) {
-            $relPath = './'.$relPath;
+        $label = $this->linkFormatter->getRelativePath($file);
+        if (!str_starts_with($label, '/')) {
+            $label = './'.$label;
         }
-        $label = $relPath;
         if ($line > 0) {
             $label .= ':'.$line;
             if ($column > 1) {
@@ -121,91 +92,63 @@ final class ConsoleTagFormatter implements OutputFormatterInterface
         }
         // The label is the file name in display form on one line, its tags
         // escaped; the link still points at the file as named.
-        $label = self::escape(ReportSpelling::displayField($label));
-        $linkedLabel = $this->linkFormatter->format($file, $line, $label, $column > 0 ? $column : 1, $label);
-
-        $output = '  <fg=cyan;options=bold>'.$linkedLabel.'</>'.\PHP_EOL;
+        $label = $this->markup->escape(ReportSpelling::displayField($label));
+        $output = '  '.$this->markup->style($this->linkFormatter->format($file, $line, $label, $column > 0 ? $column : 1, $label), ConsoleStyle::AccentBold).\PHP_EOL;
 
         if (null !== $pattern && '' !== $pattern) {
-            $highlighted = $this->safelyHighlightPattern($pattern);
-            $output .= '      <fg=cyan;options=bold>→ </><fg=white>'.$highlighted.'</>'.\PHP_EOL;
+            $output .= '      '.$this->markup->style('→ ', ConsoleStyle::AccentBold).$this->markup->style($this->safelyHighlightPattern($pattern), ConsoleStyle::Plain).\PHP_EOL;
         }
 
-        if ($hasLocation) {
-            $output .= \sprintf(
-                '     <fg=gray>%s %s</>'.\PHP_EOL,
-                self::ARROW_LABEL,
-                self::escape(ReportSpelling::displayField($location)),
-            );
+        if (\is_string($location) && '' !== $location) {
+            $output .= '     '.$this->markup->style(ConsoleLayout::ARROW.' '.$this->markup->escape(ReportSpelling::displayField($location)), ConsoleStyle::Muted).\PHP_EOL;
         }
 
         return $output;
     }
 
     /**
-     * A route requirement, a pattern body with no delimiter, is shown as
-     * written, as the CLI shows it: it does not highlight.
+     * The pattern, highlighted on a decorated console. A route requirement,
+     * a pattern body with no delimiter, is shown as written, as the CLI
+     * shows it: it does not highlight.
      */
     private function safelyHighlightPattern(string $pattern): string
     {
-        // Always escape control characters to prevent layout issues
+        // Control characters are escaped, so none lays the line out.
         $escapedPattern = DisplayEscaper::escape($pattern);
 
-        if (!$this->decorated) {
-            return self::escape($escapedPattern);
+        // Highlighting reads the pattern as written: once its display form
+        // differs (escapes, an x pattern put on one line), the display form
+        // is shown as is.
+        if (!$this->decorated || $escapedPattern !== $pattern || str_contains($escapedPattern, '\\')) {
+            return $this->markup->escape($escapedPattern);
         }
 
         try {
-            // Highlighting reads the pattern as written: once its display
-            // form differs (escapes, an x pattern put on one line), the
-            // display form is shown as is.
-            if ($escapedPattern !== $pattern || str_contains($escapedPattern, '\\')) {
-                return self::escape($escapedPattern);
-            }
-
-            $highlighted = $this->analysis->highlight($pattern);
-
-            return self::escape($highlighted);
+            return $this->markup->escape($this->analysis->highlight($pattern));
         } catch (\Throwable) {
-            return self::escape($escapedPattern);
+            return $this->markup->escape($escapedPattern);
         }
     }
 
     /**
      * @phpstan-param array<LintIssue> $issues
      */
-    private function displayIssues(array $issues, ?string $pattern = null): string
+    private function displayIssues(array $issues, ?string $pattern): string
     {
-        $parts = [];
+        $output = '';
         foreach ($issues as $issue) {
-            $issueType = $issue->severity->level();
-            $badge = $this->getIssueBadge($issueType);
-            $parts[] = $this->displaySingleIssue($badge, ConsoleResultText::messageWithSnippet($issue, $pattern));
+            $output .= $this->layout->issue($this->layout->issueBadge($issue->severity->level()), ConsoleResultText::messageWithSnippet($issue, $pattern));
 
             // An invalid pattern shows the fix its validation names; a ReDoS
             // error its hint, which opens on the evidence, and a lint rule
             // at Error its fix.
             $hint = null !== $issue->validation ? $issue->validation->hint : $issue->hint;
-            if (\is_string($hint) && '' !== $hint) {
-                $parts[] = \sprintf(
-                    '         <fg=gray>%s %s</>'.\PHP_EOL,
-                    self::ARROW_LABEL,
-                    self::escape(ReportSpelling::displayText($hint)),
-                );
+            if (null !== $hint && '' !== $hint) {
+                $output .= $this->layout->hint(ReportSpelling::displayText($hint));
             }
-
         }
 
-        return implode('', $parts);
-    }
-
-    private function getIssueBadge(string $type): string
-    {
-        return match ($type) {
-            'error' => '<bg=red;fg=white;options=bold> FAIL </>',
-            'warning' => '<bg=yellow;fg=black;options=bold> WARN </>',
-            default => '<bg=gray;fg=white;options=bold> INFO </>',
-        };
+        return $output;
     }
 
     /**
@@ -213,108 +156,19 @@ final class ConsoleTagFormatter implements OutputFormatterInterface
      */
     private function displayOptimizations(array $optimizations): string
     {
-        $parts = [];
-
-        foreach ($optimizations as $opt) {
-            $parts[] = '    <bg=cyan;fg=black;options=bold> TIP </>'.\PHP_EOL;
-
-            $optimization = $opt['optimization'];
+        $output = '';
+        foreach ($optimizations as $entry) {
+            $optimization = $entry['optimization'];
+            $output .= $this->layout->tip();
+            // An entry a caller built by hand may hold no rewrite: its badge
+            // stands alone.
             if (!$optimization instanceof OptimizationResult) {
                 continue;
             }
-
-            $original = $this->safelyHighlightPattern($optimization->original);
-            $optimized = $this->safelyHighlightPattern($optimization->optimized);
-
-            $parts[] = \sprintf('         <fg=red>- %s</>'.\PHP_EOL, $original);
-            $parts[] = \sprintf('         <fg=green>+ %s</>'.\PHP_EOL, $optimized);
+            $output .= '         '.$this->markup->style('- '.$this->safelyHighlightPattern($optimization->original), ConsoleStyle::Error).\PHP_EOL;
+            $output .= '         '.$this->markup->style('+ '.$this->safelyHighlightPattern($optimization->optimized), ConsoleStyle::Success).\PHP_EOL;
         }
-
-        return implode('', $parts);
-    }
-
-    private function displaySingleIssue(string $badge, string $message): string
-    {
-        $lines = explode("\n", $message);
-        $firstLine = array_shift($lines) ?? '';
-
-        $parts = [\sprintf(
-            '    %s <fg=white>%s</>'.\PHP_EOL,
-            $badge,
-            self::escape($firstLine),
-        )];
-
-        if (!empty($lines)) {
-            foreach ($lines as $index => $line) {
-                $parts[] = \sprintf(
-                    '         <fg=gray>%s %s</>'.\PHP_EOL,
-                    0 === $index ? self::ARROW_LABEL : ' ',
-                    self::escape(ConsoleResultText::withoutLineLabels($line)),
-                );
-            }
-        }
-
-        return implode('', $parts);
-    }
-
-    /**
-     * @phpstan-param LintStats $stats
-     */
-    private function renderSummary(array $stats): string
-    {
-        $output = \PHP_EOL;
-        $output .= $this->showSummaryMessage($stats);
 
         return $output;
-    }
-
-    /**
-     * @phpstan-param LintStats $stats
-     */
-    private function showSummaryMessage(array $stats): string
-    {
-        $errors = (int) $stats['errors'];
-        $warnings = (int) $stats['warnings'];
-        $optimizations = (int) $stats['optimizations'];
-
-        $message = match (true) {
-            $errors > 0 => \sprintf(
-                '  <bg=red;fg=white;options=bold> FAIL </> <fg=red;options=bold>%s</><fg=gray>, %s.</>',
-                LintSummary::errors($stats),
-                LintSummary::failureCounts($stats),
-            ),
-            $warnings > 0 => \sprintf(
-                '  <bg=yellow;fg=black;options=bold> PASS </> <fg=yellow;options=bold>%s</><fg=gray>, %d optimizations available.</>',
-                LintSummary::passCounts($stats),
-                $optimizations,
-            ),
-            default => \sprintf(
-                '  <bg=green;fg=white;options=bold> PASS </> <fg=green;options=bold>%s</><fg=gray>, %d optimizations available.</>',
-                LintSummary::passCounts($stats),
-                $optimizations,
-            ),
-        };
-
-        return $message.\PHP_EOL;
-    }
-
-    /**
-     * Escapes text for a console that reads style tags: "<" and ">" take a
-     * backslash, and trailing backslashes become NUL bytes so they do not
-     * escape the closing tag that follows (the console prints them back as
-     * backslashes).
-     */
-    private static function escape(string $text): string
-    {
-        $text = str_replace(['<', '>'], ['\\<', '\\>'], $text);
-
-        if (!str_ends_with($text, '\\')) {
-            return $text;
-        }
-
-        $length = \strlen($text);
-        $text = str_replace("\0", '', rtrim($text, '\\'));
-
-        return $text.str_repeat("\0", $length - \strlen($text));
     }
 }
