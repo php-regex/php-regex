@@ -30,12 +30,10 @@ use PHPRegex\Parser\Node\CalloutNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
-use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
 use PHPRegex\Parser\Node\ClassSetOperator;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ConditionalNode;
-use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
@@ -49,12 +47,10 @@ use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
-use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
-use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
@@ -99,27 +95,16 @@ final class TokenParser
     ];
 
     /**
-     * Token types that describe a character the same way wherever they appear.
-     */
-    private const ATOM_TYPES = [
-        TokenType::Literal,
-        TokenType::LiteralEscaped,
-        TokenType::CharType,
-        TokenType::UnicodeProp,
-        TokenType::ControlChar,
-        TokenType::Unicode,
-        TokenType::UnicodeNamed,
-        TokenType::Octal,
-        TokenType::OctalLegacy,
-    ];
-
-    /**
      * The marker a lookaround carries in its flags when it is non-atomic,
      * "(?*...)" or "(*napla:...)": PCRE may backtrack into it. It is the
      * character that spells it in the short form.
      */
     private const NON_ATOMIC_FLAG = '*';
 
+    /**
+     * Token types that are atoms outside a class only: inside one the lexer
+     * gives "$", "\b" and "\1" as the characters they are there.
+     */
     private const OUTSIDE_ATOM_TYPES = [
         TokenType::Anchor,
         TokenType::Assertion,
@@ -149,21 +134,20 @@ final class TokenParser
      */
     private bool $noAutoCapture = false;
 
-    private bool $inQuoteMode = false;
+    /**
+     * The reading state this parser shares with the readers of a class and
+     * of a condition: the stream, the pattern, the target, the UTF and
+     * bad-escape modes, and whether the tokens are quoted. The stream,
+     * pattern, target and UTF mode are also kept on this parser, the same
+     * values, which every step reads.
+     */
+    private ParseState $state;
 
     /**
-     * Whether the pattern is compiled with PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL,
-     * as PHP 7.3 and 7.4 compile it without "X": an escape PCRE2 refuses as
-     * it reads it is the character after the backslash. The lexer reads
-     * those it can; a reference counted back past the groups opened so far,
-     * or an octal escape past a byte, is known here.
+     * The reader of the classes of the text this parser reads, made on the
+     * first class.
      */
-    private bool $badEscapeIsLiteral = false;
-
-    /**
-     * Whether the PCRE2 judged is 10.32.
-     */
-    private readonly bool $pcre2Ten32;
+    private ?ClassParser $classes = null;
 
     /**
      * Whether the pattern is read as UTF-8: "u", or "(*UTF)" at the start.
@@ -255,7 +239,6 @@ final class TokenParser
     {
         $this->maxRecursionDepth = $maxRecursionDepth ?? RegexParser::DEFAULT_MAX_RECURSION_DEPTH;
         $this->target = $target ?? PcreTarget::runtime();
-        $this->pcre2Ten32 = !$this->target->supports(PcreFeature::BadEscapeInClassStaysRefused);
     }
 
     public function parse(TokenStream $stream, string $flags = '', string $delimiter = '/', int $patternLength = 0): RegexNode
@@ -322,8 +305,13 @@ final class TokenParser
         $this->extendedMode = str_contains($flags, 'x');
         $this->extendedMoreMode = $this->extendedMoreBefore;
         $this->noAutoCapture = str_contains($flags, 'n');
-        $this->badEscapeIsLiteral = PhpVersionGates::badEscapeIsLiteral($this->target->phpVersionId, $flags);
-        $this->inQuoteMode = false;
+        // Without "X", PHP 7.3 and 7.4 compile with
+        // PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL: an escape PCRE2 refuses as it
+        // reads it is the character after the backslash. The lexer reads
+        // those it can; a reference counted back past the groups opened so
+        // far, or an octal escape past a byte, is known here.
+        $this->state = new ParseState($stream, $this->pattern, $this->target, $this->unicodeMode, PhpVersionGates::badEscapeIsLiteral($this->target->phpVersionId, $flags));
+        $this->classes = null;
         $this->recursionDepth = $this->depthBefore;
         $this->captureCount = $this->capturesBefore;
         $this->splitEscape = null;
@@ -406,7 +394,7 @@ final class TokenParser
             }
 
             if (TokenType::QuoteModeStart === $type || TokenType::QuoteModeEnd === $type) {
-                $this->inQuoteMode = TokenType::QuoteModeStart === $type;
+                $this->state->inQuoteMode = TokenType::QuoteModeStart === $type;
                 $this->stream->advance();
 
                 continue;
@@ -449,7 +437,7 @@ final class TokenParser
      */
     private function consumeExtendedModeContent(array &$nodes): bool
     {
-        if (!$this->extendedMode || $this->inQuoteMode) {
+        if (!$this->extendedMode || $this->state->inQuoteMode) {
             return false;
         }
 
@@ -491,7 +479,7 @@ final class TokenParser
         $startToken = $this->stream->current(); // '#'
         $startPosition = $startToken->position;
 
-        $comment = $this->sourceTextOf($startToken);
+        $comment = $this->state->sourceTextOf($startToken);
         $this->stream->advance();
 
         while (!$this->stream->isAtEnd()) {
@@ -499,13 +487,13 @@ final class TokenParser
 
             // Comment ends at newline (included) or at end of pattern.
             if (TokenType::Literal === $token->type && "\n" === $token->value) {
-                $comment .= $this->sourceTextOf($token);
+                $comment .= $this->state->sourceTextOf($token);
                 $this->stream->advance();
 
                 break;
             }
 
-            $comment .= $this->sourceTextOf($token);
+            $comment .= $this->state->sourceTextOf($token);
             $this->stream->advance();
         }
 
@@ -521,7 +509,7 @@ final class TokenParser
      */
     private function skipExtendedModeContent(): int
     {
-        if (!$this->extendedMode || $this->inQuoteMode) {
+        if (!$this->extendedMode || $this->state->inQuoteMode) {
             return 0;
         }
 
@@ -567,7 +555,7 @@ final class TokenParser
      */
     private function skipExtendedWhitespace(): int
     {
-        if (!$this->extendedMode || $this->inQuoteMode) {
+        if (!$this->extendedMode || $this->state->inQuoteMode) {
             return 0;
         }
 
@@ -796,7 +784,7 @@ final class TokenParser
         // its lazy/possessive modifier: "a* +" means "a*+" to PCRE. A line
         // comment there is kept by the sequence, which then applies the
         // modifier after it to this quantifier.
-        if (QuantifierType::Greedy === $type && $this->extendedMode && !$this->inQuoteMode) {
+        if (QuantifierType::Greedy === $type && $this->extendedMode && !$this->state->inQuoteMode) {
             $skippedModifier = $this->skipExtendedWhitespace();
             if ($this->stream->check(TokenType::Quantifier) && \in_array($this->stream->current()->value, ['+', '?'], true)) {
                 $modifier = $this->stream->current()->value;
@@ -906,7 +894,7 @@ final class TokenParser
             case TokenType::CommentOpen:
                 $this->stream->advance();
 
-                return $this->parseComment();
+                return $this->state->comment();
             case TokenType::Callout:
                 $this->stream->advance();
 
@@ -922,7 +910,7 @@ final class TokenParser
             case TokenType::CharClassOpen:
                 $this->stream->advance();
 
-                return $this->parseWordBoundaryClass() ?? $this->parseCharClass();
+                return $this->classes()->wordBoundary() ?? $this->classes()->parse();
             case TokenType::PcreVerb:
                 $this->stream->advance();
 
@@ -996,7 +984,7 @@ final class TokenParser
      */
     private function guardOpenCountBeforeTen37(Token $token): void
     {
-        if (TokenType::Literal !== $token->type || $this->inQuoteMode || '{' !== ($this->pattern[$token->position] ?? '')
+        if (TokenType::Literal !== $token->type || $this->state->inQuoteMode || '{' !== ($this->pattern[$token->position] ?? '')
             || $this->supports(PcreFeature::LargeOpenCountIsText)) {
             return;
         }
@@ -1015,11 +1003,11 @@ final class TokenParser
     {
         $this->guardNamedReferenceEscape();
 
-        if (null !== $atom = $this->matchAtom($startPosition, self::OUTSIDE_ATOM_TYPES)) {
+        if (null !== $atom = $this->matchAtom($startPosition)) {
             $this->guardOpenCountBeforeTen37($this->stream->previous());
 
             // Without UTF mode "x" skips a 0x85 byte inside a character too.
-            if ($atom instanceof LiteralNode && $this->extendedMode && !$this->unicodeMode && !$this->inQuoteMode
+            if ($atom instanceof LiteralNode && $this->extendedMode && !$this->unicodeMode && !$this->state->inQuoteMode
                 && TokenType::Literal === $this->stream->previous()->type && \strlen($atom->value) > 1 && str_contains($atom->value, "\x85")) {
                 return new LiteralNode(str_replace("\x85", '', $atom->value), $atom->getStartPosition(), $atom->getEndPosition(), $atom->isRaw);
             }
@@ -1053,7 +1041,7 @@ final class TokenParser
     private function guardNamedReferenceEscape(): void
     {
         $token = $this->stream->current();
-        if (TokenType::LiteralEscaped !== $token->type || 'k' !== $token->value || $this->inQuoteMode || $this->readsBadEscapeAt($token->position)) {
+        if (TokenType::LiteralEscaped !== $token->type || 'k' !== $token->value || $this->state->inQuoteMode || $this->readsBadEscapeAt($token->position)) {
             return;
         }
 
@@ -1114,21 +1102,15 @@ final class TokenParser
     }
 
     /**
-     * Read the next token if it describes a character, and turn it into a node.
-     *
-     * These are the atoms whose meaning does not depend on where they are
-     * written: "\d" is the same inside a class and outside it. What differs
-     * between the two contexts is the rest — a dot, a subroutine call, a
-     * range — and that is handled by the callers.
+     * Read the next token if it is an atom, and turn it into a node: a
+     * character, read the same way inside a class, or an anchor, an
+     * assertion or a back reference, which only stand outside one.
      */
-    /**
-     * @param list<TokenType> $extraTypes atoms the calling context also accepts
-     */
-    private function matchAtom(int $startPosition, array $extraTypes = []): ?NodeInterface
+    private function matchAtom(int $startPosition): ?NodeInterface
     {
         $type = $this->stream->currentType();
-        if (!\in_array($type, self::ATOM_TYPES, true) && !\in_array($type, $extraTypes, true)) {
-            return null;
+        if (!\in_array($type, self::OUTSIDE_ATOM_TYPES, true)) {
+            return $this->state->matchAtom($startPosition);
         }
 
         $this->stream->advance();
@@ -1153,31 +1135,9 @@ final class TokenParser
         }
 
         return match ($type) {
-            // Between "\Q" and "\E" a backslash is text: "\Q\x\E" is "\x".
-            TokenType::Literal => new LiteralNode($token->value, $startPosition, $token->end()),
-            // "\x" with no digit is NUL where PCRE takes it (up to 10.44).
-            TokenType::LiteralEscaped => '\\x' === substr($this->pattern, $token->position, 2) && 2 === $token->end() - $token->position
-                && '{' !== ($this->pattern[$token->end()] ?? '')
-                ? new CharLiteralNode('\\x', 0, CharLiteralType::Unicode, $startPosition, $token->end())
-                : new LiteralNode($token->value, $startPosition, $token->end()),
-            TokenType::CharType => new CharTypeNode($token->value, $startPosition, $token->end()),
             TokenType::Anchor => new AnchorNode($token->value, $startPosition, $token->end()),
             TokenType::Assertion => new AssertionNode($token->value, $startPosition, $token->end()),
-            TokenType::Backref => new BackrefNode(self::withoutBracePadding($token->value), $startPosition, $token->end()),
-            TokenType::ControlChar => new ControlCharNode(
-                $token->value,
-                CodePointReader::fromControlChar($token->value),
-                $startPosition,
-                $token->end(),
-            ),
-            TokenType::UnicodeProp => new UnicodePropNode(
-                $token->value,
-                str_starts_with($token->value, '{'),
-                $startPosition,
-                $token->end(),
-                $this->isNegatedPropertySyntax($startPosition),
-            ),
-            default => $this->createCharLiteralNodeFromToken($token, $type, $startPosition),
+            default => new BackrefNode(self::withoutBracePadding($token->value), $startPosition, $token->end()),
         };
     }
 
@@ -1205,43 +1165,6 @@ final class TokenParser
             $captures ? GroupType::Capturing : GroupType::NonCapturing,
             $startToken->position,
             $endToken,
-        );
-    }
-
-    /**
-     * "[[:<:]]" and "[[:>:]]", exactly, are no classes: PCRE2 reads them as
-     * the start and the end of a word, "\b(?=\w)" and "\b(?<=\w)".
-     */
-    private function parseWordBoundaryClass(): ?GroupNode
-    {
-        $start = $this->stream->previous()->position;
-        $text = substr($this->pattern, $start, 7);
-        if ('[[:<:]]' !== $text && '[[:>:]]' !== $text) {
-            return null;
-        }
-
-        $end = $start + 7;
-        while (!$this->stream->isAtEnd() && $this->stream->current()->position < $end) {
-            $this->stream->advance();
-        }
-
-        // Each node starts inside the one holding it, as written groups do.
-        $side = new GroupNode(
-            new CharTypeNode('w', $start + 2, $end - 1),
-            '<' === $text[3] ? GroupType::LookaheadPositive : GroupType::LookbehindPositive,
-            null,
-            null,
-            $start + 1,
-            $end - 1,
-        );
-
-        return new GroupNode(
-            new SequenceNode([new AssertionNode('b', $start + 1, $start + 1), $side], $start + 1, $end - 1),
-            GroupType::NonCapturing,
-            null,
-            null,
-            $start,
-            $end,
         );
     }
 
@@ -1529,56 +1452,13 @@ final class TokenParser
     }
 
     /**
-     * parses comments like (?# this is a comment )
-     */
-    private function parseComment(): CommentNode
-    {
-        $startToken = $this->stream->previous(); // (?#
-        $startPosition = $startToken->position;
-
-        $comment = '';
-        while (
-            !$this->stream->isAtEnd()
-            && !$this->stream->check(TokenType::GroupClose)
-        ) {
-            $token = $this->stream->current();
-            $comment .= $this->sourceTextOf($token);
-            $this->stream->advance();
-        }
-
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close comment', ErrorCode::CommentUnclosed);
-        $endPosition = $endToken->position + 1;
-
-        return new CommentNode($comment, $startPosition, $endPosition);
-    }
-
-    /**
-     * The text a token was cut from, exactly as the pattern spelled it.
-     *
-     * The lexer rewrites what it reads — "\d" comes back as "d",
-     * "\P{Greek}" as "{^Greek}" — so the value cannot be turned back into
-     * source. The token knows its span instead.
-     */
-    /**
-     * Whether a unicode property was written "\P{...}" rather than "\p{...}".
-     *
-     * The lexer folds the negation into the value — "\P{Greek}" and
-     * "\p{^Greek}" arrive as the same token — so which of the two was written
-     * can only be read from the pattern.
-     */
-    private function isNegatedPropertySyntax(int $startPosition): bool
-    {
-        return 'P' === ($this->pattern[$startPosition + 1] ?? 'p');
-    }
-
-    /**
      * Whether PHP 7.3 and 7.4 read the escape whose backslash stands at
      * $position, outside a class, as the character after the backslash,
      * knowing the groups opened so far.
      */
     private function readsBadEscapeAt(int $position): bool
     {
-        return $this->badEscapeIsLiteral && !$this->inQuoteMode
+        return $this->state->badEscapeIsLiteral && !$this->state->inQuoteMode
             && BadEscape::at($this->pattern, $position, false, $this->unicodeMode, $this->target, $this->captureCount);
     }
 
@@ -1609,11 +1489,6 @@ final class TokenParser
         $this->splitEscape = new SequenceNode($parts, $startPosition, $end);
 
         return $this->splitEscape;
-    }
-
-    private function sourceTextOf(Token $token): string
-    {
-        return substr($this->pattern, $token->position, $token->sourceLength);
     }
 
     /**
@@ -1668,25 +1543,6 @@ final class TokenParser
         $this->splitEscape = new SequenceNode([$escape, new LiteralNode($text, $escapeEnd, $token->end())], $startPosition, $token->end());
 
         return $this->splitEscape;
-    }
-
-    private function createCharLiteralNodeFromToken(Token $token, TokenType $type, int $startPosition): CharLiteralNode
-    {
-        [$representation, $charType] = match ($type) {
-            TokenType::Unicode => [$token->value, CharLiteralType::Unicode],
-            TokenType::UnicodeNamed => ['\\N{'.$token->value.'}', CharLiteralType::UnicodeNamed],
-            TokenType::Octal => [$token->value, CharLiteralType::Octal],
-            TokenType::OctalLegacy => ['\\'.$token->value, CharLiteralType::OctalLegacy],
-            default => throw new \LogicException('Unsupported character literal token type.'),
-        };
-
-        return new CharLiteralNode(
-            $representation,
-            CodePointReader::fromLiteral($representation, $charType),
-            $charType,
-            $startPosition,
-            $token->end(),
-        );
     }
 
     /**
@@ -1789,11 +1645,11 @@ final class TokenParser
     {
         $verbStartPosition = $this->stream->current()->position;
 
-        $verb = $this->consumeWhile(static fn (string $c): bool => ':' !== $c);
+        $verb = $this->state->consumeWhile(static fn (string $c): bool => ':' !== $c);
 
         // A verb may carry an argument, as "(*MARK:name)" does.
         $argument = $this->stream->matchLiteral(':')
-            ? $this->consumeWhile(static fn (): bool => true)
+            ? $this->state->consumeWhile(static fn (): bool => true)
             : '';
 
         $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close PCRE verb', ErrorCode::VerbUnclosed);
@@ -1886,10 +1742,10 @@ final class TokenParser
     private function parseCommentedConditional(int $startPosition): NodeInterface
     {
         do {
-            $this->skipEmptyQuotes();
+            $this->state->skipEmptyQuotes();
             $skipped = $this->skipExtendedModeContent();
             if ($this->stream->match(TokenType::CommentOpen)) {
-                $this->parseComment();
+                $this->state->comment();
                 $skipped++;
             }
         } while ($skipped > 0);
@@ -1941,10 +1797,10 @@ final class TokenParser
 
         // PCRE skips a comment, an empty "\Q\E" and "x" whitespace there.
         do {
-            $this->skipEmptyQuotes();
+            $this->state->skipEmptyQuotes();
             $skipped = $this->skipExtendedModeContent();
             if ($this->stream->match(TokenType::CommentOpen)) {
-                $this->parseComment();
+                $this->state->comment();
                 $skipped++;
             }
         } while ($skipped > 0);
@@ -2555,7 +2411,7 @@ final class TokenParser
             $tokensConsumed++;
         }
 
-        if ($this->isLiteralDigitToken()) {
+        if ($this->state->isLiteralDigitToken()) {
             $num .= $this->stream->current()->value;
             $this->stream->advance();
             $tokensConsumed++;
@@ -2895,7 +2751,7 @@ final class TokenParser
         $ascii = $this->supports(PcreFeature::AsciiOptions);
         $afterA = false;
 
-        return $letters.$this->consumeWhile(
+        return $letters.$this->state->consumeWhile(
             static function (string $c) use ($accepted, $ascii, &$afterA): bool {
                 if ($afterA && str_contains('DSWPT', $c)) {
                     $afterA = false;
@@ -2908,6 +2764,11 @@ final class TokenParser
                 return $afterA || '-' === $c || str_contains($accepted, $c);
             },
         );
+    }
+
+    private function classes(): ClassParser
+    {
+        return $this->classes ??= new ClassParser($this->state);
     }
 
     private function supports(PcreFeature $feature): bool
@@ -3044,7 +2905,7 @@ final class TokenParser
     {
         $savedPos = $this->stream->getPosition();
         $word = '';
-        while ($this->isLiteralAlphaToken()) {
+        while ($this->state->isLiteralAlphaToken()) {
             $word .= $this->stream->current()->value;
             $this->stream->advance();
         }
@@ -3104,19 +2965,19 @@ final class TokenParser
             $sign = $this->stream->current()->value;
             $this->stream->advance();
 
-            if (!$this->isLiteralDigitToken()) {
+            if (!$this->state->isLiteralDigitToken()) {
                 $this->stream->rewind(1);
 
                 return null;
             }
         }
 
-        if (!$this->isLiteralDigitToken()) {
+        if (!$this->state->isLiteralDigitToken()) {
             return null;
         }
 
         $this->stream->advance();
-        $num = (string) ($this->stream->previous()->value.$this->consumeWhile(
+        $num = (string) ($this->stream->previous()->value.$this->state->consumeWhile(
             static fn (string $c): bool => Ascii::isDigit($c),
         ));
 
@@ -3204,7 +3065,7 @@ final class TokenParser
             throw $nameError;
         }
 
-        $digits = $this->consumeWhile(static fn (string $c): bool => Ascii::isDigit($c));
+        $digits = $this->state->consumeWhile(static fn (string $c): bool => Ascii::isDigit($c));
         if (!$this->stream->check(TokenType::GroupClose)) {
             $this->stream->setPosition($savedPos);
 
@@ -3396,217 +3257,6 @@ final class TokenParser
     }
 
     /**
-     * parses a character class, including its parts and negation
-     */
-    private function parseCharClass(): CharClassNode
-    {
-        $startToken = $this->stream->previous();
-        $startPosition = $startToken->position;
-        $isNegated = $this->parseCharClassPrefix();
-        $parts = $this->parseCharClassAlternation();
-
-        $endToken = $this->stream->consume(TokenType::CharClassClose, 'Expected "]" to close character class', ErrorCode::CharclassUnclosed);
-
-        return new CharClassNode($parts, $isNegated, $startPosition, $endToken->position + 1);
-    }
-
-    /**
-     * Read what PCRE skips before the first member of a class: "\E", an
-     * empty "\Q\E" and the negating "^", in any order, so "[\E^a]" is
-     * negated. The lexer only gives a negation token in that prefix.
-     *
-     * @return bool whether the class is negated
-     */
-    private function parseCharClassPrefix(): bool
-    {
-        $isNegated = false;
-
-        while (true) {
-            if ($this->stream->match(TokenType::Negation)) {
-                $isNegated = true;
-            } elseif ($this->stream->match(TokenType::QuoteModeStart)) {
-                $this->inQuoteMode = true;
-            } elseif ($this->stream->match(TokenType::QuoteModeEnd)) {
-                $this->inQuoteMode = false;
-            } else {
-                return $isNegated;
-            }
-        }
-    }
-
-    /**
-     * Parses the members of a character class.
-     */
-    private function parseCharClassAlternation(): NodeInterface
-    {
-        $parts = [];
-
-        while (
-            !$this->stream->check(TokenType::CharClassClose)
-            && !$this->stream->isAtEnd()
-        ) {
-            // Silent tokens inside char class
-            if ($this->stream->match(TokenType::QuoteModeStart)) {
-                $this->inQuoteMode = true;
-
-                continue;
-            }
-            if ($this->stream->match(TokenType::QuoteModeEnd)) {
-                $this->inQuoteMode = false;
-
-                continue;
-            }
-            array_push($parts, ...$this->parseCharClassParts());
-        }
-
-        if (empty($parts)) {
-            return $this->createEmptyLiteralNodeAt($this->stream->current()->position);
-        }
-
-        if (1 === \count($parts)) {
-            return $parts[0];
-        }
-
-        $start = $parts[0]->getStartPosition();
-        $end = $parts[\count($parts) - 1]->getEndPosition();
-
-        return new AlternationNode($parts, $start, $end);
-    }
-
-    /**
-     * Determines if a node type cannot be an endpoint in a character class range.
-     *
-     * In PCRE, CharTypeNode, UnicodePropNode, PosixClassNode, and CharClassNode
-     * cannot serve as range endpoints - a hyphen following them is treated as a literal.
-     */
-    /**
-     * PCRE takes a range between two characters; "[\d-z]" names no range.
-     *
-     * @throws ParserException
-     */
-    private function guardRangeEndpoint(NodeInterface $node, int $position, bool $isEnd): void
-    {
-        if (!$this->isNonRangeEndpointType($node)) {
-            return;
-        }
-
-        // Before PCRE2 10.45, a range start is refused on the hyphen, a POSIX
-        // class ending a range just inside its "[", and a type or a property
-        // ending one past its letter.
-        if (!($this->supports(PcreFeature::RangeFromTypeReadToItsEnd))) {
-            $position = match (true) {
-                !$isEnd => $position - 1,
-                $node instanceof PosixClassNode => $node->getStartPosition() + 1,
-                // A type or a property.
-                default => $node->getStartPosition() + 2,
-            };
-        }
-
-        throw $this->parserException(
-            \sprintf(
-                'Invalid range in character class: a character type, POSIX class, or Unicode property cannot be a range endpoint at position %d.',
-                $position,
-            ),
-            ErrorCode::RangeInvalidBounds,
-            $position,
-        );
-    }
-
-    /**
-     * Whether an escape PCRE refuses inside a class starts at $position:
-     * an assertion such as "\B", "\R", "\X", or "\N" that names no code
-     * point, or a letter with no meaning there, as "\j".
-     */
-    private function isClassInvalidEscapeAt(Token $token, bool $endsRange = false): bool
-    {
-        $position = $token->position;
-        if ('\\' !== ($this->pattern[$position] ?? '')) {
-            return false;
-        }
-
-        // PHP 7.3 and 7.4 read one PCRE2 refuses as it reads it as its letter.
-        if ($this->badEscapeIsLiteral && BadEscape::at($this->pattern, $position, true, $this->unicodeMode, $this->target, null, $endsRange)) {
-            return false;
-        }
-
-        $letter = $this->pattern[$position + 1] ?? '';
-
-        // "\N{" is refused where check_escape() refuses the brace, but for
-        // a count it reads, which leaves "\N", and a code point the lexer
-        // read as one.
-        if ('N' === $letter) {
-            if ('{' !== ($this->pattern[$position + 2] ?? '')) {
-                return true;
-            }
-
-            return NamedCharacterBrace::namesCodePoint($this->pattern, $position + 2, $this->target)
-                ? TokenType::UnicodeNamed !== $token->type
-                : null !== NamedCharacterBrace::errorInClass($this->pattern, $position + 2, $this->target);
-        }
-
-        // An assertion, or a letter PCRE gives no meaning in a class; "\k" is
-        // the letter from PCRE2 10.45.
-        return '' !== $letter && (str_contains('ABCFGIJKLMORTUXYZijlmquyz', $letter) || ('k' === $letter && !$this->supports(PcreFeature::ClassBackslashKIsLetter)));
-    }
-
-    /**
-     * Refuses the range an escape that names no character ends, past the
-     * escape's letter, as PCRE2 does before 10.45.
-     *
-     * @throws ParserException
-     */
-    private function throwEscapeEndingRange(int $endAt): never
-    {
-        throw $this->parserException(
-            \sprintf('Invalid range in character class: "\%s" cannot end a range, at position %d.', $this->pattern[$endAt + 1], $endAt + 2),
-            ErrorCode::RangeInvalidBounds,
-            $endAt + 2,
-        );
-    }
-
-    /**
-     * Whether the class item at the current token is a code point PCRE
-     * refuses where it reads it. The stream is left where it was.
-     */
-    private function endRefusesCodePoint(): bool
-    {
-        $at = $this->stream->getPosition();
-
-        try {
-            [$endNode] = $this->parseCharClassAtom($this->stream->current()->position);
-        } catch (ParserException) {
-            return false;
-        } finally {
-            $this->stream->setPosition($at);
-        }
-
-        return $this->refusesCodePoint($endNode);
-    }
-
-    /**
-     * Whether the node is a code point PCRE refuses where it reads it: past
-     * \xFF without UTF, past U+10FFFF or a surrogate under it.
-     */
-    private function refusesCodePoint(NodeInterface $node): bool
-    {
-        if (!$node instanceof CharLiteralNode) {
-            return false;
-        }
-
-        $codePoint = $node->codePoint;
-
-        return $this->unicodeMode ? $codePoint > 0x10FFFF || ($codePoint >= 0xD800 && $codePoint <= 0xDFFF) : $codePoint > 0xFF;
-    }
-
-    private function isNonRangeEndpointType(NodeInterface $node): bool
-    {
-        return $node instanceof CharTypeNode
-            || $node instanceof UnicodePropNode
-            || $node instanceof PosixClassNode
-            || $node instanceof CharClassNode;
-    }
-
-    /**
      * Checks if a node represents an empty value (empty literal or empty sequence/group).
      */
     private function isEmptyNode(NodeInterface $node): bool
@@ -3637,296 +3287,6 @@ final class TokenParser
             || $node instanceof PcreVerbNode
             || $node instanceof LimitMatchNode
             || $node instanceof KeepNode;
-    }
-
-    /**
-     * Parses a single character class atom (literal, char type, unicode, etc).
-     *
-     * @return array{0: NodeInterface, 1: int} The node and its end position
-     */
-    private function parseCharClassAtom(int $startPosition): array
-    {
-        // An anchor, an assertion or a backreference is a plain character
-        // inside a class: "[$]" is a dollar sign, not an anchor. The lexer
-        // already gives them as literals there, so what is left is the same
-        // set of atoms as outside, plus what only a class can hold.
-        if (null !== $atom = $this->matchAtom($startPosition)) {
-            return [$atom, $atom->getEndPosition()];
-        }
-
-        if ($this->stream->match(TokenType::CharClassOpen)) {
-            $node = $this->parseCharClass();
-
-            return [$node, $node->getEndPosition()];
-        }
-
-        if ($this->stream->match(TokenType::Range)) {
-            $token = $this->stream->previous();
-
-            return [new LiteralNode($token->value, $startPosition, $token->end()), $token->end()];
-        }
-
-        if ($this->stream->match(TokenType::PosixClass)) {
-            $token = $this->stream->previous();
-
-            return [new PosixClassNode($token->value, $startPosition, $token->end()), $token->end()];
-        }
-
-        throw $this->parserException(
-            \sprintf(
-                'Unexpected token "%s" in character class at position %d.',
-                $this->stream->current()->value,
-                $this->stream->current()->position,
-            ),
-            ErrorCode::TokenUnexpected,
-            $this->stream->current()->position,
-        );
-    }
-
-    /**
-     * The next part of a class, or the parts PCRE reads there. Without UTF
-     * mode PCRE reads a class byte by byte: a multibyte character ending a
-     * range ends it on its first byte, and a "-" after it starts a range
-     * from its last byte, the bytes between members: "[a-é-a]" is the range
-     * a to 0xC3, then 0xA9 to "a". The range is cut only when that "-" makes
-     * a range.
-     *
-     * @return non-empty-list<NodeInterface>
-     */
-    private function parseCharClassParts(): array
-    {
-        $parts = [];
-        $part = $this->parseCharClassPart();
-
-        while (!$this->unicodeMode && $part instanceof RangeNode && $part->end instanceof LiteralNode && \strlen($part->end->value) > 1) {
-            $end = $part->end;
-            $endsAt = $end->getEndPosition();
-            $tokenAt = $this->stream->getPosition();
-            $wasInQuoteMode = $this->inQuoteMode;
-            $next = $this->parseCharClassPart(new LiteralNode(substr($end->value, -1), $endsAt - 1, $endsAt, $end->isRaw));
-            if (!$next instanceof RangeNode) {
-                $this->stream->setPosition($tokenAt);
-                $this->inQuoteMode = $wasInQuoteMode;
-
-                break;
-            }
-
-            // The first byte ends the range; the bytes between are members.
-            $firstEndsAt = $endsAt - \strlen($end->value) + 1;
-            $parts[] = new RangeNode($part->start, new LiteralNode($end->value[0], $end->getStartPosition(), $firstEndsAt, $end->isRaw), $part->getStartPosition(), $firstEndsAt);
-            if ($endsAt - 1 > $firstEndsAt) {
-                $parts[] = new LiteralNode(substr($end->value, 1, -1), $firstEndsAt, $endsAt - 1, $end->isRaw);
-            }
-
-            $part = $next;
-        }
-
-        $parts[] = $part;
-
-        return $parts;
-    }
-
-    /**
-     * parses a part of a character class, which can be a literal, range, char type, unicode property, etc
-     *
-     * @param LiteralNode|null $lastByte the last byte of a multibyte range end, which starts this part
-     */
-    private function parseCharClassPart(?LiteralNode $lastByte = null): NodeInterface
-    {
-        if (null !== $lastByte) {
-            $startNode = $lastByte;
-            $startPosition = $lastByte->getStartPosition();
-        } else {
-            $startToken = $this->stream->current();
-            $startPosition = $startToken->position;
-
-            [$startNode] = $this->parseCharClassAtom($startPosition);
-
-            // PCRE refuses such an escape as soon as it reads it, before any
-            // "-" after it could make a range.
-            if ($this->isClassInvalidEscapeAt($startToken)) {
-                return $startNode;
-            }
-        }
-
-        // PCRE also skips "\E" and an empty "\Q\E" before the "-": "[z\E-a]"
-        // is the range z-a. Without a "-" after them, they are left to the
-        // class loop as they were. A quoted run of several characters starts
-        // its range at its last one, which one node cannot say, so that case
-        // keeps its members apart.
-        $beforeQuotes = $this->stream->getPosition();
-        $wasInQuoteMode = $this->inQuoteMode;
-        $singleCharacterStart = !($startNode instanceof LiteralNode && mb_strlen($startNode->value, 'UTF-8') > 1);
-        // A class escape before them, "[\w\E-a]", keeps a member "-" up to
-        // PCRE2 10.44, the newest any PHP release bundles; from 10.45 the
-        // range forms and fails, so only a newer linked PCRE2 refuses it.
-        $classEscapeStart = $startNode instanceof CharTypeNode
-            || $startNode instanceof PosixClassNode
-            || $startNode instanceof UnicodePropNode;
-        if ($singleCharacterStart && (!$classEscapeStart || $this->supports(PcreFeature::EmptyQuoteSkippedAfterClassEscape))) {
-            $this->skipEmptyQuotes();
-        }
-
-        // Check for Range
-        $rangePosition = $this->stream->getPosition();
-        if (!$this->stream->match(TokenType::Range)) {
-            $this->stream->setPosition($beforeQuotes);
-            $this->inQuoteMode = $wasInQuoteMode;
-
-            return $startNode;
-        }
-
-        // Under "(?xx)" a space or a tab between a class escape and the "-",
-        // which the lexer skipped, keeps the "-" a member up to PCRE2 10.44:
-        // "[\d -z]" is "[\d\-z]". From 10.45 the range forms and fails.
-        if ($classEscapeStart && $this->stream->previous()->position > $startNode->getEndPosition()
-            && !$this->supports(PcreFeature::SpacedHyphenAfterClassEscapeMakesRange)) {
-            $this->stream->setPosition($rangePosition);
-
-            return $startNode;
-        }
-
-        // A code point PCRE refuses as it reads it, "[\x{100}-\z]" without
-        // UTF, is refused before the "-": the range is not read, and the
-        // validator reports the character.
-        if ($this->refusesCodePoint($startNode)) {
-            $this->stream->setPosition($rangePosition);
-
-            return $startNode;
-        }
-
-        // PCRE refuses a class escape before the "-" once it has read the "-".
-        $afterHyphen = $this->stream->previous()->end();
-        $length = \strlen($this->pattern);
-
-        // Before PCRE2 10.45 a range from a type is refused on its hyphen,
-        // before its end is read, unless the pattern ends after the hyphen
-        // or a "]" follows it, read as characters: "[\w-\Q\E]" is refused.
-        $rangeFromType = $this->isNonRangeEndpointType($startNode);
-        if ($rangeFromType && !$this->supports(PcreFeature::RangeFromTypeReadToItsEnd)) {
-            if ($afterHyphen >= $length || ']' === $this->pattern[$afterHyphen]) {
-                $this->stream->setPosition($rangePosition);
-
-                return $startNode;
-            }
-
-            $this->guardRangeEndpoint($startNode, $afterHyphen, false);
-        }
-
-        // PCRE skips "\E" and an empty "\Q\E" after the "-": "[a-\Ec]" is
-        // the range a-c, and in "[a-\Q\E]" the "-" is a plain member. From
-        // 10.45 a "-" after a class escape that the pattern ends after, past
-        // them or in a "\Q" that quotes nothing, is one too: the "]" is
-        // missing.
-        $this->skipEmptyQuotes();
-        $quoteEndingThePattern = $this->stream->check(TokenType::QuoteModeStart)
-            && TokenType::Eof === $this->stream->peek()->type && $this->stream->peek()->position >= $length;
-
-        if ($this->stream->check(TokenType::CharClassClose)
-            || ($rangeFromType && (($this->stream->isAtEnd() && $this->stream->current()->position >= $length) || $quoteEndingThePattern))) {
-            $this->stream->setPosition($rangePosition);
-
-            return $startNode;
-        }
-
-        // From 10.45 the end of a range from a type is read first: a code
-        // point PCRE refuses there is reported as itself, by the validator.
-        if ($rangeFromType && $this->endRefusesCodePoint()) {
-            $this->stream->setPosition($rangePosition);
-
-            return $startNode;
-        }
-
-        // Before PCRE2 10.45, an escape that names no character ends a range
-        // as a type does: the range is refused past its letter, before a
-        // name after it is read. A property PCRE reads is left to
-        // guardRangeEndpoint().
-        $endAt = $this->stream->current()->position;
-        $endsAsInvalidRange = !$this->supports(PcreFeature::ClassEscapeEndingRangeRefusedAsEscape)
-            && !($this->badEscapeIsLiteral && BadEscape::at($this->pattern, $endAt, true, $this->unicodeMode, $this->target, null, true));
-        if ($endsAsInvalidRange && TokenType::UnicodeProp !== $this->stream->current()->type && BadEscape::endsRangeAsInvalidRange($this->pattern, $endAt, $this->pcre2Ten32)) {
-            $this->throwEscapeEndingRange($endAt);
-        }
-
-        if ($this->isClassInvalidEscapeAt($this->stream->current(), true)) {
-            // A "\N{" check_escape() refuses is refused before the range.
-            if ($endsAsInvalidRange && 'N' === $this->pattern[$endAt + 1] && '{' !== ($this->pattern[$endAt + 2] ?? '')) {
-                $this->throwEscapeEndingRange($endAt);
-            }
-
-            $this->stream->setPosition($rangePosition);
-
-            return $startNode;
-        }
-
-        $this->guardRangeEndpoint($startNode, $afterHyphen, false);
-
-        if ($this->stream->check(TokenType::CharClassOpen)) {
-            $this->stream->rewind(1);
-
-            return $startNode;
-        }
-
-        // A quoted end, "[a-\Qcz\E]", ends the range at the first quoted
-        // character; the lexer gives a class one quoted character at a time,
-        // so the rest stay members.
-        if ($this->stream->check(TokenType::QuoteModeStart)) {
-            if (TokenType::Literal !== $this->stream->peek()->type) {
-                $this->stream->setPosition($beforeQuotes);
-                $this->inQuoteMode = $wasInQuoteMode;
-
-                return $startNode;
-            }
-
-            $this->stream->advance();
-            $this->inQuoteMode = true;
-        }
-
-        $endToken = $this->stream->current();
-        $endPosition = $endToken->position;
-
-        try {
-            [$endNode] = $this->parseCharClassAtom($endPosition);
-        } catch (ParserException) {
-            throw $this->parserException(
-                \sprintf(
-                    'Unexpected token "%s" in character class range at position %d.',
-                    $this->stream->current()->value,
-                    $this->stream->current()->position,
-                ),
-                ErrorCode::TokenUnexpected,
-                $this->stream->current()->position,
-            );
-        }
-
-        // A class escape after it, once it has read the escape.
-        $this->guardRangeEndpoint($endNode, $endNode->getEndPosition(), true);
-
-        return new RangeNode($startNode, $endNode, $startPosition, $endNode->getEndPosition());
-    }
-
-    /**
-     * Skip the "\E" and empty "\Q\E" that PCRE reads as nothing.
-     */
-    private function skipEmptyQuotes(): void
-    {
-        while (true) {
-            if ($this->stream->match(TokenType::QuoteModeEnd)) {
-                $this->inQuoteMode = false;
-
-                continue;
-            }
-
-            if ($this->stream->check(TokenType::QuoteModeStart)
-                && TokenType::QuoteModeEnd === $this->stream->peek()->type) {
-                $this->stream->advance();
-                $this->stream->advance();
-
-                continue;
-            }
-
-            return;
-        }
     }
 
     /**
@@ -4232,40 +3592,5 @@ final class TokenParser
         $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
 
         return $this->createGroupNode($expr, $type, $startPosition, $endToken);
-    }
-
-    /**
-     * Check if current token is a literal digit.
-     */
-    private function isLiteralDigitToken(): bool
-    {
-        return $this->stream->check(TokenType::Literal) && Ascii::isDigit($this->stream->current()->value);
-    }
-
-    /**
-     * @return bool true if the current token is a T_LITERAL and its value is an alphabetic character (a-z, A-Z)
-     */
-    private function isLiteralAlphaToken(): bool
-    {
-        return $this->stream->check(TokenType::Literal) && Ascii::isAlpha($this->stream->current()->value);
-    }
-
-    /**
-     * Consumes tokens while the predicate returns true, concatenating their values.
-     */
-    private function consumeWhile(callable $predicate): string
-    {
-        $value = '';
-
-        while (
-            !$this->stream->isAtEnd()
-            && $this->stream->check(TokenType::Literal)
-            && $predicate($this->stream->current()->value)
-        ) {
-            $value .= $this->stream->current()->value;
-            $this->stream->advance();
-        }
-
-        return $value;
     }
 }

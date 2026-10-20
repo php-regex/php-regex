@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\TestUtils;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\GroupNameReader;
+use PHPRegex\Parser\Syntax\ParseState;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
@@ -74,10 +76,38 @@ final class ParserAccessor
         $property = $this->reflection->getProperty('stream');
         $property->setValue($this->parser, $stream);
 
-        // parse() builds this alongside the stream; a test that installs a
-        // stream by hand has to install it too, or the parser is half set up.
+        // parse() builds these alongside the stream; a test that installs a
+        // stream by hand has to install them too, or the parser is half set up.
         $groupNames = $this->reflection->getProperty('groupNames');
         $groupNames->setValue($this->parser, new GroupNameReader($stream));
+        $this->installState();
+    }
+
+    /**
+     * Calls a private method of the reader of classes the parser holds,
+     * made on the reading state installed with the tokens.
+     *
+     * @param array<mixed> $args
+     */
+    public function callClassMethod(string $methodName, array $args = []): mixed
+    {
+        $classes = $this->reflection->getMethod('classes')->invoke($this->parser);
+        \assert(\is_object($classes));
+
+        return (new \ReflectionMethod($classes, $methodName))->invoke($classes, ...$args);
+    }
+
+    /**
+     * Calls a private method of the reading state installed with the tokens.
+     *
+     * @param array<mixed> $args
+     */
+    public function callStateMethod(string $methodName, array $args = []): mixed
+    {
+        $state = $this->reflection->getProperty('state')->getValue($this->parser);
+        \assert($state instanceof ParseState);
+
+        return (new \ReflectionMethod($state, $methodName))->invoke($state, ...$args);
     }
 
     /**
@@ -89,6 +119,7 @@ final class ParserAccessor
     public function setPattern(string $pattern): void
     {
         $this->reflection->getProperty('pattern')->setValue($this->parser, $pattern);
+        $this->installState();
     }
 
     public function setPosition(int $position): void
@@ -144,5 +175,21 @@ final class ParserAccessor
     public function current(): Token
     {
         return $this->stream()->current();
+    }
+
+    /**
+     * The reading state the parser shares with its readers, as parse() makes it,
+     * over the installed stream and pattern; the readers made on the last
+     * one are dropped.
+     */
+    private function installState(): void
+    {
+        $stream = $this->reflection->getProperty('stream')->getValue($this->parser);
+        $target = $this->reflection->getProperty('target')->getValue($this->parser);
+        \assert($stream instanceof TokenStream && $target instanceof PcreTarget);
+        $pattern = $this->reflection->getProperty('pattern')->getValue($this->parser);
+
+        $this->reflection->getProperty('state')->setValue($this->parser, new ParseState($stream, \is_string($pattern) ? $pattern : '', $target, false, false));
+        $this->reflection->getProperty('classes')->setValue($this->parser, null);
     }
 }

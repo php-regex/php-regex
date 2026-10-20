@@ -20,7 +20,9 @@ use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\GroupNameReader;
+use PHPRegex\Parser\Syntax\ParseState;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
@@ -185,8 +187,9 @@ final class ParserRejectionsTest extends TestCase
         $streamProp->setValue($parser, $stream);
         $patternProp = $ref->getProperty('pattern');
         $patternProp->setValue($parser, '?=a)');
-        // parse() builds the name reader alongside the stream.
+        // parse() builds the name reader and the reading state alongside the stream.
         $ref->getProperty('groupNames')->setValue($parser, new GroupNameReader($stream));
+        $ref->getProperty('state')->setValue($parser, new ParseState($stream, '?=a)', PcreTarget::runtime(), false, false));
 
         $method = $ref->getMethod('parseConditionalCondition');
         $node = $method->invoke($parser);

@@ -58,7 +58,7 @@ final class ParserBranchesTest extends TestCase
     }
 
     /**
-     * Test Parser.createCharLiteralNodeFromToken() unsupported type path
+     * Test ParseState::charLiteral() unsupported type path
      * This triggers the default case that throws InvalidArgumentException
      */
     public function test_parser_create_char_literal_unsupported_type(): void
@@ -67,12 +67,13 @@ final class ParserBranchesTest extends TestCase
         $accessor = new ParserAccessor($parser);
 
         $token = new Token(TokenType::Literal, 'test', 0);
+        $accessor->setTokens([]);
 
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessageIsOrContains('Unsupported character literal token type.');
 
-        // Call createCharLiteralNodeFromToken with unsupported type
-        $accessor->callPrivateMethod('createCharLiteralNodeFromToken', [$token, TokenType::Literal, 0]);
+        // Call charLiteral with unsupported type
+        $accessor->callStateMethod('charLiteral', [$token, TokenType::Literal, 0]);
     }
 
     /**
@@ -93,7 +94,7 @@ final class ParserBranchesTest extends TestCase
     }
 
     /**
-     * Test Parser.parseCharClassPart() unexpected token path
+     * Test ClassParser::readPart() unexpected token path
      * This triggers the else clause that throws for invalid tokens in character class
      */
     public function test_parser_parse_char_class_part_unexpected_token(): void
@@ -117,12 +118,12 @@ final class ParserBranchesTest extends TestCase
         $this->expectException(ParserException::class);
         $this->expectExceptionMessageIsOrContains('Unexpected token "^" in character class at position 1');
 
-        // Call parseCharClassPart which should throw for unexpected token
-        $accessor->callPrivateMethod('parseCharClassPart');
+        // Call readPart which should throw for unexpected token
+        $accessor->callClassMethod('readPart');
     }
 
     /**
-     * Test Parser.parseCharClassPart() range with T_UNICODE_PROP end
+     * Test ClassParser::readPart() range with T_UNICODE_PROP end
      * This triggers the Unicode property handling in character class range end
      */
     public function test_parser_parse_char_class_part_range_unicode_prop(): void
@@ -142,11 +143,11 @@ final class ParserBranchesTest extends TestCase
 
         // PCRE rejects a Unicode property as a range endpoint.
         $this->expectException(ParserException::class);
-        $accessor->callPrivateMethod('parseCharClassPart');
+        $accessor->callClassMethod('readPart');
     }
 
     /**
-     * Test Parser.parseCharClassPart() range with T_POSIX_CLASS end
+     * Test ClassParser::readPart() range with T_POSIX_CLASS end
      * This triggers the POSIX class handling in character class range end
      */
     public function test_parser_parse_char_class_part_range_posix_class(): void
@@ -166,11 +167,11 @@ final class ParserBranchesTest extends TestCase
 
         // PCRE rejects a POSIX class as a range endpoint.
         $this->expectException(ParserException::class);
-        $accessor->callPrivateMethod('parseCharClassPart');
+        $accessor->callClassMethod('readPart');
     }
 
     /**
-     * Test Parser.parseCharClassPart() range with unexpected token end
+     * Test ClassParser::readPart() range with unexpected token end
      * This triggers the else clause that throws for invalid tokens in character class range
      */
     public function test_parser_parse_char_class_part_range_unexpected_token(): void
@@ -191,8 +192,8 @@ final class ParserBranchesTest extends TestCase
         $this->expectException(ParserException::class);
         $this->expectExceptionMessageIsOrContains('Unexpected token "^" in character class range at position 2');
 
-        // Call parseCharClassPart which should throw for unexpected token in range
-        $accessor->callPrivateMethod('parseCharClassPart');
+        // Call readPart which should throw for unexpected token in range
+        $accessor->callClassMethod('readPart');
     }
 
     /**
