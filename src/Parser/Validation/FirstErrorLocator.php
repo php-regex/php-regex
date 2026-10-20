@@ -619,6 +619,16 @@ final class FirstErrorLocator
      */
     private function firstVersionConditionErrorBefore(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?SemanticErrorException
     {
+        // Where the first ")" at or after each token stands, read once from
+        // the end: a run of conditions that no ")" closes is not read to the
+        // end again for each one.
+        $closes = [];
+        $next = null;
+        for ($at = \count($tokens) - 1; $at >= 0; $at--) {
+            $next = TokenType::GroupClose === $tokens[$at]->type ? $at : $next;
+            $closes[$at] = $next;
+        }
+
         foreach ($tokens as $index => $open) {
             $group = $tokens[$index + 1] ?? null;
             if (TokenType::GroupModifierOpen !== $open->type || null === $group || TokenType::GroupOpen !== $group->type
@@ -626,20 +636,14 @@ final class FirstErrorLocator
                 continue;
             }
 
-            // The condition runs to the first ")", read from where it opens,
-            // not from a copy of the rest of the tokens for each condition.
-            $condition = [$open, $group];
-            for ($at = $index + 2; isset($tokens[$at]); $at++) {
-                $condition[] = $tokens[$at];
-                if (TokenType::GroupClose === $tokens[$at]->type) {
-                    break;
-                }
-            }
-
-            $close = $condition[\count($condition) - 1];
-            if (TokenType::GroupClose !== $close->type || $close->end() > $position) {
+            // The condition runs to the first ")" after its "(".
+            $end = $closes[$index + 2] ?? null;
+            if (null === $end || $tokens[$end]->end() > $position) {
                 continue;
             }
+
+            $condition = \array_slice($tokens, $index, $end - $index + 1);
+            $close = $tokens[$end];
 
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))->parse(
