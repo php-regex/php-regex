@@ -48,6 +48,10 @@ final class ClassSetProviderCacheTest extends TestCase
             $this->saved[$key] = ini_get($key);
         }
         StaticCaches::clear();
+        // A command or a plugin run earlier in this process may have left the
+        // answers kept on disk, where another process wrote them: these
+        // tests ask the engine.
+        ClassSetProvider::persistIn(null);
         LibraryPcre::useIniSetter(null);
         self::useJit(true);
     }
