@@ -642,6 +642,55 @@ final class PackageManifestTest extends TestCase
         $this->assertSame($expected, $granted, 'deptrac.yaml grants a sibling\'s internal layer to a package that does not use it, or misses one it uses.');
     }
 
+    /**
+     * A package's layers, public and internal, reach the siblings its manifest
+     * requires, and the one it suggests and starts by class name when it is
+     * installed, no more: a grant the manifest does not back would let
+     * through an import a split install of the package cannot load.
+     */
+    #[Test]
+    public function test_deptrac_grants_a_package_exactly_the_siblings_its_manifest_names(): void
+    {
+        $config = (string) file_get_contents(self::root().'/deptrac.yaml');
+        $layers = self::deptracLayers($config);
+        $directories = array_flip(self::PACKAGES);
+
+        $ruleset = substr($config, (int) strpos($config, "\n  ruleset:"));
+        preg_match_all('~^    (\\w+): \\[([^\\]]*)\\]$~m', $ruleset, $rules, \PREG_SET_ORDER);
+        $granted = [];
+        $expected = [];
+        foreach ($rules as [, $layer, $targets]) {
+            if (!isset($layers[$layer])) {
+                continue;
+            }
+            $directory = $layers[$layer]['directory'];
+
+            $siblings = [];
+            foreach (array_map(trim(...), explode(',', $targets)) as $target) {
+                if (isset($layers[$target]) && $layers[$target]['directory'] !== $directory) {
+                    $siblings[] = $layers[$target]['directory'];
+                }
+            }
+            $siblings = array_values(array_unique($siblings));
+            sort($siblings);
+            $granted[$layer] = $siblings;
+
+            $manifest = self::manifest($directory);
+            $named = [];
+            foreach ([...array_keys(self::strings(self::dig($manifest, 'require'))), ...array_keys(self::strings(self::dig($manifest, 'suggest')))] as $package) {
+                if (str_starts_with($package, 'php-regex/')) {
+                    $named[] = $directories[substr($package, \strlen('php-regex/'))];
+                }
+            }
+            sort($named);
+            $expected[$layer] = $named;
+        }
+        ksort($granted);
+        ksort($expected);
+
+        $this->assertSame($expected, $granted, 'deptrac.yaml lets a package reach a sibling its composer.json does not name, or misses one it names.');
+    }
+
     #[Test]
     public function test_the_split_pushes_every_package_to_its_repository(): void
     {
