@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Printer;
 
+use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Parser\Printer\PatternFormatter;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
@@ -201,6 +202,37 @@ final class PatternPrinterRoundTripTest extends TestCase
         // writes it on one line.
         yield 'a closing parenthesis after a control backslash, under x' => ['pattern' => "((?:# )\na\\c\\)# {\n:)x", 'subjects' => ["a\x1C:", 'a:']];
         yield 'a parenthesis after a control backslash' => ['pattern' => '(\N\10(?#()(?#c){[a]\101[]]\]\x{100}\c\(?<!b))u', 'subjects' => ["x\x08{aA]]Ā\x1C", 'a']];
+    }
+
+    /**
+     * The optimizer compares the normalized prints of a pattern and of its
+     * rewrite, reading each back: a print PHP would not end where written
+     * made it throw.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideOptimizedBrackets')]
+    public function test_the_optimizer_reads_back_what_the_printer_writes(string $pattern, array $subjects): void
+    {
+        $optimized = (new Optimizer(RegexParser::create(['cache' => null])))->optimize($pattern)->optimized;
+
+        $this->assertNotFalse(@preg_match($optimized, ''), $optimized);
+        foreach ($subjects as $subject) {
+            $this->assertSame(PatternEquivalence::engineRun($pattern, $subject), PatternEquivalence::engineRun($optimized, $subject), $optimized);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: list<string>}>
+     */
+    public static function provideOptimizedBrackets(): iterable
+    {
+        yield 'a class nested in a class' => ['pattern' => '[[a-d[m-p]]]', 'subjects' => ['a', 'n', '[', ']']];
+        yield 'a brace a comment holds' => ['pattern' => '{a(?#{)b}c}', 'subjects' => ['ab}c', 'abc']];
+        yield 'a brace a verb name holds' => ['pattern' => '{{a(*MARK:})}', 'subjects' => ['{a', 'a']];
+        yield 'an atomic group by name' => ['pattern' => '<(*atomic:a|ab)c>', 'subjects' => ['abc', 'ac']];
+        yield 'a quoted brace before a count' => ['pattern' => '{\Q{a\E\nb(*MARK:})}', 'subjects' => ["{a\nb", 'a']];
     }
 
     #[Test]
