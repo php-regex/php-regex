@@ -174,7 +174,7 @@ final class ClassParserTest extends TestCase
         $pcre = PcreMessageCodes::read(PcreMessageCodes::warningOf('/'.$pattern.'/') ?? 'compiles');
 
         try {
-            self::parse($pattern);
+            self::parse($pattern, '', PcreTarget::runtime());
             $this->fail('No error for '.$pattern);
         } catch (ParserException $error) {
             $this->assertSame([$code, $pcre['offset']], [$error->errorCode, $error->position], 'Oracle: '.$pattern);
@@ -186,7 +186,8 @@ final class ClassParserTest extends TestCase
      */
     public static function provideRefusedRanges(): iterable
     {
-        // PCRE2 10.49: "/[a-\d]/" at offset 5, "/[\d-z]/" at 4.
+        // Read for the running engine, which says where: PCRE2 10.49
+        // reports "/[a-\d]/" at offset 5.
         yield 'a range to a type' => ['pattern' => '[a-\d]', 'code' => ErrorCode::RangeInvalidBounds];
         yield 'a range to a POSIX class' => ['pattern' => '[a-[:digit:]]', 'code' => ErrorCode::RangeInvalidBounds];
         yield 'a range to a property' => ['pattern' => '[a-\pL]', 'code' => ErrorCode::RangeInvalidBounds];

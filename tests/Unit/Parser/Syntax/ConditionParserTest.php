@@ -30,6 +30,7 @@ use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\ConditionParser;
 use PHPRegex\Parser\Syntax\GroupNameReader;
@@ -262,7 +263,13 @@ final class ConditionParserTest extends TestCase
         yield 'a name nothing closes' => ['pattern' => '(?(ab!)x)', 'entry' => 'condition', 'code' => ErrorCode::GroupNameUnterminated];
         yield 'a recursion name nothing closes' => ['pattern' => '(?(R&n x)a)', 'entry' => 'condition', 'code' => ErrorCode::GroupNameUnterminated];
         yield 'no condition' => ['pattern' => '(?(.)a)', 'entry' => 'condition', 'code' => ErrorCode::ConditionalInvalid];
-        yield 'a version PCRE cannot read' => ['pattern' => '(?(VERSION=10z)a)', 'entry' => 'condition', 'code' => ErrorCode::ConditionalVersionSyntax];
+        // Before PCRE2 10.47 what follows the major number leaves the
+        // condition open.
+        yield 'a version PCRE cannot read' => [
+            'pattern' => '(?(VERSION=10z)a)',
+            'entry' => 'condition',
+            'code' => PcreTarget::runtime()->supports(PcreFeature::VersionConditionLeftOpenIsVersionError) ? ErrorCode::ConditionalVersionSyntax : ErrorCode::ConditionalUnclosed,
+        ];
         yield 'no assertion after a callout' => ['pattern' => '(?(?C1)a)', 'entry' => 'callout', 'code' => ErrorCode::ConditionalAssertionExpected];
         yield 'a callout number past 255' => ['pattern' => '(?(?C256)(?=a)b)', 'entry' => 'callout', 'code' => ErrorCode::CalloutOutOfRange];
         yield 'no assertion after a comment' => ['pattern' => '(?(?#c)a)', 'entry' => 'comment', 'code' => ErrorCode::ConditionalAssertionExpected];
