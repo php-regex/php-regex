@@ -405,13 +405,21 @@ final class PcreVerbTest extends TestCase
         $this->assertSame('Unknown verb at position 2: "(**" opens no verb, PCRE wants a name after "(*".', $error->getMessage());
     }
 
+    /**
+     * PCRE2 compiles a script run with nothing in it: preg_match('/(*sr:)/',
+     * 'ab') and preg_match('/(*asr:)/', 'ab') are 1.
+     */
     #[Test]
-    public function test_a_script_run_with_nothing_in_it_is_a_plain_verb(): void
+    public function test_a_script_run_with_nothing_in_it_is_a_script_run(): void
     {
         $verb = PcreVerb::read('sr:');
 
-        $this->assertFalse($verb->isScriptRun());
+        $this->assertTrue($verb->isScriptRun());
         $this->assertSame('sr:', $verb->name);
+        $this->assertSame('', $verb->payload);
+        $this->assertSame(3, $verb->payloadOffset);
+        $this->assertFalse($verb->atomicScriptRun);
+        $this->assertTrue(PcreVerb::read('asr:')->atomicScriptRun);
     }
 
     /**

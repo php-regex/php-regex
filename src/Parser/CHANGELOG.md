@@ -6,6 +6,7 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * An empty script run, `(*sr:)` or `(*asr:)`, parses as a `ScriptRunNode`.
  * The `locale` option and `PcreTarget::$locale` name the `LC_CTYPE` locale
    the patterns run under, the runtime's by default: the size verdict
    counts exactly the classes whose length follows its character tables,

@@ -154,14 +154,10 @@ final class PcreVerb
             return new self($verb, scanSubstring: $scan[1]);
         }
 
+        // A script run may hold nothing: PCRE compiles "(*sr:)".
         foreach (self::SCRIPT_RUN_PREFIXES as $prefix => $atomic) {
-            if (!str_starts_with($verb, $prefix)) {
-                continue;
-            }
-
-            $payload = substr($verb, \strlen($prefix));
-            if ('' !== $payload) {
-                return new self($verb, null, $payload, null, \strlen($prefix), atomicScriptRun: $atomic);
+            if (str_starts_with($verb, $prefix)) {
+                return new self($verb, null, substr($verb, \strlen($prefix)), null, \strlen($prefix), atomicScriptRun: $atomic);
             }
         }
 

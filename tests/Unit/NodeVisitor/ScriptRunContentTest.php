@@ -22,6 +22,7 @@ use PHPRegex\Parser\Analysis\MetricsCollector;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\RegexParser;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -76,6 +77,36 @@ final class ScriptRunContentTest extends TestCase
 
         $this->assertSame('Script run (every character from one script)', $node->accept(new TextExplainer()));
         $this->assertSame('<li><span title="Script run (every character from one script)"><strong>Script run (every character from one script)</strong></span></li>', $node->accept(new HtmlExplainer()));
+    }
+
+    /**
+     * PCRE2 compiles a script run with nothing in it under each of its four
+     * names: preg_match('/(*sr:)/', 'ab') and the others are 1, and so is
+     * preg_match('/a(*sr:)*b/u', 'ab').
+     */
+    #[Test]
+    #[DataProvider('provideEmptyScriptRuns')]
+    public function test_an_empty_script_run_parses_as_a_script_run(string $pattern, bool $atomic, int $end): void
+    {
+        $this->assertSame(1, preg_match($pattern, 'ab'));
+        $node = $this->tree($pattern)->pattern;
+
+        $this->assertInstanceOf(ScriptRunNode::class, $node);
+        $this->assertSame('', $node->script);
+        $this->assertSame($atomic, $node->atomic);
+        $this->assertNotNull($node->content);
+        $this->assertSame($end, $node->getEndPosition());
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, atomic: bool, end: int}>
+     */
+    public static function provideEmptyScriptRuns(): iterable
+    {
+        yield 'sr' => ['pattern' => '/(*sr:)/', 'atomic' => false, 'end' => 6];
+        yield 'script_run' => ['pattern' => '/(*script_run:)/u', 'atomic' => false, 'end' => 14];
+        yield 'asr' => ['pattern' => '/(*asr:)/', 'atomic' => true, 'end' => 7];
+        yield 'atomic_script_run' => ['pattern' => '/(*atomic_script_run:)/u', 'atomic' => true, 'end' => 21];
     }
 
     #[Test]
