@@ -14,6 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
@@ -324,6 +327,48 @@ final class UnclosedClassRangeOrderTest extends TestCase
         yield 'multibyte end without u' => ['pattern' => '/[a-ébc/', 'offset' => 7];
         // Without u the range starts at the last byte of U+0100, 0x80.
         yield 'last byte of a multibyte start below an escaped end without u' => ['pattern' => "/[\u{100}-\\x{81}bc/", 'offset' => 12];
+    }
+
+    /**
+     * The lexer reads the ranges of a class left open before it reports the
+     * missing "]", each bound as PCRE reads it: an escape as the character
+     * it names, and without u a character of several bytes as its last byte
+     * where it starts a range, its first where it ends one. Each offset is
+     * the one PHP with PCRE2 10.49 reports.
+     */
+    #[Test]
+    #[DataProvider('provideBoundsReadByTheLexer')]
+    public function test_the_lexer_reads_each_bound_of_a_class_left_open(string $pattern, string $flags, ErrorCode $code, int $offset): void
+    {
+        try {
+            (new Lexer(new PcreTarget(80400, '10.49')))->tokenize($pattern, $flags);
+            $this->fail(\sprintf('%s is refused', $pattern));
+        } catch (LexerException $exception) {
+            $this->assertSame($code, $exception->errorCode, $pattern);
+            $this->assertSame($offset, $exception->position, $pattern);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, flags: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideBoundsReadByTheLexer(): iterable
+    {
+        yield 'letters' => ['pattern' => '[z-a', 'flags' => '', 'code' => ErrorCode::RangeReversed, 'offset' => 4];
+        yield 'braced hex escape' => ['pattern' => '[z-\\x{41}', 'flags' => '', 'code' => ErrorCode::RangeReversed, 'offset' => 9];
+        yield 'hex escape' => ['pattern' => '[z-\\x41', 'flags' => '', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
+        yield 'octal escape' => ['pattern' => '[z-\\101', 'flags' => '', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
+        yield 'braced octal escape' => ['pattern' => '[z-\\o{101}', 'flags' => '', 'code' => ErrorCode::RangeReversed, 'offset' => 10];
+        yield 'named code point' => ['pattern' => '[z-\\N{U+41}', 'flags' => 'u', 'code' => ErrorCode::RangeReversed, 'offset' => 11];
+        yield 'control escape' => ['pattern' => '[z-\\cA', 'flags' => '', 'code' => ErrorCode::RangeReversed, 'offset' => 6];
+        yield 'bell escape' => ['pattern' => '[z-\\a', 'flags' => '', 'code' => ErrorCode::RangeReversed, 'offset' => 5];
+        yield 'hyphen' => ['pattern' => '[z--', 'flags' => '', 'code' => ErrorCode::RangeReversed, 'offset' => 4];
+        yield 'two-byte start under u' => ['pattern' => '[é-a', 'flags' => 'u', 'code' => ErrorCode::RangeReversed, 'offset' => 5];
+        yield 'two-byte start without u, its last byte' => ['pattern' => '[é-a', 'flags' => '', 'code' => ErrorCode::RangeReversed, 'offset' => 5];
+        yield 'two-byte start without u, its last byte below the end' => ['pattern' => '[é-\\xb0', 'flags' => '', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 8];
+        yield 'three-byte start without u, its last byte' => ['pattern' => '[€-\\xa1', 'flags' => '', 'code' => ErrorCode::RangeReversed, 'offset' => 9];
+        yield 'two-byte end without u, its first byte above the start' => ['pattern' => '[\\xb0-é', 'flags' => '', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 8];
+        yield 'two-byte end without u, its first byte below the start' => ['pattern' => '[\\xc4-é', 'flags' => '', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
     }
 
     private static function parser(string $php, string $release): RegexParser
