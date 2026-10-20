@@ -196,11 +196,9 @@ final class LiteralSet
     }
 
     /**
-     * Optimized longest string computation with early termination.
+     * The longest of the candidates, the first one of that length; null when
+     * there is none.
      *
-     * @param array<string> $candidates
-     */
-    /**
      * @param array<string> $candidates
      */
     private function computeLongestString(array $candidates): ?string

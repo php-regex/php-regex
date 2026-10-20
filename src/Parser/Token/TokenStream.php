@@ -125,13 +125,10 @@ final class TokenStream
     }
 
     /**
-     * Returns true if current token is EOF
-     */
-    /**
      * Whether the token under the cursor has this type.
      *
-     * Past the end there is only T_EOF, which is what a parser asking for it
-     * expects to find.
+     * Past the end there is only TokenType::Eof, which is what a parser
+     * asking for it expects to find.
      */
     public function check(TokenType $type): bool
     {
@@ -143,7 +140,7 @@ final class TokenStream
     }
 
     /**
-     * The type of the token under the cursor; past the end, T_EOF.
+     * The type of the token under the cursor; past the end, TokenType::Eof.
      */
     public function currentType(): TokenType
     {
