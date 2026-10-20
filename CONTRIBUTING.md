@@ -193,7 +193,8 @@ stays a draft: fix the cause, then run the workflow by hand on the tag with
 The tag triggers the split workflow, which tags every `php-regex/regex-*`
 repository; Packagist picks the versions up from there. A pre-release
 (`2.1.0-BETA1`, `2.1.0-RC1`) leaves the CHANGELOG alone and is published as a
-GitHub pre-release.
+GitHub pre-release, its notes a link to the CHANGELOG and, when the tree holds
+one, to the upgrade guide of its major version (`UPGRADE-2.0.md` for any 2.x).
 
 Every push to 2.x also splits `.github/organization` to the `main` branch of
 `php-regex/.github`: the organization's profile (`.github/organization/profile/README.md`) and

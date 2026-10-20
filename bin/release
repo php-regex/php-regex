@@ -116,7 +116,15 @@ if [ "$pre_release" -eq 0 ]; then
         } > "$notes"
     fi
 else
-    printf 'Pre-release of %s. See [CHANGELOG.md](%s/CHANGELOG.md) and [UPGRADE-2.0.md](%s/UPGRADE-2.0.md).\n' "${version%%-*}" "$blob" "$blob" > "$notes"
+    # A pre-release links the CHANGELOG, and the upgrade guide of its major
+    # version when the tree holds one.
+    notes_kind="a pre-release note"
+    upgrade="UPGRADE-${version%%.*}.0.md"
+    if [ -f "$upgrade" ]; then
+        printf 'Pre-release of %s. See [CHANGELOG.md](%s/CHANGELOG.md) and [%s](%s/%s).\n' "${version%%-*}" "$blob" "$upgrade" "$blob" "$upgrade" > "$notes"
+    else
+        printf 'Pre-release of %s. See [CHANGELOG.md](%s/CHANGELOG.md).\n' "${version%%-*}" "$blob" > "$notes"
+    fi
 fi
 
 if [ "$dry_run" -eq 1 ]; then

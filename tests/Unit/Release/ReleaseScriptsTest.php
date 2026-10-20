@@ -400,6 +400,36 @@ exit 1
     }
 
     #[Test]
+    public function test_release_notes_of_a_pre_release_link_the_upgrade_guide_of_its_major(): void
+    {
+        file_put_contents($this->root.'/UPGRADE-2.0.md', '# Upgrade');
+        $this->script('bump', '2.1.0-BETA1');
+        $this->commit();
+        $this->publish();
+
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.1.0-BETA1');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('Pre-release of 2.1.0.', $output);
+        $this->assertStringContainsString('[UPGRADE-2.0.md](https://github.com/php-regex/php-regex/blob/v2.1.0-BETA1/UPGRADE-2.0.md)', $output);
+    }
+
+    #[Test]
+    public function test_release_notes_of_a_pre_release_link_the_changelog_alone_without_an_upgrade_guide(): void
+    {
+        file_put_contents($this->root.'/UPGRADE-2.0.md', '# Upgrade');
+        $this->script('bump', '3.0.0-RC1');
+        $this->commit();
+        $this->publish();
+
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '3.0.0-RC1');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('Pre-release of 3.0.0. See [CHANGELOG.md](https://github.com/php-regex/php-regex/blob/v3.0.0-RC1/CHANGELOG.md).', $output);
+        $this->assertStringNotContainsString('UPGRADE', $output);
+    }
+
+    #[Test]
     public function test_split_reads_the_branch_a_tag_checkout_only_knows_as_a_remote(): void
     {
         // A tag checkout: HEAD detached on the tag, 2.x known only as origin/2.x.
