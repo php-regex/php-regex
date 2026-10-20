@@ -56,7 +56,7 @@ final class InternalMembersTest extends TestCase
     {
         $members = [
             PcreEngine::class => ['prepare'],
-            PatternPrinter::class => ['resetState'],
+            PatternPrinter::class => ['forFormatting', 'forCompacting', 'refusal', 'resetState', 'flags', 'setFlags', 'scope', 'restoreScope', 'countCapture', 'groupOpening', 'conditionText', 'quotedRunPieces', 'separator', 'opensConstruct', 'escapeString'],
             RegexPatternRule::class => ['isOptimizationFormatSafe'],
             LiteralSet::class => ['__construct', 'empty', 'fromString', 'concat', 'unite'],
             Dfa::class => ['__construct'],
