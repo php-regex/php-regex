@@ -178,11 +178,6 @@ side of rule ids.
 
 ## Architecture and contributor path: the last pass before 2.0.0
 
-- Contributor docs: `docs/extending.md` shows a node that is a fatal error
-  (`final readonly class ... extends AbstractNode`) and names a parser method
-  that does not exist; no page explains adding a lint rule; CONTRIBUTING
-  calls Task optional and asks for readonly classes; `tests/README.md` gives
-  a camelCase test naming the suite does not follow.
 - Packaging: `bin/corpus-lint` and a dangling `bin/paratest` symlink ship in
   the monorepo archive; the monorepo package does not conflict with the
   Laravel and Symfony versions its bridges refuse; the 1.x to 2.0 Rector set
