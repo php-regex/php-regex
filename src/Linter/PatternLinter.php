@@ -185,9 +185,7 @@ final class PatternLinter extends AbstractNodeVisitor
         $this->capturingGroupsByName = [];
         $this->skipUselessBackref = false;
 
-        // Use a simple visitor to compile the pattern string for diagnostics
-        $compiler = PatternPrinter::asWritten();
-        $this->patternValue = $node->pattern->accept($compiler);
+        $this->patternValue = $node->pattern->accept(PatternPrinter::asWritten());
 
         $this->groups = PcreGroups::of($node->pattern);
         $this->collectCapturingGroupInfo($node->pattern);
@@ -197,7 +195,6 @@ final class PatternLinter extends AbstractNodeVisitor
             $rule->begin($this->context);
         }
 
-        // Second pass: traverse and lint
         $node->pattern->accept($this);
 
         foreach ($this->rules as $rule) {
@@ -235,6 +232,7 @@ final class PatternLinter extends AbstractNodeVisitor
     #[\Override]
     public function visitClassSetOperation(ClassSetOperationNode $node): NodeInterface
     {
+        $this->dispatch($node);
         $node->left?->accept($this);
         $node->right->accept($this);
 
@@ -265,7 +263,6 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
-    // Implement other visit methods as no-op
     #[\Override]
     public function visitAlternation(AlternationNode $node): NodeInterface
     {
@@ -289,8 +286,8 @@ final class PatternLinter extends AbstractNodeVisitor
         $this->dispatch($node);
 
         // A standalone (?s) changes the flags for the rest of the sequence
-        // and for the alternatives after it; the group, conditional or
-        // DEFINE holding them restores the flags at its end.
+        // and for the alternatives after it; the group, conditional, DEFINE
+        // or script run holding them restores the flags at its end.
         $this->context->pushParent($node);
         foreach ($node->children as $child) {
             $child->accept($this);
@@ -463,8 +460,8 @@ final class PatternLinter extends AbstractNodeVisitor
     }
 
     /**
-     * Single append point: enablement filtering happens here, exactly as the
-     * historical addIssue() did.
+     * Keep the findings of the rules the configuration turns on: a rule
+     * that reports under several identifiers runs when one of them is on.
      *
      * @param list<RuleViolation> $issues
      */
@@ -478,7 +475,7 @@ final class PatternLinter extends AbstractNodeVisitor
     }
 
     /**
-     * Check if a lint rule is enabled.
+     * Whether the configuration turns the rule on.
      */
     private function isRuleEnabled(string $ruleId): bool
     {
@@ -552,8 +549,6 @@ final class PatternLinter extends AbstractNodeVisitor
     {
         return (string) spl_object_id($node);
     }
-
-    // Add other visit methods as needed, default to no-op
 
     private function useRules(LintRuleRegistry $registry): void
     {
