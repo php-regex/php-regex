@@ -303,6 +303,12 @@ final class CpuCoreCounterTest extends TestCase
             'expected' => 2,
         ];
 
+        yield 'v2 quota at the host path wins over the mount root' => [
+            'cgroup' => "0::/kubepods/pod1/ctr\n",
+            'files' => ['/sys/fs/cgroup/kubepods/pod1/ctr/cpu.max' => "300000 100000\n", '/sys/fs/cgroup/cpu.max' => "200000 100000\n"],
+            'expected' => 3,
+        ];
+
         yield 'v2 quota of 2 cpus at the mount root, nothing at the host path' => [
             'cgroup' => "0::/kubepods/pod1/ctr\n",
             'files' => ['/sys/fs/cgroup/cpu.max' => "200000 100000\n"],

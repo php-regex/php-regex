@@ -60,6 +60,7 @@ final class WorkerCountTest extends TestCase
         yield 'v2, read at the container root' => ['files' => $v2 + ['/sys/fs/cgroup/memory.max' => (string) (512 * self::MIB)."\n"], 'cores' => 8, 'processBytes' => 128 * self::MIB, 'expected' => 3];
         yield 'v1, 512 MiB' => ['files' => $v1 + ['/sys/fs/cgroup/memory/lint/memory.limit_in_bytes' => (string) (512 * self::MIB)."\n"], 'cores' => 8, 'processBytes' => 128 * self::MIB, 'expected' => 3];
         yield 'v1, read at the mount root' => ['files' => $v1 + ['/sys/fs/cgroup/memory/memory.limit_in_bytes' => (string) (256 * self::MIB)."\n"], 'cores' => 8, 'processBytes' => 64 * self::MIB, 'expected' => 3];
+        yield 'v2, the path wins over the container root' => ['files' => $v2 + ['/sys/fs/cgroup/lint.slice/memory.max' => (string) (1024 * self::MIB)."\n", '/sys/fs/cgroup/memory.max' => (string) (512 * self::MIB)."\n"], 'cores' => 16, 'processBytes' => 128 * self::MIB, 'expected' => 7];
         yield 'v1, the unlimited value' => ['files' => $v1 + ['/sys/fs/cgroup/memory/lint/memory.limit_in_bytes' => "9223372036854771712\n"], 'cores' => 8, 'processBytes' => 128 * self::MIB, 'expected' => 8];
         yield 'a limit below two processes' => ['files' => $v2 + ['/sys/fs/cgroup/lint.slice/memory.max' => (string) (100 * self::MIB)."\n"], 'cores' => 8, 'processBytes' => 128 * self::MIB, 'expected' => 1];
         yield 'an unreadable limit' => ['files' => $v2 + ['/sys/fs/cgroup/lint.slice/memory.max' => "garbage\n"], 'cores' => 8, 'processBytes' => 128 * self::MIB, 'expected' => 8];

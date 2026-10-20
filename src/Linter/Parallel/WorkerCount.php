@@ -23,8 +23,8 @@ use PHPRegex\Parser\Engine\LibraryPcre;
  *
  * The limit is read from the cgroup this process is in: memory.max under
  * cgroup v2 ("max" for none), memory.limit_in_bytes under v1, at the path
- * /proc/self/cgroup names, else at the mount root, as CpuCoreCounter reads
- * the CPU quota.
+ * /proc/self/cgroup names, else at the mount root, where Cgroup says, as
+ * CpuCoreCounter reads the CPU quota.
  *
  * @internal
  */
@@ -99,24 +99,9 @@ final class WorkerCount
      */
     private function memoryLimit(): ?int
     {
-        foreach (explode("\n", (string) ($this->readFile)('/proc/self/cgroup')) as $line) {
-            $parts = explode(':', $line, 3);
-            if (3 !== \count($parts)) {
-                continue;
-            }
-
-            [$id, $controllers, $path] = $parts;
-            $path = rtrim($path, '/');
-
-            if ('0' === $id && '' === $controllers) {
-                $limit = ($this->readFile)('/sys/fs/cgroup'.$path.'/memory.max')
-                    ?? ($this->readFile)('/sys/fs/cgroup/memory.max');
-            } elseif (\in_array('memory', explode(',', $controllers), true)) {
-                $limit = ($this->readFile)('/sys/fs/cgroup/'.$controllers.$path.'/memory.limit_in_bytes')
-                    ?? ($this->readFile)('/sys/fs/cgroup/'.$controllers.'/memory.limit_in_bytes');
-            } else {
-                continue;
-            }
+        foreach (Cgroup::directories(($this->readFile)('/proc/self/cgroup'), 'memory') as [$unified, $directory, $root]) {
+            $file = $unified ? '/memory.max' : '/memory.limit_in_bytes';
+            $limit = ($this->readFile)($directory.$file) ?? ($this->readFile)($root.$file);
 
             if (1 === LibraryPcre::match('/^\d{1,19}$/', trim((string) $limit, " \t\n\r\0\x0B"))) {
                 $bytes = (int) trim((string) $limit, " \t\n\r\0\x0B");

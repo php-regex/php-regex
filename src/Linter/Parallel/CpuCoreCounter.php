@@ -128,45 +128,28 @@ final class CpuCoreCounter
     /**
      * The CPU quota of the cgroup this process is in, in whole CPUs: 1.5
      * CPU of quota is 2 processes, half a CPU is 1, never more than $count.
-     *
-     * Inside a container, /proc/self/cgroup names the cgroup's path on the
-     * host, while the container's own cgroup is mounted at the root of its
-     * /sys/fs/cgroup: when nothing is found at the path, the quota is read
-     * at the mount root.
+     * Each file is read where Cgroup says, at the cgroup's path, else at the
+     * mount root.
      */
     private function cgroupQuota(int $count): ?int
     {
-        $cgroup = ($this->readFile)('/proc/self/cgroup');
-
-        foreach (explode("\n", (string) $cgroup) as $line) {
-            $parts = explode(':', $line, 3);
-            if (3 !== \count($parts)) {
-                continue;
-            }
-
-            [$id, $controllers, $path] = $parts;
-            $path = rtrim($path, '/');
-
-            if ('0' === $id && '' === $controllers) {
+        foreach (Cgroup::directories(($this->readFile)('/proc/self/cgroup'), 'cpu') as [$unified, $directory, $root]) {
+            if ($unified) {
                 // cgroup v2: "<quota> <period>", or "max <period>" for none.
-                $max = ($this->readFile)('/sys/fs/cgroup'.$path.'/cpu.max')
-                    ?? ($this->readFile)('/sys/fs/cgroup/cpu.max');
+                $max = ($this->readFile)($directory.'/cpu.max') ?? ($this->readFile)($root.'/cpu.max');
                 $quota = 1 === LibraryPcre::match('/^(\d+)\s+(\d+)\s*$/', (string) $max, $match)
                     ? self::quota($match[1], $match[2], $count)
                     : null;
-            } elseif (\in_array('cpu', explode(',', $controllers), true)) {
-                // cgroup v1: the controller list names the mount directory;
-                // a quota of -1 is none.
-                $directory = '/sys/fs/cgroup/'.$controllers.$path;
+            } else {
+                // cgroup v1: the period is read beside the quota found; a
+                // quota of -1 is none.
                 $cfsQuota = ($this->readFile)($directory.'/cpu.cfs_quota_us');
                 if (null === $cfsQuota) {
-                    $directory = '/sys/fs/cgroup/'.$controllers;
+                    $directory = $root;
                     $cfsQuota = ($this->readFile)($directory.'/cpu.cfs_quota_us');
                 }
 
                 $quota = self::quota($cfsQuota, ($this->readFile)($directory.'/cpu.cfs_period_us'), $count);
-            } else {
-                continue;
             }
 
             if (null !== $quota) {
