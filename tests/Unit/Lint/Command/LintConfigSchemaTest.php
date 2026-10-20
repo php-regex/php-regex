@@ -106,6 +106,26 @@ final class LintConfigSchemaTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/'.$template['pattern'].'/', 'x://%x');
     }
 
+    /**
+     * Without u, \w follows the LC_CTYPE locale, which may widen it past
+     * [0-9A-Z_a-z]: the word option never promises the rewrite to \w, only
+     * where the two match alike.
+     */
+    #[Test]
+    public function test_the_word_option_does_not_promise_the_shorthand(): void
+    {
+        $definition = LintConfigSchema::definition();
+        $this->assertIsArray($definition['$defs'] ?? null);
+        $this->assertIsArray($definition['$defs']['optimizationOptions'] ?? null);
+        $this->assertIsArray($definition['$defs']['optimizationOptions']['properties'] ?? null);
+        $this->assertIsArray($definition['$defs']['optimizationOptions']['properties']['word'] ?? null);
+        $description = $definition['$defs']['optimizationOptions']['properties']['word']['description'] ?? null;
+        $this->assertIsString($description);
+
+        $this->assertStringNotContainsString('to \w.', (string) $description);
+        $this->assertStringContainsString('locale', (string) $description);
+    }
+
     #[Test]
     public function test_dist_config_validates_against_the_definition(): void
     {

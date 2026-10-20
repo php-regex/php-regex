@@ -257,7 +257,7 @@ final class LintConfigSchema
             'additionalProperties' => false,
             'properties' => [
                 'digits' => $flag('Optimize digit character classes like [0-9] to \d.', true),
-                'word' => $flag('Optimize word character classes like [A-Za-z0-9_] to \w.', true),
+                'word' => $flag('Rewrite a word character class like [A-Za-z0-9_] as \w only where the two match alike. Without u, \w follows the LC_CTYPE locale, which may widen it past the class, so the class is kept, as [0-9A-Z_a-z].', true),
                 'ranges' => $flag('Optimize consecutive character ranges.', true),
                 'canonicalizeCharClasses' => $flag('Canonicalize character classes (sort ranges, remove duplicates).', true),
                 'possessive' => $flag('Suggest possessive quantifiers (*+, ++, {m,n}+) to prevent ReDoS.', false),

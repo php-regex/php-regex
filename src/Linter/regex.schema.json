@@ -36,7 +36,7 @@
         },
         "word": {
           "type": "boolean",
-          "description": "Optimize word character classes like [A-Za-z0-9_] to \\w.",
+          "description": "Rewrite a word character class like [A-Za-z0-9_] as \\w only where the two match alike. Without u, \\w follows the LC_CTYPE locale, which may widen it past the class, so the class is kept, as [0-9A-Z_a-z].",
           "default": true
         },
         "ranges": {
