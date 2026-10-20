@@ -472,6 +472,12 @@ final class Lexer
     private array $literalEscapes = [];
 
     /**
+     * Where the token tokenizing stopped on starts, when it is refused for
+     * itself, whatever stands around it.
+     */
+    private ?int $refusedTokenStart = null;
+
+    /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(?PcreTarget $target = null)
@@ -517,6 +523,20 @@ final class Lexer
     public function literalEscapesRead(): array
     {
         return $this->literalEscapes;
+    }
+
+    /**
+     * Where the token the last tokenizing stopped on starts, when that
+     * token is refused for itself, whatever stands around it: a "\c" that
+     * ends the pattern, a "\x{}", a "(?*" older than PCRE2 10.35. Null when
+     * tokenizing read the whole pattern, or stopped for what stands around
+     * the token.
+     *
+     * @internal
+     */
+    public function refusedTokenStart(): ?int
+    {
+        return $this->refusedTokenStart;
     }
 
     /**
@@ -798,6 +818,7 @@ final class Lexer
         $this->quotedRun = null;
         $this->unclosedBody = null;
         $this->literalEscapes = [];
+        $this->refusedTokenStart = null;
     }
 
     /**
@@ -929,6 +950,8 @@ final class Lexer
     {
         // Before PCRE2 10.35 "(?*" is no group: no option letter is "*".
         if ('(?*' === $opener && !$this->readsNonAtomicShortSyntax) {
+            $this->refusedTokenStart = $this->position;
+
             throw LexerException::withContext(
                 \sprintf('Invalid group modifier syntax at position %d: PCRE2 10.35 added "(?*" for "(*napla:"%s.', $this->position + 2, $this->readsNonAtomicAssertions ? '; write "(*napla:" instead' : ''),
                 ErrorCode::GroupSyntax,
@@ -1632,6 +1655,8 @@ final class Lexer
                 // "\c" only falls through to an escaped literal when no
                 // printable ASCII character follows it; PCRE rejects that.
                 if ('\\c' === $matchedValue) {
+                    $this->refusedTokenStart = $startPos;
+
                     throw LexerException::withContext(
                         '\\c must be followed by a printable ASCII character.',
                         ErrorCode::ControlCharInvalid,
@@ -1643,6 +1668,8 @@ final class Lexer
                 // "\x{}" (empty braces) is a PCRE compile error, where the
                 // digits should be.
                 if ('\\x' === $matchedValue && '{}' === substr($this->pattern, $startPos + 2, 2)) {
+                    $this->refusedTokenStart = $startPos;
+
                     throw LexerException::withContext(
                         'Invalid hex escape "\\x{}": at least one hexadecimal digit is required.',
                         ErrorCode::EscapeDigitsMissing,

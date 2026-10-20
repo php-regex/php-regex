@@ -86,6 +86,7 @@ final class FirstErrorLocator
         }
 
         $tokens = $lexer->tokensRead();
+        $refusedAt = $lexer->refusedTokenStart();
 
         // The escapes, classes and conditions of an alphabetic assertion's
         // body are judged where they stand, as PCRE reads them: in one pass
@@ -132,11 +133,17 @@ final class FirstErrorLocator
             // what is refused past it is refused for want of that. Read up
             // to an unclosed name, the pattern is read whole. An error the
             // lexer found reading the body of an alphabetic assertion is
-            // read with the body in place.
+            // read with the body in place. A token refused for itself is
+            // read as its first character, which is what follows the "(?".
             $syntaxTokens = $swallowing ?? ($tokenized && $error instanceof LexerException ? $inPlace : $tokens);
-            $stream = new TokenStream([...$syntaxTokens, new Token(TokenType::Eof, '', min($limit, \strlen($pattern)))], $pattern);
             $last = [] === $syntaxTokens ? null : $syntaxTokens[array_key_last($syntaxTokens)];
             $readUpTo = null !== $last && TokenType::GroupModifierOpen === $last->type ? $last->end() : $limit;
+            $stand = null === $swallowing && null !== $refusedAt ? self::standInForTheRefusedToken($refusedAt, $last, $pattern) : null;
+            if (null !== $stand) {
+                $readUpTo = $limit;
+            }
+
+            $stream = new TokenStream([...$syntaxTokens, ...(null === $stand ? [] : [$stand]), new Token(TokenType::Eof, '', min($limit, \strlen($pattern)))], $pattern);
 
             try {
                 (new TokenParser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, $delimiter, \strlen($pattern));
@@ -159,6 +166,20 @@ final class FirstErrorLocator
         }
 
         return $earlier;
+    }
+
+    /**
+     * The first character of the token tokenizing stopped on, as a literal,
+     * when that token is refused for itself and follows the last one read:
+     * a "\c" ending the pattern, a "\x{}", a "(?*" older than PCRE2 10.35.
+     * PCRE meets that character before it reads the token, so a name, or
+     * the ")" after a subroutine name, refuses it there first. Where an
+     * item may stand, the literal is read, and what follows is cut off as
+     * before.
+     */
+    private static function standInForTheRefusedToken(int $at, ?Token $last, string $pattern): ?Token
+    {
+        return ($last?->end() ?? 0) === $at ? new Token(TokenType::Literal, $pattern[$at], $at, 1) : null;
     }
 
     /**
