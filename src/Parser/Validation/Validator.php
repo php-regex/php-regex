@@ -1333,6 +1333,26 @@ final class Validator extends AbstractNodeVisitor
                 ? 'p{'.$prop.'}'
                 : 'p'.$prop);
 
+        // The name as the release reads it, past the "^" that negates: no
+        // property name holds another "^". From PCRE2 10.45 the "^" may
+        // follow spaces, hyphens or underscores.
+        $skippedCaret = null !== $this->nameAfterSkippedCaret($node);
+        $read = $node->hasBraces ? $this->negationRead($node) : null;
+        if (null !== $read) {
+            [$negated, $name] = $read;
+            if (str_contains($name, '^')) {
+                $this->raiseSemanticError(
+                    \sprintf('Invalid or unsupported Unicode property: \\%s: no property name holds a "^".', substr($this->source ?? '', $node->startPosition + 1, $node->getEndPosition() - $node->startPosition - 1)),
+                    $node->getEndPosition(),
+                    ErrorCode::UnicodePropertyInvalid,
+                );
+            }
+
+            if ($skippedCaret) {
+                $key = 'p{'.($negated ? '^' : '').$name.'}';
+            }
+        }
+
         if (!isset(self::$unicodePropCache[$key])) {
             StaticCaches::register(self::class, self::clearCaches(...));
             self::$unicodePropCache = StaticCaches::makeRoom(self::$unicodePropCache);
@@ -1353,29 +1373,11 @@ final class Validator extends AbstractNodeVisitor
                 );
             }
 
-            // From PCRE2 10.45 a "^" after spaces, hyphens or underscores
-            // negates: the name after it is looked up as after a "^" right
-            // behind the brace, unless a later release added it.
-            $negated = $this->nameAfterSkippedCaret($node);
-            if (null === $negated || isset(self::UNICODE_NAMES_SINCE[self::looseName($negated)])) {
+            // A "^" after skipped characters needs 10.45 only: the name
+            // after it is looked up, unless a later release added it.
+            if (!$skippedCaret || isset(self::UNICODE_NAMES_SINCE[self::looseName($read[1] ?? '')])) {
                 return;
             }
-
-            $key = 'p{^'.$negated.'}';
-            if (!isset(self::$unicodePropCache[$key])) {
-                self::$unicodePropCache = StaticCaches::makeRoom(self::$unicodePropCache);
-                self::$unicodePropCache[$key] = $this->validateUnicodeProperty($key);
-            }
-
-            if (self::$unicodePropCache[$key]) {
-                return;
-            }
-
-            $this->raiseSemanticError(
-                \sprintf('Invalid or unsupported Unicode property: \\%s.', $key),
-                $node->getEndPosition(),
-                ErrorCode::UnicodePropertyInvalid,
-            );
         }
 
         if (false === self::$unicodePropCache[$key]) {
@@ -2037,6 +2039,33 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
+     * Whether the braced name of the property is negated, by its letter
+     * and a "^", and the name past that "^", as the release reads them: a
+     * "^" right after the brace negates, and from PCRE2 10.45 one after
+     * spaces, hyphens or underscores too. Null when the text is not known.
+     *
+     * @return array{0: bool, 1: string}|null
+     */
+    private function negationRead(UnicodePropNode $node): ?array
+    {
+        $source = $this->source ?? '';
+        $written = substr($source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
+        if (1 !== LibraryPcre::match('/^\\\\([pP])\{(.*)\}$/s', $written, $matches)) {
+            return null;
+        }
+
+        [$letter, $name] = [$matches[1], $matches[2]];
+        $caret = false;
+        if (str_starts_with($name, '^')) {
+            [$caret, $name] = [true, substr($name, 1)];
+        } elseif ($this->supports(PcreFeature::MalformedPropertyName) && null !== ($after = $this->nameAfterSkippedCaret($node))) {
+            [$caret, $name] = [true, $after];
+        }
+
+        return [('P' === $letter) !== $caret, $name];
+    }
+
+    /**
      * Loose matching: case, spaces, hyphens and underscores are ignored, and
      * "sc=", "scx:" and their long forms only name the table.
      */
@@ -2554,6 +2583,12 @@ final class Validator extends AbstractNodeVisitor
                 $this->countLookbehindMeasures(1);
                 [$length, $unfixed] = $this->lookbehindLength->branch($branch, $measuring);
                 $lengths[] = $length;
+
+                // A branch of one length past PCRE's cap is refused as it is
+                // measured, before the branches after it.
+                if (!$unfixed && $length[0] === $length[1] && $length[1] > self::MAX_FIXED_LOOKBEHIND_LENGTH) {
+                    $this->validateLookbehindBranchLength($node, $length, false);
+                }
 
                 // PCRE stops at the first branch it cannot bound, met in
                 // order: a nested lookbehind before it was judged first.

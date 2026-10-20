@@ -265,6 +265,11 @@ final class LookbehindLength
             };
             [$min, $max] = [\PHP_INT_MAX, 0];
             foreach ($alternatives as $alternative) {
+                // PCRE measures, and counts, each branch of a condition.
+                if ($node instanceof ConditionalNode) {
+                    $this->groupBody($alternative);
+                }
+
                 [$altMin, $altMax] = $this->of($alternative, $expanding);
                 $min = min($min, $altMin);
                 $max = null === $altMax ? null : max($max, $altMax);

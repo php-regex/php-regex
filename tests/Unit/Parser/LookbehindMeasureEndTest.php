@@ -93,6 +93,8 @@ final class LookbehindMeasureEndTest extends TestCase
         yield 'repeat after an accept in a group of unequal branches' => ['pattern' => '/(?<=(?:a(*ACCEPT)b+|cd))/', 'outcomes' => ['10.32' => 0, '10.42' => 0, '10.43' => null, '10.49' => null]];
         yield 'repeat after a commit' => ['pattern' => '/(?<=a(*COMMIT)b+)/', 'outcomes' => ['10.32' => 0, '10.42' => 0, '10.43' => 0]];
         // A condition with no "|" is a group of one branch.
+        yield 'conditions of one branch within the budget' => ['pattern' => '/(a)(?<='.str_repeat('(?(1)a)', 2000).')/', 'outcomes' => ['10.32' => null, '10.42' => null, '10.49' => null]];
+        yield 'conditions of two branches within the budget' => ['pattern' => '/(a)(?<='.str_repeat('(?(1)a|b)', 999).')/', 'outcomes' => ['10.32' => null, '10.43' => null, '10.49' => null]];
         yield 'condition of one branch' => ['pattern' => '/(a)(?<=(?(1)b))/', 'outcomes' => ['10.32' => null, '10.42' => null, '10.43' => null, '10.49' => null]];
         yield 'condition of one long branch' => ['pattern' => '/(a)(?<=(?(1)b{256}))/', 'outcomes' => ['10.42' => null, '10.43' => null, '10.49' => null]];
         yield 'assertion condition of one long branch' => ['pattern' => '/(?<=(?(?=a)b{300}))/', 'outcomes' => ['10.32' => null, '10.49' => null]];
@@ -111,6 +113,38 @@ final class LookbehindMeasureEndTest extends TestCase
         yield 'unbounded lookbehind in a script run in a lookahead' => ['pattern' => '/(?<=(?=(*sr:(?<=b+))))/', 'outcomes' => ['10.33' => null, '10.34' => 12, '10.49' => 12]];
         yield 'unbounded lookbehind after an accept in a lookahead' => ['pattern' => '/(?<=(?=a(*ACCEPT)(?<=b+)))/', 'outcomes' => ['10.34' => 17, '10.49' => 17]];
         yield 'unbounded lookbehind in a group a lookbehind calls' => ['pattern' => '/(?<=(?1))(a(*ACCEPT)(?<=b+))/', 'outcomes' => ['10.32' => 20, '10.42' => 20, '10.49' => 20]];
+    }
+
+    /**
+     * PCRE refuses a branch too long, or one past the budget of branches it
+     * measures, as it measures it: before a later branch of no fixed length
+     * or no bound.
+     *
+     * @param array<string, int> $offsets
+     */
+    #[Test]
+    #[DataProvider('provideRefusalsMetFirst')]
+    public function test_a_refusal_met_in_an_earlier_branch_comes_first(string $pattern, array $offsets, ErrorCode $code): void
+    {
+        foreach ($offsets as $release => $offset) {
+            $validation = self::parser($release)->validate($pattern);
+
+            $this->assertSame($offset, $validation->offset, \sprintf('%s on PCRE2 %s: %s', $pattern, $release, $validation->error ?? ''));
+            $this->assertSame($code, $validation->errorCode, \sprintf('%s on PCRE2 %s: %s', $pattern, $release, $validation->error ?? ''));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offsets: array<string, int>, code: ErrorCode}>
+     */
+    public static function provideRefusalsMetFirst(): iterable
+    {
+        yield 'branch too long before an optional one' => ['pattern' => '/(?<=a{65535}a{2}|b?)/', 'offsets' => ['10.32' => 0, '10.42' => 0, '10.43' => 0], 'code' => ErrorCode::LookbehindTooLong];
+        yield 'branch too long before a counted one' => ['pattern' => '/(?<=a{40000}a{40000}|b{1,2})/', 'offsets' => ['10.42' => 0, '10.49' => 0], 'code' => ErrorCode::LookbehindTooLong];
+        yield 'branch too long before an unbounded one' => ['pattern' => '/(?<=a{65535}a{2}|b+)/', 'offsets' => ['10.32' => 0, '10.42' => 0, '10.43' => 0, '10.49' => 0], 'code' => ErrorCode::LookbehindTooLong];
+        // Each branch of a condition is measured, and counted.
+        yield 'conditions of one branch past the budget' => ['pattern' => '/(a)(?<='.str_repeat('(?(1)a)', 2001).')/', 'offsets' => ['10.32' => 3, '10.42' => 3, '10.43' => 3, '10.49' => 3], 'code' => ErrorCode::LookbehindTooComplex];
+        yield 'conditions of two branches past the budget' => ['pattern' => '/(a)(?<='.str_repeat('(?(1)a|b)', 1001).')/', 'offsets' => ['10.32' => 3, '10.43' => 3, '10.49' => 3], 'code' => ErrorCode::LookbehindTooComplex];
     }
 
     private static function parser(string $release): RegexParser

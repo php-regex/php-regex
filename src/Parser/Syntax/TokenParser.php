@@ -1274,6 +1274,12 @@ final class TokenParser
         }
 
         $read = PcreVerb::read($token->value);
+        // "(*scs:(1)" that no ")" closes: PCRE reads its list of groups
+        // before the body, refusing a group it names that it cannot be.
+        if (null !== $read->scanSubstring) {
+            $this->readGroupList($token->position + 3 + \strlen($read->scanSubstring) + 1);
+        }
+
         $body = $this->parseScopedAlternation();
         $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
 

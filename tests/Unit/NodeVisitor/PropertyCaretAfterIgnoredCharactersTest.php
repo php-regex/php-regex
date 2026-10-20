@@ -14,7 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\SemanticErrorException;
+use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -51,6 +54,20 @@ final class PropertyCaretAfterIgnoredCharactersTest extends TestCase
     }
 
     /**
+     * A node judged with no pattern text behind it is looked up by its name
+     * alone.
+     */
+    #[Test]
+    public function test_a_property_with_no_text_behind_it_is_judged_by_its_name(): void
+    {
+        $validator = new Validator();
+        $validator->visitUnicodeProp(new UnicodePropNode('{^Lu}', true, 0, 7));
+
+        $this->expectException(SemanticErrorException::class);
+        $validator->visitUnicodeProp(new UnicodePropNode('{Foo}', true, 0, 7));
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, outcomes: array<string, int|null>}>
      */
     public static function provideNames(): iterable
@@ -66,6 +83,11 @@ final class PropertyCaretAfterIgnoredCharactersTest extends TestCase
         yield 'caret after a space before no name' => ['pattern' => '/\P{ ^}/', 'outcomes' => ['10.44' => 6, '10.45' => 6, '10.47' => 6, '10.48' => 6, '10.49' => 6]];
         yield 'caret after a space before an unknown name' => ['pattern' => '/\p{ ^Foo}/', 'outcomes' => ['10.45' => 9, '10.46' => 9, '10.48' => 9, '10.49' => 9]];
         yield 'caret after a space before an unknown name in a class' => ['pattern' => '/[\p{ ^a]}/u', 'outcomes' => ['10.45' => 9, '10.48' => 9]];
+        yield 'negated letter and a caret after an underscore' => ['pattern' => '/a\P{_^L}/u', 'outcomes' => ['10.44' => 8, '10.45' => null, '10.49' => null]];
+        yield 'negated letter and a caret after a hyphen' => ['pattern' => '/a\P{-^L}/u', 'outcomes' => ['10.42' => 8, '10.47' => null, '10.49' => null]];
+        // No name holds a second caret.
+        yield 'second caret after a skipped caret' => ['pattern' => '/a\P{ ^^L}/u', 'outcomes' => ['10.44' => 9, '10.45' => 9, '10.49' => 9]];
+        yield 'second caret after a space' => ['pattern' => '/a\P{^ ^L}/u', 'outcomes' => ['10.40' => 9, '10.44' => 9, '10.45' => 9, '10.49' => 9]];
         yield 'hyphen after the caret' => ['pattern' => '/\p{^-Lu}/', 'outcomes' => ['10.40' => null, '10.44' => null, '10.49' => null]];
     }
 }

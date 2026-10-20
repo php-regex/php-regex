@@ -68,6 +68,12 @@ final class UnclosedScanSubstringBodyTest extends TestCase
         yield 'no list' => ['pattern' => '/(*scs:)b/', 'release' => '10.49', 'offset' => 6, 'code' => ErrorCode::ScanSubstringMissingList];
         yield 'list no parenthesis closes' => ['pattern' => '/(*scs:(1/', 'release' => '10.46', 'offset' => 8, 'code' => ErrorCode::GroupUnclosed];
         yield 'name starting with a digit in the list' => ['pattern' => '/(*scs:(<1>)a/', 'release' => '10.47', 'offset' => 9, 'code' => ErrorCode::GroupNameInvalid];
+        // A group the list names that PCRE refuses as it reads the list,
+        // before the body.
+        yield 'relative zero in the list before an error in the body' => ['pattern' => '/(a)(*scs:(+0)\c/', 'release' => '10.45', 'offset' => 12, 'code' => ErrorCode::GroupListRelativeZero];
+        yield 'group zero in the list' => ['pattern' => '/(*scs:(0)x/', 'release' => '10.49', 'offset' => 8, 'code' => ErrorCode::GroupListMissingGroup];
+        yield 'relative zero after a group in the list' => ['pattern' => '/(a)(*scs:(1,+0)x/', 'release' => '10.47', 'offset' => 14, 'code' => ErrorCode::GroupListRelativeZero];
+        yield 'relative group before the first in the list' => ['pattern' => '/(*scs:(-5)x/', 'release' => '10.46', 'offset' => 9, 'code' => ErrorCode::GroupListMissingGroup];
         yield 'substring scan as the condition' => ['pattern' => '/(?(*scs:(1)a/', 'release' => '10.49', 'offset' => 7, 'code' => ErrorCode::ConditionalAssertionExpected];
         yield 'substring scan where a group name is due' => ['pattern' => '/(?<(*scs:a/', 'release' => '10.49', 'offset' => 3, 'code' => ErrorCode::GroupNameExpected];
         yield 'substring scan before 10.45' => ['pattern' => '/(*scs:(1)(*UTF:x)/', 'release' => '10.44', 'offset' => 5, 'code' => ErrorCode::VerbInvalid];
