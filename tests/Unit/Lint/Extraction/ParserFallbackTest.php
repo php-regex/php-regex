@@ -13,8 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
-use PHPRegex\Linter\LintIssue;
-use PHPRegex\Linter\RedosVerdict;
 use PhpParser\ErrorHandler;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
@@ -23,9 +21,11 @@ use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintStatsCounter;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\RecordingLintProgress;
