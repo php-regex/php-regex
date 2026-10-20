@@ -150,23 +150,11 @@ would mean replaying their internal form of the pattern (10.35 fixed it).
 
 ## Linter: the last pass before 2.0.0
 
-Bugs to fix, each reproduced against PCRE2 10.49:
-
-- `anchor.impossible.end` reports `/a$\b\n/`, `/a$(?=\n)\n/`, `/a$(?!x)\n/`
-  and `/a$\X/u`, which all match `"a\n"`.
-- Two issues of one pattern with the same message are reported once:
-  `/a{1}b{1}/` shows one `quantifier.useless`.
-- `redos.ignored_patterns` skips a fragment only in a pattern without
-  flags whose delimiters are the same: not in `/(a+)+$/i` or `{(a+)+$}`.
-- `backref.useless` does not see the groups inside `(*sr:...)`.
-- Long runs of lazy quantifiers are linted in quadratic time.
-
-Then the cleanup: an issue value object instead of the array held twice,
-one severity mapping, one rule-id helper and catalogue (with the docs URL
-in every output), `lintChunk` split, the flag scope and "what follows"
-written once, the rule state reset in `begin()`, the token helpers shared by
-the two extraction strategies, the console formatter split, and the config
-side of rule ids.
+Left: one rule catalogue (with the docs URL in every output: JSON, LSP,
+Checkstyle, GitHub), the token helpers shared by the two extraction
+strategies, the console formatter split, and the config side of rule ids
+(`regex.json` refusing the full `regex.lint.*` spelling, an inline marker
+naming a short id read as a note).
 
 ## Architecture and contributor path: the last pass before 2.0.0
 
@@ -175,7 +163,7 @@ side of rule ids.
 - Then, once the branches above are merged: `new Optimizer()` and
   `new Transpiler()` without a parser, `Optimizer::optimize()` without
   arrays, `SampleGenerator` without its seed setters, `Regex::lint()`;
-  `regex-phpunit` without the facade; the Psalm and PHPStan bridges without
+  the Psalm and PHPStan bridges without
   the whole linter (the target resolution and the PHP-source helpers move
   out of `regex-linter`); one placement and naming rule for exceptions; the
   test conventions (`#[Test]` everywhere, the four inline ignores moved to
@@ -185,11 +173,7 @@ side of rule ids.
 
 ## Parser and integrations: the last pass before 2.0.0
 
-Parser bugs, each reproduced against the engine: `\p{javaLowerCase}`,
-`\p{Block=...}` and `\p{Blk=...}` are reported valid where every PCRE2
-refuses them; a trailing `\c` after an unfinished group name hides the
-name error (`/(?&\c/`); `\c(` before `?[` is taken for an extended class;
-one error order on the PHP 7.3 target; the library's own regexes giving up
+Parser bugs, each reproduced against the engine: the library's own regexes giving up
 under a low `pcre.backtrack_limit` are reported as pattern errors;
 `php_version` and `ParserOptions` accept nonsense values.
 
@@ -200,9 +184,8 @@ printed `<b(?<=a)>` (the `<` delimiter counted), `{^a\Q{\E2}$}` printed
 `{^a\{2}$}`, `[[a-d[m-p]]]` normalized to `[[a-d[m-p]\]]` and
 `{a(?#{)b}c}` to `{a(?#{)b\}c}`.
 
-Parser structure: `TokenParser` (class and conditional parsing apart) and
-`PatternPrinter` (layout and bracket delimiters apart) split; then
-`Validator` split by concern; `QuantifierNode` carrying its bounds instead
+Parser structure: `TokenParser` split (class and conditional parsing
+apart); then `Validator` split by concern; `QuantifierNode` carrying its bounds instead
 of 47 re-parses; the error-offset rule, the 65535 limit and the UTF-8 width
 written once; the exception types and the snippet renderer unified; the
 public renames (node properties, error codes, getters, `PcreFeature`) to
@@ -223,8 +206,6 @@ Integrations:
 - PHPStan: a repo-only rule ships in the public extension;
   `PatternChecker` split. Psalm: the calls into `Psalm\Internal` isolated
   in one adapter; `PregCallAnalyzer` marked internal and split.
-- PHPUnit: `assertPatternDoesNotMatch()` on a broken pattern is flagged
-  risky; the package stops depending on the facade.
 - CLI: one option declaration per command for parsing and help; the LSP
   server's workspace settings apart; `OutputFormat` split per method in the
   facade.
