@@ -28,7 +28,10 @@ use PHPUnit\Framework\TestCase;
  *   tells the engine where a match may start: "/(?:x|(?=a)){0}\w/" never
  *   matches "\tb", where "/\w/" does;
  * - "\N" repeated right before "\R" is made possessive, though both match
- *   "\r": "/\N*\R/" does not match "a\r\x0Bb\r", where "/(?:\N)*\R/" does.
+ *   "\r": "/\N*\R/" does not match "a\r\x0Bb\r", where "/(?:\N)*\R/" does;
+ * - a character repeated right before a group repeated possessively from
+ *   zero is made possessive, as if the group could not be skipped:
+ *   "/\.a+(?:-b)?+a/" does not match ".aaaa", where "/\.(?:a)+(?:-b)?+a/" does.
  */
 final class EngineAgreementTest extends TestCase
 {
@@ -91,6 +94,42 @@ final class EngineAgreementTest extends TestCase
             'pattern' => '/(?:\s{4}){2,}(?:\N){0,2}?\R/',
             'expected' => '/(?:\s{4}){2,}(?:\N){0,2}?\R/',
             'subjects' => ["\t\n \n \n\t\t  \t\t?\r"],
+        ];
+
+        yield 'a grouped letter repeated before an optional group of one character' => [
+            'pattern' => '/\.(?:a)+(?:-)?+a/',
+            'expected' => '/\.a+-?+a/',
+            'subjects' => ['.aaaa', '.a-a'],
+        ];
+
+        yield 'a grouped letter repeated before a counted atomic group made possessive' => [
+            'pattern' => '/\.(?:\x61)+(?:(?>-)){0,2}+a{1}a{1}a{1}a{1}|a/',
+            'expected' => '/\.(?:\x61)+(?:(?>-)){0,2}+a{4}|a/',
+            'subjects' => ['.aaaaaaaa', '.a--aaaa'],
+        ];
+
+        yield 'a grouped letter repeated before a group made possessive from one' => [
+            'pattern' => '/\.(?:a)+(?:-b)++a/',
+            'expected' => '/\.a+(?:-b)++a/',
+            'subjects' => ['.a-ba', '.aaaa'],
+        ];
+
+        yield 'a grouped letter repeated before an optional group of two made possessive' => [
+            'pattern' => '/\.(?:a)+(?:-b)?+a/',
+            'expected' => '/\.(?:a)+(?:-b)?+a/',
+            'subjects' => ['.aaaa', '.a-ba'],
+        ];
+
+        yield 'a grouped letter repeated before an atomic group that can match empty' => [
+            'pattern' => '/\.(?:a)+(?>(?:-b)?)a/',
+            'expected' => '/\.(?:a)+(?>(?:-b)?)a/',
+            'subjects' => ['.aaaa', '.a-ba'],
+        ];
+
+        yield 'a grouped letter repeated before an atomic group that cannot' => [
+            'pattern' => '/\.(?:a)+(?>-b)a/',
+            'expected' => '/\.a+(?>-b)a/',
+            'subjects' => ['.a-ba', '.aaaa'],
         ];
     }
 }

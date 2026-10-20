@@ -97,6 +97,13 @@ final class Rewriter extends AbstractNodeVisitor
 
     private ?PatternPrinter $compiler = null;
 
+    /**
+     * The repeats whose group was dropped, "(?:a)+" written "a+".
+     *
+     * @var \WeakMap<QuantifierNode, true>
+     */
+    private \WeakMap $ungroupedRepeats;
+
     private readonly int $minQuantifierCount;
 
     public function __construct(
@@ -126,6 +133,7 @@ final class Rewriter extends AbstractNodeVisitor
     ) {
         $this->minQuantifierCount = max(2, $minQuantifierCount);
         $this->charSetAnalyzer = new CharSetAnalyzer();
+        $this->ungroupedRepeats = new \WeakMap();
         // Read again from the flags of each pattern visited whole.
         $this->possessify = $possessive;
     }
@@ -340,6 +348,8 @@ final class Rewriter extends AbstractNodeVisitor
             return $node;
         }
 
+        $optimizedChildren = $this->regroupBeforeOptionalPossessiveGroups($optimizedChildren);
+
         if (1 === \count($optimizedChildren)) {
             return $optimizedChildren[0];
         }
@@ -405,16 +415,17 @@ final class Rewriter extends AbstractNodeVisitor
             $this->isInsideQuantifier = $wasInsideQuantifier;
         }
 
+        $ungrouped = $node->node instanceof GroupNode && !$optimizedNode instanceof GroupNode;
         if ($optimizedNode !== $node->node) {
             $node = new QuantifierNode($this->repeatable($optimizedNode), $node->quantifier, $node->type, $node->startPosition, $node->endPosition);
         }
 
         $normalized = $this->normalizeQuantifier($node);
-        if ($normalized !== $node) {
-            return $normalized;
+        if ($ungrouped && $normalized instanceof QuantifierNode) {
+            $this->ungroupedRepeats[$normalized] = true;
         }
 
-        return $node;
+        return $normalized;
     }
 
     #[\Override]
@@ -618,6 +629,48 @@ final class Rewriter extends AbstractNodeVisitor
     public function visitCallout(CalloutNode $node): NodeInterface
     {
         return $node;
+    }
+
+    /**
+     * PCRE2 makes a character repeated right before a group repeated
+     * possessively from zero, or an atomic group that can match empty,
+     * possessive, as if the group could not be skipped: "\.a+(?:-b)?+a" misses ".aaaa", which "\.(?:a)+(?:-b)?+a"
+     * matches. A repeat whose group the rewrite dropped gets it back there.
+     *
+     * @param list<NodeInterface> $children
+     *
+     * @return list<NodeInterface>
+     */
+    private function regroupBeforeOptionalPossessiveGroups(array $children): array
+    {
+        foreach ($children as $i => $child) {
+            $next = $children[$i + 1] ?? null;
+            if ($child instanceof QuantifierNode && isset($this->ungroupedRepeats[$child]) && $this->skippableAtomicGroup($next)) {
+                $children[$i] = new QuantifierNode(
+                    new GroupNode($child->node, GroupType::NonCapturing, null, null, $child->node->getStartPosition(), $child->node->getEndPosition()),
+                    $child->quantifier,
+                    $child->type,
+                    $child->startPosition,
+                    $child->endPosition,
+                );
+            }
+        }
+
+        return $children;
+    }
+
+    /**
+     * Whether the node is a group the engine may skip without
+     * backtracking into it: repeated possessively from zero, or atomic
+     * around what can match empty.
+     */
+    private function skippableAtomicGroup(?NodeInterface $node): bool
+    {
+        if ($node instanceof QuantifierNode) {
+            return QuantifierType::Possessive === $node->type && $node->node instanceof GroupNode && $this->quantifierAllowsZero($node->quantifier);
+        }
+
+        return $node instanceof GroupNode && GroupType::Atomic === $node->type && $this->canMatchEmpty($node->child);
     }
 
     /**
