@@ -77,9 +77,6 @@ use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Config;
 use Psalm\Context;
-use Psalm\Internal\Analyzer\Statements\ExpressionAnalyzer;
-use Psalm\Internal\Analyzer\StatementsAnalyzer;
-use Psalm\Internal\Provider\NodeDataProvider;
 use Psalm\IssueBuffer;
 use Psalm\NodeTypeProvider;
 use Psalm\Plugin\EventHandler\AfterExpressionAnalysisInterface;
@@ -116,8 +113,8 @@ use Psalm\Type\Union;
  * whose taint flows, purity and parameter checks all stay: a type the plugin
  * narrows keeps the data flow of the stub's.
  *
- * The narrowing goes through Psalm's internal node data, read behind an
- * instanceof check: should it move, the calls are left to the stubs.
+ * The narrowing goes through Psalm's internal node data, reached through
+ * PsalmInternals: should it move, the calls are left to the stubs.
  *
  * @internal
  *
@@ -229,9 +226,8 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     {
         $call = $event->getExpr();
         $source = $event->getStatementsSource();
-        $codebase = $event->getCodebase();
         if ($call instanceof BinaryOp && \in_array($call::class, self::COMPARISONS, true)) {
-            self::dropAssertions($call, $source, $codebase);
+            self::dropAssertions($call, $source);
 
             return null;
         }
@@ -240,7 +236,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             return null;
         }
 
-        $function = self::globalFunction($call->name, $source, $codebase);
+        $function = self::globalFunction($call->name, $source);
         $arguments = null === $function ? null : self::bind(array_values($call->getArgs()), self::PARAMETERS[$function]);
         if ('preg_quote' === $function && null !== $arguments) {
             self::quote($call, $arguments, $source->getNodeTypeProvider());
@@ -293,7 +289,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         $parser = self::parser($codebase);
 
         try {
-            $pattern = self::literal($arguments['pattern'], $nodeTypes) ?? self::patternAroundQuotes($arguments['pattern'], $source, $codebase, $parser);
+            $pattern = self::literal($arguments['pattern'], $nodeTypes) ?? self::patternAroundQuotes($arguments['pattern'], $source, $parser);
             $verdict = null === $pattern ? null : self::verdict($parser, $pattern);
             if (null === $pattern || null === $verdict || null !== $verdict['error'] || ($verdict['noAutoCapture'] && $codebase->analysis_php_version_id < self::NO_AUTO_CAPTURE_FLOOR)) {
                 return null;
@@ -352,7 +348,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
 
         if (null === $judged) {
             // A pattern built around preg_quote() of a text not known types $matches from its groups.
-            $quoted = 'preg_match' === $function ? self::patternAroundQuotes($arguments['pattern'], $source, $codebase, $parser) : null;
+            $quoted = 'preg_match' === $function ? self::patternAroundQuotes($arguments['pattern'], $source, $parser) : null;
             if (null !== $quoted) {
                 self::typeAroundQuotes($call, $quoted, $arguments, $nodeTypes, $parser, $codebase);
             }
@@ -434,7 +430,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
      * The pattern standing for a concatenation of literals and preg_quote()
      * calls (QuotedPattern), or null for any other expression.
      */
-    private static function patternAroundQuotes(Expr $argument, StatementsSource $source, Codebase $codebase, RegexParser $parser): ?string
+    private static function patternAroundQuotes(Expr $argument, StatementsSource $source, RegexParser $parser): ?string
     {
         $nodeTypes = $source->getNodeTypeProvider();
         $parts = [];
@@ -446,7 +442,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
                 $parts[] = $text;
             } elseif ($part instanceof Concat) {
                 array_unshift($pending, $part->left, $part->right);
-            } elseif ($part instanceof FuncCall && $part->name instanceof Name && !$part->isFirstClassCallable() && 'preg_quote' === self::globalFunction($part->name, $source, $codebase)) {
+            } elseif ($part instanceof FuncCall && $part->name instanceof Name && !$part->isFirstClassCallable() && 'preg_quote' === self::globalFunction($part->name, $source)) {
                 $parts[] = null;
             } else {
                 return null;
@@ -485,11 +481,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
      */
     private static function analysedInPlace(Expr $argument, StatementsSource $source, Context $context): bool
     {
-        if (!$source instanceof StatementsAnalyzer || !self::writesNothing($argument, $source)) {
-            return false; // A source of another kind never: Psalm asks while it analyses a call.
-        }
-
-        return false !== ExpressionAnalyzer::analyze($source, $argument, $context);
+        return self::writesNothing($argument, $source) && PsalmInternals::analyse($argument, $source, $context);
     }
 
     /**
@@ -500,7 +492,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     private static function writesNothing(Expr $expr, StatementsSource $source): bool
     {
         if ($expr instanceof FuncCall) {
-            if (!$expr->name instanceof Name || $expr->isFirstClassCallable() || 'preg_quote' !== self::globalFunction($expr->name, $source, $source->getCodebase())) {
+            if (!$expr->name instanceof Name || $expr->isFirstClassCallable() || 'preg_quote' !== self::globalFunction($expr->name, $source)) {
                 return false;
             }
 
@@ -671,14 +663,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
      */
     private static function assertOnResult(NodeTypeProvider $nodeTypes, FuncCall $call, array $ifTrue, array $ifFalse): void
     {
-        if (!$nodeTypes instanceof NodeDataProvider || !method_exists($nodeTypes, 'setIfTrueAssertions') || !method_exists($nodeTypes, 'setIfFalseAssertions')) {
-            return; // Only on a Psalm release that moved its node data: none the tests run has.
-        }
-
-        $nodeTypes->setIfTrueAssertions($call, array_values(array_filter($ifTrue)));
-        if ([] !== $ifFalse) {
-            $nodeTypes->setIfFalseAssertions($call, array_values(array_filter($ifFalse)));
-        }
+        PsalmInternals::assert($nodeTypes, $call, array_values(array_filter($ifTrue)), [] === $ifFalse ? null : array_values(array_filter($ifFalse)));
     }
 
     /**
@@ -688,17 +673,11 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
      * call is an operand, its assertions go: Psalm analyses the comparison
      * before it reads them. The stub asserts nothing on the call.
      */
-    private static function dropAssertions(BinaryOp $comparison, StatementsSource $source, Codebase $codebase): void
+    private static function dropAssertions(BinaryOp $comparison, StatementsSource $source): void
     {
-        $nodeTypes = $source->getNodeTypeProvider();
-        if (!$nodeTypes instanceof NodeDataProvider || !method_exists($nodeTypes, 'setIfTrueAssertions') || !method_exists($nodeTypes, 'setIfFalseAssertions')) {
-            return; // Only on a Psalm release that moved its node data: none the tests run has.
-        }
-
         foreach ([$comparison->left, $comparison->right] as $operand) {
-            if ($operand instanceof FuncCall && $operand->name instanceof Name && \in_array(self::globalFunction($operand->name, $source, $codebase), ['preg_match', 'preg_match_all'], true)) {
-                $nodeTypes->setIfTrueAssertions($operand, []);
-                $nodeTypes->setIfFalseAssertions($operand, []);
+            if ($operand instanceof FuncCall && $operand->name instanceof Name && \in_array(self::globalFunction($operand->name, $source), ['preg_match', 'preg_match_all'], true)) {
+                PsalmInternals::assert($source->getNodeTypeProvider(), $operand, [], []);
             }
         }
     }
@@ -723,7 +702,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
      * unqualified call in a namespace reaches the namespace's function of
      * that name when there is one, as PHP resolves it.
      */
-    private static function globalFunction(Name $name, StatementsSource $source, Codebase $codebase): ?string
+    private static function globalFunction(Name $name, StatementsSource $source): ?string
     {
         $resolved = $name->getAttribute('resolvedName');
         $namespaced = $name->getAttribute('namespacedName');
@@ -731,28 +710,16 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             $name instanceof FullyQualified => $name->toString(),
             // "use function" imported it, or the name is qualified.
             \is_string($resolved) => $resolved,
-            \is_string($namespaced) && self::functionExists($namespaced, $source, $codebase) => null,
+            // Psalm keys its functions by strtolower(), locale and all: the
+            // name is lowered the same way to be found. A Psalm that cannot
+            // be asked leaves the call alone.
+            \is_string($namespaced) && PsalmInternals::functionExists($source, strtolower($namespaced)) => null,
             default => $name->toString(),
         };
 
         $function = null === $function ? null : Ascii::lower(ltrim($function, '\\'));
 
         return null !== $function && isset(self::PARAMETERS[$function]) ? $function : null;
-    }
-
-    /**
-     * Whether Psalm knows a function of that name; true when it cannot be
-     * asked, so the call is left alone.
-     */
-    private static function functionExists(string $function, StatementsSource $source, Codebase $codebase): bool
-    {
-        if (!$source instanceof StatementsAnalyzer || !method_exists($codebase->functions, 'functionExists')) {
-            return true; // Only on a Psalm release that moved these: none the tests run has.
-        }
-
-        // Psalm keys its functions by strtolower(), locale and all: the name
-        // is lowered the same way to be found.
-        return $codebase->functions->functionExists($source, strtolower($function));
     }
 
     /**

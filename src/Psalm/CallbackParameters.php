@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Psalm;
 
-use Psalm\Internal\Analyzer\StatementsAnalyzer;
 use Psalm\Plugin\EventHandler\Event\FunctionParamsProviderEvent;
 use Psalm\Plugin\EventHandler\FunctionParamsProviderInterface;
 use Psalm\Storage\FunctionLikeParameter;
@@ -42,16 +41,10 @@ final class CallbackParameters implements FunctionParamsProviderInterface
     public static function getFunctionParams(FunctionParamsProviderEvent $event): ?array
     {
         $source = $event->getStatementsSource();
-        $codebase = $source->getCodebase();
         $context = $event->getContext();
-        if (!$source instanceof StatementsAnalyzer) {
-            return null; // Never: Psalm asks while it analyses a call.
-        }
-
-        try {
-            $parameters = $codebase->getFunctionLikeStorage($source, 'preg_replace_callback')->params;
-        } catch (\UnexpectedValueException) {
-            return null; // Never: the stub declares the function.
+        $parameters = PsalmInternals::parameters($source, 'preg_replace_callback');
+        if (null === $parameters) {
+            return null; // Never on the Psalm releases the plugin reads: the stub declares the function.
         }
 
         $type = null === $context ? null : PregCallAnalyzer::callbackMatchesType($event->getCallArgs(), $source, $context);
