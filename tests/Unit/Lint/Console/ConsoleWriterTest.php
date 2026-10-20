@@ -70,4 +70,14 @@ final class ConsoleWriterTest extends TestCase
         $this->assertSame("PHPRegex 9.9.9\n", $plain->fetch());
         $this->assertSame("PHPRegex 9.9.9 by Younes ENNAJI\n", $verbose->fetch());
     }
+
+    #[Test]
+    public function test_title_colors_the_name_and_the_version(): void
+    {
+        $output = new BufferedOutput(decorated: true);
+
+        ConsoleWriter::title($output, '9.9.9');
+
+        $this->assertSame("\e[36;1mPHPRegex\e[39;22m \e[33m9.9.9\e[39m\n", $output->fetch());
+    }
 }

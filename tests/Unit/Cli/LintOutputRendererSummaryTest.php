@@ -85,6 +85,40 @@ final class LintOutputRendererSummaryTest extends TestCase
     }
 
     /**
+     * The request for a star ends a verbose run only, empty or not.
+     */
+    #[Test]
+    public function test_the_summary_ends_on_the_footer_under_verbose_only(): void
+    {
+        foreach ([true, false] as $isEmpty) {
+            $this->assertStringNotContainsString('GitHub star', self::summary(['errors' => 0, 'warnings' => 0, 'optimizations' => 0], $isEmpty));
+            $this->assertStringEndsWith("a GitHub star is appreciated: https://github.com/php-regex/php-regex\n\n", self::summary(['errors' => 0, 'warnings' => 0, 'optimizations' => 0], $isEmpty, true));
+        }
+    }
+
+    /**
+     * @param LintStats $stats
+     */
+    private static function summary(array $stats, bool $isEmpty, ?bool $verbose = null): string
+    {
+        $stream = fopen('php://memory', 'w+');
+        self::assertIsResource($stream);
+
+        ob_start();
+
+        try {
+            $renderer = new LintOutputRenderer();
+            $output = new Output(false, false, errorStream: $stream);
+            null === $verbose ? $renderer->renderSummary($output, $stats, $isEmpty) : $renderer->renderSummary($output, $stats, $isEmpty, $verbose);
+        } finally {
+            $written = (string) ob_get_clean();
+            fclose($stream);
+        }
+
+        return $written;
+    }
+
+    /**
      * @param LintStats $stats
      */
     private static function failLine(array $stats): string

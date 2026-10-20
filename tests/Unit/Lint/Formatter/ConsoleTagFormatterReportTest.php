@@ -448,10 +448,14 @@ final class ConsoleTagFormatterReportTest extends TestCase
 
         $output = $this->invokePrivate($formatter, 'displayOptimizations', [[
             ['optimization' => 'noop'],
+            ['optimization' => new OptimizationResult('/c/', '/d/', [])],
         ]]);
 
         $this->assertIsString($output);
         $this->assertStringContainsString('TIP', (string) $output);
+        // The entry after it is shown all the same.
+        $this->assertSame(2, substr_count((string) $output, ' TIP '));
+        $this->assertStringContainsString('<fg=green>+ ', (string) $output);
     }
 
     public function test_display_single_issue_handles_multiline_messages(): void

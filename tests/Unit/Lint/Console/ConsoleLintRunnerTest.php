@@ -102,6 +102,54 @@ final class ConsoleLintRunnerTest extends TestCase
      * Under --quiet the console writes nothing, the steps and the report
      * included; the exit code still says what was found.
      */
+    /**
+     * On a terminal each part of the banner, the error line and the line
+     * that times the run take their colors; the time and the memory are
+     * read as the run measured them.
+     */
+    #[Test]
+    public function test_decorated_console_colors_the_banner_and_the_times(): void
+    {
+        $project = $this->makeProject(['composer.json' => '{"name": "acme/app"}']);
+
+        $this->lint(self::request(['/a/'], projectDir: $project, warnings: ['W.']), decorated: true);
+
+        $target = ProjectTarget::fromSources([], [], $project, []);
+        $this->assertStringStartsWith(
+            "\e[36;1mPHPRegex\e[39;22m \e[33m9.9.9\e[39m\n\n"
+            ."\e[37;1mRuntime  \e[39;22m : PHP \e[33m".\PHP_VERSION."\e[39m\n"
+            ."\e[37;1mTarget   \e[39;22m : PHP \e[33m".$target->php()."\e[39m, PCRE2 \e[33m".$target->target()->pcreVersion."\e[39m (".$target->source().")\n"
+            ."\e[37;1mProcesses\e[39;22m : \e[33m1\e[39m\n"
+            ."\e[90mNote: ".$target->notices()[0]."\e[39m\n"
+            ."\e[33mWarning: W.\e[39m\n\n",
+            $this->standard(),
+        );
+        $this->assertMatchesRegularExpression('/\n  \e\[1mTime:\e\[22m \e\[33m\d{1,2}(\.\d{1,2})?s\e\[39m \| \e\[1mMemory:\e\[22m \e\[33m\d{1,4}(\.\d{1,2})? MB\e\[39m \| \e\[1mProcesses:\e\[22m \e\[33m1\e\[39m\n\n$/', $this->standard());
+    }
+
+    /**
+     * A locale other than C is named beside the target.
+     */
+    #[Test]
+    public function test_the_banner_names_a_locale_other_than_c(): void
+    {
+        $this->lint(self::request(['/a/'], setup: static function (): LintSetup {
+            $analysis = new AnalysisService(RegexParser::create());
+
+            return LintSetup::forTarget(ProjectTarget::fromSources(['setting' => '8.2'], ['setting' => '10.40'], null, [], ['setting' => 'C.UTF-8']), [], $analysis, new LintService($analysis, new PatternSourceCollection([])));
+        }), decorated: true);
+
+        $this->assertStringContainsString(", PCRE2 \e[33m10.40\e[39m, locale \e[33mC.UTF-8\e[39m (", $this->standard());
+    }
+
+    #[Test]
+    public function test_decorated_error_is_one_red_line(): void
+    {
+        $this->lint(self::request(['/a/'], jobs: '0'), decorated: true);
+
+        $this->assertSame("\e[37;41mError: The --jobs value must be a positive integer.\e[39;49m\n", $this->error());
+    }
+
     #[Test]
     public function test_quiet_console_writes_nothing(): void
     {
@@ -328,9 +376,9 @@ final class ConsoleLintRunnerTest extends TestCase
     /**
      * @param \Closure(self): ConsoleLintRequest $request
      */
-    private function lint(\Closure $request, int $verbosity = OutputInterface::VERBOSITY_NORMAL): int
+    private function lint(\Closure $request, int $verbosity = OutputInterface::VERBOSITY_NORMAL, bool $decorated = false): int
     {
-        $output = self::console($this->standard, new StreamOutput($this->error, $verbosity, false), $verbosity);
+        $output = self::console($this->standard, new StreamOutput($this->error, $verbosity, $decorated), $verbosity, $decorated);
 
         return (new ConsoleLintRunner())->run($request($this), $output);
     }
@@ -459,18 +507,19 @@ final class ConsoleLintRunnerTest extends TestCase
      *
      * @param resource $stream
      */
-    private static function console($stream, OutputInterface $errorOutput, int $verbosity): ConsoleOutputInterface
+    private static function console($stream, OutputInterface $errorOutput, int $verbosity, bool $decorated): ConsoleOutputInterface
     {
-        return new class($stream, $errorOutput, $verbosity) extends StreamOutput implements ConsoleOutputInterface {
+        return new class($stream, $errorOutput, $verbosity, $decorated) extends StreamOutput implements ConsoleOutputInterface {
             /**
              * @param resource $stream
              */
             public function __construct(
                 $stream,
                 private OutputInterface $errorOutput,
-                int $verbosity
+                int $verbosity,
+                bool $decorated,
             ) {
-                parent::__construct($stream, $verbosity, false);
+                parent::__construct($stream, $verbosity, $decorated);
             }
 
             public function getErrorOutput(): OutputInterface

@@ -112,7 +112,7 @@ final class ConsoleLintRunner
             excludeBase: $request->excludeBase,
         );
 
-        $startTime = (float) microtime(true);
+        $startTime = microtime(true);
         $progress = null;
         if ($console && !$output->isQuiet()) {
             // The bridges always suggest optimizations, a step of their own.
@@ -154,11 +154,12 @@ final class ConsoleLintRunner
 
         $this->writeReport($format, $output, $this->formatters->get($format)->format($report));
 
-        if ($console) {
-            $elapsed = (float) microtime(true) - $startTime;
+        // The console shows the run's figures, unless --quiet silences it.
+        // No cache count: the workers parse the patterns, not this process.
+        if (null !== $progress) {
+            $elapsed = microtime(true) - $startTime;
             $peakMemory = memory_get_peak_usage(true);
-            // No cache count: the workers parse the patterns, not this process.
-            $output->writeln('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Processes:</> <fg=yellow>'.($progress?->workersStarted() ?? 1).'</>');
+            $output->writeln('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Processes:</> <fg=yellow>'.$progress->workersStarted().'</>');
             $output->writeln('');
             ConsoleWriter::footer($output);
         }

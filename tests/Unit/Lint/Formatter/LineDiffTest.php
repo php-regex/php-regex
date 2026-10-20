@@ -74,6 +74,37 @@ final class LineDiffTest extends TestCase
     }
 
     /**
+     * The lines kept are a longest common run, and the operations read back
+     * both sides: the kept and deleted lines give the old one, the kept and
+     * inserted lines the new one.
+     *
+     * @param list<string> $old
+     * @param list<string> $new
+     */
+    #[Test]
+    #[DataProvider('provideLongestRuns')]
+    public function test_lines_keep_as_many_lines_as_the_longest_common_run(array $old, array $new, int $longest): void
+    {
+        $ops = LineDiff::lines($old, $new);
+
+        $this->assertCount($longest, array_filter($ops, static fn (array $op): bool => 'equal' === $op['type']));
+        $this->assertSame($old, array_values(array_map(static fn (array $op): string => $op['line'], array_filter($ops, static fn (array $op): bool => 'insert' !== $op['type']))));
+        $this->assertSame($new, array_values(array_map(static fn (array $op): string => $op['line'], array_filter($ops, static fn (array $op): bool => 'delete' !== $op['type']))));
+    }
+
+    /**
+     * @return iterable<string, array{old: list<string>, new: list<string>, longest: int}>
+     */
+    public static function provideLongestRuns(): iterable
+    {
+        yield 'two sequences of seven and six' => ['old' => ['a', 'b', 'c', 'b', 'd', 'a', 'b'], 'new' => ['b', 'd', 'c', 'a', 'b', 'a'], 'longest' => 4];
+        yield 'every other line changed' => ['old' => ['a', 'b', 'c', 'd', 'e'], 'new' => ['a', 'x', 'c', 'y', 'e'], 'longest' => 3];
+        yield 'a run that starts late' => ['old' => ['x', 'y', 'a', 'b', 'c'], 'new' => ['a', 'b', 'c', 'x'], 'longest' => 3];
+        yield 'one line in common at the end' => ['old' => ['a', 'b', 'z'], 'new' => ['c', 'z'], 'longest' => 1];
+        yield 'nothing in common' => ['old' => ['a', 'b'], 'new' => ['c', 'd', 'e'], 'longest' => 0];
+    }
+
+    /**
      * @param array{int, int} $expected the length of the shared prefix, then of the shared suffix
      */
     #[Test]

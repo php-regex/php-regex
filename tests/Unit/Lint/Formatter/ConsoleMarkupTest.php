@@ -103,6 +103,18 @@ final class ConsoleMarkupTest extends TestCase
         yield 'nothing' => ['text' => ''];
     }
 
+    /**
+     * The NUL bytes that stand for trailing backslashes are the only ones
+     * the escaped text ends with: a NUL inside is kept, unless trailing
+     * backslashes follow, when the console would read it as one of them.
+     */
+    #[Test]
+    public function test_a_nul_byte_is_kept_unless_trailing_backslashes_follow(): void
+    {
+        $this->assertSame("a\0b", (new TagMarkup())->escape("a\0b"));
+        $this->assertSame("ab\0\0", (new TagMarkup())->escape("a\0b\\"));
+    }
+
     #[Test]
     public function test_a_muted_run_is_one_tag_or_a_code_per_segment(): void
     {

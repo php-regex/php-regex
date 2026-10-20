@@ -48,6 +48,7 @@ final class TextPreservingHighlighterTest extends TestCase
         yield 'a brace left open' => ['body' => 'a{1', 'expected' => 'a{1'];
         yield 'a brace closed after a comma and a letter' => ['body' => 'a{1,x}', 'expected' => 'a{1,x}'];
         yield 'a brace at the end' => ['body' => 'a{', 'expected' => 'a{'];
+        yield 'a brace around a letter' => ['body' => 'a{x}', 'expected' => 'a{x}'];
     }
 
     #[Test]
