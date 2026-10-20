@@ -147,16 +147,16 @@ final class JavaScriptTranspilerTest extends TestCase
      */
     public static function provideProperties(): iterable
     {
-        yield 'a bare script' => ['pattern' => '/^\p{Han}$/u', 'literal' => '/^\p{Script_Extensions=Han}$/u', 'subjects' => ['中' => 1, '、' => 1, 'a' => 0]];
-        yield 'a script by its Script' => ['pattern' => '/^\p{sc:Han}$/u', 'literal' => '/^\p{Script=Han}$/u', 'subjects' => ['中' => 1, '、' => 0]];
-        yield 'a script by its short name' => ['pattern' => '/^\p{Script=Hani}$/u', 'literal' => '/^\p{Script=Han}$/u', 'subjects' => ['中' => 1, '、' => 0]];
-        yield 'a script by its Script_Extensions' => ['pattern' => '/^\p{scx:Hira}$/u', 'literal' => '/^\p{Script_Extensions=Hiragana}$/u', 'subjects' => ['ー' => 1, 'あ' => 1, 'ア' => 0]];
-        yield 'a script spelled loosely' => ['pattern' => '/^\P{greek}$/u', 'literal' => '/^\P{Script_Extensions=Greek}$/u', 'subjects' => ['α' => 0, 'a' => 1]];
-        yield 'a script negated with a caret' => ['pattern' => '/^\p{^Latin}$/u', 'literal' => '/^\P{Script_Extensions=Latin}$/u', 'subjects' => ['a' => 0, 'α' => 1]];
-        yield 'the Common script' => ['pattern' => '/^\p{Common}$/u', 'literal' => '/^\p{Script=Common}$/u', 'subjects' => ['、' => 1, '1' => 1, 'a' => 0]];
-        yield 'a script in a class' => ['pattern' => '/^[\p{Han}\d]+$/u', 'literal' => '/^[\p{Script_Extensions=Han}\d]+$/u', 'subjects' => ['中1' => 1, 'a' => 0]];
-        yield 'general categories' => ['pattern' => '/^\p{L}\p{Lu}\pN$/u', 'literal' => '/^\p{L}\p{Lu}\p{N}$/u', 'subjects' => ['aB1' => 1, 'ab1' => 0]];
-        yield 'a binary property' => ['pattern' => '/^\p{Alphabetic}$/u', 'literal' => '/^\p{Alphabetic}$/u', 'subjects' => ['a' => 1, '1' => 0]];
+        yield 'a bare script' => ['pattern' => '/^\p{Han}$/u', 'literal' => '/^\p{Script_Extensions=Han}(?=\n?$)/u', 'subjects' => ['中' => 1, '、' => 1, 'a' => 0]];
+        yield 'a script by its Script' => ['pattern' => '/^\p{sc:Han}$/u', 'literal' => '/^\p{Script=Han}(?=\n?$)/u', 'subjects' => ['中' => 1, '、' => 0]];
+        yield 'a script by its short name' => ['pattern' => '/^\p{Script=Hani}$/u', 'literal' => '/^\p{Script=Han}(?=\n?$)/u', 'subjects' => ['中' => 1, '、' => 0]];
+        yield 'a script by its Script_Extensions' => ['pattern' => '/^\p{scx:Hira}$/u', 'literal' => '/^\p{Script_Extensions=Hiragana}(?=\n?$)/u', 'subjects' => ['ー' => 1, 'あ' => 1, 'ア' => 0]];
+        yield 'a script spelled loosely' => ['pattern' => '/^\P{greek}$/u', 'literal' => '/^\P{Script_Extensions=Greek}(?=\n?$)/u', 'subjects' => ['α' => 0, 'a' => 1]];
+        yield 'a script negated with a caret' => ['pattern' => '/^\p{^Latin}$/u', 'literal' => '/^\P{Script_Extensions=Latin}(?=\n?$)/u', 'subjects' => ['a' => 0, 'α' => 1]];
+        yield 'the Common script' => ['pattern' => '/^\p{Common}$/u', 'literal' => '/^\p{Script=Common}(?=\n?$)/u', 'subjects' => ['、' => 1, '1' => 1, 'a' => 0]];
+        yield 'a script in a class' => ['pattern' => '/^[\p{Han}\d]+$/u', 'literal' => '/^[\p{Script_Extensions=Han}\p{Nd}]+(?=\n?$)/u', 'subjects' => ['中1' => 1, 'a' => 0]];
+        yield 'general categories' => ['pattern' => '/^\p{L}\p{Lu}\pN$/u', 'literal' => '/^\p{L}\p{Lu}\p{N}(?=\n?$)/u', 'subjects' => ['aB1' => 1, 'ab1' => 0]];
+        yield 'a binary property' => ['pattern' => '/^\p{Alphabetic}$/u', 'literal' => '/^\p{Alphabetic}(?=\n?$)/u', 'subjects' => ['a' => 1, '1' => 0]];
     }
 
     /**
@@ -171,9 +171,9 @@ final class JavaScriptTranspilerTest extends TestCase
         $before = Regex::create(['cache' => null, 'php_version' => 80100]);
         $after = Regex::create(['cache' => null, 'php_version' => 80200]);
 
-        $this->assertSame('/^\p{Script=Han}$/u', $before->transpile('/^\p{Han}$/u', 'javascript')->literal);
-        $this->assertSame('/^\P{Script=Han}$/u', $before->transpile('/^\p{^Han}$/u', 'javascript')->literal);
-        $this->assertSame('/^\p{Script_Extensions=Han}$/u', $after->transpile('/^\p{Han}$/u', 'javascript')->literal);
+        $this->assertSame('/^\p{Script=Han}(?=\n?$)/u', $before->transpile('/^\p{Han}$/u', 'javascript')->literal);
+        $this->assertSame('/^\P{Script=Han}(?=\n?$)/u', $before->transpile('/^\p{^Han}$/u', 'javascript')->literal);
+        $this->assertSame('/^\p{Script_Extensions=Han}(?=\n?$)/u', $after->transpile('/^\p{Han}$/u', 'javascript')->literal);
     }
 
     #[Test]
@@ -230,7 +230,7 @@ final class JavaScriptTranspilerTest extends TestCase
      */
     public static function provideUngreedyPatterns(): iterable
     {
-        yield 'a greedy quantifier' => ['pattern' => '/<.+>/U', 'literal' => '/<.+?>/', 'subject' => '<a><b>', 'groups' => ['<a>']];
+        yield 'a greedy quantifier' => ['pattern' => '/<.+>/U', 'literal' => '/<[^\n]+?>/', 'subject' => '<a><b>', 'groups' => ['<a>']];
         yield 'a lazy quantifier' => ['pattern' => '/(a+?)/U', 'literal' => '/(a+)/', 'subject' => 'aaa', 'groups' => ['aaa', 'aaa']];
         yield 'a counted quantifier' => ['pattern' => '/a{2,}/U', 'literal' => '/a{2,}?/', 'subject' => 'aaaa', 'groups' => ['aa']];
         yield 'an inline switch' => ['pattern' => '/a(?U)b+/', 'literal' => '/ab+?/', 'subject' => 'abbb', 'groups' => ['ab']];

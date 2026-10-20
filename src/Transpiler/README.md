@@ -27,10 +27,12 @@ Features
 --------
 
 - Three targets, `javascript` (alias `js`), `html-pattern` (alias `html`) and `python` (alias `py`), each producing a paste-ready literal and a constructor call
-- Dialect rewrites: `(?P<name>)` becomes `(?<name>)` in JavaScript, `\k<name>` becomes `(?P=name)` in Python, `\h` and `\v` become character classes, atomic groups are emulated in Python
-- Flags are mapped per target: JavaScript keeps `i`, `m`, `s`, `u`, gains `u` when Unicode escapes need it, and has `/x` applied then dropped; Python keeps `i`, `m`, `s`, `x` and spells flags inline or as `re` constants; every target drops `/S`, which PHP has ignored since 7.3, with a note
-- Warnings list every rewrite to review; notes list run-time caveats, such as ASCII-based `\w` in JavaScript
-- A construct the target cannot express — a possessive quantifier, `\p{...}` in Python — throws a `TranspileException` carrying the position in the pattern
+- Dialect rewrites: `(?P<name>)` becomes `(?<name>)` in JavaScript, `\k<name>` becomes `(?P=name)` in Python, `\h` and `\v` become character classes
+- What a target reads otherwise is written out as PCRE reads it: `$`, which also matches before a final newline, `^` and `$` under `m`, the dot, which leaves out `\n` alone, and, under `u`, `\d`, `\w`, `\s` and `\b`, which PHP reads in Unicode
+- Flags are mapped per target: JavaScript keeps `i`, `s`, `u`, gains `u` when Unicode escapes need it, and has `/m`, `/D`, `/x` and `/U` applied while printing; Python keeps `i` and `s`, gains `re.ASCII` without `u`, has `/m`, `/D`, `/x` and `/U` applied while printing, and spells flags inline or as `re` constants; every target drops `/S`, which PHP has ignored since 7.3, with a note
+- Warnings list every rewrite to review; notes list the flags applied or dropped
+- A construct the target cannot express without matching otherwise — a possessive quantifier, an atomic group or `\w` under `u` in Python, a backreference to a group that may not have matched in JavaScript — throws a `TranspileException` carrying the position in the pattern
+- Every target is checked against its own engine: the test suite runs the transpiled patterns in Node and Python on the subjects `preg_match()` is run on, and compares the matches and the groups
 
 Installation
 ------------
@@ -60,16 +62,19 @@ $transpiler = new Transpiler(RegexParser::create());
 $result = $transpiler->transpile('/(?P<word>\w+)\k{word}/i', 'javascript');
 
 echo $result->literal;  // /(?<word>\w+)\k<word>/i
-echo $result->notes[0]; // JavaScript \w and \b are ASCII-based; Unicode word boundaries may differ.
+
+// "$" also matches before a newline that ends the subject; JavaScript's does not.
+echo $transpiler->transpile('/^\d+$/', 'javascript')->literal; // /^\d+(?=\n?$)/
 ```
 
-For Python, the literal is a raw string carrying the flags inline, and the constructor is a `re.compile()` call:
+For Python, the literal is a raw string carrying the flags inline, and the constructor is a `re.compile()` call.
+Without `u` PCRE reads `\w`, `\d`, `\s`, `\b` and case in ASCII, so the pattern gains `re.ASCII`:
 
 ```php
 $result = $transpiler->transpile('/(?P<word>\w+)\k<word>/i', 'python');
 
-echo $result->literal;     // r'(?i)(?P<word>\w+)(?P=word)'
-echo $result->constructor; // re.compile(r'(?P<word>\w+)(?P=word)', re.IGNORECASE)
+echo $result->literal;     // r'(?ai)(?P<word>\w+)(?P=word)'
+echo $result->constructor; // re.compile(r'(?P<word>\w+)(?P=word)', re.ASCII | re.IGNORECASE)
 ```
 
 Every rewrite is reported, and what a target cannot express is refused rather than approximated:
@@ -95,7 +100,7 @@ For an HTML form, the `pattern` attribute matches the whole value under the
 accepts what `preg_match()` finds, and escapes in classes what `v` reserves:
 
 ```php
-$result = $transpiler->transpile('/^[\w.-]+@[\w-]+\.[a-z]{2,}$/u', 'html-pattern');
+$result = $transpiler->transpile('/^[\w.-]+@[\w-]+\.[a-z]{2,}$/', 'html-pattern');
 
 echo $result->literal;     // ^[\w\.\-]+@[\w\-]+\.[a-z]{2,}$
 echo $transpiler->transpile('/\d{4}/', 'html')->literal; // [\s\S]*(?:\d{4})[\s\S]*
@@ -115,7 +120,8 @@ A backreference under `/i` is refused: it would match its group's text in
 one case only. `/s`, `/m` and `/D` change nothing in a field value, which
 holds no line break. `/S`, which PHP has ignored since 7.3, is dropped with a
 note, there as for JavaScript, and `/U` or `(?U)` swaps greedy and lazy in the
-quantifiers it governs: `/<.+>/U` is `/<.+?>/` for JavaScript.
+quantifiers it governs: `/<.+>/U` is `/<[^\n]+?>/` for JavaScript, the dot
+written as PCRE reads it.
 
 JavaScript and Python read characters, where PCRE without `u` reads bytes. A
 multibyte character written whole (`/café/`) stays that character; a byte above

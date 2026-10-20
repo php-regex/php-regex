@@ -590,21 +590,34 @@ echo $result->constructor; // new RegExp("(?<word>\\w+)", "i")
 
 $result = Regex::create()->transpile('/(?P<word>\\w+)/i', 'python');
 
-echo $result->literal;     // r'(?i)(?P<word>\w+)'
-echo $result->constructor; // re.compile(r'(?P<word>\w+)', re.IGNORECASE)
+echo $result->literal;     // r'(?ai)(?P<word>\w+)'
+echo $result->constructor; // re.compile(r'(?P<word>\w+)', re.ASCII | re.IGNORECASE)
 ```
 
 Notes:
-- Unsupported PCRE constructs throw `TranspileException`.
+- Unsupported PCRE constructs throw `TranspileException`, and so does a construct the target engine would match
+  otherwise and has no way to write: an atomic group, a backreference inside a lookbehind or under `/iu`, and `\w` or
+  `\b` under `u` in Python; in JavaScript a backreference to a group that may not have matched (it matches the empty
+  string there), a capturing group a repetition may leave unset or take empty, a repetition that may match empty before
+  a longer match, and `\p{Lu}`, `\p{Ll}` or `\p{Lt}` under `/i`.
+- What a target reads otherwise is written as PCRE reads it: `$` is `(?=\n?$)` in JavaScript, as it also matches before
+  a newline that ends the subject, `$` under `/D` and `\z` are `$`, `\Z` is `(?=\n?$)`, and `^` and `$` under `/m` see
+  `\n` alone end a line (`(?:^|(?<=\n)(?!$))` and `(?=\n|$)`); in Python `\z` is `\Z` and `\Z` is `(?=\n?\Z)`. The dot,
+  which leaves out `\n` alone, is `[^\n]` in JavaScript. Under `u`, where PHP reads `\d`, `\w`, `\s` and `\b` in
+  Unicode, JavaScript gets `\p{Nd}`, a class of the word characters and one of the spaces, and Python, without `u`,
+  `re.ASCII`.
 - JavaScript targets may add `/u` when Unicode properties or code point escapes are used.
 - A script property takes the name JavaScript reads: PCRE2 reads `\p{Han}` as the script's extensions, so it is
   `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused. For a
   target before PCRE2 10.40 (PHP 8.1), which reads `\p{Han}` as the script alone, it is `\p{Script=Han}`.
-- `/x` is dropped after comments/whitespace are normalized.
+- `/x` is dropped after comments/whitespace are normalized; `/m` and `/D` are dropped once `^` and `$` are written
+  for them, each with a note.
 - `/S` is dropped with a note in the JavaScript, `html-pattern` and Python targets: PHP has ignored it since 7.3.
-- `/U` and `(?U)` are carried by swapping greedy and lazy in the quantifiers they govern (`/<.+>/U` is `/<.+?>/`);
-  a possessive quantifier is refused as before. JavaScript takes no other inline flag.
-- `TranspileOptions` lets you disable JS lookbehind support (`allowLookbehind: false`).
+- `/U` and `(?U)` are carried by swapping greedy and lazy in the quantifiers they govern (`/<.+>/U` is `/<[^\n]+?>/`);
+  a possessive quantifier is refused as before. JavaScript also takes `(?s)`, `(?m)` and `(?x)`, written out, and
+  `(?i)` where it changes nothing; Python takes `(?i)` too, each atom it governs written `(?i:…)` or `(?-i:…)`.
+- `TranspileOptions` lets you disable JS lookbehind support (`allowLookbehind: false`): `^` under `/m` and `\b` or
+  `\B` under `u`, which are written with a lookbehind, are then refused.
 - Available targets: `javascript` (alias: `js`), `html-pattern` (alias: `html`) and `python` (alias: `py`).
 - `html-pattern` gives the value of an HTML `pattern` attribute, which the browser matches whole under the `v` flag
   (`new RegExp("^(?:" + value + ")$", "v")`): an unanchored side is padded with `[\s\S]*`, so the attribute accepts
@@ -837,7 +850,7 @@ foreach ($result->warnings as $warning) {
 foreach ($result->notes as $note) {
     echo "- $note\n";
 }
-// - JavaScript \w and \b are ASCII-based; Unicode word boundaries may differ.
+// (no notes for this pattern; /m, /x or /U would each add one)
 ```
 
 ---

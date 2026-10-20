@@ -87,21 +87,13 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
     private bool $commentWarningEmitted = false;
 
-    private string $flags;
+    private readonly string $flags;
 
     /**
-     * Whether /i holds where the printer stands, under the v flag only.
+     * Whether the pattern reads UTF-8, by u or "(*UTF)", for the cases the
+     * HTML pattern attribute spells out.
      */
-    private bool $caseless = false;
-
-    /**
-     * Whether /U holds where the printer stands: greedy and lazy swap.
-     */
-    private bool $ungreedy = false;
-
-    private bool $unicode = false;
-
-    private bool $unicodeFlag = false;
+    private bool $unicodeText = false;
 
     private string $source = '';
 
@@ -125,28 +117,19 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitRegex(RegexNode $node): string
     {
-        $this->flags = $node->flags;
-        $this->ungreedy = str_contains($node->flags, 'U');
+        $this->enterPattern($node);
         if ($this->unicodeSets) {
-            $this->caseless = str_contains($node->flags, 'i');
-            $this->unicode = $node->isUnicode();
-            $this->unicodeFlag = str_contains($node->flags, 'u');
+            $this->unicodeText = $node->isUnicode();
             $this->source = $node->source ?? '';
         }
 
-        return $node->pattern->accept($this);
-    }
+        $printed = $node->pattern->accept($this);
+        $divergence = CaptureSemantics::firstDivergence($node);
+        if (null !== $divergence) {
+            $this->unsupported($divergence[0], $divergence[1]);
+        }
 
-    /**
-     * Whether the group is a bare "(?flags)", which sets its flags for what
-     * follows it up to the end of the enclosing group, the alternatives
-     * after it included. "(?i:)" holds the same empty child one byte longer.
-     */
-    public static function isBareOptionSetting(NodeInterface $node): bool
-    {
-        return $node instanceof GroupNode
-            && GroupType::InlineFlags === $node->type
-            && $node->getEndPosition() - $node->getStartPosition() === \strlen((string) $node->flags) + 3;
+        return $printed;
     }
 
     #[\Override]
@@ -191,32 +174,28 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             return $result;
         }
 
-        $result = $children[0]->accept($this);
-        for ($i = 1, $count = \count($children); $i < $count; $i++) {
-            $result .= $children[$i]->accept($this);
-        }
-
-        return $result;
+        return $this->printSequence($children);
     }
 
     #[\Override]
     public function visitGroup(GroupNode $node): string
     {
         // An option set inside a group ends with it.
-        [$caseless, $ungreedy] = [$this->caseless, $this->ungreedy];
+        $scope = $this->scope();
         if (GroupType::InlineFlags === $node->type && $this->carriesInlineFlags((string) $node->flags, $node)) {
             if (self::isBareOptionSetting($node)) {
                 return '';
             }
 
             $child = $node->child->accept($this);
-            [$this->caseless, $this->ungreedy] = [$caseless, $ungreedy];
+            $this->restoreScope($scope);
 
             return '(?:'.$child.')';
         }
 
+        $this->refuseNonAtomic($node, 'JavaScript');
         $child = $node->child->accept($this);
-        [$this->caseless, $this->ungreedy] = [$caseless, $ungreedy];
+        $this->restoreScope($scope);
         $name = $node->name ?? '';
 
         return match ($node->type) {
@@ -241,16 +220,18 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             return $this->unsupported('Possessive quantifiers are not supported in JavaScript.', $node);
         }
 
+        $assertion = $this->repeatedAssertion($node);
+        if (null !== $assertion) {
+            return $assertion;
+        }
+
         $nodeCompiled = $node->node->accept($this);
 
         if ($node->node instanceof SequenceNode || $node->node instanceof AlternationNode) {
             $nodeCompiled = '(?:'.$nodeCompiled.')';
         }
 
-        $suffix = (QuantifierType::Lazy === $node->type) !== $this->ungreedy ? '?' : '';
-        $quantifier = $this->normalizeQuantifier($node->quantifier);
-
-        return $nodeCompiled.$quantifier.$suffix;
+        return $nodeCompiled.$this->normalizeQuantifier($node->quantifier).$this->lazySuffix($node);
     }
 
     #[\Override]
@@ -266,8 +247,12 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
         $this->refuseALoneByte($node->value, $node);
 
-        if ($this->caseless && !$this->inCharClass) {
+        if ($this->spellsCase() && !$this->inCharClass) {
             return $this->caselessLiteral($node->value, $node);
+        }
+
+        if ($this->caseless && !$this->unicodeSets && !$this->unicode && self::holdsACasedCharacterAboveAscii($node->value)) {
+            return $this->unsupported('Without u, PCRE matches a character above ASCII in its own case only under /i, where JavaScript matches its other cases too. Add u, or write the character itself without /i.', $node);
         }
 
         return $this->escapeString($node->value);
@@ -287,7 +272,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             $this->context->addWarning('Converted octal escape to hex/Unicode escape for JavaScript.');
         }
 
-        if ($this->caseless && !$this->inCharClass) {
+        if ($this->spellsCase() && !$this->inCharClass) {
             return $this->caselessCharacter($codePoint, $this->formatCodePoint($codePoint), $node);
         }
 
@@ -297,56 +282,83 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitCharType(CharTypeNode $node): string
     {
-        if ('h' === $node->value) {
-            $this->context->addNote('Converted \h (horizontal whitespace) to character class.');
+        if ('h' === $node->value || 'v' === $node->value) {
+            $this->context->addNote('Converted \\'.$node->value.' ('.('h' === $node->value ? 'horizontal' : 'vertical').' whitespace) to character class.');
+            $set = 'h' === $node->value ? self::HORIZONTAL_SPACES : self::VERTICAL_SPACES;
 
-            return '[\x09\x20\xA0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]';
-        }
-
-        if ('v' === $node->value) {
-            $this->context->addNote('Converted \v (vertical whitespace) to character class.');
-
-            return '[\x0A-\x0D\x85\u2028\u2029]';
+            return $this->inCharClass ? $set : '['.$set.']';
         }
 
         if (!\in_array($node->value, self::SUPPORTED_CHAR_TYPES, true)) {
             return $this->unsupported('Unsupported character type in JavaScript: \\'.$node->value.'.', $node);
         }
 
-        if ('w' === $node->value || 'W' === $node->value) {
-            $this->noteUnicodeWordBoundary();
+        if (!$this->unicode) {
+            return '\\'.$node->value;
         }
 
-        return '\\'.$node->value;
+        // Under u PHP compiles with UCP: the types read Unicode, JavaScript's ASCII.
+        return match ($node->value) {
+            'd' => '\p{Nd}',
+            'D' => '\P{Nd}',
+            default => $this->inCharClass && Ascii::lower($node->value) === $node->value ? $this->unicodeSet($node->value) : '['.(Ascii::lower($node->value) === $node->value ? '' : '^').$this->unicodeSet(Ascii::lower($node->value)).']',
+        };
     }
 
     #[\Override]
     public function visitDot(DotNode $node): string
     {
-        return '.';
+        // The dot leaves out "\n" alone; JavaScript's also "\r", U+2028 and U+2029.
+        if (!$this->dotAll) {
+            return '[^\n]';
+        }
+
+        return $this->unicodeSets || !str_contains($this->patternFlags, 's') ? '[\s\S]' : '.';
     }
 
     #[\Override]
     public function visitAnchor(AnchorNode $node): string
     {
-        return $node->value;
+        // A field value holds no line break: "^" and "$" are its ends.
+        if ($this->unicodeSets) {
+            return $node->value;
+        }
+
+        if ('^' === $node->value) {
+            if (!$this->multiline) {
+                return '^';
+            }
+
+            // A line starts after "\n" alone, and not after one that ends the subject.
+            if (!$this->allowLookbehind) {
+                return $this->unsupported('Lookbehind is disabled for JavaScript targets: "^" under /m needs one to find the start of a line.', $node);
+            }
+
+            return '(?:^|(?<=\n)(?!$))';
+        }
+
+        if ($this->multiline) {
+            return '(?=\n|$)';
+        }
+
+        // "$" also matches before a newline that ends the subject, but under /D.
+        return $this->dollarEndOnly ? '$' : '(?=\n?$)';
     }
 
     #[\Override]
     public function visitAssertion(AssertionNode $node): string
     {
         if ('b' === $node->value || 'B' === $node->value) {
-            $this->noteUnicodeWordBoundary();
-
-            return '\\'.$node->value;
+            return $this->unicode ? $this->unicodeWordBoundary('b' === $node->value, $node) : '\\'.$node->value;
         }
 
         // A field value holds no line break: "\Z" ends it as "\z" does.
-        if ($this->unicodeSets && \in_array($node->value, ['A', 'z', 'Z'], true)) {
-            return 'A' === $node->value ? '^' : '$';
-        }
-
-        return $this->unsupported('Unsupported assertion in JavaScript: \\'.$node->value.'.', $node);
+        return match ($node->value) {
+            'A' => '^',
+            'z' => '$',
+            'Z' => $this->unicodeSets ? '$' : '(?=\n?$)',
+            default => $this->unsupported('Unsupported assertion in JavaScript: \\'.$node->value.'.', $node),
+        };
     }
 
     #[\Override]
@@ -363,9 +375,16 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
         try {
             $negation = $node->isNegated ? '^' : '';
+            if ($this->unicode && !$this->unicodeSets && !$wasInCharClass) {
+                $composed = $this->composeComplements($node);
+                if (null !== $composed) {
+                    return $composed;
+                }
+            }
+
             $body = $node->expression->accept($this);
 
-            return $this->caseless && !$wasInCharClass ? $this->caselessClass($body, $node) : '['.$negation.$body.']';
+            return $this->spellsCase() && !$wasInCharClass ? $this->caselessClass($body, $node) : '['.$negation.$body.']';
         } finally {
             $this->inCharClass = $wasInCharClass;
         }
@@ -380,7 +399,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitBackref(BackrefNode $node): string
     {
-        if ($this->caseless) {
+        if ($this->spellsCase()) {
             return $this->unsupported('A backreference under /i cannot be carried into the HTML pattern attribute: it would match its group\'s text in one case only.', $node);
         }
 
@@ -390,7 +409,8 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitControlChar(ControlCharNode $node): string
     {
-        return '\\c'.$node->char;
+        // JavaScript takes a letter after "\c"; "\c?" is DEL, "\c\" is 0x1C.
+        return Ascii::isAlpha($node->char) ? '\\c'.$node->char : $this->formatCodePoint($node->codePoint);
     }
 
     #[\Override]
@@ -418,9 +438,12 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
         $this->context->requireFlag('u', 'Added /u for Unicode property escapes.');
         $prop = $this->javaScriptProperty($prop, $node);
+        if ($this->caseless && !$this->unicodeSets && \in_array($prop, ['Lu', 'Ll', 'Lt'], true)) {
+            return $this->unsupported('A case property under /i cannot be carried into JavaScript: PCRE2 reads \\p{Lu}, \\p{Ll} and \\p{Lt} as any cased letter from 10.45 and as themselves before, JavaScript folds them otherwise.', $node);
+        }
         $printed = $isNegated ? '\\P{'.$prop.'}' : '\\p{'.$prop.'}';
 
-        return $this->caseless && !$this->inCharClass ? $this->caselessAtom($printed, $this->text($node), $node) : $printed;
+        return $this->spellsCase() && !$this->inCharClass ? $this->caselessAtom($printed, $this->text($node), $node) : $printed;
     }
 
     #[\Override]
@@ -487,6 +510,111 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         }
 
         return $prefix.$child.')';
+    }
+
+    /**
+     * Whether /i is spelled out, each atom written with its cases: in the
+     * HTML pattern attribute, which takes no flag.
+     */
+    private function spellsCase(): bool
+    {
+        return $this->unicodeSets && $this->caseless;
+    }
+
+    /**
+     * Applies an inline "(?flags)" the target can carry, and says whether it
+     * can. JavaScript carries "m" and "s", which the printer applies to "^",
+     * "$" and the dot, "x", which the parser has applied, and "U", swapping
+     * greedy and lazy; "i" only where it changes nothing. The HTML
+     * attribute also takes "i" spelled out. Under JavaScript any other
+     * letter is left to the group's refusal.
+     */
+    private function carriesInlineFlags(string $flags, GroupNode $node): bool
+    {
+        $caseless = $this->caseless;
+        if (!$this->applyInlineFlags($flags, 'imsxU')) {
+            if (!$this->unicodeSets) {
+                return false;
+            }
+
+            throw new TranspileException('The HTML pattern attribute cannot carry the inline flags (?'.$flags.').', $node->getStartPosition(), $this->context->sourcePattern);
+        }
+
+        return $this->unicodeSets || $caseless === $this->caseless;
+    }
+
+    /**
+     * What "\s" or "\w" matches under u, written for a class: "\w" takes
+     * the combining marks and the connector punctuation from PCRE2 10.43,
+     * as the running PCRE says.
+     */
+    private function unicodeSet(string $type): string
+    {
+        if ('s' === $type) {
+            return self::UNICODE_SPACES;
+        }
+
+        return 1 === LibraryPcre::match('/^\w$/u', "\u{300}") ? '\p{L}\p{N}_\p{Mn}\p{Pc}' : '\p{L}\p{N}_';
+    }
+
+    /**
+     * "\b" or "\B" under u, a word character read as PCRE reads it with UCP:
+     * the boundary looks behind, which a target without lookbehind lacks.
+     */
+    private function unicodeWordBoundary(bool $boundary, AssertionNode $node): string
+    {
+        if (!$this->allowLookbehind) {
+            return $this->unsupported('Lookbehind is disabled for JavaScript targets: \\'.$node->value.' under u needs one to read a Unicode word boundary.', $node);
+        }
+
+        $word = '['.$this->unicodeSet('w').']';
+
+        return $boundary
+            ? '(?:(?<='.$word.')(?!'.$word.')|(?<!'.$word.')(?='.$word.'))'
+            : '(?:(?<='.$word.')(?='.$word.')|(?<!'.$word.')(?!'.$word.'))';
+    }
+
+    /**
+     * A class holding "\S" or "\W" under u, whose set JavaScript only
+     * writes as a negated class of its own, or null for any other class.
+     */
+    private function composeComplements(CharClassNode $node): ?string
+    {
+        $members = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
+        $kept = [];
+        $complements = [];
+        foreach ($members as $member) {
+            if ($member instanceof CharTypeNode && \in_array($member->value, ['S', 'W'], true)) {
+                $complements[] = $this->unicodeSet(Ascii::lower($member->value));
+            } else {
+                $kept[] = $member;
+            }
+        }
+
+        if ([] === $complements) {
+            return null;
+        }
+
+        $written = '';
+        foreach ($kept as $index => $member) {
+            $written .= $this->compileCharClassNode($member, $kept[$index + 1] ?? null);
+        }
+
+        return self::composedClass($written, $complements, $node->isNegated);
+    }
+
+    /**
+     * Whether the text holds a character above ASCII that has another case.
+     */
+    private static function holdsACasedCharacterAboveAscii(string $text): bool
+    {
+        foreach (mb_str_split($text, 1, 'UTF-8') as $character) {
+            if (\strlen($character) > 1 && (mb_strtolower($character, 'UTF-8') !== $character || mb_strtoupper($character, 'UTF-8') !== $character)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function escapeString(string $value): string
@@ -628,15 +756,21 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
      * its Script_Extensions (its Script before 10.40), "sc:" as its Script, and a name loosely;
      * JavaScript wants "Script_Extensions=Han" or "Script=Han", spelled as
      * Unicode does. Common and Inherited are their Script either way in
-     * PCRE2. A general category or a binary property is kept as written.
+     * PCRE2. A general category or a binary property takes its JavaScript
+     * spelling; PCRE's own properties, as "Xan", have none.
      */
     private function javaScriptProperty(string $prop, UnicodePropNode $node): string
     {
         $separator = strcspn($prop, ':=');
         if ($separator === \strlen($prop)) {
+            $property = JavaScriptProperties::javaScriptName($prop);
+            if (null !== $property) {
+                return $property;
+            }
+
             $script = ScriptNames::javaScriptName($prop);
 
-            return null === $script ? $prop : self::scriptProperty($script, !$this->context->scriptsAlone);
+            return null === $script ? $this->unsupported('Unsupported Unicode property in JavaScript: '.$prop.'.', $node) : self::scriptProperty($script, !$this->context->scriptsAlone);
         }
 
         $name = ScriptNames::looseKey(substr($prop, 0, $separator));
@@ -661,49 +795,19 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     }
 
     /**
-     * Applies an inline "(?flags)" the target can carry, and says whether it
-     * can: a leading "^" takes i off (not U), then the letters before "-"
-     * set and those after it unset. JavaScript carries "U", swapping greedy
-     * and lazy; the HTML attribute also takes "i" spelled out, and "m" and
-     * "s", which change nothing in a field value, and "x", which the parser
-     * has applied. Under JavaScript any other letter is left to the group's
-     * refusal.
-     */
-    private function carriesInlineFlags(string $flags, GroupNode $node): bool
-    {
-        if ('' !== trim($flags, $this->unicodeSets ? '^-imsxU' : '-U') || str_contains($flags, 'xx')) {
-            if (!$this->unicodeSets) {
-                return false;
-            }
-
-            throw new TranspileException('The HTML pattern attribute cannot carry the inline flags (?'.$flags.').', $node->getStartPosition(), $this->context->sourcePattern);
-        }
-
-        if (str_starts_with($flags, '^')) {
-            $this->caseless = false;
-        }
-
-        [$set, $unset] = explode('-', ltrim($flags, '^').'-', 3);
-        $this->caseless = (str_contains($set, 'i') || $this->caseless) && !str_contains($unset, 'i');
-        $this->ungreedy = (str_contains($set, 'U') || $this->ungreedy) && !str_contains($unset, 'U');
-
-        return true;
-    }
-
-    /**
      * A caseless literal, each character that PCRE takes in more than one
      * case written as a class of them: "ab" under /i is "[aA][bB]". Without
      * /u only an ASCII letter has a pair.
      */
     private function caselessLiteral(string $value, LiteralNode $node): string
     {
-        $codePoints = Utf8::decode($value, $this->unicode) ?? [];
+        $codePoints = Utf8::decode($value, $this->unicodeText) ?? [];
         $result = '';
         $run = '';
         $spelled = false;
         foreach ($codePoints as $codePoint) {
-            $character = Utf8::character($codePoint, $this->unicode);
-            $partners = $this->unicode || $codePoint < 0x80 ? $this->partners($codePoint, $node) : CharSet::empty();
+            $character = Utf8::character($codePoint, $this->unicodeText);
+            $partners = $this->unicodeText || $codePoint < 0x80 ? $this->partners($codePoint, $node) : CharSet::empty();
             if ($partners->isEmpty()) {
                 $run .= $character;
 
@@ -810,8 +914,8 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
      */
     private function caselessSets(string $atom, NodeInterface $node): array
     {
-        $sensitive = ClassSetProvider::query($atom, $this->unicode, '', '', $this->unicodeFlag);
-        $caseless = ClassSetProvider::query($atom, $this->unicode, 'i', '', $this->unicodeFlag);
+        $sensitive = ClassSetProvider::query($atom, $this->unicodeText, '', '', $this->unicode);
+        $caseless = ClassSetProvider::query($atom, $this->unicodeText, 'i', '', $this->unicode);
         if (null === $sensitive || null === $caseless) {
             throw new TranspileException('PCRE cannot tell which characters '.$atom.' matches under /i.', $node->getStartPosition(), $this->context->sourcePattern);
         }
@@ -860,10 +964,5 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     private function text(NodeInterface $node): string
     {
         return substr($this->source, $node->getStartPosition(), $node->getEndPosition() - $node->getStartPosition());
-    }
-
-    private function noteUnicodeWordBoundary(): void
-    {
-        $this->context->addNote('JavaScript \\w and \\b are ASCII-based; Unicode word boundaries may differ.');
     }
 }

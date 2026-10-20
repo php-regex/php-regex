@@ -30,9 +30,10 @@ final class PythonTranspilerTest extends TestCase
 
         $this->assertSame('python', $result->target);
         $this->assertSame('foo', $result->pattern);
-        $this->assertSame('im', $result->flags);
+        // /m is applied while printing; without u PCRE reads ASCII, as re.ASCII does.
+        $this->assertSame('ai', $result->flags);
         // Python strings carry no flags of their own, so they go inline.
-        $this->assertSame("r'(?im)foo'", $result->literal);
+        $this->assertSame("r'(?ai)foo'", $result->literal);
     }
 
     #[Test]
@@ -43,8 +44,8 @@ final class PythonTranspilerTest extends TestCase
 
         $result = Regex::create(['cache' => null])->transpile('/ab+c/S', 'python');
 
-        $this->assertSame("r'ab+c'", $result->literal);
-        $this->assertSame('', $result->flags);
+        $this->assertSame("r'(?a)ab+c'", $result->literal);
+        $this->assertSame('a', $result->flags);
         $this->assertContains('Dropped /S: PHP has ignored it since 7.3, under PCRE2.', $result->notes);
     }
 
@@ -53,7 +54,7 @@ final class PythonTranspilerTest extends TestCase
     {
         $result = Regex::create(['cache' => null])->transpile('/ab+c/Si', 'python');
 
-        $this->assertSame("r'(?i)ab+c'", $result->literal);
+        $this->assertSame("r'(?ai)ab+c'", $result->literal);
     }
 
     #[Test]
@@ -61,7 +62,7 @@ final class PythonTranspilerTest extends TestCase
     {
         $result = Regex::create()->transpile('/(?P<w>\w+)(?P=w)/', 'python');
 
-        $this->assertSame("r'(?P<w>\\w+)(?P=w)'", $result->literal);
+        $this->assertSame("r'(?a)(?P<w>\\w+)(?P=w)'", $result->literal);
     }
 
     #[Test]
@@ -71,8 +72,8 @@ final class PythonTranspilerTest extends TestCase
         $this->assertSame(1, preg_match("/(?<n>a)\\k'n'/", 'aa'));
         $this->assertSame(1, preg_match('/(?<n>a)\\k{n}/', 'aa'));
 
-        $this->assertSame("r'(?P<n>a)(?P=n)'", Regex::create()->transpile("/(?<n>a)\\k'n'/", 'python')->literal);
-        $this->assertSame("r'(?P<n>a)(?P=n)'", Regex::create()->transpile('/(?<n>a)\\k{n}/', 'python')->literal);
+        $this->assertSame("r'(?a)(?P<n>a)(?P=n)'", Regex::create()->transpile("/(?<n>a)\\k'n'/", 'python')->literal);
+        $this->assertSame("r'(?a)(?P<n>a)(?P=n)'", Regex::create()->transpile('/(?<n>a)\\k{n}/', 'python')->literal);
     }
 
     #[Test]
@@ -80,7 +81,7 @@ final class PythonTranspilerTest extends TestCase
     {
         $result = Regex::create()->transpile('/(a)\g{1}/', 'python');
 
-        $this->assertSame("r'(a)\\1'", $result->literal);
+        $this->assertSame("r'(?a)(a)\\1'", $result->literal);
     }
 
     #[Test]
@@ -88,16 +89,25 @@ final class PythonTranspilerTest extends TestCase
     {
         $regex = Regex::create();
 
-        $this->assertSame("r'a(?=b)'", $regex->transpile('/a(?=b)/', 'python')->literal);
-        $this->assertSame("r'(?<=x)y'", $regex->transpile('/(?<=x)y/', 'python')->literal);
+        $this->assertSame("r'(?a)a(?=b)'", $regex->transpile('/a(?=b)/', 'python')->literal);
+        $this->assertSame("r'(?a)(?<=x)y'", $regex->transpile('/(?<=x)y/', 'python')->literal);
     }
 
+    /**
+     * The lookahead emulation, "(?=(?P<tmp>x))(?P=tmp)", adds a group: every
+     * group after it moves up a number, and a second one does not compile.
+     */
     #[Test]
-    public function test_emulates_atomic_groups_with_lookahead_capture(): void
+    public function test_refuses_atomic_groups(): void
     {
-        $result = Regex::create()->transpile('/(?>x)y/', 'python');
+        try {
+            Regex::create()->transpile('/(?>x)y/', 'python');
+            $message = '';
+        } catch (TranspileException $e) {
+            $message = $e->getMessage();
+        }
 
-        $this->assertSame("r'(?=(?P<tmp>x))(?P=tmp)y'", $result->literal);
+        $this->assertSame('Atomic groups are not supported in Python re.', $message);
     }
 
     #[Test]
@@ -105,7 +115,7 @@ final class PythonTranspilerTest extends TestCase
     {
         $result = Regex::create()->transpile('/\h+/', 'python');
 
-        $this->assertStringStartsWith("r'[\\x09\\x20", $result->literal);
+        $this->assertStringStartsWith("r'(?a)[\\x09\\x20", $result->literal);
         $this->assertNotEmpty($result->notes);
     }
 
@@ -133,8 +143,8 @@ final class PythonTranspilerTest extends TestCase
 
         // Backslash-escaping the quote inside a raw string would leave the
         // backslash in the pattern.
-        $this->assertSame('r"a\'b"', $regex->transpile("/a'b/", 'python')->literal);
-        $this->assertSame('r\'a"b\'', $regex->transpile('/a"b/', 'python')->literal);
+        $this->assertSame('r"(?a)a\'b"', $regex->transpile("/a'b/", 'python')->literal);
+        $this->assertSame('r\'(?a)a"b\'', $regex->transpile('/a"b/', 'python')->literal);
     }
 
     #[Test]
@@ -144,8 +154,8 @@ final class PythonTranspilerTest extends TestCase
 
         $result = $regex->transpile('/a\'b"c/', 'python');
 
-        $this->assertSame("'a\\'b\"c'", $result->literal);
-        $this->assertSame("re.compile('a\\'b\"c', 0)", $result->constructor);
+        $this->assertSame("'(?a)a\\'b\"c'", $result->literal);
+        $this->assertSame("re.compile('a\\'b\"c', re.ASCII)", $result->constructor);
     }
 
     #[Test]
@@ -156,7 +166,7 @@ final class PythonTranspilerTest extends TestCase
         $result = $regex->transpile('/foo/imsx', 'python');
 
         $this->assertSame(
-            "re.compile(r'foo', re.IGNORECASE | re.MULTILINE | re.DOTALL | re.VERBOSE)",
+            "re.compile(r'foo', re.ASCII | re.IGNORECASE | re.DOTALL)",
             $result->constructor,
         );
     }

@@ -22,3 +22,12 @@ CHANGELOG
    ignored since 7.3, with a note.
  * The JavaScript and `html-pattern` targets carry `/U` and `(?U)` by
    swapping greedy and lazy in the quantifiers they govern.
+ * Each target writes what its engine reads otherwise as PCRE reads it:
+   `$` before a final newline, `^` and `$` under `/m`, the dot, and, under
+   `u`, `\d`, `\w`, `\s` and `\b` (JavaScript), `\Z` and `\z` (Python),
+   `re.ASCII` without `u` (Python). What it cannot write so is refused: an
+   atomic group in Python, which was emulated with an extra group, `\w`
+   under `u` in Python, and in JavaScript a backreference to a group that
+   may not have matched or a group a repetition may leave unset.
+ * The Python target carries `(?i:…)`, which it dropped, `(?i)`, `/U` and
+   `/x`, which lost an escaped space.

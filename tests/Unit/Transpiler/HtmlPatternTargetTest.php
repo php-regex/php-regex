@@ -64,6 +64,14 @@ final class HtmlPatternTargetTest extends TestCase
         yield 'an opening bracket alone in a class' => ['pattern' => '/^[^[]+$/', 'attribute' => '^[^\[]+$', 'verdicts' => ['ab' => true, 'a[b' => false]];
         yield 'a script' => ['pattern' => '/^\p{Han}+$/u', 'attribute' => '^\p{Script_Extensions=Han}+$', 'verdicts' => ['中、' => true, '中a' => false]];
         yield 'a property' => ['pattern' => '/^\p{L}+$/u', 'attribute' => '^\p{L}+$', 'verdicts' => ['été' => true, 'é1' => false]];
+        // The dot leaves out "\n" alone, which no value holds; the v flag's leaves out U+2028 and U+2029 too.
+        yield 'the dot' => ['pattern' => '/^a.b$/u', 'attribute' => '^a[^\n]b$', 'verdicts' => ["a\u{2028}b" => true, 'ab' => false]];
+        // Under u PHP turns on UCP: "\d" and "\s" read Unicode, the v flag's ASCII.
+        yield 'a digit under u' => ['pattern' => '/^\d$/u', 'attribute' => '^\p{Nd}$', 'verdicts' => ['٣' => true, 'a' => false]];
+        yield 'a space under u' => ['pattern' => '/^\s$/u', 'attribute' => '^[\t-\r \x85\xA0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]$', 'verdicts' => ["\u{85}" => true, "\u{FEFF}" => false]];
+        yield 'a non-space in a class under u' => ['pattern' => '/^[\S\d]$/u', 'attribute' => '^[[^\t-\r \x85\xA0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]\p{Nd}]$', 'verdicts' => ["\u{FEFF}" => true, "\u{85}" => false]];
+        yield 'a control escape that is no letter' => ['pattern' => '/^\c?$/', 'attribute' => '^\x7F$', 'verdicts' => ["\x7F" => true, '?' => false]];
+        yield 'a lookahead that may be left out' => ['pattern' => '/^(?=a)*b$/', 'attribute' => '^b$', 'verdicts' => ['b' => true, 'a' => false]];
     }
 
     /**
@@ -100,7 +108,7 @@ final class HtmlPatternTargetTest extends TestCase
         yield 'a caret resetting the options' => ['pattern' => '/^(?i)a(?^)b$/', 'attribute' => '^[aA]b$', 'verdicts' => ['Ab' => true, 'AB' => false]];
         yield 'an ungreedy pattern' => ['pattern' => '/^a+?b*$/U', 'attribute' => '^a+b*?$', 'verdicts' => ['aab' => true, 'ac' => false]];
         yield 'an inline ungreedy switch' => ['pattern' => '/^a(?Ui)b+$/', 'attribute' => '^a[bB]+?$', 'verdicts' => ['aBb' => true, 'Ab' => false]];
-        yield 'a dot-all group' => ['pattern' => '/^(?s:a.)$/', 'attribute' => '^(?:a.)$', 'verdicts' => ['ab' => true, 'a' => false]];
+        yield 'a dot-all group' => ['pattern' => '/^(?s:a.)$/', 'attribute' => '^(?:a[\s\S])$', 'verdicts' => ['ab' => true, 'a' => false]];
         yield 'a hex escape with no other case' => ['pattern' => '/^\x31$/i', 'attribute' => '^\x31$', 'verdicts' => ['1' => true, '2' => false]];
         yield 'a property closed under case' => ['pattern' => '/^\p{L}+$/iu', 'attribute' => '^\p{L}+$', 'verdicts' => ['ÉtÉ' => true, 'a1' => false]];
         yield 'a Greek sigma' => ['pattern' => '/^σ$/iu', 'attribute' => '^[σ\u03A3\u03C2]$', 'verdicts' => ['Σ' => true, 'ς' => true, 'o' => false]];
@@ -167,7 +175,7 @@ final class HtmlPatternTargetTest extends TestCase
     {
         $result = Regex::create(['cache' => null])->transpile('/^a.b$/sm', 'html-pattern');
 
-        $this->assertSame('^a.b$', $result->pattern);
+        $this->assertSame('^a[\s\S]b$', $result->pattern);
         $this->assertContains('A field value holds no line break: /s and /m change nothing there.', $result->notes);
     }
 

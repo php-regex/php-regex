@@ -119,7 +119,7 @@ Or transpile it for another engine:
 ```php
 $result = Regex::transpile('/^[a-z]+(?=\d)$/i', 'javascript');
 
-$result->constructor; // 'new RegExp("^[a-z]+(?=\\d)$", "i")'
+$result->constructor; // 'new RegExp("^[a-z]+(?=\\d)(?=\\n?$)", "i")'
 ```
 
 The facade mirrors the whole service: `create`, `fromOptions`, `parse`, `parseTolerant`, `parsePattern`, `parser`, `validate`,

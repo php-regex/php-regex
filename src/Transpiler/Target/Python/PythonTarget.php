@@ -27,9 +27,12 @@ use PHPRegex\Transpiler\TranspileException;
  */
 final class PythonTarget implements TargetInterface
 {
-    // Python re flags: ASCII (a), IGNORECASE (i), LOCALE (L), MULTILINE (m), DOTALL (s), VERBOSE (x)
-    // We map PCRE flags to these.
-    private const SUPPORTED_FLAGS = ['i', 'm', 's', 'x'];
+    /**
+     * The re flags a pattern is given: ASCII, which PCRE's reading without
+     * u matches, IGNORECASE and DOTALL. /m, /D and /x are applied while
+     * printing, and /U by swapping greedy and lazy.
+     */
+    private const SUPPORTED_FLAGS = ['a', 'i', 's'];
 
     public function getName(): string
     {
@@ -59,37 +62,34 @@ final class PythonTarget implements TargetInterface
         $unsupported = [];
 
         foreach (Bytes::split($flags) as $flag) {
-            if (\in_array($flag, self::SUPPORTED_FLAGS, true)) {
+            $note = match ($flag) {
+                'i', 's', 'u' => null,
+                'm' => 'Applied /m: "^" and "$" are written for lines ended by "\n" alone, as PCRE reads them.',
+                'D' => 'Applied /D: "$" is written for the end of the subject alone.',
+                'x' => 'Applied /x (extended mode): whitespace and comments were removed during compilation.',
+                'U' => 'Applied /U (ungreedy): greedy and lazy quantifiers were swapped.',
+                'S' => 'Dropped /S: PHP has ignored it since 7.3, under PCRE2.',
+                default => '',
+            };
+
+            if ('' === $note) {
+                $unsupported[] = $flag;
+            } elseif (null !== $note) {
+                $context->addNote($note);
+            } elseif ('u' !== $flag) {
                 $normalized .= $flag;
-
-                continue;
             }
-
-            if ('u' === $flag) {
-                // Python 3 implies unicode by default for str regexes.
-                // We don't need to add a flag, but we should probably note it.
-                continue;
-            }
-
-            if ('U' === $flag) {
-                // PCRE inverts every quantifier with /U; Python only marks
-                // them one by one, so there is nothing to map it to.
-                $context->addWarning('Dropped /U (ungreedy) flag; Python requires per-quantifier ungreedy (?).');
-
-                continue;
-            }
-
-            if ('S' === $flag) {
-                $context->addNote('Dropped /S: PHP has ignored it since 7.3, under PCRE2.');
-
-                continue;
-            }
-
-            $unsupported[] = $flag;
         }
 
         if ([] !== $unsupported) {
             throw new TranspileException('Unsupported PCRE flag(s) for Python: '.implode(', ', $unsupported).'.');
+        }
+
+        // Without u PCRE reads "\d", "\w", "\s", "\b" and case in ASCII;
+        // Python reads them in Unicode but under re.ASCII.
+        if (!str_contains($flags, 'u')) {
+            $normalized .= 'a';
+            $context->addNote('Added re.ASCII: without u, PCRE reads \d, \w, \s, \b and case in ASCII.');
         }
 
         return $this->normalizeFlagOrder($normalized);
@@ -107,17 +107,14 @@ final class PythonTarget implements TargetInterface
     {
         // re.compile(r'pattern', flags)
         $flagConstants = [];
+        if (str_contains($flags, 'a')) {
+            $flagConstants[] = 're.ASCII';
+        }
         if (str_contains($flags, 'i')) {
             $flagConstants[] = 're.IGNORECASE';
         }
-        if (str_contains($flags, 'm')) {
-            $flagConstants[] = 're.MULTILINE';
-        }
         if (str_contains($flags, 's')) {
             $flagConstants[] = 're.DOTALL';
-        }
-        if (str_contains($flags, 'x')) {
-            $flagConstants[] = 're.VERBOSE';
         }
 
         $flagsStr = [] === $flagConstants ? '0' : implode(' | ', $flagConstants);

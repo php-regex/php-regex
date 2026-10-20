@@ -26,7 +26,7 @@ use PHPRegex\Transpiler\TranspileException;
  */
 final class JavaScriptTarget implements TargetInterface
 {
-    private const SUPPORTED_FLAGS = ['i', 'm', 's', 'u'];
+    private const SUPPORTED_FLAGS = ['i', 's', 'u'];
 
     public function getName(): string
     {
@@ -62,6 +62,18 @@ final class JavaScriptTarget implements TargetInterface
         foreach (Bytes::split($flags) as $flag) {
             if (\in_array($flag, self::SUPPORTED_FLAGS, true)) {
                 $normalized .= $flag;
+
+                continue;
+            }
+
+            if ('m' === $flag) {
+                $context->addNote('Applied /m: "^" and "$" are written for lines ended by "\n" alone, as PCRE reads them.');
+
+                continue;
+            }
+
+            if ('D' === $flag) {
+                $context->addNote('Applied /D: "$" is written for the end of the subject alone.');
 
                 continue;
             }

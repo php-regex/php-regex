@@ -103,8 +103,8 @@ Or transpile it for another engine:
 
 ```php
 $transpiled = $regex->transpile('/^[a-z]+(?=\d)$/i', 'js');
-echo $transpiled->literal;     // /^[a-z]+(?=\d)$/i
-echo $transpiled->constructor; // new RegExp("^[a-z]+(?=\\d)$", "i")
+echo $transpiled->literal;     // /^[a-z]+(?=\d)(?=\n?$)/i
+echo $transpiled->constructor; // new RegExp("^[a-z]+(?=\\d)(?=\\n?$)", "i")
 ```
 
 The service also exposes `parse`, `parseTolerant`, `analyze`, `explain`, `highlight`, `literals`, `generate` and `parsePattern`.

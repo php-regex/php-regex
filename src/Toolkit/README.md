@@ -119,7 +119,7 @@ echo $regex->transpile('/^\d{4}-\d{2}-\d{2}$/', 'javascript')->constructor, "\n"
 ```
 /[0-9A-Fa-f]+/
 rcu@d.rx            # one possible output (random)
-new RegExp("^\\d{4}-\\d{2}-\\d{2}$", "")
+new RegExp("^\\d{4}-\\d{2}-\\d{2}(?=\\n?$)", "")
 ```
 
 Or run every check at once — `analyze()` validates, lints, and reports ReDoS and optimizations in one report:
