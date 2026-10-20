@@ -206,7 +206,7 @@ final class TextExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitDot(DotNode $node): string
     {
-        return $this->line('Wildcard: any character (may or may not match line terminators)');
+        return $this->line('Wildcard: '.Vocabulary::dot($this->settings));
     }
 
     #[\Override]

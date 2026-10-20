@@ -192,7 +192,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitDot(DotNode $node): string
     {
-        $explanation = 'any character (may or may not match line terminators)';
+        $explanation = Vocabulary::dot($this->settings);
 
         return \sprintf(
             '<li><span title="%s">Wildcard: <strong>.</strong> (%s)</span></li>',

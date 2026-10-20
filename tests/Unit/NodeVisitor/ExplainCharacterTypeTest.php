@@ -22,6 +22,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
+ * What a character type or a dot matches by the flags in force.
+ *
  * PHP turns Unicode properties on with the u flag: "\d", "\s" and "\w" then
  * match by the Unicode tables, as they do after a leading "(*UCP)". Without
  * it they match ASCII, and the ASCII options of PCRE2 10.43, "(?aD)" and
@@ -108,6 +110,15 @@ final class ExplainCharacterTypeTest extends TestCase
         yield 'anything but a newline is one character under u' => ['pattern' => '/^\N$/u', 'description' => 'Any character but a newline (\n), whatever s says', 'subject' => 'é', 'matches' => 1];
         yield 'one byte, a newline included' => ['pattern' => '/^\C$/', 'description' => self::BYTE, 'subject' => "\n", 'matches' => 1];
         yield 'one byte of a character' => ['pattern' => '/^\C\C$/', 'description' => self::BYTE, 'subject' => 'é', 'matches' => 1];
+        // The dot takes a newline under s only.
+        yield 'a dot without s' => ['pattern' => '/a.b/', 'description' => 'any character but a newline (\n)', 'subject' => "a\nb", 'matches' => 0];
+        yield 'a dot takes a carriage return under LF' => ['pattern' => '/a.b/', 'description' => 'any character but a newline (\n)', 'subject' => "a\rb", 'matches' => 1];
+        yield 'a dot under s' => ['pattern' => '/a.b/s', 'description' => 'any character, a newline included', 'subject' => "a\nb", 'matches' => 1];
+        yield 'a dot after an inline s' => ['pattern' => '/(?s)a.b/', 'description' => 'any character, a newline included', 'subject' => "a\nb", 'matches' => 1];
+        yield 'a dot after a group that set s' => ['pattern' => '/(?s:x)|a.b/', 'description' => 'any character but a newline (\n)', 'subject' => "a\nb", 'matches' => 0];
+        yield 'a dot after s is turned off' => ['pattern' => '/(?-s)a.b/s', 'description' => 'any character but a newline (\n)', 'subject' => "a\nb", 'matches' => 0];
+        yield 'a dot after a caret reset' => ['pattern' => '/(?^)a.b/s', 'description' => 'any character but a newline (\n)', 'subject' => "a\nb", 'matches' => 0];
+        yield 'a dot under CR' => ['pattern' => '/(*CR)a.b/', 'description' => 'any character but a newline (\r)', 'subject' => "a\rb", 'matches' => 0];
     }
 
     /**

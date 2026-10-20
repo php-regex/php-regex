@@ -104,6 +104,14 @@ final class Vocabulary
     }
 
     /**
+     * What a dot matches: a newline too under s.
+     */
+    public static function dot(MatchSettings $settings): string
+    {
+        return $settings->dotAll ? 'any character, a newline included' : 'any character but '.self::newline($settings->newline);
+    }
+
+    /**
      * Where "^" or "$" matches, by the flags in force: with m at the start
      * or end of any line, without it at the start of the subject and at its
      * end or, unless D, before a newline that ends it.

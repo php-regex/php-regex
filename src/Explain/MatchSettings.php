@@ -61,6 +61,11 @@ final class MatchSettings
          * "(?a)" sets the three.
          */
         public readonly string $asciiTypes = '',
+        /**
+         * Whether a dot takes a newline too: the s flag, from the pattern
+         * or an inline setting.
+         */
+        public readonly bool $dotAll = false,
     ) {}
 
     /**
@@ -74,6 +79,7 @@ final class MatchSettings
             multiline: str_contains($regex->flags, 'm'),
             dollarEndOnly: str_contains($regex->flags, 'D'),
             ucp: str_contains($regex->flags, 'u'),
+            dotAll: str_contains($regex->flags, 's'),
         );
     }
 
@@ -86,15 +92,17 @@ final class MatchSettings
     public function with(string $flags): self
     {
         [$on, $off] = explode('-', $flags, 2) + [1 => ''];
-        $multiline = match (true) {
-            str_contains($off, 'm') => false,
-            str_contains($on, 'm') => true,
-            default => $this->multiline && !str_starts_with($on, '^'),
-        };
-
         $asciiTypes = str_replace(Bytes::split(self::asciiTypes($off)), '', $this->asciiTypes).self::asciiTypes($on);
 
-        return new self($this->utf, $multiline, $this->dollarEndOnly, $this->newline, $this->ucp, $asciiTypes);
+        return new self(
+            $this->utf,
+            self::turns('m', $on, $off, $this->multiline),
+            $this->dollarEndOnly,
+            $this->newline,
+            $this->ucp,
+            $asciiTypes,
+            self::turns('s', $on, $off, $this->dotAll),
+        );
     }
 
     /**
@@ -113,7 +121,7 @@ final class MatchSettings
     public function withOption(string $option): self
     {
         if ('UCP' === $option) {
-            return new self($this->utf, $this->multiline, $this->dollarEndOnly, $this->newline, true, $this->asciiTypes);
+            return new self($this->utf, $this->multiline, $this->dollarEndOnly, $this->newline, true, $this->asciiTypes, $this->dotAll);
         }
 
         $newline = NewlineConvention::tryFrom($option);
@@ -121,7 +129,21 @@ final class MatchSettings
             return $this;
         }
 
-        return new self($this->utf, $this->multiline, $this->dollarEndOnly, $newline, $this->ucp, $this->asciiTypes);
+        return new self($this->utf, $this->multiline, $this->dollarEndOnly, $newline, $this->ucp, $this->asciiTypes, $this->dotAll);
+    }
+
+    /**
+     * Whether a flag is in force once modifiers turned flags on and off:
+     * off when listed after "-", on when listed before, off after a "^"
+     * that resets it, as it was otherwise.
+     */
+    private static function turns(string $flag, string $on, string $off, bool $wasInForce): bool
+    {
+        return match (true) {
+            str_contains($off, $flag) => false,
+            str_contains($on, $flag) => true,
+            default => $wasInForce && !str_starts_with($on, '^'),
+        };
     }
 
     /**
