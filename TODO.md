@@ -77,16 +77,6 @@ After the 2.0.0 tag, check that the release went from draft to published
 with both assets, and that `gh attestation verify regex.phar --repo
 php-regex/php-regex` passes on the downloaded phar.
 
-## Site: redirect HTTP to HTTPS
-
-`php-regex.com` is proxied by Cloudflare, so GitHub Pages cannot issue its
-own certificate and refuses "Enforce HTTPS" ("The certificate does not exist
-yet"); `http://php-regex.com/` answers 200 instead of redirecting. By hand,
-in Cloudflare for `php-regex.com` (and `phpregex.com`): SSL/TLS → Edge
-Certificates → "Always Use HTTPS" on. Then `curl -sS -o /dev/null -w
-'%{http_code} %{redirect_url}\n' http://php-regex.com/` gives a 301 to
-`https://php-regex.com/`.
-
 ## Upstream PHPStan fixes: push the branches and open the PRs
 
 Six branches are ready in the local `../phpstan-src` checkout (fork
