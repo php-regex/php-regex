@@ -91,7 +91,7 @@ final class MatchSettings
      */
     public function with(string $flags): self
     {
-        [$on, $off] = explode('-', $flags, 2) + [1 => ''];
+        [$on, $off] = explode('-', $flags) + [1 => ''];
         $asciiTypes = str_replace(Bytes::split(self::asciiTypes($off)), '', $this->asciiTypes).self::asciiTypes($on);
 
         return new self(

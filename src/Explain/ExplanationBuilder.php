@@ -347,26 +347,26 @@ final class ExplanationBuilder extends AbstractNodeVisitor
             return Explanation::leaf('passes control to user function with no argument', 'Callout', '(?C)');
         }
 
-        $argument = $node->isStringIdentifier ? '"'.$node->identifier.'"' : (string) $node->identifier;
+        $argument = $node->isStringIdentifier ? '"'.$node->identifier.'"' : $node->identifier;
 
         return Explanation::leaf('passes control to user function with argument '.$argument, 'Callout', '(?C'.$argument.')');
     }
 
     /**
-     * @param array<NodeInterface> $nodes
+     * @param list<NodeInterface> $nodes
      *
      * @return list<Explanation>
      */
     private function each(array $nodes): array
     {
-        return array_values(array_map(fn (NodeInterface $node): Explanation => $node->accept($this), $nodes));
+        return array_map(fn (NodeInterface $node): Explanation => $node->accept($this), $nodes);
     }
 
     /**
      * What a group holds, under the flags it sets: they hold to its end, as
      * does a bare "(?m)" inside it.
      *
-     * @param array<NodeInterface> $nodes
+     * @param list<NodeInterface> $nodes
      *
      * @return list<Explanation>
      */

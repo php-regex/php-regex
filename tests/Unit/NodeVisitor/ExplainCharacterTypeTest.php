@@ -99,6 +99,12 @@ final class ExplainCharacterTypeTest extends TestCase
         yield 'a digit after one ASCII option is turned off' => ['pattern' => '/(?a)(?-aD)\d/u', 'description' => self::UNICODE_DIGIT, 'subject' => '٣', 'matches' => 1];
         yield 'a digit after an ASCII option ended by its group' => ['pattern' => '/(?:(?aD))\d/u', 'description' => self::UNICODE_DIGIT, 'subject' => '٣', 'matches' => 1];
         yield 'a digit in a group setting an ASCII option' => ['pattern' => '/(?aD:\d)/u', 'description' => self::DIGIT, 'subject' => '٣', 'matches' => 0];
+        yield 'a digit after an ASCII digit and an ASCII space option' => ['pattern' => '/(?aDaS)\d/u', 'description' => self::DIGIT, 'subject' => '٣', 'matches' => 0];
+        yield 'a digit after an ASCII digit option, then an ASCII space one' => ['pattern' => '/(?aD)(?aS)\d/u', 'description' => self::DIGIT, 'subject' => '٣', 'matches' => 0];
+        yield 'a word character after an ASCII digit option behind another flag' => ['pattern' => '/(?iaD)\w/u', 'description' => self::UNICODE_WORD, 'subject' => 'é', 'matches' => 1];
+        yield 'a digit after an ASCII space option' => ['pattern' => '/(?aS)\d/u', 'description' => self::UNICODE_DIGIT, 'subject' => '٣', 'matches' => 1];
+        yield 'a digit after an ASCII word option' => ['pattern' => '/(?aW)\d/u', 'description' => self::UNICODE_DIGIT, 'subject' => '٣', 'matches' => 1];
+        yield 'a digit after an ASCII property option' => ['pattern' => '/(?aT)\d/u', 'description' => self::UNICODE_DIGIT, 'subject' => '٣', 'matches' => 1];
         // The other options leave the three types alone.
         yield 'a digit after an ASCII POSIX option' => ['pattern' => '/(?aP)\d/u', 'description' => self::UNICODE_DIGIT, 'subject' => '٣', 'matches' => 1];
         yield 'a grapheme cluster under u' => ['pattern' => '/^\X$/u', 'description' => self::GRAPHEME, 'subject' => "e\u{301}", 'matches' => 1];

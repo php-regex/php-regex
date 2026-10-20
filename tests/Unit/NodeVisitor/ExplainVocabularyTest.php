@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
+use PHPRegex\Explain\MatchSettings;
 use PHPRegex\Explain\Vocabulary;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
@@ -46,6 +47,9 @@ final class ExplainVocabularyTest extends TestCase
         yield 'escape' => ['value' => "\x1B", 'expected' => "'\\e' (escape)"];
         yield 'delete' => ['value' => "\x7F", 'expected' => "'\\x7F'"];
         yield 'a high byte' => ['value' => "\xE9", 'expected' => "'\\xE9'"];
+        // Bytes, unless the pattern is said to be read as UTF.
+        yield 'the bytes of a character' => ['value' => 'é', 'expected' => "'\\xC3\\xA9'"];
+        yield 'a run with a space' => ['value' => 'a b', 'expected' => "'a b'"];
     }
 
     #[Test]
@@ -100,12 +104,31 @@ final class ExplainVocabularyTest extends TestCase
         }
     }
 
+    /**
+     * Under UTF a run is read a character at a time: a control byte in it is
+     * spelled as one without UTF, a character above ASCII shown whole.
+     */
+    #[Test]
+    public function test_literal_reads_a_run_a_character_at_a_time_under_utf(): void
+    {
+        $this->assertSame("'a\\x09é'", Vocabulary::literal("a\té", true));
+        $this->assertSame("'\\x7Fé'", Vocabulary::literal("\x7Fé", true));
+    }
+
     #[Test]
     public function test_unicode_property_negates_its_description(): void
     {
         $this->assertSame('Any character except an uppercase letter (category)', Vocabulary::unicodeProperty('lu', true));
         $this->assertSame('Any character except a whitespace character (the Unicode White_Space property)', Vocabulary::unicodeProperty('white-space', true));
         $this->assertNull(Vocabulary::unicodeProperty('greek', false));
+        $this->assertSame('A whitespace character (the Unicode White_Space property)', Vocabulary::unicodeProperty('white space', false));
+    }
+
+    #[Test]
+    public function test_an_anchor_other_than_a_caret_or_a_dollar_is_named_as_written(): void
+    {
+        $this->assertSame('\\A', Vocabulary::anchor('\\A', new MatchSettings(multiline: true)));
+        $this->assertSame('\\Q', Vocabulary::assertion('Q', new MatchSettings()));
     }
 
     #[Test]

@@ -67,6 +67,8 @@ final class ExplainAnchorTest extends TestCase
         yield 'a caret after a group that set m' => ['pattern' => '/(?m:x)|^b/', 'description' => $subjectStart, 'subject' => "a\nb", 'matches' => 0];
         yield 'a dollar after an inline m ended by its group' => ['pattern' => '/(?:(?m))a$/', 'description' => $finalNewline, 'subject' => "a\nb", 'matches' => 0];
         yield 'a caret in a group that sets m' => ['pattern' => '/x|(?m:^b)/', 'description' => $lineStart, 'subject' => "a\nb", 'matches' => 1];
+        yield 'a caret after a setting that leaves m alone' => ['pattern' => '/(?i)^b/', 'description' => $subjectStart, 'subject' => "a\nb", 'matches' => 0];
+        yield 'a caret after a caret reset, without m' => ['pattern' => '/(?^)^b/', 'description' => $subjectStart, 'subject' => "a\nb", 'matches' => 0];
         yield 'a dollar after m is turned off' => ['pattern' => '/(?-m)a$/m', 'description' => $finalNewline, 'subject' => "a\nb", 'matches' => 0];
         yield 'a dollar after a caret reset' => ['pattern' => '/(?^)a$/m', 'description' => $finalNewline, 'subject' => "a\nb", 'matches' => 0];
         yield 'a dollar under CR' => ['pattern' => '/(*CR)a$/', 'description' => 'the end of the subject, or just before a newline (\r) that ends it', 'subject' => "a\r", 'matches' => 1];

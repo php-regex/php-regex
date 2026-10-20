@@ -31,10 +31,11 @@ final class TextExplainer extends AbstractNodeVisitor
         $children = $explanation->children;
 
         $lines = match ($explanation->kind) {
-            ExplanationKind::Pattern => [$indent.$explanation->text, ...$this->each($children, $level + 1)],
+            // The pattern stands at the top, and holds one piece, as a block does.
+            ExplanationKind::Pattern => [$explanation->text, $this->render($children[0], 1)],
             ExplanationKind::Sequence => $this->each($children, $level),
             ExplanationKind::Alternation => $this->branches($children, $level),
-            ExplanationKind::Block => [$indent.$explanation->text, ...$this->each($children, $level + 1), $indent.$explanation->end],
+            ExplanationKind::Block => [$indent.$explanation->text, $this->render($children[0], $level + 1), $indent.$explanation->end],
             ExplanationKind::Repetition => $this->repetition($explanation, $level),
             ExplanationKind::Conditional => $this->conditional($children, $level),
             ExplanationKind::Leaf => [$indent.$explanation->inline()],
