@@ -91,7 +91,10 @@ they are the verdicts a pattern gets.
 
 `redos.ignored_patterns` lists patterns, fragments of patterns or whole
 regexes the risk analysis skips, such as the requirement constants of
-Symfony routes.
+Symfony routes. A fragment, `(a+)+`, is matched against the body of each
+pattern, with or without a `^` before it and a `$` after it, whatever its
+delimiters and modifiers: it skips `/(a+)+$/`, `/(a+)+$/i`, `{(a+)+$}` and
+`#(a+)+$#u` alike.
 
 `extraction` takes the presets and the helpers `regex lint` takes under
 `extraction` in `regex.json` (see

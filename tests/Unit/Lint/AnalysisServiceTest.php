@@ -46,7 +46,6 @@ final class AnalysisServiceTest extends TestCase
             50,
             'low',
             [],
-            [],
             'theoretical',
             null,
             true, // redosEnabled
@@ -627,10 +626,11 @@ final class AnalysisServiceTest extends TestCase
         $skip = $this->invokePrivate('shouldSkipRiskAnalysis', $occurrence);
         $this->assertTrue($skip);
 
-        $this->assertSame('', $this->invokePrivate('extractFragment', ''));
-        $this->assertSame('', $this->invokePrivate('trimPatternBody', ''));
-        $this->assertFalse($this->invokePrivate('isIgnored', ''));
         $this->assertFalse($this->invokePrivate('isTriviallySafe', ''));
+        $this->assertFalse($this->invokePrivate('isTriviallySafe', 'foo'));
+        $this->assertFalse($this->invokePrivate('isTriviallySafe', 'foo|b+r'));
+        $this->assertSame('a', $this->invokePrivate('unanchored', '^a$'));
+        $this->assertSame('a$b', $this->invokePrivate('unanchored', 'a$b'));
     }
 
     public function test_uses_extended_mode_handles_invalid_input(): void

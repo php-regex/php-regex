@@ -362,7 +362,6 @@ final class AnalysisServiceTest extends TestCase
             $warningThreshold,
             $redosThreshold,
             $ignoredPatterns,
-            [],
             'theoretical',
             null,
             true, // redosEnabled

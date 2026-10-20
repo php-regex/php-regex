@@ -37,7 +37,6 @@ final class AnalysisServiceClassTest extends TestCase
             null,  // extractor
             50,    // warningThreshold
             RedosSeverity::High->value,
-            [],     // ignoredPatterns
             [],     // redosIgnoredPatterns
         );
 

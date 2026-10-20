@@ -110,6 +110,12 @@ An unknown `redos.threshold` stops `regex:lint` with an error naming the
 value, and leaves every other artisan command working. `safe` and `unknown`
 are not thresholds: they are the verdicts a pattern gets.
 
+`redos.ignored_patterns` lists patterns, fragments of patterns or whole
+regexes the risk analysis skips. A fragment, `(a+)+`, is matched against the
+body of each pattern, with or without a `^` before it and a `$` after it,
+whatever its delimiters and modifiers: it skips `/(a+)+$/`, `/(a+)+$/i`,
+`{(a+)+$}` and `#(a+)+$#u` alike.
+
 ## Using the service
 
 The `Regex` facade forwards to the `PHPRegex\Toolkit\Regex` service the

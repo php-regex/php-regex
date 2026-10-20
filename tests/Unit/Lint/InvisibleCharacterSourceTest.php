@@ -101,7 +101,7 @@ final class InvisibleCharacterSourceTest extends TestCase
      */
     private function invisibleIssues(array $occurrences): array
     {
-        $service = new AnalysisService(RegexParser::create(['cache' => null]), null, 50, 'critical', [], [], 'theoretical', null, false);
+        $service = new AnalysisService(RegexParser::create(['cache' => null]), redosThreshold: 'critical');
 
         return array_values(array_filter(
             $service->lint($occurrences),

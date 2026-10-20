@@ -65,17 +65,11 @@ use PHPRegex\Redos\RedosSeverity;
  */
 final class AnalysisService
 {
-    private const PATTERN_DELIMITERS = ['/', '#', '~', '%'];
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
 
     private const ISSUE_ID_MEANING_CHANGES = 'regex.lint.compat.meaningChanges';
 
     private readonly RedosSeverity $redosSeverityThreshold;
-
-    /**
-     * @var array<string>
-     */
-    private readonly array $ignoredPatterns;
 
     private readonly RedosMode $redosMode;
 
@@ -90,8 +84,9 @@ final class AnalysisService
     /**
      * @param string                 $redosThreshold       the lowest severity reported: low, medium, high or
      *                                                     critical, in any case
-     * @param array<string>          $ignoredPatterns
-     * @param array<string>          $redosIgnoredPatterns
+     * @param array<string>          $redosIgnoredPatterns the patterns the risk analysis skips: a whole regex, its
+     *                                                     body, or its body without the anchors around it, under
+     *                                                     any delimiters and modifiers
      * @param array<string, bool>    $lintRules
      * @param list<RegexParser>      $range                the parsers of the PHP versions after the floor a
      *                                                     pattern is validated at too (ProjectTarget::rangeParsers())
@@ -108,8 +103,7 @@ final class AnalysisService
         private readonly ?PatternExtractor $extractor = null,
         private readonly int $warningThreshold = 50,
         string $redosThreshold = 'high',
-        array $ignoredPatterns = [],
-        array $redosIgnoredPatterns = [],
+        private readonly array $redosIgnoredPatterns = [],
         RedosMode|string $redosMode = RedosMode::Theoretical,
         private readonly ?ConfirmationOptions $redosConfirmOptions = null,
         bool $redosEnabled = false,
@@ -120,7 +114,6 @@ final class AnalysisService
         private readonly ?JudgedRange $judged = null,
     ) {
         $this->redosSeverityThreshold = RedosSeverity::fromConfig($redosThreshold);
-        $this->ignoredPatterns = $this->buildIgnoredPatterns($ignoredPatterns, $redosIgnoredPatterns);
 
         // When redosEnabled is false, force mode to OFF
         if (!$redosEnabled) {
@@ -156,8 +149,7 @@ final class AnalysisService
             $this->extractor,
             $this->warningThreshold,
             $this->redosSeverityThreshold->value,
-            $this->ignoredPatterns,
-            [],
+            $this->redosIgnoredPatterns,
             $this->redosMode,
             $this->redosConfirmOptions,
             RedosMode::Off !== $this->redosMode,
@@ -665,8 +657,7 @@ final class AnalysisService
             $this->extractor,
             $this->warningThreshold,
             $this->redosSeverityThreshold->value,
-            $this->ignoredPatterns,
-            [],
+            $this->redosIgnoredPatterns,
             $this->redosMode,
             $this->redosConfirmOptions,
             RedosMode::Off !== $this->redosMode,
@@ -1067,84 +1058,71 @@ final class AnalysisService
         return $classes;
     }
 
+    /**
+     * Whether the risk analysis skips a pattern: one the ignore list names,
+     * or an alternation of plain words.
+     */
     private function shouldSkipRiskAnalysis(PatternOccurrence $occurrence): bool
     {
-        $rawPattern = $occurrence->displayPattern ?? $occurrence->pattern;
-        $fragment = $this->extractFragment($rawPattern);
-        $body = $this->trimPatternBody($occurrence->pattern);
+        foreach ($this->ignorableForms($occurrence) as $form) {
+            if (\in_array($form, $this->redosIgnoredPatterns, true) || self::isTriviallySafe($form)) {
+                return true;
+            }
+        }
 
-        // Patterns, fragments or full regexes, as the ignore list is documented.
-        return $this->isIgnored($occurrence->pattern)
-            || $this->isIgnored($fragment)
-            || $this->isIgnored($body)
-            || $this->isTriviallySafe($fragment)
-            || $this->isTriviallySafe($body);
+        return false;
     }
 
-    private function extractFragment(string $pattern): string
+    /**
+     * The forms of a pattern the ignore list may name, as it is documented
+     * to take patterns, fragments of patterns or whole regexes: the regex,
+     * its body between the delimiters, whatever they and the modifiers
+     * after them are, and the body without a "^" before it and a "$" after
+     * it; for a route requirement, the requirement as written, with and
+     * without those anchors.
+     *
+     * @return list<string>
+     */
+    private function ignorableForms(PatternOccurrence $occurrence): array
     {
-        if ('' === $pattern) {
-            return '';
+        $forms = [$occurrence->pattern];
+
+        try {
+            [$body] = PatternParser::extractPatternAndFlags($occurrence->pattern, $this->regex->target());
+            $forms[] = $body;
+            $forms[] = self::unanchored($body);
+        } catch (ParserException) {
+            // Unreachable for a pattern the analysis validated; the whole
+            // regex is still matched.
         }
 
-        $first = $pattern[0];
-        $last = $pattern[-1];
-
-        if ($first === $last && \in_array($first, self::PATTERN_DELIMITERS, true)) {
-            $pattern = substr($pattern, 1, -1);
+        if (null !== $occurrence->displayPattern) {
+            $forms[] = $occurrence->displayPattern;
+            $forms[] = self::unanchored($occurrence->displayPattern);
         }
 
-        if (str_starts_with($pattern, '^')) {
-            $pattern = substr($pattern, 1);
-        }
-
-        if (str_ends_with($pattern, '$')) {
-            $pattern = substr($pattern, 0, -1);
-        }
-
-        return $pattern;
+        return array_values(array_filter($forms, static fn (string $form): bool => '' !== $form));
     }
 
-    private function trimPatternBody(string $pattern): string
+    /**
+     * The fragment without the "^" it starts with and the "$" it ends with.
+     */
+    private static function unanchored(string $fragment): string
     {
-        if ('' === $pattern) {
-            return '';
+        if (str_starts_with($fragment, '^')) {
+            $fragment = substr($fragment, 1);
         }
 
-        $first = $pattern[0];
-        $last = $pattern[-1];
-
-        if ($first === $last) {
-            $pattern = substr($pattern, 1, -1);
-        }
-
-        if (str_starts_with($pattern, '^')) {
-            $pattern = substr($pattern, 1);
-        }
-
-        if (str_ends_with($pattern, '$')) {
-            $pattern = substr($pattern, 0, -1);
-        }
-
-        return $pattern;
+        return str_ends_with($fragment, '$') ? substr($fragment, 0, -1) : $fragment;
     }
 
-    private function isIgnored(string $body): bool
+    /**
+     * Whether a fragment is two words or more, of letters, digits, ".", "_"
+     * and "-", as alternatives.
+     */
+    private static function isTriviallySafe(string $fragment): bool
     {
-        if ('' === $body) {
-            return false;
-        }
-
-        return \in_array($body, $this->ignoredPatterns, true);
-    }
-
-    private function isTriviallySafe(string $body): bool
-    {
-        if ('' === $body) {
-            return false;
-        }
-
-        $parts = explode('|', $body);
+        $parts = explode('|', $fragment);
         if (\count($parts) < 2) {
             return false;
         }
@@ -1156,17 +1134,6 @@ final class AnalysisService
         }
 
         return true;
-    }
-
-    /**
-     * @param array<string> $userIgnored
-     * @param array<string> $redosIgnored
-     *
-     * @return array<string>
-     */
-    private function buildIgnoredPatterns(array $userIgnored, array $redosIgnored): array
-    {
-        return array_values(array_unique([...$redosIgnored, ...$userIgnored]));
     }
 
     /**

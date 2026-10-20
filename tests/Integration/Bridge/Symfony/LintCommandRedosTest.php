@@ -32,6 +32,12 @@ final class LintCommandRedosTest extends TestCase
 
     private const VULNERABLE_FILE = "<?php\n\npreg_match('/(a+)+\$/', \$subject);\n";
 
+    /**
+     * The same vulnerable body under a modifier, under a pair of braces,
+     * and under another delimiter with a modifier.
+     */
+    private const SPELLINGS_FILE = "<?php\n\npreg_match('/(a+)+\$/', \$s);\npreg_match('/(a+)+\$/i', \$s);\npreg_match('{(a+)+\$}', \$s);\npreg_match('#(a+)+\$#u', \$s);\n";
+
     #[Test]
     public function test_lint_with_redos_enabled_reports_the_redos_issue(): void
     {
@@ -50,6 +56,22 @@ final class LintCommandRedosTest extends TestCase
         $issueIds = $this->lintIssueIds($project, ['enabled' => false]);
 
         $this->assertNotContains('regex.lint.redos', $issueIds);
+    }
+
+    /**
+     * "redos.ignored_patterns" takes a fragment of a pattern: its risk
+     * analysis is skipped whatever the delimiters and the modifiers around
+     * the body.
+     */
+    #[Test]
+    public function test_lint_skips_an_ignored_fragment_under_any_delimiter_and_modifier(): void
+    {
+        $project = $this->makeProject(['composer.json' => '{"name": "acme/app"}', 'src/Pattern.php' => self::SPELLINGS_FILE]);
+
+        $risky = static fn (array $ids): array => array_values(array_filter($ids, static fn (string $id): bool => \in_array($id, ['regex.lint.redos', 'regex.lint.quantifier.nested'], true)));
+
+        $this->assertCount(8, $risky($this->lintIssueIds($project, ['enabled' => true])), 'control: each spelling is reported when not ignored');
+        $this->assertSame([], $risky($this->lintIssueIds($project, ['enabled' => true, 'ignored_patterns' => ['(a+)+']])));
     }
 
     /**

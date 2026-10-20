@@ -29,6 +29,12 @@ final class LintCommandRedosTest extends LaravelTestCase
 
     private const VULNERABLE_FILE = "<?php\n\npreg_match('/(a+)+\$/', \$subject);\n";
 
+    /**
+     * The same vulnerable body under a modifier, under a pair of braces,
+     * and under another delimiter with a modifier.
+     */
+    private const SPELLINGS_FILE = "<?php\n\npreg_match('/(a+)+\$/', \$s);\npreg_match('/(a+)+\$/i', \$s);\npreg_match('{(a+)+\$}', \$s);\npreg_match('#(a+)+\$#u', \$s);\n";
+
     #[Test]
     public function test_lint_with_redos_enabled_reports_the_redos_issue(): void
     {
@@ -43,6 +49,37 @@ final class LintCommandRedosTest extends LaravelTestCase
         self::configOf($this->application())->set('php-regex.redos.enabled', false);
 
         $this->assertNotContains('regex.lint.redos', $this->lintIssueIds());
+    }
+
+    /**
+     * "redos.ignored_patterns" takes a fragment of a pattern: its risk
+     * analysis is skipped whatever the delimiters and the modifiers around
+     * the body.
+     */
+    #[Test]
+    public function test_lint_skips_an_ignored_fragment_under_any_delimiter_and_modifier(): void
+    {
+        $config = self::configOf($this->application());
+        $config->set('php-regex.redos.enabled', true);
+        $config->set('php-regex.redos.ignored_patterns', ['(a+)+']);
+
+        $risky = array_values(array_filter($this->lintIssueIds(self::SPELLINGS_FILE), static fn (string $id): bool => \in_array($id, ['regex.lint.redos', 'regex.lint.quantifier.nested'], true)));
+
+        $this->assertSame([], $risky);
+    }
+
+    /**
+     * The control of the test above: without the list, each spelling is
+     * reported.
+     */
+    #[Test]
+    public function test_lint_reports_each_spelling_of_a_fragment_not_ignored(): void
+    {
+        self::configOf($this->application())->set('php-regex.redos.enabled', true);
+
+        $risky = array_values(array_filter($this->lintIssueIds(self::SPELLINGS_FILE), static fn (string $id): bool => \in_array($id, ['regex.lint.redos', 'regex.lint.quantifier.nested'], true)));
+
+        $this->assertCount(8, $risky);
     }
 
     /**
@@ -63,9 +100,9 @@ final class LintCommandRedosTest extends LaravelTestCase
     /**
      * @return list<string>
      */
-    private function lintIssueIds(): array
+    private function lintIssueIds(string $file = self::VULNERABLE_FILE): array
     {
-        $project = $this->makeProject(['src/Pattern.php' => self::VULNERABLE_FILE]);
+        $project = $this->makeProject(['src/Pattern.php' => $file]);
 
         Artisan::call('regex:lint', [
             'paths' => [$project.'/src'],

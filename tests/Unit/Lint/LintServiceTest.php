@@ -683,7 +683,7 @@ final class LintServiceTest extends TestCase
     #[Test]
     public function test_analysis_drops_charset_overlap_on_an_ignored_pattern(): void
     {
-        $analysis = new AnalysisService(RegexParser::create(), ignoredPatterns: ['(?:[a-m]|[a-z])+', '(a+)+']);
+        $analysis = new AnalysisService(RegexParser::create(), redosIgnoredPatterns: ['(?:[a-m]|[a-z])+', '(a+)+']);
 
         $ids = array_map(
             static fn (array $issue): string => $issue['issueId'] ?? '',
