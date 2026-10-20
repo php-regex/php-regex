@@ -596,6 +596,20 @@ final class PatternPrinterTest extends TestCase
         yield 'a comment under x' => ['pattern' => "/a b # c\n/x", 'asWritten' => "/a b # c\n/x", 'normalized' => "/ab# c\n/x", 'pretty' => "/\n    ab  # c\n/x", 'subjects' => ['ab' => 1, 'a b' => 0]];
     }
 
+    /**
+     * Where the formatter would refuse a layout, pretty printing writes the
+     * pattern on one line and refuses nothing: after a top-level "(?-x)" a
+     * line break would be a literal.
+     */
+    #[Test]
+    public function test_pretty_mode_writes_one_line_where_a_layout_would_be_refused(): void
+    {
+        $printer = PatternPrinter::pretty();
+
+        $this->assertSame('/(?-x)(((a)))/x', Regex::create()->parse('/(?-x)(((a)))/x')->accept($printer));
+        $this->assertNull($printer->refusal());
+    }
+
     #[Test]
     public function test_named_constructors_give_a_new_printer_each_time(): void
     {

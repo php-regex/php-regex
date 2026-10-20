@@ -82,7 +82,21 @@ final class DelimiterBracketsTest extends TestCase
         // An odd run of backslashes would escape the closing delimiter: an
         // empty "\E", which PCRE ignores, closes it.
         yield 'a body ending in a control backslash' => ['body' => 'a\c\\', 'opening' => '/', 'closing' => '/', 'expected' => 'a\c\\\E', 'subject' => "a\x1C"];
+        // Once PHP and PCRE disagree, every control backslash before a
+        // backslash or a delimiter is spelled: one before the delimiter
+        // itself takes a backslash after it, which PCRE reads as escaping
+        // the delimiter, as it read the control backslash's.
+        yield 'a control backslash before the delimiter, then one before a backslash' => ['body' => 'a\\c\\#b\\c\\\\#', 'opening' => '#', 'closing' => '#', 'expected' => 'a\\x1C\\#b\\x1C\\#', 'subject' => "a\x1C#b\x1C#"];
+        yield 'a control backslash before an opening brace, then one before a closing brace' => ['body' => '\\c\\{a}\\c\\\\}', 'opening' => '{', 'closing' => '}', 'expected' => '\\x1C{a}\\x1C\\}', 'subject' => "\x1C{a}\x1C}"];
         yield 'a body ending in an escaped backslash' => ['body' => 'a\\\\', 'opening' => '/', 'closing' => '/', 'expected' => 'a\\\\', 'subject' => 'a\\'];
+    }
+
+    #[Test]
+    public function test_spelled_to_end_spells_where_a_closing_bracket_stands_bare_before_its_partner(): void
+    {
+        // PHP reads "\c", "\\", then a bare "}": the body would end there,
+        // whatever the brackets after it.
+        $this->assertSame('\\x1C\\}{{a}', DelimiterBrackets::spelledToEnd('\\c\\\\}{{a}', '{', '}'));
     }
 
     #[Test]
