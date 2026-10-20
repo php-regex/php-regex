@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony\Analyzer;
 
 use PHPRegex\Redos\RedosSeverity;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
  * @internal
@@ -21,7 +22,7 @@ use PHPRegex\Redos\RedosSeverity;
 final class AnalysisContext
 {
     /**
-     * @param array<int, string> $securityConfigPaths
+     * @param list<string> $securityConfigPaths
      */
     public function __construct(
         public readonly ?string $projectDir,
@@ -31,5 +32,6 @@ final class AnalysisContext
         public readonly RedosSeverity $redosThreshold = RedosSeverity::High,
         public readonly bool $skipFirewalls = false,
         public readonly bool $debug = false,
+        public readonly ?KernelInterface $kernel = null,
     ) {}
 }

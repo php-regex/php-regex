@@ -13,13 +13,26 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Security;
 
+use PHPRegex\Symfony\Security\SecurityConfigException;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
+use PHPRegex\Symfony\Security\SecurityConfigLocator;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPRegex\Tests\Support\SecurityConfigFunctionOverrides;
+use PHPRegex\Tests\Support\TemporaryProject;
+use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\DependencyInjection\Container;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Yaml\Yaml;
 
 final class SecurityConfigExtractorTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+    use TemporaryProject;
+
     #[Test]
     public function test_extracts_access_control_and_firewalls(): void
     {
@@ -197,5 +210,202 @@ final class SecurityConfigExtractorTest extends TestCase
             'yaml' => "security:\n    access_control:\n        - path: ^/admin\n          ips:\n              []\n          methods: [GET]\n",
             'expected' => ['roles' => [], 'methods' => ['GET'], 'ips' => []],
         ];
+    }
+
+    /**
+     * A file named with --config is read by symfony/yaml: every shape YAML
+     * allows, where the line scanner read the block style only.
+     *
+     * @param list<array{0: ?string, 1: list<string>, 2: int}> $rules
+     * @param array<string, ?string>                           $firewalls
+     */
+    #[Test]
+    #[DataProvider('provideYamlShapes')]
+    public function test_a_yaml_file_is_read_whatever_its_shape(string $yaml, array $rules, array $firewalls): void
+    {
+        $path = $this->makeProject(['security.yaml' => $yaml]).'/security.yaml';
+
+        $result = (new SecurityConfigExtractor())->extract($path, 'prod');
+
+        $this->assertSame($rules, array_map(
+            static fn (array $rule): array => [$rule['path'], $rule['roles'], $rule['line']],
+            $result['accessControl'],
+        ));
+        $this->assertSame($firewalls, array_column($result['firewalls'], 'pattern', 'name'));
+    }
+
+    /**
+     * @return iterable<string, array{yaml: string, rules: list<array{0: ?string, 1: list<string>, 2: int}>, firewalls: array<string, ?string>}>
+     */
+    public static function provideYamlShapes(): iterable
+    {
+        yield 'flow sequence on one line' => [
+            'yaml' => "security:\n    access_control: [{ path: ^/admin, roles: ROLE_ADMIN }, { path: ^/admin/public, roles: PUBLIC_ACCESS }]\n",
+            'rules' => [['^/admin', ['ROLE_ADMIN'], 2], ['^/admin/public', ['PUBLIC_ACCESS'], 2]],
+            'firewalls' => [],
+        ];
+
+        yield 'flow sequence over several lines' => [
+            'yaml' => "security:\n    access_control: [\n        { path: ^/admin, roles: 'ROLE_ADMIN, ROLE_EDITOR' },\n        { path: ^/admin/public, roles: [PUBLIC_ACCESS], methods: 'get, post' },\n    ]\n",
+            'rules' => [['^/admin', ['ROLE_ADMIN', 'ROLE_EDITOR'], 3], ['^/admin/public', ['PUBLIC_ACCESS'], 4]],
+            'firewalls' => [],
+        ];
+
+        yield 'anchors and aliases' => [
+            'yaml' => "security:\n    firewalls:\n        main: &main { pattern: ^/ }\n        copy: *main\n    access_control:\n        - &admin { path: ^/admin, roles: ROLE_ADMIN }\n        - *admin\n",
+            'rules' => [['^/admin', ['ROLE_ADMIN'], 6], ['^/admin', ['ROLE_ADMIN'], 6]],
+            'firewalls' => ['main' => '^/', 'copy' => '^/'],
+        ];
+
+        yield 'the file parameters' => [
+            'yaml' => "parameters:\n    admin_path: ^/admin\n    public_path: '%admin_path%/public'\nsecurity:\n    firewalls:\n        main: { pattern: ['^/app', '^/api'] }\n    access_control:\n        - { path: '%admin_path%', roles: ROLE_ADMIN }\n        - { path: '%public_path%' }\n",
+            'rules' => [['^/admin', ['ROLE_ADMIN'], 8], ['^/admin/public', [], 9]],
+            'firewalls' => ['main' => '(?:^/app|^/api)'],
+        ];
+
+        yield 'entries that are no rule' => [
+            'yaml' => "security:\n    access_control: [~, { path: ^/admin }, ROLE_ADMIN]\n    firewalls: { main: ~ }\n",
+            'rules' => [['^/admin', [], 2]],
+            'firewalls' => ['main' => null],
+        ];
+
+        yield 'the environment block after the root' => [
+            'yaml' => "security:\n    firewalls:\n        main: { pattern: ^/ }\nwhen@prod:\n    security:\n        firewalls:\n            main: { pattern: ^/prod }\n        access_control:\n            - { path: ^/prod }\nwhen@dev:\n    security:\n        access_control:\n            - { path: ^/dev }\n",
+            'rules' => [['^/prod', [], 9]],
+            'firewalls' => ['main' => '^/prod'],
+        ];
+    }
+
+    #[Test]
+    public function test_a_file_parameter_may_come_from_the_kernel(): void
+    {
+        $path = $this->makeProject(['security.yaml' => "security:\n    access_control:\n        - { path: '%admin_path%' }\n"]).'/security.yaml';
+        $container = new Container(new ParameterBag(['admin_path' => '^/admin']));
+
+        $result = (new SecurityConfigExtractor())->extract($path, null, $container);
+
+        $this->assertSame('^/admin', $result['accessControl'][0]['path']);
+        $this->assertSame(3, $result['accessControl'][0]['line']);
+    }
+
+    #[Test]
+    public function test_a_parameter_nothing_defines_is_an_error(): void
+    {
+        $path = $this->makeProject(['security.yaml' => "security:\n    access_control:\n        - { path: '%admin_path%' }\n"]).'/security.yaml';
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('admin_path');
+
+        (new SecurityConfigExtractor())->extract($path, null, new Container());
+    }
+
+    #[Test]
+    public function test_a_file_that_is_no_yaml_is_an_error(): void
+    {
+        $path = $this->makeProject(['security.yaml' => "security:\n    access_control: [{ path: ^/admin\n"]).'/security.yaml';
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('security.yaml');
+
+        (new SecurityConfigExtractor())->extract($path);
+    }
+
+    #[Test]
+    public function test_a_file_that_cannot_be_read_is_an_error(): void
+    {
+        $this->expectException(SecurityConfigException::class);
+
+        (new SecurityConfigExtractor())->extract($this->makeProject().'/missing.yaml');
+    }
+
+    #[Test]
+    public function test_reading_yaml_needs_symfony_yaml(): void
+    {
+        SecurityConfigFunctionOverrides::$missingClasses = [Yaml::class];
+        $path = $this->makeProject(['security.yaml' => "security: ~\n"]).'/security.yaml';
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('composer require symfony/yaml');
+
+        (new SecurityConfigExtractor())->extract($path);
+    }
+
+    #[Test]
+    public function test_named_files_none_of_which_exists_are_an_error(): void
+    {
+        $project = $this->makeProject();
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('None of the provided --config files could be found.');
+
+        (new SecurityConfigExtractor())->read([$project.'/a.yaml', $project.'/b.yaml'], null, new SecurityConfigLocator(), $project, null);
+    }
+
+    #[Test]
+    public function test_a_named_file_that_is_no_yaml_is_an_error(): void
+    {
+        $project = $this->makeProject(['config/packages/security.php' => "<?php\n"]);
+
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('Only YAML files can be read with --config');
+
+        (new SecurityConfigExtractor())->read([$project.'/config/packages/security.php'], null, new SecurityConfigLocator(), $project, null);
+    }
+
+    #[Test]
+    public function test_a_named_file_that_does_not_exist_is_skipped_beside_one_that_does(): void
+    {
+        $project = $this->makeProject(['security.yaml' => "security:\n    access_control: [{ path: ^/admin }]\n"]);
+
+        $result = (new SecurityConfigExtractor())->read([$project.'/missing.yaml', $project.'/security.yaml'], null, new SecurityConfigLocator(), $project, null);
+
+        $this->assertNotNull($result);
+        $this->assertSame([['file' => $project.'/missing.yaml', 'reason' => 'File not found.']], $result['skippedFiles']);
+        $this->assertSame(['^/admin'], array_column($result['accessControl'], 'path'));
+    }
+
+    /**
+     * Without a kernel the files found in the project are read, the YAML
+     * ones: a PHP file needs the kernel that loads it.
+     */
+    #[Test]
+    public function test_without_a_kernel_the_located_yaml_files_are_read(): void
+    {
+        $project = $this->makeProject([
+            'config/packages/security.yaml' => "security:\n    access_control: [{ path: ^/admin }]\n",
+            'config/packages/prod/security.php' => "<?php\n",
+        ]);
+
+        $result = (new SecurityConfigExtractor())->read([], null, new SecurityConfigLocator(), $project, 'prod');
+
+        $this->assertNotNull($result);
+        $this->assertSame(['^/admin'], array_column($result['accessControl'], 'path'));
+        $this->assertSame(
+            [['file' => $project.'/config/packages/prod/security.php', 'reason' => 'Only YAML files are read without a kernel.']],
+            $result['skippedFiles'],
+        );
+    }
+
+    #[Test]
+    public function test_without_a_kernel_or_a_file_there_is_no_security_configuration(): void
+    {
+        $project = $this->makeProject();
+
+        $this->assertNull((new SecurityConfigExtractor())->read([], null, new SecurityConfigLocator(), $project, null));
+    }
+
+    #[Test]
+    public function test_a_kernel_of_its_own_making_cannot_be_read(): void
+    {
+        $this->expectException(SecurityConfigException::class);
+        $this->expectExceptionMessageIsOrContains('name its files with --config');
+
+        (new SecurityConfigExtractor())->extractFromKernel($this->createStub(KernelInterface::class));
+    }
+
+    #[After]
+    protected function restoreYaml(): void
+    {
+        SecurityConfigFunctionOverrides::reset();
     }
 }

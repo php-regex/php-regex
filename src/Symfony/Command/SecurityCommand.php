@@ -22,6 +22,7 @@ use PHPRegex\Symfony\Security\AccessRuleSummary;
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
+use PHPRegex\Symfony\Security\SecurityConfigException;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Symfony\Security\SecurityConfigLocator;
 use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
@@ -124,47 +125,25 @@ final class SecurityCommand extends Command
             return Command::INVALID;
         }
 
-        $configOption = $input->getOption('config');
-        $explicitConfigs = $this->normalizeStringList(\is_array($configOption) ? $configOption : []);
-        $configPaths = [] !== $explicitConfigs
-            ? $explicitConfigs
-            : $this->configLocator->locate($projectDir, $environment);
+        $explicitConfigs = $this->normalizeStringList($input, 'config');
 
-        if ([] !== $explicitConfigs) {
-            $existing = array_values(array_filter($configPaths, is_file(...)));
-            if ([] === $existing) {
-                $io->error('None of the provided --config files could be found.');
-
-                return Command::INVALID;
-            }
-        }
-        if ([] === $configPaths) {
-            $io->error('No security config files found. Use --config to specify one.');
+        try {
+            $config = $this->extractor->read($explicitConfigs, $this->kernel, $this->configLocator, $projectDir, $environment);
+        } catch (SecurityConfigException $e) {
+            $io->error($e->getMessage());
 
             return Command::INVALID;
         }
 
-        $rules = [];
-        $firewalls = [];
-        $skippedFiles = [];
+        if (null === $config) {
+            $io->error('No security configuration found: configure the SecurityBundle, or name a security file with --config.');
 
-        foreach ($configPaths as $path) {
-            if (!is_file($path)) {
-                $skippedFiles[] = ['file' => $path, 'reason' => 'File not found.'];
-
-                continue;
-            }
-
-            if (!AccessRuleSummary::isYamlFile($path)) {
-                $skippedFiles[] = ['file' => $path, 'reason' => 'Only YAML security config files are supported.'];
-
-                continue;
-            }
-
-            $data = $this->extractor->extract($path, $environment);
-            $rules = array_merge($rules, $data['accessControl']);
-            $firewalls = array_merge($firewalls, $data['firewalls']);
+            return Command::INVALID;
         }
+
+        $rules = $config['accessControl'];
+        $firewalls = $config['firewalls'];
+        $skippedFiles = $config['skippedFiles'];
 
         if ([] === $rules && [] === $firewalls) {
             $this->showBanner($io);
@@ -539,7 +518,7 @@ final class SecurityCommand extends Command
 
     private function formatLocation(string $file, int $line): string
     {
-        return $this->pathHelper->getRelativePath($file).':'.$line;
+        return AccessRuleSummary::location($this->pathHelper, $file, $line);
     }
 
     private function formatSeverityBadge(string $severity): string
@@ -552,14 +531,15 @@ final class SecurityCommand extends Command
     }
 
     /**
-     * @param array<int|string, mixed> $values
+     * The trimmed, non-empty strings an array option was given, each once.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
-    private function normalizeStringList(array $values): array
+    private function normalizeStringList(InputInterface $input, string $option): array
     {
+        $values = $input->getOption($option);
         $normalized = [];
-        foreach ($values as $value) {
+        foreach (\is_array($values) ? $values : [] as $value) {
             if (!\is_string($value)) {
                 continue;
             }

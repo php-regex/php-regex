@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Security;
 
+use PHPRegex\Linter\Formatter\RelativePathHelper;
+
 /**
  * One access_control rule on one line, as regex:security and regex:analyze
  * both print it, and the security files both read.
@@ -43,6 +45,22 @@ final class AccessRuleSummary
         }
 
         return implode('  ', $parts);
+    }
+
+    /**
+     * Where an entry of the security configuration is written: the file
+     * relative to the project and the line, the file alone when its line is
+     * unknown, and "security configuration" when no security file writes it.
+     */
+    public static function location(RelativePathHelper $paths, string $file, int $line): string
+    {
+        if ('' === $file) {
+            return 'security configuration';
+        }
+
+        $relative = $paths->getRelativePath($file);
+
+        return $line > 0 ? $relative.':'.$line : $relative;
     }
 
     /**

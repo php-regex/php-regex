@@ -213,7 +213,7 @@ tells the two apart.
 | stage | meaning |
 |---|---|
 | `usage` | The command line cannot be used: an unknown command or option, a missing pattern or value, an invalid `--php-version`, a path argument that does not exist, a `--baseline` file that is missing, cannot be read or is not a baseline, a `--generate-baseline` or `--output` file that cannot be written |
-| `config` | The configuration cannot be used: a `regex.json` that is not valid JSON, an unknown or removed key, a path it lists that does not exist |
+| `config` | The configuration cannot be used: a `regex.json` that is not valid JSON, an unknown or removed key, a path it lists that does not exist; for Symfony's `regex:analyze`, a security configuration it cannot read (exit code 2) |
 | `target` | `lint` was asked to judge for a PHP it does not judge: PHP 7.2 and earlier, which ship PCRE1, named outright or as a `composer.json` that allows no PHP of 7.3 or later; exit code 2. A `require.php` that also allows 7.3 or later is judged from there instead, with a `Note:` line on stderr |
 | `collect` | `lint` could not read the files or the patterns in them |
 | `analyze` | `lint` read the patterns but could not analyse them: a worker process failed or exited, named with the files it was reading; exit code 1 |
@@ -674,7 +674,10 @@ people, written as `{label, value}` rows rather than as keys:
 The exit code is 1 when an issue of a kind `--fail-on` names was found, 0
 otherwise. An option it cannot use (an unknown `--only` analyzer, `--fail-on`
 kind or `--redos-threshold`) prints the [error envelope](#the-error-envelope),
-stage `usage`, and exits with 2.
+stage `usage`, and exits with 2. A security configuration it cannot read (a
+`--config` file that is missing or not YAML, a parameter nothing defines, a
+configuration the SecurityBundle refuses) prints the envelope with stage
+`config`, and exits with 2.
 
 ### Symfony analyze: `symfony_analyze`
 

@@ -152,6 +152,8 @@ bin/console regex:compare '/[a-z]+/' '/edit/' --method=subset
 bin/console regex:transpile '/^\d{4}$/' --target=python
 ```
 
+`regex:security` and `regex:analyze` read the security configuration your application runs with, as `bin/console debug:config security` shows it, whatever the format of its files and with its parameters resolved; `--config=<file>` analyzes one YAML file instead, which needs `symfony/yaml`.
+
 Exit codes: 0 when nothing is wrong, 1 when the judged patterns or files have a problem, 2 when an option or the configuration cannot be used.
 
 Documentation

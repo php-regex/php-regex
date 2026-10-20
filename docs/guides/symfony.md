@@ -292,7 +292,7 @@ short forms (`-j` for `--jobs`, `-t` for `--target`): `regex:compare
 `regex:explain` takes `--format=console|html` and `--highlight`, and prints
 the optimization, the ReDoS risk, the lint issues and a sample beside the
 explanation. What stays the bundle's own: `regex:routes`, `regex:security`
-and `regex:analyze` read Symfony's router and `security.yaml`, where
+and `regex:analyze` read Symfony's router and security configuration, where
 Laravel's `regex:routes` lists and validates route constraints.
 
 `regex:routes` reads the routes in the order they are declared, as the router
@@ -303,6 +303,26 @@ never be reached. Two routes that share some paths but not all are an
 before `/blog/{id}` (`\d+|new`) takes `/blog/new`. A narrower route declared
 before a wider one, `/users/list` before `/users/{id}`, is the order the
 router expects and is not reported.
+
+`regex:security` and `regex:analyze` read the security configuration the
+application runs with, as `bin/console debug:config security` shows it:
+`config/packages/security.yaml`, `security.php` or any other file the kernel
+loads, in any YAML shape (block or flow lists, anchors and aliases,
+`when@<env>` blocks), with its `%parameters%` and `%env()%` values resolved.
+Each finding names the file and the line its value is written on, or
+`security configuration` when no `security.*` file under `config/` writes it.
+`--config=<file>` analyzes that YAML file instead, read with `symfony/yaml`
+(`composer require symfony/yaml`), its `%parameters%` taken from its own
+`parameters` and then from the application's.
+
+A security configuration either command cannot read stops it with exit code 2:
+a `--config` file that is missing, is not YAML or does not parse, a parameter
+nothing defines, a configuration the SecurityBundle refuses, `symfony/yaml`
+not installed. `regex:analyze --format=json` prints the
+[error envelope](../reference/json-output.md#the-error-envelope), stage
+`config`. An application without the SecurityBundle has no security
+configuration: `regex:security` stops with exit code 2 and says so, and
+`regex:analyze` prints it as a warning.
 
 `regex:lint` reads the functions marked `#[RegexPattern]` (or PhpStorm's
 `#[Language('RegExp')]`) in the configured `paths`, with `exclude` where they are linted, and

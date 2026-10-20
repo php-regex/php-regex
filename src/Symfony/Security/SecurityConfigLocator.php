@@ -14,12 +14,16 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony\Security;
 
 /**
+ * The security files of a project, in the formats the kernel loads.
+ *
  * @internal
  */
 final class SecurityConfigLocator
 {
+    private const EXTENSIONS = ['yaml', 'yml', 'php', 'xml'];
+
     /**
-     * @return array<int, string>
+     * @return list<string>
      */
     public function locate(?string $projectDir, ?string $environment): array
     {
@@ -28,18 +32,18 @@ final class SecurityConfigLocator
             return [];
         }
 
-        $paths = [
-            $root.'/config/packages/security.yaml',
-            $root.'/config/packages/security.yml',
-        ];
-
+        $directories = [$root.'/config/packages'];
         if (null !== $environment && '' !== $environment) {
-            $paths[] = $root.'/config/packages/'.$environment.'/security.yaml';
-            $paths[] = $root.'/config/packages/'.$environment.'/security.yml';
+            $directories[] = $root.'/config/packages/'.$environment;
         }
+        $directories[] = $root.'/config';
 
-        $paths[] = $root.'/config/security.yaml';
-        $paths[] = $root.'/config/security.yml';
+        $paths = [];
+        foreach ($directories as $directory) {
+            foreach (self::EXTENSIONS as $extension) {
+                $paths[] = $directory.'/security.'.$extension;
+            }
+        }
 
         $existing = [];
         foreach ($paths as $path) {
@@ -48,6 +52,6 @@ final class SecurityConfigLocator
             }
         }
 
-        return array_values(array_unique($existing));
+        return $existing;
     }
 }

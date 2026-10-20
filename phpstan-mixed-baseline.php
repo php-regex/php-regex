@@ -210,19 +210,12 @@ return [
         'PHPRegex\PHPUnit\PatternLab::export()' => ['validator-input', 1],
         'PHPRegex\PHPUnit\PatternLab::judge()' => ['validator-input', 1],
     ],
-    'src/Symfony/Command/AnalyzeCommand.php' => [
-        'PHPRegex\Symfony\Command\AnalyzeCommand::normalizeLowercaseList()' => ['host-return', 1],
-        'PHPRegex\Symfony\Command\AnalyzeCommand::normalizeStringList()' => ['host-return', 1],
-    ],
     'src/Symfony/Command/CompareCommand.php' => [
         'PHPRegex\Symfony\Command\CompareCommand::resolveDeterminizationAlgorithm()' => ['host-return', 1],
         'PHPRegex\Symfony\Command\CompareCommand::resolveMinimizationAlgorithm()' => ['host-return', 1],
     ],
     'src/Symfony/Command/LintCommand.php' => [
         'PHPRegex\Symfony\Command\LintCommand::normalizeStringList()' => ['host-return', 1],
-    ],
-    'src/Symfony/Command/SecurityCommand.php' => [
-        'PHPRegex\Symfony\Command\SecurityCommand::normalizeStringList()' => ['host-return', 1],
     ],
     'src/Symfony/DependencyInjection/Configuration.php' => [
         'PHPRegex\Symfony\DependencyInjection\Configuration::getConfigTreeBuilder()' => ['host-contract', 2],
@@ -239,6 +232,11 @@ return [
     ],
     'src/Symfony/Security/SecurityAccessControlAnalyzer.php' => [
         'PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer::normalizeList()' => ['host-return', 1],
+    ],
+    'src/Symfony/Security/SecurityConfigExtractor.php' => [
+        'PHPRegex\Symfony\Security\SecurityConfigExtractor::build()' => ['host-return', 1],
+        'PHPRegex\Symfony\Security\SecurityConfigExtractor::listOf()' => ['validator-input', 1],
+        'PHPRegex\Symfony\Security\SecurityConfigExtractor::text()' => ['validator-input', 1],
     ],
     'src/Symfony/Validator/Constraints/ValidRegex.php' => [
         'PHPRegex\Symfony\Validator\Constraints\ValidRegex::__construct()' => ['host-contract', 1],

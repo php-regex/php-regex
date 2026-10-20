@@ -46,6 +46,7 @@
     "suggest": {
         "symfony/routing": "To analyze route requirements with regex:routes.",
         "symfony/validator": "To lint the patterns of Regex constraints, and to validate submitted patterns with ValidRegex.",
+        "symfony/yaml": "To read a security file named with regex:security --config or regex:analyze --config.",
         "nikic/php-parser": "To extract patterns with a full PHP parser."
     },
     "autoload": {

@@ -151,6 +151,7 @@
         "rector/rector": "To rewrite preg_* calls into the string functions the automata prove they match.",
         "symfony/routing": "To analyze route requirements with regex:routes.",
         "symfony/validator": "To lint the patterns of Regex constraints, and to validate submitted patterns with ValidRegex.",
+        "symfony/yaml": "To read a security file named with regex:security --config or regex:analyze --config.",
         "vimeo/psalm": "To type $matches from the pattern and report invalid patterns in Psalm (php-regex/regex-psalm)."
     }
 }

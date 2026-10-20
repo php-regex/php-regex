@@ -24,6 +24,7 @@ use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
 use PHPRegex\Symfony\Analyzer\ReportSection;
 use PHPRegex\Symfony\Analyzer\SecurityReport;
 use PHPRegex\Symfony\Output\ConsoleWriter;
+use PHPRegex\Symfony\Security\SecurityConfigException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -123,8 +124,7 @@ final class AnalyzeCommand extends Command
         }
         $json = self::FORMAT_JSON === $format;
 
-        $onlyOption = $input->getOption('only');
-        $only = $this->normalizeLowercaseList(\is_array($onlyOption) ? $onlyOption : []);
+        $only = $this->normalizeLowercaseList($input, 'only');
         $available = array_map(static fn ($analyzer): string => $analyzer->getId(), $this->registry->all());
         if ([] !== $only) {
             $unknown = array_diff($only, $available);
@@ -158,8 +158,7 @@ final class AnalyzeCommand extends Command
         $projectDir = $this->kernel?->getProjectDir() ?? (getcwd() ?: null);
         $environment = $this->kernel?->getEnvironment();
 
-        $configOption = $input->getOption('config');
-        $configPaths = $this->normalizeStringList(\is_array($configOption) ? $configOption : []);
+        $configPaths = $this->normalizeStringList($input, 'config');
 
         $context = new AnalysisContext(
             $projectDir,
@@ -169,6 +168,7 @@ final class AnalyzeCommand extends Command
             $threshold,
             (bool) $input->getOption('skip-firewalls'),
             $debug,
+            $this->kernel,
         );
 
         $renderBanner = self::FORMAT_CONSOLE === $format && !$output->isQuiet();
@@ -196,7 +196,15 @@ final class AnalyzeCommand extends Command
             }
 
             $start = microtime(true);
-            $analyzed = $analyzer->analyze($context);
+
+            try {
+                $analyzed = $analyzer->analyze($context);
+            } catch (SecurityConfigException $e) {
+                $progressBar?->clear();
+
+                return $this->refuse($output, $io, $json, $e->getMessage(), JsonDocument::STAGE_CONFIG);
+            }
+
             $durationMs = (int) round((microtime(true) - $start) * 1000);
 
             foreach ($analyzed as $section) {
@@ -248,13 +256,13 @@ final class AnalyzeCommand extends Command
     }
 
     /**
-     * A command line it cannot use: the error envelope in JSON mode, an
-     * error block otherwise.
+     * A command line, or a configuration, it cannot use: the error envelope
+     * in JSON mode, an error block otherwise.
      */
-    private function refuse(OutputInterface $output, SymfonyStyle $io, bool $json, string $message): int
+    private function refuse(OutputInterface $output, SymfonyStyle $io, bool $json, string $message, string $stage = JsonDocument::STAGE_USAGE): int
     {
         if ($json) {
-            ConsoleWriter::document($output, JsonDocument::error($message, JsonDocument::STAGE_USAGE));
+            ConsoleWriter::document($output, JsonDocument::error($message, $stage));
         } else {
             $io->error($message);
         }
@@ -267,8 +275,7 @@ final class AnalyzeCommand extends Command
      */
     private function resolveFailOn(InputInterface $input): array|string
     {
-        $failOnOption = $input->getOption('fail-on');
-        $failOn = $this->normalizeLowercaseList(\is_array($failOnOption) ? $failOnOption : []);
+        $failOn = $this->normalizeLowercaseList($input, 'fail-on');
         if ([] === $failOn) {
             $failOn = self::DEFAULT_FAIL_ON;
         }
@@ -303,14 +310,15 @@ final class AnalyzeCommand extends Command
     }
 
     /**
-     * @param array<int|string, mixed> $values
+     * The trimmed, non-empty strings an array option was given, each once.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
-    private function normalizeStringList(array $values): array
+    private function normalizeStringList(InputInterface $input, string $option): array
     {
+        $values = $input->getOption($option);
         $normalized = [];
-        foreach ($values as $value) {
+        foreach (\is_array($values) ? $values : [] as $value) {
             if (!\is_string($value)) {
                 continue;
             }
@@ -325,15 +333,13 @@ final class AnalyzeCommand extends Command
     }
 
     /**
-     * @param array<int|string, mixed> $values
-     *
      * @return array<int, string>
      */
-    private function normalizeLowercaseList(array $values): array
+    private function normalizeLowercaseList(InputInterface $input, string $option): array
     {
         return array_map(
             strtolower(...),
-            $this->normalizeStringList($values),
+            $this->normalizeStringList($input, $option),
         );
     }
 

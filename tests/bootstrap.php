@@ -16,3 +16,4 @@ require __DIR__.'/Support/LintFunctionOverrides.php';
 require __DIR__.'/Support/SelfUpdateFunctionOverrides.php';
 require __DIR__.'/Support/SymfonyExtractorFunctionOverrides.php';
 require __DIR__.'/Support/DependencyInjectionFunctionOverrides.php';
+require __DIR__.'/Support/SecurityConfigFunctionOverrides.php';

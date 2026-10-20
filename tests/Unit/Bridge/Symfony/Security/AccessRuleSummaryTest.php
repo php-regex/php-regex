@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Security;
 
+use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Symfony\Security\AccessRuleSummary;
 use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -27,6 +28,16 @@ use PHPUnit\Framework\TestCase;
  */
 final class AccessRuleSummaryTest extends TestCase
 {
+    #[Test]
+    public function test_a_location_names_the_file_from_the_project_and_its_line(): void
+    {
+        $paths = new RelativePathHelper('/app');
+
+        $this->assertSame('config/packages/security.yaml:12', AccessRuleSummary::location($paths, '/app/config/packages/security.yaml', 12));
+        $this->assertSame('config/packages/security.yaml', AccessRuleSummary::location($paths, '/app/config/packages/security.yaml', 0));
+        $this->assertSame('security configuration', AccessRuleSummary::location($paths, '', 0));
+    }
+
     #[Test]
     public function test_a_rule_with_no_scope_says_its_path_and_roles(): void
     {

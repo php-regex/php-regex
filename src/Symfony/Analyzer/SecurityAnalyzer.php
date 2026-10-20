@@ -18,6 +18,7 @@ use PHPRegex\Symfony\Security\AccessRuleSummary;
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
+use PHPRegex\Symfony\Security\SecurityConfigException;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Symfony\Security\SecurityConfigLocator;
 use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
@@ -61,46 +62,34 @@ final class SecurityAnalyzer implements AnalyzerInterface
         return self::PRIORITY;
     }
 
+    /**
+     * @throws SecurityConfigException when the security configuration cannot be read
+     */
     public function analyze(AnalysisContext $context): array
     {
-        $paths = $context->securityConfigPaths;
-        if ([] === $paths) {
-            $paths = $this->locator->locate($context->projectDir, $context->environment);
-        }
+        $config = $this->extractor->read(
+            $context->securityConfigPaths,
+            $context->kernel,
+            $this->locator,
+            $context->projectDir,
+            $context->environment,
+        );
 
-        if ([] === $paths) {
+        if (null === $config) {
             return [
                 new ReportSection(
                     self::ID.'_access',
                     'Security Access Control',
                     summary: [
-                        new AnalysisNotice(CheckOutcome::Warn, 'No security config files found.'),
+                        new AnalysisNotice(CheckOutcome::Warn, 'No security configuration found.'),
                     ],
                 ),
             ];
         }
 
-        $rules = [];
-        $firewalls = [];
-        $skippedFiles = [];
-
-        foreach ($paths as $path) {
-            if (!is_file($path)) {
-                $skippedFiles[] = ['file' => $path, 'reason' => 'File not found.'];
-
-                continue;
-            }
-
-            if (!AccessRuleSummary::isYamlFile($path)) {
-                $skippedFiles[] = ['file' => $path, 'reason' => 'Only YAML security config files are supported.'];
-
-                continue;
-            }
-
-            $data = $this->extractor->extract($path, $context->environment);
-            $rules = array_merge($rules, $data['accessControl']);
-            $firewalls = array_merge($firewalls, $data['firewalls']);
-        }
+        $rules = $config['accessControl'];
+        $firewalls = $config['firewalls'];
+        $skippedFiles = $config['skippedFiles'];
 
         $pathHelper = new RelativePathHelper($context->projectDir);
         $accessReport = $this->accessAnalyzer->analyze($rules, $context->includeOverlaps);
@@ -146,7 +135,7 @@ final class SecurityAnalyzer implements AnalyzerInterface
         if ([] !== $report->conflicts) {
             $suggestions = $this->suggestionBuilder->collect(
                 $report->conflicts,
-                static fn (string $file, int $line): string => $pathHelper->getRelativePath($file).':'.$line,
+                static fn (string $file, int $line): string => AccessRuleSummary::location($pathHelper, $file, $line),
             );
         }
 
@@ -417,6 +406,6 @@ final class SecurityAnalyzer implements AnalyzerInterface
 
     private function formatLocation(RelativePathHelper $pathHelper, string $file, int $line): string
     {
-        return $pathHelper->getRelativePath($file).':'.$line;
+        return AccessRuleSummary::location($pathHelper, $file, $line);
     }
 }

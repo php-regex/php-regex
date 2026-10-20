@@ -76,3 +76,10 @@ CHANGELOG
    an overlap whichever is declared first, the earlier one winning them, and
    a route is shadowed when an earlier one takes all its paths. A narrower
    route declared before a wider one is not reported.
+ * `regex:security` and `regex:analyze` read the security configuration the
+   application runs with, as `debug:config security` shows it: every file
+   format the kernel loads, every YAML shape, the parameters resolved, where
+   a line scanner read the block style of `security.yaml` only and passed
+   on the rest. `--config=<file>` reads that YAML file with `symfony/yaml`,
+   now suggested. A configuration they cannot read is exit code 2, stage
+   `config` in the JSON report of `regex:analyze`.
