@@ -89,7 +89,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertCount(1, $result);
         $this->assertSame('test.php', $result[0]->file);
         $this->assertSame(1, $result[0]->line);
-        $this->assertNotNull($result[0]->analysis);
+        $this->assertInstanceOf(RedosAnalysis::class, $result[0]->analysis);
     }
 
     public function test_redos_issues_filters_by_threshold(): void

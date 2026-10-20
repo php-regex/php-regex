@@ -115,7 +115,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertNotEmpty($issues);
         $this->assertSame('file.php', $issues[0]->file);
         $this->assertSame(1, $issues[0]->line);
-        $this->assertNotNull($issues[0]->analysis);
+        $this->assertInstanceOf(RedosAnalysis::class, $issues[0]->analysis);
     }
 
     public function test_suggest_optimizations_method(): void
