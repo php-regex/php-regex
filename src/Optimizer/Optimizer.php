@@ -116,7 +116,7 @@ final class Optimizer
             $optimizedPattern = $this->keepLayout($regex, $ast, $optimizedAst) ?? $optimizedPattern;
         }
 
-        if ($optimizedPattern !== $regex && $this->introducesAtomicity($regex, $optimizedPattern)) {
+        if ($optimizedPattern !== $regex && $this->mayIntroduceAtomicity($regex, $optimizedPattern, $options->possessive)) {
             // A rewrite that adds a possessive quantifier or an atomic group
             // ships only when the solver verifies it: the solver refuses the
             // possessive forms it cannot prove safe, and an unverified one can
@@ -159,12 +159,16 @@ final class Optimizer
     }
 
     /**
-     * Whether the rewrite added an atomic group or a possessive quantifier
-     * the original did not have, read from both ASTs.
+     * Whether the rewrite may have added an atomic group or a possessive
+     * quantifier, read from both ASTs: one more than the original holds,
+     * or, when the rewrite may possessify, any at all, as a rewrite that
+     * drops "a{0}+" and makes "b+" possessive holds as many as before.
      */
-    private function introducesAtomicity(string $original, string $optimized): bool
+    private function mayIntroduceAtomicity(string $original, string $optimized, bool $possessive): bool
     {
-        return $this->atomicityMarkers($optimized) > $this->atomicityMarkers($original);
+        $markers = $this->atomicityMarkers($optimized);
+
+        return $markers > $this->atomicityMarkers($original) || ($possessive && $markers > 0);
     }
 
     private function atomicityMarkers(string $pattern): int

@@ -71,6 +71,14 @@ final class Rewriter extends AbstractNodeVisitor
 
     private bool $isInsideQuantifier = false;
 
+    /**
+     * Whether a quantifier may be made possessive here: the option is on,
+     * no "U" makes a plain quantifier lazy, and no inline flag changes what
+     * a node matches, which the character sets, reading the flags the
+     * pattern is written with, would not see.
+     */
+    private bool $possessify = false;
+
     private ?PatternPrinter $compiler = null;
 
     private readonly int $minQuantifierCount;
@@ -96,6 +104,8 @@ final class Rewriter extends AbstractNodeVisitor
     ) {
         $this->minQuantifierCount = max(2, $minQuantifierCount);
         $this->charSetAnalyzer = new CharSetAnalyzer();
+        // Read again from the flags of each pattern visited whole.
+        $this->possessify = $possessive;
     }
 
     #[\Override]
@@ -104,6 +114,7 @@ final class Rewriter extends AbstractNodeVisitor
         $this->flags = $node->flags;
         $this->unicodeMode = str_contains($this->flags, 'u');
         $this->charSetAnalyzer = new CharSetAnalyzer($this->flags);
+        $this->possessify = $this->possessive && !str_contains($this->flags, 'U') && !$this->containsInlineFlags($node->pattern);
         $optimizedPattern = $node->pattern->accept($this);
 
         // Remove useless flags
@@ -263,7 +274,7 @@ final class Rewriter extends AbstractNodeVisitor
 
         // Auto-possessivization (opt-in, conservative by default)
         // This optimization is opt-in because it can change semantics with backreferences
-        if ($this->possessive) {
+        if ($this->possessify) {
             for ($i = 0; $i < \count($optimizedChildren); $i++) {
                 $current = $optimizedChildren[$i];
                 $suffix = array_slice($optimizedChildren, $i + 1);
@@ -274,10 +285,6 @@ final class Rewriter extends AbstractNodeVisitor
                     }
                     // Compute disjointness against the FIRST-set of the suffix
                     $suffixNode = 1 === \count($suffix) ? $suffix[0] : new SequenceNode($suffix, $current->startPosition, $current->endPosition);
-
-                    if ($this->containsInlineFlags($current->node) || $this->containsInlineFlags($suffixNode)) {
-                        continue;
-                    }
 
                     // The sets stop at 0x7F: above it nothing is known disjoint.
                     if ($this->mayTakeAboveAscii($current->node) || $this->suffixMayStartAboveAscii($suffix)) {
@@ -677,11 +684,6 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * The charset analyzer reads the outer flags only, so an inline flag
-     * scope can change what a node matches without the disjointness check
-     * seeing it; possessification then stays out.
-     */
-    /**
      * Whether the node may take a character above ASCII, which the
      * character sets, stopping at 0x7F, do not hold: a byte or a code point
      * above it, a dot, a negated class, a type but \\d, \\w and \\s held to
@@ -736,6 +738,13 @@ final class Rewriter extends AbstractNodeVisitor
         return false;
     }
 
+    /**
+     * Whether an inline flag stands anywhere under the node. The charset
+     * analyzer reads the outer flags only, so an inline flag can change
+     * what a node matches without the disjointness check seeing it, from
+     * where it stands to the end of its group: possessification then
+     * stays out of the whole pattern.
+     */
     private function containsInlineFlags(NodeInterface $node): bool
     {
         if ($node instanceof GroupNode && null !== $node->flags) {

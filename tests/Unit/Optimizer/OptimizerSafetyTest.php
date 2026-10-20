@@ -85,6 +85,24 @@ final class OptimizerSafetyTest extends TestCase
     }
 
     /**
+     * The gate counts the markers of both sides, and with possessive on it
+     * checks any rewrite that holds one: dropping "a{0}+" while making
+     * "b+" possessive leaves the count as it was.
+     */
+    #[Test]
+    public function test_the_atomicity_gate_checks_a_rewrite_that_trades_one_possessive_for_another(): void
+    {
+        $gate = new \ReflectionMethod(Optimizer::class, 'mayIntroduceAtomicity');
+        $instance = new Optimizer(Regex::create()->parser());
+
+        $this->assertTrue($gate->invoke($instance, '/a{0}+b+c/', '/b++c/', true));
+        $this->assertFalse($gate->invoke($instance, '/a{0}+b+c/', '/b++c/', false));
+        $this->assertTrue($gate->invoke($instance, '/a+b/', '/a++b/', false));
+        $this->assertFalse($gate->invoke($instance, '/[0-9]+b/', '/\d+b/', true));
+        $this->assertFalse($gate->invoke($instance, '/a++[0-9]/', '/a++\d/', false));
+    }
+
+    /**
      * A rewrite the parser refuses is refused, not reported: the error of
      * the check would name a pattern the caller never wrote, "/{2}/" for
      * "/(?:B{0}){2}/". The pattern comes back as written.
