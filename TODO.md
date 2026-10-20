@@ -242,6 +242,31 @@ Integrations:
 - The target settings (PHP, PCRE2, locale) enter through one class, and
   every parser derived for another target keeps the locale.
 
+## Analysis engines: the last pass before 2.0.0
+
+- The optimizer with default options changes what a pattern matches:
+  `/^(?:a{1}b)+$/` becomes `/^ab+$/`, which no longer matches `abab`
+  (a group dropped while a quantifier still applies to it); the `word`
+  rewrite turns `[a-zA-Z0-9_]` into `\w` without `u`, which a locale widens;
+  the ReDoS repair trusts an unverified rewrite.
+- The transpiler: the Python target drops the body of `(?i:...)`, shifts
+  group numbers with its atomic emulation, never adds `re.ASCII`, and
+  emits `\Z`, `\z` and `\G` wrongly; the JS target silently differs on
+  `$`, `.`, `^` under `m` and `\d` under `u`, refuses `/a$/D` and `\z`,
+  and emits quantified lookarounds JS refuses.
+- The explainers: `/é/u` explained as `'\xC3'`, `^` and `$` always "of a
+  line", `\d` and `\w` called ASCII under `u`, `\X`, `\N` and `\C` unknown,
+  `(?(1)...)` described as a back reference; the text and HTML wording
+  apart.
+- ReDoS results: a proven-safe verdict still carries the heuristic's
+  critical finding; `(\cA)` and `(\x01)` scored differently;
+  `upperBoundDegree` missing from the JSON.
+- Structure: the semantic facts (nullability, length ranges, flag scope)
+  read from one layer instead of five copies; the railroad layout, the
+  backtrack prover's result passing, the two Tarjan implementations, the
+  24-parameter `RedosAnalysis`, and the solver's internal methods on its
+  public class.
+
 ## The articles section: what is left
 
 - The next articles, in priority order: variable-length lookbehind across
