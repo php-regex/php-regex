@@ -27,9 +27,11 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class BracedHexWithoutURule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.unicode.bracedHexWithoutU';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.unicode.bracedHexWithoutU'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -52,7 +54,7 @@ final class BracedHexWithoutURule extends AbstractLintRule
             && $node->codePoint > 0xFF
         ) {
             return [new RuleViolation(
-                'regex.lint.unicode.bracedHexWithoutU',
+                self::ID,
                 \sprintf('Unicode escape "%s" requires /u flag for code points > U+FF.', $node->originalRepresentation),
                 $node->startPosition,
                 'Add /u flag or use byte-level encoding.',

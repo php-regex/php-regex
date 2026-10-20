@@ -75,7 +75,7 @@ final class JsonContract
         'lint.stats' => ['errors', 'warnings', 'optimizations', 'redos_errors', 'infos', 'lint_errors', 'parser_fallbacks', 'not_analyzed'],
         'lint.results[]' => ['file', 'line', 'column', 'file_offset', 'source', 'pattern', 'location', 'issues', 'optimizations'],
         'lint.results[].issues[]' => [
-            'severity', 'file', 'line', 'column', 'file_offset', 'position', 'issue_id', 'message', 'hint',
+            'severity', 'file', 'line', 'column', 'file_offset', 'position', 'issue_id', 'docs_url', 'message', 'hint',
             'tip', 'source', 'validation', 'analysis', 'target',
         ],
         'lint.results[].issues[].target' => ['php', 'pcre', 'guard', 'guard_pcre'],

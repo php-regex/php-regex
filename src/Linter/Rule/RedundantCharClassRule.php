@@ -26,9 +26,11 @@ use PHPRegex\Parser\Node\RangeNode;
  */
 final class RedundantCharClassRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.charclass.redundant';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.charclass.redundant'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -122,7 +124,7 @@ final class RedundantCharClassRule extends AbstractLintRule
 
         if ($redundant) {
             return [new RuleViolation(
-                'regex.lint.charclass.redundant',
+                self::ID,
                 'Redundant elements detected in character class.',
                 $node->startPosition,
                 $this->formatRedundantCharClassHint($redundantNotes, $redundantOverflow),

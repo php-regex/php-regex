@@ -28,7 +28,7 @@ use PHPRegex\Parser\Node\SequenceNode;
  */
 final class QuantifiedMultibyteWithoutURule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.unicode.quantifiedMultibyteWithoutU';
+    public const ID = 'regex.lint.unicode.quantifiedMultibyteWithoutU';
 
     public function getRuleIds(): array
     {

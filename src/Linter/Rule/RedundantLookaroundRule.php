@@ -47,7 +47,7 @@ use PHPRegex\Parser\Node\SequenceNode;
  */
 final class RedundantLookaroundRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.lookaround.redundant';
+    public const ID = 'regex.lint.lookaround.redundant';
 
     private const AHEAD = [GroupType::LookaheadPositive, GroupType::LookaheadNegative];
 

@@ -30,7 +30,7 @@ final class RegexPatternRuleSonarParityLintTest extends RuleTestCase
 {
     private const FIXTURE = __DIR__.'/Fixtures/SonarParityLintFixture.php';
 
-    private const DOCS = 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#';
+    private const DOCS = 'https://php-regex.com/reference/rules/#';
 
     #[Test]
     public function test_the_bug_rules_reach_phpstan_and_the_opt_in_rules_do_not(): void

@@ -124,8 +124,8 @@ vendor/bin/regex analyze '/(a+)+$/' --no-visuals
 ```bash
 vendor/bin/regex lint src/ --format=github --no-visuals
 # Target: PHP 8.2, PCRE2 10.40 (composer.json require.php)
-# ::notice file=src/demo.php,line=3,col=12,title=Lint (regex.lint.group.quantifiedCapture)::Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.%0ASuggestion: Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-# ::warning file=src/demo.php,line=3,col=12,title=Lint (regex.lint.quantifier.nested)::Nested quantifiers can cause catastrophic backtracking.%0ASuggestion: Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+# ::notice file=src/demo.php,line=3,col=12,title=Lint (regex.lint.group.quantifiedCapture)::Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.%0ASuggestion: Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.%0ARead more: https://php-regex.com/reference/rules/#quantified-capturing-group
+# ::warning file=src/demo.php,line=3,col=12,title=Lint (regex.lint.quantifier.nested)::Nested quantifiers can cause catastrophic backtracking.%0ASuggestion: Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.%0ARead more: https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk
 ```
 
 `transpile` writes the pattern for another engine:

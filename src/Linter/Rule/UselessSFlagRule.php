@@ -26,11 +26,13 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class UselessSFlagRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.flag.useless.s';
+
     private bool $hasDots = false;
 
     public function getRuleIds(): array
     {
-        return ['regex.lint.flag.useless.s'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -54,7 +56,7 @@ final class UselessSFlagRule extends AbstractLintRule
     {
         if ($context->pattern->hasFlag('s') && !$this->hasDots) {
             return [new RuleViolation(
-                'regex.lint.flag.useless.s',
+                self::ID,
                 "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
             )];
         }

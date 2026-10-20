@@ -24,9 +24,11 @@ use PHPRegex\Parser\Node\QuantifierNode;
  */
 final class UselessQuantifierRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.quantifier.useless';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.quantifier.useless'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -50,7 +52,7 @@ final class UselessQuantifierRule extends AbstractLintRule
         }
 
         return [new RuleViolation(
-            'regex.lint.quantifier.useless',
+            self::ID,
             'Quantifier is redundant; it matches exactly once.',
             $node->startPosition,
             'Remove the {1} quantifier; it does not change the match.',

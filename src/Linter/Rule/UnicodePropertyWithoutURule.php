@@ -25,9 +25,11 @@ use PHPRegex\Parser\Printer\PatternPrinter;
  */
 final class UnicodePropertyWithoutURule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.unicode.propertyWithoutU';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.unicode.propertyWithoutU'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -48,7 +50,7 @@ final class UnicodePropertyWithoutURule extends AbstractLintRule
         // The property as the pattern spells it: "\P{L}", "\pL" and "\p{^L}"
         // each stay themselves, the printer undoing the "^" the parser folds.
         return [new RuleViolation(
-            'regex.lint.unicode.propertyWithoutU',
+            self::ID,
             \sprintf('Without the /u flag, Unicode property "%s" only covers the first 256 code points.', $node->accept(PatternPrinter::asWritten())),
             $node->startPosition,
             'Add the /u flag to match beyond the first 256 code points.',

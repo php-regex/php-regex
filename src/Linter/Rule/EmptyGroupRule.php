@@ -34,7 +34,7 @@ use PHPRegex\Parser\Node\SequenceNode;
  */
 final class EmptyGroupRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.group.empty';
+    public const ID = 'regex.lint.group.empty';
 
     public function getRuleIds(): array
     {

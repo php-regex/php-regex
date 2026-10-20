@@ -224,8 +224,8 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
         }
         $this->assertGreaterThan(0, $errors, $output);
         // The problem carries its own identifier, so it can be baselined
-        // or filtered like any other; Checkstyle prefixes every one.
-        $this->assertContains('php-regex.regex.lint.source.unreadable', $sources, $output);
+        // or filtered like any other; Checkstyle gives it as the source.
+        $this->assertContains('regex.lint.source.unreadable', $sources, $output);
         // The file fails the run: its problem is an error.
         $this->assertSame(['error'], array_values(array_unique($severities)), $output);
     }

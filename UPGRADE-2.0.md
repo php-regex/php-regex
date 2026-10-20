@@ -1389,6 +1389,11 @@ The Checkstyle `column` attribute is the same column, and is left out when
 the column is unknown: 1.x wrote the position inside the pattern there too,
 or `1`.
 
+The Checkstyle `source` attribute is the issue's identifier, as the JSON
+report's `issue_id` (`regex.lint.quantifier.nested`, `regex.group.unclosed`),
+and `php-regex` for an issue without one. 1.x wrote `regex-parser.` before
+the identifier: a filter on `source` matches the identifier alone now.
+
 #### Every command exits with 0, 1 or 2
 
 Every CLI command now uses the codes of the lint command:

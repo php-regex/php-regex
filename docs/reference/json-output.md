@@ -277,6 +277,7 @@ short for `--format=json`.
                     "file_offset": 18,
                     "position": 2,
                     "issue_id": "regex.group.unclosed",
+                    "docs_url": null,
                     "message": "Expected ) at end of input (found eof)",
                     "hint": null,
                     "tip": null,
@@ -390,6 +391,7 @@ An issue repeats the location of its result, so it can be read alone.
 | `file_offset` | int \| null | As in the result |
 | `position` | int \| null | Where in the pattern body the issue lies, 0-based, in bytes; `null` when it concerns the whole pattern |
 | `issue_id` | string \| null | What was found: a lint rule (`regex.lint.quantifier.nested`), the ReDoS verdict (`regex.lint.redos`), the cost of an unanchored search (`regex.lint.redos.search`), a complexity warning (`regex.lint.complexity`), an inline marker or a baseline entry that silences nothing (`regex.ignore.unmatched`), a `@regex-target` marker that cannot be read (`regex.target.invalid`) or keeps no version judged (`regex.target.empty`), or the error code of an invalid pattern (`regex.group.unclosed`); an open set, and a baseline matches on it. Every issue the library reports today carries one; `null` is kept for an invalid pattern without an error code |
+| `docs_url` | string \| null | The page of php-regex.com that explains what was found, as `https://php-regex.com/reference/rules/#useless-quantifier`: every lint rule, the ReDoS verdict and the search cost, the complexity warning, a file the lint could not read, a marker that silences nothing or cannot be read; `null` for the error code of an invalid pattern, which [Diagnostics: Error Codes](diagnostics.md#error-codes) lists. For people: a link may move with the docs, so match on `issue_id` |
 | `message` | string | The finding, for people; not frozen |
 | `hint` | string \| null | How to fix it, for people |
 | `tip` | string \| null | A further suggestion for an invalid pattern |

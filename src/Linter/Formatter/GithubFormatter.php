@@ -143,6 +143,12 @@ final class GithubFormatter extends AbstractOutputFormatter
             $parts[] = 'Suggestion: '.ReportSpelling::displayText($problem->suggestion);
         }
 
+        // An annotation has no property for a link: it ends the message.
+        $docsUrl = $problem->docsUrl();
+        if (null !== $docsUrl) {
+            $parts[] = 'Read more: '.$docsUrl;
+        }
+
         return implode("\n", $parts);
     }
 

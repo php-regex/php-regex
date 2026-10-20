@@ -34,9 +34,11 @@ use PHPRegex\Parser\Node\SequenceNode;
  */
 final class NestedDotStarRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.dotstar.nested';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.dotstar.nested'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -66,7 +68,7 @@ final class NestedDotStarRule extends AbstractLintRule
         }
 
         return [new RuleViolation(
-            'regex.lint.dotstar.nested',
+            self::ID,
             'An unbounded quantifier wraps a dot-star, which can cause severe backtracking.',
             $node->startPosition,
             'Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.',

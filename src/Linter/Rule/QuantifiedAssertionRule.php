@@ -28,7 +28,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
  */
 final class QuantifiedAssertionRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.quantifier.assertion';
+    public const ID = 'regex.lint.quantifier.assertion';
 
     private const LOOKAROUNDS = [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative];
 

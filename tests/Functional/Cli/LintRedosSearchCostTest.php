@@ -170,7 +170,7 @@ final class LintRedosSearchCostTest extends TestCase
     public static function provideDiagnosticFormats(): iterable
     {
         yield 'github' => ['format' => 'github', 'expected' => ['::warning ', '(regex.lint.redos.search)', 'Attack: " " x n'], 'unexpected' => '::notice '];
-        yield 'checkstyle' => ['format' => 'checkstyle', 'expected' => ['severity="warning"', 'source="php-regex.regex.lint.redos.search"', 'pcre.backtrack_limit'], 'unexpected' => 'severity="info"'];
+        yield 'checkstyle' => ['format' => 'checkstyle', 'expected' => ['severity="warning"', 'source="regex.lint.redos.search"', 'pcre.backtrack_limit'], 'unexpected' => 'severity="info"'];
     }
 
     /**

@@ -26,7 +26,7 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexPatternRuleRulesNeonTest extends RuleTestCase
 {
-    private const DOCS = 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md';
+    private const DOCS = 'https://php-regex.com/reference/rules/';
 
     public static function getAdditionalConfigFiles(): array
     {
@@ -63,8 +63,8 @@ final class RegexPatternRuleRulesNeonTest extends RuleTestCase
                     "Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking.\n".
                     "Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...).\n".
                     "\n".
-                    "Read more about possessive quantifiers: https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/04-quantifiers.md#possessive-quantifiers-performance\n".
-                    "Read more about atomic groups: https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/08-performance-redos.md#1-atomic-groups-\n".
+                    "Read more about possessive quantifiers: https://php-regex.com/tutorial/04-quantifiers/#possessive-quantifiers-performance\n".
+                    "Read more about atomic groups: https://php-regex.com/tutorial/08-performance-redos/#1-atomic-groups-\n".
                     'Read more about catastrophic backtracking: '.self::DOCS.'#catastrophic-backtracking',
                 ),
             ],
@@ -76,7 +76,7 @@ final class RegexPatternRuleRulesNeonTest extends RuleTestCase
             [
                 'Quantified capturing group "(...)" with "+": only the last iteration\'s capture is retained.',
                 22,
-                'Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.',
+                "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.\nRead more: https://php-regex.com/reference/rules/#quantified-capturing-group",
             ],
         ]);
     }

@@ -25,9 +25,11 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class UselessBackrefRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.backref.useless';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.backref.useless'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -73,7 +75,7 @@ final class UselessBackrefRule extends AbstractLintRule
         $backrefPos = $node->getStartPosition();
         if ($backrefPos < $groupInfo['end']) {
             return [new RuleViolation(
-                'regex.lint.backref.useless',
+                self::ID,
                 'Backreference refers to a group that has not been closed yet.',
                 $node->startPosition,
                 'Move the backreference after the capturing group or rewrite the pattern.',
@@ -83,7 +85,7 @@ final class UselessBackrefRule extends AbstractLintRule
 
         if ($this->alternationSignaturesConflict($context->currentAlternationSignature(), $groupInfo['alternation'])) {
             return [new RuleViolation(
-                'regex.lint.backref.useless',
+                self::ID,
                 'Backreference refers to a group in a different alternative.',
                 $node->startPosition,
                 'Place the backreference in the same alternative as its capturing group.',
@@ -93,7 +95,7 @@ final class UselessBackrefRule extends AbstractLintRule
 
         if ($groupInfo['alwaysEmpty']) {
             return [new RuleViolation(
-                'regex.lint.backref.useless',
+                self::ID,
                 'Backreference refers to a capturing group that always matches an empty string.',
                 $node->startPosition,
                 'Remove the backreference or replace the capturing group with literal text.',

@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The `Read more:` tip of every lint error links to the docs on
+   php-regex.com, for every rule, where it linked to the GitHub copy of the
+   docs and to 45 rules only.
  * `phpRegex.locale` names the `LC_CTYPE` locale the patterns run under,
    the one of the PHP running PHPStan by default; every version of the
    range and every version a guard or a marker keeps is judged under it.

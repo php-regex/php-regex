@@ -15,6 +15,7 @@ namespace PHPRegex\LanguageServer\Converter;
 
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Parser\ErrorCode;
 
@@ -22,7 +23,10 @@ use PHPRegex\Parser\ErrorCode;
  * Converts PHPRegex diagnostics to LSP diagnostic format, each placed on
  * the document through the span of its pattern.
  *
- * @phpstan-type Diagnostic array{range: Range, severity: 1|2|3, code: string, source: 'php-regex', message: string}
+ * A diagnostic the docs explain links to them through codeDescription,
+ * which an editor shows as a link on the code.
+ *
+ * @phpstan-type Diagnostic array{range: Range, severity: 1|2|3, code: string, codeDescription?: array{href: string}, source: 'php-regex', message: string}
  *
  * @phpstan-import-type Range from RegexOccurrence
  *
@@ -43,13 +47,13 @@ final class DiagnosticConverter
      */
     public function convert(RuleViolation $issue, PatternSpan $span): array
     {
-        return [
+        return self::linked([
             'range' => $span->range($issue->offset ?? 0, $issue->end),
             'severity' => $this->mapSeverity($issue->severity),
             'code' => $issue->id,
             'source' => 'php-regex',
             'message' => $issue->message,
-        ];
+        ]);
     }
 
     /**
@@ -114,13 +118,13 @@ final class DiagnosticConverter
      */
     public function fromRedos(string $code, string $message, array $evidence, bool $error, PatternSpan $span, ?int $from = null, ?int $to = null): array
     {
-        return [
+        return self::linked([
             'range' => null === $from ? $span->range(0, $span->bodyLength()) : $span->range($from, $to),
             'severity' => $error ? self::SEVERITY_ERROR : self::SEVERITY_WARNING,
             'code' => $code,
             'source' => 'php-regex',
             'message' => implode("\n", [$message, ...$evidence]),
-        ];
+        ]);
     }
 
     /**
@@ -136,13 +140,13 @@ final class DiagnosticConverter
      */
     public function fromUnmatchedIgnore(string $message, array $range): array
     {
-        return [
+        return self::linked([
             'range' => $range,
             'severity' => self::SEVERITY_WARNING,
             'code' => 'regex.ignore.unmatched',
             'source' => 'php-regex',
             'message' => $message,
-        ];
+        ]);
     }
 
     /**
@@ -155,13 +159,31 @@ final class DiagnosticConverter
      */
     public function fromTargetMarker(string $code, string $message, array $range): array
     {
-        return [
+        return self::linked([
             'range' => $range,
             'severity' => self::SEVERITY_ERROR,
             'code' => $code,
             'source' => 'php-regex',
             'message' => $message,
-        ];
+        ]);
+    }
+
+    /**
+     * The diagnostic with the link to the section of the docs its code has,
+     * when it has one.
+     *
+     * @param Diagnostic $diagnostic
+     *
+     * @return Diagnostic
+     */
+    private static function linked(array $diagnostic): array
+    {
+        $docsUrl = RuleCatalog::docsUrl($diagnostic['code']);
+        if (null !== $docsUrl) {
+            $diagnostic['codeDescription'] = ['href' => $docsUrl];
+        }
+
+        return $diagnostic;
     }
 
     private static function withHint(string $message, ?string $hint): string

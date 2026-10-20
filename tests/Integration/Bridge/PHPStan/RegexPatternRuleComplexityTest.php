@@ -38,7 +38,7 @@ final class RegexPatternRuleComplexityTest extends RuleTestCase
 
     private const FIXTURE = __DIR__.'/Fixtures/ComplexityFixture.php';
 
-    private const TIP = 'Read more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#complexity-threshold';
+    private const TIP = 'Read more: https://php-regex.com/reference/rules/#complexity-threshold';
 
     /**
      * @var array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, complexity?: array{enabled?: bool, threshold?: int}}

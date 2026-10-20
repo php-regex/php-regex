@@ -25,11 +25,13 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class UselessMFlagRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.flag.useless.m';
+
     private bool $hasAnchors = false;
 
     public function getRuleIds(): array
     {
-        return ['regex.lint.flag.useless.m'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -55,7 +57,7 @@ final class UselessMFlagRule extends AbstractLintRule
     {
         if ($context->pattern->hasFlag('m') && !$this->hasAnchors) {
             return [new RuleViolation(
-                'regex.lint.flag.useless.m',
+                self::ID,
                 "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
             )];
         }

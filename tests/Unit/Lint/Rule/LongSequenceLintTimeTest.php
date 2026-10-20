@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
-use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -33,7 +33,7 @@ final class LongSequenceLintTimeTest extends TestCase
     public function test_a_long_sequence_is_linted_in_linear_time(string $item, int $issues, int $count = 2000): void
     {
         $tree = Regex::create(['cache' => null])->parse('/'.str_repeat($item, $count).'/');
-        $linter = new PatternLinter(array_fill_keys(LintConfigSchema::lintRuleIds(), true));
+        $linter = new PatternLinter(array_fill_keys(RuleCatalog::lintRuleIds(), true));
 
         $start = CpuClock::nanoseconds();
         $tree->accept($linter);

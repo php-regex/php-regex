@@ -92,9 +92,9 @@ final class SeverityMappingTest extends TestCase
         $this->assertMatchesRegularExpression('/^::notice [^\n]*\(regex\.lint\.group\.quantifiedCapture\)::/m', $github);
 
         $checkstyle = (new CheckstyleFormatter())->format($report);
-        $this->assertMatchesRegularExpression('/severity="error"[^>]*source="php-regex\.regex\.lint\.unicode\.multibyteInClassWithoutU"/', $checkstyle);
-        $this->assertMatchesRegularExpression('/severity="warning"[^>]*source="php-regex\.regex\.lint\.quantifier\.lazyEnd"/', $checkstyle);
-        $this->assertMatchesRegularExpression('/severity="info"[^>]*source="php-regex\.regex\.lint\.group\.quantifiedCapture"/', $checkstyle);
+        $this->assertMatchesRegularExpression('/severity="error"[^>]*source="regex\.lint\.unicode\.multibyteInClassWithoutU"/', $checkstyle);
+        $this->assertMatchesRegularExpression('/severity="warning"[^>]*source="regex\.lint\.quantifier\.lazyEnd"/', $checkstyle);
+        $this->assertMatchesRegularExpression('/severity="info"[^>]*source="regex\.lint\.group\.quantifiedCapture"/', $checkstyle);
 
         $junit = (new JunitFormatter())->format($report);
         $this->assertStringContainsString('failures="1" errors="0"', $junit);

@@ -276,6 +276,7 @@ vendor/bin/regex lint app/ --format=json
                     "file_offset": 147,
                     "position": 1,
                     "issue_id": "regex.lint.quantifier.nested",
+                    "docs_url": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk",
                     "message": "Nested quantifiers can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers ...",
                     "tip": null,

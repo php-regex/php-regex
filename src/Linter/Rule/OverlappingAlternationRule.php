@@ -37,12 +37,18 @@ use PHPRegex\Parser\Text\DisplayEscaper;
  */
 final class OverlappingAlternationRule extends AbstractLintRule
 {
+    public const ID_DOT_NEWLINE = 'regex.lint.alternation.dotNewline';
+
+    public const ID_OVERLAP = 'regex.lint.alternation.overlap';
+
+    public const ID_CHARSET = 'regex.lint.overlap.charset';
+
     public function getRuleIds(): array
     {
         return [
-            'regex.lint.alternation.dotNewline',
-            'regex.lint.alternation.overlap',
-            'regex.lint.overlap.charset',
+            self::ID_DOT_NEWLINE,
+            self::ID_OVERLAP,
+            self::ID_CHARSET,
         ];
     }
 
@@ -68,7 +74,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 : 'Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).';
 
             $issues[] = new RuleViolation(
-                'regex.lint.alternation.dotNewline',
+                self::ID_DOT_NEWLINE,
                 'Alternation (.|\n) is an anti-pattern for matching any character including newlines.',
                 $node->startPosition,
                 $hint,
@@ -110,7 +116,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
                         [$readA, $readB] = $aCaseless || $bCaseless ? [self::fold($a, $context), self::fold($b, $context)] : [$a, $b];
                         if (str_starts_with($readA, $readB) || str_starts_with($readB, $readA)) {
                             $issues[] = new RuleViolation(
-                                'regex.lint.alternation.overlap',
+                                self::ID_OVERLAP,
                                 \sprintf('Alternation branches "%s" and "%s" overlap.', self::spell($a, $context), self::spell($b, $context)),
                                 $node->startPosition,
                                 'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
@@ -160,7 +166,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
             for ($j = $i + 1; $j < $total; $j++) {
                 if (!$charSets[$i]->isEmpty() && !$charSets[$j]->isEmpty() && $charSets[$i]->intersects($charSets[$j])) {
                     return new RuleViolation(
-                        'regex.lint.overlap.charset',
+                        self::ID_CHARSET,
                         'Alternation branches have overlapping character sets, which may cause unnecessary backtracking.',
                         $node->startPosition,
                         'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',

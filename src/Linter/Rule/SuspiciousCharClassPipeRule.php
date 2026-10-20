@@ -26,9 +26,11 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class SuspiciousCharClassPipeRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.charclass.suspiciousPipe';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.charclass.suspiciousPipe'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -74,7 +76,7 @@ final class SuspiciousCharClassPipeRule extends AbstractLintRule
 
         if ($pipes > 0 && $letters >= 4) {
             return [new RuleViolation(
-                'regex.lint.charclass.suspiciousPipe',
+                self::ID,
                 'Character class contains "|" which is literal inside []. It looks like an alternation typo.',
                 $node->startPosition,
                 'Did you mean an alternation like "(error|failure)" instead of a character class?',

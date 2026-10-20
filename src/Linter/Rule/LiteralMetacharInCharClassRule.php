@@ -27,9 +27,11 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class LiteralMetacharInCharClassRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.charclass.literalMetachar';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.charclass.literalMetachar'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -91,7 +93,7 @@ final class LiteralMetacharInCharClassRule extends AbstractLintRule
         $meta = $metachars[0];
 
         return [new RuleViolation(
-            'regex.lint.charclass.literalMetachar',
+            self::ID,
             \sprintf(
                 '"%s" is a literal character inside a character class, not a quantifier.',
                 $meta->value,

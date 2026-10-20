@@ -1548,6 +1548,7 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
                     "file_offset": 18,
                     "position": 0,
                     "issue_id": "regex.lookbehind.unbounded",
+                    "docs_url": null,
                     "message": "Lookbehind is unbounded. PCRE requires a bounded maximum length.",
                     ...
                     "validation": { ... },
@@ -1567,6 +1568,7 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
                     "severity": "error",
                     ...
                     "issue_id": "regex.lint.redos",
+                    "docs_url": "https://php-regex.com/reference/rules/#catastrophic-backtracking",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"a\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). ...",
                     "source": "preg_match()",
@@ -1617,13 +1619,22 @@ column of the pattern in the file, its opening quote, the `column` of the JSON
 report; it is left out when the column is unknown, as for a pattern not read
 from a PHP string. The message is escaped as GitHub's format requires: a
 newline is `%0A`, a carriage return `%0D` and `%` is `%25`. In the `file` and
-`title` properties, `:` and `,` are escaped too, as `%3A` and `%2C`.
+`title` properties, `:` and `,` are escaped too, as `%3A` and `%2C`. A lint
+rule, a ReDoS verdict or another issue the [rule reference](../reference/rules.md)
+explains ends its message with `Read more: ` and the address of its section,
+as `https://php-regex.com/reference/rules/#useless-quantifier`.
 
 ### Checkstyle (for CI)
 
 ```bash
 vendor/bin/regex lint src/ --format=checkstyle --output=checkstyle.xml
 ```
+
+Each `<error>` names the issue in `source`, as the JSON report's `issue_id`
+(`regex.lint.quantifier.nested`, `regex.group.unclosed`), and `php-regex` for
+an issue that has none. A lint rule, a ReDoS verdict or another issue the
+[rule reference](../reference/rules.md) explains ends its `message` with
+`Read more: ` and the address of its section.
 
 ### JUnit
 

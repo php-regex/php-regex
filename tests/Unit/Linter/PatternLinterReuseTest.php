@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Linter;
 
-use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
@@ -48,7 +48,7 @@ final class PatternLinterReuseTest extends TestCase
     #[Test]
     public function test_one_linter_gives_each_pattern_the_findings_of_a_linter_of_its_own(): void
     {
-        $rules = array_fill_keys(LintConfigSchema::lintRuleIds(), true);
+        $rules = array_fill_keys(RuleCatalog::lintRuleIds(), true);
         $alone = array_map(static fn (string $pattern): array => self::findings(new PatternLinter($rules), $pattern), self::PATTERNS);
         $this->assertNotSame([], array_merge(...$alone));
 

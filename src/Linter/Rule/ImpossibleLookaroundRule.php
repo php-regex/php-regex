@@ -52,7 +52,7 @@ use PHPRegex\Parser\Node\SubroutineNode;
  */
 final class ImpossibleLookaroundRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.lookaround.impossible';
+    public const ID = 'regex.lint.lookaround.impossible';
 
     /**
      * How much of the pattern after the lookahead, in bytes as written, is

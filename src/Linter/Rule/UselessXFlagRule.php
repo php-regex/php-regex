@@ -31,6 +31,8 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class UselessXFlagRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.flag.useless.x';
+
     /**
      * The whitespace x may drop: ASCII whitespace, the byte 0x85 (also the
      * last byte of U+0085), and the UTF-8 of U+200E, U+200F, U+2028, U+2029;
@@ -43,7 +45,7 @@ final class UselessXFlagRule extends AbstractLintRule
 
     public function getRuleIds(): array
     {
-        return ['regex.lint.flag.useless.x'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -79,7 +81,7 @@ final class UselessXFlagRule extends AbstractLintRule
         }
 
         return [new RuleViolation(
-            'regex.lint.flag.useless.x',
+            self::ID,
             "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
         )];
     }

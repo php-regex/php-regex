@@ -46,7 +46,7 @@ use PHPRegex\Parser\Text\Bytes;
  */
 final class DollarNewlineRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.anchor.dollarNewline';
+    public const ID = 'regex.lint.anchor.dollarNewline';
 
     /**
      * The last character of a newline, under each convention but ANY.

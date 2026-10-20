@@ -6,6 +6,8 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A lint finding, a ReDoS verdict and an inline marker diagnostic carry a
+   `codeDescription` linking to the section of the docs that explains them.
  * `initializationOptions.locale`, then `locale` in `regex.json`, name the
    `LC_CTYPE` locale the patterns are judged under; the versions a
    `@regex-target` marker keeps are judged under it too.

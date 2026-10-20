@@ -65,7 +65,7 @@ final class CheckstyleFormatterTest extends TestCase
         // The column of the pattern in the file, not the position 5 inside the pattern.
         $this->assertStringContainsString('column="12"', $output);
         $this->assertStringContainsString('severity="error"', $output);
-        $this->assertStringContainsString('source="php-regex.'.LintIssueFixtures::INVALID_CODE.'"', $output);
+        $this->assertStringContainsString('source="'.LintIssueFixtures::INVALID_CODE.'"', $output);
         $this->assertStringContainsString('Invalid &gt; pattern', $output);
         $this->assertStringContainsString('Location: in function call', $output);
         $this->assertStringContainsString('Line 1: a**', $output);
@@ -102,8 +102,10 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringContainsString('<file name="file2.php">', $output);
         $this->assertStringContainsString('severity="warning"', $output);
         $this->assertStringContainsString('severity="error"', $output);
-        $this->assertStringContainsString('php-regex.regex.lint.quantifier.nested', $output);
-        $this->assertStringContainsString('php-regex.regex.redos"', $output);
+        // The source is the issue's identifier, as the JSON report gives it.
+        $this->assertStringContainsString('source="regex.lint.quantifier.nested"', $output);
+        $this->assertStringContainsString('source="regex.redos"', $output);
+        $this->assertStringNotContainsString('php-regex.regex.', $output);
     }
 
     public function test_format_with_different_severities(): void
@@ -292,5 +294,29 @@ final class CheckstyleFormatterTest extends TestCase
 
         $this->assertStringContainsString('line="10"', $output);
         $this->assertStringNotContainsString('column=', $output);
+    }
+
+    /**
+     * A finding the docs explain names its page at the end of its message,
+     * the one free text field of the format; an invalid pattern does not.
+     */
+    #[Test]
+    public function test_format_ends_the_message_of_a_documented_finding_with_its_docs(): void
+    {
+        $result = [
+            'file' => 'test.php',
+            'line' => 1,
+            'pattern' => '/a{1}/',
+            'optimizations' => [],
+            'issues' => [
+                LintIssueFixtures::finding(LintSeverity::Warning, 'Useless quantifier', 'regex.lint.quantifier.useless'),
+                LintIssueFixtures::invalid(),
+            ],
+        ];
+
+        $output = $this->formatter->format(new LintReport([$result], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]));
+
+        $this->assertStringContainsString('message="Useless quantifier&#10;Read more: https://php-regex.com/reference/rules/#useless-quantifier" source="regex.lint.quantifier.useless"', $output);
+        $this->assertSame(1, substr_count($output, 'Read more:'));
     }
 }

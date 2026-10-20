@@ -143,17 +143,22 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
             $parts[] = 'Suggestion: '.$problem->suggestion;
         }
 
+        // The format has no attribute for a link: it ends the message.
+        $docsUrl = $problem->docsUrl();
+        if (null !== $docsUrl) {
+            $parts[] = 'Read more: '.$docsUrl;
+        }
+
         return implode("\n", $parts);
     }
 
+    /**
+     * The issue's identifier, as the JSON report gives it
+     * ("regex.lint.quantifier.nested", "regex.group.unclosed"); the
+     * library's name for an issue that has none.
+     */
     private function formatCheckstyleSource(Diagnostic $problem): string
     {
-        $source = 'php-regex';
-
-        if (null !== $problem->code && '' !== $problem->code) {
-            $source .= '.'.$problem->code;
-        }
-
-        return $source;
+        return null !== $problem->code && '' !== $problem->code ? $problem->code : 'php-regex';
     }
 }

@@ -29,9 +29,13 @@ use PHPRegex\Parser\Text\Bytes;
  */
 final class InlineFlagsRule extends AbstractLintRule
 {
+    public const ID_REDUNDANT = 'regex.lint.flag.redundant';
+
+    public const ID_OVERRIDE = 'regex.lint.flag.override';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.flag.redundant', 'regex.lint.flag.override'];
+        return [self::ID_REDUNDANT, self::ID_OVERRIDE];
     }
 
     public function getNodeTypes(): array
@@ -73,7 +77,7 @@ final class InlineFlagsRule extends AbstractLintRule
             }
             if (str_contains($baseFlags, $flag)) {
                 $issues[] = new RuleViolation(
-                    'regex.lint.flag.redundant',
+                    self::ID_REDUNDANT,
                     \sprintf(
                         "Inline flag '%s' is redundant; it is already %s.",
                         $flag,
@@ -92,7 +96,7 @@ final class InlineFlagsRule extends AbstractLintRule
 
             if (!str_contains($baseFlags, $flag)) {
                 $issues[] = new RuleViolation(
-                    'regex.lint.flag.redundant',
+                    self::ID_REDUNDANT,
                     \sprintf("Inline flag '-%s' is redundant; the flag is not set at this position.", $flag),
                     $node->startPosition,
                     \sprintf("Remove '-%s' from the inline flag group; it has no effect unless the flag is enabled first.", $flag),
@@ -100,7 +104,7 @@ final class InlineFlagsRule extends AbstractLintRule
                 );
             } else {
                 $issues[] = new RuleViolation(
-                    'regex.lint.flag.override',
+                    self::ID_OVERRIDE,
                     \sprintf(
                         "Inline flag '-%s' overrides a flag %s.",
                         $flag,

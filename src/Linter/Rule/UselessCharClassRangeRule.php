@@ -27,9 +27,11 @@ use PHPRegex\Parser\Node\RangeNode;
  */
 final class UselessCharClassRangeRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.range.useless';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.range.useless'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -74,7 +76,7 @@ final class UselessCharClassRangeRule extends AbstractLintRule
                 );
 
             $issues[] = new RuleViolation(
-                'regex.lint.range.useless',
+                self::ID,
                 'Character range is unnecessary; list the characters explicitly.',
                 $part->startPosition,
                 $hint,

@@ -47,7 +47,7 @@ use PHPRegex\Parser\Token\TokenType;
  */
 final class AlternationPrecedenceRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.anchor.alternationPrecedence';
+    public const ID = 'regex.lint.anchor.alternationPrecedence';
 
     /**
      * Groups an alternative matches through as if they were not there; a

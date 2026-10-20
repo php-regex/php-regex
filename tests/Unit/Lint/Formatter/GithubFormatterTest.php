@@ -406,4 +406,28 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString($expected, $output);
         $this->assertStringEndsWith('%0ASuggestion: '.LintIssueFixtures::INVALID_HINT."\n", $output);
     }
+
+    /**
+     * A finding the docs explain names its page on the last line of its
+     * message; an invalid pattern does not.
+     */
+    #[Test]
+    public function test_format_ends_the_message_of_a_documented_finding_with_its_docs(): void
+    {
+        $result = [
+            'file' => 'test.php',
+            'line' => 1,
+            'pattern' => '/a{1}/',
+            'optimizations' => [],
+            'issues' => [
+                LintIssueFixtures::finding(LintSeverity::Warning, 'Useless quantifier', 'regex.lint.quantifier.useless'),
+                LintIssueFixtures::invalid(),
+            ],
+        ];
+
+        $output = $this->formatter->format(new LintReport([$result], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]));
+
+        $this->assertStringContainsString("::warning file=test.php,line=1,title=Lint (regex.lint.quantifier.useless)::Useless quantifier%0ARead more: https://php-regex.com/reference/rules/#useless-quantifier\n", $output);
+        $this->assertSame(1, substr_count($output, 'Read more'));
+    }
 }

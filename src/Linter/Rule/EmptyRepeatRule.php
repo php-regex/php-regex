@@ -44,7 +44,7 @@ use PHPRegex\Parser\Node\SequenceNode;
  */
 final class EmptyRepeatRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.quantifier.emptyRepeat';
+    public const ID = 'regex.lint.quantifier.emptyRepeat';
 
     /**
      * @var list<LintRuleInterface<NodeInterface>> the rules that report the same repeat their own way
@@ -77,7 +77,7 @@ final class EmptyRepeatRule extends AbstractLintRule
             return [];
         }
 
-        if (self::holdsAnEmptyAlternative($node->node) && $context->isRuleEnabled('regex.lint.alternation.empty')) {
+        if (self::holdsAnEmptyAlternative($node->node) && $context->isRuleEnabled(EmptyAlternationRule::ID)) {
             return [];
         }
 

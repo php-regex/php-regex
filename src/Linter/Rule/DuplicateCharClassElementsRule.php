@@ -26,9 +26,11 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class DuplicateCharClassElementsRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.charclass.duplicateChars';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.charclass.duplicateChars'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -91,7 +93,7 @@ final class DuplicateCharClassElementsRule extends AbstractLintRule
                 }
 
                 return [new RuleViolation(
-                    'regex.lint.charclass.duplicateChars',
+                    self::ID,
                     'Character class contains duplicate elements that do not add new matches.',
                     $entry['node']->getStartPosition(),
                     'Remove the redundant character class element.',

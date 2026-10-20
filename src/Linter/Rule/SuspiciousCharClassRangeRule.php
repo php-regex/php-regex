@@ -28,9 +28,11 @@ use PHPRegex\Parser\Node\RangeNode;
  */
 final class SuspiciousCharClassRangeRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.charclass.suspiciousRange';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.charclass.suspiciousRange'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -73,7 +75,7 @@ final class SuspiciousCharClassRangeRule extends AbstractLintRule
                 $maxChar = \chr($maxOrd);
 
                 return [new RuleViolation(
-                    'regex.lint.charclass.suspiciousRange',
+                    self::ID,
                     \sprintf(
                         'Suspicious ASCII range "%s" includes non-letters between "%s" and "%s" in ASCII order.',
                         $rangeLabel,

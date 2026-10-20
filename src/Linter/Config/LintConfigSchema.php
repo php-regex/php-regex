@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Config;
 
 use PHPRegex\Linter\Formatter\LinkFormatter;
+use PHPRegex\Linter\Rule\RuleCatalog;
 
 /**
  * What regex.json and regex.dist.json may hold, as one JSON Schema.
@@ -29,76 +30,6 @@ use PHPRegex\Linter\Formatter\LinkFormatter;
  */
 final class LintConfigSchema
 {
-    /**
-     * Every lint rule id, with what it reports and whether it runs when
-     * regex.json does not mention it.
-     */
-    public const LINT_RULES = [
-        'unicode.shorthandWithoutU' => ['Warn when \w, \d, \s are used without /u flag (ASCII-only matching).', false],
-        'unicode.propertyWithoutU' => ['Error when \p{...} Unicode properties are used without /u flag.', true],
-        'unicode.bracedHexWithoutU' => ['Error when \x{...} escapes with code points > 0xFF are used without /u flag.', true],
-        'unicode.multibyteInClassWithoutU' => ['Error when a multibyte character sits in a character class without /u flag (the class matches each byte).', true],
-        'unicode.quantifiedMultibyteWithoutU' => ['Error when a quantifier follows a multibyte character without /u flag (only its last byte repeats).', true],
-        'flag.useless.i' => ['Warn when /i flag is used but pattern has no case-sensitive characters.', true],
-        'flag.useless.m' => ['Warn when /m flag is used but pattern has no anchors.', true],
-        'flag.useless.s' => ['Warn when /s flag is used but pattern has no unescaped dot outside a character class.', true],
-        'flag.useless.D' => ['Warn when /D flag is used but no $ anchor is read without m.', true],
-        'flag.useless.x' => ['Warn when /x flag is used but pattern has no whitespace and no # comment.', true],
-        'flag.redundant' => ['Warn about redundant flag modifiers.', true],
-        'flag.override' => ['Warn when inline flags override outer flags.', true],
-        'charclass.redundant' => ['Warn about redundant character classes like [a].', true],
-        'charclass.suspiciousRange' => ['Warn about suspicious character ranges like [A-z].', true],
-        'charclass.suspiciousPipe' => ['Warn about literal pipe in character class (likely meant alternation).', true],
-        'charclass.duplicateChars' => ['Warn about duplicate elements in character classes.', true],
-        'charclass.backrefAsOctal' => ['Warn when \1-\9 in character class is octal, not a backreference.', true],
-        'charclass.literalMetachar' => ['Warn about unescaped metacharacters in character classes.', true],
-        'alternation.empty' => ['Warn about empty alternatives in alternations.', true],
-        'alternation.duplicateDisjunction' => ['Warn about duplicate branches in alternations.', true],
-        'alternation.overlap' => ['Warn about overlapping alternatives that may cause backtracking.', true],
-        'alternation.dotNewline' => ['Warn about (.|\n) anti-pattern for matching any character.', true],
-        'quantifier.useless' => ['Warn about useless quantifiers like {1}.', true],
-        'quantifier.zero' => ['Warn about quantifiers that always match zero times.', true],
-        'quantifier.nested' => ['Warn about nested quantifiers that may cause catastrophic backtracking.', true],
-        'quantifier.concatenation' => ['Warn about concatenated quantifiers that can be optimized.', true],
-        'quantifier.assertion' => ['Warn about a quantifier on a lookaround, which lets the match skip it or changes nothing.', true],
-        'quantifier.lazyEnd' => ['Warn about a lazy quantifier nothing follows, which always matches its minimum.', true],
-        'group.redundant' => ['Warn about redundant non-capturing groups.', true],
-        'group.quantifiedCapture' => ['Warn about quantified capturing groups where only last match is retained.', true],
-        'anchor.impossible.start' => ['Warn about impossible start anchor positions.', true],
-        'anchor.impossible.end' => ['Warn about impossible end anchor positions.', true],
-        'backref.undefined' => ['Warn about references to undefined groups.', true],
-        'backref.useless' => ['Warn about useless backreferences.', true],
-        'dotstar.nested' => ['Warn about nested dot-star patterns that cause severe backtracking.', true],
-        'escape.suspicious' => ['Warn about suspicious escape sequences.', true],
-        'range.useless' => ['Warn about useless character ranges.', true],
-        'overlap.charset' => ['Warn about overlapping character sets in alternations.', true],
-        'quantifier.emptyRepeat' => ['Warn about an unbounded quantifier on an item that can match the empty string.', true],
-        'anchor.alternationPrecedence' => ['Warn when an anchor on the first or last alternative leaves another alternative unanchored, as in ^a|b.', true],
-        'quantifier.possessiveImpossible' => ['Warn about a possessive repeat that takes every character the atom after it could read.', true],
-        'anchor.impossible.boundary' => ['Warn about a word boundary its two neighbouring characters contradict.', true],
-        'lookaround.impossible' => ['Warn about a lookahead the pattern after it contradicts.', true],
-        'group.alwaysEmptyCapture' => ['Warn about a capturing group that always captures an empty string.', true],
-        'group.empty' => ['Warn about an empty non-capturing or atomic group.', true],
-        'charclass.single' => ['Report a character class holding a single character (style).', false],
-        'literal.multipleSpaces' => ['Report a run of literal spaces, clearer as a counted repeat (style).', false],
-        'quantifier.lazyToClass' => ['Report a lazy dot before a single closing character, faster as a negated class (perf).', false],
-        'quantifier.uselessLazy' => ['Report a lazy quantifier that matches what the greedy one matches (style).', false],
-        'lookaround.edgeQuantifier' => ['Report a repeat at the edge of a lookaround past its minimum, which is never checked (perf).', false],
-        'anchor.dollarNewline' => ['Report a final $ in a pattern anchored at its start, which also matches before a trailing newline (info).', false],
-        'literal.invisible' => ['Warn about a control character, or a character that hides or moves text, written raw in a pattern.', true],
-        'lookaround.redundant' => ['Report a lookaround at the edge of a lookaround read the same way, which can hold its body (style).', false],
-    ];
-
-    /**
-     * The issues of an analysis the rules map turns off like a lint rule,
-     * though no lint rule reports them: what each reports, and whether it
-     * is on when regex.json does not mention it.
-     */
-    private const ANALYSIS_RULES = [
-        'redos.search' => ['Report the quadratic cost of an unanchored search whose every attempt is proven linear. It runs under the ReDoS check and is medium: a threshold of medium or low shows it.', true],
-        'compat.meaningChanges' => ['Warn when a later PHP of the project range parses the pattern into another meaning, as "a{,3}" (text before PCRE2 10.43, a quantifier from it).', true],
-    ];
-
     /**
      * The libraries extraction.interop can name, by package slug, in the
      * order of InteropPresets::names().
@@ -290,40 +221,6 @@ final class LintConfigSchema
     }
 
     /**
-     * The ids of the lint rules, which regex.json may name beside the
-     * analysis issues it turns off the same way.
-     *
-     * @return list<string>
-     */
-    public static function lintRuleIds(): array
-    {
-        return array_keys(self::LINT_RULES);
-    }
-
-    /**
-     * Whether checks.lint.rules may name the id: a lint rule, or an
-     * analysis issue turned off the same way.
-     */
-    public static function isRuleId(string $id): bool
-    {
-        return isset(self::LINT_RULES[$id]) || isset(self::ANALYSIS_RULES[$id]);
-    }
-
-    /**
-     * Whether a rules map, as checks.lint.rules writes it, leaves on an
-     * analysis issue it turns off like a lint rule: unless it says false
-     * for it, under its full identifier or without "regex.lint.".
-     *
-     * @param array<string, bool> $rules
-     */
-    public static function leavesOn(array $rules, string $issueId): bool
-    {
-        $short = str_starts_with($issueId, 'regex.lint.') ? substr($issueId, \strlen('regex.lint.')) : $issueId;
-
-        return false !== ($rules[$issueId] ?? null) && false !== ($rules[$short] ?? null);
-    }
-
-    /**
      * The interop presets extraction.interop may name.
      *
      * @return list<string>
@@ -426,13 +323,15 @@ final class LintConfigSchema
     private static function checksLint(): array
     {
         $rules = [];
-        foreach ([...self::LINT_RULES, ...self::ANALYSIS_RULES] as $id => [$description, $default]) {
+        foreach (RuleCatalog::configurableIds() as $id) {
             $rules[$id] = [
                 'type' => 'boolean',
-                'description' => $description,
-                'default' => $default,
+                'description' => RuleCatalog::description($id),
+                'default' => RuleCatalog::enables([], $id),
             ];
         }
+        $off = RuleCatalog::rulesOffByDefault();
+        $last = array_pop($off) ?? '';
 
         return [
             'type' => 'object',
@@ -446,7 +345,7 @@ final class LintConfigSchema
                 ],
                 'rules' => [
                     'type' => 'object',
-                    'description' => 'Enable or disable specific lint rules. All rules are enabled by default except anchor.dollarNewline, unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy, lookaround.edgeQuantifier and lookaround.redundant.',
+                    'description' => 'Enable or disable specific lint rules. All rules are enabled by default except '.implode(', ', $off).' and '.$last.'.',
                     'additionalProperties' => false,
                     'properties' => $rules,
                 ],

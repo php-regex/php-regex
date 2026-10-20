@@ -24,9 +24,11 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class EmptyAlternationRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.alternation.empty';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.alternation.empty'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -44,7 +46,7 @@ final class EmptyAlternationRule extends AbstractLintRule
         foreach ($node->alternatives as $alt) {
             if (NodePredicates::isSyntacticallyEmptyAlternative($alt)) {
                 $issues[] = new RuleViolation(
-                    'regex.lint.alternation.empty',
+                    self::ID,
                     'Alternation contains an empty alternative.',
                     $alt->getStartPosition(),
                     'Use a quantifier (e.g., "?") if the empty string should be allowed.',

@@ -120,14 +120,14 @@ final class PackageManifestTest extends TestCase
         // internal they all use for it.
         'LanguageServer' => [
             'Linter\Config\JudgedRange', 'Linter\Config\LintArguments', 'Linter\Config\LintConfigLoader',
-            'Linter\Config\LintConfigResult', 'Linter\Config\LintConfigSchema', 'Linter\Config\LintDefaultsBuilder',
+            'Linter\Config\LintConfigResult', 'Linter\Config\LintDefaultsBuilder',
             'Linter\Config\ProjectTarget', 'Linter\Config\TargetConstraint', 'Linter\Config\UnsupportedTargetException',
             'Linter\Extraction\IgnoreMarker', 'Linter\Extraction\InlineIgnores', 'Linter\Extraction\LiteralSpelling',
             'Linter\Extraction\MemoryBudget', 'Linter\Extraction\PatternAttributeScanner',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpStringLiteral',
             'Linter\Extraction\TargetMarker', 'Linter\Extraction\TargetMarkers',
             'Linter\Extraction\TokenBasedExtractionStrategy', 'Linter\RedosVerdict',
-            'Linter\Rule\InvisibleCharacterRule', 'Linter\Rule\RuleId', 'Parser\Text\Ascii', 'Parser\Engine\IniFlag',
+            'Linter\Rule\InvisibleCharacterRule', 'Linter\Rule\RuleCatalog', 'Linter\Rule\RuleId', 'Parser\Text\Ascii', 'Parser\Engine\IniFlag',
             'Parser\Engine\LibraryPcre',
         ],
         'Laravel' => [
@@ -164,7 +164,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\TargetMarker',
             'Linter\Extraction\TargetMarkers', 'Linter\PatternOccurrence', 'Parser\Hir\ClassSetProvider',
             'Parser\Text\Ascii', 'Parser\Text\DisplayEscaper', 'Parser\Engine\LibraryPcre',
-            'Linter\Extraction\PatternAttributeScanner', 'Linter\Extraction\PregFunctions',
+            'Linter\Extraction\PatternAttributeScanner', 'Linter\Extraction\PregFunctions', 'Linter\Rule\RuleCatalog',
         ],
         // The plugin reads the key layout CaptureShape renders for
         // PHPStan, so both type systems say the same keys.

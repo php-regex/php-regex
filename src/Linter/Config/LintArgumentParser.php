@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Config;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Redos\RedosMode;
@@ -77,7 +78,7 @@ final class LintArgumentParser
                 [$option, $ruleId] = explode('=', $arg, 2);
                 // A rule reads its setting under its short id, as regex.json writes it.
                 $shortId = str_starts_with($ruleId, 'regex.lint.') ? substr($ruleId, \strlen('regex.lint.')) : $ruleId;
-                if (!LintConfigSchema::isRuleId($shortId)) {
+                if (!RuleCatalog::isConfigurable($shortId)) {
                     return new LintParseResult(null, \sprintf('Unknown lint rule "%s" in %s.', $ruleId, $option));
                 }
 

@@ -28,7 +28,7 @@ use PHPRegex\Parser\Text\Bytes;
  */
 final class MultibyteInCharClassWithoutURule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.unicode.multibyteInClassWithoutU';
+    public const ID = 'regex.lint.unicode.multibyteInClassWithoutU';
 
     public function getRuleIds(): array
     {

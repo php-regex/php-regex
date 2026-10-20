@@ -14,13 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Linter;
 
 use PHPRegex\Automata\Solver\DfaCacheInterface;
-use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\Rule\GroupIndex;
 use PHPRegex\Linter\Rule\LintContext;
 use PHPRegex\Linter\Rule\LintRuleInterface;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPRegex\Linter\Rule\PatternInfo;
-use PHPRegex\Linter\Rule\RuleId;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Linter\Rule\Support\FlagScope;
 use PHPRegex\Parser\AbstractNodeVisitor;
@@ -393,13 +392,7 @@ final class PatternLinter extends AbstractNodeVisitor
      */
     public static function enables(array $enabledRules, string $ruleId): bool
     {
-        $shortId = RuleId::short($ruleId);
-        if (\array_key_exists($shortId, $enabledRules)) {
-            return $enabledRules[$shortId];
-        }
-
-        // Else as the schema runs it by default; an id it does not know runs
-        return LintConfigSchema::LINT_RULES[$shortId][1] ?? true;
+        return RuleCatalog::enables($enabledRules, $ruleId);
     }
 
     /**

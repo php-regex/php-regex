@@ -23,6 +23,7 @@ use PHPRegex\Parser\Json\JsonEncodingFailure;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\LintIssueFixtures;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -223,6 +224,7 @@ final class JsonFormatterTest extends TestCase
             'file_offset' => null,
             'position' => null,
             'issue_id' => null,
+            'docs_url' => null,
             'message' => 'Error 1',
             'hint' => null,
             'tip' => null,
@@ -359,5 +361,44 @@ final class JsonFormatterTest extends TestCase
         $this->assertStringContainsString('/test/path/', $output);
         // JSON_UNESCAPED_SLASHES should prevent escaping forward slashes
         $this->assertStringNotContainsString('\\/', $output);
+    }
+
+    /**
+     * Each issue links to the section of the docs that explains it, after
+     * its identifier; an error code of an invalid pattern has none.
+     *
+     * @return iterable<string, array{issue: LintIssue, url: string|null}>
+     */
+    public static function provideIssuesWithTheirDocs(): iterable
+    {
+        yield 'a lint rule' => ['issue' => LintIssueFixtures::finding(LintSeverity::Warning, 'Useless quantifier', 'regex.lint.quantifier.useless'), 'url' => 'https://php-regex.com/reference/rules/#useless-quantifier'];
+        yield 'the ReDoS verdict' => ['issue' => LintIssueFixtures::redos(LintSeverity::Error, 'ReDoS'), 'url' => 'https://php-regex.com/reference/rules/#catastrophic-backtracking'];
+        yield 'an invalid pattern' => ['issue' => LintIssueFixtures::invalid(), 'url' => null];
+        yield 'an issue without identifier' => ['issue' => LintIssueFixtures::finding(LintSeverity::Warning, 'Something'), 'url' => null];
+    }
+
+    #[Test]
+    #[DataProvider('provideIssuesWithTheirDocs')]
+    public function test_format_links_each_issue_to_its_docs(LintIssue $issue, ?string $url): void
+    {
+        $result = [
+            'file' => 'test.php',
+            'line' => 1,
+            'pattern' => '/a{1}/',
+            'issues' => [$issue],
+            'optimizations' => [],
+        ];
+
+        $decoded = json_decode($this->formatter->format(new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0])), true);
+
+        $this->assertIsArray($decoded);
+        $this->assertIsArray($decoded['results'] ?? null);
+        $this->assertIsArray($decoded['results'][0] ?? null);
+        $this->assertIsArray($decoded['results'][0]['issues'] ?? null);
+        $mapped = $decoded['results'][0]['issues'][0] ?? null;
+        $this->assertIsArray($mapped);
+        $this->assertArrayHasKey('docs_url', $mapped);
+        $this->assertSame($url, $mapped['docs_url']);
+        $this->assertSame(['issue_id', 'docs_url', 'message'], \array_slice(array_keys($mapped), 6, 3));
     }
 }

@@ -38,7 +38,7 @@ use PHPRegex\Parser\Text\Ascii;
  */
 final class SingleCharClassRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.charclass.single';
+    public const ID = 'regex.lint.charclass.single';
 
     /**
      * The characters that mean something else outside a class.

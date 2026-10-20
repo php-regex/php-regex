@@ -89,6 +89,12 @@ What each diagnostic underlines:
 - a ReDoS verdict, the part of the pattern at risk, else the whole body;
 - a pattern not analyzed for a limit, the whole body.
 
+A lint issue, a ReDoS verdict, an inline marker that silences nothing and a
+`@regex-target` marker that cannot be read carry their identifier as the
+diagnostic's `code`, and a `codeDescription` linking to its section of the
+[rule reference](../reference/rules.md): an editor that supports it shows the
+code as a link.
+
 Columns count UTF-16 code units, as the protocol does, and follow the literal
 as written: in `"/\t(a/"` an offset past the tab lands past the `\t` escape.
 

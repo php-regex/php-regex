@@ -28,9 +28,11 @@ use PHPRegex\Parser\Node\QuantifierNode;
  */
 final class QuantifiedCapturingGroupRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.group.quantifiedCapture';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.group.quantifiedCapture'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -69,7 +71,7 @@ final class QuantifiedCapturingGroupRule extends AbstractLintRule
             : 'capturing group "(...)"';
 
         return [new RuleViolation(
-            'regex.lint.group.quantifiedCapture',
+            self::ID,
             \sprintf(
                 'Quantified %s with "%s": only the last iteration\'s capture is retained.',
                 $label,

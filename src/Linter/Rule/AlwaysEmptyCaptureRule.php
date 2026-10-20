@@ -48,7 +48,7 @@ use PHPRegex\Parser\Node\SequenceNode;
  */
 final class AlwaysEmptyCaptureRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.group.alwaysEmptyCapture';
+    public const ID = 'regex.lint.group.alwaysEmptyCapture';
 
     private readonly QuestionBudget $questions;
 

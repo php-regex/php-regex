@@ -25,9 +25,11 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class UndefinedBackrefRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.backref.undefined';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.backref.undefined'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -60,7 +62,7 @@ final class UndefinedBackrefRule extends AbstractLintRule
 
             if ($num > $context->groups->maxCapturingGroup) {
                 return [new RuleViolation(
-                    'regex.lint.backref.undefined',
+                    self::ID,
                     "Backreference \\{$num} refers to a non-existent capturing group.",
                     $node->startPosition,
                     end: $node->getEndPosition(),
@@ -73,7 +75,7 @@ final class UndefinedBackrefRule extends AbstractLintRule
         $name = $target['value'];
         if (!isset($context->groups->definedNamedGroups[$name])) {
             return [new RuleViolation(
-                'regex.lint.backref.undefined',
+                self::ID,
                 "Backreference \\k<{$name}> refers to a non-existent named group.",
                 $node->startPosition,
                 end: $node->getEndPosition(),

@@ -26,13 +26,15 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class UselessDFlagRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.flag.useless.D';
+
     private bool $readsD = false;
 
     private bool $hasDollar = false;
 
     public function getRuleIds(): array
     {
-        return ['regex.lint.flag.useless.D'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -63,7 +65,7 @@ final class UselessDFlagRule extends AbstractLintRule
         }
 
         return [new RuleViolation(
-            'regex.lint.flag.useless.D',
+            self::ID,
             $this->hasDollar
                 ? "Flag 'D' is useless: every $ anchor is read under m, which overrides D."
                 : "Flag 'D' is useless: the pattern contains no $ anchor.",

@@ -49,9 +49,11 @@ use PHPRegex\Parser\Node\UnicodePropNode;
  */
 final class RedundantGroupRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.group.redundant';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.group.redundant'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -75,7 +77,7 @@ final class RedundantGroupRule extends AbstractLintRule
         }
 
         return [new RuleViolation(
-            'regex.lint.group.redundant',
+            self::ID,
             'Redundant non-capturing group; it can be removed without changing behavior.',
             $node->startPosition,
             end: $node->getEndPosition(),

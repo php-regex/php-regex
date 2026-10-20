@@ -39,7 +39,7 @@ use PHPRegex\Parser\Syntax\StartOptions;
  */
 final class LazyToClassRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.quantifier.lazyToClass';
+    public const ID = 'regex.lint.quantifier.lazyToClass';
 
     /**
      * The characters a class needs escaped.

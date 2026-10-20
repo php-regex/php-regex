@@ -13,8 +13,7 @@ To check patterns for your own purpose, write a visitor, as the
 The steps below follow what one rule touched when it was added:
 `regex.lint.lookaround.redundant`, the rule that reports `(?=a(?=b))`, which
 asserts what `(?=ab)` asserts. One commit added its class, registered it,
-gave it a configuration key, a PHPStan doc link, a reference entry and its
-tests.
+gave it an entry in the rule catalogue, a reference entry and its tests.
 
 The linter's internal classes may move between releases. The steps stay the
 same, and each step names the test that fails until it is done: when a class
@@ -66,9 +65,11 @@ use PHPRegex\Parser\Node\QuantifierNode;
  */
 final class ZeroQuantifierRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.quantifier.zero';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.quantifier.zero'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -92,7 +93,7 @@ final class ZeroQuantifierRule extends AbstractLintRule
         }
 
         return [new RuleViolation(
-            'regex.lint.quantifier.zero',
+            self::ID,
             'Quantifier always repeats zero times; it can be removed.',
             $node->startPosition,
             'Remove the quantified element or replace it with an empty pattern.',
@@ -102,8 +103,13 @@ final class ZeroQuantifierRule extends AbstractLintRule
 }
 ```
 
-- `getRuleIds()` lists every id the rule reports. One class may report a few
-  ids whose findings belong together.
+- `ID` is the id, as a public constant: the rule reports it through
+  `self::ID`, and the rule catalogue names the rule by it. A class that
+  reports a few ids whose findings belong together gives each one a constant
+  of its own, `ID_` and a name, as `ImpossibleAnchorRule::ID_START`.
+  `RuleCatalogTest` fails when an id a rule reports is not one of its
+  constants.
+- `getRuleIds()` lists every id the rule reports.
 - `getNodeTypes()` lists the node classes the rule inspects. The linter walks
   the tree once and calls `check()` on each node of those classes.
 - `check()` returns a list of `RuleViolation`: the id, the message, the byte
@@ -114,8 +120,8 @@ final class ZeroQuantifierRule extends AbstractLintRule
   what the rule could only know once it has seen the whole pattern.
   `AbstractLintRule` gives both an empty body.
 
-`RedundantLookaroundRule.php` shows the parts a newer rule adds: its id in a
-`private const ID`, `LintSeverity::Style` for a style rule, a message that
+`RedundantLookaroundRule.php` shows the parts a newer rule adds:
+`LintSeverity::Style` for a style rule, a message that
 quotes the pattern and a hint that names the rewrite:
 `Write "(?=ab)".`
 
@@ -139,50 +145,61 @@ in that order, so a new rule goes last.
 
 ---
 
-## Step 3: Give It a Configuration Key
+## Step 3: Add It to the Rule Catalogue
 
-1. Add the key to `LintConfigSchema::LINT_RULES`
-   (`src/Linter/Config/LintConfigSchema.php`): what the rule reports, and
-   whether it runs by default.
-   `'lookaround.redundant' => ['Report a lookaround at the edge of a lookaround read the same way, which can hold its body (style).', false],`
-2. For a rule off by default, add its key to the description of
-   `checks.lint.rules` in the same file, the sentence that ends
-   "All rules are enabled by default except ...".
-3. Write `src/Linter/regex.schema.json` again from the definition:
+`RuleCatalog` (`src/Linter/Rule/RuleCatalog.php`) holds, for each rule, what
+it reports, whether it runs by default and the section of the docs that
+explains it. Add the rule to `LINT_RULES`, last:
+
+```php
+RedundantLookaroundRule::ID => ['Report a lookaround at the edge of a lookaround read the same way, which can hold its body (style).', false, 'https://php-regex.com/reference/rules/#lookaround-inside-a-lookaround'],
+```
+
+Everything else reads the catalogue:
+
+- the `checks.lint.rules` key of `regex.json`, the id without `regex.lint.`
+  (`"lookaround.redundant": true`), with its
+  description and its default, and the list of the rules off by default in
+  the description of `checks.lint.rules`;
+- `--enable-rule` and `--disable-rule`, which refuse an id the catalogue
+  does not hold;
+- the link of each finding: `docs_url` in the JSON report, the last line of
+  the GitHub and Checkstyle messages, the `codeDescription` of the editor's
+  diagnostic and the "Read more" tip of the PHPStan error. The PHPStan rule
+  reports each finding with the rule id as its error identifier.
+
+Then:
+
+1. Write `src/Linter/regex.schema.json` again from the definition:
    `php tests/Tools/write_config_schema.php`.
-4. For a rule off by default, add its key to the list in the
+2. For a rule off by default, add its key to the list in the
    `checks.lint.rules.<id>` row of `src/Linter/README.md`.
 
 The tests that fail until this is done:
 
-- `LintRuleConfigurationTest`: every registered rule has a key, the schema
-  file lists it, the description names every rule off by default, and
+- `RuleCatalogTest`: the catalogue lists exactly the rules the registry
+  runs, and each links to the docs site;
+- `RuleDocsAnchorsTest`: the link lands on a heading of the docs whose
+  section names the id (write the section of Step 5 first);
+- `LintRuleConfigurationTest`: the schema file lists the rule, and
   `provideNewRuleDefaults()` holds a row for the new key;
+- `LintRuleInventoryTest`: the Linter README names every rule off by default;
 - `LintConfigSchemaTest::test_schema_file_is_written_from_the_php_definition`.
 
 ---
 
-## Step 4: Link It From PHPStan
+## Step 4: Check the Editor and PHPStan Output
 
-The PHPStan rule reports each finding with the rule id as its error
-identifier, so nothing is needed for the identifier. Give the finding a link
-to its documentation: add the id to `LINT_DOC_LINKS` in
-`src/PHPStan/PatternChecker.php`, pointing to the rule's heading in
-`docs/reference/rules.md`:
-
-```php
-'regex.lint.lookaround.redundant' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#lookaround-inside-a-lookaround',
-```
-
-`RegexPatternRuleDocLinksTest::test_every_doc_link_lands_on_an_existing_page_and_heading`
-fails when the heading does not exist.
+Nothing to add: the language server and the PHPStan rule read the id and
+the link from the catalogue. Run the PHPStan tests of the rule's area, whose
+expected tips end with the new `Read more:` line.
 
 ---
 
 ## Step 5: Document It
 
 - **`docs/reference/rules.md`**: a section under the rule's area, with its
-  heading (the one the PHPStan link points to), then **Identifier:** (with
+  heading (the one the catalogue links to), then **Identifier:** (with
   "off by default" when it is), **When it triggers:**, **Message:**,
   **Example:** and **Fix:**, and a row in the Quick Reference Table.
   `SonarParityReferenceTest` checks the rows of the rules mapped to a
@@ -330,12 +347,11 @@ is missed:
 
 | Where | What | What fails when it is missed |
 |---|---|---|
-| `src/Linter/Rule/RedundantLookaroundRule.php` | the rule | the rule's own test |
+| `src/Linter/Rule/RedundantLookaroundRule.php` | the rule and its `ID` | the rule's own test, `RuleCatalogTest` |
 | `src/Linter/Rule/LintRuleRegistry.php` | the registration | `LintRuleRegistryTest`, `LintRuleExamplesTest` |
-| `src/Linter/Config/LintConfigSchema.php` | the key, its default, the list of rules off by default | `LintRuleConfigurationTest` |
+| `src/Linter/Rule/RuleCatalog.php` | the description, the default, the docs link | `RuleCatalogTest`, `LintRuleConfigurationTest` |
 | `src/Linter/regex.schema.json` | written from the definition | `LintConfigSchemaTest` |
-| `src/PHPStan/PatternChecker.php` | the doc link | `RegexPatternRuleDocLinksTest`, for a link to a missing heading |
-| `docs/reference/rules.md` | the section and the Quick Reference row | `RegexPatternRuleDocLinksTest` for the heading |
+| `docs/reference/rules.md` | the section and the Quick Reference row | `RuleDocsAnchorsTest` for the heading the link names |
 | `docs/guides/lsp.md` | the row of diagnostic codes | nothing: check it by hand |
 | `src/Linter/README.md`, `src/Cli/README.md`, `src/PHPStan/README.md` | the rule count, and the list of rules off by default | `LintRuleInventoryTest` |
 | `CHANGELOG.md`, `src/Linter/CHANGELOG.md` | the entries | `LintRuleInventoryTest`, for a rule off by default |

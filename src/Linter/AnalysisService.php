@@ -19,13 +19,14 @@ use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Advice\RedosHints;
 use PHPRegex\Linter\Advice\ValidationTips;
 use PHPRegex\Linter\Config\JudgedRange;
-use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
+use PHPRegex\Linter\Rule\RuleCatalog;
+use PHPRegex\Linter\Rule\RuleId;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Optimizer\LayoutSplicer;
 use PHPRegex\Optimizer\OptimizationResult;
@@ -63,9 +64,9 @@ use PHPRegex\Redos\RedosSeverity;
  */
 final class AnalysisService
 {
-    private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
+    private const ISSUE_ID_COMPLEXITY = RuleCatalog::COMPLEXITY;
 
-    private const ISSUE_ID_MEANING_CHANGES = 'regex.lint.compat.meaningChanges';
+    private const ISSUE_ID_MEANING_CHANGES = RuleCatalog::MEANING_CHANGES;
 
     private readonly RedosSeverity $redosSeverityThreshold;
 
@@ -147,13 +148,11 @@ final class AnalysisService
      */
     public function leavesOff(string $identifier): bool
     {
-        $short = str_starts_with($identifier, 'regex.lint.') ? substr($identifier, \strlen('regex.lint.')) : null;
-
         return match (true) {
             RedosVerdict::ISSUE_ID === $identifier => RedosMode::Off === $this->redosMode,
             RedosVerdict::SEARCH_ISSUE_ID === $identifier => RedosMode::Off === $this->redosMode || !$this->shouldReportSearchCostRule(),
             self::ISSUE_ID_MEANING_CHANGES === $identifier => !$this->comparesTrees() || [] === $this->range,
-            null !== $short && \in_array($short, LintConfigSchema::lintRuleIds(), true) => !$this->lintEnabled || !PatternLinter::enables($this->lintRules, $short),
+            RuleId::isLintRule($identifier) => !$this->lintEnabled || !RuleCatalog::enables($this->lintRules, $identifier),
             default => false,
         };
     }
@@ -286,7 +285,7 @@ final class AnalysisService
      */
     private function shouldReportSearchCostRule(): bool
     {
-        return LintConfigSchema::leavesOn($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID);
+        return RuleCatalog::enables($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID);
     }
 
     /**
@@ -359,7 +358,7 @@ final class AnalysisService
 
         // A file the extractor could not read holds patterns no one linted.
         if (null !== $occurrence->unread) {
-            return [new LintIssue(LintSeverity::Error, $occurrence->unread, $occurrence->file, 1, 1, issueId: 'regex.lint.source.unreadable', source: $occurrence->source)];
+            return [new LintIssue(LintSeverity::Error, $occurrence->unread, $occurrence->file, 1, 1, issueId: RuleCatalog::SOURCE_UNREADABLE, source: $occurrence->source)];
         }
 
         $validation = $this->regex->validate($occurrence->pattern);
@@ -687,7 +686,7 @@ final class AnalysisService
      */
     private function comparesTrees(): bool
     {
-        return LintConfigSchema::leavesOn($this->lintRules, self::ISSUE_ID_MEANING_CHANGES);
+        return RuleCatalog::enables($this->lintRules, self::ISSUE_ID_MEANING_CHANGES);
     }
 
     /**

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Linter\Rule\RuleCatalog;
+
 /**
  * Unified representation of syntax, semantic, lint, security, or optimization issues.
  *
@@ -28,4 +30,13 @@ final class Diagnostic
         public readonly ?string $snippet = null,
         public readonly ?string $suggestion = null,
     ) {}
+
+    /**
+     * The section of the docs that explains the issue, by its code; null
+     * when the docs hold none of its own.
+     */
+    public function docsUrl(): ?string
+    {
+        return null === $this->code ? null : RuleCatalog::docsUrl($this->code);
+    }
 }

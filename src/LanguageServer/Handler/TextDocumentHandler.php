@@ -23,7 +23,6 @@ use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\Linter\Config\JudgedRange;
-use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\InlineIgnores;
@@ -33,6 +32,7 @@ use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Linter\Rule\RuleId;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Parser\ErrorCode;
@@ -491,9 +491,9 @@ final class TextDocumentHandler
         return match ($identifier) {
             RedosVerdict::ISSUE_ID => RedosMode::Off === $this->redosMode,
             RedosVerdict::SEARCH_ISSUE_ID => RedosMode::Off === $this->redosMode
-                || !LintConfigSchema::leavesOn($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID),
+                || !RuleCatalog::enables($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID),
             'regex.optimization', 'regex.lint.complexity', 'regex.lint.compat.meaningChanges' => true,
-            default => RuleId::isLintRule($identifier) && !PatternLinter::enables($this->lintRules, $identifier),
+            default => RuleId::isLintRule($identifier) && !RuleCatalog::enables($this->lintRules, $identifier),
         };
     }
 
@@ -543,7 +543,7 @@ final class TextDocumentHandler
         // One attempt proven linear, the search retrying it is not.
         $searchCost = $redos->searchCost;
         if (null !== $searchCost
-            && LintConfigSchema::leavesOn($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID)
+            && RuleCatalog::enables($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID)
             && RedosVerdict::searchSeverity()->rank() >= $this->redosThreshold->rank()) {
             $diagnostics[] = $this->diagnosticConverter->fromRedos(
                 RedosVerdict::SEARCH_ISSUE_ID,

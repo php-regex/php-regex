@@ -39,9 +39,11 @@ use PHPRegex\Parser\Node\SequenceNode;
  */
 final class QuantifierConcatenationRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.quantifier.concatenation';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.quantifier.concatenation'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -109,7 +111,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             // with a character of that set.
             if (null === $rightMax && $this->isKnownSubset($left->node, $leftSet, $right->node, $rightSet, $context, $flags[$i]) && [] === $rightGuards) {
                 $issues[] = new RuleViolation(
-                    'regex.lint.quantifier.concatenation',
+                    self::ID,
                     'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
                     $left->startPosition,
                     0 === $leftMin
@@ -129,7 +131,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
                 && ([] === $leftGuards || ($rightMin > 0 && $this->guardsHoldBefore($leftGuards, $rightSet, $context, $flags[$i])))
             ) {
                 $issues[] = new RuleViolation(
-                    'regex.lint.quantifier.concatenation',
+                    self::ID,
                     'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
                     $right->startPosition,
                     0 === $rightMin

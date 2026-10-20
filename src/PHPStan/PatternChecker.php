@@ -27,6 +27,7 @@ use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\RedosRepairer;
@@ -67,60 +68,13 @@ final class PatternChecker
 {
     private const ISSUE_ID_REDOS = 'regex.lint.redos';
     private const ISSUE_ID_REDOS_SEARCH = 'regex.lint.redos.search';
-    private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
+    private const ISSUE_ID_COMPLEXITY = RuleCatalog::COMPLEXITY;
     private const MAX_PATTERN_DISPLAY_LENGTH = 50;
 
     private const DOC_LINKS = [
-        'catastrophic backtracking' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#catastrophic-backtracking',
-        'possessive quantifiers' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/04-quantifiers.md#possessive-quantifiers-performance',
-        'atomic groups' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/08-performance-redos.md#1-atomic-groups-',
-    ];
-
-    private const LINT_DOC_LINKS = [
-        'regex.lint.flag.useless.s' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-flag-s-dotall',
-        'regex.lint.flag.useless.m' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-flag-m-multiline',
-        'regex.lint.flag.useless.i' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-flag-i-caseless',
-        'regex.lint.flag.useless.D' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-flag-d-dollar-end-only',
-        'regex.lint.flag.useless.x' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-flag-x-extended',
-        'regex.lint.anchor.impossible.start' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#anchor-conflicts',
-        'regex.lint.anchor.impossible.end' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#anchor-conflicts',
-        'regex.lint.quantifier.nested' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#nested-quantifiers-redos-risk',
-        'regex.lint.dotstar.nested' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#dot-star-in-quantifier',
-        'regex.lint.quantifier.useless' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-quantifier',
-        'regex.lint.quantifier.zero' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#zero-quantifier',
-        'regex.lint.group.redundant' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#redundant-non-capturing-group',
-        'regex.lint.alternation.duplicateDisjunction' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#duplicate-alternation-branches',
-        'regex.lint.alternation.empty' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#empty-alternatives',
-        'regex.lint.alternation.overlap' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#overlapping-alternation-branches',
-        'regex.lint.overlap.charset' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#overlapping-character-sets',
-        'regex.lint.backref.useless' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-backreferences',
-        'regex.lint.charclass.redundant' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#redundant-character-class-elements',
-        'regex.lint.charclass.duplicateChars' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#duplicate-character-class-elements',
-        'regex.lint.range.useless' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-character-range',
-        'regex.lint.charclass.suspiciousRange' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#suspicious-ascii-ranges',
-        'regex.lint.charclass.suspiciousPipe' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#alternation-like-character-classes',
-        'regex.lint.escape.suspicious' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#suspicious-escapes',
-        'regex.lint.flag.redundant' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#inline-flag-redundant',
-        'regex.lint.flag.override' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#inline-flag-override',
-        'regex.lint.quantifier.concatenation' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#optimal-quantifier-concatenation',
-        'regex.lint.quantifier.lazyEnd' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#lazy-quantifier-at-the-end',
-        'regex.lint.charclass.literalMetachar' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#literal-metacharacter-in-a-character-class',
-        'regex.lint.unicode.multibyteInClassWithoutU' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#multibyte-character-in-a-class',
-        'regex.lint.unicode.quantifiedMultibyteWithoutU' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#quantifier-after-a-multibyte-character',
-        'regex.lint.unicode.propertyWithoutU' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#bytes-without-u',
-        'regex.lint.quantifier.emptyRepeat' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#repeat-that-can-match-empty',
-        'regex.lint.anchor.alternationPrecedence' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#anchor-precedence-in-alternation',
-        'regex.lint.quantifier.possessiveImpossible' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#impossible-possessive-quantifier',
-        'regex.lint.anchor.impossible.boundary' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#anchor-conflicts',
-        'regex.lint.anchor.dollarNewline' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#dollar-before-a-trailing-newline',
-        'regex.lint.lookaround.impossible' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#impossible-lookaround',
-        'regex.lint.lookaround.redundant' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#lookaround-inside-a-lookaround',
-        'regex.lint.group.empty' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#empty-group',
-        'regex.lint.charclass.single' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#single-character-class',
-        'regex.lint.literal.multipleSpaces' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#multiple-spaces',
-        'regex.lint.literal.invisible' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#invisible-character-written-raw',
-        'regex.lint.quantifier.lazyToClass' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#lazy-quantifier-before-a-delimiter',
-        'regex.lint.complexity' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#complexity-threshold',
+        'catastrophic backtracking' => 'https://php-regex.com/reference/rules/#catastrophic-backtracking',
+        'possessive quantifiers' => 'https://php-regex.com/tutorial/04-quantifiers/#possessive-quantifiers-performance',
+        'atomic groups' => 'https://php-regex.com/tutorial/08-performance-redos/#1-atomic-groups-',
     ];
 
     /**
@@ -472,8 +426,9 @@ final class PatternChecker
             if (null !== $hint && '' !== $hint) {
                 $tipParts[] = $hint;
             }
-            if (isset(self::LINT_DOC_LINKS[$issueId])) {
-                $tipParts[] = 'Read more: '.self::LINT_DOC_LINKS[$issueId];
+            $docsUrl = RuleCatalog::docsUrl($issueId);
+            if (null !== $docsUrl) {
+                $tipParts[] = 'Read more: '.$docsUrl;
             }
             if ([] !== $tipParts) {
                 $builder = $builder->tip(implode("\n", $tipParts));

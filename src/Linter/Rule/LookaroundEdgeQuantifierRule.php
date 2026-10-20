@@ -49,7 +49,7 @@ use PHPRegex\Parser\Node\SubroutineNode;
  */
 final class LookaroundEdgeQuantifierRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.lookaround.edgeQuantifier';
+    public const ID = 'regex.lint.lookaround.edgeQuantifier';
 
     private readonly QuestionBudget $questions;
 

@@ -94,7 +94,7 @@ final class DisabledRuleDispatchTest extends TestCase
     {
         yield 'on by default' => ['ids' => ['regex.lint.test.one'], 'enabled' => [], 'runs' => true];
         yield 'turned off' => ['ids' => ['regex.lint.test.one'], 'enabled' => ['test.one' => false], 'runs' => false];
-        yield 'turned off with its prefix' => ['ids' => ['regex.lint.test.one'], 'enabled' => ['regex.lint.test.one' => false], 'runs' => true];
+        yield 'turned off with its prefix' => ['ids' => ['regex.lint.test.one'], 'enabled' => ['regex.lint.test.one' => false], 'runs' => false];
         yield 'one of two turned off' => ['ids' => ['regex.lint.test.one', 'regex.lint.test.two'], 'enabled' => ['test.one' => false], 'runs' => true];
         yield 'both turned off' => ['ids' => ['regex.lint.test.one', 'regex.lint.test.two'], 'enabled' => ['test.one' => false, 'test.two' => false], 'runs' => false];
         yield 'off by default' => ['ids' => ['regex.lint.quantifier.uselessLazy'], 'enabled' => [], 'runs' => false];

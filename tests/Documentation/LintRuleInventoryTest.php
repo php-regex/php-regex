@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
-use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -69,11 +69,27 @@ final class LintRuleInventoryTest extends TestCase
      */
     public static function provideRulesOffByDefault(): iterable
     {
-        foreach (LintConfigSchema::LINT_RULES as $rule => [, $default]) {
-            if (!$default) {
-                yield $rule => ['rule' => $rule];
-            }
+        foreach (RuleCatalog::rulesOffByDefault() as $rule) {
+            yield $rule => ['rule' => $rule];
         }
+    }
+
+    /**
+     * The Linter README names the rules off by default where it describes
+     * checks.lint.rules: those of the catalogue, no more, no fewer.
+     */
+    #[Test]
+    public function test_the_linter_readme_names_the_rules_off_by_default(): void
+    {
+        $readme = (string) file_get_contents(self::ROOT.'src/Linter/README.md');
+
+        $this->assertSame(1, preg_match('/^\| `checks\.lint\.rules\.<id>` \|[^\n]*?; (?<list>[^\n]+) default to `false` \|$/m', $readme, $row));
+        preg_match_all('/`([^`]+)`/', $row['list'], $named);
+        $off = RuleCatalog::rulesOffByDefault();
+        sort($off);
+        sort($named[1]);
+
+        $this->assertSame($off, $named[1]);
     }
 
     /**

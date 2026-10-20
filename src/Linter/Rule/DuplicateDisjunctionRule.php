@@ -35,9 +35,11 @@ use PHPRegex\Parser\Text\DisplayEscaper;
  */
 final class DuplicateDisjunctionRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.alternation.duplicateDisjunction';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.alternation.duplicateDisjunction'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -72,7 +74,7 @@ final class DuplicateDisjunctionRule extends AbstractLintRule
                 $display = DisplayEscaper::escapeFragment('' !== $written ? $written : $signature, $context->pattern->unicodeMode);
 
                 return [new RuleViolation(
-                    'regex.lint.alternation.duplicateDisjunction',
+                    self::ID,
                     \sprintf('Duplicate alternation branch "%s".', $display),
                     $alt->getStartPosition(),
                     'Remove the redundant alternative.',

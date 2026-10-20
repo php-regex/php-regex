@@ -26,9 +26,11 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class SuspiciousEscapeRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.escape.suspicious';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.escape.suspicious'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -44,7 +46,7 @@ final class SuspiciousEscapeRule extends AbstractLintRule
 
         if (CharLiteralType::Unicode === $node->type && $node->codePoint > 0x10FFFF) {
             return [new RuleViolation(
-                'regex.lint.escape.suspicious',
+                self::ID,
                 \sprintf('Suspicious Unicode escape "%s" (out of range).', $node->originalRepresentation),
                 $node->startPosition,
                 end: $node->getEndPosition(),
@@ -54,7 +56,7 @@ final class SuspiciousEscapeRule extends AbstractLintRule
         // Past "\377", an octal escape is a code point in UTF mode only.
         if (\in_array($node->type, [CharLiteralType::Octal, CharLiteralType::OctalLegacy], true) && $node->codePoint > 0xFF && !$context->pattern->unicodeMode) {
             return [new RuleViolation(
-                'regex.lint.escape.suspicious',
+                self::ID,
                 \sprintf('Suspicious octal escape "%s" (out of range).', $node->originalRepresentation),
                 $node->startPosition,
                 end: $node->getEndPosition(),
@@ -68,7 +70,7 @@ final class SuspiciousEscapeRule extends AbstractLintRule
                 $char = \IntlChar::charFromName($matches[1]);
                 if (null === $char) {
                     return [new RuleViolation(
-                        'regex.lint.escape.suspicious',
+                        self::ID,
                         \sprintf('Unknown Unicode character name "%s".', $matches[1]),
                         $node->startPosition,
                         end: $node->getEndPosition(),

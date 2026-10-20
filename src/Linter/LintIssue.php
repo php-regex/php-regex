@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter;
 
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
@@ -86,6 +87,18 @@ final class LintIssue
     public function id(): ?string
     {
         return $this->issueId ?? $this->validation?->errorCode?->value;
+    }
+
+    /**
+     * The section of the docs that explains the finding, by its
+     * identifier; null when the docs hold none of its own, as for the error
+     * code of a pattern that does not compile.
+     */
+    public function docsUrl(): ?string
+    {
+        $id = $this->id();
+
+        return null === $id ? null : RuleCatalog::docsUrl($id);
     }
 
     /**

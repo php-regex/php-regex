@@ -39,9 +39,11 @@ use PHPRegex\Parser\Text\Ascii;
  */
 final class NestedQuantifierRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.quantifier.nested';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.quantifier.nested'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -84,7 +86,7 @@ final class NestedQuantifierRule extends AbstractLintRule
         }
 
         return [new RuleViolation(
-            'regex.lint.quantifier.nested',
+            self::ID,
             'Nested quantifiers can cause catastrophic backtracking.',
             $node->startPosition,
             'Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.',

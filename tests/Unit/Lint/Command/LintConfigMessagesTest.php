@@ -18,6 +18,7 @@ use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -138,7 +139,7 @@ final class LintConfigMessagesTest extends TestCase
         }
         sort($ids);
 
-        $schema = LintConfigSchema::lintRuleIds();
+        $schema = RuleCatalog::lintRuleIds();
         sort($schema);
 
         $this->assertSame($ids, $schema);

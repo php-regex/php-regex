@@ -37,6 +37,8 @@ use PHPRegex\Parser\Text\Ascii;
  */
 final class UselessIFlagRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.flag.useless.i';
+
     private bool $hasCaseSensitiveChars = false;
 
     private bool $hasBackreferences = false;
@@ -47,7 +49,7 @@ final class UselessIFlagRule extends AbstractLintRule
 
     public function getRuleIds(): array
     {
-        return ['regex.lint.flag.useless.i'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -127,7 +129,7 @@ final class UselessIFlagRule extends AbstractLintRule
     {
         if ($context->pattern->hasFlag('i') && !$this->hasCaseSensitiveChars && !$this->hasBackreferences) {
             return [new RuleViolation(
-                'regex.lint.flag.useless.i',
+                self::ID,
                 "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
             )];
         }

@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * One catalogue describes every lint rule: what it reports, its default and
+   the section of the docs that explains it. Every rule declares its
+   identifier as a public constant (`ID`, or `ID_*` for a rule of several),
+   the `regex.json` schema reads its descriptions and defaults, and every
+   report links each finding to the docs on php-regex.com: `docs_url` in the
+   JSON report, a `Read more:` line in the GitHub and Checkstyle messages.
+ * The Checkstyle `source` is the issue's identifier, without a prefix.
  * `regex.json` takes `locale`, the `LC_CTYPE` locale the patterns run
    under; the JSON report names it as `target.locale`.
  * `group.alwaysEmptyCapture` asks the automata about a capturing group only

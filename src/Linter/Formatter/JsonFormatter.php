@@ -39,6 +39,7 @@ use PHPRegex\Redos\RedosAnalysis;
  *     file_offset: int|null,
  *     position: int|null,
  *     issue_id: string|null,
+ *     docs_url: string|null,
  *     message: string,
  *     hint: string|null,
  *     tip: string|null,
@@ -161,6 +162,8 @@ final class JsonFormatter extends AbstractOutputFormatter
             'file_offset' => $issue->fileOffset,
             'position' => $issue->position,
             'issue_id' => $issue->id(),
+            // The section of the docs that explains the issue.
+            'docs_url' => $issue->docsUrl(),
             'message' => $issue->message,
             'hint' => $issue->hint,
             'tip' => $issue->tip,

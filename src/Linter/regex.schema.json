@@ -177,7 +177,7 @@
         },
         "rules": {
           "type": "object",
-          "description": "Enable or disable specific lint rules. All rules are enabled by default except anchor.dollarNewline, unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy, lookaround.edgeQuantifier and lookaround.redundant.",
+          "description": "Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy, lookaround.edgeQuantifier, anchor.dollarNewline and lookaround.redundant.",
           "additionalProperties": false,
           "properties": {
             "unicode.shorthandWithoutU": {

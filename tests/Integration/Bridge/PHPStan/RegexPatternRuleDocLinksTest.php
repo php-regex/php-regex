@@ -13,81 +13,57 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\PHPStan\PatternChecker;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every "Read more" link of an issue lands on a page of the docs that
- * exists, on a heading that page generates: an anchor GitHub does not
- * generate opens the top of the page, a page the restructure removed
- * opens a 404.
+ * Every "Read more" link of an issue lands on a page of php-regex.com the
+ * docs tree builds, on a heading that page generates: an anchor the site
+ * does not generate opens the top of the page, a page the restructure
+ * removed opens a 404. The link of a lint issue is the one the rule
+ * catalogue gives every report.
  */
 final class RegexPatternRuleDocLinksTest extends TestCase
 {
-    private const REPO_URL_PREFIX = 'https://github.com/php-regex/php-regex/blob/2.x/';
+    private const SITE = 'https://php-regex.com/';
 
     private const DOCS_ROOT = __DIR__.'/../../../../docs/';
 
     #[Test]
-    public function test_every_doc_link_lands_on_an_existing_page_and_heading(): void
+    public function test_every_concept_link_lands_on_an_existing_page_and_heading(): void
     {
         $anchorsByPage = [];
 
-        foreach (self::allDocLinks() as $issueId => $url) {
-            $page = self::docsPage($issueId, $url);
+        foreach (self::constantMap('DOC_LINKS') as $concept => $url) {
+            $page = self::docsPage($concept, $url);
             $anchorsByPage[$page] ??= self::headingAnchors($page);
 
             $fragment = (string) parse_url($url, \PHP_URL_FRAGMENT);
-            $this->assertContains($fragment, $anchorsByPage[$page], \sprintf('%s links to %s#%s, which no heading of docs/%s generates.', $issueId, $page, $fragment, $page));
+            $this->assertContains($fragment, $anchorsByPage[$page], \sprintf('%s links to %s#%s, which no heading of docs/%s generates.', $concept, $page, $fragment, $page));
         }
     }
 
-    #[Test]
-    public function test_lazy_end_and_literal_metachar_have_a_doc_link(): void
-    {
-        $links = self::lintDocLinks();
-
-        $this->assertArrayHasKey('regex.lint.quantifier.lazyEnd', $links);
-        $this->assertArrayHasKey('regex.lint.charclass.literalMetachar', $links);
-    }
-
     /**
-     * The rules taken from SonarPHP's regex checks each link to their
-     * section of the reference.
+     * The lint issues PHPStan reports link where every other report links
+     * them, to the docs site.
      */
     #[Test]
-    public function test_the_sonar_parity_rules_have_a_doc_link(): void
+    public function test_the_lint_rules_link_to_the_docs_site(): void
     {
-        $links = self::lintDocLinks();
+        $this->assertFalse((new \ReflectionClass(PatternChecker::class))->hasConstant('LINT_DOC_LINKS'));
 
         foreach ([
-            'regex.lint.quantifier.emptyRepeat',
-            'regex.lint.anchor.alternationPrecedence',
-            'regex.lint.quantifier.possessiveImpossible',
-            'regex.lint.anchor.impossible.boundary',
-            'regex.lint.lookaround.impossible',
-            'regex.lint.group.empty',
-            'regex.lint.charclass.single',
-            'regex.lint.literal.multipleSpaces',
-            'regex.lint.quantifier.lazyToClass',
-        ] as $issueId) {
-            $this->assertArrayHasKey($issueId, $links, \sprintf('%s has no "Read more" link.', $issueId));
+            'regex.lint.quantifier.lazyEnd' => 'https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end',
+            'regex.lint.charclass.literalMetachar' => 'https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class',
+            'regex.lint.unicode.multibyteInClassWithoutU' => 'https://php-regex.com/reference/rules/#multibyte-character-in-a-class',
+            'regex.lint.unicode.quantifiedMultibyteWithoutU' => 'https://php-regex.com/reference/rules/#quantifier-after-a-multibyte-character',
+            'regex.lint.unicode.propertyWithoutU' => 'https://php-regex.com/reference/rules/#unicode-property-without-u',
+            'regex.lint.complexity' => 'https://php-regex.com/reference/rules/#complexity-threshold',
+        ] as $issueId => $url) {
+            $this->assertSame($url, RuleCatalog::docsUrl($issueId), $issueId);
         }
-    }
-
-    /**
-     * The rules of error severity fail a lint run, so each one links to the
-     * page that explains it.
-     */
-    #[Test]
-    public function test_the_rules_that_fail_a_lint_run_have_a_doc_link(): void
-    {
-        $links = self::lintDocLinks();
-
-        $this->assertStringEndsWith('#multibyte-character-in-a-class', $links['regex.lint.unicode.multibyteInClassWithoutU'] ?? '');
-        $this->assertStringEndsWith('#quantifier-after-a-multibyte-character', $links['regex.lint.unicode.quantifiedMultibyteWithoutU'] ?? '');
-        $this->assertStringEndsWith('#bytes-without-u', $links['regex.lint.unicode.propertyWithoutU'] ?? '');
     }
 
     /**
@@ -99,8 +75,9 @@ final class RegexPatternRuleDocLinksTest extends TestCase
     {
         $links = self::constantMap('DOC_LINKS');
 
-        $this->assertSame(self::REPO_URL_PREFIX.'docs/tutorial/04-quantifiers.md#possessive-quantifiers-performance', $links['possessive quantifiers']);
-        $this->assertSame(self::REPO_URL_PREFIX.'docs/tutorial/08-performance-redos.md#1-atomic-groups-', $links['atomic groups']);
+        $this->assertSame(self::SITE.'tutorial/04-quantifiers/#possessive-quantifiers-performance', $links['possessive quantifiers']);
+        $this->assertSame(self::SITE.'tutorial/08-performance-redos/#1-atomic-groups-', $links['atomic groups']);
+        $this->assertSame(self::SITE.'reference/rules/#catastrophic-backtracking', $links['catastrophic backtracking']);
     }
 
     /**
@@ -117,25 +94,6 @@ final class RegexPatternRuleDocLinksTest extends TestCase
     }
 
     /**
-     * @return array<string, string>
-     */
-    private static function allDocLinks(): array
-    {
-        return array_merge(
-            self::constantMap('DOC_LINKS'),
-            self::lintDocLinks(),
-        );
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private static function lintDocLinks(): array
-    {
-        return self::constantMap('LINT_DOC_LINKS');
-    }
-
-    /**
      * A map constant of PatternChecker, asserted into a map of strings.
      *
      * @return array<string, string>
@@ -145,16 +103,6 @@ final class RegexPatternRuleDocLinksTest extends TestCase
         $map = (new \ReflectionClass(PatternChecker::class))->getConstant($name);
         self::assertIsArray($map);
 
-        return self::typedStringMap($map);
-    }
-
-    /**
-     * @param array<mixed> $map
-     *
-     * @return array<string, string>
-     */
-    private static function typedStringMap(array $map): array
-    {
         $typed = [];
         foreach ($map as $key => $url) {
             self::assertIsString($key);
@@ -166,18 +114,18 @@ final class RegexPatternRuleDocLinksTest extends TestCase
     }
 
     /**
-     * The docs page a URL addresses, relative to docs/.
+     * The docs page a URL of the site addresses, relative to docs/.
      */
-    private static function docsPage(string $issueId, string $url): string
+    private static function docsPage(string $concept, string $url): string
     {
-        self::assertStringStartsWith(self::REPO_URL_PREFIX.'docs/', $url, \sprintf('%s does not link into the docs tree.', $issueId));
+        self::assertSame(1, preg_match('~^'.preg_quote(self::SITE, '~').'((?:[a-z0-9-]+/)+)#~', $url, $parts), \sprintf('%s does not link to a page of the docs site.', $concept));
 
-        return substr($url, \strlen(self::REPO_URL_PREFIX.'docs/'), (int) (strpos($url, '#') ?: \strlen($url)) - \strlen(self::REPO_URL_PREFIX.'docs/'));
+        return rtrim($parts[1], '/').'.md';
     }
 
     /**
-     * The anchors GitHub generates: lower case, punctuation dropped, spaces
-     * turned into hyphens, a repeated heading suffixed "-1", "-2"...
+     * The anchors the site generates: lower case, punctuation dropped,
+     * spaces turned into hyphens, a repeated heading suffixed "-1", "-2"...
      *
      * @return list<string>
      */

@@ -13,8 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
-use PHPRegex\Linter\Config\LintConfigSchema;
-
 /**
  * The two spellings of a lint rule's identifier: in full, as an issue
  * carries it ("regex.lint.quantifier.useless"), and short, as a rules map
@@ -53,6 +51,6 @@ final class RuleId
      */
     public static function isLintRule(string $id): bool
     {
-        return str_starts_with($id, self::PREFIX) && \in_array(self::short($id), LintConfigSchema::lintRuleIds(), true);
+        return str_starts_with($id, self::PREFIX) && \in_array(self::short($id), RuleCatalog::lintRuleIds(), true);
     }
 }

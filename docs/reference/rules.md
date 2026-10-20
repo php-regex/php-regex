@@ -31,6 +31,7 @@ This reference documents every lint rule that PHPRegex produces. It serves as th
 | [Bytes Without /u](#bytes-without-u)        | Multibyte text read as bytes      |
 | [Inline Flags](#inline-flags)                | Inline flag diagnostics           |
 | [Pattern Complexity](#pattern-complexity)    | When a pattern is too complex     |
+| [Sources](#sources)                          | A file the lint could not read    |
 | [ReDoS Security](#security-redos)            | Catastrophic backtracking         |
 | [Advanced Syntax](#advanced-syntax)          | Pointers to the tutorial          |
 | [Compatibility](#compatibility--limitations) | PHP and PCRE2 support             |
@@ -1434,11 +1435,28 @@ The Symfony and Laravel lint commands leave it out.
 
 ---
 
+## Sources
+
+### Unreadable Source File
+
+**Identifier:** `regex.lint.source.unreadable` (error)
+
+**When it triggers:** `regex lint` could not read a PHP file it was asked to scan: the file
+cannot be opened, or holding it and its tokens would not fit in `memory_limit`. Its
+patterns are not linted, so the file is reported instead of being left out silently, at
+error severity: the run fails.
+
+**Fix:** Do what the message names: make the file readable, raise `memory_limit`, or
+exclude the file (`--exclude`, or `exclude` in `regex.json`) when it holds no pattern you
+write, as a large generated file.
+
+---
+
 ## Security (ReDoS)
 
 ### Catastrophic Backtracking
 
-**Identifier:** `regex.redos` in PHPStan, whatever the severity; the message names it
+**Identifier:** `regex.lint.redos`; `regex.redos` in PHPStan, whatever the severity; the message names it
 
 **When it triggers:** The ReDoS analyzer proves how one match attempt grows with the input, by following PCRE's backtracking order, and hands back the input that triggers it. Patterns outside that model (backreferences, conditionals, recursion, an analysis over budget) are judged by heuristics, and the report says which of the two decided. The message prefix names the class: `Exponential backtracking (ReDoS)`, `Polynomial backtracking (ReDoS)` or `Potential backtracking (ReDoS)`.
 

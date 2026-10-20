@@ -229,6 +229,32 @@ final class DiagnosticConverterTest extends TestCase
     }
 
     /**
+     * A diagnostic the docs explain links to them through codeDescription,
+     * which an editor shows as a link on the code; an identifier the docs
+     * do not hold, and an error code, carry none.
+     */
+    #[Test]
+    public function test_a_documented_diagnostic_links_to_its_docs(): void
+    {
+        $range = ['start' => ['line' => 0, 'character' => 0], 'end' => ['line' => 0, 'character' => 1]];
+
+        $lint = $this->converter->convert(new RuleViolation(id: 'regex.lint.quantifier.useless', message: 'Useless.', offset: 1), $this->span);
+        $this->assertSame(['href' => 'https://php-regex.com/reference/rules/#useless-quantifier'], $lint['codeDescription'] ?? null);
+
+        $redos = $this->converter->fromRedos('regex.lint.redos', 'Risky.', [], false, $this->span);
+        $this->assertSame(['href' => 'https://php-regex.com/reference/rules/#catastrophic-backtracking'], $redos['codeDescription'] ?? null);
+
+        $unmatched = $this->converter->fromUnmatchedIgnore('Silences nothing.', $range);
+        $this->assertSame(['href' => 'https://php-regex.com/guides/cli/#markers-that-silence-nothing'], $unmatched['codeDescription'] ?? null);
+
+        $marker = $this->converter->fromTargetMarker('regex.target.invalid', 'Unreadable.', $range);
+        $this->assertSame(['href' => 'https://php-regex.com/guides/cli/#code-that-runs-on-some-php-versions-only'], $marker['codeDescription'] ?? null);
+
+        $this->assertArrayNotHasKey('codeDescription', $this->converter->convert(new RuleViolation(id: 'regex.lint.test', message: 'Test.', offset: 1), $this->span));
+        $this->assertArrayNotHasKey('codeDescription', $this->converter->fromParseError('Bad.', ErrorCode::QuantifierNothingToRepeat, $this->span));
+    }
+
+    /**
      * The span of a literal written on line 1 from column 10.
      */
     private static function span(string $literal): PatternSpan

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,7 +34,7 @@ final class LintRuleConfigurationTest extends TestCase
     #[Test]
     public function test_every_registered_rule_has_a_configuration_key(): void
     {
-        $missing = array_values(array_diff(self::registeredKeys(), array_keys(LintConfigSchema::LINT_RULES)));
+        $missing = array_values(array_diff(self::registeredKeys(), RuleCatalog::lintRuleIds()));
 
         $this->assertSame([], $missing, 'These rules cannot be configured in regex.json.');
     }
@@ -50,8 +51,8 @@ final class LintRuleConfigurationTest extends TestCase
     #[DataProvider('provideNewRuleDefaults')]
     public function test_a_new_rule_runs_by_default_unless_it_is_a_style_or_perf_rule(string $key, bool $default): void
     {
-        $this->assertArrayHasKey($key, LintConfigSchema::LINT_RULES);
-        $this->assertSame($default, LintConfigSchema::LINT_RULES[$key][1]);
+        $this->assertContains($key, RuleCatalog::lintRuleIds());
+        $this->assertSame($default, RuleCatalog::enables([], $key));
 
         $schemaRules = self::schemaRules();
         $this->assertArrayHasKey($key, $schemaRules);
@@ -120,7 +121,8 @@ final class LintRuleConfigurationTest extends TestCase
     #[Test]
     public function test_the_linter_runs_by_default_exactly_the_rules_the_schema_turns_on(): void
     {
-        foreach (LintConfigSchema::LINT_RULES as $key => [, $default]) {
+        foreach (RuleCatalog::lintRuleIds() as $key) {
+            $default = !\in_array($key, RuleCatalog::rulesOffByDefault(), true);
             $this->assertSame($default, PatternLinter::enables([], $key), $key);
             $this->assertSame($default, PatternLinter::enables([], 'regex.lint.'.$key), $key);
             $this->assertSame(!$default, PatternLinter::enables([$key => !$default], $key), $key);
@@ -138,7 +140,7 @@ final class LintRuleConfigurationTest extends TestCase
     #[DataProvider('provideAnalysisIssueRules')]
     public function test_an_analysis_issue_is_on_unless_the_rules_map_turns_it_off(array $rules, bool $expected): void
     {
-        $this->assertSame($expected, LintConfigSchema::leavesOn($rules, 'regex.lint.redos.search'));
+        $this->assertSame($expected, RuleCatalog::enables($rules, 'regex.lint.redos.search'));
     }
 
     /**

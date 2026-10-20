@@ -24,9 +24,11 @@ use PHPRegex\Parser\Node\QuantifierNode;
  */
 final class ZeroQuantifierRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.quantifier.zero';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.quantifier.zero'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -50,7 +52,7 @@ final class ZeroQuantifierRule extends AbstractLintRule
         }
 
         return [new RuleViolation(
-            'regex.lint.quantifier.zero',
+            self::ID,
             'Quantifier always repeats zero times; it can be removed.',
             $node->startPosition,
             'Remove the quantified element or replace it with an empty pattern.',

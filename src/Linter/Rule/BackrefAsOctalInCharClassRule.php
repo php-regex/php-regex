@@ -28,9 +28,11 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class BackrefAsOctalInCharClassRule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.charclass.backrefAsOctal';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.charclass.backrefAsOctal'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -69,7 +71,7 @@ final class BackrefAsOctalInCharClassRule extends AbstractLintRule
             }
 
             return [new RuleViolation(
-                'regex.lint.charclass.backrefAsOctal',
+                self::ID,
                 \sprintf(
                     'Suspicious \\%d inside character class: this is octal (\\x%02X), not a backreference to group %d.',
                     $num,

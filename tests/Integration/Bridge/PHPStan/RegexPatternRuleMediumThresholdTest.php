@@ -35,20 +35,20 @@ final class RegexPatternRuleMediumThresholdTest extends RuleTestCase
                     "Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking.\n".
                     "Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...).\n".
                     "\n".
-                    "Read more about possessive quantifiers: https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/04-quantifiers.md#possessive-quantifiers-performance\n".
-                    "Read more about atomic groups: https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/08-performance-redos.md#1-atomic-groups-\n".
-                    'Read more about catastrophic backtracking: https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#catastrophic-backtracking',
+                    "Read more about possessive quantifiers: https://php-regex.com/tutorial/04-quantifiers/#possessive-quantifiers-performance\n".
+                    "Read more about atomic groups: https://php-regex.com/tutorial/08-performance-redos/#1-atomic-groups-\n".
+                    'Read more about catastrophic backtracking: https://php-regex.com/reference/rules/#catastrophic-backtracking',
                 ),
             ],
             [
                 'Nested quantifiers can cause catastrophic backtracking.',
                 23,
-                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#nested-quantifiers-redos-risk",
+                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk",
             ],
             [
                 'Quantified capturing group "(...)" with "+": only the last iteration\'s capture is retained.',
                 23,
-                'Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.',
+                "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.\nRead more: https://php-regex.com/reference/rules/#quantified-capturing-group",
             ],
             [
                 'Polynomial backtracking (ReDoS): /a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a...',
@@ -58,13 +58,13 @@ final class RegexPatternRuleMediumThresholdTest extends RuleTestCase
                     'high, polynomial degree 60 (proven)',
                     true,
                     "Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.\n".
-                    "Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking.\n\nRead more about possessive quantifiers: https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/04-quantifiers.md#possessive-quantifiers-performance\nRead more about atomic groups: https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/08-performance-redos.md#1-atomic-groups-\nRead more about catastrophic backtracking: https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#catastrophic-backtracking",
+                    "Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking.\n\nRead more about possessive quantifiers: https://php-regex.com/tutorial/04-quantifiers/#possessive-quantifiers-performance\nRead more about atomic groups: https://php-regex.com/tutorial/08-performance-redos/#1-atomic-groups-\nRead more about catastrophic backtracking: https://php-regex.com/reference/rules/#catastrophic-backtracking",
                 ),
             ],
             [
                 'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
                 24,
-                "The first quantifier can match zero times already: consider dropping the whole quantified term.\nRead more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#optimal-quantifier-concatenation",
+                "The first quantifier can match zero times already: consider dropping the whole quantified term.\nRead more: https://php-regex.com/reference/rules/#optimal-quantifier-concatenation",
             ],
         ]);
     }

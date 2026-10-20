@@ -38,7 +38,7 @@ use PHPRegex\Parser\Node\SequenceNode;
  */
 final class PossessiveImpossibleRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.quantifier.possessiveImpossible';
+    public const ID = 'regex.lint.quantifier.possessiveImpossible';
 
     /**
      * Groups that hold the repeat without changing what it matches.

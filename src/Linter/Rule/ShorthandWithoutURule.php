@@ -26,9 +26,11 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class ShorthandWithoutURule extends AbstractLintRule
 {
+    public const ID = 'regex.lint.unicode.shorthandWithoutU';
+
     public function getRuleIds(): array
     {
-        return ['regex.lint.unicode.shorthandWithoutU'];
+        return [self::ID];
     }
 
     public function getNodeTypes(): array
@@ -47,7 +49,7 @@ final class ShorthandWithoutURule extends AbstractLintRule
         }
 
         return [new RuleViolation(
-            'regex.lint.unicode.shorthandWithoutU',
+            self::ID,
             \sprintf('Shorthand "\\%s" matches only ASCII without /u flag.', $node->value),
             $node->startPosition,
             'Add /u flag for Unicode support, or use \\p{L} for letters.',

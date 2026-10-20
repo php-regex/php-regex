@@ -33,7 +33,7 @@ use PHPRegex\Parser\Node\SequenceNode;
  */
 final class MultipleSpacesRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.literal.multipleSpaces';
+    public const ID = 'regex.lint.literal.multipleSpaces';
 
     public function getRuleIds(): array
     {
