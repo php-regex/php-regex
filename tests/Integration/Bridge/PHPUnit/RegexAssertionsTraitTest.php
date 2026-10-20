@@ -166,6 +166,19 @@ final class RegexAssertionsTraitTest extends TestCase
         $this->assertStringStartsWith('proven unsafe:', $failure);
     }
 
+    #[Test]
+    public function test_assert_pattern_is_linear_works_on_a_bare_assert_subclass(): void
+    {
+        PlainRegexAssert::assertPatternIsLinear('/^[a-z0-9-]{3,}$/');
+
+        $failure = $this->failingMessage(static function (): void {
+            PlainRegexAssert::assertPatternIsLinear('/(a+)+b/', 'the custom note');
+        });
+
+        $this->assertStringStartsWith('proven unsafe:', $failure);
+        $this->assertStringEndsWith("\nthe custom note", $failure);
+    }
+
     /**
      * The trait door words its failure from the verdict the constraint
      * reached, the caller's note after it, and keeps the constraint's own
