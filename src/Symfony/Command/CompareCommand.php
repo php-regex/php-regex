@@ -19,6 +19,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -138,7 +139,7 @@ final class CompareCommand extends Command
             $io->error('Comparison not supported: Pattern contains advanced features (e.g., backreferences).');
 
             return Command::FAILURE;
-        } catch (\Throwable $exception) {
+        } catch (ExceptionInterface $exception) {
             $io->error('Comparison failed: '.$exception->getMessage());
 
             return Command::FAILURE;

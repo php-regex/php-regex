@@ -230,9 +230,6 @@ return [
     'src/Symfony/Extractor/ValidatorPatternSource.php' => [
         'PHPRegex\Symfony\Extractor\ValidatorPatternSource::getMappedClasses()' => ['host-return', 1],
     ],
-    'src/Symfony/Security/SecurityAccessControlAnalyzer.php' => [
-        'PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer::normalizeList()' => ['host-return', 1],
-    ],
     'src/Symfony/Security/SecurityConfigExtractor.php' => [
         'PHPRegex\Symfony\Security\SecurityConfigExtractor::build()' => ['host-return', 1],
         'PHPRegex\Symfony\Security\SecurityConfigExtractor::listOf()' => ['validator-input', 1],

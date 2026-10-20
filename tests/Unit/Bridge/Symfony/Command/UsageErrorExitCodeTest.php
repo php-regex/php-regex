@@ -108,6 +108,15 @@ final class UsageErrorExitCodeTest extends TestCase
         $this->assertStringContainsString('Comparison not supported', $tester->getDisplay());
     }
 
+    #[Test]
+    public function test_a_pattern_the_parser_refuses_exits_failure_with_its_reason(): void
+    {
+        $tester = new CommandTester(new CompareCommand(Regex::create()));
+
+        $this->assertSame(Command::FAILURE, $tester->execute(['pattern1' => '/(a/', 'pattern2' => '/a/']));
+        $this->assertStringContainsString('Comparison failed: ', $tester->getDisplay());
+    }
+
     /**
      * @param list<AnalyzerInterface>|null $analyzers
      */

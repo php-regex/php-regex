@@ -86,3 +86,7 @@ CHANGELOG
  * `regex:routes` and `regex:security` print the sections of `regex:analyze`,
    the same analyzers in the same layout; `-v` adds the counts of the
    analysis and why each entry left out was left out.
+ * `regex:security` and `regex:analyze` skip a pair of `access_control` rules
+   whose path the automata cannot read (a backreference), where they stopped
+   on an uncaught exception; the commands catch the library's exceptions
+   only, and any other error surfaces.

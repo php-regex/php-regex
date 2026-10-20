@@ -52,20 +52,9 @@ final class SecurityFirewallAnalyzer
                 continue;
             }
 
-            $normalized = $this->patternNormalizer->normalize($pattern);
-
-            try {
-                $analysis = $this->regex->redos($normalized);
-            } catch (\Throwable $exception) {
-                $skipped[] = [
-                    'name' => $firewall['name'],
-                    'file' => $firewall['file'],
-                    'line' => $firewall['line'],
-                    'reason' => 'ReDoS analysis failed: '.$exception->getMessage(),
-                ];
-
-                continue;
-            }
+            // The analysis gives a pattern the library refuses back as its
+            // error; whatever it throws is a bug, and surfaces.
+            $analysis = $this->regex->redos($this->patternNormalizer->normalize($pattern));
 
             if (null !== $analysis->error) {
                 $skipped[] = [

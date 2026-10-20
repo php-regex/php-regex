@@ -141,4 +141,96 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
         $this->assertCount(0, $report->skippedRules);
         $this->assertSame(1, $report->stats['rules']);
     }
+
+    /**
+     * Symfony wraps the path in braces: a lone "}" closes them early, and
+     * the parser refuses what follows. The rule is left out, with the
+     * reason, and the next rule is still read.
+     */
+    #[Test]
+    public function test_a_path_the_parser_refuses_skips_its_rule(): void
+    {
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: 'a}b'),
+            self::rule(path: '^/admin', line: 4),
+        ]);
+
+        $this->assertSame([['index' => 1, 'file' => 'security.yaml', 'line' => 3, 'reason' => 'Invalid path regex.']], $report->skippedRules);
+        $this->assertSame(2, $report->stats['rules']);
+    }
+
+    #[Test]
+    public function test_a_host_the_parser_refuses_is_not_evaluated(): void
+    {
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/admin', host: 'admin{'),
+        ]);
+
+        $this->assertSame([], $report->skippedRules);
+        $this->assertSame([1], $report->rulesWithUnsupportedHosts);
+    }
+
+    /**
+     * A backreference leaves the regular subset the solver reads: the pair
+     * is counted as skipped, and the other pairs are still compared.
+     */
+    #[Test]
+    public function test_a_pair_the_solver_cannot_read_is_skipped(): void
+    {
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/(a)\\1'),
+            self::rule(path: '^/admin', line: 4),
+            self::rule(path: '^/admin/users', line: 5),
+        ], true);
+
+        $this->assertSame(1, $report->stats['shadowed']);
+        $this->assertSame(2, $report->stats['skipped_pairs']);
+        $this->assertSame(['^/admin', '^/admin/users'], [$report->conflicts[0]['rule']['path'], $report->conflicts[0]['conflict']['path']]);
+    }
+
+    #[Test]
+    public function test_hosts_the_solver_cannot_compare_leave_the_paths_to_decide(): void
+    {
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/admin', host: '^(a)\\1\\.example\\.com$'),
+            self::rule(path: '^/admin/users', host: '^b\\.example\\.com$', line: 4),
+        ]);
+
+        $this->assertSame(1, $report->stats['shadowed']);
+        $this->assertSame(1, $report->stats['host_checks']);
+    }
+
+    #[Test]
+    public function test_paths_that_share_no_request_are_not_compared_further(): void
+    {
+        $report = (new SecurityAccessControlAnalyzer(Regex::create()))->analyze([
+            self::rule(path: '^/admin$'),
+            self::rule(path: '^/shop$', line: 4),
+        ], true);
+
+        $this->assertSame([], $report->conflicts);
+        $this->assertSame(1, $report->stats['path_intersections']);
+        $this->assertSame(0, $report->stats['path_subsets']);
+    }
+
+    /**
+     * @param list<string> $roles
+     *
+     * @return array{file: string, line: int, path: ?string, host: ?string, roles: array<int, string>, methods: array<int, string>, ips: array<int, string>, allowIf: ?string, requestMatcher: ?string, requiresChannel: ?string}
+     */
+    private static function rule(?string $path, ?string $host = null, array $roles = ['ROLE_ADMIN'], int $line = 3): array
+    {
+        return [
+            'file' => 'security.yaml',
+            'line' => $line,
+            'path' => $path,
+            'host' => $host,
+            'roles' => $roles,
+            'methods' => [],
+            'ips' => [],
+            'allowIf' => null,
+            'requestMatcher' => null,
+            'requiresChannel' => null,
+        ];
+    }
 }

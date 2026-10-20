@@ -21,6 +21,7 @@ use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
+use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -96,6 +97,7 @@ final class SecurityAccessControlAnalyzer
         $equivalent = 0;
         $redundant = 0;
         $pairsTotal = 0;
+        $skippedPairs = 0;
         $pairsFilteredMethods = 0;
         $hostChecks = 0;
         $hostIntersections = 0;
@@ -119,15 +121,22 @@ final class SecurityAccessControlAnalyzer
                     continue;
                 }
 
-                $pathIntersections++;
-                $intersection = $this->solver->intersection($left['pattern'], $right['pattern'], $options);
-                if ($intersection->isEmpty) {
+                try {
+                    $pathIntersections++;
+                    $intersection = $this->solver->intersection($left['pattern'], $right['pattern'], $options);
+                    if ($intersection->isEmpty) {
+                        continue;
+                    }
+
+                    $pathSubsets++;
+                    $equivalence = $this->solver->equivalent($left['pattern'], $right['pattern'], $options);
+                } catch (ComplexityException) {
+                    $skippedPairs++;
+
                     continue;
                 }
 
                 $example = $intersection->example;
-                $pathSubsets++;
-                $equivalence = $this->solver->equivalent($left['pattern'], $right['pattern'], $options);
                 $isEquivalent = $equivalence->isEquivalent;
                 $isSubset = null === $equivalence->rightOnlyExample;
                 if ($isEquivalent) {
@@ -184,6 +193,7 @@ final class SecurityAccessControlAnalyzer
             'equivalent' => $equivalent,
             'redundant' => $redundant,
             'skipped_rules' => \count($skippedRules),
+            'skipped_pairs' => $skippedPairs,
             'pairs_total' => $pairsTotal,
             'pairs_filtered_methods' => $pairsFilteredMethods,
             'host_checks' => $hostChecks,
@@ -255,18 +265,16 @@ final class SecurityAccessControlAnalyzer
             $notes[] = 'requires_channel is not evaluated.';
         }
 
+        // Only the parser's refusal of the delimited path is the path's
+        // fault; anything else is a bug and surfaces.
         try {
             $pathPattern = $this->normalizePattern($path);
-        } catch (\Throwable $exception) {
-            $reason = $exception instanceof ComplexityException
-                ? $exception->getMessage()
-                : 'Invalid path regex.';
-
+        } catch (ExceptionInterface) {
             $skippedRules[] = [
                 'index' => $index,
                 'file' => $rule['file'],
                 'line' => $rule['line'],
-                'reason' => $reason,
+                'reason' => 'Invalid path regex.',
             ];
 
             return null;
@@ -278,7 +286,7 @@ final class SecurityAccessControlAnalyzer
         if (null !== $host && '' !== trim($host, " \t\n\r\0\x0B")) {
             try {
                 $hostPattern = $this->normalizePattern($host, true);
-            } catch (\Throwable) {
+            } catch (ExceptionInterface) {
                 $hostUnsupported = true;
                 $rulesWithUnsupportedHosts[] = $index;
                 $notes[] = 'Host restrictions are not evaluated.';
@@ -377,7 +385,7 @@ final class SecurityAccessControlAnalyzer
     }
 
     /**
-     * @param array<int, mixed> $values
+     * @param array<int, string> $values
      *
      * @return array<int, string>
      */
@@ -385,9 +393,6 @@ final class SecurityAccessControlAnalyzer
     {
         $normalized = [];
         foreach ($values as $value) {
-            if (!\is_string($value)) {
-                continue;
-            }
             $trimmed = trim($value, " \t\n\r\0\x0B");
             if ('' !== $trimmed) {
                 $normalized[] = $trimmed;
@@ -499,7 +504,14 @@ final class SecurityAccessControlAnalyzer
 
         $hostChecks++;
         $hostIntersections++;
-        $intersection = $this->solver->intersection($left['hostPattern'], $right['hostPattern'], $options);
+
+        try {
+            $intersection = $this->solver->intersection($left['hostPattern'], $right['hostPattern'], $options);
+        } catch (ComplexityException) {
+            // Hosts the solver cannot compare may share a request: the
+            // paths decide, as for a host that could not be read.
+            return true;
+        }
 
         return !$intersection->isEmpty;
     }
