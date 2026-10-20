@@ -212,6 +212,14 @@ Each checked with pcre2test 10.32 to 10.49.
   there, and is refused at 17 from 10.35; the library refuses it at 17 on
   10.34 too.
 
+- Up to 10.42 an item is added to the length of its branch before the
+  repeat after it is read: `(?<=a{65535}b?)` is "lookbehind assertion is
+  too long" at 0 there, where the library says
+  `regex.lookbehind.variable_length_not_supported` (same offset).
+- `Regex::info()` reports the longest lookbehind of one PCRE never measures:
+  `(?<=(*ACCEPT)(?<=abcd))` and `(?<=(?(DEFINE)(?<=abcd)))` have no
+  "Max lookbehind" in pcre2test 10.49 `/I`; the library says 4.
+
 ## The articles section: what is left
 
 - The next articles, in priority order: variable-length lookbehind across
