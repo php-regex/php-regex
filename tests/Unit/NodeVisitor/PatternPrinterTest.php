@@ -371,6 +371,40 @@ final class PatternPrinterTest extends TestCase
         $bytes = implode('', array_map(\chr(...), [...range(0x03, 0x08), ...range(0x0E, 0x1F)]));
         yield 'a comment holding every control byte but the last' => ['pattern' => '{a(?#{'.substr($bytes, 0, -1).')b}c}', 'expected' => '{a(?#{'.substr($bytes, 0, -1).')b}c}', 'subjects' => ['ab}c' => 1, 'abc' => 0]];
         yield 'a comment holding every control byte' => ['pattern' => '{a(?#{'.$bytes.')b}c}', 'expected' => '{a(?#{'.$bytes.')b}c}', 'subjects' => ['ab}c' => 1, 'abc' => 0]];
+        // The mark of a literal bracket is a control byte the source does not
+        // hold, or a longer text where it holds them all.
+        yield 'a comment holding the first control byte, then a brace a mark name balances' => ['pattern' => "{(?#\x03)\\Q{a\\E(*MARK:})}", 'expected' => "{(?#\x03){a(*MARK:})}", 'subjects' => ['{a' => 1, 'a' => 0]];
+        yield 'a comment holding the first two control bytes, then a brace a mark name balances' => ['pattern' => "{(?#\x03\x04)\\Q{a\\E(*MARK:})}", 'expected' => "{(?#\x03\x04){a(*MARK:})}", 'subjects' => ['{a' => 1, 'a' => 0]];
+        yield 'a comment holding every control byte, then a brace a mark name balances' => ['pattern' => '{(?#'.$bytes.')\Q{a\E(*MARK:})}', 'expected' => '{(?#'.$bytes.'){a(*MARK:})}', 'subjects' => ['{a' => 1, 'a' => 0]];
+    }
+
+    /**
+     * Where pretty printing writes a bracket delimiter, the backslash of a
+     * literal bracket stands as a mark while lines are measured: a mark of
+     * one byte, whatever control bytes the source holds, measures as the
+     * backslash does, and the lines break where they would without them.
+     */
+    #[Test]
+    #[DataProvider('provideControlBytesInABracketDelimitedPattern')]
+    public function test_pretty_mode_lays_out_a_bracket_delimited_pattern_alike_whatever_control_bytes_it_holds(string $bytes): void
+    {
+        $pattern = static fn (string $held): string => '[(?:(?:(?:\[:a:\](?#'.$held.')|zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz)\[:a:\])yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy # '.$held."\n\\[:a:\\])]x";
+        $printed = static fn (string $held): string => Regex::create()->parse($pattern($held))->accept(new PatternPrinter(true, true));
+
+        $subject = '[:a:][:a:]'.str_repeat('y', 42).'[:a:]';
+
+        $this->assertSame(1, preg_match($pattern($bytes), $subject));
+        $this->assertSame($printed(''), str_replace($bytes, '', $printed($bytes)));
+        $this->assertSame(1, preg_match($printed($bytes), $subject));
+    }
+
+    /**
+     * @return iterable<string, array{bytes: string}>
+     */
+    public static function provideControlBytesInABracketDelimitedPattern(): iterable
+    {
+        yield 'the first control byte' => ['bytes' => "\x03"];
+        yield 'the first two control bytes' => ['bytes' => "\x03\x04"];
     }
 
     /**

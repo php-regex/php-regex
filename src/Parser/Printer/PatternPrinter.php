@@ -101,6 +101,14 @@ final class PatternPrinter extends AbstractNodeVisitor
     private const PRETTY_WIDTH = 80;
 
     /**
+     * Where pretty printing writes a bracket delimiter, the bytes that may
+     * stand for the backslash of a literal bracket until the balance is
+     * known (see bracketMark): control bytes that are no white space, which
+     * no trailing-comment marker holds.
+     */
+    private const BRACKET_MARKS = "\x03\x04\x05\x06\x07\x08\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F";
+
+    /**
      * How far back from the end of the text joined so far an escape or a
      * repeat count may start that the next item would extend.
      */
@@ -1941,7 +1949,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $this->delimiter = $node->delimiter;
         $this->closingDelimiter = PatternParser::closingDelimiter($node->delimiter);
         $this->bracketMark = self::MODE_PRETTY === $this->mode && $this->delimiter !== $this->closingDelimiter
-            ? self::markAbsentFrom($node->source ?? $node->accept(new self()))
+            ? self::markAbsentFrom($node->source ?? $node->accept(new self()), "\x03\x04", "\x04", self::BRACKET_MARKS)
             : null;
         // Pretty printing normalizes the spelling: it writes from the tree.
         $this->source = self::MODE_PRETTY === $this->mode ? null : $node->source;
@@ -2025,7 +2033,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $written ?? $inline;
         }
 
-        $trail = self::markerAbsentFrom(($this->source ?? '').$inline);
+        $trail = self::markAbsentFrom(($this->source ?? '').$inline, PatternLayout::TRAIL, "\x02");
         $this->addsExtended = !str_contains($node->flags, 'x');
 
         // Under the x it adds, a space may part two tokens a "(?:)" parted
@@ -2228,23 +2236,6 @@ final class PatternPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * A marker for trailing comments that the text does not hold. Its first
-     * byte occurs nowhere else in it, so no text before it can end in a
-     * piece of it that the marker completes.
-     *
-     * @return non-empty-string
-     */
-    private static function markerAbsentFrom(string $text): string
-    {
-        $marker = PatternLayout::TRAIL;
-        while (str_contains($text, $marker)) {
-            $marker .= "\x02";
-        }
-
-        return $marker;
-    }
-
-    /**
      * Whether a verb name or a callout string holds a raw line break: no
      * escape spells one there.
      */
@@ -2281,23 +2272,31 @@ final class PatternPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * A mark the text does not hold: a control byte, or when the text holds
-     * them all, "\x03" followed by as many "\x04" as it takes. Its first
-     * byte occurs nowhere else in it, so no text before it can end in a
-     * piece of it that the mark completes.
+     * A mark the text does not hold, to stand in it for what can only be
+     * written once the whole text is known: the first of $bytes the text
+     * does not hold, or else $mark, lengthened by $filler until the text
+     * holds no such text. $filler is not the first byte of $mark, so that
+     * byte occurs nowhere else in the mark: no text before the mark can end
+     * in a piece of it that the mark completes.
+     *
+     * A mark that stands for one character in a line the layout measures,
+     * the backslash of a literal bracket, is one byte wherever it can be:
+     * it measures as that character does, and where a line breaks does not
+     * depend on the control bytes the pattern holds.
+     *
+     * @param non-empty-string $mark
      *
      * @return non-empty-string
      */
-    private static function markAbsentFrom(string $text): string
+    private static function markAbsentFrom(string $text, string $mark, string $filler, string $bytes = ''): string
     {
-        $absent = str_replace(Bytes::split(count_chars($text, 3)), '', "\x03\x04\x05\x06\x07\x08\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F");
+        $absent = '' === $bytes ? '' : str_replace(Bytes::split(count_chars($text, 3)), '', $bytes);
         if ('' !== $absent) {
             return $absent[0];
         }
 
-        $mark = "\x03\x04";
         while (str_contains($text, $mark)) {
-            $mark .= "\x04";
+            $mark .= $filler;
         }
 
         return $mark;
