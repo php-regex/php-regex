@@ -26,7 +26,7 @@ Documentation: [php-regex.com](https://php-regex.com) — the [API reference](ht
 Features
 --------
 
-- `[0-9]` becomes `\d`, `[a-zA-Z0-9_]` becomes `\w`; character class members are sorted, merged and deduplicated
+- `[0-9]` becomes `\d`; character class members are sorted, merged and deduplicated
 - Repeated items collapse into a quantifier, `/aaaa/` becoming `/a{4}/`, from `min_quantifier_count` repetitions on
 - Alternatives sharing a prefix share it, `/abc|abd/` becoming `/ab(?:c|d)/` — opt-in
 - A quantifier becomes possessive where nothing after it can take back what it matched, `/[0-9]+;/` becoming `/\d++;/` — opt-in
@@ -56,7 +56,7 @@ the same options in camelCase (`OptimizerOptions::fromCamelCaseArray()`).
 | Option                      | Type | Default | What it does                                                                |
 |-----------------------------|------|---------|-----------------------------------------------------------------------------|
 | `digits`                    | bool | `true`  | `[0-9]` becomes `\d`                                                        |
-| `word`                      | bool | `true`  | `[a-zA-Z0-9_]` becomes `\w`                                                 |
+| `word`                      | bool | `true`  | `[a-zA-Z0-9_]` becomes `\w` where the two match alike: never today, see below |
 | `ranges`                    | bool | `true`  | runs of consecutive characters become ranges                                |
 | `canonicalize_char_classes` | bool | `true`  | members of a class are sorted and merged                                    |
 | `possessive`                | bool | `false` | a quantifier becomes possessive where nothing after it can take the match back |
@@ -71,6 +71,15 @@ the proof builds automata for both patterns, which costs time on large ones,
 and a rewrite it disproves is withdrawn, the original pattern returned. The
 proof works within a budget of its own: a check that runs out of it proves
 nothing, and the rewrite is withdrawn as well.
+
+A rewrite holds whatever locale the program runs under. Without `u`, PHP builds
+the tables of `\w`, `\s` and the POSIX classes from `LC_CTYPE` once a program
+calls `setlocale()`: under a Latin-1 locale `\w` takes `"\xE9"`, which
+`[a-zA-Z0-9_]` does not, and with `u` it takes every letter. Nothing in a
+pattern says which locale it runs under, so `word` writes no `\w` today.
+`[0-9]` becomes `\d` under every locale, as the C library's digits are the ten
+ASCII ones, but not under `u` or `(*UCP)`, where `\d` matches every decimal
+digit.
 
 Under `/x` the rewrite keeps the pattern as its author laid it out: only the
 parts it changes are written again, in place, and the newlines, indents and

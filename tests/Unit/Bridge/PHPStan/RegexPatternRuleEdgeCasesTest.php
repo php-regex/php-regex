@@ -327,14 +327,18 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertTrue($hasOptimization);
     }
 
-    public function test_default_optimization_config_enables_word_optimization(): void
+    /**
+     * "\w" follows the locale without "u": the word class is not offered
+     * as one, and only a reordering would be left to suggest.
+     */
+    public function test_default_optimization_config_keeps_the_word_class(): void
     {
         $rule = new RegexPatternRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
 
         $errors = $this->errorsFor($rule, '/[A-Za-z0-9_]+/', 11);
 
         $identifiers = array_map(static fn ($error) => $error->getIdentifier(), $errors);
-        $this->assertContains('regex.optimization', $identifiers);
+        $this->assertNotContains('regex.optimization', $identifiers);
     }
 
     public function test_default_optimization_config_avoids_cross_category_ranges(): void

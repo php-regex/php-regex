@@ -28,7 +28,10 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 
 **Optimizer**
 - **Semantics:** Applies semantic-preserving rewrites to simplify patterns.
-- **Guarantee:** Sound for supported transformations; does not claim completeness.
+- **Guarantee:** Sound for supported transformations; does not claim completeness. A rewrite holds under every
+  `LC_CTYPE` locale: it introduces no `\w`, `\s` or POSIX class that reads the locale's tables without `u`, so
+  `[a-zA-Z0-9_]` stays a class, and `[0-9]` becomes `\d`, the ten ASCII digits under every locale, only without
+  `u` and `(*UCP)`.
 - **Fallbacks:** Unsafe rewrites are skipped when uncertainty is detected.
 
 ## ReDoS Analysis

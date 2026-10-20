@@ -203,7 +203,7 @@ final class Configuration implements ConfigurationInterface
                         ->end()
                         ->booleanNode('word')
                             ->defaultTrue()
-                            ->info('Optimize word character classes (e.g., [A-Za-z0-9_] -> \\w).')
+                            ->info('Write [A-Za-z0-9_] as \\w where they match alike: never today, as \\w follows the locale without u and Unicode with it.')
                         ->end()
                         ->booleanNode('ranges')
                             ->defaultTrue()

@@ -48,8 +48,11 @@ final class OptimizerOptions
     ];
 
     /**
-     * @param bool $digits                  "[0-9]" becomes "\d"
-     * @param bool $word                    "[a-zA-Z0-9_]" becomes "\w"
+     * @param bool $digits                  "[0-9]" becomes "\d", but under "u" or "(*UCP)", where "\d"
+     *                                      matches every decimal digit
+     * @param bool $word                    "[a-zA-Z0-9_]" becomes "\w" where the two match alike: never
+     *                                      today, as "\w" follows the LC_CTYPE locale without "u", a
+     *                                      Latin-1 one giving it "\xE9", and every letter with it
      * @param bool $ranges                  runs of consecutive characters become ranges
      * @param bool $canonicalizeCharClasses members of a class are sorted and merged
      * @param bool $possessive              a quantifier becomes possessive where nothing after it can

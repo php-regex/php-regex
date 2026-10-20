@@ -140,7 +140,7 @@ final class OptimizerSafetyTest extends TestCase
 
         // --- 4. Character Class Optimization (Safe) ---
         yield 'Digits to char type' => ['/[0-9]/', '/\d/', ['possessive' => true]];
-        yield 'Word to char type' => ['/[a-zA-Z0-9_]/', '/\w/', ['possessive' => true]];
+        yield 'Word class kept, its shorthand following the locale' => ['/[a-zA-Z0-9_]/', '/[0-9A-Z_a-z]/', ['possessive' => true]];
 
         // --- 5. Group Unwrapping (Safe) ---
         yield 'Unwrap non-capturing group' => ['/(?:abc)/', '/abc/', ['possessive' => true]];

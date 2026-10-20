@@ -42,6 +42,8 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class RewriterEdgeCasesTest extends TestCase
@@ -709,28 +711,20 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertTrue($result); // defaults to true when unknown
     }
 
-    public function test_is_full_word_class_covers_all_cases(): void
+    /**
+     * "\w" reads the locale's tables without "u" and Unicode properties
+     * with it: the full word class stays a class, written in order.
+     */
+    public function test_the_full_word_class_is_never_written_as_a_shorthand(): void
     {
-        $optimizer = new Rewriter();
+        $regex = Regex::create();
+        $printer = new PatternPrinter();
 
-        // Test with complete word class parts
-        $parts = [
-            new RangeNode(new LiteralNode('a', 0, 1), new LiteralNode('z', 1, 2), 0, 2),
-            new RangeNode(new LiteralNode('A', 2, 3), new LiteralNode('Z', 3, 4), 2, 4),
-            new RangeNode(new LiteralNode('0', 4, 5), new LiteralNode('9', 5, 6), 4, 6),
-            new LiteralNode('_', 6, 7),
-        ];
-        $result = $this->invokePrivate($optimizer, 'isFullWordClass', [$parts]);
-        $this->assertTrue($result);
+        $result = $regex->parse('/[a-zA-Z0-9_]/')->accept(new Rewriter());
+        $this->assertSame('/[0-9A-Z_a-z]/', $result->accept($printer));
 
-        // Test with incomplete word class
-        $parts2 = [
-            new RangeNode(new LiteralNode('a', 0, 1), new LiteralNode('z', 1, 2), 0, 2),
-            new RangeNode(new LiteralNode('A', 2, 3), new LiteralNode('Z', 3, 4), 2, 4),
-            // missing digits and underscore
-        ];
-        $result = $this->invokePrivate($optimizer, 'isFullWordClass', [$parts2]);
-        $this->assertFalse($result);
+        $result = $regex->parse('/[^a-zA-Z0-9_]/')->accept(new Rewriter());
+        $this->assertSame('/[^0-9A-Z_a-z]/', $result->accept($printer));
     }
 
     public function test_parse_quantifier_count_covers_all_cases(): void

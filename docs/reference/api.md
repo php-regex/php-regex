@@ -507,7 +507,7 @@ use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->optimize('/[0-9]+/', [
     'digits' => true,                    // [0-9] -> \d
-    'word' => true,                      // [A-Za-z0-9_] -> \w
+    'word' => true,                      // [A-Za-z0-9_] stays: \w follows the locale
     'ranges' => true,                    // Normalize ranges
     'canonicalize_char_classes' => true, // Normalize character class order/dedup
     'possessive' => false,               // Add possessive quantifiers

@@ -1010,6 +1010,14 @@ one and cast the other.
 `digits`, `word` and `ranges` are unchanged. `RegexLintRequest::$optimizations`
 and `RegexAnalysisService::suggestOptimizations()` take an `OptimizerOptions`.
 
+`word` no longer writes `[a-zA-Z0-9_]` as `\w`: without `u`, `\w` follows the
+`LC_CTYPE` locale once a program calls `setlocale()`, so the two differ under a
+Latin-1 locale, and with `u` it matches every letter. The class comes back
+with its members sorted, `[0-9A-Z_a-z]`. A test that expected `/\w+/` from
+`optimize('/[a-zA-Z0-9_]+/')` expects the class now; write `\w` yourself where
+the program runs under the C locale. `[0-9]` no longer becomes `\d` under
+`(*UCP)`, as under `u`.
+
 #### `ValidationResult::$error` is the message alone
 
 In 1.x a failed validation's `$error` ended with the caret snippet, on the

@@ -33,7 +33,7 @@ final class JsonOutputContractTest extends TestCase
     /**
      * A lint issue (a{1}), a ReDoS issue with its analysis ((a+)+$ under
      * --redos), an invalid pattern with its validation ((a), and an
-     * optimization ([a-zA-Z0-9_]+ is \w+).
+     * optimization ([0-9]+ is \d+).
      */
     private const LINTED_FILE = <<<'PHP'
         <?php
@@ -41,7 +41,7 @@ final class JsonOutputContractTest extends TestCase
         preg_match('/a{1}/', $s);
         preg_match('/(a+)+$/', $s);
         preg_match('/(a/', $s);
-        preg_match('/[a-zA-Z0-9_]+/', $s);
+        preg_match('/[0-9]+/', $s);
 
         PHP;
 
@@ -368,12 +368,12 @@ final class JsonOutputContractTest extends TestCase
         $this->assertNull($redos['validation']);
 
         // The optimization.
-        $optimizations = JsonContract::asArray($byPattern['/[a-zA-Z0-9_]+/']['optimizations']);
+        $optimizations = JsonContract::asArray($byPattern['/[0-9]+/']['optimizations']);
         $this->assertCount(1, $optimizations);
         $optimization = JsonContract::asArray($optimizations[0]);
-        $this->assertSame(['original' => '/[a-zA-Z0-9_]+/', 'optimized' => '/\w+/', 'changes' => ['Optimized pattern.']], $optimization['optimization']);
-        $this->assertSame(10, $optimization['savings']);
-        $this->assertSame([], $byPattern['/[a-zA-Z0-9_]+/']['issues']);
+        $this->assertSame(['original' => '/[0-9]+/', 'optimized' => '/\d+/', 'changes' => ['Optimized pattern.']], $optimization['optimization']);
+        $this->assertSame(3, $optimization['savings']);
+        $this->assertSame([], $byPattern['/[0-9]+/']['issues']);
     }
 
     #[Test]

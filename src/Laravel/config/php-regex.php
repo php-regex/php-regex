@@ -177,7 +177,8 @@ return [
         'digits' => true,
 
         /*
-        | Optimize word character classes (e.g., [A-Za-z0-9_] -> \w).
+        | Write [A-Za-z0-9_] as \w where they match alike: never today, as \w
+        | follows the locale without u and Unicode with it.
         */
         'word' => true,
 

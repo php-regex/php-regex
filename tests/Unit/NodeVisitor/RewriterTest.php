@@ -289,9 +289,9 @@ final class RewriterTest extends TestCase
         );
     }
 
-    public function test_full_word_optimization(): void
+    public function test_full_word_class_is_kept_without_u(): void
     {
-        // [a-zA-Z0-9_] -> \w
+        // [a-zA-Z0-9_] is not \w without u: a Latin-1 locale gives \w "\xE9"
         $regex = Regex::create();
         $ast = $regex->parse('/[a-zA-Z0-9_]/');
         $optimizer = new Rewriter();
@@ -299,8 +299,8 @@ final class RewriterTest extends TestCase
         /** @var RegexNode $newAst */
         $newAst = $ast->accept($optimizer);
 
-        $this->assertInstanceOf(CharTypeNode::class, $newAst->pattern);
-        $this->assertSame('w', $newAst->pattern->value);
+        $this->assertInstanceOf(CharClassNode::class, $newAst->pattern);
+        $this->assertSame('/[0-9A-Z_a-z]/', $newAst->accept(new PatternPrinter()));
     }
 
     public function test_does_not_optimize_word_if_flag_u_present(): void
@@ -380,15 +380,15 @@ final class RewriterTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $optimized->pattern);
     }
 
-    public function test_full_word_class_optimization_success(): void
+    public function test_full_word_class_stays_a_class(): void
     {
-        // Logic: [a-zA-Z0-9_] -> \w
+        // Logic: [a-zA-Z0-9_] stays a class, "\w" following the locale
         $ast = $this->regex->parse('/[a-zA-Z0-9_]/');
         $optimized = $ast->accept($this->optimizer);
 
         $this->assertInstanceOf(RegexNode::class, $optimized);
-        $this->assertInstanceOf(CharTypeNode::class, $optimized->pattern);
-        $this->assertSame('w', $optimized->pattern->value);
+        $this->assertInstanceOf(CharClassNode::class, $optimized->pattern);
+        $this->assertFalse($optimized->pattern->isNegated);
     }
 
     public function test_full_word_class_optimization_missing_underscore(): void
@@ -518,7 +518,8 @@ final class RewriterTest extends TestCase
         $resultEnabled = $optimizedEnabled->accept($compiler);
         $this->assertSame('/\d/', $resultEnabled, 'Digits optimization should work when enabled');
 
-        // Test disabling word optimization
+        // The word option writes no "\w" either way: its table follows the
+        // locale without "u".
         $ast2 = $regex->parse('/[a-zA-Z0-9_]/');
         $optimizerWordDisabled = new Rewriter(optimizeWord: false);
         $optimizedWordDisabled = $ast2->accept($optimizerWordDisabled);
@@ -529,7 +530,7 @@ final class RewriterTest extends TestCase
         $optimizerWordEnabled = new Rewriter(optimizeWord: true);
         $optimizedWordEnabled = $ast2->accept($optimizerWordEnabled);
         $resultWordEnabled = $optimizedWordEnabled->accept($compiler);
-        $this->assertSame('/\w/', $resultWordEnabled, 'Word optimization should work when enabled');
+        $this->assertSame('/[0-9A-Z_a-z]/', $resultWordEnabled, 'The word class stays a class');
     }
 
     public function test_strict_ranges_option(): void
@@ -687,8 +688,9 @@ final class RewriterTest extends TestCase
         yield 'quantified with u flag - should not optimize' => ['/[0-9]+/u', null, '[0-9]+ with u flag should remain as CharClass'];
     }
 
-    public function test_negated_word_class_optimizes_to_uppercase_w(): void
+    public function test_negated_word_class_stays_a_class(): void
     {
+        // "\W" reads the locale's tables without "u".
         $regex = Regex::create();
         $ast = $regex->parse('/[^a-zA-Z0-9_]+/');
         $optimizer = new Rewriter();
@@ -697,7 +699,7 @@ final class RewriterTest extends TestCase
         $compiler = new PatternPrinter();
         $result = $optimized->accept($compiler);
 
-        $this->assertSame('/\W+/', $result);
+        $this->assertSame('/[^0-9A-Z_a-z]+/', $result);
     }
 
     public function test_negated_word_class_not_optimized_in_unicode_mode(): void

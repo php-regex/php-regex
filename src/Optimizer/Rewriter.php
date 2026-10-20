@@ -69,6 +69,12 @@ final class Rewriter extends AbstractNodeVisitor
 
     private bool $unicodeMode = false;
 
+    /**
+     * Whether "\d", "\s" and "\w" read Unicode properties: "/u", or
+     * "(*UCP)".
+     */
+    private bool $unicodeProperties = false;
+
     private bool $isInsideQuantifier = false;
 
     /**
@@ -110,7 +116,13 @@ final class Rewriter extends AbstractNodeVisitor
          * This can make verbose (/x) patterns harder to read.
          */
         private readonly bool $factorize = false,
-        int $minQuantifierCount = 4
+        int $minQuantifierCount = 4,
+        /**
+         * The LC_CTYPE locale the pattern runs under, when it is known:
+         * "\w" stands for "[a-zA-Z0-9_]" under "C" and "POSIX" only, and
+         * null, the locale unknown, writes no "\w".
+         */
+        private readonly ?string $locale = null,
     ) {
         $this->minQuantifierCount = max(2, $minQuantifierCount);
         $this->charSetAnalyzer = new CharSetAnalyzer();
@@ -123,6 +135,7 @@ final class Rewriter extends AbstractNodeVisitor
     {
         $this->flags = $node->flags;
         $this->unicodeMode = str_contains($this->flags, 'u');
+        $this->unicodeProperties = UnicodeProperties::on($node);
         $this->charSetAnalyzer = new CharSetAnalyzer($this->flags);
         $this->lazyByDefault = str_contains($this->flags, 'U');
         $this->inlineFlags = $this->containsInlineFlags($node->pattern);
@@ -406,9 +419,14 @@ final class Rewriter extends AbstractNodeVisitor
     {
         $parts = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
 
-        // We must check !str_contains($this->flags, 'u') because in Unicode mode,
-        // \d matches more than just [0-9] (e.g. Arabic digits), so they are not equivalent.
-        if ($this->optimizeDigits && !$this->unicodeMode && 1 === \count($parts)) {
+        // "\d" is the ten ASCII digits under every locale, as C's isdigit()
+        // is; with Unicode properties it matches every decimal digit, as
+        // U+0663. "\w" is never written for "[a-zA-Z0-9_]": with Unicode
+        // properties it matches every letter, and without them PHP builds
+        // its table from LC_CTYPE once a program calls setlocale(), where a
+        // Latin-1 locale makes it take "\xE9": only a locale known to be
+        // C or POSIX lets it stand for the class.
+        if ($this->optimizeDigits && !$this->unicodeProperties && 1 === \count($parts)) {
             $part = $parts[0];
             if ($part instanceof RangeNode && $part->start instanceof LiteralNode && $part->end instanceof LiteralNode) {
                 if ('0' === $part->start->value && '9' === $part->end->value) {
@@ -417,10 +435,8 @@ final class Rewriter extends AbstractNodeVisitor
             }
         }
 
-        if ($this->optimizeWord && !$this->unicodeMode && 4 === \count($parts)) {
-            if ($this->isFullWordClass($parts)) {
-                return new CharTypeNode($node->isNegated ? 'W' : 'w', $node->startPosition, $node->endPosition);
-            }
+        if ($this->optimizeWord && !$this->unicodeProperties && \in_array($this->locale, ['C', 'POSIX'], true) && $this->isFullWordClass($parts)) {
+            return new CharTypeNode($node->isNegated ? 'W' : 'w', $node->startPosition, $node->endPosition);
         }
 
         $optimizedParts = [];
@@ -698,15 +714,17 @@ final class Rewriter extends AbstractNodeVisitor
     /**
      * Whether the node may take a character above ASCII, which the
      * character sets, stopping at 0x7F, do not hold: a byte or a code point
-     * above it, a dot, a negated class, a type but \\d, \\w and \\s held to
-     * ASCII without u, a property, a POSIX class, and anything not read here.
+     * above it, a dot, a negated class, a type but \\d, \\w and \\s without
+     * Unicode properties, a property, a POSIX class, and anything not read
+     * here. A locale gives \\w and \\s bytes above ASCII, "\xE9" and "\xA0",
+     * but never one to both: the two stay disjoint there as they are below.
      */
     private function mayTakeAboveAscii(NodeInterface $node): bool
     {
         return match (true) {
             $node instanceof LiteralNode => '' !== trim($node->value, "\x00..\x7F"),
             $node instanceof CharLiteralNode, $node instanceof ControlCharNode => $node->codePoint > 0x7F,
-            $node instanceof CharTypeNode => $this->unicodeMode || !\in_array($node->value, ['d', 'w', 's'], true),
+            $node instanceof CharTypeNode => $this->unicodeProperties || !\in_array($node->value, ['d', 'w', 's'], true),
             $node instanceof DotNode, $node instanceof UnicodePropNode, $node instanceof PosixClassNode => true,
             $node instanceof CharClassNode && $node->isNegated => true,
             $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof CommentNode, $node instanceof KeepNode => false,
@@ -930,6 +948,9 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
+     * Whether the parts are exactly "a-z", "A-Z", "0-9" and "_", in any
+     * order.
+     *
      * @param array<NodeInterface> $parts
      */
     private function isFullWordClass(array $parts): bool
@@ -938,11 +959,14 @@ final class Rewriter extends AbstractNodeVisitor
         foreach ($parts as $part) {
             if ($part instanceof RangeNode && $part->start instanceof LiteralNode && $part->end instanceof LiteralNode) {
                 $range = $part->start->value.'-'.$part->end->value;
-                if (isset($partsFound[$range])) {
-                    $partsFound[$range] = true;
+                if (!isset($partsFound[$range])) {
+                    return false;
                 }
+                $partsFound[$range] = true;
             } elseif ($part instanceof LiteralNode && '_' === $part->value) {
                 $partsFound['_'] = true;
+            } else {
+                return false;
             }
         }
 
@@ -1717,7 +1741,7 @@ final class Rewriter extends AbstractNodeVisitor
             return false;
         }
 
-        if ($this->unicodeMode) {
+        if ($this->unicodeProperties) {
             return false;
         }
 
