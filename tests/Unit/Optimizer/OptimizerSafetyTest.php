@@ -85,6 +85,22 @@ final class OptimizerSafetyTest extends TestCase
     }
 
     /**
+     * A rewrite the parser refuses is refused, not reported: the error of
+     * the check would name a pattern the caller never wrote, "/{2}/" for
+     * "/(?:B{0}){2}/". The pattern comes back as written.
+     */
+    #[Test]
+    public function test_a_rewrite_that_does_not_parse_is_refused(): void
+    {
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+        $instance = new Optimizer(Regex::create()->parser());
+
+        $this->assertFalse($verify->invoke($instance, '/(?:B{0}){2}/', '/{2}/'));
+        $this->assertFalse($verify->invoke($instance, '/a/', '/['));
+        $this->assertTrue($verify->invoke($instance, '/a+b/', '/a++b/'));
+    }
+
+    /**
      * @return \Generator<string, array{string, string, array<mixed>}>
      */
     public static function provideOptimizationCases(): \Generator

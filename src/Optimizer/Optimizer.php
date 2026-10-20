@@ -15,6 +15,7 @@ namespace PHPRegex\Optimizer;
 
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
@@ -196,10 +197,16 @@ final class Optimizer
     }
 
     /**
-     * @return bool true when proven, false when disproven or unproven
+     * @return bool true when proven, false when disproven or unproven, a
+     *              rewrite the parser refuses included: its error would
+     *              name a pattern the caller never wrote
      */
     private function verifyOptimizedPatternWithAutomata(string $original, string $optimized): bool
     {
-        return $this->check->verify($original, $optimized);
+        try {
+            return $this->check->verify($original, $optimized);
+        } catch (ExceptionInterface) {
+            return false;
+        }
     }
 }
