@@ -159,16 +159,6 @@ literal 99,999,999 times: it runs for many seconds where PCRE2 refuses the
 count. A count past 65535, or a product of counts past a bound, should end
 the extraction before it is expanded.
 
-## Verbs still reported wrong
-
-Each checked with pcre2test 10.45 to 10.49.
-
-- A verb in the body of a `(*scs:` no `)` closes is never read: the list
-  left open is refused at the end of the pattern first. `(*scs:(1)(*UTF:x)`
-  is "(*VERB) not recognized or malformed" at 14 and `(*scs:(1)(*pla)`
-  "(*alpha_assertion) not recognized" at 15 (14 on 10.45 and 10.46); the
-  library says `regex.group.unclosed` at 17 and 15.
-
 ## Lookbehind measures still reported wrong
 
 Each checked with pcre2test 10.32 to 10.49.

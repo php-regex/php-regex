@@ -977,8 +977,15 @@ final class Lexer
             return true;
         }
 
+        // "(*scs:" that no ")" closes: PCRE reads its list of groups, then
+        // its body in place, as the body of any group.
+        $opened = $opener;
         if (!$inPlace) {
-            return false;
+            $list = $this->scanSubstringList($name, $tokens);
+            if (null === $list) {
+                return false;
+            }
+            $opened .= $list;
         }
 
         if (!$this->bodiesInPlace) {
@@ -988,10 +995,41 @@ final class Lexer
         // The opener opens a group: an option set in the body holds up to
         // its ")".
         $this->extendedModeStack[] = [$this->extendedMode, $this->extendedMoreMode];
-        $this->position += \strlen($opener);
-        $tokens[] = new Token(TokenType::PcreVerb, substr($opener, 2), $start, \strlen($opener));
+        $this->position += \strlen($opened);
+        $tokens[] = new Token(TokenType::PcreVerb, substr($opened, 2), $start, \strlen($opened));
 
         return true;
+    }
+
+    /**
+     * The list of groups of the "(*scs:" or "(*scan_substring:" the cursor
+     * opens, "(1,<n>)", which PCRE reads before the body; null where the
+     * name opens no substring scan, as the condition of "(?(" or where a
+     * group name is due.
+     *
+     * @param list<Token> $tokens
+     */
+    private function scanSubstringList(string $name, array $tokens): ?string
+    {
+        if (!$this->readsScanSubstring || !\in_array($name, ['scs', 'scan_substring'], true)
+            || $this->opensCondition($tokens, $this->position) || $this->followsNameOpener($this->position)) {
+            return null;
+        }
+
+        $listOpen = $this->position + 3 + \strlen($name);
+        $fault = PcreVerb::groupListFault($this->pattern, $listOpen, $this->reportsPastTheFault, $this->utf ? $this->target : null);
+        if (null !== $fault) {
+            if (!$this->target->supports(PcreFeature::GroupListErrors)) {
+                $fault = PcreVerb::groupListFaultBefore1047($fault, $this->length);
+            }
+
+            throw LexerException::withContext($fault[2], $fault[1], $fault[0], $this->pattern);
+        }
+
+        // A list read without a fault ends at its first ")".
+        $listEnd = (int) strpos($this->pattern, ')', $listOpen);
+
+        return substr($this->pattern, $listOpen, $listEnd + 1 - $listOpen);
     }
 
     /**
@@ -1659,22 +1697,6 @@ final class Lexer
                     $colon,
                     $this->pattern,
                 );
-            }
-
-            // "(*scs:(1)...": PCRE reads the list of groups first.
-            if ($this->readsScanSubstring && \in_array($opener[1], ['scs', 'scan_substring'], true)) {
-                $listOpen = $startPos + \strlen($opener[0]);
-                [$offset, $code, $message] = PcreVerb::groupListFault(
-                    $this->pattern,
-                    $listOpen,
-                    $this->reportsPastTheFault,
-                    $this->utf ? $this->target : null,
-                ) ?? [$this->length, ErrorCode::GroupUnclosed, \sprintf('Missing closing parenthesis for "(*%s:".', $opener[1])];
-                if (!$this->target->supports(PcreFeature::GroupListErrors)) {
-                    [$offset, $code, $message] = PcreVerb::groupListFaultBefore1047([$offset, $code, $message], $this->length);
-                }
-
-                throw LexerException::withContext($message, $code, $offset, $this->pattern);
             }
 
             // In "(?((*foo:" the verb opens after the condition's own "(":
