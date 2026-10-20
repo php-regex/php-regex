@@ -49,11 +49,62 @@ final class ExplainVocabularyTest extends TestCase
     }
 
     #[Test]
-    public function test_unicode_property_negates_the_greek_block_in_its_own_words(): void
+    public function test_every_property_named_is_one_the_engine_takes(): void
     {
-        $this->assertSame('A character in the Greek block (block)', Vocabulary::unicodeProperty('ingreek', false));
-        $this->assertSame('Any character except one in the Greek block (block)', Vocabulary::unicodeProperty('ingreek', true));
+        // The newest PCRE2 knows every name an older release knew.
+        foreach (array_keys(Vocabulary::UNICODE_PROPERTIES) as $name) {
+            $this->assertNotFalse(@preg_match('/\p{'.$name.'}/u', ''), $name);
+        }
+    }
+
+    #[Test]
+    #[DataProvider('provideProperties')]
+    public function test_unicode_property_says_what_the_engine_matches(string $name, string $description, string $subject, int $matches): void
+    {
+        $this->assertSame($matches, preg_match('/^\p{'.$name.'}$/u', $subject), 'engine');
+        $this->assertSame($description, Vocabulary::unicodeProperty(strtolower($name), false));
+    }
+
+    /**
+     * @return iterable<string, array{name: string, description: string, subject: string, matches: int}>
+     */
+    public static function provideProperties(): iterable
+    {
+        // A letter beyond ASCII, which "[a-z]" said it was not.
+        yield 'lower' => ['name' => 'lower', 'description' => 'A lowercase character (the Unicode Lowercase property)', 'subject' => 'é', 'matches' => 1];
+        yield 'lowercase, by its long name' => ['name' => 'Lowercase', 'description' => 'A lowercase character (the Unicode Lowercase property)', 'subject' => 'ª', 'matches' => 1];
+        yield 'upper' => ['name' => 'upper', 'description' => 'An uppercase character (the Unicode Uppercase property)', 'subject' => 'Ⅰ', 'matches' => 1];
+        yield 'alpha' => ['name' => 'alpha', 'description' => 'An alphabetic character (the Unicode Alphabetic property)', 'subject' => 'Ⅰ', 'matches' => 1];
+        yield 'ascii' => ['name' => 'ascii', 'description' => 'An ASCII character: [\x00-\x7F]', 'subject' => 'é', 'matches' => 0];
+        yield 'space' => ['name' => 'space', 'description' => 'A whitespace character (the Unicode White_Space property)', 'subject' => "\u{2028}", 'matches' => 1];
+        yield 'white space, spelled with an underscore' => ['name' => 'White_Space', 'description' => 'A whitespace character (the Unicode White_Space property)', 'subject' => "\u{85}", 'matches' => 1];
+        yield 'an uppercase letter' => ['name' => 'Lu', 'description' => 'An uppercase letter (category)', 'subject' => 'ǅ', 'matches' => 0];
+        yield 'a currency symbol' => ['name' => 'Sc', 'description' => 'A currency symbol (category)', 'subject' => '€', 'matches' => 1];
+    }
+
+    #[Test]
+    #[DataProvider('provideRefusedNames')]
+    public function test_a_name_the_engine_refuses_is_described_by_none(string $name): void
+    {
+        $this->assertFalse(@preg_match('/\p{'.$name.'}/u', ''), $name);
+        $this->assertNull(Vocabulary::unicodeProperty($name, false));
+    }
+
+    /**
+     * @return iterable<string, array{name: string}>
+     */
+    public static function provideRefusedNames(): iterable
+    {
+        foreach (['javalowercase', 'javauppercase', 'javawhitespace', 'javamirrored', 'islatin', 'ingreek', 'isalphabetic', 'digit', 'alnum', 'punct', 'graph', 'print', 'blank', 'cntrl', 'xdigit'] as $name) {
+            yield $name => ['name' => $name];
+        }
+    }
+
+    #[Test]
+    public function test_unicode_property_negates_its_description(): void
+    {
         $this->assertSame('Any character except an uppercase letter (category)', Vocabulary::unicodeProperty('lu', true));
+        $this->assertSame('Any character except a whitespace character (the Unicode White_Space property)', Vocabulary::unicodeProperty('white-space', true));
         $this->assertNull(Vocabulary::unicodeProperty('greek', false));
     }
 

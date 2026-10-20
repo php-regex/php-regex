@@ -49,29 +49,25 @@ final class Vocabulary
         'C' => 'One code unit: a single byte, a newline included',
     ];
 
+    /**
+     * The properties described by name, keyed by the name as PCRE2 matches
+     * it from 10.40: lower case, without spaces, hyphens or underscores.
+     * Only names some PCRE2 release takes: Java's, the "Is" and "In"
+     * prefixes and the POSIX class names are refused by every one.
+     */
     public const UNICODE_PROPERTIES = [
-        'lower' => 'A lower-case alphabetic character: [a-z]',
-        'upper' => 'An upper-case alphabetic character: [A-Z]',
-        'ascii' => 'All ASCII: [\\x00-\\x7F]',
-        'alpha' => 'An alphabetic character: [\\p{Lower}\\p{Upper}]',
-        'digit' => 'A decimal digit: [0-9]',
-        'alnum' => 'An alphanumeric character: [\\p{Alpha}\\p{Digit}]',
-        'punct' => 'Punctuation: One of !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~',
-        'graph' => 'A visible character: [\\p{Alnum}\\p{Punct}]',
-        'print' => 'A printable character: [\\p{Graph}\\x20]',
-        'blank' => 'A space or a tab: [ \\t]',
-        'cntrl' => 'A control character: [\\x00-\\x1F\\x7F]',
-        'xdigit' => 'A hexadecimal digit: [0-9a-fA-F]',
-        'space' => 'A whitespace character: [ \\t\\n\\x0B\\f\\r]',
-        'javalowercase' => 'Equivalent to java.lang.Character.isLowerCase()',
-        'javauppercase' => 'Equivalent to java.lang.Character.isUpperCase()',
-        'javawhitespace' => 'Equivalent to java.lang.Character.isWhitespace()',
-        'javamirrored' => 'Equivalent to java.lang.Character.isMirrored()',
-        'islatin' => 'A Latin script character (script)',
-        'ingreek' => 'A character in the Greek block (block)',
+        'lower' => 'A lowercase character (the Unicode Lowercase property)',
+        'lowercase' => 'A lowercase character (the Unicode Lowercase property)',
+        'upper' => 'An uppercase character (the Unicode Uppercase property)',
+        'uppercase' => 'An uppercase character (the Unicode Uppercase property)',
+        'alpha' => 'An alphabetic character (the Unicode Alphabetic property)',
+        'alphabetic' => 'An alphabetic character (the Unicode Alphabetic property)',
+        'ascii' => 'An ASCII character: [\\x00-\\x7F]',
+        'space' => 'A whitespace character (the Unicode White_Space property)',
+        'whitespace' => 'A whitespace character (the Unicode White_Space property)',
+        'wspace' => 'A whitespace character (the Unicode White_Space property)',
         'lu' => 'An uppercase letter (category)',
-        'isalphabetic' => 'An alphabetic character (binary property)',
-        'sc' => 'A currency symbol',
+        'sc' => 'A currency symbol (category)',
     ];
 
     /**
@@ -229,23 +225,17 @@ final class Vocabulary
      * What a Unicode property describes, negated or not; null for a
      * property the table does not hold.
      *
-     * @param string $key the property's name, lower case
+     * @param string $key the property's name, lower case; spaces, hyphens
+     *                    and underscores are passed over, as PCRE2 does
      */
     public static function unicodeProperty(string $key, bool $negated): ?string
     {
-        if (!isset(self::UNICODE_PROPERTIES[$key])) {
-            return null;
+        $description = self::UNICODE_PROPERTIES[str_replace([' ', '-', '_'], '', $key)] ?? null;
+        if (null === $description || !$negated) {
+            return $description;
         }
 
-        if (!$negated) {
-            return self::UNICODE_PROPERTIES[$key];
-        }
-
-        if ('ingreek' === $key) {
-            return 'Any character except one in the Greek block (block)';
-        }
-
-        return 'Any character except '.Ascii::lowerFirst(self::UNICODE_PROPERTIES[$key]);
+        return 'Any character except '.Ascii::lowerFirst($description);
     }
 
     /**
