@@ -15,9 +15,11 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CalloutNode;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
@@ -26,11 +28,11 @@ use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Redos\RedosConfidence;
@@ -183,35 +185,16 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $this->assertSame('DOT', $signature);
     }
 
-    public function test_length_range_and_quantifier_bounds_helpers(): void
+    public function test_capture_length_and_quantifier_bounds_helpers(): void
     {
         $visitor = new RedosProfiler();
 
-        $zeroRange = $this->invokePrivate($visitor, 'lengthRange', [new PcreVerbNode('FAIL', 0, 0)]);
-        $this->assertSame([0, 0], $zeroRange);
+        // A control character is one character: its capture has one length.
+        $fixedCapture = new SequenceNode([new GroupNode(new ControlCharNode('A', 1, 0, 3), GroupType::Capturing), new BackrefNode('\\1', 4, 6)], 0, 6);
+        $this->assertFalse($this->invokePrivate($visitor, 'hasBackrefLoop', [$fixedCapture]));
 
-        $unknownRange = $this->invokePrivate($visitor, 'lengthRange', [new class implements NodeInterface {
-            public function getChildren(): array
-            {
-                return [];
-            }
-
-            public function accept(NodeVisitorInterface $visitor): RedosSeverity
-            {
-                return RedosSeverity::Safe;
-            }
-
-            public function getStartPosition(): int
-            {
-                return 0;
-            }
-
-            public function getEndPosition(): int
-            {
-                return 0;
-            }
-        }]);
-        $this->assertSame([0, null], $unknownRange);
+        $variableCapture = new SequenceNode([new GroupNode(new QuantifierNode(new LiteralNode('a', 1, 2), '+', QuantifierType::Greedy, 1, 3), GroupType::Capturing), new BackrefNode('\\1', 4, 6)], 0, 6);
+        $this->assertTrue($this->invokePrivate($visitor, 'hasBackrefLoop', [$variableCapture]));
 
         $exact = $this->invokePrivate($visitor, 'quantifierBounds', ['{3}']);
         $this->assertSame([3, 3], $exact);

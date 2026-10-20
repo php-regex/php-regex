@@ -15,6 +15,7 @@ namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -573,8 +574,18 @@ final class RedosProfiler extends AbstractNodeVisitor
     #[\Override]
     public function visitDefine(DefineNode $node): RedosSeverity
     {
-        // Analyze the content of the DEFINE block for ReDoS vulnerabilities
-        return $node->content->accept($this);
+        // The groups of a DEFINE block run only when a subroutine calls them,
+        // never where the block stands: its content is analysed on its own,
+        // outside the loops around it.
+        $unboundedDepth = $this->unboundedQuantifierDepth;
+        $totalDepth = $this->totalQuantifierDepth;
+        $this->unboundedQuantifierDepth = 0;
+        $this->totalQuantifierDepth = 0;
+        $severity = $node->content->accept($this);
+        $this->unboundedQuantifierDepth = $unboundedDepth;
+        $this->totalQuantifierDepth = $totalDepth;
+
+        return $severity;
     }
 
     #[\Override]
@@ -827,22 +838,13 @@ final class RedosProfiler extends AbstractNodeVisitor
         $hasVariableCapture = false;
 
         if ($node instanceof GroupNode && $this->isCapturingGroup($node)) {
-            [$min, $max] = $this->lengthRange($node->child);
+            [$min, $max] = $node->child->accept(new LengthRangeCalculator());
             if (null === $max || $min !== $max) {
                 $hasVariableCapture = true;
             }
         }
 
-        $children = match (true) {
-            $node instanceof SequenceNode => $node->children,
-            $node instanceof AlternationNode => $node->alternatives,
-            $node instanceof QuantifierNode => [$node->node],
-            $node instanceof GroupNode => [$node->child],
-            $node instanceof ConditionalNode => [$node->condition, $node->yes, $node->no],
-            default => [],
-        };
-
-        foreach ($children as $child) {
+        foreach ($this->getChildren($node) as $child) {
             $childState = $this->analyzeBackrefLoop($child);
             $hasBackref = $hasBackref || $childState['hasBackref'];
             $hasVariableCapture = $hasVariableCapture || $childState['hasVariableCapture'];
@@ -852,83 +854,6 @@ final class RedosProfiler extends AbstractNodeVisitor
             'hasBackref' => $hasBackref,
             'hasVariableCapture' => $hasVariableCapture,
         ];
-    }
-
-    /**
-     * @return array{0:int, 1:int|null}
-     */
-    private function lengthRange(NodeInterface $node): array
-    {
-        if ($node instanceof LiteralNode) {
-            $len = \strlen($node->value);
-
-            return [$len, $len];
-        }
-
-        if ($node instanceof CharTypeNode
-            || $node instanceof DotNode
-            || $node instanceof CharClassNode
-            || $node instanceof RangeNode
-            || $node instanceof UnicodePropNode
-            || $node instanceof CharLiteralNode
-            || $node instanceof PosixClassNode
-        ) {
-            return [1, 1];
-        }
-
-        if ($node instanceof AnchorNode
-            || $node instanceof AssertionNode
-            || $node instanceof KeepNode
-            || $node instanceof PcreVerbNode
-            || $node instanceof CommentNode
-            || $node instanceof CalloutNode
-        ) {
-            return [0, 0];
-        }
-
-        if ($node instanceof SequenceNode) {
-            $min = 0;
-            $max = 0;
-            foreach ($node->children as $child) {
-                [$cMin, $cMax] = $this->lengthRange($child);
-                $min += $cMin;
-                $max = null === $max || null === $cMax ? null : $max + $cMax;
-            }
-
-            return [$min, $max];
-        }
-
-        if ($node instanceof AlternationNode) {
-            $min = null;
-            $max = 0;
-            foreach ($node->alternatives as $child) {
-                [$cMin, $cMax] = $this->lengthRange($child);
-                $min = null === $min ? $cMin : min($min, $cMin);
-                $max = null === $max || null === $cMax ? null : max($max, $cMax);
-            }
-
-            return [$min ?? 0, $max];
-        }
-
-        if ($node instanceof GroupNode) {
-            return $this->lengthRange($node->child);
-        }
-
-        if ($node instanceof QuantifierNode) {
-            [$cMin, $cMax] = $this->lengthRange($node->node);
-            [$qMin, $qMax] = $this->quantifierBounds($node->quantifier);
-
-            $min = $cMin * $qMin;
-            $max = null === $cMax || null === $qMax ? null : $cMax * $qMax;
-
-            return [$min, $max];
-        }
-
-        if ($node instanceof BackrefNode || $node instanceof SubroutineNode) {
-            return [0, null];
-        }
-
-        return [0, null];
     }
 
     private function nullableStatus(NodeInterface $node): ?bool
@@ -949,8 +874,15 @@ final class RedosProfiler extends AbstractNodeVisitor
             || $node instanceof CharLiteralNode
             || $node instanceof PosixClassNode
             || $node instanceof ControlCharNode
+            || $node instanceof ExtendedCharClassNode
+            || $node instanceof ClassSetOperationNode
         ) {
             return false;
+        }
+
+        // A script run matches what its body matches, in one script.
+        if ($node instanceof ScriptRunNode) {
+            return null === $node->content ? true : $this->nullableStatus($node->content);
         }
 
         if ($node instanceof AnchorNode
@@ -960,7 +892,6 @@ final class RedosProfiler extends AbstractNodeVisitor
             || $node instanceof CommentNode
             || $node instanceof CalloutNode
             || $node instanceof LimitMatchNode
-            || $node instanceof ScriptRunNode
             || $node instanceof VersionConditionNode
             || $node instanceof DefineNode
         ) {
@@ -1287,6 +1218,9 @@ final class RedosProfiler extends AbstractNodeVisitor
         }
         if ($node instanceof ConditionalNode) {
             return [$node->condition, $node->yes, $node->no];
+        }
+        if ($node instanceof ScriptRunNode && null !== $node->content) {
+            return [$node->content];
         }
 
         return [];

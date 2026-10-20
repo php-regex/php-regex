@@ -10,6 +10,10 @@ CHANGELOG
    `hotspots` or `recommendations`, and its `vulnerablePart`, `trigger`,
    `falsePositiveRisk`, `suggestedRewrite` and `culpritNode` are `null`: the
    structural heuristics no longer run once the proof settles the verdict.
+ * The structural heuristics measure a capture with the parser's
+   `LengthRangeCalculator`: `(\cA)` is one character, as `(\x01)` is, `\R`
+   one or two, a lookaround none. A script run can match nothing only when
+   its body can, and a `DEFINE` block is analysed outside the loops around it.
  * A Unicode class is read as the union of its members, each member read
    from the engine once per process, a negated one as the rest of the
    alphabet and every general category from one read: the analysis of a
