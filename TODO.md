@@ -228,7 +228,7 @@ Integrations:
 - The Modernizer rewrites `[\t\n\x0B\f\r ]` to `\s`, which a locale widens
   (167 of 288 macOS locales add the byte 0xA0): keep the class unless the
   locale is `C`, as the optimizer now does.
-- The explainers, the ReDoS results, the railroad layout, the backtrack
+- The ReDoS results, the railroad layout, the backtrack
   prover's result passing, the two Tarjan implementations, the
   24-parameter `RedosAnalysis`, the solver's internal methods on its public
   class, and the semantic facts (nullability, length ranges, flag scope)
@@ -243,6 +243,14 @@ version), and the empty-repetition rules for JavaScript, which refuse some
 patterns that would behave the same. A pattern without `u` is read by PHP
 byte by byte and by the targets character by character: the docs should
 say so where the transpiler is described.
+
+## Explainers: after the fix
+
+The explanations follow the flags, UCP and the newline convention now.
+Left: `\R` under `(*BSR_ANYCRLF)` described as any Unicode line break,
+`\h` and `\v` given their Unicode lists in byte mode, and the explainers
+not knowing the target release or locale (`\w` says "from PCRE2 10.43"
+instead of choosing).
 
 ## The articles section: what is left
 
