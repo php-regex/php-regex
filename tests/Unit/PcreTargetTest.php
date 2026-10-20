@@ -180,6 +180,37 @@ final class PcreTargetTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideFaultOffsets')]
+    public function test_fault_offset_is_past_the_fault_from_pcre2_10_47(string $release, int $offset, int $shift, int $expected): void
+    {
+        $this->assertSame($expected, (new PcreTarget(80400, $release))->faultOffset($offset, $shift));
+    }
+
+    /**
+     * @return iterable<string, array{release: string, offset: int, shift: int, expected: int}>
+     */
+    public static function provideFaultOffsets(): iterable
+    {
+        // "(?C" then a character that opens no string: PCRE2 10.49 reports
+        // "/(?Cab)/" at offset 4, past the "a"; the releases PHP bundles at 3.
+        yield 'from 10.47, past the fault' => ['release' => '10.47', 'offset' => 4, 'shift' => 1, 'expected' => 4];
+        yield 'the newest release' => ['release' => '10.49', 'offset' => 4, 'shift' => 1, 'expected' => 4];
+        yield 'before 10.47, on the fault' => ['release' => '10.46', 'offset' => 4, 'shift' => 1, 'expected' => 3];
+        yield 'the release PHP 8.4 bundles' => ['release' => '10.44', 'offset' => 4, 'shift' => 1, 'expected' => 3];
+        // A character of several bytes in UTF mode moves back whole.
+        yield 'a two-byte character' => ['release' => '10.44', 'offset' => 7, 'shift' => 2, 'expected' => 5];
+        yield 'a two-byte character from 10.47' => ['release' => '10.47', 'offset' => 7, 'shift' => 2, 'expected' => 7];
+        yield 'no shift' => ['release' => '10.40', 'offset' => 7, 'shift' => 0, 'expected' => 7];
+    }
+
+    #[Test]
+    public function test_fault_offset_moves_back_one_byte_by_default(): void
+    {
+        $this->assertSame(8, (new PcreTarget(80400, '10.44'))->faultOffset(9));
+        $this->assertSame(9, (new PcreTarget(80400, '10.47'))->faultOffset(9));
+    }
+
+    #[Test]
     public function test_the_running_engine_is_the_running_php_minor_and_pcre2_release(): void
     {
         $running = explode(' ', \PCRE_VERSION)[0];

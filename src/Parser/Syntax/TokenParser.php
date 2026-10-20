@@ -61,7 +61,6 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Text\Ascii;
-use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;
@@ -78,23 +77,10 @@ use PHPRegex\Parser\Validation\Validator;
  */
 final class TokenParser
 {
-    /**
-     * Atoms a character class cannot hold: inside "[...]" a "^" is a literal
-     * or a negation, and "\1" is an octal escape, so a class that receives
-     * one of these has been built by hand rather than by the lexer.
-     */
-    /**
-     * The delimiters PCRE2 takes around the string of a callout, each with
-     * the one that closes it.
-     */
-    public const CALLOUT_STRING_DELIMITERS = [
-        '`' => '`', "'" => "'", '"' => '"', '^' => '^', '%' => '%', '#' => '#', '$' => '$', '{' => '}',
-    ];
     private const INLINE_FLAG_LETTERS = InlineFlags::LETTERS;
 
     // Token length constants for calculating positions
     private const PCRE_VERB_WRAPPER_LENGTH = 3; // (*...)
-    private const CALLOUT_WRAPPER_LENGTH = 4; // (?C...)
 
     /**
      * The two lookaheads, by the character that introduces them.
@@ -350,7 +336,7 @@ final class TokenParser
         // A ")" no group opened: PCRE2 10.47 reports it past the ")", the
         // releases before on it.
         if ($this->stream->check(TokenType::GroupClose)) {
-            $position = $this->stream->current()->position + ($this->supports(PcreFeature::ErrorOffsetPastTheFault) ? 1 : 0);
+            $position = $this->target->faultOffset($this->stream->current()->position + 1);
 
             throw $this->parserException(\sprintf('Unmatched closing parenthesis at position %d.', $position), ErrorCode::GroupUnmatchedClose, $position);
         }
@@ -704,7 +690,7 @@ final class TokenParser
 
         if (QuantifierType::Greedy !== $target->type || !\in_array($modifier, ['+', '?'], true)) {
             $this->guardQuantifierCount($token);
-            $position = $this->quantifierErrorOffset($token);
+            $position = RepeatCount::nothingToRepeatOffset($token, $this->target);
 
             throw $this->parserException(
                 \sprintf('Quantifier without target at position %d', $position),
@@ -715,7 +701,7 @@ final class TokenParser
 
         // "a*(?#c)++": the first "+" is the modifier, the second repeats nothing.
         if (\strlen($token->value) > 1) {
-            $position = $this->pastTheFault($token->position + \strlen($token->value));
+            $position = $this->target->faultOffset($token->position + \strlen($token->value));
 
             throw $this->parserException(
                 \sprintf('Quantifier without target at position %d', $position),
@@ -846,7 +832,7 @@ final class TokenParser
 
     private function assertQuantifierCanApply(NodeInterface $node, Token $token): void
     {
-        $position = $this->quantifierErrorOffset($token);
+        $position = RepeatCount::nothingToRepeatOffset($token, $this->target);
 
         // A callout matches nothing, and PCRE does not let it be repeated.
         if ($node instanceof CalloutNode) {
@@ -957,17 +943,20 @@ final class TokenParser
             // "(*MARK:a" with no ")" is a verb PCRE reads to the end.
             $unclosedVerb = $this->startsUnclosedVerb($position);
             if ($unclosedVerb && '*' === $this->pattern[$position + 1]) {
-                throw $this->doubleStarError($position + 1);
+                throw PcreVerb::doubleStarError($this->pattern, $position + 1);
             }
 
             if ($unclosedVerb) {
-                $this->refuseUnclosedVerbName($position - 1);
+                $nameError = PcreVerb::unclosedNameError($this->pattern, $position - 1, $this->target);
+                if (null !== $nameError) {
+                    throw $nameError;
+                }
             }
 
             $namePosition = $position + 1;
             $position = $unclosedVerb
-                ? $this->unclosedVerbOffset($position - 1)
-                : $this->quantifierErrorOffset($this->stream->current());
+                ? PcreVerb::unclosedOffset($this->pattern, $position - 1, $this->target, $this->unicodeMode)
+                : RepeatCount::nothingToRepeatOffset($this->stream->current(), $this->target);
 
             // A name that starts with a lowercase letter is an alphabetic
             // assertion PCRE does not know, wherever it ends before PCRE2
@@ -1269,7 +1258,7 @@ final class TokenParser
         // "(**)" reads as "(?*)" does, a token whose value starts with "*":
         // the text tells them apart.
         if ('**' === substr($this->pattern, $token->position + 1, 2)) {
-            throw $this->doubleStarError($token->position + 2);
+            throw PcreVerb::doubleStarError($this->pattern, $token->position + 2);
         }
 
         if ($token->end() - $token->position !== \strlen($token->value) + 2) {
@@ -1298,52 +1287,7 @@ final class TokenParser
      */
     private function parseCallout(): CalloutNode
     {
-        $token = $this->stream->previous();
-        $startPosition = $token->position;
-        $value = $token->value;
-        $endPosition = $startPosition + \strlen($token->value) + self::CALLOUT_WRAPPER_LENGTH;
-
-        if ('' === $value) {
-            return new CalloutNode(null, false, $startPosition, $endPosition);
-        }
-
-        if (Ascii::isDigit($value)) {
-            return new CalloutNode((int) $value, false, $startPosition, $endPosition);
-        }
-
-        $closing = self::CALLOUT_STRING_DELIMITERS[$value[0]] ?? null;
-        if (null === $closing) {
-            // "(?Cab)": a callout takes a number or a delimited string;
-            // "(?C1x)": the number is read, and ")" is due after it.
-            $code = ErrorCode::CalloutInvalidDelimiter;
-            if (1 === LibraryPcre::match('/^\d++/', $value, $number)) {
-                $code = \strlen(ltrim($number[0], '0')) > 3 || (int) $number[0] > 255 ? ErrorCode::CalloutOutOfRange : ErrorCode::CalloutUnclosed;
-            }
-            $position = $this->calloutFault($startPosition)[0] ?? $startPosition + 4;
-
-            throw $this->parserException(
-                \sprintf('Invalid callout argument: %s at position %d: %s.', $value, $position, self::calloutProblem($code)),
-                $code,
-                $position,
-            );
-        }
-
-        // A doubled closing delimiter stands for itself: "(?C{a}}b})".
-        $quoted = preg_quote($closing, '/');
-        if (1 !== LibraryPcre::match('/^.((?:[^'.$quoted.']|'.$quoted.$quoted.')*+)'.$quoted.'$/s', $value, $matches)) {
-            // "(?C"a"b)": the string is closed, and ")" is due after it.
-            $closed = 1 === LibraryPcre::match('/^.(?:[^'.$quoted.']|'.$quoted.$quoted.')*+'.$quoted.'/s', $value);
-            $code = $closed ? ErrorCode::CalloutUnclosed : ErrorCode::CalloutUnclosedString;
-            $position = $this->calloutFault($startPosition)[0] ?? $startPosition;
-
-            throw $this->parserException(
-                \sprintf('Invalid callout argument: %s at position %d: %s.', $value, $position, self::calloutProblem($code)),
-                $code,
-                $position,
-            );
-        }
-
-        return new CalloutNode(str_replace($closing.$closing, $closing, $matches[1]), true, $startPosition, $endPosition);
+        return Callout::read($this->stream->previous(), $this->pattern, $this->target);
     }
 
     /**
@@ -1780,7 +1724,7 @@ final class TokenParser
         // 2.2 "(?(?[a])b)": an extended class is no assertion; PCRE refuses
         // it past the "(", on it before PCRE2 10.47.
         if ($this->stream->check(TokenType::ExtendedClass) && $this->stream->current()->position === $startPosition + 2) {
-            $position = $this->pastTheFault($this->stream->current()->position + 1);
+            $position = $this->target->faultOffset($this->stream->current()->position + 1);
 
             throw $this->parserException(
                 \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
@@ -1990,9 +1934,9 @@ final class TokenParser
         // PCRE refuses a number past 255 as it reads it, before it looks
         // for the assertion due after the callout.
         if (!$callout->isStringIdentifier && \is_int($callout->identifier) && $callout->identifier > 255) {
-            $position = $this->calloutFault($callout->startPosition)[0] ?? $callout->startPosition;
+            $position = Callout::fault($this->pattern, $callout->startPosition, $this->target)[0] ?? $callout->startPosition;
 
-            throw $this->parserException(\sprintf('Invalid callout at position %d: %s.', $position, self::calloutProblem(ErrorCode::CalloutOutOfRange)), ErrorCode::CalloutOutOfRange, $position);
+            throw $this->parserException(\sprintf('Invalid callout at position %d: %s.', $position, Callout::problem(ErrorCode::CalloutOutOfRange)), ErrorCode::CalloutOutOfRange, $position);
         }
 
         // PCRE skips a comment, an empty "\Q\E" and "x" whitespace there.
@@ -2045,7 +1989,7 @@ final class TokenParser
     private function parseVerbConditional(int $startPosition, Token $verbToken): NodeInterface
     {
         // PCRE stops at the "*", past it from PCRE2 10.47.
-        $this->guardVerbCondition($verbToken, $this->pastTheFault($verbToken->position + 1));
+        $this->guardVerbCondition($verbToken, $this->target->faultOffset($verbToken->position + 1));
 
         return $this->parseConditionalBranches($startPosition, $this->verbNode($verbToken, $verbToken->position));
     }
@@ -2180,7 +2124,7 @@ final class TokenParser
 
         // Past the whole character in UTF mode.
         $width = $this->unicodeMode && 1 === LibraryPcre::match('/\G./su', $this->pattern, $character, 0, $nameEnd) ? \strlen($character[0]) : 1;
-        $position = $nameEnd >= \strlen($this->pattern) ? $nameEnd : $this->pastTheFault($nameEnd + $width, $width);
+        $position = $nameEnd >= \strlen($this->pattern) ? $nameEnd : $this->target->faultOffset($nameEnd + $width, $width);
 
         return $this->parserException(\sprintf('Unknown alphabetic assertion "(*%s" at position %d: a ":" is expected after the name.', $name[0], $position), ErrorCode::VerbInvalid, $position);
     }
@@ -2539,7 +2483,7 @@ final class TokenParser
         // PCRE reports it past the character it could not read from PCRE2
         // 10.47, all its bytes in UTF mode; on it before.
         $length = $this->unicodeMode && 1 === LibraryPcre::match('/\G./su', $this->pattern, $character, 0, $pPos + 1) ? \strlen($character[0]) : 1;
-        $position = $this->pastTheFault($pPos + 1 + $length, $length);
+        $position = $this->target->faultOffset($pPos + 1 + $length, $length);
 
         throw $this->parserException(
             \sprintf('Invalid syntax after (?P at position %d: "<", ">" or "=" is expected.', $position),
@@ -2569,7 +2513,7 @@ final class TokenParser
 
         if ($this->stream->check(TokenType::Quantifier) && \in_array($this->stream->current()->value, ['*+', '*?'], true)) {
             $token = $this->stream->current();
-            $position = $this->pastTheFault($token->position + \strlen($token->value));
+            $position = $this->target->faultOffset($token->position + \strlen($token->value));
 
             throw $this->parserException(
                 \sprintf('Quantifier without target at position %d', $position),
@@ -2861,7 +2805,7 @@ final class TokenParser
         // "(?^" turns every other modifier off already, so PCRE refuses a
         // "-" after it, and reports it past the hyphen (on it before 10.47).
         if (str_starts_with($flags, '^') && str_contains($flags, '-')) {
-            $position = $this->pastTheFault($startPosition + 2 + (int) strpos($flags, '-') + 1);
+            $position = $this->target->faultOffset($startPosition + 2 + (int) strpos($flags, '-') + 1);
 
             throw $this->parserException(
                 \sprintf('Invalid hyphen in option setting at position %d: "(?^" cannot turn modifiers off.', $position),
@@ -2995,14 +2939,14 @@ final class TokenParser
         if ($isModifier) {
             // Inline Lookaround condition
             $conditionStartPos = $this->stream->previous()->position;
-            $this->guardCutShortAssertion($conditionStartPos, $this->pastTheFault($conditionStartPos + 1));
+            $this->guardCutShortAssertion($conditionStartPos, $this->target->faultOffset($conditionStartPos + 1));
 
             // "(?(?C1" that no ")" closes, the "(?" read alone: the callout
             // is refused as anywhere else.
             if ($this->stream->checkLiteral('C')) {
-                [$fault, $code] = $this->calloutFault($conditionStartPos) ?? [\strlen($this->pattern), ErrorCode::CalloutUnclosed];
+                [$fault, $code] = Callout::fault($this->pattern, $conditionStartPos, $this->target) ?? [\strlen($this->pattern), ErrorCode::CalloutUnclosed];
 
-                throw $this->parserException(\sprintf('Invalid callout at position %d: %s.', $fault, self::calloutProblem($code)), $code, $fault);
+                throw $this->parserException(\sprintf('Invalid callout at position %d: %s.', $fault, Callout::problem($code)), $code, $fault);
             }
 
             $condition = $this->parseLookaroundCondition($conditionStartPos);
@@ -3084,7 +3028,7 @@ final class TokenParser
         }
 
         // Past the "?" from PCRE2 10.47, on it before.
-        $position = $faultPosition ?? $this->pastTheFault($startPosition + 1);
+        $position = $faultPosition ?? $this->target->faultOffset($startPosition + 1);
 
         throw $this->parserException(
             'Invalid conditional condition at position '.$position,
@@ -3177,7 +3121,7 @@ final class TokenParser
         ));
 
         // PCRE refuses a number past 65535 as it reads it, before the ")".
-        $position = $this->numberTooBigOffset($num, $startPosition + \strlen($sign));
+        $position = RepeatCount::tooBigOffset($num, $startPosition + \strlen($sign), $this->target);
         if (null !== $position) {
             throw $this->parserException(\sprintf('Group number %s%s is too big at position %d: PCRE takes at most 65535.', $sign, $num, $position), ErrorCode::GroupNumberTooBig, $position);
         }
@@ -3343,7 +3287,7 @@ final class TokenParser
         // "(?(*" the lexer read as no verb, for want of a name or a ")", is
         // no assertion either: refused past the "(", on it before 10.47.
         if ($this->stream->check(TokenType::Quantifier) && '*' === ($this->pattern[$startPosition] ?? '')) {
-            throw $this->unclosedVerbConditionError($startPosition - 1, $this->pastTheFault($startPosition));
+            throw $this->unclosedVerbConditionError($startPosition - 1, $this->target->faultOffset($startPosition));
         }
 
         // "(?(VERSION=10z)", or "(?(VERSIONx)": PCRE reads a version
@@ -4087,7 +4031,7 @@ final class TokenParser
         if (1 === LibraryPcre::match('/\G([+-]?)(\d++)/', $pattern, $matches, 0, $position)) {
             [$number, $sign, $digits] = $matches;
             $end = $position + \strlen($number);
-            $tooBig = $this->numberTooBigOffset($digits, $position + \strlen($sign))
+            $tooBig = RepeatCount::tooBigOffset($digits, $position + \strlen($sign), $this->target)
                 ?? ('+' === $sign && (int) $digits + $this->captureCount > 65535 ? $end : null);
 
             return match (true) {
@@ -4101,7 +4045,7 @@ final class TokenParser
         // "(?+" without a number: past the character after the "+", from
         // PCRE2 10.47; on the "+" before.
         if ('+' === $char) {
-            $fault = $this->pastTheFault(min($position + 2, $length), min($position + 2, $length) - $position);
+            $fault = $this->target->faultOffset(min($position + 2, $length), min($position + 2, $length) - $position);
 
             return $position + 1 >= $length
                 ? [$fault, ...$unclosed]
@@ -4109,9 +4053,9 @@ final class TokenParser
         }
 
         if ('C' === $char) {
-            [$fault, $code] = $this->calloutFault($start) ?? [$start, ErrorCode::GroupSyntax];
+            [$fault, $code] = Callout::fault($this->pattern, $start, $this->target) ?? [$start, ErrorCode::GroupSyntax];
 
-            return [$fault, $code, 'Invalid callout at position %d: '.str_replace('%', '%%', self::calloutProblem($code)).'.'];
+            return [$fault, $code, 'Invalid callout at position %d: '.str_replace('%', '%%', Callout::problem($code)).'.'];
         }
 
         // Option letters: PCRE stops past the first one it does not know,
@@ -4128,7 +4072,7 @@ final class TokenParser
 
             if ('-' === $char) {
                 if (!$hyphenAllowed) {
-                    return [$this->pastTheFault($position), ErrorCode::GroupOptionHyphen, 'Invalid hyphen in option setting at position %d: modifiers are turned off once, after a single "-" that no "^" precedes.'];
+                    return [$this->target->faultOffset($position), ErrorCode::GroupOptionHyphen, 'Invalid hyphen in option setting at position %d: modifiers are turned off once, after a single "-" that no "^" precedes.'];
                 }
 
                 $hyphenAllowed = false;
@@ -4144,141 +4088,11 @@ final class TokenParser
             }
 
             if (!str_contains($letters, $char)) {
-                return [$this->pastTheFault($position), ...$syntax];
+                return [$this->target->faultOffset($position), ...$syntax];
             }
         }
 
         return $position < $length ? [$start, ...$syntax] : [$length, ...$unclosed];
-    }
-
-    /**
-     * Where PCRE refuses a number past 65535, a group number or a count,
-     * whose digits start at $at: past the whole number from PCRE2 10.45,
-     * past the digit that takes it over before. Null for one within.
-     */
-    private function numberTooBigOffset(string $digits, int $at): ?int
-    {
-        $value = 0;
-        foreach (Bytes::split($digits) as $read => $digit) {
-            $value = $value * 10 + (int) $digit;
-            if ($value > 65535) {
-                return $at + ($this->supports(PcreFeature::NumberTooBigPastWholeNumber) ? \strlen($digits) : $read + 1);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Where PCRE refuses a callout, and why, or null when it reads it: past
-     * a digit that takes the number over 255, at a string delimiter never
-     * closed, past a character that opens no string, where the ")" should
-     * follow the argument, or at the end of a pattern that ends after "(?C".
-     *
-     * @param int $start the offset of the "(" of "(?C"
-     *
-     * @return array{0: int, 1: ErrorCode}|null
-     */
-    private function calloutFault(int $start): ?array
-    {
-        $pattern = $this->pattern;
-        $length = \strlen($pattern);
-        $position = $start + 3;
-
-        if ($position >= $length) {
-            return [$length, ErrorCode::GroupUnclosed];
-        }
-
-        if (Ascii::isDigit($pattern[$position])) {
-            $number = 0;
-            while ($position < $length && Ascii::isDigit($pattern[$position])) {
-                $number = $number * 10 + (int) $pattern[$position++];
-                if ($number > 255) {
-                    return [$position, ErrorCode::CalloutOutOfRange];
-                }
-            }
-        } elseif (')' !== $pattern[$position]) {
-            $closing = self::CALLOUT_STRING_DELIMITERS[$pattern[$position]] ?? null;
-            if (null === $closing) {
-                return [$this->pastTheFault($position + 1), ErrorCode::CalloutInvalidDelimiter];
-            }
-
-            $opening = $position;
-            while (true) {
-                if (++$position >= $length) {
-                    return [$opening, ErrorCode::CalloutUnclosedString];
-                }
-
-                // A doubled closing delimiter stands for itself.
-                if ($closing === $pattern[$position] && (++$position >= $length || $closing !== $pattern[$position])) {
-                    break;
-                }
-            }
-        }
-
-        return ')' === ($pattern[$position] ?? '') ? null : [$position, ErrorCode::CalloutUnclosed];
-    }
-
-    /**
-     * What is wrong with a callout calloutFault() refuses, in words.
-     */
-    private static function calloutProblem(ErrorCode $code): string
-    {
-        return match ($code) {
-            ErrorCode::CalloutOutOfRange => 'the callout number is greater than 255',
-            ErrorCode::CalloutInvalidDelimiter => 'a callout takes a number, or a string opened by one of ` \' " ^ % # $ {',
-            ErrorCode::CalloutUnclosedString => 'the callout string is not closed by its delimiter',
-            ErrorCode::CalloutUnclosed => '")" is expected after the callout argument',
-            default => '")" is expected to close the callout',
-        };
-    }
-
-    /**
-     * PCRE refuses a quantifier with nothing to repeat once it has read it,
-     * before any "?" or "+" that would make it lazy or possessive; numbers
-     * it cannot take are refused while it reads them.
-     */
-    private function quantifierErrorOffset(Token $token): int
-    {
-        $countError = $this->countErrorOffset($token);
-        if (null !== $countError) {
-            return $countError;
-        }
-
-        $suffixed = \strlen($token->value) > 1 && \in_array(substr($token->value, -1), ['?', '+'], true);
-
-        return $this->pastTheFault($token->end() - ($suffixed ? 1 : 0));
-    }
-
-    /**
-     * Where PCRE refuses the numbers of a count: past the digit that takes
-     * one over 65535, or past the maximum when they are out of order. Null
-     * for a count PCRE reads, or no count at all. From PCRE2 10.43, a count
-     * may be padded with spaces and tabs, and "{,n}" is one.
-     */
-    private function countErrorOffset(Token $token): ?int
-    {
-        $blank = $this->supports(PcreFeature::OpenAndPaddedRepeatCounts) ? '[ \t]*+' : '';
-        if (1 !== LibraryPcre::match('/^\{'.$blank.'(\d*+)'.$blank.'(?:(,)'.$blank.'(\d*+)'.$blank.')?\}/', $token->value, $matches, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL)) {
-            return null;
-        }
-
-        [$minimum, $minimumAt] = $matches[1];
-        [$maximum, $maximumAt] = $matches[3];
-        $minimum ??= '';
-        $maximum ??= '';
-        if ('' === $minimum && ('' === $blank || '' === $maximum)) {
-            return null;
-        }
-
-        foreach ([[$minimum, $minimumAt], [$maximum, $maximumAt]] as [$digits, $at]) {
-            $tooBig = $this->numberTooBigOffset($digits, $token->position + $at);
-            if (null !== $tooBig) {
-                return $tooBig;
-            }
-        }
-
-        return '' !== $maximum && '' !== $minimum && (int) $maximum < (int) $minimum ? $token->position + $maximumAt + \strlen($maximum) : null;
     }
 
     /**
@@ -4290,55 +4104,14 @@ final class TokenParser
      */
     private function guardQuantifierCount(Token $token): void
     {
-        $countError = $this->countErrorOffset($token);
+        $countError = RepeatCount::faultOffset($token, $this->target);
         if (null !== $countError) {
             throw $this->parserException(
                 \sprintf('Invalid quantifier "%s" at position %d: its numbers are out of order or past 65535.', $token->value, $countError),
-                $this->countErrorCode($token),
+                RepeatCount::faultCode($token->value),
                 $countError,
             );
         }
-    }
-
-    /**
-     * What is wrong with a count countErrorOffset() refuses: a number past
-     * 65535, or else numbers out of order.
-     */
-    private function countErrorCode(Token $token): ErrorCode
-    {
-        LibraryPcre::matchAll('/\d++/', $token->value, $numbers);
-
-        foreach ($numbers[0] as $digits) {
-            if (\strlen(ltrim($digits, '0')) > 5 || (int) $digits > 65535) {
-                return ErrorCode::QuantifierTooBig;
-            }
-        }
-
-        return ErrorCode::QuantifierInvalidRange;
-    }
-
-    /**
-     * Where PCRE reports an error it reports past the character at fault
-     * from PCRE2 10.47, given that later offset: $shift characters earlier
-     * before 10.47, which every PHP bundles.
-     */
-    private function pastTheFault(int $offset, int $shift = 1): int
-    {
-        return $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? $offset : $offset - $shift;
-    }
-
-    /**
-     * "(**" opens no verb: a verb name never starts with "*", and "(?*" is
-     * the only short spelling of a lookahead. PCRE refuses it at the second
-     * "*", at $position.
-     */
-    private function doubleStarError(int $position): ParserException
-    {
-        return $this->parserException(
-            \sprintf('Unknown verb at position %d: "(**" opens no verb, PCRE wants a name after "(*".', $position),
-            ErrorCode::VerbInvalid,
-            $position,
-        );
     }
 
     /**
@@ -4354,94 +4127,6 @@ final class TokenParser
             && $position + 1 < \strlen($this->pattern)
             && TokenType::GroupOpen === $previous->type
             && $previous->end() === $position;
-    }
-
-    /**
-     * Where PCRE reports a "(*" the pattern never closes: where its name
-     * ends, or at the end of the pattern once a name it knows takes ":".
-     *
-     * @param int $start the offset of the "("
-     */
-    private function unclosedVerbOffset(int $start): int
-    {
-        // A limit is only read in the run of settings that opens the
-        // pattern; elsewhere it is a verb PCRE does not know.
-        LibraryPcre::match('/\A(?:\(\*[A-Z_]++(?:=\d*+)?\))*+/', $this->pattern, $settings);
-        $limit = $start > \strlen($settings[0] ?? '') ? null : PcreVerb::limitValueErrorOffset(
-            $this->pattern,
-            $start,
-            $this->supports(PcreFeature::LimitValueErrorOnFaultingCharacter),
-        );
-        if (null !== $limit) {
-            return $limit;
-        }
-
-        // Before PCRE2 10.33 the name is a run of letters.
-        LibraryPcre::match($this->supports(PcreFeature::NamesReadWhole) ? '/\G[A-Za-z0-9_]*+/' : '/\G[A-Za-z]*+/', $this->pattern, $matches, 0, $start + 2);
-        $name = $matches[0] ?? '';
-        $nameEnd = $start + 2 + \strlen($name);
-
-        if (':' === ($this->pattern[$nameEnd] ?? '') && PcreVerb::takesArgument($name)) {
-            return \strlen($this->pattern);
-        }
-
-        // "(*" at the end is a "*" with nothing to repeat, and from PCRE2
-        // 10.47 an alphabetic name, one that starts with a lowercase letter,
-        // followed by no colon is refused past the character after it,
-        // whole in UTF mode.
-        $pastTheFault = $this->supports(PcreFeature::ErrorOffsetPastTheFault);
-        if ('' === $name && $nameEnd >= \strlen($this->pattern)) {
-            return $this->pastTheFault($nameEnd);
-        }
-
-        if (!$pastTheFault || 1 !== LibraryPcre::match('/^[a-z]/', $name) || $nameEnd >= \strlen($this->pattern) || ':' === $this->pattern[$nameEnd]) {
-            return $nameEnd;
-        }
-
-        return $nameEnd + ($this->unicodeMode && 1 === LibraryPcre::match('/\G./su', $this->pattern, $character, 0, $nameEnd) ? \strlen($character[0]) : 1);
-    }
-
-    /**
-     * PCRE reads the name of a "(*" no ")" closes as it reads any verb name,
-     * before it looks for the ")": a name longer than a group name may be is
-     * refused as one too long where it ends. Before PCRE2 10.33, which reads
-     * it as a run of letters, a name that starts with a digit is refused on
-     * it, and one past 32 letters at the 33rd.
-     *
-     * @param int $start the offset of the "("
-     *
-     * @throws ParserException
-     */
-    private function refuseUnclosedVerbName(int $start): void
-    {
-        $nameStart = $start + 2;
-        if (!$this->supports(PcreFeature::NamesReadWhole)) {
-            if (Ascii::isDigit($this->pattern[$nameStart] ?? '')) {
-                throw $this->parserException(
-                    \sprintf('Invalid verb name at position %d: PCRE2 before 10.33 reads it as a group name, which must not start with a digit.', $nameStart),
-                    ErrorCode::GroupNameInvalid,
-                    $nameStart,
-                );
-            }
-
-            if (strspn($this->pattern, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', $nameStart) > GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044) {
-                $offset = $nameStart + GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044 + 1;
-
-                throw $this->parserException(\sprintf('Verb name too long at position %d: PCRE2 before 10.33 takes at most 32 letters.', $offset), ErrorCode::GroupNameTooLong, $offset);
-            }
-
-            return;
-        }
-
-        $length = strspn($this->pattern, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_', $nameStart);
-        $longest = $this->supports(PcreFeature::LongGroupNames) ? GroupNameReader::MAX_NAME_LENGTH : GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044;
-        if ($length > $longest) {
-            throw $this->parserException(
-                \sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $nameStart + $length, $longest),
-                ErrorCode::GroupNameTooLong,
-                $nameStart + $length,
-            );
-        }
     }
 
     /**

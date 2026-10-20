@@ -14,10 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Text;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Syntax\Callout;
 use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\StartOptions;
-use PHPRegex\Parser\Syntax\TokenParser;
 
 /**
  * Escapes bytes that would break the layout of a terminal or a rendered
@@ -751,8 +751,8 @@ final class DisplayEscaper
      */
     private static function unescapedRunEnd(string $text, int $offset): ?int
     {
-        if ('(?C' === substr($text, $offset, 3) && isset(TokenParser::CALLOUT_STRING_DELIMITERS[$text[$offset + 3] ?? ''])) {
-            return self::calloutStringEnd($text, $offset + 4, TokenParser::CALLOUT_STRING_DELIMITERS[$text[$offset + 3]]);
+        if ('(?C' === substr($text, $offset, 3) && isset(Callout::STRING_DELIMITERS[$text[$offset + 3] ?? ''])) {
+            return self::calloutStringEnd($text, $offset + 4, Callout::STRING_DELIMITERS[$text[$offset + 3]]);
         }
 
         if ('(?#' === substr($text, $offset, 3)) {

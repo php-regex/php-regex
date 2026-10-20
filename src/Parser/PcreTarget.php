@@ -186,6 +186,19 @@ final class PcreTarget
     }
 
     /**
+     * Where PCRE2 reports an error it reports past the character at fault
+     * from 10.47, given that later offset: $shift bytes earlier, on the
+     * character itself, before 10.47, which every PHP release bundles. A
+     * character of several bytes in UTF mode moves back whole.
+     *
+     * @internal
+     */
+    public function faultOffset(int $offset, int $shift = 1): int
+    {
+        return $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? $offset : $offset - $shift;
+    }
+
+    /**
      * Whether the running engine is the one judged: the same PHP minor
      * version, linking the same PCRE2 release, under the same locale. Only
      * then can PHP itself be asked about a pattern.

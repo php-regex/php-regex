@@ -15,7 +15,10 @@ namespace PHPRegex\Parser\Syntax;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\SyntaxErrorException;
 use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
 
@@ -364,6 +367,109 @@ final class PcreVerb
         }
 
         return ')' === ($pattern[$at + $digits] ?? '') ? null : $at + $digits + ($pcre1045 ? 0 : 1);
+    }
+
+    /**
+     * Where PCRE reports a "(*" the pattern never closes, the "(" at $start:
+     * where its name ends, or at the end of the pattern once a name it knows
+     * takes ":". In UTF mode, $utf, a character past the name is whole.
+     */
+    public static function unclosedOffset(string $pattern, int $start, PcreTarget $target, bool $utf): int
+    {
+        // A limit is only read in the run of settings that opens the
+        // pattern; elsewhere it is a verb PCRE does not know.
+        LibraryPcre::match('/\A(?:\(\*[A-Z_]++(?:=\d*+)?\))*+/', $pattern, $settings);
+        $limit = $start > \strlen($settings[0] ?? '') ? null : self::limitValueErrorOffset(
+            $pattern,
+            $start,
+            $target->supports(PcreFeature::LimitValueErrorOnFaultingCharacter),
+        );
+        if (null !== $limit) {
+            return $limit;
+        }
+
+        // Before PCRE2 10.33 the name is a run of letters.
+        LibraryPcre::match($target->supports(PcreFeature::NamesReadWhole) ? '/\G[A-Za-z0-9_]*+/' : '/\G[A-Za-z]*+/', $pattern, $matches, 0, $start + 2);
+        $name = $matches[0] ?? '';
+        $nameEnd = $start + 2 + \strlen($name);
+
+        if (':' === ($pattern[$nameEnd] ?? '') && self::takesArgument($name)) {
+            return \strlen($pattern);
+        }
+
+        // "(*" at the end is a "*" with nothing to repeat, and from PCRE2
+        // 10.47 an alphabetic name, one that starts with a lowercase letter,
+        // followed by no colon is refused past the character after it,
+        // whole in UTF mode.
+        $pastTheFault = $target->supports(PcreFeature::ErrorOffsetPastTheFault);
+        if ('' === $name && $nameEnd >= \strlen($pattern)) {
+            return $target->faultOffset($nameEnd);
+        }
+
+        if (!$pastTheFault || 1 !== LibraryPcre::match('/^[a-z]/', $name) || $nameEnd >= \strlen($pattern) || ':' === $pattern[$nameEnd]) {
+            return $nameEnd;
+        }
+
+        return $nameEnd + ($utf && 1 === LibraryPcre::match('/\G./su', $pattern, $character, 0, $nameEnd) ? \strlen($character[0]) : 1);
+    }
+
+    /**
+     * What PCRE refuses in the name of a "(*" no ")" closes, the "(" at
+     * $start, or null for a name it reads: it reads the name as it reads any
+     * verb name, before it looks for the ")", and refuses a name longer than
+     * a group name may be where it ends. Before PCRE2 10.33, which reads it
+     * as a run of letters, a name that starts with a digit is refused on it,
+     * and one past 32 letters at the 33rd.
+     */
+    public static function unclosedNameError(string $pattern, int $start, PcreTarget $target): ?ParserException
+    {
+        $nameStart = $start + 2;
+        if (!$target->supports(PcreFeature::NamesReadWhole)) {
+            if (Ascii::isDigit($pattern[$nameStart] ?? '')) {
+                return SyntaxErrorException::withContext(
+                    \sprintf('Invalid verb name at position %d: PCRE2 before 10.33 reads it as a group name, which must not start with a digit.', $nameStart),
+                    ErrorCode::GroupNameInvalid,
+                    $nameStart,
+                    $pattern,
+                );
+            }
+
+            if (strspn($pattern, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', $nameStart) > GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044) {
+                $offset = $nameStart + GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044 + 1;
+
+                return SyntaxErrorException::withContext(\sprintf('Verb name too long at position %d: PCRE2 before 10.33 takes at most 32 letters.', $offset), ErrorCode::GroupNameTooLong, $offset, $pattern);
+            }
+
+            return null;
+        }
+
+        $length = strspn($pattern, self::WORD_NAME, $nameStart);
+        $longest = $target->supports(PcreFeature::LongGroupNames) ? GroupNameReader::MAX_NAME_LENGTH : GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044;
+        if ($length > $longest) {
+            return SyntaxErrorException::withContext(
+                \sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $nameStart + $length, $longest),
+                ErrorCode::GroupNameTooLong,
+                $nameStart + $length,
+                $pattern,
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * "(**" opens no verb: a verb name never starts with "*", and "(?*" is
+     * the only short spelling of a lookahead. PCRE refuses it at the second
+     * "*", at $position.
+     */
+    public static function doubleStarError(string $pattern, int $position): ParserException
+    {
+        return SyntaxErrorException::withContext(
+            \sprintf('Unknown verb at position %d: "(**" opens no verb, PCRE wants a name after "(*".', $position),
+            ErrorCode::VerbInvalid,
+            $position,
+            $pattern,
+        );
     }
 
     public function isScriptRun(): bool

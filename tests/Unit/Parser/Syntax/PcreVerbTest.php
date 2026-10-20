@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser\Syntax;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
@@ -319,6 +320,89 @@ final class PcreVerbTest extends TestCase
         yield 'a group opener' => ['pattern' => '(?=a)', 'at' => 0, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => null];
         yield 'not on a parenthesis' => ['pattern' => 'a(*pla:', 'at' => 0, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => null];
         yield 'past the end' => ['pattern' => '(*pla:', 'at' => 6, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => null];
+    }
+
+    /**
+     * Where PCRE reports a "(*" no ")" closes: where its name ends, at the
+     * end of the pattern after a name that takes ":", past the character
+     * after an alphabetic name from PCRE2 10.47.
+     */
+    #[Test]
+    #[DataProvider('provideUnclosedVerbs')]
+    public function test_unclosed_offset_is_where_pcre_stops_reading_the_verb(string $pattern, int $start, string $release, bool $utf, int $offset): void
+    {
+        $this->assertSame($offset, PcreVerb::unclosedOffset($pattern, $start, new PcreTarget(80400, $release), $utf));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, start: int, release: string, utf: bool, offset: int}>
+     */
+    public static function provideUnclosedVerbs(): iterable
+    {
+        // PCRE2 10.49: "/(*MARK:a/" at offset 8, "/(*foo/" at 5,
+        // "/(*LIMIT_MATCH=1x/" at 15, "/a(*LIMIT_MATCH=1x/" at 14,
+        // "/(*fooé/u" at 7 and "/(*fooé/" at 6.
+        yield 'a name that takes an argument' => ['pattern' => '(*MARK:a', 'start' => 0, 'release' => '10.49', 'utf' => false, 'offset' => 8];
+        yield 'a name the pattern ends in' => ['pattern' => '(*foo', 'start' => 0, 'release' => '10.49', 'utf' => false, 'offset' => 5];
+        yield 'a malformed limit' => ['pattern' => '(*LIMIT_MATCH=1x', 'start' => 0, 'release' => '10.49', 'utf' => false, 'offset' => 15];
+        yield 'a malformed limit, before 10.45' => ['pattern' => '(*LIMIT_MATCH=1x', 'start' => 0, 'release' => '10.44', 'utf' => false, 'offset' => 16];
+        yield 'a limit past the start of the pattern' => ['pattern' => 'a(*LIMIT_MATCH=1x', 'start' => 1, 'release' => '10.49', 'utf' => false, 'offset' => 14];
+        yield 'a two-byte character after an alphabetic name' => ['pattern' => '(*fooé', 'start' => 0, 'release' => '10.49', 'utf' => true, 'offset' => 7];
+        yield 'one byte of it without UTF' => ['pattern' => '(*fooé', 'start' => 0, 'release' => '10.49', 'utf' => false, 'offset' => 6];
+        yield 'where the name ends, before 10.47' => ['pattern' => '(*fooé', 'start' => 0, 'release' => '10.44', 'utf' => true, 'offset' => 5];
+        yield 'a capital name and a character after it' => ['pattern' => '(*FOO!', 'start' => 0, 'release' => '10.49', 'utf' => false, 'offset' => 5];
+        yield 'an alphabetic name and a colon' => ['pattern' => '(*foo:a', 'start' => 0, 'release' => '10.49', 'utf' => false, 'offset' => 5];
+        // "/(*/": the "*" repeats nothing, past it from 10.47.
+        yield 'no name at the end' => ['pattern' => '(*', 'start' => 0, 'release' => '10.49', 'utf' => false, 'offset' => 2];
+        yield 'no name at the end, before 10.47' => ['pattern' => '(*', 'start' => 0, 'release' => '10.44', 'utf' => false, 'offset' => 1];
+        // Before PCRE2 10.33 the name is a run of letters.
+        yield 'a digit ends the name before 10.33' => ['pattern' => '(*ab1', 'start' => 0, 'release' => '10.32', 'utf' => false, 'offset' => 4];
+        yield 'a digit is in the name from 10.33' => ['pattern' => '(*ab1', 'start' => 0, 'release' => '10.33', 'utf' => false, 'offset' => 5];
+    }
+
+    #[Test]
+    #[DataProvider('provideUnclosedNames')]
+    public function test_unclosed_name_error_refuses_a_name_pcre_cannot_read(string $name, string $release, ?ErrorCode $code, ?int $offset): void
+    {
+        $error = PcreVerb::unclosedNameError('(*'.$name, 0, new PcreTarget(80400, $release));
+
+        $this->assertSame([$code, $offset], [$error?->errorCode, $error?->position]);
+    }
+
+    /**
+     * @return iterable<string, array{name: string, release: string, code: ErrorCode|null, offset: int|null}>
+     */
+    public static function provideUnclosedNames(): iterable
+    {
+        // PCRE2 10.49: 129 letters after "(*" are refused at offset 131, 128
+        // are read.
+        yield 'one character too long' => ['name' => str_repeat('a', 129), 'release' => '10.49', 'code' => ErrorCode::GroupNameTooLong, 'offset' => 131];
+        yield 'the longest name' => ['name' => str_repeat('a', 128), 'release' => '10.49', 'code' => null, 'offset' => null];
+        yield 'digits count' => ['name' => str_repeat('a', 120).'012345678', 'release' => '10.49', 'code' => ErrorCode::GroupNameTooLong, 'offset' => 131];
+        yield 'too long before 10.44' => ['name' => str_repeat('a', 33), 'release' => '10.43', 'code' => ErrorCode::GroupNameTooLong, 'offset' => 35];
+        yield 'the longest name before 10.44' => ['name' => str_repeat('a', 32), 'release' => '10.43', 'code' => null, 'offset' => null];
+        yield 'a digit first before 10.33' => ['name' => '1a', 'release' => '10.32', 'code' => ErrorCode::GroupNameInvalid, 'offset' => 2];
+        yield 'a digit first from 10.33' => ['name' => '1a', 'release' => '10.33', 'code' => null, 'offset' => null];
+        yield 'too many letters before 10.33' => ['name' => str_repeat('a', 33), 'release' => '10.32', 'code' => ErrorCode::GroupNameTooLong, 'offset' => 35];
+        yield 'letters and a digit before 10.33' => ['name' => str_repeat('a', 32).'1', 'release' => '10.32', 'code' => null, 'offset' => null];
+    }
+
+    #[Test]
+    public function test_unclosed_name_error_names_the_limit(): void
+    {
+        $error = PcreVerb::unclosedNameError('(*'.str_repeat('a', 129), 0, new PcreTarget(80400, '10.49'));
+
+        $this->assertSame('Verb name too long at position 131: PCRE takes at most 128 characters.', $error?->getMessage());
+    }
+
+    #[Test]
+    public function test_double_star_error_is_refused_at_the_second_star(): void
+    {
+        $error = PcreVerb::doubleStarError('(**)', 2);
+
+        $this->assertSame(ErrorCode::VerbInvalid, $error->errorCode);
+        $this->assertSame(2, $error->position);
+        $this->assertSame('Unknown verb at position 2: "(**" opens no verb, PCRE wants a name after "(*".', $error->getMessage());
     }
 
     #[Test]

@@ -68,6 +68,7 @@ final class AstFingerprint
         'src/Parser/Engine/NoJit.php',
         'src/Parser/PhpVersionGates.php',
         'src/Parser/Syntax/BadEscape.php',
+        'src/Parser/Syntax/Callout.php',
         'src/Parser/Syntax/CodePointReader.php',
         'src/Parser/Syntax/ExtendedClassReader.php',
         'src/Parser/Syntax/GroupNameReader.php',
