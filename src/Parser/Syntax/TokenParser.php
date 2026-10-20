@@ -3044,7 +3044,9 @@ final class TokenParser
             }
         }
 
-        $no ??= $this->createEmptyLiteralNodeAt($this->stream->current()->position);
+        // With no "|", the second branch is empty where the first one ends:
+        // after a "|" it starts past that end.
+        $no ??= $this->createEmptyLiteralNodeAt($yesBranch->getEndPosition());
 
         $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
         $endPosition = $endToken->position + 1;

@@ -68,18 +68,54 @@ final class LookbehindLengthTest extends TestCase
         yield 'a relative back reference' => ['pattern' => '/(ab)(?<=\g-1)x/', 'expected' => [2, 2]];
         yield 'a numbered back reference' => ['pattern' => '/(ab)(?<=\g{1})x/', 'expected' => [2, 2]];
         yield 'a group inside a script run' => ['pattern' => '/(*sr:(ab))(?<=\1)c/', 'expected' => [2, 2]];
+        yield 'a script run is a group' => ['pattern' => '/(?<=(*sr:ab|cd))x/', 'expected' => [2, 2]];
+        yield 'an accept ends the branch' => ['pattern' => '/(?<=a(*ACCEPT)b+)x/', 'expected' => [1, 1]];
+        yield 'a fail ends the branch' => ['pattern' => '/(?<=a(*FAIL)bcd)x/', 'expected' => [1, 1]];
+        yield 'a condition of one branch' => ['pattern' => '/(?<=(?(1)ab))(x)/', 'expected' => [2, 2]];
     }
 
     /**
-     * Before PCRE2 10.43 a group of variable length stays variable even
-     * repeated zero times.
+     * Before PCRE2 10.43 a group of variable length has no fixed length
+     * even repeated zero times, and a repeat of variable count has none
+     * whatever it repeats: the measure ends there.
      */
     #[Test]
-    public function test_a_group_repeated_zero_times_keeps_its_maximum_before_variable_lengths(): void
+    #[DataProvider('provideUnfixedBefore1043')]
+    public function test_an_item_of_no_fixed_length_ends_the_measure_before_variable_lengths(string $pattern): void
     {
-        [$regex, $lookbehind] = $this->lookbehind('/(?<=(?:a|bc){0}d)x/');
+        [$regex, $lookbehind] = $this->lookbehind($pattern);
 
-        $this->assertSame([1, 3], (new LookbehindLength(GroupIndex::of($regex->pattern), false, false))->of($lookbehind->child));
+        $this->assertTrue((new LookbehindLength(GroupIndex::of($regex->pattern), false, false))->branch($lookbehind->child)[1]);
+        $this->assertFalse((new LookbehindLength(GroupIndex::of($regex->pattern), false, true))->branch($lookbehind->child)[1]);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideUnfixedBefore1043(): iterable
+    {
+        yield 'a group of two lengths repeated zero times' => ['pattern' => '/(?<=(?:a|bc){0}d)x/'];
+        yield 'an empty group made optional' => ['pattern' => '/(?<=(?:)?)x/'];
+        yield 'a lookbehind counted once or twice' => ['pattern' => '/(?<=(?<=a){1,2})x/'];
+        yield 'a call to a group of two lengths' => ['pattern' => '/(?<=(?1))(a|bc)/'];
+    }
+
+    /**
+     * A group measured once is not measured again: what it ended the
+     * measure on holds for each call to it.
+     */
+    #[Test]
+    public function test_a_group_measured_once_still_ends_the_measure_before_variable_lengths(): void
+    {
+        $regex = RegexParser::create(self::TARGET)->parse('/(?<=(?1))(?<=x(?1))(a(?:)?)/');
+        $lookbehinds = NodeFinder::find($regex, static fn (NodeInterface $node): bool => $node instanceof GroupNode && GroupType::LookbehindPositive === $node->type);
+        $this->assertCount(2, $lookbehinds);
+        $measure = new LookbehindLength(GroupIndex::of($regex->pattern), false, false);
+
+        foreach ($lookbehinds as $lookbehind) {
+            $this->assertInstanceOf(GroupNode::class, $lookbehind);
+            $this->assertTrue($measure->branch($lookbehind->child)[1], self::text($regex, $lookbehind));
+        }
     }
 
     #[Test]

@@ -2505,7 +2505,7 @@ final class Validator extends AbstractNodeVisitor
         try {
             foreach ($branches as $branch) {
                 $this->countLookbehindMeasures(1);
-                $length = $this->lookbehindLength->of($branch, $measuring);
+                [$length, $unfixed] = $this->lookbehindLength->branch($branch, $measuring);
                 $lengths[] = $length;
 
                 // PCRE stops at the first branch it cannot bound, met in
@@ -2524,6 +2524,11 @@ final class Validator extends AbstractNodeVisitor
                     $this->validateLookbehindBranchLength($node, $length, true);
                 }
 
+                // Up to PCRE2 10.42 the measure ends at the first item of no
+                // fixed length, and the lookbehind is refused there.
+                if ($unfixed) {
+                    $this->refuseVariableLengthLookbehind($node);
+                }
             }
         } finally {
             $this->measuredLookbehind = $around;
@@ -2569,7 +2574,7 @@ final class Validator extends AbstractNodeVisitor
      */
     private function validateLookbehindBranchLength(GroupNode $node, array $lengthRange, bool $variable): void
     {
-        [$min, $max] = $lengthRange;
+        $max = $lengthRange[1];
 
         if (null === $max) {
             $culprit = $this->findUnboundedLookbehindNode($node->child);
@@ -2584,15 +2589,6 @@ final class Validator extends AbstractNodeVisitor
                 $this->lookbehindErrorPosition($node),
                 ErrorCode::LookbehindUnbounded,
                 $hint,
-            );
-        }
-
-        if (!$this->supportsVariableLengthLookbehind() && $min !== $max) {
-            $this->raiseSemanticError(
-                'Variable-length lookbehind needs PCRE2 10.43, which PHP bundles from 8.4.',
-                $this->lookbehindErrorPosition($node),
-                ErrorCode::LookbehindVariableLengthNotSupported,
-                'Give each branch of the lookbehind a fixed length, or target PHP 8.4+.',
             );
         }
 
@@ -2616,6 +2612,16 @@ final class Validator extends AbstractNodeVisitor
                 'Reduce the lookbehind length, or raise max_lookbehind_length.',
             );
         }
+    }
+
+    private function refuseVariableLengthLookbehind(GroupNode $node): never
+    {
+        $this->raiseSemanticError(
+            'Variable-length lookbehind needs PCRE2 10.43, which PHP bundles from 8.4.',
+            $this->lookbehindErrorPosition($node),
+            ErrorCode::LookbehindVariableLengthNotSupported,
+            'Give each branch of the lookbehind a fixed length, or target PHP 8.4+.',
+        );
     }
 
     /**
@@ -2643,6 +2649,7 @@ final class Validator extends AbstractNodeVisitor
             $node instanceof QuantifierNode => [$node->node],
             $node instanceof ConditionalNode => [$node->condition, $node->yes, $node->no],
             $node instanceof DefineNode => [$node->content],
+            $node instanceof ScriptRunNode => null === $node->content ? [] : [$node->content],
             default => [],
         };
 
@@ -4302,7 +4309,10 @@ final class Validator extends AbstractNodeVisitor
             return;
         }
 
-        if ($this->readingPrefix) {
+        // A lookbehind inside another is measured with it, where the measure
+        // of the outer one reaches it: not after a "(*ACCEPT)" that ends its
+        // branch, nor in a DEFINE group PCRE skips.
+        if ($this->readingPrefix || $this->lookbehindDepth > 0) {
             return;
         }
 

@@ -91,6 +91,10 @@ final class PcreVersionGatingTest extends TestCase
         yield 'bounded range: /(?<=a{1,3})b/' => ['pattern' => '/(?<=a{1,3})b/'];
         yield 'nested alternation of unequal lengths: /(?<=(?:a|bc))b/' => ['pattern' => '/(?<=(?:a|bc))b/'];
         yield 'call to a group of unequal branches: /(?<n>a|bc)(?<=(?1))b/' => ['pattern' => '/(?<n>a|bc)(?<=(?1))b/'];
+        yield 'optional empty group: /(?<=(?:)?)b/' => ['pattern' => '/(?<=(?:)?)b/'];
+        yield 'optional empty capture: /(?<=()?)b/' => ['pattern' => '/(?<=()?)b/'];
+        yield 'optional lookbehind: /(?<=(?<=a)?)b/' => ['pattern' => '/(?<=(?<=a)?)b/'];
+        yield 'optional accept: /(?<=(*ACCEPT)?)b/' => ['pattern' => '/(?<=(*ACCEPT)?)b/'];
     }
 
     /**
@@ -102,5 +106,7 @@ final class PcreVersionGatingTest extends TestCase
         yield 'fixed repeat: /(?<=a{3})b/' => ['pattern' => '/(?<=a{3})b/'];
         yield 'back reference to a fixed group: /(a)(?<=\\1)b/' => ['pattern' => '/(a)(?<=\\1)b/'];
         yield 'call to a fixed group: /(?<n>a)(?<=(?1))b/' => ['pattern' => '/(?<n>a)(?<=(?1))b/'];
+        yield 'condition of one branch: /(a)(?<=(?(1)b))c/' => ['pattern' => '/(a)(?<=(?(1)b))c/'];
+        yield 'repeat after an accept: /(?<=a(*ACCEPT)b+)c/' => ['pattern' => '/(?<=a(*ACCEPT)b+)c/'];
     }
 }

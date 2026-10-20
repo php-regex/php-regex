@@ -196,6 +196,15 @@ Each checked with pcre2test 10.32 to 10.49.
   `(?:x|(?:b){8190})` are at 0 on 10.48 and 10.49, the library says 13 and
   17; `(?:a{2}){7000}|(?:bb){1000}` is at 0, the library says 27, as the
   floor counts `a{2}` two units where PCRE2 compiles four.
+  first three at 0 and the last at 4, as 10.35 does. On 10.34 the
+  lookbehinds after it in the pattern are then never measured:
+  `(?<=(?(DEFINE)(a))b)(?<=c+)` compiles there, and is refused at 20 on
+  10.32, 10.33 and 10.35. Following it means reading the pattern again with
+  one parenthesis fewer from the DEFINE group on, the data PCRE2 keeps for
+  the skipped opening read as characters (their count depends on how
+  PCRE2 was built), which the tree the library measures does not hold. A
+  repeat of such a DEFINE group is left alone: `(?<=(?(DEFINE)(a))??)`
+  compiles on 10.32 to 10.34.
 
 ## The articles section: what is left
 
