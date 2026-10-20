@@ -103,6 +103,31 @@ final class PolyfilledMethodsTest extends TestCase
     }
 
     /**
+     * Rector reads the tests with no PHPUnit installed beside it, its own
+     * TestCase standing in only once a class asks for it: the traits load
+     * there all the same, as the implementations built on the older API.
+     */
+    public function test_every_feature_trait_loads_where_no_phpunit_is_installed(): void
+    {
+        $root = \dirname(__DIR__, 4);
+        $script = \sprintf(
+            'require %s; require %s; echo class_exists(%s, false) ? "PHPUnit loaded" : "", "\n"; foreach (%s as $trait) { echo $trait, " ", (new ReflectionClass($trait))->getName(), "\n"; }',
+            var_export($root.'/vendor/autoload.php', true),
+            var_export($root.'/tests/Support/PhpUnitCompat/bootstrap.php', true),
+            var_export(TestCase::class, true),
+            var_export(array_keys(PolyfilledMethods::FEATURES), true),
+        );
+
+        exec(escapeshellarg(\PHP_BINARY).' -r '.escapeshellarg($script).' 2>&1', $output, $code);
+
+        $expected = [''];
+        foreach (array_keys(PolyfilledMethods::FEATURES) as $trait) {
+            $expected[] = $trait.' '.PolyfilledMethods::implementation($trait, false);
+        }
+        $this->assertSame([0, $expected], [$code, $output]);
+    }
+
+    /**
      * Each passing and each failing expectation of the feature's probe, run
      * by the PHPUnit running this test, ends as its name says.
      *

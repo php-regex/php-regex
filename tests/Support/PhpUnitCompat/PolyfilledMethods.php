@@ -45,11 +45,14 @@ final class PolyfilledMethods
     ];
 
     /**
+     * Where no PHPUnit is installed, as Rector reads the tests, the method
+     * is built on the older API.
+     *
      * @param trait-string $trait
      */
     public static function isNative(string $trait): bool
     {
-        return (new \ReflectionClass(TestCase::class))->hasMethod(self::FEATURES[$trait]['method']);
+        return class_exists(TestCase::class) && (new \ReflectionClass(TestCase::class))->hasMethod(self::FEATURES[$trait]['method']);
     }
 
     /**
