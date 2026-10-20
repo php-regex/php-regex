@@ -88,13 +88,16 @@ trait RegexAssertions
      */
     public static function assertPatternIsLinear(string $pattern, string $message = ''): void
     {
+        $constraint = new IsLinearPattern();
+
         try {
-            self::assertThat($pattern, new IsLinearPattern(), $message);
+            self::assertThat($pattern, $constraint, $message);
         } catch (ExpectationFailedException $failure) {
-            // The verdict's own words lead, its prefix the first line, so
-            // the constraint's prose is carried after them instead.
+            // The verdict the constraint reached leads, its prefix the first
+            // line, the caller's note after it; the constraint's own failure,
+            // its prose included, rides along as the previous exception.
             throw new ExpectationFailedException(
-                self::noted(PatternLab::linearFailure($pattern) ?? $failure->getMessage(), $message),
+                self::noted($constraint->verdict() ?? $failure->getMessage(), $message),
                 $failure->getComparisonFailure(),
                 $failure,
             );

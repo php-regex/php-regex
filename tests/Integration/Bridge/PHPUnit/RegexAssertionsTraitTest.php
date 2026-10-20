@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPUnit;
 
+use PHPRegex\PHPUnit\Constraint\IsLinearPattern;
 use PHPRegex\PHPUnit\RegexAssertions;
 use PHPRegex\Tests\Support\MatchesPatternCases;
 use PHPRegex\Tests\Support\PcreGates;
@@ -163,6 +164,40 @@ final class RegexAssertionsTraitTest extends TestCase
         });
 
         $this->assertStringStartsWith('proven unsafe:', $failure);
+    }
+
+    /**
+     * The trait door words its failure from the verdict the constraint
+     * reached, the caller's note after it, and keeps the constraint's own
+     * failure, its prose and the note first, as the previous exception.
+     */
+    #[Test]
+    public function test_assert_pattern_is_linear_leads_with_the_constraints_verdict_and_keeps_its_failure(): void
+    {
+        $constraint = new IsLinearPattern();
+        $this->assertFalse($constraint->evaluate('/(a+)+b/', '', true));
+        $verdict = $constraint->verdict();
+        $this->assertNotNull($verdict);
+
+        try {
+            self::assertPatternIsLinear('/(a+)+b/', 'the custom note');
+            self::fail('Expected the assertion to fail.');
+        } catch (ExpectationFailedException $failure) {
+            $this->assertSame($verdict."\nthe custom note", $failure->getMessage());
+            $previous = $failure->getPrevious();
+            $this->assertInstanceOf(ExpectationFailedException::class, $previous);
+            $this->assertStringStartsWith("the custom note\nFailed asserting that '/(a+)+b/' is proven to match in linear time.\n", $previous->getMessage());
+        }
+    }
+
+    #[Test]
+    public function test_is_linear_pattern_holds_no_verdict_before_it_is_evaluated_nor_for_a_linear_pattern(): void
+    {
+        $constraint = new IsLinearPattern();
+        $this->assertNull($constraint->verdict());
+
+        $this->assertTrue($constraint->evaluate('/^a+$/', '', true));
+        $this->assertNull($constraint->verdict());
     }
 
     /**

@@ -38,6 +38,19 @@ final class IsLinearPattern extends Constraint
         return 'is proven to match in linear time';
     }
 
+    /**
+     * The verdict the last evaluation reached, in the assertion's own words
+     * and led by its stable prefix, or null before any evaluation and for a
+     * pattern proven linear: the trait door words its failure from it, so
+     * the pattern is analysed once.
+     *
+     * @internal read by RegexAssertions
+     */
+    public function verdict(): ?string
+    {
+        return $this->failure;
+    }
+
     protected function matches(mixed $other): bool
     {
         if (!\is_string($other)) {
