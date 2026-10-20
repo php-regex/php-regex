@@ -295,6 +295,25 @@ results of `preg_grep()`, `preg_replace()` and `preg_filter()`, keep Psalm's
 types, which already follow the subject's: the plugin only checks their
 patterns.
 
+### Compared with the PHPStan extension
+
+The plugin reads the same facts of a pattern as the PHPStan extension, and
+says less in two places:
+
+* A group of digits is never a `numeric-string`. For
+  `/^(\d+)-(?<y>\d+)?$/`, PHPStan types `$matches` as
+  `array{0: non-falsy-string, 1: numeric-string, y?: numeric-string, 2?: numeric-string}`,
+  the plugin as
+  `array{0: non-falsy-string, 1: non-empty-string, 2?: non-empty-string, y?: non-empty-string}`.
+  Psalm's type combiner reads `numeric-string|'none'` as `numeric-string`, so
+  with a `numeric-string` group Psalm would type
+  `preg_match(…) ? $m[1] : 'none'` as a `numeric-string` and reject
+  `'none' === $v`.
+* A replacement of `preg_replace()` or `preg_filter()` that refers to a group
+  the pattern does not have is not reported. `preg_replace('/(a)/', '[$2]', 'xay')`
+  returns `'x[]y'`: PHP replaces `$2` with nothing. The PHPStan extension
+  reports it as `regex.replacement.undefinedGroup`.
+
 Configuration
 -------------
 
