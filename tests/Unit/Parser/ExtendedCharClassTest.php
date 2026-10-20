@@ -181,8 +181,9 @@ final class ExtendedCharClassTest extends TestCase
         $this->assertNotEmpty($ast->accept(new TestCaseGenerator()));
         $this->assertNotNull($ast->accept(new LiteralExtractor()));
         $this->assertSame($pattern, $ast->accept(new Rewriter())->accept(new PatternPrinter()));
-        // The modernized tree has no source: each operation comes back in parentheses.
-        $this->assertSame('/(?[(((\\d-([3]&![:alpha:]))^\\x61)|\\p{Lu})])+/', $ast->accept(new Modernizer())->accept(new PatternPrinter()));
+        // The modernized tree has no source: an operation comes back in
+        // parentheses only where precedence needs them.
+        $this->assertSame('/(?[\\d-[3]&![:alpha:]^\\x61|\\p{Lu}])+/', $ast->accept(new Modernizer())->accept(new PatternPrinter()));
         $ast->accept(new PatternLinter());
         $this->assertStringContainsString('but not (', $ast->accept(new HtmlExplainer()));
 
@@ -326,7 +327,7 @@ final class ExtendedCharClassTest extends TestCase
         $pattern = '/^(?[ \\é + \\8 + \\! ])$/u';
 
         $written = $regex->parse($pattern)->accept(new PatternPrinter(true));
-        $this->assertSame('/^(?[((\\x{e9}+\\x{38})+\\!)])$/u', $written);
+        $this->assertSame('/^(?[\\x{e9}+\\x{38}+\\!])$/u', $written);
     }
 
     #[Test]

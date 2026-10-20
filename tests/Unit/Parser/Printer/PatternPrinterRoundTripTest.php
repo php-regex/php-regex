@@ -59,6 +59,35 @@ final class PatternPrinterRoundTripTest extends TestCase
     /**
      * @param list<string> $subjects
      */
+    #[Test]
+    #[DataProvider('provideExtendedClassOperations')]
+    public function test_an_extended_class_prints_back_the_same_pattern(string $pattern, array $subjects): void
+    {
+        $this->assertEveryPrinterKeepsThePattern($pattern, $subjects);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: list<string>}>
+     */
+    public static function provideExtendedClassOperations(): iterable
+    {
+        // PCRE2 refuses parentheses nested past a depth in "(?[...])": an
+        // operation in parentheses where its precedence needs none counts.
+        $nested = str_repeat('\n+[a]&\n+(', 14).'\n&\n'.str_repeat(')', 14);
+        yield 'operations nested as deep as PCRE2 reads them' => ['pattern' => '/(?['.$nested.'])/', 'subjects' => ['a', "\n", 'b']];
+        // "&" binds tighter than "+", "|", "-" and "^", which bind left to
+        // right; "!" binds tightest.
+        yield 'an intersection after a union' => ['pattern' => '/(?[[a]+[b]&[c]])/', 'subjects' => ['a', 'b', 'c']];
+        yield 'a union in parentheses before an intersection' => ['pattern' => '/(?[([a]+[b])&[b]])/', 'subjects' => ['a', 'b', 'c']];
+        yield 'a difference of a difference' => ['pattern' => '/(?[[ab]-[b]-[a]])/', 'subjects' => ['a', 'b']];
+        yield 'a difference from a difference in parentheses' => ['pattern' => '/(?[[ab]-([b]-[a])])/', 'subjects' => ['a', 'b']];
+        yield 'a complement of an intersection' => ['pattern' => '/(?[!([a]&[ab])&[ab]])/', 'subjects' => ['a', 'b', 'c']];
+        yield 'a complement before an intersection' => ['pattern' => '/(?[![a]&[ab]])/', 'subjects' => ['a', 'b', 'c']];
+    }
+
+    /**
+     * @param list<string> $subjects
+     */
     private function assertEveryPrinterKeepsThePattern(string $pattern, array $subjects): void
     {
         $this->requiresCompile($pattern);

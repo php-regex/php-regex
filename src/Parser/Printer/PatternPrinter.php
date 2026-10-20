@@ -25,6 +25,7 @@ use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
+use PHPRegex\Parser\Node\ClassSetOperator;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\ControlCharNode;
@@ -732,17 +733,20 @@ final class PatternPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * Without the source, every operation is parenthesised: the precedence
-     * of "&" over the others needs no reader to remember it.
+     * Without the source, an operation is parenthesised where precedence
+     * needs it, and nowhere else: PCRE2 refuses parentheses nested past a
+     * depth, and one pair around each operation would double the depth of
+     * "a+b&c+(...)".
      */
     #[\Override]
     public function visitClassSetOperation(ClassSetOperationNode $node): string
     {
+        $binding = self::classSetBinding($node->operator);
         if (null === $node->left) {
-            return '!'.$node->right->accept($this);
+            return '!'.$this->classSetOperand($node->right, $binding, false);
         }
 
-        return '('.$node->left->accept($this).$node->symbol.$node->right->accept($this).')';
+        return $this->classSetOperand($node->left, $binding, false).$node->symbol.$this->classSetOperand($node->right, $binding, true);
     }
 
     #[\Override]
@@ -1346,6 +1350,37 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         return false;
+    }
+
+    /**
+     * An operand of an extended class operation, in parentheses where it is
+     * an operation that binds looser than the one it stands in, or as
+     * tightly on its right: the operators of one precedence bind left to
+     * right.
+     */
+    private function classSetOperand(NodeInterface $operand, int $binding, bool $isRight): string
+    {
+        $text = $operand->accept($this);
+        if (!$operand instanceof ClassSetOperationNode) {
+            return $text;
+        }
+
+        $inner = self::classSetBinding($operand->operator);
+
+        return $inner < $binding || ($isRight && $inner === $binding) ? '('.$text.')' : $text;
+    }
+
+    /**
+     * How tightly an extended class operator binds: "!" most, then "&",
+     * then "+", "|", "-" and "^" alike.
+     */
+    private static function classSetBinding(ClassSetOperator $operator): int
+    {
+        return match ($operator) {
+            ClassSetOperator::Complement => 3,
+            ClassSetOperator::Intersection => 2,
+            default => 1,
+        };
     }
 
     /**
