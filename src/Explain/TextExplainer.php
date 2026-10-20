@@ -77,11 +77,22 @@ final class TextExplainer extends AbstractNodeVisitor
      */
     private int $groupDepth = 0;
 
+    /**
+     * The settings in force where the node being explained stands.
+     */
+    private MatchSettings $settings;
+
+    public function __construct()
+    {
+        $this->settings = new MatchSettings();
+    }
+
     #[\Override]
     public function visitRegex(RegexNode $node): string
     {
         $this->indentLevel = 0;
         $this->groupDepth = 0;
+        $this->settings = MatchSettings::of($node);
         $flags = $node->flags ? ' (with flags: '.$node->flags.')' : '';
         $header = $this->line('Regex matches'.$flags);
         $this->indentLevel++;
@@ -175,7 +186,7 @@ final class TextExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitLiteral(LiteralNode $node): string
     {
-        return $this->line(Vocabulary::literal($node->value));
+        return $this->line(Vocabulary::literal($node->value, $this->settings->utf));
     }
 
     #[\Override]
@@ -225,11 +236,11 @@ final class TextExplainer extends AbstractNodeVisitor
     public function visitRange(RangeNode $node): string
     {
         $start = ($node->start instanceof LiteralNode)
-            ? Vocabulary::literal($node->start->value)
+            ? Vocabulary::literal($node->start->value, $this->settings->utf)
             : $node->start->accept($this); // Fallback
 
         $end = ($node->end instanceof LiteralNode)
-            ? Vocabulary::literal($node->end->value)
+            ? Vocabulary::literal($node->end->value, $this->settings->utf)
             : $node->end->accept($this); // Fallback
 
         return $this->line(\sprintf('Range: from %s to %s', $start, $end));

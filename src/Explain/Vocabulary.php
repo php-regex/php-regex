@@ -18,6 +18,8 @@ use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Bytes;
+use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * The words the text and the HTML explanations describe a construct with,
@@ -107,8 +109,11 @@ final class Vocabulary
 
     /**
      * A literal, quoted, a blank or a control character named.
+     *
+     * @param bool $utf whether the pattern is read as UTF: a character
+     *                  above ASCII is then one character, else its bytes
      */
-    public static function literal(string $value): string
+    public static function literal(string $value, bool $utf = false): string
     {
         return match ($value) {
             '' => "'' (empty string)",
@@ -119,7 +124,7 @@ final class Vocabulary
             "\f" => "'\\f' (form feed)",
             "\x07" => "'\\a' (bell)",
             "\x1B" => "'\\e' (escape)",
-            default => self::charLiteral($value),
+            default => self::charLiteral($value, $utf),
         };
     }
 
@@ -194,18 +199,25 @@ final class Vocabulary
         return str_starts_with($raw, '0') ? $raw : '0'.$raw;
     }
 
-    private static function charLiteral(string $value): string
+    /**
+     * The characters of a literal, quoted: under UTF a character above
+     * ASCII as itself, or as its code point "\x{HEX}" when it prints as
+     * nothing; otherwise, as the engine reads the text a byte at a time,
+     * each byte above ASCII and each control byte as "\xHH".
+     */
+    private static function charLiteral(string $value, bool $utf): string
     {
-        // The first byte, as ord() read it before PHP 8.5 deprecated
-        // passing it anything but one byte.
-        $ord = '' === $value ? 0 : \ord($value[0]);
-
-        // Handle control characters and extended ASCII as hex codes
-        if ($ord < 32 || 127 === $ord || $ord >= 128) {
-            return "'\\x".Ascii::upper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT))."'";
+        $characters = $utf && mb_check_encoding($value, 'UTF-8') ? mb_str_split($value, 1, 'UTF-8') : Bytes::split($value);
+        $shown = '';
+        foreach ($characters as $character) {
+            $ord = \ord($character[0]);
+            $shown .= match (true) {
+                \strlen($character) > 1 => DisplayEscaper::escapeFragment($character, true),
+                $ord < 32 || $ord >= 127 => '\\x'.Ascii::upper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT)),
+                default => $character,
+            };
         }
 
-        // Printable characters
-        return "'".$value."'";
+        return "'".$shown."'";
     }
 }

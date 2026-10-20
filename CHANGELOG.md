@@ -355,6 +355,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The text and HTML explanations show a character above ASCII as the engine reads it: under `/u` or a leading `(*UTF)` as the character, `'é'` for `/é/u`, or as its code point when it prints as nothing (`'\x{200B}'`); without UTF each of its bytes, `'\xC3\xA9'` for `/é/`. Any literal starting above ASCII was shown as its first byte alone, `'\xC3'`, in a class and a range too.
 - A second quantifier after an escape read as a character then text is refused, as PCRE2 refuses it: `/\10000**/` and `/\10000{2}*/` (the octal `\100` then `00`), `/\8888888888**/` up to PCRE2 10.44 and, on PHP 7.3 and 7.4, `/\g{-1}{1,3}*/` with no group before it, which were reported valid; on PHP 7.3 that error now comes before a reference to a missing name, as in `/\g{-1}\k<n>*?\g{-1}{1,3}*/` (at 24).
 - A class after `\c(?` (`/\c(?[a/`, where `\c` escapes the `(` and `?` repeats it) is a plain class, refused where PCRE2 refuses it (at 6, the class left open), where it was taken for the `(?[` of an extended class and refused on its `[`.
 - A group, subroutine or condition name that a `\c` ending the pattern, a `\x{}` or, before PCRE2 10.35, a `(?*` cuts short is refused where PCRE2 refuses it, on the backslash or the `(` (`/(?&\c/` at 3, `/(?<a\c/` at 4, `/(?&a\x{}/` at 4), as is a `(?\c` (at 2, past it from PCRE2 10.47), where the escape or the group was reported.

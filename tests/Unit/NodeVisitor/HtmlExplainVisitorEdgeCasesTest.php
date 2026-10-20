@@ -139,8 +139,8 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
 
     /**
      * A byte of invalid UTF-8 the explanation does not spell itself, in a
-     * callout argument or a quoted run, is shown as the replacement
-     * character: the rest of the text stays.
+     * callout argument, is shown as the replacement character: the rest of
+     * the text stays. A literal byte, quoted or not, is spelled "\xHH".
      */
     public function test_a_byte_of_invalid_utf8_keeps_the_text_around_it(): void
     {
@@ -148,7 +148,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $quoted = $this->regex->parse("/\\Qa\xE9b\\E/")->accept($this->visitor);
 
         $this->assertStringContainsString("Callout: <strong>(?C&quot;a\u{FFFD}b&quot;)</strong>", $callout);
-        $this->assertStringContainsString("<strong>&#039;a\u{FFFD}b&#039;</strong>", $quoted);
+        $this->assertStringContainsString('<strong>&#039;a\\xE9b&#039;</strong>', $quoted);
     }
 
     /**

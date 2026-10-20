@@ -63,10 +63,21 @@ final class HtmlExplainer extends AbstractNodeVisitor
      */
     private int $groupDepth = 0;
 
+    /**
+     * The settings in force where the node being explained stands.
+     */
+    private MatchSettings $settings;
+
+    public function __construct()
+    {
+        $this->settings = new MatchSettings();
+    }
+
     #[\Override]
     public function visitRegex(RegexNode $node): string
     {
         $this->groupDepth = 0;
+        $this->settings = MatchSettings::of($node);
         $patternExplain = $node->pattern->accept($this);
         $flags = $node->flags ? $this->e(' (with flags: '.$node->flags.')') : '';
 
@@ -155,7 +166,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitLiteral(LiteralNode $node): string
     {
-        $explanation = Vocabulary::literal($node->value);
+        $explanation = Vocabulary::literal($node->value, $this->settings->utf);
 
         return \sprintf(
             '<li><span title="Literal: %s">Literal: <strong>%s</strong></span></li>',
@@ -253,11 +264,11 @@ final class HtmlExplainer extends AbstractNodeVisitor
     public function visitRange(RangeNode $node): string
     {
         $start = ($node->start instanceof LiteralNode)
-            ? Vocabulary::literal($node->start->value)
+            ? Vocabulary::literal($node->start->value, $this->settings->utf)
             : $node->start->accept($this);
 
         $end = ($node->end instanceof LiteralNode)
-            ? Vocabulary::literal($node->end->value)
+            ? Vocabulary::literal($node->end->value, $this->settings->utf)
             : $node->end->accept($this);
 
         return \sprintf('Range: from %s to %s', $this->e((string) $start), $this->e((string) $end));
