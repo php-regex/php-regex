@@ -51,6 +51,8 @@
         <exclude>
             <group>capture-shape-parity</group>
             <group>formatter-corpus</group>
+            <!-- Runs Node and Python as child processes: its own job runs it. -->
+            <group>transpiler-oracle</group>
         </exclude>
     </groups>
 

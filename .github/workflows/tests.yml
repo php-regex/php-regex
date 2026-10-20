@@ -142,6 +142,47 @@ jobs:
       - name: Run Test Suite
         run: tools/phpunit/vendor/bin/phpunit --colors=always
 
+  transpiler-oracle:
+    # The transpiler's output run in the engines it writes for: Node's
+    # RegExp, under the u and v flags, and Python's re match what
+    # preg_match() matches, pattern by pattern and subject by subject. The
+    # engines are pinned here, as the test skips where they are missing.
+    name: Transpiler oracle (Node 24, Python 3.13)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          tools: phpunit
+
+      - name: Show the engines
+        run: |
+          php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, PHP_EOL;'
+          node --version
+          python3 --version
+
+      - name: Run the Transpiler Oracle
+        run: tools/phpunit/vendor/bin/phpunit --colors=always --group transpiler-oracle tests/Integration/Transpiler
+
   validation:
     name: Validation & Feature Completeness
     runs-on: ubuntu-latest
