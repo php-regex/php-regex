@@ -18,7 +18,6 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\JsonRequest;
 use PHPRegex\Cli\Output;
 use PHPRegex\Linter\AnalysisService;
-use PHPRegex\Linter\Config\LintArgumentParser;
 use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;

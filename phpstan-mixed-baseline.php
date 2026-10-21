@@ -20,6 +20,9 @@ return [
     'src/Automata/Solver/RewriteSites.php' => [
         'PHPRegex\Automata\Solver\RewriteSites::shape()' => ['reflection-sink', 2],
     ],
+    'src/Cli/Command/LintArgumentParser.php' => [
+        'PHPRegex\Cli\Command\LintArgumentParser::parse()' => ['validator-input', 1],
+    ],
     'src/Cli/Command/RedosCommand.php' => [
         'PHPRegex\Cli\Command\RedosCommand::usageToMs()' => ['host-return', 2],
     ],
@@ -52,9 +55,6 @@ return [
     ],
     'src/Linter/Config/ComposerPlatform.php' => [
         'PHPRegex\Linter\Config\ComposerPlatform::at()' => ['json-decode', 2],
-    ],
-    'src/Linter/Config/LintArgumentParser.php' => [
-        'PHPRegex\Linter\Config\LintArgumentParser::parse()' => ['validator-input', 1],
     ],
     'src/Linter/Config/LintArguments.php' => [
         'PHPRegex\Linter\Config\LintArguments::fromDefaults()' => ['validator-input', 1],

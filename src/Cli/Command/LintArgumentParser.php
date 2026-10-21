@@ -11,8 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Linter\Config;
+namespace PHPRegex\Cli\Command;
 
+use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Formatter\OutputConfiguration;

@@ -14,9 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Lint;
 
 use PhpParser\ParserFactory;
+use PHPRegex\Cli\Command\LintArgumentParser;
 use PHPRegex\Cli\Command\LintOutputRenderer;
 use PHPRegex\Cli\Output;
-use PHPRegex\Linter\Config\LintArgumentParser;
 use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;

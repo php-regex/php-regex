@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Command;
 
-use PHPRegex\Linter\Config\LintArgumentParser;
+use PHPRegex\Cli\Command\LintArgumentParser;
 use PHPRegex\Linter\Config\LintArguments;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;

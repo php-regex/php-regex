@@ -14,11 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Cli;
 
 use PHPRegex\Cli\Command\HelpCommand;
+use PHPRegex\Cli\Command\LintArgumentParser;
 use PHPRegex\Cli\Command\LintCommand;
 use PHPRegex\Cli\Command\LintOutputRenderer;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Linter\Config\LintArgumentParser;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
