@@ -20,7 +20,7 @@ use PHPRegex\Automata\Transform\LookaroundProduct;
 use PHPRegex\Cli\Command\AnalyzeCommand;
 use PHPRegex\Cli\Command\CompareCommand;
 use PHPRegex\Cli\Command\HelpCommand;
-use PHPRegex\Cli\Command\RedosCommand;
+use PHPRegex\Cli\Command\RedosBenchmark;
 use PHPRegex\Explain\RailroadLayoutVisitor;
 use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\LanguageServer\Converter\DiagnosticConverter;
@@ -104,7 +104,7 @@ final class TypeAliasInventoryTest extends TestCase
         AnalyzeCommand::class => ['AnalyzeArguments'],
         CompareCommand::class => ['CompareArguments'],
         HelpCommand::class => ['CommandHelp'],
-        RedosCommand::class => ['BenchResult'],
+        RedosBenchmark::class => ['BenchResult'],
         CompletionHandler::class => ['CompletionContext', 'CompletionItem'],
         CodeActionHandler::class => ['CodeAction', 'RewriteAction'],
         DiagnosticConverter::class => ['Diagnostic'],

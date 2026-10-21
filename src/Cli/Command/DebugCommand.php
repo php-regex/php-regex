@@ -42,8 +42,6 @@ use PHPRegex\Redos\RedosSeverity;
 /**
  * @phpstan-import-type LintDefaults from LintDefaultsBuilder
  *
- * @phpstan-type DebugArguments array{pattern: string, inputValue: ?string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, error: ?string}
- *
  * @internal
  */
 final class DebugCommand extends AbstractCommand implements JsonCommandInterface
@@ -335,7 +333,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
      * @param array<int, string> $args
      * @param LintDefaults       $defaults
      *
-     * @return DebugArguments
+     * @return array{pattern: string, inputValue: ?string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, error: ?string}
      */
     private function parseArguments(array $args, array $defaults = []): array
     {
@@ -391,7 +389,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
     }
 
     /**
-     * @return DebugArguments
+     * @return array{pattern: string, inputValue: ?string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, error: ?string}
      */
     private static function errorResult(string $error): array
     {
