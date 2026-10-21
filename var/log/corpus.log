@@ -37,11 +37,11 @@ corpus/Automattic/jetpack/projects/packages/agents-manager/src/class-agents-mana
 
 corpus/Automattic/jetpack/projects/packages/changelogger/lib/KeepAChangelogParser.php:76:20
     → /^\[([^]]+)\]: *(\S+(?: +(?:"(?:[^"]|\\.)*"|'(?:[^']|\\.)*'|\((?:[^()]|\\.)*\)))?)\s*\Z/m
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^"]" and "\\\\." have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^']" and "\\\\." have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^()]" and "\\\\." have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/Automattic/jetpack/projects/packages/changelogger/lib/KeepAChangelogParser.php:172:23
@@ -380,7 +380,7 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/gfm.php:218
    ↳ via $regex
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^$]+# Not a dollar\n" and "(?<=(?<!\\\\)\\\\)\\$# Dollar prece…" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/gfm.php:250:4
@@ -447,7 +447,7 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/modules/latex.php:38:11
    ↳ via $regex
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^$]+# Not a dollar\n" and "(?<=(?<!\\\\)\\\\)\\$# Dollar prece…" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/Automattic/jetpack/projects/plugins/jetpack/modules/photon-cdn.php:329:20
@@ -499,7 +499,7 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/modules/shortcodes/googleapps
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "docs" and "drive" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/Automattic/jetpack/projects/plugins/jetpack/modules/shortcodes/googlemaps.php:35:37
@@ -538,7 +538,7 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/modules/shortcodes/recipe.php
    WARN  Quantifier "+" repeats an item that can match the empty string: an empty iteration matches nothing more.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "&#8211;" and "&#8212;" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    FAIL  Character class holds "–", which without /u is the bytes \xE2 \x80 \x93: the class matches each byte on its own.
        ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
@@ -597,7 +597,7 @@ corpus/Automattic/jetpack/projects/plugins/vaultpress/vaultpress.php:1387:20
     → /^\s*(?:(?:EXPLAIN\s+(?:EXTENDED\s+)?)?SELECT.*?\s+FROM|INSERT(?:\s+LOW_PRIORITY|\s+DELAYED|\s+HIGH_PRIORITY)?(?:\s+IGNORE)?(?:\s+INTO)?|REPLACE(?:\s+LOW_PRIORITY|\s+DELAYED)?(?:\s+INTO)?|UPDATE(?:\s+LOW_PRIORITY)?(?:\s+IGNORE)?|DELETE(?:\s+LOW_PRIORITY|\s+QUICK|\s+IGNORE)*(?:\s+FROM)?|DESCRIBE|DESC|EXPLAIN|HANDLER|(?:LOCK|UNLOCK)\s+TABLE(?:S)?|(?:RENAME|OPTIMIZE|BACKUP|RESTORE|CHECK|CHECKSUM|ANALYZE|OPTIMIZE|REPAIR).*\s+TABLE|TRUNCATE(?:\s+TABLE)?|CREATE(?:\s+TEMPORARY)?\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?|ALTER(?:\s+IGNORE)?\s+TABLE|DROP\s+TABLE(?:\s+IF\s+EXISTS)?|CREATE(?:\s+\w+)?\s+INDEX.*\s+ON|DROP\s+INDEX.*\s+ON|LOAD\s+DATA.*INFILE.*INTO\s+TABLE|(?:GRANT|REVOKE).*ON\s+TABLE|SHOW\s+(?:.*FROM|.*TABLE))\s+`?(\w+)`?/is
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\s+LOW_PRIORITY" and "\\s+QUICK" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
    WARN  Duplicate alternation branch "OPTIMIZE".
@@ -860,7 +860,7 @@ corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/Version.php:20:39
    ↳ via self::semverRegex
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "0" and "\\d*[a-zA-Z\\-][0-9a-zA-Z\\-]*" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/FOSSBilling/FOSSBilling/src/modules/Email/Service.php:467:24
@@ -1127,12 +1127,12 @@ corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileC
 
 corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:80:28
     → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9_\[\]]+))*)( .*)?`i
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "array\\([^)]*\\)" and "[\\\\a-z0-9_[\\]]+" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/VariableCommentSniff.php:141:20
     → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9\[\]]+))*)( .*)?`i
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "array\\([^)]*\\)" and "[\\\\a-z0-9[\\]]+" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/PHPCSStandards/PHP_CodeSniffer/src/Tokenizers/PHP.php:1980:39
@@ -1306,11 +1306,11 @@ corpus/PHPOffice/PhpSpreadsheet/samples/Pdf/21b_Pdf.php:13:19
 corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php:1175:37
     → /((?:[,(]|^)\s*)([(](?:((([^\s,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.])(?::((([^\s,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.]))?|((([^\s,!&%^\/\*\+<>=-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?([_\p{L}][_\p{L}\p{N}\.]*))(?:\s*,\s*(?:((([^\s,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.])(?::((([^\s,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.]))?|((([^\s,!&%^\/\*\+<>=-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?([_\p{L}][_\p{L}\p{N}\.]*)))+\s*[)])/i
    ↳ via self::UNIONABLE_COMMAS
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "([^\\s,!&%\\^\\/*+<>=:`\\-]*)" and "('(?:[^']|'[^!])+?')" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "([^\\s,!&%\\^\\/*+<>=:`\\-]*)" and "('(?:[^']|'[^!])+?')" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "([^\\s,!&%\\^\\/*+<>=\\-]*)" and "('(?:[^']|'[^!])+?')" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php:1203:30
@@ -2218,7 +2218,7 @@ corpus/PrestaShop/PrestaShop/src/Adapter/Meta/ShopUrlDataConfiguration.php:119:4
     → #^(?:[~\-_\/&\.\+]|\w|%\d+|\s)+$#
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[~\\-_\\/&.+]" and "\\w" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/PrestaShop/PrestaShop/src/Adapter/Product/Validate/ProductValidator.php:138:49
@@ -2313,7 +2313,7 @@ corpus/PrestaShop/PrestaShop/src/Core/Image/Parser/ImageTagSourceParser.php:23:3
     → /src="(\.\.\/|\.\/)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\.\\.\\/" and "\\.\\/" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/PrestaShop/PrestaShop/src/Core/Import/File/FileUploader.php:113:25
@@ -2530,7 +2530,7 @@ corpus/Seldaek/jsonlint/src/Seld/JsonLint/JsonParser.php:281:46
     → {"(?:[^"]+|\\")*$}m
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^"]+" and "\\\\"" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 
@@ -2818,7 +2818,7 @@ corpus/TYPO3/typo3/typo3/sysext/redirects/Classes/Evaluation/SourceHost.php:70:3
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[a-zA-Z0-9]" and "[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA…" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/TYPO3/typo3/typo3/sysext/rte_ckeditor/Classes/Configuration/CKEditor5Migrator.php:731:17
@@ -3480,7 +3480,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3893:4
     → /^\s*(?:SELECT.*?\s+FROM|INSERT(?:\s+LOW_PRIORITY|\s+DELAYED|\s+HIGH_PRIORITY)?(?:\s+IGNORE)?(?:\s+INTO)?|REPLACE(?:\s+LOW_PRIORITY|\s+DELAYED)?(?:\s+INTO)?|UPDATE(?:\s+LOW_PRIORITY)?(?:\s+IGNORE)?|DELETE(?:\s+LOW_PRIORITY|\s+QUICK|\s+IGNORE)*(?:.+?FROM)?)\s+((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)/is
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\s+LOW_PRIORITY" and "\\s+QUICK" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3918:20
@@ -3513,7 +3513,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/deprecated.php:3867:23
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches ""[^"]*("|$)" and "\\S" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/WordPress/wordpress-develop/src/wp-includes/deprecated.php:5158:17
@@ -3618,7 +3618,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:858:3
        ↳ Remove the redundant character class element.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^`!()[\\]{}:'".,<>\\xC2\\xAB\\xC2…" and "(?:[:]\\d+)?\\/?" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    FAIL  Character class holds "«", which without /u is the bytes \xC2 \xAB: the class matches each byte on its own.
        ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
@@ -4380,7 +4380,7 @@ corpus/canyongbs/aidingapp/app-modules/engagement/src/Jobs/ProcessSesS3InboundEm
 
 corpus/canyongbs/aidingapp/app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php:651:43
     → /^(?:\s*(?:fwd?|fw)\s*:\s*)+/i
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "fwd?" and "fw" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/canyongbs/aidingapp/app-modules/engagement/src/Notifications/EngagementNotification.php:91:13
@@ -4777,7 +4777,7 @@ corpus/composer/composer/src/Composer/Json/JsonManipulator.php:259:32
     → {(?(DEFINE) (?<number>    -? (?= [1-9]|0(?!\d) ) \d++ (?:\.\d++)? (?:[eE] [+-]?+ \d++)? ) (?<boolean>   true | false | null ) (?<string>    " (?:[^"\\]*+ | \\ ["\\bfnrt\/] | \\ u [0-9A-Fa-f]{4} )* " ) (?<array>     \[  (?:  (?&json) \s*+ (?: , (?&json) \s*+ )*+  )?+  \s*+ \] ) (?<pair>      \s*+ (?&string) \s*+ : (?&json) \s*+ ) (?<object>    \{  (?:  (?&pair)  (?: , (?&pair)  )*+  )?+  \s*+ \} ) (?<json>      \s*+ (?: (?&number) | (?&boolean) | (?&string) | (?&array) | (?&object) ) ) )^(?P<start>\s*\{\s*(?:(?&string)\s*:\s*(?&json)\s*,\s*)*?"url"\s*:\s*)(?P<url>(?&string))(?P<end>.*)}sx
    ↳ via $repositoryRegex
    WARN  Quantifier "*" repeats an item that can match the empty string: an empty iteration matches nothing more.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\\\["\\\\bfnrt\\/]" and "\\\\u[0-9A-Fa-f]{4}" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/composer/composer/src/Composer/Package/Loader/ArrayLoader.php:325:42
@@ -5130,7 +5130,7 @@ corpus/contao/contao/core-bundle/contao/dca/tl_content.php:1086:25
     → /<!--(.|\s)*?-->/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/contao/contao/core-bundle/contao/library/Contao/Controller.php:1155:86
@@ -5191,7 +5191,7 @@ corpus/contao/contao/core-bundle/src/EventListener/DataContainer/ContentElementV
     → /<!--(.|\s)*?-->/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/contao/contao/core-bundle/src/String/HtmlAttributes.php:464:27
@@ -5329,9 +5329,9 @@ corpus/cycle/database/src/Injection/JsonExpression.php:112:25
 
 corpus/cycle/database/src/Query/Interpolator.php:41:13
     → /(?<dq>"(?:\\\"|[^"])*")|(?<sq>'(?:\\'|[^'])*')|(?<ph>\?)|(?<named>:[a-z_\d]+)/
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\\\"" and "[^"]" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\\\'" and "[^']" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 
@@ -5534,7 +5534,7 @@ corpus/drupal/drupal/core/lib/Drupal/Component/Utility/UrlHelper.php:446:32
        ↳ Redundant elements: '+' (duplicate)
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '+' (duplicate)
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[\\w.\\-+%!$&'()*+,;=]" and "%[0-9a-f]{2}" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/drupal/drupal/core/lib/Drupal/Component/Utility/Xss.php:388:36
@@ -5554,15 +5554,15 @@ corpus/drupal/drupal/core/lib/Drupal/Component/Uuid/Uuid.php:28:30
 corpus/drupal/drupal/core/lib/Drupal/Core/Asset/CssCollectionOptimizerLazy.php:191:15
     → /@import\s*(?:'(?:\\'|.)*'|"(?:\\"|.)*"|url\(\s*(?:\\[\)\'\"]|[^'")])*\s*\)|url\(\s*'(?:\'|.)*'\s*\)|url\(\s*"(?:\"|.)*"\s*\)).*;/iU
    ↳ via $regexp
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\\\'" and "." have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\\\"" and "." have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\\\[)'"]" and "[^'")]" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "'" and "." have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches """ and "." have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/drupal/drupal/core/lib/Drupal/Core/Template/ComponentNodeVisitor.php:120:21
@@ -6450,7 +6450,7 @@ corpus/freescout-help-desk/freescout/app/Misc/Helper.php:1917:41
     → /<!--(.|\s)*?-->/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2807:33
@@ -6521,7 +6521,7 @@ corpus/freescout-help-desk/freescout/overrides/barryvdh/laravel-translation-mana
 
 corpus/freescout-help-desk/freescout/overrides/erusev/parsedown/Parsedown.php:976:28
     → /(?:(\\[|])|[^|`]|`[^`]+`|`)+/
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(\\\\[|])" and "[^|`]" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/freescout-help-desk/freescout/overrides/erusev/parsedown/Parsedown.php:1337:56
@@ -6631,23 +6631,23 @@ corpus/freescout-help-desk/freescout/overrides/swiftmailer/swiftmailer/lib/class
     → /^(?:(?:(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?[a-zA-Z0-9!#\$%&'\*\+\-\/=\?\^_`\{\}\|~]+(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?)|(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?"((?:(?:[ \t]*(?:\r\n))?[ \t])?(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21\x23-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])))*(?:(?:[ \t]*(?:\r\n))?[ \t])?"(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?))+?)$/D
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…" and "(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have overlapping character sets, which may cause unnecessary backtracking.
+       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+   WARN  Nested quantifiers can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+   WARN  Nested quantifiers can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -6657,7 +6657,7 @@ corpus/freescout-help-desk/freescout/overrides/swiftmailer/swiftmailer/lib/class
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -6691,7 +6691,7 @@ corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Connection/P
     → %^\(*"((.|\\|\")*?)" *%
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\\\" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Header.php:1012:33
@@ -6719,7 +6719,7 @@ corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Header.php:1
     → /([A-Z]{2,3}\,\ [0-9]{1,2}\ [A-Z]{2,3}\ ([0-9]{2}|[0-9]{4})\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ UT)+$/i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[0-9]{2}" and "[0-9]{4}" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Header.php:1029:33
@@ -6764,9 +6764,9 @@ corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Header.php:1
 corpus/getgrav/grav/system/src/Grav/Common/Assets/Pipeline.php:51:51
     → ~("(?:[^"\\\r\n]|\\(?:\r\n|.))*"|'(?:[^'\\\r\n]|\\(?:\r\n|.))*')|(/\*!.*?\*/)|/\*.*?\*/~s
    ↳ via self::CSS_STRING_OR_COMMENT_REGEX
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\r\\n" and "." have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\r\\n" and "." have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/getgrav/grav/system/src/Grav/Common/Data/Validation.php:277:31
@@ -6846,7 +6846,7 @@ corpus/getgrav/grav/system/src/Grav/Common/Markdown/ParsedownExtra.php:32:31
 
 corpus/getgrav/grav/system/src/Grav/Common/Markdown/ParsedownGravTrait.php:754:24
     → /(?:(\\[|])|[^|`]|`[^`]+`|`)+/
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(\\\\[|])" and "[^|`]" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/getgrav/grav/system/src/Grav/Common/Page/Medium/VectorImageMedium.php:53:29
@@ -7309,7 +7309,7 @@ corpus/ibexa/core/src/lib/Persistence/TransformationProcessor/PcreCompiler.php:2
     → ("(?:[^\\"]+|\\\\|\\'|\\")*?")
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\\\\\\\" and "\\\\'" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/ibexa/core/src/lib/Repository/NameSchema/SchemaIdentifierExtractor.php:30:22
@@ -7769,7 +7769,7 @@ corpus/joomla/joomla-cms/libraries/src/Filter/OutputFilter.php:96:29
     → /(\s|[^A-Za-z0-9\-])+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\s" and "[^A-Za-z0-9\\-]" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/joomla/joomla-cms/libraries/src/HTML/Helpers/StringHelper.php:56:62
@@ -7825,7 +7825,7 @@ corpus/joomla/joomla-cms/plugins/editors/tinymce/src/PluginTraits/DisplayTrait.p
     → /(\s|[^A-Za-z0-9_])+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\s" and "[^A-Za-z0-9_]" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/joomla/joomla-cms/plugins/editors/tinymce/src/PluginTraits/DisplayTrait.php:70:54
@@ -7922,13 +7922,13 @@ corpus/laminas/laminas-code/src/Generator/TypeGenerator/CompositeType.php:36:34
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[|]" and "[^()&]+" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[&]" and "[^|()]+" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/laminas/laminas-code/src/Reflection/DocBlock/Tag/ParamTag.php:32:26
@@ -8212,7 +8212,7 @@ corpus/laravel/framework/src/Illuminate/View/Compilers/ComponentTagCompiler.php:
    ↳ via $pattern
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:@(?:class)(\\((?:(?>[^()]+)|…" and "(?:@(?:style)(\\((?:(?>[^()]+)|…" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/laravel/framework/src/Illuminate/View/Compilers/ComponentTagCompiler.php:170:20
@@ -8220,7 +8220,7 @@ corpus/laravel/framework/src/Illuminate/View/Compilers/ComponentTagCompiler.php:
    ↳ via $pattern
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:@(?:class)(\\((?:(?>[^()]+)|…" and "(?:@(?:style)(\\((?:(?>[^()]+)|…" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/laravel/framework/src/Illuminate/View/Compilers/ComponentTagCompiler.php:518:20
@@ -8228,7 +8228,7 @@ corpus/laravel/framework/src/Illuminate/View/Compilers/ComponentTagCompiler.php:
    ↳ via $pattern
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:@(?:class)(\\((?:(?>[^()]+)|…" and "(?:@(?:style)(\\((?:(?>[^()]+)|…" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/laravel/framework/src/Illuminate/View/Compilers/ComponentTagCompiler.php:661:20
@@ -8266,7 +8266,7 @@ corpus/laravel/pint/app/PrettierFormatters/EmbeddedBladeMasker.php:70:13
     → /(<(style|script)\b(?:"[^"]*"|'[^']*'|[^>])*>)(.*?)(<\/\2>)/is
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches ""[^"]*"" and "[^>]" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 
@@ -9723,7 +9723,7 @@ corpus/mmoreram/php-formatter/src/PHPFormatter/Fixer/HeaderFixer.php:53:18
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:\\/\\*.*?\\*\\/)" and "(?:(?:\\/\\/|#).*?\\n{1})" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Quantifier is redundant; it matches exactly once.
        ↳ Remove the {1} quantifier; it does not change the match.
@@ -9738,7 +9738,7 @@ corpus/mmoreram/php-formatter/src/PHPFormatter/Fixer/StrictFixer.php:57:18
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:\\/\\*.*?\\*\\/)" and "(?:(?:\\/\\/|#).*?\\n{1})" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Quantifier is redundant; it matches exactly once.
        ↳ Remove the {1} quantifier; it does not change the match.
@@ -10124,7 +10124,7 @@ corpus/moodle/moodle/public/filter/multilang/classes/text_filter.php:53:23
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "{2}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\s+lang="[a-zA-Z0-9_\\-]+"" and "\\s+class="multilang"" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/moodle/moodle/public/filter/multilang/classes/text_filter.php:57:23
@@ -10291,7 +10291,7 @@ corpus/moodle/moodle/public/lib/adodb/drivers/adodb-mssqlnative.inc.php:627:5
     → /^\W*insert[\s\w()[\]",.]+values\s*\((?:[^;']|''|(?:(?:'')*'[^']+'(?:'')*))*;?$/i
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "''" and "(?:(?:'')*'[^']+'(?:'')*)" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/moodle/moodle/public/lib/adodb/drivers/adodb-odbtp.inc.php:474:20
@@ -12040,9 +12040,9 @@ corpus/moodle/moodle/public/lib/webauthn/src/WebAuthn.php:587:61
 
 corpus/moodle/moodle/public/lib/webauthn/src/WebAuthn.php:682:29
     → /BEGIN PUBLIC KEY\-+(?:\s|\n|\r)+([^\-]+)(?:\s|\n|\r)*\-+END PUBLIC KEY/i
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\s" and "\\n" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\s" and "\\n" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/moodle/moodle/public/lib/weblib.php:823:25
@@ -12360,11 +12360,11 @@ corpus/mpdf/mpdf/src/Css/NormalizeProperties.php:653:19
     → /[\-]{0,1}\d+(in|cm|mm|pt|pc|em|ex|px|%)* [\-]{0,1}\d+(in|cm|mm|pt|pc|em|ex|px|%)*/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "pt" and "pc" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "pt" and "pc" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    TIP 
        - /[\-]{0,1}\d+(in|cm|mm|pt|pc|em|ex|px|%)* [\-]{0,1}\d+(in|cm|mm|pt|pc|em|ex|px|%)*/
@@ -13019,7 +13019,7 @@ corpus/nelmio/alice/src/FixtureBuilder/ExpressionLanguage/Parser/TokenParser/Cha
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\r?\\n" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/nelmio/alice/src/Parser/Chainable/JsonParser.php:27:27
@@ -13105,9 +13105,9 @@ corpus/nette/tester/src/Framework/Helpers.php:119:18
 ### corpus/nette/tracy — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/nette/tracy/src/Tracy/BlueScreen/BlueScreen.php:536:4
     → #'\S(?:[^']|\\')*\S'|"\S(?:[^"]|\\")*\S"#
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^']" and "\\\\'" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^"]" and "\\\\"" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/nette/tracy/src/Tracy/Helpers.php:453:4
@@ -13117,11 +13117,11 @@ corpus/nette/tracy/src/Tracy/Helpers.php:453:4
 
 corpus/nette/tracy/src/Tracy/Helpers.php:623:4
     → ( (?: (^|[-+\([{}=,:;!%^&*|?~]|/(?![/*])|return|throw) (?:\s|//[^\n]*+\n|/\*(?:[^*]|\*(?!/))*+\*/)* (/(?![/*])(?:\\[^\n]|[^[\n/\\]|\[(?:\\[^\n]|[^]])++)+/) |(^ |'(?:\\.|[^\n'\\])*' |"(?:\\.|[^\n"\\])*" |([0-9A-Za-z_$]+) |([-+]+) |. ) )(?:\s|//[^\n]*+\n|/\*(?:[^*]|\*(?!/))*+\*/)* ())sx
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\/\\/[^\\n]*+\\n" and "\\/\\*(?:[^*]|\\*(?!\\/))*+\\*\\/" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\\\[^\\n]" and "[^\\]]" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\/\\/[^\\n]*+\\n" and "\\/\\*(?:[^*]|\\*(?!\\/))*+\\*\\/" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/nette/tracy/src/Tracy/Logger/Logger.php:167:17
@@ -13432,7 +13432,7 @@ corpus/octobercms/october/modules/system/models/SiteDefinition.php:231:17
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[a-zA-Z0-9]" and "[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA…" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 
@@ -13545,7 +13545,7 @@ corpus/pestphp/pest/src/Expectation.php:525:71
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\/\\*[\\s\\S]*?\\*\\/" and "\\/\\/[^\\r\\n]*(?:\\r?\\n|$)" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/pestphp/pest/src/Plugins/Help.php:89:28
@@ -14214,7 +14214,7 @@ corpus/phpbb/phpbb/phpBB/phpbb/install/helper/database.php:223:29
     → #/\*(.|[\r\n])*?\*/#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "[\\r\\n]" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/phpbb/phpbb/phpBB/phpbb/install/helper/iohandler/ajax_iohandler.php:196:38
@@ -14537,7 +14537,7 @@ Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library 
 ### corpus/phpstan/phpstan-src — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/phpstan/phpstan-src/.claude/skills/rebase-branch/rebase-plan.php:285:18
     → ~^[-+]\s*(?:(?:public|protected|private|readonly|static)(?:\(set\))?\s+)+[^=;(]*?\$(\w+)~
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "public" and "protected" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/phpstan/phpstan-src/build/PHPStan/Build/TurboDeclarationGenerator.php:370:18
@@ -15124,7 +15124,7 @@ corpus/roundcube/roundcubemail/program/include/rcmail_output_html.php:1095:20
 corpus/roundcube/roundcubemail/program/include/rcmail_output_html.php:1312:19
     → /<roundcube:([-_a-z]+)\s+((?:[^>]|\\>)+)(?<!\\)>/Ui
    ↳ via $regexp
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^>]" and "\\\\>" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/roundcube/roundcubemail/program/include/rcmail_output_html.php:2410:30
@@ -15364,7 +15364,7 @@ corpus/s9e/TextFormatter/scripts/patchElementInspector.php:203:24
     → (((?:listed|labelable|submittable|resettable),? )+and autocapitalize-inheriting )
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "listed" and "labelable" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/s9e/TextFormatter/scripts/patchExamples.php:21:4
@@ -15426,7 +15426,7 @@ corpus/s9e/TextFormatter/src/Plugins/BBCodes/Configurator/BBCodeMonkey.php:199:4
 corpus/s9e/TextFormatter/src/Plugins/Litedown/Parser/Passes/Blocks.php:37:13
     → /^(?:(?=[-*+\d \t>`~#_])((?: {0,3}>(?:(?!!)|!(?![^\n>]*?!<)) ?)+)?([ \t]+)?(\* *\* *\*[* ]*$|- *- *-[- ]*$|_ *_ *_[_ ]*$|=+$)?((?:[-*+]|\d+\.)[ \t]+(?=\S))?[ \t]*(#{1,6}[ \t]+|```+[^`\n]*$|~~~+[^~\n]*$)?)?/m
    ↳ via $regexp
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?!!)" and "!(?![^\\n>]*?!<)" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/s9e/TextFormatter/src/Plugins/Litedown/Parser/Passes/Images.php:64:4
@@ -16184,7 +16184,7 @@ corpus/salesagility/SuiteCRM/include/utils.php:2287:16
    ↳ via $tagsrex
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\w" and "\\w[\\w\\-]*\\w" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    TIP 
        - #<\/?(\w+)((?:\s+(?:\w|\w[\w-]*\w)(?:\s*=\s*(?:\".*?\"|'.*?'|[^'\">\s]+))?)+\s*|\s*)\/?>#im
@@ -16844,7 +16844,7 @@ corpus/silverstripe/silverstripe-framework/src/ORM/Connect/MySQLDatabase.php:507
 
 corpus/silverstripe/silverstripe-framework/src/ORM/Connect/MySQLSchemaManager.php:755:13
     → /\\'(?:[^']|''|\\\\')*\\'/
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[^']" and "\\\\\\\\'" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/silverstripe/silverstripe-framework/src/ORM/DataList.php:461:36
@@ -16908,7 +16908,7 @@ corpus/silverstripe/silverstripe-framework/src/View/Shortcodes/EmbedShortcodePro
     → #^<iframe(?:"[^"]*"|'[^']*'|[^>])*>#i
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches ""[^"]*"" and "[^>]" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/silverstripe/silverstripe-framework/src/i18n/TextCollection/i18nTextCollector.php:933:17
@@ -17316,42 +17316,42 @@ corpus/smarty-php/smarty/src/Lexer/ConfigfileLexer.php:214:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/ConfigfileLexer.php:316:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/ConfigfileLexer.php:435:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/ConfigfileLexer.php:500:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/ConfigfileLexer.php:575:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/ConfigfileLexer.php:644:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:233:24
@@ -17362,35 +17362,35 @@ corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:335:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:448:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:583:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:884:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:975:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 
@@ -17842,12 +17842,12 @@ corpus/squizlabs/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileCommen
 
 corpus/squizlabs/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:79:28
     → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9\[\]]+))*)( .*)?`i
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "array\\([^)]*\\)" and "[\\\\a-z0-9[\\]]+" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/squizlabs/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/VariableCommentSniff.php:120:20
     → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9\[\]]+))*)( .*)?`i
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "array\\([^)]*\\)" and "[\\\\a-z0-9[\\]]+" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/squizlabs/PHP_CodeSniffer/src/Tokenizers/JS.php:471:32
@@ -18105,23 +18105,23 @@ corpus/symfony/mime/Header/AbstractHeader.php:99:25
     → /^(?:(?:(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?[a-zA-Z0-9!#\$%&'\*\+\-\/=\?\^_`\{\}\|~]+(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?)|(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?"((?:(?:[ \t]*(?:\r\n))?[ \t])?(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21\x23-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])))*(?:(?:[ \t]*(?:\r\n))?[ \t])?"(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?))+?)$/D
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…" and "(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have overlapping character sets, which may cause unnecessary backtracking.
+       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+   WARN  Nested quantifiers can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+   WARN  Nested quantifiers can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -18131,7 +18131,7 @@ corpus/symfony/mime/Header/AbstractHeader.php:99:25
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -18410,7 +18410,7 @@ corpus/symfony/symfony/src/Symfony/Component/HttpKernel/HttpCache/Esi.php:72:33
 
 corpus/symfony/symfony/src/Symfony/Component/HttpKernel/HttpClientKernel.php:124:52
     → {^ *\?1(?:; *[a-z*][-a-z0-9_.*]*(?:=(?:-?\d{1,12}\.\d{1,3}|-?\d{1,15}|"(?:[\x20\x21\x23-\x5B\x5D-\x7E]|\\["\\])*"|[A-Za-z*][-!#$%&'*+.^_`|~0-9A-Za-z:/]*|:[A-Za-z0-9+/=]*:|\?[01]|@-?\d{1,15}|%"(?:[\x20\x21\x23\x24\x26-\x7E]|%[0-9a-f]{2})*"))?)* *$}D
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "-?\\d{1,12}\\.\\d{1,3}" and "-?\\d{1,15}" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/symfony/symfony/src/Symfony/Component/Intl/Resources/bin/update-data.php:80:59
@@ -18453,23 +18453,23 @@ corpus/symfony/symfony/src/Symfony/Component/Mime/Header/AbstractHeader.php:99:2
     → /^(?:(?:(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?[a-zA-Z0-9!#\$%&'\*\+\-\/=\?\^_`\{\}\|~]+(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?)|(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?"((?:(?:[ \t]*(?:\r\n))?[ \t])?(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21\x23-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])))*(?:(?:[ \t]*(?:\r\n))?[ \t])?"(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?))+?)$/D
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…" and "(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have overlapping character sets, which may cause unnecessary backtracking.
+       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+   WARN  Nested quantifiers can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+   WARN  Nested quantifiers can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -18479,7 +18479,7 @@ corpus/symfony/symfony/src/Symfony/Component/Mime/Header/AbstractHeader.php:99:2
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…" and "(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -18936,9 +18936,9 @@ corpus/tubalmartin/YUI-CSS-compressor-PHP-port/src/Minifier.php:317:13
 
 corpus/tubalmartin/YUI-CSS-compressor-PHP-port/src/Minifier.php:324:13
     → /(?:"(?:[^\\"]|\\.|\\)*")|(?:'(?:[^\\']|\\.|\\)*')/S
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\\\." and "\\\\" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\\\." and "\\\\" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 
@@ -19410,7 +19410,7 @@ corpus/wikimedia/mediawiki/includes/Languages/LanguageFi.php:33:22
 
 corpus/wikimedia/mediawiki/includes/Media/DjVuImage.php:355:25
     → /(?:\\(035|037))+/
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "035" and "037" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/wikimedia/mediawiki/includes/Media/IPTC.php:350:23
@@ -19437,7 +19437,7 @@ corpus/wikimedia/mediawiki/includes/Parser/BlockLevelPass.php:372:29
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "<style\\b[^>]*>.*?<\\/style>\\s*" and "<link\\b[^>]*>\\s*" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/wikimedia/mediawiki/includes/Parser/Parser.php:5787:28
@@ -19608,15 +19608,15 @@ corpus/wikimedia/mediawiki/includes/libs/Mime/XmlTypeCheck.php:440:4
     → /^(?:\s*<!ENTITY\s+\S+\s+(?:"(?:&[^"%&;]{1,64};|(?:[^"%&]|&amp;|&quot;){0,255})"|'(?:&[^'%&;]{1,64};|(?:[^'%&]|&amp;|&apos;){0,255})')\s*>|\s*<!--(?:[^-]|-[^-])*-->|\s*<!ATTLIST svg xmlns:xlink CDATA #FIXED "http:\/\/www.w3.org\/1999\/xlink">)*\s*$/
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\s*<!ENTITY\\s+\\S+\\s+(?:"(?:&[^…" and "\\s*<!--(?:[^\\-]|-[^\\-])*-->" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "&[^"%&;]{1,64};" and "(?:[^"%&]|&amp;|&quot;){0,255}" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "&amp;" and "&quot;" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "&[^'%&;]{1,64};" and "(?:[^'%&]|&amp;|&apos;){0,255}" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "&amp;" and "&apos;" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/wikimedia/mediawiki/includes/libs/ObjectCache/MemcachedBagOStuff.php:60:5
@@ -19630,7 +19630,7 @@ corpus/wikimedia/mediawiki/includes/libs/Rdbms/Database/DatabasePostgres.php:619
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "\\{?"([^"\\\\]|\\\\.)*"" and "[^,{}]+" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
