@@ -14630,42 +14630,42 @@ corpus/pimcore/pimcore/lib/Mail/Plugins/RedirectingPlugin.php:127:38
        - !(<\s*head\s*>)!is
        + !(<\s*head\s*>)!i
 
-corpus/pimcore/pimcore/lib/Tool/Text.php:69:40
+corpus/pimcore/pimcore/lib/Tool/Text.php:91:40
     → /href="([^"]+)*"/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/pimcore/pimcore/lib/Tool/Text.php:111:36
+corpus/pimcore/pimcore/lib/Tool/Text.php:135:36
     → /width="([^"]+)*"/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/pimcore/pimcore/lib/Tool/Text.php:112:36
+corpus/pimcore/pimcore/lib/Tool/Text.php:136:36
     → /height="([^"]+)*"/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/pimcore/pimcore/lib/Tool/Text.php:113:36
+corpus/pimcore/pimcore/lib/Tool/Text.php:137:36
     → /style="([^"]+)*"/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/pimcore/pimcore/lib/Tool/Text.php:141:41
+corpus/pimcore/pimcore/lib/Tool/Text.php:165:41
     → /pimcore_disable_thumbnail="([^"]+)*"/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/pimcore/pimcore/lib/Tool/Text.php:234:20
+corpus/pimcore/pimcore/lib/Tool/Text.php:258:20
     → @<(a|img)[^>]*\bpimcore_id="([\d]+)"[^>]*\bpimcore_type="(asset|document|object)"|<(a|img)[^>]*\bpimcore_type="(asset|document|object)"[^>]*\bpimcore_id="([\d]+)"@msUi
    ↳ via $pattern
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -18323,7 +18323,7 @@ corpus/symfony/symfony/src/Symfony/Component/DependencyInjection/Dumper/PhpDumpe
        - /\n.*NONEMPTY_PARAMETERS.*\n.*\n.*\n/m
        + /\n.*NONEMPTY_PARAMETERS.*\n.*\n.*\n/
 
-corpus/symfony/symfony/src/Symfony/Component/DependencyInjection/ServiceLocator.php:132:190
+corpus/symfony/symfony/src/Symfony/Component/DependencyInjection/ServiceLocator.php:134:190
     → /([^\\]++\\)++/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
