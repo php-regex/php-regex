@@ -102,10 +102,15 @@ final class RewriterEdgeCasesTest extends TestCase
     {
         $optimizer = new Rewriter();
 
+        // Left as it is, the group is the same node; its body rewritten,
+        // "[0-9]" as "\d", it is a new one.
         $define = new DefineNode(new LiteralNode('a', 0, 0), 0, 0);
-        $defineResult = $define->accept($optimizer);
+        $this->assertSame($define, $define->accept($optimizer));
+
+        $digits = new DefineNode(new CharClassNode(new RangeNode(new LiteralNode('0', 0, 0), new LiteralNode('9', 0, 0), 0, 0), false, 0, 0), 0, 0);
+        $defineResult = $digits->accept($optimizer);
         $this->assertInstanceOf(DefineNode::class, $defineResult);
-        $this->assertNotSame($define, $defineResult);
+        $this->assertNotSame($digits, $defineResult);
 
         $limit = new LimitMatchNode(100, 0, 0);
         $this->assertSame($limit, $limit->accept($optimizer));

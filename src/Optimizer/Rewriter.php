@@ -84,6 +84,11 @@ final class Rewriter extends AbstractNodeVisitor
     private const CHAR_CLASS_META = [']' => true, '\\' => true, '^' => true, '-' => true];
 
     /**
+     * The largest count PCRE takes in a quantifier.
+     */
+    private const MAX_COUNT = 65535;
+
+    /**
      * The kinds of rewrite made, in the order first made.
      *
      * @var array<string, true>
@@ -673,11 +678,12 @@ final class Rewriter extends AbstractNodeVisitor
     #[\Override]
     public function visitDefine(DefineNode $node): NodeInterface
     {
-        return new DefineNode(
-            $node->content->accept($this),
-            $node->startPosition,
-            $node->endPosition,
-        );
+        $content = $node->content->accept($this);
+        if ($content === $node->content) {
+            return $node;
+        }
+
+        return new DefineNode($content, $node->startPosition, $node->endPosition);
     }
 
     #[\Override]
@@ -763,12 +769,15 @@ final class Rewriter extends AbstractNodeVisitor
      * reference stands as written, anything else goes into a group, as a
      * quantifier repeats the one item written before it. "ab" counted four
      * times is "(?:ab){4}", never "ab{4}", and nothing repeated twice is
-     * "(?:){2}", never "{2}".
+     * "(?:){2}", never "{2}". A DEFINE group stands as written too: PCRE2
+     * compiles "(?(DEFINE)a){7000}", and refuses "(?:(?(DEFINE)a)){7000}",
+     * where it compiles the group once for each repeat, as too large.
      */
     private function repeatable(NodeInterface $node): NodeInterface
     {
         if ($this->isSingleCharacter($node)
             || $node instanceof GroupNode
+            || $node instanceof DefineNode
             || $node instanceof ConditionalNode
             || $node instanceof BackrefNode
             || $node instanceof SubroutineNode
@@ -1378,7 +1387,9 @@ final class Rewriter extends AbstractNodeVisitor
                 continue;
             }
 
-            if (null === $currentNode || !$this->areNodesEqual($currentNode, $baseNode)) {
+            // A run counted past what PCRE takes goes on in a count of its
+            // own: "\d\d{65535}" is no "\d{65536}", which PCRE refuses.
+            if (null === $currentNode || !$this->areNodesEqual($currentNode, $baseNode) || $currentCount + $count > self::MAX_COUNT) {
                 $this->flushCompactedSequence($compacted, $currentNode, $currentCount, $currentFromQuantifier);
                 $currentNode = $baseNode;
                 $currentCount = $count;

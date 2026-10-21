@@ -91,6 +91,14 @@ comments around them stay. The lint suggests for such a pattern what
 `optimize()` gives it with `factorize` off, whatever its options say, so the
 alternatives keep the order and the lines the author gave them.
 
+A rewrite compiles wherever the original does, for the target the parser judges
+for: the automata read what a pattern matches, never whether PCRE compiles it,
+so a rewrite PCRE would refuse, as `(?<=abc|abde)` factorized into
+`(?<=ab(?:c|de))` for PHP 8.2, whose PCRE2 refuses a lookbehind branch of two
+lengths, is withdrawn whatever the options say. A DEFINE group keeps its
+quantifier as written, and a run of the same item is counted up to 65535, the
+largest count PCRE takes.
+
 An unknown key or a value of the wrong type throws `InvalidRegexOptionException`. The 1.x names
 `autoPossessify` and `allowAlternationFactorization` were renamed `possessive` and `factorize`:
 the old names meet the same unknown-option error as any typo.

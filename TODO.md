@@ -206,8 +206,6 @@ Integrations:
 
 ## Analysis engines: the last pass before 2.0.0
 
-- The optimizer rewrites `(?(DEFINE)a){7000}` to `(?:(?(DEFINE)a)){7000}`,
-  which PCRE2 refuses: a DEFINE group is not to be wrapped.
 - The printer writes a quantifier before the comments that sit between an
   atom and it; under `#`, where a `\c\` hides the delimiter in such a
   comment, PHP then reads the printed pattern differently.

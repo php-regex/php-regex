@@ -36,7 +36,8 @@ use PHPRegex\Parser\TraversalAction;
 /**
  * Rewrites a pattern into a shorter or faster one that matches the same
  * strings, read with the parser it is given; the automata can confirm the
- * two are equivalent before the rewrite is offered.
+ * two are equivalent before the rewrite is offered, and a rewrite the
+ * parser refuses where it accepts the pattern is never offered.
  *
  * @phpstan-import-type OptimizerOptionsArray from OptimizerOptions
  */
@@ -115,6 +116,15 @@ final class Optimizer
         // its changed parts printed again.
         if ($pretty) {
             $optimizedPattern = $this->keepLayout($regex, $ast, $optimizedAst) ?? $optimizedPattern;
+        }
+
+        // A rewrite PCRE refuses where it compiles the original is no
+        // rewrite, whatever the options say: the automata read what a
+        // pattern matches, never whether PCRE compiles it, and prove
+        // "(?<=abc|abde)" factorized for a release that refuses a
+        // lookbehind branch of two lengths.
+        if (!$this->parser->validate($optimizedPattern)->isValid && $this->parser->validate($regex)->isValid) {
+            return new OptimizationResult($regex, $regex, []);
         }
 
         if ($optimizedPattern !== $regex && $this->mayIntroduceAtomicity($regex, $optimizedPattern, $options->possessive)) {

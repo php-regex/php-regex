@@ -31,7 +31,8 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Guarantee:** Sound for supported transformations; does not claim completeness. A rewrite holds under every
   `LC_CTYPE` locale: it introduces no `\w`, `\s` or POSIX class that reads the locale's tables without `u`, so
   `[a-zA-Z0-9_]` stays a class, and `[0-9]` becomes `\d`, the ten ASCII digits under every locale, only without
-  `u` and `(*UCP)`.
+  `u` and `(*UCP)`. A rewrite compiles wherever the original does: one that PCRE refuses for the target, as a count
+  above 65535 or a lookbehind branch of two lengths before PCRE2 10.43, is withdrawn, whatever the options say.
 - **Fallbacks:** Unsafe rewrites are skipped when uncertainty is detected.
 
 ## ReDoS Analysis
