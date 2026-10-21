@@ -83,8 +83,15 @@ php_regex:
     paths: [src]       # read from %kernel.project_dir%
     exclude: [vendor]  # a directory of the project, wherever it lies under the paths
     report_unmatched_ignores: true  # report the @regex-ignore markers that silence nothing
-    ide: '%env(default::SYMFONY_IDE)%'
+    ide: null          # phpstorm, vscode or a URL template; null for framework.ide
 ```
+
+`ide` names the editor the clickable links of the console report open:
+`phpstorm`, `vscode`, `sublime`, `textmate`, `emacs`, `atom`, `macvim`, or a
+URL template with `%f` (or `%%file%%`) and `%l` (or `%%line%%`). Left `null`,
+the links open the editor FrameworkBundle links its own pages to:
+`framework.ide`, which defaults to the `SYMFONY_IDE` environment variable
+in a debug kernel.
 
 `paths` and `exclude` are read from `%kernel.project_dir%`: `regex:lint`
 lints the same files whatever directory it runs from. The paths given to

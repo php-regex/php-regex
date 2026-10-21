@@ -86,4 +86,20 @@ final class FrameworkKernel extends Kernel
     {
         return $this->varDirectory.'/log';
     }
+
+    /**
+     * Without the configuration directory, which a debug kernel of Symfony
+     * 7.4 and later writes its config/reference.php into: a fixture project
+     * stays as it is checked in.
+     *
+     * @return array<mixed>
+     */
+    #[\Override]
+    protected function getKernelParameters(): array
+    {
+        $parameters = parent::getKernelParameters();
+        unset($parameters['.kernel.config_dir']);
+
+        return $parameters;
+    }
 }

@@ -96,7 +96,6 @@ final class PHPRegexExtension extends Extension
         $config = $this->processConfiguration($configuration, $configs);
 
         $ignoredPatterns = array_values(array_unique($config['redos']['ignored_patterns']));
-        $editorFormat = $this->resolveEditorFormat($config, $container);
 
         // Set parameters
         $container->setParameter('php_regex.max_pattern_length', $config['max_pattern_length']);
@@ -128,7 +127,7 @@ final class PHPRegexExtension extends Extension
         $container->setParameter('php_regex.paths', $config['paths']);
         $container->setParameter('php_regex.report_unmatched_ignores', $config['report_unmatched_ignores']);
         $container->setParameter('php_regex.exclude', $config['exclude']);
-        $container->setParameter('php_regex.editor_format', $editorFormat);
+        $container->setParameter('php_regex.editor_format', $this->isNotNullOrEmpty($config['ide']) ? $config['ide'] : null);
 
         $container->setDefinition('php_regex.cache', $this->buildCacheDefinition($config));
 
@@ -246,29 +245,6 @@ final class PHPRegexExtension extends Extension
         }
 
         return array_values(array_unique($warnings));
-    }
-
-    /**
-     * Resolve the editor format from config and container parameters.
-     *
-     * @param array{
-     *     ide: string|null,
-     *     ...
-     * } $config
-     */
-    private function resolveEditorFormat(array $config, ContainerBuilder $container): ?string
-    {
-        $editorFormat = $config['ide'];
-
-        // Fallback to framework.ide if php_regex.ide is not set
-        if (!$this->isNotNullOrEmpty($editorFormat) && $container->hasParameter('framework.ide')) {
-            $frameworkIde = $container->getParameter('framework.ide');
-            if (\is_string($frameworkIde) && '' !== $frameworkIde) {
-                $editorFormat = $frameworkIde;
-            }
-        }
-
-        return \is_string($editorFormat) && '' !== $editorFormat ? $editorFormat : null;
     }
 
     /**

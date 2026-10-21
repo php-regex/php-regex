@@ -178,18 +178,4 @@ final class PHPRegexExtensionTest extends TestCase
 
         $this->assertSame(TokenBasedExtractionStrategy::class, $definition->getClass());
     }
-
-    public function test_resolve_editor_format_uses_framework_ide(): void
-    {
-        $container = new ContainerBuilder();
-        $container->setParameter('framework.ide', 'phpstorm');
-
-        $extension = new PHPRegexExtension();
-        $reflection = new \ReflectionClass($extension);
-        $method = $reflection->getMethod('resolveEditorFormat');
-
-        $resolved = $method->invoke($extension, ['ide' => null], $container);
-
-        $this->assertSame('phpstorm', $resolved);
-    }
 }

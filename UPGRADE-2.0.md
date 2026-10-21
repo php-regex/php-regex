@@ -1498,6 +1498,7 @@ The configuration moves from `regex_parser:` to `php_regex:`, with these keys:
 | 1.x                                     | 2.0                                                        |
 |-----------------------------------------|------------------------------------------------------------|
 | `runtime_pcre_validation: '%kernel.debug%'` (default) | `runtime_pcre_validation: false` (default)   |
+| `ide: '%env(default::SYMFONY_IDE)%'` (default) | `ide: null` (default): the editor of `framework.ide`, itself `SYMFONY_IDE` unless set |
 | `exclude_paths`                         | `exclude`                                                  |
 | `analysis.ignore_patterns`              | `redos.ignored_patterns` (the two lists were merged anyway) |
 | `analysis.redos_threshold`              | removed: it was never read                                 |

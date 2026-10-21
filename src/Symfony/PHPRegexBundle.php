@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony;
 
+use PHPRegex\Symfony\DependencyInjection\EditorLinkPass;
 use PHPRegex\Symfony\DependencyInjection\ValidatorMappingPass;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -29,6 +30,7 @@ final class PHPRegexBundle extends Bundle
         // After the passes of other bundles, which may give the validator
         // mapping files of their own.
         $container->addCompilerPass(new ValidatorMappingPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, -1024);
+        $container->addCompilerPass(new EditorLinkPass());
     }
 
     /**

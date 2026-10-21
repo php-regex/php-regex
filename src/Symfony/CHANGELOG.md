@@ -14,6 +14,11 @@ CHANGELOG
    where a running counter stood in for the line; a mapping file the
    validator cannot read is `regex.lint.source.unreadable`. An attribute is
    read from the PHP file alone.
+ * `ide` defaults to `null`, and the links of `regex:lint` then open the
+   editor of `framework.ide` (`SYMFONY_IDE` by default), as FrameworkBundle's
+   own pages do. The documented fallback never fired: the default was an
+   environment placeholder, never empty, and FrameworkBundle sets
+   `debug.file_link_format`, not `framework.ide`.
  * `regex:lint` reads `paths` and `exclude` from `%kernel.project_dir%`,
    whatever directory it runs from; the paths given on the command line are
    read from the working directory.

@@ -243,8 +243,8 @@ final class Configuration implements ConfigurationInterface
                     ->info('Whether regex:lint reports as regex.ignore.unmatched each @regex-ignore marker, or issue identifier it names, that silences nothing.')
                 ->end()
                 ->scalarNode('ide')
-                    ->defaultValue('%env(default::SYMFONY_IDE)%')
-                    ->info('IDE shorthand (vscode, phpstorm, etc.) or custom URL template for clickable links (e.g., phpstorm://open?file=%%file%%&line=%%line%%&column=%%column%%). Falls back to framework.ide.')
+                    ->defaultNull()
+                    ->info('IDE shorthand (vscode, phpstorm, etc.) or custom URL template for clickable links (e.g., phpstorm://open?file=%%file%%&line=%%line%%&column=%%column%%). Unset: the editor FrameworkBundle links to, framework.ide, which defaults to the SYMFONY_IDE environment variable.')
                 ->end()
             ->end();
 

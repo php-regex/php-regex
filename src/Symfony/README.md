@@ -64,7 +64,7 @@ Every key is optional and lives under `php_regex` in `config/packages/php_regex.
 | `optimizations.*` | `digits`, `word`, `ranges`, `canonicalize_char_classes` `true`; `possessive`, `factorize` `false`; `min_quantifier_count` `4` | Default optimization switches for `regex:lint` |
 | `paths`, `exclude` | `['src']`, `['vendor']` | Directories `regex:lint` scans, and skips, read from `%kernel.project_dir%` whatever directory it runs from; paths given on the command line are read from the working directory |
 | `report_unmatched_ignores` | `true` | `regex:lint` reports each `@regex-ignore` marker, or issue identifier it names, that silences nothing, as `regex.ignore.unmatched` |
-| `ide` | `'%env(default::SYMFONY_IDE)%'` | IDE behind the clickable links; falls back to `framework.ide` |
+| `ide` | `null` | IDE behind the clickable links (`phpstorm`, `vscode` or a URL template); `null` for the one FrameworkBundle links to, `framework.ide`, which defaults to the `SYMFONY_IDE` environment variable |
 
 The bundle does not read `regex.json`: `extraction` is set here. A later configuration file's `extraction.interop` or `extraction.functions` list replaces the earlier one, where `paths` and `exclude` add up. A name in `extraction.interop` that is no preset is a configuration error, raised as the container is built, which names the preset it most likely means.
 
