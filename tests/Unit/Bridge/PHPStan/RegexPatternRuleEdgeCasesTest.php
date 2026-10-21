@@ -22,7 +22,7 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
-use PHPRegex\PHPStan\PatternChecker;
+use PHPRegex\PHPStan\ErrorFactory;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPStan\Analyser\CollectedDataEmitter;
 use PHPStan\Analyser\DependencyTracker;
@@ -483,15 +483,15 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
     public function test_display_pattern_cuts_at_the_length_limit(): void
     {
         // Test exactly at length limit
-        $result = PatternChecker::displayPattern(str_repeat('a', 50), 50);
+        $result = ErrorFactory::displayPattern(str_repeat('a', 50), 50);
         $this->assertSame(str_repeat('a', 50), $result);
 
         // Test over length limit
-        $result = PatternChecker::displayPattern(str_repeat('a', 51), 50);
+        $result = ErrorFactory::displayPattern(str_repeat('a', 51), 50);
         $this->assertSame(str_repeat('a', 50).'...', $result);
 
         // Test default length parameter
-        $result = PatternChecker::displayPattern(str_repeat('a', 55));
+        $result = ErrorFactory::displayPattern(str_repeat('a', 55));
         $this->assertSame(str_repeat('a', 50).'...', $result);
     }
 

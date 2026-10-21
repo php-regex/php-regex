@@ -14,19 +14,19 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\PHPStan;
 
 use PHPRegex\Linter\Config\UnsupportedTargetException;
-use PHPRegex\PHPStan\PatternChecker;
+use PHPRegex\PHPStan\TargetScope;
 use PHPStan\Php\PhpVersion;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The PHPStan extension judges the target `regex lint` judges: a PHP named
+ * The versions the extension judges a pattern for. It judges the target `regex lint` judges: a PHP named
  * below 7.3, which ships PCRE1, is refused with the same error, and a floor
  * read from composer.json that also allows 7.3 or later is judged from the
  * lowest such PHP.
  */
-final class PatternCheckerTargetTest extends TestCase
+final class TargetScopeTest extends TestCase
 {
     private const REFUSAL = 'PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.';
 
@@ -39,7 +39,7 @@ final class PatternCheckerTargetTest extends TestCase
     public function test_a_version_named_below_7_3_is_refused_as_lint_refuses_it(array $config, ?PhpVersion $phpVersion, int|array|null $range, string $message): void
     {
         try {
-            new PatternChecker($config, $phpVersion, $range);
+            new TargetScope($config, $phpVersion, $range);
             $this->fail('A PHP on PCRE1 was judged.');
         } catch (UnsupportedTargetException $e) {
             $this->assertSame($message, $e->getMessage());
@@ -59,10 +59,10 @@ final class PatternCheckerTargetTest extends TestCase
     #[Test]
     public function test_a_range_of_phpstan_that_reaches_7_3_is_judged_from_7_3(): void
     {
-        $checker = new PatternChecker([], new PhpVersion(70100, PhpVersion::SOURCE_CONFIG), ['min' => 70100, 'max' => 80499]);
+        $scope = new TargetScope([], new PhpVersion(70100, PhpVersion::SOURCE_CONFIG), ['min' => 70100, 'max' => 80499]);
 
-        $this->assertSame(70300, $checker->parser()->target()->phpVersionId);
-        $this->assertSame('10.32', $checker->parser()->target()->pcreVersion);
+        $this->assertSame(70300, $scope->parser()->target()->phpVersionId);
+        $this->assertSame('10.32', $scope->parser()->target()->pcreVersion);
     }
 
     /**
@@ -80,13 +80,13 @@ final class PatternCheckerTargetTest extends TestCase
 
         try {
             file_put_contents('composer.json', '{"require": {"php": "^7.1 || ^8.0"}}');
-            $checker = new PatternChecker([], new PhpVersion(70100, PhpVersion::SOURCE_COMPOSER_PLATFORM_PHP));
-            $this->assertSame(70300, $checker->parser()->target()->phpVersionId);
+            $scope = new TargetScope([], new PhpVersion(70100, PhpVersion::SOURCE_COMPOSER_PLATFORM_PHP));
+            $this->assertSame(70300, $scope->parser()->target()->phpVersionId);
 
             file_put_contents('composer.json', '{"require": {"php": ">=7.0 <7.3"}}');
 
             try {
-                new PatternChecker([], new PhpVersion(70000, PhpVersion::SOURCE_COMPOSER_PLATFORM_PHP));
+                new TargetScope([], new PhpVersion(70000, PhpVersion::SOURCE_COMPOSER_PLATFORM_PHP));
                 $this->fail('A composer.json allowing PHP on PCRE1 only was judged.');
             } catch (UnsupportedTargetException $e) {
                 $this->assertSame('composer.json require.php allows PHP 7.0: '.self::REFUSAL, $e->getMessage());
@@ -98,10 +98,49 @@ final class PatternCheckerTargetTest extends TestCase
         }
     }
 
+    /**
+     * The running engine alone is PHPStan's own regexp.pattern: nothing is
+     * left for the extension to judge a pattern for.
+     */
+    #[Test]
+    public function test_a_scope_tells_whether_it_judges_beyond_the_running_engine(): void
+    {
+        $this->assertFalse((new TargetScope(['phpVersion' => 'runtime']))->judgesBeyondTheRunningEngine());
+        $this->assertTrue((new TargetScope(['phpVersion' => '8.2', 'pcreVersion' => '10.40']))->judgesBeyondTheRunningEngine());
+        $this->assertTrue((new TargetScope([], new PhpVersion(\PHP_VERSION_ID, PhpVersion::SOURCE_RUNTIME), ['min' => \PHP_VERSION_ID, 'max' => 80699]))->judgesBeyondTheRunningEngine());
+    }
+
+    /**
+     * The "@regex-target" markers of a file are read again once it changes,
+     * and a file that cannot be read has none.
+     */
+    #[Test]
+    public function test_the_markers_of_a_file_follow_its_changes(): void
+    {
+        $file = sys_get_temp_dir().'/phpregex-phpstan-markers-'.bin2hex(random_bytes(4)).'.php';
+        $scope = new TargetScope(['phpVersion' => '8.2']);
+
+        try {
+            file_put_contents($file, "<?php\n// @regex-target php>=8.4\npreg_match('/a/', \$s);\n");
+            $markers = $scope->markersOf($file);
+            $this->assertCount(1, $markers);
+            $this->assertSame('php>=8.4', $markers[0]->text);
+
+            file_put_contents($file, "<?php\npreg_match('/a/', \$s);\n");
+            touch($file, time() + 10);
+            clearstatcache();
+            $this->assertSame([], $scope->markersOf($file));
+        } finally {
+            @unlink($file);
+        }
+
+        $this->assertSame([], $scope->markersOf($file));
+    }
+
     #[Test]
     public function test_a_version_on_pcre2_is_judged_as_before(): void
     {
-        $this->assertSame(70300, (new PatternChecker(['phpVersion' => '7.3']))->parser()->target()->phpVersionId);
-        $this->assertSame(70400, (new PatternChecker([], new PhpVersion(70400, PhpVersion::SOURCE_CONFIG)))->parser()->target()->phpVersionId);
+        $this->assertSame(70300, (new TargetScope(['phpVersion' => '7.3']))->parser()->target()->phpVersionId);
+        $this->assertSame(70400, (new TargetScope([], new PhpVersion(70400, PhpVersion::SOURCE_CONFIG)))->parser()->target()->phpVersionId);
     }
 }

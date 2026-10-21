@@ -35,7 +35,6 @@ use PHPStan\Reflection\ExtendedParametersAcceptor;
 use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
-use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\TypeCombinator;
 
 /**
@@ -120,14 +119,7 @@ final class RegexPatternArgumentRule implements Rule
     {
         $refusal = (new PcreEngine())->compile($pattern);
         if (null !== $refusal) {
-            return [RuleErrorBuilder::message(\sprintf(
-                'Regex pattern is invalid: %s%s',
-                $refusal->message,
-                str_ends_with($refusal->message, '.') ? '' : '.',
-            ))
-                ->line($lineNumber)
-                ->identifier(self::IDENTIFIER_INVALID)
-                ->build()];
+            return [ErrorFactory::invalid($refusal->message, $lineNumber)];
         }
 
         return array_values($this->checker->check($pattern, $lineNumber, $scope, $source, false, $fileOffset));

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
 use PHPRegex\Linter\Rule\RuleCatalog;
+use PHPRegex\PHPStan\ErrorFactory;
 use PHPRegex\PHPStan\PatternChecker;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -94,13 +95,13 @@ final class RegexPatternRuleDocLinksTest extends TestCase
     }
 
     /**
-     * A map constant of PatternChecker, asserted into a map of strings.
+     * A map constant of ErrorFactory, asserted into a map of strings.
      *
      * @return array<string, string>
      */
     private static function constantMap(string $name): array
     {
-        $map = (new \ReflectionClass(PatternChecker::class))->getConstant($name);
+        $map = (new \ReflectionClass(ErrorFactory::class))->getConstant($name);
         self::assertIsArray($map);
 
         $typed = [];

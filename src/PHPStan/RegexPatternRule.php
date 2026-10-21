@@ -41,7 +41,6 @@ use PHPStan\Php\PhpVersion;
 use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
-use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\Constant\ConstantArrayType;
 use PHPStan\Type\Type;
 
@@ -79,8 +78,6 @@ use PHPStan\Type\Type;
  *         complexity?: array{enabled?: bool, threshold?: int},
  *     },
  * }
- *
- * @phpstan-import-type GroupReference from ReplacementReferences
  *
  * @implements Rule<CallLike>
  */
@@ -360,15 +357,7 @@ final class RegexPatternRule implements Rule
             return [];
         }
 
-        return [RuleErrorBuilder::message(\sprintf(
-            'preg_match() with %s is %s.',
-            PatternChecker::displayPattern($pattern),
-            $match->phpExpression((new Standard())->prettyPrintExpr($subject)),
-        ))
-            ->line($lineNumber)
-            ->identifier(self::IDENTIFIER_TRIVIAL_MATCH)
-            ->tip('Both say yes for exactly the same subjects, as the automata prove, and the function needs no regex engine; preg_match() returns 1 or 0 where the function returns true or false.')
-            ->build()];
+        return [ErrorFactory::trivialMatch($pattern, $match, (new Standard())->prettyPrintExpr($subject), $lineNumber)];
     }
 
     /**
@@ -442,7 +431,7 @@ final class RegexPatternRule implements Rule
                 foreach (ReplacementReferences::of($replacement) as $reference) {
                     $found = [];
                     foreach ($numberings as [$pattern, $numbering]) {
-                        $error = self::undefinedReplacementGroup($reference, $numbering, $pattern, $functionName);
+                        $error = ErrorFactory::undefinedReplacementGroup($reference, $numbering, $pattern, $functionName);
                         if (null !== $error) {
                             $found[] = $error;
                         } elseif ($correlated) {
@@ -456,68 +445,13 @@ final class RegexPatternRule implements Rule
                             continue;
                         }
 
-                        $builder = RuleErrorBuilder::message($error[0])
-                            ->line($lineNumber)
-                            ->identifier(self::IDENTIFIER_REPLACEMENT_UNDEFINED_GROUP);
-                        if (null !== $error[1]) {
-                            $builder = $builder->tip($error[1]);
-                        }
-                        $errors[$error[0]] = $builder->build();
+                        $errors[$error[0]] = ErrorFactory::replacementGroup($error[0], $error[1], $lineNumber);
                     }
                 }
             }
         }
 
         return array_values($errors);
-    }
-
-    /**
-     * The message and tip for a reference to a group the pattern does not
-     * have, null for a reference to one of its groups.
-     *
-     * @param GroupReference $reference
-     *
-     * @return array{string, string|null}|null
-     */
-    private static function undefinedReplacementGroup(array $reference, GroupNumbering $numbering, string $pattern, string $functionName): ?array
-    {
-        $name = $reference['name'];
-        if (null !== $name) {
-            $numbers = $numbering->getNamedGroupNumbers($name);
-
-            return [
-                \sprintf('Replacement text %s is not a group reference: %s() reads group numbers only and leaves it in the result as written.', $reference['raw'], $functionName),
-                [] === $numbers
-                    ? \sprintf('%s has no group named "%s" either; refer to a group by its number, as in ${1}.', PatternChecker::displayPattern($pattern), $name)
-                    : \sprintf('Write ${%d}, the number of the group "%s".', $numbers[0], $name),
-            ];
-        }
-
-        $group = (int) $reference['group'];
-        $count = $numbering->maxGroupNumber;
-        if ($group <= $count) {
-            return null;
-        }
-
-        $message = \sprintf(
-            'Replacement reference %s names group %d, but %s has %s: %s() substitutes an empty string.',
-            $reference['raw'],
-            $group,
-            PatternChecker::displayPattern($pattern),
-            match ($count) {
-                0 => 'no capturing group',
-                1 => '1 capturing group',
-                default => $count.' capturing groups',
-            },
-            $functionName,
-        );
-
-        // "$10" is group 10: group 1 followed by a "0" is written "${1}0".
-        if ($group >= 10 && intdiv($group, 10) <= $count && !str_starts_with($reference['raw'], '${')) {
-            return [$message, \sprintf('Two digits are read after "%1$s": write ${%2$d}%3$d for group %2$d followed by "%3$d".', $reference['raw'][0], intdiv($group, 10), $group % 10)];
-        }
-
-        return [$message, null];
     }
 
     /**

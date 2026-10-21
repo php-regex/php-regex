@@ -15,50 +15,31 @@ namespace PHPRegex\PHPStan;
 
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\BinaryOp\Concat;
-use PhpParser\Node\Expr\ConstFetch;
-use PhpParser\Node\Name;
-use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Scalar\String_;
 use PHPRegex\Linter\AnalysisService;
-use PHPRegex\Linter\Config\JudgedRange;
-use PHPRegex\Linter\Config\ProjectTarget;
-use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Config\UnsupportedTargetException;
-use PHPRegex\Linter\Extraction\TargetMarker;
-use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\RedosRepairer;
-use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\ParserOptions;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Redos\RedosAnalysis;
-use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
-use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPStan\Analyser\Scope;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Rules\IdentifierRuleError;
-use PHPStan\Rules\RuleErrorBuilder;
-use PHPStan\Type\IntegerRangeType;
-use PHPStan\Type\NeverType;
-use PHPStan\Type\Type;
-use PHPStan\Type\TypeCombinator;
 
 /**
  * The checks of one constant pattern, as the "phpRegex" parameter sets
- * them: validity for the target and the later PHPs of PHPStan's range, then
- * lint, ReDoS risks and optimizations on demand. Both rules read their
- * patterns through it.
+ * them: validity for the versions its TargetScope judges, then lint, ReDoS
+ * risks and optimizations on demand, each error worded by ErrorFactory.
+ * The rules read their patterns through it.
  *
  * @internal
  *
@@ -69,24 +50,11 @@ final class PatternChecker
     private const ISSUE_ID_REDOS = 'regex.lint.redos';
     private const ISSUE_ID_REDOS_SEARCH = 'regex.lint.redos.search';
     private const ISSUE_ID_COMPLEXITY = RuleCatalog::COMPLEXITY;
-    private const MAX_PATTERN_DISPLAY_LENGTH = 50;
-
-    private const DOC_LINKS = [
-        'catastrophic backtracking' => 'https://php-regex.com/reference/rules/#catastrophic-backtracking',
-        'possessive quantifiers' => 'https://php-regex.com/tutorial/04-quantifiers/#possessive-quantifiers-performance',
-        'atomic groups' => 'https://php-regex.com/tutorial/08-performance-redos/#1-atomic-groups-',
-    ];
 
     /**
-     * Judges patterns for the target; its cache stays in memory.
+     * The versions a pattern is judged for, at each call.
      */
-    private readonly RegexParser $regex;
-
-    /**
-     * "PHP 8.2 with PCRE2 10.40", or null when the target is the running
-     * engine: what it refuses is reported apart.
-     */
-    private readonly ?string $targetLabel;
+    private readonly TargetScope $scope;
 
     private readonly bool $lintEnabled;
 
@@ -107,29 +75,7 @@ final class PatternChecker
      */
     private readonly int $complexityThreshold;
 
-    /**
-     * The later PHP versions of PHPStan's range a pattern is validated at
-     * too, each with its label ("PHP 8.5 with PCRE2 10.44").
-     *
-     * @var list<array{RegexParser, string}>
-     */
-    private readonly array $range;
-
     private ?AnalysisService $analysis = null;
-
-    /**
-     * The PHP versions of PHPStan's range, the lowest judged and the
-     * highest, when a guard on PHP_VERSION_ID may narrow them: null when
-     * one version is judged.
-     *
-     * @var array{int, int}|null
-     */
-    private readonly ?array $guardable;
-
-    /**
-     * The PCRE2 release "pcreVersion" names for every version judged.
-     */
-    private readonly ?string $pinnedPcre;
 
     /**
      * The analysis of each lowest version a guard or a marker leaves, by
@@ -138,19 +84,6 @@ final class PatternChecker
      * @var array<string, AnalysisService>
      */
     private array $guardedFloors = [];
-
-    /**
-     * The versions judged and those PHPStan's range admits, built once.
-     */
-    private ?JudgedRange $judged = null;
-
-    /**
-     * The "@regex-target" markers of the files last read, by path and time
-     * of change.
-     *
-     * @var array<string, list<TargetMarker>>
-     */
-    private array $markers = [];
 
     /**
      * @param ConfigArray                        $config             the "phpRegex" parameter: "phpVersion", "pcreVersion", "locale"
@@ -174,24 +107,9 @@ final class PatternChecker
         array $config = [],
         ?PhpVersion $phpVersion = null,
         int|array|null $phpVersionRange = null,
-        private readonly ?ReflectionProvider $reflectionProvider = null
+        ?ReflectionProvider $reflectionProvider = null
     ) {
-        // Built now, so that an unreadable version stops PHPStan before any file is read.
-        $this->regex = RegexParser::fromOptions(ParserOptions::fromArray(self::targetOptions($config, $phpVersion, $phpVersionRange)));
-        $target = $this->regex->target();
-        $this->range = self::rangeParsers($config, $this->regex, $phpVersionRange);
-        $this->guardable = null === ($config['phpVersion'] ?? null) && \is_array($phpVersionRange) && $phpVersionRange['max'] >= $target->phpVersionId
-            ? [$target->phpVersionId, $phpVersionRange['max']]
-            : null;
-        $pcreVersion = $config['pcreVersion'] ?? null;
-        $this->pinnedPcre = \is_string($pcreVersion) ? $pcreVersion : null;
-        $this->targetLabel = $target->isRunningEngine() ? null : \sprintf(
-            'PHP %d.%d with PCRE2 %s%s',
-            intdiv($target->phpVersionId, 10000),
-            intdiv($target->phpVersionId, 100) % 100,
-            $target->pcreVersion,
-            'C' === $target->locale ? '' : ' under the locale '.$target->locale,
-        );
+        $this->scope = new TargetScope($config, $phpVersion, $phpVersionRange, $reflectionProvider);
 
         $checks = $config['checks'] ?? [];
         $lint = $checks['lint'] ?? [];
@@ -217,7 +135,7 @@ final class PatternChecker
      */
     public function parser(): RegexParser
     {
-        return $this->regex;
+        return $this->scope->parser();
     }
 
     public function optimizationsEnabled(): bool
@@ -276,7 +194,7 @@ final class PatternChecker
      */
     public function check(string $pattern, int $lineNumber, Scope $scope, string $source, bool $constantSubject, ?int $fileOffset = null): array
     {
-        if (null === $this->targetLabel && [] === $this->range && null === $this->guardable && !$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled && !$this->complexityEnabled) {
+        if (!$this->scope->judgesBeyondTheRunningEngine() && !$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled && !$this->complexityEnabled) {
             return [];
         }
 
@@ -288,13 +206,12 @@ final class PatternChecker
         // The floor first, then the later PHPs of PHPStan's range: the first
         // that refuses the pattern is reported. Under a guard on
         // PHP_VERSION_ID, those of the versions the call runs on.
-        $guarded = $this->guardedTargets($scope, $lineNumber);
-        if ([] === $guarded) {
+        $targets = $this->scope->targetsAt($scope, $lineNumber);
+        if (null === $targets) {
             return [];
         }
-        [$floor, $floorLabel, $later, $floorAnalysis] = $guarded ?? [$this->regex, $this->targetLabel, $this->range, null];
-        $targets = null === $floorLabel ? $later : [[$floor, $floorLabel], ...$later];
-        foreach ($targets as [$parser, $label]) {
+        [$validated, $floor] = $targets;
+        foreach ($validated as [$parser, $label]) {
             $validation = $parser->validate($pattern);
             // A limit of the library: the pattern is not analyzed, and
             // nothing is said about it.
@@ -303,20 +220,7 @@ final class PatternChecker
             }
 
             if (!$validation->isValid) {
-                $reason = $this->firstLine($validation->error ?? 'Invalid regex.');
-                $builder = RuleErrorBuilder::message(\sprintf(
-                    'Regex pattern is invalid for %s: %s%s',
-                    $label,
-                    $reason,
-                    str_ends_with($reason, '.') ? '' : '.',
-                ))
-                    ->line($lineNumber)
-                    ->identifier(RegexPatternRule::IDENTIFIER_INVALID_FOR_TARGET);
-                if (null !== $validation->hint && '' !== $validation->hint) {
-                    $builder = $builder->tip($validation->hint);
-                }
-
-                return [$builder->build()];
+                return [ErrorFactory::invalidForTarget($label, $validation->error ?? 'Invalid regex.', $validation->hint, $lineNumber)];
             }
         }
 
@@ -332,11 +236,12 @@ final class PatternChecker
             $source,
             fileOffset: $fileOffset,
         );
+        $analysisService = $this->analysisAt($floor);
 
         $redosIssues = [];
         $lintIssues = [];
         if ($this->lintEnabled || $this->redosEnabled || $this->complexityEnabled) {
-            foreach (($floorAnalysis ?? $this->getAnalysisService())->lint([$occurrence]) as $issue) {
+            foreach ($analysisService->lint([$occurrence]) as $issue) {
                 // A pattern the library cannot read comes back without an
                 // issue id, alone: nothing below reports it.
                 $issueId = $issue->issueId;
@@ -369,31 +274,19 @@ final class PatternChecker
                 continue; // never: a ReDoS issue carries its analysis; the check is for the type
             }
 
-            // One attempt proven linear, the search retrying it is not: its
-            // own message, frozen like the three others, and identifier.
             if (self::ISSUE_ID_REDOS_SEARCH === $issue->issueId) {
-                $errors[] = RuleErrorBuilder::message(\sprintf('Quadratic search (ReDoS): %s', self::displayPattern($pattern)))
-                    ->line($lineNumber)
-                    ->tip(self::getTipForSearchCost($issue->message, $issue->hint))
-                    ->identifier(RegexPatternRule::IDENTIFIER_REDOS_SEARCH)
-                    ->build();
+                $errors[] = ErrorFactory::searchCost($pattern, $issue->message, $issue->hint, $lineNumber);
 
                 continue;
             }
 
-            $errors[] = RuleErrorBuilder::message(\sprintf(
-                self::redosMessageFormat($analysis),
-                self::displayPattern($pattern),
-            ))
-                ->line($lineNumber)
-                ->tip($this->getTipForReDoS($analysis, $pattern))
-                ->identifier(RegexPatternRule::IDENTIFIER_REDOS)
-                ->build();
+            $repair = (new RedosRepairer($this->scope->parser()))->repair($pattern)[0] ?? null;
+            $errors[] = ErrorFactory::redos($pattern, $analysis, $repair, $lineNumber);
         }
 
         if ($this->optimizationsEnabled) {
             /** @var array<array{file: string, line: int, optimization: OptimizationResult, savings: int, source?: string}> $optimizations */
-            $optimizations = ($floorAnalysis ?? $this->getAnalysisService())->suggestOptimizations(
+            $optimizations = $analysisService->suggestOptimizations(
                 [$occurrence],
                 $this->optimizationMinSavings,
                 $this->optimizationOptions,
@@ -404,11 +297,7 @@ final class PatternChecker
                 if (!$this->isOptimizationFormatSafe($pattern, $optimization->optimized)) {
                     continue;
                 }
-                $errors[] = RuleErrorBuilder::message(\sprintf('Regex pattern can be optimized: "%s"', self::displayPattern($pattern)))
-                    ->line($lineNumber)
-                    ->identifier(RegexPatternRule::IDENTIFIER_OPTIMIZATION)
-                    ->tip(\sprintf('Consider using: %s', DisplayEscaper::escape($optimization->optimized)))
-                    ->build();
+                $errors[] = ErrorFactory::optimization($pattern, $optimization->optimized, $lineNumber);
             }
         }
 
@@ -418,22 +307,7 @@ final class PatternChecker
                 continue; // a pattern the library cannot read, which the running engine compiles
             }
 
-            $builder = RuleErrorBuilder::message($issue->message)
-                ->line($lineNumber)
-                ->identifier($issueId);
-            $tipParts = [];
-            $hint = $issue->hint;
-            if (null !== $hint && '' !== $hint) {
-                $tipParts[] = $hint;
-            }
-            $docsUrl = RuleCatalog::docsUrl($issueId);
-            if (null !== $docsUrl) {
-                $tipParts[] = 'Read more: '.$docsUrl;
-            }
-            if ([] !== $tipParts) {
-                $builder = $builder->tip(implode("\n", $tipParts));
-            }
-            $errors[] = $builder->build();
+            $errors[] = ErrorFactory::lintIssue($issueId, $issue->message, $issue->hint, $lineNumber);
         }
 
         return $errors;
@@ -470,39 +344,6 @@ final class PatternChecker
     }
 
     /**
-     * The pattern as the console shows it, on one line with the characters
-     * that move or hide text escaped in the pattern's own mode, cut after
-     * its first 50 characters (bytes when the rendering is not valid UTF-8)
-     * and followed by "..." when cut. The cut never splits a character, nor
-     * an escape sequence such as "\x{202E}", "\xC2", "\p{L}", "\pL" or "\d": the
-     * text stops before the sequence it would otherwise fall inside.
-     */
-    public static function displayPattern(string $pattern, int $length = self::MAX_PATTERN_DISPLAY_LENGTH): string
-    {
-        $rendered = DisplayEscaper::escape($pattern);
-        $modifiers = 1 === LibraryPcre::match('//u', $rendered) ? 'su' : 's';
-        if (1 !== LibraryPcre::match('/\A.{'.$length.'}(?=.)/'.$modifiers, $rendered, $head)) {
-            return $rendered;
-        }
-
-        $cut = \strlen($head[0]);
-        for ($offset = 0; $offset < $cut; $offset++) {
-            if ('\\' !== $rendered[$offset]) {
-                continue;
-            }
-            $end = self::escapeSequenceEnd($rendered, $offset);
-            if ($end > $cut) {
-                $cut = $offset;
-
-                break;
-            }
-            $offset = $end - 1;
-        }
-
-        return substr($rendered, 0, $cut).'...';
-    }
-
-    /**
      * The errors of the "@regex-target" markers of a file: one that cannot
      * be read, one that keeps no version of PHPStan's range, each on its
      * line.
@@ -512,142 +353,15 @@ final class PatternChecker
     public function markerErrors(string $file): array
     {
         $errors = [];
-        foreach ($this->markersOf($file) as $marker) {
+        foreach ($this->scope->markersOf($file) as $marker) {
             if (null === $marker->constraint) {
-                $errors[] = RuleErrorBuilder::message((string) $marker->error)
-                    ->line($marker->line)
-                    ->tip('Write the versions the code runs on as a Composer constraint after "php", "pcre", or both.')
-                    ->identifier(RegexPatternRule::IDENTIFIER_TARGET_INVALID)
-                    ->build();
-            } elseif ([] === $this->judged()->narrow($marker->constraint)) {
-                $errors[] = RuleErrorBuilder::message(\sprintf('The %s marker "%s" keeps no version the project is judged for (PHP %s): the patterns it covers are not judged.', $marker->marker, $marker->text, $this->judged()->describe()))
-                    ->line($marker->line)
-                    ->tip('Widen the marker to versions of the range, or remove the code it covers if it never runs there.')
-                    ->identifier(RegexPatternRule::IDENTIFIER_TARGET_EMPTY)
-                    ->build();
+                $errors[] = ErrorFactory::unreadableMarker($marker);
+            } elseif ([] === $this->scope->judged()->narrow($marker->constraint)) {
+                $errors[] = ErrorFactory::emptyMarker($marker, $this->scope->judged()->describe());
             }
         }
 
         return $errors;
-    }
-
-    /**
-     * The offset just past the escape sequence a backslash at $offset opens:
-     * "\x" with its braced code point or up to two hex digits; "\N" or "\o"
-     * with its braced operand ("\N{U+41}"); "\p" or "\P" with its braced
-     * operand ("\p{L}") or the one letter naming a property ("\pL", "\pZs"
-     * being "\pZ" then "s"); "\g" or
-     * "\k" with its operand in braces, angle brackets or quotes ("\g{1}",
-     * "\k<n>", "\k'n'"), or "\g" with an optionally signed number ("\g1",
-     * "\g-1", "\g+1"); "\c" with the character it controls; "\0" with up
-     * to two more octal digits; "\1" to "\9" with every digit after it, the
-     * octal escape or back reference PCRE reads there being no longer; an
-     * operand left open runs to the end of the text. Otherwise the backslash
-     * and the whole character after it.
-     */
-    private static function escapeSequenceEnd(string $text, int $offset): int
-    {
-        // The operand is optional: a lone backslash is a sequence of one.
-        LibraryPcre::match('/\G\\\\(?:x(?:\{[^}]*\}?|[0-9A-Fa-f]{0,2})|[No]\{[^}]*\}?|[Pp](?:\{[^}]*\}?|[A-Za-z])|[gk](?:\{[^}]*\}?|<[^>]*>?|\'[^\']*\'?)|g[+-]?[0-9]+|c(?:[\xC0-\xFF][\x80-\xBF]*|[\x00-\xFF])?|0[0-7]{0,2}|[1-9][0-9]*|[\xC0-\xFF][\x80-\xBF]*|[\x00-\xFF])?/', $text, $match, 0, $offset);
-
-        return $offset + max(1, \strlen($match[0] ?? ''));
-    }
-
-    private function firstLine(string $message): string
-    {
-        $lines = explode("\n", $message);
-
-        return $lines[0];
-    }
-
-    /**
-     * The "php_version", "pcre_version" and "locale" options of the target:
-     * PHPStan's PHP version with the PCRE2 it bundles by default, the
-     * running PHP and the PCRE2 it links when that version is the running
-     * one or the setting is "runtime", else the version the setting names;
-     * the locale "locale" names, else the runtime's.
-     *
-     * A PHP below the first on PCRE2 is judged as regex lint judges it:
-     * refused when "phpVersion" or PHPStan names it, judged from the lowest
-     * PHP on PCRE2 of a range of PHPStan or of the composer.json PHPStan
-     * read it from, refused when they allow none.
-     *
-     * @param ConfigArray                        $config
-     * @param int|array{min: int, max: int}|null $phpVersionRange
-     *
-     * @throws InvalidRegexOptionException when "phpVersion" names no version, or "locale" a locale the machine
-     *                                     cannot set
-     * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1
-     *
-     * @return array{php_version?: string|int, pcre_version?: string, locale?: string}
-     */
-    private static function targetOptions(array $config, ?PhpVersion $phpVersion, int|array|null $phpVersionRange): array
-    {
-        $options = [];
-        $locale = $config['locale'] ?? null;
-        if (null !== $locale) {
-            $options['locale'] = $locale;
-        }
-
-        $firstOnPcre2 = PcreTarget::phpVersionBoundaries()[0];
-        $setting = $config['phpVersion'] ?? null;
-        if (null === $setting) {
-            if (null !== $phpVersion && $phpVersion->getVersionId() < $firstOnPcre2) {
-                $target = \is_array($phpVersionRange)
-                    ? ProjectTarget::fromRange($phpVersionRange['min'], $phpVersionRange['max'], 'phpVersion', ['phpRegex.locale' => $locale])
-                    : ProjectTarget::belowPcre2($phpVersion->getVersionId(), 'phpVersion', PhpVersion::SOURCE_COMPOSER_PLATFORM_PHP === $phpVersion->getSource() ? (getcwd() ?: null) : null, getenv(), ['phpRegex.locale' => $locale]);
-                $options['php_version'] = $target->target()->phpVersionId;
-            } elseif (null !== $phpVersion && \PHP_VERSION_ID !== $phpVersion->getVersionId()) {
-                $options['php_version'] = $phpVersion->getVersionId();
-            }
-        } elseif ('runtime' !== $setting) {
-            $named = ParserOptions::fromArray(['php_version' => $setting])->target->phpVersionId;
-            if ($named < $firstOnPcre2) {
-                ProjectTarget::belowPcre2($named, 'phpRegex.phpVersion', null, []);
-            }
-            $options['php_version'] = $setting;
-        }
-
-        $pcreVersion = $config['pcreVersion'] ?? null;
-        if (null !== $pcreVersion) {
-            $options['pcre_version'] = $pcreVersion;
-        }
-
-        return $options;
-    }
-
-    /**
-     * A parser and its label for each PHP where a rule of the library
-     * changes, above the floor and up to the max of PHPStan's range; none
-     * when "phpVersion" names the version patterns are judged for, or when
-     * PHPStan names one version.
-     *
-     * @param ConfigArray                        $config
-     * @param int|array{min: int, max: int}|null $phpVersionRange
-     *
-     * @return list<array{RegexParser, string}>
-     */
-    private static function rangeParsers(array $config, RegexParser $floorParser, int|array|null $phpVersionRange): array
-    {
-        $floor = $floorParser->target();
-        $max = \is_array($phpVersionRange) ? $phpVersionRange['max'] : null;
-        if (null !== ($config['phpVersion'] ?? null) || !\is_int($max)) {
-            return [];
-        }
-
-        $pcreVersion = $config['pcreVersion'] ?? null;
-        $parsers = [];
-        foreach (PcreTarget::phpVersionBoundaries() as $phpVersionId) {
-            if ($phpVersionId <= $floor->phpVersionId || $phpVersionId > $max) {
-                continue;
-            }
-
-            $pcre = \is_string($pcreVersion) ? $pcreVersion : PcreTarget::bundledWith($phpVersionId)->pcreVersion;
-            $target = new PcreTarget($phpVersionId, $pcre, $floor->locale);
-            $parsers[] = [$floorParser->withTarget($target), self::label($target)];
-        }
-
-        return $parsers;
     }
 
     /**
@@ -689,190 +403,17 @@ final class PatternChecker
     }
 
     /**
-     * The versions of PHPStan's range a call runs on, as a guard on
-     * PHP_VERSION_ID and the "@regex-target" markers covering its line say
-     * them, both at once: the lowest, judged with the PCRE2 it bundles or
-     * the one "pcreVersion" names, its label (null for the target of the
-     * extension, when the running engine stands for it), the later PHPs of
-     * the range above it, and the analysis of the lowest. Null when nothing
-     * narrows the range; an empty list when what narrows it keeps no
-     * version of it, the call never running on the versions judged.
-     *
-     * @return array{RegexParser, string|null, list<array{RegexParser, string}>, AnalysisService|null}|array{}|null
+     * The analysis that reads a pattern for the lowest version a call is
+     * judged for: the target's, or the one of a version a guard or a marker
+     * leaves, built once.
      */
-    private function guardedTargets(Scope $scope, int $lineNumber): ?array
+    private function analysisAt(RegexParser $floor): AnalysisService
     {
-        $constraint = TargetMarker::constraintAt($this->markersOf($scope->getFile()), $lineNumber);
-        if (null !== $this->guardable) {
-            [$lowest, $highest] = $this->guardable;
-            $narrowed = self::admitted($this->versionType($scope), $lowest, $highest);
-            if (null === $narrowed) {
-                return [];
-            }
-
-            if ($narrowed !== [$lowest, $highest]) {
-                $guard = TargetConstraint::phpFrom($narrowed[0], $narrowed[1] + 1);
-                $constraint = $constraint?->intersect($guard) ?? $guard;
-            }
+        if ($floor === $this->scope->parser()) {
+            return $this->analysis ??= $this->analysisFor($floor);
         }
 
-        if (null === $constraint) {
-            return null;
-        }
-
-        $judged = $this->judged();
-        $targets = $judged->narrow($constraint);
-        if ([] === $targets) {
-            return [];
-        }
-
-        $key = static fn (PcreTarget $target): string => $target->key();
-        if (array_map($key, $targets) === array_map($key, $judged->points())) {
-            return null;
-        }
-
-        $later = [];
-        foreach (\array_slice($targets, 1) as $target) {
-            $later[] = [$judged->parserFor($target), self::label($target)];
-        }
-
-        $floor = $targets[0];
-        if ($key($floor) === $key($this->regex->target())) {
-            return [$this->regex, $this->targetLabel, $later, null];
-        }
-
-        $this->guardedFloors[$key($floor)] ??= $this->analysisFor($judged->parserFor($floor));
-        $analysis = $this->guardedFloors[$key($floor)];
-
-        return [$analysis->getParser(), self::label($floor), $later, $analysis];
-    }
-
-    /**
-     * "PHP 8.4 with PCRE2 10.44", and the locale when it is not "C".
-     */
-    private static function label(PcreTarget $target): string
-    {
-        return \sprintf('PHP %s with PCRE2 %s%s', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion, 'C' === $target->locale ? '' : ' under the locale '.$target->locale);
-    }
-
-    /**
-     * The versions the extension judges, and those a marker or a guard may
-     * keep of them: PHPStan's range, or the series of its one version.
-     */
-    private function judged(): JudgedRange
-    {
-        if (null === $this->judged) {
-            $floor = $this->regex->target();
-            [$lowest, $highest] = $this->guardable ?? [$floor->phpVersionId, (intdiv($floor->phpVersionId, 100) + 1) * 100 - 1];
-            $this->judged = new JudgedRange(
-                [$floor, ...array_map(static fn (array $target): PcreTarget => $target[0]->target(), $this->range)],
-                [[$lowest, $highest + 1]],
-                $this->pinnedPcre,
-                $this->regex,
-            );
-        }
-
-        return $this->judged;
-    }
-
-    /**
-     * The "@regex-target" markers of a file, read once per version of it.
-     *
-     * @return list<TargetMarker>
-     */
-    private function markersOf(string $file): array
-    {
-        $modified = @filemtime($file);
-        $key = $file."\0".(false === $modified ? '' : (string) $modified);
-        if (!\array_key_exists($key, $this->markers)) {
-            $content = @file_get_contents($file);
-            $this->markers = [$key => false === $content ? [] : TargetMarkers::read($content)] + \array_slice($this->markers, 0, 63, true);
-        }
-
-        return $this->markers[$key];
-    }
-
-    /**
-     * The type of PHP_VERSION_ID at the call: of "\PHP_VERSION_ID", and of
-     * "PHP_VERSION_ID" too when it names the global constant, PHPStan
-     * narrowing each as it is written. In a namespace, the unqualified
-     * name is read only when no constant of the namespace takes it, neither
-     * declared in the file nor known to PHPStan elsewhere: a constant of
-     * the namespace is no PHP version.
-     */
-    private function versionType(Scope $scope): Type
-    {
-        $type = $scope->getType(new ConstFetch(new FullyQualified('PHP_VERSION_ID')));
-        $unqualified = new Name('PHP_VERSION_ID');
-        $namespace = $scope->getNamespace();
-        if (null === $namespace
-            || ($scope->hasExpressionType(new ConstFetch(new FullyQualified($namespace.'\\PHP_VERSION_ID')))->no()
-                && 'PHP_VERSION_ID' === $this->reflectionProvider?->resolveConstantName($unqualified, $scope))) {
-            $type = TypeCombinator::intersect($type, $scope->getType(new ConstFetch($unqualified)));
-        }
-
-        return $type;
-    }
-
-    /**
-     * The lowest and the highest version of $lowest to $highest an integer
-     * type admits, or null when it admits none. A type that is no integer
-     * admits every version: it says nothing of them.
-     *
-     * @return array{int, int}|null
-     */
-    private static function admitted(Type $type, int $lowest, int $highest): ?array
-    {
-        if (self::isNever($type)) {
-            return null;
-        }
-
-        // Any other type says nothing of the versions, and keeps them all.
-        if (!$type->isInteger()->yes()) {
-            return [$lowest, $highest]; // never taken: PHPStan types PHP_VERSION_ID as an integer
-        }
-
-        $admits = static fn (int $from, int $to): bool => !self::isNever(TypeCombinator::intersect($type, IntegerRangeType::fromInterval($from, $to)));
-        if (!$admits($lowest, $highest)) {
-            return null;
-        }
-
-        // The lowest version admitted, then the highest, each by halving.
-        [$low, $high] = [$lowest, $highest];
-        while ($low < $high) {
-            $middle = intdiv($low + $high, 2);
-            if ($admits($lowest, $middle)) {
-                $high = $middle;
-            } else {
-                $low = $middle + 1;
-            }
-        }
-        $from = $low;
-
-        [$low, $high] = [$from, $highest];
-        while ($low < $high) {
-            $middle = intdiv($low + $high + 1, 2);
-            if ($admits($middle, $highest)) {
-                $low = $middle;
-            } else {
-                $high = $middle - 1;
-            }
-        }
-
-        return [$from, $low];
-    }
-
-    /**
-     * Whether a type admits no value: dead code, for a version.
-     */
-    private static function isNever(Type $type): bool
-    {
-        return (new NeverType())->isSuperTypeOf($type)->yes();
-    }
-
-    private function getAnalysisService(): AnalysisService
-    {
-        return $this->analysis ??= $this->analysisFor($this->regex);
+        return $this->guardedFloors[$floor->target()->key()] ??= $this->analysisFor($floor);
     }
 
     private function analysisFor(RegexParser $parser): AnalysisService
@@ -886,98 +427,5 @@ final class PatternChecker
             redosEnabled: $this->redosEnabled,
             lintEnabled: $this->lintEnabled,
         );
-    }
-
-    /**
-     * The message of a ReDoS error, frozen for 2.x so that a verdict fix never
-     * breaks a baseline: the class only when the model proved it.
-     */
-    private static function redosMessageFormat(RedosAnalysis $analysis): string
-    {
-        if (RedosProof::Proven === $analysis->proof) {
-            if (RedosComplexity::Exponential === $analysis->complexity) {
-                return 'Exponential backtracking (ReDoS): %s';
-            }
-
-            if (RedosComplexity::Polynomial === $analysis->complexity) {
-                return 'Polynomial backtracking (ReDoS): %s';
-            }
-        }
-
-        return 'Potential backtracking (ReDoS): %s';
-    }
-
-    /**
-     * "critical, exponential (proven)", "high, polynomial degree 3 (proven)",
-     * "medium, heuristic": the severity, then how the verdict was reached.
-     */
-    private static function redosVerdict(RedosAnalysis $analysis): string
-    {
-        $how = match ($analysis->proof) {
-            // The degree is only set on a polynomial.
-            RedosProof::Proven => $analysis->complexity->value
-                .(null === $analysis->degree ? '' : ' degree '.$analysis->degree)
-                .' (proven)',
-            RedosProof::Heuristic => 'heuristic',
-            RedosProof::BudgetExceeded => 'heuristic (budget exceeded)',
-            RedosProof::NotAnalyzed => 'not analyzed',
-        };
-
-        return $analysis->severity->value.', '.$how;
-    }
-
-    /**
-     * What the search cost means and its attack, as the lint issue says
-     * them, then the documentation link. A "<" is written "\x3C", as in the
-     * per-attempt tip.
-     */
-    private static function getTipForSearchCost(string $message, ?string $hint): string
-    {
-        $lines = [str_replace('<', '\x3C', $message)];
-        if (null !== $hint && '' !== $hint) {
-            $lines[] = str_replace('<', '\x3C', $hint);
-        }
-
-        return implode("\n", $lines)."\n\nRead more about catastrophic backtracking: ".self::DOC_LINKS['catastrophic backtracking'];
-    }
-
-    /**
-     * The verdict, the attack when there is a witness, the recommendations,
-     * a blank line, then the documentation links.
-     */
-    private function getTipForReDoS(RedosAnalysis $analysis, string $pattern): string
-    {
-        $lines = ['Severity: '.self::redosVerdict($analysis).'.'];
-        if (null !== $analysis->witness) {
-            // A "<" would open console markup in PHPStan's table output: written
-            // "\x3C", the literal stays valid PHP for the same bytes. The renderer
-            // prints "<" raw and never inside one of its escape sequences.
-            $lines[] = 'Attack: '.str_replace('<', '\x3C', $analysis->witness->render());
-        }
-
-        // A rewrite proven to match the same subjects and proven linear.
-        $repair = (new RedosRepairer($this->regex))->repair($pattern)[0] ?? null;
-        if (null !== $repair && $repair->isCertified()) {
-            $lines[] = \sprintf('Proven repair: %s (same subjects%s, linear).', str_replace('<', '\x3C', $repair->pattern), true === $repair->sameMatches ? ', same matches' : '');
-        }
-
-        $recommendations = implode("\n", $analysis->recommendations);
-        if ('' !== $recommendations) {
-            $lines[] = $recommendations;
-        }
-
-        // Append links for relevant recommendations
-        $additionalLinks = [];
-        if (str_contains($recommendations, 'possessive')) {
-            $additionalLinks[] = 'Read more about possessive quantifiers: '.self::DOC_LINKS['possessive quantifiers'];
-        }
-        if (str_contains($recommendations, 'atomic groups')) {
-            $additionalLinks[] = 'Read more about atomic groups: '.self::DOC_LINKS['atomic groups'];
-        }
-
-        // Always append catastrophic backtracking link for ReDoS
-        $additionalLinks[] = 'Read more about catastrophic backtracking: '.self::DOC_LINKS['catastrophic backtracking'];
-
-        return implode("\n", $lines)."\n\n".implode("\n", $additionalLinks);
     }
 }

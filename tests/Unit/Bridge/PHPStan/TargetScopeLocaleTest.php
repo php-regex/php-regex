@@ -17,7 +17,7 @@ use PHPRegex\Linter\Config\JudgedRange;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\PHPStan\PatternChecker;
+use PHPRegex\PHPStan\TargetScope;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPStan\Php\PhpVersion;
@@ -29,7 +29,7 @@ use PHPUnit\Framework\TestCase;
  * floor, every later PHP of PHPStan's range, and the versions a guard or a
  * "@regex-target" marker keeps are all judged under it.
  */
-final class PatternCheckerLocaleTest extends TestCase
+final class TargetScopeLocaleTest extends TestCase
 {
     use InstalledLocales;
     use PhpUnitForwardCompat;
@@ -38,11 +38,11 @@ final class PatternCheckerLocaleTest extends TestCase
     public function test_every_version_judged_keeps_the_locale_named(): void
     {
         $this->requiresLocale('fr_FR.ISO8859-1', 'The locale of the PHPStan range');
-        $checker = new PatternChecker(['locale' => 'fr_FR.ISO8859-1'], new PhpVersion(80200, PhpVersion::SOURCE_CONFIG), ['min' => 80200, 'max' => 80599]);
+        $scope = new TargetScope(['locale' => 'fr_FR.ISO8859-1'], new PhpVersion(80200, PhpVersion::SOURCE_CONFIG), ['min' => 80200, 'max' => 80599]);
 
-        $this->assertSame('fr_FR.ISO8859-1', $checker->parser()->target()->locale);
+        $this->assertSame('fr_FR.ISO8859-1', $scope->parser()->target()->locale);
         /** @var list<array{RegexParser, string}> $range */
-        $range = (new \ReflectionProperty($checker, 'range'))->getValue($checker);
+        $range = (new \ReflectionProperty($scope, 'range'))->getValue($scope);
         $this->assertNotSame([], $range);
         foreach ($range as [$parser, $label]) {
             $this->assertSame('fr_FR.ISO8859-1', $parser->target()->locale);
@@ -52,7 +52,7 @@ final class PatternCheckerLocaleTest extends TestCase
         }
 
         /** @var JudgedRange $judged */
-        $judged = (new \ReflectionMethod($checker, 'judged'))->invoke($checker);
+        $judged = (new \ReflectionMethod($scope, 'judged'))->invoke($scope);
         $targets = $judged->narrow(TargetConstraint::phpFrom(80400, null));
         $this->assertNotSame([], $targets);
         foreach ($targets as $target) {
@@ -67,6 +67,6 @@ final class PatternCheckerLocaleTest extends TestCase
         $this->expectException(InvalidRegexOptionException::class);
         $this->expectExceptionMessageIsOrContains('"locale" names "xx_YY.NOWHERE"');
 
-        new PatternChecker(['locale' => 'xx_YY.NOWHERE'], new PhpVersion(80400, PhpVersion::SOURCE_CONFIG), 80400);
+        new TargetScope(['locale' => 'xx_YY.NOWHERE'], new PhpVersion(80400, PhpVersion::SOURCE_CONFIG), 80400);
     }
 }
