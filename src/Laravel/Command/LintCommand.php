@@ -122,7 +122,9 @@ final class LintCommand extends Command
             // `regex lint` reads them, and in vendor/, whatever paths are
             // linted. A setting that is no list (one path) is read as one.
             declarationPaths: [] === $defaultPaths ? ($configured ? self::fromBasePath(['app']) : $givenPaths) : self::fromBasePath($defaultPaths),
-            vendorPaths: [base_path('vendor')],
+            vendorPaths: null === ($vendorPaths = config('php-regex.vendor_paths'))
+                ? [base_path('vendor')]
+                : self::fromBasePath($strings($vendorPaths)),
             editorUrl: \is_string($editorUrl) ? $editorUrl : null,
             displayBase: base_path(),
             // The Regex service judges for the running PHP; the lint judges

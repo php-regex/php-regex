@@ -263,6 +263,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Vendor Paths
+    |--------------------------------------------------------------------------
+    |
+    | Directories read for the patterns a dependency declares, beside the
+    | scan paths. The application's vendor/ directory by default; an empty
+    | list reads none, and the functions marked #[RegexPattern] are read
+    | from the scan paths alone.
+    |
+    */
+    'vendor_paths' => null,
+
+    /*
+    |--------------------------------------------------------------------------
     | Unmatched Inline Ignores
     |--------------------------------------------------------------------------
     |

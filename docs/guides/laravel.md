@@ -72,6 +72,7 @@ return [
     ],
     'paths' => ['app'],                                // read from base_path()
     'exclude' => ['vendor', 'node_modules', 'storage'], // directories of the application
+    'vendor_paths' => null,                             // libraries read for declared patterns, vendor/ by default
     'report_unmatched_ignores' => true, // report the @regex-ignore markers that silence nothing
     'ide' => env('PHP_REGEX_IDE', env('APP_EDITOR', null)),
 ];
