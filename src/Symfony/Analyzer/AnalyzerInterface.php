@@ -22,8 +22,6 @@ interface AnalyzerInterface
 
     public function getLabel(): string;
 
-    public function getPriority(): int;
-
     /**
      * @return array<int, ReportSection>
      */

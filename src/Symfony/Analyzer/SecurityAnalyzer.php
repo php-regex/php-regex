@@ -38,7 +38,6 @@ use PHPRegex\Symfony\Security\SecurityFirewallReport;
 final class SecurityAnalyzer implements AnalyzerInterface
 {
     private const ID = 'security';
-    private const PRIORITY = 20;
     private const ARROW_LABEL = "\u{21B3}";
 
     public function __construct(
@@ -57,11 +56,6 @@ final class SecurityAnalyzer implements AnalyzerInterface
     public function getLabel(): string
     {
         return 'Security';
-    }
-
-    public function getPriority(): int
-    {
-        return self::PRIORITY;
     }
 
     /**

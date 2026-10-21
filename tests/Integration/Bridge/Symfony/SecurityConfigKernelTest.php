@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
-use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;
 use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
 use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;
@@ -563,6 +562,6 @@ final class SecurityConfigKernelTest extends TestCase
             new SecurityFirewallAnalyzer(Regex::create()),
         );
 
-        return new AnalyzeCommand(new AnalyzerRegistry([$analyzer]), new ConsoleReportFormatter(), new JsonReportFormatter(), $kernel);
+        return new AnalyzeCommand([$analyzer], new ConsoleReportFormatter(), new JsonReportFormatter(), $kernel);
     }
 }

@@ -20,7 +20,6 @@ use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;
 use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
 use PHPRegex\Symfony\Analyzer\RoutesAnalyzer;
@@ -174,22 +173,18 @@ return static function (ContainerConfigurator $container): void {
     $services->set('php_regex.analyzer.routes', RoutesAnalyzer::class)
         ->arg('$analyzer', service('php_regex.routing.conflict_analyzer'))
         ->arg('$suggestionBuilder', service('php_regex.routing.conflict_suggestion_builder'))
-        ->arg('$router', service('router')->nullOnInvalid())
-        ->tag('php_regex.bridge_analyzer');
+        ->arg('$router', service('router')->nullOnInvalid());
 
     $services->set('php_regex.analyzer.security', SecurityAnalyzer::class)
         ->arg('$extractor', service('php_regex.security.config_extractor'))
         ->arg('$locator', service('php_regex.security.config_locator'))
         ->arg('$accessAnalyzer', service('php_regex.security.access_control_analyzer'))
         ->arg('$firewallAnalyzer', service('php_regex.security.firewall_analyzer'))
-        ->arg('$suggestionBuilder', service('php_regex.security.access_suggestion_builder'))
-        ->tag('php_regex.bridge_analyzer');
+        ->arg('$suggestionBuilder', service('php_regex.security.access_suggestion_builder'));
 
-    $services->set('php_regex.analyzer_registry', AnalyzerRegistry::class)
-        ->arg('$analyzers', tagged_iterator('php_regex.bridge_analyzer'));
-
+    // The two analyzers regex:analyze runs, in this order.
     $services->set('php_regex.command.analyze', AnalyzeCommand::class)
-        ->arg('$registry', service('php_regex.analyzer_registry'))
+        ->arg('$analyzers', [service('php_regex.analyzer.routes'), service('php_regex.analyzer.security')])
         ->arg('$consoleFormatter', service('php_regex.analyzer.console_formatter'))
         ->arg('$jsonFormatter', service('php_regex.analyzer.json_formatter'))
         ->arg('$kernel', service('kernel')->nullOnInvalid())

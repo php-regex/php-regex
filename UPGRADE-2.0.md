@@ -171,7 +171,6 @@ one.
 | `RegexParser\Bridge\Symfony\Analyzer\AnalysisNotice` | `PHPRegex\Symfony\Analyzer\AnalysisNotice` |
 | `RegexParser\Bridge\Symfony\Analyzer\AnalysisReport` | `PHPRegex\Symfony\Analyzer\SecurityReport` |
 | `RegexParser\Bridge\Symfony\Analyzer\AnalyzerInterface` | `PHPRegex\Symfony\Analyzer\AnalyzerInterface` |
-| `RegexParser\Bridge\Symfony\Analyzer\AnalyzerRegistry` | `PHPRegex\Symfony\Analyzer\AnalyzerRegistry` |
 | `RegexParser\Bridge\Symfony\Analyzer\Formatter\ConsoleReportFormatter` | `PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter` |
 | `RegexParser\Bridge\Symfony\Analyzer\Formatter\JsonReportFormatter` | `PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter` |
 | `RegexParser\Bridge\Symfony\Analyzer\IssueDetail` | `PHPRegex\Symfony\Analyzer\IssueDetail` |
@@ -390,6 +389,7 @@ one.
 | `RegexParser\Automata\Transform\AstToNfaTransformerInterface` | removed: type against `PHPRegex\Automata\Transform\HirToNfaTransformer`, one concrete class |
 | `RegexParser\Automata\Solver\RegexSolverCompilerInterface` | removed: type against `PHPRegex\Automata\LanguageSolver` |
 | `RegexParser\Automata\Solver\RegexSolverInterface` | removed: type against `PHPRegex\Automata\LanguageSolver` |
+| `RegexParser\Bridge\Symfony\Analyzer\AnalyzerRegistry` | removed: no replacement: AnalyzeCommand takes its two analyzers directly |
 | `RegexParser\Bridge\Symfony\DependencyInjection\Configuration` | removed: no replacement: `PHPRegex\Symfony\PHPRegexBundle` defines its configuration itself |
 | `RegexParser\Bridge\Symfony\DependencyInjection\RegexParserExtension` | removed: no replacement: `PHPRegex\Symfony\PHPRegexBundle` loads its services itself; its container extension keeps the php_regex alias |
 | `RegexParser\Bridge\Symfony\Routing\RouteControllerFileResolver` | removed: no replacement: nothing called it |
@@ -1575,11 +1575,15 @@ Every service of the bundle is private and named `php_regex.*`:
   `SecurityConfigExtractor`, `SecurityConfigLocator`,
   `SecurityFirewallAnalyzer`, `SecurityPatternNormalizer`,
   `ConsoleReportFormatter`, `JsonReportFormatter`, `RoutesAnalyzer`,
-  `SecurityAnalyzer`, `AnalyzerRegistry` and the
+  `SecurityAnalyzer` and the
   `PHPRegex\Linter\Extraction\ExtractorInterface` alias. Only
   `PHPRegex\Toolkit\Regex` and the `ValidRegexValidator` of the `ValidRegex`
   constraint are.
 - `RouteControllerFileResolver`, which nothing called, is gone.
+- `AnalyzerRegistry`, the `php_regex.bridge_analyzer` tag and
+  `AnalyzerInterface::getPriority()` are gone: `regex:analyze` is given its
+  two analyzers, routes then security. The tag was never an extension
+  point: `AnalyzerInterface` is internal.
 
 #### Laravel: config/php-regex.php replaces config/regex-parser.php
 

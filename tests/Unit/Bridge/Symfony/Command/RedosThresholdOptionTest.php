@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Unit\Bridge\Symfony\Command;
 
 use PHPRegex\Symfony\Analyzer\AnalysisContext;
 use PHPRegex\Symfony\Analyzer\AnalyzerInterface;
-use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;
 use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
 use PHPRegex\Symfony\Command\AnalyzeCommand;
@@ -95,18 +94,13 @@ final class RedosThresholdOptionTest extends TestCase
                 return 'Routes';
             }
 
-            public function getPriority(): int
-            {
-                return 10;
-            }
-
             public function analyze(AnalysisContext $context): array
             {
                 return [];
             }
         };
 
-        return new AnalyzeCommand(new AnalyzerRegistry([$analyzer]), new ConsoleReportFormatter(), new JsonReportFormatter());
+        return new AnalyzeCommand([$analyzer], new ConsoleReportFormatter(), new JsonReportFormatter());
     }
 
     private function securityCommand(): SecurityCommand

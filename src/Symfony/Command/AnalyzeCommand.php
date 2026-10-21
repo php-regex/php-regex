@@ -18,7 +18,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Symfony\Analyzer\AnalysisContext;
-use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;
+use PHPRegex\Symfony\Analyzer\AnalyzerInterface;
 use PHPRegex\Symfony\Analyzer\CheckOutcome;
 use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
@@ -47,8 +47,12 @@ final class AnalyzeCommand extends Command
 
     private const DEFAULT_FAIL_ON = ['shadowed', 'redos', 'critical'];
 
+    /**
+     * @param list<AnalyzerInterface> $analyzers the analyzers, in the order they run: the bundle's routes
+     *                                           analyzer, then its security one
+     */
     public function __construct(
-        private readonly AnalyzerRegistry $registry,
+        private readonly array $analyzers,
         private readonly ConsoleReportFormatter $consoleFormatter,
         private readonly JsonReportFormatter $jsonFormatter,
         private readonly ?KernelInterface $kernel = null,
@@ -125,7 +129,7 @@ final class AnalyzeCommand extends Command
         $json = self::FORMAT_JSON === $format;
 
         $only = $this->normalizeLowercaseList($input, 'only');
-        $available = array_map(static fn ($analyzer): string => $analyzer->getId(), $this->registry->all());
+        $available = array_map(static fn (AnalyzerInterface $analyzer): string => $analyzer->getId(), $this->analyzers);
         if ([] !== $only) {
             $unknown = array_diff($only, $available);
             if ([] !== $unknown) {
@@ -133,7 +137,10 @@ final class AnalyzeCommand extends Command
             }
         }
 
-        $analyzers = $this->registry->filter($only);
+        $analyzers = [] === $only ? $this->analyzers : array_values(array_filter(
+            $this->analyzers,
+            static fn (AnalyzerInterface $analyzer): bool => \in_array($analyzer->getId(), $only, true),
+        ));
         if ([] === $analyzers) {
             $message = 'No matching analyzers found.';
             if ([] !== $available) {

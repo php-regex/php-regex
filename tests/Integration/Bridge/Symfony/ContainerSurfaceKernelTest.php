@@ -15,11 +15,13 @@ namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
 use PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator;
 use PHPRegex\Tests\Support\FrameworkKernel;
+use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -103,6 +105,44 @@ final class ContainerSurfaceKernelTest extends TestCase
         foreach (['php_regex.regex', 'php_regex.command.lint', 'php_regex.command.compare', 'php_regex.command.routes', 'php_regex.command.security', 'php_regex.command.analyze', 'php_regex.command.explain', 'php_regex.command.transpile'] as $id) {
             $this->assertFalse($container->has($id), $id);
         }
+    }
+
+    /**
+     * regex:analyze runs the routes analyzer, then the security one.
+     */
+    #[Test]
+    public function test_regex_analyze_is_given_the_routes_and_the_security_analyzers(): void
+    {
+        $kernel = new FrameworkKernel($this->makeProject(), $this->makeProject());
+
+        try {
+            $tester = new CommandTester((new Application($kernel))->find('regex:analyze'));
+            $status = $tester->execute(['--only' => ['nope'], '--format' => 'json']);
+        } finally {
+            $kernel->shutdown();
+        }
+
+        $this->assertSame(Command::INVALID, $status);
+        $this->assertStringContainsString('Unknown analyzer ids: nope.', $tester->getDisplay());
+
+        $kernel = new FrameworkKernel($this->makeProject(), $this->makeProject());
+
+        try {
+            $tester = new CommandTester((new Application($kernel))->find('regex:analyze'));
+            $tester->execute(['--format' => 'json']);
+        } finally {
+            $kernel->shutdown();
+        }
+
+        $sections = JsonContract::asArray(JsonContract::decodeDocument($tester->getDisplay())['sections'] ?? null);
+        $this->assertSame(['routes', 'security'], array_values(array_unique(array_map(
+            static function (mixed $section): string {
+                $id = JsonContract::asArray($section)['id'] ?? null;
+
+                return \is_string($id) ? explode('_', $id)[0] : '';
+            },
+            $sections,
+        ))));
     }
 
     /**

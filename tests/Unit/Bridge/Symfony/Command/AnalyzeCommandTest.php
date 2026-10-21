@@ -17,7 +17,6 @@ use PHPRegex\Symfony\Analyzer\AnalysisContext;
 use PHPRegex\Symfony\Analyzer\AnalysisIssue;
 use PHPRegex\Symfony\Analyzer\AnalysisNotice;
 use PHPRegex\Symfony\Analyzer\AnalyzerInterface;
-use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;
 use PHPRegex\Symfony\Analyzer\CheckOutcome;
 use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
@@ -33,7 +32,7 @@ final class AnalyzeCommandTest extends TestCase
     #[Test]
     public function test_command_outputs_json_report(): void
     {
-        $registry = new AnalyzerRegistry([
+        $registry = [
             new class implements AnalyzerInterface {
                 public function getId(): string
                 {
@@ -43,11 +42,6 @@ final class AnalyzeCommandTest extends TestCase
                 public function getLabel(): string
                 {
                     return 'Routes';
-                }
-
-                public function getPriority(): int
-                {
-                    return 10;
                 }
 
                 public function analyze(AnalysisContext $context): array
@@ -70,7 +64,7 @@ final class AnalyzeCommandTest extends TestCase
                     ];
                 }
             },
-        ]);
+        ];
 
         $command = new AnalyzeCommand(
             $registry,
@@ -98,7 +92,7 @@ final class AnalyzeCommandTest extends TestCase
     #[Test]
     public function test_command_allows_disabling_fail_on(): void
     {
-        $registry = new AnalyzerRegistry([
+        $registry = [
             new class implements AnalyzerInterface {
                 public function getId(): string
                 {
@@ -108,11 +102,6 @@ final class AnalyzeCommandTest extends TestCase
                 public function getLabel(): string
                 {
                     return 'Security';
-                }
-
-                public function getPriority(): int
-                {
-                    return 10;
                 }
 
                 public function analyze(AnalysisContext $context): array
@@ -127,7 +116,7 @@ final class AnalyzeCommandTest extends TestCase
                     ];
                 }
             },
-        ]);
+        ];
 
         $command = new AnalyzeCommand(
             $registry,
@@ -144,7 +133,7 @@ final class AnalyzeCommandTest extends TestCase
     #[Test]
     public function test_command_includes_debug_payload_when_requested(): void
     {
-        $registry = new AnalyzerRegistry([
+        $registry = [
             new class implements AnalyzerInterface {
                 public function getId(): string
                 {
@@ -154,11 +143,6 @@ final class AnalyzeCommandTest extends TestCase
                 public function getLabel(): string
                 {
                     return 'Routes';
-                }
-
-                public function getPriority(): int
-                {
-                    return 10;
                 }
 
                 public function analyze(AnalysisContext $context): array
@@ -173,7 +157,7 @@ final class AnalyzeCommandTest extends TestCase
                     ];
                 }
             },
-        ]);
+        ];
 
         $command = new AnalyzeCommand(
             $registry,

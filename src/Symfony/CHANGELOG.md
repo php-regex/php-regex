@@ -25,6 +25,9 @@ CHANGELOG
    name. `php_regex.regex` and the commands are private; the
    `PHPRegex\Toolkit\Regex` alias stays public. `RouteControllerFileResolver`,
    which nothing called, is gone.
+ * `regex:analyze` is given its two analyzers, routes then security, in place
+   of an internal `php_regex.bridge_analyzer` tag and an `AnalyzerRegistry`
+   that sorted them by priority; both are gone.
  * The bundle sets no container parameter: its configuration goes straight
    into its services, where 22 `php_regex.*` parameters (two of them read by
    nothing) let an application read and override it. Read the configuration

@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Command;
 
-use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;
 use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
 use PHPRegex\Symfony\Analyzer\RoutesAnalyzer;
@@ -269,7 +268,7 @@ final class AnalyzerViewsTest extends TestCase
     private function analyzeCommand(?RouterInterface $router): AnalyzeCommand
     {
         return new AnalyzeCommand(
-            new AnalyzerRegistry([
+            [
                 new RoutesAnalyzer(new RouteConflictAnalyzer(Regex::create()), router: $router),
                 new SecurityAnalyzer(
                     new SecurityConfigExtractor(),
@@ -277,7 +276,7 @@ final class AnalyzerViewsTest extends TestCase
                     new SecurityAccessControlAnalyzer(Regex::create()),
                     new SecurityFirewallAnalyzer(Regex::create()),
                 ),
-            ]),
+            ],
             new ConsoleReportFormatter(),
             new JsonReportFormatter(),
         );

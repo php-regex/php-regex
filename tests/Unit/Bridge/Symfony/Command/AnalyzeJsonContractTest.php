@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Command;
 
-use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;
 use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
 use PHPRegex\Symfony\Analyzer\RoutesAnalyzer;
@@ -140,7 +139,7 @@ final class AnalyzeJsonContractTest extends TestCase
     #[Test]
     public function test_no_analyzer_at_all_prints_the_envelope(): void
     {
-        $tester = new CommandTester(new AnalyzeCommand(new AnalyzerRegistry([]), new ConsoleReportFormatter(), new JsonReportFormatter()));
+        $tester = new CommandTester(new AnalyzeCommand([], new ConsoleReportFormatter(), new JsonReportFormatter()));
         $status = $tester->execute(['--format' => 'json']);
 
         $this->assertSame(2, $status);
@@ -178,7 +177,7 @@ final class AnalyzeJsonContractTest extends TestCase
         $router->method('getRouteCollection')->willReturn($collection);
 
         return new AnalyzeCommand(
-            new AnalyzerRegistry([
+            [
                 new RoutesAnalyzer(new RouteConflictAnalyzer(Regex::create()), router: $router),
                 new SecurityAnalyzer(
                     new SecurityConfigExtractor(),
@@ -186,7 +185,7 @@ final class AnalyzeJsonContractTest extends TestCase
                     new SecurityAccessControlAnalyzer(Regex::create()),
                     new SecurityFirewallAnalyzer(Regex::create()),
                 ),
-            ]),
+            ],
             new ConsoleReportFormatter(),
             new JsonReportFormatter(),
         );

@@ -27,7 +27,6 @@ use Symfony\Component\Routing\RouterInterface;
 final class RoutesAnalyzer implements AnalyzerInterface
 {
     private const ID = 'routes';
-    private const PRIORITY = 10;
     private const ARROW_LABEL = "\u{21B3}";
 
     public function __construct(
@@ -44,11 +43,6 @@ final class RoutesAnalyzer implements AnalyzerInterface
     public function getLabel(): string
     {
         return 'Routes';
-    }
-
-    public function getPriority(): int
-    {
-        return self::PRIORITY;
     }
 
     public function analyze(AnalysisContext $context): array
