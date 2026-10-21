@@ -149,11 +149,6 @@ each exactly, checked with the first-pass length of pcre2test 10.32 to 10.49:
 The DEFINE quirk of PCRE2 10.32 to 10.34 stays documented, not planned: it
 would mean replaying their internal form of the pattern (10.35 fixed it).
 
-## Linter: the last pass before 2.0.0
-
-Left: the argument parsing that lives in `Linter\Config` though only the
-CLI and the language server read it.
-
 ## Architecture and contributor path: the last pass before 2.0.0
 
 - The transpiler output is never run in its target engine: add a
@@ -197,9 +192,8 @@ Integrations:
   no autowirable internal services.
 - PHPStan: a repo-only rule ships in the public extension;
   `PatternChecker` split.
-- CLI: one option declaration per command for parsing and help;
-  `OutputFormat` split per method in the facade; the language server's
-  error stream still written through a static.
+- CLI: `OutputFormat` split per method in the facade; the language
+  server's error stream still written through a static.
 - The target settings (PHP, PCRE2, locale) enter through one class, and
   every parser derived for another target keeps the locale.
 
