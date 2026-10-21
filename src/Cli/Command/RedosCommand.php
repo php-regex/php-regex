@@ -16,6 +16,7 @@ namespace PHPRegex\Cli\Command;
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\JsonRequest;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
@@ -26,7 +27,6 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\PatternParser;
-use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Redos\InputGenerator;
 use PHPRegex\Toolkit\Regex;
@@ -55,6 +55,14 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
         return 'Benchmark regex patterns for ReDoS behavior';
     }
 
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return RedosArguments::options();
+    }
+
     public function run(Input $input, Output $output): int
     {
         // The benchmark runs the pattern with the JIT on purpose, unless
@@ -80,26 +88,26 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
     private function benchmark(Input $input, Output $output, array &$saved): int
     {
         $json = JsonRequest::in($input->args);
-        $parsed = $this->parseArguments($input->args);
-        if (null !== $parsed['error']) {
-            return $this->usageError($output, $parsed['error'], "Usage: regex redos <pattern> [--safe <pattern>] [--input <string> | --input-file <path>] [--repeat <n>] [--prefix <string>] [--suffix <string>] [--iterations <n>] [--warmup <n>] [--jit 0|1] [--backtrack-limit <n>] [--recursion-limit <n>] [--time-limit <sec>] [--format=json] [--show-input]\n", $json);
+        $arguments = RedosArguments::parse($input->args);
+        if (\is_string($arguments)) {
+            return $this->usageError($output, $arguments, self::options()->usage, $json);
         }
 
-        $pattern = $parsed['pattern'];
-        $safePattern = $parsed['safePattern'];
-        $inputValue = $parsed['inputValue'];
-        $inputFile = $parsed['inputFile'];
-        $repeat = $parsed['repeat'];
-        $prefix = $parsed['prefix'];
-        $suffix = $parsed['suffix'];
-        $iterations = $parsed['iterations'];
-        $warmup = $parsed['warmup'];
-        $jit = $parsed['jit'];
-        $backtrackLimit = $parsed['backtrackLimit'];
-        $recursionLimit = $parsed['recursionLimit'];
-        $timeLimit = $parsed['timeLimit'];
-        $format = $parsed['format'];
-        $showInput = $parsed['showInput'];
+        $pattern = $arguments->pattern;
+        $safePattern = $arguments->safePattern;
+        $inputValue = $arguments->input;
+        $inputFile = $arguments->inputFile;
+        $repeat = $arguments->repeat;
+        $prefix = $arguments->prefix;
+        $suffix = $arguments->suffix;
+        $iterations = $arguments->iterations;
+        $warmup = $arguments->warmup;
+        $jit = $arguments->jit;
+        $backtrackLimit = $arguments->backtrackLimit;
+        $recursionLimit = $arguments->recursionLimit;
+        $timeLimit = $arguments->timeLimit;
+        $format = $arguments->format;
+        $showInput = $arguments->showInput;
 
         $regex = $this->createRegex($output, $input->regexOptions, $json);
         if (null === $regex) {
@@ -327,374 +335,6 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
         if (false !== $previous) {
             $saved[$key] = $previous;
         }
-    }
-
-    /**
-     * @param array<int, string> $args
-     *
-     * @return array{
-     *     pattern: string,
-     *     safePattern: ?string,
-     *     inputValue: ?string,
-     *     inputFile: ?string,
-     *     repeat: int,
-     *     prefix: string,
-     *     suffix: string,
-     *     iterations: int,
-     *     warmup: int,
-     *     jit: ?string,
-     *     backtrackLimit: ?int,
-     *     recursionLimit: ?int,
-     *     timeLimit: ?int,
-     *     format: string,
-     *     showInput: bool,
-     *     error: ?string
-     * }
-     */
-    private function parseArguments(array $args): array
-    {
-        $pattern = '';
-        $safePattern = null;
-        $inputValue = null;
-        $inputFile = null;
-        $repeat = 1;
-        $prefix = '';
-        $suffix = '';
-        $iterations = 1;
-        $warmup = 0;
-        $jit = null;
-        $backtrackLimit = null;
-        $recursionLimit = null;
-        $timeLimit = null;
-        $format = 'console';
-        $showInput = false;
-        $stopParsing = false;
-
-        for ($i = 0; $i < \count($args); $i++) {
-            $arg = $args[$i];
-
-            if (!$stopParsing && '--' === $arg) {
-                $stopParsing = true;
-
-                continue;
-            }
-
-            if (!$stopParsing && ('--json' === $arg)) {
-                $format = 'json';
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--format=')) {
-                $format = Ascii::lower(substr($arg, \strlen('--format=')));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--format' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return $this->errorPayload('Missing value for --format.');
-                }
-                $format = Ascii::lower($value);
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--safe=')) {
-                $safePattern = substr($arg, \strlen('--safe='));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--safe' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return $this->errorPayload('Missing value for --safe.');
-                }
-                $safePattern = $value;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--input=')) {
-                $inputValue = substr($arg, \strlen('--input='));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--input' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return $this->errorPayload('Missing value for --input.');
-                }
-                $inputValue = $value;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--input-file=')) {
-                $inputFile = substr($arg, \strlen('--input-file='));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--input-file' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return $this->errorPayload('Missing value for --input-file.');
-                }
-                $inputFile = $value;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--repeat=')) {
-                $value = substr($arg, \strlen('--repeat='));
-                $repeatValue = $this->parseIntOption($value, 1);
-                if (null === $repeatValue) {
-                    return $this->errorPayload('Invalid value for --repeat.');
-                }
-                $repeat = $repeatValue;
-
-                continue;
-            }
-
-            if (!$stopParsing && '--repeat' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                $repeatValue = $this->parseIntOption($value, 1);
-                if (null === $repeatValue) {
-                    return $this->errorPayload('Missing or invalid value for --repeat.');
-                }
-                $repeat = $repeatValue;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--prefix=')) {
-                $prefix = substr($arg, \strlen('--prefix='));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--prefix' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return $this->errorPayload('Missing value for --prefix.');
-                }
-                $prefix = $value;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--suffix=')) {
-                $suffix = substr($arg, \strlen('--suffix='));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--suffix' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return $this->errorPayload('Missing value for --suffix.');
-                }
-                $suffix = $value;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--iterations=')) {
-                $value = substr($arg, \strlen('--iterations='));
-                $iterationsValue = $this->parseIntOption($value, 1);
-                if (null === $iterationsValue) {
-                    return $this->errorPayload('Invalid value for --iterations.');
-                }
-                $iterations = $iterationsValue;
-
-                continue;
-            }
-
-            if (!$stopParsing && '--iterations' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                $iterationsValue = $this->parseIntOption($value, 1);
-                if (null === $iterationsValue) {
-                    return $this->errorPayload('Missing or invalid value for --iterations.');
-                }
-                $iterations = $iterationsValue;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--warmup=')) {
-                $value = substr($arg, \strlen('--warmup='));
-                $warmupValue = $this->parseIntOption($value, 0);
-                if (null === $warmupValue) {
-                    return $this->errorPayload('Invalid value for --warmup.');
-                }
-                $warmup = $warmupValue;
-
-                continue;
-            }
-
-            if (!$stopParsing && '--warmup' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                $warmupValue = $this->parseIntOption($value, 0);
-                if (null === $warmupValue) {
-                    return $this->errorPayload('Missing or invalid value for --warmup.');
-                }
-                $warmup = $warmupValue;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--jit=')) {
-                $value = substr($arg, \strlen('--jit='));
-                if (!\in_array($value, ['0', '1'], true)) {
-                    return $this->errorPayload('Invalid value for --jit.');
-                }
-                $jit = $value;
-
-                continue;
-            }
-
-            if (!$stopParsing && '--jit' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if (!\in_array($value, ['0', '1'], true)) {
-                    return $this->errorPayload('Missing or invalid value for --jit.');
-                }
-                $jit = $value;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--backtrack-limit=')) {
-                $value = substr($arg, \strlen('--backtrack-limit='));
-                $limit = $this->parseIntOption($value, 1);
-                if (null === $limit) {
-                    return $this->errorPayload('Invalid value for --backtrack-limit.');
-                }
-                $backtrackLimit = $limit;
-
-                continue;
-            }
-
-            if (!$stopParsing && '--backtrack-limit' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                $limit = $this->parseIntOption($value, 1);
-                if (null === $limit) {
-                    return $this->errorPayload('Missing or invalid value for --backtrack-limit.');
-                }
-                $backtrackLimit = $limit;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--recursion-limit=')) {
-                $value = substr($arg, \strlen('--recursion-limit='));
-                $limit = $this->parseIntOption($value, 1);
-                if (null === $limit) {
-                    return $this->errorPayload('Invalid value for --recursion-limit.');
-                }
-                $recursionLimit = $limit;
-
-                continue;
-            }
-
-            if (!$stopParsing && '--recursion-limit' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                $limit = $this->parseIntOption($value, 1);
-                if (null === $limit) {
-                    return $this->errorPayload('Missing or invalid value for --recursion-limit.');
-                }
-                $recursionLimit = $limit;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--time-limit=')) {
-                $value = substr($arg, \strlen('--time-limit='));
-                $limit = $this->parseIntOption($value, 0);
-                if (null === $limit) {
-                    return $this->errorPayload('Invalid value for --time-limit.');
-                }
-                $timeLimit = $limit;
-
-                continue;
-            }
-
-            if (!$stopParsing && '--time-limit' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                $limit = $this->parseIntOption($value, 0);
-                if (null === $limit) {
-                    return $this->errorPayload('Missing or invalid value for --time-limit.');
-                }
-                $timeLimit = $limit;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && '--show-input' === $arg) {
-                $showInput = true;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '-')) {
-                return $this->errorPayload('Unknown option: '.$arg);
-            }
-
-            if ('' === $pattern) {
-                $pattern = $arg;
-
-                continue;
-            }
-
-            return $this->errorPayload('Unexpected argument: '.$arg);
-        }
-
-        if ('' === $pattern) {
-            return $this->errorPayload('Missing pattern.');
-        }
-
-        if (null !== $inputValue && null !== $inputFile) {
-            return $this->errorPayload('Use only one of --input or --input-file.');
-        }
-
-        if (!\in_array($format, ['console', 'json'], true)) {
-            return $this->errorPayload('Invalid value for --format.');
-        }
-
-        return [
-            'pattern' => $pattern,
-            'safePattern' => $safePattern,
-            'inputValue' => $inputValue,
-            'inputFile' => $inputFile,
-            'repeat' => $repeat,
-            'prefix' => $prefix,
-            'suffix' => $suffix,
-            'iterations' => $iterations,
-            'warmup' => $warmup,
-            'jit' => $jit,
-            'backtrackLimit' => $backtrackLimit,
-            'recursionLimit' => $recursionLimit,
-            'timeLimit' => $timeLimit,
-            'format' => $format,
-            'showInput' => $showInput,
-            'error' => null,
-        ];
     }
 
     /**
@@ -978,61 +618,5 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
         }
 
         return 'error';
-    }
-
-    private function parseIntOption(string $value, int $min): ?int
-    {
-        if ('' === $value || !Ascii::isDigit($value)) {
-            return null;
-        }
-
-        $parsed = (int) $value;
-        if ($parsed < $min) {
-            return null;
-        }
-
-        return $parsed;
-    }
-
-    /**
-     * @return array{
-     *     pattern: string,
-     *     safePattern: ?string,
-     *     inputValue: ?string,
-     *     inputFile: ?string,
-     *     repeat: int,
-     *     prefix: string,
-     *     suffix: string,
-     *     iterations: int,
-     *     warmup: int,
-     *     jit: ?string,
-     *     backtrackLimit: ?int,
-     *     recursionLimit: ?int,
-     *     timeLimit: ?int,
-     *     format: string,
-     *     showInput: bool,
-     *     error: ?string
-     * }
-     */
-    private function errorPayload(string $message): array
-    {
-        return [
-            'pattern' => '',
-            'safePattern' => null,
-            'inputValue' => null,
-            'inputFile' => null,
-            'repeat' => 1,
-            'prefix' => '',
-            'suffix' => '',
-            'iterations' => 1,
-            'warmup' => 0,
-            'jit' => null,
-            'backtrackLimit' => null,
-            'recursionLimit' => null,
-            'timeLimit' => null,
-            'format' => 'console',
-            'showInput' => false,
-            'error' => $message,
-        ];
     }
 }

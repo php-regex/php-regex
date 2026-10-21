@@ -16,6 +16,9 @@ namespace PHPRegex\Cli\Command;
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\JsonRequest;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
@@ -52,7 +55,7 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
         $args = $this->parseArguments($input->args);
 
         if (null !== $args['error']) {
-            return $this->usageError($output, $args['error'], "Usage: regex transpile <pattern> [--target=js|html|python] [--format=json]\n", $json);
+            return $this->usageError($output, $args['error'], self::options()->usage, $json);
         }
 
         $regex = $this->createRegex($output, $input->regexOptions, $json);
@@ -108,81 +111,39 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
     }
 
     /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::Pattern, [
+            Option::value('--target', '<dialect>', 'Target dialect (js, html, python)'),
+            Option::value('--format', '<format>', 'Output format (console, json)'),
+            Option::flag('--json', 'Same as --format=json'),
+        ], "Usage: regex transpile <pattern> [--target=js|html|python] [--format=json]\n");
+    }
+
+    /**
      * @param array<int, string> $args
      *
      * @return array{pattern: string, target: string, format: string, error: ?string}
      */
     private function parseArguments(array $args): array
     {
-        $pattern = '';
-        $target = 'js';
-        $format = 'console';
-        $stopParsing = false;
-
-        for ($i = 0; $i < \count($args); $i++) {
-            $arg = $args[$i];
-
-            if (!$stopParsing && '--' === $arg) {
-                $stopParsing = true;
-
-                continue;
-            }
-
-            if (!$stopParsing && '--json' === $arg) {
-                $format = 'json';
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--target=')) {
-                $target = Ascii::lower(substr($arg, \strlen('--target=')));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--target' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return ['pattern' => '', 'target' => '', 'format' => '', 'error' => 'Missing value for --target.'];
-                }
-                $target = Ascii::lower($value);
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--format=')) {
-                $format = Ascii::lower(substr($arg, \strlen('--format=')));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--format' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return ['pattern' => '', 'target' => '', 'format' => '', 'error' => 'Missing value for --format.'];
-                }
-                $format = Ascii::lower($value);
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '-')) {
-                return ['pattern' => '', 'target' => '', 'format' => '', 'error' => 'Unknown option: '.$arg];
-            }
-
-            if ('' === $pattern) {
-                $pattern = $arg;
-
-                continue;
-            }
-
-            return ['pattern' => '', 'target' => '', 'format' => '', 'error' => 'Unexpected argument: '.$arg];
+        $parsed = self::options()->parse($args);
+        if (null !== $parsed->error) {
+            return ['pattern' => '', 'target' => '', 'format' => '', 'error' => $parsed->error];
         }
 
-        if ('' === $pattern) {
-            return ['pattern' => '', 'target' => '', 'format' => '', 'error' => 'Missing pattern.'];
+        $target = 'js';
+        $format = 'console';
+        foreach ($parsed->options as $option) {
+            if ('--json' === $option->name) {
+                $format = 'json';
+            } elseif ('--format' === $option->name) {
+                $format = Ascii::lower((string) $option->value);
+            } else {
+                $target = Ascii::lower((string) $option->value);
+            }
         }
 
         if (!\in_array($format, ['console', 'json'], true)) {
@@ -196,7 +157,7 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
         }
 
         return [
-            'pattern' => $pattern,
+            'pattern' => $parsed->argument(),
             'target' => $target,
             'format' => $format,
             'error' => null,

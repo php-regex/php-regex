@@ -14,8 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\ConsoleStyle;
+use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\JsonRequest;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
@@ -23,7 +27,6 @@ use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\DelimitedPattern;
-use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
@@ -38,6 +41,8 @@ use PHPRegex\Redos\RedosSeverity;
 
 /**
  * @phpstan-import-type LintDefaults from LintDefaultsBuilder
+ *
+ * @phpstan-type DebugArguments array{pattern: string, inputValue: ?string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, error: ?string}
  *
  * @internal
  */
@@ -58,6 +63,20 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
     public function getDescription(): string
     {
         return 'Deep ReDoS analysis with heatmap output';
+    }
+
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::Pattern, [
+            Option::value('--input', '<string>', 'Input string to test against the pattern'),
+            Option::value('--format', '<format>', 'Output format (console, json)'),
+            Option::flag('--json', 'Same as --format=json'),
+            ...self::redosOptions(),
+            ...GlobalOptionsParser::target(),
+        ], "Usage: regex debug <pattern> [--input <string>] [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical]\n");
     }
 
     public function run(Input $input, Output $output): int
@@ -91,7 +110,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
 
         $parsed = $this->parseArguments($input->args, $defaults);
         if (null !== $parsed['error']) {
-            return $this->usageError($output, $parsed['error'], "Usage: regex debug <pattern> [--input <string>] [--format=json] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical]\n", $json);
+            return $this->usageError($output, $parsed['error'], self::options()->usage, $json);
         }
 
         $pattern = $parsed['pattern'];
@@ -316,11 +335,10 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
      * @param array<int, string> $args
      * @param LintDefaults       $defaults
      *
-     * @return array{pattern: string, inputValue: ?string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, error: ?string}
+     * @return DebugArguments
      */
     private function parseArguments(array $args, array $defaults = []): array
     {
-        $pattern = '';
         $inputValue = null;
         $format = 'console';
 
@@ -338,138 +356,46 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             $redosThreshold = RedosSeverity::fromConfig($defaults['redosThreshold']);
         }
 
-        $stopParsing = false;
-
-        for ($i = 0; $i < \count($args); $i++) {
-            $arg = $args[$i];
-
-            if (!$stopParsing && '--' === $arg) {
-                $stopParsing = true;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--input=')) {
-                $inputValue = substr($arg, \strlen('--input='));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--input' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Missing value for --input.'];
-                }
-                $inputValue = $value;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && ('--json' === $arg)) {
+        $parsed = self::options()->parse($args);
+        foreach ($parsed->options as $option) {
+            if ('--input' === $option->name) {
+                $inputValue = $option->value;
+            } elseif ('--json' === $option->name) {
                 $format = 'json';
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--format=')) {
-                $format = Ascii::lower(substr($arg, \strlen('--format=')));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--format' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Missing value for --format.'];
+            } elseif ('--format' === $option->name) {
+                $format = Ascii::lower((string) $option->value);
+            } else {
+                $error = $this->readRedosOption($option, $redosMode, $redosThreshold);
+                if (null !== $error) {
+                    return self::errorResult($error);
                 }
-                $format = Ascii::lower($value);
-                $i++;
-
-                continue;
             }
-
-            if (!$stopParsing && str_starts_with($arg, '--redos-mode=')) {
-                $value = Ascii::lower(substr($arg, \strlen('--redos-mode=')));
-                $mode = RedosMode::tryFrom($value);
-                if (null === $mode) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Invalid value for --redos-mode.'];
-                }
-                $redosMode = $mode;
-
-                continue;
-            }
-
-            if (!$stopParsing && '--redos-mode' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Missing value for --redos-mode.'];
-                }
-                $mode = RedosMode::tryFrom(Ascii::lower($value));
-                if (null === $mode) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Invalid value for --redos-mode.'];
-                }
-                $redosMode = $mode;
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--redos-threshold=')) {
-                try {
-                    $redosThreshold = RedosSeverity::fromConfig(substr($arg, \strlen('--redos-threshold=')));
-                } catch (InvalidRegexOptionException $e) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Invalid value for --redos-threshold: '.$e->getMessage()];
-                }
-
-                continue;
-            }
-
-            if (!$stopParsing && '--redos-threshold' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Missing value for --redos-threshold.'];
-                }
-
-                try {
-                    $redosThreshold = RedosSeverity::fromConfig($value);
-                } catch (InvalidRegexOptionException $e) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Invalid value for --redos-threshold: '.$e->getMessage()];
-                }
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '-')) {
-                return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Unknown option: '.$arg];
-            }
-
-            if ('' === $pattern) {
-                $pattern = $arg;
-
-                continue;
-            }
-
-            return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Unexpected argument: '.$arg];
         }
 
-        if ('' === $pattern) {
-            return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Missing pattern.'];
+        if (null !== $parsed->error) {
+            return self::errorResult($parsed->error);
         }
 
         if (!\in_array($format, ['console', 'json'], true)) {
-            return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Invalid value for --format.'];
+            return self::errorResult('Invalid value for --format.');
         }
 
         return [
-            'pattern' => $pattern,
+            'pattern' => $parsed->argument(),
             'inputValue' => $inputValue,
             'format' => $format,
             'redosMode' => $redosMode,
             'redosThreshold' => $redosThreshold,
             'error' => null,
         ];
+    }
+
+    /**
+     * @return DebugArguments
+     */
+    private static function errorResult(string $error): array
+    {
+        return ['pattern' => '', 'inputValue' => null, 'format' => 'console', 'redosMode' => RedosMode::Theoretical, 'redosThreshold' => null, 'error' => $error];
     }
 
     /**

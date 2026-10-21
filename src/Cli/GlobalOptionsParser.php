@@ -13,119 +13,75 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli;
 
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
+use PHPRegex\Cli\Option\Options;
+
 /**
  * @internal
  */
 final class GlobalOptionsParser
 {
     /**
-     * @param array<int, string> $args
+     * The options every command takes, read wherever they stand on the
+     * command line; the rest is the command's.
      */
-    public function parse(array $args): ParsedGlobalOptions
+    public static function options(): Options
     {
-        $quiet = false;
-        $ansi = null;
-        $help = false;
-        $visuals = true;
-        $phpVersion = null;
-        $pcreVersion = null;
-        $locale = null;
-        $cacheDirectory = null;
-        $error = null;
-        $remaining = [];
-
-        for ($i = 0; $i < \count($args); $i++) {
-            $arg = $args[$i];
-
-            if ($this->isQuietOption($arg)) {
-                $quiet = true;
-
-                continue;
-            }
-
-            if ($this->isAnsiOption($arg)) {
-                $ansi = '--ansi' === $arg;
-
-                continue;
-            }
-
-            if ($this->isHelpOption($arg)) {
-                $help = true;
-
-                continue;
-            }
-
-            if ($this->isVisualsOption($arg)) {
-                $visuals = false;
-
-                continue;
-            }
-
-            if ($this->isValuedOption('--pcre-version', $arg, $args, $i, $pcreVersion, $error)
-                || $this->isValuedOption('--php-version', $arg, $args, $i, $phpVersion, $error)
-                || $this->isValuedOption('--locale', $arg, $args, $i, $locale, $error)
-                || $this->isValuedOption('--cache-dir', $arg, $args, $i, $cacheDirectory, $error)) {
-                if (null !== $error) {
-                    break;
-                }
-
-                continue;
-            }
-
-            $remaining[] = $arg;
-        }
-
-        $options = new GlobalOptions($quiet, $ansi, $help, $visuals, $phpVersion, $error, $pcreVersion, $cacheDirectory, $locale);
-
-        return new ParsedGlobalOptions($options, $remaining);
+        return new Options(Arguments::PassThrough, [
+            Option::flag('--ansi', 'Force ANSI output'),
+            Option::flag('--no-ansi', 'Disable ANSI output'),
+            Option::flag('--quiet', 'Suppress output', ['-q']),
+            Option::flag('--silent', 'Same as --quiet'),
+            Option::flag('--no-visuals', 'Disable banner and section visuals'),
+            Option::flag('--no-art')->hide(),
+            Option::flag('--no-splash')->hide(),
+            ...self::target(),
+            Option::value('--cache-dir', '<dir>', 'Keep the Unicode class scans in <dir> for the next run'),
+            Option::flag('--help', 'Display this help message'),
+            Option::flag('-h')->hide(),
+        ]);
     }
 
-    private function isQuietOption(string $arg): bool
+    /**
+     * The PHP, the PCRE2 release and the locale the patterns are judged
+     * for, which the help of each command that reads a pattern lists.
+     *
+     * @return list<Option>
+     */
+    public static function target(): array
     {
-        return '-q' === $arg || '--quiet' === $arg || '--silent' === $arg;
-    }
-
-    private function isAnsiOption(string $arg): bool
-    {
-        return '--ansi' === $arg || '--no-ansi' === $arg;
-    }
-
-    private function isHelpOption(string $arg): bool
-    {
-        return '--help' === $arg || '-h' === $arg;
-    }
-
-    private function isVisualsOption(string $arg): bool
-    {
-        return '--no-visuals' === $arg || '--no-art' === $arg || '--no-splash' === $arg;
+        return [
+            Option::value('--php-version', '<ver>', 'Target PHP version for validation')->readByTheApplication(),
+            Option::value('--pcre-version', '<ver>', 'Target PCRE2 release for validation')->readByTheApplication(),
+            Option::value('--locale', '<name>', 'Target LC_CTYPE locale for validation')->readByTheApplication(),
+        ];
     }
 
     /**
      * @param array<int, string> $args
      */
-    private function isValuedOption(string $name, string $arg, array $args, int &$i, ?string &$value, ?string &$error): bool
+    public function parse(array $args): ParsedGlobalOptions
     {
-        if (str_starts_with($arg, $name.'=')) {
-            $value = substr($arg, \strlen($name) + 1);
+        $parsed = self::options()->parse($args);
+        $quiet = false;
+        $ansi = null;
+        $help = false;
+        $visuals = true;
+        $values = ['--php-version' => null, '--pcre-version' => null, '--locale' => null, '--cache-dir' => null];
 
-            return true;
+        foreach ($parsed->options as $option) {
+            match ($option->name) {
+                '--quiet', '--silent' => $quiet = true,
+                '--ansi', '--no-ansi' => $ansi = '--ansi' === $option->name,
+                '--help', '-h' => $help = true,
+                '--no-visuals', '--no-art', '--no-splash' => $visuals = false,
+                default => $values[$option->name] = $option->value,
+            };
         }
 
-        if ($name !== $arg) {
-            return false;
-        }
+        $options = new GlobalOptions($quiet, $ansi, $help, $visuals, $values['--php-version'], $parsed->error, $values['--pcre-version'], $values['--cache-dir'], $values['--locale']);
 
-        $next = $args[$i + 1] ?? '';
-
-        if ('' === $next || str_starts_with($next, '-')) {
-            $error = \sprintf('Missing value for %s.', $name);
-
-            return true;
-        }
-
-        $value = $next;
-        $i++;
-
-        return true;
+        return new ParsedGlobalOptions($options, $parsed->arguments);
     }
 }

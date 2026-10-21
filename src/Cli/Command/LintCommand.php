@@ -16,6 +16,7 @@ namespace PHPRegex\Cli\Command;
 use PHPRegex\Cli\CliException;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\JsonRequest;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Config\LintArguments;
@@ -58,8 +59,6 @@ use PHPRegex\Toolkit\Regex;
  */
 final class LintCommand extends AbstractCommand implements JsonCommandInterface
 {
-    private const USAGE = "Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--json] [--output <file>] [--baseline <file>] [--generate-baseline <file>] [--no-report-unmatched-ignores] [--redos] [--no-redos] [--redos-mode=theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--no-validate] [--no-optimize] [--lint|--no-lint] [--enable-rule=<id>] [--disable-rule=<id>] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n";
-
     public function __construct(
         private readonly HelpCommand $helpCommand,
         private readonly LintConfigLoader $configLoader,
@@ -82,6 +81,14 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
     public function getDescription(): string
     {
         return 'Lint regex patterns in PHP source code';
+    }
+
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return LintArgumentParser::options();
     }
 
     public function run(Input $input, Output $output): int
@@ -111,7 +118,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         if (null !== $parsed->error || null === $arguments) {
             $code = $this->fail($output, $json, $parsed->error ?? 'Invalid lint arguments', JsonDocument::STAGE_USAGE, self::INVALID);
             if (!$json) {
-                $output->writeError(self::USAGE);
+                $output->writeError(self::options()->usage);
             }
 
             return $code;

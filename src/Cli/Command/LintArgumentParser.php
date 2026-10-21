@@ -13,6 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli\Command;
 
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
+use PHPRegex\Cli\Option\Options;
+use PHPRegex\Cli\Option\ParsedOption;
 use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
@@ -30,356 +34,149 @@ use PHPRegex\Redos\RedosSeverity;
 final class LintArgumentParser
 {
     /**
+     * The options of `regex lint`, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::Paths, [
+            Option::value('--exclude', '<path>', 'Paths to exclude (repeatable)'),
+            Option::value('--min-savings', '<n>', 'Minimum optimization savings'),
+            Option::value('--jobs', '<n>', 'Parallel workers for analysis', ['-j']),
+            Option::value('--format', '<format>', 'Output format (console, json, github, checkstyle, junit)'),
+            Option::flag('--json', 'Same as --format=json'),
+            Option::value('--output', '<file>', 'Write output to file'),
+            Option::value('--baseline', '<file>', 'Leave out the issues a baseline file lists'),
+            Option::value('--generate-baseline', '<file>', 'Write the issues found to a baseline file'),
+            Option::flag('--redos', 'Run the ReDoS risk analysis, off by default'),
+            Option::flag('--no-redos', 'Skip the ReDoS risk analysis when regex.json turns it on'),
+            Option::value('--redos-mode', '<mode>', 'ReDoS mode (theoretical, confirmed)'),
+            Option::value('--redos-threshold', '<sev>', 'Minimum ReDoS severity (low, medium, high, critical)'),
+            Option::flag('--no-validate', 'Skip validation errors (structural lint only)'),
+            Option::flag('--no-optimize', 'Disable optimization suggestions'),
+            Option::flag('--lint', 'Run the lint rules (the default)'),
+            Option::flag('--no-lint', 'Skip the lint rules'),
+            Option::value('--enable-rule', '<id>', 'Turn a lint rule on (repeatable)')->attachedOnly(),
+            Option::value('--disable-rule', '<id>', 'Turn a lint rule off (repeatable)')->attachedOnly(),
+            Option::value('--interop', '<presets>', 'Libraries to read patterns from, all by default (composer-pcre, nette-utils, spatie-regex, illuminate-support, phpunit, webmozart-assert, beberlei-assert, symfony-validator, none)')->takingAnyValue(),
+            Option::flag('--no-interop', 'Read patterns from the native calls only (preg_*, RegexIterator, filter_var())'),
+            Option::value('--pattern-function', '<spec>', 'Extra call carrying a pattern, e.g. App\\Str::matches#1 (repeatable)')->takingAnyValue(),
+            Option::flag('--verbose', 'Show detailed output', ['-v']),
+            Option::flag('--debug', 'Show debug information'),
+            Option::flag('--quiet', '', ['-q'])->hide(),
+            Option::flag('--report-unmatched-ignores')->hide(),
+            Option::flag('--no-report-unmatched-ignores')->hide(),
+            Option::flag('--help', '', ['-h'])->hide(),
+        ], "Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--json] [--output <file>] [--baseline <file>] [--generate-baseline <file>] [--no-report-unmatched-ignores] [--redos] [--no-redos] [--redos-mode=theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--no-validate] [--no-optimize] [--lint|--no-lint] [--enable-rule=<id>] [--disable-rule=<id>] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n");
+    }
+
+    /**
      * @param array<int, string>   $args
      * @param array<string, mixed> $defaults
      */
     public function parse(array $args, array $defaults = []): LintParseResult
     {
+        $parsed = self::options()->parse($args);
         $arguments = LintArguments::fromDefaults($defaults);
-        $pathsProvided = false;
         $warnings = [];
 
-        for ($i = 0; $i < \count($args); $i++) {
-            $arg = $args[$i];
-
-            if ('--help' === $arg || '-h' === $arg) {
+        foreach ($parsed->options as $option) {
+            if ('--help' === $option->name) {
                 return new LintParseResult(null, null, true);
             }
 
-            if ('--quiet' === $arg || '-q' === $arg) {
-                $arguments = $this->withVerbosity($arguments, OutputConfiguration::VERBOSITY_QUIET);
-
-                continue;
+            $read = $this->apply($arguments, $option, $warnings);
+            if (\is_string($read)) {
+                return new LintParseResult(null, $read);
             }
-
-            if ('--verbose' === $arg || '-v' === $arg) {
-                $arguments = $this->withVerbosity($arguments, OutputConfiguration::VERBOSITY_VERBOSE);
-
-                continue;
-            }
-
-            if ('--debug' === $arg) {
-                $arguments = $this->withVerbosity($arguments, OutputConfiguration::VERBOSITY_DEBUG);
-
-                continue;
-            }
-
-            if ('--lint' === $arg) {
-                $arguments = $this->withCheckLint($arguments, true);
-
-                continue;
-            }
-
-            if ('--no-lint' === $arg) {
-                $arguments = $this->withCheckLint($arguments, false);
-
-                continue;
-            }
-
-            if (str_starts_with($arg, '--enable-rule=') || str_starts_with($arg, '--disable-rule=')) {
-                [$option, $ruleId] = explode('=', $arg, 2);
-                if (!RuleCatalog::isConfigurable($ruleId)) {
-                    $suggestion = RuleCatalog::suggestion($ruleId);
-
-                    return new LintParseResult(null, \sprintf('Unknown lint rule "%s" in %s.%s', $ruleId, $option, null === $suggestion ? '' : \sprintf(' Did you mean "%s"?', $suggestion)));
-                }
-
-                // A rule reads its setting under its short id, as regex.json writes it.
-                $arguments = $this->withLintRule($arguments, RuleId::short($ruleId), '--enable-rule' === $option);
-
-                continue;
-            }
-
-            if ('--report-unmatched-ignores' === $arg || '--no-report-unmatched-ignores' === $arg) {
-                $arguments = $this->withReportUnmatchedIgnores($arguments, '--report-unmatched-ignores' === $arg);
-
-                continue;
-            }
-
-            if ('--no-interop' === $arg) {
-                $arguments = $this->withInterop($arguments, []);
-
-                continue;
-            }
-
-            if (str_starts_with($arg, '--interop=') || '--interop' === $arg) {
-                if ('--interop' === $arg && !isset($args[++$i])) {
-                    return new LintParseResult(null, 'Missing value for --interop.');
-                }
-
-                $interop = $this->parseInteropValue('--interop' === $arg ? $args[$i] : substr($arg, \strlen('--interop=')));
-                if (\is_string($interop)) {
-                    return new LintParseResult(null, $interop);
-                }
-
-                $arguments = $this->withInterop($arguments, $interop);
-
-                continue;
-            }
-
-            if (str_starts_with($arg, '--pattern-function=')) {
-                $arguments = $this->withPatternFunction($arguments, substr($arg, \strlen('--pattern-function=')), $warnings);
-
-                continue;
-            }
-
-            if ('--pattern-function' === $arg) {
-                $i++;
-                if (!isset($args[$i])) {
-                    return new LintParseResult(null, 'Missing value for --pattern-function.');
-                }
-
-                $arguments = $this->withPatternFunction($arguments, $args[$i], $warnings);
-
-                continue;
-            }
-
-            if ('--redos' === $arg) {
-                $arguments = $arguments->with(checkRedos: true);
-
-                continue;
-            }
-
-            if ('--no-redos' === $arg) {
-                $arguments = $arguments->with(checkRedos: false);
-
-                continue;
-            }
-
-            if (str_starts_with($arg, '--redos-mode=')) {
-                $mode = $this->redosMode(substr($arg, \strlen('--redos-mode=')));
-                if (\is_string($mode)) {
-                    return new LintParseResult(null, $mode);
-                }
-                $arguments = $arguments->with(
-                    checkRedos: true,
-                    redosMode: $mode->value,
-                );
-
-                continue;
-            }
-
-            if ('--redos-mode' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return new LintParseResult(null, 'Missing value for --redos-mode.');
-                }
-                $mode = $this->redosMode($value);
-                if (\is_string($mode)) {
-                    return new LintParseResult(null, $mode);
-                }
-                $arguments = $arguments->with(
-                    checkRedos: true,
-                    redosMode: $mode->value,
-                );
-                $i++;
-
-                continue;
-            }
-
-            if (str_starts_with($arg, '--redos-threshold=')) {
-                try {
-                    $value = RedosSeverity::fromConfig(substr($arg, \strlen('--redos-threshold=')))->value;
-                } catch (InvalidRegexOptionException $e) {
-                    return new LintParseResult(null, 'Invalid value for --redos-threshold: '.$e->getMessage());
-                }
-                $arguments = $arguments->with(redosThreshold: $value);
-
-                continue;
-            }
-
-            if ('--redos-threshold' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return new LintParseResult(null, 'Missing value for --redos-threshold.');
-                }
-
-                try {
-                    $value = RedosSeverity::fromConfig($value)->value;
-                } catch (InvalidRegexOptionException $e) {
-                    return new LintParseResult(null, 'Invalid value for --redos-threshold: '.$e->getMessage());
-                }
-                $arguments = $arguments->with(redosThreshold: $value);
-                $i++;
-
-                continue;
-            }
-
-            if ('--no-validate' === $arg) {
-                $arguments = $arguments->with(checkValidation: false);
-
-                continue;
-            }
-
-            if ('--no-optimize' === $arg) {
-                $arguments = $arguments->with(checkOptimizations: false);
-
-                continue;
-            }
-
-            if ('--generate-baseline' === $arg || str_starts_with($arg, '--generate-baseline=')) {
-                $generateBaseline = $this->fileValue($args, $i, '--generate-baseline');
-                if (null === $generateBaseline) {
-                    return new LintParseResult(null, 'Missing value for --generate-baseline.');
-                }
-                $arguments = $arguments->with(generateBaseline: $generateBaseline);
-
-                continue;
-            }
-
-            if ('--baseline' === $arg || str_starts_with($arg, '--baseline=')) {
-                $baseline = $this->fileValue($args, $i, '--baseline');
-                if (null === $baseline) {
-                    return new LintParseResult(null, 'Missing value for --baseline.');
-                }
-                $arguments = $arguments->with(baseline: $baseline);
-
-                continue;
-            }
-
-            // The other commands' --json: an alias of --format=json.
-            if ('--json' === $arg) {
-                $arguments = $this->withFormat($arguments, 'json');
-
-                continue;
-            }
-
-            if (str_starts_with($arg, '--format=')) {
-                $arguments = $this->withFormat($arguments, substr($arg, \strlen('--format=')));
-
-                continue;
-            }
-
-            if ('--format' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return new LintParseResult(null, 'Missing value for --format.');
-                }
-                $arguments = $this->withFormat($arguments, $value);
-                $i++;
-
-                continue;
-            }
-
-            if (str_starts_with($arg, '--exclude=')) {
-                $exclude = $arguments->exclude;
-                $exclude[] = substr($arg, \strlen('--exclude='));
-                $arguments = $arguments->with(exclude: $exclude);
-
-                continue;
-            }
-
-            if ('--exclude' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return new LintParseResult(null, 'Missing value for --exclude.');
-                }
-                $exclude = $arguments->exclude;
-                $exclude[] = $value;
-                $arguments = $arguments->with(exclude: $exclude);
-                $i++;
-
-                continue;
-            }
-
-            if (str_starts_with($arg, '--min-savings=')) {
-                $arguments = $arguments->with(minSavings: (int) substr($arg, \strlen('--min-savings=')));
-
-                continue;
-            }
-
-            if (str_starts_with($arg, '--jobs=')) {
-                $jobs = (int) substr($arg, \strlen('--jobs='));
-                if ($jobs < 1) {
-                    return new LintParseResult(null, 'The --jobs value must be a positive integer.');
-                }
-                $arguments = $arguments->with(jobs: $jobs);
-
-                continue;
-            }
-
-            if ('--min-savings' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return new LintParseResult(null, 'Missing value for --min-savings.');
-                }
-                $minSavings = (int) $value;
-                $arguments = $arguments->with(minSavings: $minSavings);
-                $i++;
-
-                continue;
-            }
-
-            if ('--jobs' === $arg || '-j' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return new LintParseResult(null, 'Missing value for --jobs.');
-                }
-                $jobs = (int) $value;
-                if ($jobs < 1) {
-                    return new LintParseResult(null, 'The --jobs value must be a positive integer.');
-                }
-                $arguments = $arguments->with(jobs: $jobs);
-                $i++;
-
-                continue;
-            }
-
-            if (str_starts_with($arg, '--output=')) {
-                $arguments = $arguments->with(output: substr($arg, \strlen('--output=')));
-
-                continue;
-            }
-
-            if ('--output' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return new LintParseResult(null, 'Missing value for --output.');
-                }
-                $arguments = $arguments->with(output: $value);
-                $i++;
-
-                continue;
-            }
-
-            if (str_starts_with($arg, '-')) {
-                return new LintParseResult(null, 'Unknown option: '.$arg);
-            }
-
-            $paths = $arguments->paths;
-            if (!$pathsProvided) {
-                $paths = [];
-                $pathsProvided = true;
-            }
-            $paths[] = $arg;
-            $arguments = $arguments->with(paths: $paths);
+            $arguments = $read;
         }
 
-        return new LintParseResult($arguments, pathsGiven: $pathsProvided, warnings: $warnings);
+        if (null !== $parsed->error) {
+            return new LintParseResult(null, $parsed->error);
+        }
+
+        $pathsGiven = [] !== $parsed->arguments;
+        if ($pathsGiven) {
+            $arguments = $arguments->with(paths: $parsed->arguments);
+        }
+
+        return new LintParseResult($arguments, pathsGiven: $pathsGiven, warnings: $warnings);
     }
 
     /**
-     * The file a baseline option names, as "--option=file" or as
-     * "--option file" (then $i moves past the file); null when there is no
-     * file: an empty "=" value, or nothing but an option after the space.
+     * The arguments with the option applied, or the message refusing it.
      *
-     * @param array<int, string> $args
+     * @param list<string> $warnings
      */
-    private function fileValue(array $args, int &$i, string $option): ?string
+    private function apply(LintArguments $arguments, ParsedOption $option, array &$warnings): LintArguments|string
     {
-        if (str_starts_with($args[$i], $option.'=')) {
-            $value = substr($args[$i], \strlen($option) + 1);
+        $value = (string) $option->value;
 
-            return '' === $value ? null : $value;
+        return match ($option->name) {
+            '--quiet' => $this->withVerbosity($arguments, OutputConfiguration::VERBOSITY_QUIET),
+            '--verbose' => $this->withVerbosity($arguments, OutputConfiguration::VERBOSITY_VERBOSE),
+            '--debug' => $this->withVerbosity($arguments, OutputConfiguration::VERBOSITY_DEBUG),
+            '--lint', '--no-lint' => $this->withCheckLint($arguments, '--lint' === $option->name),
+            '--enable-rule', '--disable-rule' => $this->withRule($arguments, $option->name, $value),
+            '--report-unmatched-ignores', '--no-report-unmatched-ignores' => $this->withReportUnmatchedIgnores($arguments, '--report-unmatched-ignores' === $option->name),
+            '--no-interop' => $this->withInterop($arguments, []),
+            '--interop' => $this->withInteropValue($arguments, $value),
+            '--pattern-function' => $this->withPatternFunction($arguments, $value, $warnings),
+            '--redos', '--no-redos' => $arguments->with(checkRedos: '--redos' === $option->name),
+            '--redos-mode' => $this->withRedosMode($arguments, $value),
+            '--redos-threshold' => $this->withRedosThreshold($arguments, $value),
+            '--no-validate' => $arguments->with(checkValidation: false),
+            '--no-optimize' => $arguments->with(checkOptimizations: false),
+            // A baseline option given "=" and nothing names no file.
+            '--generate-baseline' => '' === $value ? 'Missing value for --generate-baseline.' : $arguments->with(generateBaseline: $value),
+            '--baseline' => '' === $value ? 'Missing value for --baseline.' : $arguments->with(baseline: $value),
+            // The other commands' --json: an alias of --format=json.
+            '--json' => $this->withFormat($arguments, 'json'),
+            '--format' => $this->withFormat($arguments, $value),
+            '--exclude' => $arguments->with(exclude: [...$arguments->exclude, $value]),
+            '--min-savings' => $arguments->with(minSavings: (int) $value),
+            '--jobs' => (int) $value < 1 ? 'The --jobs value must be a positive integer.' : $arguments->with(jobs: (int) $value),
+            default => $arguments->with(output: $value),
+        };
+    }
+
+    /**
+     * The arguments with the rule turned on or off, or the message refusing
+     * a rule no rules map may name.
+     */
+    private function withRule(LintArguments $arguments, string $option, string $ruleId): LintArguments|string
+    {
+        if (!RuleCatalog::isConfigurable($ruleId)) {
+            $suggestion = RuleCatalog::suggestion($ruleId);
+
+            return \sprintf('Unknown lint rule "%s" in %s.%s', $ruleId, $option, null === $suggestion ? '' : \sprintf(' Did you mean "%s"?', $suggestion));
         }
 
-        $value = $args[$i + 1] ?? '';
-        if ('' === $value || str_starts_with($value, '-')) {
-            return null;
-        }
-        $i++;
+        // A rule reads its setting under its short id, as regex.json writes it.
+        return $this->withLintRule($arguments, RuleId::short($ruleId), '--enable-rule' === $option);
+    }
 
-        return $value;
+    private function withInteropValue(LintArguments $arguments, string $value): LintArguments|string
+    {
+        $interop = $this->parseInteropValue($value);
+
+        return \is_string($interop) ? $interop : $this->withInterop($arguments, $interop);
+    }
+
+    private function withRedosMode(LintArguments $arguments, string $value): LintArguments|string
+    {
+        $mode = $this->redosMode($value);
+
+        return \is_string($mode) ? $mode : $arguments->with(checkRedos: true, redosMode: $mode->value);
+    }
+
+    private function withRedosThreshold(LintArguments $arguments, string $value): LintArguments|string
+    {
+        try {
+            return $arguments->with(redosThreshold: RedosSeverity::fromConfig($value)->value);
+        } catch (InvalidRegexOptionException $e) {
+            return 'Invalid value for --redos-threshold: '.$e->getMessage();
+        }
     }
 
     /**

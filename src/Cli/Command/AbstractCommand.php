@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Option\Option;
+use PHPRegex\Cli\Option\ParsedOption;
 use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\UnsupportedTargetException;
@@ -21,6 +23,7 @@ use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
@@ -86,89 +89,44 @@ abstract class AbstractCommand implements CommandInterface
     }
 
     /**
-     * Read a command line of one pattern and the options named here. A flag
-     * stands alone; a valued option is "--name=value" or "--name value". An
-     * argument starting with "--" is an option until "--" ends them, the
-     * first other argument is the pattern, and a second one is an error.
+     * The ReDoS options of analyze and debug.
      *
-     * @param array<int, string> $args
-     * @param list<string>       $flags
-     * @param list<string>       $valued
-     *
-     * @return array{pattern: string, options: array<string, string|true>, error: ?string}
+     * @return list<Option>
      */
-    protected function readArguments(array $args, array $flags = [], array $valued = []): array
+    protected static function redosOptions(): array
     {
-        $pattern = null;
-        $options = [];
-        $endOfOptions = false;
-        $count = \count($args);
-
-        for ($i = 0; $i < $count; $i++) {
-            $arg = $args[$i];
-
-            if ($endOfOptions || !str_starts_with($arg, '--')) {
-                if (null !== $pattern) {
-                    return ['pattern' => '', 'options' => [], 'error' => 'Unexpected argument: '.$arg];
-                }
-
-                $pattern = $arg;
-
-                continue;
-            }
-
-            if ('--' === $arg) {
-                $endOfOptions = true;
-
-                continue;
-            }
-
-            $parts = explode('=', $arg, 2);
-            $name = $parts[0];
-            $value = $parts[1] ?? null;
-
-            if (null === $value && \in_array($name, $flags, true)) {
-                $options[$name] = true;
-
-                continue;
-            }
-
-            if (!\in_array($name, $valued, true)) {
-                return ['pattern' => '', 'options' => [], 'error' => 'Unknown option: '.$arg];
-            }
-
-            if (null === $value) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return ['pattern' => '', 'options' => [], 'error' => \sprintf('Missing value for %s.', $name)];
-                }
-                $i++;
-            }
-
-            $options[$name] = $value;
-        }
-
-        if (null === $pattern || '' === $pattern) {
-            return ['pattern' => '', 'options' => [], 'error' => 'Missing pattern.'];
-        }
-
-        return ['pattern' => $pattern, 'options' => $options, 'error' => null];
+        return [
+            Option::value('--redos-mode', '<mode>', 'ReDoS mode (off, theoretical, confirmed)'),
+            Option::value('--redos-threshold', '<sev>', 'Minimum ReDoS severity (low, medium, high, critical)'),
+        ];
     }
 
     /**
-     * What is wrong with the arguments of a command that takes none: the
-     * first is an option it does not know, or an argument it does not take.
+     * Read --redos-mode or --redos-threshold into the mode or the threshold
+     * it sets, as analyze and debug take them.
      *
-     * @param array<int, string> $args
+     * @return string|null the message refusing the value
      */
-    protected function unexpectedArgument(array $args): ?string
+    protected function readRedosOption(ParsedOption $option, RedosMode &$mode, ?RedosSeverity &$threshold): ?string
     {
-        $first = array_key_first($args);
-        if (null === $first) {
+        $value = (string) $option->value;
+        if ('--redos-mode' === $option->name) {
+            $read = RedosMode::tryFrom(Ascii::lower($value));
+            if (null === $read) {
+                return 'Invalid value for --redos-mode.';
+            }
+            $mode = $read;
+
             return null;
         }
 
-        return str_starts_with($args[$first], '-') ? 'Unknown option: '.$args[$first] : 'Unexpected argument: '.$args[$first];
+        try {
+            $threshold = RedosSeverity::fromConfig($value);
+        } catch (InvalidRegexOptionException $e) {
+            return 'Invalid value for --redos-threshold: '.$e->getMessage();
+        }
+
+        return null;
     }
 
     /**

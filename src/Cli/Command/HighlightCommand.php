@@ -14,7 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\ConsoleStyle;
+use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Explain\Highlighter\HtmlHighlighter;
@@ -27,8 +31,6 @@ use PHPRegex\Parser\Exception\ParserException;
  */
 final class HighlightCommand extends AbstractCommand
 {
-    private const USAGE = "Usage: regex highlight <pattern> [--format=auto|console|html]\n";
-
     public function getName(): string
     {
         return 'highlight';
@@ -44,21 +46,32 @@ final class HighlightCommand extends AbstractCommand
         return 'Highlight a regex for display';
     }
 
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::LoosePattern, [
+            Option::value('--format', '<format>', 'Output format (auto, console, html)'),
+            ...GlobalOptionsParser::target(),
+        ], "Usage: regex highlight <pattern> [--format=auto|console|html]\n");
+    }
+
     public function run(Input $input, Output $output): int
     {
-        $arguments = $this->readArguments($input->args, [], ['--format']);
-        if (null !== $arguments['error']) {
-            return $this->usageError($output, $arguments['error'], self::USAGE);
+        $arguments = self::options()->parse($input->args);
+        if (null !== $arguments->error) {
+            return $this->usageError($output, $arguments->error, self::options()->usage);
         }
 
-        $pattern = $arguments['pattern'];
-        $format = (string) ($arguments['options']['--format'] ?? 'auto');
+        $pattern = $arguments->argument();
+        $format = $arguments->value('--format') ?? 'auto';
         if ('auto' === $format) {
             $format = \PHP_SAPI === 'cli' ? 'console' : 'html';
         }
 
         if (!\in_array($format, ['console', 'html'], true)) {
-            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=auto, --format=console or --format=html.", $format), self::USAGE);
+            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=auto, --format=console or --format=html.", $format), self::options()->usage);
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);

@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 
 /**
@@ -49,10 +51,18 @@ final class LspCommand extends AbstractCommand
         return 'Run the language server over stdio';
     }
 
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::None, [], "Usage: regex lsp\n");
+    }
+
     public function run(Input $input, Output $output): int
     {
-        $usage = "Usage: regex lsp\n";
-        $error = $this->unexpectedArgument($input->args);
+        $usage = self::options()->usage;
+        $error = self::options()->parse($input->args)->error;
         if (null !== $error) {
             return $this->usageError($output, $error, $usage);
         }

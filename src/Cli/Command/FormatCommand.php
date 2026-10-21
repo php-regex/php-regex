@@ -13,8 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli\Command;
 
+use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\JsonRequest;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\LexerException;
@@ -33,8 +37,6 @@ use PHPRegex\Parser\Text\Ascii;
  */
 final class FormatCommand extends AbstractCommand implements JsonCommandInterface
 {
-    private const USAGE = "Usage: regex format <pattern> [--compact] [--width=N] [--format=console|json]\n";
-
     public function getName(): string
     {
         return 'format';
@@ -50,24 +52,38 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
         return 'Lay a pattern out over lines, or compact it to one';
     }
 
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::LoosePattern, [
+            Option::flag('--compact', 'Write the pattern on one line, without x, layout or comments'),
+            Option::value('--width', '<n>', 'Width a line aims at, indent included (default: 80)'),
+            Option::value('--format', '<format>', 'Output format (console, json)'),
+            Option::flag('--json', 'Same as --format=json'),
+            ...GlobalOptionsParser::target(),
+        ], "Usage: regex format <pattern> [--compact] [--width=N] [--format=console|json]\n");
+    }
+
     public function run(Input $input, Output $output): int
     {
         $json = JsonRequest::in($input->args);
-        $arguments = $this->readArguments($input->args, ['--compact', '--json'], ['--format', '--width']);
-        if (null !== $arguments['error']) {
-            return $this->usageError($output, $arguments['error'], self::USAGE, $json);
+        $usage = self::options()->usage;
+        $arguments = self::options()->parse($input->args);
+        if (null !== $arguments->error) {
+            return $this->usageError($output, $arguments->error, $usage, $json);
         }
 
-        $options = $arguments['options'];
         // --json and --format name the same thing: the last one wins.
         $format = JsonRequest::format($input->args) ?? 'console';
         if (!\in_array($format, ['console', 'json'], true)) {
-            return $this->usageError($output, 'Invalid value for --format. Use console or json.', self::USAGE, $json);
+            return $this->usageError($output, 'Invalid value for --format. Use console or json.', $usage, $json);
         }
 
-        $width = self::width($options['--width'] ?? '80');
+        $width = self::width($arguments->value('--width') ?? '80');
         if (null === $width) {
-            return $this->usageError($output, 'The --width value must be a positive integer.', self::USAGE, $json);
+            return $this->usageError($output, 'The --width value must be a positive integer.', $usage, $json);
         }
 
         $regex = $this->createRegex($output, $input->regexOptions, $json);
@@ -75,7 +91,7 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
             return self::INVALID;
         }
 
-        $pattern = $arguments['pattern'];
+        $pattern = $arguments->argument();
 
         try {
             $ast = $regex->parse($pattern);
@@ -92,7 +108,7 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
         $formatter = new PatternFormatter($width, $regex->target());
 
         try {
-            $result = isset($options['--compact']) ? $formatter->compact($ast) : $formatter->format($ast);
+            $result = $arguments->has('--compact') ? $formatter->compact($ast) : $formatter->format($ast);
         } catch (FormattingException $e) {
             // The formatter's self-check refused its own output: a bug, never
             // reached by a pattern the formatter handles correctly.
@@ -135,12 +151,10 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
     /**
      * The width a --width value asks for: a whole number of 1 or more, null
      * for anything else.
-     *
-     * @param string|true $value
      */
-    private static function width(string|bool $value): ?int
+    private static function width(string $value): ?int
     {
-        if (true === $value || !Ascii::isDigit($value)) {
+        if (!Ascii::isDigit($value)) {
             return null;
         }
 

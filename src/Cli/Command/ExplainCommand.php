@@ -15,6 +15,9 @@ namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Parser\Exception\LexerException;
@@ -41,18 +44,28 @@ final class ExplainCommand extends AbstractCommand
         return 'Explain a regex pattern in plain language';
     }
 
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::LoosePattern, [
+            Option::value('--format', '<format>', 'Output format (console, html)'),
+        ], "Usage: regex explain <pattern> [--format=console|html]\n");
+    }
+
     public function run(Input $input, Output $output): int
     {
-        $usage = "Usage: regex explain <pattern> [--format=console|html]\n";
-        $arguments = $this->readArguments($input->args, [], ['--format']);
-        if (null !== $arguments['error']) {
-            return $this->usageError($output, $arguments['error'], $usage);
+        $usage = self::options()->usage;
+        $arguments = self::options()->parse($input->args);
+        if (null !== $arguments->error) {
+            return $this->usageError($output, $arguments->error, $usage);
         }
 
-        $pattern = $arguments['pattern'];
-        $format = $arguments['options']['--format'] ?? 'console';
-        if (!\is_string($format) || !\in_array($format, ['console', 'html'], true)) {
-            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=console or --format=html.", (string) $format), $usage);
+        $pattern = $arguments->argument();
+        $format = $arguments->value('--format') ?? 'console';
+        if (!\in_array($format, ['console', 'html'], true)) {
+            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=console or --format=html.", $format), $usage);
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);

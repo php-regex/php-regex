@@ -17,6 +17,9 @@ use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Cli\Graph\GraphGenerator;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
@@ -44,18 +47,28 @@ final class GraphCommand extends AbstractCommand
         return 'Generate a graph diagram (DOT/Mermaid) of the NFA';
     }
 
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::LoosePattern, [
+            Option::value('--format', '<format>', 'Output format (dot, graphviz, mermaid)'),
+            Option::value('--output', '<file>', 'Write the diagram to a file'),
+        ], "Usage: regex graph <pattern> [--format=dot|graphviz|mermaid] [--output=<file>]\n");
+    }
+
     public function run(Input $input, Output $output): int
     {
-        $usage = "Usage: regex graph <pattern> [--format=dot|graphviz|mermaid] [--output=<file>]\n";
-        $arguments = $this->readArguments($input->args, [], ['--format', '--output']);
-        if (null !== $arguments['error']) {
-            return $this->usageError($output, $arguments['error'], $usage);
+        $usage = self::options()->usage;
+        $arguments = self::options()->parse($input->args);
+        if (null !== $arguments->error) {
+            return $this->usageError($output, $arguments->error, $usage);
         }
 
-        $pattern = $arguments['pattern'];
-        $format = Ascii::lower((string) ($arguments['options']['--format'] ?? 'dot'));
-        $outputFile = $arguments['options']['--output'] ?? null;
-        $outputFile = \is_string($outputFile) ? $outputFile : null;
+        $pattern = $arguments->argument();
+        $format = Ascii::lower($arguments->value('--format') ?? 'dot');
+        $outputFile = $arguments->value('--output');
         if (!\in_array($format, ['dot', 'graphviz', 'mermaid'], true)) {
             return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=dot, --format=graphviz or --format=mermaid.", $format), $usage);
         }

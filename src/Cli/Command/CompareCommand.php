@@ -20,7 +20,11 @@ use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Cli\ConsoleStyle;
+use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\DisplayEscaper;
@@ -56,7 +60,7 @@ final class CompareCommand extends AbstractCommand
         $parsed = $this->parseArguments($input->args);
         if (null !== $parsed['error']) {
             $output->writeError($output->error('Error: '.$parsed['error']."\n"));
-            $output->writeError("Usage: regex compare <pattern1> <pattern2> [--method intersection|subset|equivalence] [--minimizer hopcroft|moore] [--determinizer subset|subset-indexed]\n");
+            $output->writeError(self::options()->usage);
 
             return self::INVALID;
         }
@@ -102,6 +106,19 @@ final class CompareCommand extends AbstractCommand
 
             return self::FAILURE;
         }
+    }
+
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::Patterns, [
+            Option::value('--method', '<method>', 'intersection (default), subset, or equivalence'),
+            Option::value('--determinizer', '<algo>', 'subset-indexed (default) or subset'),
+            Option::value('--minimizer', '<algo>', 'hopcroft (default) or moore'),
+            ...GlobalOptionsParser::target(),
+        ], "Usage: regex compare <pattern1> <pattern2> [--method intersection|subset|equivalence] [--minimizer hopcroft|moore] [--determinizer subset|subset-indexed]\n");
     }
 
     /**
@@ -191,78 +208,21 @@ final class CompareCommand extends AbstractCommand
      */
     private function parseArguments(array $args): array
     {
-        $method = self::METHOD_INTERSECTION;
-        $minimizer = MinimizationAlgorithm::Hopcroft->value;
-        $determinizer = DeterminizationAlgorithm::SubsetIndexed->value;
-        $patterns = [];
-        $stopParsing = false;
-
-        for ($i = 0; $i < \count($args); $i++) {
-            $arg = $args[$i];
-
-            if (!$stopParsing && '--' === $arg) {
-                $stopParsing = true;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--method=')) {
-                $method = Ascii::lower(substr($arg, \strlen('--method=')));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--method' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return $this->errorResult('Missing value for --method.');
-                }
-                $method = Ascii::lower($value);
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--minimizer=')) {
-                $minimizer = Ascii::lower(substr($arg, \strlen('--minimizer=')));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--minimizer' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return $this->errorResult('Missing value for --minimizer.');
-                }
-                $minimizer = Ascii::lower($value);
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--determinizer=')) {
-                $determinizer = Ascii::lower(substr($arg, \strlen('--determinizer=')));
-
-                continue;
-            }
-
-            if (!$stopParsing && '--determinizer' === $arg) {
-                $value = $args[$i + 1] ?? '';
-                if ('' === $value || str_starts_with($value, '-')) {
-                    return $this->errorResult('Missing value for --determinizer.');
-                }
-                $determinizer = Ascii::lower($value);
-                $i++;
-
-                continue;
-            }
-
-            if (!$stopParsing && str_starts_with($arg, '--')) {
-                return $this->errorResult('Unknown option: '.$arg);
-            }
-
-            $patterns[] = $arg;
+        $parsed = self::options()->parse($args);
+        if (null !== $parsed->error) {
+            return $this->errorResult($parsed->error);
         }
+
+        $chosen = [
+            '--method' => self::METHOD_INTERSECTION,
+            '--minimizer' => MinimizationAlgorithm::Hopcroft->value,
+            '--determinizer' => DeterminizationAlgorithm::SubsetIndexed->value,
+        ];
+        foreach ($parsed->options as $option) {
+            $chosen[$option->name] = Ascii::lower((string) $option->value);
+        }
+        ['--method' => $method, '--minimizer' => $minimizer, '--determinizer' => $determinizer] = $chosen;
+        $patterns = $parsed->arguments;
 
         if (!\in_array($method, [self::METHOD_INTERSECTION, self::METHOD_SUBSET, self::METHOD_EQUIVALENCE], true)) {
             return $this->errorResult('Invalid value for --method.');

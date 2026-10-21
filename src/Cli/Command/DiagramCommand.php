@@ -14,7 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\ConsoleStyle;
+use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Explain\AsciiTreeRenderer;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
@@ -44,18 +48,29 @@ final class DiagramCommand extends AbstractCommand
         return 'Render a diagram of the AST (text or SVG)';
     }
 
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::LoosePattern, [
+            Option::value('--format', '<format>', 'Output format (console, svg)'),
+            Option::value('--output', '<file>', 'Write output to file'),
+            ...GlobalOptionsParser::target(),
+        ], "Usage: regex diagram <pattern> [--format=console|svg] [--output=<file>]\n");
+    }
+
     public function run(Input $input, Output $output): int
     {
-        $usage = "Usage: regex diagram <pattern> [--format=console|svg] [--output=<file>]\n";
-        $arguments = $this->readArguments($input->args, [], ['--format', '--output']);
-        if (null !== $arguments['error']) {
-            return $this->usageError($output, $arguments['error'], $usage);
+        $usage = self::options()->usage;
+        $arguments = self::options()->parse($input->args);
+        if (null !== $arguments->error) {
+            return $this->usageError($output, $arguments->error, $usage);
         }
 
-        $pattern = $arguments['pattern'];
-        $format = Ascii::lower((string) ($arguments['options']['--format'] ?? 'console'));
-        $outputPath = $arguments['options']['--output'] ?? null;
-        $outputPath = \is_string($outputPath) ? $outputPath : null;
+        $pattern = $arguments->argument();
+        $format = Ascii::lower($arguments->value('--format') ?? 'console');
+        $outputPath = $arguments->value('--output');
         if (!\in_array($format, ['console', 'svg'], true)) {
             return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=console or --format=svg.", $format), $usage);
         }

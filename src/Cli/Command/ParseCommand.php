@@ -14,7 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\ConsoleStyle;
+use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Parser\Exception\LexerException;
@@ -43,15 +47,26 @@ final class ParseCommand extends AbstractCommand
         return 'Parse and recompile a regex pattern';
     }
 
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::LoosePattern, [
+            Option::flag('--validate', 'Validate the pattern after parsing'),
+            ...GlobalOptionsParser::target(),
+        ], "Usage: regex parse <pattern> [--validate]\n");
+    }
+
     public function run(Input $input, Output $output): int
     {
-        $arguments = $this->readArguments($input->args, ['--validate']);
-        if (null !== $arguments['error']) {
-            return $this->usageError($output, $arguments['error'], "Usage: regex parse <pattern> [--validate]\n");
+        $arguments = self::options()->parse($input->args);
+        if (null !== $arguments->error) {
+            return $this->usageError($output, $arguments->error, self::options()->usage);
         }
 
-        $pattern = $arguments['pattern'];
-        $validate = isset($arguments['options']['--validate']);
+        $pattern = $arguments->argument();
+        $validate = $arguments->has('--validate');
         $regex = $this->createRegex($output, $input->regexOptions);
         if (null === $regex) {
             return self::INVALID;

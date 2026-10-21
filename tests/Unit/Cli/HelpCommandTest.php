@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Cli;
 
 use PHPRegex\Cli\Command\HelpCommand;
+use PHPRegex\Cli\Command\LintCommand;
+use PHPRegex\Cli\Command\ParseCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
@@ -655,14 +657,7 @@ final class HelpCommandTest extends TestCase
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('formatCommandUsage');
 
-        $lintData = [
-            'description' => 'Test',
-            'options' => [],
-            'notes' => [],
-            'examples' => [],
-        ];
-
-        $usage = $method->invoke($command, $output, 'regex', 'lint', $lintData);
+        $usage = $method->invoke($command, $output, 'regex', 'lint', LintCommand::options());
 
         $this->assertIsString($usage);
         $this->assertStringContainsString('regex', (string) $usage);
@@ -679,14 +674,7 @@ final class HelpCommandTest extends TestCase
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('formatCommandUsage');
 
-        $parseData = [
-            'description' => 'Test',
-            'options' => [],
-            'notes' => [],
-            'examples' => [],
-        ];
-
-        $usage = $method->invoke($command, $output, 'regex', 'parse', $parseData);
+        $usage = $method->invoke($command, $output, 'regex', 'parse', ParseCommand::options());
 
         $this->assertIsString($usage);
         $this->assertStringContainsString('regex', (string) $usage);
@@ -703,14 +691,7 @@ final class HelpCommandTest extends TestCase
         $reflection = new \ReflectionClass($command);
         $method = $reflection->getMethod('formatCommandUsage');
 
-        $helpData = [
-            'description' => 'Test',
-            'options' => [],
-            'notes' => [],
-            'examples' => [],
-        ];
-
-        $usage = $method->invoke($command, $output, 'regex', 'help', $helpData);
+        $usage = $method->invoke($command, $output, 'regex', 'help', HelpCommand::options());
 
         $this->assertIsString($usage);
         $this->assertStringContainsString('regex', (string) $usage);

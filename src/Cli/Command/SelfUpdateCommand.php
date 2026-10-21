@@ -15,6 +15,8 @@ namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\SelfUpdate\SelfUpdater;
 
@@ -40,17 +42,25 @@ final class SelfUpdateCommand extends AbstractCommand
         return 'Update the CLI phar to the latest release';
     }
 
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::None, [], "Usage: regex self-update\n");
+    }
+
     public function run(Input $input, Output $output): int
     {
         if (\in_array('--help', $input->args, true)) {
-            $output->write("Usage: regex self-update\n");
+            $output->write(self::options()->usage);
 
             return self::SUCCESS;
         }
 
-        $error = $this->unexpectedArgument($input->args);
+        $error = self::options()->parse($input->args)->error;
         if (null !== $error) {
-            return $this->usageError($output, $error, "Usage: regex self-update\n");
+            return $this->usageError($output, $error, self::options()->usage);
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);

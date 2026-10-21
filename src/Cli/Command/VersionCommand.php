@@ -15,6 +15,8 @@ namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Toolkit\Regex;
 
@@ -38,11 +40,19 @@ final class VersionCommand extends AbstractCommand
         return 'Display version information';
     }
 
+    /**
+     * The options of the command, which its help lists.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::None, [], "Usage: regex version\n");
+    }
+
     public function run(Input $input, Output $output): int
     {
-        $error = $this->unexpectedArgument($input->args);
+        $error = self::options()->parse($input->args)->error;
         if (null !== $error) {
-            return $this->usageError($output, $error, "Usage: regex version\n");
+            return $this->usageError($output, $error, self::options()->usage);
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);

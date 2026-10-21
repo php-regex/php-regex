@@ -14,7 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\ConsoleStyle;
+use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\ParserException;
@@ -24,7 +27,7 @@ use PHPRegex\Parser\Text\NearMiss;
 /**
  * @internal
  *
- * @phpstan-type CommandHelp array{description: string, options: list<array{string, string}>, notes: list<string>, examples: list<array{list<string>, string}>}
+ * @phpstan-type CommandHelp array{description: string, declaration: Options, options: list<array{string, string}>, notes: list<string>, examples: list<array{list<string>, string}>}
  */
 final class HelpCommand extends AbstractCommand
 {
@@ -36,35 +39,6 @@ final class HelpCommand extends AbstractCommand
         'parse', 'analyze', 'compare', 'explain', 'debug', 'redos', 'diagram',
         'graph', 'highlight', 'validate', 'transpile', 'format', 'lint', 'lsp',
         'version', 'self-update', 'help',
-    ];
-
-    /**
-     * The options LintArgumentParser accepts, listed for `help lint`.
-     */
-    private const LINT_OPTIONS = [
-        ['--exclude <path>', 'Paths to exclude (repeatable)'],
-        ['--min-savings <n>', 'Minimum optimization savings'],
-        ['-j, --jobs <n>', 'Parallel workers for analysis'],
-        ['--format <format>', 'Output format (console, json, github, checkstyle, junit)'],
-        ['--json', 'Same as --format=json'],
-        ['--output <file>', 'Write output to file'],
-        ['--baseline <file>', 'Leave out the issues a baseline file lists'],
-        ['--generate-baseline <file>', 'Write the issues found to a baseline file'],
-        ['--redos', 'Run the ReDoS risk analysis, off by default'],
-        ['--no-redos', 'Skip the ReDoS risk analysis when regex.json turns it on'],
-        ['--redos-mode <mode>', 'ReDoS mode (theoretical, confirmed)'],
-        ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-        ['--no-validate', 'Skip validation errors (structural lint only)'],
-        ['--no-optimize', 'Disable optimization suggestions'],
-        ['--lint', 'Run the lint rules (the default)'],
-        ['--no-lint', 'Skip the lint rules'],
-        ['--enable-rule=<id>', 'Turn a lint rule on (repeatable)'],
-        ['--disable-rule=<id>', 'Turn a lint rule off (repeatable)'],
-        ['--interop <presets>', 'Libraries to read patterns from, all by default (composer-pcre, nette-utils, spatie-regex, illuminate-support, phpunit, webmozart-assert, beberlei-assert, symfony-validator, none)'],
-        ['--no-interop', 'Read patterns from the native calls only (preg_*, RegexIterator, filter_var())'],
-        ['--pattern-function <spec>', 'Extra call carrying a pattern, e.g. App\\Str::matches#1 (repeatable)'],
-        ['-v, --verbose', 'Show detailed output'],
-        ['--debug', 'Show debug information'],
     ];
 
     /**
@@ -98,13 +72,19 @@ final class HelpCommand extends AbstractCommand
         return 'Display this help message';
     }
 
+    /**
+     * The one argument help takes is a command name.
+     */
+    public static function options(): Options
+    {
+        return new Options(Arguments::Command, [], "Usage: regex help [command]\n");
+    }
+
     public function run(Input $input, Output $output): int
     {
-        // The one argument help takes is a command name.
-        $first = $input->args[0] ?? '';
-        $error = $this->unexpectedArgument(str_starts_with($first, '-') ? $input->args : \array_slice($input->args, 1));
+        $error = self::options()->parse($input->args)->error;
         if (null !== $error) {
-            return $this->usageError($output, $error, "Usage: regex help [command]\n");
+            return $this->usageError($output, $error, self::options()->usage);
         }
 
         $binary = $this->resolveInvocation();
@@ -136,19 +116,7 @@ final class HelpCommand extends AbstractCommand
 
         $this->renderTableSection($output, 'Commands', $this->commandSummary(), fn (string $value): string => $this->formatCommand($output, $value));
 
-        $globalOptions = [
-            ['--ansi', 'Force ANSI output'],
-            ['--no-ansi', 'Disable ANSI output'],
-            ['-q, --quiet', 'Suppress output'],
-            ['--silent', 'Same as --quiet'],
-            ['--no-visuals', 'Disable banner and section visuals'],
-            ['--php-version <ver>', 'Target PHP version for validation'],
-            ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
-            ['--locale <name>', 'Target LC_CTYPE locale for validation'],
-            ['--cache-dir <dir>', 'Keep the Unicode class scans in <dir> for the next run'],
-            ['--help', 'Display this help message'],
-        ];
-        $this->renderTableSection($output, 'Global Options', $globalOptions, fn (string $value): string => $this->formatOption($output, $value));
+        $this->renderTableSection($output, 'Global Options', GlobalOptionsParser::options()->help(), fn (string $value): string => $this->formatOption($output, $value));
 
         // Each command's options are on its own page.
         $output->write('  Run '.$output->color($binary, Output::BLUE).' '.$this->formatCommand($output, 'help').' '.$output->color('<command>', Output::YELLOW)." for the options of a command.\n\n");
@@ -236,7 +204,7 @@ final class HelpCommand extends AbstractCommand
         }
 
         $this->renderTextSection($output, 'Description', [$this->describe($command, $commandData['description'])]);
-        $this->renderTextSection($output, 'Usage', [$this->formatCommandUsage($output, $binary, $command)]);
+        $this->renderTextSection($output, 'Usage', [$this->formatCommandUsage($output, $binary, $command, $commandData['declaration'])]);
 
         if (!empty($commandData['options'])) {
             $this->renderTableSection($output, 'Options', $commandData['options'], fn (string $value): string => $this->formatOption($output, $value));
@@ -264,12 +232,7 @@ final class HelpCommand extends AbstractCommand
         return match ($command) {
             'parse' => self::commandHelp(
                 description: 'Parse and recompile a regex pattern',
-                options: [
-                    ['--validate', 'Validate the pattern after parsing'],
-                    ['--php-version <ver>', 'Target PHP version for validation'],
-                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
-                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
-                ],
+                declaration: ParseCommand::options(),
                 notes: [],
                 examples: [
                     [[$this->resolveInvocation(), 'parse', "'/a+/'"], 'Basic parsing'],
@@ -279,15 +242,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'analyze' => self::commandHelp(
                 description: 'Parse, validate, and analyze ReDoS risk',
-                options: [
-                    ['--format <format>', 'Output format (console, json)'],
-                    ['--json', 'Same as --format=json'],
-                    ['--php-version <ver>', 'Target PHP version for validation'],
-                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
-                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
-                    ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
-                    ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-                ],
+                declaration: AnalyzeCommand::options(),
                 notes: [],
                 examples: [
                     [[$this->resolveInvocation(), 'analyze', "'/a+/'"], 'Analyze a simple pattern'],
@@ -297,14 +252,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'compare' => self::commandHelp(
                 description: 'Compare two regex patterns using automata logic',
-                options: [
-                    ['--method <method>', 'intersection (default), subset, or equivalence'],
-                    ['--determinizer <algo>', 'subset-indexed (default) or subset'],
-                    ['--minimizer <algo>', 'hopcroft (default) or moore'],
-                    ['--php-version <ver>', 'Target PHP version for validation'],
-                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
-                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
-                ],
+                declaration: CompareCommand::options(),
                 notes: ['Compares the regular subset: lookarounds, \b and anchors are read; backreferences, recursion and atomic groups are refused.'],
                 examples: [
                     [[$this->resolveInvocation(), 'compare', "'/[a-z]+/'", "'/edit/'"], 'Check intersection'],
@@ -314,9 +262,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'explain' => self::commandHelp(
                 description: 'Explain a regex pattern in plain language',
-                options: [
-                    ['--format <format>', 'Output format (console, html)'],
-                ],
+                declaration: ExplainCommand::options(),
                 notes: [],
                 examples: [
                     [[$this->resolveInvocation(), 'explain', "'/a+/'"], 'Explain a simple pattern'],
@@ -325,16 +271,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'debug' => self::commandHelp(
                 description: 'Deep ReDoS analysis with heatmap output',
-                options: [
-                    ['--input <string>', 'Input string to test against the pattern'],
-                    ['--format <format>', 'Output format (console, json)'],
-                    ['--json', 'Same as --format=json'],
-                    ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
-                    ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-                    ['--php-version <ver>', 'Target PHP version for validation'],
-                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
-                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
-                ],
+                declaration: DebugCommand::options(),
                 notes: ['Provides detailed ReDoS analysis including attack vectors and complexity heatmaps.'],
                 examples: [
                     [[$this->resolveInvocation(), 'debug', "'/(a+)+$/'"], 'Debug a pattern with potential ReDoS risk'],
@@ -343,26 +280,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'redos' => self::commandHelp(
                 description: 'Benchmark regex patterns for ReDoS behavior',
-                options: [
-                    ['--safe <pattern>', 'Safe pattern to compare against'],
-                    ['--input <string>', 'Input string to benchmark (auto-generated when omitted)'],
-                    ['--input-file <path>', 'Read input from a file'],
-                    ['--repeat <n>', 'Repeat input N times'],
-                    ['--prefix <string>', 'Prefix for the input'],
-                    ['--suffix <string>', 'Suffix for the input'],
-                    ['--iterations <n>', 'Number of iterations'],
-                    ['--warmup <n>', 'Warmup iterations'],
-                    ['--jit <0|1>', 'Override pcre.jit'],
-                    ['--backtrack-limit <n>', 'Override pcre.backtrack_limit'],
-                    ['--recursion-limit <n>', 'Override pcre.recursion_limit'],
-                    ['--time-limit <n>', 'Set max_execution_time in seconds'],
-                    ['--format <format>', 'Output format (console, json)'],
-                    ['--json', 'Same as --format=json'],
-                    ['--show-input', 'Print full input string'],
-                    ['--php-version <ver>', 'Target PHP version for validation'],
-                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
-                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
-                ],
+                declaration: RedosCommand::options(),
                 notes: ['Use the same input for both patterns to compare timing and resource usage.'],
                 examples: [
                     [[$this->resolveInvocation(), 'redos', "'/(a+)+$/'", '--safe', "'/a+$/'", '--input', "'a'", '--repeat=50000', "--suffix='!'"], 'Benchmark vulnerable vs safe'],
@@ -372,13 +290,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'diagram' => self::commandHelp(
                 description: 'Render a diagram of the AST (text or SVG)',
-                options: [
-                    ['--format <format>', 'Output format (console, svg)'],
-                    ['--output <file>', 'Write output to file'],
-                    ['--php-version <ver>', 'Target PHP version for validation'],
-                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
-                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
-                ],
+                declaration: DiagramCommand::options(),
                 notes: [],
                 examples: [
                     [[$this->resolveInvocation(), 'diagram', "'/^a+$/'"], 'Basic diagram'],
@@ -387,12 +299,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'highlight' => self::commandHelp(
                 description: 'Highlight a regex for display',
-                options: [
-                    ['--format <format>', 'Output format (auto, console, html)'],
-                    ['--php-version <ver>', 'Target PHP version for validation'],
-                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
-                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
-                ],
+                declaration: HighlightCommand::options(),
                 notes: [],
                 examples: [
                     [[$this->resolveInvocation(), 'highlight', "'/a+/'"], 'Console highlighting'],
@@ -401,11 +308,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'validate' => self::commandHelp(
                 description: 'Validate a regex pattern',
-                options: [
-                    ['--php-version <ver>', 'Target PHP version for validation'],
-                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
-                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
-                ],
+                declaration: ValidateCommand::options(),
                 notes: [],
                 examples: [
                     [[$this->resolveInvocation(), 'validate', "'/a+/'"], 'Validate a pattern'],
@@ -414,11 +317,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'transpile' => self::commandHelp(
                 description: 'Transpile PCRE regex to other dialects',
-                options: [
-                    ['--target <dialect>', 'Target dialect (js, html, python)'],
-                    ['--format <format>', 'Output format (console, json)'],
-                    ['--json', 'Same as --format=json'],
-                ],
+                declaration: TranspileCommand::options(),
                 notes: [],
                 examples: [
                     [[$this->resolveInvocation(), 'transpile', "'/a+/'", '--target=js'], 'Transpile to JavaScript'],
@@ -427,15 +326,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'format' => self::commandHelp(
                 description: 'Lay a pattern out over lines, or compact it to one',
-                options: [
-                    ['--compact', 'Write the pattern on one line, without x, layout or comments'],
-                    ['--width <n>', 'Width a line aims at, indent included (default: 80)'],
-                    ['--format <format>', 'Output format (console, json)'],
-                    ['--json', 'Same as --format=json'],
-                    ['--php-version <ver>', 'Target PHP version for validation'],
-                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
-                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
-                ],
+                declaration: FormatCommand::options(),
                 notes: [
                     'Prints the pattern alone, so that it can be piped or pasted back. A pattern that fits the width comes back unchanged.',
                     'The output matches exactly what the input matches. A pattern it cannot lay out safely comes back as written, with one note on stderr.',
@@ -448,7 +339,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'lint' => self::commandHelp(
                 description: 'Lint regex patterns in PHP source code',
-                options: self::LINT_OPTIONS,
+                declaration: LintCommand::options(),
                 notes: [
                     'Config: regex.json or regex.dist.json in the working directory sets lint defaults.',
                     'Target: --php-version, else regex.json phpVersion, else the lowest PHP composer.json allows, else the running PHP.',
@@ -468,10 +359,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'graph' => self::commandHelp(
                 description: 'Generate a graph diagram (DOT/Mermaid) of the NFA',
-                options: [
-                    ['--format <format>', 'Output format (dot, graphviz, mermaid)'],
-                    ['--output <file>', 'Write the diagram to a file'],
-                ],
+                declaration: GraphCommand::options(),
                 notes: [],
                 examples: [
                     [[$this->resolveInvocation(), 'graph', "'/a+b/'"], 'Render the automaton as DOT'],
@@ -480,7 +368,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'lsp' => self::commandHelp(
                 description: 'Run the language server over stdio',
-                options: [],
+                declaration: LspCommand::options(),
                 notes: [
                     'Speaks the Language Server Protocol on stdin and stdout, as vendor/bin/regex-lsp does.',
                     'The target is read from the editor\'s initializationOptions, regex.json or composer.json.',
@@ -491,7 +379,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'version' => self::commandHelp(
                 description: 'Display version information',
-                options: [],
+                declaration: VersionCommand::options(),
                 notes: [],
                 examples: [
                     [[$this->resolveInvocation(), 'version'], 'Show the installed version'],
@@ -499,7 +387,7 @@ final class HelpCommand extends AbstractCommand
             ),
             'self-update' => self::commandHelp(
                 description: 'Update the CLI phar to the latest release',
-                options: [],
+                declaration: SelfUpdateCommand::options(),
                 notes: ['Updates the installed phar file to the latest version.'],
                 examples: [
                     [[$this->resolveInvocation(), 'self-update'], 'Update to latest version'],
@@ -507,7 +395,8 @@ final class HelpCommand extends AbstractCommand
             ),
             'help' => self::commandHelp(
                 description: 'Display this help message',
-                options: [
+                declaration: self::options(),
+                rows: [
                     ['<command>', 'Show help for specific command'],
                 ],
                 notes: [],
@@ -521,31 +410,32 @@ final class HelpCommand extends AbstractCommand
     }
 
     /**
-     * @param list<array{string, string}>       $options
+     * @param Options                           $declaration the options the command reads, the rows of its table
      * @param list<string>                      $notes
      * @param list<array{list<string>, string}> $examples
+     * @param ?list<array{string, string}>      $rows        the rows of the table, when they are not the options
      *
      * @return CommandHelp
      */
-    private static function commandHelp(string $description, array $options, array $notes, array $examples): array
+    private static function commandHelp(string $description, Options $declaration, array $notes, array $examples, ?array $rows = null): array
     {
-        return ['description' => $description, 'options' => $options, 'notes' => $notes, 'examples' => $examples];
+        return ['description' => $description, 'declaration' => $declaration, 'options' => $rows ?? $declaration->help(), 'notes' => $notes, 'examples' => $examples];
     }
 
-    private function formatCommandUsage(Output $output, string $binary, string $command): string
+    /**
+     * The usage line of the command: "[options]" when it has any to show,
+     * then the arguments it takes.
+     */
+    private function formatCommandUsage(Output $output, string $binary, string $command, Options $declaration): string
     {
         $usage = $output->color($binary, Output::BLUE).' '.$output->color($command, Output::YELLOW.Output::BOLD);
 
-        if ('lint' === $command) {
-            $usage .= ' '.$output->color('[options]', Output::CYAN).' '.$output->color('<path>', Output::GREEN);
-        } elseif (\in_array($command, ['parse', 'analyze', 'debug', 'redos', 'diagram', 'graph', 'highlight', 'transpile', 'format', 'validate', 'explain'], true)) {
-            $usage .= ' '.$output->color('[options]', Output::CYAN).' '.$output->color('<pattern>', Output::GREEN);
-        } elseif ('compare' === $command) {
-            $usage .= ' '.$output->color('[options]', Output::CYAN)
-                .' '.$output->color('<pattern1>', Output::GREEN)
-                .' '.$output->color('<pattern2>', Output::GREEN);
-        } elseif ('help' === $command) {
-            $usage .= ' '.$output->color('[command]', Output::GREEN);
+        if ([] !== $declaration->help()) {
+            $usage .= ' '.$output->color('[options]', Output::CYAN);
+        }
+
+        foreach ($declaration->arguments() as $argument) {
+            $usage .= ' '.$output->color($argument, Output::GREEN);
         }
 
         return $usage;
