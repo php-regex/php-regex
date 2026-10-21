@@ -117,6 +117,30 @@ final class PhpTokensTest extends TestCase
         $this->assertNull(PhpTokens::identifier('('));
     }
 
+    /**
+     * A token with no text is answered without a deprecation: PHP 8.5
+     * deprecates ord() on a string that is not one byte, and the empty
+     * token reaches it.
+     */
+    #[Test]
+    public function test_a_token_with_no_text_raises_no_deprecation(): void
+    {
+        $captured = [];
+        \set_error_handler(static function (int $errno, string $errstr) use (&$captured): bool {
+            $captured[] = $errstr;
+
+            return true;
+        }, \E_DEPRECATED);
+
+        try {
+            PhpTokens::identifier([\T_INLINE_HTML, '', 1]);
+        } finally {
+            \restore_error_handler();
+        }
+
+        $this->assertSame([], $captured);
+    }
+
     #[Test]
     public function test_is_object_or_static_operator_holds_the_three_operators(): void
     {

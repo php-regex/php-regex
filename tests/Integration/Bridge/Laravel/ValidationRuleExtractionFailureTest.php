@@ -99,6 +99,46 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
     }
 
     /**
+     * Whichever of the file's regexes gives up first, the file is named
+     * unreadable: the rule scan that follows the search for the rule
+     * strings can be the one to hit the limit, and the failure it raises
+     * leaves the file the same way the search's does. The first raise of
+     * the floor passes through so the search runs; every later one puts 0
+     * in its place.
+     */
+    #[Test]
+    public function test_validation_extractor_names_the_backtrack_limit_whichever_of_its_regexes_gives_up(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => "<?php
+\$rules = ['code' => 'regex:/^[a-z]+$/'];
+"]);
+        $source = new ValidationRulePatternSource();
+
+        $raises = 0;
+        LibraryPcre::useIniSetter(static function (string $key, string $value) use (&$raises): string|false {
+            if ('pcre.backtrack_limit' !== $key || (string) LibraryPcre::BACKTRACK_LIMIT_FLOOR !== $value) {
+                return \ini_set($key, $value);
+            }
+
+            return \ini_set($key, 0 === $raises++ ? $value : '0');
+        });
+        \ini_set('pcre.backtrack_limit', (string) (LibraryPcre::BACKTRACK_LIMIT_FLOOR - 1));
+
+        try {
+            $patterns = $source->extract(new PatternSourceContext(paths: [$project.'/app'], excludePaths: []));
+        } finally {
+            LibraryPcre::useIniSetter(null);
+            \ini_set('pcre.backtrack_limit', $this->backtrackLimit);
+        }
+
+        $this->assertSame([], $patterns);
+        $failures = $source->failures();
+        $this->assertCount(1, $failures);
+        $this->assertStringEndsWith('/app/Rules.php', $failures[0]['file']);
+        $this->assertSame('Validation rules not read: the rule regex gave up on this file (backtrack limit reached).', $failures[0]['message']);
+    }
+
+    /**
      * Any other PCRE error is named by its code. The recursion limit binds
      * only with the JIT off, and a pattern PHP compiled earlier with the
      * JIT keeps it: the extraction runs in a PHP process started with the

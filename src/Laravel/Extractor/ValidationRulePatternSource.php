@@ -142,6 +142,39 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         // inside it, e.g. 'regex:/^[^"]+$/'.
         try {
             LibraryPcre::matchAll(self::RULE_PATTERN, $content, $matches, \PREG_OFFSET_CAPTURE);
+
+            foreach ($matches[2] as $index => $match) {
+                $literal = $this->unescapeStringLiteral($match[0], $matches[1][$index][0]);
+                $offset = $match[1];
+                $lineNumber = substr_count(substr($content, 0, $offset), "\n") + 1;
+
+                // Laravel splits a rules string on every "|", one inside a
+                // pattern included; an element of a rules array is one rule.
+                $rules = $this->isRulesString($literal, substr($content, 0, $offset - 1)) ? explode('|', $literal) : [$literal];
+
+                foreach ($rules as $rule) {
+                    if (1 !== LibraryPcre::match(self::RULE, $rule, $name)) {
+                        continue;
+                    }
+
+                    // preg_match() gets the parameter as it is, delimiters and
+                    // all: it is linted as written.
+                    $pattern = substr($rule, \strlen($name[0]));
+                    $trimmed = trim($pattern, " \t\n\r\0\x0B");
+                    if ('' === $trimmed) {
+                        continue;
+                    }
+
+                    $patterns[] = new PatternOccurrence(
+                        $trimmed,
+                        $filePath,
+                        $lineNumber,
+                        'validation:'.('' === ($name[1] ?? '') ? 'regex' : 'not_regex'),
+                        $pattern,
+                        'Laravel validation rule',
+                    );
+                }
+            }
         } catch (InternalFailureException $failure) {
             $this->failures[] = [
                 'file' => $filePath,
@@ -152,39 +185,6 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             ];
 
             return [];
-        }
-
-        foreach ($matches[2] as $index => $match) {
-            $literal = $this->unescapeStringLiteral($match[0], $matches[1][$index][0]);
-            $offset = $match[1];
-            $lineNumber = substr_count(substr($content, 0, $offset), "\n") + 1;
-
-            // Laravel splits a rules string on every "|", one inside a
-            // pattern included; an element of a rules array is one rule.
-            $rules = $this->isRulesString($literal, substr($content, 0, $offset - 1)) ? explode('|', $literal) : [$literal];
-
-            foreach ($rules as $rule) {
-                if (1 !== LibraryPcre::match(self::RULE, $rule, $name)) {
-                    continue;
-                }
-
-                // preg_match() gets the parameter as it is, delimiters and
-                // all: it is linted as written.
-                $pattern = substr($rule, \strlen($name[0]));
-                $trimmed = trim($pattern, " \t\n\r\0\x0B");
-                if ('' === $trimmed) {
-                    continue;
-                }
-
-                $patterns[] = new PatternOccurrence(
-                    $trimmed,
-                    $filePath,
-                    $lineNumber,
-                    'validation:'.('' === ($name[1] ?? '') ? 'regex' : 'not_regex'),
-                    $pattern,
-                    'Laravel validation rule',
-                );
-            }
         }
 
         return $patterns;

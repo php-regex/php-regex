@@ -98,7 +98,7 @@ final class PhpTokens
         // A variable, a literal, a number or an operator starts with no
         // letter: no pattern needs to say so.
         $first = $token[1][0] ?? '';
-        if ('_' !== $first && !Ascii::isAlpha($first) && \ord($first) < 0x80) {
+        if ('' === $first || ('_' !== $first && !Ascii::isAlpha($first) && \ord($first) < 0x80)) {
             return null;
         }
 
