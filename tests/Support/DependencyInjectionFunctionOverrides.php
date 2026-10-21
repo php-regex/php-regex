@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Support;
 
 /**
- * Stands in for class_exists() in the Symfony bundle's extension. Loaded by
+ * Stands in for class_exists() in the Symfony bundle's class. Loaded by
  * the bootstrap, before any test runs: a function declared once the
  * extension has called class_exists() would never be reached, as PHP keeps
  * the function an unqualified call resolved to.
@@ -29,7 +29,7 @@ final class DependencyInjectionFunctionOverrides
     }
 }
 
-namespace PHPRegex\Symfony\DependencyInjection;
+namespace PHPRegex\Symfony;
 
 use PHPRegex\Tests\Support\DependencyInjectionFunctionOverrides;
 

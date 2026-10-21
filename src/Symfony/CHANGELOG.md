@@ -14,6 +14,11 @@ CHANGELOG
    where a running counter stood in for the line; a mapping file the
    validator cannot read is `regex.lint.source.unreadable`. An attribute is
    read from the PHP file alone.
+ * The bundle is an `AbstractBundle` that defines its configuration and loads
+   its services itself: `PHPRegex\Symfony\DependencyInjection\PHPRegexExtension`
+   and `Configuration`, both internal, are gone. The `php_regex` alias and
+   every configuration key are unchanged, as `config:dump-reference
+   php_regex` shows.
  * `ide` defaults to `null`, and the links of `regex:lint` then open the
    editor of `framework.ide` (`SYMFONY_IDE` by default), as FrameworkBundle's
    own pages do. The documented fallback never fired: the default was an

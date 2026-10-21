@@ -16,7 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Command\LintCommand;
-use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
+use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
@@ -239,8 +239,7 @@ final class BundleConfigurationTest extends TestCase
         $container->setParameter('kernel.cache_dir', $this->projectDir.'/var/cache');
         $container->setParameter('kernel.project_dir', $this->projectDir);
 
-        $extension = new PHPRegexExtension();
-        $container->registerExtension($extension);
+        $extension = BundleContainer::register($container);
         $container->loadFromExtension($extension->getAlias(), ['cache' => ['directory' => null]] + $config);
         $container->compile();
 

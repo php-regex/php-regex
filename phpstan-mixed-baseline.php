@@ -217,18 +217,16 @@ return [
         'PHPRegex\Symfony\Command\CompareCommand::resolveDeterminizationAlgorithm()' => ['host-return', 1],
         'PHPRegex\Symfony\Command\CompareCommand::resolveMinimizationAlgorithm()' => ['host-return', 1],
     ],
-    'src/Symfony/DependencyInjection/Configuration.php' => [
-        'PHPRegex\Symfony\DependencyInjection\Configuration::getConfigTreeBuilder()' => ['host-contract', 2],
-        'PHPRegex\Symfony\DependencyInjection\Configuration::redosThreshold()' => ['validator-input', 1],
-        'PHPRegex\Symfony\DependencyInjection\Configuration::targetVersion()' => ['validator-input', 1],
-    ],
-    'src/Symfony/DependencyInjection/PHPRegexExtension.php' => [
-        'PHPRegex\Symfony\DependencyInjection\PHPRegexExtension::createExtractorDefinition()' => ['host-return', 3],
-        'PHPRegex\Symfony\DependencyInjection\PHPRegexExtension::extractionWarnings()' => ['host-return', 2],
-        'PHPRegex\Symfony\DependencyInjection\PHPRegexExtension::load()' => ['host-return', 3],
-    ],
     'src/Symfony/Extractor/ValidatorPatternSource.php' => [
         'PHPRegex\Symfony\Extractor\ValidatorPatternSource::patterns()' => ['reflection-sink', 1],
+    ],
+    'src/Symfony/PHPRegexBundle.php' => [
+        'PHPRegex\Symfony\PHPRegexBundle::configure()' => ['host-contract', 2],
+        'PHPRegex\Symfony\PHPRegexBundle::createExtractorDefinition()' => ['host-return', 3],
+        'PHPRegex\Symfony\PHPRegexBundle::extractionWarnings()' => ['host-return', 2],
+        'PHPRegex\Symfony\PHPRegexBundle::loadExtension()' => ['host-return', 2],
+        'PHPRegex\Symfony\PHPRegexBundle::redosThreshold()' => ['validator-input', 1],
+        'PHPRegex\Symfony\PHPRegexBundle::targetVersion()' => ['validator-input', 1],
     ],
     'src/Symfony/Security/SecurityConfigExtractor.php' => [
         'PHPRegex\Symfony\Security\SecurityConfigExtractor::build()' => ['host-return', 1],

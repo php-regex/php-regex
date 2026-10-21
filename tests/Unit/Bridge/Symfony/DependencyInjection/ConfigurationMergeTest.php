@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\DependencyInjection;
 
-use PHPRegex\Symfony\DependencyInjection\Configuration;
+use PHPRegex\Tests\Support\BundleContainer;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Processor;
@@ -71,6 +71,6 @@ final class ConfigurationMergeTest extends TestCase
      */
     private function process(array $configs): array
     {
-        return (new Processor())->processConfiguration(new Configuration(), $configs);
+        return (new Processor())->processConfiguration(BundleContainer::configuration(), $configs);
     }
 }

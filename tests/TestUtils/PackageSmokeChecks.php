@@ -31,7 +31,6 @@ use PHPRegex\Rector\EscapeNulByteRector;
 use PHPRegex\Rector\Set\RegexSetList;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosSeverity;
-use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
 use PHPRegex\Symfony\PHPRegexBundle;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Transpiler;
@@ -83,7 +82,7 @@ final class PackageSmokeChecks
             'Psalm' => [Plugin::class, static fn (): bool => self::extends(Plugin::class, PluginEntryPointInterface::class)],
             'Rector' => [EscapeNulByteRector::class, static fn (): bool => self::extends(EscapeNulByteRector::class, RectorInterface::class) && is_file(RegexSetList::PCRE_UPGRADE) && is_file(RegexSetList::UPGRADE_2_0)],
             'Redos' => [RedosAnalyzer::class, static fn (): bool => RedosSeverity::Critical === (new RedosAnalyzer())->analyze('/(a+)+$/')->severity],
-            'Symfony' => [PHPRegexBundle::class, static fn (): bool => (new PHPRegexBundle())->getContainerExtension() instanceof PHPRegexExtension],
+            'Symfony' => [PHPRegexBundle::class, static fn (): bool => 'php_regex' === (new PHPRegexBundle())->getContainerExtension()?->getAlias()],
             'Toolkit' => [Regex::class, static fn (): bool => Regex::create()->validate('/a+/')->isValid],
             'Transpiler' => [Transpiler::class, static fn (): bool => '/a+/i' === (new Transpiler(RegexParser::create()))->transpile('/a+/i', 'javascript')->literal],
         ];

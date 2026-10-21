@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
 use PHPRegex\Symfony\Command\LintCommand;
-use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
+use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -68,8 +68,7 @@ final class LintCommandComplexityTest extends TestCase
         $container = new ContainerBuilder();
         $container->setParameter('kernel.debug', true);
         $container->setParameter('kernel.cache_dir', sys_get_temp_dir());
-        $extension = new PHPRegexExtension();
-        $container->registerExtension($extension);
+        $extension = BundleContainer::register($container);
         $container->loadFromExtension($extension->getAlias(), ['analysis' => $analysis]);
         $container->compile();
 

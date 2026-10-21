@@ -1,0 +1,121 @@
+# Default configuration for extension with alias: "php_regex"
+php_regex:
+
+    # The maximum allowed length for a regex pattern string to parse.
+    max_pattern_length:   100000
+
+    # The maximum length of a variable-length lookbehind; a fixed-length one is only limited by PCRE's 65535.
+    max_lookbehind_length: 255
+
+    # Whether the php_regex.regex service also compiles every pattern with the running PHP (preg_match compile check). regex:lint never does: it judges for php_version / pcre_version.
+    runtime_pcre_validation: false
+
+    # The PHP version regex:lint judges patterns for ("8.2", "8.2.4" or 80200). Unset: the lowest PHP composer.json allows, else the running PHP. The php_regex.regex service always judges for the running PHP.
+    php_version:          null
+
+    # The PCRE2 release regex:lint judges patterns for ("10.42"). Unset: the release php_version bundles.
+    pcre_version:         null
+
+    # The LC_CTYPE locale regex:lint judges patterns under ("tr_TR.UTF-8"): its character tables decide the size of some classes. Unset: the locale of the PHP running the command. The php_regex.regex service always judges under the running PHP's locale.
+    locale:               null
+
+    # Cache configuration for storing parsed regex patterns.
+    cache:
+
+        # Symfony cache pool service id (PSR-6). Takes precedence over "directory" when set.
+        pool:                 null
+
+        # Directory path for cached AST files. Set to null to disable caching.
+        directory:            '%kernel.cache_dir%/php_regex'
+
+        # Cache key prefix for PSR-6 cache pools.
+        prefix:               regex_
+
+    # Custom regex pattern extractor service ID. If not provided, PhpParser-based extraction will be tried first, then token-based extraction.
+    extractor_service:    null
+
+    # Which calls regex:lint reads patterns from, beyond the native preg_* functions, RegexIterator and filter_var(): the shape of regex.json's "extraction", which the bundle does not read. Unused when extractor_service is set.
+    extraction:
+
+        # Libraries whose calls carry a regex pattern, by package slug (composer-pcre, nette-utils, spatie-regex, illuminate-support, phpunit, webmozart-assert, beberlei-assert, symfony-validator). Every preset is on by default, and ~ says the same; a list reads exactly the presets it names, [] the native calls only, and a later config file's list replaces it. An unknown name is a configuration error, which names the preset it most likely means.
+        interop:
+
+            # Defaults:
+            - composer-pcre
+            - nette-utils
+            - spatie-regex
+            - illuminate-support
+            - phpunit
+            - webmozart-assert
+            - beberlei-assert
+            - symfony-validator
+
+        # Project helpers carrying a pattern, as "function" or "Some\Class::method". Append "#<index>" when the pattern is not the first argument, and "#<index>:keys" when that argument is an array whose keys hold the patterns. A call may pass the pattern by name as pattern:, patterns: or regex:; append "$<name>" to read it under the helper's own parameter name instead, as in "App\grep#1$expression". A later config file's list replaces it.
+        functions:            []
+    redos:
+
+        # Enable ReDoS vulnerability analysis. Disabled by default for performance; enable explicitly when needed.
+        enabled:              false
+
+        # Minimum ReDoS severity to report (low|medium|high|critical, in any case).
+        threshold:            high
+
+        # Patterns, fragments or full regexes to skip in the risk analysis (e.g. Symfony requirement constants).
+        ignored_patterns:     []
+    analysis:
+
+        # Whether regex:lint reports the patterns whose complexity score reaches warning_threshold.
+        complexity:           false
+
+        # Complexity score from which regex:lint reports a pattern, once "complexity" is on.
+        warning_threshold:    50
+    automata:
+
+        # DFA minimization strategy for automata comparisons (hopcroft|moore).
+        minimization_algorithm: hopcroft
+
+        # NFA determinization strategy for automata comparisons (subset|subset-indexed).
+        determinization_algorithm: subset-indexed
+
+    # Default optimization options for regex:lint.
+    optimizations:
+
+        # Optimize digit character classes (e.g., [0-9] -> \d).
+        digits:               true
+
+        # Write [A-Za-z0-9_] as \w where they match alike: never today, as \w follows the locale without u and Unicode with it.
+        word:                 true
+
+        # Allow range merging inside character classes.
+        ranges:               true
+
+        # Normalize character class order and deduplicate elements.
+        canonicalize_char_classes: true
+
+        # Enable auto-possessive quantifier optimizations.
+        possessive:           false
+
+        # Enable alternation factorization optimizations.
+        factorize:            false
+
+        # Minimum repeated quantifier count before collapsing (e.g., aaaa -> a{4}).
+        min_quantifier_count: 4
+
+    # Directories to scan for regex patterns. Defaults to src/ for Symfony applications.
+    paths:
+
+        # Default:
+        - src
+
+    # Directories regex:lint does not scan. Defaults to vendor/.
+    exclude:
+
+        # Default:
+        - vendor
+
+    # Whether regex:lint reports as regex.ignore.unmatched each @regex-ignore marker, or issue identifier it names, that silences nothing.
+    report_unmatched_ignores: true
+
+    # IDE shorthand (vscode, phpstorm, etc.) or custom URL template for clickable links (e.g., phpstorm://open?file=%%file%%&line=%%line%%&column=%%column%%). Unset: the editor FrameworkBundle links to, framework.ide, which defaults to the SYMFONY_IDE environment variable.
+    ide:                  null
+

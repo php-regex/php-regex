@@ -17,7 +17,7 @@ use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Command\LintCommand;
-use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
+use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -74,8 +74,7 @@ final class PHPRegexBundleTest extends TestCase
         $container->setParameter('kernel.debug', true);
         $container->setParameter('kernel.cache_dir', sys_get_temp_dir());
 
-        $extension = new PHPRegexExtension();
-        $container->registerExtension($extension);
+        $extension = BundleContainer::register($container);
 
         if ($loadExtension) {
             $container->loadFromExtension($extension->getAlias(), $config);

@@ -17,8 +17,7 @@ use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Symfony\DependencyInjection\Configuration;
-use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
+use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -60,7 +59,7 @@ final class ExtractionConfigTest extends TestCase
     #[Test]
     public function test_the_tree_takes_the_extraction_keys(): void
     {
-        $config = (new Processor())->processConfiguration(new Configuration(), [[
+        $config = (new Processor())->processConfiguration(BundleContainer::configuration(), [[
             'extraction' => ['interop' => ['nette-utils', 'phpunit'], 'functions' => ['App\grep#1']],
         ]]);
 
@@ -95,7 +94,7 @@ final class ExtractionConfigTest extends TestCase
     #[Test]
     public function test_one_name_without_a_list_is_a_list_of_it(): void
     {
-        $config = (new Processor())->processConfiguration(new Configuration(), [['extraction' => ['interop' => 'nette-utils', 'functions' => 'App\grep#1']]]);
+        $config = (new Processor())->processConfiguration(BundleContainer::configuration(), [['extraction' => ['interop' => 'nette-utils', 'functions' => 'App\grep#1']]]);
 
         $extraction = $config['extraction'] ?? null;
         $this->assertIsArray($extraction);
@@ -106,7 +105,7 @@ final class ExtractionConfigTest extends TestCase
     #[Test]
     public function test_a_null_interop_is_every_preset_in_the_tree(): void
     {
-        $config = (new Processor())->processConfiguration(new Configuration(), [['extraction' => ['interop' => null]]]);
+        $config = (new Processor())->processConfiguration(BundleContainer::configuration(), [['extraction' => ['interop' => null]]]);
 
         $extraction = $config['extraction'] ?? null;
         $this->assertIsArray($extraction);
@@ -192,7 +191,7 @@ final class ExtractionConfigTest extends TestCase
         $container->setParameter('kernel.cache_dir', $project.'/var/cache');
         $container->setParameter('kernel.environment', 'test');
 
-        (new PHPRegexExtension())->load([[] === $extraction ? [] : ['extraction' => $extraction]], $container);
+        BundleContainer::register($container)->load([[] === $extraction ? [] : ['extraction' => $extraction]], $container);
         $container->getDefinition('php_regex.extractor.instance')->setPublic(true);
         $container->getDefinition('php_regex.command.lint')->setPublic(true);
         $container->compile();

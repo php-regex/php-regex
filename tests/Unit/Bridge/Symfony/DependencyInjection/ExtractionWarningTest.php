@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\DependencyInjection;
 
-use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
+use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -112,7 +112,7 @@ final class ExtractionWarningTest extends TestCase
         $container->setParameter('kernel.cache_dir', $project.'/var/cache');
         $container->setParameter('kernel.environment', 'test');
 
-        (new PHPRegexExtension())->load([$config], $container);
+        BundleContainer::register($container)->load([$config], $container);
         if ($compile) {
             $container->getDefinition('php_regex.command.lint')->setPublic(true);
             $container->compile();

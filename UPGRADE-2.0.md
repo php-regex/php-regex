@@ -185,8 +185,6 @@ one.
 | `RegexParser\Bridge\Symfony\Command\RegexRoutesCommand` | `PHPRegex\Symfony\Command\RoutesCommand` |
 | `RegexParser\Bridge\Symfony\Command\RegexSecurityCommand` | `PHPRegex\Symfony\Command\SecurityCommand` |
 | `RegexParser\Bridge\Symfony\Command\RegexTranspileCommand` | `PHPRegex\Symfony\Command\TranspileCommand` |
-| `RegexParser\Bridge\Symfony\DependencyInjection\Configuration` | `PHPRegex\Symfony\DependencyInjection\Configuration` |
-| `RegexParser\Bridge\Symfony\DependencyInjection\RegexParserExtension` | `PHPRegex\Symfony\DependencyInjection\PHPRegexExtension` |
 | `RegexParser\Bridge\Symfony\Extractor\RouteRegexPatternSource` | `PHPRegex\Symfony\Extractor\RoutePatternSource` |
 | `RegexParser\Bridge\Symfony\Extractor\ValidatorRegexPatternSource` | `PHPRegex\Symfony\Extractor\ValidatorPatternSource` |
 | `RegexParser\Bridge\Symfony\Output\SymfonyConsoleFormatter` | `PHPRegex\Linter\Formatter\ConsoleTagFormatter` |
@@ -393,6 +391,8 @@ one.
 | `RegexParser\Automata\Transform\AstToNfaTransformerInterface` | removed: type against `PHPRegex\Automata\Transform\HirToNfaTransformer`, one concrete class |
 | `RegexParser\Automata\Solver\RegexSolverCompilerInterface` | removed: type against `PHPRegex\Automata\LanguageSolver` |
 | `RegexParser\Automata\Solver\RegexSolverInterface` | removed: type against `PHPRegex\Automata\LanguageSolver` |
+| `RegexParser\Bridge\Symfony\DependencyInjection\Configuration` | removed: no replacement: `PHPRegex\Symfony\PHPRegexBundle` defines its configuration itself |
+| `RegexParser\Bridge\Symfony\DependencyInjection\RegexParserExtension` | removed: no replacement: `PHPRegex\Symfony\PHPRegexBundle` loads its services itself; its container extension keeps the php_regex alias |
 | `RegexParser\Cli\Command\ClearCacheCommand` | removed: no replacement: the binary keeps no cache between runs, so the regex clear-cache command had nothing to clear |
 | `RegexParser\Node\ClassOperationNode` | removed: no replacement: PHP reads "&&" and "--" in a class as members and ranges, so no pattern ever produced it |
 | `RegexParser\Node\ClassOperationType` | removed: no replacement: it only typed ClassOperationNode |

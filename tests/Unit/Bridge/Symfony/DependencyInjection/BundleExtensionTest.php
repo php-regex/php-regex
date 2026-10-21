@@ -17,15 +17,15 @@ use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Parser\Cache\PsrCacheAdapter;
 use PHPRegex\Symfony\Command\ExplainCommand;
-use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
+use PHPRegex\Symfony\PHPRegexBundle;
 use PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator;
+use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Tests\Support\DependencyInjectionFunctionOverrides;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 
-final class PHPRegexExtensionTest extends TestCase
+final class BundleExtensionTest extends TestCase
 {
     protected function tearDown(): void
     {
@@ -34,10 +34,9 @@ final class PHPRegexExtensionTest extends TestCase
 
     public function test_load_sets_parameters_and_services(): void
     {
-        $container = new ContainerBuilder();
-        $container->setParameter('kernel.debug', false);
+        $container = BundleContainer::builder();
 
-        $extension = new PHPRegexExtension();
+        $extension = BundleContainer::extension();
         $extension->load([[
             'max_pattern_length' => 42,
             'cache' => [
@@ -83,10 +82,9 @@ final class PHPRegexExtensionTest extends TestCase
      */
     public function test_the_lint_command_takes_the_settings_patterns_are_read_with(): void
     {
-        $container = new ContainerBuilder();
-        $container->setParameter('kernel.debug', false);
+        $container = BundleContainer::builder();
 
-        (new PHPRegexExtension())->load([[]], $container);
+        BundleContainer::extension()->load([[]], $container);
 
         $regexOptions = $container->getDefinition('php_regex.command.lint')->getArgument('$regexOptions');
         $this->assertIsArray($regexOptions);
@@ -99,10 +97,9 @@ final class PHPRegexExtensionTest extends TestCase
      */
     public function test_load_registers_the_explain_command(): void
     {
-        $container = new ContainerBuilder();
-        $container->setParameter('kernel.debug', false);
+        $container = BundleContainer::builder();
 
-        (new PHPRegexExtension())->load([[]], $container);
+        BundleContainer::extension()->load([[]], $container);
 
         $definition = $container->getDefinition('php_regex.command.explain');
         $this->assertSame(ExplainCommand::class, $definition->getClass());
@@ -118,10 +115,9 @@ final class PHPRegexExtensionTest extends TestCase
      */
     public function test_load_registers_the_valid_regex_validator(): void
     {
-        $container = new ContainerBuilder();
-        $container->setParameter('kernel.debug', false);
+        $container = BundleContainer::builder();
 
-        (new PHPRegexExtension())->load([[]], $container);
+        BundleContainer::extension()->load([[]], $container);
 
         $definition = $container->getDefinition(ValidRegexValidator::class);
         $this->assertTrue($definition->hasTag('validator.constraint_validator'));
@@ -132,10 +128,9 @@ final class PHPRegexExtensionTest extends TestCase
 
     public function test_load_sets_custom_extractor_alias(): void
     {
-        $container = new ContainerBuilder();
-        $container->setParameter('kernel.debug', false);
+        $container = BundleContainer::builder();
 
-        $extension = new PHPRegexExtension();
+        $extension = BundleContainer::extension();
         $extension->load([[
             'extractor_service' => 'my_custom_extractor',
         ]], $container);
@@ -146,7 +141,7 @@ final class PHPRegexExtensionTest extends TestCase
 
     public function test_build_cache_definition_uses_pool(): void
     {
-        $extension = new PHPRegexExtension();
+        $extension = new PHPRegexBundle();
         $reflection = new \ReflectionClass($extension);
         $method = $reflection->getMethod('buildCacheDefinition');
 
@@ -169,7 +164,7 @@ final class PHPRegexExtensionTest extends TestCase
     {
         DependencyInjectionFunctionOverrides::$classExistsResult = false;
 
-        $extension = new PHPRegexExtension();
+        $extension = new PHPRegexBundle();
         $reflection = new \ReflectionClass($extension);
         $method = $reflection->getMethod('createExtractorDefinition');
 

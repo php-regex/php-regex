@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony;
 
-use PHPRegex\Symfony\DependencyInjection\Configuration;
+use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Processor;
@@ -23,7 +23,7 @@ final class ConfigurationTest extends TestCase
     public function test_default_configuration(): void
     {
         $processor = new Processor();
-        $configuration = new Configuration();
+        $configuration = BundleContainer::configuration();
 
         /**
          * @var array{
@@ -83,7 +83,7 @@ final class ConfigurationTest extends TestCase
     public function test_custom_configuration(): void
     {
         $processor = new Processor();
-        $configuration = new Configuration();
+        $configuration = BundleContainer::configuration();
 
         /**
          * @var array{

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\DependencyInjection;
 
-use PHPRegex\Symfony\DependencyInjection\Configuration;
+use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -119,7 +119,7 @@ final class ConfigurationTargetTest extends TestCase
     private function process(array $settings): array
     {
         /** @var array<string, mixed> $config */
-        $config = (new Processor())->processConfiguration(new Configuration(), [$settings]);
+        $config = (new Processor())->processConfiguration(BundleContainer::configuration(), [$settings]);
 
         return $config;
     }
