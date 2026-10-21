@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\Finding;
@@ -197,7 +198,7 @@ final class RedosAnalysisConstructionTest extends TestCase
             witness: new RedosWitness('', 'a', '!', false),
             replayed: false,
             abstractions: ['a{2,2000} read as a{2,}'],
-            pcreVersion: '10.40',
+            pcreVersion: '10.40' === PcreTarget::runtime()->pcreVersion ? '10.44' : '10.40',
             analysisVersion: '0',
             upperBoundDegree: 4,
             searchCost: new RedosSearchCost(2, '', 'a', '!', false),

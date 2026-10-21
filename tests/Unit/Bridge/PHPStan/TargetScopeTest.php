@@ -106,8 +106,8 @@ final class TargetScopeTest extends TestCase
     public function test_a_scope_tells_whether_it_judges_beyond_the_running_engine(): void
     {
         $this->assertFalse((new TargetScope(['phpVersion' => 'runtime']))->judgesBeyondTheRunningEngine());
-        $this->assertTrue((new TargetScope(['phpVersion' => '8.2', 'pcreVersion' => '10.40']))->judgesBeyondTheRunningEngine());
-        $this->assertTrue((new TargetScope([], new PhpVersion(\PHP_VERSION_ID, PhpVersion::SOURCE_RUNTIME), ['min' => \PHP_VERSION_ID, 'max' => 80699]))->judgesBeyondTheRunningEngine());
+        $this->assertTrue((new TargetScope(['phpVersion' => '7.3', 'pcreVersion' => '10.32']))->judgesBeyondTheRunningEngine());
+        $this->assertTrue((new TargetScope([], new PhpVersion(\PHP_VERSION_ID, PhpVersion::SOURCE_RUNTIME), ['min' => \PHP_VERSION_ID, 'max' => \PHP_VERSION_ID + 299]))->judgesBeyondTheRunningEngine());
     }
 
     /**

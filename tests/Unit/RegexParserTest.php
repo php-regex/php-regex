@@ -96,7 +96,7 @@ final class RegexParserTest extends TestCase
     {
         $cache = new ArrayCache();
         $parser = RegexParser::create(['cache' => $cache, 'max_pattern_length' => 10, 'max_lookbehind_length' => 7, 'max_recursion_depth' => 64, 'runtime_pcre_validation' => true]);
-        $target = new PcreTarget(80200, '10.40', 'C');
+        $target = new PcreTarget(70300, '10.32', 'C');
 
         $derived = $parser->withTarget($target);
 
