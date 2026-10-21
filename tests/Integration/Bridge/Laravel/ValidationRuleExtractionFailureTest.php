@@ -242,11 +242,12 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
             $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $gaveUp);
             $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, LibraryPcre::lastError());
 
-            // An explicit target, and no library of the application read:
-            // the target resolution then reads no composer.json, and no
-            // vendor file is tokenized, either of which gives up under the
-            // pinned limit before the extractor this test starves.
-            config(['php-regex.php_version' => \PHP_VERSION_ID, 'php-regex.pcre_version' => strtok(\PCRE_VERSION, ' '), 'php-regex.vendor_paths' => []]);
+            // An explicit target, no library of the application read, and
+            // the scan paths of the project alone: the target resolution
+            // then reads no composer.json, and no file of the application
+            // the test boots is tokenized, either of which gives up under
+            // the pinned limit before the extractor this test starves.
+            config(['php-regex.php_version' => \PHP_VERSION_ID, 'php-regex.pcre_version' => strtok(\PCRE_VERSION, ' '), 'php-regex.vendor_paths' => [], 'php-regex.paths' => [$project.'/app']]);
 
             $code = Artisan::call('regex:lint', [
                 'paths' => [$project.'/app'],
@@ -302,9 +303,9 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
         \ini_set('pcre.backtrack_limit', (string) (LibraryPcre::BACKTRACK_LIMIT_FLOOR - 1));
 
         try {
-            // An explicit target and no library read, as the checkstyle
-            // run above.
-            config(['php-regex.php_version' => \PHP_VERSION_ID, 'php-regex.pcre_version' => strtok(\PCRE_VERSION, ' '), 'php-regex.vendor_paths' => []]);
+            // An explicit target, no library read and the project's scan
+            // paths alone, as the checkstyle run above.
+            config(['php-regex.php_version' => \PHP_VERSION_ID, 'php-regex.pcre_version' => strtok(\PCRE_VERSION, ' '), 'php-regex.vendor_paths' => [], 'php-regex.paths' => [$project.'/app']]);
 
             $code = Artisan::call('regex:lint', [
                 'paths' => [$project.'/app'],
