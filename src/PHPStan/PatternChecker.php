@@ -440,9 +440,6 @@ final class PatternChecker
     }
 
     /**
-     * Whether the engine running PHPStan compiles the pattern.
-     */
-    /**
      * Where the expression starts in its file, when it is a string literal
      * or literals joined by ".": the pattern is then written there.
      */
@@ -464,6 +461,9 @@ final class PatternChecker
         return $offset >= 0 ? $offset : null;
     }
 
+    /**
+     * Whether the engine running PHPStan compiles the pattern.
+     */
     public function runningEngineCompiles(string $pattern): bool
     {
         return null === (new PcreEngine())->compile($pattern);
