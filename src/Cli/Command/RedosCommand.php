@@ -19,27 +19,13 @@ use PHPRegex\Cli\JsonRequest;
 use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
-use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
-use PHPRegex\Parser\DelimitedPattern;
-use PHPRegex\Parser\Exception\LexerException;
-use PHPRegex\Parser\Exception\LimitException;
-use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
-use PHPRegex\Parser\PcreTarget;
-use PHPRegex\Parser\Syntax\PatternParser;
-use PHPRegex\Parser\Text\DisplayEscaper;
-use PHPRegex\Redos\InputGenerator;
-use PHPRegex\Toolkit\Regex;
 
 /**
  * @internal
- *
- * @phpstan-type BenchResult array{label: string, result: string, wall_ms: float, avg_ms: float, cpu_ms: ?float, mem_bytes: int, peak_bytes: int, err_msg: string, err_code: int, iterations: int}
  */
 final class RedosCommand extends AbstractCommand implements JsonCommandInterface
 {
-    private const PREVIEW_LIMIT = 120;
-
     public function getName(): string
     {
         return 'redos';
@@ -94,20 +80,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
         }
 
         $pattern = $arguments->pattern;
-        $safePattern = $arguments->safePattern;
-        $inputValue = $arguments->input;
-        $inputFile = $arguments->inputFile;
-        $repeat = $arguments->repeat;
-        $prefix = $arguments->prefix;
-        $suffix = $arguments->suffix;
-        $iterations = $arguments->iterations;
-        $warmup = $arguments->warmup;
-        $jit = $arguments->jit;
-        $backtrackLimit = $arguments->backtrackLimit;
-        $recursionLimit = $arguments->recursionLimit;
-        $timeLimit = $arguments->timeLimit;
-        $format = $arguments->format;
-        $showInput = $arguments->showInput;
+        $safePattern = null !== $arguments->safePattern && '' !== $arguments->safePattern ? $arguments->safePattern : null;
 
         $regex = $this->createRegex($output, $input->regexOptions, $json);
         if (null === $regex) {
@@ -116,7 +89,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
 
         // A JSON run stops on an invalid pattern, with its validation: there
         // is no benchmark of it to report.
-        if ('json' === $format) {
+        if ('json' === $arguments->format) {
             $validation = $regex->validate($pattern);
             if (!$validation->isValid) {
                 $output->writeDocument(JsonDocument::error($validation->error ?? 'Invalid pattern.', JsonDocument::STAGE_PATTERN, ['validation' => $validation]));
@@ -124,7 +97,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
                 return self::FAILURE;
             }
 
-            $safeValidation = null !== $safePattern && '' !== $safePattern ? $regex->validate($safePattern) : null;
+            $safeValidation = null !== $safePattern ? $regex->validate($safePattern) : null;
             if (null !== $safeValidation && !$safeValidation->isValid) {
                 $output->writeDocument(JsonDocument::error('Invalid --safe pattern: '.($safeValidation->error ?? 'Invalid pattern.'), JsonDocument::STAGE_PATTERN, ['validation' => $safeValidation]));
 
@@ -132,491 +105,97 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
             }
         }
 
-        $target = $regex->target();
-
-        // These options set a setting: where ini_set() is disabled none can.
-        // disable_functions is set per process, so the test of this block
-        // runs the command in a PHP process of its own.
-        $setsASetting = null !== $jit || null !== $backtrackLimit || null !== $recursionLimit || (null !== $timeLimit && $timeLimit > 0);
-        if ($setsASetting && !\function_exists('ini_set')) {
-            $message = '--jit, --backtrack-limit, --recursion-limit and --time-limit set a setting, and ini_set() is disabled.';
-            if ($json) {
-                $output->writeDocument(JsonDocument::error($message, JsonDocument::STAGE_USAGE));
-            } else {
-                $output->writeError($output->error("Error: {$message}\n"));
-            }
-
-            return self::INVALID;
-        }
-
-        if (null !== $jit) {
-            self::change($saved, 'pcre.jit', $jit);
-        }
-        if (null !== $backtrackLimit) {
-            self::change($saved, 'pcre.backtrack_limit', (string) $backtrackLimit);
-        }
-        if (null !== $recursionLimit) {
-            self::change($saved, 'pcre.recursion_limit', (string) $recursionLimit);
-        }
-        if (null !== $timeLimit && $timeLimit > 0) {
-            // Setting the time limit restarts its count, as set_time_limit() does.
-            self::change($saved, 'max_execution_time', (string) $timeLimit);
+        $error = $this->applySettings($arguments, $saved);
+        if (null !== $error) {
+            return $this->unusable($output, $error, $json);
         }
 
         $runtime = PcreRuntimeInfo::fromIni();
-
-        $inputSource = 'user';
-        $inputNote = null;
-        if (null !== $inputFile) {
-            $inputValue = is_file($inputFile) && is_readable($inputFile) ? @file_get_contents($inputFile) : false;
-            if (false === $inputValue) {
-                if ($json) {
-                    $output->writeDocument(JsonDocument::error("Input file not readable: {$inputFile}", JsonDocument::STAGE_USAGE));
-                } else {
-                    $output->writeError($output->error("Error: Input file not readable: {$inputFile}\n"));
-                }
-
-                return self::INVALID;
-            }
-            $inputSource = 'file';
+        $subject = RedosInput::from($arguments, $regex);
+        if (\is_string($subject)) {
+            return $this->unusable($output, $subject, $json);
         }
 
-        if (null === $inputValue) {
-            [$inputValue, $inputSource, $inputNote] = $this->generateInput($regex, $pattern, $target);
+        $renderer = new RedosBenchmarkRenderer($output);
+        $highlightedVuln = $renderer->highlight($regex, $pattern);
+        $highlightedSafe = null !== $safePattern ? $renderer->highlight($regex, $safePattern) : null;
+
+        if ('json' !== $arguments->format) {
+            $meta = $this->targetMeta($input, $output);
+            $meta['PCRE'] = $output->warning($runtime->version);
+            $meta['PCRE JIT'] = $output->warning($runtime->jitSetting ?? 'unknown');
+            $meta['Backtrack'] = $output->warning((string) ($runtime->backtrackLimit ?? 'unknown'));
+            $meta['Recursion'] = $output->warning((string) ($runtime->recursionLimit ?? 'unknown'));
+            $renderer->renderPreamble(new ConsoleStyle($output, $input->globalOptions->visuals), $meta, $highlightedVuln, $highlightedSafe, $arguments, $subject);
         }
 
-        $baseLength = \strlen($inputValue);
-        $subject = $prefix.str_repeat($inputValue, $repeat).$suffix;
-        $finalLength = \strlen($subject);
-
-        $style = new ConsoleStyle($output, $input->globalOptions->visuals);
-        $meta = [];
-        $meta += $this->targetMeta($input, $output);
-        $meta['PCRE'] = $output->warning($runtime->version);
-        $meta['PCRE JIT'] = $output->warning($runtime->jitSetting ?? 'unknown');
-        $meta['Backtrack'] = $output->warning((string) ($runtime->backtrackLimit ?? 'unknown'));
-        $meta['Recursion'] = $output->warning((string) ($runtime->recursionLimit ?? 'unknown'));
-
-        $highlightedVuln = $this->highlightPattern($regex, $output, $pattern, $target);
-        $highlightedSafe = null;
-        if (null !== $safePattern && '' !== $safePattern) {
-            $highlightedSafe = $this->highlightPattern($regex, $output, $safePattern, $target);
-        }
-
-        if ('json' !== $format) {
-            $style->renderBanner('redos', $meta);
-
-            $steps = 3;
-            $style->renderSection('Patterns', 1, $steps);
-            $style->renderPattern($highlightedVuln, 'Vulnerable');
-            if (null !== $highlightedSafe) {
-                $style->renderPattern($highlightedSafe, 'Safe');
-            }
-
-            if ($style->visualsEnabled()) {
-                $output->write("\n");
-            }
-
-            $style->renderSection('Input', 2, $steps);
-            $inputRows = [
-                'Source' => $output->warning($inputSource),
-                'Base length' => $output->warning((string) $baseLength),
-                'Final length' => $output->warning((string) $finalLength),
-                'Iterations' => $output->warning($iterations.' (warmup '.$warmup.')'),
-            ];
-            if (1 !== $repeat) {
-                $inputRows['Repeat'] = $output->warning((string) $repeat);
-            }
-            if ('' !== $prefix || '' !== $suffix) {
-                $inputRows['Prefix/Suffix'] = $output->warning(\strlen($prefix).'/'.\strlen($suffix));
-            }
-            $displayInput = $this->formatInput($subject, $showInput ? null : self::PREVIEW_LIMIT);
-            if ($showInput) {
-                $inputRows['Input'] = $output->dim('"'.$displayInput.'"');
-            } else {
-                $inputRows['Preview'] = $output->dim('"'.$displayInput.'"');
-            }
-            if (null !== $inputNote) {
-                $inputRows['Note'] = $output->dim($inputNote);
-            }
-            $style->renderKeyValueBlock($inputRows);
-
-            if ($style->visualsEnabled()) {
-                $output->write("\n");
-            }
-
-            $style->renderSection('Benchmark', 3, $steps);
-        }
-
-        $rows = [];
-        $rows['vuln'] = $this->bench('vuln', $pattern, $subject, $warmup, $iterations);
-        if (null !== $safePattern && '' !== $safePattern) {
-            $rows['safe'] = $this->bench('safe', $safePattern, $subject, $warmup, $iterations);
-        }
+        $benchmark = new RedosBenchmark();
+        $vuln = $benchmark->run('vuln', $pattern, $subject->subject, $arguments->warmup, $arguments->iterations);
+        $safe = null !== $safePattern ? $benchmark->run('safe', $safePattern, $subject->subject, $arguments->warmup, $arguments->iterations) : null;
 
         // A pattern PHP refuses is a problem of the pattern, whatever the
         // benchmark measured.
-        $verdict = $this->refuses($pattern) || (isset($rows['safe']) && null !== $safePattern && $this->refuses($safePattern))
+        $verdict = $benchmark->refuses($pattern) || (null !== $safePattern && $benchmark->refuses($safePattern))
             ? self::FAILURE
             : self::SUCCESS;
 
-        if ('json' === $format) {
-            $summary = null;
-            if (isset($rows['safe'])) {
-                $summary = $this->buildSummary($rows['vuln'], $rows['safe']);
-            }
-            $payload = [
-                'pattern' => $pattern,
-                'safe_pattern' => $safePattern,
-                'runtime' => $runtime,
-                'input' => [
-                    'source' => $inputSource,
-                    'base_length' => $baseLength,
-                    'final_length' => $finalLength,
-                    'repeat' => $repeat,
-                    'prefix' => $prefix,
-                    'suffix' => $suffix,
-                    'preview' => $showInput ? null : $this->formatInput($subject, self::PREVIEW_LIMIT),
-                    'value' => $showInput ? $subject : null,
-                    'note' => $inputNote,
-                ],
-                'settings' => [
-                    'iterations' => $iterations,
-                    'warmup' => $warmup,
-                ],
-                'bench' => $rows,
-                'summary' => $summary,
-            ];
-
-            $output->writeDocument(JsonDocument::encode($payload));
-
-            return $verdict;
-        }
-
-        $this->renderBenchmarkTable($output, $rows);
-
-        if (isset($rows['safe'])) {
-            $this->renderSummary($output, $rows['vuln'], $rows['safe']);
+        if ('json' === $arguments->format) {
+            $renderer->writeDocument($arguments, $runtime, $subject, $vuln, $safe);
+        } else {
+            $renderer->renderResults($vuln, $safe);
         }
 
         return $verdict;
     }
 
     /**
-     * Whether PHP refuses to compile the pattern: the call fails with a
-     * warning, which a failure while matching never raises.
+     * Report what keeps the command line from running: as the JSON error
+     * envelope, stage "usage", when it asked for JSON.
      */
-    private function refuses(string $pattern): bool
+    private function unusable(Output $output, string $message, bool $json): int
     {
-        $warned = false;
-        set_error_handler(static function () use (&$warned): bool {
-            $warned = true;
-
-            return true;
-        });
-
-        try {
-            $result = preg_match($pattern, '');
-        } finally {
-            restore_error_handler();
+        if ($json) {
+            $output->writeDocument(JsonDocument::error($message, JsonDocument::STAGE_USAGE));
+        } else {
+            $output->writeError($output->error("Error: {$message}\n"));
         }
 
-        return false === $result && $warned;
+        return self::INVALID;
     }
 
     /**
-     * Set the setting, once per run, keeping in $saved the value it had.
+     * Set the settings the command line names, keeping in $saved the value
+     * each had; the message when ini_set() is disabled and one is named.
      *
      * @param array<string, string> $saved
      */
-    private static function change(array &$saved, string $key, string $value): void
+    private function applySettings(RedosArguments $arguments, array &$saved): ?string
     {
-        $previous = ini_set($key, $value);
-        if (false !== $previous) {
-            $saved[$key] = $previous;
-        }
-    }
+        // disable_functions is set per process, so the test of this block
+        // runs the command in a PHP process of its own.
+        $settings = array_filter([
+            'pcre.jit' => $arguments->jit,
+            'pcre.backtrack_limit' => $arguments->backtrackLimit,
+            'pcre.recursion_limit' => $arguments->recursionLimit,
+            // Setting the time limit restarts its count, as set_time_limit() does.
+            'max_execution_time' => null !== $arguments->timeLimit && $arguments->timeLimit > 0 ? $arguments->timeLimit : null,
+        ], static fn (string|int|null $value): bool => null !== $value);
 
-    /**
-     * @return array{0: string, 1: string, 2: ?string}
-     */
-    private function generateInput(Regex $regex, string $pattern, PcreTarget $target): array
-    {
-        try {
-            $analysis = $regex->redos($pattern);
-            $culprit = $analysis->culpritNode;
-            if (null !== $culprit) {
-                $patternInfo = DelimitedPattern::fromDelimited($pattern, $target);
-                $generated = (new InputGenerator())->generate($culprit, $patternInfo->flags, $analysis->severity);
-                if ('' !== $generated) {
-                    return [$generated, 'auto', null];
-                }
-            }
-        } catch (\Throwable) {
-            // Fall back to default input.
+        if ([] === $settings) {
+            return null;
         }
 
-        return ['a!', 'default', 'Auto input unavailable; using default.'];
-    }
-
-    private function highlightPattern(Regex $regex, Output $output, string $pattern, PcreTarget $target): string
-    {
-        if (!$output->isAnsi()) {
-            return $pattern;
+        if (!\function_exists('ini_set')) {
+            return '--jit, --backtrack-limit, --recursion-limit and --time-limit set a setting, and ini_set() is disabled.';
         }
 
-        try {
-            $ast = $regex->parse($pattern);
-            $patternInfo = DelimitedPattern::fromDelimited($pattern, $target);
-            $highlightedBody = $ast->accept(new ConsoleHighlighter());
-            $closingDelimiter = PatternParser::closingDelimiter($patternInfo->delimiter);
-
-            return $patternInfo->delimiter.$highlightedBody.$closingDelimiter.$patternInfo->flags;
-        } catch (LexerException|LimitException|ParserException) {
-            return $pattern;
-        }
-    }
-
-    /**
-     * @return BenchResult
-     */
-    private function bench(string $label, string $pattern, string $subject, int $warmup, int $iterations): array
-    {
-        // A pattern PHP refuses warns on every call: its error is read from
-        // preg_last_error() below.
-        set_error_handler(static fn (): bool => true);
-
-        try {
-            return $this->measure($label, $pattern, $subject, $warmup, $iterations);
-        } finally {
-            restore_error_handler();
-        }
-    }
-
-    /**
-     * @return BenchResult
-     */
-    private function measure(string $label, string $pattern, string $subject, int $warmup, int $iterations): array
-    {
-        for ($i = 0; $i < $warmup; $i++) {
-            preg_match($pattern, $subject);
-        }
-
-        $usageStart = \function_exists('getrusage') ? (array) getrusage() : null;
-        $memStart = memory_get_usage(true);
-        $peakStart = memory_get_peak_usage(true);
-
-        $t0 = hrtime(true);
-        $result = false;
-        $errCode = \PREG_NO_ERROR;
-        $iterationsRun = 0;
-
-        for ($i = 0; $i < $iterations; $i++) {
-            $iterationsRun++;
-            $result = preg_match($pattern, $subject);
-            $errCode = preg_last_error();
-
-            if (false === $result && \PREG_NO_ERROR !== $errCode) {
-                break;
+        foreach ($settings as $key => $value) {
+            $previous = ini_set($key, (string) $value);
+            if (false !== $previous) {
+                $saved[$key] = $previous;
             }
         }
 
-        $wallMs = (hrtime(true) - $t0) / 1e6;
-        $usageEnd = \function_exists('getrusage') ? (array) getrusage() : null;
-        $memEnd = memory_get_usage(true);
-        $peakEnd = memory_get_peak_usage(true);
-
-        $cpuMs = null;
-        if (\is_array($usageStart) && \is_array($usageEnd)) {
-            $cpuMs = $this->usageToMs($usageEnd, 'ru_utime') - $this->usageToMs($usageStart, 'ru_utime');
-            $cpuMs += $this->usageToMs($usageEnd, 'ru_stime') - $this->usageToMs($usageStart, 'ru_stime');
-        }
-
-        $errMsg = '-';
-        if (\PREG_NO_ERROR !== $errCode) {
-            $errMsg = \function_exists('preg_last_error_msg') ? preg_last_error_msg() : (string) $errCode;
-        }
-
-        return [
-            'label' => $label,
-            'result' => $this->matchResultName($result),
-            'wall_ms' => $wallMs,
-            'avg_ms' => $wallMs / max(1, $iterationsRun),
-            'cpu_ms' => $cpuMs,
-            'mem_bytes' => $memEnd - $memStart,
-            'peak_bytes' => $peakEnd - $peakStart,
-            'err_msg' => $errMsg,
-            'err_code' => $errCode,
-            'iterations' => $iterationsRun,
-        ];
-    }
-
-    /**
-     * @param BenchResult $vuln
-     * @param BenchResult $safe
-     *
-     * @return array{result_parity: string, speedup: ?float, delta_ms: ?float}
-     */
-    private function buildSummary(array $vuln, array $safe): array
-    {
-        $speedup = null;
-        $delta = null;
-        if ($safe['avg_ms'] > 0.0) {
-            $speedup = $vuln['avg_ms'] / $safe['avg_ms'];
-            $delta = $vuln['avg_ms'] - $safe['avg_ms'];
-        }
-
-        return [
-            'result_parity' => $vuln['result'] === $safe['result'] ? 'same' : 'different',
-            'speedup' => $speedup,
-            'delta_ms' => $delta,
-        ];
-    }
-
-    /**
-     * @param array<string, BenchResult> $rows
-     */
-    private function renderBenchmarkTable(Output $output, array $rows): void
-    {
-        $header = sprintf(
-            "%-8s | %-6s | %10s | %10s | %10s | %10s | %10s | %s\n",
-            'case',
-            'result',
-            'wall_ms',
-            'avg_ms',
-            'cpu_ms',
-            'mem_kb',
-            'peak_kb',
-            'err',
-        );
-        $output->write($output->dim($header));
-        $output->write(str_repeat('-', 92)."\n");
-
-        foreach ($rows as $row) {
-            $labelText = str_pad($row['label'], 8);
-            $resultText = str_pad($row['result'], 6);
-            $label = $this->formatCase($output, $labelText, $row['label']);
-            $result = $this->formatResult($output, $resultText, $row['result']);
-            $wall = str_pad($this->formatMs($row['wall_ms']), 10, ' ', \STR_PAD_LEFT);
-            $avg = str_pad($this->formatMs($row['avg_ms']), 10, ' ', \STR_PAD_LEFT);
-            $cpu = null === $row['cpu_ms'] ? 'n/a' : $this->formatMs($row['cpu_ms']);
-            $cpu = str_pad($cpu, 10, ' ', \STR_PAD_LEFT);
-            $mem = str_pad($this->formatKb($row['mem_bytes']), 10, ' ', \STR_PAD_LEFT);
-            $peak = str_pad($this->formatKb($row['peak_bytes']), 10, ' ', \STR_PAD_LEFT);
-            $err = $row['err_msg'];
-            if ('-' !== $err) {
-                $err = $output->error($err);
-            }
-
-            $output->write(
-                $label.' | '
-                .$result.' | '
-                .$wall.' | '
-                .$avg.' | '
-                .$cpu.' | '
-                .$mem.' | '
-                .$peak.' | '
-                .$err."\n",
-            );
-        }
-    }
-
-    /**
-     * @param BenchResult $vuln
-     * @param BenchResult $safe
-     */
-    private function renderSummary(Output $output, array $vuln, array $safe): void
-    {
-        $summary = $this->buildSummary($vuln, $safe);
-        $parity = 'same' === $summary['result_parity']
-            ? $output->success('same')
-            : $output->warning('different');
-
-        $speedupText = 'n/a';
-        if (null !== $summary['speedup']) {
-            $speedupText = number_format($summary['speedup'], 2).'x';
-            $speedupText = $summary['speedup'] >= 1.0
-                ? $output->success($speedupText)
-                : $output->warning($speedupText);
-        }
-
-        $deltaText = 'n/a';
-        if (null !== $summary['delta_ms']) {
-            $deltaText = $this->formatMs($summary['delta_ms']).' ms';
-            $deltaText = $summary['delta_ms'] >= 0.0
-                ? $output->success($deltaText)
-                : $output->warning($deltaText);
-        }
-
-        $output->write("\n");
-        $output->write('Result parity : '.$parity."\n");
-        $output->write('Speedup       : '.$speedupText." (vuln avg / safe avg)\n");
-        $output->write('Delta avg     : '.$deltaText." (vuln - safe)\n");
-    }
-
-    private function formatCase(Output $output, string $label, string $raw): string
-    {
-        return match ($raw) {
-            'vuln' => $output->error($label),
-            'safe' => $output->success($label),
-            default => $label,
-        };
-    }
-
-    private function formatResult(Output $output, string $label, string $raw): string
-    {
-        return match ($raw) {
-            'match' => $output->success($label),
-            'no' => $output->warning($label),
-            'error' => $output->error($label),
-            default => $label,
-        };
-    }
-
-    private function formatInput(string $value, ?int $limit): string
-    {
-        $escaped = DisplayEscaper::escapeText($value);
-        if (null !== $limit && \strlen($escaped) > $limit) {
-            return substr($escaped, 0, $limit).'...';
-        }
-
-        return $escaped;
-    }
-
-    private function formatMs(float $ms): string
-    {
-        return number_format($ms, 2);
-    }
-
-    private function formatKb(int $bytes): string
-    {
-        return sprintf('%+.1f', $bytes / 1024);
-    }
-
-    /**
-     * @param array<mixed, mixed> $usage
-     */
-    private function usageToMs(array $usage, string $prefix): float
-    {
-        $secKey = $prefix.'.tv_sec';
-        $usecKey = $prefix.'.tv_usec';
-
-        $sec = isset($usage[$secKey]) && is_numeric($usage[$secKey]) ? (float) $usage[$secKey] : 0.0;
-        $usec = isset($usage[$usecKey]) && is_numeric($usage[$usecKey]) ? (float) $usage[$usecKey] : 0.0;
-
-        return $sec * 1000 + $usec / 1000;
-    }
-
-    private function matchResultName(int|false $result): string
-    {
-        if (1 === $result) {
-            return 'match';
-        }
-
-        if (0 === $result) {
-            return 'no';
-        }
-
-        return 'error';
+        return null;
     }
 }

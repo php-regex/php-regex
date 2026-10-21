@@ -23,8 +23,8 @@ return [
     'src/Cli/Command/LintArgumentParser.php' => [
         'PHPRegex\Cli\Command\LintArgumentParser::parse()' => ['validator-input', 1],
     ],
-    'src/Cli/Command/RedosCommand.php' => [
-        'PHPRegex\Cli\Command\RedosCommand::usageToMs()' => ['host-return', 2],
+    'src/Cli/Command/RedosBenchmark.php' => [
+        'PHPRegex\Cli\Command\RedosBenchmark::milliseconds()' => ['host-return', 2],
     ],
     'src/LanguageServer/Protocol/Message.php' => [
         'PHPRegex\LanguageServer\Protocol\Message::__construct()' => ['protocol-slot', 1],

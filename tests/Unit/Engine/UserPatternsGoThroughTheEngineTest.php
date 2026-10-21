@@ -29,7 +29,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
 
     /**
      * The files that run the library's own regexes. The CLI benchmark
-     * (RedosCommand) runs the pattern with the JIT on purpose: it measures
+     * (RedosBenchmark) runs the pattern with the JIT on purpose: it measures
      * what production sees, so it stays out of the engine.
      */
     private const OWN_REGEX_FILES = [
@@ -45,7 +45,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
         'src/Symfony/Security/SecurityConfigExtractor.php',
         'src/Cli/Command/HelpCommand.php',
         'src/Cli/Command/LintCommand.php',
-        'src/Cli/Command/RedosCommand.php',
+        'src/Cli/Command/RedosBenchmark.php',
         'src/Cli/SelfUpdate/SelfUpdater.php',
         'src/Parser/Syntax/CodePointReader.php',
         'src/Parser/Text/DisplayEscaper.php',
@@ -110,7 +110,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
      * caller's limits on purpose: it measures what production sees, so it
      * goes through neither the engine nor the floor.
      */
-    private const USER_PATTERN_BENCHMARKS = ['src/Cli/Command/RedosCommand.php'];
+    private const USER_PATTERN_BENCHMARKS = ['src/Cli/Command/RedosBenchmark.php'];
 
     /**
      * The functions that run a regex; preg_quote() runs none.
@@ -124,7 +124,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
     private const LAST_ERROR_READERS = [
         'src/Parser/Engine/LibraryPcre.php',
         'src/Parser/Lexer.php',
-        'src/Cli/Command/RedosCommand.php',
+        'src/Cli/Command/RedosBenchmark.php',
     ];
 
     /**
