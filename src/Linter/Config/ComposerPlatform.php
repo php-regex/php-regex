@@ -43,7 +43,12 @@ final class ComposerPlatform
     public static function read(string $projectDir, array $env, array &$notices): ?array
     {
         $name = ($env['COMPOSER'] ?? '') ?: 'composer.json';
-        $path = str_starts_with($name, '/') || 1 === LibraryPcre::match('/^[A-Za-z]:[\\\\\/]/', $name) ? $name : $projectDir.'/'.$name;
+        // A Windows drive prefix is read from the name itself: a check of
+        // the file system needs no regex of the engine, which a pinned
+        // limit would leave giving up on.
+        $windowsDrive = \strlen($name) >= 3 && \ctype_alpha($name[0]) && ':' === $name[1]
+            && ('/' === $name[2] || '\\' === $name[2]);
+        $path = str_starts_with($name, '/') || $windowsDrive ? $name : $projectDir.'/'.$name;
 
         $contents = is_file($path) ? @file_get_contents($path) : false;
         if (false === $contents) {
