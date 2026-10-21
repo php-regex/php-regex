@@ -25,6 +25,10 @@ CHANGELOG
    name. `php_regex.regex` and the commands are private; the
    `PHPRegex\Toolkit\Regex` alias stays public. `RouteControllerFileResolver`,
    which nothing called, is gone.
+ * The `ValidRegex` messages ship in an English catalogue,
+   `Resources/translations/validators.en.xlf`, of the `validators` domain:
+   an application translates them as it translates the messages of
+   Symfony's own constraints.
  * `regex:analyze` is given its two analyzers, routes then security, in place
    of an internal `php_regex.bridge_analyzer` tag and an `AnalyzerRegistry`
    that sorted them by priority; both are gone.

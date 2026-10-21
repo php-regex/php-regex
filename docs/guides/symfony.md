@@ -233,6 +233,17 @@ final class SearchFilter
   is never analysed for ReDoS.
 - Null and the empty string are valid, as for every Symfony constraint: add
   `NotBlank` to refuse them.
+- `message` and `redosMessage` are translation keys of the `validators`
+  domain, as the messages of Symfony's own constraints are: the bundle ships
+  their English catalogue (`Resources/translations/validators.en.xlf`), and
+  your application translates them in its own `translations/validators.<locale>.*`
+  files. `{{ error }}` and `{{ hint }}` are the library's English messages,
+  not translated.
+
+```yaml
+# translations/validators.fr.yaml
+'This value is not a valid regular expression: {{ error }}': 'Cette valeur n''est pas une expression régulière valide : {{ error }}'
+```
 
 ## How route requirements and security patterns are read
 

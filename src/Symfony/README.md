@@ -121,6 +121,8 @@ public string $pattern;
 public string $routePattern;
 ```
 
+Its messages are translation keys of the `validators` domain: the bundle ships their English catalogue, and your `translations/validators.<locale>.*` files translate them.
+
 Integration
 -----------
 

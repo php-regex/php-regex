@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+    <file source-language="en" target-language="en" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>This value is not a valid regular expression: {{ error }}</source>
+                <target>This value is not a valid regular expression: {{ error }}</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>This regular expression is open to catastrophic backtracking (ReDoS risk: {{ severity }}).</source>
+                <target>This regular expression is open to catastrophic backtracking (ReDoS risk: {{ severity }}).</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>
