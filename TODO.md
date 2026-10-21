@@ -239,6 +239,19 @@ Left: `\R` under `(*BSR_ANYCRLF)` described as any Unicode line break,
 not knowing the target release or locale (`\w` says "from PCRE2 10.43"
 instead of choosing).
 
+## Test suite: a state leak an order can expose
+
+Running the whole suite in a container, one random order in three makes
+two Laravel lint tests fail: a test that ran before them leaves the
+library reading patterns under a limit it cannot meet, and the lint
+report says "Failed to collect patterns" where the tests expect their
+file. The class alone passes, every order on the runner CI uses has
+passed so far, and seeds 424242 and 777 are clean. Find the leaking
+test: pin `pcre.backtrack_limit` or the ini-setter hook and not restore
+it (see `LibraryPcre::useIniSetter` and the resets in
+`tests/Unit/Hir/ClassSetProviderCacheTest`), reproduce with
+`--random-order-seed=1792566553`, and give it a `finally`.
+
 ## The articles section: what is left
 
 - The next articles, in priority order: variable-length lookbehind across
