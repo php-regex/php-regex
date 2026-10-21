@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Parser\DelimitedPattern;
-use PHPRegex\Parser\Text\DisplayEscaper;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Redos\InputGenerator;
 use PHPRegex\Toolkit\Regex;
 

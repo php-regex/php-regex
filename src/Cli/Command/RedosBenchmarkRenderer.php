@@ -22,7 +22,7 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
-use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -52,7 +52,7 @@ final class RedosBenchmarkRenderer
             $ast = $regex->parse($pattern);
             $patternInfo = DelimitedPattern::fromDelimited($pattern, $regex->target());
             $highlightedBody = $ast->accept(new ConsoleHighlighter());
-            $closingDelimiter = PatternParser::closingDelimiter($patternInfo->delimiter);
+            $closingDelimiter = Delimiters::closing($patternInfo->delimiter);
 
             return $patternInfo->delimiter.$highlightedBody.$closingDelimiter.$patternInfo->flags;
         } catch (LexerException|LimitException|ParserException) {
