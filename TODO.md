@@ -203,6 +203,13 @@ Integrations:
 - The target settings (PHP, PCRE2, locale) enter through one class, and
   every parser derived for another target keeps the locale.
 
+## Public API: the last decisions before 2.0.0
+
+- `ExtractorInterface` is marked internal, yet the `extractor_service`
+  setting asks users to implement it: make it public, as the extension
+  point it is.
+- `regex:routes --check-conflicts` does nothing: remove it before the tag.
+
 ## Analysis engines: the last pass before 2.0.0
 
 - The linter rebuilds the optimizer's Rewriter for `/x` patterns
