@@ -1,5 +1,12 @@
 parameters:
 	ignoreErrors:
+
+		-
+			rawMessage: 'Attribute references internal class PHPUnit\Framework\Attributes\IgnorePhpunitDeprecations.'
+			identifier: attribute.internalClass
+			count: 1
+			path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
+
 		-
 			rawMessage: 'Static property PHPRegex\Cli\Application::$memoryReserve is never read, only written.'
 			identifier: property.onlyWritten
