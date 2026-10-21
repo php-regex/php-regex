@@ -107,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The default cache wrote parsed trees as PHP files under the shared system temp directory and `include`d them: another local user could plant a file there and have it run, or change a verdict. Nothing is written to disk by default any more (the latest 1024 trees are kept in memory), `FilesystemCache` only runs where a directory is named, stores data read back with a class allowlist instead of code, creates its directories for their owner only (`0700`, files `0600`) without touching the process umask, and ignores a directory another user owns or others can write to.
 
 ### Added
+- `php-regex.vendor_paths`: the Laravel bridge reads the libraries whose declared patterns `regex:lint` scans from it, the application's `vendor/` directory by default and none as an empty list.
 
 - The Symfony bundle ships the English catalogue of the `ValidRegex` messages, `validators.en.xlf` in the `validators` domain, which an application translates in its own `translations/` files.
 - `checks.lint.rules` in `regex.json` takes a rule id in full, `regex.lint.quantifier.useless`, as the docs and the issues write it, beside the short `quantifier.useless`; a misspelt id, in either spelling, is told the nearest one (`Did you mean "regex.lint.quantifier.nested"?`), and a rule named in both spellings in one file is an error. `--enable-rule` and `--disable-rule` suggest the nearest id too.
