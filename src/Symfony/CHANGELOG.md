@@ -19,6 +19,12 @@ CHANGELOG
    and `Configuration`, both internal, are gone. The `php_regex` alias and
    every configuration key are unchanged, as `config:dump-reference
    php_regex` shows.
+ * Every service is private and named `php_regex.*`: an application
+   autowires `PHPRegex\Toolkit\Regex` and the `ValidRegexValidator`, and
+   none of the about twenty internal classes registered under their class
+   name. `php_regex.regex` and the commands are private; the
+   `PHPRegex\Toolkit\Regex` alias stays public. `RouteControllerFileResolver`,
+   which nothing called, is gone.
  * The bundle sets no container parameter: its configuration goes straight
    into its services, where 22 `php_regex.*` parameters (two of them read by
    nothing) let an application read and override it. Read the configuration

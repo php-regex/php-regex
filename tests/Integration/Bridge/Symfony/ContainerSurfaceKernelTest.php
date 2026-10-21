@@ -13,11 +13,14 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
+use PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator;
 use PHPRegex\Tests\Support\FrameworkKernel;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -53,6 +56,53 @@ final class ContainerSurfaceKernelTest extends TestCase
         $this->assertInstanceOf(Regex::class, $default);
         $this->assertFalse($configured->validate($long)->isValid);
         $this->assertTrue($default->validate($long)->isValid);
+    }
+
+    /**
+     * The application autowires the Regex service and the validator of the
+     * ValidRegex constraint; every other class of the bundle is internal.
+     */
+    #[Test]
+    public function test_only_the_regex_service_and_the_constraint_validator_are_autowirable(): void
+    {
+        $kernel = new FrameworkKernel($this->makeProject(), $this->makeProject(), debug: true);
+
+        try {
+            $tester = new CommandTester((new Application($kernel))->find('debug:autowiring'));
+            $tester->execute(['search' => 'PHPRegex', '--all' => true]);
+        } finally {
+            $kernel->shutdown();
+        }
+
+        $types = [];
+        foreach (explode("\n", $tester->getDisplay()) as $line) {
+            if (str_starts_with($line, ' PHPRegex\\')) {
+                // The type alone: the alias it points to is written
+                // "→ id" or "- alias:id" depending on the Symfony release.
+                $types[] = strtok(trim($line), ' ');
+            }
+        }
+
+        $this->assertSame([
+            ValidRegexValidator::class,
+            Regex::class,
+        ], $types);
+    }
+
+    /**
+     * Nothing of the bundle is fetched from the container by its id: the
+     * commands are lazy, and the Regex service is injected, or fetched as
+     * PHPRegex\Toolkit\Regex.
+     */
+    #[Test]
+    public function test_the_services_are_private_but_the_regex_alias(): void
+    {
+        $container = $this->boot();
+
+        $this->assertTrue($container->has(Regex::class));
+        foreach (['php_regex.regex', 'php_regex.command.lint', 'php_regex.command.compare', 'php_regex.command.routes', 'php_regex.command.security', 'php_regex.command.analyze', 'php_regex.command.explain', 'php_regex.command.transpile'] as $id) {
+            $this->assertFalse($container->has($id), $id);
+        }
     }
 
     /**

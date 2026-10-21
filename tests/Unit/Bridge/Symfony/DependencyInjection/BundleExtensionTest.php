@@ -143,8 +143,9 @@ final class BundleExtensionTest extends TestCase
             'extractor_service' => 'my_custom_extractor',
         ]], $container);
 
-        $this->assertTrue($container->hasAlias(ExtractorInterface::class));
-        $this->assertSame('my_custom_extractor', (string) $container->getAlias(ExtractorInterface::class));
+        $this->assertSame('my_custom_extractor', (string) $container->getAlias('php_regex.extractor.instance'));
+        // The interface is internal: the application autowires no extractor.
+        $this->assertFalse($container->hasAlias(ExtractorInterface::class));
     }
 
     public function test_build_cache_definition_uses_pool(): void

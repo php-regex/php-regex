@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony;
 
 use PhpParser\ParserFactory;
-use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
@@ -27,8 +26,6 @@ use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Symfony\DependencyInjection\EditorLinkPass;
 use PHPRegex\Symfony\DependencyInjection\ValidatorMappingPass;
-use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
-use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -353,11 +350,9 @@ final class PHPRegexBundle extends AbstractBundle
         $extractorService = $config['extractor_service'];
         $warnings = [];
         if (null !== $extractorService && '' !== $extractorService) {
-            $builder->setAlias(ExtractorInterface::class, $extractorService);
             $builder->setAlias('php_regex.extractor.instance', $extractorService);
         } else {
             $builder->setDefinition('php_regex.extractor.instance', $this->createExtractorDefinition($config['extraction']));
-            $builder->setAlias(ExtractorInterface::class, 'php_regex.extractor.instance');
             $warnings = $this->extractionWarnings($config['extraction']);
         }
 
@@ -391,7 +386,7 @@ final class PHPRegexBundle extends AbstractBundle
             ->setArgument('$defaultMinimizer', $minimization)
             ->setArgument('$defaultDeterminizer', $determinization);
 
-        foreach ([RouteConflictAnalyzer::class, SecurityAccessControlAnalyzer::class] as $analyzer) {
+        foreach (['php_regex.routing.conflict_analyzer', 'php_regex.security.access_control_analyzer'] as $analyzer) {
             $builder->getDefinition($analyzer)
                 ->setArgument('$minimizationAlgorithm', $minimization)
                 ->setArgument('$determinizationAlgorithm', $determinization);

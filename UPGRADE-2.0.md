@@ -192,7 +192,6 @@ one.
 | `RegexParser\Bridge\Symfony\Routing\RouteConflictAnalyzer` | `PHPRegex\Symfony\Routing\RouteConflictAnalyzer` |
 | `RegexParser\Bridge\Symfony\Routing\RouteConflictReport` | `PHPRegex\Symfony\Routing\RouteConflictReport` |
 | `RegexParser\Bridge\Symfony\Routing\RouteConflictSuggestionBuilder` | `PHPRegex\Symfony\Routing\RouteConflictSuggestionBuilder` |
-| `RegexParser\Bridge\Symfony\Routing\RouteControllerFileResolver` | `PHPRegex\Symfony\Routing\RouteControllerFileResolver` |
 | `RegexParser\Bridge\Symfony\Routing\RouteRequirementNormalizer` | `PHPRegex\Symfony\Routing\RouteRequirementNormalizer` |
 | `RegexParser\Bridge\Symfony\Security\SecurityAccessControlAnalyzer` | `PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer` |
 | `RegexParser\Bridge\Symfony\Security\SecurityAccessControlReport` | `PHPRegex\Symfony\Security\SecurityAccessControlReport` |
@@ -393,6 +392,7 @@ one.
 | `RegexParser\Automata\Solver\RegexSolverInterface` | removed: type against `PHPRegex\Automata\LanguageSolver` |
 | `RegexParser\Bridge\Symfony\DependencyInjection\Configuration` | removed: no replacement: `PHPRegex\Symfony\PHPRegexBundle` defines its configuration itself |
 | `RegexParser\Bridge\Symfony\DependencyInjection\RegexParserExtension` | removed: no replacement: `PHPRegex\Symfony\PHPRegexBundle` loads its services itself; its container extension keeps the php_regex alias |
+| `RegexParser\Bridge\Symfony\Routing\RouteControllerFileResolver` | removed: no replacement: nothing called it |
 | `RegexParser\Cli\Command\ClearCacheCommand` | removed: no replacement: the binary keeps no cache between runs, so the regex clear-cache command had nothing to clear |
 | `RegexParser\Node\ClassOperationNode` | removed: no replacement: PHP reads "&&" and "--" in a class as members and ranges, so no pattern ever produced it |
 | `RegexParser\Node\ClassOperationType` | removed: no replacement: it only typed ClassOperationNode |
@@ -1557,6 +1557,29 @@ The 2.0 development snapshots set 22 `php_regex.*` parameters, gone as well:
 `php_regex.automata.determinization_algorithm`, `php_regex.optimizations`,
 `php_regex.paths`, `php_regex.exclude`, `php_regex.report_unmatched_ignores`,
 `php_regex.editor_format` and `php_regex.extraction.warnings`.
+
+#### Symfony: the bundle's services are private
+
+Every service of the bundle is private and named `php_regex.*`:
+
+- `$container->get('php_regex.regex')` no longer works: inject
+  `PHPRegex\Toolkit\Regex`. The `PHPRegex\Toolkit\Regex` alias stays
+  public, and `$container->get(Regex::class)` keeps working.
+- The commands (`php_regex.command.lint` and the others) are private: they
+  are lazy, listed by `bin/console list` and built when they run.
+- The internal classes the bundle registered under their class name are no
+  longer autowirable in the application: `PhpFilePatternSource`,
+  `RoutePatternSource`, `ValidatorPatternSource`, `RouteConflictAnalyzer`,
+  `RouteConflictSuggestionBuilder`, `RouteRequirementNormalizer`,
+  `SecurityAccessControlAnalyzer`, `SecurityAccessSuggestionBuilder`,
+  `SecurityConfigExtractor`, `SecurityConfigLocator`,
+  `SecurityFirewallAnalyzer`, `SecurityPatternNormalizer`,
+  `ConsoleReportFormatter`, `JsonReportFormatter`, `RoutesAnalyzer`,
+  `SecurityAnalyzer`, `AnalyzerRegistry` and the
+  `PHPRegex\Linter\Extraction\ExtractorInterface` alias. Only
+  `PHPRegex\Toolkit\Regex` and the `ValidRegexValidator` of the `ValidRegex`
+  constraint are.
+- `RouteControllerFileResolver`, which nothing called, is gone.
 
 #### Laravel: config/php-regex.php replaces config/regex-parser.php
 

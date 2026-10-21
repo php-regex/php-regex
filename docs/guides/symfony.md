@@ -172,7 +172,7 @@ out.
 
 ## Using the service
 
-The container registers `php_regex.regex`, autowirable as
+The container registers `php_regex.regex`, a private service autowirable as
 `PHPRegex\Toolkit\Regex` — inject it like any other service:
 
 ```php
@@ -188,6 +188,12 @@ final class PatternSupport
     }
 }
 ```
+
+Every service of the bundle is private and named `php_regex.*`. Besides
+`PHPRegex\Toolkit\Regex`, the application autowires only the validator of the
+`ValidRegex` constraint, which the validator finds by its class name; the
+other classes of the bundle are internal. The commands are lazy, built when
+they run.
 
 `validate()` returns the object [the Laravel facade returns](laravel.md#using-the-service): `$result->isValid`, `$result->error`,
 `$result->caretSnippet`. [The API reference](../reference/api.md) lists every

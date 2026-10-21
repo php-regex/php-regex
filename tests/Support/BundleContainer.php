@@ -15,6 +15,8 @@ namespace PHPRegex\Tests\Support;
 
 use PHPRegex\Symfony\PHPRegexBundle;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
+use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
@@ -37,7 +39,9 @@ final class BundleContainer
 
     /**
      * The bundle's extension registered in the container, the bundle's
-     * compiler passes added, as a kernel registers them.
+     * compiler passes added, as a kernel registers them. The bundle's
+     * services, all private, are made public for the test to fetch, as the
+     * test container of FrameworkBundle exposes them.
      */
     public static function register(ContainerBuilder $container): ExtensionInterface
     {
@@ -47,6 +51,16 @@ final class BundleContainer
         $extension = self::extensionOf($bundle);
         $container->registerExtension($extension);
         $bundle->build($container);
+        $container->addCompilerPass(new class implements CompilerPassInterface {
+            public function process(ContainerBuilder $container): void
+            {
+                foreach ($container->getDefinitions() as $id => $definition) {
+                    if (str_starts_with($id, 'php_regex.')) {
+                        $definition->setPublic(true);
+                    }
+                }
+            }
+        }, PassConfig::TYPE_BEFORE_OPTIMIZATION, -2048);
 
         return $extension;
     }

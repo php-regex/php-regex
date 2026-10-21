@@ -185,7 +185,7 @@ final class PackageManifestTest extends TestCase
         'Symfony' => [
             'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Console\ConsoleLintRequest',
             'Linter\Console\ConsoleLintRunner', 'Linter\Console\ConsoleWriter',
-            'Linter\Extraction\ExtractorInterface', 'Linter\Extraction\InteropPresets',
+            'Linter\Extraction\InteropPresets',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpParserExtractionStrategy', 'Linter\Extraction\RouteRequirementCompiler',
             'Linter\Extraction\TokenBasedExtractionStrategy', 'Linter\Formatter\FormatterRegistry',
             'Linter\Formatter\RelativePathHelper', 'Linter\LintService', 'Linter\LintSetup', 'Linter\PatternExtractor',

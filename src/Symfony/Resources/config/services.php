@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony\Resources\config;
 
 use PHPRegex\Linter\AnalysisService;
-use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternExtractor;
@@ -37,7 +36,6 @@ use PHPRegex\Symfony\Extractor\RoutePatternSource;
 use PHPRegex\Symfony\Extractor\ValidatorPatternSource;
 use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
 use PHPRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
-use PHPRegex\Symfony\Routing\RouteControllerFileResolver;
 use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
@@ -56,25 +54,31 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_it
 /*
  * The services of the PHPRegex bundle. The arguments its configuration
  * decides are set by PHPRegexBundle::loadExtension().
+ *
+ * Every service is private and named php_regex.*: the classes behind them
+ * are internal, and an application autowires none of them. It autowires
+ * the Regex service, as PHPRegex\Toolkit\Regex; the validator of the
+ * ValidRegex constraint is found by its class name. The commands are lazy,
+ * listed by their #[AsCommand] name.
  */
-/* @internal */
 return static function (ContainerConfigurator $container): void {
     $services = $container->services()
         ->defaults()
             ->private();
 
     $services->set('php_regex.regex', Regex::class)
-        ->factory([Regex::class, 'create'])
-        ->public();
+        ->factory([Regex::class, 'create']);
 
-    // Aliases for autowiring
+    // The one way to reach the service from outside the container's
+    // wiring, kept for the code that fetches it by its class.
     $services->alias(Regex::class, 'php_regex.regex')
         ->public();
 
-    // Configure extractor with the determined implementation
+    // php_regex.extractor.instance is the extraction strategy, or the
+    // service extractor_service names; both set by loadExtension().
     $services->set('php_regex.extractor', PatternExtractor::class)
         ->args([
-            '$extractor' => service(ExtractorInterface::class)->nullOnInvalid(),
+            '$extractor' => service('php_regex.extractor.instance')->nullOnInvalid(),
         ]);
 
     $services->set('php_regex.parser', RegexParser::class)
@@ -89,21 +93,21 @@ return static function (ContainerConfigurator $container): void {
             '$sources' => tagged_iterator('php_regex.pattern_source'),
         ]);
 
-    $services->set(PhpFilePatternSource::class)
+    $services->set('php_regex.pattern_source.php', PhpFilePatternSource::class)
         ->args([
             '$extractor' => service('php_regex.extractor'),
         ])
         ->tag('php_regex.pattern_source');
 
-    $services->set(RoutePatternSource::class)
+    $services->set('php_regex.pattern_source.routes', RoutePatternSource::class)
         ->args([
-            '$patternNormalizer' => service(RouteRequirementNormalizer::class),
+            '$patternNormalizer' => service('php_regex.routing.requirement_normalizer'),
             '$router' => service('router')->nullOnInvalid(),
         ])
         ->tag('php_regex.pattern_source');
 
     // The mapping files are set by ValidatorMappingPass.
-    $services->set(ValidatorPatternSource::class)
+    $services->set('php_regex.pattern_source.validators', ValidatorPatternSource::class)
         ->arg('$mappingFiles', [])
         ->tag('php_regex.pattern_source');
 
@@ -119,84 +123,77 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$lint', service('php_regex.service.regex_lint'))
         ->arg('$analysis', service('php_regex.service.regex_analysis'))
         ->arg('$formatterRegistry', service('php_regex.formatter_registry'))
-        ->tag('console.command')
-        ->public();
+        ->tag('console.command');
 
     $services->set('php_regex.command.compare', CompareCommand::class)
         ->arg('$regex', service('php_regex.regex'))
-        ->tag('console.command')
-        ->public();
+        ->tag('console.command');
 
-    $services->set(RouteConflictAnalyzer::class)
+    $services->set('php_regex.routing.requirement_normalizer', RouteRequirementNormalizer::class);
+
+    $services->set('php_regex.routing.conflict_analyzer', RouteConflictAnalyzer::class)
         ->arg('$regex', service('php_regex.regex'));
 
-    $services->set(RouteConflictSuggestionBuilder::class);
+    $services->set('php_regex.routing.conflict_suggestion_builder', RouteConflictSuggestionBuilder::class);
 
     $services->set('php_regex.command.routes', RoutesCommand::class)
-        ->arg('$analyzer', service(RouteConflictAnalyzer::class))
-        ->arg('$suggestionBuilder', service(RouteConflictSuggestionBuilder::class))
+        ->arg('$analyzer', service('php_regex.routing.conflict_analyzer'))
+        ->arg('$suggestionBuilder', service('php_regex.routing.conflict_suggestion_builder'))
         ->arg('$router', service('router')->nullOnInvalid())
-        ->tag('console.command')
-        ->public();
+        ->tag('console.command');
 
-    $services->set(RouteRequirementNormalizer::class);
+    $services->set('php_regex.security.pattern_normalizer', SecurityPatternNormalizer::class);
 
-    $services->set(RouteControllerFileResolver::class);
+    $services->set('php_regex.security.config_extractor', SecurityConfigExtractor::class);
 
-    $services->set(SecurityPatternNormalizer::class);
+    $services->set('php_regex.security.config_locator', SecurityConfigLocator::class);
 
-    $services->set(SecurityConfigExtractor::class);
+    $services->set('php_regex.security.access_suggestion_builder', SecurityAccessSuggestionBuilder::class);
 
-    $services->set(SecurityConfigLocator::class);
-
-    $services->set(SecurityAccessSuggestionBuilder::class);
-
-    $services->set(SecurityAccessControlAnalyzer::class)
+    $services->set('php_regex.security.access_control_analyzer', SecurityAccessControlAnalyzer::class)
         ->arg('$regex', service('php_regex.regex'))
-        ->arg('$patternNormalizer', service(SecurityPatternNormalizer::class));
+        ->arg('$patternNormalizer', service('php_regex.security.pattern_normalizer'));
 
-    $services->set(SecurityFirewallAnalyzer::class)
+    $services->set('php_regex.security.firewall_analyzer', SecurityFirewallAnalyzer::class)
         ->arg('$regex', service('php_regex.regex'))
-        ->arg('$patternNormalizer', service(SecurityPatternNormalizer::class));
+        ->arg('$patternNormalizer', service('php_regex.security.pattern_normalizer'));
 
     $services->set('php_regex.command.security', SecurityCommand::class)
-        ->arg('$extractor', service(SecurityConfigExtractor::class))
-        ->arg('$accessAnalyzer', service(SecurityAccessControlAnalyzer::class))
-        ->arg('$firewallAnalyzer', service(SecurityFirewallAnalyzer::class))
-        ->arg('$configLocator', service(SecurityConfigLocator::class))
-        ->arg('$suggestionBuilder', service(SecurityAccessSuggestionBuilder::class))
+        ->arg('$extractor', service('php_regex.security.config_extractor'))
+        ->arg('$accessAnalyzer', service('php_regex.security.access_control_analyzer'))
+        ->arg('$firewallAnalyzer', service('php_regex.security.firewall_analyzer'))
+        ->arg('$configLocator', service('php_regex.security.config_locator'))
+        ->arg('$suggestionBuilder', service('php_regex.security.access_suggestion_builder'))
         ->arg('$kernel', service('kernel')->nullOnInvalid())
-        ->tag('console.command')
-        ->public();
+        ->tag('console.command');
 
-    $services->set(ConsoleReportFormatter::class);
+    $services->set('php_regex.analyzer.console_formatter', ConsoleReportFormatter::class);
 
-    $services->set(JsonReportFormatter::class);
+    $services->set('php_regex.analyzer.json_formatter', JsonReportFormatter::class);
 
-    $services->set(RoutesAnalyzer::class)
-        ->arg('$analyzer', service(RouteConflictAnalyzer::class))
-        ->arg('$suggestionBuilder', service(RouteConflictSuggestionBuilder::class))
+    $services->set('php_regex.analyzer.routes', RoutesAnalyzer::class)
+        ->arg('$analyzer', service('php_regex.routing.conflict_analyzer'))
+        ->arg('$suggestionBuilder', service('php_regex.routing.conflict_suggestion_builder'))
         ->arg('$router', service('router')->nullOnInvalid())
         ->tag('php_regex.bridge_analyzer');
 
-    $services->set(SecurityAnalyzer::class)
-        ->arg('$extractor', service(SecurityConfigExtractor::class))
-        ->arg('$locator', service(SecurityConfigLocator::class))
-        ->arg('$accessAnalyzer', service(SecurityAccessControlAnalyzer::class))
-        ->arg('$firewallAnalyzer', service(SecurityFirewallAnalyzer::class))
-        ->arg('$suggestionBuilder', service(SecurityAccessSuggestionBuilder::class))
+    $services->set('php_regex.analyzer.security', SecurityAnalyzer::class)
+        ->arg('$extractor', service('php_regex.security.config_extractor'))
+        ->arg('$locator', service('php_regex.security.config_locator'))
+        ->arg('$accessAnalyzer', service('php_regex.security.access_control_analyzer'))
+        ->arg('$firewallAnalyzer', service('php_regex.security.firewall_analyzer'))
+        ->arg('$suggestionBuilder', service('php_regex.security.access_suggestion_builder'))
         ->tag('php_regex.bridge_analyzer');
 
-    $services->set(AnalyzerRegistry::class)
+    $services->set('php_regex.analyzer_registry', AnalyzerRegistry::class)
         ->arg('$analyzers', tagged_iterator('php_regex.bridge_analyzer'));
 
     $services->set('php_regex.command.analyze', AnalyzeCommand::class)
-        ->arg('$registry', service(AnalyzerRegistry::class))
-        ->arg('$consoleFormatter', service(ConsoleReportFormatter::class))
-        ->arg('$jsonFormatter', service(JsonReportFormatter::class))
+        ->arg('$registry', service('php_regex.analyzer_registry'))
+        ->arg('$consoleFormatter', service('php_regex.analyzer.console_formatter'))
+        ->arg('$jsonFormatter', service('php_regex.analyzer.json_formatter'))
         ->arg('$kernel', service('kernel')->nullOnInvalid())
-        ->tag('console.command')
-        ->public();
+        ->tag('console.command');
 
     // The ValidRegex constraint judges with the service above; the
     // validator finds it under its class name.
@@ -208,11 +205,9 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set('php_regex.command.explain', ExplainCommand::class)
         ->arg('$regex', service('php_regex.regex'))
-        ->tag('console.command')
-        ->public();
+        ->tag('console.command');
 
     $services->set('php_regex.command.transpile', TranspileCommand::class)
         ->arg('$regex', service('php_regex.regex'))
-        ->tag('console.command')
-        ->public();
+        ->tag('console.command');
 };

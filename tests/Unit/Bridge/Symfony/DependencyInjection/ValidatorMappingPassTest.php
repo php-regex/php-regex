@@ -30,7 +30,7 @@ final class ValidatorMappingPassTest extends TestCase
     public function test_the_mapping_files_of_the_validator_builder_are_handed_to_the_source(): void
     {
         $container = new ContainerBuilder();
-        $container->setDefinition(ValidatorPatternSource::class, new Definition(ValidatorPatternSource::class));
+        $container->setDefinition(ValidatorMappingPass::SOURCE, new Definition(ValidatorPatternSource::class));
         $container->setDefinition('validator.builder', (new Definition())
             ->addMethodCall('addYamlMappings', [['/app/config/validator/a.yaml', '/app/config/validator/b.yml']])
             ->addMethodCall('addXmlMappings', [['/app/config/validator/c.xml']])
@@ -42,7 +42,7 @@ final class ValidatorMappingPassTest extends TestCase
 
         $this->assertSame(
             ['/app/config/validator/a.yaml', '/app/config/validator/b.yml', '/app/config/validator/c.xml', '/app/%%weird%%/d.xml'],
-            $container->getDefinition(ValidatorPatternSource::class)->getArgument('$mappingFiles'),
+            $container->getDefinition(ValidatorMappingPass::SOURCE)->getArgument('$mappingFiles'),
         );
     }
 
@@ -50,11 +50,11 @@ final class ValidatorMappingPassTest extends TestCase
     public function test_without_a_validator_builder_the_source_has_no_file(): void
     {
         $container = new ContainerBuilder();
-        $container->setDefinition(ValidatorPatternSource::class, new Definition(ValidatorPatternSource::class));
+        $container->setDefinition(ValidatorMappingPass::SOURCE, new Definition(ValidatorPatternSource::class));
 
         (new ValidatorMappingPass())->process($container);
 
-        $this->assertSame([], $container->getDefinition(ValidatorPatternSource::class)->getArgument('$mappingFiles'));
+        $this->assertSame([], $container->getDefinition(ValidatorMappingPass::SOURCE)->getArgument('$mappingFiles'));
     }
 
     #[Test]
@@ -65,6 +65,6 @@ final class ValidatorMappingPassTest extends TestCase
 
         (new ValidatorMappingPass())->process($container);
 
-        $this->assertFalse($container->hasDefinition(ValidatorPatternSource::class));
+        $this->assertFalse($container->hasDefinition(ValidatorMappingPass::SOURCE));
     }
 }

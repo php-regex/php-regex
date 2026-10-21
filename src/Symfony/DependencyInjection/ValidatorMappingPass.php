@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\DependencyInjection;
 
-use PHPRegex\Symfony\Extractor\ValidatorPatternSource;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -28,7 +27,10 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 final class ValidatorMappingPass implements CompilerPassInterface
 {
-    private const SOURCE = ValidatorPatternSource::class;
+    /**
+     * The service of the validator pattern source.
+     */
+    public const SOURCE = 'php_regex.pattern_source.validators';
 
     private const MAPPING_CALLS = ['addYamlMappings', 'addXmlMappings', 'addYamlMapping', 'addXmlMapping'];
 
