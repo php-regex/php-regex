@@ -11,9 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Json;
-
-use PHPRegex\Parser\Exception\ExceptionInterface;
+namespace PHPRegex\Parser\Exception;
 
 /**
  * A value JsonDocument cannot write: a non-finite float, or an object with
@@ -21,4 +19,4 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
  *
  * @internal
  */
-final class JsonEncodingFailure extends \RuntimeException implements ExceptionInterface {}
+final class JsonEncodingException extends \RuntimeException implements ExceptionInterface {}

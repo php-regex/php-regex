@@ -722,6 +722,17 @@ Rector target below PHP 7.0 is judged from PHP 7.0.
 `maxPatternLength` or a `maxRecursionDepth` below 1 and a
 `maxLookbehindLength` below 0, which `fromArray()` already refused.
 
+#### The snippet of an exception is `$snippet`
+
+`VisualContextInterface::getVisualSnippet()` is gone: it returned what
+`RegexException::$snippet` holds. Read the property; the interface still marks
+the exceptions that carry one, and declares `getPattern()`.
+
+```diff
+-$text = $e->getVisualSnippet();
++$text = (string) $e->snippet;
+```
+
 #### `runtime_pcre_validation` needs the running engine as target
 
 It compiles with the running PHP, so combining it with a target that is another

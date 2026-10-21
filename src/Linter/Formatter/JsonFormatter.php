@@ -18,8 +18,8 @@ use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Parser\Exception\JsonEncodingException;
 use PHPRegex\Parser\Json\JsonDocument;
-use PHPRegex\Parser\Json\JsonEncodingFailure;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
 
@@ -101,7 +101,7 @@ final class JsonFormatter extends AbstractOutputFormatter
 
         try {
             return JsonDocument::encode($data);
-        } catch (JsonEncodingFailure $e) {
+        } catch (JsonEncodingException $e) {
             throw new LintException($e->getMessage(), 0, $e);
         }
     }

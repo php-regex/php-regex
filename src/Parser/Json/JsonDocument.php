@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Json;
 
+use PHPRegex\Parser\Exception\JsonEncodingException;
 use PHPRegex\Parser\Text\Utf8;
 
 /**
@@ -58,14 +59,14 @@ final class JsonDocument
     /**
      * @param array<mixed> $document
      *
-     * @throws JsonEncodingFailure when a value has no JSON form (a non-finite float, an object with no mapping)
+     * @throws JsonEncodingException when a value has no JSON form (a non-finite float, an object with no mapping)
      */
     public static function encode(array $document): string
     {
         try {
             return json_encode(self::escapeArray($document), self::FLAGS)."\n";
         } catch (\JsonException $e) {
-            throw new JsonEncodingFailure('Failed to encode JSON: '.$e->getMessage(), 0, $e);
+            throw new JsonEncodingException('Failed to encode JSON: '.$e->getMessage(), 0, $e);
         }
     }
 
@@ -143,7 +144,7 @@ final class JsonDocument
         }
 
         if (\is_object($value)) {
-            throw new JsonEncodingFailure(\sprintf('No JSON mapping for an object of class %s.', $value::class));
+            throw new JsonEncodingException(\sprintf('No JSON mapping for an object of class %s.', $value::class));
         }
 
         return $value;

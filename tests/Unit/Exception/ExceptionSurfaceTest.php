@@ -64,7 +64,7 @@ final class ExceptionSurfaceTest extends TestCase
         } catch (ParserException $exception) {
             $this->assertSame(ErrorCode::GroupUnclosed, $exception->errorCode);
             $this->assertSame(2, $exception->position);
-            $this->assertSame($exception->getVisualSnippet(), $exception->snippet);
+            $this->assertSame("Line 1: a(\n".str_repeat(' ', 10).'^', $exception->snippet);
         }
     }
 
@@ -86,9 +86,9 @@ final class ExceptionSurfaceTest extends TestCase
         $this->assertInstanceOf($class, $shifted);
         $this->assertSame(5, $shifted->position);
         $this->assertSame('/abcdefgh/', $shifted->getPattern());
-        $this->assertSame($atTwo->getVisualSnippet(), $shifted->getVisualSnippet());
-        $this->assertNotSame($atFive->getVisualSnippet(), $shifted->getVisualSnippet());
-        $this->assertSame($atFive->getVisualSnippet(), $atFive->snippet);
+        $this->assertSame($atTwo->snippet, $shifted->snippet);
+        $this->assertNotSame($atFive->snippet, $shifted->snippet);
+        $this->assertStringEndsWith(str_repeat(' ', 13).'^', (string) $atFive->snippet);
     }
 
     /**

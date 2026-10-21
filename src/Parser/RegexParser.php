@@ -32,6 +32,7 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
+use PHPRegex\Parser\Exception\Snippet;
 use PHPRegex\Parser\Exception\VisualContextInterface;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -88,10 +89,6 @@ final class RegexParser
      * ParserOptions::DEFAULT_MAX_RECURSION_DEPTH, by the name the parser gave it first.
      */
     public const DEFAULT_MAX_RECURSION_DEPTH = ParserOptions::DEFAULT_MAX_RECURSION_DEPTH;
-
-    // Visual snippet constants
-    private const MAX_CONTEXT_WIDTH = 80;
-    private const ELLIPSIS_LENGTH = 3;
 
     /**
      * How many validate() results a parser keeps, the latest read first.
@@ -479,7 +476,7 @@ final class RegexParser
         }
 
         $offset = $error->offset;
-        $snippet = $this->buildVisualSnippet($pattern, $offset);
+        $snippet = Snippet::render($pattern, $offset);
         $fullMessage = 'PCRE runtime error: '.$error->message;
 
         return new ValidationResult(
@@ -492,48 +489,6 @@ final class RegexParser
             null,
             ErrorCode::PcreRuntime,
         );
-    }
-
-    private function buildVisualSnippet(?string $pattern, ?int $position): string
-    {
-        if (null === $pattern || null === $position || $position < 0) {
-            return '';
-        }
-
-        $length = \strlen($pattern);
-        $caretIndex = $position > $length ? $length : $position;
-
-        $lineStart = strrpos($pattern, "\n", $caretIndex - $length);
-        $lineStart = false === $lineStart ? 0 : $lineStart + 1;
-        $lineEnd = strpos($pattern, "\n", $caretIndex);
-        $lineEnd = false === $lineEnd ? $length : $lineEnd;
-
-        $lineNumber = substr_count($pattern, "\n", 0, $lineStart) + 1;
-
-        $displayStart = $lineStart;
-        $displayEnd = $lineEnd;
-
-        $maxContextWidth = self::MAX_CONTEXT_WIDTH;
-        if (($displayEnd - $displayStart) > $maxContextWidth) {
-            $half = intdiv($maxContextWidth, 2);
-            $displayStart = max($lineStart, $caretIndex - $half);
-            $displayEnd = min($lineEnd, $displayStart + $maxContextWidth);
-        }
-
-        $prefixEllipsis = $displayStart > $lineStart ? '...' : '';
-        $suffixEllipsis = $displayEnd < $lineEnd ? '...' : '';
-
-        $excerpt = $prefixEllipsis
-            .substr($pattern, $displayStart, $displayEnd - $displayStart)
-            .$suffixEllipsis;
-
-        // The window starts at or before the caret: the offset is never negative.
-        $caretOffset = ('' === $prefixEllipsis ? 0 : self::ELLIPSIS_LENGTH) + ($caretIndex - $displayStart);
-
-        $lineLabel = 'Line '.$lineNumber.': ';
-
-        return $lineLabel.$excerpt."\n"
-            .str_repeat(' ', \strlen($lineLabel) + $caretOffset).'^';
     }
 
     /**
@@ -652,10 +607,7 @@ final class RegexParser
     private function buildValidationFailure(ExceptionInterface $exception): ValidationResult
     {
         $errorMessage = $exception->getMessage();
-        $visualSnippet = '';
-        if ($exception instanceof VisualContextInterface) {
-            $visualSnippet = $exception->getVisualSnippet();
-        }
+        $visualSnippet = $exception instanceof VisualContextInterface && $exception instanceof RegexException ? (string) $exception->snippet : '';
         $position = null;
         $errorCode = null;
         $hint = null;

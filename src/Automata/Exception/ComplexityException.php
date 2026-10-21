@@ -40,9 +40,9 @@ final class ComplexityException extends RegexException implements ExceptionInter
          */
         private ?array $diagnostic = null,
     ) {
-        $this->initializeContext($position, $pattern);
+        $snippet = $this->initializeContext($position, $pattern);
 
-        parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
+        parent::__construct($message, $errorCode, $position, $snippet, $previous);
     }
 
     /**

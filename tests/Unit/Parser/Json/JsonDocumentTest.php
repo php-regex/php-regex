@@ -15,8 +15,8 @@ namespace PHPRegex\Tests\Unit\Parser\Json;
 
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\JsonEncodingException;
 use PHPRegex\Parser\Json\JsonDocument;
-use PHPRegex\Parser\Json\JsonEncodingFailure;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -87,7 +87,7 @@ final class JsonDocumentTest extends TestCase
     #[Test]
     public function test_encode_refuses_an_object_with_no_mapping(): void
     {
-        $this->expectException(JsonEncodingFailure::class);
+        $this->expectException(JsonEncodingException::class);
         $this->expectExceptionMessageIsOrContains('No JSON mapping for an object of class stdClass.');
 
         JsonDocument::encode(['value' => new \stdClass()]);
@@ -96,7 +96,7 @@ final class JsonDocumentTest extends TestCase
     #[Test]
     public function test_encode_reports_a_value_json_cannot_hold_as_an_encoding_failure(): void
     {
-        $this->expectException(JsonEncodingFailure::class);
+        $this->expectException(JsonEncodingException::class);
         $this->expectExceptionMessageIsOrContains('Failed to encode JSON');
 
         JsonDocument::encode(['value' => \NAN]);
@@ -105,8 +105,8 @@ final class JsonDocumentTest extends TestCase
     #[Test]
     public function test_an_encoding_failure_is_a_library_exception(): void
     {
-        $this->assertTrue((new \ReflectionClass(JsonEncodingFailure::class))->implementsInterface(ExceptionInterface::class));
-        $this->assertTrue((new \ReflectionClass(JsonEncodingFailure::class))->isSubclassOf(\RuntimeException::class));
+        $this->assertTrue((new \ReflectionClass(JsonEncodingException::class))->implementsInterface(ExceptionInterface::class));
+        $this->assertTrue((new \ReflectionClass(JsonEncodingException::class))->isSubclassOf(\RuntimeException::class));
     }
 
     #[Test]

@@ -19,6 +19,9 @@ CHANGELOG
  * `php_version` is read whole, each part after the major at most 99, and a
    PHP_VERSION_ID is at least `ParserOptions::OLDEST_PHP_VERSION_ID`, 70000;
    the constructor of `ParserOptions` checks the ranges of the limits.
+ * `RegexException::$snippet` is the one snippet accessor:
+   `VisualContextInterface::getVisualSnippet()` is gone, the interface declares
+   `getPattern()`. A snippet is never cut inside a UTF-8 character.
  * `Exception\InternalFailureException`: the library could not finish its own
    work, one of its regexes giving up under PCRE limits PHP would not raise.
    `parse()`, `parseTolerant()` and `validate()` throw it, where they

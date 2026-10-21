@@ -56,6 +56,8 @@ final class AstFingerprint
         // Hands the flags, the delimiter and the options to the parser; the
         // version it holds is left out of its own fingerprint.
         'src/Parser/RegexParser.php',
+        // Draws the snippet of a runtime compile error the parser reports.
+        'src/Parser/Exception/Snippet.php',
         // Holds the default recursion depth the token parser reads.
         'src/Parser/ParserOptions.php',
         'src/Parser/Analysis/LengthRangeCalculator.php',

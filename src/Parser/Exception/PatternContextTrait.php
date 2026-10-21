@@ -40,9 +40,9 @@ trait PatternContextTrait
         ?\Throwable $previous = null,
         ?int $snippetPosition = null,
     ) {
-        $this->initializeContext($snippetPosition ?? $position, $pattern);
+        $snippet = $this->initializeContext($snippetPosition ?? $position, $pattern);
 
-        parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
+        parent::__construct($message, $errorCode, $position, $snippet, $previous);
     }
 
     /**

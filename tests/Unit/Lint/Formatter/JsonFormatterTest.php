@@ -19,7 +19,7 @@ use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
-use PHPRegex\Parser\Json\JsonEncodingFailure;
+use PHPRegex\Parser\Exception\JsonEncodingException;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
@@ -94,7 +94,7 @@ final class JsonFormatterTest extends TestCase
             $this->fail('No exception for a value with no JSON form.');
         } catch (LintException $e) {
             $this->assertSame('Failed to encode JSON: Inf and NaN cannot be JSON encoded', $e->getMessage());
-            $this->assertInstanceOf(JsonEncodingFailure::class, $e->getPrevious());
+            $this->assertInstanceOf(JsonEncodingException::class, $e->getPrevious());
         }
     }
 

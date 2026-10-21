@@ -20,8 +20,8 @@ use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Linter\LintException;
+use PHPRegex\Parser\Exception\JsonEncodingException;
 use PHPRegex\Parser\Json\JsonDocument;
-use PHPRegex\Parser\Json\JsonEncodingFailure;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -259,7 +259,7 @@ final class ApplicationTest extends TestCase
             'failure' => new LintException('Parallel analysis failed: RuntimeException: Invalid worker output.'),
         ];
         yield 'a value has no JSON form' => [
-            'failure' => new JsonEncodingFailure('Failed to encode JSON: Inf and NaN cannot be JSON encoded'),
+            'failure' => new JsonEncodingException('Failed to encode JSON: Inf and NaN cannot be JSON encoded'),
         ];
     }
 

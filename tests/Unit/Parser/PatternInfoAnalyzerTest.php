@@ -899,7 +899,7 @@ final class PatternInfoAnalyzerTest extends TestCase
             $this->assertSame(ErrorCode::KeepInLookaround, $refusal->errorCode);
             $this->assertSame($validation->offset, $refusal->position);
             $this->assertSame($validation->hint, $refusal->hint);
-            $this->assertStringStartsWith('Line 1: (?<=a\Kb)c', $refusal->getVisualSnippet());
+            $this->assertStringStartsWith('Line 1: (?<=a\Kb)c', (string) $refusal->snippet);
         }
     }
 

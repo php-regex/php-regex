@@ -331,8 +331,8 @@ final class PatternLab
     private static function libraryFailure(RegexException $e): string
     {
         $text = $e->getMessage();
-        if ($e instanceof VisualContextInterface && '' !== $e->getVisualSnippet()) {
-            $text .= "\n".$e->getVisualSnippet();
+        if ($e instanceof VisualContextInterface && '' !== (string) $e->snippet) {
+            $text .= "\n".(string) $e->snippet;
         }
 
         return $text;

@@ -78,7 +78,7 @@ final class TokenStreamTest extends TestCase
         $stream->advance();
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessageIsOrContains('Cannot rewind 2 tokens, would go before start of stream');
+        $this->expectExceptionMessageIsOrContains('Cannot rewind 2 tokens, would go before start of stream.');
         $stream->rewind(2);
     }
 
@@ -166,7 +166,7 @@ final class TokenStreamTest extends TestCase
         $stream = new TokenStream($tokens, 'a');
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessageIsOrContains('Position -1 is out of bounds [0, 2]');
+        $this->expectExceptionMessageIsOrContains('Position -1 is out of bounds [0, 2].');
         $stream->setPosition(-1);
     }
 
@@ -179,7 +179,7 @@ final class TokenStreamTest extends TestCase
         $stream = new TokenStream($tokens, 'a');
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessageIsOrContains('Position 3 is out of bounds [0, 2]');
+        $this->expectExceptionMessageIsOrContains('Position 3 is out of bounds [0, 2].');
         $stream->setPosition(3);
     }
 
@@ -225,7 +225,7 @@ final class TokenStreamTest extends TestCase
         $stream->setPosition(2); // past the end-of-pattern token
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessageIsOrContains('Token stream is exhausted');
+        $this->expectExceptionMessageIsOrContains('Token stream is exhausted.');
         $stream->current();
     }
 }

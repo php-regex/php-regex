@@ -36,8 +36,8 @@ final class TranspileException extends RegexException implements ExceptionInterf
         ?\Throwable $previous = null,
         ErrorCode $errorCode = ErrorCode::TranspileUnsupported,
     ) {
-        $this->initializeContext($position, $pattern);
+        $snippet = $this->initializeContext($position, $pattern);
 
-        parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
+        parent::__construct($message, $errorCode, $position, $snippet, $previous);
     }
 }

@@ -24,6 +24,7 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
+use PHPRegex\Parser\Exception\Snippet;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
@@ -406,12 +407,10 @@ final class RegexTest extends TestCase
 
     public function test_build_visual_snippet_truncates_and_marks_caret(): void
     {
-        $regex = Regex::create();
-        $ref = new \ReflectionClass($regex->parser());
-        $method = $ref->getMethod('buildVisualSnippet');
-
+        // The parser draws the snippet of a runtime compile error with the
+        // renderer the exceptions use.
         $pattern = str_repeat('a', 120);
-        $snippet = $method->invoke($regex->parser(), $pattern, 110);
+        $snippet = Snippet::render($pattern, 110);
 
         $this->assertIsString($snippet);
         /** @var string $snippetString */
@@ -423,11 +422,7 @@ final class RegexTest extends TestCase
 
     public function test_build_visual_snippet_returns_empty_for_nulls(): void
     {
-        $regex = Regex::create();
-        $ref = new \ReflectionClass($regex->parser());
-        $method = $ref->getMethod('buildVisualSnippet');
-
-        $this->assertSame('', $method->invoke($regex->parser(), null, null));
+        $this->assertSame('', Snippet::render(null, null));
     }
 
     public function test_build_search_patterns_and_confidence_levels(): void
@@ -499,15 +494,12 @@ final class RegexTest extends TestCase
 
     public function test_build_visual_snippet_edge_cases(): void
     {
-        $ref = new \ReflectionClass($this->regexService->parser());
-        $method = $ref->getMethod('buildVisualSnippet');
-
-        $this->assertSame('', $method->invoke($this->regexService->parser(), 'pattern', -1));
-        $snippet = $method->invoke($this->regexService->parser(), 'pattern', 100);
+        $this->assertSame('', Snippet::render('pattern', -1));
+        $snippet = Snippet::render('pattern', 100);
         $this->assertIsString($snippet);
         $this->assertStringContainsString('Line 1:', (string) $snippet);
         $this->assertStringContainsString('^', (string) $snippet);
-        $this->assertSame('', $method->invoke($this->regexService->parser(), null, 5));
+        $this->assertSame('', Snippet::render(null, 5));
     }
 
     public function test_extract_unique_literals(): void

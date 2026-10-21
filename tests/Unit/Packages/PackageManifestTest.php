@@ -152,7 +152,7 @@ final class PackageManifestTest extends TestCase
             'Optimizer\LayoutSplicer', 'Optimizer\RewriteCheck', 'Optimizer\Rewriter',
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Cache\AstSerializer',
             'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Printer\DisplayEscaper',
-            'Parser\Analysis\GroupIndex', 'Parser\Json\JsonDocument', 'Parser\Json\JsonEncodingFailure',
+            'Parser\Analysis\GroupIndex', 'Parser\Json\JsonDocument', 'Parser\Exception\JsonEncodingException',
             'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
             'Parser\Syntax\PropertyNames', 'Parser\Syntax\StartOptions', 'Parser\Cache\StaticCaches',
             'Parser\Lexer', 'Parser\NodeWalker', 'Parser\TraversalAction',

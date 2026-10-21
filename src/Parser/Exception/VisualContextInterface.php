@@ -14,9 +14,14 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Exception;
 
 /**
- * Provides the visual context (pattern excerpt with a caret) of a parser-related exception.
+ * Marks the exceptions that show the pattern: RegexException::$snippet holds
+ * the line at fault with a caret under it, drawn from getPattern().
  */
 interface VisualContextInterface
 {
-    public function getVisualSnippet(): string;
+    /**
+     * The pattern the snippet is drawn from, as written; null when the
+     * exception was built without one.
+     */
+    public function getPattern(): ?string;
 }

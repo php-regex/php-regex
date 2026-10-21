@@ -29,42 +29,43 @@ final class ParserExceptionTest extends TestCase
     {
         $this->assertTrue(interface_exists(VisualContextInterface::class), VisualContextInterface::class.' must exist.');
         $this->assertTrue(is_a(ParserException::class, VisualContextInterface::class, true), ParserException::class.' must implement '.VisualContextInterface::class.'.');
-        $this->assertTrue((new \ReflectionMethod(VisualContextInterface::class, 'getVisualSnippet'))->isPublic());
+        $this->assertTrue((new \ReflectionMethod(VisualContextInterface::class, 'getPattern'))->isPublic());
+        $this->assertFalse(method_exists(VisualContextInterface::class, 'getVisualSnippet'), 'The snippet is read through RegexException::$snippet alone.');
     }
 
     public function test_the_snippet_of_an_exception_without_context_is_empty(): void
     {
         $exception = new ParserException('Error', ErrorCode::TokenUnexpected);
 
-        $this->assertSame('', $exception->getVisualSnippet());
+        $this->assertSame('', $exception->snippet);
     }
 
     public function test_visual_snippet_at_beginning(): void
     {
         $exception = ParserException::withContext('Error', ErrorCode::TokenUnexpected, 0, 'abc');
 
-        $this->assertSame("Line 1: abc\n".str_repeat(' ', 8).'^', $exception->getVisualSnippet());
+        $this->assertSame("Line 1: abc\n".str_repeat(' ', 8).'^', $exception->snippet);
     }
 
     public function test_visual_snippet_at_end(): void
     {
         $exception = ParserException::withContext('Error', ErrorCode::TokenUnexpected, 3, 'abc');
 
-        $this->assertSame("Line 1: abc\n".str_repeat(' ', 11).'^', $exception->getVisualSnippet());
+        $this->assertSame("Line 1: abc\n".str_repeat(' ', 11).'^', $exception->snippet);
     }
 
     public function test_visual_snippet_in_middle(): void
     {
         $exception = ParserException::withContext('Error', ErrorCode::TokenUnexpected, 4, 'foo(bar)baz');
 
-        $this->assertSame("Line 1: foo(bar)baz\n".str_repeat(' ', 12).'^', $exception->getVisualSnippet());
+        $this->assertSame("Line 1: foo(bar)baz\n".str_repeat(' ', 12).'^', $exception->snippet);
     }
 
     public function test_visual_snippet_in_multiline_pattern(): void
     {
         $exception = ParserException::withContext('Error', ErrorCode::TokenUnexpected, 5, "foo\nbar\nbaz");
 
-        $this->assertSame("Line 2: bar\n".str_repeat(' ', 9).'^', $exception->getVisualSnippet());
+        $this->assertSame("Line 2: bar\n".str_repeat(' ', 9).'^', $exception->snippet);
     }
 
     public function test_visual_snippet_truncates_long_patterns(): void
@@ -72,7 +73,7 @@ final class ParserExceptionTest extends TestCase
         $pattern = str_repeat('a', 50).'X'.str_repeat('b', 50);
         $exception = ParserException::withContext('Error', ErrorCode::TokenUnexpected, 50, $pattern);
 
-        $snippet = $exception->getVisualSnippet();
+        $snippet = (string) $exception->snippet;
         [$line, $caretLine] = explode("\n", $snippet);
 
         $this->assertStringStartsWith('Line 1: ...', $line);

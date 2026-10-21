@@ -919,12 +919,20 @@ the library reads patterns with then gives up. `$pcreError` holds the
 `preg_last_error()` code. Raise the limits, or allow `ini_set()`.
 
 `VisualContextInterface` marks the exceptions that carry the failing pattern
-with a caret under the offending character: `getVisualSnippet(): string` on
-`ParserException` and its syntax subclass, `LimitException` (and its recursion
-and resource subclasses),
+with a caret under the offending character, in `RegexException::$snippet`, and
+the pattern it is drawn from, `getPattern()`: `ParserException` and its syntax
+subclass, `LimitException` (and its recursion and resource subclasses),
 `LexerException`, `SemanticErrorException`, `TranspileException` and the
 automata `ComplexityException`. Test for it with `instanceof` to render the
-snippet when the caught exception has one.
+snippet when the caught exception has one. A line longer than 80 bytes is cut
+around the caret, never inside a UTF-8 character.
+
+Which one to catch: `LexerException`, `ParserException` and its subclass
+`SyntaxErrorException` all mean a pattern PCRE refuses; which of them is
+thrown follows the stage of the library that met the fault, which may move
+between releases. Catch `RegexException` for every judgement on a pattern
+(a semantic error and a limit of the library included), or read
+`validate()`, which reports each with its category and error code.
 
 **Usage Examples:**
 

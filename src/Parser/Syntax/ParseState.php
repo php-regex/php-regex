@@ -255,6 +255,9 @@ final class ParseState
         return 'P' === ($this->pattern[$startPosition + 1] ?? 'p');
     }
 
+    /**
+     * @throws \LogicException for a token that is no character literal, a bug of the caller
+     */
     private function charLiteral(Token $token, TokenType $type, int $startPosition): CharLiteralNode
     {
         [$representation, $charType] = match ($type) {

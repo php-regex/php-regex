@@ -20,6 +20,9 @@ use PHPRegex\Parser\Exception\SyntaxErrorException;
  * The cursor the parser walks the tokens with. Read the tokens of a regex
  * through RegexParser::tokenize() or Regex::tokenize(), a list.
  *
+ * Moving the cursor past either end is a bug of the code that walks it, not
+ * a fault of the pattern: a plain \LogicException, as for every such bug.
+ *
  * @internal
  */
 final class TokenStream
@@ -42,7 +45,7 @@ final class TokenStream
     public function current(): Token
     {
         if ($this->position > $this->maxPosition) {
-            throw new \LogicException('Token stream is exhausted');
+            throw new \LogicException('Token stream is exhausted.');
         }
 
         return $this->tokens[$this->position];
@@ -60,7 +63,7 @@ final class TokenStream
         $newPosition = $this->position - $count;
         if ($newPosition < 0) {
             throw new \LogicException(\sprintf(
-                'Cannot rewind %d tokens, would go before start of stream',
+                'Cannot rewind %d tokens, would go before start of stream.',
                 $count,
             ));
         }
@@ -68,11 +71,14 @@ final class TokenStream
         $this->position = $newPosition;
     }
 
+    /**
+     * @throws \LogicException
+     */
     public function setPosition(int $position): void
     {
         if ($position < 0 || $position > $this->maxPosition + 1) {
             throw new \LogicException(\sprintf(
-                'Position %d is out of bounds [0, %d]',
+                'Position %d is out of bounds [0, %d].',
                 $position,
                 $this->maxPosition + 1,
             ));

@@ -33,8 +33,8 @@ final class SemanticErrorException extends RegexException implements ExceptionIn
         ?\Throwable $previous = null,
         public readonly ?string $hint = null,
     ) {
-        $this->initializeContext($position, $pattern);
+        $snippet = $this->initializeContext($position, $pattern);
 
-        parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
+        parent::__construct($message, $errorCode, $position, $snippet, $previous);
     }
 }
