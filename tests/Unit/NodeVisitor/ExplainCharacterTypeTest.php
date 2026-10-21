@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 use PHPRegex\Explain\HtmlExplainer;
 use PHPRegex\Explain\TextExplainer;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,6 +32,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExplainCharacterTypeTest extends TestCase
 {
+    use PcreGates;
+
     private const DIGIT = 'A digit: [0-9]';
 
     private const NON_DIGIT = 'A non-digit: [^0-9]';
@@ -51,10 +54,24 @@ final class ExplainCharacterTypeTest extends TestCase
 
     private const BYTE = 'One code unit: a single byte, a newline included';
 
+    /**
+     * The rows that hold from a PCRE2 newer than the floor: every pattern
+     * with an ASCII option is 10.43's syntax, refused before.
+     */
+    private const NEWER_RELEASES = ['10.43' => ['/(?aD)\d/u', '/(?aD)\w/u', '/(?a)\w/u', '/(?aS)\s/u', '/(?aW)\w/u', '/(?aD)(?-a)\d/u', '/(?a)(?-aD)\d/u', '/(?:(?aD))\d/u', '/(?aD:\d)/u', '/(?aDaS)\d/u', '/(?aD)(?aS)\d/u', '/(?iaD)\w/u', '/(?aS)\d/u', '/(?aW)\d/u', '/(?aT)\d/u', '/(?aP)\d/u']];
+
     #[Test]
     #[DataProvider('provideTypes')]
     public function test_a_character_type_is_explained_by_the_flags_in_force(string $pattern, string $description, string $subject, int $matches): void
     {
+        $this->requiresPcre2For($pattern, self::NEWER_RELEASES);
+
+        // "\w" under u takes a mark or a connector from PCRE2 10.43 only: a
+        // spacing mark no release takes, the other subjects hold everywhere.
+        if ('/\w/u' === $pattern && 1 === preg_match('/^[\p{Mn}\p{Pc}]$/u', $subject)) {
+            $this->requiresPcre2('10.43', '\w under u on a mark or a connector');
+        }
+
         // The engine: the subject tells the meaning described from the others.
         $this->assertSame($matches, preg_match($pattern, $subject), 'engine');
 
