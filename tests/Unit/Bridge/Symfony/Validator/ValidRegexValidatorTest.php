@@ -19,6 +19,7 @@ use PHPRegex\Symfony\Validator\Constraints\ValidRegex;
 use PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\IgnorePhpunitDeprecations;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -33,6 +34,13 @@ use Symfony\Component\Validator\Test\ConstraintValidatorTestCase;
  *
  * @extends ConstraintValidatorTestCase<ValidRegexValidator>
  */
+/**
+ * The deprecation PHPUnit 13 reports here comes from the base test case
+ * symfony/validator 6.4 builds its context mock with (an "any()" invoked
+ * count), fixed in symfony/validator 7; the prefer-lowest runs resolve
+ * 6.4.
+ */
+#[IgnorePhpunitDeprecations]
 final class ValidRegexValidatorTest extends ConstraintValidatorTestCase
 {
     private ?Regex $regex = null;
