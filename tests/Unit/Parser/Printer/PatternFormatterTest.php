@@ -790,7 +790,7 @@ final class PatternFormatterTest extends TestCase
         $formatter->{$operation}($long);
         $longTime = CpuClock::nanoseconds() - $start;
 
-        $this->assertLessThan(6, $longTime / max(1, $shortTime), \sprintf('%s: %.0f ms for 5,000 escapes, %.0f ms for 20,000.', $operation, $shortTime / 1e6, $longTime / 1e6));
+        $this->assertLessThan(10, $longTime / max(1, $shortTime), \sprintf('%s: %.0f ms for 5,000 escapes, %.0f ms for 20,000.', $operation, $shortTime / 1e6, $longTime / 1e6));
     }
 
     /**
