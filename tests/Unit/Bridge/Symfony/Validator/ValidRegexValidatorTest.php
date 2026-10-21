@@ -32,13 +32,12 @@ use Symfony\Component\Validator\Test\ConstraintValidatorTestCase;
  * library's message and hint, the service's limits. The ReDoS check is off
  * unless asked for, and then rejects from the threshold up.
  *
- * @extends ConstraintValidatorTestCase<ValidRegexValidator>
- */
-/**
  * The deprecation PHPUnit 13 reports here comes from the base test case
  * symfony/validator 6.4 builds its context mock with (an "any()" invoked
  * count), fixed in symfony/validator 7; the prefer-lowest runs resolve
  * 6.4.
+ *
+ * @extends ConstraintValidatorTestCase<ValidRegexValidator>
  */
 #[IgnorePhpunitDeprecations]
 final class ValidRegexValidatorTest extends ConstraintValidatorTestCase
