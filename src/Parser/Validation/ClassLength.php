@@ -28,6 +28,7 @@ use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
+use PHPRegex\Parser\Text\Utf8;
 
 /**
  * The length the first pass of PCRE2 counts for a class of more than one
@@ -945,16 +946,6 @@ final class ClassLength
      */
     private static function itemUnits(int $low, int $high): int
     {
-        return 1 + ($low < $high ? self::utf8Length($low) : 0) + self::utf8Length($high);
-    }
-
-    private static function utf8Length(int $codePoint): int
-    {
-        return match (true) {
-            $codePoint < 0x80 => 1,
-            $codePoint < 0x800 => 2,
-            $codePoint < 0x10000 => 3,
-            default => 4,
-        };
+        return 1 + ($low < $high ? Utf8::encodedLength($low) : 0) + Utf8::encodedLength($high);
     }
 }

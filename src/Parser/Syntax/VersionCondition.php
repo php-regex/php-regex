@@ -78,7 +78,23 @@ final class VersionCondition
      */
     public static function errorOffsetFor(string $pattern, int $position, PcreTarget $target, bool $utf = false): ?int
     {
-        return self::errorOffset($pattern, $position, !$target->supports(PcreFeature::VersionConditionWholeNumbers), $target->supports(PcreFeature::ErrorOffsetPastTheFault), $utf);
+        return self::errorOffsetReading($pattern, $position, !$target->supports(PcreFeature::VersionConditionWholeNumbers), $target->supports(PcreFeature::ErrorOffsetPastTheFault), $utf);
+    }
+
+    /**
+     * Whether $offset, where PCRE refuses the version condition whose
+     * "VERSION" starts at $position, is the character right after a major
+     * number PCRE takes, where only "." or ")" may follow.
+     */
+    public static function isMajorLeftOpenAt(string $pattern, int $position, int $offset): bool
+    {
+        if (1 !== LibraryPcre::match('/\GVERSION>?=(\d++)/', $pattern, $matches, 0, $position)) {
+            return false;
+        }
+
+        $end = $position + \strlen($matches[0]);
+
+        return $offset === $end && !\in_array($pattern[$end] ?? ')', ['.', ')'], true) && (int) $matches[1] <= 1000;
     }
 
     /**
@@ -86,7 +102,7 @@ final class VersionCondition
      * minor is two digits ($twoDigitMinor), whether PCRE reports past the
      * character it stops on ($pastTheFault).
      */
-    public static function errorOffset(string $pattern, int $position, bool $twoDigitMinor = false, bool $pastTheFault = true, bool $utf = false): ?int
+    private static function errorOffsetReading(string $pattern, int $position, bool $twoDigitMinor, bool $pastTheFault, bool $utf): ?int
     {
         $length = \strlen($pattern);
         if ($length - $position < 10 || 'VERSION' !== substr($pattern, $position, 7)) {
@@ -143,22 +159,6 @@ final class VersionCondition
         }
 
         return null;
-    }
-
-    /**
-     * Whether $offset, where PCRE refuses the version condition whose
-     * "VERSION" starts at $position, is the character right after a major
-     * number PCRE takes, where only "." or ")" may follow.
-     */
-    public static function isMajorLeftOpenAt(string $pattern, int $position, int $offset): bool
-    {
-        if (1 !== LibraryPcre::match('/\GVERSION>?=(\d++)/', $pattern, $matches, 0, $position)) {
-            return false;
-        }
-
-        $end = $position + \strlen($matches[0]);
-
-        return $offset === $end && !\in_array($pattern[$end] ?? ')', ['.', ')'], true) && (int) $matches[1] <= 1000;
     }
 
     /**

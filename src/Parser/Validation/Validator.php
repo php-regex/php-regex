@@ -57,6 +57,7 @@ use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\InlineFlags;
+use PHPRegex\Parser\Syntax\PcreNumber;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Parser\Syntax\PosixItem;
 use PHPRegex\Parser\Syntax\RepeatCount;
@@ -576,10 +577,10 @@ final class Validator extends AbstractNodeVisitor
         // name, and refuses it where the "\N" ends.
         $afterN = $node->node instanceof CharTypeNode && 'N' === $node->node->value && null !== $this->source
             && '{' === ($this->source[$node->node->getEndPosition()] ?? '') ? $node->node->getEndPosition() : null;
-        if ($min > 65535 || $max > 65535) {
+        if ($min > PcreNumber::MAX || $max > PcreNumber::MAX) {
             $this->raiseSemanticError(
                 \sprintf('Number too big in "%s" quantifier: PCRE allows at most 65535 repetitions.', $node->quantifier),
-                $afterN ?? ($min > 65535 ? $minEnd : $maxEnd),
+                $afterN ?? ($min > PcreNumber::MAX ? $minEnd : $maxEnd),
                 ErrorCode::QuantifierTooBig,
             );
         }
@@ -1067,7 +1068,7 @@ final class Validator extends AbstractNodeVisitor
     public function visitVersionCondition(VersionConditionNode $node): void
     {
         $versionAt = null === $this->source ? false : strpos($this->source, 'VERSION', $node->startPosition);
-        $pcreOffset = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault), $this->unicodeMode);
+        $pcreOffset = false === $versionAt ? null : VersionCondition::errorOffsetFor((string) $this->source, $versionAt, $this->target, $this->unicodeMode);
 
         if (!\in_array($node->operator, ['=', '>='], true)) {
             $this->raiseSemanticError(
@@ -1079,7 +1080,7 @@ final class Validator extends AbstractNodeVisitor
 
         // PCRE reads a major number and at most one ".minor".
         if (1 === LibraryPcre::match('/^\d++(?:\.\d++)?$/', $node->version, $matches)) {
-            $tooBig = false === $versionAt ? null : VersionCondition::errorOffset((string) $this->source, $versionAt, !$this->readsWholeVersionNumbers(), $this->supports(PcreFeature::ErrorOffsetPastTheFault), $this->unicodeMode);
+            $tooBig = false === $versionAt ? null : VersionCondition::errorOffsetFor((string) $this->source, $versionAt, $this->target, $this->unicodeMode);
 
             // "(?(VERSION=10 )": before PCRE2 10.47, what follows the major
             // where the ")" belongs leaves the condition open.
@@ -1336,7 +1337,7 @@ final class Validator extends AbstractNodeVisitor
         $value = 0;
         foreach (Bytes::split($digits) as $index => $digit) {
             $value = $value * 10 + (int) $digit;
-            if ($value > 65535) {
+            if ($value > PcreNumber::MAX) {
                 return $index + 1;
             }
         }
@@ -1367,11 +1368,6 @@ final class Validator extends AbstractNodeVisitor
      * Whether the version numbers of "(?(VERSION...)" are read whole, as
      * PCRE2 10.47 does; before, the minor is two digits.
      */
-    private function readsWholeVersionNumbers(): bool
-    {
-        return $this->supports(PcreFeature::VersionConditionWholeNumbers);
-    }
-
     private function supports(PcreFeature $feature): bool
     {
         return $this->target->supports($feature);

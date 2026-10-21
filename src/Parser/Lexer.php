@@ -663,7 +663,7 @@ final class Lexer
         // A valid UTF-8 pattern, read a character at a time: every token
         // ends between two characters, so the cursor stands on a lead byte,
         // which gives the length.
-        $length = $ord >= 0xF0 ? 4 : ($ord >= 0xE0 ? 3 : 2);
+        $length = Utf8::width($this->pattern, $at);
         $this->position += $length;
 
         return new Token(TokenType::Literal, substr($this->pattern, $at, $length), $at, $length);
@@ -1817,8 +1817,7 @@ final class Lexer
     private function consumeClassText(int $end): Token
     {
         $start = $this->position;
-        $ord = \ord($this->pattern[$start]);
-        $this->position += $this->byteMode || $ord < 0xC0 ? 1 : ($ord >= 0xF0 ? 4 : ($ord >= 0xE0 ? 3 : 2));
+        $this->position += $this->characterLength($start);
         if ($this->position >= $end) {
             $this->classTextEnd = null;
         }

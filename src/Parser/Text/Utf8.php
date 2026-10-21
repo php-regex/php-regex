@@ -32,6 +32,19 @@ final class Utf8
     }
 
     /**
+     * How many bytes UTF-8 writes $codePoint in.
+     */
+    public static function encodedLength(int $codePoint): int
+    {
+        return match (true) {
+            $codePoint < 0x80 => 1,
+            $codePoint < 0x800 => 2,
+            $codePoint < 0x10000 => 3,
+            default => 4,
+        };
+    }
+
+    /**
      * How many bytes the character at $at takes: the length its first byte
      * announces, 1 for a byte that starts no sequence (a continuation byte,
      * the end of the text), so a walk always moves on. Whether the bytes

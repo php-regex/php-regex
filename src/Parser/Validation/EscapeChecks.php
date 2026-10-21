@@ -32,6 +32,7 @@ use PHPRegex\Parser\Syntax\PropertyNames;
 use PHPRegex\Parser\Syntax\RepeatCount;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Utf8;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
 
@@ -800,11 +801,11 @@ final class EscapeChecks
         // The code point is read from the escape as written.
         $rep = $node->originalRepresentation;
 
-        if (LibraryPcre::match('/^\\\\x([0-9a-fA-F]{1,2})$/', $rep, $m)) {
+        if (1 === LibraryPcre::match('/^\\\\x([0-9a-fA-F]{1,2})$/', $rep, $m)) {
             $codePoint = (int) hexdec($m[1]);
-        } elseif (LibraryPcre::match('/^\\\\u([0-9a-fA-F]{4})$/', $rep, $m)) {
+        } elseif (1 === LibraryPcre::match('/^\\\\u([0-9a-fA-F]{4})$/', $rep, $m)) {
             $codePoint = (int) hexdec($m[1]);
-        } elseif (LibraryPcre::match('/^\\\\(x|u)\\{[ \t]*+([0-9a-fA-F]+)[ \t]*+\\}$/', $rep, $m)) {
+        } elseif (1 === LibraryPcre::match('/^\\\\(x|u)\\{[ \t]*+([0-9a-fA-F]+)[ \t]*+\\}$/', $rep, $m)) {
             // Past six digits the value is past U+10FFFF, and may be past
             // what an integer holds.
             $codePoint = \strlen(ltrim($m[2], '0')) > 6 ? 0x110000 : (int) hexdec($m[2]);
@@ -905,7 +906,7 @@ final class EscapeChecks
     {
         // Extract the Unicode name from the representation. Unreachable from
         // a parsed pattern: the parser always spells a non-empty "\N{...}".
-        if (!LibraryPcre::match('/^\\\\N\\{(.+)}$/', $node->originalRepresentation, $matches)) {
+        if (1 !== LibraryPcre::match('/^\\\\N\\{(.+)}$/', $node->originalRepresentation, $matches)) {
             throw new ParserException("Invalid Unicode named character format: {$node->originalRepresentation}", ErrorCode::EscapeUnsupported, $node->getStartPosition(), $this->pattern);
         }
 
@@ -1302,18 +1303,7 @@ final class EscapeChecks
      */
     private function characterLengthAt(string $source, int $position): int
     {
-        if (!$this->utf) {
-            return 1;
-        }
-
-        $byte = \ord($source[$position]);
-
-        return match (true) {
-            $byte >= 0xF0 => 4,
-            $byte >= 0xE0 => 3,
-            $byte >= 0xC0 => 2,
-            default => 1,
-        };
+        return $this->utf ? Utf8::width($source, $position) : 1;
     }
 
     private function raise(string $message, int $position, ErrorCode $code, ?string $hint = null): never

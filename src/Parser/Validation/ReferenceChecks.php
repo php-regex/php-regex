@@ -24,6 +24,7 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\NameCharacters;
+use PHPRegex\Parser\Syntax\PcreNumber;
 use PHPRegex\Parser\Syntax\VersionCondition;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\NearMiss;
@@ -104,7 +105,7 @@ final class ReferenceChecks
         $ref = $node->ref;
 
         // A reference by number, written with a backslash.
-        if (LibraryPcre::match('/^\\\\(\d++)$/', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\(\d++)$/', $ref, $matches)) {
             $num = (int) $matches[1];
             if (0 === $num) {
                 $this->raise(
@@ -131,14 +132,14 @@ final class ReferenceChecks
 
         // Relative conditions, "(?(-1)...)" and "(?(+1)...)", count groups
         // from where they stand.
-        if (LibraryPcre::match('/^[+-]\d++$/', $ref)) {
+        if (1 === LibraryPcre::match('/^[+-]\d++$/', $ref)) {
             $this->assertRelativeReferenceExists((int) $ref, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Condition', $node);
 
             return;
         }
 
         // A condition on a group by number, "(?(2)...)".
-        if (LibraryPcre::match('/^(\d++)$/', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^(\d++)$/', $ref, $matches)) {
             $num = (int) $matches[1];
             if (0 === $num) {
                 $this->raise(
@@ -160,7 +161,7 @@ final class ReferenceChecks
         }
 
         // A reference by name, "\k<name>", "\k{name}", "\k'name'".
-        if (LibraryPcre::match('/^\\\\k[<{\'](?<name>'.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\k[<{\'](?<name>'.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
             $name = $matches['name'];
             $this->guardByteModeName($node, $name, ErrorCode::GroupNameUnterminated);
             if (!$this->numbering->hasNamedGroup($name)) {
@@ -192,7 +193,7 @@ final class ReferenceChecks
         }
 
         // "\g1", "\g{1}", "\g'1'", "\g{-1}".
-        if (LibraryPcre::match('/^\\\\g(?:\{([0-9+-]++)\}|\'([0-9+-]++)\'|([0-9+-]++))$/', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\g(?:\{([0-9+-]++)\}|\'([0-9+-]++)\'|([0-9+-]++))$/', $ref, $matches)) {
             $numStr = ('' !== $matches[1]) ? $matches[1] : (('' !== ($matches[2] ?? '')) ? $matches[2] : ($matches[3] ?? ''));
 
             // "\g-" or "\g+" with no digit is no reference at all: PCRE stops
@@ -288,7 +289,7 @@ final class ReferenceChecks
             return true;
         }
 
-        if (LibraryPcre::match('/^R-?\d++$/', $ref)) {
+        if (1 === LibraryPcre::match('/^R-?\d++$/', $ref)) {
             $num = (int) substr($ref, 1);
             // PCRE reads "R2" as a name, then as a group number digit by
             // digit, and stops on the digit that takes it over 65535.
@@ -526,7 +527,7 @@ final class ReferenceChecks
         $before = ($this->groups->nextNumberAt($node) ?? 1) - 1;
 
         return match (true) {
-            \strlen(ltrim($digits, '0')) > 5 || $value > 65535 || ('+' === $sign && $value + $before > 65535) => ErrorCode::GroupNumberTooBig,
+            PcreNumber::exceeds($digits) || ('+' === $sign && $value + $before > PcreNumber::MAX) => ErrorCode::GroupNumberTooBig,
             '' !== $sign && 0 === $value => ErrorCode::BackrefZero,
             '-' === $sign && $value > $before => ErrorCode::BackrefRelative,
             default => null,
@@ -585,12 +586,12 @@ final class ReferenceChecks
             // included, is refused where it ends.
             $number = (int) $matches[4] + ('+' === $matches[3] ? ($this->groups->nextNumberAt($node) ?? 1) - 1 : 0);
 
-            return $failsWhileRead || 0 === $number || $number > 65535 ? $end : $this->target->faultOffset($end);
+            return $failsWhileRead || 0 === $number || $number > PcreNumber::MAX ? $end : $this->target->faultOffset($end);
         }
 
         // "\1", "\81"; a number past 65535 is refused where it ends.
         if ('\\' === $text[0]) {
-            return (int) substr($text, 1) > 65535 ? $end : $this->target->faultOffset($end);
+            return (int) substr($text, 1) > PcreNumber::MAX ? $end : $this->target->faultOffset($end);
         }
 
         // "(?P=name)", "(?P>name)", "(?&name)", "(?1)", "(?-1)"
@@ -608,7 +609,7 @@ final class ReferenceChecks
         }
 
         // "(?(VERSION=10z)": PCRE reads a version condition, not a name.
-        $versionError = VersionCondition::errorOffset($this->source, $start, !$this->target->supports(PcreFeature::VersionConditionWholeNumbers), $this->target->supports(PcreFeature::ErrorOffsetPastTheFault), $this->utf);
+        $versionError = VersionCondition::errorOffsetFor($this->source, $start, $this->target, $this->utf);
         if (null !== $versionError) {
             return $versionError;
         }
@@ -657,7 +658,7 @@ final class ReferenceChecks
         $length = \strlen($digits);
         for ($index = 0; $index < $length && Ascii::isDigit($digits[$index]); $index++) {
             $number = $number * 10 + (int) $digits[$index];
-            if ($number > 65535) {
+            if ($number > PcreNumber::MAX) {
                 return $index;
             }
         }
@@ -680,7 +681,7 @@ final class ReferenceChecks
             $number += ($this->groups->nextNumberAt($node) ?? 1) - 1;
         }
 
-        if ($number > 65535) {
+        if ($number > PcreNumber::MAX) {
             // A braced, angled or quoted number is refused on its bracket,
             // even when only its sum with the groups before it overflows.
             $text = null === $this->source ? '' : substr($this->source, $node->startPosition, 3);

@@ -35,6 +35,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\PcreNumber;
 use PHPRegex\Parser\Syntax\PcreVerb;
 
 /**
@@ -62,7 +63,7 @@ final class LookbehindChecks
      * PCRE's own ceiling on a fixed-length lookbehind, the same on every
      * PCRE2 release; max_lookbehind_length only bounds variable ones.
      */
-    private const MAX_FIXED_LENGTH = 65535;
+    private const MAX_FIXED_LENGTH = PcreNumber::MAX;
 
     /**
      * How many branches PCRE measures across all the lookbehinds of a

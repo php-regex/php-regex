@@ -52,7 +52,9 @@ final class RangeDiff
      * @param int $from a PHP_VERSION_ID, 70400 for PHP 7.4
      * @param int $to   a PHP_VERSION_ID at or after $from
      *
-     * @throws InvalidRegexOptionException when the range ends before it starts
+     * @throws InvalidRegexOptionException when the range ends before it starts, or starts
+     *                                     below 70000, PHP 7.0's PHP_VERSION_ID, which
+     *                                     "php_version" refuses
      */
     public static function between(int $from, int $to): self
     {

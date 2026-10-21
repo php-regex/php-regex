@@ -31,6 +31,18 @@ final class Utf8Test extends TestCase
         $this->assertSame($width, Utf8::width($text, $at));
     }
 
+    /**
+     * How many bytes UTF-8 writes a code point in, at each boundary.
+     */
+    #[Test]
+    public function test_the_encoded_length_of_a_code_point_follows_its_range(): void
+    {
+        foreach ([0x00 => 1, 0x7F => 1, 0x80 => 2, 0x7FF => 2, 0x800 => 3, 0xFFFF => 3, 0x10000 => 4, 0x10FFFF => 4] as $codePoint => $length) {
+            $this->assertSame($length, Utf8::encodedLength($codePoint), \sprintf('U+%04X', $codePoint));
+            $this->assertSame(\strlen((string) mb_chr($codePoint, 'UTF-8')), Utf8::encodedLength($codePoint), 'Oracle: mb_chr() writes it so.');
+        }
+    }
+
     #[Test]
     public function test_a_continuation_byte_is_one_of_0x80_to_0xbf(): void
     {
