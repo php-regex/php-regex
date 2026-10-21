@@ -86,20 +86,8 @@ final class PharWorkflowTest extends TestCase
     public function test_the_assets_carry_the_names_self_update_downloads(): void
     {
         $workflow = self::workflow();
-        $updater = new class extends SelfUpdater {
-            public function updateUrl(): string
-            {
-                return $this->getUpdateUrl();
-            }
-
-            public function checksumUrl(): string
-            {
-                return $this->getChecksumUrl();
-            }
-        };
-
-        $this->assertStringEndsWith('/regex.phar', $updater->updateUrl());
-        $this->assertStringEndsWith('/regex.phar.sha256', $updater->checksumUrl());
+        $this->assertStringEndsWith('/regex.phar', SelfUpdater::UPDATE_URL);
+        $this->assertStringEndsWith('/regex.phar.sha256', SelfUpdater::CHECKSUM_URL);
         $this->assertStringContainsString('gh release upload "$TAG" bin/regex.phar bin/regex.phar.sha256 --clobber', $workflow);
         $this->assertLessThan(
             strpos($workflow, 'gh release edit "$TAG" --draft=false'),

@@ -21,32 +21,31 @@ use PHPRegex\Parser\Text\Ascii;
 /**
  * @internal
  */
-class SelfUpdater
+final class SelfUpdater
 {
     /**
-     * How long the download may take to connect, and to finish.
-     *
-     * Without them an unreachable mirror leaves the updater hanging with no
-     * way out but a signal.
+     * The phar of the latest release, and its SHA-256 checksum.
      */
-    private const CONNECT_TIMEOUT_SECONDS = 10;
+    public const UPDATE_URL = 'https://github.com/php-regex/php-regex/releases/latest/download/regex.phar';
 
-    private const TRANSFER_TIMEOUT_SECONDS = 30;
+    public const CHECKSUM_URL = self::UPDATE_URL.'.sha256';
+
+    /**
+     * @param ?string $pharPath the phar to replace, the one running when null
+     */
+    public function __construct(private readonly Downloader $downloader = new HttpDownloader(), private readonly ?string $pharPath = null) {}
 
     public function run(Output $output): void
     {
-        $pharPath = $this->getPharPath();
+        $pharPath = $this->pharPath ?? \Phar::running(false);
         $this->validatePharPath($pharPath);
-
-        $updateUrl = $this->getUpdateUrl();
-        $checksumUrl = $this->getChecksumUrl();
 
         $output->write('  '.$output->dim('Downloading latest release...')."\n");
 
-        $checksum = $this->parseChecksum($this->fetchRemoteString($checksumUrl));
+        $checksum = $this->parseChecksum($this->fetchRemoteString(self::CHECKSUM_URL));
 
         $tempPath = $this->createTempFile();
-        $this->downloadFile($updateUrl, $tempPath);
+        $this->downloader->download(self::UPDATE_URL, $tempPath);
 
         $this->verifyChecksum($tempPath, $checksum);
         $this->validateDownloadedPhar($tempPath);
@@ -54,21 +53,6 @@ class SelfUpdater
         $this->replacePhar($pharPath, $tempPath);
 
         $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('PHPRegex updated successfully.')."\n");
-    }
-
-    protected function getPharPath(): string
-    {
-        return \Phar::running(false);
-    }
-
-    protected function getUpdateUrl(): string
-    {
-        return 'https://github.com/php-regex/php-regex/releases/latest/download/regex.phar';
-    }
-
-    protected function getChecksumUrl(): string
-    {
-        return $this->getUpdateUrl().'.sha256';
     }
 
     private function validatePharPath(string $pharPath): void
@@ -131,138 +115,6 @@ class SelfUpdater
         }
     }
 
-    private function downloadFile(string $url, string $destination): void
-    {
-        $streamSuccess = $this->downloadWithStreamContext($url, $destination);
-        if ($streamSuccess) {
-            return;
-        }
-
-        $curlSuccess = $this->downloadWithCurl($url, $destination);
-        if ($curlSuccess) {
-            return;
-        }
-
-        $wgetSuccess = $this->downloadWithWget($url, $destination);
-        if ($wgetSuccess) {
-            return;
-        }
-
-        throw new CliException('Unable to download '.$url.'.');
-    }
-
-    private function downloadWithStreamContext(string $url, string $destination): bool
-    {
-        $context = $this->createStreamContext();
-
-        $read = @fopen($url, 'r', false, $context);
-        if (!\is_resource($read)) {
-            return false;
-        }
-
-        $write = @fopen($destination, 'w');
-        if (!\is_resource($write)) {
-            fclose($read);
-
-            throw new CliException('Unable to write to '.$destination.'.');
-        }
-
-        stream_copy_to_stream($read, $write);
-        fclose($read);
-        fclose($write);
-
-        if (!file_exists($destination) || 0 === (int) filesize($destination)) {
-            throw new CliException('Downloaded file is empty.');
-        }
-
-        return true;
-    }
-
-    private function downloadWithCurl(string $url, string $destination): bool
-    {
-        if (!\function_exists('exec')) {
-            return false;
-        }
-
-        $escapedUrl = escapeshellarg($url);
-        $escapedDestination = escapeshellarg($destination);
-
-        $output = [];
-        $exitCode = 1;
-        @exec(
-            \sprintf(
-                'curl -fsSL --connect-timeout %d --max-time %d %s -o %s',
-                self::CONNECT_TIMEOUT_SECONDS,
-                self::TRANSFER_TIMEOUT_SECONDS,
-                $escapedUrl,
-                $escapedDestination,
-            ),
-            $output,
-            $exitCode,
-        );
-        if (0 !== $exitCode) {
-            return false;
-        }
-
-        if (!file_exists($destination) || 0 === (int) filesize($destination)) {
-            throw new CliException('Downloaded file is empty.');
-        }
-
-        return true;
-    }
-
-    private function downloadWithWget(string $url, string $destination): bool
-    {
-        if (!\function_exists('exec')) {
-            return false;
-        }
-
-        $escapedUrl = escapeshellarg($url);
-        $escapedDestination = escapeshellarg($destination);
-
-        $output = [];
-        $exitCode = 1;
-        @exec(
-            \sprintf(
-                'wget -q --connect-timeout=%d --timeout=%d -O %s %s',
-                self::CONNECT_TIMEOUT_SECONDS,
-                self::TRANSFER_TIMEOUT_SECONDS,
-                $escapedDestination,
-                $escapedUrl,
-            ),
-            $output,
-            $exitCode,
-        );
-        if (0 !== $exitCode) {
-            return false;
-        }
-
-        if (!file_exists($destination) || 0 === (int) filesize($destination)) {
-            throw new CliException('Downloaded file is empty.');
-        }
-
-        return true;
-    }
-
-    /**
-     * @return resource
-     */
-    private function createStreamContext()
-    {
-        return stream_context_create([
-            'http' => [
-                'follow_location' => 1,
-                'timeout' => self::TRANSFER_TIMEOUT_SECONDS,
-                'user_agent' => 'php-regex-cli',
-            ],
-            'https' => [
-                'follow_location' => 1,
-                'timeout' => self::TRANSFER_TIMEOUT_SECONDS,
-                'user_agent' => 'php-regex-cli',
-            ],
-        ]);
-    }
-
     private function fetchRemoteString(string $url): string
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'regex-update-');
@@ -271,7 +123,7 @@ class SelfUpdater
         }
 
         try {
-            $this->downloadFile($url, $tempFile);
+            $this->downloader->download($url, $tempFile);
             $data = file_get_contents($tempFile);
             if (false === $data) {
                 throw new CliException('Unable to read downloaded data.');

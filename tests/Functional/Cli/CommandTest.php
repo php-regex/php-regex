@@ -29,6 +29,7 @@ use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\SelfUpdate\SelfUpdater;
+use PHPRegex\Tests\Support\LocalReleaseDownloader;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -799,20 +800,26 @@ final class CommandTest extends TestCase
 
     public function test_self_update_command_run_returns_zero_on_success(): void
     {
-        $updater = new class extends SelfUpdater {
-            public function run(Output $output): void
-            {
-                // Do nothing
-            }
-        };
+        // The installed phar is replaced by itself, served as the latest release.
+        $pharPath = sys_get_temp_dir().'/regex-self-update-'.bin2hex(random_bytes(4)).'.phar';
+        copy(__DIR__.'/../../Fixtures/Cli/template.phar', $pharPath);
+        $checksumFile = $pharPath.'.sha256';
+        file_put_contents($checksumFile, hash_file('sha256', $pharPath).'  regex.phar');
 
-        $command = new SelfUpdateCommand($updater);
+        $command = new SelfUpdateCommand(new SelfUpdater(new LocalReleaseDownloader([SelfUpdater::UPDATE_URL => $pharPath, SelfUpdater::CHECKSUM_URL => $checksumFile]), $pharPath));
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $this->captureOutput(static fn (): int => $command->run(self::makeInput('self-update', []), $output), $exitCode, $output);
+
+        try {
+            $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('self-update', []), $output), $exitCode, $output);
+        } finally {
+            @unlink($pharPath);
+            @unlink($checksumFile);
+        }
 
         $this->assertSame(0, $exitCode);
+        $this->assertStringContainsString('PHPRegex updated successfully.', $buffer);
     }
 
     public function test_version_command_get_name_returns_correct_value(): void

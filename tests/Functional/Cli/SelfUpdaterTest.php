@@ -15,34 +15,12 @@ namespace PHPRegex\Tests\Functional\Cli;
 
 use PHPRegex\Cli\CliException;
 use PHPRegex\Cli\Output;
+use PHPRegex\Cli\SelfUpdate\HttpDownloader;
 use PHPRegex\Cli\SelfUpdate\SelfUpdater;
+use PHPRegex\Tests\Support\LocalReleaseDownloader;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\SelfUpdateFunctionOverrides;
 use PHPUnit\Framework\TestCase;
-
-class TestableSelfUpdater extends SelfUpdater
-{
-    public function __construct(
-        private readonly string $testPharPath,
-        private readonly string $testUpdateUrl,
-        private readonly string $testChecksumUrl
-    ) {}
-
-    protected function getPharPath(): string
-    {
-        return $this->testPharPath;
-    }
-
-    protected function getUpdateUrl(): string
-    {
-        return $this->testUpdateUrl;
-    }
-
-    protected function getChecksumUrl(): string
-    {
-        return $this->testChecksumUrl;
-    }
-}
 
 final class SelfUpdaterTest extends TestCase
 {
@@ -80,7 +58,6 @@ final class SelfUpdaterTest extends TestCase
     public function test_download_and_fetch_remote_string_from_local_file(): void
     {
         $updater = new SelfUpdater();
-        $download = new \ReflectionMethod(SelfUpdater::class, 'downloadFile');
         $fetch = new \ReflectionMethod(SelfUpdater::class, 'fetchRemoteString');
 
         $source = tempnam(sys_get_temp_dir(), 'regex-src-');
@@ -100,7 +77,7 @@ final class SelfUpdaterTest extends TestCase
         @unlink($destination);
 
         try {
-            $download->invoke($updater, 'file://'.$source, $destination);
+            (new HttpDownloader())->download('file://'.$source, $destination);
             $this->assertSame($content, file_get_contents($destination));
 
             $fetched = $fetch->invoke($updater, 'file://'.$source);
@@ -161,8 +138,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_download_file_with_invalid_url_throws_and_tries_exec(): void
     {
-        $updater = new SelfUpdater();
-        $method = new \ReflectionMethod(SelfUpdater::class, 'downloadFile');
+        $downloader = new HttpDownloader();
 
         $destination = tempnam(sys_get_temp_dir(), 'regex-dest-');
         if (false === $destination) {
@@ -174,7 +150,7 @@ final class SelfUpdaterTest extends TestCase
         try {
             $this->expectException(CliException::class);
             $this->expectExceptionMessageIsOrContains('Unable to download invalid://url.');
-            $method->invoke($updater, 'invalid://url', $destination);
+            $downloader->download('invalid://url', $destination);
         } finally {
             @unlink($destination);
         }
@@ -221,11 +197,7 @@ final class SelfUpdaterTest extends TestCase
 
         $output = new Output(false, true);
 
-        $updater = new TestableSelfUpdater(
-            $originalPhar,
-            'file://'.$newPhar,
-            'file://'.$checksumFile,
-        );
+        $updater = self::updater($originalPhar, 'file://'.$newPhar, 'file://'.$checksumFile);
 
         try {
             $updater->run($output);
@@ -282,11 +254,7 @@ final class SelfUpdaterTest extends TestCase
 
         $output = new Output(false, true);
 
-        $updater = new TestableSelfUpdater(
-            $originalPhar,
-            'file://'.$newPhar,
-            'file://'.$checksumFile,
-        );
+        $updater = self::updater($originalPhar, 'file://'.$newPhar, 'file://'.$checksumFile);
 
         try {
             $this->expectException(CliException::class);
@@ -344,11 +312,7 @@ final class SelfUpdaterTest extends TestCase
 
         $output = new Output(false, true);
 
-        $updater = new TestableSelfUpdater(
-            $originalPhar,
-            'file://'.$invalidPhar,
-            'file://'.$checksumFile,
-        );
+        $updater = self::updater($originalPhar, 'file://'.$invalidPhar, 'file://'.$checksumFile);
 
         try {
             $this->expectException(CliException::class);
@@ -367,11 +331,7 @@ final class SelfUpdaterTest extends TestCase
 
         $output = new Output(false, true);
 
-        $updater = new TestableSelfUpdater(
-            $nonExistentPath,
-            'file://'.$nonExistentPath,
-            'file://'.$nonExistentPath,
-        );
+        $updater = self::updater($nonExistentPath, 'file://'.$nonExistentPath, 'file://'.$nonExistentPath);
 
         $this->expectException(CliException::class);
         $this->expectExceptionMessageIsOrContains('Unable to locate the running phar.');
@@ -400,11 +360,7 @@ final class SelfUpdaterTest extends TestCase
 
         $output = new Output(false, true);
 
-        $updater = new TestableSelfUpdater(
-            $readonlyPhar,
-            'file://'.$readonlyPhar,
-            'file://'.$readonlyPhar,
-        );
+        $updater = self::updater($readonlyPhar, 'file://'.$readonlyPhar, 'file://'.$readonlyPhar);
 
         try {
             $this->expectException(CliException::class);
@@ -418,18 +374,53 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_get_update_url_returns_expected_url(): void
     {
-        $updater = new SelfUpdater();
-        $method = new \ReflectionMethod(SelfUpdater::class, 'getUpdateUrl');
+        $pharPath = $this->copyTemplatePhar();
+        $checksumFile = $this->writeChecksumFile($pharPath);
+        // The checksum is served, the phar is not.
+        $downloader = new LocalReleaseDownloader(['https://github.com/php-regex/php-regex/releases/latest/download/regex.phar.sha256' => $checksumFile]);
 
-        $this->assertSame('https://github.com/php-regex/php-regex/releases/latest/download/regex.phar', $method->invoke($updater));
+        try {
+            (new SelfUpdater($downloader, $pharPath))->run(new Output(false, true));
+            $this->fail('The phar was downloaded from an address nobody serves.');
+        } catch (CliException $e) {
+            $this->assertStringContainsString('Unable to download invalid://https://github.com/php-regex/php-regex/releases/latest/download/regex.phar.', $e->getMessage());
+        } finally {
+            @unlink($pharPath);
+            @unlink($checksumFile);
+        }
+
+        $this->assertSame('https://github.com/php-regex/php-regex/releases/latest/download/regex.phar', $downloader->requested[1] ?? null);
     }
 
     public function test_get_checksum_url_returns_expected_url(): void
     {
-        $updater = new SelfUpdater();
-        $method = new \ReflectionMethod(SelfUpdater::class, 'getChecksumUrl');
+        $pharPath = $this->copyTemplatePhar();
+        $downloader = new LocalReleaseDownloader([]);
 
-        $this->assertSame('https://github.com/php-regex/php-regex/releases/latest/download/regex.phar.sha256', $method->invoke($updater));
+        try {
+            (new SelfUpdater($downloader, $pharPath))->run(new Output(false, true));
+            $this->fail('The checksum was downloaded from an address nobody serves.');
+        } catch (CliException) {
+            $this->assertSame(['https://github.com/php-regex/php-regex/releases/latest/download/regex.phar.sha256'], $downloader->requested);
+        } finally {
+            @unlink($pharPath);
+        }
+    }
+
+    public function test_run_downloads_the_checksum_then_the_phar_of_the_latest_release(): void
+    {
+        $pharPath = $this->copyTemplatePhar();
+        $checksumFile = $this->writeChecksumFile($pharPath);
+        $downloader = new LocalReleaseDownloader([SelfUpdater::UPDATE_URL => $pharPath, SelfUpdater::CHECKSUM_URL => $checksumFile]);
+
+        try {
+            (new SelfUpdater($downloader, $pharPath))->run(new Output(false, true));
+        } finally {
+            @unlink($pharPath);
+            @unlink($checksumFile);
+        }
+
+        $this->assertSame([SelfUpdater::CHECKSUM_URL, SelfUpdater::UPDATE_URL], $downloader->requested);
     }
 
     public function test_run_throws_when_phar_not_writable_via_override(): void
@@ -439,11 +430,7 @@ final class SelfUpdaterTest extends TestCase
 
         SelfUpdateFunctionOverrides::queueIsWritable(false);
 
-        $updater = new TestableSelfUpdater(
-            $pharPath,
-            $pharPath,
-            $pharPath,
-        );
+        $updater = self::updater($pharPath, $pharPath, $pharPath);
 
         try {
             $this->expectException(CliException::class);
@@ -464,11 +451,7 @@ final class SelfUpdaterTest extends TestCase
         SelfUpdateFunctionOverrides::queueTempnam($checksumTemp);
         SelfUpdateFunctionOverrides::queueTempnam(false);
 
-        $updater = new TestableSelfUpdater(
-            $pharPath,
-            $pharPath,
-            $checksumFile,
-        );
+        $updater = self::updater($pharPath, $pharPath, $checksumFile);
 
         try {
             $this->expectException(CliException::class);
@@ -488,11 +471,7 @@ final class SelfUpdaterTest extends TestCase
 
         SelfUpdateFunctionOverrides::queueHashFile(false);
 
-        $updater = new TestableSelfUpdater(
-            $pharPath,
-            $pharPath,
-            $checksumFile,
-        );
+        $updater = self::updater($pharPath, $pharPath, $checksumFile);
 
         try {
             $this->expectException(CliException::class);
@@ -510,11 +489,7 @@ final class SelfUpdaterTest extends TestCase
         $checksumFile = $this->writeChecksumFile($pharPath, str_repeat('a', 64));
         $output = new Output(false, true);
 
-        $updater = new TestableSelfUpdater(
-            $pharPath,
-            $pharPath,
-            $checksumFile,
-        );
+        $updater = self::updater($pharPath, $pharPath, $checksumFile);
 
         try {
             $this->expectException(CliException::class);
@@ -535,11 +510,7 @@ final class SelfUpdaterTest extends TestCase
         SelfUpdateFunctionOverrides::queueRename(false);
         SelfUpdateFunctionOverrides::queueCopy(false);
 
-        $updater = new TestableSelfUpdater(
-            $pharPath,
-            $pharPath,
-            $checksumFile,
-        );
+        $updater = self::updater($pharPath, $pharPath, $checksumFile);
 
         try {
             $this->expectException(CliException::class);
@@ -560,11 +531,7 @@ final class SelfUpdaterTest extends TestCase
         SelfUpdateFunctionOverrides::queueRename(false);
         SelfUpdateFunctionOverrides::queueCopy(true);
 
-        $updater = new TestableSelfUpdater(
-            $pharPath,
-            $pharPath,
-            $checksumFile,
-        );
+        $updater = self::updater($pharPath, $pharPath, $checksumFile);
 
         try {
             $updater->run($output);
@@ -577,8 +544,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_download_file_throws_when_write_handle_fails(): void
     {
-        $updater = new SelfUpdater();
-        $method = new \ReflectionMethod(SelfUpdater::class, 'downloadFile');
+        $downloader = new HttpDownloader();
 
         $source = tempnam(sys_get_temp_dir(), 'regex-src-');
         if (false === $source) {
@@ -596,7 +562,7 @@ final class SelfUpdaterTest extends TestCase
         try {
             $this->expectException(CliException::class);
             $this->expectExceptionMessageIsOrContains('Unable to write to '.$destination.'.');
-            $method->invoke($updater, 'file://'.$source, $destination);
+            $downloader->download('file://'.$source, $destination);
         } finally {
             SelfUpdateFunctionOverrides::$forceFopenWriteFail = null;
             @chmod($destinationDir, 0o755);
@@ -608,8 +574,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_download_file_throws_when_downloaded_file_empty(): void
     {
-        $updater = new SelfUpdater();
-        $method = new \ReflectionMethod(SelfUpdater::class, 'downloadFile');
+        $downloader = new HttpDownloader();
 
         $source = tempnam(sys_get_temp_dir(), 'regex-src-');
         if (false === $source) {
@@ -629,7 +594,7 @@ final class SelfUpdaterTest extends TestCase
         try {
             $this->expectException(CliException::class);
             $this->expectExceptionMessageIsOrContains('Downloaded file is empty.');
-            $method->invoke($updater, 'file://'.$source, $destination);
+            $downloader->download('file://'.$source, $destination);
         } finally {
             @unlink($source);
             @unlink($destination);
@@ -638,8 +603,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_download_file_exec_fallback_uses_curl_when_successful(): void
     {
-        $updater = new SelfUpdater();
-        $method = new \ReflectionMethod(SelfUpdater::class, 'downloadFile');
+        $downloader = new HttpDownloader();
 
         $destination = tempnam(sys_get_temp_dir(), 'regex-dest-');
         if (false === $destination) {
@@ -652,7 +616,7 @@ final class SelfUpdaterTest extends TestCase
         SelfUpdateFunctionOverrides::queueExecResult(0, $destination, 'payload');
 
         try {
-            $method->invoke($updater, 'https://example.com/file', $destination);
+            $downloader->download('https://example.com/file', $destination);
             $this->assertSame('payload', file_get_contents($destination));
         } finally {
             SelfUpdateFunctionOverrides::$forceFopenReadFail = null;
@@ -662,8 +626,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_download_file_exec_fallback_curl_empty_file_throws(): void
     {
-        $updater = new SelfUpdater();
-        $method = new \ReflectionMethod(SelfUpdater::class, 'downloadFile');
+        $downloader = new HttpDownloader();
 
         $destination = tempnam(sys_get_temp_dir(), 'regex-dest-');
         if (false === $destination) {
@@ -678,7 +641,7 @@ final class SelfUpdaterTest extends TestCase
         try {
             $this->expectException(CliException::class);
             $this->expectExceptionMessageIsOrContains('Downloaded file is empty.');
-            $method->invoke($updater, 'https://example.com/file', $destination);
+            $downloader->download('https://example.com/file', $destination);
         } finally {
             SelfUpdateFunctionOverrides::$forceFopenReadFail = null;
             @unlink($destination);
@@ -687,8 +650,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_download_file_exec_fallback_uses_wget_when_successful(): void
     {
-        $updater = new SelfUpdater();
-        $method = new \ReflectionMethod(SelfUpdater::class, 'downloadFile');
+        $downloader = new HttpDownloader();
 
         $destination = tempnam(sys_get_temp_dir(), 'regex-dest-');
         if (false === $destination) {
@@ -702,7 +664,7 @@ final class SelfUpdaterTest extends TestCase
         SelfUpdateFunctionOverrides::queueExecResult(0, $destination, 'payload');
 
         try {
-            $method->invoke($updater, 'https://example.com/file', $destination);
+            $downloader->download('https://example.com/file', $destination);
             $this->assertSame('payload', file_get_contents($destination));
         } finally {
             SelfUpdateFunctionOverrides::$forceFopenReadFail = null;
@@ -712,8 +674,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_download_file_exec_fallback_wget_empty_file_throws(): void
     {
-        $updater = new SelfUpdater();
-        $method = new \ReflectionMethod(SelfUpdater::class, 'downloadFile');
+        $downloader = new HttpDownloader();
 
         $destination = tempnam(sys_get_temp_dir(), 'regex-dest-');
         if (false === $destination) {
@@ -729,7 +690,7 @@ final class SelfUpdaterTest extends TestCase
         try {
             $this->expectException(CliException::class);
             $this->expectExceptionMessageIsOrContains('Downloaded file is empty.');
-            $method->invoke($updater, 'https://example.com/file', $destination);
+            $downloader->download('https://example.com/file', $destination);
         } finally {
             SelfUpdateFunctionOverrides::$forceFopenReadFail = null;
             @unlink($destination);
@@ -768,6 +729,15 @@ final class SelfUpdaterTest extends TestCase
         } finally {
             @unlink($source);
         }
+    }
+
+    /**
+     * An updater replacing $pharPath with the phar at $update, checked
+     * against the checksum at $checksum.
+     */
+    private static function updater(string $pharPath, string $update, string $checksum): SelfUpdater
+    {
+        return new SelfUpdater(new LocalReleaseDownloader([SelfUpdater::UPDATE_URL => $update, SelfUpdater::CHECKSUM_URL => $checksum]), $pharPath);
     }
 
     private function copyTemplatePhar(): string
