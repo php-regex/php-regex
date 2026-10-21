@@ -61,9 +61,9 @@ final class RealWorldCasesTest extends TestCase
 
         // Alternation overlapping - only flagged when inside an unbounded quantifier
         // These patterns wrap overlapping alternations in quantifiers, creating ReDoS risk
-        yield ['pattern' => '/(([0-9]*.[0-9]+)|([0-9]+(.[0-9]*)?))+/', 'expectedIssueMessage' => 'Alternation branches have overlapping character sets, which may cause unnecessary backtracking.'];
-        yield ['pattern' => '/(([a-f][a-f0-9])|([a-f0-9][a-f]))+/', 'expectedIssueMessage' => 'Alternation branches have overlapping character sets, which may cause unnecessary backtracking.'];
-        yield ['pattern' => '%^(?:[-]|[-][-]|[-][-]|[-][-]{2}|[-][-]|[-][-]{2}|[-][-]{3}|[-][-]{2})*$%xs', 'expectedIssueMessage' => 'Alternation branches have overlapping character sets, which may cause unnecessary backtracking.'];
+        yield ['pattern' => '/(([0-9]*.[0-9]+)|([0-9]+(.[0-9]*)?))+/', 'expectedIssueMessage' => 'Alternation branches "([0-9]*.[0-9]+)" and "([0-9]+(.[0-9]*)?)" have overlapping character sets, which may cause unnecessary backtracking.'];
+        yield ['pattern' => '/(([a-f][a-f0-9])|([a-f0-9][a-f]))+/', 'expectedIssueMessage' => 'Alternation branches "([a-f][a-f0-9])" and "([a-f0-9][a-f])" have overlapping character sets, which may cause unnecessary backtracking.'];
+        yield ['pattern' => '%^(?:[-]|[-][-]|[-][-]|[-][-]{2}|[-][-]|[-][-]{2}|[-][-]{3}|[-][-]{2})*$%xs', 'expectedIssueMessage' => 'Alternation branches "[\\\\-]" and "[\\\\-][\\\\-]" have overlapping character sets, which may cause unnecessary backtracking.'];
 
         // Redundant elements
         yield ['pattern' => '~{args.((?:[^{}}]++|(?R))*)}~', 'expectedIssueMessage' => 'Redundant elements detected in character class.'];
