@@ -50,6 +50,12 @@ final class ParserOptionsRangeTest extends TestCase
         yield 'a major and a minor run together' => ['version' => 82, 'message' => '"php_version" 82 is no PHP_VERSION_ID: write PHP 8.2 as 80200 or "8.2".'];
         yield 'a major alone, as a string' => ['version' => '8', 'message' => '"php_version" 8 is no PHP_VERSION_ID: write PHP 8.0 as 80000 or "8.0".'];
         yield 'PHP 7.4 run together' => ['version' => '74', 'message' => '"php_version" 74 is no PHP_VERSION_ID: write PHP 7.4 as 70400 or "7.4".'];
+        $below = static fn (int $version): string => \sprintf('"php_version" %d is below 70000, the PHP_VERSION_ID of PHP 7.0: write a version as "8.2", or as its PHP_VERSION_ID, 80200.', $version);
+        // Read as a major or a major and a minor, they would name no PHP
+        // the library judges: no hint to write one.
+        yield 'a major below 7' => ['version' => 5, 'message' => $below(5)];
+        yield 'a number read as 1.0' => ['version' => 10, 'message' => $below(10)];
+        yield 'a number read as 6.9' => ['version' => 69, 'message' => $below(69)];
     }
 
     #[Test]
@@ -75,8 +81,8 @@ final class ParserOptionsRangeTest extends TestCase
         yield 'a patch past 99' => ['version' => '8.2.100', 'message' => $invalid];
         yield 'a minor past 99' => ['version' => '8.100', 'message' => $invalid];
         yield 'a trailing dot' => ['version' => '8.', 'message' => $invalid];
-        yield 'a version id below PHP 7' => ['version' => 69999, 'message' => $invalid];
-        yield 'a version id string below PHP 7' => ['version' => '50600', 'message' => $invalid];
+        yield 'a version id below PHP 7' => ['version' => 69999, 'message' => '"php_version" 69999 is below 70000, the PHP_VERSION_ID of PHP 7.0: write a version as "8.2", or as its PHP_VERSION_ID, 80200.'];
+        yield 'a version id string below PHP 7' => ['version' => '50600', 'message' => '"php_version" 50600 is below 70000, the PHP_VERSION_ID of PHP 7.0: write a version as "8.2", or as its PHP_VERSION_ID, 80200.'];
         yield 'zero' => ['version' => 0, 'message' => $invalid];
         yield 'a negative id' => ['version' => -80200, 'message' => $invalid];
     }

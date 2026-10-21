@@ -715,8 +715,8 @@ major at most 99: `"8.2foo"`, `"8.x"`, `"8.2.1.9"` and `"8.2.100"` throw
 (`"8.2.100"` judged PHP 8.3). A PHP_VERSION_ID, an integer or its digits, is
 at least 70000: `8` and `82` throw, the message saying to write `80000` or
 `"8.0"`, `80200` or `"8.2"`, where they judged a PHP that does not exist. The
-regex.json schema and the PHPStan parameter schema refuse the same values. A
-Rector target below PHP 7.0 is judged from PHP 7.0.
+regex.json schema refuses the same values, the PHPStan parameter schema the
+same version strings. A Rector target below PHP 7.0 is judged from PHP 7.0.
 
 `new ParserOptions()` throws `InvalidRegexOptionException` for a
 `maxPatternLength` or a `maxRecursionDepth` below 1 and a

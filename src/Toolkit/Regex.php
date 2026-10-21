@@ -35,6 +35,7 @@ use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\FormattingException;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
@@ -227,28 +228,28 @@ final class Regex
                 $ast->accept($linter);
                 $lintIssues = $linter->getIssues();
             } catch (ExceptionInterface $e) {
-                $errors[] = $e->getMessage();
+                $errors[] = self::patternError($e);
                 $isValid = false;
             }
 
             try {
                 $optimizations = $this->optimize($regex);
             } catch (ExceptionInterface $e) {
-                $errors[] = $e->getMessage();
+                $errors[] = self::patternError($e);
                 $isValid = false;
             }
 
             try {
                 $explain = $this->explain($regex);
             } catch (ExceptionInterface $e) {
-                $errors[] = $e->getMessage();
+                $errors[] = self::patternError($e);
                 $isValid = false;
             }
 
             try {
                 $highlighted = $this->highlight($regex);
             } catch (ExceptionInterface $e) {
-                $errors[] = $e->getMessage();
+                $errors[] = self::patternError($e);
                 $isValid = false;
             }
         }
@@ -494,6 +495,21 @@ final class Regex
     public function clearCaches(): void
     {
         $this->parser->clearCaches();
+    }
+
+    /**
+     * The message of an error the pattern causes. A failure of the library,
+     * which says nothing of the pattern, goes on as it is.
+     *
+     * @throws InternalFailureException
+     */
+    private static function patternError(ExceptionInterface $error): string
+    {
+        if ($error instanceof InternalFailureException) {
+            throw $error;
+        }
+
+        return $error->getMessage();
     }
 
     /**

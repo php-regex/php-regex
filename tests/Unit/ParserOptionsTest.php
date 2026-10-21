@@ -125,7 +125,7 @@ final class ParserOptionsTest extends TestCase
     public function test_from_array_invalid_php_version_digits_low(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessageIsOrContains('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
+        $this->expectExceptionMessageIsOrContains('"php_version" 8000 is below 70000, the PHP_VERSION_ID of PHP 7.0: write a version as "8.2", or as its PHP_VERSION_ID, 80200.');
         ParserOptions::fromArray(['php_version' => '8000']);
     }
 

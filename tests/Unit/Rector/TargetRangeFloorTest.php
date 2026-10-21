@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Rector;
 
+use PHPRegex\Rector\PregCall;
 use PHPRegex\Rector\TargetRange;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,5 +32,19 @@ final class TargetRangeFloorTest extends TestCase
 
         $this->assertSame(TargetRange::from(70000), $range);
         $this->assertTrue($range->diff('/a/')->from->validation->isValid);
+    }
+
+    /**
+     * The parser a rule reads the target's patterns with takes the same
+     * floor: PregSplitToExplodeRector and PregReplaceToStrReplaceRector run
+     * on a project that targets PHP 5.6.
+     */
+    #[Test]
+    public function test_the_target_parser_of_a_php_below_7_judges_php_7(): void
+    {
+        $parser = PregCall::targetParser(50600);
+
+        $this->assertSame(70000, $parser->target()->phpVersionId);
+        $this->assertTrue($parser->validate('/a/')->isValid);
     }
 }

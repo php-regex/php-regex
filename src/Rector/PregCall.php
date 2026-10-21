@@ -27,6 +27,7 @@ use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use Rector\ValueObject\PhpVersion;
@@ -129,10 +130,13 @@ final class PregCall
      * The parser that reads patterns as the PHP the code targets does,
      * with the PCRE2 its sources bundle, under the locale Rector runs with:
      * Rector names no other, and a rule rewrites no pattern whose answer
-     * moves with the locale (see TrivialMatchClassifier).
+     * moves with the locale (see TrivialMatchClassifier). Rector takes
+     * targets from PHP 5.3, which the library judges from PHP 7.0.
      */
     public static function targetParser(int $phpVersion): RegexParser
     {
+        $phpVersion = max($phpVersion, ParserOptions::OLDEST_PHP_VERSION_ID);
+
         return RegexParser::create(['php_version' => $phpVersion, 'pcre_version' => PcreTarget::bundledWith($phpVersion)->pcreVersion]);
     }
 
