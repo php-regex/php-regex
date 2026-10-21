@@ -143,44 +143,6 @@ final class PatternChecker
         return $this->optimizationsEnabled;
     }
 
-    public function isOptimizationFormatSafe(string $original, string $optimized): bool
-    {
-        $delimiter = $optimized[0] ?? '';
-        if ('' === $delimiter) {
-            return false;
-        }
-
-        $lastDelimiterPos = strrpos($optimized, $delimiter);
-        if (false === $lastDelimiterPos || 0 === $lastDelimiterPos) {
-            return false;
-        }
-
-        $patternPart = substr($optimized, 1, $lastDelimiterPos - 1);
-
-        $originalDelimiter = $original[0] ?? '';
-        $originalPatternPart = '';
-        if ('' !== $originalDelimiter) {
-            $originalLastPos = strrpos($original, $originalDelimiter);
-            if (false !== $originalLastPos) {
-                $originalPatternPart = substr($original, 1, $originalLastPos - 1);
-            }
-        }
-
-        if ('' === $patternPart) {
-            return false;
-        }
-
-        if (\strlen($patternPart) < 2) {
-            return false;
-        }
-
-        if (str_contains($originalPatternPart, '\n') && !str_contains($patternPart, '\n')) {
-            return false;
-        }
-
-        return true;
-    }
-
     /**
      * The errors of a pattern the running engine compiles; the caller
      * reports one it refuses (PHPStan core does in a preg_*() call).
@@ -294,7 +256,7 @@ final class PatternChecker
 
             foreach ($optimizations as $optimizationEntry) {
                 $optimization = $optimizationEntry['optimization'];
-                if (!$this->isOptimizationFormatSafe($pattern, $optimization->optimized)) {
+                if (!OptimizationFormat::isSafe($pattern, $optimization->optimized)) {
                     continue;
                 }
                 $errors[] = ErrorFactory::optimization($pattern, $optimization->optimized, $lineNumber);

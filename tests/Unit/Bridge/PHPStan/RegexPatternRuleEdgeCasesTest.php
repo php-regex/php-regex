@@ -23,6 +23,7 @@ use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
 use PHPRegex\PHPStan\ErrorFactory;
+use PHPRegex\PHPStan\OptimizationFormat;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPStan\Analyser\CollectedDataEmitter;
 use PHPStan\Analyser\DependencyTracker;
@@ -396,23 +397,17 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
 
     public function test_is_optimization_safe_rejects_empty_optimized_pattern(): void
     {
-        $rule = new RegexPatternRule();
-
-        $this->assertFalse($rule->isOptimizationFormatSafe('/abc/', ''));
+        $this->assertFalse(OptimizationFormat::isSafe('/abc/', ''));
     }
 
     public function test_is_optimization_safe_rejects_short_pattern(): void
     {
-        $rule = new RegexPatternRule();
-
-        $this->assertFalse($rule->isOptimizationFormatSafe('/a/', '/a/'));
+        $this->assertFalse(OptimizationFormat::isSafe('/a/', '/a/'));
     }
 
     public function test_is_optimization_safe_rejects_delimiter_only(): void
     {
-        $rule = new RegexPatternRule();
-
-        $this->assertFalse($rule->isOptimizationFormatSafe('/a/', '/'));
+        $this->assertFalse(OptimizationFormat::isSafe('/a/', '/'));
     }
 
     public function test_default_optimization_config_enables_digits_optimization(): void
@@ -427,30 +422,22 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
 
     public function test_is_optimization_format_safe_rejects_empty_delimiter(): void
     {
-        $rule = new RegexPatternRule();
-
-        $this->assertFalse($rule->isOptimizationFormatSafe('/abc/', ''));
+        $this->assertFalse(OptimizationFormat::isSafe('/abc/', ''));
     }
 
     public function test_is_optimization_format_safe_rejects_delimiter_at_start_only(): void
     {
-        $rule = new RegexPatternRule();
-
-        $this->assertFalse($rule->isOptimizationFormatSafe('/abc/', '/'));
+        $this->assertFalse(OptimizationFormat::isSafe('/abc/', '/'));
     }
 
     public function test_is_optimization_format_safe_rejects_empty_pattern_part(): void
     {
-        $rule = new RegexPatternRule();
-
-        $this->assertFalse($rule->isOptimizationFormatSafe('/abc/', '//'));
+        $this->assertFalse(OptimizationFormat::isSafe('/abc/', '//'));
     }
 
     public function test_is_optimization_format_safe_rejects_short_pattern(): void
     {
-        $rule = new RegexPatternRule();
-
-        $this->assertFalse($rule->isOptimizationFormatSafe('/ab/', '/a/'));
+        $this->assertFalse(OptimizationFormat::isSafe('/ab/', '/a/'));
     }
 
     public function test_redos_critical_severity_is_reported_under_regex_redos(): void

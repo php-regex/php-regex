@@ -245,14 +245,6 @@ final class RegexPatternRule implements Rule
     }
 
     /**
-     * @internal the rule's own check
-     */
-    public function isOptimizationFormatSafe(string $original, string $optimized): bool
-    {
-        return $this->checker->isOptimizationFormatSafe($original, $optimized);
-    }
-
-    /**
      * A static method of a wrapper library, judged as `regex lint` judges
      * it: the pattern at the argument the library takes it, the keys of a
      * map where the library reads them. The subject is not told apart, so
