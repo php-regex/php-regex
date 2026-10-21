@@ -189,7 +189,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpParserExtractionStrategy', 'Linter\Extraction\RouteRequirementCompiler',
             'Linter\Extraction\TokenBasedExtractionStrategy', 'Linter\Formatter\FormatterRegistry',
             'Linter\Formatter\RelativePathHelper', 'Linter\LintService', 'Linter\LintSetup', 'Linter\PatternExtractor',
-            'Linter\PatternOccurrence', 'Linter\Source\OverlappingPatternSourceInterface',
+            'Linter\PatternOccurrence',
             'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
             'Parser\Text\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
