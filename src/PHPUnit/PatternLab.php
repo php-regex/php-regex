@@ -17,7 +17,6 @@ use PHPRegex\Parser\Analysis\PatternInfo;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\RegexException;
-use PHPRegex\Parser\Exception\VisualContextInterface;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
@@ -330,12 +329,9 @@ final class PatternLab
      */
     private static function libraryFailure(RegexException $e): string
     {
-        $text = $e->getMessage();
-        if ($e instanceof VisualContextInterface && '' !== (string) $e->snippet) {
-            $text .= "\n".(string) $e->snippet;
-        }
+        $snippet = $e->snippet ?? '';
 
-        return $text;
+        return '' === $snippet ? $e->getMessage() : $e->getMessage()."\n".$snippet;
     }
 
     /**

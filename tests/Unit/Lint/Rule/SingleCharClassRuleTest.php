@@ -126,6 +126,9 @@ final class SingleCharClassRuleTest extends TestCase
         yield 'hash under x' => ['pattern' => '/[#]/x'];
         yield 'space under x' => ['pattern' => '/[ ]/x'];
         yield 'the delimiter' => ['pattern' => '/[\/]/'];
+        // A bracket pair delimits: its opening bracket is a delimiter too.
+        yield 'the opening bracket of a bracket delimiter' => ['pattern' => '<a[\<]b>'];
+        yield 'the closing bracket of a bracket delimiter' => ['pattern' => '<a[\>]b>'];
         yield 'raw multibyte character without u' => ['pattern' => '/[é]/'];
         yield 'duplicate, another rule' => ['pattern' => '/[aa]/'];
         yield 'two characters' => ['pattern' => '/[ab]/'];

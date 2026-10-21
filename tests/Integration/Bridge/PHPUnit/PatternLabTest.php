@@ -40,4 +40,17 @@ final class PatternLabTest extends TestCase
     {
         $this->assertEquals(PcreTarget::runtime(), PatternLab::parser()->target());
     }
+
+    /**
+     * A pattern that does not parse fails the attempt with the library's
+     * message, then the line at fault with a caret under it.
+     */
+    #[Test]
+    public function test_a_pattern_that_does_not_parse_fails_with_its_message_and_snippet(): void
+    {
+        $attempt = PatternLab::run('/a(/', 'a', []);
+
+        $this->assertNull($attempt->matched);
+        $this->assertSame("Expected ) at end of input (found eof).\nLine 1: a(\n".str_repeat(' ', 10).'^', $attempt->failure);
+    }
 }

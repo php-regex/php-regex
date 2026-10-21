@@ -31,6 +31,15 @@ final class Utf8Test extends TestCase
         $this->assertSame($width, Utf8::width($text, $at));
     }
 
+    #[Test]
+    public function test_a_continuation_byte_is_one_of_0x80_to_0xbf(): void
+    {
+        $this->assertTrue(Utf8::continues("\x80"));
+        $this->assertTrue(Utf8::continues("\xBF"));
+        $this->assertFalse(Utf8::continues("\x7F"));
+        $this->assertFalse(Utf8::continues("\xC0"));
+    }
+
     /**
      * @return iterable<string, array{text: string, at: int, width: int}>
      */

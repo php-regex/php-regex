@@ -1105,7 +1105,7 @@ final class Lexer
             if ($extended && '#' === $this->pattern[$at]) {
                 $newline = $this->nextNewline($at + 1);
                 $at = null === $newline ? $this->length : $newline[0] + $newline[1];
-                while ($at < $this->length && self::isContinuationByte($this->pattern[$at])) {
+                while ($at < $this->length && Utf8::continues($this->pattern[$at])) {
                     $at++;
                 }
 
@@ -1386,7 +1386,7 @@ final class Lexer
         // Outside UTF mode the byte 0x85 ends the line under "(*ANY)" even
         // inside a UTF-8 character: the bytes left of that character are
         // read one by one, as PCRE reads them.
-        while ($this->position < $this->length && self::isContinuationByte($this->pattern[$this->position])) {
+        while ($this->position < $this->length && Utf8::continues($this->pattern[$this->position])) {
             $tokens[] = new Token(TokenType::Literal, $this->pattern[$this->position], $this->position);
             $this->position++;
         }
@@ -1456,14 +1456,6 @@ final class Lexer
     private function characterLength(int $at): int
     {
         return $this->byteMode ? 1 : Utf8::width($this->pattern, $at);
-    }
-
-    /**
-     * Whether the byte is one that continues a UTF-8 character.
-     */
-    private static function isContinuationByte(string $byte): bool
-    {
-        return 0x80 === (\ord($byte) & 0xC0);
     }
 
     /**

@@ -414,13 +414,13 @@ echo $result->error;
 $result = $regex->validate('/hello/i');
 ```
 
-### Error: Expected ) at end of input (found eof)
+### Error: Expected ) at end of input (found eof).
 
 ```php
 // Wrong: Unclosed parenthesis
 $result = $regex->validate('/(hello/');
 echo $result->error;
-// Output: Expected ) at end of input (found eof)
+// Output: Expected ) at end of input (found eof).
 
 // Right: Matching parentheses
 $result = $regex->validate('/(hello)/');

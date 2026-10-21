@@ -86,7 +86,7 @@ echo $result->error, "\n";
 echo $result->caretSnippet, "\n";
 ```
 ```
-Expected ) at end of input (found eof)
+Expected ) at end of input (found eof).
 Line 1: (?<year>\d{4})-(\k<month>
                                  ^
 ```

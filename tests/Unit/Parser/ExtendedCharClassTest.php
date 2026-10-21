@@ -236,6 +236,16 @@ final class ExtendedCharClassTest extends TestCase
         $error = (new \ReflectionMethod($parser, 'firstMemberErrorBefore'))->invoke($parser, $members, 8);
         $this->assertInstanceOf(ParserException::class, $error);
         $this->assertSame(7, $error->position);
+
+        // A member ending where the class failed is read, and refused there.
+        $atItsEnd = (new \ReflectionMethod($parser, 'firstMemberErrorBefore'))->invoke($parser, $members, 7);
+        $this->assertInstanceOf(ParserException::class, $atItsEnd);
+        $this->assertSame(7, $atItsEnd->position);
+
+        // A member PCRE takes is passed over for the next one.
+        $afterOneTaken = (new \ReflectionMethod($parser, 'firstMemberErrorBefore'))->invoke($parser, [new Token(TokenType::Literal, 'x', 4), $members[1]], 8);
+        $this->assertInstanceOf(ParserException::class, $afterOneTaken);
+        $this->assertSame(7, $afterOneTaken->position);
     }
 
     #[Test]

@@ -23,6 +23,15 @@ final class Utf8
     private function __construct() {}
 
     /**
+     * Whether the byte continues a UTF-8 character, 0x80 to 0xBF, rather
+     * than starting one.
+     */
+    public static function continues(string $byte): bool
+    {
+        return 0x80 === (\ord($byte) & 0xC0);
+    }
+
+    /**
      * How many bytes the character at $at takes: the length its first byte
      * announces, 1 for a byte that starts no sequence (a continuation byte,
      * the end of the text), so a walk always moves on. Whether the bytes

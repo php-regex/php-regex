@@ -66,7 +66,7 @@ final class JsonDocument
         try {
             return json_encode(self::escapeArray($document), self::FLAGS)."\n";
         } catch (\JsonException $e) {
-            throw new JsonEncodingException('Failed to encode JSON: '.$e->getMessage(), 0, $e);
+            throw new JsonEncodingException('Failed to encode JSON: '.$e->getMessage(), previous: $e);
         }
     }
 

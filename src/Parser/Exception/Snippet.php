@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Exception;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Text\Utf8;
 
 /**
  * The line of a pattern with a caret under an offset, as the exceptions
@@ -90,22 +91,14 @@ final class Snippet
      */
     private static function onCharacters(string $pattern, int $start, int $end, int $caret, int $lineEnd): array
     {
-        while ($start < $caret && self::continues($pattern[$start])) {
+        while ($start < $caret && Utf8::continues($pattern[$start])) {
             $start++;
         }
 
-        while ($end > $caret && $end < $lineEnd && self::continues($pattern[$end])) {
+        while ($end > $caret && $end < $lineEnd && Utf8::continues($pattern[$end])) {
             $end--;
         }
 
         return [$start, $end];
-    }
-
-    /**
-     * Whether the byte continues a UTF-8 character rather than starting one.
-     */
-    private static function continues(string $byte): bool
-    {
-        return 0x80 === (\ord($byte) & 0xC0);
     }
 }

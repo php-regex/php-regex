@@ -209,11 +209,11 @@ final class RegexParser
      * lookup, without reading the tree cache again. clearCaches() empties
      * them.
      *
-     * @param string $regex the regular expression to validate
-     *
      * A failure of the library itself, one of its regexes giving up under
      * PCRE limits it could not raise, is no verdict on the pattern: it is
-     * thrown, never reported as an invalid pattern
+     * thrown, never reported as an invalid pattern.
+     *
+     * @param string $regex the regular expression to validate
      *
      * @throws InternalFailureException when the library cannot finish its own work
      *
