@@ -67,7 +67,7 @@ parameters:
 			path: src/Psalm/PsalmInternals.php
 
 		-
-			rawMessage: 'Parameter #1 $config of class PHPRegex\PHPStan\PatternChecker constructor expects array{phpVersion?: int|string|null, pcreVersion?: string|null, locale?: string|null, interop?: list<string>|null, checks?: array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, optimizations?: array{enabled?: bool, minSavings?: int, options?: array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, possessive?: bool, factorize?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool}}, complexity?: array{enabled?: bool, threshold?: int}}, noNewMixed?: array{enabled?: bool, baseline?: string|null, paths?: list<string>}}, array{checks: array{complexity: array{enabled: false, threshold: mixed}}} given.'
+			rawMessage: 'Parameter #1 $config of class PHPRegex\PHPStan\PatternChecker constructor expects array{phpVersion?: int|string|null, pcreVersion?: string|null, locale?: string|null, interop?: list<string>|null, checks?: array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, optimizations?: array{enabled?: bool, minSavings?: int, options?: array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, possessive?: bool, factorize?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool}}, complexity?: array{enabled?: bool, threshold?: int}}}, array{checks: array{complexity: array{enabled: false, threshold: mixed}}} given.'
 			identifier: argument.type
 			count: 1
 			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleComplexityTest.php
@@ -655,7 +655,7 @@ parameters:
 			path: tests/Integration/Bridge/Rector/RuleContractTest.php
 
 		-
-			rawMessage: 'Parameter #1 $config of class PHPRegex\PHPStan\RegexPatternRule constructor expects array{phpVersion?: int|string|null, pcreVersion?: string|null, locale?: string|null, interop?: list<string>|null, checks?: array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, optimizations?: array{enabled?: bool, minSavings?: int, options?: array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, possessive?: bool, factorize?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool}}, complexity?: array{enabled?: bool, threshold?: int}}, noNewMixed?: array{enabled?: bool, baseline?: string|null, paths?: list<string>}}, array{checks: array{redos: array{enabled: true, threshold: 3}}} given.'
+			rawMessage: 'Parameter #1 $config of class PHPRegex\PHPStan\RegexPatternRule constructor expects array{phpVersion?: int|string|null, pcreVersion?: string|null, locale?: string|null, interop?: list<string>|null, checks?: array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, optimizations?: array{enabled?: bool, minSavings?: int, options?: array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, possessive?: bool, factorize?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool}}, complexity?: array{enabled?: bool, threshold?: int}}}, array{checks: array{redos: array{enabled: true, threshold: 3}}} given.'
 			identifier: argument.type
 			count: 1
 			path: tests/Unit/Bridge/PHPStan/RegexPatternRuleThresholdTypeTest.php

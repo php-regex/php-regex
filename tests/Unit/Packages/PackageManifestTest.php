@@ -162,7 +162,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\InteropPresets', 'Linter\Extraction\PatternFunction',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\TargetMarker',
             'Linter\Extraction\TargetMarkers', 'Linter\PatternOccurrence', 'Parser\Hir\ClassSetProvider',
-            'Parser\Text\Ascii', 'Parser\Text\DisplayEscaper', 'Parser\Engine\LibraryPcre',
+            'Parser\Text\DisplayEscaper', 'Parser\Engine\LibraryPcre',
             'Linter\Extraction\PatternAttributeScanner', 'Linter\Extraction\PregFunctions', 'Linter\Rule\RuleCatalog',
         ],
         // The plugin reads the key layout CaptureShape renders for

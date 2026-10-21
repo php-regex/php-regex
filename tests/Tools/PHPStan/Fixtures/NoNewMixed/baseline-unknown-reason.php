@@ -13,6 +13,6 @@ declare(strict_types=1);
 
 return [
     'MixedDeclarations.php' => [
-        'PHPRegex\Tests\Integration\Bridge\PHPStan\Fixtures\NoNewMixed\helper()' => ['because', 2],
+        'PHPRegex\Tests\Tools\PHPStan\Fixtures\NoNewMixed\helper()' => ['because', 2],
     ],
 ];

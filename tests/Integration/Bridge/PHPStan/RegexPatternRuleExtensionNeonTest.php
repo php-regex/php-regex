@@ -14,9 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
 use PHPRegex\Parser\Hir\ClassSetProvider;
-use PHPRegex\PHPStan\MixedTypeCollector;
-use PHPRegex\PHPStan\NoNewMixedRule;
+use PHPRegex\PHPStan\RegexPatternArgumentRule;
 use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\PHPStan\RegexTargetMarkerRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -95,17 +95,18 @@ final class RegexPatternRuleExtensionNeonTest extends RuleTestCase
     }
 
     /**
-     * The library's own check on the mixed types it declares is off for
-     * every other project: neither its rule nor its collector runs.
+     * The library's check on the mixed types it declares is the
+     * repository's own tooling: no rule or collector of the extension is
+     * there for it, nor a parameter.
      */
     #[Test]
-    public function test_extension_neon_leaves_the_mixed_type_check_off(): void
+    public function test_extension_neon_registers_only_the_pattern_rules(): void
     {
-        $this->assertFalse(NeonParameters::read(self::getContainer()->getParameter('phpRegex'), 'noNewMixed', 'enabled'));
-        $this->assertSame([], array_filter(
+        $this->assertSame(NeonParameters::MISSING, NeonParameters::read(self::getContainer()->getParameter('phpRegex'), 'noNewMixed'));
+        $this->assertSame([], array_values(array_filter(
             [...self::getContainer()->getServicesByTag('phpstan.rules.rule'), ...self::getContainer()->getServicesByTag('phpstan.collector')],
-            static fn (mixed $service): bool => $service instanceof NoNewMixedRule || $service instanceof MixedTypeCollector,
-        ));
+            static fn (mixed $service): bool => \is_object($service) && str_starts_with($service::class, 'PHPRegex\\') && !\in_array($service::class, [RegexPatternRule::class, RegexPatternArgumentRule::class, RegexTargetMarkerRule::class], true),
+        )));
     }
 
     /**
@@ -121,6 +122,7 @@ final class RegexPatternRuleExtensionNeonTest extends RuleTestCase
         yield 'optimizationConfig' => ['optimizationConfig'];
         yield 'checks.redos.mode' => ['checks', 'redos', 'mode'];
         yield 'checks.redos.noJit' => ['checks', 'redos', 'noJit'];
+        yield 'noNewMixed' => ['noNewMixed'];
     }
 
     #[Test]

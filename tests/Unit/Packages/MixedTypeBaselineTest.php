@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Packages;
 
-use PHPRegex\PHPStan\NoNewMixedRule;
+use PHPRegex\Tests\Tools\PHPStan\NoNewMixedRule;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -55,6 +55,21 @@ final class MixedTypeBaselineTest extends TestCase
         ksort($counts);
 
         $this->assertSame(self::PER_PACKAGE, $counts);
+    }
+
+    /**
+     * The check runs in the repository's own analysis, from its tooling:
+     * the published PHPStan extension carries neither the rule nor its
+     * parameter.
+     */
+    public function test_the_repository_analysis_holds_src_to_the_baseline(): void
+    {
+        $root = \dirname(self::BASELINE);
+        $neon = (string) file_get_contents($root.'/phpstan.dist.neon');
+
+        $this->assertStringContainsString("\n    - tests/Tools/PHPStan/mixed-types.neon\n", $neon);
+        $this->assertStringContainsString("\n    noNewMixed:\n        baseline: %currentWorkingDirectory%/phpstan-mixed-baseline.php\n        paths:\n            - %currentWorkingDirectory%/src\n", $neon);
+        $this->assertStringNotContainsString('noNewMixed', (string) file_get_contents($root.'/src/PHPStan/extension.neon'));
     }
 
     public function test_each_entry_gives_a_reason_of_the_vocabulary_and_a_count(): void

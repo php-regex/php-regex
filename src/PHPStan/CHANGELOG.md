@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The extension registers its pattern rules only: `phpRegex.noNewMixed`,
+   `NoNewMixedRule` and `MixedTypeCollector`, the library's check on its
+   own declared types, are gone from the package.
  * The `Read more:` tip of every lint error links to the docs on
    php-regex.com, for every rule, where it linked to the GitHub copy of the
    docs and to 45 rules only.

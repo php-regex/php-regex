@@ -11,11 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
+namespace PHPRegex\Tests\Tools\PHPStan;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\PHPStan\MixedTypeCollector;
-use PHPRegex\PHPStan\NoNewMixedRule;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPStan\PhpDocParser\Lexer\Lexer;
 use PHPStan\PhpDocParser\Parser\PhpDocParser;
@@ -37,7 +35,7 @@ final class NoNewMixedRuleTest extends RuleTestCase
 
     private const FIXTURES = __DIR__.'/Fixtures/NoNewMixed';
 
-    private const NS = 'PHPRegex\Tests\Integration\Bridge\PHPStan\Fixtures\NoNewMixed\\';
+    private const NS = 'PHPRegex\Tests\Tools\PHPStan\Fixtures\NoNewMixed\\';
 
     private ?string $baseline = null;
 

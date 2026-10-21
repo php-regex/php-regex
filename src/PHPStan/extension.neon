@@ -45,13 +45,6 @@ parametersSchema:
                 # The complexity score from which a pattern is reported
                 threshold: schema(int(), min(1))
             ])
-        ]),
-        # The library's own check on the mixed types it declares, held to a
-        # baseline of the ones that stay; off for every other project
-        noNewMixed: structure([
-            enabled: bool(),
-            baseline: schema(string(), nullable()),
-            paths: listOf(string())
         ])
     ])
 
@@ -90,25 +83,7 @@ parameters:
                 enabled: false
                 threshold: 50
 
-        noNewMixed:
-            enabled: false
-            baseline: null
-            paths: []
-
-conditionalTags:
-    PHPRegex\PHPStan\MixedTypeCollector:
-        phpstan.collector: %phpRegex.noNewMixed.enabled%
-    PHPRegex\PHPStan\NoNewMixedRule:
-        phpstan.rules.rule: %phpRegex.noNewMixed.enabled%
-
 services:
-    -
-        class: PHPRegex\PHPStan\MixedTypeCollector
-    -
-        class: PHPRegex\PHPStan\NoNewMixedRule
-        arguments:
-            baseline: %phpRegex.noNewMixed.baseline%
-            paths: %phpRegex.noNewMixed.paths%
     -
         class: PHPRegex\PHPStan\RegexPatternRule
         arguments:

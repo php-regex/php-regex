@@ -748,6 +748,7 @@ The configuration is `phpVersion`, `pcreVersion` and `checks` only:
 | `suggestOptimizations` | `checks.optimizations.enabled` |
 | `optimizationConfig` | `checks.optimizations.options` |
 | `ignoreParseErrors` | nothing: a pattern PHP cannot compile is PHPStan's to report |
+| `noNewMixed` | nothing: it held this library's own declared types to a baseline, and is part of the repository's tests now |
 
 The identifiers `regex.syntax.invalid`, `regex.syntax.delimiter` and
 `regex.syntax.empty` are gone (PHPStan reports those patterns as

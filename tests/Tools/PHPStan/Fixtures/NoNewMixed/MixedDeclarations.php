@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Integration\Bridge\PHPStan\Fixtures\NoNewMixed;
+namespace PHPRegex\Tests\Tools\PHPStan\Fixtures\NoNewMixed;
 
 /**
  * Prose may say mixed: only types count.

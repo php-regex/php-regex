@@ -1,5 +1,6 @@
 includes:
     - src/PHPStan/extension.neon
+    - tests/Tools/PHPStan/mixed-types.neon
     - tools/phpstan/vendor/phpstan/phpstan/conf/bleedingEdge.neon
     - tools/phpstan/vendor/phpstan/phpstan-phpunit/extension.neon
     - tools/phpstan/vendor/phpstan/phpstan-phpunit/rules.neon
@@ -46,13 +47,13 @@ parameters:
     # patterns for the PHP running the analysis, not for the 8.2 floor.
     phpRegex:
         phpVersion: runtime
-        # Every mixed type src/ declares is held to this baseline, each entry
-        # giving the reason the type stays mixed; it only goes down.
-        noNewMixed:
-            enabled: true
-            baseline: %currentWorkingDirectory%/phpstan-mixed-baseline.php
-            paths:
-                - %currentWorkingDirectory%/src
+
+    # Every mixed type src/ declares is held to this baseline, each entry
+    # giving the reason the type stays mixed; it only goes down.
+    noNewMixed:
+        baseline: %currentWorkingDirectory%/phpstan-mixed-baseline.php
+        paths:
+            - %currentWorkingDirectory%/src
 
     # Absolute strictness for local development: the benevolent unions, the
     # implicit mixed and the too-wide public return shapes level max tolerates
@@ -129,6 +130,7 @@ parameters:
         - tests/Benchmark/Fixtures/*
         - tests/Fixtures/*
         - tests/Integration/Bridge/PHPStan/Fixtures/
+        - tests/Tools/PHPStan/Fixtures/
         # Psalm reads these, invalid patterns and all
         - tests/Integration/Bridge/Psalm/Fixtures/
         # Rector's test case writes each fixture's code as a .php file beside

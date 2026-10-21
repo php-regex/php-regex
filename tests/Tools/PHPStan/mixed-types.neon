@@ -1,0 +1,29 @@
+# The library's check on the mixed types it declares: every one is held to a
+# baseline that gives the reason it stays mixed, and the baseline only goes
+# down. The repository's phpstan.dist.neon includes this file; the published
+# PHPStan extension knows nothing of it.
+parametersSchema:
+    noNewMixed: structure([
+        # The PHP file of the baseline; null allows no mixed type
+        baseline: schema(string(), nullable()),
+        # The directories whose files are judged
+        paths: listOf(string())
+    ])
+
+parameters:
+    noNewMixed:
+        baseline: null
+        paths: []
+
+services:
+    -
+        class: PHPRegex\Tests\Tools\PHPStan\MixedTypeCollector
+        tags:
+            - phpstan.collector
+    -
+        class: PHPRegex\Tests\Tools\PHPStan\NoNewMixedRule
+        arguments:
+            baseline: %noNewMixed.baseline%
+            paths: %noNewMixed.paths%
+        tags:
+            - phpstan.rules.rule

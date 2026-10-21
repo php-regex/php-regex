@@ -61,6 +61,7 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
         yield 'optimizationConfig' => ["optimizationConfig:\n            digits: true", "phpRegex\u{A0}›\u{A0}optimizationConfig"];
         yield 'checks.redos.mode' => ["checks:\n            redos:\n                mode: confirmed", "phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}redos\u{A0}›\u{A0}mode"];
         yield 'checks.redos.noJit' => ["checks:\n            redos:\n                noJit: false", "phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}redos\u{A0}›\u{A0}noJit"];
+        yield 'noNewMixed' => ["noNewMixed:\n            enabled: true", "phpRegex\u{A0}›\u{A0}noNewMixed"];
     }
 
     #[Test]

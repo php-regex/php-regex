@@ -78,7 +78,6 @@ use PHPStan\Type\Type;
  *         },
  *         complexity?: array{enabled?: bool, threshold?: int},
  *     },
- *     noNewMixed?: array{enabled?: bool, baseline?: string|null, paths?: list<string>},
  * }
  *
  * @phpstan-import-type GroupReference from ReplacementReferences

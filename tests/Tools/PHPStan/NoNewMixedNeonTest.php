@@ -11,17 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
+namespace PHPRegex\Tests\Tools\PHPStan;
 
-use PHPRegex\PHPStan\MixedTypeCollector;
-use PHPRegex\PHPStan\NoNewMixedRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
- * phpRegex.noNewMixed switches the check on, with the baseline and the
- * paths it names; the shipped extension.neon leaves it off.
+ * mixed-types.neon, which the repository's phpstan.dist.neon includes,
+ * registers the check with the baseline and the paths its "noNewMixed"
+ * parameter names; the shipped extension.neon knows nothing of it.
  *
  * @extends RuleTestCase<NoNewMixedRule>
  */
@@ -33,8 +32,8 @@ final class NoNewMixedNeonTest extends RuleTestCase
         // is written with the fixtures' absolute paths.
         $neon = sys_get_temp_dir().'/php-regex-no-new-mixed-'.hash('xxh128', __DIR__).'.neon';
         file_put_contents($neon, \sprintf(
-            "includes:\n    - %s\n\nparameters:\n    phpRegex:\n        noNewMixed:\n            enabled: true\n            baseline: %s\n            paths:\n                - %s\n",
-            \dirname(__DIR__, 4).'/src/PHPStan/extension.neon',
+            "includes:\n    - %s\n\nparameters:\n    noNewMixed:\n        baseline: %s\n        paths:\n            - %s\n",
+            __DIR__.'/mixed-types.neon',
             __DIR__.'/Fixtures/NoNewMixed/baseline-exact.php',
             __DIR__.'/Fixtures/NoNewMixed',
         ));

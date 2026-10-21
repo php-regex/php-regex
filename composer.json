@@ -65,7 +65,8 @@
             "tests/Integration/Bridge/PHPStan/Fixtures/",
             "tests/Integration/Bridge/Psalm/Fixtures/",
             "tests/Integration/Bridge/Rector/**/Fixture/",
-            "tests/Integration/Bridge/Rector/**/Fixture*/"
+            "tests/Integration/Bridge/Rector/**/Fixture*/",
+            "tests/Tools/PHPStan/Fixtures/"
         ]
     },
     "bin": [
