@@ -132,6 +132,26 @@ final class Output
     }
 
     /**
+     * A document written where no output buffer stands in front of the
+     * reader: the shutdown handler of a run that died of exhaustion
+     * reaches here, where the buffering layer may be the part that had no
+     * memory left, and an echo into it leaves the document unprinted.
+     *
+     * @internal
+     */
+    public function writeDocumentPastBuffers(string $text): void
+    {
+        $this->documentWritten = true;
+        if (\defined('STDOUT') && \is_resource(\STDOUT)) {
+            \fwrite(\STDOUT, $text);
+
+            return;
+        }
+
+        echo $text;
+    }
+
+    /**
      * Whether a document was written: a run prints one at most.
      */
     public function hasWrittenDocument(): bool

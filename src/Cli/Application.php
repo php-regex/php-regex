@@ -173,7 +173,7 @@ final class Application
             return null;
         }
 
-        $output->writeDocument(JsonDocument::error('Fatal error: '.$error['message'], JsonDocument::STAGE_INTERNAL));
+        $output->writeDocumentPastBuffers(JsonDocument::error('Fatal error: '.$error['message'], JsonDocument::STAGE_INTERNAL));
 
         return CommandInterface::FAILURE;
     }
