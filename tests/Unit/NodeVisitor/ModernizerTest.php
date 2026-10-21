@@ -315,7 +315,8 @@ final class ModernizerTest extends TestCase
             0, 22,
         );
 
-        $result = $whitespaceClass->accept($this->visitor);
+        // Under the C locale only: another one may give "\s" the byte 0xA0.
+        $result = $whitespaceClass->accept(new Modernizer('C'));
 
         $this->assertInstanceOf(CharTypeNode::class, $result);
         $this->assertSame('s', $result->value);

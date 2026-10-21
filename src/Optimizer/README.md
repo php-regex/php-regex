@@ -156,6 +156,10 @@ $modernized = $parser->parse('/a\-(?:[0-9])/')->accept(new Modernizer());
 echo $modernized->accept(PatternPrinter::asWritten());  // '/a-\d/'
 ```
 
+`[\t\n\x0B\f\r ]` becomes `\s` only when the Modernizer is told the pattern runs
+under the `C` or `POSIX` locale, `new Modernizer('C')`: without `u`, most other
+locales give `\s` the no-break space, byte `0xA0`, which the class does not hold.
+
 Documentation
 -------------
 

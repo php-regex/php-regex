@@ -206,9 +206,6 @@ Integrations:
 
 ## Analysis engines: the last pass before 2.0.0
 
-- The Modernizer rewrites `[\t\n\x0B\f\r ]` to `\s`, which a locale widens
-  (167 of 288 macOS locales add the byte 0xA0): keep the class unless the
-  locale is `C`, as the optimizer now does.
 - The optimizer rewrites `(?(DEFINE)a){7000}` to `(?:(?(DEFINE)a)){7000}`,
   which PCRE2 refuses: a DEFINE group is not to be wrapped.
 - The printer writes a quantifier before the comments that sit between an

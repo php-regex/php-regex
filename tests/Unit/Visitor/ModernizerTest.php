@@ -140,13 +140,13 @@ final class ModernizerTest extends TestCase
 
     /**
      * "\s" matches HT, LF, VT, FF, CR and the space on every PCRE2 from 10.32
-     * to 10.49, and nothing else below 256; under "/u" or "(*UCP)" it also
-     * matches U+0085, U+00A0, U+2028 and U+3000.
+     * to 10.49, and nothing else below 256 under the C locale; under "/u" or
+     * "(*UCP)" it also matches U+0085, U+00A0, U+2028 and U+3000.
      */
     #[DataProvider('provideWhitespaceClasses')]
     public function test_whitespace_class_becomes_shorthand_only_when_it_matches_alike(string $pattern, bool $shorthand): void
     {
-        $modernized = $this->modernize($pattern);
+        $modernized = $this->modernize($pattern, 'C');
 
         $this->assertSame($shorthand, str_contains($modernized, '\s'), $modernized);
         $subjects = array_map(chr(...), range(0, 255));
@@ -191,10 +191,10 @@ final class ModernizerTest extends TestCase
         }
     }
 
-    private function modernize(string $pattern): string
+    private function modernize(string $pattern, ?string $locale = null): string
     {
         $ast = $this->regexService->parse($pattern);
-        $modernized = $ast->accept(new Modernizer());
+        $modernized = $ast->accept(new Modernizer($locale));
 
         return $modernized->accept(new PatternPrinter());
     }

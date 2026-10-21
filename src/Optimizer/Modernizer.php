@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Optimizer;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
-use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -66,13 +65,20 @@ final class Modernizer extends AbstractNodeVisitor
      */
     private bool $unicodeProperties = false;
 
+    public function __construct(
+        /**
+         * The LC_CTYPE locale the pattern runs under, when it is known:
+         * "\s" stands for "[\t\n\x0B\f\r ]" under "C" and "POSIX" only,
+         * and null, the locale unknown, writes no "\s".
+         */
+        private readonly ?string $locale = null,
+    ) {}
+
     #[\Override]
     public function visitRegex(RegexNode $node)
     {
         $this->delimiter = $node->delimiter;
-        // "(*UCP)" counts only in the run of options the pattern opens with.
-        $this->unicodeProperties = str_contains($node->flags, 'u')
-            || 1 === LibraryPcre::match('/^(?:\(\*[A-Z_0-9]++(?:=\d++)?\))*?\(\*UCP\)/', $node->source ?? '');
+        $this->unicodeProperties = UnicodeProperties::on($node);
 
         return new RegexNode(
             $node->pattern->accept($this),
@@ -90,8 +96,9 @@ final class Modernizer extends AbstractNodeVisitor
             ? $node->expression->alternatives
             : [$node->expression];
 
-        // "\d" matches the ten ASCII digits; with Unicode properties it
-        // matches every decimal digit, as U+0663.
+        // "\d" matches the ten ASCII digits under every locale, as C's
+        // isdigit() does; with Unicode properties it matches every decimal
+        // digit, as U+0663.
         if (!$node->isNegated && !$this->unicodeProperties && 1 === \count($parts) && $parts[0] instanceof RangeNode) {
             $range = $parts[0];
             if ($range->start instanceof LiteralNode && $range->end instanceof LiteralNode
@@ -101,9 +108,11 @@ final class Modernizer extends AbstractNodeVisitor
         }
 
         // "\s" matches HT, LF, VT, FF, CR and the space, and nothing else, on
-        // every PCRE2 release; with Unicode properties, under "/u" or
-        // "(*UCP)", it matches more, as U+00A0.
-        if (!$node->isNegated && !$this->unicodeProperties && self::SPACES === $this->codePoints($parts)) {
+        // every PCRE2 release under the C locale. Without Unicode properties
+        // PHP builds its table from LC_CTYPE once a program calls
+        // setlocale(), where most locales give it the no-break space, byte
+        // 0xA0; with them, under "/u" or "(*UCP)", it matches U+00A0 too.
+        if (!$node->isNegated && !$this->unicodeProperties && \in_array($this->locale, ['C', 'POSIX'], true) && self::SPACES === $this->codePoints($parts)) {
             return new CharTypeNode('s', $node->getStartPosition(), $node->getEndPosition());
         }
 
