@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
 use PHPRegex\Parser\Hir\ClassSetProvider;
+use PHPRegex\Parser\Hir\ClassSetStore;
 use PHPRegex\PHPStan\RegexPatternArgumentRule;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\PHPStan\RegexTargetMarkerRule;
@@ -46,16 +47,29 @@ final class RegexPatternRuleExtensionNeonTest extends RuleTestCase
 
     /**
      * What the engine answers about Unicode classes is kept in PHPStan's
-     * own temporary directory, for the next run and the other workers.
+     * own temporary directory, for the next run and the other workers: the
+     * extension's bootstrap file says so, which PHPStan runs with its
+     * container in every process.
      */
     #[Test]
     public function test_extension_neon_keeps_the_class_scans_in_phpstan_temporary_directory(): void
     {
-        $tmpDir = self::getContainer()->getParameter('tmpDir');
+        $container = self::getContainer();
+        $tmpDir = $container->getParameter('tmpDir');
         $this->assertIsString($tmpDir);
+        $bootstrapFiles = $container->getParameter('bootstrapFiles');
+        $this->assertIsArray($bootstrapFiles);
+        $bootstrap = (string) realpath(__DIR__.'/../../../../src/PHPStan/bootstrap.php');
+        $this->assertContains($bootstrap, array_map(static fn (mixed $file): string => \is_string($file) ? (string) realpath($file) : '', $bootstrapFiles));
 
-        $rule = self::getContainer()->getByType(RegexPatternRule::class);
-        $this->assertSame($tmpDir.'/php-regex', (new \ReflectionProperty(RegexPatternRule::class, 'cacheDirectory'))->getValue($rule));
+        ClassSetProvider::persistIn(null);
+        (static function () use ($container, $bootstrap): void {
+            require $bootstrap;
+        })();
+
+        $store = (new \ReflectionClass(ClassSetProvider::class))->getStaticPropertyValue('store');
+        $this->assertInstanceOf(ClassSetStore::class, $store);
+        $this->assertSame((new ClassSetStore($tmpDir.'/php-regex'))->directory(), $store->directory());
     }
 
     #[Test]

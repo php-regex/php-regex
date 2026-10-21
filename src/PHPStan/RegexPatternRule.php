@@ -35,7 +35,6 @@ use PHPRegex\Parser\Analysis\GroupNumbering;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPStan\Analyser\Scope;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Reflection\ReflectionProvider;
@@ -135,9 +134,6 @@ final class RegexPatternRule implements Rule
      *                                                               library changes, unless "phpVersion" names one version
      * @param ReflectionProvider|null            $reflectionProvider tells whether PHP_VERSION_ID names the global constant
      *                                                               in a namespace, for a guard written without a leading backslash
-     * @param string|null                        $cacheDirectory     where what the engine answers about Unicode classes is kept
-     *                                                               between runs, for the next run and the other workers:
-     *                                                               under PHPStan's tmpDir; none keeps it in memory only
      *
      * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read,
      *                                     or "interop" names a preset that does not exist
@@ -148,9 +144,7 @@ final class RegexPatternRule implements Rule
         ?PhpVersion $phpVersion = null,
         int|array|null $phpVersionRange = null,
         ?ReflectionProvider $reflectionProvider = null,
-        private readonly ?string $cacheDirectory = null
     ) {
-        ClassSetProvider::persistIn($this->cacheDirectory);
         $this->checker = new PatternChecker($config, $phpVersion, $phpVersionRange, $reflectionProvider);
         $interop = $config['interop'] ?? null;
         $presets = \is_array($interop) ? array_values(array_filter($interop, \is_string(...))) : InteropPresets::DEFAULT_PRESETS;

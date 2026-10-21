@@ -17,8 +17,9 @@ CHANGELOG
    range and every version a guard or a marker keeps is judged under it.
  * What the running PCRE2 answers about Unicode classes is kept under
    PHPStan's `tmpDir`, in `php-regex/`, for the next run and the other
-   workers: `RegexPatternRule` takes it as its new `cacheDirectory`
-   argument.
+   workers: the extension's `bootstrap.php`, listed in its `bootstrapFiles`,
+   sets it once in each PHPStan process, and building a rule sets nothing
+   process-wide.
  * `@regex-target` narrows the versions a call is judged for;
    `regex.target.empty` and `regex.target.invalid` report the markers that
    keep no version or cannot be read.

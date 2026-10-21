@@ -49,6 +49,12 @@ parametersSchema:
     ])
 
 parameters:
+    # Keeps what the engine answers about Unicode classes under tmpDir, for
+    # the next run and the other workers: PHPStan runs it once in each
+    # process.
+    bootstrapFiles:
+        - bootstrap.php
+
     phpRegex:
         # Judge patterns for PHPStan's phpVersion, with the PCRE2 it bundles.
         # A pattern is reported only when the running engine compiles it and
@@ -91,9 +97,6 @@ services:
             # PHPStan's own phpVersion: with {min, max}, each later PHP of
             # the range validates the patterns too.
             phpVersionRange: %phpVersion%
-            # What the engine answers about Unicode classes, kept for the
-            # next run and the other workers.
-            cacheDirectory: %tmpDir%/php-regex
         tags:
             - phpstan.rules.rule
     -
