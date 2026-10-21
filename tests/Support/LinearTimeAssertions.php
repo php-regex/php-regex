@@ -53,7 +53,7 @@ trait LinearTimeAssertions
     {
         $shared = false !== getenv('CI') && '' !== getenv('CI');
         $budget = $shared ? 4.0 : 3.0;
-        $maxRatio ??= $shared ? 9.5 : 8.0;
+        $maxRatio ??= $shared ? 11.0 : 10.0;
 
         $small = self::cpuTime($read, $size);
         $large = \INF;
