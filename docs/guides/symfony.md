@@ -346,12 +346,27 @@ the Laravel package run the same lint, and print it the same way. Under
 `-v` the title names the author and the report ends on a request for a
 GitHub star, as in `regex:routes`, `regex:security` and `regex:analyze`.
 
-Every command is listed by `bin/console list`. They take the options of the
-same command in the CLI and in the Laravel package, under the same names and
-short forms (`-j` for `--jobs`, `-t` for `--target`): `regex:compare
---method` takes `intersection` (the default), `subset` or `equivalence`, and
-`regex:explain` takes `--format=console|html` and `--highlight`, and prints
-the optimization, the ReDoS risk, the lint issues and a sample beside the
+Every command is listed by `bin/console list`, and takes these arguments
+and options:
+
+| Command | Arguments | Options |
+|---|---|---|
+| `regex:lint` | `[paths]...` | `--exclude=...` (default: `exclude`), `--min-savings=1`, `-j`/`--jobs=N`, `--no-routes`, `--no-validators`, `--format=console\|json\|github\|checkstyle\|junit` |
+| `regex:routes` | | `--show-overlaps`; `--check-conflicts` is accepted and changes nothing, conflicts being always checked |
+| `regex:security` | | `--show-overlaps`, `-c`/`--config=<file>...`, `--skip-firewalls`, `--redos-threshold=high` |
+| `regex:analyze` | | `--only=routes\|security...`, `--show-overlaps`, `-c`/`--config=<file>...`, `--skip-firewalls`, `--redos-threshold=high`, `--format=console\|json`, `--debug`, `--fail-on=shadowed,redos,critical` (also `overlap`, `any`, `none`) |
+| `regex:compare` | `<pattern1> <pattern2>` | `--method=intersection\|subset\|equivalence`, `--minimizer=hopcroft\|moore`, `--determinizer=subset-indexed\|subset` (defaults: `automata.*`) |
+| `regex:explain` | `<pattern>` | `--format=console\|html`, `--highlight` |
+| `regex:transpile` | `<pattern>` | `-t`/`--target=js` (`javascript`, `html`, `html-pattern`, `python`, `py`), `--format=console\|json` |
+
+`regex:lint`, `regex:explain` and `regex:transpile` take the options of the
+Laravel package's command of the same name, under the same names and short
+forms; `regex:compare` takes them but `--format`, which the Laravel command
+adds for a JSON report. The standalone `vendor/bin/regex` takes more:
+`regex lint` its baseline and check switches, `regex compare` a target
+(`--php-version`, `--pcre-version`, `--locale`), while `regex transpile` has
+no `-t` and `regex explain` no `--highlight`. `regex:explain` prints the
+optimization, the ReDoS risk, the lint issues and a sample beside the
 explanation. What stays the bundle's own: `regex:routes`, `regex:security`
 and `regex:analyze` read Symfony's router and security configuration, where
 Laravel's `regex:routes` lists and validates route constraints.

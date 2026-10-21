@@ -28,7 +28,7 @@ Features
 
 * A `Regex` service, autowired as `PHPRegex\Toolkit\Regex`, to validate, parse, optimize, transpile and ReDoS-check patterns from your own code
 * A `ValidRegex` constraint for a pattern your users submit: valid as `regex validate` judges it, and optionally free of ReDoS
-* Seven console commands: `regex:lint`, `regex:routes`, `regex:security`, `regex:analyze`, `regex:compare`, `regex:explain` and `regex:transpile`, with the options of the same commands in the CLI and the Laravel package
+* Seven console commands: `regex:lint`, `regex:routes`, `regex:security`, `regex:analyze`, `regex:compare`, `regex:explain` and `regex:transpile`; `regex:lint`, `regex:explain` and `regex:transpile` take the options of the Laravel package's commands of the same name, `regex:compare` all but `--format`, and the [Symfony guide](https://php-regex.com/guides/symfony/#commands) lists every option
 * `regex:lint` reads your PHP files, your route requirements and the `Regex` constraints of your validator mapping files (`config/validator/*.yaml`, `*.xml`) in one pass, each reported at the line that writes it
 * In PHP files, `regex:lint` reads the calls `regex lint` reads: `preg_*`, `RegexIterator`, `filter_var()`, `new Regex()` and `#[Assert\Regex]`, the wrapper libraries, PHPUnit's regex assertions, and a pattern held in a constant, a variable or a property of the same file
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
