@@ -22,7 +22,6 @@ use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
-use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Backtrack\ProofResult;
 use PHPRegex\Redos\RedosAnalysis;
@@ -335,7 +334,8 @@ final class AnalysisServiceTest extends TestCase
     public function test_suggest_optimizations_extended_mode_falls_back_to_the_pretty_layout(): void
     {
         // A tree without the text it was read from has no layout to keep:
-        // both sides are pretty-printed. The cache here gives it back so.
+        // the optimizer pretty-prints the rewrite, weighed against the
+        // pattern as written. The cache here gives it back so.
         $pattern = "/a{1}  # comment\n/x";
         $ast = Regex::create()->parse($pattern);
         $cache = new class(new RegexNode($ast->pattern, $ast->flags, $ast->delimiter, $ast->startPosition, $ast->endPosition)) implements CacheInterface {
@@ -354,11 +354,16 @@ final class AnalysisServiceTest extends TestCase
             }
         };
 
-        $result = (new AnalysisService(RegexParser::create(['cache' => $cache])))->suggestOptimizations([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')], 0);
+        $analysis = new AnalysisService(RegexParser::create(['cache' => $cache]));
+        $occurrences = [new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')];
+        $result = $analysis->suggestOptimizations($occurrences, -10);
 
         $this->assertCount(1, $result);
-        $baseline = $ast->accept(new PatternPrinter(str_contains($ast->flags, 'x')));
-        $this->assertSame($baseline, $result[0]['optimization']->original);
+        $this->assertSame($pattern, $result[0]['optimization']->original);
+        $pretty = "/\n    a  # comment\n/x";
+        $this->assertSame($pretty, $result[0]['optimization']->optimized);
+        $this->assertSame(\strlen($pattern) - \strlen($pretty), $result[0]['savings']);
+        $this->assertSame([], $analysis->suggestOptimizations($occurrences, 0), 'Longer than the pattern as written, it saves nothing.');
     }
 
     public function test_suggest_optimizations_skips_when_optimizer_throws(): void

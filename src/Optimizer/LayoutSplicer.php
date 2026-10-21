@@ -62,13 +62,17 @@ final class LayoutSplicer
 
         $spliced = $original->delimiter.$body.Delimiters::closing($original->delimiter).$rewritten->flags;
 
+        // The rewrite is read back from its own print as well: a literal it
+        // joined, "\[" and "\]" into "[]", prints "\[\]" where the two the
+        // text keeps print "\[]", and the parser reads both as the same.
         try {
             $readBack = $this->parser->parse($spliced);
+            $expected = $this->parser->parse(self::canonical($rewritten));
         } catch (RegexException) {
             return null;
         }
 
-        return self::canonical($readBack) === self::canonical($rewritten) ? $spliced : null;
+        return self::canonical($readBack) === self::canonical($expected) ? $spliced : null;
     }
 
     /**

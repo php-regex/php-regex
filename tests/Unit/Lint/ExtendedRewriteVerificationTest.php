@@ -18,6 +18,8 @@ use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Optimizer\RewriteCheck;
+use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -46,8 +48,7 @@ final class ExtendedRewriteVerificationTest extends TestCase
     {
         $this->assertSame(['/\d*0\d{14}x{6}$/mx'], $this->suggestions('/[0-9]*0[0-9]{14}xxxxxx$/mx', true));
 
-        $verify = new \ReflectionMethod(AnalysisService::class, 'verifyOptimizationWithAutomata');
-        $this->assertFalse($verify->invoke(new AnalysisService(RegexParser::create(['cache' => null])), '/[0-9]*0[0-9]{14}(?:x|xy)$/mx', '/\d*0\d{14}(?:x(?:y)??)$/mx'));
+        $this->assertFalse(self::check()->verify('/[0-9]*0[0-9]{14}(?:x|xy)$/mx', '/\d*0\d{14}(?:x(?:y)??)$/mx'));
     }
 
     /**
@@ -109,8 +110,7 @@ final class ExtendedRewriteVerificationTest extends TestCase
     {
         $this->assertTrue((new LanguageSolver())->equivalent('/[0-9]*0[0-9]{3}(?:x|xy)$/mx', '/\d*0\d{3}(?:x(?:y)??)$/mx')->isEquivalent, 'The two match the same strings.');
 
-        $verify = new \ReflectionMethod(AnalysisService::class, 'verifyOptimizationWithAutomata');
-        $this->assertFalse($verify->invoke(new AnalysisService(RegexParser::create(['cache' => null])), '/[0-9]*0[0-9]{3}(?:x|xy)$/mx', '/\d*0\d{3}(?:x(?:y)??)$/mx'));
+        $this->assertFalse(self::check()->verify('/[0-9]*0[0-9]{3}(?:x|xy)$/mx', '/\d*0\d{3}(?:x(?:y)??)$/mx'));
         $this->assertSame(['/\d*0\d{3}x{6}$/mx'], $this->suggestions('/[0-9]*0[0-9]{3}xxxxxx$/mx', true), 'A run of x\'s spelled as a repeat is proven alone.');
     }
 
@@ -131,26 +131,27 @@ final class ExtendedRewriteVerificationTest extends TestCase
     #[Test]
     public function test_a_rewrite_the_match_check_refuses_is_not_suggested(): void
     {
-        $verify = new \ReflectionMethod(AnalysisService::class, 'verifyOptimizationWithAutomata');
-        $analysis = new AnalysisService(RegexParser::create(['cache' => null]));
         $this->assertTrue((new LanguageSolver())->equivalent('/(a|ab)/x', '/(ab|a)/x')->isEquivalent, 'The two match the same strings.');
 
-        $this->assertFalse($verify->invoke($analysis, '/(a|ab)/x', '/(ab|a)/x'));
-        $this->assertFalse($verify->invoke($analysis, '/ab/x', '/ac/x'));
+        $this->assertFalse(self::check()->verify('/(a|ab)/x', '/(ab|a)/x'));
+        $this->assertFalse(self::check()->verify('/ab/x', '/ac/x'));
     }
 
     /**
-     * A rewrite the check cannot read, or a side it cannot even parse, is
-     * not proven.
+     * A rewrite the check cannot read is not proven; a side it cannot even
+     * parse raises, which the optimizer takes for no proof.
      */
     #[Test]
     public function test_a_rewrite_the_check_cannot_read_is_not_proven(): void
     {
-        $verify = new \ReflectionMethod(AnalysisService::class, 'verifyOptimizationWithAutomata');
-        $analysis = new AnalysisService(RegexParser::create(['cache' => null]));
+        $this->assertFalse(self::check()->verify('/(a)\1/x', '/(a)a/x'));
+        $this->expectException(ParserException::class);
+        self::check()->verify('/a/x', '/(a/x');
+    }
 
-        $this->assertFalse($verify->invoke($analysis, '/(a)\1/x', '/(a)a/x'));
-        $this->assertFalse($verify->invoke($analysis, '/a/x', '/(a/x'));
+    private static function check(): RewriteCheck
+    {
+        return new RewriteCheck(new LanguageSolver(RegexParser::create(['cache' => null])));
     }
 
     /**

@@ -176,8 +176,8 @@ deptrac:
     RedosInternal: [ReDoS, Parser, ParserInternal]
     Transpiler: [Parser, ParserInternal, TranspilerInternal]
     TranspilerInternal: [Transpiler, Parser, ParserInternal]
-    Linter: [Parser, ParserInternal, Explain, ReDoS, Automata, Optimizer, OptimizerInternal, LinterInternal]
-    LinterInternal: [Linter, Parser, ParserInternal, Explain, ReDoS, Automata, Optimizer, OptimizerInternal]
+    Linter: [Parser, ParserInternal, Explain, ReDoS, Automata, Optimizer, LinterInternal]
+    LinterInternal: [Linter, Parser, ParserInternal, Explain, ReDoS, Automata, Optimizer]
     Toolkit: [Parser, Explain, Optimizer, Generator, ReDoS, Transpiler, Linter]
     # The language server is started by its class name, when its package is installed.
     Cli: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Automata, AutomataInternal, ReDoS, RedosInternal, Transpiler, TranspilerInternal, Linter, LinterInternal, LanguageServerInternal]

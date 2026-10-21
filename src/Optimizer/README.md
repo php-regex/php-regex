@@ -87,7 +87,9 @@ digit.
 
 Under `/x` the rewrite keeps the pattern as its author laid it out: only the
 parts it changes are written again, in place, and the newlines, indents and
-comments around them stay.
+comments around them stay. The lint suggests for such a pattern what
+`optimize()` gives it with `factorize` off, whatever its options say, so the
+alternatives keep the order and the lines the author gave them.
 
 An unknown key or a value of the wrong type throws `InvalidRegexOptionException`. The 1.x names
 `autoPossessify` and `allowAlternationFactorization` were renamed `possessive` and `factorize`:

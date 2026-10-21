@@ -62,10 +62,11 @@ final class ExtendedModeDelimiterTest extends TestCase
         $withLead = $this->onlySuggestion($lead.self::PATTERN);
         $without = $this->onlySuggestion(self::PATTERN);
 
-        // The rewrite is written into the text from the delimiter on, which
-        // leaves the bytes before it out: both suggestions are the same.
-        $this->assertSame($without->original, $withLead->original);
-        $this->assertSame($without->optimized, $withLead->optimized);
+        // The rewrite is written into the text as the call gives it: the
+        // bytes before the delimiter stay on both sides, as the optimizer
+        // keeps them, and the rest is the same suggestion.
+        $this->assertSame($lead.$without->original, $withLead->original);
+        $this->assertSame($lead.$without->optimized, $withLead->optimized);
         $this->assertStringContainsString('# one', $withLead->optimized);
     }
 

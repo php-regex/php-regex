@@ -98,6 +98,15 @@ final class LayoutSplicerTest extends TestCase
             'subject' => "a\xFF\xFE",
         ];
 
+        // The rewrite joins "\[" and "\]" into one literal, which prints
+        // "\[\]" where the two print "\[]": the text read back is the
+        // rewrite all the same.
+        yield 'brackets the rewrite joined into one literal' => [
+            'pattern' => "/\n  [0-9]   # a digit\n  \\[\\]    # a pair\n/x",
+            'expected' => "/\n  \\d   # a digit\n  \\[\\]    # a pair\n/x",
+            'subject' => '7[]',
+        ];
+
         yield 'tabs, nested groups and lookarounds' => [
             'pattern' => "/\n\t\t\t&\t\t\t# 1. entity prefix\n\t\t\t(?=\t\t\t# 2. followed by:\n\t\t\t(?:\n"
                 ."\t\t\t\tfrac(?:1(?:2|4)|34)|\n"

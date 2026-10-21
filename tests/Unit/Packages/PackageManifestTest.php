@@ -145,11 +145,7 @@ final class PackageManifestTest extends TestCase
             'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
             'Transpiler\Target\TargetRegistry',
         ],
-        // The lint writes its rewrite of a pattern under x into the
-        // pattern's own layout, as the optimizer does, and checks it as
-        // the optimizer checks its own.
         'Linter' => [
-            'Optimizer\LayoutSplicer', 'Optimizer\RewriteCheck', 'Optimizer\Rewriter',
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Cache\AstSerializer',
             'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Printer\DisplayEscaper',
             'Parser\Analysis\GroupIndex', 'Parser\Json\JsonDocument', 'Parser\Exception\JsonEncodingException',

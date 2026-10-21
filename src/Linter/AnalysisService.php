@@ -28,12 +28,9 @@ use PHPRegex\Linter\Rule\InvisibleCharacterRule;
 use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Linter\Rule\RuleId;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
-use PHPRegex\Optimizer\LayoutSplicer;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
-use PHPRegex\Optimizer\RewriteCheck;
-use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Cache\AstSerializer;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\ExceptionInterface;
@@ -42,7 +39,6 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\PcreTarget;
-use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Validation\RangeDiff;
@@ -726,8 +722,6 @@ final class AnalysisService
      */
     private function suggestOptimization(PatternOccurrence $occurrence, int $minSavings, OptimizerOptions $options, ?array $analyzed = null): ?array
     {
-        $verifyWithAutomata = $options->verifyWithAutomata;
-
         if ($occurrence->isIgnored || null !== $occurrence->unread || null !== $occurrence->parserFallback || null !== $occurrence->ignores) {
             return null;
         }
@@ -745,51 +739,24 @@ final class AnalysisService
             $this->regex->remember($occurrence->pattern, $ast);
         }
 
-        $isExtended = $this->usesExtendedMode($occurrence->pattern);
+        // Under /x, factorizing alternatives would reflow what the author
+        // laid out: it stays off whatever the options say. The optimizer
+        // keeps the layout of the rest.
+        if ($options->factorize && $this->usesExtendedMode($occurrence->pattern)) {
+            $options = new OptimizerOptions(
+                digits: $options->digits,
+                word: $options->word,
+                ranges: $options->ranges,
+                canonicalizeCharClasses: $options->canonicalizeCharClasses,
+                possessive: $options->possessive,
+                factorize: false,
+                minQuantifierCount: $options->minQuantifierCount,
+                verifyWithAutomata: $options->verifyWithAutomata,
+            );
+        }
 
         try {
-            if ($isExtended) {
-                // Under /x, factorizing alternatives would reflow what the
-                // author laid out: it stays off whatever the options say.
-                $optimizer = new Rewriter(
-                    optimizeDigits: $options->digits,
-                    optimizeWord: $options->word,
-                    ranges: $options->ranges,
-                    canonicalizeCharClasses: $options->canonicalizeCharClasses,
-                    possessive: $options->possessive,
-                    factorize: false,
-                    minQuantifierCount: $options->minQuantifierCount,
-                );
-
-                $ast = $this->regex->parse($occurrence->pattern);
-                $optimizedAst = $ast->accept($optimizer);
-
-                // The rewrite is written into the pattern as laid out,
-                // only its changed parts printed again; a tree without
-                // that text is pretty-printed on both sides instead.
-                $splicer = new LayoutSplicer($this->regex);
-                $baseline = $splicer->splice($ast, $ast);
-                $optimizedPattern = $optimizedAst instanceof RegexNode ? $splicer->splice($ast, $optimizedAst) : null;
-                if (null === $baseline || null === $optimizedPattern) {
-                    $pretty = str_contains($ast->flags, 'x');
-                    $baseline = $ast->accept($pretty ? PatternPrinter::pretty() : PatternPrinter::asWritten());
-                    $optimizedPattern = $optimizedAst->accept($pretty ? PatternPrinter::pretty() : PatternPrinter::asWritten());
-                }
-
-                if ($baseline === $optimizedPattern) {
-                    return null;
-                }
-
-                if ($verifyWithAutomata) {
-                    if (!$this->verifyOptimizationWithAutomata($baseline, $optimizedPattern)) {
-                        return null;
-                    }
-                }
-
-                $optimization = new OptimizationResult($baseline, $optimizedPattern, ['Optimized pattern.']);
-            } else {
-                $optimization = (new Optimizer($this->regex))->optimize($occurrence->pattern, $options);
-            }
+            $optimization = (new Optimizer($this->regex))->optimize($occurrence->pattern, $options);
 
             // The router splices a requirement into the pattern it compiles,
             // after the text of the path and before the rest of it: a
@@ -1031,22 +998,6 @@ final class AnalysisService
     private function dfas(): DfaCacheInterface
     {
         return $this->dfaCache ?? LanguageQuestions::dfas();
-    }
-
-    /**
-     * The optimizer's verdict on a rewrite: the $matches it writes, or,
-     * where the match solver does not read it, the same normal form.
-     *
-     * @return bool true when proven, false when disproven or unproven,
-     *              a side the solver cannot parse included
-     */
-    private function verifyOptimizationWithAutomata(string $original, string $optimized): bool
-    {
-        try {
-            return (new RewriteCheck(new LanguageSolver($this->regex, $this->dfas())))->verify($original, $optimized);
-        } catch (ExceptionInterface) {
-            return false;
-        }
     }
 
     /**
