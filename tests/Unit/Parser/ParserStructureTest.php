@@ -85,7 +85,7 @@ final class ParserStructureTest extends TestCase
         $regex = Regex::create();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "k"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "k".');
 
         $regex->parse('/abc/k'); // 'k' n'est pas un flag valide
     }

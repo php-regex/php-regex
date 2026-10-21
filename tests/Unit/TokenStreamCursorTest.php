@@ -166,7 +166,7 @@ final class TokenStreamCursorTest extends TestCase
         $stream = $this->streamOf('a');
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Expected a dot at position 0 (found literal)');
+        $this->expectExceptionMessageIsOrContains('Expected a dot at position 0 (found literal).');
 
         $stream->consume(TokenType::Dot, 'Expected a dot', ErrorCode::TokenUnexpected);
     }
@@ -177,7 +177,7 @@ final class TokenStreamCursorTest extends TestCase
         $stream = $this->streamOf();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Expected something at end of input (found eof)');
+        $this->expectExceptionMessageIsOrContains('Expected something at end of input (found eof).');
 
         $stream->consume(TokenType::Literal, 'Expected something', ErrorCode::TokenUnexpected);
     }
@@ -188,7 +188,7 @@ final class TokenStreamCursorTest extends TestCase
         $stream = $this->streamOf('b');
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Expected error at position 0 (found literal with value b)');
+        $this->expectExceptionMessageIsOrContains('Expected error at position 0 (found literal with value b).');
 
         $stream->consumeLiteral('a', 'Expected error', ErrorCode::GroupNameUnterminated);
     }

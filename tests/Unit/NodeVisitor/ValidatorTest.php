@@ -35,7 +35,7 @@ final class ValidatorTest extends TestCase
     public function test_throws_on_invalid_flags(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "z"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "z".');
         $this->validate('/foo/imz');
     }
 

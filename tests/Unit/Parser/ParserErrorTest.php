@@ -53,7 +53,7 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_unknown_flag(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "z"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "z".');
 
         $regex = $this->createRegex();
         $regex->parse('/abc/z');

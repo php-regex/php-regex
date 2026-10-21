@@ -45,7 +45,7 @@ final class ValidationMessageTest extends TestCase
     {
         yield 'syntax error' => ['pattern' => '/[unclosed/', 'message' => 'Unclosed character class "]" at end of input.'];
         yield 'semantic error' => ['pattern' => '/(?<=a+)b/', 'message' => 'Lookbehind is unbounded. PCRE requires a bounded maximum length.'];
-        yield 'modifier error' => ['pattern' => '/a/Q', 'message' => 'Unknown regex flag(s) found: "Q"'];
+        yield 'modifier error' => ['pattern' => '/a/Q', 'message' => 'Unknown regex flag(s) found: "Q".'];
     }
 
     #[Test]

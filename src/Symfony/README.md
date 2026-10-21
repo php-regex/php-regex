@@ -78,7 +78,7 @@ $regex = Regex::create(); // what the container injects
 $regex->validate('/^[a-z0-9-]{3,}$/')->isValid; // true
 
 $invalid = $regex->validate('/^(unclosed/');
-$invalid->error; // "Expected ) at end of input (found eof)"
+$invalid->error; // "Expected ) at end of input (found eof)."
 ```
 
 Check one for ReDoS:

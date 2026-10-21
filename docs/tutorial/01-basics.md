@@ -408,7 +408,7 @@ echo $regex->explain('/\$\d+\.\d{2}/');
 // Wrong: 'a' after the closing / is read as a flag — and no such flag exists
 $result = $regex->validate('/hello/a');
 echo $result->error;
-// Output: Unknown regex flag(s) found: "a"
+// Output: Unknown regex flag(s) found: "a".
 
 // Right: Put real flags after the closing /
 $result = $regex->validate('/hello/i');

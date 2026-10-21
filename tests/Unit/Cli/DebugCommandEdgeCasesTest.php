@@ -104,7 +104,7 @@ final class DebugCommandEdgeCasesTest extends TestCase
         });
 
         $this->assertSame(1, $exitCode);
-        $this->assertMatchesRegularExpression('/^  Error:\s+Expected \) at end of input \(found eof\)$/m', $buffer);
+        $this->assertMatchesRegularExpression('/^  Error:\s+Expected \) at end of input \(found eof\)\.$/m', $buffer);
         $this->assertStringNotContainsString('Exception', $buffer);
     }
 

@@ -93,7 +93,7 @@ final class ParserUtilityTest extends TestCase
     public function test_extract_pattern_throws_on_malformed_flags(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "!"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "!".');
 
         PatternParser::extractPatternAndFlags('/abc/i!');
     }
@@ -111,7 +111,7 @@ final class ParserUtilityTest extends TestCase
         }
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r".');
 
         PatternParser::extractPatternAndFlags('/a/r');
     }

@@ -351,7 +351,7 @@ final class FormatCommandTest extends TestCase
      */
     public static function provideParseErrors(): iterable
     {
-        yield 'an unclosed group' => ['pattern' => '/(a/', 'message' => 'Expected ) at end of input (found eof)'];
+        yield 'an unclosed group' => ['pattern' => '/(a/', 'message' => 'Expected ) at end of input (found eof).'];
         yield 'an unclosed class' => ['pattern' => '/[a/', 'message' => 'Unclosed character class "]" at end of input.'];
     }
 

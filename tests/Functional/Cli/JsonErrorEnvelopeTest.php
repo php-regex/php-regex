@@ -393,7 +393,7 @@ final class JsonErrorEnvelopeTest extends TestCase
         [$exitCode, $stdout] = $this->runRegex(['transpile', '/(a/']);
 
         $this->assertSame(1, $exitCode, $stdout);
-        $this->assertSame("  Transpile failed: Expected ) at end of input (found eof)\n", $stdout);
+        $this->assertSame("  Transpile failed: Expected ) at end of input (found eof).\n", $stdout);
     }
 
     /**

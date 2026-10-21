@@ -277,7 +277,7 @@ final class TokenStream
         $at = $this->isAtEnd() ? 'end of input' : 'position '.$this->current()->position;
 
         return SyntaxErrorException::withContext(
-            $error.' at '.$at.' '.$found,
+            $error.' at '.$at.' '.$found.'.',
             $code,
             $this->current()->position,
             $this->pattern,

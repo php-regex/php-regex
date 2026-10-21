@@ -198,11 +198,11 @@ final class RegexTest extends TestCase
 
     public static function provideInvalidRegexForParsing(): \Generator
     {
-        yield 'unclosed group' => ['/(a/', 'Expected ) at end of input (found eof)'];
+        yield 'unclosed group' => ['/(a/', 'Expected ) at end of input (found eof).'];
         // PHP: "quantifier does not follow a repeatable item at offset 1".
         // At offset 1 from PCRE2 10.47, 0 before: the running PHP decides.
         yield 'quantifier on nothing' => ['/*/', \sprintf('Quantifier without target at position %d', PhpErrorOffset::of('/*/'))];
-        yield 'invalid flag' => ['/a/invalid', 'Unknown regex flag(s) found: "v", "a", "l", "d"'];
+        yield 'invalid flag' => ['/a/invalid', 'Unknown regex flag(s) found: "v", "a", "l", "d".'];
     }
 
     public static function provideInvalidRegexForLexing(): \Generator

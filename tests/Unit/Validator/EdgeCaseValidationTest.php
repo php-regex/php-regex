@@ -135,7 +135,7 @@ final class EdgeCaseValidationTest extends TestCase
         // Test that invalid flags are properly rejected.
         // The pattern '/foo/z' has an invalid flag 'z' which should trigger validation.
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "z"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "z".');
 
         $this->regexService->parse('/foo/z');
     }

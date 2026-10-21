@@ -86,7 +86,7 @@ final class LintServiceEdgeCasesTest extends TestCase
         $validation = RegexParser::create()->validate('/a(/');
         $this->assertStringNotContainsString("\n", (string) $validation->error);
         $this->assertStringStartsWith('Line 1: a(', (string) $validation->caretSnippet);
-        $this->assertSame('Expected ) at end of input (found eof)', $validation->error);
+        $this->assertSame('Expected ) at end of input (found eof).', $validation->error);
     }
 
     private function makeService(): LintService

@@ -36,7 +36,7 @@ final class PatternParserTest extends TestCase
     public function test_rejects_modifier_r_when_target_php_is_older(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r".');
 
         PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80300));
     }
@@ -107,7 +107,7 @@ final class PatternParserTest extends TestCase
     public function test_unknown_flag_letters_keep_the_flag_message(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "q"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "q".');
 
         PatternParser::extractPatternAndFlags('/abc/q');
     }
@@ -149,7 +149,7 @@ final class PatternParserTest extends TestCase
             $this->assertCount(3, $result);
         } else {
             $this->expectException(ParserException::class);
-            $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r"');
+            $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r".');
             PatternParser::extractPatternAndFlags('/a/r');
         }
     }
@@ -177,7 +177,7 @@ final class PatternParserTest extends TestCase
             $this->assertSame('r', $result[1]);
         } else {
             $this->expectException(ParserException::class);
-            $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r"');
+            $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r".');
             PatternParser::extractPatternAndFlags('/a/r');
         }
     }
@@ -218,7 +218,7 @@ final class PatternParserTest extends TestCase
         $this->assertSame(['a', 'r', '/'], PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(90000)));
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r".');
         PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80300));
     }
 
@@ -250,7 +250,7 @@ final class PatternParserTest extends TestCase
 
         // PHP 8.4 on Ubuntu 24.04 links PCRE2 10.42, and refuses "r".
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r".');
 
         PatternParser::extractPatternAndFlags('/a/r', new PcreTarget(80400, '10.42'));
     }
@@ -261,7 +261,7 @@ final class PatternParserTest extends TestCase
 
         // PHP 8.1: "Unknown modifier 'n'".
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "n"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "n".');
 
         PatternParser::extractPatternAndFlags('/(a)/n', PcreTarget::bundledWith(80100));
     }

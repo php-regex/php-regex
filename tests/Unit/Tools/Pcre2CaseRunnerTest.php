@@ -392,7 +392,7 @@ final class Pcre2CaseRunnerTest extends TestCase
             'abc',
             'reject',
             4,
-            'Unknown regex flag(s) found: "q"',
+            'Unknown regex flag(s) found: "q".',
             '/',
             'q',
         ));
@@ -406,7 +406,7 @@ final class Pcre2CaseRunnerTest extends TestCase
             'abc',
             'reject',
             4,
-            'Unknown regex flag(s) found: "q"',
+            'Unknown regex flag(s) found: "q".',
             '(',
             'q',
         ));

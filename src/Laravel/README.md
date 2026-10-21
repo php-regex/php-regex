@@ -86,7 +86,7 @@ Regex::validate('/^[a-z0-9-]{3,}$/')->isValid; // true
 
 $invalid = Regex::validate('/^(unclosed/');
 
-$invalid->error; // "Expected ) at end of input (found eof)"
+$invalid->error; // "Expected ) at end of input (found eof)."
 echo $invalid->caretSnippet;
 // Line 1: ^(unclosed
 //                   ^
