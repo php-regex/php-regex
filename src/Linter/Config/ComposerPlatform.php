@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Config;
 
-use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\PcreTarget;
 
 /**
