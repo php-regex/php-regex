@@ -233,6 +233,7 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
             // Under a limit of 0 any regex that repeats gives up, a
             // possessive run included (PCRE2 10.49, JIT on and off).
             $gaveUp = null;
+
             try {
                 LibraryPcre::matchAll('/regex:([^\']++)/', "'regex:/^[a-z]+$/'");
             } catch (InternalFailureException $failure) {
@@ -240,6 +241,11 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
             }
             $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $gaveUp);
             $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, LibraryPcre::lastError());
+
+            // An explicit version: the target resolution then reads no
+            // composer.json, whose constraint parse gives up under the
+            // pinned limit before the extractor this test starves.
+            config(['php-regex.php_version' => \PHP_VERSION_ID]);
 
             $code = Artisan::call('regex:lint', [
                 'paths' => [$project.'/app'],
@@ -295,6 +301,10 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
         \ini_set('pcre.backtrack_limit', (string) (LibraryPcre::BACKTRACK_LIMIT_FLOOR - 1));
 
         try {
+            // An explicit version, as the checkstyle run above: the target
+            // resolution reads no composer.json under the pinned limit.
+            config(['php-regex.php_version' => \PHP_VERSION_ID]);
+
             $code = Artisan::call('regex:lint', [
                 'paths' => [$project.'/app'],
                 '--format' => 'json',
