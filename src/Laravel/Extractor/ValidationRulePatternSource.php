@@ -132,6 +132,11 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     {
         $content = @file_get_contents($filePath);
         if (false === $content) {
+            $this->failures[] = [
+                'file' => $filePath,
+                'message' => 'Validation rules not read: the file cannot be read.',
+            ];
+
             return [];
         }
 

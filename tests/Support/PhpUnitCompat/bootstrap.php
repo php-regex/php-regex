@@ -20,6 +20,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Support\PhpUnitCompat;
 
 require_once __DIR__.'/PolyfilledMethods.php';
+require_once __DIR__.'/IgnorePhpunitDeprecationsPolyfill.php';
+
+IgnorePhpunitDeprecationsPolyfill::load();
 
 foreach (array_keys(PolyfilledMethods::FEATURES) as $trait) {
     PolyfilledMethods::load($trait);

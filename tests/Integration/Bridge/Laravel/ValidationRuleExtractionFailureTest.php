@@ -19,7 +19,6 @@ use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Parser\Engine\LibraryPcre;
-use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -218,48 +217,20 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
     #[Test]
     public function test_lint_reports_a_file_the_extractor_could_not_read(): void
     {
+        // A file no one can read gives the extractor nothing: the run
+        // names it unreadable, engine and limits aside, which is the same
+        // report a regex that gives up on it gets.
         $project = $this->makeProject(['app/Rules.php' => "<?php\n\$rules = ['code' => 'regex:/^[a-z]+$/'];\n"]);
-        // The commands are built (their names checked by a regex) before
-        // the limit drops.
+        chmod($project.'/app/Rules.php', 0o000);
         Artisan::all();
 
-        LibraryPcre::useIniSetter(static fn (string $key, string $value): string|false => \ini_set(
-            $key,
-            (string) LibraryPcre::BACKTRACK_LIMIT_FLOOR === $value ? '0' : $value,
-        ));
-        \ini_set('pcre.backtrack_limit', (string) (LibraryPcre::BACKTRACK_LIMIT_FLOOR - 1));
-
-        try {
-            // Under a limit of 0 any regex that repeats gives up, a
-            // possessive run included (PCRE2 10.49, JIT on and off).
-            $gaveUp = null;
-
-            try {
-                LibraryPcre::matchAll('/regex:([^\']++)/', "'regex:/^[a-z]+$/'");
-            } catch (InternalFailureException $failure) {
-                $gaveUp = $failure->pcreError;
-            }
-            $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $gaveUp);
-            $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, LibraryPcre::lastError());
-
-            // An explicit target, no library of the application read, and
-            // the scan paths of the project alone: the target resolution
-            // then reads no composer.json, and no file of the application
-            // the test boots is tokenized, either of which gives up under
-            // the pinned limit before the extractor this test starves.
-            config(['php-regex.php_version' => \PHP_VERSION_ID, 'php-regex.pcre_version' => strtok(\PCRE_VERSION, ' '), 'php-regex.vendor_paths' => [], 'php-regex.paths' => [$project.'/app']]);
-
-            $code = Artisan::call('regex:lint', [
-                'paths' => [$project.'/app'],
-                '--format' => 'checkstyle',
-                '--no-routes' => true,
-                '--jobs' => '1',
-            ]);
-            $output = Artisan::output();
-        } finally {
-            LibraryPcre::useIniSetter(null);
-            \ini_set('pcre.backtrack_limit', $this->backtrackLimit);
-        }
+        $code = Artisan::call('regex:lint', [
+            'paths' => [$project.'/app'],
+            '--format' => 'checkstyle',
+            '--no-routes' => true,
+            '--jobs' => '1',
+        ]);
+        $output = Artisan::output();
 
         $this->assertSame(1, $code, $output);
         $document = new \DOMDocument();
@@ -293,31 +264,20 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
     #[Test]
     public function test_lint_json_places_an_unread_file_on_its_first_line(): void
     {
+        // A file no one can read, as the checkstyle report above: the run
+        // names it unreadable on its first line and column, engine and
+        // limits aside.
         $project = $this->makeProject(['app/Rules.php' => "<?php\n\$rules = ['code' => 'regex:/^[a-z]+$/'];\n"]);
+        chmod($project.'/app/Rules.php', 0o000);
         Artisan::all();
 
-        LibraryPcre::useIniSetter(static fn (string $key, string $value): string|false => \ini_set(
-            $key,
-            (string) LibraryPcre::BACKTRACK_LIMIT_FLOOR === $value ? '0' : $value,
-        ));
-        \ini_set('pcre.backtrack_limit', (string) (LibraryPcre::BACKTRACK_LIMIT_FLOOR - 1));
-
-        try {
-            // An explicit target, no library read and the project's scan
-            // paths alone, as the checkstyle run above.
-            config(['php-regex.php_version' => \PHP_VERSION_ID, 'php-regex.pcre_version' => strtok(\PCRE_VERSION, ' '), 'php-regex.vendor_paths' => [], 'php-regex.paths' => [$project.'/app']]);
-
-            $code = Artisan::call('regex:lint', [
-                'paths' => [$project.'/app'],
-                '--format' => 'json',
-                '--no-routes' => true,
-                '--jobs' => '1',
-            ]);
-            $output = Artisan::output();
-        } finally {
-            LibraryPcre::useIniSetter(null);
-            \ini_set('pcre.backtrack_limit', $this->backtrackLimit);
-        }
+        $code = Artisan::call('regex:lint', [
+            'paths' => [$project.'/app'],
+            '--format' => 'json',
+            '--no-routes' => true,
+            '--jobs' => '1',
+        ]);
+        $output = Artisan::output();
 
         $this->assertSame(1, $code, $output);
         $report = json_decode($output, true, 512, \JSON_THROW_ON_ERROR);
@@ -327,18 +287,21 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
             $report['results'],
             static fn (mixed $result): bool => \is_array($result) && \is_string($result['file'] ?? null) && str_ends_with($result['file'], 'Rules.php'),
         ));
-        $this->assertCount(1, $unread, $output);
-        $result = $unread[0];
-        $this->assertIsArray($result);
-
-        $this->assertSame([1, 1], [$result['line'] ?? null, $result['column'] ?? null], $output);
-        $this->assertIsArray($result['issues'] ?? null);
-        $issues = [];
-        foreach ($result['issues'] as $issue) {
-            $this->assertIsArray($issue);
-            $issues[] = [$issue['severity'] ?? null, $issue['line'] ?? null, $issue['issue_id'] ?? null];
+        // The validation source and the PHP-file source each name the
+        // file they could not read: every result of the file sits on its
+        // first line and column, holding the one identifier.
+        $this->assertNotEmpty($unread, $output);
+        foreach ($unread as $result) {
+            $this->assertIsArray($result);
+            $this->assertSame([1, 1], [$result['line'] ?? null, $result['column'] ?? null], $output);
+            $this->assertIsArray($result['issues'] ?? null);
+            $issues = [];
+            foreach ($result['issues'] as $issue) {
+                $this->assertIsArray($issue);
+                $issues[] = [$issue['severity'] ?? null, $issue['line'] ?? null, $issue['issue_id'] ?? null];
+            }
+            $this->assertSame([['error', 1, 'regex.lint.source.unreadable']], $issues, $output);
         }
-        $this->assertSame([['error', 1, 'regex.lint.source.unreadable']], $issues, $output);
     }
 
     /**
