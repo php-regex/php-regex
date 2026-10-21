@@ -186,6 +186,27 @@ final class AnalyzerViewsTest extends TestCase
         $this->assertStringNotContainsString('security config files were skipped', $display);
     }
 
+    /**
+     * A narrower rule placed first is no finding: verbose, the command
+     * counts it as a carve-out, and reports nothing.
+     */
+    #[Test]
+    public function test_a_verbose_security_command_counts_the_carve_outs_it_left_unreported(): void
+    {
+        $path = $this->makeProject([
+            'security.yaml' => "security:\n    access_control:\n        - { path: ^/admin/public, roles: PUBLIC_ACCESS }\n        - { path: ^/admin, roles: ROLE_ADMIN }\n",
+        ]).'/security.yaml';
+
+        $tester = new CommandTester($this->securityCommand());
+        $status = $tester->execute(['--config' => [$path], '--skip-firewalls' => true, '--show-overlaps' => true], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE]);
+        $display = $tester->getDisplay();
+
+        $this->assertSame(Command::SUCCESS, $status);
+        $this->assertMatchesRegularExpression('/Carve-outs \(narrower rule first, not reported\)\s*:\s*1\b/', $display);
+        $this->assertMatchesRegularExpression('/Overlaps\s*:\s*0\b/', $display);
+        $this->assertMatchesRegularExpression('/Shadowed\s*:\s*0\b/', $display);
+    }
+
     #[Test]
     public function test_a_verbose_security_command_names_every_file_it_skipped(): void
     {

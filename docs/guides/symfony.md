@@ -380,6 +380,28 @@ before `/blog/{id}` (`\d+|new`) takes `/blog/new`. A narrower route declared
 before a wider one, `/users/list` before `/users/{id}`, is the order the
 router expects and is not reported.
 
+`regex:security` reads `access_control` the same way: the first rule whose
+path, host, methods and addresses take a request applies to it. A later
+rule is **shadowed** when an earlier one takes every request it takes, its
+path, its host, its methods and its addresses included: it never applies.
+An earlier rule is a **carve-out** of a later one when its path is strictly
+narrower, or when it takes only requests the later one takes too: that is
+the order `access_control` expects, and it is never reported.
+
+```yaml
+access_control:
+    - { path: ^/admin/public, roles: PUBLIC_ACCESS }   # a carve-out of the next rule
+    - { path: ^/admin, roles: ROLE_ADMIN }
+```
+
+Any other pair of rules that share a request is an **overlap**, listed with
+`--show-overlaps`: the order decides which rule applies to the requests both
+take. `{ path: ^/admin, methods: [GET] }` before `{ path: ^/admin/users }`
+leaves `POST /admin/users` to the later rule, an overlap and not a shadow.
+Addresses are compared as written, and a host the analysis cannot read
+leaves the paths to decide; `allow_if` and `requires_channel` decide access,
+not which rule applies, and play no part.
+
 `regex:security` and `regex:analyze` read the security configuration the
 application runs with, as `bin/console debug:config security` shows it:
 `config/packages/security.yaml`, `security.php` or any other file the kernel

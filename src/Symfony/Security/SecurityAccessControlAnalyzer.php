@@ -93,6 +93,7 @@ final class SecurityAccessControlAnalyzer
         $conflicts = [];
         $shadowed = 0;
         $overlaps = 0;
+        $carveOuts = 0;
         $critical = 0;
         $equivalent = 0;
         $redundant = 0;
@@ -136,9 +137,24 @@ final class SecurityAccessControlAnalyzer
                     continue;
                 }
 
+                // access_control is first match. The later rule is shadowed
+                // when the earlier one takes every request it takes. The
+                // earlier rule is a carve-out of the later one, the order
+                // access_control expects, when it takes only requests the
+                // later one takes too, or when its path is strictly
+                // narrower. Any other pair sharing a request overlaps: the
+                // order decides which rule applies to what both take.
+                $laterPathInEarlier = null === $equivalence->rightOnlyExample;
+                $earlierPathInLater = null === $equivalence->leftOnlyExample;
+                $isSubset = $laterPathInEarlier && $this->takesEveryRequestOf($left, $right, $options);
+                if (!$isSubset && $earlierPathInLater && (!$laterPathInEarlier || $this->takesEveryRequestOf($right, $left, $options))) {
+                    $carveOuts++;
+
+                    continue;
+                }
+
                 $example = $intersection->example;
                 $isEquivalent = $equivalence->isEquivalent;
-                $isSubset = null === $equivalence->rightOnlyExample;
                 if ($isEquivalent) {
                     $equivalent++;
                 }
@@ -189,6 +205,7 @@ final class SecurityAccessControlAnalyzer
             'conflicts' => \count($conflicts),
             'shadowed' => $shadowed,
             'overlaps' => $overlaps,
+            'carve_outs' => $carveOuts,
             'critical' => $critical,
             'equivalent' => $equivalent,
             'redundant' => $redundant,
@@ -514,6 +531,61 @@ final class SecurityAccessControlAnalyzer
         }
 
         return !$intersection->isEmpty;
+    }
+
+    /**
+     * Whether every request the inner rule takes, the outer rule takes too,
+     * but for the path: no method, host or address of its own, or one that
+     * holds the inner rule's. Addresses are compared as written. A host
+     * the parser or the solver cannot read leaves the paths to decide, as
+     * it does when the hosts are intersected.
+     *
+     * @phpstan-param AccessRule $outer
+     * @phpstan-param AccessRule $inner
+     */
+    private function takesEveryRequestOf(array $outer, array $inner, SolverOptions $options): bool
+    {
+        if (!$this->listHolds($outer['methods'], $inner['methods'])) {
+            return false;
+        }
+
+        if ([] !== $outer['ips'] && !$this->listHolds($outer['ips'], $inner['ips'])) {
+            return false;
+        }
+
+        if ($outer['hostUnsupported'] || $inner['hostUnsupported'] || null === $outer['hostPattern']) {
+            return true;
+        }
+
+        if (null === $inner['hostPattern']) {
+            return false;
+        }
+
+        try {
+            return null === $this->solver->equivalent($outer['hostPattern'], $inner['hostPattern'], $options)->rightOnlyExample;
+        } catch (ComplexityException) {
+            return true;
+        }
+    }
+
+    /**
+     * Whether a list of methods or addresses takes every value the inner
+     * one takes: an empty list takes them all.
+     *
+     * @param array<int, string> $outer
+     * @param array<int, string> $inner
+     */
+    private function listHolds(array $outer, array $inner): bool
+    {
+        if ([] === $outer) {
+            return true;
+        }
+
+        if ([] === $inner) {
+            return false;
+        }
+
+        return [] === array_diff(array_map(strtoupper(...), $inner), array_map(strtoupper(...), $outer));
     }
 
     /**

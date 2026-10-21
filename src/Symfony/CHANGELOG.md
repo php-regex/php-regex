@@ -25,6 +25,12 @@ CHANGELOG
    name. `php_regex.regex` and the commands are private; the
    `PHPRegex\Toolkit\Regex` alias stays public. `RouteControllerFileResolver`,
    which nothing called, is gone.
+ * `regex:security` and `regex:analyze` read `access_control` as Symfony's
+   `AccessMap` applies it, first match: a narrower rule placed first on
+   purpose, `^/admin/public` before `^/admin`, is a carve-out and no longer
+   reported as an overlap; a later rule is shadowed only when the earlier
+   one takes every request it takes, methods, host and addresses included,
+   where `^/admin` for `GET` shadowed `^/admin/users` for every method.
  * The `ValidRegex` messages ship in an English catalogue,
    `Resources/translations/validators.en.xlf`, of the `validators` domain:
    an application translates them as it translates the messages of
