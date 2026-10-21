@@ -195,8 +195,6 @@ Integrations:
   first on purpose (`^/admin/public` before `^/admin`) as an overlap; the
   `ide` fallback never fires; `AbstractBundle`, no container parameters,
   no autowirable internal services.
-- PHPStan: a repo-only rule ships in the public extension;
-  `PatternChecker` split.
 - CLI: one option declaration per command for parsing and help;
   `OutputFormat` split per method in the facade; the language server's
   error stream still written through a static.
