@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Command\LintCommand;
+use PHPRegex\Symfony\Command\SecurityCommand;
 use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
@@ -68,7 +69,6 @@ final class BundleConfigurationTest extends TestCase
     {
         $container = $this->compile([], debug: true);
 
-        $this->assertFalse($container->getParameter('php_regex.runtime_pcre_validation'));
         $this->assertFalse($this->runtimeValidationOf($this->regexService($container)->parser()));
     }
 
@@ -215,7 +215,9 @@ final class BundleConfigurationTest extends TestCase
     {
         $container = $this->compile(['redos' => ['threshold' => 'CRITICAL']]);
 
-        $this->assertSame('critical', $container->getParameter('php_regex.redos.threshold'));
+        $command = $container->get('php_regex.command.security');
+        $this->assertInstanceOf(SecurityCommand::class, $command);
+        $this->assertSame('critical', (new \ReflectionProperty(SecurityCommand::class, 'defaultRedosThreshold'))->getValue($command));
     }
 
     #[Test]

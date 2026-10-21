@@ -1518,11 +1518,45 @@ command: `php_version` / `pcre_version`, else `composer.json` in
 `php_regex.regex` service keeps judging for the running PHP. See
 [the Symfony guide](docs/guides/symfony.md).
 
-Every container parameter and service moves from `regex_parser.*` to
-`php_regex.*`. `regex_parser.analysis.redos_threshold`,
-`regex_parser.analysis.ignore_patterns` and `regex_parser.exclude_paths` have
-no 2.0 counterpart; `php_regex.exclude`, `php_regex.php_version` and
-`php_regex.pcre_version` are new.
+Every service moves from `regex_parser.*` to `php_regex.*`.
+
+The bundle no longer sets container parameters: its configuration goes
+straight into its services, so an application can neither read it with
+`%...%` or `getParameter()` nor override it with a parameter of the same
+name. Read the `php_regex` configuration itself instead (`bin/console
+debug:config php_regex`). These 1.x parameters are gone, with no 2.0
+counterpart:
+
+| 1.x parameter |
+|---|
+| `regex_parser.analysis.ignore_patterns` |
+| `regex_parser.analysis.redos_threshold` |
+| `regex_parser.analysis.warning_threshold` |
+| `regex_parser.automata.determinization_algorithm` |
+| `regex_parser.automata.minimization_algorithm` |
+| `regex_parser.cache` |
+| `regex_parser.editor_format` |
+| `regex_parser.exclude_paths` |
+| `regex_parser.extractor_service` |
+| `regex_parser.max_lookbehind_length` |
+| `regex_parser.max_pattern_length` |
+| `regex_parser.optimizations` |
+| `regex_parser.paths` |
+| `regex_parser.redos.ignored_patterns` |
+| `regex_parser.redos.threshold` |
+| `regex_parser.runtime_pcre_validation` |
+
+The 2.0 development snapshots set 22 `php_regex.*` parameters, gone as well:
+`php_regex.max_pattern_length`, `php_regex.max_lookbehind_length`,
+`php_regex.runtime_pcre_validation`, `php_regex.php_version`,
+`php_regex.pcre_version`, `php_regex.locale`, `php_regex.project_dir`,
+`php_regex.cache`, `php_regex.extractor_service`, `php_regex.redos.enabled`,
+`php_regex.redos.threshold`, `php_regex.redos.ignored_patterns`,
+`php_regex.analysis.complexity`, `php_regex.analysis.warning_threshold`,
+`php_regex.automata.minimization_algorithm`,
+`php_regex.automata.determinization_algorithm`, `php_regex.optimizations`,
+`php_regex.paths`, `php_regex.exclude`, `php_regex.report_unmatched_ignores`,
+`php_regex.editor_format` and `php_regex.extraction.warnings`.
 
 #### Laravel: config/php-regex.php replaces config/regex-parser.php
 

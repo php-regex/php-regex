@@ -27,6 +27,8 @@ use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Symfony\DependencyInjection\EditorLinkPass;
 use PHPRegex\Symfony\DependencyInjection\ValidatorMappingPass;
+use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
+use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -317,60 +319,87 @@ final class PHPRegexBundle extends AbstractBundle
     #[\Override]
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
-        $ignoredPatterns = array_values(array_unique($config['redos']['ignored_patterns']));
+        $container->import('Resources/config/services.php');
 
-        // Set parameters
-        $builder->setParameter('php_regex.max_pattern_length', $config['max_pattern_length']);
-        $builder->setParameter('php_regex.max_lookbehind_length', $config['max_lookbehind_length']);
-        $builder->setParameter('php_regex.runtime_pcre_validation', $config['runtime_pcre_validation']);
-        $builder->setParameter('php_regex.php_version', $config['php_version']);
-        $builder->setParameter('php_regex.pcre_version', $config['pcre_version']);
-        $builder->setParameter('php_regex.locale', $config['locale']);
-        // Where regex:lint reads composer.json; never the working directory.
-        $builder->setParameter('php_regex.project_dir', $builder->hasParameter('kernel.project_dir') ? '%kernel.project_dir%' : null);
-        $builder->setParameter('php_regex.cache', $config['cache']);
-        $builder->setParameter('php_regex.extractor_service', $config['extractor_service']);
-        $builder->setParameter('php_regex.redos.enabled', $config['redos']['enabled']);
-        $builder->setParameter('php_regex.redos.threshold', $config['redos']['threshold']);
-        $builder->setParameter('php_regex.redos.ignored_patterns', $ignoredPatterns);
-        $builder->setParameter('php_regex.analysis.complexity', $config['analysis']['complexity']);
-        $builder->setParameter('php_regex.analysis.warning_threshold', $config['analysis']['warning_threshold']);
-        $builder->setParameter('php_regex.automata.minimization_algorithm', $config['automata']['minimization_algorithm']);
-        $builder->setParameter('php_regex.automata.determinization_algorithm', $config['automata']['determinization_algorithm']);
-        $builder->setParameter('php_regex.optimizations', [
-            'digits' => $config['optimizations']['digits'],
-            'word' => $config['optimizations']['word'],
-            'ranges' => $config['optimizations']['ranges'],
-            'canonicalize_char_classes' => $config['optimizations']['canonicalize_char_classes'],
-            'possessive' => $config['optimizations']['possessive'],
-            'factorize' => $config['optimizations']['factorize'],
-            'min_quantifier_count' => $config['optimizations']['min_quantifier_count'],
-        ]);
-        $builder->setParameter('php_regex.paths', $config['paths']);
-        $builder->setParameter('php_regex.report_unmatched_ignores', $config['report_unmatched_ignores']);
-        $builder->setParameter('php_regex.exclude', $config['exclude']);
-        $builder->setParameter('php_regex.editor_format', $this->isNotNullOrEmpty($config['ide']) ? $config['ide'] : null);
+        // The configuration goes into the services that read it, never into
+        // container parameters the application could read or override.
+        $ignoredPatterns = array_values(array_unique($config['redos']['ignored_patterns']));
+        $minimization = $config['automata']['minimization_algorithm'];
+        $determinization = $config['automata']['determinization_algorithm'];
+        $redosThreshold = $config['redos']['threshold'];
+        // What patterns are read with, as Regex::create() takes it; the lint
+        // judges for the project's target with these settings, but never with
+        // the runtime validation, which only the running PHP can do.
+        $readOptions = [
+            'max_pattern_length' => $config['max_pattern_length'],
+            'max_lookbehind_length' => $config['max_lookbehind_length'],
+            'cache' => new Reference('php_regex.cache'),
+            'redos_ignored_patterns' => $ignoredPatterns,
+        ];
 
         $builder->setDefinition('php_regex.cache', $this->buildCacheDefinition($config));
 
-        // Configure extractor service or default implementation: a custom
-        // service reads its own calls, and php_regex.extraction is unused.
+        $builder->getDefinition('php_regex.regex')
+            ->setArgument('$options', $readOptions + ['runtime_pcre_validation' => $config['runtime_pcre_validation']]);
+
+        $builder->getDefinition('php_regex.service.regex_analysis')
+            ->setArgument('$warningThreshold', $config['analysis']['warning_threshold'])
+            ->setArgument('$redosThreshold', $redosThreshold)
+            ->setArgument('$redosIgnoredPatterns', $ignoredPatterns)
+            ->setArgument('$redosEnabled', $config['redos']['enabled']);
+
+        // A custom extractor service reads its own calls, and
+        // php_regex.extraction is unused.
         $extractorService = $config['extractor_service'];
-        $builder->setParameter('php_regex.extraction.warnings', []);
-        if ($this->isNotNullOrEmpty($extractorService)) {
-            if (\is_string($extractorService)) {
-                $builder->setAlias(ExtractorInterface::class, $extractorService);
-                $builder->setAlias('php_regex.extractor.instance', $extractorService);
-            }
+        $warnings = [];
+        if (null !== $extractorService && '' !== $extractorService) {
+            $builder->setAlias(ExtractorInterface::class, $extractorService);
+            $builder->setAlias('php_regex.extractor.instance', $extractorService);
         } else {
-            // Determine and register appropriate extractor.
-            $extractorDefinition = $this->createExtractorDefinition($config['extraction']);
-            $builder->setDefinition('php_regex.extractor.instance', $extractorDefinition);
-            $builder->setParameter('php_regex.extraction.warnings', $this->extractionWarnings($config['extraction']));
+            $builder->setDefinition('php_regex.extractor.instance', $this->createExtractorDefinition($config['extraction']));
             $builder->setAlias(ExtractorInterface::class, 'php_regex.extractor.instance');
+            $warnings = $this->extractionWarnings($config['extraction']);
         }
 
-        $container->import('Resources/config/services.php');
+        $builder->getDefinition('php_regex.command.lint')
+            ->setArgument('$defaultPaths', $config['paths'])
+            ->setArgument('$defaultExcludePaths', $config['exclude'])
+            ->setArgument('$defaultOptimizations', [
+                'digits' => $config['optimizations']['digits'],
+                'word' => $config['optimizations']['word'],
+                'ranges' => $config['optimizations']['ranges'],
+                'canonicalize_char_classes' => $config['optimizations']['canonicalize_char_classes'],
+                'possessive' => $config['optimizations']['possessive'],
+                'factorize' => $config['optimizations']['factorize'],
+                'min_quantifier_count' => $config['optimizations']['min_quantifier_count'],
+            ])
+            // Without an ide of its own, EditorLinkPass links to the editor
+            // FrameworkBundle links to.
+            ->setArgument('$editorUrl', $this->isNotNullOrEmpty($config['ide']) ? $config['ide'] : null)
+            ->setArgument('$regexOptions', $readOptions)
+            ->setArgument('$phpVersion', $config['php_version'])
+            ->setArgument('$pcreVersion', $config['pcre_version'])
+            ->setArgument('$locale', $config['locale'])
+            // Where regex:lint reads composer.json; never the working directory.
+            ->setArgument('$projectDir', $builder->hasParameter('kernel.project_dir') ? '%kernel.project_dir%' : null)
+            ->setArgument('$checkRedos', $config['redos']['enabled'])
+            ->setArgument('$checkComplexity', $config['analysis']['complexity'])
+            ->setArgument('$warnings', $warnings)
+            ->setArgument('$reportUnmatchedIgnores', $config['report_unmatched_ignores']);
+
+        $builder->getDefinition('php_regex.command.compare')
+            ->setArgument('$defaultMinimizer', $minimization)
+            ->setArgument('$defaultDeterminizer', $determinization);
+
+        foreach ([RouteConflictAnalyzer::class, SecurityAccessControlAnalyzer::class] as $analyzer) {
+            $builder->getDefinition($analyzer)
+                ->setArgument('$minimizationAlgorithm', $minimization)
+                ->setArgument('$determinizationAlgorithm', $determinization);
+        }
+
+        foreach (['php_regex.command.security', 'php_regex.command.analyze'] as $command) {
+            $builder->getDefinition($command)->setArgument('$defaultRedosThreshold', $redosThreshold);
+        }
     }
 
     #[\Override]

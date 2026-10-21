@@ -35,10 +35,9 @@ final class EditorLinkPass implements CompilerPassInterface
             return;
         }
 
-        if (null !== $container->getParameter('php_regex.editor_format')) {
-            return;
+        $command = $container->getDefinition(self::COMMAND);
+        if (null === ($command->getArguments()['$editorUrl'] ?? null)) {
+            $command->setArgument('$editorUrl', '%debug.file_link_format%');
         }
-
-        $container->getDefinition(self::COMMAND)->setArgument('$editorUrl', '%debug.file_link_format%');
     }
 }

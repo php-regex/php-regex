@@ -19,6 +19,10 @@ CHANGELOG
    and `Configuration`, both internal, are gone. The `php_regex` alias and
    every configuration key are unchanged, as `config:dump-reference
    php_regex` shows.
+ * The bundle sets no container parameter: its configuration goes straight
+   into its services, where 22 `php_regex.*` parameters (two of them read by
+   nothing) let an application read and override it. Read the configuration
+   with `debug:config php_regex`.
  * `ide` defaults to `null`, and the links of `regex:lint` then open the
    editor of `framework.ide` (`SYMFONY_IDE` by default), as FrameworkBundle's
    own pages do. The documented fallback never fired: the default was an

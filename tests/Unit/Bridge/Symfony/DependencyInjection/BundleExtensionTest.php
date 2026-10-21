@@ -50,16 +50,21 @@ final class BundleExtensionTest extends TestCase
             ],
         ]], $container);
 
-        $this->assertSame(42, $container->getParameter('php_regex.max_pattern_length'));
-        $cacheConfig = (array) $container->getParameter('php_regex.cache');
-        $this->assertSame('/tmp/cache', $cacheConfig['directory']);
-        $this->assertSame(1, $container->getParameter('php_regex.analysis.warning_threshold'));
-        $this->assertFalse($container->getParameter('php_regex.analysis.complexity'));
-        // 2.0 has one ignore list, and no complexity score named after ReDoS.
-        $this->assertFalse($container->hasParameter('php_regex.analysis.redos_threshold'));
-        $this->assertSame(['foo'], $container->getParameter('php_regex.redos.ignored_patterns'));
-        $this->assertSame('hopcroft', $container->getParameter('php_regex.automata.minimization_algorithm'));
-        $this->assertSame('subset-indexed', $container->getParameter('php_regex.automata.determinization_algorithm'));
+        $this->assertEquals([
+            'max_pattern_length' => 42,
+            'max_lookbehind_length' => 255,
+            'cache' => new Reference('php_regex.cache'),
+            'redos_ignored_patterns' => ['foo'],
+            'runtime_pcre_validation' => false,
+        ], $container->getDefinition('php_regex.regex')->getArgument('$options'));
+        $this->assertSame(['/tmp/cache'], $container->getDefinition('php_regex.cache')->getArguments());
+        $analysis = $container->getDefinition('php_regex.service.regex_analysis');
+        $this->assertSame(1, $analysis->getArgument('$warningThreshold'));
+        $this->assertSame(['foo'], $analysis->getArgument('$redosIgnoredPatterns'));
+        $this->assertSame('high', $analysis->getArgument('$redosThreshold'));
+        $this->assertFalse($analysis->getArgument('$redosEnabled'));
+        $lint = $container->getDefinition('php_regex.command.lint');
+        $this->assertFalse($lint->getArgument('$checkComplexity'));
         $this->assertSame([
             'digits' => true,
             'word' => true,
@@ -68,7 +73,10 @@ final class BundleExtensionTest extends TestCase
             'possessive' => false,
             'factorize' => false,
             'min_quantifier_count' => 4,
-        ], $container->getParameter('php_regex.optimizations'));
+        ], $lint->getArgument('$defaultOptimizations'));
+        $compare = $container->getDefinition('php_regex.command.compare');
+        $this->assertSame('hopcroft', $compare->getArgument('$defaultMinimizer'));
+        $this->assertSame('subset-indexed', $compare->getArgument('$defaultDeterminizer'));
 
         $this->assertTrue($container->hasDefinition('php_regex.regex'));
         $this->assertTrue($container->hasDefinition('php_regex.extractor'));

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\DependencyInjection;
 
+use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\TemporaryProject;
@@ -68,7 +69,7 @@ final class ExtractionWarningTest extends TestCase
             'Extraction interop entry ignored: expected a string, got bool.',
             'Extraction interop entry ignored: expected a string, got int.',
             'Extraction functions entry ignored: expected a string, got int.',
-        ], $container->getParameter('php_regex.extraction.warnings'));
+        ], $this->warnings($container));
     }
 
     #[Test]
@@ -79,7 +80,7 @@ final class ExtractionWarningTest extends TestCase
         $this->assertSame([
             'Malformed pattern function "x#1$", ignored.',
             'Malformed pattern function "x#a%", ignored.',
-        ], $container->getParameter('php_regex.extraction.warnings'));
+        ], $this->warnings($container));
     }
 
     #[Test]
@@ -87,7 +88,22 @@ final class ExtractionWarningTest extends TestCase
     {
         $container = $this->container(['extractor_service' => 'app.extractor', 'extraction' => ['functions' => ['x#a']]], $this->makeProject(), compile: false);
 
-        $this->assertSame([], $container->getParameter('php_regex.extraction.warnings'));
+        $this->assertSame([], $this->warnings($container));
+    }
+
+    /**
+     * The warnings regex:lint is given to print before its report.
+     */
+    private function warnings(ContainerBuilder $container): mixed
+    {
+        if (!$container->isCompiled()) {
+            return $container->getDefinition('php_regex.command.lint')->getArgument('$warnings');
+        }
+
+        $command = $container->get('php_regex.command.lint');
+        $this->assertInstanceOf(LintCommand::class, $command);
+
+        return (new \ReflectionProperty(LintCommand::class, 'warnings'))->getValue($command);
     }
 
     /**

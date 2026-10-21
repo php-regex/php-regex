@@ -50,14 +50,12 @@ use PHPRegex\Toolkit\Regex;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\Validator\ConstraintValidator;
 
-use function Symfony\Component\DependencyInjection\Loader\Configurator\param;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;
 
 /*
- * Base services for the PHPRegex library.
- *
- * These services are always loaded when the bundle is enabled.
+ * The services of the PHPRegex bundle. The arguments its configuration
+ * decides are set by PHPRegexBundle::loadExtension().
  */
 /* @internal */
 return static function (ContainerConfigurator $container): void {
@@ -67,13 +65,6 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set('php_regex.regex', Regex::class)
         ->factory([Regex::class, 'create'])
-        ->arg('$options', [
-            'max_pattern_length' => param('php_regex.max_pattern_length'),
-            'max_lookbehind_length' => param('php_regex.max_lookbehind_length'),
-            'cache' => service('php_regex.cache'),
-            'redos_ignored_patterns' => param('php_regex.redos.ignored_patterns'),
-            'runtime_pcre_validation' => param('php_regex.runtime_pcre_validation'),
-        ])
         ->public();
 
     // Aliases for autowiring
@@ -91,11 +82,7 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set('php_regex.service.regex_analysis', AnalysisService::class)
         ->arg('$regex', service('php_regex.parser'))
-        ->arg('$extractor', service('php_regex.extractor')->nullOnInvalid())
-        ->arg('$warningThreshold', param('php_regex.analysis.warning_threshold'))
-        ->arg('$redosThreshold', param('php_regex.redos.threshold'))
-        ->arg('$redosIgnoredPatterns', param('php_regex.redos.ignored_patterns'))
-        ->arg('$redosEnabled', param('php_regex.redos.enabled'));
+        ->arg('$extractor', service('php_regex.extractor')->nullOnInvalid());
 
     $services->set('php_regex.pattern_sources', PatternSourceCollection::class)
         ->args([
@@ -132,41 +119,16 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$lint', service('php_regex.service.regex_lint'))
         ->arg('$analysis', service('php_regex.service.regex_analysis'))
         ->arg('$formatterRegistry', service('php_regex.formatter_registry'))
-        ->arg('$defaultPaths', param('php_regex.paths'))
-        ->arg('$defaultExcludePaths', param('php_regex.exclude'))
-        ->arg('$defaultOptimizations', param('php_regex.optimizations'))
-        ->arg('$editorUrl', param('php_regex.editor_format'))
-        // The lint judges for the project's target, with the service's
-        // settings but never its runtime validation, which only the running
-        // PHP can do.
-        ->arg('$regexOptions', [
-            'max_pattern_length' => param('php_regex.max_pattern_length'),
-            'max_lookbehind_length' => param('php_regex.max_lookbehind_length'),
-            'cache' => service('php_regex.cache'),
-            'redos_ignored_patterns' => param('php_regex.redos.ignored_patterns'),
-        ])
-        ->arg('$phpVersion', param('php_regex.php_version'))
-        ->arg('$pcreVersion', param('php_regex.pcre_version'))
-        ->arg('$locale', param('php_regex.locale'))
-        ->arg('$projectDir', param('php_regex.project_dir'))
-        ->arg('$checkRedos', param('php_regex.redos.enabled'))
-        ->arg('$checkComplexity', param('php_regex.analysis.complexity'))
-        ->arg('$warnings', param('php_regex.extraction.warnings'))
-        ->arg('$reportUnmatchedIgnores', param('php_regex.report_unmatched_ignores'))
         ->tag('console.command')
         ->public();
 
     $services->set('php_regex.command.compare', CompareCommand::class)
         ->arg('$regex', service('php_regex.regex'))
-        ->arg('$defaultMinimizer', param('php_regex.automata.minimization_algorithm'))
-        ->arg('$defaultDeterminizer', param('php_regex.automata.determinization_algorithm'))
         ->tag('console.command')
         ->public();
 
     $services->set(RouteConflictAnalyzer::class)
-        ->arg('$regex', service('php_regex.regex'))
-        ->arg('$minimizationAlgorithm', param('php_regex.automata.minimization_algorithm'))
-        ->arg('$determinizationAlgorithm', param('php_regex.automata.determinization_algorithm'));
+        ->arg('$regex', service('php_regex.regex'));
 
     $services->set(RouteConflictSuggestionBuilder::class);
 
@@ -191,9 +153,7 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set(SecurityAccessControlAnalyzer::class)
         ->arg('$regex', service('php_regex.regex'))
-        ->arg('$patternNormalizer', service(SecurityPatternNormalizer::class))
-        ->arg('$minimizationAlgorithm', param('php_regex.automata.minimization_algorithm'))
-        ->arg('$determinizationAlgorithm', param('php_regex.automata.determinization_algorithm'));
+        ->arg('$patternNormalizer', service(SecurityPatternNormalizer::class));
 
     $services->set(SecurityFirewallAnalyzer::class)
         ->arg('$regex', service('php_regex.regex'))
@@ -206,7 +166,6 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$configLocator', service(SecurityConfigLocator::class))
         ->arg('$suggestionBuilder', service(SecurityAccessSuggestionBuilder::class))
         ->arg('$kernel', service('kernel')->nullOnInvalid())
-        ->arg('$defaultRedosThreshold', param('php_regex.redos.threshold'))
         ->tag('console.command')
         ->public();
 
@@ -236,7 +195,6 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$consoleFormatter', service(ConsoleReportFormatter::class))
         ->arg('$jsonFormatter', service(JsonReportFormatter::class))
         ->arg('$kernel', service('kernel')->nullOnInvalid())
-        ->arg('$defaultRedosThreshold', param('php_regex.redos.threshold'))
         ->tag('console.command')
         ->public();
 

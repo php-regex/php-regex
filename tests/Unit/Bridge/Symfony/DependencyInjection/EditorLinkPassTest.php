@@ -42,7 +42,7 @@ final class EditorLinkPassTest extends TestCase
 
         (new EditorLinkPass())->process($container);
 
-        $this->assertSame('%php_regex.editor_format%', $container->getDefinition('php_regex.command.lint')->getArgument('$editorUrl'));
+        $this->assertSame('vscode', $container->getDefinition('php_regex.command.lint')->getArgument('$editorUrl'));
     }
 
     #[Test]
@@ -52,7 +52,7 @@ final class EditorLinkPassTest extends TestCase
 
         (new EditorLinkPass())->process($container);
 
-        $this->assertSame('%php_regex.editor_format%', $container->getDefinition('php_regex.command.lint')->getArgument('$editorUrl'));
+        $this->assertNull($container->getDefinition('php_regex.command.lint')->getArgument('$editorUrl'));
     }
 
     #[Test]
@@ -69,11 +69,10 @@ final class EditorLinkPassTest extends TestCase
     private function container(?string $ide, bool $framework): ContainerBuilder
     {
         $container = new ContainerBuilder();
-        $container->setParameter('php_regex.editor_format', $ide);
         if ($framework) {
             $container->setParameter('debug.file_link_format', 'phpstorm');
         }
-        $container->setDefinition('php_regex.command.lint', (new Definition())->setArgument('$editorUrl', '%php_regex.editor_format%'));
+        $container->setDefinition('php_regex.command.lint', (new Definition())->setArgument('$editorUrl', $ide));
 
         return $container;
     }
