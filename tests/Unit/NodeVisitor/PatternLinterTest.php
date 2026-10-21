@@ -516,7 +516,7 @@ final class PatternLinterTest extends TestCase
         $regex->accept($linter);
         $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
-        $this->assertContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
+        $this->assertNotEmpty(array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'A charset overlap is reported.');
     }
 
     public function test_no_semantic_overlap_when_not_inside_quantifier(): void
@@ -527,7 +527,7 @@ final class PatternLinterTest extends TestCase
         $regex->accept($linter);
         $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
-        $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
+        $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
     public function test_no_semantic_overlap_in_alternation(): void
@@ -537,7 +537,7 @@ final class PatternLinterTest extends TestCase
         $regex->accept($linter);
         $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
-        $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
+        $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
     public function test_no_overlap_warning_without_alternation(): void
@@ -547,7 +547,7 @@ final class PatternLinterTest extends TestCase
         $regex->accept($linter);
         $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
-        $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
+        $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
     public function test_semantic_overlap_with_char_types_inside_quantifier(): void
@@ -558,7 +558,7 @@ final class PatternLinterTest extends TestCase
         $regex->accept($linter);
         $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
-        $this->assertContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
+        $this->assertNotEmpty(array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'A charset overlap is reported.');
     }
 
     public function test_no_overlap_for_line_ending_pattern(): void
@@ -569,7 +569,7 @@ final class PatternLinterTest extends TestCase
         $regex->accept($linter);
         $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
-        $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
+        $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
     public function test_no_overlap_for_isbn_prefix_pattern(): void
@@ -580,7 +580,7 @@ final class PatternLinterTest extends TestCase
         $regex->accept($linter);
         $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
-        $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
+        $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
     public function test_overlap_inside_possessive_quantifier_not_flagged(): void
@@ -591,7 +591,7 @@ final class PatternLinterTest extends TestCase
         $regex->accept($linter);
         $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
-        $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
+        $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
     public function test_overlap_inside_atomic_group_not_flagged(): void
@@ -602,7 +602,7 @@ final class PatternLinterTest extends TestCase
         $regex->accept($linter);
         $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
-        $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
+        $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
     // ---------------------------------------------------------------

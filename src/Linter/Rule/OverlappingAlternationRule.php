@@ -23,6 +23,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\DisplayEscaper;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -167,7 +168,11 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 if (!$charSets[$i]->isEmpty() && !$charSets[$j]->isEmpty() && $charSets[$i]->intersects($charSets[$j])) {
                     return new RuleViolation(
                         self::ID_CHARSET,
-                        'Alternation branches have overlapping character sets, which may cause unnecessary backtracking.',
+                        \sprintf(
+                            'Alternation branches "%s" and "%s" have overlapping character sets, which may cause unnecessary backtracking.',
+                            self::spell(self::asWritten($node->alternatives[$i]), $context),
+                            self::spell(self::asWritten($node->alternatives[$j]), $context),
+                        ),
                         $node->startPosition,
                         'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
                         end: $node->getEndPosition(),
@@ -267,6 +272,17 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * hidden character "\x{HEX}" in UTF mode and its bytes "\xHH"
      * otherwise.
      */
+    /**
+     * A branch as the pattern writes it, kept short enough to read: the
+     * reader tells the findings of two alternations apart by it.
+     */
+    private static function asWritten(NodeInterface $node): string
+    {
+        $text = $node->accept(PatternPrinter::asWritten());
+
+        return \mb_strlen($text) > 30 ? \mb_strcut($text, 0, 30, 'UTF-8').'…' : $text;
+    }
+
     private static function spell(string $text, LintContext $context): string
     {
         return DisplayEscaper::escapeFragment(str_replace('\\', '\\\\', $text), $context->pattern->unicodeMode);
