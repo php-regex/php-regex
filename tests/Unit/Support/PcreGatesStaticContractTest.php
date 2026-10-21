@@ -41,6 +41,7 @@ final class PcreGatesStaticContractTest extends TestCase
     public function test_a_gate_naming_a_judged_version_analyses_clean(): void
     {
         $this->requiresPhp('8.3', 'The repository\'s PHPStan run', 'cannot load PHPUnit 12, which its configuration bootstraps');
+        $this->forbidsPhp('8.5', 'The repository\'s PHPStan run', 'runs a PHPStan no release of it declares it reads');
 
         foreach (['judgedRelease', 'judgedFloor', 'judgedCeiling', 'computedRelease'] as $marker) {
             $this->assertSame([], self::errorsOn($marker), $marker);

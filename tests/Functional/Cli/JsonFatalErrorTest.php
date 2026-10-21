@@ -57,7 +57,7 @@ final class JsonFatalErrorTest extends TestCase
 
         $this->assertSame(1, $exitCode, $stdout.$stderr);
         $document = JsonContract::decodeDocument($stdout);
-        $this->assertSame(['error', 'stage'], array_keys($document), $stdout);
+        $this->assertSame(['error', 'stage'], array_keys($document), $stdout.$stderr);
         $this->assertSame('internal', $document['stage']);
         $this->assertIsString($document['error']);
         $this->assertStringContainsString('Maximum execution time', (string) $document['error']);

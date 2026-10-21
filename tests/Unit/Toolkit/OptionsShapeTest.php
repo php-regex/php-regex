@@ -43,6 +43,8 @@ final class OptionsShapeTest extends TestCase
     #[Test]
     public function test_phpstan_refuses_an_option_outside_the_shape(): void
     {
+        $this->forbidsPhp('8.5', 'The repository\'s PHPStan run', 'runs a PHPStan no release of it declares it reads');
+
         $this->requiresPhp('8.3', 'The repository\'s PHPStan run', 'cannot load PHPUnit 12, which its configuration bootstraps');
 
         $lines = array_map(static fn (array $error): int => $error['line'], self::errors());

@@ -86,6 +86,8 @@ final class VisitorGenericDefaultTest extends TestCase
     {
         $this->requiresPhp('8.3', 'The repository\'s PHPStan run', 'cannot load PHPUnit 12, which its configuration bootstraps');
 
+        $this->forbidsPhp('8.5', 'The repository\'s PHPStan run', 'runs a PHPStan no release of it declares it reads');
+
         $errors = self::fixtureErrors();
 
         $onCollector = array_values(array_filter(
