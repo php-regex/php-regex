@@ -17,7 +17,7 @@ use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
-use PHPRegex\Parser\Text\DisplayEscaper;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 
 /**
  * The console report of the framework bridges' regex:lint, in console tags.

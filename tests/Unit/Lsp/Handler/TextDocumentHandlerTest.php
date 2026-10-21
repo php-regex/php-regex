@@ -150,7 +150,7 @@ final class TextDocumentHandlerTest extends TestCase
         $frames = preg_split('/Content-Length: \d+\r\n\r\n/', (string) stream_get_contents($stream), -1, \PREG_SPLIT_NO_EMPTY);
         $this->assertIsArray($frames);
         $this->assertSame([
-            ['jsonrpc' => '2.0', 'id' => 1, 'result' => ['contents' => ['kind' => 'markdown', 'value' => "**Regex Error**\n\nExpected ) at end of input (found eof)"]]],
+            ['jsonrpc' => '2.0', 'id' => 1, 'result' => ['contents' => ['kind' => 'markdown', 'value' => "**Regex Error**\n\nExpected ) at end of input (found eof)."]]],
             ['jsonrpc' => '2.0', 'id' => 2, 'result' => null],
             ['jsonrpc' => '2.0', 'id' => 3, 'result' => ['contents' => ['kind' => 'markdown', 'value' => "**Regex Error**\n\n\\c must be followed by a printable ASCII character."]]],
         ], array_map(static fn (string $frame): mixed => json_decode($frame, true, 512, \JSON_THROW_ON_ERROR), $frames));

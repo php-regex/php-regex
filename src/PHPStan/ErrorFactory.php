@@ -19,7 +19,7 @@ use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Optimizer\RedosRepair;
 use PHPRegex\Parser\Analysis\GroupNumbering;
 use PHPRegex\Parser\Engine\LibraryPcre;
-use PHPRegex\Parser\Text\DisplayEscaper;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
