@@ -72,7 +72,9 @@ parameters:
                 enabled: false
             redos:
                 enabled: false
-                threshold: critical
+                # High, as regex lint, the Symfony and Laravel bridges and
+                # the language server report from.
+                threshold: high
             optimizations:
                 enabled: false
                 minSavings: 1

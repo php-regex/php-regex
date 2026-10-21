@@ -90,7 +90,7 @@ final class RegexPatternRuleExtensionNeonTest extends RuleTestCase
             'pcreVersion' => null,
             'lint' => false,
             'redos' => false,
-            'threshold' => 'critical',
+            'threshold' => 'high',
             'optimizations' => false,
             'minSavings' => 1,
             'complexity' => false,

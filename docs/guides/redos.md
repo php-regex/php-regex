@@ -226,7 +226,7 @@ Only a verdict the engine reproduced, or a proven one it could not replay becaus
 
 ## Severity and thresholds
 
-Severities are ordered `safe` < `low` < `unknown` < `medium` < `high` < `critical` (`RedosSeverity::rank()`). A threshold is `low`, `medium`, `high` or `critical`; a pattern is reported at or above it. The default is `high` for the linter, Symfony and Laravel, and `critical` for PHPStan.
+Severities are ordered `safe` < `low` < `unknown` < `medium` < `high` < `critical` (`RedosSeverity::rank()`). A threshold is `low`, `medium`, `high` or `critical`; a pattern is reported at or above it. The default is `high` everywhere: the linter, Symfony, Laravel, PHPStan and the language server.
 
 A proven quadratic pattern (`/\d+\d+$/`, `/(\w+)(\w+)$/`) is `medium`: below the default thresholds. Lower the threshold to `medium` to see them.
 

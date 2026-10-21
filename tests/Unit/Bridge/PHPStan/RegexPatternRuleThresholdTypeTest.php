@@ -38,10 +38,10 @@ final class RegexPatternRuleThresholdTypeTest extends TestCase
     }
 
     #[Test]
-    public function test_rule_reads_an_unset_threshold_as_critical(): void
+    public function test_rule_reads_an_unset_threshold_as_high(): void
     {
         $checker = new PatternChecker(['checks' => ['redos' => ['enabled' => true]]]);
 
-        $this->assertSame('critical', (new \ReflectionProperty($checker, 'redosThreshold'))->getValue($checker));
+        $this->assertSame('high', (new \ReflectionProperty($checker, 'redosThreshold'))->getValue($checker));
     }
 }

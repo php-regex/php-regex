@@ -80,7 +80,7 @@ in `ignoreErrors`, as with any PHPStan rule. The defaults as shipped:
 | `interop` | `null` | Libraries whose static methods carry a pattern, as `extraction.interop` of `regex lint`: `composer-pcre`, `nette-utils`, `spatie-regex`, `illuminate-support`, `phpunit`, `webmozart-assert`, `beberlei-assert`, `symfony-validator`; `null` for every preset, a list for exactly those, `[]` for the native functions only; an unknown name stops PHPStan as it loads the configuration |
 | `checks.lint.enabled` | `false` | lint rules |
 | `checks.redos.enabled` | `false` | ReDoS analysis |
-| `checks.redos.threshold` | `critical` | lowest severity reported: `low`, `medium`, `high` or `critical` |
+| `checks.redos.threshold` | `high` | lowest severity reported: `low`, `medium`, `high` or `critical` |
 | `checks.optimizations.enabled` | `false` | optimization suggestions |
 | `checks.optimizations.minSavings` | `1` | characters saved before a suggestion is reported |
 | `checks.optimizations.options` | as shipped | which rewrites the optimizer may apply: `digits`, `word`, `ranges`, `canonicalizeCharClasses` and `verifyWithAutomata` on, `possessive` and `factorize` off, `minQuantifierCount` at `4` |

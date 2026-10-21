@@ -327,15 +327,16 @@ final class PatternChecker
     }
 
     /**
-     * "checks.redos.threshold", critical when unset. It is read even while
-     * the section is off: a typo there would bite the day it is switched on.
+     * "checks.redos.threshold", high when unset, as in every other front
+     * end. It is read even while the section is off: a typo there would
+     * bite the day it is switched on.
      *
      * @throws InvalidRegexOptionException when the value names no threshold
      */
     private static function redosThreshold(mixed $threshold): string
     {
         if (null === $threshold) {
-            return RedosSeverity::Critical->value;
+            return RedosSeverity::High->value;
         }
 
         if (!\is_string($threshold)) {

@@ -23,7 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
 /**
  * The search cost in PHPStan: identifier regex.redos.search, its own message,
  * under the existing ReDoS setting and threshold (medium, so the default
- * critical threshold hides it). The three frozen regex.redos messages do not
+ * high threshold hides it). The three frozen regex.redos messages do not
  * move (RegexPatternRuleProvenRedosTest).
  *
  * @extends RuleTestCase<RegexPatternRule>
@@ -109,8 +109,8 @@ final class RegexPatternRuleSearchCostTest extends RuleTestCase
      */
     public static function provideSettingsHidingTheSearchCost(): iterable
     {
-        yield 'default threshold, critical' => ['redos' => ['enabled' => true]];
-        yield 'high threshold' => ['redos' => ['enabled' => true, 'threshold' => 'high']];
+        yield 'default threshold, high' => ['redos' => ['enabled' => true]];
+        yield 'critical threshold' => ['redos' => ['enabled' => true, 'threshold' => 'critical']];
         yield 'ReDoS check off' => ['redos' => ['enabled' => false, 'threshold' => 'medium']];
     }
 

@@ -6,6 +6,8 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `checks.redos.threshold` is `high` when left unset, as everywhere else,
+   where it was `critical`.
  * The extension registers its pattern rules only: `phpRegex.noNewMixed`,
    `NoNewMixedRule` and `MixedTypeCollector`, the library's check on its
    own declared types, are gone from the package.

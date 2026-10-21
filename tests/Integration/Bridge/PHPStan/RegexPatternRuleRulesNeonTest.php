@@ -99,6 +99,25 @@ final class RegexPatternRuleRulesNeonTest extends RuleTestCase
         ], $identifiers);
     }
 
+    /**
+     * The default threshold is high, as in every other front end: a
+     * proven polynomial of degree 3 is reported beside an exponential, a
+     * quadratic one is not.
+     */
+    #[Test]
+    public function test_rules_neon_reports_redos_from_high(): void
+    {
+        $lines = array_map(
+            static fn (Error $error): ?int => $error->getLine(),
+            array_values(array_filter(
+                $this->gatherAnalyserErrors([__DIR__.'/Fixtures/DefaultThresholdFixture.php']),
+                static fn (Error $error): bool => RegexPatternRule::IDENTIFIER_REDOS === $error->getIdentifier(),
+            )),
+        );
+
+        $this->assertSame([20, 21], $lines);
+    }
+
     #[Test]
     public function test_rules_neon_turns_lint_and_redos_on_and_nothing_else(): void
     {
@@ -108,7 +127,7 @@ final class RegexPatternRuleRulesNeonTest extends RuleTestCase
             'phpVersion' => null,
             'lint' => true,
             'redos' => true,
-            'threshold' => 'critical',
+            'threshold' => 'high',
             'optimizations' => false,
             'complexity' => false,
         ], [

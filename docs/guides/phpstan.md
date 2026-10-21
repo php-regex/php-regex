@@ -206,7 +206,8 @@ other workers: a new PHP, PCRE2 or library release reads them again.
 
 ## ReDoS findings
 
-A pattern at or above `checks.redos.threshold` (`critical` by default) is
+A pattern at or above `checks.redos.threshold` (`high` by default, as in
+`regex lint`, the Symfony and Laravel bridges and the language server) is
 reported under `regex.redos`, with one of three messages:
 
 | message | verdict |
@@ -256,7 +257,7 @@ preg_match('/\d*\d*\d*$/', $value);
 preg_match('/^(a+)+\1$/', $value);
 ```
 
-With `threshold: high`:
+With the default threshold, `high`:
 
 ```
  ------ -----------------------------------------------------------------------
@@ -384,7 +385,7 @@ parameters:
             redos:
                 enabled: false
                 # The lowest severity reported: low, medium, high or critical.
-                threshold: critical
+                threshold: high
             optimizations:
                 enabled: false
                 minSavings: 1

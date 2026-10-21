@@ -812,6 +812,22 @@ parameters are trailing and defaulted, and such a result says
 `proof: heuristic`. `isSafe()` keeps its meaning; use `isProvenSafe()` to
 require a proof.
 
+#### The PHPStan ReDoS threshold is `high` by default
+
+With `checks.redos.enabled` (or `rules.neon`) and no `threshold`, the
+extension reported only `critical` ReDoS risks; it now reports from `high`,
+the default of `regex lint`, the Symfony and Laravel bridges and the language
+server. A pattern proven polynomial of degree 3 or more, as
+`/\d*\d*\d*$/`, is reported where it was not. To keep the 1.x set:
+
+```neon
+parameters:
+    phpRegex:
+        checks:
+            redos:
+                threshold: critical
+```
+
 #### The pattern extractors moved, and one is renamed
 
 The two ways of finding regex patterns in PHP source now sit together under
