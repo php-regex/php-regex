@@ -137,6 +137,9 @@ final class JsonFatalErrorTest extends TestCase
         $script = \dirname(__DIR__, 2).'/Fixtures/Cli/json_fatal_run.php';
         $environment = getenv();
         $environment['XDEBUG_MODE'] = 'off';
+        $trace = sys_get_temp_dir().'/phpregex-json-fatal-trace';
+        @unlink($trace);
+        $environment['JSON_FATAL_TRACE'] = $trace;
 
         $process = proc_open(
             [\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'display_errors=1', $script, $mode],
@@ -151,7 +154,12 @@ final class JsonFatalErrorTest extends TestCase
         $stderr = (string) stream_get_contents($pipes[2]);
         fclose($pipes[1]);
         fclose($pipes[2]);
+        $exit = proc_close($process);
+        // The trace of a shutdown whose document never arrived, where the
+        // assertion message carries it.
+        $shutdownTrace = is_file($trace) ? (string) file_get_contents($trace) : 'no trace file';
+        @unlink($trace);
 
-        return [proc_close($process), $stdout, $stderr];
+        return [$exit, $stdout, $stderr.\PHP_EOL.$shutdownTrace];
     }
 }
