@@ -841,7 +841,7 @@ corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/Sanitizer/BrowserHtmlSani
        - #<style\b[^>]*/?>#is
        + #<style\b[^>]*/?>#i
 
-corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2365:20
+corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2366:20
     → /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -3777,7 +3777,7 @@ corpus/akaunting/akaunting/app/Traits/Contacts.php:106:34
 
 
 ### corpus/api-platform/core — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
-corpus/api-platform/core/src/JsonApi/Serializer/ItemNormalizerTrait.php:144:27
+corpus/api-platform/core/src/JsonApi/Serializer/ItemNormalizerTrait.php:166:27
     → /^\w[-\w_]*$/
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
@@ -3806,7 +3806,7 @@ corpus/atoum/atoum/classes/script/arguments/parser.php:276:28
 
 
 
-### corpus/aws/aws-sdk-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+### corpus/aws/aws-sdk-php — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/aws/aws-sdk-php/src/CloudFront/Signer.php:174:36
     → /\s/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -4851,7 +4851,7 @@ corpus/composer/composer/src/Composer/Util/ProcessExecutor.php:131:56
 
 
 ### corpus/composer/packagist — Target: PHP 8.4.11, PCRE2 10.44 (composer.json config.platform.php) — exit 0
-corpus/composer/packagist/src/Controller/PackageController.php:1452:40
+corpus/composer/packagist/src/Controller/PackageController.php:1451:40
     → {\.9999999$}
    TIP 
        - {\.9999999$}
@@ -13172,12 +13172,12 @@ corpus/nextcloud/server/apps/files_sharing/lib/Repair/CleanupShareTarget.php:191
    INFO  Quantified capturing group "(...)" with "{2,}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/nextcloud/server/apps/theming/lib/Controller/ThemingController.php:429:19
+corpus/nextcloud/server/apps/theming/lib/Controller/ThemingController.php:449:19
     → /(@[^{]+{(?:[^{}]*|(?R))*})/
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/nextcloud/server/apps/theming/lib/Controller/ThemingController.php:431:30
+corpus/nextcloud/server/apps/theming/lib/Controller/ThemingController.php:451:30
     → /(@[^{]+{(?:[^{}]*|(?R))*})/
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -13431,6 +13431,8 @@ corpus/octobercms/october/modules/system/models/SiteDefinition.php:231:17
 
 
 
+### corpus/ondrejmirtes/simple-downgrader — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+
 ### corpus/openai-php/client — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 
 ### corpus/ovr/phpsa — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
@@ -13619,7 +13621,7 @@ corpus/phan/phan/src/Phan/CLI.php:2443:40
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/phan/phan/src/Phan/Config.php:1632:35
+corpus/phan/phan/src/Phan/Config.php:1654:35
     → @^(\./)+@
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -13741,7 +13743,7 @@ corpus/phan/phan/src/Phan/Library/Paths.php:53:31
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/phan/phan/src/Phan/Library/PhaseTimer.php:674:46
+corpus/phan/phan/src/Phan/Library/PhaseTimer.php:705:46
     → @^(\./)+@
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -14589,7 +14591,7 @@ corpus/phpunit/environment/src/Console.php:221:32
 
 
 
-### corpus/phpunit/phpunit — Target: PHP 8.4.1, PCRE2 10.44 (composer.json config.platform.php) — exit 0
+### corpus/phpunit/phpunit — Target: PHP 8.5.12, PCRE2 10.44 (composer.json config.platform.php) — exit 0
 corpus/phpunit/phpunit/src/Util/Color.php:206:17
     → /(\x1B\[[^m]*m)+(\x1B\[0m)/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -18558,6 +18560,12 @@ corpus/symfony/symfony/src/Symfony/Component/Translation/Dumper/PoFileDumper.php
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+corpus/symfony/symfony/src/Symfony/Component/Tui/Ansi/AnsiUtils.php:63:48
+    → /[\t\p{M}\p{Cf}\p{Cn}\x{1160}-\x{11FF}\x{2028}-\x{2029}\x{D7B0}-\x{D7FF}\x{1F3FB}-\x{1F3FF}]/u
+   ↳ via self::MISMEASURED_BY_MB_STRWIDTH
+   WARN  Character range is unnecessary; list the characters explicitly.
+       ↳ Use '\x{2028}' and '\x{2029}' explicitly instead of a range.
+
 corpus/symfony/symfony/src/Symfony/Component/Tui/Style/TailwindStylesheet.php:296:24
     → /^border-(t|r|b|l)$/
    TIP 
@@ -18570,17 +18578,17 @@ corpus/symfony/symfony/src/Symfony/Component/Tui/Style/TailwindStylesheet.php:29
        - /^border-(t|r|b|l)-(\d+)$/
        + /^border-([trbl])-(\d+)$/
 
-corpus/symfony/symfony/src/Symfony/Component/VarExporter/ProxyHelper.php:394:40
+corpus/symfony/symfony/src/Symfony/Component/VarExporter/ProxyHelper.php:396:40
     → /(?|(,)\n( )       |\n        |,\n    (\]))/
    TIP 
        - /(?|(,)\n( )       |\n        |,\n    (\]))/
        + /(?|(,)\n( ) {7}|\n {8}|,\n {4}(]))/
 
-corpus/symfony/symfony/src/Symfony/Component/VarExporter/ProxyHelper.php:406:59
+corpus/symfony/symfony/src/Symfony/Component/VarExporter/ProxyHelper.php:408:59
     → /^'(?:[^'\\]*+(?:\\.)*+)*+'$/
    WARN  Quantifier "*" repeats an item that can match the empty string: an empty iteration matches nothing more.
 
-corpus/symfony/symfony/src/Symfony/Component/VarExporter/ProxyHelper.php:426:19
+corpus/symfony/symfony/src/Symfony/Component/VarExporter/ProxyHelper.php:428:19
     → /("(?:[^"\\]*+(?:\\.)*+)*+"|'(?:[^'\\]*+(?:\\.)*+)*+')/
    ↳ via $regexp
    WARN  Quantifier "*" repeats an item that can match the empty string: an empty iteration matches nothing more.
