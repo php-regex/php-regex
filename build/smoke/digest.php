@@ -71,8 +71,11 @@ function digest(NodeInterface $node): array
 	return $result;
 }
 
-$parser = RegexParser::create();
-
+// the reference runs the ORIGINAL parser but judges for the same target the
+// twin serves: how each PHP reads the escapes its engine refuses (a \x{...}
+// without /u becomes the letter x then text on 7.4) is target behaviour,
+// not a divergence
+$parser = RegexParser::create(['php_version' => '7.4']);
 
 foreach (corpus() as $body) {
 	$pattern = '/' . $body . '/';

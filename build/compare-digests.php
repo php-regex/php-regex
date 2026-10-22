@@ -10,10 +10,9 @@ declare(strict_types=1);
  */
 
 $allowlist = [
-	// tokenize as literals on PCRE2 10.35: version-aware lexer behavior,
-	// not the downgrade transform — see build/README.md
-	'\x{1F600}',
-	'\g{-1}',
+	// empty: the two known divergences turned out to be the parser emulating
+	// each PHP's reading of escapes its engine refuses — the reference now
+	// judges for the same target, so any divergence is a real one
 ];
 
 [$reference, $twin] = [$argv[1], $argv[2]];
