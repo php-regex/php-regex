@@ -52,6 +52,7 @@ final class PcreGatesStaticContractTest extends TestCase
     public function test_a_gate_naming_a_version_outside_the_lists_is_an_analysis_error(): void
     {
         $this->requiresPhp('8.3', 'The repository\'s PHPStan run', 'cannot load PHPUnit 12, which its configuration bootstraps');
+        $this->forbidsPhp('8.5', 'The repository\'s PHPStan run', 'runs a PHPStan no release of it declares it reads');
 
         foreach (['releaseAboveTheCeiling' => '10.50', 'misspelledMinor' => '10.4', 'unjudgedFloor' => '8.7', 'unjudgedCeiling' => '5.0'] as $marker => $version) {
             $errors = self::errorsOn($marker);

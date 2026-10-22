@@ -108,6 +108,7 @@ final class VisitorGenericDefaultTest extends TestCase
     #[Test]
     public function test_empty_body_override_is_told_to_return_null(): void
     {
+        $this->forbidsPhp('8.5', 'The repository\'s PHPStan run', 'runs a PHPStan no release of it declares it reads');
         $this->requiresPhp('8.3', 'The repository\'s PHPStan run', 'cannot load PHPUnit 12, which its configuration bootstraps');
 
         $errors = self::fixtureErrors();
