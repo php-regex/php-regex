@@ -147,10 +147,9 @@ final class JsonFatalErrorTest extends TestCase
         $environment['XDEBUG_MODE'] = 'off';
         $trace = sys_get_temp_dir().'/phpregex-json-fatal-trace';
         @unlink($trace);
-        $environment['JSON_FATAL_TRACE'] = $trace;
 
         $process = proc_open(
-            [\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'display_errors=1', $script, $mode],
+            [\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'display_errors=1', $script, $mode, $trace],
             [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
             null,

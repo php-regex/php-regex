@@ -30,12 +30,14 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Json\JsonDocument;
 
-register_shutdown_function(static function (): void {
+$tracePath = $argv[2] ?? '';
+
+register_shutdown_function(static function () use ($tracePath): void {
     // A trace beside the streams, which none of their layers can lose:
     // what the shutdown saw and did, read by the test when the document
     // does not arrive.
-    $trace = getenv('JSON_FATAL_TRACE');
-    if (false !== $trace && '' !== $trace) {
+    $trace = $tracePath;
+    if ('' !== $trace) {
         $error = error_get_last();
         @file_put_contents($trace, \sprintf(
             "php=%s pid=%s stdout_defined=%s error_type=%s error_message=%s\n",
