@@ -34,4 +34,30 @@ fi
 # escaped so perl does not interpolate an array out of the pattern
 find build/php74 -name '*.php' -exec perl -i -ne 'print unless /^\s*\* \@readonly\s*$/' {} +
 
+# the twin is a package: the same composer manifest the mirror repository
+# would publish, so consumers install it exactly as CI tested it
+cat > build/php74/composer.json <<'MANIFEST'
+{
+	"name": "php-regex/regex-parser-php74",
+	"description": "The PHPRegex parser built to run on hosts PHP 7.4-8.0. On PHP 8.1+, install php-regex/regex-parser instead.",
+	"license": "MIT",
+	"version": "2.x-dev",
+	"type": "library",
+	"require": {
+		"php": "^7.4 || ^8.0",
+		"symfony/polyfill-php80": "^1.31",
+		"symfony/polyfill-php81": "^1.31",
+		"symfony/polyfill-mbstring": "^1.31"
+	},
+	"autoload": {
+		"psr-4": {
+			"PHPRegex\\Parser\\": "Parser/"
+		}
+	},
+	"config": {
+		"allow-plugins": false
+	}
+}
+MANIFEST
+
 echo "twin generated: $(find build/php74 -name '*.php' | wc -l | tr -d ' ') files"
