@@ -18,7 +18,6 @@
 /.deptrac.cache
 
 # Build & Distribution
-/build/
 /bin/regex.phar
 /bin/regex.phar.sha256
 /coverage/
@@ -61,4 +60,4 @@ __pycache__/
 /demo/*/vendor/
 /demo/*/var/
 /demo/*/node_modules/
-/legacy/out/
+/build/php74/
