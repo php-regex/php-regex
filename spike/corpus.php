@@ -1,0 +1,134 @@
+<?php declare(strict_types = 1);
+
+/**
+ * Pattern bodies (no delimiters) shared by the Hoa and PHPRegex dump
+ * harnesses. Delimiter when re-wrapping: '/'.
+ *
+ * @return list<string>
+ */
+function corpus(): array
+{
+	return [
+		// literals and concatenation
+		'a',
+		'ab',
+		'a\\.b',
+		// alternation, including empty branches
+		'a|b',
+		'a|',
+		'|a',
+		'a||b',
+		// capturing groups
+		'(a)',
+		'(a)(b)',
+		'((a))',
+		'(?<name>a)',
+		"(?'name'a)",
+		'(?:a)',
+		'(?i:a)',
+		'(?i)',
+		'(?|a|(b))',
+		'(?>a+)',
+		'()',
+		// quantifiers, all four families and their lazy/possessive forms
+		'a?',
+		'a??',
+		'a?+',
+		'a*',
+		'a*?',
+		'a*+',
+		'a+',
+		'a+?',
+		'a++',
+		'a{2}',
+		'a{2,}',
+		'a{2,4}',
+		'a{2,4}?',
+		'a{2,4}+',
+		'(ab)+',
+		'[ab]+',
+		// character classes
+		'[abc]',
+		'[^abc]',
+		'[a-z]',
+		'[-a]',
+		'[a-]',
+		'[]]',
+		'[^]]',
+		'[a\\-z]',
+		'[[:digit:]]',
+		'[[:^alpha:]]',
+		'[\\d-\\w]',
+		'[a-c\\dx]',
+		// escapes and types
+		'\\d',
+		'\\D',
+		'\\w',
+		'\\s',
+		'\\h',
+		'\\v',
+		'\\R',
+		'\\N',
+		'\\p{L}',
+		'\\P{L}',
+		'\\p{Greek}',
+		'\\x41',
+		'\\x{1F600}',
+		'\\101',
+		'\\n',
+		'\\t',
+		'\\cA',
+		// anchors and specials
+		'^a$',
+		'\\b',
+		'\\B',
+		'\\A',
+		'\\z',
+		'\\Z',
+		'\\G',
+		'\\K',
+		// assertions
+		'(?=a)',
+		'(?!a)',
+		'(?<=a)',
+		'(?<!a)',
+		'a(?=b)c',
+		// conditions
+		'(?(1)a|b)',
+		'(?(1)a)',
+		'(?(<n>)a|b)',
+		"(?('n')a|b)",
+		'(?(?=a)a|b)',
+		'(?(R)a|b)',
+		'(?(DEFINE)a)',
+		'(?(VERSION>=10.4)a|b)',
+		// comments and marks
+		'(?#comment)',
+		'(*:markname)',
+		// backreferences and friends — where the 2017 grammar is blind
+		'(a)\\1',
+		'\\g{1}',
+		'\\g1',
+		'\\g{-1}',
+		'\\k<n>',
+		"\\k'n'",
+		'(?P=n)',
+		// literal-mode and verbs — unsupported by the Hoa grammar
+		'\\Qa.b\\E',
+		'(*PRUNE)',
+		'(*SKIP)',
+		'(*FAIL)',
+		'(*ACCEPT)',
+		'(?C1)',
+		'\\g<name>',
+		"\\g'name'",
+		'(?+1)',
+		// modern syntax
+		'(?<name>a)\\k<name>',
+		'[\\p{L}]',
+		'(?n)',
+		'(?J)',
+		'(*SCRIPT_RUN:a)',
+		'[[:word:]]',
+	];
+}

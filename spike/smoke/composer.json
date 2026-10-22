@@ -1,0 +1,16 @@
+{
+	"require": {
+		"php": ">=7.4",
+		"symfony/polyfill-php80": "^1.31",
+		"symfony/polyfill-php81": "^1.31",
+		"symfony/polyfill-mbstring": "^1.31"
+	},
+	"autoload": {
+		"psr-4": {
+			"PHPRegex\\Parser\\": "../out/Parser"
+		}
+	},
+	"config": {
+		"allow-plugins": false
+	}
+}
