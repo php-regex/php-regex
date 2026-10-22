@@ -33,23 +33,26 @@ use PHPRegex\Parser\Json\JsonDocument;
 $tracePath = $argv[2] ?? '';
 
 register_shutdown_function(static function () use ($tracePath): void {
+    // The report first: it frees the memory reserve, without which any
+    // allocation here dies with the process, envelope and trace together.
+    $code = Application::reportFatalError();
+
     // A trace beside the streams, which none of their layers can lose:
     // what the shutdown saw and did, read by the test when the document
     // does not arrive.
-    $trace = $tracePath;
-    if ('' !== $trace) {
+    if (null !== $code && '' !== $tracePath) {
         $error = error_get_last();
-        @file_put_contents($trace, \sprintf(
-            "php=%s pid=%s stdout_defined=%s error_type=%s error_message=%s\n",
+        @file_put_contents($tracePath, \sprintf(
+            "php=%s pid=%s code=%s error_type=%s error_message=%s\n",
             \PHP_VERSION,
             (string) getmypid(),
-            \defined('STDOUT') ? 'yes' : 'no',
+            (string) $code,
             null === $error ? 'none' : (string) $error['type'],
             null === $error ? '' : $error['message'],
         ));
+        exit($code);
     }
 
-    $code = Application::reportFatalError();
     if (null !== $code) {
         exit($code);
     }
