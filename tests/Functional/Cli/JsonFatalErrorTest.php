@@ -56,6 +56,10 @@ final class JsonFatalErrorTest extends TestCase
         ]);
 
         $this->assertSame(1, $exitCode, $stdout.$stderr);
+        // The streams first, with the trace of the shutdown folded into
+        // the standard error: the reason a document is missing shows
+        // here, before the contract of the document is judged.
+        $this->assertStringEndsWith(\PHP_EOL, $stdout, $stdout.$stderr);
         $document = JsonContract::decodeDocument($stdout);
         $this->assertSame(['error', 'stage'], array_keys($document), $stdout.$stderr);
         $this->assertSame('internal', $document['stage']);
