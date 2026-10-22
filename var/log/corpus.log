@@ -13790,6 +13790,20 @@ corpus/php-debugbar/php-debugbar/src/DataFormatter/QueryFormatter.php:17:29
 
 
 
+### corpus/php-debugger/php-debugger — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+corpus/php-debugger/php-debugger/run-xdebug-tests.php:439:44
+    → /^#.*\[(.*)\]\:\s+(.*)$/
+   TIP 
+       - /^#.*\[(.*)\]\:\s+(.*)$/
+       + /^#.*\[(.*)\]:\s+(.*)$/
+
+corpus/php-debugger/php-debugger/run-xdebug-tests.php:3706:33
+    → /valgrind-(\d+)\.(\d+)\.(\d+)([.\w_-]+)?(\s+)/
+   WARN  Character class contains duplicate elements that do not add new matches.
+       ↳ Remove the redundant character class element.
+
+
+
 ### corpus/php-parallel-lint/PHP-Parallel-Lint — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
