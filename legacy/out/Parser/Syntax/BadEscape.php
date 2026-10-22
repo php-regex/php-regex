@@ -106,7 +106,7 @@ final class BadEscape
             return false;
         }
 
-        $pcre2Ten32 = !$target->supports(PcreFeature::BadEscapeInClassStaysRefused);
+        $pcre2Ten32 = !$target->supports(PcreFeature::BadEscapeInClassStaysRefused());
         $after = $at + 2;
         if (strpos(self::UNKNOWN_LETTERS, $letter) !== false) {
             return true;

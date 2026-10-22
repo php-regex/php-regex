@@ -87,28 +87,44 @@ final class PcreVerb
     /**
      * PCRE2 10.33+ alphabetic assertion verbs and their group equivalents.
      */
-    private const ASSERTIONS = [
-        'positive_lookahead' => GroupType::LookaheadPositive,
-        'pla' => GroupType::LookaheadPositive,
-        'negative_lookahead' => GroupType::LookaheadNegative,
-        'nla' => GroupType::LookaheadNegative,
-        'positive_lookbehind' => GroupType::LookbehindPositive,
-        'plb' => GroupType::LookbehindPositive,
-        'negative_lookbehind' => GroupType::LookbehindNegative,
-        'nlb' => GroupType::LookbehindNegative,
-        'atomic' => GroupType::Atomic,
+    private static function ASSERTIONS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [
+        'positive_lookahead' => GroupType::LookaheadPositive(),
+        'pla' => GroupType::LookaheadPositive(),
+        'negative_lookahead' => GroupType::LookaheadNegative(),
+        'nla' => GroupType::LookaheadNegative(),
+        'positive_lookbehind' => GroupType::LookbehindPositive(),
+        'plb' => GroupType::LookbehindPositive(),
+        'negative_lookbehind' => GroupType::LookbehindNegative(),
+        'nlb' => GroupType::LookbehindNegative(),
+        'atomic' => GroupType::Atomic(),
     ];
+        }
+
+        return $cache;
+    }
 
     /**
      * The non-atomic assertions: a lookaround PCRE may backtrack into. Only
      * the positive ones exist.
      */
-    private const NON_ATOMIC_ASSERTIONS = [
-        'non_atomic_positive_lookahead' => GroupType::LookaheadPositive,
-        'napla' => GroupType::LookaheadPositive,
-        'non_atomic_positive_lookbehind' => GroupType::LookbehindPositive,
-        'naplb' => GroupType::LookbehindPositive,
+    private static function NON_ATOMIC_ASSERTIONS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [
+        'non_atomic_positive_lookahead' => GroupType::LookaheadPositive(),
+        'napla' => GroupType::LookaheadPositive(),
+        'non_atomic_positive_lookbehind' => GroupType::LookbehindPositive(),
+        'naplb' => GroupType::LookbehindPositive(),
     ];
+        }
+
+        return $cache;
+    }
 
     /**
      * The spellings of a script run, and whether its body is atomic.
@@ -166,7 +182,7 @@ final class PcreVerb
         // "(?*...)" is the short spelling of "(*napla:...)"; the lexer hands
         // it over as the text after "(?".
         if (strncmp($verb, '*', strlen('*')) === 0) {
-            return new self($verb, GroupType::LookaheadPositive, (string) substr($verb, 1), null, 1, true);
+            return new self($verb, GroupType::LookaheadPositive(), (string) substr($verb, 1), null, 1, true);
         }
 
         // "(*:name)" and "(*=name)" are shorthands for a mark.
@@ -178,12 +194,12 @@ final class PcreVerb
         if (false !== $colon) {
             // PCRE only knows the lowercase spelling of these.
             $name = (string) substr($verb, 0, $colon);
-            $assertion = self::ASSERTIONS[$name] ?? null;
+            $assertion = self::ASSERTIONS()[$name] ?? null;
             if (null !== $assertion) {
                 return new self($verb, $assertion, (string) substr($verb, $colon + 1), null, $colon + 1);
             }
 
-            $nonAtomic = self::NON_ATOMIC_ASSERTIONS[$name] ?? null;
+            $nonAtomic = self::NON_ATOMIC_ASSERTIONS()[$name] ?? null;
             if (null !== $nonAtomic) {
                 return new self($verb, $nonAtomic, (string) substr($verb, $colon + 1), null, $colon + 1, true);
             }
@@ -221,14 +237,14 @@ final class PcreVerb
      *                            digits a name holds
      * @param bool       $unicode whether the pattern is read in UTF mode
      *
-     * @return array{0: int, 1: string, 2: string}|null the offset, the
+     * @return array{0: int, 1: ErrorCode, 2: string}|null the offset, the
      *                                                     code and the message
      */
     public static function groupListFault(string $pattern, int $open, PcreTarget $target, bool $unicode = false): ?array
     {
         $unicodeTables = $unicode ? $target : null;
         if ('(' !== ($pattern[$open] ?? '')) {
-            return [$open, ErrorCode::ScanSubstringMissingList, \sprintf('Missing "(" to open the list of groups at position %d.', $open)];
+            return [$open, ErrorCode::ScanSubstringMissingList(), \sprintf('Missing "(" to open the list of groups at position %d.', $open)];
         }
 
         $at = $open + 1;
@@ -240,7 +256,7 @@ final class PcreVerb
                 if ($digit > 0) {
                     $offset = $target->faultOffset($nameStart + $digit, $digit);
 
-                    return [$offset, ErrorCode::GroupNameInvalid, \sprintf('A group name must not start with a digit, at position %d.', $offset)];
+                    return [$offset, ErrorCode::GroupNameInvalid(), \sprintf('A group name must not start with a digit, at position %d.', $offset)];
                 }
 
                 if (null !== $unicodeTables) {
@@ -253,22 +269,22 @@ final class PcreVerb
                 // Lists arrived in PCRE2 10.45, which takes names of 128
                 // code units; it measures one before it looks for its quote.
                 if ($nameEnd - $nameStart > GroupNameReader::MAX_NAME_LENGTH) {
-                    return [$nameEnd, ErrorCode::GroupNameTooLong, \sprintf('Group name is too long at position %d: PCRE allows at most %d code units.', $nameEnd, GroupNameReader::MAX_NAME_LENGTH)];
+                    return [$nameEnd, ErrorCode::GroupNameTooLong(), \sprintf('Group name is too long at position %d: PCRE allows at most %d code units.', $nameEnd, GroupNameReader::MAX_NAME_LENGTH)];
                 }
 
                 if ($nameEnd === $nameStart) {
-                    return [$nameStart, ErrorCode::GroupNameExpected, \sprintf('Group name expected at position %d.', $nameStart)];
+                    return [$nameStart, ErrorCode::GroupNameExpected(), \sprintf('Group name expected at position %d.', $nameStart)];
                 }
 
                 if (('<' === $quote ? '>' : "'") !== ($pattern[$nameEnd] ?? '')) {
-                    return [$nameEnd, ErrorCode::GroupNameUnterminated, \sprintf('Missing "%s" to close the group name at position %d.', '<' === $quote ? '>' : "'", $nameEnd)];
+                    return [$nameEnd, ErrorCode::GroupNameUnterminated(), \sprintf('Missing "%s" to close the group name at position %d.', '<' === $quote ? '>' : "'", $nameEnd)];
                 }
 
                 $at = $nameEnd + 1;
             } elseif (1 === LibraryPcre::match('/\G[+-]?\d++/', $pattern, $number, 0, $at)) {
                 $at += \strlen($number[0]);
             } else {
-                return [$at, ErrorCode::GroupListItemExpected, \sprintf('Expected a capture group number or name at position %d.', $at)];
+                return [$at, ErrorCode::GroupListItemExpected(), \sprintf('Expected a capture group number or name at position %d.', $at)];
             }
 
             $next = $pattern[$at] ?? '';
@@ -277,7 +293,7 @@ final class PcreVerb
             }
 
             if (',' !== $next) {
-                return [$at, ErrorCode::GroupUnclosed, \sprintf('Missing ")" to close the list of groups at position %d.', $at)];
+                return [$at, ErrorCode::GroupUnclosed(), \sprintf('Missing ")" to close the list of groups at position %d.', $at)];
             }
 
             $at++;
@@ -290,17 +306,17 @@ final class PcreVerb
      * item that is no number or name: a missing ")" at the end of the
      * pattern, a reference to no group elsewhere.
      *
-     * @param array{0: int, 1: string, 2: string} $fault
+     * @param array{0: int, 1: ErrorCode, 2: string} $fault
      *
-     * @return array{0: int, 1: string, 2: string}
+     * @return array{0: int, 1: ErrorCode, 2: string}
      */
     public static function groupListFaultBefore1047(array $fault, int $patternLength): array
     {
-        if (ErrorCode::ScanSubstringMissingList !== $fault[1] && ErrorCode::GroupListItemExpected !== $fault[1]) {
+        if (ErrorCode::ScanSubstringMissingList() !== $fault[1] && ErrorCode::GroupListItemExpected() !== $fault[1]) {
             return $fault;
         }
 
-        return [$fault[0], $fault[0] >= $patternLength ? ErrorCode::GroupUnclosed : string::GroupListMissingGroup, $fault[2]];
+        return [$fault[0], $fault[0] >= $patternLength ? ErrorCode::GroupUnclosed() : ErrorCode::GroupListMissingGroup(), $fault[2]];
     }
 
     /**
@@ -329,8 +345,8 @@ final class PcreVerb
      */
     public static function takesArgument(string $name): bool
     {
-        return isset(self::ASSERTIONS[$name])
-            || isset(self::NON_ATOMIC_ASSERTIONS[$name])
+        return isset(self::ASSERTIONS()[$name])
+            || isset(self::NON_ATOMIC_ASSERTIONS()[$name])
             || isset(self::SCRIPT_RUN_PREFIXES[$name.':'])
             || \in_array($name, ['', 'MARK', 'PRUNE', 'SKIP', 'THEN', 'COMMIT', 'ACCEPT', 'FAIL', 'F'], true);
     }
@@ -342,7 +358,7 @@ final class PcreVerb
      */
     public static function isLookaround(string $name): bool
     {
-        return GroupType::Atomic !== (self::ASSERTIONS[$name] ?? GroupType::Atomic);
+        return GroupType::Atomic() !== (self::ASSERTIONS()[$name] ?? GroupType::Atomic());
     }
 
     /**
@@ -351,7 +367,7 @@ final class PcreVerb
      */
     public static function isAlphabeticAssertion(string $name): bool
     {
-        return isset(self::ASSERTIONS[$name]);
+        return isset(self::ASSERTIONS()[$name]);
     }
 
     /**
@@ -360,7 +376,7 @@ final class PcreVerb
      */
     public static function isNonAtomicAssertion(string $name): bool
     {
-        return isset(self::NON_ATOMIC_ASSERTIONS[$name]);
+        return isset(self::NON_ATOMIC_ASSERTIONS()[$name]);
     }
 
     /**
@@ -378,14 +394,14 @@ final class PcreVerb
      */
     public static function classicOpener(string $name): string
     {
-        switch (self::ASSERTIONS[$name] ?? null) {
-            case GroupType::LookaheadPositive:
+        switch (self::ASSERTIONS()[$name] ?? null) {
+            case GroupType::LookaheadPositive():
                 return '(?=';
-            case GroupType::LookaheadNegative:
+            case GroupType::LookaheadNegative():
                 return '(?!';
-            case GroupType::LookbehindPositive:
+            case GroupType::LookbehindPositive():
                 return '(?<=';
-            case GroupType::LookbehindNegative:
+            case GroupType::LookbehindNegative():
                 return '(?<!';
             default:
                 return '(?>';
@@ -427,14 +443,14 @@ final class PcreVerb
         $limit = $start > \strlen($settings[0] ?? '') ? null : self::limitValueErrorOffset(
             $pattern,
             $start,
-            $target->supports(PcreFeature::LimitValueErrorOnFaultingCharacter),
+            $target->supports(PcreFeature::LimitValueErrorOnFaultingCharacter()),
         );
         if (null !== $limit) {
             return $limit;
         }
 
         // Before PCRE2 10.33 the name is a run of letters.
-        LibraryPcre::match($target->supports(PcreFeature::NamesReadWhole) ? '/\G[A-Za-z0-9_]*+/' : '/\G[A-Za-z]*+/', $pattern, $matches, 0, $start + 2);
+        LibraryPcre::match($target->supports(PcreFeature::NamesReadWhole()) ? '/\G[A-Za-z0-9_]*+/' : '/\G[A-Za-z]*+/', $pattern, $matches, 0, $start + 2);
         $name = $matches[0] ?? '';
         $nameEnd = $start + 2 + \strlen($name);
 
@@ -446,7 +462,7 @@ final class PcreVerb
         // 10.47 an alphabetic name, one that starts with a lowercase letter,
         // followed by no colon is refused past the character after it,
         // whole in UTF mode.
-        $pastTheFault = $target->supports(PcreFeature::ErrorOffsetPastTheFault);
+        $pastTheFault = $target->supports(PcreFeature::ErrorOffsetPastTheFault());
         if ('' === $name && $nameEnd >= \strlen($pattern)) {
             return $target->faultOffset($nameEnd);
         }
@@ -469,11 +485,11 @@ final class PcreVerb
     public static function unclosedNameError(string $pattern, int $start, PcreTarget $target): ?ParserException
     {
         $nameStart = $start + 2;
-        if (!$target->supports(PcreFeature::NamesReadWhole)) {
+        if (!$target->supports(PcreFeature::NamesReadWhole())) {
             if (Ascii::isDigit($pattern[$nameStart] ?? '')) {
                 return SyntaxErrorException::withContext(
                     \sprintf('Invalid verb name at position %d: PCRE2 before 10.33 reads it as a group name, which must not start with a digit.', $nameStart),
-                    ErrorCode::GroupNameInvalid,
+                    ErrorCode::GroupNameInvalid(),
                     $nameStart,
                     $pattern,
                 );
@@ -482,7 +498,7 @@ final class PcreVerb
             if (strspn($pattern, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', $nameStart) > GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044) {
                 $offset = $nameStart + GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044 + 1;
 
-                return SyntaxErrorException::withContext(\sprintf('Verb name too long at position %d: PCRE2 before 10.33 takes at most 32 letters.', $offset), ErrorCode::GroupNameTooLong, $offset, $pattern);
+                return SyntaxErrorException::withContext(\sprintf('Verb name too long at position %d: PCRE2 before 10.33 takes at most 32 letters.', $offset), ErrorCode::GroupNameTooLong(), $offset, $pattern);
             }
 
             return null;
@@ -493,7 +509,7 @@ final class PcreVerb
         if ($length > $longest) {
             return SyntaxErrorException::withContext(
                 \sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $nameStart + $length, $longest),
-                ErrorCode::GroupNameTooLong,
+                ErrorCode::GroupNameTooLong(),
                 $nameStart + $length,
                 $pattern,
             );
@@ -511,7 +527,7 @@ final class PcreVerb
     {
         return SyntaxErrorException::withContext(
             \sprintf('Unknown verb at position %d: "(**" opens no verb, PCRE wants a name after "(*".', $position),
-            ErrorCode::VerbInvalid,
+            ErrorCode::VerbInvalid(),
             $position,
             $pattern,
         );

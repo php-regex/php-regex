@@ -523,19 +523,19 @@ final class Lexer
     public function __construct(?PcreTarget $target = null)
     {
         $target = $target ?? PcreTarget::runtime();
-        $this->readsAlphabeticAssertions = $target->supports(PcreFeature::AlphabeticAssertionNames);
-        $this->namesReadWhole = $target->supports(PcreFeature::NamesReadWhole);
-        $this->readsScriptRuns = $target->supports(PcreFeature::ScriptRuns);
-        $this->readsNonAtomicAssertions = $target->supports(PcreFeature::NonAtomicAssertionNames);
-        $this->readsNonAtomicShortSyntax = $target->supports(PcreFeature::NonAtomicAssertionShortSyntax);
-        $this->overflowingNumberIsOctal = $target->supports(PcreFeature::OverflowingBackslashNumberIsOctal);
+        $this->readsAlphabeticAssertions = $target->supports(PcreFeature::AlphabeticAssertionNames());
+        $this->namesReadWhole = $target->supports(PcreFeature::NamesReadWhole());
+        $this->readsScriptRuns = $target->supports(PcreFeature::ScriptRuns());
+        $this->readsNonAtomicAssertions = $target->supports(PcreFeature::NonAtomicAssertionNames());
+        $this->readsNonAtomicShortSyntax = $target->supports(PcreFeature::NonAtomicAssertionShortSyntax());
+        $this->overflowingNumberIsOctal = $target->supports(PcreFeature::OverflowingBackslashNumberIsOctal());
         $this->phpVersionId = $target->phpVersionId;
         $this->target = $target;
-        $this->pcre2Ten32 = !$target->supports(PcreFeature::BadEscapeInClassStaysRefused);
-        $this->wideRepeatCounts = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts);
-        $this->readsScanSubstring = $target->supports(PcreFeature::ScanSubstring);
-        $this->readsExtendedClass = $target->supports(PcreFeature::ExtendedCharClass);
-        $this->emptyQuoteOpeningClassIsUnclosed = $target->supports(PcreFeature::EmptyQuoteOpeningClassIsUnclosed);
+        $this->pcre2Ten32 = !$target->supports(PcreFeature::BadEscapeInClassStaysRefused());
+        $this->wideRepeatCounts = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts());
+        $this->readsScanSubstring = $target->supports(PcreFeature::ScanSubstring());
+        $this->readsExtendedClass = $target->supports(PcreFeature::ExtendedCharClass());
+        $this->emptyQuoteOpeningClassIsUnclosed = $target->supports(PcreFeature::EmptyQuoteOpeningClassIsUnclosed());
     }
 
     /**
@@ -646,7 +646,7 @@ final class Lexer
         $this->utf = strpos($flags, 'u') !== false
             || StartOptions::turnUtfOn($pattern);
         if ($this->byteMode && $this->utf) {
-            throw LexerException::withContext('Input string is not valid UTF-8.', ErrorCode::EncodingInvalidUtf8, self::firstInvalidUtf8Offset($pattern), $pattern);
+            throw LexerException::withContext('Input string is not valid UTF-8.', ErrorCode::EncodingInvalidUtf8(), self::firstInvalidUtf8Offset($pattern), $pattern);
         }
 
         $this->pattern = $pattern;
@@ -694,7 +694,7 @@ final class Lexer
             $this->tokensRead = $tokens;
         }
 
-        $tokens[] = new Token(TokenType::Eof, '', $this->position);
+        $tokens[] = new Token(TokenType::Eof(), '', $this->position);
 
         return new TokenStream($tokens, $pattern);
     }
@@ -718,13 +718,13 @@ final class Lexer
 
             $this->position++;
 
-            return new Token(TokenType::Literal, $byte, $at, 1);
+            return new Token(TokenType::Literal(), $byte, $at, 1);
         }
 
         if ($this->byteMode) {
             $this->position++;
 
-            return new Token(TokenType::Literal, $byte, $at, 1);
+            return new Token(TokenType::Literal(), $byte, $at, 1);
         }
 
         // A valid UTF-8 pattern, read a character at a time: every token
@@ -733,7 +733,7 @@ final class Lexer
         $length = Utf8::width($this->pattern, $at);
         $this->position += $length;
 
-        return new Token(TokenType::Literal, (string) substr($this->pattern, $at, $length), $at, $length);
+        return new Token(TokenType::Literal(), (string) substr($this->pattern, $at, $length), $at, $length);
     }
 
     /**
@@ -883,7 +883,7 @@ final class Lexer
         // character after the backslash, then what follows as pattern text.
         if ($this->badEscapeIsLiteral && '\\' === $this->pattern[$this->position]
             && BadEscape::at($this->pattern, $this->position, $this->inCharClass, $this->utf, $this->target, null, $this->startsRangeEnd($tokens))) {
-            $tokens[] = new Token(TokenType::LiteralEscaped, $this->pattern[$this->position + 1], $this->position, 2);
+            $tokens[] = new Token(TokenType::LiteralEscaped(), $this->pattern[$this->position + 1], $this->position, 2);
             $this->literalEscapes[$this->position] = true;
             $this->position += 2;
 
@@ -970,7 +970,7 @@ final class Lexer
 
             throw LexerException::withContext(
                 \sprintf('Invalid group modifier syntax at position %d: PCRE2 10.35 added "(?*" for "(*napla:"%s.', $this->position + 2, $this->readsNonAtomicAssertions ? '; write "(*napla:" instead' : ''),
-                ErrorCode::GroupSyntax,
+                ErrorCode::GroupSyntax(),
                 $this->position + 2,
                 $this->pattern,
             );
@@ -1010,10 +1010,10 @@ final class Lexer
                 // After a callout it wants an assertion, on the "(", what it
                 // reads as nothing between them aside.
                 $last = $before[\count($before) - 1] ?? null;
-                if (null !== $last && TokenType::Callout === $last->type) {
+                if (null !== $last && TokenType::Callout() === $last->type) {
                     throw LexerException::withContext(
                         \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after the callout.', $start),
-                        ErrorCode::ConditionalAssertionExpected,
+                        ErrorCode::ConditionalAssertionExpected(),
                         $start,
                         $this->pattern,
                     );
@@ -1030,7 +1030,7 @@ final class Lexer
 
             throw LexerException::withContext(
                 $why,
-                ErrorCode::VerbInvalid,
+                ErrorCode::VerbInvalid(),
                 $start + 2 + ($this->readsAlphabeticAssertions ? \strlen($name) : strspn($name, 'abcdefghijklmnopqrstuvwxyz')),
                 $this->pattern,
             );
@@ -1045,7 +1045,7 @@ final class Lexer
             // which are all a verb name is judged on.
             $this->refuseVerbName((string) substr($this->pattern, $start + 2, strspn($this->pattern, PcreVerb::WORD_NAME, $start + 2) + 1), $start, $tokens);
             $this->position = $end;
-            $tokens[] = new Token(TokenType::PcreVerb, (string) substr($this->pattern, $start + 2, $end - $start - 3), $start, $end - $start);
+            $tokens[] = new Token(TokenType::PcreVerb(), (string) substr($this->pattern, $start + 2, $end - $start - 3), $start, $end - $start);
 
             return true;
         }
@@ -1069,7 +1069,7 @@ final class Lexer
         // its ")".
         $this->extendedModeStack[] = [$this->extendedMode, $this->extendedMoreMode];
         $this->position += \strlen($opened);
-        $tokens[] = new Token(TokenType::PcreVerb, (string) substr($opened, 2), $start, \strlen($opened));
+        $tokens[] = new Token(TokenType::PcreVerb(), (string) substr($opened, 2), $start, \strlen($opened));
 
         return true;
     }
@@ -1092,7 +1092,7 @@ final class Lexer
         $listOpen = $this->position + 3 + \strlen($name);
         $fault = PcreVerb::groupListFault($this->pattern, $listOpen, $this->target, $this->utf);
         if (null !== $fault) {
-            if (!$this->target->supports(PcreFeature::GroupListErrors)) {
+            if (!$this->target->supports(PcreFeature::GroupListErrors())) {
                 $fault = PcreVerb::groupListFaultBefore1047($fault, $this->length);
             }
 
@@ -1389,7 +1389,7 @@ final class Lexer
         $start = $this->position;
         $this->position = $this->extendedClassEnd($start);
 
-        return new Token(TokenType::ExtendedClass, (string) substr($this->pattern, $start, $this->position - $start), $start);
+        return new Token(TokenType::ExtendedClass(), (string) substr($this->pattern, $start, $this->position - $start), $start);
     }
 
     /**
@@ -1446,7 +1446,7 @@ final class Lexer
      */
     private function consumeExtendedComment(array &$tokens): void
     {
-        $tokens[] = new Token(TokenType::Literal, '#', $this->position);
+        $tokens[] = new Token(TokenType::Literal(), '#', $this->position);
         $this->position++;
 
         $newline = $this->nextNewline($this->position);
@@ -1454,7 +1454,7 @@ final class Lexer
 
         if ($bodyEnd > $this->position) {
             $body = (string) substr($this->pattern, $this->position, $bodyEnd - $this->position);
-            $tokens[] = new Token(TokenType::Literal, $body, $this->position);
+            $tokens[] = new Token(TokenType::Literal(), $body, $this->position);
             $this->position = $bodyEnd;
         }
 
@@ -1462,14 +1462,14 @@ final class Lexer
             return;
         }
 
-        $tokens[] = new Token(TokenType::Literal, "\n", $this->position, $newline[1]);
+        $tokens[] = new Token(TokenType::Literal(), "\n", $this->position, $newline[1]);
         $this->position += $newline[1];
 
         // Outside UTF mode the byte 0x85 ends the line under "(*ANY)" even
         // inside a UTF-8 character: the bytes left of that character are
         // read one by one, as PCRE reads them.
         while ($this->position < $this->length && Utf8::continues($this->pattern[$this->position])) {
-            $tokens[] = new Token(TokenType::Literal, $this->pattern[$this->position], $this->position);
+            $tokens[] = new Token(TokenType::Literal(), $this->pattern[$this->position], $this->position);
             $this->position++;
         }
     }
@@ -1608,7 +1608,7 @@ final class Lexer
 
             throw LexerException::withContext(
                 \sprintf('Unable to tokenize pattern at position %d. Context: "\\..."', $this->length),
-                ErrorCode::EscapeTrailingBackslash,
+                ErrorCode::EscapeTrailingBackslash(),
                 $this->length,
                 $this->pattern,
             );
@@ -1650,7 +1650,7 @@ final class Lexer
                 return $token;
             }
 
-            if (TokenType::LiteralEscaped === $type) {
+            if (TokenType::LiteralEscaped() === $type) {
                 // "\c" only falls through to an escaped literal when no
                 // printable ASCII character follows it; PCRE rejects that.
                 if ('\\c' === $matchedValue) {
@@ -1658,7 +1658,7 @@ final class Lexer
 
                     throw LexerException::withContext(
                         '\\c must be followed by a printable ASCII character.',
-                        ErrorCode::ControlCharInvalid,
+                        ErrorCode::ControlCharInvalid(),
                         $this->target->faultOffset($this->afterCharacter($startPos + 2), $this->afterCharacter($startPos + 2) - $startPos - 2),
                         $this->pattern,
                     );
@@ -1671,7 +1671,7 @@ final class Lexer
 
                     throw LexerException::withContext(
                         'Invalid hex escape "\\x{}": at least one hexadecimal digit is required.',
-                        ErrorCode::EscapeDigitsMissing,
+                        ErrorCode::EscapeDigitsMissing(),
                         $startPos + 3,
                         $this->pattern,
                     );
@@ -1703,13 +1703,13 @@ final class Lexer
             $this->trackExtendedModeScope($type);
         }
 
-        if (TokenType::PcreVerb === $type && !$this->inCharClass) {
+        if (TokenType::PcreVerb() === $type && !$this->inCharClass) {
             $this->refuseVerbName((string) substr($matchedValue, self::OFFSET_VERB_START, self::OFFSET_VERB_END), $startPos, $currentTokens);
         }
 
         // Before PCRE2 10.37 a backslash and its digits are one number, refused
         // at the digit that takes it past 214748363.
-        if (!$this->overflowingNumberIsOctal && !$this->inCharClass && TokenType::Backref === $type
+        if (!$this->overflowingNumberIsOctal && !$this->inCharClass && TokenType::Backref() === $type
             && 1 === LibraryPcre::match('/^\\\\([1-9]\d{8,})$/', $matchedValue, $digits)) {
             $value = 0;
             for ($index = 0, $count = \strlen($digits[1]); $index < $count; $index++) {
@@ -1719,7 +1719,7 @@ final class Lexer
 
                     throw LexerException::withContext(
                         \sprintf('Number too big at position %d: PCRE2 before 10.37 reads the digits after a backslash as one number, at most 214748363.', $overflow),
-                        ErrorCode::GroupNumberTooBig,
+                        ErrorCode::GroupNumberTooBig(),
                         $overflow,
                         $this->pattern,
                     );
@@ -1731,7 +1731,7 @@ final class Lexer
         // read in place. A name PCRE does not know is refused where it ends.
         // Where a name is due, as after "(?<", PCRE wants it on the "(" and
         // reads no name: the parser refuses it there.
-        if (TokenType::GroupOpen === $type && null !== ($name = PcreVerb::nameBeforeColonAt($this->pattern, $startPos, PcreVerb::LOWERCASE_NAME)) && !$this->followsNameOpener($startPos)) {
+        if (TokenType::GroupOpen() === $type && null !== ($name = PcreVerb::nameBeforeColonAt($this->pattern, $startPos, PcreVerb::LOWERCASE_NAME)) && !$this->followsNameOpener($startPos)) {
             // "(?(*atomic:" is no condition: PCRE takes a lookaround there,
             // and refuses any other name it knows at the colon.
             $known = PcreVerb::takesArgument($name) || ($this->readsScanSubstring && \in_array($name, ['scs', 'scan_substring'], true));
@@ -1740,7 +1740,7 @@ final class Lexer
 
                 throw LexerException::withContext(
                     \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $colon),
-                    ErrorCode::ConditionalAssertionExpected,
+                    ErrorCode::ConditionalAssertionExpected(),
                     $colon,
                     $this->pattern,
                 );
@@ -1752,7 +1752,7 @@ final class Lexer
             if (!$known && $startPos >= 3 && '(?((' === (string) substr($this->pattern, $startPos - 3, 4)) {
                 throw LexerException::withContext(
                     \sprintf('Invalid conditional construct at position %d. Condition must be a group reference, lookaround, or (DEFINE).', $startPos),
-                    ErrorCode::ConditionalInvalid,
+                    ErrorCode::ConditionalInvalid(),
                     $startPos,
                     $this->pattern,
                 );
@@ -1766,7 +1766,7 @@ final class Lexer
             // A name PCRE knows opens a body read in place.
             throw LexerException::withContext(
                 \sprintf('Unknown alphabetic assertion "(*%s:".', $name),
-                ErrorCode::VerbInvalid,
+                ErrorCode::VerbInvalid(),
                 $startPos + 2 + \strlen($name),
                 $this->pattern,
             );
@@ -1775,22 +1775,22 @@ final class Lexer
         // Before PCRE2 10.43, "{,2}" and "{ 2 }" are text: only the "{" is
         // read here, and what follows it is read again as text. A "\N" right
         // before keeps its count, which the validator refuses there.
-        if (TokenType::Quantifier === $type && !$this->wideRepeatCounts && '{' === $matchedValue[0]
+        if (TokenType::Quantifier() === $type && !$this->wideRepeatCounts && '{' === $matchedValue[0]
             && !self::isPlainCount($matchedValue)
             && !$this->followsNamedCharacterEscape($currentTokens, $startPos)) {
             $this->position = $startPos + 1;
 
-            return new Token(TokenType::Literal, '{', $startPos);
+            return new Token(TokenType::Literal(), '{', $startPos);
         }
 
         switch ($type) {
-            case TokenType::CharClassOpen:
+            case TokenType::CharClassOpen():
                 return $this->handleCharClassOpen($startPos);
-            case TokenType::CharClassClose:
+            case TokenType::CharClassClose():
                 return $this->closeCharClass($startPos, $currentTokens);
-            case TokenType::CommentOpen:
+            case TokenType::CommentOpen():
                 return $this->openComment($startPos);
-            case TokenType::QuoteModeStart:
+            case TokenType::QuoteModeStart():
                 return $this->openQuoteMode($startPos);
             default:
                 return $this->handleContextualLiteral($type, $matchedValue, $startPos, $currentTokens);
@@ -1814,7 +1814,7 @@ final class Lexer
         $previous = end($currentTokens);
 
         return false !== $previous
-            && TokenType::CharType === $previous->type
+            && TokenType::CharType() === $previous->type
             && 'N' === $previous->value
             && $previous->end() === $position;
     }
@@ -1827,20 +1827,20 @@ final class Lexer
      */
     private function trackExtendedModeScope($type): void
     {
-        if (TokenType::GroupClose === $type) {
+        if (TokenType::GroupClose() === $type) {
             [$this->extendedMode, $this->extendedMoreMode] = array_pop($this->extendedModeStack)
                 ?? [$this->extendedMode, $this->extendedMoreMode];
 
             return;
         }
 
-        if (TokenType::GroupOpen === $type) {
+        if (TokenType::GroupOpen() === $type) {
             $this->extendedModeStack[] = [$this->extendedMode, $this->extendedMoreMode];
 
             return;
         }
 
-        if (TokenType::GroupModifierOpen !== $type) {
+        if (TokenType::GroupModifierOpen() !== $type) {
             return;
         }
 
@@ -1900,12 +1900,12 @@ final class Lexer
             if (null !== $terminator && ':' === $this->pattern[$startPos + 1]) {
                 $this->position = $terminator + 2;
 
-                return new Token(TokenType::PosixClass, (string) substr($this->pattern, $startPos + 2, $terminator - $startPos - 2), $startPos, $this->position - $startPos);
+                return new Token(TokenType::PosixClass(), (string) substr($this->pattern, $startPos + 2, $terminator - $startPos - 2), $startPos, $this->position - $startPos);
             }
 
             $this->classTextEnd = null === $terminator ? null : $terminator + 2;
 
-            return new Token(TokenType::Literal, '[', $startPos);
+            return new Token(TokenType::Literal(), '[', $startPos);
         }
 
         $this->classTextEnd = null === $terminator ? null : $terminator + 1;
@@ -1925,7 +1925,7 @@ final class Lexer
             $this->classTextEnd = null;
         }
 
-        return new Token(TokenType::Literal, (string) substr($this->pattern, $start, $this->position - $start), $start);
+        return new Token(TokenType::Literal(), (string) substr($this->pattern, $start, $this->position - $start), $start);
     }
 
     private function openCharClass(int $startPos): Token
@@ -1933,7 +1933,7 @@ final class Lexer
         $this->inCharClass = true;
         $this->charClassStartPositions[] = $startPos;
 
-        return new Token(TokenType::CharClassOpen, '[', $startPos);
+        return new Token(TokenType::CharClassOpen(), '[', $startPos);
     }
 
     /**
@@ -1942,7 +1942,7 @@ final class Lexer
     private function closeCharClass(int $startPos, array $currentTokens): Token
     {
         if ($this->isAtCharClassStart($currentTokens)) {
-            return new Token(TokenType::Literal, ']', $startPos);
+            return new Token(TokenType::Literal(), ']', $startPos);
         }
 
         array_pop($this->charClassStartPositions);
@@ -1950,21 +1950,21 @@ final class Lexer
             $this->inCharClass = false;
         }
 
-        return new Token(TokenType::CharClassClose, ']', $startPos);
+        return new Token(TokenType::CharClassClose(), ']', $startPos);
     }
 
     private function openComment(int $startPos): Token
     {
         $this->inCommentMode = true;
 
-        return new Token(TokenType::CommentOpen, '(?#', $startPos);
+        return new Token(TokenType::CommentOpen(), '(?#', $startPos);
     }
 
     private function openQuoteMode(int $startPos): Token
     {
         $this->inQuoteMode = true;
 
-        return new Token(TokenType::QuoteModeStart, '\Q', $startPos);
+        return new Token(TokenType::QuoteModeStart(), '\Q', $startPos);
     }
 
     /**
@@ -1977,7 +1977,7 @@ final class Lexer
         int $startPos,
         array $currentTokens
     ): ?Token {
-        if (!$this->inCharClass || TokenType::Literal !== $type) {
+        if (!$this->inCharClass || TokenType::Literal() !== $type) {
             return null;
         }
 
@@ -1985,11 +1985,11 @@ final class Lexer
 
         // Only the first "^" negates: in "[^^]" the second one is a member.
         if (false === $prefix && '^' === $matchedValue) {
-            return new Token(TokenType::Negation, '^', $startPos);
+            return new Token(TokenType::Negation(), '^', $startPos);
         }
 
         if (null === $prefix && '-' === $matchedValue) {
-            return new Token(TokenType::Range, '-', $startPos);
+            return new Token(TokenType::Range(), '-', $startPos);
         }
 
         return null;
@@ -2029,11 +2029,11 @@ final class Lexer
         for ($index = \count($currentTokens) - 1; $index >= 0; $index--) {
             $token = $currentTokens[$index];
 
-            if (TokenType::CharClassOpen === $token->type && $classStart === $token->position) {
+            if (TokenType::CharClassOpen() === $token->type && $classStart === $token->position) {
                 return $negated;
             }
 
-            if (TokenType::Negation === $token->type) {
+            if (TokenType::Negation() === $token->type) {
                 $negated = true;
 
                 continue;
@@ -2042,7 +2042,7 @@ final class Lexer
             // Quote mode is closed by the time a member is read here, so a
             // "\Q" in the prefix is the start of an empty "\Q\E": anything it
             // quoted would be a literal token, which ends the prefix.
-            if (TokenType::QuoteModeEnd !== $token->type && TokenType::QuoteModeStart !== $token->type) {
+            if (TokenType::QuoteModeEnd() !== $token->type && TokenType::QuoteModeStart() !== $token->type) {
                 return null;
             }
         }
@@ -2082,12 +2082,12 @@ final class Lexer
             $length = $this->inCharClass ? $this->characterLength($startPos) : $textEnd - $startPos;
             $this->position += $length;
 
-            return new Token(TokenType::Literal, (string) substr($this->pattern, $startPos, $length), $startPos);
+            return new Token(TokenType::Literal(), (string) substr($this->pattern, $startPos, $length), $startPos);
         }
 
         if (self::PATTERN_QUOTE_END === $endSequence) {
             $this->inQuoteMode = false;
-            $token = new Token(TokenType::QuoteModeEnd, self::PATTERN_QUOTE_END, $this->position);
+            $token = new Token(TokenType::QuoteModeEnd(), self::PATTERN_QUOTE_END, $this->position);
             $this->position += \strlen(self::PATTERN_QUOTE_END);
 
             return $token;
@@ -2114,12 +2114,12 @@ final class Lexer
         if ('' !== $commentText) {
             $this->position += \strlen($commentText);
 
-            return new Token(TokenType::Literal, $commentText, $startPos);
+            return new Token(TokenType::Literal(), $commentText, $startPos);
         }
 
         if (self::PATTERN_COMMENT_CLOSE === $endSequence) {
             $this->inCommentMode = false;
-            $token = new Token(TokenType::GroupClose, self::PATTERN_COMMENT_CLOSE, $this->position);
+            $token = new Token(TokenType::GroupClose(), self::PATTERN_COMMENT_CLOSE, $this->position);
             $this->position += \strlen(self::PATTERN_COMMENT_CLOSE);
 
             return $token;
@@ -2170,29 +2170,29 @@ final class Lexer
     private function extractTokenValue($type, string $matchedValue, array $matches): string
     {
         switch ($type) {
-            case TokenType::LiteralEscaped:
+            case TokenType::LiteralEscaped():
                 return $this->extractEscapedLiteralValue($matchedValue);
-            case TokenType::PcreVerb:
+            case TokenType::PcreVerb():
                 return (string) substr($matchedValue, self::OFFSET_VERB_START, self::OFFSET_VERB_END);
-            case TokenType::Callout:
+            case TokenType::Callout():
                 return (string) substr($matchedValue, self::OFFSET_CALLOUT_START, self::OFFSET_CALLOUT_END);
-            case TokenType::Assertion:
-            case TokenType::CharType:
-            case TokenType::Keep:
+            case TokenType::Assertion():
+            case TokenType::CharType():
+            case TokenType::Keep():
                 return (string) substr($matchedValue, self::OFFSET_BACKSLASH);
-            case TokenType::Backref:
+            case TokenType::Backref():
                 return $matchedValue;
-            case TokenType::OctalLegacy:
+            case TokenType::OctalLegacy():
                 return (string) substr($matchedValue, self::OFFSET_BACKSLASH);
-            case TokenType::PosixClass:
+            case TokenType::PosixClass():
                 return \is_string($matches['v_posix'] ?? null) ? $matches['v_posix'] : '';
-            case TokenType::Unicode:
+            case TokenType::Unicode():
                 return $this->parseUnicodeEscape($matchedValue);
-            case TokenType::UnicodeProp:
+            case TokenType::UnicodeProp():
                 return $this->normalizeUnicodeProp($matchedValue);
-            case TokenType::UnicodeNamed:
+            case TokenType::UnicodeNamed():
                 return (string) substr($matchedValue, self::OFFSET_UNICODE_NAMED_START, self::OFFSET_UNICODE_NAMED_END);
-            case TokenType::ControlChar:
+            case TokenType::ControlChar():
                 return (string) substr($matchedValue, self::OFFSET_CONTROL_CHAR);
             default:
                 return $matchedValue;
@@ -2284,7 +2284,7 @@ final class Lexer
         $condition = $this->opensCondition($tokens, $at);
         if (!$this->readsAlphabeticAssertions && $condition) {
             $previous = $tokens[\count($tokens) - 1] ?? null;
-            if (null !== $previous && TokenType::GroupModifierOpen === $previous->type && $at === $start) {
+            if (null !== $previous && TokenType::GroupModifierOpen() === $previous->type && $at === $start) {
                 throw self::conditionWantsAName($start + 1, $this->pattern);
             }
 
@@ -2320,7 +2320,7 @@ final class Lexer
         if (Ascii::isDigit($name[0])) {
             throw LexerException::withContext(
                 \sprintf('Invalid verb name at position %d: PCRE2 before 10.33 reads it as a group name, which must not start with a digit.', $start + 2),
-                ErrorCode::GroupNameInvalid,
+                ErrorCode::GroupNameInvalid(),
                 $start + 2,
                 $this->pattern,
             );
@@ -2333,7 +2333,7 @@ final class Lexer
         if (':' !== $next && '' !== $next) {
             throw LexerException::withContext(
                 \sprintf('Invalid or unsupported PCRE verb at position %d: PCRE2 before 10.33 reads a verb name as letters only.', $start + 2 + $letters),
-                ErrorCode::VerbInvalid,
+                ErrorCode::VerbInvalid(),
                 $start + 2 + $letters,
                 $this->pattern,
             );
@@ -2401,7 +2401,7 @@ final class Lexer
 
         throw LexerException::withContext(
             \sprintf('Invalid or unsupported PCRE verb at position %d: "(*%s)" is a setting, which takes no argument.', $start + 2 + $length, substr($name, 0, $length)),
-            ErrorCode::VerbInvalid,
+            ErrorCode::VerbInvalid(),
             $start + 2 + $length,
             $this->pattern,
         );
@@ -2417,13 +2417,13 @@ final class Lexer
      */
     private function refuseAlphabeticNameEndingThePattern(string $name, int $length, int $start): void
     {
-        if (!$this->target->supports(PcreFeature::ErrorOffsetPastTheFault) || $length !== \strlen($name) || 1 !== LibraryPcre::match('/^[a-z]/', $name) || $start + $length + 3 !== $this->length) {
+        if (!$this->target->supports(PcreFeature::ErrorOffsetPastTheFault()) || $length !== \strlen($name) || 1 !== LibraryPcre::match('/^[a-z]/', $name) || $start + $length + 3 !== $this->length) {
             return;
         }
 
         throw LexerException::withContext(
             \sprintf('Unknown alphabetic assertion "(*%s)" at position %d: an alphabetic name is followed by ":".', $name, $this->length),
-            ErrorCode::VerbInvalid,
+            ErrorCode::VerbInvalid(),
             $this->length,
             $this->pattern,
         );
@@ -2442,7 +2442,7 @@ final class Lexer
         if ($length > $longest) {
             throw LexerException::withContext(
                 \sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $start + 2 + $length, $longest),
-                ErrorCode::GroupNameTooLong,
+                ErrorCode::GroupNameTooLong(),
                 $start + 2 + $length,
                 $this->pattern,
             );
@@ -2461,7 +2461,7 @@ final class Lexer
 
             throw LexerException::withContext(
                 \sprintf('Verb name too long at position %d: PCRE2 before 10.33 takes at most 32 letters.', $offset),
-                ErrorCode::GroupNameTooLong,
+                ErrorCode::GroupNameTooLong(),
                 $offset,
                 $this->pattern,
             );
@@ -2476,7 +2476,7 @@ final class Lexer
     private function leadingSettingsEnd(): int
     {
         $settings = StartOptions::of($this->pattern);
-        if (!$this->target->supports(PcreFeature::CasingSettingVerbs)) {
+        if (!$this->target->supports(PcreFeature::CasingSettingVerbs())) {
             foreach (['(*CASELESS_RESTRICT)', '(*TURKISH_CASING)'] as $unknown) {
                 $at = strpos($settings, $unknown);
                 $settings = false === $at ? $settings : (string) substr($settings, 0, $at);
@@ -2504,7 +2504,7 @@ final class Lexer
     {
         return LexerException::withContext(
             \sprintf('Invalid conditional construct at position %d. Condition must be a group reference, lookaround, or (DEFINE).', $offset),
-            ErrorCode::ConditionalInvalid,
+            ErrorCode::ConditionalInvalid(),
             $offset,
             $pattern,
         );
@@ -2523,12 +2523,12 @@ final class Lexer
     {
         $last = array_key_last($tokens);
         $previous = null === $last ? null : $tokens[$last];
-        if (null !== $previous && TokenType::Callout === $previous->type && $previous->end() === $position) {
+        if (null !== $previous && TokenType::Callout() === $previous->type && $previous->end() === $position) {
             $position = $previous->position;
             $previous = $tokens[$last - 1] ?? null;
         }
 
-        return null !== $previous && TokenType::GroupModifierOpen === $previous->type && $previous->end() === $position;
+        return null !== $previous && TokenType::GroupModifierOpen() === $previous->type && $previous->end() === $position;
     }
 
     /**
@@ -2548,19 +2548,19 @@ final class Lexer
 
         $classStart = $this->charClassStartPositions[\count($this->charClassStartPositions) - 1];
         $first = \count($tokens);
-        while ($first > 0 && !(TokenType::CharClassOpen === $tokens[$first - 1]->type && $tokens[$first - 1]->position === $classStart)) {
+        while ($first > 0 && !(TokenType::CharClassOpen() === $tokens[$first - 1]->type && $tokens[$first - 1]->position === $classStart)) {
             $first--;
         }
 
         $state = 'none';
         foreach (\array_slice($tokens, $first) as $token) {
             switch ($token->type) {
-                case TokenType::QuoteModeStart:
-                case TokenType::QuoteModeEnd:
-                case TokenType::Negation:
+                case TokenType::QuoteModeStart():
+                case TokenType::QuoteModeEnd():
+                case TokenType::Negation():
                     $state = $state;
                     break;
-                case TokenType::Range:
+                case TokenType::Range():
                     switch ($state) {
                         case 'character':
                             $state = 'range';
@@ -2573,15 +2573,15 @@ final class Lexer
                             break;
                     }
                     break;
-                case TokenType::Literal:
-                case TokenType::LiteralEscaped:
+                case TokenType::Literal():
+                case TokenType::LiteralEscaped():
                     $state = 'range' === $state && 1 === $this->multibyteLength($token) ? 'none' : 'character';
                     break;
-                case TokenType::Unicode:
-                case TokenType::Octal:
-                case TokenType::OctalLegacy:
-                case TokenType::UnicodeNamed:
-                case TokenType::ControlChar:
+                case TokenType::Unicode():
+                case TokenType::Octal():
+                case TokenType::OctalLegacy():
+                case TokenType::UnicodeNamed():
+                case TokenType::ControlChar():
                     $state = 'range' === $state ? 'none' : 'character';
                     break;
                 default:
@@ -2608,13 +2608,13 @@ final class Lexer
         $quoted = false;
         foreach ($tokens as $token) {
             if (!$open) {
-                $open = TokenType::CharClassOpen === $token->type && $token->position === $classStart;
-            } elseif (TokenType::QuoteModeStart === $token->type || TokenType::QuoteModeEnd === $token->type) {
-                $quoted = TokenType::QuoteModeStart === $token->type;
-            } elseif (!$quoted && TokenType::Literal === $token->type && '[' === $token->value && null !== PosixItem::terminator($this->pattern, $token->position)) {
+                $open = TokenType::CharClassOpen() === $token->type && $token->position === $classStart;
+            } elseif (TokenType::QuoteModeStart() === $token->type || TokenType::QuoteModeEnd() === $token->type) {
+                $quoted = TokenType::QuoteModeStart() === $token->type;
+            } elseif (!$quoted && TokenType::Literal() === $token->type && '[' === $token->value && null !== PosixItem::terminator($this->pattern, $token->position)) {
                 // The "[" of a POSIX item, "[.a.]", names no character:
                 // PCRE refuses the item, or a range it ends.
-                $members[] = new Token(TokenType::PosixClass, '', $token->position, 1);
+                $members[] = new Token(TokenType::PosixClass(), '', $token->position, 1);
             } else {
                 $members[] = $token;
             }
@@ -2622,7 +2622,7 @@ final class Lexer
 
         $count = \count($members);
         for ($i = 0; $i + 2 < $count; $i++) {
-            if (TokenType::Range !== $members[$i + 1]->type) {
+            if (TokenType::Range() !== $members[$i + 1]->type) {
                 continue;
             }
 
@@ -2654,16 +2654,16 @@ final class Lexer
         // "\x" with no digit is NUL where PCRE takes it (up to 10.44). A
         // "\x{" PCRE2 refuses, which PHP 7.3 and 7.4 read as the letter x
         // then text, stays the x.
-        if (TokenType::LiteralEscaped === $token->type && 2 === $token->end() - $token->position && '\\x' === (string) substr($this->pattern, $token->position, 2)
+        if (TokenType::LiteralEscaped() === $token->type && 2 === $token->end() - $token->position && '\\x' === (string) substr($this->pattern, $token->position, 2)
             && '{' !== ($this->pattern[$token->end()] ?? '')) {
             return 0;
         }
 
         $value = $token->value;
         switch ($token->type) {
-            case TokenType::Literal:
-            case TokenType::LiteralEscaped:
-            case TokenType::Range:
+            case TokenType::Literal():
+            case TokenType::LiteralEscaped():
+            case TokenType::Range():
                 switch (true) {
                     case 1 === \strlen($value):
                         $codePoint = \ord($value);
@@ -2679,19 +2679,19 @@ final class Lexer
                         break;
                 }
                 break;
-            case TokenType::Unicode:
+            case TokenType::Unicode():
                 $codePoint = CodePointReader::fromHexEscape($value);
                 break;
-            case TokenType::Octal:
+            case TokenType::Octal():
                 $codePoint = CodePointReader::fromOctalEscape($value);
                 break;
-            case TokenType::OctalLegacy:
+            case TokenType::OctalLegacy():
                 $codePoint = CodePointReader::fromOctalEscape('\\'.$value);
                 break;
-            case TokenType::UnicodeNamed:
+            case TokenType::UnicodeNamed():
                 $codePoint = CodePointReader::fromNamedEscape('\\N{'.$value.'}');
                 break;
-            case TokenType::ControlChar:
+            case TokenType::ControlChar():
                 $codePoint = 1 === \strlen($value) && \ord($value) < 0x80 ? \ord(Ascii::upper($value)) ^ 0x40 : null;
                 break;
             default:
@@ -2708,7 +2708,7 @@ final class Lexer
      */
     private function multibyteLength(Token $token): int
     {
-        return !$this->utf && \in_array($token->type, [TokenType::Literal, TokenType::LiteralEscaped], true) ? max(1, \strlen($token->value)) : 1;
+        return !$this->utf && \in_array($token->type, [TokenType::Literal(), TokenType::LiteralEscaped()], true) ? max(1, \strlen($token->value)) : 1;
     }
 
     /**
@@ -2723,7 +2723,7 @@ final class Lexer
     {
         foreach ($tokens as $token) {
             if ($token->end() === $position) {
-                return TokenType::GroupModifierOpen === $token->type;
+                return TokenType::GroupModifierOpen() === $token->type;
             }
         }
 
@@ -2743,7 +2743,7 @@ final class Lexer
             if (!$this->readsExtendedClass && $this->opensExtendedClass($tokens, $classStart)) {
                 throw LexerException::withContext(
                     \sprintf('Invalid group modifier syntax at position %d.', $classStart),
-                    ErrorCode::GroupSyntax,
+                    ErrorCode::GroupSyntax(),
                     $classStart,
                     $this->pattern,
                 );
@@ -2760,7 +2760,7 @@ final class Lexer
                 && 1 === LibraryPcre::match('/\G'.$skipped.'*+(?:\^'.$skipped.'*+)?(?<=\\\\E)\z/', $this->pattern, $quotes, 0, $classStart + 1)) {
                 throw LexerException::withContext(
                     \sprintf('A backslash ends the pattern at position %d.', $this->length),
-                    ErrorCode::EscapeTrailingBackslash,
+                    ErrorCode::EscapeTrailingBackslash(),
                     $this->length,
                     $this->pattern,
                 );
@@ -2772,7 +2772,7 @@ final class Lexer
             if (null !== $reversed) {
                 throw LexerException::withContext(
                     'Range out of order in character class.',
-                    ErrorCode::RangeReversed,
+                    ErrorCode::RangeReversed(),
                     $this->target->faultOffset($reversed),
                     $this->pattern,
                 );
@@ -2780,7 +2780,7 @@ final class Lexer
 
             throw LexerException::withContext(
                 'Unclosed character class "]" at end of input.',
-                ErrorCode::CharclassUnclosed,
+                ErrorCode::CharclassUnclosed(),
                 $this->opensExtendedClass($tokens, $classStart) ? $classStart : $this->position,
                 $this->pattern,
             );
@@ -2789,7 +2789,7 @@ final class Lexer
         if ($this->inCommentMode) {
             throw LexerException::withContext(
                 'Unclosed comment ")" at end of input.',
-                ErrorCode::CommentUnclosed,
+                ErrorCode::CommentUnclosed(),
                 $this->position,
                 $this->pattern,
             );
@@ -2800,7 +2800,7 @@ final class Lexer
         if (null !== $this->unclosedBody) {
             throw LexerException::withContext(
                 \sprintf('Missing closing parenthesis for "%s".', $this->unclosedBody),
-                ErrorCode::GroupUnclosed,
+                ErrorCode::GroupUnclosed(),
                 $this->length,
                 $this->pattern,
             );

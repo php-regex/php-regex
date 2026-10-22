@@ -92,7 +92,7 @@ final class VersionCondition
      */
     public static function errorOffsetFor(string $pattern, int $position, PcreTarget $target, bool $utf = false): ?int
     {
-        return self::errorOffsetReading($pattern, $position, !$target->supports(PcreFeature::VersionConditionWholeNumbers), $target->supports(PcreFeature::ErrorOffsetPastTheFault), $utf);
+        return self::errorOffsetReading($pattern, $position, !$target->supports(PcreFeature::VersionConditionWholeNumbers()), $target->supports(PcreFeature::ErrorOffsetPastTheFault()), $utf);
     }
 
     /**

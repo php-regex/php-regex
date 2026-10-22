@@ -161,7 +161,7 @@ final class ConditionParser
             // "(?(?C1" that no ")" closes, the "(?" read alone: the callout
             // is refused as anywhere else.
             if ($this->stream->checkLiteral('C')) {
-                [$fault, $code] = Callout::fault($this->pattern, $conditionStartPos, $this->target) ?? [\strlen($this->pattern), ErrorCode::CalloutUnclosed];
+                [$fault, $code] = Callout::fault($this->pattern, $conditionStartPos, $this->target) ?? [\strlen($this->pattern), ErrorCode::CalloutUnclosed()];
 
                 throw $this->state->error(\sprintf('Invalid callout at position %d: %s.', $fault, Callout::problem($code)), $code, $fault);
             }
@@ -171,11 +171,11 @@ final class ConditionParser
             $condition = $this->readCondition($groupsBefore);
 
             // "(?(VERSION=10.4": PCRE reads the ")" as part of the version.
-            if ($condition instanceof VersionConditionNode && !$this->stream->check(TokenType::GroupClose)) {
+            if ($condition instanceof VersionConditionNode && !$this->stream->check(TokenType::GroupClose())) {
                 throw $this->versionConditionError($this->versionConditionErrorOffset($condition->startPosition) ?? $this->stream->current()->position, $condition->startPosition);
             }
 
-            $this->stream->consume(TokenType::GroupClose, 'Expected ) after condition', ErrorCode::ConditionalUnclosed);
+            $this->stream->consume(TokenType::GroupClose(), 'Expected ) after condition', ErrorCode::ConditionalUnclosed());
         }
 
         return $this->readBranches($startPosition, $condition);
@@ -195,14 +195,14 @@ final class ConditionParser
         if (!$callout->isStringIdentifier && \is_int($callout->identifier) && $callout->identifier > 255) {
             $position = Callout::fault($this->pattern, $callout->startPosition, $this->target)[0] ?? $callout->startPosition;
 
-            throw $this->state->error(\sprintf('Invalid callout at position %d: %s.', $position, Callout::problem(ErrorCode::CalloutOutOfRange)), ErrorCode::CalloutOutOfRange, $position);
+            throw $this->state->error(\sprintf('Invalid callout at position %d: %s.', $position, Callout::problem(ErrorCode::CalloutOutOfRange())), ErrorCode::CalloutOutOfRange(), $position);
         }
 
         // PCRE skips a comment, an empty "\Q\E" and "x" whitespace there.
         do {
             $this->state->skipEmptyQuotes();
             $skipped = ($this->skipTrivia)();
-            if ($this->stream->match(TokenType::CommentOpen)) {
+            if ($this->stream->match(TokenType::CommentOpen())) {
                 $this->state->comment();
                 $skipped++;
             }
@@ -212,19 +212,19 @@ final class ConditionParser
 
         // "(?(?C1)(*pla:a)b)": the assertion spelled as a verb, refused as
         // anything else there is when it is no lookaround.
-        if ($this->stream->check(TokenType::PcreVerb)) {
+        if ($this->stream->check(TokenType::PcreVerb())) {
             $verbToken = $this->stream->current();
             $this->guardVerbCondition($verbToken, $this->calloutConditionErrorOffset());
             $this->stream->advance();
             $assertion = ($this->verb)($verbToken, $verbToken->position);
         } elseif ($this->opensUnclosedVerb()) {
             throw $this->unclosedVerbConditionError($this->stream->current()->position, $this->calloutConditionErrorOffset());
-        } elseif (!$this->stream->match(TokenType::GroupModifierOpen)) {
+        } elseif (!$this->stream->match(TokenType::GroupModifierOpen())) {
             $position = $this->calloutConditionErrorOffset();
 
             throw $this->state->error(
                 \sprintf('Invalid conditional condition at position %d: a callout in a condition must be followed by an assertion.', $position),
-                ErrorCode::ConditionalAssertionExpected,
+                ErrorCode::ConditionalAssertionExpected(),
                 $position,
             );
         } else {
@@ -263,17 +263,17 @@ final class ConditionParser
         do {
             $this->state->skipEmptyQuotes();
             $skipped = ($this->skipTrivia)();
-            if ($this->stream->match(TokenType::CommentOpen)) {
+            if ($this->stream->match(TokenType::CommentOpen())) {
                 $this->state->comment();
                 $skipped++;
             }
         } while ($skipped > 0);
 
-        if ($this->stream->match(TokenType::Callout)) {
+        if ($this->stream->match(TokenType::Callout())) {
             return $this->calloutConditional($startPosition);
         }
 
-        if ($this->stream->match(TokenType::PcreVerb)) {
+        if ($this->stream->match(TokenType::PcreVerb())) {
             return $this->verbConditional($startPosition, $this->stream->previous());
         }
 
@@ -283,7 +283,7 @@ final class ConditionParser
             throw $this->unclosedVerbConditionError($this->stream->current()->position, $position);
         }
 
-        if ($this->stream->match(TokenType::GroupModifierOpen)) {
+        if ($this->stream->match(TokenType::GroupModifierOpen())) {
             $groupStart = $this->stream->previous()->position;
             $this->guardCutShortAssertion($groupStart, $position);
 
@@ -292,7 +292,7 @@ final class ConditionParser
 
         throw $this->state->error(
             \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
-            ErrorCode::ConditionalAssertionExpected,
+            ErrorCode::ConditionalAssertionExpected(),
             $position,
         );
     }
@@ -315,7 +315,7 @@ final class ConditionParser
      */
     private function calloutConditionErrorOffset(): int
     {
-        return $this->target->supports(PcreFeature::CalloutConditionErrorAtItemStart)
+        return $this->target->supports(PcreFeature::CalloutConditionErrorAtItemStart())
             ? $this->stream->current()->position
             : $this->conditionFaultOnItsLastByte();
     }
@@ -328,16 +328,16 @@ final class ConditionParser
      */
     private function commentConditionErrorOffset(): int
     {
-        if (!$this->target->supports(PcreFeature::ErrorOffsetPastTheFault)) {
+        if (!$this->target->supports(PcreFeature::ErrorOffsetPastTheFault())) {
             return $this->conditionFaultOnItsLastByte();
         }
 
         $token = $this->stream->current();
 
         switch ($token->type) {
-            case TokenType::QuoteModeStart:
+            case TokenType::QuoteModeStart():
                 return $token->position;
-            case TokenType::Literal:
+            case TokenType::Literal():
                 return $token->position + \strlen($this->firstCharacterOf($token));
             default:
                 return $token->position + 1;
@@ -352,11 +352,11 @@ final class ConditionParser
     private function conditionFaultOnItsLastByte(): int
     {
         $token = $this->stream->current();
-        if (TokenType::QuoteModeStart === $token->type && TokenType::Literal === $this->stream->peek()->type) {
+        if (TokenType::QuoteModeStart() === $token->type && TokenType::Literal() === $this->stream->peek()->type) {
             $token = $this->stream->peek();
         }
 
-        if (TokenType::Literal !== $token->type) {
+        if (TokenType::Literal() !== $token->type) {
             return $token->position;
         }
 
@@ -377,7 +377,7 @@ final class ConditionParser
     private function guardVerbCondition(Token $verbToken, int $unnamedAt): void
     {
         $read = PcreVerb::read($verbToken->value);
-        if (null !== $read->assertion && GroupType::Atomic !== $read->assertion && !$read->nonAtomic) {
+        if (null !== $read->assertion && GroupType::Atomic() !== $read->assertion && !$read->nonAtomic) {
             return;
         }
 
@@ -392,7 +392,7 @@ final class ConditionParser
 
         throw $this->state->error(
             \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
-            ErrorCode::ConditionalAssertionExpected,
+            ErrorCode::ConditionalAssertionExpected(),
             $position,
         );
     }
@@ -410,7 +410,7 @@ final class ConditionParser
 
         $position = $this->stream->current()->position;
 
-        throw $this->state->error(\sprintf('Missing ")" to close the conditional at position %d.', $position), ErrorCode::GroupUnclosed, $position);
+        throw $this->state->error(\sprintf('Missing ")" to close the conditional at position %d.', $position), ErrorCode::GroupUnclosed(), $position);
     }
 
     /**
@@ -427,7 +427,7 @@ final class ConditionParser
 
         throw $this->state->error(
             \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $faultAt),
-            ErrorCode::ConditionalAssertionExpected,
+            ErrorCode::ConditionalAssertionExpected(),
             $faultAt,
         );
     }
@@ -440,7 +440,7 @@ final class ConditionParser
     {
         $token = $this->stream->current();
 
-        return TokenType::GroupOpen === $token->type && '*' === ($this->pattern[$token->position + 1] ?? '');
+        return TokenType::GroupOpen() === $token->type && '*' === ($this->pattern[$token->position + 1] ?? '');
     }
 
     /**
@@ -455,7 +455,7 @@ final class ConditionParser
 
         return $this->alphaNameConditionError($open + 2) ?? $this->state->error(
             \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $unnamedAt),
-            ErrorCode::ConditionalAssertionExpected,
+            ErrorCode::ConditionalAssertionExpected(),
             $unnamedAt,
         );
     }
@@ -472,7 +472,7 @@ final class ConditionParser
     private function alphaNameConditionError(int $nameStart): ?ParserException
     {
         // Before PCRE2 10.33 no name is alphabetic.
-        if (!$this->target->supports(PcreFeature::AlphabeticAssertionNames) || 1 !== LibraryPcre::match('/\G[a-z][A-Za-z0-9_]*+/', $this->pattern, $name, 0, $nameStart)) {
+        if (!$this->target->supports(PcreFeature::AlphabeticAssertionNames()) || 1 !== LibraryPcre::match('/\G[a-z][A-Za-z0-9_]*+/', $this->pattern, $name, 0, $nameStart)) {
             return null;
         }
 
@@ -480,27 +480,27 @@ final class ConditionParser
         // A name too long is refused as one before anything else.
         $longest = GroupNameReader::maxNameLength($this->target);
         if (\strlen($name[0]) > $longest) {
-            return $this->state->error(\sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $nameEnd, $longest), ErrorCode::GroupNameTooLong, $nameEnd);
+            return $this->state->error(\sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $nameEnd, $longest), ErrorCode::GroupNameTooLong(), $nameEnd);
         }
 
         if (':' === ($this->pattern[$nameEnd] ?? '')) {
             // Before PCRE2 10.45, a substring scan is a name PCRE does not know.
-            $scan = \in_array($name[0], ['scs', 'scan_substring'], true) && $this->target->supports(PcreFeature::ScanSubstring);
+            $scan = \in_array($name[0], ['scs', 'scan_substring'], true) && $this->target->supports(PcreFeature::ScanSubstring());
 
             return PcreVerb::takesArgument($name[0]) || $scan
                 ? null
-                : $this->state->error(\sprintf('Unknown alphabetic assertion "(*%s:" at position %d.', $name[0], $nameEnd), ErrorCode::VerbInvalid, $nameEnd);
+                : $this->state->error(\sprintf('Unknown alphabetic assertion "(*%s:" at position %d.', $name[0], $nameEnd), ErrorCode::VerbInvalid(), $nameEnd);
         }
 
-        if ($nameEnd >= \strlen($this->pattern) && $this->target->supports(PcreFeature::AlphaNameAtPatternEndIsUnclosed)) {
-            return $this->state->error(\sprintf('Missing ")" to close "(*%s" at position %d.', $name[0], $nameEnd), ErrorCode::GroupUnclosed, $nameEnd);
+        if ($nameEnd >= \strlen($this->pattern) && $this->target->supports(PcreFeature::AlphaNameAtPatternEndIsUnclosed())) {
+            return $this->state->error(\sprintf('Missing ")" to close "(*%s" at position %d.', $name[0], $nameEnd), ErrorCode::GroupUnclosed(), $nameEnd);
         }
 
         // Past the whole character in UTF mode.
         $width = $this->state->unicodeMode && 1 === LibraryPcre::match('/\G./su', $this->pattern, $character, 0, $nameEnd) ? \strlen($character[0]) : 1;
         $position = $nameEnd >= \strlen($this->pattern) ? $nameEnd : $this->target->faultOffset($nameEnd + $width, $width);
 
-        return $this->state->error(\sprintf('Unknown alphabetic assertion "(*%s" at position %d: a ":" is expected after the name.', $name[0], $position), ErrorCode::VerbInvalid, $position);
+        return $this->state->error(\sprintf('Unknown alphabetic assertion "(*%s" at position %d: a ":" is expected after the name.', $name[0], $position), ErrorCode::VerbInvalid(), $position);
     }
 
     /**
@@ -514,7 +514,7 @@ final class ConditionParser
 
         // Special case: (?(DEFINE)...) creates a DefineNode instead of ConditionalNode
         if ($condition instanceof AssertionNode && 'DEFINE' === $condition->value) {
-            $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
+            $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected )', ErrorCode::GroupUnclosed());
             $endPosition = $endToken->position + 1;
 
             return new DefineNode($yes, $startPosition, $endPosition);
@@ -541,7 +541,7 @@ final class ConditionParser
         // after a "|" it starts past that end.
         $no = $no ?? new LiteralNode('', $yesBranch->getEndPosition(), $yesBranch->getEndPosition());
 
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
+        $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected )', ErrorCode::GroupUnclosed());
         $endPosition = $endToken->position + 1;
 
         return new ConditionalNode($condition, $yesBranch, $no, $startPosition, $endPosition);
@@ -572,7 +572,7 @@ final class ConditionParser
 
         throw $this->state->error(
             \sprintf('Invalid conditional condition at position %d.', $position),
-            ErrorCode::ConditionalAssertionExpected,
+            ErrorCode::ConditionalAssertionExpected(),
             $position,
         );
     }
@@ -589,7 +589,7 @@ final class ConditionParser
             $this->stream->advance();
         }
 
-        if ('DEFINE' === $word && $this->stream->check(TokenType::GroupClose)) {
+        if ('DEFINE' === $word && $this->stream->check(TokenType::GroupClose())) {
             return new AssertionNode('DEFINE', $startPosition, $this->stream->current()->position);
         }
 
@@ -609,7 +609,7 @@ final class ConditionParser
         while (
             !$this->stream->checkLiteral(')')
             && !$this->stream->isAtEnd()
-            && ($this->stream->check(TokenType::Literal) || $this->stream->check(TokenType::Dot))
+            && ($this->stream->check(TokenType::Literal()) || $this->stream->check(TokenType::Dot()))
         ) {
             $word .= $this->stream->current()->value;
             $this->stream->advance();
@@ -640,7 +640,7 @@ final class ConditionParser
         // arrives as a quantifier token.
         $sign = '';
         if ($this->stream->checkLiteral('-')
-            || ($this->stream->check(TokenType::Quantifier) && '+' === $this->stream->current()->value)) {
+            || ($this->stream->check(TokenType::Quantifier()) && '+' === $this->stream->current()->value)) {
             $sign = $this->stream->current()->value;
             $this->stream->advance();
 
@@ -665,7 +665,7 @@ final class ConditionParser
         // PCRE refuses a number past 65535 as it reads it, before the ")".
         $position = RepeatCount::tooBigOffset($num, $startPosition + \strlen($sign), $this->target);
         if (null !== $position) {
-            throw $this->state->error(\sprintf('Group number %s%s is too big at position %d: PCRE takes at most 65535.', $sign, $num, $position), ErrorCode::GroupNumberTooBig, $position);
+            throw $this->state->error(\sprintf('Group number %s%s is too big at position %d: PCRE takes at most 65535.', $sign, $num, $position), ErrorCode::GroupNumberTooBig(), $position);
         }
 
         // "(?(+n)" counts the groups before it too: past 65535 in all, PCRE
@@ -673,7 +673,7 @@ final class ConditionParser
         if ('+' === $sign && (int) $num + $groupsBefore > PcreNumber::MAX) {
             $position = $this->stream->current()->position;
 
-            throw $this->state->error(\sprintf('Group number %s%s is too big at position %d: with the groups before it, it goes past 65535.', $sign, $num, $position), ErrorCode::GroupNumberTooBig, $position);
+            throw $this->state->error(\sprintf('Group number %s%s is too big at position %d: with the groups before it, it goes past 65535.', $sign, $num, $position), ErrorCode::GroupNumberTooBig(), $position);
         }
 
         // "(?(-n)" counts back over the groups opened so far: PCRE refuses a
@@ -681,7 +681,7 @@ final class ConditionParser
         if ('-' === $sign && (int) $num > $groupsBefore) {
             $position = $this->stream->current()->position;
 
-            throw $this->state->error(\sprintf('Condition relative reference -%s is outside the range of available capture groups.', $num), ErrorCode::BackrefRelative, $position);
+            throw $this->state->error(\sprintf('Condition relative reference -%s is outside the range of available capture groups.', $num), ErrorCode::BackrefRelative(), $position);
         }
 
         return new BackrefNode($sign.$num, $startPosition, $this->stream->current()->position);
@@ -704,7 +704,7 @@ final class ConditionParser
         }
 
         $name = $this->groupNames->read(false);
-        $this->stream->consumeLiteral('>', 'Expected > after condition name', ErrorCode::GroupNameUnterminated);
+        $this->stream->consumeLiteral('>', 'Expected > after condition name', ErrorCode::GroupNameUnterminated());
 
         return new BackrefNode($name, $startPosition, $this->stream->current()->position);
     }
@@ -730,10 +730,10 @@ final class ConditionParser
             $name = $this->groupNames->read(false);
 
             // The name is closed by the ")" of the condition.
-            if (!$this->stream->check(TokenType::GroupClose)) {
+            if (!$this->stream->check(TokenType::GroupClose())) {
                 $position = $this->stream->current()->position;
 
-                throw $this->state->error(\sprintf('Missing ")" to close the condition name at position %d.', $position), ErrorCode::GroupNameUnterminated, $position);
+                throw $this->state->error(\sprintf('Missing ")" to close the condition name at position %d.', $position), ErrorCode::GroupNameUnterminated(), $position);
             }
 
             return new SubroutineNode('R&'.$name, '', $startPosition, $this->stream->previous()->position);
@@ -750,7 +750,7 @@ final class ConditionParser
         $digits = $this->state->consumeWhile(static function (string $c): bool {
             return Ascii::isDigit($c);
         });
-        if (!$this->stream->check(TokenType::GroupClose)) {
+        if (!$this->stream->check(TokenType::GroupClose())) {
             $this->stream->setPosition($savedPos);
 
             return null;
@@ -774,7 +774,7 @@ final class ConditionParser
      */
     private function bareNameCondition(int $startPosition): ?BackrefNode
     {
-        if (!$this->stream->check(TokenType::Literal)) {
+        if (!$this->stream->check(TokenType::Literal())) {
             return null;
         }
 
@@ -782,7 +782,7 @@ final class ConditionParser
         $nameStart = $this->stream->current()->position;
         $name = '';
         while (
-            $this->stream->check(TokenType::Literal)
+            $this->stream->check(TokenType::Literal())
             && !$this->stream->checkLiteral(')')
             && !$this->stream->isAtEnd()
         ) {
@@ -791,7 +791,7 @@ final class ConditionParser
         }
 
         // Only characters a name may hold, up to the ")".
-        if ('' !== $name && $this->stream->check(TokenType::GroupClose)
+        if ('' !== $name && $this->stream->check(TokenType::GroupClose())
             && $this->groupNames->invalidNameOffset($nameStart) === $this->stream->current()->position) {
             $this->guardNameLength($name, $nameStart);
 
@@ -812,7 +812,7 @@ final class ConditionParser
 
         // "(?(" the pattern ends in misses its ")".
         if ($this->stream->isAtEnd() && $startPosition >= \strlen($this->pattern)) {
-            throw $this->state->error(\sprintf('Missing ")" to close the conditional at position %d.', $startPosition), ErrorCode::GroupUnclosed, $startPosition);
+            throw $this->state->error(\sprintf('Missing ")" to close the conditional at position %d.', $startPosition), ErrorCode::GroupUnclosed(), $startPosition);
         }
 
         $condition = $this->defineCondition($startPosition)
@@ -831,7 +831,7 @@ final class ConditionParser
 
         // "(?(*" the lexer read as no verb, for want of a name or a ")", is
         // no assertion either: refused past the "(", on it before 10.47.
-        if ($this->stream->check(TokenType::Quantifier) && '*' === ($this->pattern[$startPosition] ?? '')) {
+        if ($this->stream->check(TokenType::Quantifier()) && '*' === ($this->pattern[$startPosition] ?? '')) {
             throw $this->unclosedVerbConditionError($startPosition - 1, $this->target->faultOffset($startPosition));
         }
 
@@ -849,7 +849,7 @@ final class ConditionParser
 
             throw $this->state->error(
                 \sprintf('Invalid condition name at position %d: a group name must not start with a digit.', $position),
-                ErrorCode::GroupNameInvalid,
+                ErrorCode::GroupNameInvalid(),
                 $position,
             );
         }
@@ -875,7 +875,7 @@ final class ConditionParser
                 'Invalid conditional construct at position %d. Condition must be a group reference, lookaround, or (DEFINE).',
                 $position,
             ),
-            ErrorCode::ConditionalInvalid,
+            ErrorCode::ConditionalInvalid(),
             $position,
         );
     }
@@ -904,7 +904,7 @@ final class ConditionParser
 
         return $this->state->error(
             \sprintf('Missing ")" to close the condition name at position %d.', $nameEnd),
-            ErrorCode::GroupNameUnterminated,
+            ErrorCode::GroupNameUnterminated(),
             $nameEnd,
         );
     }
@@ -925,17 +925,17 @@ final class ConditionParser
     {
         // Before PCRE2 10.47, what follows the major number where the ")"
         // belongs leaves the condition open.
-        if (!$this->target->supports(PcreFeature::VersionConditionLeftOpenIsVersionError) && VersionCondition::isMajorLeftOpenAt($this->pattern, $start, $position)) {
+        if (!$this->target->supports(PcreFeature::VersionConditionLeftOpenIsVersionError()) && VersionCondition::isMajorLeftOpenAt($this->pattern, $start, $position)) {
             return $this->state->error(
                 \sprintf('Missing ")" to close the condition at position %d.', $position),
-                ErrorCode::ConditionalUnclosed,
+                ErrorCode::ConditionalUnclosed(),
                 $position,
             );
         }
 
         return $this->state->error(
             \sprintf('Invalid VERSION condition at position %d: PCRE takes "VERSION=" or "VERSION>=", a major number, an optional ".minor", and ")".', $position),
-            ErrorCode::ConditionalVersionSyntax,
+            ErrorCode::ConditionalVersionSyntax(),
             $position,
         );
     }

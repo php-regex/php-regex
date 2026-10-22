@@ -218,7 +218,7 @@ final class ClassLength
         }
 
         $negated = $negated ?? $node->isNegated;
-        if (!$this->target->supports(PcreFeature::ClassesCompiledFromMergedRanges)) {
+        if (!$this->target->supports(PcreFeature::ClassesCompiledFromMergedRanges())) {
             return $this->memberByMember($members, $negated, $caseless, $restricted);
         }
 
@@ -345,7 +345,7 @@ final class ClassLength
             }
 
             [$name, $negatedMember] = 'type' === $kind ? [Ascii::lower((string) $first), (string) $first !== Ascii::lower((string) $first)] : [(string) $first, (bool) $second];
-            if ($this->ucp && ('type' === $kind ? \in_array($name, ['d', 's', 'w'], true) : (\in_array($name, self::POSIX_PROPERTIES, true) || ('xdigit' === $name && $this->target->supports(PcreFeature::AsciiOptions))))) {
+            if ($this->ucp && ('type' === $kind ? \in_array($name, ['d', 's', 'w'], true) : (\in_array($name, self::POSIX_PROPERTIES, true) || ('xdigit' === $name && $this->target->supports(PcreFeature::AsciiOptions()))))) {
                 $items += 3;
                 $property = true;
 

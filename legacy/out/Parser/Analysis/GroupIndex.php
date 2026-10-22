@@ -292,7 +292,7 @@ final class GroupIndex
             $this->recursionTests[spl_object_id($node->condition)] = true;
         }
 
-        if ($node instanceof GroupNode && GroupType::BranchReset === $node->type) {
+        if ($node instanceof GroupNode && GroupType::BranchReset() === $node->type) {
             $this->hasBranchReset = true;
             $base = $nextGroupNumber;
             $highest = $base;
@@ -309,11 +309,11 @@ final class GroupIndex
 
         if ($node instanceof GroupNode) {
             // "(*scs:(+1)...)" counts groups from where it stands.
-            if (GroupType::ScanSubstring === $node->type) {
+            if (GroupType::ScanSubstring() === $node->type) {
                 $this->nextNumberAt[spl_object_id($node)] = $nextGroupNumber;
             }
 
-            if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
+            if (GroupType::Capturing() === $node->type || GroupType::Named() === $node->type) {
                 $this->captureSequence[] = $nextGroupNumber;
                 $this->numberOf[spl_object_id($node)] = $nextGroupNumber;
                 $this->byNumber[$nextGroupNumber++][] = $node;

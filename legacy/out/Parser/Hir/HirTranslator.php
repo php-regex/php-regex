@@ -213,7 +213,7 @@ final class HirTranslator
             case $node instanceof AssertionNode:
                 return $this->assertion($node, $flags);
             case $node instanceof KeepNode:
-                return new AssertionHir(AssertionKind::ResetMatchStart, $node->getStartPosition(), $node->getEndPosition());
+                return new AssertionHir(AssertionKind::ResetMatchStart(), $node->getStartPosition(), $node->getEndPosition());
             case $node instanceof CommentNode:
             case $node instanceof DefineNode:
             case $node instanceof LimitMatchNode:
@@ -274,17 +274,17 @@ final class HirTranslator
         $end = $node->getEndPosition();
 
         switch ($node->type) {
-            case GroupType::LookaheadPositive:
-                $look = LookKind::Ahead;
+            case GroupType::LookaheadPositive():
+                $look = LookKind::Ahead();
                 break;
-            case GroupType::LookaheadNegative:
-                $look = LookKind::NegativeAhead;
+            case GroupType::LookaheadNegative():
+                $look = LookKind::NegativeAhead();
                 break;
-            case GroupType::LookbehindPositive:
-                $look = LookKind::Behind;
+            case GroupType::LookbehindPositive():
+                $look = LookKind::Behind();
                 break;
-            case GroupType::LookbehindNegative:
-                $look = LookKind::NegativeBehind;
+            case GroupType::LookbehindNegative():
+                $look = LookKind::NegativeBehind();
                 break;
             default:
                 $look = null;
@@ -296,16 +296,16 @@ final class HirTranslator
         }
 
         switch ($node->type) {
-            case GroupType::Capturing:
-            case GroupType::Named:
+            case GroupType::Capturing():
+            case GroupType::Named():
                 return new CaptureHir($this->node($node->child, $flags), $this->groupNumbers[spl_object_id($node)] ?? 0, $node->name, $start, $end);
-            case GroupType::Atomic:
+            case GroupType::Atomic():
                 return new AtomicHir($this->node($node->child, $flags), $start, $end);
-            case GroupType::InlineFlags:
+            case GroupType::InlineFlags():
                 return $this->isBareOptionSetting($node)
                     ? new EmptyHir($start, $end)
                     : $this->node($node->child, $this->applyOptions($flags, $node->flags ?? ''));
-            case GroupType::ScanSubstring:
+            case GroupType::ScanSubstring():
                 return $this->opaque($node, Properties::zeroWidth(false, self::capturesIn($node->child)));
             default:
                 return $this->node($node->child, $flags);
@@ -325,14 +325,14 @@ final class HirTranslator
         }
 
         switch (true) {
-            case QuantifierType::Possessive === $node->type:
-                $greed = Greed::Possessive;
+            case QuantifierType::Possessive() === $node->type:
+                $greed = Greed::Possessive();
                 break;
-            case (QuantifierType::Lazy === $node->type) !== (0 !== ($flags & self::UNGREEDY)):
-                $greed = Greed::Lazy;
+            case (QuantifierType::Lazy() === $node->type) !== (0 !== ($flags & self::UNGREEDY)):
+                $greed = Greed::Lazy();
                 break;
             default:
-                $greed = Greed::Greedy;
+                $greed = Greed::Greedy();
                 break;
         }
 
@@ -456,38 +456,38 @@ final class HirTranslator
         $multiline = 0 !== ($flags & self::MULTILINE);
         switch ($node->value) {
             case '^':
-                $kind = $multiline ? AssertionKind::LineStart : string::SubjectStart;
+                $kind = $multiline ? AssertionKind::LineStart() : AssertionKind::SubjectStart();
                 break;
             case '$':
                 switch (true) {
                     case $multiline:
-                        $kind = AssertionKind::LineEnd;
+                        $kind = AssertionKind::LineEnd();
                         break;
                     case $this->dollarEndOnly:
-                        $kind = AssertionKind::SubjectEnd;
+                        $kind = AssertionKind::SubjectEnd();
                         break;
                     default:
-                        $kind = AssertionKind::EndOrFinalNewline;
+                        $kind = AssertionKind::EndOrFinalNewline();
                         break;
                 }
                 break;
             case 'A':
-                $kind = AssertionKind::SubjectStart;
+                $kind = AssertionKind::SubjectStart();
                 break;
             case 'z':
-                $kind = AssertionKind::SubjectEnd;
+                $kind = AssertionKind::SubjectEnd();
                 break;
             case 'Z':
-                $kind = AssertionKind::EndOrFinalNewline;
+                $kind = AssertionKind::EndOrFinalNewline();
                 break;
             case 'G':
-                $kind = AssertionKind::MatchStart;
+                $kind = AssertionKind::MatchStart();
                 break;
             case 'b':
-                $kind = AssertionKind::WordBoundary;
+                $kind = AssertionKind::WordBoundary();
                 break;
             case 'B':
-                $kind = AssertionKind::NotWordBoundary;
+                $kind = AssertionKind::NotWordBoundary();
                 break;
             default:
                 $kind = null;
@@ -500,7 +500,7 @@ final class HirTranslator
 
         // A word boundary tells word characters from the rest: which they
         // are, under /u or "(*UCP)", the engine says.
-        $word = AssertionKind::WordBoundary === $kind || AssertionKind::NotWordBoundary === $kind ? $this->classOf('\\w', $node, $flags) : null;
+        $word = AssertionKind::WordBoundary() === $kind || AssertionKind::NotWordBoundary() === $kind ? $this->classOf('\\w', $node, $flags) : null;
 
         return new AssertionHir($kind, $node->getStartPosition(), $node->getEndPosition(), $word instanceof ClassHir ? $word->set : null);
     }
@@ -681,7 +681,7 @@ final class HirTranslator
      */
     private static function collectGroups(NodeInterface $node, array &$groups): void
     {
-        if ($node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type)) {
+        if ($node instanceof GroupNode && (GroupType::Capturing() === $node->type || GroupType::Named() === $node->type)) {
             $groups[] = spl_object_id($node);
         }
 
@@ -714,7 +714,7 @@ final class HirTranslator
 
     private function flagsAfter(NodeInterface $node, int $flags): int
     {
-        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && $this->isBareOptionSetting($node)) {
+        if ($node instanceof GroupNode && GroupType::InlineFlags() === $node->type && $this->isBareOptionSetting($node)) {
             return $this->applyOptions($flags, $node->flags ?? '');
         }
 

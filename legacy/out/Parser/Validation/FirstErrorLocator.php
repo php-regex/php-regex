@@ -153,13 +153,13 @@ final class FirstErrorLocator
             // read as its first character, which is what follows the "(?".
             $syntaxTokens = $swallowing ?? ($tokenized && $error instanceof LexerException ? $inPlace : $tokens);
             $last = [] === $syntaxTokens ? null : $syntaxTokens[array_key_last($syntaxTokens)];
-            $readUpTo = null !== $last && TokenType::GroupModifierOpen === $last->type ? $last->end() : $limit;
+            $readUpTo = null !== $last && TokenType::GroupModifierOpen() === $last->type ? $last->end() : $limit;
             $stand = null === $swallowing && null !== $refusedAt ? self::standInForTheRefusedToken($refusedAt, $last, $pattern) : null;
             if (null !== $stand) {
                 $readUpTo = $limit;
             }
 
-            $stream = new TokenStream(array_merge($syntaxTokens, null === $stand ? [] : [$stand], [new Token(TokenType::Eof, '', min($limit, \strlen($pattern)))]), $pattern);
+            $stream = new TokenStream(array_merge($syntaxTokens, null === $stand ? [] : [$stand], [new Token(TokenType::Eof(), '', min($limit, \strlen($pattern)))]), $pattern);
 
             try {
                 (new TokenParser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, $delimiter, \strlen($pattern));
@@ -171,9 +171,9 @@ final class FirstErrorLocator
                 // "-" or a quote, which PCRE reads as no item: it then meets
                 // the end of the pattern.
                 $atTheEnd = $at === $position && $error->errorCode !== $syntaxError->errorCode
-                    && (ErrorCode::GroupUnclosed === $error->errorCode
-                        || (ErrorCode::CharclassUnclosed === $error->errorCode && null !== $last
-                            && !\in_array($last->type, [TokenType::Range, TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true)));
+                    && (ErrorCode::GroupUnclosed() === $error->errorCode
+                        || (ErrorCode::CharclassUnclosed() === $error->errorCode && null !== $last
+                            && !\in_array($last->type, [TokenType::Range(), TokenType::QuoteModeStart(), TokenType::QuoteModeEnd()], true)));
                 if (($at < min($limit, $readUpTo) || $atTheEnd) && (null === $earlier || $at < ($earlier->position ?? $position))
                     && !($error instanceof LexerException && $this->rangeEndsWhereTokenizingStopped($syntaxError, $syntaxTokens))) {
                     return $this->escapeErrorEndingRange($syntaxError, $syntaxTokens, $pattern, $flags) ?? $syntaxError;
@@ -195,7 +195,7 @@ final class FirstErrorLocator
      */
     private static function standInForTheRefusedToken(int $at, ?Token $last, string $pattern): ?Token
     {
-        return ((($nullsafeVariable1 = $last) ? $nullsafeVariable1->end() : null) ?? 0) === $at ? new Token(TokenType::Literal, $pattern[$at], $at, 1) : null;
+        return ((($nullsafeVariable1 = $last) ? $nullsafeVariable1->end() : null) ?? 0) === $at ? new Token(TokenType::Literal(), $pattern[$at], $at, 1) : null;
     }
 
     /**
@@ -208,7 +208,7 @@ final class FirstErrorLocator
      */
     private function escapeErrorEndingRange(RegexException $error, array $tokens, string $pattern, string $flags): ?SemanticErrorException
     {
-        if (ErrorCode::RangeInvalidBounds !== $error->errorCode || !$this->target->supports(PcreFeature::RangeFromTypeReadToItsEnd)) {
+        if (ErrorCode::RangeInvalidBounds() !== $error->errorCode || !$this->target->supports(PcreFeature::RangeFromTypeReadToItsEnd())) {
             return null;
         }
 
@@ -232,19 +232,19 @@ final class FirstErrorLocator
      */
     private function rangeEndsWhereTokenizingStopped(RegexException $error, array $tokens): bool
     {
-        if (ErrorCode::RangeInvalidBounds !== $error->errorCode || !$this->target->supports(PcreFeature::RangeFromTypeReadToItsEnd)) {
+        if (ErrorCode::RangeInvalidBounds() !== $error->errorCode || !$this->target->supports(PcreFeature::RangeFromTypeReadToItsEnd())) {
             return false;
         }
 
         // The last token read but the quotes PCRE skips after the hyphen.
         $last = null;
         foreach ($tokens as $token) {
-            if (!\in_array($token->type, [TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true)) {
+            if (!\in_array($token->type, [TokenType::QuoteModeStart(), TokenType::QuoteModeEnd()], true)) {
                 $last = $token;
             }
         }
 
-        return null !== $last && TokenType::Range === $last->type && $last->end() === $error->position;
+        return null !== $last && TokenType::Range() === $last->type && $last->end() === $error->position;
     }
 
     /**
@@ -258,13 +258,13 @@ final class FirstErrorLocator
         $afterHyphen = false;
         $end = null;
         foreach ($tokens as $token) {
-            if ($afterHyphen && TokenType::QuoteModeStart !== $token->type && TokenType::QuoteModeEnd !== $token->type) {
+            if ($afterHyphen && TokenType::QuoteModeStart() !== $token->type && TokenType::QuoteModeEnd() !== $token->type) {
                 $end = $token;
 
                 break;
             }
 
-            $afterHyphen = $afterHyphen || (TokenType::Range === $token->type && $token->end() === $position);
+            $afterHyphen = $afterHyphen || (TokenType::Range() === $token->type && $token->end() === $position);
         }
 
         return $end;
@@ -292,14 +292,14 @@ final class FirstErrorLocator
 
             // The lexer reads "\p{" with no "}" after it as "\p" then "{";
             // PHP 7.3 and 7.4 read it as "p{", and go on.
-            if (TokenType::LiteralEscaped === $token->type && \in_array($token->value, ['p', 'P'], true) && !isset($literalEscapes[$token->position])
+            if (TokenType::LiteralEscaped() === $token->type && \in_array($token->value, ['p', 'P'], true) && !isset($literalEscapes[$token->position])
                 && '{' === ($pattern[$token->end()] ?? '') && (false === $lastBrace || $lastBrace < $token->end())) {
                 return \array_slice($tokens, 0, $index + 1);
             }
 
             // And "(*MARK:a" with no ")" after it as "(" then "*".
             $star = $tokens[$index + 1] ?? null;
-            if (TokenType::GroupOpen === $token->type && null !== $star && TokenType::Quantifier === $star->type
+            if (TokenType::GroupOpen() === $token->type && null !== $star && TokenType::Quantifier() === $star->type
                 && $star->position === $token->end() && '*' === $star->value[0] && $star->position + 1 < \strlen($pattern)) {
                 return \array_slice($tokens, 0, $index + 2);
             }
@@ -327,14 +327,14 @@ final class FirstErrorLocator
         // it, at the start of its body, though the groups are never closed.
         $tooDeep = self::openerPastTheNestingLimit($tokens);
         if (null !== $tooDeep) {
-            return new SemanticErrorException(\sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', Validator::MAX_GROUP_NESTING), ErrorCode::GroupNestedTooDeep, $tooDeep->end(), $pattern, null, 'Flatten the pattern: drop groups that only wrap one item.');
+            return new SemanticErrorException(\sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', Validator::MAX_GROUP_NESTING), ErrorCode::GroupNestedTooDeep(), $tooDeep->end(), $pattern, null, 'Flatten the pattern: drop groups that only wrap one item.');
         }
 
         $length = \strlen($pattern);
         $parser = new TokenParser($this->maxRecursionDepth, $this->target);
 
         try {
-            $ast = $parser->parse(new TokenStream(array_merge($tokens, [new Token(TokenType::Eof, '', $length)]), $pattern), $flags, $delimiter, $length);
+            $ast = $parser->parse(new TokenStream(array_merge($tokens, [new Token(TokenType::Eof(), '', $length)]), $pattern), $flags, $delimiter, $length);
         } catch (LexerException|LimitException|ParserException $exception) {
             $read = \array_slice($tokens, 0, $parser->tokensReadWhole());
             $cutAt = [] === $read ? 0 : $read[array_key_last($read)]->end();
@@ -342,16 +342,16 @@ final class FirstErrorLocator
             // Each group still open there is closed where the text read ends.
             $closers = [];
             foreach ($read as $token) {
-                if (TokenType::GroupClose === $token->type) {
+                if (TokenType::GroupClose() === $token->type) {
                     array_pop($closers);
                 } elseif (self::opensGroup($token)) {
-                    $closers[] = new Token(TokenType::GroupClose, ')', $cutAt, 0);
+                    $closers[] = new Token(TokenType::GroupClose(), ')', $cutAt, 0);
                 }
             }
 
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
-                    ->parse(new TokenStream(array_merge($read, $closers, [new Token(TokenType::Eof, '', $cutAt)]), $pattern), $flags, $delimiter, $length);
+                    ->parse(new TokenStream(array_merge($read, $closers, [new Token(TokenType::Eof(), '', $cutAt)]), $pattern), $flags, $delimiter, $length);
             } catch (LexerException|LimitException|ParserException $exception2) {
                 // Not expected: these are the tokens the first parse read
                 // whole, each group they open closed, no deeper than it went.
@@ -382,26 +382,26 @@ final class FirstErrorLocator
 
         foreach ($tokens as $token) {
             switch ($token->type) {
-                case TokenType::Literal:
-                case TokenType::GroupOpen:
-                case TokenType::GroupClose:
-                case TokenType::Alternation:
-                case TokenType::Dot:
-                case TokenType::Anchor:
-                case TokenType::CharClassOpen:
-                case TokenType::CharClassClose:
-                case TokenType::Range:
-                case TokenType::Negation:
-                case TokenType::PosixClass:
-                case TokenType::QuoteModeStart:
-                case TokenType::QuoteModeEnd:
-                case TokenType::CommentOpen:
+                case TokenType::Literal():
+                case TokenType::GroupOpen():
+                case TokenType::GroupClose():
+                case TokenType::Alternation():
+                case TokenType::Dot():
+                case TokenType::Anchor():
+                case TokenType::CharClassOpen():
+                case TokenType::CharClassClose():
+                case TokenType::Range():
+                case TokenType::Negation():
+                case TokenType::PosixClass():
+                case TokenType::QuoteModeStart():
+                case TokenType::QuoteModeEnd():
+                case TokenType::CommentOpen():
                     $plain = true;
                     break;
-                case TokenType::Quantifier:
+                case TokenType::Quantifier():
                     $plain = '{' !== $token->value[0];
                     break;
-                case TokenType::PcreVerb:
+                case TokenType::PcreVerb():
                     $plain = self::opensGroup($token) && null !== PcreVerb::read($token->value)->assertion;
                     break;
                 default:
@@ -432,7 +432,7 @@ final class FirstErrorLocator
                 if (\count($open) > Validator::MAX_GROUP_NESTING) {
                     return $token;
                 }
-            } elseif (TokenType::GroupClose === $token->type) {
+            } elseif (TokenType::GroupClose() === $token->type) {
                 array_pop($open);
             }
         }
@@ -448,11 +448,11 @@ final class FirstErrorLocator
     private static function opensGroup(Token $token): bool
     {
         switch ($token->type) {
-            case TokenType::GroupOpen:
-            case TokenType::GroupModifierOpen:
-            case TokenType::CommentOpen:
+            case TokenType::GroupOpen():
+            case TokenType::GroupModifierOpen():
+            case TokenType::CommentOpen():
                 return true;
-            case TokenType::PcreVerb:
+            case TokenType::PcreVerb():
                 return $token->end() - $token->position === \strlen($token->value) + 2;
             default:
                 return false;
@@ -471,11 +471,11 @@ final class FirstErrorLocator
         $opening = 0;
 
         foreach ($tokens as $index => $token) {
-            if (TokenType::CharClassOpen === $token->type && 0 === $depth++) {
+            if (TokenType::CharClassOpen() === $token->type && 0 === $depth++) {
                 $opening = $index;
             }
 
-            if (TokenType::CharClassClose !== $token->type || 0 !== --$depth) {
+            if (TokenType::CharClassClose() !== $token->type || 0 !== --$depth) {
                 continue;
             }
 
@@ -483,7 +483,7 @@ final class FirstErrorLocator
 
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
-                    ->parse(new TokenStream(array_merge($class, [new Token(TokenType::Eof, '', $token->end())]), $pattern), $flags, $delimiter, \strlen($pattern));
+                    ->parse(new TokenStream(array_merge($class, [new Token(TokenType::Eof(), '', $token->end())]), $pattern), $flags, $delimiter, \strlen($pattern));
             } catch (LexerException|LimitException|ParserException $classError) {
                 // A class read alone opens no group, so no limit is met
                 // here today; one would escape the error being reported. A
@@ -528,9 +528,9 @@ final class FirstErrorLocator
         // The missing "]" and a reversed range the lexer found come after
         // every item read; an escape it refuses, after those before it.
         $position = $lexerError->position ?? 0;
-        $atTheEnd = \in_array($lexerError->errorCode, [ErrorCode::CharclassUnclosed, ErrorCode::RangeReversed], true);
+        $atTheEnd = \in_array($lexerError->errorCode, [ErrorCode::CharclassUnclosed(), ErrorCode::RangeReversed()], true);
         $end = \strlen($pattern);
-        $class = array_merge(\array_slice($tokens, $opening), [new Token(TokenType::CharClassClose, ']', $end, 0), new Token(TokenType::Eof, '', $end)]);
+        $class = array_merge(\array_slice($tokens, $opening), [new Token(TokenType::CharClassClose(), ']', $end, 0), new Token(TokenType::Eof(), '', $end)]);
 
         try {
             $ast = (new TokenParser($this->maxRecursionDepth, $this->target))->parse(new TokenStream($class, $pattern), $flags, $delimiter, $end);
@@ -577,9 +577,9 @@ final class FirstErrorLocator
         $depth = 0;
         $opening = null;
         foreach ($tokens as $index => $token) {
-            if (TokenType::CharClassOpen === $token->type && 0 === $depth++) {
+            if (TokenType::CharClassOpen() === $token->type && 0 === $depth++) {
                 $opening = $index;
-            } elseif (TokenType::CharClassClose === $token->type && $depth > 0 && 0 === --$depth) {
+            } elseif (TokenType::CharClassClose() === $token->type && $depth > 0 && 0 === --$depth) {
                 $opening = null;
             }
         }
@@ -604,11 +604,11 @@ final class FirstErrorLocator
         $read = [$class[0]];
         $lastHyphen = null;
         foreach (\array_slice($class, 1) as $token) {
-            if ($token->position >= $limit || \in_array($token->type, [TokenType::CharClassClose, TokenType::Eof], true)) {
+            if ($token->position >= $limit || \in_array($token->type, [TokenType::CharClassClose(), TokenType::Eof()], true)) {
                 break;
             }
 
-            if (TokenType::Range === $token->type) {
+            if (TokenType::Range() === $token->type) {
                 $lastHyphen = \count($read);
             }
 
@@ -624,7 +624,7 @@ final class FirstErrorLocator
 
             try {
                 (new TokenParser($this->maxRecursionDepth, $this->target))
-                    ->parse(new TokenStream(array_merge($prefix, [new Token(TokenType::CharClassClose, ']', $end, 0), new Token(TokenType::Eof, '', $end)]), $pattern), $flags, $delimiter, \strlen($pattern))
+                    ->parse(new TokenStream(array_merge($prefix, [new Token(TokenType::CharClassClose(), ']', $end, 0), new Token(TokenType::Eof(), '', $end)]), $pattern), $flags, $delimiter, \strlen($pattern))
                     ->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
 
                 return null;
@@ -652,13 +652,13 @@ final class FirstErrorLocator
     private function firstExtendedClassErrorBefore(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?RegexException
     {
         foreach ($tokens as $token) {
-            if (TokenType::ExtendedClass !== $token->type || $token->end() > $position) {
+            if (TokenType::ExtendedClass() !== $token->type || $token->end() > $position) {
                 continue;
             }
 
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
-                    ->parse(new TokenStream([$token, new Token(TokenType::Eof, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
+                    ->parse(new TokenStream([$token, new Token(TokenType::Eof(), '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
                 $ast->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
             } catch (RegexException $error) {
                 if (($error->position ?? $position) < $position) {
@@ -685,13 +685,13 @@ final class FirstErrorLocator
         $closes = [];
         $next = null;
         for ($at = \count($tokens) - 1; $at >= 0; $at--) {
-            $next = TokenType::GroupClose === $tokens[$at]->type ? $at : $next;
+            $next = TokenType::GroupClose() === $tokens[$at]->type ? $at : $next;
             $closes[$at] = $next;
         }
 
         foreach ($tokens as $index => $open) {
             $group = $tokens[$index + 1] ?? null;
-            if (TokenType::GroupModifierOpen !== $open->type || null === $group || TokenType::GroupOpen !== $group->type
+            if (TokenType::GroupModifierOpen() !== $open->type || null === $group || TokenType::GroupOpen() !== $group->type
                 || $group->position !== $open->end() || strncmp((string) substr($pattern, $group->end(), 7), 'VERSION', strlen('VERSION')) !== 0) {
                 continue;
             }
@@ -707,7 +707,7 @@ final class FirstErrorLocator
 
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))->parse(
-                    new TokenStream(array_merge($condition, [new Token(TokenType::GroupClose, ')', $close->end()), new Token(TokenType::Eof, '', $close->end() + 1)]), $pattern),
+                    new TokenStream(array_merge($condition, [new Token(TokenType::GroupClose(), ')', $close->end()), new Token(TokenType::Eof(), '', $close->end() + 1)]), $pattern),
                     $flags,
                     $delimiter,
                     \strlen($pattern),

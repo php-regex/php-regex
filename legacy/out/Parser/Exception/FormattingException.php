@@ -32,6 +32,6 @@ final class FormattingException extends RegexException implements ExceptionInter
      */
     public function __construct(string $message, string $pattern, ?\Throwable $previous = null)
     {
-        parent::__construct($message, ErrorCode::FormattingUnsafe, null, $pattern, $previous);
+        parent::__construct($message, ErrorCode::FormattingUnsafe(), null, $pattern, $previous);
     }
 }

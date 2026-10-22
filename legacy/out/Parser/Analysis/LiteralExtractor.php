@@ -60,13 +60,21 @@ final class LiteralExtractor extends AbstractNodeVisitor
      */
     private const MAX_LITERALS_COUNT = 128;
 
-    private const LOOKAROUNDS = [
-        GroupType::LookaheadPositive,
-        GroupType::LookaheadNegative,
-        GroupType::LookbehindPositive,
-        GroupType::LookbehindNegative,
-        GroupType::ScanSubstring,
+    private static function LOOKAROUNDS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [
+        GroupType::LookaheadPositive(),
+        GroupType::LookaheadNegative(),
+        GroupType::LookbehindPositive(),
+        GroupType::LookbehindNegative(),
+        GroupType::ScanSubstring(),
     ];
+        }
+
+        return $cache;
+    }
 
     /**
      * @var bool
@@ -138,7 +146,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
     public function visitGroup(GroupNode $node): LiteralSet
     {
         // A lookaround looks at the subject without consuming it.
-        if (\in_array($node->type, self::LOOKAROUNDS, true)) {
+        if (\in_array($node->type, self::LOOKAROUNDS(), true)) {
             return LiteralSet::fromString('');
         }
 
@@ -148,7 +156,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
         // "(?i)" holds to the end of the group it stands in, so it is not
         // undone here; "(?i:...)" holds for its own body. Reading an empty
         // "(?i:)" as the first is only ever more cautious.
-        if (GroupType::InlineFlags === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value) {
+        if (GroupType::InlineFlags() === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value) {
             $this->caseInsensitive = $caseInsensitive;
 
             return LiteralSet::fromString('');

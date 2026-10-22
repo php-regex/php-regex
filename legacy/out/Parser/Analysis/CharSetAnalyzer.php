@@ -166,11 +166,11 @@ final class CharSetAnalyzer
             $left = $this->walk($node->left, $fromStart);
 
             switch ($node->operator) {
-                case ClassSetOperator::Intersection:
+                case ClassSetOperator::Intersection():
                     return $left->intersect($right);
-                case ClassSetOperator::Difference:
+                case ClassSetOperator::Difference():
                     return $left->intersect($right->complement());
-                case ClassSetOperator::SymmetricDifference:
+                case ClassSetOperator::SymmetricDifference():
                     return $left->union($right)->intersect($left->intersect($right)->complement());
                 default:
                     return $left->union($right);

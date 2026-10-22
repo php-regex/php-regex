@@ -156,14 +156,14 @@ final class LookbehindChecks
         $this->length = new LookbehindLength(
             $groups,
             $utf,
-            $target->supports(PcreFeature::VariableLengthLookbehind),
+            $target->supports(PcreFeature::VariableLengthLookbehind()),
             \Closure::fromCallable([$this, 'measureNested']),
             \Closure::fromCallable([$this, 'countBranches']),
             \Closure::fromCallable([$this, 'checkMeasuredReference']),
-            $target->supports(PcreFeature::LookbehindInLookaheadMeasured),
-            $target->supports(PcreFeature::DefineSkippedInLookbehind),
-            !$target->supports(PcreFeature::ExtendedCharClass) || $target->supports(PcreFeature::ExtendedClassBesideLookbehindCompiles),
-            !$target->supports(PcreFeature::LookbehindLengthOverflowRefused),
+            $target->supports(PcreFeature::LookbehindInLookaheadMeasured()),
+            $target->supports(PcreFeature::DefineSkippedInLookbehind()),
+            !$target->supports(PcreFeature::ExtendedCharClass()) || $target->supports(PcreFeature::ExtendedClassBesideLookbehindCompiles()),
+            !$target->supports(PcreFeature::LookbehindLengthOverflowRefused()),
         );
     }
 
@@ -254,7 +254,7 @@ final class LookbehindChecks
                     $this->raise(
                         \sprintf('Lookbehind is too long: PCRE adds each item to the length of its branch before the repeat after it, and refuses a branch past %d characters (%d reached).', self::MAX_FIXED_LENGTH, $tooLong),
                         $this->errorPosition($node),
-                        ErrorCode::LookbehindTooLong,
+                        ErrorCode::LookbehindTooLong(),
                         'Shorten the lookbehind.',
                     );
                 }
@@ -267,7 +267,7 @@ final class LookbehindChecks
                         $this->raise(
                             'Lookbehind is unbounded: \X matches a grapheme cluster of any length.',
                             $this->errorPosition($node),
-                            ErrorCode::LookbehindUnbounded,
+                            ErrorCode::LookbehindUnbounded(),
                             'Match the characters the cluster may hold instead of \X.',
                         );
                     }
@@ -315,7 +315,7 @@ final class LookbehindChecks
             $this->raise(
                 'Lookbehind is unbounded. PCRE requires a bounded maximum length.',
                 $this->errorPosition($node),
-                ErrorCode::LookbehindUnbounded,
+                ErrorCode::LookbehindUnbounded(),
                 $hint,
             );
         }
@@ -327,7 +327,7 @@ final class LookbehindChecks
             $this->raise(
                 \sprintf('Lookbehind exceeds the maximum length of %d (max=%d).', $this->maxLength, $max),
                 $this->errorPosition($node),
-                ErrorCode::LookbehindTooLong,
+                ErrorCode::LookbehindTooLong(),
                 'Reduce the lookbehind length, or raise max_lookbehind_length.',
             );
         }
@@ -341,7 +341,7 @@ final class LookbehindChecks
         $this->raise(
             'Variable-length lookbehind needs PCRE2 10.43, which PHP bundles from 8.4.',
             $this->errorPosition($node),
-            ErrorCode::LookbehindVariableLengthNotSupported,
+            ErrorCode::LookbehindVariableLengthNotSupported(),
             'Give each branch of the lookbehind a fixed length, or target PHP 8.4+.',
         );
     }
@@ -356,8 +356,8 @@ final class LookbehindChecks
     private function measureNested(NodeInterface $node, array $expanding): void
     {
         if ($node instanceof GroupNode && \in_array($node->type, [
-            GroupType::LookbehindPositive,
-            GroupType::LookbehindNegative,
+            GroupType::LookbehindPositive(),
+            GroupType::LookbehindNegative(),
         ], true)) {
             $this->measureLookbehind($node, $expanding);
 
@@ -439,7 +439,7 @@ final class LookbehindChecks
             $this->raise(
                 'Lookbehind is too complicated: PCRE gives up past 2,001 branches measured for the lookbehinds of a pattern.',
                 $this->errorPosition($this->measured),
-                ErrorCode::LookbehindTooComplex,
+                ErrorCode::LookbehindTooComplex(),
                 'Call fewer groups from the lookbehinds, use fewer lookbehinds, or drop the branch reset, which makes PCRE measure a group again each time.',
             );
         }
@@ -517,7 +517,7 @@ final class LookbehindChecks
             case $node instanceof AlternationNode:
                 return $this->anyContainsGraphemeCluster($node->alternatives);
             case $node instanceof GroupNode:
-                return !\in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true) && $this->containsGraphemeCluster($node->child);
+                return !\in_array($node->type, [GroupType::LookaheadPositive(), GroupType::LookaheadNegative(), GroupType::LookbehindPositive(), GroupType::LookbehindNegative()], true) && $this->containsGraphemeCluster($node->child);
             case $node instanceof QuantifierNode:
                 return $this->containsGraphemeCluster($node->node);
             case $node instanceof ConditionalNode:

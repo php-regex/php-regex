@@ -43,7 +43,7 @@ final class NodeWalker
             [$node, $ancestors, $entered] = array_pop($stack);
 
             if ($entered) {
-                if (null !== $leave && TraversalAction::Stop === $leave($node, $ancestors)) {
+                if (null !== $leave && TraversalAction::Stop() === $leave($node, $ancestors)) {
                     return;
                 }
 
@@ -51,12 +51,12 @@ final class NodeWalker
             }
 
             $action = $enter($node, $ancestors);
-            if (TraversalAction::Stop === $action) {
+            if (TraversalAction::Stop() === $action) {
                 return;
             }
 
             $stack[] = [$node, $ancestors, true];
-            if (TraversalAction::SkipChildren === $action) {
+            if (TraversalAction::SkipChildren() === $action) {
                 continue;
             }
 

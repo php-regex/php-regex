@@ -77,17 +77,25 @@ final class ParseState
      * Token types that describe a character the same way wherever they
      * appear: "\d" is the same inside a class and outside it.
      */
-    private const ATOM_TYPES = [
-        TokenType::Literal,
-        TokenType::LiteralEscaped,
-        TokenType::CharType,
-        TokenType::UnicodeProp,
-        TokenType::ControlChar,
-        TokenType::Unicode,
-        TokenType::UnicodeNamed,
-        TokenType::Octal,
-        TokenType::OctalLegacy,
+    private static function ATOM_TYPES(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [
+        TokenType::Literal(),
+        TokenType::LiteralEscaped(),
+        TokenType::CharType(),
+        TokenType::UnicodeProp(),
+        TokenType::ControlChar(),
+        TokenType::Unicode(),
+        TokenType::UnicodeNamed(),
+        TokenType::Octal(),
+        TokenType::OctalLegacy(),
     ];
+        }
+
+        return $cache;
+    }
 
     /**
      * Whether the tokens read now stand between "\Q" and "\E".
@@ -120,7 +128,7 @@ final class ParseState
     public function matchAtom(int $startPosition): ?NodeInterface
     {
         $type = $this->stream->currentType();
-        if (!\in_array($type, self::ATOM_TYPES, true)) {
+        if (!\in_array($type, self::ATOM_TYPES(), true)) {
             return null;
         }
 
@@ -136,23 +144,23 @@ final class ParseState
     public function atom(Token $token, $type, int $startPosition): NodeInterface
     {
         switch ($type) {
-            case TokenType::Literal:
+            case TokenType::Literal():
                 return new LiteralNode($token->value, $startPosition, $token->end());
-            case TokenType::LiteralEscaped:
+            case TokenType::LiteralEscaped():
                 return '\\x' === (string) substr($this->pattern, $token->position, 2) && 2 === $token->end() - $token->position
                     && '{' !== ($this->pattern[$token->end()] ?? '')
-                    ? new CharLiteralNode('\\x', 0, CharLiteralType::Unicode, $startPosition, $token->end())
+                    ? new CharLiteralNode('\\x', 0, CharLiteralType::Unicode(), $startPosition, $token->end())
                     : new LiteralNode($token->value, $startPosition, $token->end());
-            case TokenType::CharType:
+            case TokenType::CharType():
                 return new CharTypeNode($token->value, $startPosition, $token->end());
-            case TokenType::ControlChar:
+            case TokenType::ControlChar():
                 return new ControlCharNode(
                     $token->value,
                     CodePointReader::fromControlChar($token->value),
                     $startPosition,
                     $token->end(),
                 );
-            case TokenType::UnicodeProp:
+            case TokenType::UnicodeProp():
                 return new UnicodePropNode(
                     $token->value,
                     strncmp($token->value, '{', strlen('{')) === 0,
@@ -174,12 +182,12 @@ final class ParseState
         $startPosition = $this->stream->previous()->position;
 
         $comment = '';
-        while (!$this->stream->isAtEnd() && !$this->stream->check(TokenType::GroupClose)) {
+        while (!$this->stream->isAtEnd() && !$this->stream->check(TokenType::GroupClose())) {
             $comment .= $this->sourceTextOf($this->stream->current());
             $this->stream->advance();
         }
 
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close comment', ErrorCode::CommentUnclosed);
+        $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected ) to close comment', ErrorCode::CommentUnclosed());
 
         return new CommentNode($comment, $startPosition, $endToken->position + 1);
     }
@@ -190,14 +198,14 @@ final class ParseState
     public function skipEmptyQuotes(): void
     {
         while (true) {
-            if ($this->stream->match(TokenType::QuoteModeEnd)) {
+            if ($this->stream->match(TokenType::QuoteModeEnd())) {
                 $this->inQuoteMode = false;
 
                 continue;
             }
 
-            if ($this->stream->check(TokenType::QuoteModeStart)
-                && TokenType::QuoteModeEnd === $this->stream->peek()->type) {
+            if ($this->stream->check(TokenType::QuoteModeStart())
+                && TokenType::QuoteModeEnd() === $this->stream->peek()->type) {
                 $this->stream->advance();
                 $this->stream->advance();
 
@@ -220,7 +228,7 @@ final class ParseState
 
         while (
             !$this->stream->isAtEnd()
-            && $this->stream->check(TokenType::Literal)
+            && $this->stream->check(TokenType::Literal())
             && $predicate($this->stream->current()->value)
         ) {
             $value .= $this->stream->current()->value;
@@ -235,7 +243,7 @@ final class ParseState
      */
     public function isLiteralDigitToken(): bool
     {
-        return $this->stream->check(TokenType::Literal) && Ascii::isDigit($this->stream->current()->value);
+        return $this->stream->check(TokenType::Literal()) && Ascii::isDigit($this->stream->current()->value);
     }
 
     /**
@@ -243,7 +251,7 @@ final class ParseState
      */
     public function isLiteralAlphaToken(): bool
     {
-        return $this->stream->check(TokenType::Literal) && Ascii::isAlpha($this->stream->current()->value);
+        return $this->stream->check(TokenType::Literal()) && Ascii::isAlpha($this->stream->current()->value);
     }
 
     /**
@@ -297,17 +305,17 @@ final class ParseState
     private function charLiteral(Token $token, $type, int $startPosition): CharLiteralNode
     {
         switch ($type) {
-            case TokenType::Unicode:
-                [$representation, $charType] = [$token->value, CharLiteralType::Unicode];
+            case TokenType::Unicode():
+                [$representation, $charType] = [$token->value, CharLiteralType::Unicode()];
                 break;
-            case TokenType::UnicodeNamed:
-                [$representation, $charType] = ['\\N{'.$token->value.'}', CharLiteralType::UnicodeNamed];
+            case TokenType::UnicodeNamed():
+                [$representation, $charType] = ['\\N{'.$token->value.'}', CharLiteralType::UnicodeNamed()];
                 break;
-            case TokenType::Octal:
-                [$representation, $charType] = [$token->value, CharLiteralType::Octal];
+            case TokenType::Octal():
+                [$representation, $charType] = [$token->value, CharLiteralType::Octal()];
                 break;
-            case TokenType::OctalLegacy:
-                [$representation, $charType] = ['\\'.$token->value, CharLiteralType::OctalLegacy];
+            case TokenType::OctalLegacy():
+                [$representation, $charType] = ['\\'.$token->value, CharLiteralType::OctalLegacy()];
                 break;
             default:
                 throw new \LogicException('Unsupported character literal token type.');

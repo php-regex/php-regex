@@ -215,7 +215,7 @@ final class PatternLayout
      */
     public static function isSetting(GroupNode $node, ?string $flags = null): bool
     {
-        return GroupType::InlineFlags === $node->type
+        return GroupType::InlineFlags() === $node->type
             && $node->getEndPosition() - $node->getStartPosition() === \strlen($flags ?? $node->flags ?? '') + 3;
     }
 

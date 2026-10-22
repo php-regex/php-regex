@@ -207,15 +207,15 @@ final class PcreTarget
      */
     public function supports($feature): bool
     {
-        if (isset(self::$supported[$this->release][$feature])) {
-            return self::$supported[$this->release][$feature];
+        if (isset(self::$supported[$this->release][$feature->name])) {
+            return self::$supported[$this->release][$feature->name];
         }
 
         StaticCaches::register(self::class, static function (): void {
             self::$supported = [];
         });
 
-        return self::$supported[$this->release][$feature] = $this->pcreAtLeast(PcreFeature::release($feature));
+        return self::$supported[$this->release][$feature->name] = $this->pcreAtLeast($feature->release());
     }
 
     /**
@@ -228,7 +228,7 @@ final class PcreTarget
      */
     public function faultOffset(int $offset, int $shift = 1): int
     {
-        return $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? $offset : $offset - $shift;
+        return $this->supports(PcreFeature::ErrorOffsetPastTheFault()) ? $offset : $offset - $shift;
     }
 
     /**

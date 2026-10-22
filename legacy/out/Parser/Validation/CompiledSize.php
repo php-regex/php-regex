@@ -182,7 +182,7 @@ final class CompiledSize
         $this->unicodeFlag = strpos($regex->flags, 'u') !== false;
         $this->caseless = strpos($regex->flags, 'i') !== false || strpos($source, '(?') !== false;
         $this->ucp = $this->unicodeFlag || strpos($source, 'UCP') !== false;
-        $this->mayWrapCaptures = !$target->supports(PcreFeature::GroupHoldingItsOwnReferenceBacktracks) && 1 === LibraryPcre::match('/\\\\[1-9gk]|\\(\\?P=/', $source);
+        $this->mayWrapCaptures = !$target->supports(PcreFeature::GroupHoldingItsOwnReferenceBacktracks()) && 1 === LibraryPcre::match('/\\\\[1-9gk]|\\(\\?P=/', $source);
         $this->asciiOptions = 1 === LibraryPcre::match('/\(\?[\^a-zA-Z-]*a/', $source);
     }
 
@@ -230,13 +230,13 @@ final class CompiledSize
     public function errorOffset(): int
     {
         $end = \strlen($this->regex->source ?? '');
-        if (!$this->target->supports(PcreFeature::TooLargeAtPatternStart)) {
+        if (!$this->target->supports(PcreFeature::TooLargeAtPatternStart())) {
             return $end;
         }
 
         // On 10.47 a class whose lists pass the limit as it is compiled is
         // refused by a check that sets no offset.
-        if (!$this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd)) {
+        if (!$this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd())) {
             $length = $this->length();
             $length->passesTheLimit($this->regex->pattern);
 
@@ -446,12 +446,12 @@ final class CompiledSize
 
     private function groupFrameCeiling(GroupNode $node): int
     {
-        $capture = GroupType::Capturing === $node->type || GroupType::Named === $node->type;
+        $capture = GroupType::Capturing() === $node->type || GroupType::Named() === $node->type;
         $branches = $node->child instanceof AlternationNode ? \count($node->child->alternatives) : 1;
 
         return CompiledLength::BRACKETS + ($capture ? 2 + ($this->mayWrapCaptures ? CompiledLength::BRACKETS : 0) : 0)
-            + (\in_array($node->type, [GroupType::LookbehindPositive, GroupType::LookbehindNegative], true) ? 5 * $branches : 0)
-            + (GroupType::ScanSubstring === $node->type ? 5 * (\count($node->scannedGroups) + 1) : 0);
+            + (\in_array($node->type, [GroupType::LookbehindPositive(), GroupType::LookbehindNegative()], true) ? 5 * $branches : 0)
+            + (GroupType::ScanSubstring() === $node->type ? 5 * (\count($node->scannedGroups) + 1) : 0);
     }
 
     /**
@@ -574,7 +574,7 @@ final class CompiledSize
             return $copy + ($short ? 1 : 5) + ($item instanceof BackrefNode ? CompiledLength::BRACKETS : 0);
         }
 
-        $possessive = QuantifierType::Possessive === $node->type;
+        $possessive = QuantifierType::Possessive() === $node->type;
         if (!$item instanceof GroupNode && !$item instanceof ConditionalNode && !$item instanceof DefineNode && !$item instanceof ScriptRunNode
             && !$item instanceof SubroutineNode && !$item instanceof PcreVerbNode) {
             switch (true) {
@@ -729,7 +729,7 @@ final class CompiledSize
      */
     private function mayFoldToEveryByte(array $ranges, int $covered): bool
     {
-        if ($covered < 128 || !$this->target->supports(PcreFeature::ClassesCompiledFromMergedRanges)) {
+        if ($covered < 128 || !$this->target->supports(PcreFeature::ClassesCompiledFromMergedRanges())) {
             return false;
         }
 
@@ -806,10 +806,10 @@ final class CompiledSize
         switch (true) {
             case self::isLookaround($node) && 0 === $body:
                 return 0;
-            case GroupType::InlineFlags === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value && (null === $this->source || InlineFlags::setOptionsOnly($this->source, $node->startPosition)):
+            case GroupType::InlineFlags() === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value && (null === $this->source || InlineFlags::setOptionsOnly($this->source, $node->startPosition)):
                 return 0;
-            case GroupType::Capturing === $node->type:
-            case GroupType::Named === $node->type:
+            case GroupType::Capturing() === $node->type:
+            case GroupType::Named() === $node->type:
                 return CompiledLength::BRACKETS + 2;
             default:
                 return CompiledLength::BRACKETS;
@@ -824,10 +824,10 @@ final class CompiledSize
     private static function isLookaround(GroupNode $node): bool
     {
         return \in_array($node->type, [
-            GroupType::LookaheadPositive,
-            GroupType::LookaheadNegative,
-            GroupType::LookbehindPositive,
-            GroupType::LookbehindNegative,
+            GroupType::LookaheadPositive(),
+            GroupType::LookaheadNegative(),
+            GroupType::LookbehindPositive(),
+            GroupType::LookbehindNegative(),
         ], true);
     }
 

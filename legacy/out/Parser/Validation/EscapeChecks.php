@@ -248,13 +248,13 @@ final class EscapeChecks
 
         // Before PCRE2 10.45, "\N", "\z" or "\p" ending a range is refused as
         // the range, before what follows its letter is read.
-        $nEndsRange = !$this->target->supports(PcreFeature::ClassEscapeEndingRangeRefusedAsEscape);
-        $pcre2Ten32 = !$this->target->supports(PcreFeature::BadEscapeInClassStaysRefused);
+        $nEndsRange = !$this->target->supports(PcreFeature::ClassEscapeEndingRangeRefusedAsEscape());
+        $pcre2Ten32 = !$this->target->supports(PcreFeature::BadEscapeInClassStaysRefused());
         $afterRange = false;
         $rangeEnded = false;
         // Up to PCRE2 10.44 a quote after a class escape keeps a "-" after
         // it a member: "[\h\E-\pL]".
-        $quoteKeepsHyphen = !$this->target->supports(PcreFeature::EmptyQuoteSkippedAfterClassEscape);
+        $quoteKeepsHyphen = !$this->target->supports(PcreFeature::EmptyQuoteSkippedAfterClassEscape());
         $classEscapeThenQuote = false;
         $classEscape = false;
         $inClass = false;
@@ -271,38 +271,38 @@ final class EscapeChecks
                 // between them or not: "[a-c-\pL]", "[a-c\E-\pL]". So is a
                 // "-" that ends one, "[!--\pL]".
                 $endsRange = $afterRange;
-                $quote = \in_array($token->type, [TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true);
-                $afterRange = (TokenType::Range === $token->type && !$endsRange && !$rangeEnded && !$classEscapeThenQuote) || ($endsRange && $quote);
+                $quote = \in_array($token->type, [TokenType::QuoteModeStart(), TokenType::QuoteModeEnd()], true);
+                $afterRange = (TokenType::Range() === $token->type && !$endsRange && !$rangeEnded && !$classEscapeThenQuote) || ($endsRange && $quote);
                 // Without UTF a multibyte character ending a range leaves
                 // its last byte, which a "-" makes a range from.
                 $rangeEnded = $quote ? $rangeEnded || $endsRange
-                    : $endsRange && ($this->utf || !\in_array($token->type, [TokenType::Literal, TokenType::LiteralEscaped], true) || 1 === \strlen($token->value));
+                    : $endsRange && ($this->utf || !\in_array($token->type, [TokenType::Literal(), TokenType::LiteralEscaped()], true) || 1 === \strlen($token->value));
                 $classEscapeThenQuote = $quoteKeepsHyphen && $quote && ($classEscape || $classEscapeThenQuote);
-                $classEscape = \in_array($token->type, [TokenType::CharType, TokenType::PosixClass, TokenType::UnicodeProp], true);
+                $classEscape = \in_array($token->type, [TokenType::CharType(), TokenType::PosixClass(), TokenType::UnicodeProp()], true);
 
                 // "\N" ending a range is refused as the range, but for a "\N{"
                 // check_escape() refuses first.
-                if ($nEndsRange && $endsRange && TokenType::CharType === $token->type && 'N' === $token->value
+                if ($nEndsRange && $endsRange && TokenType::CharType() === $token->type && 'N' === $token->value
                     && ('{' !== ($source[$token->end()] ?? '') || (!NamedCharacterBrace::namesCodePoint($source, $token->end(), $this->target)
                         && null === NamedCharacterBrace::errorInClass($source, $token->end(), $this->target)))) {
                     continue;
                 }
 
-                if ($nEndsRange && $endsRange && \in_array($token->type, [TokenType::LiteralEscaped, TokenType::CharType, TokenType::UnicodeProp], true)
+                if ($nEndsRange && $endsRange && \in_array($token->type, [TokenType::LiteralEscaped(), TokenType::CharType(), TokenType::UnicodeProp()], true)
                     && BadEscape::endsRangeAsInvalidRange($source, $token->position, $pcre2Ten32)
                     && !($this->badEscapeIsLiteral && BadEscape::at($source, $token->position, true, $this->utf, $this->target, null, true))) {
                     $this->raise(
                         \sprintf('Invalid range in character class: "\%s" cannot end a range, at position %d.', $source[$token->position + 1], $token->position + 2),
                         $token->position + 2,
-                        ErrorCode::RangeInvalidBounds,
+                        ErrorCode::RangeInvalidBounds(),
                     );
                 }
 
                 switch ($token->type) {
-                    case TokenType::CharClassOpen:
+                    case TokenType::CharClassOpen():
                         $inClass = true;
                         break;
-                    case TokenType::CharClassClose:
+                    case TokenType::CharClassClose():
                         $inClass = false;
                         break;
                     default:
@@ -341,7 +341,7 @@ final class EscapeChecks
             $this->raise(
                 \sprintf('Unrecognized escape sequence "\%s".', $letter),
                 $this->target->faultOffset($end),
-                ErrorCode::EscapeUnrecognized,
+                ErrorCode::EscapeUnrecognized(),
             );
         }
 
@@ -353,17 +353,17 @@ final class EscapeChecks
             $this->raise(
                 \sprintf('Escape sequence \%s is invalid in a character class.', $letter),
                 $this->target->faultOffset($end),
-                ErrorCode::CharclassInvalidEscape,
+                ErrorCode::CharclassInvalidEscape(),
             );
         }
 
         // "\k" in a class is the letter from PCRE2 10.45, which no PHP release
         // bundles yet; the releases before refuse it, on the "k".
-        if ($inClass && 'k' === $letter && !$this->target->supports(PcreFeature::ClassBackslashKIsLetter)) {
+        if ($inClass && 'k' === $letter && !$this->target->supports(PcreFeature::ClassBackslashKIsLetter())) {
             $this->raise(
                 'Escape sequence \k is invalid in a character class before PCRE2 10.45.',
                 $start + 1,
-                ErrorCode::CharclassInvalidEscape,
+                ErrorCode::CharclassInvalidEscape(),
             );
         }
 
@@ -408,7 +408,7 @@ final class EscapeChecks
             $this->raise(
                 '\C is not allowed in Unicode mode: it matches a single byte.',
                 null === $lookbehindAt || PhpVersionGates::neverBackslashCUnderUtf($this->target->phpVersionId) ? $node->getEndPosition() : $lookbehindAt,
-                ErrorCode::EscapeSingleByteInUtf,
+                ErrorCode::EscapeSingleByteInUtf(),
                 'Use "." or drop the "u" flag.',
             );
         }
@@ -419,7 +419,7 @@ final class EscapeChecks
             $this->raise(
                 '\C is not allowed in a lookbehind in UTF-8 mode: the length of the lookbehind would not be known.',
                 $lookbehindAt,
-                ErrorCode::EscapeSingleByteInUtf,
+                ErrorCode::EscapeSingleByteInUtf(),
             );
         }
 
@@ -446,9 +446,9 @@ final class EscapeChecks
                 $this->raise(
                     (function () use ($braceError) {
                         switch ($braceError) {
-                            case ErrorCode::QuantifierTooBig:
+                            case ErrorCode::QuantifierTooBig():
                                 return 'Number too big in the count after \N: PCRE allows at most 65535 repetitions.';
-                            case ErrorCode::QuantifierInvalidRange:
+                            case ErrorCode::QuantifierInvalidRange():
                                 return 'Invalid count after \N: min > max.';
                             default:
                                 return 'PCRE does not support the escape "\N{" (\F, \L, \l, \N{name}, \U and \u are not supported), in a character class either.';
@@ -462,7 +462,7 @@ final class EscapeChecks
             $this->raise(
                 '\N is not supported in a character class.',
                 $node->getEndPosition(),
-                ErrorCode::CharclassInvalidEscape,
+                ErrorCode::CharclassInvalidEscape(),
             );
         }
 
@@ -470,7 +470,7 @@ final class EscapeChecks
             $this->raise(
                 \sprintf('Escape sequence \%s is invalid in a character class.', $node->value),
                 $this->target->faultOffset($node->getEndPosition()),
-                ErrorCode::CharclassInvalidEscape,
+                ErrorCode::CharclassInvalidEscape(),
             );
         }
     }
@@ -484,12 +484,12 @@ final class EscapeChecks
         // "\N{name}": PCRE2 refuses a character name, whatever it names, on
         // the "{", past it from PCRE2 10.47; only "\N{U+...}" is a code point,
         // and from 10.43 "\N{ U+...}": before, a space makes "\N{" a name.
-        $padding = $this->target->supports(PcreFeature::PaddedBracedEscapes) ? '[ \t]*+' : '';
-        if (CharLiteralType::UnicodeNamed === $node->type
+        $padding = $this->target->supports(PcreFeature::PaddedBracedEscapes()) ? '[ \t]*+' : '';
+        if (CharLiteralType::UnicodeNamed() === $node->type
             && 1 !== LibraryPcre::match('/^\\\\N\{'.$padding.'U\+/', $node->originalRepresentation)) {
             // Before PCRE2 10.37 its digits are read as a count first.
-            if (!$this->target->supports(PcreFeature::LargeOpenCountIsText) && null !== RepeatCount::overflowBeforeTen37($node->originalRepresentation, 2)) {
-                $this->raise('Number too big in the count after \N: PCRE allows at most 65535 repetitions.', $node->startPosition + 2, ErrorCode::QuantifierTooBig);
+            if (!$this->target->supports(PcreFeature::LargeOpenCountIsText()) && null !== RepeatCount::overflowBeforeTen37($node->originalRepresentation, 2)) {
+                $this->raise('Number too big in the count after \N: PCRE allows at most 65535 repetitions.', $node->startPosition + 2, ErrorCode::QuantifierTooBig());
             }
 
             $this->raiseUnsupportedEscape('N{', $this->target->faultOffset($node->startPosition + 3));
@@ -497,7 +497,7 @@ final class EscapeChecks
 
         // "\N{U+...}" outside UTF mode is refused before its braces are read:
         // "\N{U+1 }" fails on the mode on every release, padding or not.
-        if (CharLiteralType::UnicodeNamed === $node->type) {
+        if (CharLiteralType::UnicodeNamed() === $node->type) {
             $this->validateUnicodeNamed($node);
         }
 
@@ -507,16 +507,16 @@ final class EscapeChecks
         }
 
         switch ($node->type) {
-            case CharLiteralType::Unicode:
+            case CharLiteralType::Unicode():
                 $this->validateUnicode($node);
                 break;
-            case CharLiteralType::Octal:
+            case CharLiteralType::Octal():
                 $this->validateOctal($node);
                 break;
-            case CharLiteralType::OctalLegacy:
+            case CharLiteralType::OctalLegacy():
                 $this->validateOctalLegacy($node);
                 break;
-            case CharLiteralType::UnicodeNamed:
+            case CharLiteralType::UnicodeNamed():
                 null;
                 break;
         }
@@ -529,7 +529,7 @@ final class EscapeChecks
             $this->raise(
                 \sprintf('Code point "%s" is a surrogate, which is not allowed in Unicode mode.', $node->originalRepresentation),
                 $node->getEndPosition() - 1,
-                ErrorCode::UnicodeSurrogate,
+                ErrorCode::UnicodeSurrogate(),
             );
         }
     }
@@ -542,7 +542,7 @@ final class EscapeChecks
     {
         // Before PCRE2 10.40, a name is looked up as written in a table of
         // its own: no running engine since then answers for it.
-        if (null !== $this->source && !$this->target->supports(PcreFeature::LoosePropertyNames)) {
+        if (null !== $this->source && !$this->target->supports(PcreFeature::LoosePropertyNames())) {
             $this->validateExactPropertyName($node, $this->source);
 
             return;
@@ -573,7 +573,7 @@ final class EscapeChecks
                 $this->raise(
                     \sprintf('Invalid or unsupported Unicode property: \\%s: no property name holds a "^".', substr($this->source ?? '', $node->startPosition + 1, $node->getEndPosition() - $node->startPosition - 1)),
                     $node->getEndPosition(),
-                    ErrorCode::UnicodePropertyInvalid,
+                    ErrorCode::UnicodePropertyInvalid(),
                 );
             }
 
@@ -597,7 +597,7 @@ final class EscapeChecks
                 $this->raise(
                     \sprintf('Invalid or unsupported Unicode property: \\%s. It needs PCRE2 %s, and the target is PCRE2 %s.', ltrim($key, '\\'), $needs, $this->target->pcreVersion),
                     $node->getEndPosition(),
-                    ErrorCode::UnicodePropertyInvalid,
+                    ErrorCode::UnicodePropertyInvalid(),
                     \sprintf('Target a PHP whose PCRE2 is %s or later, or use another property.', $needs),
                 );
             }
@@ -616,7 +616,7 @@ final class EscapeChecks
                 $this->raise(
                     \sprintf('Invalid or unsupported Unicode property: \\%s.', $key),
                     $node->getEndPosition(),
-                    ErrorCode::UnicodePropertyInvalid,
+                    ErrorCode::UnicodePropertyInvalid(),
                     \sprintf('Target a PHP whose PCRE2 is %s or later, or use another property.', $needs),
                 );
             }
@@ -628,7 +628,7 @@ final class EscapeChecks
             $this->raise(
                 \sprintf('Invalid or unsupported Unicode property: \\%s.', $key).(null === $hint ? '' : ' '.$hint),
                 $node->getEndPosition(),
-                ErrorCode::UnicodePropertyInvalid,
+                ErrorCode::UnicodePropertyInvalid(),
                 $hint,
             );
         }
@@ -641,15 +641,15 @@ final class EscapeChecks
      */
     private function token(Token $token, string $source, bool $inClass, bool $endsRange): void
     {
-        if (TokenType::UnicodeNamed === $token->type) {
+        if (TokenType::UnicodeNamed() === $token->type) {
             $this->validateNamedCharacterBraces($source, $token->position + 2);
         }
 
-        if (TokenType::CharType === $token->type) {
+        if (TokenType::CharType() === $token->type) {
             $this->charType(new CharTypeNode($token->value, $token->position, $token->end()), $inClass);
         }
 
-        if (TokenType::UnicodeProp === $token->type) {
+        if (TokenType::UnicodeProp() === $token->type) {
             $this->property(new UnicodePropNode(
                 $token->value,
                 strncmp($token->value, '{', strlen('{')) === 0,
@@ -660,7 +660,7 @@ final class EscapeChecks
         }
 
         $letter = $token->value;
-        if (TokenType::LiteralEscaped === $token->type && 1 === \strlen($letter) && Ascii::isAlpha($letter)
+        if (TokenType::LiteralEscaped() === $token->type && 1 === \strlen($letter) && Ascii::isAlpha($letter)
             && '\\'.$letter === (string) substr($source, $token->position, 2)) {
             $this->escapedLetter($letter, $token->position, $inClass, $endsRange);
         }
@@ -706,7 +706,7 @@ final class EscapeChecks
             $this->raise(
                 \sprintf('Invalid or unsupported Unicode property: \\%s. It needs PCRE2 %s, and the target is PCRE2 %s.', substr($source, $node->startPosition + 1, $end - $node->startPosition - 1), $needs, $this->target->pcreVersion),
                 $end,
-                ErrorCode::UnicodePropertyInvalid,
+                ErrorCode::UnicodePropertyInvalid(),
                 \sprintf('Target a PHP whose PCRE2 is %s or later, or use another property.', $needs),
             );
         }
@@ -716,7 +716,7 @@ final class EscapeChecks
         $this->raise(
             \sprintf('Invalid or unsupported Unicode property: \\%s. PCRE2 %s knows a property by one exact name only.', substr($source, $node->startPosition + 1, $end - $node->startPosition - 1), $this->target->pcreVersion),
             $end,
-            ErrorCode::UnicodePropertyInvalid,
+            ErrorCode::UnicodePropertyInvalid(),
             null === $spelling
                 ? 'Spell the name as PCRE2 10.39 lists it, as "Greek" or "Lu", or target a PHP whose PCRE2 is 10.40 or later.'
                 : \sprintf('Write \\%s{%s%s}.', $letter, $negated ? '^' : '', $spelling),
@@ -777,7 +777,7 @@ final class EscapeChecks
         $caret = false;
         if (strncmp($name, '^', strlen('^')) === 0) {
             [$caret, $name] = [true, (string) substr($name, 1)];
-        } elseif ($this->target->supports(PcreFeature::MalformedPropertyName) && null !== ($after = $this->nameAfterSkippedCaret($node))) {
+        } elseif ($this->target->supports(PcreFeature::MalformedPropertyName()) && null !== ($after = $this->nameAfterSkippedCaret($node))) {
             [$caret, $name] = [true, $after];
         }
 
@@ -888,7 +888,7 @@ final class EscapeChecks
             $this->raise(
                 \sprintf('Invalid Unicode codepoint "%s" (out of range).', $node->originalRepresentation),
                 $node->startPosition + $overflow,
-                ErrorCode::UnicodeOutOfRange,
+                ErrorCode::UnicodeOutOfRange(),
             );
         }
 
@@ -897,7 +897,7 @@ final class EscapeChecks
             $this->raise(
                 \sprintf('Invalid code point "%s": without the "u" flag, a character is at most \xFF.', $node->originalRepresentation),
                 $node->startPosition + $overflow,
-                ErrorCode::OctalOutOfRange,
+                ErrorCode::OctalOutOfRange(),
                 'Add the "u" flag, or use a code point up to \xFF.',
             );
         }
@@ -923,7 +923,7 @@ final class EscapeChecks
             $this->raise(
                 \sprintf($this->utf ? 'Invalid octal codepoint "%s" (out of Unicode range).' : 'Invalid octal codepoint "%s".', $node->originalRepresentation),
                 $node->startPosition + $overflow,
-                ErrorCode::OctalOutOfRange,
+                ErrorCode::OctalOutOfRange(),
             );
         }
     }
@@ -939,7 +939,7 @@ final class EscapeChecks
      */
     private function codePointOverflow(string $text, int $at, string $digits): ?int
     {
-        $padded = $this->target->supports(PcreFeature::PaddedBracedEscapes);
+        $padded = $this->target->supports(PcreFeature::PaddedBracedEscapes());
         $at += $padded ? strspn($text, self::BRACE_PADDING, $at) : 0;
         $base = self::HEX_DIGITS === $digits ? 16 : 8;
         $max = $this->utf ? 0x10FFFF : 0xFF;
@@ -966,7 +966,7 @@ final class EscapeChecks
                 \sprintf('Invalid legacy octal codepoint "%s" (out of range).', $node->originalRepresentation),
                 // PCRE reads the whole escape first, in every release.
                 $node->getEndPosition(),
-                ErrorCode::OctalOutOfRange,
+                ErrorCode::OctalOutOfRange(),
             );
         }
     }
@@ -976,7 +976,7 @@ final class EscapeChecks
         // Extract the Unicode name from the representation. Unreachable from
         // a parsed pattern: the parser always spells a non-empty "\N{...}".
         if (1 !== LibraryPcre::match('/^\\\\N\\{(.+)}$/', $node->originalRepresentation, $matches)) {
-            throw new ParserException("Invalid Unicode named character format: {$node->originalRepresentation}", ErrorCode::EscapeUnsupported, $node->getStartPosition(), $this->pattern);
+            throw new ParserException("Invalid Unicode named character format: {$node->originalRepresentation}", ErrorCode::EscapeUnsupported(), $node->getStartPosition(), $this->pattern);
         }
 
         $name = $matches[1];
@@ -988,8 +988,8 @@ final class EscapeChecks
                 \sprintf('\N{%s} is only supported in Unicode mode; add the "u" flag.', $name),
                 // From PCRE2 10.47, PCRE reads the escape to its closing
                 // brace before it looks at the mode; before, past the "\N".
-                $this->target->supports(PcreFeature::NamedCodePointReadBeforeModeCheck) ? $node->getEndPosition() : $node->startPosition + 2,
-                ErrorCode::UnicodeNamedRequiresUtf,
+                $this->target->supports(PcreFeature::NamedCodePointReadBeforeModeCheck()) ? $node->getEndPosition() : $node->startPosition + 2,
+                ErrorCode::UnicodeNamedRequiresUtf(),
             );
         }
 
@@ -1000,7 +1000,7 @@ final class EscapeChecks
             $this->raise(
                 \sprintf('Invalid Unicode codepoint "%s" (out of range).', $node->originalRepresentation),
                 $node->startPosition + $overflow,
-                ErrorCode::UnicodeOutOfRange,
+                ErrorCode::UnicodeOutOfRange(),
             );
         }
 
@@ -1009,7 +1009,7 @@ final class EscapeChecks
         // parsed pattern: characterLiteral() refuses every "\N{...}" that is
         // no "U+" code point before it gets here.
         if (-1 === $node->codePoint) {
-            throw new ParserException("Invalid Unicode character name: {$name}", ErrorCode::EscapeUnsupported, $node->getStartPosition() + 3, $this->pattern);
+            throw new ParserException("Invalid Unicode character name: {$name}", ErrorCode::EscapeUnsupported(), $node->getStartPosition() + 3, $this->pattern);
         }
     }
 
@@ -1022,19 +1022,19 @@ final class EscapeChecks
     {
         $representation = $node->originalRepresentation;
         $space = strcspn($representation, " \t");
-        if ($space === \strlen($representation) || $this->target->supports(PcreFeature::PaddedBracedEscapes)) {
+        if ($space === \strlen($representation) || $this->target->supports(PcreFeature::PaddedBracedEscapes())) {
             return;
         }
 
         switch (true) {
-            case CharLiteralType::Octal === $node->type:
-                [$code, $escape] = [ErrorCode::OctalInvalidDigit, '\o{}'];
+            case CharLiteralType::Octal() === $node->type:
+                [$code, $escape] = [ErrorCode::OctalInvalidDigit(), '\o{}'];
                 break;
-            case CharLiteralType::UnicodeNamed === $node->type:
-                [$code, $escape] = [ErrorCode::UnicodeInvalidDigit, '\N{U+}'];
+            case CharLiteralType::UnicodeNamed() === $node->type:
+                [$code, $escape] = [ErrorCode::UnicodeInvalidDigit(), '\N{U+}'];
                 break;
             default:
-                [$code, $escape] = [ErrorCode::UnicodeInvalidDigit, '\x{}'];
+                [$code, $escape] = [ErrorCode::UnicodeInvalidDigit(), '\x{}'];
                 break;
         }
 
@@ -1058,7 +1058,7 @@ final class EscapeChecks
             $this->raise(
                 \sprintf('Invalid or unsupported Unicode property: \\%s{}.', $letter),
                 $position + 2,
-                ErrorCode::UnicodePropertyInvalid,
+                ErrorCode::UnicodePropertyInvalid(),
             );
         }
 
@@ -1096,7 +1096,7 @@ final class EscapeChecks
         $this->raise(
             \sprintf('Malformed \\%s sequence: a property letter or a braced name must follow it.', $letter),
             $offset,
-            ErrorCode::UnicodePropertyMalformed,
+            ErrorCode::UnicodePropertyMalformed(),
             \sprintf('Name a property, as in "\\%1$sL" or "\\%1$s{Lu}", or drop the backslash for a literal "%1$s".', $letter),
         );
     }
@@ -1114,7 +1114,7 @@ final class EscapeChecks
 
         // Before PCRE2 10.40, the name is read as written, spaces included,
         // into a buffer of PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40 bytes.
-        if (!$this->target->supports(PcreFeature::LoosePropertyNames)) {
+        if (!$this->target->supports(PcreFeature::LoosePropertyNames())) {
             $start = $brace + 1 + ('^' === ($source[$brace + 1] ?? '') ? 1 : 0);
             $close = strpos($source, '}', $start);
             if (false !== $close && $close - $start < PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40) {
@@ -1143,7 +1143,7 @@ final class EscapeChecks
             }
 
             // Up to PCRE2 10.44 only a "^" right after the brace negates.
-            if (0 === $read && !$negated && '^' === $char && ($position === $brace + 2 || $this->target->supports(PcreFeature::MalformedPropertyName))) {
+            if (0 === $read && !$negated && '^' === $char && ($position === $brace + 2 || $this->target->supports(PcreFeature::MalformedPropertyName()))) {
                 $negated = true;
 
                 continue;
@@ -1155,7 +1155,7 @@ final class EscapeChecks
 
             // Names hold "&" to "z" only; 10.45 and 10.46 stop past the
             // first byte of a longer UTF-8 character, 10.47 past all of it.
-            if (($char < '&' || $char > 'z') && $this->target->supports(PcreFeature::MalformedPropertyName)) {
+            if (($char < '&' || $char > 'z') && $this->target->supports(PcreFeature::MalformedPropertyName())) {
                 return $position;
             }
 
@@ -1176,11 +1176,11 @@ final class EscapeChecks
             $this->raise(
                 'Missing opening brace after \o.',
                 $position >= \strlen($source) ? $this->target->faultOffset($position) : $position,
-                ErrorCode::OctalMissingBrace,
+                ErrorCode::OctalMissingBrace(),
             );
         }
 
-        $this->validateBracedDigits($source, $position + 1, self::OCTAL_DIGITS, true, ErrorCode::OctalInvalidDigit, '\o{}');
+        $this->validateBracedDigits($source, $position + 1, self::OCTAL_DIGITS, true, ErrorCode::OctalInvalidDigit(), '\o{}');
     }
 
     /**
@@ -1189,12 +1189,12 @@ final class EscapeChecks
     private function validateHexBraces(string $source, int $position): void
     {
         if ('{' === ($source[$position] ?? '')) {
-            $this->validateBracedDigits($source, $position + 1, self::HEX_DIGITS, true, ErrorCode::UnicodeInvalidDigit, '\x{}');
-        } elseif ($this->target->supports(PcreFeature::HexEscapeNeedsDigits)) {
+            $this->validateBracedDigits($source, $position + 1, self::HEX_DIGITS, true, ErrorCode::UnicodeInvalidDigit(), '\x{}');
+        } elseif ($this->target->supports(PcreFeature::HexEscapeNeedsDigits())) {
             // A "\x" with no digit is "\x00" up to PCRE2 10.44 and an error
             // from 10.45, which no PHP release bundles yet: only a newer
             // linked PCRE2 refuses it.
-            $this->raise('Digits missing after \x.', $position, ErrorCode::EscapeDigitsMissing);
+            $this->raise('Digits missing after \x.', $position, ErrorCode::EscapeDigitsMissing());
         }
     }
 
@@ -1222,12 +1222,12 @@ final class EscapeChecks
                 $end += strspn($source, self::BRACE_PADDING, $end);
                 $this->raise(
                     '\N{U+...} is only supported in Unicode mode; add the "u" flag.',
-                    $this->target->supports(PcreFeature::NamedCodePointReadBeforeModeCheck) ? ('}' === ($source[$end] ?? '') ? $end + 1 : $end) : $position,
-                    ErrorCode::UnicodeNamedRequiresUtf,
+                    $this->target->supports(PcreFeature::NamedCodePointReadBeforeModeCheck()) ? ('}' === ($source[$end] ?? '') ? $end + 1 : $end) : $position,
+                    ErrorCode::UnicodeNamedRequiresUtf(),
                 );
             }
 
-            $this->validateBracedDigits($source, $digits, self::HEX_DIGITS, false, ErrorCode::UnicodeInvalidDigit, '\N{U+}');
+            $this->validateBracedDigits($source, $digits, self::HEX_DIGITS, false, ErrorCode::UnicodeInvalidDigit(), '\N{U+}');
 
             // Unreachable: a well-formed "\N{U+...}", "\N{U+ }" included, is
             // a token of its own, so the digits above are always refused.
@@ -1236,8 +1236,8 @@ final class EscapeChecks
 
         // Before PCRE2 10.37 the digits are read as a count first, and one
         // past 65535 refused past the "\N", whatever follows it.
-        if (!$this->target->supports(PcreFeature::LargeOpenCountIsText) && null !== RepeatCount::overflowBeforeTen37($source, $position)) {
-            $this->raise('Number too big in the count after \N: PCRE allows at most 65535 repetitions.', $position, ErrorCode::QuantifierTooBig);
+        if (!$this->target->supports(PcreFeature::LargeOpenCountIsText()) && null !== RepeatCount::overflowBeforeTen37($source, $position)) {
+            $this->raise('Number too big in the count after \N: PCRE allows at most 65535 repetitions.', $position, ErrorCode::QuantifierTooBig());
         }
 
         if (1 !== LibraryPcre::match(self::REPEAT_COUNT, $source, $matches, 0, $position)) {
@@ -1251,7 +1251,7 @@ final class EscapeChecks
      */
     private function startsNamedCodePoint(string $source, int $position): bool
     {
-        $padding = $this->target->supports(PcreFeature::PaddedBracedEscapes) ? strspn($source, self::BRACE_PADDING, $position + 1) : 0;
+        $padding = $this->target->supports(PcreFeature::PaddedBracedEscapes()) ? strspn($source, self::BRACE_PADDING, $position + 1) : 0;
 
         return '{' === ($source[$position] ?? '') && 'U+' === (string) substr($source, $position + 1 + $padding, 2);
     }
@@ -1276,7 +1276,7 @@ final class EscapeChecks
     ): void {
         $length = \strlen($source);
         // Before PCRE2 10.43 a space or a tab is no digit, refused on it.
-        $padded = $this->target->supports(PcreFeature::PaddedBracedEscapes);
+        $padded = $this->target->supports(PcreFeature::PaddedBracedEscapes());
 
         if ($leadingPadding) {
             $position += $padded ? strspn($source, self::BRACE_PADDING, $position) : 0;
@@ -1310,7 +1310,7 @@ final class EscapeChecks
             $this->raise(
                 \sprintf('Digits missing in %s.', $escape),
                 $position,
-                ErrorCode::EscapeDigitsMissing,
+                ErrorCode::EscapeDigitsMissing(),
             );
         }
 
@@ -1320,7 +1320,7 @@ final class EscapeChecks
             $this->raise(
                 \sprintf('Code point too large in %s.', $escape),
                 $overflow,
-                '\o{}' === $escape || ('\x{}' === $escape && !$this->utf) ? ErrorCode::OctalOutOfRange : string::UnicodeOutOfRange,
+                '\o{}' === $escape || ('\x{}' === $escape && !$this->utf) ? ErrorCode::OctalOutOfRange() : ErrorCode::UnicodeOutOfRange(),
             );
         }
 
@@ -1333,11 +1333,11 @@ final class EscapeChecks
         // the spaces and tabs after its digits; no larger than U+10FFFF, or
         // refused above.
         $codePoint = (int) ('\o{}' === $escape ? octdec($value) : hexdec($value));
-        if ($this->utf && $codePoint >= 0xD800 && $codePoint <= 0xDFFF && $this->target->supports(PcreFeature::SurrogateRefusedBeforeBrace)) {
+        if ($this->utf && $codePoint >= 0xD800 && $codePoint <= 0xDFFF && $this->target->supports(PcreFeature::SurrogateRefusedBeforeBrace())) {
             $this->raise(
                 \sprintf('Invalid code point in %s: a surrogate, which UTF-8 cannot hold.', $escape),
                 $position,
-                ErrorCode::UnicodeSurrogate,
+                ErrorCode::UnicodeSurrogate(),
             );
         }
 
@@ -1367,7 +1367,7 @@ final class EscapeChecks
     {
         $length = \strlen($source);
         if ($position >= $length) {
-            return $this->target->supports(PcreFeature::UnclosedBraceAtPatternEnd) ? $length : $this->target->faultOffset($length + 1, 2);
+            return $this->target->supports(PcreFeature::UnclosedBraceAtPatternEnd()) ? $length : $this->target->faultOffset($length + 1, 2);
         }
 
         return $this->target->faultOffset($position + $this->characterLengthAt($source, $position), $this->characterLengthAt($source, $position));
@@ -1381,7 +1381,7 @@ final class EscapeChecks
         $this->raise(
             \sprintf('PCRE does not support the escape "\%s" (\F, \L, \l, \N{name}, \U and \u are not supported).', $escape),
             $position,
-            ErrorCode::EscapeUnsupported,
+            ErrorCode::EscapeUnsupported(),
         );
     }
 

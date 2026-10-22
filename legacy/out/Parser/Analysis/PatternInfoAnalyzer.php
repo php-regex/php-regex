@@ -102,7 +102,7 @@ final class PatternInfoAnalyzer
         if (!$validation->isValid) {
             [$pattern] = PatternParser::extractPatternAndFlags($regex, $parser->target());
 
-            throw new SemanticErrorException((string) $validation->error, $validation->errorCode ?? ErrorCode::InternalUnexpectedState, $validation->offset, $pattern, null, $validation->hint);
+            throw new SemanticErrorException((string) $validation->error, $validation->errorCode ?? ErrorCode::InternalUnexpectedState(), $validation->offset, $pattern, null, $validation->hint);
         }
 
         return (new self($parser->target()))->analyze($ast);
@@ -187,7 +187,7 @@ final class PatternInfoAnalyzer
         $waiting = $outermost;
         $measure = new LookbehindLength($groups, $unicode, true, static function (GroupNode $lookaround) use (&$waiting): void {
             self::collectLookbehinds($lookaround, $waiting);
-        }, null, null, $target->supports(PcreFeature::LookbehindInLookaheadMeasured), $target->supports(PcreFeature::DefineSkippedInLookbehind), true, !$target->supports(PcreFeature::LookbehindLengthOverflowRefused));
+        }, null, null, $target->supports(PcreFeature::LookbehindInLookaheadMeasured()), $target->supports(PcreFeature::DefineSkippedInLookbehind()), true, !$target->supports(PcreFeature::LookbehindLengthOverflowRefused()));
 
         $max = 0;
         $measured = [];
@@ -210,7 +210,7 @@ final class PatternInfoAnalyzer
 
         // Before PCRE2 10.34 every branch measured counts, of a group in a
         // lookbehind or one it calls too.
-        return $target->supports(PcreFeature::LongestLookbehindCountsItsBranchesOnly) ? $max : max($max, $measure->longestBranch());
+        return $target->supports(PcreFeature::LongestLookbehindCountsItsBranchesOnly()) ? $max : max($max, $measure->longestBranch());
     }
 
     /**
@@ -237,7 +237,7 @@ final class PatternInfoAnalyzer
      */
     private static function isLookbehind(NodeInterface $node): bool
     {
-        return $node instanceof GroupNode && (GroupType::LookbehindPositive === $node->type || GroupType::LookbehindNegative === $node->type);
+        return $node instanceof GroupNode && (GroupType::LookbehindPositive() === $node->type || GroupType::LookbehindNegative() === $node->type);
     }
 
     /**
@@ -332,7 +332,7 @@ final class PatternInfoAnalyzer
     {
         switch (true) {
             case $hir instanceof AssertionHir:
-                return (AssertionKind::SubjectStart === $hir->kind || AssertionKind::MatchStart === $hir->kind)
+                return (AssertionKind::SubjectStart() === $hir->kind || AssertionKind::MatchStart() === $hir->kind)
                     && !$groupBefore($hir->startPosition);
             case $hir instanceof ConcatHir:
                 return self::startsAnchored($hir->parts[0], $groupBefore);
@@ -382,7 +382,7 @@ final class PatternInfoAnalyzer
      */
     private static function isOptionSetting(GroupNode $node, string $source): bool
     {
-        return GroupType::InlineFlags === $node->type
+        return GroupType::InlineFlags() === $node->type
             && ')' === ($source[$node->getStartPosition() + 2 + \strlen((string) $node->flags)] ?? '');
     }
 
@@ -394,7 +394,7 @@ final class PatternInfoAnalyzer
     {
         switch (true) {
             case $hir instanceof AssertionHir:
-                return AssertionKind::SubjectEnd === $hir->kind;
+                return AssertionKind::SubjectEnd() === $hir->kind;
             case $hir instanceof ConcatHir:
                 return self::endsAnchored($hir->parts[\count($hir->parts) - 1]);
             case $hir instanceof AlternationHir:

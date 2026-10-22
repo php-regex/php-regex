@@ -63,13 +63,21 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
      * @var bool
      */
     private $unicode = false;
-    private const LOOKAROUNDS = [
-        GroupType::LookaheadPositive,
-        GroupType::LookaheadNegative,
-        GroupType::LookbehindPositive,
-        GroupType::LookbehindNegative,
-        GroupType::ScanSubstring,
+    private static function LOOKAROUNDS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [
+        GroupType::LookaheadPositive(),
+        GroupType::LookaheadNegative(),
+        GroupType::LookbehindPositive(),
+        GroupType::LookbehindNegative(),
+        GroupType::ScanSubstring(),
     ];
+        }
+
+        return $cache;
+    }
 
     /**
      * @param bool $unicode whether lengths count UTF-8 characters rather than
@@ -140,7 +148,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     public function visitGroup(GroupNode $node): array
     {
         // Lookarounds are zero-width assertions
-        if (\in_array($node->type, self::LOOKAROUNDS, true)) {
+        if (\in_array($node->type, self::LOOKAROUNDS(), true)) {
             return [0, 0];
         }
 

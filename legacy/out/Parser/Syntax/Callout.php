@@ -69,9 +69,9 @@ final class Callout
         if (null === $closing) {
             // "(?Cab)": a callout takes a number or a delimited string;
             // "(?C1x)": the number is read, and ")" is due after it.
-            $code = ErrorCode::CalloutInvalidDelimiter;
+            $code = ErrorCode::CalloutInvalidDelimiter();
             if (1 === LibraryPcre::match('/^\d++/', $value, $number)) {
-                $code = \strlen(ltrim($number[0], '0')) > 3 || (int) $number[0] > 255 ? ErrorCode::CalloutOutOfRange : string::CalloutUnclosed;
+                $code = \strlen(ltrim($number[0], '0')) > 3 || (int) $number[0] > 255 ? ErrorCode::CalloutOutOfRange() : ErrorCode::CalloutUnclosed();
             }
             $position = self::fault($pattern, $startPosition, $target)[0] ?? $startPosition + 4;
 
@@ -88,7 +88,7 @@ final class Callout
         if (1 !== LibraryPcre::match('/^.((?:[^'.$quoted.']|'.$quoted.$quoted.')*+)'.$quoted.'$/s', $value, $matches)) {
             // "(?C"a"b)": the string is closed, and ")" is due after it.
             $closed = 1 === LibraryPcre::match('/^.(?:[^'.$quoted.']|'.$quoted.$quoted.')*+'.$quoted.'/s', $value);
-            $code = $closed ? ErrorCode::CalloutUnclosed : string::CalloutUnclosedString;
+            $code = $closed ? ErrorCode::CalloutUnclosed() : ErrorCode::CalloutUnclosedString();
             $position = self::fault($pattern, $startPosition, $target)[0] ?? $startPosition;
 
             throw SyntaxErrorException::withContext(
@@ -110,7 +110,7 @@ final class Callout
      *
      * @param int $start the offset of the "(" of "(?C"
      *
-     * @return array{0: int, 1: string}|null
+     * @return array{0: int, 1: ErrorCode}|null
      */
     public static function fault(string $pattern, int $start, PcreTarget $target): ?array
     {
@@ -118,7 +118,7 @@ final class Callout
         $position = $start + 3;
 
         if ($position >= $length) {
-            return [$length, ErrorCode::GroupUnclosed];
+            return [$length, ErrorCode::GroupUnclosed()];
         }
 
         if (Ascii::isDigit($pattern[$position])) {
@@ -126,19 +126,19 @@ final class Callout
             while ($position < $length && Ascii::isDigit($pattern[$position])) {
                 $number = $number * 10 + (int) $pattern[$position++];
                 if ($number > 255) {
-                    return [$position, ErrorCode::CalloutOutOfRange];
+                    return [$position, ErrorCode::CalloutOutOfRange()];
                 }
             }
         } elseif (')' !== $pattern[$position]) {
             $closing = self::STRING_DELIMITERS[$pattern[$position]] ?? null;
             if (null === $closing) {
-                return [$target->faultOffset($position + 1), ErrorCode::CalloutInvalidDelimiter];
+                return [$target->faultOffset($position + 1), ErrorCode::CalloutInvalidDelimiter()];
             }
 
             $opening = $position;
             while (true) {
                 if (++$position >= $length) {
-                    return [$opening, ErrorCode::CalloutUnclosedString];
+                    return [$opening, ErrorCode::CalloutUnclosedString()];
                 }
 
                 // A doubled closing delimiter stands for itself.
@@ -148,7 +148,7 @@ final class Callout
             }
         }
 
-        return ')' === ($pattern[$position] ?? '') ? null : [$position, ErrorCode::CalloutUnclosed];
+        return ')' === ($pattern[$position] ?? '') ? null : [$position, ErrorCode::CalloutUnclosed()];
     }
 
     /**
@@ -158,13 +158,13 @@ final class Callout
     public static function problem($code): string
     {
         switch ($code) {
-            case ErrorCode::CalloutOutOfRange:
+            case ErrorCode::CalloutOutOfRange():
                 return 'the callout number is greater than 255';
-            case ErrorCode::CalloutInvalidDelimiter:
+            case ErrorCode::CalloutInvalidDelimiter():
                 return 'a callout takes a number, or a string opened by one of ` \' " ^ % # $ {';
-            case ErrorCode::CalloutUnclosedString:
+            case ErrorCode::CalloutUnclosedString():
                 return 'the callout string is not closed by its delimiter';
-            case ErrorCode::CalloutUnclosed:
+            case ErrorCode::CalloutUnclosed():
                 return '")" is expected after the callout argument';
             default:
                 return '")" is expected to close the callout';

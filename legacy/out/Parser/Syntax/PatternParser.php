@@ -42,7 +42,7 @@ final class PatternParser
         $len = \strlen($regex);
         if (0 === $len) {
             // No body, so no offset: offsets count from the body.
-            throw new ParserException('Regex is too short. It must include delimiters, e.g. "/abc/".', ErrorCode::PatternEmpty);
+            throw new ParserException('Regex is too short. It must include delimiters, e.g. "/abc/".', ErrorCode::PatternEmpty());
         }
 
         // PHP judges the delimiter before the length, so a lone letter is
@@ -62,11 +62,11 @@ final class PatternParser
                 $message .= \sprintf(' Try %s.', self::suggestPattern($regex));
             }
 
-            throw new ParserException($message, ErrorCode::DelimiterInvalid);
+            throw new ParserException($message, ErrorCode::DelimiterInvalid());
         }
 
         if (1 === $len) {
-            throw new ParserException('Regex is too short. It must include delimiters, e.g. "/abc/".', ErrorCode::DelimiterUnclosed);
+            throw new ParserException('Regex is too short. It must include delimiters, e.g. "/abc/".', ErrorCode::DelimiterUnclosed());
         }
 
         // Handle bracket delimiters style: (pattern), [pattern], {pattern}, <pattern>
@@ -132,7 +132,7 @@ final class PatternParser
             // only when built against PCRE2 10.43 or later; "e" left
             // in PHP 7.0.
             $allowedFlags = 'imsxADSUXJu'.($phpVersionId >= PhpVersionGates::NO_AUTO_CAPTURE_MODIFIER ? 'n' : '');
-            if ($phpVersionId >= PhpVersionGates::CASELESS_RESTRICT_MODIFIER && $target->supports(PcreFeature::CaselessRestrictModifier)) {
+            if ($phpVersionId >= PhpVersionGates::CASELESS_RESTRICT_MODIFIER && $target->supports(PcreFeature::CaselessRestrictModifier())) {
                 $allowedFlags .= 'r';
             }
             if ($phpVersionId < PhpVersionGates::EVAL_MODIFIER_REMOVED) {
@@ -151,7 +151,7 @@ final class PatternParser
                     'Unescaped delimiter "%1$s" at position %2$d ends the pattern early; what follows is read as modifiers. Escape it as "\\%1$s" or use another delimiter.',
                     $closingDelimiter,
                     $i - 1,
-                ), ErrorCode::DelimiterUnescaped, $i - 1, $regex, null, $i);
+                ), ErrorCode::DelimiterUnescaped(), $i - 1, $regex, null, $i);
             }
 
             $allowedPattern = '/^['.preg_quote($allowedFlags, '/').']*+$/';
@@ -168,7 +168,7 @@ final class PatternParser
                 }
 
                 if (strpos((string) $invalid, 'e') !== false) {
-                    throw new ParserException('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.', ErrorCode::FlagRemovedE, $flagPosition, $regex, null, $flagPosition + 1);
+                    throw new ParserException('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.', ErrorCode::FlagRemovedE(), $flagPosition, $regex, null, $flagPosition + 1);
                 }
 
                 // Format each invalid flag individually with quotes
@@ -176,7 +176,7 @@ final class PatternParser
                     return \sprintf('"%s"', DisplayEscaper::escape($flag));
                 }, Bytes::split($invalid ?? $flags)));
 
-                throw new ParserException(\sprintf('Unknown regex flag(s) found: %s.', $formattedFlags), ErrorCode::FlagUnknown, $flagPosition, $regex, null, $flagPosition + 1);
+                throw new ParserException(\sprintf('Unknown regex flag(s) found: %s.', $formattedFlags), ErrorCode::FlagUnknown(), $flagPosition, $regex, null, $flagPosition + 1);
             }
 
             return [$pattern, $flags, $delimiter];
@@ -193,12 +193,12 @@ final class PatternParser
             $closingDelimiter,
             $closingDelimiter,
             $suggested,
-        ), ErrorCode::DelimiterUnclosed);
+        ), ErrorCode::DelimiterUnclosed());
     }
 
     private static function nulByte(int $offset, string $regex): ParserException
     {
-        return new ParserException(\sprintf('Null byte in regex at position %d: PHP before 8.2 refuses a NUL byte anywhere in a pattern; write it "\\0" or "\\x00".', $offset), ErrorCode::PatternNulByte, $offset, $regex, null, $offset + 1);
+        return new ParserException(\sprintf('Null byte in regex at position %d: PHP before 8.2 refuses a NUL byte anywhere in a pattern; write it "\\0" or "\\x00".', $offset), ErrorCode::PatternNulByte(), $offset, $regex, null, $offset + 1);
     }
 
     private static function isValidDelimiter(string $delimiter): bool

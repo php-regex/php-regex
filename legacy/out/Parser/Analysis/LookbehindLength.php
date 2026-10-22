@@ -119,17 +119,33 @@ final class LookbehindLength
      * @readonly
      */
     private $wrapsLengths = false;
-    private const LOOKAROUNDS = [
-        GroupType::LookaheadPositive,
-        GroupType::LookaheadNegative,
-        GroupType::LookbehindPositive,
-        GroupType::LookbehindNegative,
+    private static function LOOKAROUNDS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [
+        GroupType::LookaheadPositive(),
+        GroupType::LookaheadNegative(),
+        GroupType::LookbehindPositive(),
+        GroupType::LookbehindNegative(),
     ];
+        }
 
-    private const LOOKAHEADS = [
-        GroupType::LookaheadPositive,
-        GroupType::LookaheadNegative,
+        return $cache;
+    }
+
+    private static function LOOKAHEADS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [
+        GroupType::LookaheadPositive(),
+        GroupType::LookaheadNegative(),
     ];
+        }
+
+        return $cache;
+    }
 
     /**
      * The length of each group measured, by node, with the groups its
@@ -459,9 +475,9 @@ final class LookbehindLength
         }
 
         if ($node instanceof GroupNode) {
-            if (\in_array($node->type, self::LOOKAROUNDS, true)) {
+            if (\in_array($node->type, self::LOOKAROUNDS(), true)) {
                 // Before PCRE2 10.34 a lookahead is skipped whole.
-                if (null !== $this->onLookaround && ($this->inLookaheads || !\in_array($node->type, self::LOOKAHEADS, true))) {
+                if (null !== $this->onLookaround && ($this->inLookaheads || !\in_array($node->type, self::LOOKAHEADS(), true))) {
                     ($this->onLookaround)($node, $expanding);
                 }
 
@@ -499,8 +515,8 @@ final class LookbehindLength
             // repeated lookbehind, a lookahead inside another group, or a
             // repeated "(*ACCEPT)" has no bound, as PCRE measures them.
             if ($node->node instanceof GroupNode && \in_array($node->node->type, [
-                GroupType::LookaheadPositive,
-                GroupType::LookaheadNegative,
+                GroupType::LookaheadPositive(),
+                GroupType::LookaheadNegative(),
             ], true)) {
                 return [0, 0];
             }
@@ -700,8 +716,8 @@ final class LookbehindLength
     private function conditionAssertions(NodeInterface $condition, array $expanding): void
     {
         foreach ($condition instanceof SequenceNode ? $condition->children : [$condition] as $item) {
-            if ($item instanceof GroupNode && \in_array($item->type, self::LOOKAROUNDS, true) && null !== $this->onLookaround
-                && ($this->inLookaheads || !\in_array($item->type, self::LOOKAHEADS, true))) {
+            if ($item instanceof GroupNode && \in_array($item->type, self::LOOKAROUNDS(), true) && null !== $this->onLookaround
+                && ($this->inLookaheads || !\in_array($item->type, self::LOOKAHEADS(), true))) {
                 ($this->onLookaround)($item, $expanding);
             }
         }
@@ -755,7 +771,7 @@ final class LookbehindLength
 
         // "(?i)" sets options and opens nothing.
         if ($first instanceof GroupNode) {
-            return GroupType::InlineFlags !== $first->type || !$first->child instanceof LiteralNode || '' !== $first->child->value;
+            return GroupType::InlineFlags() !== $first->type || !$first->child instanceof LiteralNode || '' !== $first->child->value;
         }
 
         return $first instanceof DefineNode || $first instanceof ConditionalNode || $first instanceof ScriptRunNode;

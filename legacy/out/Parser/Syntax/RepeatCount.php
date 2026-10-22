@@ -72,7 +72,7 @@ final class RepeatCount
      */
     public static function faultOffset(Token $quantifier, PcreTarget $target): ?int
     {
-        $blank = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts) ? '[ \t]*+' : '';
+        $blank = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts()) ? '[ \t]*+' : '';
         if (1 !== LibraryPcre::match('/^\{'.$blank.'(\d*+)'.$blank.'(?:(,)'.$blank.'(\d*+)'.$blank.')?\}/', $quantifier->value, $matches, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL)) {
             return null;
         }
@@ -99,17 +99,17 @@ final class RepeatCount
      * What is wrong with a count faultOffset() refuses: a number past 65535,
      * or else numbers out of order.
      */
-    public static function faultCode(string $quantifier): string
+    public static function faultCode(string $quantifier): ErrorCode
     {
         LibraryPcre::matchAll('/\d++/', $quantifier, $numbers);
 
         foreach ($numbers[0] as $digits) {
             if (PcreNumber::exceeds($digits)) {
-                return ErrorCode::QuantifierTooBig;
+                return ErrorCode::QuantifierTooBig();
             }
         }
 
-        return ErrorCode::QuantifierInvalidRange;
+        return ErrorCode::QuantifierInvalidRange();
     }
 
     /**
@@ -140,7 +140,7 @@ final class RepeatCount
         foreach (Bytes::split($digits) as $read => $digit) {
             $value = $value * 10 + (int) $digit;
             if ($value > PcreNumber::MAX) {
-                return $at + ($target->supports(PcreFeature::NumberTooBigPastWholeNumber) ? \strlen($digits) : $read + 1);
+                return $at + ($target->supports(PcreFeature::NumberTooBigPastWholeNumber()) ? \strlen($digits) : $read + 1);
             }
         }
 

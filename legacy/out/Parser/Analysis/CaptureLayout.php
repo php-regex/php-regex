@@ -86,11 +86,11 @@ final class CaptureLayout
         $lastMaySet = 0;
         $byName = [];
         foreach ($shape->groups as $group) {
-            if (Participation::Always === $group->participation) {
+            if (Participation::Always() === $group->participation) {
                 $lastAlways = $group->number;
             }
 
-            if (Participation::Never !== $group->participation) {
+            if (Participation::Never() !== $group->participation) {
                 $lastMaySet = $group->number;
             }
 
@@ -105,11 +105,11 @@ final class CaptureLayout
         foreach ($shape->groups as $group) {
             $optional = !$unmatchedAsNull && $group->number > $lastAlways;
             // Without the flag, PHP leaves out the groups past the last one set.
-            if ($optional && Participation::Never === $group->participation && $group->number >= $lastMaySet) {
+            if ($optional && Participation::Never() === $group->participation && $group->number >= $lastMaySet) {
                 continue;
             }
 
-            $always = Participation::Always === $group->participation;
+            $always = Participation::Always() === $group->participation;
             $name = $group->name;
             if (null !== $name && !isset($named[$name])) {
                 $named[$name] = true;
@@ -117,7 +117,7 @@ final class CaptureLayout
                 [$groups, $unset] = self::nameValue($byName[$name], $unmatchedAsNull, $lastAlways, $lastMaySet);
                 // A name several groups share (/J) is set whenever one of them always is.
                 $nameAlways = [] !== array_filter($byName[$name], static function (CaptureGroupShape $shared): bool {
-                    return Participation::Always === $shared->participation;
+                    return Participation::Always() === $shared->participation;
                 });
                 $keys[] = new CaptureKey($name, $optional, $groups, $unset, 'MARK' === $name && [] !== $shape->marks, $nameAlways);
             }
@@ -185,7 +185,7 @@ final class CaptureLayout
      */
     private static function listKey($key, CaptureGroupShape $group, bool $marks): CaptureKey
     {
-        $always = Participation::Always === $group->participation;
+        $always = Participation::Always() === $group->participation;
 
         return new CaptureKey($key, false, self::setGroups([$group]), !$always, $marks, $always);
     }
@@ -197,11 +197,11 @@ final class CaptureLayout
     private static function readsUnset(CaptureGroupShape $group, bool $unmatchedAsNull, int $lastAlways, int $lastMaySet): bool
     {
         switch ($group->participation) {
-            case Participation::Always:
+            case Participation::Always():
                 return false;
-            case Participation::Never:
+            case Participation::Never():
                 return true;
-            case Participation::MayBeUnset:
+            case Participation::MayBeUnset():
                 return $unmatchedAsNull || $group->number <= $lastAlways || $group->number < $lastMaySet;
         }
     }
@@ -222,7 +222,7 @@ final class CaptureLayout
         $groups = self::setGroups($sharing);
         $unset = false;
         foreach ($sharing as $group) {
-            if (Participation::Always === $group->participation) {
+            if (Participation::Always() === $group->participation) {
                 return [$groups, false];
             }
 
@@ -240,7 +240,7 @@ final class CaptureLayout
     private static function setGroups(array $groups): array
     {
         return array_values(array_filter($groups, static function (CaptureGroupShape $group): bool {
-            return Participation::Never !== $group->participation;
+            return Participation::Never() !== $group->participation;
         }));
     }
 }

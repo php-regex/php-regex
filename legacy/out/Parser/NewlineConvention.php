@@ -2,42 +2,116 @@
 
 declare(strict_types=1);
 
-/*
- * This file is part of the PHPRegex package.
- *
- * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace PHPRegex\Parser;
 
-class NewlineConvention
+/**
+ * Cached-instance twin of the NewlineConvention enum: GroupType::Capturing()
+ * returns one shared instance, so identity comparisons, ->value and
+ * native type hints keep the enum's semantics on PHP 7.4.
+ */
+final class NewlineConvention
 {
-    public const Cr = 'CR';
-    public const Lf = 'LF';
-    public const CrLf = 'CRLF';
-    public const Any = 'ANY';
-    public const AnyCrLf = 'ANYCRLF';
-    public const Nul = 'NUL';
+    /** @var array<string, self> */
+    private static $instances = [];
 
-    public static function from($value)
+    /** @var string */
+    public $name;
+
+    /** @var string */
+    public $value;
+
+    private function __construct(string $name, string $value)
     {
-        if (!\in_array($value, self::cases(), true)) {
-            throw new \InvalidArgumentException(\sprintf('Unknown value "%s" for %s.', $value, self::class));
+        $this->name = $name;
+        $this->value = $value;
+    }
+
+    public static function Cr(): self
+    {
+        if (!isset(self::$instances['Cr'])) {
+            self::$instances['Cr'] = new self('Cr', 'CR');
         }
 
-        return $value;
+        return self::$instances['Cr'];
     }
 
-    public static function tryFrom($value)
+    public static function Lf(): self
     {
-        return \in_array($value, self::cases(), true) ? $value : null;
+        if (!isset(self::$instances['Lf'])) {
+            self::$instances['Lf'] = new self('Lf', 'LF');
+        }
+
+        return self::$instances['Lf'];
     }
 
-    public static function cases()
+    public static function CrLf(): self
     {
-        return \array_values((new \ReflectionClass(self::class))->getConstants());
+        if (!isset(self::$instances['CrLf'])) {
+            self::$instances['CrLf'] = new self('CrLf', 'CRLF');
+        }
+
+        return self::$instances['CrLf'];
+    }
+
+    public static function Any(): self
+    {
+        if (!isset(self::$instances['Any'])) {
+            self::$instances['Any'] = new self('Any', 'ANY');
+        }
+
+        return self::$instances['Any'];
+    }
+
+    public static function AnyCrLf(): self
+    {
+        if (!isset(self::$instances['AnyCrLf'])) {
+            self::$instances['AnyCrLf'] = new self('AnyCrLf', 'ANYCRLF');
+        }
+
+        return self::$instances['AnyCrLf'];
+    }
+
+    public static function Nul(): self
+    {
+        if (!isset(self::$instances['Nul'])) {
+            self::$instances['Nul'] = new self('Nul', 'NUL');
+        }
+
+        return self::$instances['Nul'];
+    }
+
+    /** @return list<self> */
+    public static function cases(): array
+    {
+        return [
+            self::Cr(),
+            self::Lf(),
+            self::CrLf(),
+            self::Any(),
+            self::AnyCrLf(),
+            self::Nul(),
+        ];
+    }
+
+    public static function from(string $value): self
+    {
+        foreach (self::cases() as $case) {
+            if ($case->value === $value) {
+                return $case;
+            }
+        }
+
+        throw new \InvalidArgumentException(sprintf('Unknown value %s for NewlineConvention.', $value));
+    }
+
+    public static function tryFrom(string $value): ?self
+    {
+        foreach (self::cases() as $case) {
+            if ($case->value === $value) {
+                return $case;
+            }
+        }
+
+        return null;
     }
 }

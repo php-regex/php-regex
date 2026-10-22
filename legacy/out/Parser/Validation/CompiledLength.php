@@ -447,7 +447,7 @@ final class CompiledLength
                 $ceiling = self::sum($ceiling, self::ALTERNATION);
                 // Up to 10.47 the next branch is checked with the branches
                 // before it, the end marker left out.
-                if (($this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd) ? $before : 0) + $done + $length > self::LIMIT) {
+                if (($this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd()) ? $before : 0) + $done + $length > self::LIMIT) {
                     $this->stoppedAt = $branch->getEndPosition();
 
                     return [false, $length, null];
@@ -485,7 +485,7 @@ final class CompiledLength
     {
         // Up to 10.47 each item is checked with the branches before it in
         // its group; from 10.48 with its own branch.
-        $checked = $this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd) ? 0 : $before;
+        $checked = $this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd()) ? 0 : $before;
         $ceiling = 0;
         foreach (self::itemsOf($branch) as $item) {
             // Most items are one ASCII letter, or one byte without UTF:
@@ -505,7 +505,7 @@ final class CompiledLength
                 continue;
             }
 
-            if ($item instanceof GroupNode && GroupType::InlineFlags === $item->type && $this->setsOptionsOnly($item)) {
+            if ($item instanceof GroupNode && GroupType::InlineFlags() === $item->type && $this->setsOptionsOnly($item)) {
                 $caseless = self::caselessAfter((string) $item->flags, $caseless);
                 $this->restricted = self::optionAfter((string) $item->flags, 'r', $this->restricted);
 
@@ -524,7 +524,7 @@ final class CompiledLength
             // a group is checked with what that group holds.
             $lists = $this->charLists - $lists;
             $class = $item instanceof QuantifierNode ? $item->node : $item;
-            if ($lists > 0 && ($class instanceof CharClassNode || $class instanceof ExtendedCharClassNode) && !$this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd) && $before + $length + $this->listsPeak > self::LIMIT) {
+            if ($lists > 0 && ($class instanceof CharClassNode || $class instanceof ExtendedCharClassNode) && !$this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd()) && $before + $length + $this->listsPeak > self::LIMIT) {
                 $this->passedAtClassLists = true;
                 $this->stoppedAt = $item->getEndPosition();
 
@@ -552,7 +552,7 @@ final class CompiledLength
     private function measureItem(NodeInterface $item, bool $caseless): array
     {
         // "(?!)" not counted is a failure, one unit.
-        if ($item instanceof GroupNode && GroupType::LookaheadNegative === $item->type && $this->holdsOnlyComments($item->child)) {
+        if ($item instanceof GroupNode && GroupType::LookaheadNegative() === $item->type && $this->holdsOnlyComments($item->child)) {
             return [null, 1, 1];
         }
 
@@ -582,12 +582,12 @@ final class CompiledLength
         }
 
         $open = $this->openCaptures;
-        $capture = $repeated instanceof GroupNode && \in_array($repeated->type, [GroupType::Capturing, GroupType::Named], true);
+        $capture = $repeated instanceof GroupNode && \in_array($repeated->type, [GroupType::Capturing(), GroupType::Named()], true);
         switch (true) {
             case $capture:
                 $this->openCaptures = $open + 1;
                 break;
-            case $repeated instanceof GroupNode && \in_array($repeated->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring], true):
+            case $repeated instanceof GroupNode && \in_array($repeated->type, [GroupType::LookaheadPositive(), GroupType::LookaheadNegative(), GroupType::LookbehindPositive(), GroupType::LookbehindNegative(), GroupType::ScanSubstring()], true):
                 $this->openCaptures = 0;
                 break;
             default:
@@ -600,7 +600,7 @@ final class CompiledLength
 
         // The options a group sets, or its branches set, end with it.
         $restricted = $this->restricted;
-        if ($repeated instanceof GroupNode && GroupType::InlineFlags === $repeated->type) {
+        if ($repeated instanceof GroupNode && GroupType::InlineFlags() === $repeated->type) {
             $this->restricted = self::optionAfter((string) $repeated->flags, 'r', $restricted);
         }
 
@@ -618,7 +618,7 @@ final class CompiledLength
 
         // Up to 10.34 a capture holding a back reference to itself is
         // wrapped in an atomic group.
-        if ($referenced && !$this->target->supports(PcreFeature::GroupHoldingItsOwnReferenceBacktracks)) {
+        if ($referenced && !$this->target->supports(PcreFeature::GroupHoldingItsOwnReferenceBacktracks())) {
             $length += self::BRACKETS;
             $ceiling = self::sum($ceiling, self::BRACKETS);
         }
@@ -651,22 +651,22 @@ final class CompiledLength
     {
         if ($node instanceof GroupNode) {
             switch ($node->type) {
-                case GroupType::Capturing:
-                case GroupType::Named:
+                case GroupType::Capturing():
+                case GroupType::Named():
                     return [self::branchesOf($node->child), [self::BRACKETS + 2, self::BRACKETS + 2], $caseless, null];
-                case GroupType::NonCapturing:
-                case GroupType::Atomic:
-                case GroupType::BranchReset:
+                case GroupType::NonCapturing():
+                case GroupType::Atomic():
+                case GroupType::BranchReset():
                     return [self::branchesOf($node->child), [self::BRACKETS, self::BRACKETS], $caseless, null];
-                case GroupType::InlineFlags:
+                case GroupType::InlineFlags():
                     return [self::branchesOf($node->child), [self::BRACKETS, self::BRACKETS], self::caselessAfter((string) $node->flags, $caseless), null];
-                case GroupType::LookaheadPositive:
-                case GroupType::LookaheadNegative:
+                case GroupType::LookaheadPositive():
+                case GroupType::LookaheadNegative():
                     return [self::branchesOf($node->child), [self::BRACKETS, self::BRACKETS], $caseless, null];
-                case GroupType::LookbehindPositive:
-                case GroupType::LookbehindNegative:
+                case GroupType::LookbehindPositive():
+                case GroupType::LookbehindNegative():
                     return [$branches = self::branchesOf($node->child), $this->lookbehindFrame($node, $branches), $caseless, null];
-                case GroupType::ScanSubstring:
+                case GroupType::ScanSubstring():
                     return [self::branchesOf($node->child), $this->scanSubstringFrame($node), $caseless, null];
             }
         }
@@ -722,15 +722,15 @@ final class CompiledLength
     private function groupRepeat(QuantifierNode $node, NodeInterface $repeated): ?\Closure
     {
         [$min, $max] = $this->boundsOf($node);
-        $possessive = QuantifierType::Possessive === $node->type;
-        $atomicOnce = $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic);
+        $possessive = QuantifierType::Possessive() === $node->type;
+        $atomicOnce = $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic());
         if ($repeated instanceof GroupNode) {
             // A substring scan is an assertion too.
-            $assertion = \in_array($repeated->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring], true);
+            $assertion = \in_array($repeated->type, [GroupType::LookaheadPositive(), GroupType::LookaheadNegative(), GroupType::LookbehindPositive(), GroupType::LookbehindNegative(), GroupType::ScanSubstring()], true);
 
             // Up to 10.34 an assertion counted at least once is compiled
             // once, and one counted from zero as optional.
-            if ($assertion && !$this->target->supports(PcreFeature::RepeatedAssertionKeepsItsCount)) {
+            if ($assertion && !$this->target->supports(PcreFeature::RepeatedAssertionKeepsItsCount())) {
                 return $min > 0 ? static function (int $copy): int {
                     return $copy;
                 } : static function (int $copy) use ($max, $possessive, $atomicOnce): int {
@@ -876,7 +876,7 @@ final class CompiledLength
         [$min, $max] = $this->boundsOf($node);
         $item = $this->classOfSingleItem($node->node);
         if ($item instanceof SubroutineNode) {
-            return self::repeatCall(3 + 3 * \count($item->returnedGroups), $min, $max, QuantifierType::Possessive === $node->type, $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic));
+            return self::repeatCall(3 + 3 * \count($item->returnedGroups), $min, $max, QuantifierType::Possessive() === $node->type, $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic()));
         }
 
         // A counted verb, "(*ACCEPT)?", is wrapped in a group first.
@@ -886,7 +886,7 @@ final class CompiledLength
             // conditional is when possessive.
             $scriptRun = isset(self::EMPTY_SCRIPT_RUNS[$item->verb]);
 
-            return null === $verb ? null : self::repeatGroup(($scriptRun ? 0 : self::BRACKETS) + $verb, $min, $max, QuantifierType::Possessive === $node->type, $scriptRun, $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic));
+            return null === $verb ? null : self::repeatGroup(($scriptRun ? 0 : self::BRACKETS) + $verb, $min, $max, QuantifierType::Possessive() === $node->type, $scriptRun, $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic()));
         }
 
         // A count of zero drops the item, but its length stays counted.
@@ -936,7 +936,7 @@ final class CompiledLength
             return self::repeatSingle(0, 1, $min, $max);
         }
 
-        $wrap = $item instanceof BackrefNode && QuantifierType::Possessive === $node->type && !$this->target->supports(PcreFeature::PossessiveReferenceRepeatedInPlace) ? self::BRACKETS : 0;
+        $wrap = $item instanceof BackrefNode && QuantifierType::Possessive() === $node->type && !$this->target->supports(PcreFeature::PossessiveReferenceRepeatedInPlace()) ? self::BRACKETS : 0;
 
         return null === $length ? null : $length + $count + $wrap;
     }
@@ -1023,7 +1023,7 @@ final class CompiledLength
             // the negated code point, minus one.
             [$first, $second] = $members[0] + [1 => -1];
 
-            return !$node->isNegated && 2 === \count($members[0]) && $this->target->supports(PcreFeature::CasePairClassIsACaselessCharacter) && true === $this->isCasePair($first, $second) ? -1 - $first : null;
+            return !$node->isNegated && 2 === \count($members[0]) && $this->target->supports(PcreFeature::CasePairClassIsACaselessCharacter()) && true === $this->isCasePair($first, $second) ? -1 - $first : null;
         }
 
         return $this->codePointOf($node);
@@ -1109,7 +1109,7 @@ final class CompiledLength
      */
     private function classLength(CharClassNode $node, bool $caseless): ?int
     {
-        $members = $node->isNegated || !$this->target->supports(PcreFeature::CasePairClassIsACaselessCharacter) ? null : $this->classMembers($node);
+        $members = $node->isNegated || !$this->target->supports(PcreFeature::CasePairClassIsACaselessCharacter()) ? null : $this->classMembers($node);
         if (null !== $members && [] === $members[1] && [] === $members[2] && 2 === \count($members[0]) && null === $this->isCasePair(...$members[0])) {
             return null;
         }
@@ -1170,7 +1170,7 @@ final class CompiledLength
      */
     private function scanSubstringFrame(GroupNode $node): array
     {
-        $once = $this->target->supports(PcreFeature::ScanSubstringListsEachGroupOnce);
+        $once = $this->target->supports(PcreFeature::ScanSubstringListsEachGroupOnce());
         $next = (int) $this->groupIndex()->nextNumberAt($node);
         $listed = [];
         $units = 0;
@@ -1482,10 +1482,10 @@ final class CompiledLength
         }
 
         if (strpos($node->prop, '^') !== false) {
-            return $this->target->supports(PcreFeature::ClassesCompiledFromMergedRanges) ? 33 : 3;
+            return $this->target->supports(PcreFeature::ClassesCompiledFromMergedRanges()) ? 33 : 3;
         }
 
-        return $this->target->supports(PcreFeature::AnyPropertyMatchesAnyCharacter) ? 1 : 3;
+        return $this->target->supports(PcreFeature::AnyPropertyMatchesAnyCharacter()) ? 1 : 3;
     }
 
     /**
@@ -1509,7 +1509,7 @@ final class CompiledLength
             return null; // a reference to no group is refused before any measure
         }
 
-        return (\count($numbers) > 1 ? 5 : 3) + ($caseless && $this->target->supports(PcreFeature::CaselessReferenceHoldsItsCaseRules) ? 1 : 0);
+        return (\count($numbers) > 1 ? 5 : 3) + ($caseless && $this->target->supports(PcreFeature::CaselessReferenceHoldsItsCaseRules()) ? 1 : 0);
     }
 
     /**
@@ -1560,7 +1560,7 @@ final class CompiledLength
      */
     private function unicodeCases(): bool
     {
-        return $this->utf || ($this->ucp && $this->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf));
+        return $this->utf || ($this->ucp && $this->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf()));
     }
 
     /**
@@ -1602,7 +1602,7 @@ final class CompiledLength
         // back. 10.34 then reads a DEFINE group that opens on a group as if
         // it closed one level early, and stops where the outermost group
         // around it closes: the lookbehinds after are left none either.
-        if (!$this->target->supports(PcreFeature::DefineSkippedInLookbehind)) {
+        if (!$this->target->supports(PcreFeature::DefineSkippedInLookbehind())) {
             $this->unmeasured = $this->unmeasured ?? $this->unmeasuredLookbehinds();
             [$from, $skipped, $known] = $this->unmeasured;
             if (!$known && $node->getStartPosition() > $from) {
@@ -1614,7 +1614,7 @@ final class CompiledLength
             }
         }
 
-        $this->lookbehinds = $this->lookbehinds ?? new LookbehindLength($this->groupIndex(), $this->utf, $this->target->supports(PcreFeature::VariableLengthLookbehind), null, null, null, $this->target->supports(PcreFeature::LookbehindInLookaheadMeasured), $this->target->supports(PcreFeature::DefineSkippedInLookbehind), !$this->target->supports(PcreFeature::ExtendedCharClass) || $this->target->supports(PcreFeature::ExtendedClassBesideLookbehindCompiles));
+        $this->lookbehinds = $this->lookbehinds ?? new LookbehindLength($this->groupIndex(), $this->utf, $this->target->supports(PcreFeature::VariableLengthLookbehind()), null, null, null, $this->target->supports(PcreFeature::LookbehindInLookaheadMeasured()), $this->target->supports(PcreFeature::DefineSkippedInLookbehind()), !$this->target->supports(PcreFeature::ExtendedCharClass()) || $this->target->supports(PcreFeature::ExtendedClassBesideLookbehindCompiles()));
         $lengths = [];
         foreach ($branches as $branch) {
             [$length] = $this->lookbehinds->branch($branch);
@@ -1669,14 +1669,14 @@ final class CompiledLength
         usort($found, static function (array $a, array $b): int {
             return $a[0]->getStartPosition() <=> $b[0]->getStartPosition();
         });
-        $closesEarly = $this->target->supports(PcreFeature::LookbehindInLookaheadMeasured);
+        $closesEarly = $this->target->supports(PcreFeature::LookbehindInLookaheadMeasured());
         $skipped = [];
         foreach ($found as [$define, , $inLookbehind, $first]) {
             if ($inLookbehind || ($closesEarly && \count($found) > 1)) {
                 return [$define->getStartPosition(), [], false];
             }
 
-            if ($first instanceof GroupNode && \in_array($first->type, [GroupType::LookbehindPositive, GroupType::LookbehindNegative], true)) {
+            if ($first instanceof GroupNode && \in_array($first->type, [GroupType::LookbehindPositive(), GroupType::LookbehindNegative()], true)) {
                 $skipped[spl_object_id($first)] = $first;
             }
         }
@@ -1709,12 +1709,12 @@ final class CompiledLength
             }
 
             $item = $item instanceof QuantifierNode ? $item->node : $item;
-            if (($item instanceof GroupNode && !(GroupType::InlineFlags === $item->type && $this->setsOptionsOnly($item))) || $item instanceof ConditionalNode || $item instanceof DefineNode || $item instanceof ScriptRunNode) {
+            if (($item instanceof GroupNode && !(GroupType::InlineFlags() === $item->type && $this->setsOptionsOnly($item))) || $item instanceof ConditionalNode || $item instanceof DefineNode || $item instanceof ScriptRunNode) {
                 $found[] = [$node, $end, $inLookbehind, $item];
             }
         }
 
-        $lookbehind = $inLookbehind || ($node instanceof GroupNode && \in_array($node->type, [GroupType::LookbehindPositive, GroupType::LookbehindNegative], true));
+        $lookbehind = $inLookbehind || ($node instanceof GroupNode && \in_array($node->type, [GroupType::LookbehindPositive(), GroupType::LookbehindNegative()], true));
         foreach ($node->getChildren() as $child) {
             $this->findDefinesOpeningOnAGroup($child, $end, $lookbehind, $found);
         }
@@ -1814,7 +1814,7 @@ final class CompiledLength
         }
 
         return self::isEmpty($node) || $node instanceof CommentNode
-            || ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && $this->setsOptionsOnly($node));
+            || ($node instanceof GroupNode && GroupType::InlineFlags() === $node->type && $this->setsOptionsOnly($node));
     }
 
     private static function isEmpty(NodeInterface $node): bool

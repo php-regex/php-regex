@@ -38,34 +38,34 @@ final class NamedCharacterBrace
      * class, null when it reads a count there. A code point, which
      * namesCodePoint() tells, is judged apart, before.
      */
-    public static function errorInClass(string $pattern, int $brace, PcreTarget $target): ?string
+    public static function errorInClass(string $pattern, int $brace, PcreTarget $target): ?ErrorCode
     {
-        if ($target->supports(PcreFeature::NamedCharacterBraceRefusedInClass)) {
-            return ErrorCode::EscapeUnsupported;
+        if ($target->supports(PcreFeature::NamedCharacterBraceRefusedInClass())) {
+            return ErrorCode::EscapeUnsupported();
         }
 
         // Before 10.37 the digits are read first, whatever follows them.
-        if (!$target->supports(PcreFeature::LargeOpenCountIsText) && null !== RepeatCount::overflowBeforeTen37($pattern, $brace)) {
-            return ErrorCode::QuantifierTooBig;
+        if (!$target->supports(PcreFeature::LargeOpenCountIsText()) && null !== RepeatCount::overflowBeforeTen37($pattern, $brace)) {
+            return ErrorCode::QuantifierTooBig();
         }
 
-        $blank = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts) ? '[ \t]*+' : '';
+        $blank = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts()) ? '[ \t]*+' : '';
 
         if (1 !== LibraryPcre::match('/\G\{'.$blank.'(\d*+)'.$blank.'(?:(,)'.$blank.'(\d*+)'.$blank.')?\}/', $pattern, $count, \PREG_UNMATCHED_AS_NULL, $brace)) {
-            return ErrorCode::EscapeUnsupported;
+            return ErrorCode::EscapeUnsupported();
         }
 
         $minimum = $count[1] ?? '';
         $maximum = $count[3] ?? '';
         if ('' === $minimum && ('' === $blank || '' === $maximum)) {
-            return ErrorCode::EscapeUnsupported;
+            return ErrorCode::EscapeUnsupported();
         }
 
         if (self::tooBig($minimum) || self::tooBig($maximum)) {
-            return ErrorCode::QuantifierTooBig;
+            return ErrorCode::QuantifierTooBig();
         }
 
-        return '' !== $minimum && '' !== $maximum && (int) $maximum < (int) $minimum ? ErrorCode::QuantifierInvalidRange : null;
+        return '' !== $minimum && '' !== $maximum && (int) $maximum < (int) $minimum ? ErrorCode::QuantifierInvalidRange() : null;
     }
 
     /**
@@ -75,7 +75,7 @@ final class NamedCharacterBrace
      */
     public static function namesCodePoint(string $pattern, int $brace, PcreTarget $target): bool
     {
-        $blank = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts) ? '[ \t]*+' : '';
+        $blank = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts()) ? '[ \t]*+' : '';
 
         return 1 === LibraryPcre::match('/\G\{'.$blank.'U\+/', $pattern, $codePoint, 0, $brace);
     }

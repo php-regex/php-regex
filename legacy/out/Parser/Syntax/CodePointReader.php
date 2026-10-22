@@ -41,12 +41,12 @@ final class CodePointReader
     public static function fromLiteral(string $representation, $type): int
     {
         switch ($type) {
-            case CharLiteralType::Unicode:
+            case CharLiteralType::Unicode():
                 return self::fromHexEscape($representation);
-            case CharLiteralType::UnicodeNamed:
+            case CharLiteralType::UnicodeNamed():
                 return self::fromNamedEscape($representation);
-            case CharLiteralType::Octal:
-            case CharLiteralType::OctalLegacy:
+            case CharLiteralType::Octal():
+            case CharLiteralType::OctalLegacy():
                 return self::fromOctalEscape($representation);
         }
     }

@@ -84,7 +84,15 @@ final class CaptureFacts
      */
     private const ZERO_FREE_POSIX = ['alpha', 'upper', 'lower', 'space', 'blank', 'cntrl', 'punct'];
 
-    private const LOOKAROUNDS = [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative];
+    private static function LOOKAROUNDS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [GroupType::LookaheadPositive(), GroupType::LookaheadNegative(), GroupType::LookbehindPositive(), GroupType::LookbehindNegative()];
+        }
+
+        return $cache;
+    }
 
     /**
      * @readonly
@@ -473,7 +481,7 @@ final class CaptureFacts
 
     private static function isLookaround(GroupNode $node): bool
     {
-        return \in_array($node->type, self::LOOKAROUNDS, true);
+        return \in_array($node->type, self::LOOKAROUNDS(), true);
     }
 
     /**

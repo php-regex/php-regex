@@ -95,7 +95,7 @@ final class StructuralFingerprint
         // or one holding only comments, is empty wherever it stands, the
         // whole pattern or the body of a group as much as in a sequence. Its
         // body was read first, so nested groups cost one pass.
-        if ($node instanceof GroupNode && GroupType::NonCapturing === $node->type && self::isEmptyLiteral($canonical['child'] ?? null)) {
+        if ($node instanceof GroupNode && GroupType::NonCapturing() === $node->type && self::isEmptyLiteral($canonical['child'] ?? null)) {
             return ['literal', false, ''];
         }
 

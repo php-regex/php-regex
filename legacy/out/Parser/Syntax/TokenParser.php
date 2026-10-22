@@ -86,18 +86,34 @@ final class TokenParser
     /**
      * The two lookaheads, by the character that introduces them.
      */
-    private const LOOKAHEADS = [
-        '=' => GroupType::LookaheadPositive,
-        '!' => GroupType::LookaheadNegative,
+    private static function LOOKAHEADS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [
+        '=' => GroupType::LookaheadPositive(),
+        '!' => GroupType::LookaheadNegative(),
     ];
+        }
+
+        return $cache;
+    }
 
     /**
      * The two lookbehinds, which follow a "<".
      */
-    private const LOOKBEHINDS = [
-        '=' => GroupType::LookbehindPositive,
-        '!' => GroupType::LookbehindNegative,
+    private static function LOOKBEHINDS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [
+        '=' => GroupType::LookbehindPositive(),
+        '!' => GroupType::LookbehindNegative(),
     ];
+        }
+
+        return $cache;
+    }
 
     /**
      * The marker a lookaround carries in its flags when it is non-atomic,
@@ -110,11 +126,19 @@ final class TokenParser
      * Token types that are atoms outside a class only: inside one the lexer
      * gives "$", "\b" and "\1" as the characters they are there.
      */
-    private const OUTSIDE_ATOM_TYPES = [
-        TokenType::Anchor,
-        TokenType::Assertion,
-        TokenType::Backref,
+    private static function OUTSIDE_ATOM_TYPES(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [
+        TokenType::Anchor(),
+        TokenType::Assertion(),
+        TokenType::Backref(),
     ];
+        }
+
+        return $cache;
+    }
 
     /**
      * @var \PHPRegex\Parser\Token\TokenStream
@@ -345,7 +369,7 @@ final class TokenParser
         // the start, from PCRE2 10.33.
         $this->unicodeMode = strpos($flags, 'u') !== false
             || StartOptions::turnUtfOn($this->pattern);
-        $this->groupNames->readUnicodeNames($this->unicodeMode && $this->supports(PcreFeature::NonAsciiGroupNames) ? $this->target : null);
+        $this->groupNames->readUnicodeNames($this->unicodeMode && $this->supports(PcreFeature::NonAsciiGroupNames()) ? $this->target : null);
         if (null !== $this->namesAround) {
             $this->groupNames->shareNamesWith($this->namesAround);
             $this->groupNames->allowDuplicates($this->namesAround->duplicatesAllowed());
@@ -374,13 +398,13 @@ final class TokenParser
 
         // A ")" no group opened: PCRE2 10.47 reports it past the ")", the
         // releases before on it.
-        if ($this->stream->check(TokenType::GroupClose)) {
+        if ($this->stream->check(TokenType::GroupClose())) {
             $position = $this->target->faultOffset($this->stream->current()->position + 1);
 
-            throw $this->parserException(\sprintf('Unmatched closing parenthesis at position %d.', $position), ErrorCode::GroupUnmatchedClose, $position);
+            throw $this->parserException(\sprintf('Unmatched closing parenthesis at position %d.', $position), ErrorCode::GroupUnmatchedClose(), $position);
         }
 
-        $this->stream->consume(TokenType::Eof, 'Unexpected content at end of pattern', ErrorCode::TokenUnexpected);
+        $this->stream->consume(TokenType::Eof(), 'Unexpected content at end of pattern', ErrorCode::TokenUnexpected());
 
         return new RegexNode($patternNode, $flags, $delimiter, 0, $patternLength, $this->pattern);
     }
@@ -416,7 +440,7 @@ final class TokenParser
             $startPosition = $this->stream->current()->position;
             $nodes = [$this->parseSequence()];
 
-            while ($this->stream->match(TokenType::Alternation)) {
+            while ($this->stream->match(TokenType::Alternation())) {
                 $nodes[] = $this->parseSequence();
             }
 
@@ -439,13 +463,13 @@ final class TokenParser
 
         // The type of the token under the cursor decides each step: it is
         // read once per item.
-        while (TokenType::Eof !== $type = $this->stream->currentType()) {
-            if (TokenType::GroupClose === $type || TokenType::Alternation === $type) {
+        while (TokenType::Eof() !== $type = $this->stream->currentType()) {
+            if (TokenType::GroupClose() === $type || TokenType::Alternation() === $type) {
                 break;
             }
 
-            if (TokenType::QuoteModeStart === $type || TokenType::QuoteModeEnd === $type) {
-                $this->state->inQuoteMode = TokenType::QuoteModeStart === $type;
+            if (TokenType::QuoteModeStart() === $type || TokenType::QuoteModeEnd() === $type) {
+                $this->state->inQuoteMode = TokenType::QuoteModeStart() === $type;
                 $this->stream->advance();
 
                 continue;
@@ -458,7 +482,7 @@ final class TokenParser
                 continue;
             }
 
-            if (TokenType::Quantifier !== $type || !$this->quantifyPreviousItem($nodes)) {
+            if (TokenType::Quantifier() !== $type || !$this->quantifyPreviousItem($nodes)) {
                 $nodes[] = $this->parseQuantifiedAtom();
             }
 
@@ -493,9 +517,9 @@ final class TokenParser
         }
 
         $skipped = false;
-        while (!$this->stream->isAtEnd() && !$this->stream->check(TokenType::GroupClose) && !$this->stream->check(TokenType::Alternation)) {
+        while (!$this->stream->isAtEnd() && !$this->stream->check(TokenType::GroupClose()) && !$this->stream->check(TokenType::Alternation())) {
             $token = $this->stream->current();
-            if (TokenType::Literal !== $token->type) {
+            if (TokenType::Literal() !== $token->type) {
                 break;
             }
 
@@ -537,7 +561,7 @@ final class TokenParser
             $token = $this->stream->current();
 
             // Comment ends at newline (included) or at end of pattern.
-            if (TokenType::Literal === $token->type && "\n" === $token->value) {
+            if (TokenType::Literal() === $token->type && "\n" === $token->value) {
                 $comment .= $this->state->sourceTextOf($token);
                 $this->stream->advance();
 
@@ -565,9 +589,9 @@ final class TokenParser
         }
 
         $skipped = 0;
-        while (!$this->stream->isAtEnd() && !$this->stream->check(TokenType::GroupClose) && !$this->stream->check(TokenType::Alternation)) {
+        while (!$this->stream->isAtEnd() && !$this->stream->check(TokenType::GroupClose()) && !$this->stream->check(TokenType::Alternation())) {
             $token = $this->stream->current();
-            if (TokenType::Literal !== $token->type) {
+            if (TokenType::Literal() !== $token->type) {
                 break;
             }
 
@@ -611,7 +635,7 @@ final class TokenParser
         }
 
         $skipped = 0;
-        while (!$this->stream->isAtEnd() && TokenType::Literal === $this->stream->current()->type && $this->isExtendedWhitespace($this->stream->current()->value)) {
+        while (!$this->stream->isAtEnd() && TokenType::Literal() === $this->stream->current()->type && $this->isExtendedWhitespace($this->stream->current()->value)) {
             $this->stream->advance();
             $skipped++;
         }
@@ -632,7 +656,7 @@ final class TokenParser
      */
     private function quantifyPreviousItem(array &$nodes): bool
     {
-        if (!$this->stream->check(TokenType::Quantifier)) {
+        if (!$this->stream->check(TokenType::Quantifier())) {
             return false;
         }
 
@@ -727,13 +751,13 @@ final class TokenParser
     {
         $modifier = $token->value[0];
 
-        if (QuantifierType::Greedy !== $target->type || !\in_array($modifier, ['+', '?'], true)) {
+        if (QuantifierType::Greedy() !== $target->type || !\in_array($modifier, ['+', '?'], true)) {
             $this->guardQuantifierCount($token);
             $position = RepeatCount::nothingToRepeatOffset($token, $this->target);
 
             throw $this->parserException(
                 \sprintf('Quantifier without target at position %d.', $position),
-                ErrorCode::QuantifierNothingToRepeat,
+                ErrorCode::QuantifierNothingToRepeat(),
                 $position,
             );
         }
@@ -744,7 +768,7 @@ final class TokenParser
 
             throw $this->parserException(
                 \sprintf('Quantifier without target at position %d.', $position),
-                ErrorCode::QuantifierNothingToRepeat,
+                ErrorCode::QuantifierNothingToRepeat(),
                 $position,
             );
         }
@@ -752,7 +776,7 @@ final class TokenParser
         return new QuantifierNode(
             $target->node,
             $target->quantifier,
-            '+' === $modifier ? QuantifierType::Possessive : string::Lazy,
+            '+' === $modifier ? QuantifierType::Possessive() : QuantifierType::Lazy(),
             $target->getStartPosition(),
             $token->position + 1,
         );
@@ -784,7 +808,7 @@ final class TokenParser
 
         $skipped = $this->skipExtendedWhitespace();
 
-        if ($this->stream->match(TokenType::Quantifier)) {
+        if ($this->stream->match(TokenType::Quantifier())) {
             $token = $this->stream->previous();
 
             [$prefix, $node] = $this->splitRepeatedCharacter($node);
@@ -807,7 +831,7 @@ final class TokenParser
      */
     private function parseQuantifiedText(NodeInterface $text): NodeInterface
     {
-        if (!$text instanceof LiteralNode || !$this->stream->check(TokenType::Quantifier)) {
+        if (!$text instanceof LiteralNode || !$this->stream->check(TokenType::Quantifier())) {
             return $text;
         }
 
@@ -835,11 +859,11 @@ final class TokenParser
         // its lazy/possessive modifier: "a* +" means "a*+" to PCRE. A line
         // comment there is kept by the sequence, which then applies the
         // modifier after it to this quantifier.
-        if (QuantifierType::Greedy === $type && $this->extendedMode && !$this->state->inQuoteMode) {
+        if (QuantifierType::Greedy() === $type && $this->extendedMode && !$this->state->inQuoteMode) {
             $skippedModifier = $this->skipExtendedWhitespace();
-            if ($this->stream->check(TokenType::Quantifier) && \in_array($this->stream->current()->value, ['+', '?'], true)) {
+            if ($this->stream->check(TokenType::Quantifier()) && \in_array($this->stream->current()->value, ['+', '?'], true)) {
                 $modifier = $this->stream->current()->value;
-                $type = '+' === $modifier ? QuantifierType::Possessive : string::Lazy;
+                $type = '+' === $modifier ? QuantifierType::Possessive() : QuantifierType::Lazy();
                 $endPosition = $this->stream->current()->position + 1;
                 $this->stream->advance();
             } elseif ($skippedModifier > 0) {
@@ -851,7 +875,7 @@ final class TokenParser
     }
 
     /**
-     * @return array{0: string, 1: string}
+     * @return array{0: string, 1: QuantifierType}
      */
     private function parseQuantifierValue(string $value): array
     {
@@ -859,14 +883,14 @@ final class TokenParser
         $baseValue = (string) substr($value, 0, -1);
 
         if ('?' === $lastChar && \strlen($value) > 1) {
-            return [$baseValue, QuantifierType::Lazy];
+            return [$baseValue, QuantifierType::Lazy()];
         }
 
         if ('+' === $lastChar && \strlen($value) > 1) {
-            return [$baseValue, QuantifierType::Possessive];
+            return [$baseValue, QuantifierType::Possessive()];
         }
 
-        return [$value, QuantifierType::Greedy];
+        return [$value, QuantifierType::Greedy()];
     }
 
     private function assertQuantifierCanApply(NodeInterface $node, Token $token): void
@@ -879,7 +903,7 @@ final class TokenParser
 
             throw $this->parserException(
                 \sprintf('Quantifier does not follow a repeatable item at position %d: a callout cannot be repeated.', $position),
-                ErrorCode::QuantifierNothingToRepeat,
+                ErrorCode::QuantifierNothingToRepeat(),
                 $position,
             );
         }
@@ -889,7 +913,7 @@ final class TokenParser
 
             throw $this->parserException(
                 \sprintf('Quantifier without target at position %d.', $position),
-                ErrorCode::QuantifierNothingToRepeat,
+                ErrorCode::QuantifierNothingToRepeat(),
                 $position,
             );
         }
@@ -902,14 +926,14 @@ final class TokenParser
         $isAccept = $node instanceof PcreVerbNode && 1 === LibraryPcre::match('/^ACCEPT(?::|$)/', $node->verb);
         $isUnknownName = $node instanceof PcreVerbNode && 1 === LibraryPcre::match('/^[a-z]/', $node->verb);
 
-        if (!($isAccept && $this->supports(PcreFeature::QuantifiedAccept)) && !$isUnknownName && $this->isAssertionNode($node)) {
+        if (!($isAccept && $this->supports(PcreFeature::QuantifiedAccept())) && !$isUnknownName && $this->isAssertionNode($node)) {
             $this->guardQuantifierCount($token);
             $nodeName = $this->getAssertionNodeName($node);
 
             throw $this->parserException(
                 \sprintf('Quantifier "%s" cannot be applied to assertion or verb "%s" at position %d%s.',
                     $token->value, $nodeName, $position, $isAccept ? ': PCRE2 10.34 lets "(*ACCEPT)" be repeated; write "(?:(*ACCEPT))'.$token->value.'", which every release reads' : ''),
-                ErrorCode::QuantifierNothingToRepeat,
+                ErrorCode::QuantifierNothingToRepeat(),
                 $position,
             );
         }
@@ -943,35 +967,35 @@ final class TokenParser
         // errors below. "\Q" and "\E" never get here: the sequence reads
         // them before it asks for an item.
         switch ($token->type) {
-            case TokenType::ExtendedClass:
+            case TokenType::ExtendedClass():
                 $this->stream->advance();
 
                 return $this->extendedClasses()->parse($token);
-            case TokenType::CommentOpen:
+            case TokenType::CommentOpen():
                 $this->stream->advance();
 
                 return $this->state->comment();
-            case TokenType::Callout:
+            case TokenType::Callout():
                 $this->stream->advance();
 
                 return $this->parseCallout();
-            case TokenType::GroupOpen:
+            case TokenType::GroupOpen():
                 $this->stream->advance();
 
                 return $this->parsePlainGroup($token);
-            case TokenType::GroupModifierOpen:
+            case TokenType::GroupModifierOpen():
                 $this->stream->advance();
 
                 return $this->parseGroupModifier();
-            case TokenType::CharClassOpen:
+            case TokenType::CharClassOpen():
                 $this->stream->advance();
 
                 return $this->classes()->wordBoundary() ?? $this->classes()->parse();
-            case TokenType::PcreVerb:
+            case TokenType::PcreVerb():
                 $this->stream->advance();
 
                 return $this->verbNode($token, $startPosition);
-            case TokenType::Quantifier:
+            case TokenType::Quantifier():
                 break;
             default:
                 if (null !== $node = $this->parseSimpleAtom($startPosition)) {
@@ -979,7 +1003,7 @@ final class TokenParser
                 }
         }
 
-        if (TokenType::Quantifier === $token->type) {
+        if (TokenType::Quantifier() === $token->type) {
             $position = $this->stream->current()->position;
 
             $this->guardQuantifierCount($this->stream->current());
@@ -1006,25 +1030,25 @@ final class TokenParser
             // assertion PCRE does not know, wherever it ends before PCRE2
             // 10.47, and from 10.47 unless the pattern ends with it.
             if ($unclosedVerb && 1 === LibraryPcre::match('/\G[a-z]/', $this->pattern, $letter, 0, $namePosition)
-                && (!$this->supports(PcreFeature::AlphaNameAtPatternEndIsUnclosed) || 1 !== LibraryPcre::match('/\G\w++\z/', $this->pattern, $name, 0, $namePosition))) {
+                && (!$this->supports(PcreFeature::AlphaNameAtPatternEndIsUnclosed()) || 1 !== LibraryPcre::match('/\G\w++\z/', $this->pattern, $name, 0, $namePosition))) {
                 throw $this->parserException(
                     \sprintf('Unknown alphabetic assertion "(*%s" at position %d.', substr($this->pattern, $namePosition, $position - $namePosition), $position),
-                    ErrorCode::VerbInvalid,
+                    ErrorCode::VerbInvalid(),
                     $position,
                 );
             }
 
             throw $unclosedVerb
-                ? $this->parserException(\sprintf('Missing ")" to close the verb at position %d.', $position), ErrorCode::VerbUnclosed, $position)
-                : $this->parserException(\sprintf('Quantifier without target at position %d.', $position), ErrorCode::QuantifierNothingToRepeat, $position);
+                ? $this->parserException(\sprintf('Missing ")" to close the verb at position %d.', $position), ErrorCode::VerbUnclosed(), $position)
+                : $this->parserException(\sprintf('Quantifier without target at position %d.', $position), ErrorCode::QuantifierNothingToRepeat(), $position);
         }
 
         $val = $this->stream->current()->value;
-        $type = $this->stream->current()->type;
+        $type = $this->stream->current()->type->value;
 
         throw $this->parserException(
             \sprintf('Unexpected token "%s" (%s) at position %d.', $val, $type, $startPosition),
-            ErrorCode::TokenUnexpected,
+            ErrorCode::TokenUnexpected(),
             $startPosition,
         );
     }
@@ -1040,8 +1064,8 @@ final class TokenParser
      */
     private function guardOpenCountBeforeTen37(Token $token): void
     {
-        if (TokenType::Literal !== $token->type || $this->state->inQuoteMode || '{' !== ($this->pattern[$token->position] ?? '')
-            || $this->supports(PcreFeature::LargeOpenCountIsText)) {
+        if (TokenType::Literal() !== $token->type || $this->state->inQuoteMode || '{' !== ($this->pattern[$token->position] ?? '')
+            || $this->supports(PcreFeature::LargeOpenCountIsText())) {
             return;
         }
 
@@ -1049,7 +1073,7 @@ final class TokenParser
         if (null !== $overflow) {
             throw $this->parserException(
                 \sprintf('Number too big in "{" at position %d: PCRE2 before 10.37 reads the digits after it as a count, at most 65535.', $overflow),
-                ErrorCode::QuantifierTooBig,
+                ErrorCode::QuantifierTooBig(),
                 $overflow,
             );
         }
@@ -1064,22 +1088,22 @@ final class TokenParser
 
             // Without UTF mode "x" skips a 0x85 byte inside a character too.
             if ($atom instanceof LiteralNode && $this->extendedMode && !$this->unicodeMode && !$this->state->inQuoteMode
-                && TokenType::Literal === $this->stream->previous()->type && \strlen($atom->value) > 1 && strpos($atom->value, "\x85") !== false) {
+                && TokenType::Literal() === $this->stream->previous()->type && \strlen($atom->value) > 1 && strpos($atom->value, "\x85") !== false) {
                 return new LiteralNode(str_replace("\x85", '', $atom->value), $atom->getStartPosition(), $atom->getEndPosition(), $atom->isRaw);
             }
 
             return $atom;
         }
 
-        if ($this->stream->match(TokenType::Dot)) {
+        if ($this->stream->match(TokenType::Dot())) {
             return new DotNode($startPosition, $this->stream->previous()->end());
         }
 
-        if ($this->stream->match(TokenType::GReference)) {
+        if ($this->stream->match(TokenType::GReference())) {
             return $this->parseGReference($startPosition);
         }
 
-        if ($this->stream->match(TokenType::Keep)) {
+        if ($this->stream->match(TokenType::Keep())) {
             return new KeepNode($startPosition, $this->stream->previous()->end());
         }
 
@@ -1097,7 +1121,7 @@ final class TokenParser
     private function guardNamedReferenceEscape(): void
     {
         $token = $this->stream->current();
-        if (TokenType::LiteralEscaped !== $token->type || 'k' !== $token->value || $this->state->inQuoteMode || $this->readsBadEscapeAt($token->position)) {
+        if (TokenType::LiteralEscaped() !== $token->type || 'k' !== $token->value || $this->state->inQuoteMode || $this->readsBadEscapeAt($token->position)) {
             return;
         }
 
@@ -1107,22 +1131,22 @@ final class TokenParser
         if (null === $closer) {
             throw $this->parserException(
                 \sprintf('\k is not followed by a braced, angle-bracketed or quoted name at position %d.', $token->position + 2),
-                ErrorCode::BackrefInvalidSyntax,
+                ErrorCode::BackrefInvalidSyntax(),
                 $token->position + 2,
             );
         }
 
         $nameStart = $token->position + 3;
         // Inside braces PCRE skips the spaces before the name as well.
-        if ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes)) {
+        if ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes())) {
             $nameStart += strspn($this->pattern, " \t", $nameStart);
         }
         $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
 
-        if (ErrorCode::GroupNameInvalid === $this->groupNames->nameFault($nameStart, $nameEnd)) {
+        if (ErrorCode::GroupNameInvalid() === $this->groupNames->nameFault($nameStart, $nameEnd)) {
             throw $this->parserException(
                 \sprintf('Group name after \k%s must not start with a digit at position %d.', $opener, $nameEnd),
-                ErrorCode::GroupNameInvalid,
+                ErrorCode::GroupNameInvalid(),
                 $nameEnd,
             );
         }
@@ -1136,7 +1160,7 @@ final class TokenParser
         if ($nameEnd === $nameStart) {
             throw $this->parserException(
                 \sprintf('Group name expected after \k%s at position %d.', $opener, $nameStart),
-                ErrorCode::GroupNameExpected,
+                ErrorCode::GroupNameExpected(),
                 $nameStart,
             );
         }
@@ -1144,14 +1168,14 @@ final class TokenParser
         // Inside braces PCRE skips the spaces after the name, then wants
         // the "}": it stops on the first character that is neither.
         $closeAt = $nameEnd;
-        if ('}' === $closer && $this->supports(PcreFeature::PaddedBracedEscapes)) {
+        if ('}' === $closer && $this->supports(PcreFeature::PaddedBracedEscapes())) {
             $closeAt += strspn($this->pattern, " \t", $nameEnd);
         }
 
         if ($closer !== ($this->pattern[$closeAt] ?? '')) {
             throw $this->parserException(
                 \sprintf('Missing "%s" to close the group name after \k%s at position %d.', $closer, $opener, $closeAt),
-                ErrorCode::GroupNameUnterminated,
+                ErrorCode::GroupNameUnterminated(),
                 $closeAt,
             );
         }
@@ -1165,7 +1189,7 @@ final class TokenParser
     private function matchAtom(int $startPosition): ?NodeInterface
     {
         $type = $this->stream->currentType();
-        if (!\in_array($type, self::OUTSIDE_ATOM_TYPES, true)) {
+        if (!\in_array($type, self::OUTSIDE_ATOM_TYPES(), true)) {
             return $this->state->matchAtom($startPosition);
         }
 
@@ -1179,7 +1203,7 @@ final class TokenParser
      */
     private function atomFromToken(Token $token, $type, int $startPosition): NodeInterface
     {
-        if (TokenType::Backref === $type) {
+        if (TokenType::Backref() === $type) {
             if ($this->readsBadEscapeAt($token->position)) {
                 return $this->badEscapeLiteral($token, $startPosition);
             }
@@ -1194,9 +1218,9 @@ final class TokenParser
         }
 
         switch ($type) {
-            case TokenType::Anchor:
+            case TokenType::Anchor():
                 return new AnchorNode($token->value, $startPosition, $token->end());
-            case TokenType::Assertion:
+            case TokenType::Assertion():
                 return new AssertionNode($token->value, $startPosition, $token->end());
             default:
                 return new BackrefNode(self::withoutBracePadding($token->value), $startPosition, $token->end());
@@ -1216,11 +1240,11 @@ final class TokenParser
         }
 
         $expr = $this->parseScopedAlternation();
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
+        $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected )', ErrorCode::GroupUnclosed());
 
         return $this->createGroupNode(
             $expr,
-            $captures ? GroupType::Capturing : string::NonCapturing,
+            $captures ? GroupType::Capturing() : GroupType::NonCapturing(),
             $startToken->position,
             $endToken,
         );
@@ -1254,13 +1278,13 @@ final class TokenParser
         }
 
         $body = $this->parseScopedAlternation();
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
+        $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected )', ErrorCode::GroupUnclosed());
 
         // Reached only from the tokens of Lexer::tokenizeInPlace(), which
         // reads a closed body in place too: "(*pla:(a))b". Lexer::tokenize()
         // keeps a closed body in the opener's token, so there no ")" closes
         // a body read here.
-        return $this->createGroupNode($body, $read->assertion ?? GroupType::NonCapturing, $startPosition, $endToken, null, $read->nonAtomic ? self::NON_ATOMIC_FLAG : null);
+        return $this->createGroupNode($body, $read->assertion ?? GroupType::NonCapturing(), $startPosition, $endToken, null, $read->nonAtomic ? self::NON_ATOMIC_FLAG : null);
     }
 
     /**
@@ -1314,7 +1338,7 @@ final class TokenParser
 
             throw $this->parserException(
                 \sprintf('Invalid subroutine call %s at position %d: the group number is not followed by what closes it.', $value, $position),
-                $this->supports(PcreFeature::GReferenceNumberReadBeforeClosing) ? ErrorCode::SubroutineInvalidSyntax : string::BackrefInvalidSyntax,
+                $this->supports(PcreFeature::GReferenceNumberReadBeforeClosing()) ? ErrorCode::SubroutineInvalidSyntax() : ErrorCode::BackrefInvalidSyntax(),
                 $position,
             );
         }
@@ -1335,9 +1359,9 @@ final class TokenParser
         throw $this->parserException(
             \sprintf('Invalid \\g reference syntax: %s at position %d%s', $value, $position, (function () use ($code) {
                 switch ($code) {
-                    case ErrorCode::GroupNameExpected:
+                    case ErrorCode::GroupNameExpected():
                         return ': a group name or number is expected.';
-                    case ErrorCode::GroupNameUnterminated:
+                    case ErrorCode::GroupNameUnterminated():
                         return ': nothing closes the group name there.';
                     default:
                         return '.';
@@ -1366,7 +1390,7 @@ final class TokenParser
         }
 
         $at = $start + 3;
-        if ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes)) {
+        if ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes())) {
             $at += strspn($this->pattern, " \t", $at);
         }
 
@@ -1380,11 +1404,11 @@ final class TokenParser
 
         switch (true) {
             case PcreNumber::exceeds($digits) || ('+' === $sign && $value + $this->captureCount > PcreNumber::MAX):
-                return [ErrorCode::GroupNumberTooBig, 'the group number is too big: PCRE takes at most 65535'];
+                return [ErrorCode::GroupNumberTooBig(), 'the group number is too big: PCRE takes at most 65535'];
             case '' !== $sign && 0 === $value:
-                return [$call ? ErrorCode::SubroutineRelativeZero : string::BackrefZero, 'a relative number may not be zero'];
+                return [$call ? ErrorCode::SubroutineRelativeZero() : ErrorCode::BackrefZero(), 'a relative number may not be zero'];
             case '-' === $sign && $value > $this->captureCount:
-                return [$call ? ErrorCode::SubroutineRelativeMissing : string::BackrefRelative, \sprintf('-%d counts back past the %d groups opened before it', $value, $this->captureCount)];
+                return [$call ? ErrorCode::SubroutineRelativeMissing() : ErrorCode::BackrefRelative(), \sprintf('-%d counts back past the %d groups opened before it', $value, $this->captureCount)];
             default:
                 return null;
         }
@@ -1397,25 +1421,25 @@ final class TokenParser
      *
      * @param int $start the offset of the backslash
      */
-    private function gReferenceErrorCode(int $start, int $position): string
+    private function gReferenceErrorCode(int $start, int $position): ErrorCode
     {
         $opener = $this->pattern[$start + 2] ?? '';
         if (!\in_array($opener, ['{', '<', "'"], true)) {
-            return ErrorCode::BackrefInvalidSyntax;
+            return ErrorCode::BackrefInvalidSyntax();
         }
 
         // Only "\g{" takes spaces and tabs before a name or number, from
         // PCRE2 10.43.
-        $nameStart = $start + 3 + ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes) ? strspn($this->pattern, " \t", $start + 3) : 0);
+        $nameStart = $start + 3 + ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes()) ? strspn($this->pattern, " \t", $start + 3) : 0);
 
         if (1 === LibraryPcre::match('/\G[+-]?\d/', $this->pattern, $matches, 0, $nameStart)) {
-            return ErrorCode::BackrefInvalidSyntax;
+            return ErrorCode::BackrefInvalidSyntax();
         }
 
         // PCRE measures the name before it looks for what closes it.
         if (!$this->groupNames->startsWithDigit($nameStart)
             && $position === $this->groupNames->tooLongAt($nameStart, $this->groupNames->invalidNameOffset($nameStart))) {
-            return ErrorCode::GroupNameTooLong;
+            return ErrorCode::GroupNameTooLong();
         }
 
         return $this->groupNames->nameFault($nameStart, $position);
@@ -1436,7 +1460,7 @@ final class TokenParser
         // Only braces take spaces and tabs before the name, from PCRE2 10.43;
         // the name ends where the characters a name holds end.
         $nameStart = $start + 3;
-        if ('{' === $matches[1] && $this->supports(PcreFeature::PaddedBracedEscapes)) {
+        if ('{' === $matches[1] && $this->supports(PcreFeature::PaddedBracedEscapes())) {
             $nameStart += strspn($this->pattern, " \t", $nameStart);
         }
 
@@ -1478,17 +1502,17 @@ final class TokenParser
         }
 
         // Only "\g{...}" takes spaces around what it holds, from PCRE2 10.43.
-        $blanks = '}' === $closing && $this->supports(PcreFeature::PaddedBracedEscapes) ? " \t" : '';
+        $blanks = '}' === $closing && $this->supports(PcreFeature::PaddedBracedEscapes()) ? " \t" : '';
         $position++;
         $position += strspn($this->pattern, $blanks, $position);
 
         if (1 === LibraryPcre::match('/\G[+-]?\d++/', $this->pattern, $matches, 0, $position)) {
             // Before PCRE2 10.47, a number nothing closes fails "\g" itself,
             // or, before 10.43, the space after "{" that pads it.
-            if (!$this->supports(PcreFeature::GReferenceNumberReadBeforeClosing)) {
+            if (!$this->supports(PcreFeature::GReferenceNumberReadBeforeClosing())) {
                 $padded = strpos(" \t", $this->pattern[$start + 3] ?? 'x') !== false;
 
-                return $start + ($padded && !$this->supports(PcreFeature::PaddedBracedEscapes) ? 3 : 2);
+                return $start + ($padded && !$this->supports(PcreFeature::PaddedBracedEscapes()) ? 3 : 2);
             }
 
             $position += \strlen($matches[0]);
@@ -1536,8 +1560,8 @@ final class TokenParser
         $plusAt = '+' === ($this->pattern[$characterEnd] ?? '') ? $characterEnd : $characterEnd + 1;
         if ('g' === $character->value && '+' === ($this->pattern[$plusAt] ?? '') && $plusAt < $end) {
             $parts = $plusAt === $characterEnd
-                ? [new QuantifierNode($character, '+', QuantifierType::Greedy, $startPosition, $plusAt + 1)]
-                : [$character, new QuantifierNode(new LiteralNode($this->pattern[$characterEnd], $characterEnd, $plusAt), '+', QuantifierType::Greedy, $characterEnd, $plusAt + 1)];
+                ? [new QuantifierNode($character, '+', QuantifierType::Greedy(), $startPosition, $plusAt + 1)]
+                : [$character, new QuantifierNode(new LiteralNode($this->pattern[$characterEnd], $characterEnd, $plusAt), '+', QuantifierType::Greedy(), $characterEnd, $plusAt + 1)];
             $textStart = $plusAt + 1;
         }
 
@@ -1554,7 +1578,7 @@ final class TokenParser
      */
     private function digitsFromUnreadReference(Token $token, int $startPosition): ?NodeInterface
     {
-        if ($this->supports(PcreFeature::HugeBackreferenceNumberIsReference) || 1 !== LibraryPcre::match('/^\\\\([89]\d{8,})$/', $token->value, $matches)) {
+        if ($this->supports(PcreFeature::HugeBackreferenceNumberIsReference()) || 1 !== LibraryPcre::match('/^\\\\([89]\d{8,})$/', $token->value, $matches)) {
             return null;
         }
 
@@ -1585,8 +1609,8 @@ final class TokenParser
         $escapeEnd = $startPosition + \strlen($representation);
         $escape = new CharLiteralNode(
             $representation,
-            CodePointReader::fromLiteral($representation, CharLiteralType::OctalLegacy),
-            CharLiteralType::OctalLegacy,
+            CodePointReader::fromLiteral($representation, CharLiteralType::OctalLegacy()),
+            CharLiteralType::OctalLegacy(),
             $startPosition,
             $escapeEnd,
         );
@@ -1623,31 +1647,31 @@ final class TokenParser
 
         // 2.0 "(?(?C1)(?=a)yes|no)": a callout may run before the assertion
         // that is the condition.
-        if ($this->stream->match(TokenType::Callout)) {
+        if ($this->stream->match(TokenType::Callout())) {
             return $this->conditions()->calloutConditional($startPosition);
         }
 
         // 2.1 "(?(" followed by "(*...)" is a conditional whose condition is
         // spelled as a verb: "(?(*pla:a)yes|no)".
-        if ($this->stream->match(TokenType::PcreVerb)) {
+        if ($this->stream->match(TokenType::PcreVerb())) {
             return $this->conditions()->verbConditional($startPosition, $this->stream->previous());
         }
 
         // 2.2 "(?(?[a])b)": an extended class is no assertion; PCRE refuses
         // it past the "(", on it before PCRE2 10.47.
-        if ($this->stream->check(TokenType::ExtendedClass) && $this->stream->current()->position === $startPosition + 2) {
+        if ($this->stream->check(TokenType::ExtendedClass()) && $this->stream->current()->position === $startPosition + 2) {
             $position = $this->target->faultOffset($this->stream->current()->position + 1);
 
             throw $this->parserException(
                 \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
-                ErrorCode::ConditionalAssertionExpected,
+                ErrorCode::ConditionalAssertionExpected(),
                 $position,
             );
         }
 
         // 2.3 "(?(?#c)(?=a)b)": a comment where the condition starts is
         // skipped, and the assertion is due after it.
-        if ($this->stream->check(TokenType::CommentOpen) && $this->stream->current()->position === $startPosition + 2) {
+        if ($this->stream->check(TokenType::CommentOpen()) && $this->stream->current()->position === $startPosition + 2) {
             return $this->conditions()->commentedConditional($startPosition);
         }
 
@@ -1663,9 +1687,9 @@ final class TokenParser
 
         // 5. Check for conditional (?(...)
         $isConditionalWithModifier = null;
-        if ($this->stream->match(TokenType::GroupModifierOpen)) {
+        if ($this->stream->match(TokenType::GroupModifierOpen())) {
             $isConditionalWithModifier = true;
-        } elseif ($this->stream->match(TokenType::GroupOpen)) {
+        } elseif ($this->stream->match(TokenType::GroupOpen())) {
             $isConditionalWithModifier = false;
         }
 
@@ -1712,7 +1736,7 @@ final class TokenParser
             })
             : '';
 
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close PCRE verb', ErrorCode::VerbUnclosed);
+        $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected ) to close PCRE verb', ErrorCode::VerbUnclosed());
         $endPosition = $endToken->position + 1;
 
         // Parse the rest of the pattern after the verb group
@@ -1799,7 +1823,7 @@ final class TokenParser
     {
         $listOpen = $startPosition + 2 + \strlen($name) + 1;
         if ('(' !== ($this->pattern[$listOpen] ?? '')) {
-            throw $this->groupListError([$listOpen, ErrorCode::ScanSubstringMissingList, \sprintf('Missing "(" to open the groups of (*%s: at position %d.', $name, $listOpen)]);
+            throw $this->groupListError([$listOpen, ErrorCode::ScanSubstringMissingList(), \sprintf('Missing "(" to open the groups of (*%s: at position %d.', $name, $listOpen)]);
         }
 
         [$groups, $bodyStart] = $this->readGroupList($listOpen + 1);
@@ -1807,7 +1831,7 @@ final class TokenParser
 
         return new GroupNode(
             $this->parseSubPattern($body, $bodyStart),
-            GroupType::ScanSubstring,
+            GroupType::ScanSubstring(),
             // The spelling, "scs" or "scan_substring".
             $name,
             null,
@@ -1822,7 +1846,7 @@ final class TokenParser
     {
         $read = PcreVerb::read($verb);
 
-        if (null !== $read->scanSubstring && $this->supports(PcreFeature::ScanSubstring)) {
+        if (null !== $read->scanSubstring && $this->supports(PcreFeature::ScanSubstring())) {
             return $this->createScanSubstringNode($read->scanSubstring, $startPosition, $endPosition);
         }
 
@@ -1872,21 +1896,21 @@ final class TokenParser
         if ($this->stream->matchLiteral('>')) { // (?P>name) subroutine
             $name = $this->parseSubroutineName();
             $returned = $this->readReturnedGroups() ?? [];
-            $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close subroutine call', $this->callLeftOpenCode());
+            $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected ) to close subroutine call', $this->callLeftOpenCode());
 
             return new SubroutineNode($name, 'P>', $startPos, $endToken->position + 1, $returned);
         }
 
         if ($this->stream->matchLiteral('=')) {
             $name = $this->groupNames->read(false);
-            $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupNameUnterminated);
+            $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected )', ErrorCode::GroupNameUnterminated());
 
             return new BackrefNode('\\k<'.$name.'>', $startPos, $endToken->position + 1);
         }
 
         // A pattern that ends there misses the ")" of the group.
         if ($pPos + 1 >= \strlen($this->pattern)) {
-            throw $this->parserException(\sprintf('Missing ")" to close "(?P" at position %d.', $pPos + 1), ErrorCode::GroupUnclosed, $pPos + 1);
+            throw $this->parserException(\sprintf('Missing ")" to close "(?P" at position %d.', $pPos + 1), ErrorCode::GroupUnclosed(), $pPos + 1);
         }
 
         // PCRE reports it past the character it could not read from PCRE2
@@ -1896,7 +1920,7 @@ final class TokenParser
 
         throw $this->parserException(
             \sprintf('Invalid syntax after (?P at position %d: "<", ">" or "=" is expected.', $position),
-            ErrorCode::GroupSyntax,
+            ErrorCode::GroupSyntax(),
             $position,
         );
     }
@@ -1910,38 +1934,38 @@ final class TokenParser
         // quantifier token. In "(?<*+" or "(?<*?" the "+" or "?" that came
         // with it repeats nothing. Before PCRE2 10.35 the "*" is where a
         // group name is expected.
-        if ($this->stream->check(TokenType::Quantifier) && strncmp($this->stream->current()->value, '*', strlen('*')) === 0 && !$this->supports(PcreFeature::NonAtomicAssertionShortSyntax)) {
+        if ($this->stream->check(TokenType::Quantifier()) && strncmp($this->stream->current()->value, '*', strlen('*')) === 0 && !$this->supports(PcreFeature::NonAtomicAssertionShortSyntax())) {
             $position = $this->stream->current()->position;
 
             throw $this->parserException(
-                \sprintf('Expected group name at position %d: PCRE2 10.35 added "(?<*" for "(*naplb:"%s.', $position, $this->supports(PcreFeature::NonAtomicAssertionNames) ? '; write "(*naplb:" instead' : ''),
-                ErrorCode::GroupNameExpected,
+                \sprintf('Expected group name at position %d: PCRE2 10.35 added "(?<*" for "(*naplb:"%s.', $position, $this->supports(PcreFeature::NonAtomicAssertionNames()) ? '; write "(*naplb:" instead' : ''),
+                ErrorCode::GroupNameExpected(),
                 $position,
             );
         }
 
-        if ($this->stream->check(TokenType::Quantifier) && \in_array($this->stream->current()->value, ['*+', '*?'], true)) {
+        if ($this->stream->check(TokenType::Quantifier()) && \in_array($this->stream->current()->value, ['*+', '*?'], true)) {
             $token = $this->stream->current();
             $position = $this->target->faultOffset($token->position + \strlen($token->value));
 
             throw $this->parserException(
                 \sprintf('Quantifier without target at position %d.', $position),
-                ErrorCode::QuantifierNothingToRepeat,
+                ErrorCode::QuantifierNothingToRepeat(),
                 $position,
             );
         }
 
-        if ($this->stream->check(TokenType::Quantifier) && '*' === $this->stream->current()->value) {
+        if ($this->stream->check(TokenType::Quantifier()) && '*' === $this->stream->current()->value) {
             $this->stream->advance();
             $expr = $this->parseScopedAlternation();
-            $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
+            $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected )', ErrorCode::GroupUnclosed());
 
-            return $this->createGroupNode($expr, GroupType::LookbehindPositive, $startPos, $endToken, null, self::NON_ATOMIC_FLAG);
+            return $this->createGroupNode($expr, GroupType::LookbehindPositive(), $startPos, $endToken, null, self::NON_ATOMIC_FLAG);
         }
 
         // "(?<=...)" and "(?<!...)" are lookbehinds; anything else after the
         // "<" is the name of a group.
-        return $this->matchLookaround($startPos, self::LOOKBEHINDS)
+        return $this->matchLookaround($startPos, self::LOOKBEHINDS())
             ?? $this->parseNamedGroup($startPos, true);
     }
 
@@ -1956,7 +1980,7 @@ final class TokenParser
         if ($this->stream->matchLiteral('-')) {
             $num = '-';
             $tokensConsumed++;
-        } elseif ($this->stream->check(TokenType::Quantifier) && '+' === $this->stream->current()->value) {
+        } elseif ($this->stream->check(TokenType::Quantifier()) && '+' === $this->stream->current()->value) {
             // "+" after "(?" is lexed as a quantifier token; here it is the
             // sign of a relative subroutine call like (?+1).
             $this->stream->advance();
@@ -1970,15 +1994,15 @@ final class TokenParser
             $tokensConsumed++;
 
             // Consume additional digits
-            while ($this->stream->check(TokenType::Literal) && Ascii::isDigit($this->stream->current()->value)) {
+            while ($this->stream->check(TokenType::Literal()) && Ascii::isDigit($this->stream->current()->value)) {
                 $num .= $this->stream->current()->value;
                 $this->stream->advance();
                 $tokensConsumed++;
             }
 
             $returned = $this->readReturnedGroups();
-            if (null !== $returned || $this->stream->check(TokenType::GroupClose)) {
-                $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
+            if (null !== $returned || $this->stream->check(TokenType::GroupClose())) {
+                $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected )', ErrorCode::GroupUnclosed());
 
                 return new SubroutineNode($num, '', $startPos, $endToken->position + 1, $returned ?? []);
             }
@@ -2006,7 +2030,7 @@ final class TokenParser
     {
         // Whatever the lexer made of the "(" and what follows it, as "(?:".
         $open = $this->stream->current()->position;
-        if (!$this->supports(PcreFeature::CallsReturnCaptureGroups) || $this->stream->isAtEnd() || '(' !== ($this->pattern[$open] ?? '')) {
+        if (!$this->supports(PcreFeature::CallsReturnCaptureGroups()) || $this->stream->isAtEnd() || '(' !== ($this->pattern[$open] ?? '')) {
             return null;
         }
 
@@ -2039,7 +2063,7 @@ final class TokenParser
         while (true) {
             if (1 !== LibraryPcre::match('/\G(?:([+-]?)(\d++)|<[^>]*+>|\'[^\']*+\')/', $this->pattern, $matches, 0, $at)) {
                 // The reader stops on such an item too: the fallback is for the type.
-                throw $this->groupListError($fault ?? [$at, ErrorCode::GroupListItemExpected, \sprintf('Expected a capture group number or name at position %d.', $at)]);
+                throw $this->groupListError($fault ?? [$at, ErrorCode::GroupListItemExpected(), \sprintf('Expected a capture group number or name at position %d.', $at)]);
             }
 
             $itemEnd = $at + \strlen($matches[0]);
@@ -2048,15 +2072,15 @@ final class TokenParser
             if ('' !== $digits) {
                 switch (true) {
                     case PcreNumber::exceeds($digits):
-                        [$refused, $code] = ['is too big', ErrorCode::GroupNumberTooBig];
+                        [$refused, $code] = ['is too big', ErrorCode::GroupNumberTooBig()];
                         break;
                     case 0 === (int) $digits:
                         [$refused, $code] = '' === $sign
-                            ? ['names no group', ErrorCode::GroupListMissingGroup]
-                            : ['is a relative zero', ErrorCode::GroupListRelativeZero];
+                            ? ['names no group', ErrorCode::GroupListMissingGroup()]
+                            : ['is a relative zero', ErrorCode::GroupListRelativeZero()];
                         break;
                     case '-' === $sign && (int) $digits > $this->captureCount:
-                        [$refused, $code] = ['names no group', ErrorCode::GroupListMissingGroup];
+                        [$refused, $code] = ['names no group', ErrorCode::GroupListMissingGroup()];
                         break;
                     default:
                         [$refused, $code] = [null, null];
@@ -2081,11 +2105,11 @@ final class TokenParser
     }
 
     /**
-     * @param array{0: int, 1: string, 2: string} $fault
+     * @param array{0: int, 1: ErrorCode, 2: string} $fault
      */
     private function groupListError(array $fault): ParserException
     {
-        if (!$this->supports(PcreFeature::GroupListErrors)) {
+        if (!$this->supports(PcreFeature::GroupListErrors())) {
             $fault = PcreVerb::groupListFaultBefore1047($fault, \strlen($this->pattern));
         }
 
@@ -2096,9 +2120,9 @@ final class TokenParser
      * The code of a call by name the pattern ends in: before PCRE2 10.47 the
      * name wants a ")" right after it, from 10.47 the call does.
      */
-    private function callLeftOpenCode(): string
+    private function callLeftOpenCode(): ErrorCode
     {
-        return $this->supports(PcreFeature::CallsReturnCaptureGroups) ? ErrorCode::GroupUnclosed : string::GroupNameUnterminated;
+        return $this->supports(PcreFeature::CallsReturnCaptureGroups()) ? ErrorCode::GroupUnclosed() : ErrorCode::GroupNameUnterminated();
     }
 
     /**
@@ -2112,7 +2136,7 @@ final class TokenParser
 
         $name = $this->parseSubroutineName();
         $returned = $this->readReturnedGroups() ?? [];
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close subroutine call', $this->callLeftOpenCode());
+        $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected ) to close subroutine call', $this->callLeftOpenCode());
 
         return new SubroutineNode($name, '&', $startPosition, $endToken->position + 1, $returned);
     }
@@ -2124,8 +2148,8 @@ final class TokenParser
     {
         if ($this->stream->matchLiteral('R')) {
             $returned = $this->readReturnedGroups();
-            if (null !== $returned || $this->stream->check(TokenType::GroupClose)) {
-                $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
+            if (null !== $returned || $this->stream->check(TokenType::GroupClose())) {
+                $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected )', ErrorCode::GroupUnclosed());
 
                 return new SubroutineNode('R', '', $startPosition, $endToken->position + 1, $returned ?? []);
             }
@@ -2146,22 +2170,22 @@ final class TokenParser
     private function parseSimpleGroupModifier(int $startPosition): ?GroupNode
     {
         if ($this->stream->matchLiteral(':')) {
-            return $this->parseSimpleGroup($startPosition, GroupType::NonCapturing);
+            return $this->parseSimpleGroup($startPosition, GroupType::NonCapturing());
         }
 
         if ($this->stream->matchLiteral('=')) {
-            return $this->parseSimpleGroup($startPosition, GroupType::LookaheadPositive);
+            return $this->parseSimpleGroup($startPosition, GroupType::LookaheadPositive());
         }
 
         if ($this->stream->matchLiteral('!')) {
-            return $this->parseSimpleGroup($startPosition, GroupType::LookaheadNegative);
+            return $this->parseSimpleGroup($startPosition, GroupType::LookaheadNegative());
         }
 
         if ($this->stream->matchLiteral('>')) {
-            return $this->parseSimpleGroup($startPosition, GroupType::Atomic);
+            return $this->parseSimpleGroup($startPosition, GroupType::Atomic());
         }
 
-        if ($this->stream->match(TokenType::Alternation)) {
+        if ($this->stream->match(TokenType::Alternation())) {
             return $this->parseBranchReset($startPosition);
         }
 
@@ -2192,7 +2216,7 @@ final class TokenParser
                 $this->captureCount = $base;
                 $branches[] = $this->parseSequence();
                 $highest = max($highest, $this->captureCount);
-            } while ($this->stream->match(TokenType::Alternation));
+            } while ($this->stream->match(TokenType::Alternation()));
         } finally {
             $this->recursionDepth--;
             $this->extendedMode = $extendedMode;
@@ -2207,9 +2231,9 @@ final class TokenParser
             ? $branches[0]
             : new AlternationNode($branches, $branchStart, end($branches)->getEndPosition());
 
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
+        $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected )', ErrorCode::GroupUnclosed());
 
-        return $this->createGroupNode($expr, GroupType::BranchReset, $startPosition, $endToken);
+        return $this->createGroupNode($expr, GroupType::BranchReset(), $startPosition, $endToken);
     }
 
     /**
@@ -2226,12 +2250,12 @@ final class TokenParser
 
             throw $this->parserException(
                 \sprintf('Invalid hyphen in option setting at position %d: "(?^" cannot turn modifiers off.', $position),
-                ErrorCode::GroupOptionHyphen,
+                ErrorCode::GroupOptionHyphen(),
                 $position,
             );
         }
 
-        $letters = self::INLINE_FLAG_LETTERS.($this->supports(PcreFeature::CaselessRestrictModifier) ? 'r' : '');
+        $letters = self::INLINE_FLAG_LETTERS.($this->supports(PcreFeature::CaselessRestrictModifier()) ? 'r' : '');
         // The ASCII options were only read where PCRE2 takes them.
         $tracked = InlineFlags::withoutAsciiOptions($flags);
         $modifiers = InlineFlags::read($tracked, $letters);
@@ -2239,8 +2263,8 @@ final class TokenParser
         // "(?)", "(?-)" and "(?-:...)" set nothing, and PCRE takes them as
         // such, as "(?a)" or "(?-aD)" set nothing this library tracks; "(?A:"
         // or "(?{" is no option setting at all.
-        $setsNothing = ('' === $flags && $this->stream->check(TokenType::GroupClose))
-            || ('-' === $flags && ($this->stream->check(TokenType::GroupClose) || $this->stream->checkLiteral(':')))
+        $setsNothing = ('' === $flags && $this->stream->check(TokenType::GroupClose()))
+            || ('-' === $flags && ($this->stream->check(TokenType::GroupClose()) || $this->stream->checkLiteral(':')))
             || ($tracked !== $flags && \in_array($tracked, ['', '-'], true));
 
         if (null === $modifiers && !$setsNothing) {
@@ -2264,7 +2288,7 @@ final class TokenParser
         $this->noAutoCapture = (($nullsafeVariable5 = $modifiers) ? $nullsafeVariable5->inForce('n', $this->noAutoCapture) : null) ?? $this->noAutoCapture;
 
         // "(?iz)": the letters are read as far as PCRE knows them.
-        if (!$this->stream->check(TokenType::GroupClose) && !$this->stream->checkLiteral(':')) {
+        if (!$this->stream->check(TokenType::GroupClose()) && !$this->stream->checkLiteral(':')) {
             throw $this->unreadableGroupError($startPosition);
         }
 
@@ -2278,12 +2302,12 @@ final class TokenParser
             $this->groupNames->allowDuplicates($wasAllowingDuplicates);
         }
 
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
+        $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected )', ErrorCode::GroupUnclosed());
         $expr = $expr ?? $this->createEmptyLiteralNodeAt($this->stream->previous()->position);
 
         return $this->createGroupNode(
             $expr,
-            GroupType::InlineFlags,
+            GroupType::InlineFlags(),
             $startPosition,
             $endToken,
             null,
@@ -2301,15 +2325,15 @@ final class TokenParser
     {
         $letters = '';
 
-        if ($this->stream->check(TokenType::Anchor) && '^' === $this->stream->current()->value) {
+        if ($this->stream->check(TokenType::Anchor()) && '^' === $this->stream->current()->value) {
             $letters = '^';
             $this->stream->advance();
         }
 
-        $accepted = self::INLINE_FLAG_LETTERS.($this->supports(PcreFeature::CaselessRestrictModifier) ? 'r' : '');
+        $accepted = self::INLINE_FLAG_LETTERS.($this->supports(PcreFeature::CaselessRestrictModifier()) ? 'r' : '');
 
         // From PCRE2 10.43, "a" may take one of "D", "S", "W", "P", "T".
-        $ascii = $this->supports(PcreFeature::AsciiOptions);
+        $ascii = $this->supports(PcreFeature::AsciiOptions());
         $afterA = false;
 
         return $letters.$this->state->consumeWhile(
@@ -2369,7 +2393,7 @@ final class TokenParser
             $this->patternNames,
             \Closure::fromCallable([$this, 'parseScopedAlternation']),
             function (int $start, bool $behind): ?GroupNode {
-                return $this->matchLookaround($start, $behind ? self::LOOKBEHINDS : self::LOOKAHEADS);
+                return $this->matchLookaround($start, $behind ? self::LOOKBEHINDS() : self::LOOKAHEADS());
             },
             \Closure::fromCallable([$this, 'verbNode']),
             \Closure::fromCallable([$this, 'skipExtendedModeContent']),
@@ -2420,7 +2444,7 @@ final class TokenParser
      */
     private function isOptionSetting(GroupNode $node): bool
     {
-        return GroupType::InlineFlags === $node->type
+        return GroupType::InlineFlags() === $node->type
             && ')' === ($this->pattern[$node->getStartPosition() + 2 + \strlen((string) $node->flags)] ?? ')');
     }
 
@@ -2452,7 +2476,7 @@ final class TokenParser
         if ($this->groupNames->startsWithDigit($nameStart)) {
             throw $this->parserException(
                 \sprintf('Invalid subroutine name at position %d: a group name must not start with a digit.', $nameEnd),
-                ErrorCode::GroupNameInvalid,
+                ErrorCode::GroupNameInvalid(),
                 $nameEnd,
             );
         }
@@ -2465,15 +2489,15 @@ final class TokenParser
         if ($nameEnd === $nameStart) {
             throw $this->parserException(
                 \sprintf('Expected subroutine name at position %d.', $nameStart),
-                ErrorCode::GroupNameExpected,
+                ErrorCode::GroupNameExpected(),
                 $nameStart,
             );
         }
 
-        if (!$this->supports(PcreFeature::CallsReturnCaptureGroups) && ')' !== ($this->pattern[$nameEnd] ?? '')) {
+        if (!$this->supports(PcreFeature::CallsReturnCaptureGroups()) && ')' !== ($this->pattern[$nameEnd] ?? '')) {
             throw $this->parserException(
                 \sprintf('Missing ")" to close subroutine call: the name ends at position %d.', $nameEnd),
-                ErrorCode::GroupNameUnterminated,
+                ErrorCode::GroupNameUnterminated(),
                 $nameEnd,
             );
         }
@@ -2504,7 +2528,7 @@ final class TokenParser
      *
      * @param int $start the offset of the "("
      *
-     * @return array{0: int, 1: string, 2: string} the offset, the code,
+     * @return array{0: int, 1: ErrorCode, 2: string} the offset, the code,
      *                                                and the message, whose
      *                                                "%d" is the offset
      */
@@ -2514,8 +2538,8 @@ final class TokenParser
         $length = \strlen($pattern);
         $position = $start + 2;
         $char = $pattern[$position] ?? '';
-        $syntax = [ErrorCode::GroupSyntax, 'Invalid group modifier syntax at position %d.'];
-        $unclosed = [ErrorCode::GroupUnclosed, 'Missing ")" to close the group at position %d.'];
+        $syntax = [ErrorCode::GroupSyntax(), 'Invalid group modifier syntax at position %d.'];
+        $unclosed = [ErrorCode::GroupUnclosed(), 'Missing ")" to close the group at position %d.'];
 
         // Tokens with no pattern text behind them: nothing to read.
         if ($position > $length) {
@@ -2530,7 +2554,7 @@ final class TokenParser
 
         // "(?R" calls the whole pattern, and a ")" has to follow.
         if ('R' === $char) {
-            return [$position + 1, ErrorCode::SubroutineInvalidSyntax, '"(?R" must be followed by ")", at position %d.'];
+            return [$position + 1, ErrorCode::SubroutineInvalidSyntax(), '"(?R" must be followed by ")", at position %d.'];
         }
 
         // "(?1", "(?-1", "(?+1": a call, which ends after its number, and is
@@ -2543,13 +2567,13 @@ final class TokenParser
 
             switch (true) {
                 case null !== $tooBig:
-                    return [$tooBig, ErrorCode::GroupNumberTooBig, 'Group number '.$number.' is too big at position %d: PCRE takes at most 65535.'];
+                    return [$tooBig, ErrorCode::GroupNumberTooBig(), 'Group number '.$number.' is too big at position %d: PCRE takes at most 65535.'];
                 case '' !== $sign && 0 === (int) $digits:
-                    return [$end, ErrorCode::SubroutineRelativeZero, 'Subroutine call relative reference cannot be zero, at position %d.'];
+                    return [$end, ErrorCode::SubroutineRelativeZero(), 'Subroutine call relative reference cannot be zero, at position %d.'];
                 case '-' === $sign && (int) $digits > $this->captureCount:
-                    return [$end, ErrorCode::SubroutineRelativeMissing, 'Subroutine call relative reference '.$number.' points before the first group, at position %d.'];
+                    return [$end, ErrorCode::SubroutineRelativeMissing(), 'Subroutine call relative reference '.$number.' points before the first group, at position %d.'];
                 default:
-                    return [$end, ErrorCode::GroupUnclosed, 'Missing ")" to close the subroutine call at position %d.'];
+                    return [$end, ErrorCode::GroupUnclosed(), 'Missing ")" to close the subroutine call at position %d.'];
             }
         }
 
@@ -2560,18 +2584,18 @@ final class TokenParser
 
             return $position + 1 >= $length
                 ? array_merge([$fault], $unclosed)
-                : [$fault, ErrorCode::SubroutineInvalidSyntax, 'A digit is expected after "(?+", at position %d.'];
+                : [$fault, ErrorCode::SubroutineInvalidSyntax(), 'A digit is expected after "(?+", at position %d.'];
         }
 
         if ('C' === $char) {
-            [$fault, $code] = Callout::fault($this->pattern, $start, $this->target) ?? [$start, ErrorCode::GroupSyntax];
+            [$fault, $code] = Callout::fault($this->pattern, $start, $this->target) ?? [$start, ErrorCode::GroupSyntax()];
 
             return [$fault, $code, 'Invalid callout at position %d: '.str_replace('%', '%%', Callout::problem($code)).'.'];
         }
 
         // Option letters: PCRE stops past the first one it does not know,
         // past a "-" it cannot take, or at the end of the pattern.
-        $letters = self::INLINE_FLAG_LETTERS.($this->supports(PcreFeature::CaselessRestrictModifier) ? 'r' : '');
+        $letters = self::INLINE_FLAG_LETTERS.($this->supports(PcreFeature::CaselessRestrictModifier()) ? 'r' : '');
         $hyphenAllowed = true;
         if ('^' === $char) {
             $hyphenAllowed = false;
@@ -2583,7 +2607,7 @@ final class TokenParser
 
             if ('-' === $char) {
                 if (!$hyphenAllowed) {
-                    return [$this->target->faultOffset($position), ErrorCode::GroupOptionHyphen, 'Invalid hyphen in option setting at position %d: modifiers are turned off once, after a single "-" that no "^" precedes.'];
+                    return [$this->target->faultOffset($position), ErrorCode::GroupOptionHyphen(), 'Invalid hyphen in option setting at position %d: modifiers are turned off once, after a single "-" that no "^" precedes.'];
                 }
 
                 $hyphenAllowed = false;
@@ -2592,7 +2616,7 @@ final class TokenParser
             }
 
             // An ASCII option, "a", takes at most one class letter along.
-            if ('a' === $char && $this->supports(PcreFeature::AsciiOptions)) {
+            if ('a' === $char && $this->supports(PcreFeature::AsciiOptions())) {
                 $position += (int) ($position < $length && strpos('DSWPT', $pattern[$position]) !== false);
 
                 continue;
@@ -2636,7 +2660,7 @@ final class TokenParser
 
         return '*' === ($this->pattern[$position] ?? '')
             && $position + 1 < \strlen($this->pattern)
-            && TokenType::GroupOpen === $previous->type
+            && TokenType::GroupOpen() === $previous->type
             && $previous->end() === $position;
     }
 
@@ -2657,7 +2681,7 @@ final class TokenParser
         if ($this->recursionDepth + $deeper >= $this->maxRecursionDepth) {
             throw RecursionLimitException::withContext(
                 \sprintf('Recursion limit of %d exceeded.', $this->maxRecursionDepth),
-                ErrorCode::NestingTooDeep,
+                ErrorCode::NestingTooDeep(),
                 $position,
                 $this->pattern,
             );
@@ -2718,15 +2742,15 @@ final class TokenParser
         $name = $this->groupNames->read(true, ++$this->captureCount, !$expectAngle);
 
         if ($expectAngle) {
-            $this->stream->consumeLiteral('>', 'Expected > after group name', ErrorCode::GroupNameUnterminated);
+            $this->stream->consumeLiteral('>', 'Expected > after group name', ErrorCode::GroupNameUnterminated());
         }
 
         $expr = $this->parseScopedAlternation();
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
+        $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected )', ErrorCode::GroupUnclosed());
 
         return $this->createGroupNode(
             $expr,
-            GroupType::Named,
+            GroupType::Named(),
             $startPosition,
             $endToken,
             $name,
@@ -2743,7 +2767,7 @@ final class TokenParser
     private function parseSimpleGroup(int $startPosition, $type): GroupNode
     {
         $expr = $this->parseScopedAlternation();
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
+        $endToken = $this->stream->consume(TokenType::GroupClose(), 'Expected )', ErrorCode::GroupUnclosed());
 
         return $this->createGroupNode($expr, $type, $startPosition, $endToken);
     }

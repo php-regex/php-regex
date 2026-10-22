@@ -58,13 +58,37 @@ final class CaptureShapeAnalyzer
      * Groups that neither capture nor assert: the split alternation may sit
      * inside them.
      */
-    private const PATH_GROUPS = [GroupType::NonCapturing, GroupType::Atomic, GroupType::InlineFlags];
+    private static function PATH_GROUPS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [GroupType::NonCapturing(), GroupType::Atomic(), GroupType::InlineFlags()];
+        }
+
+        return $cache;
+    }
 
     private const MARK_VERBS = ['MARK', 'PRUNE', 'THEN', 'ACCEPT', 'COMMIT', 'F', 'FAIL'];
 
-    private const TRANSPARENT_GROUPS = [GroupType::NonCapturing, GroupType::Atomic, GroupType::InlineFlags, GroupType::LookaheadPositive, GroupType::LookbehindPositive];
+    private static function TRANSPARENT_GROUPS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [GroupType::NonCapturing(), GroupType::Atomic(), GroupType::InlineFlags(), GroupType::LookaheadPositive(), GroupType::LookbehindPositive()];
+        }
 
-    private const NEGATIVE_LOOKAROUNDS = [GroupType::LookaheadNegative, GroupType::LookbehindNegative];
+        return $cache;
+    }
+
+    private static function NEGATIVE_LOOKAROUNDS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [GroupType::LookaheadNegative(), GroupType::LookbehindNegative()];
+        }
+
+        return $cache;
+    }
 
     /**
      * @var int<1, max>
@@ -179,12 +203,12 @@ final class CaptureShapeAnalyzer
 
         // \K and (*ACCEPT) cut the whole match short: only its presence is known.
         if ($this->keeps || $this->accepts) {
-            return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, 0, null, null), $groups, $this->marks);
+            return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always(), 0, null, null), $groups, $this->marks);
         }
 
         $whole = $this->facts->of($this->rebuild($pattern) ?? self::nothing($pattern));
 
-        return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, $whole['min'], $whole['max'], $whole['values'], $whole['nonFalsy'], $whole['digitsOnly']), $groups, $this->marks);
+        return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always(), $whole['min'], $whole['max'], $whole['values'], $whole['nonFalsy'], $whole['digitsOnly']), $groups, $this->marks);
     }
 
     private function reset(): void
@@ -202,7 +226,7 @@ final class CaptureShapeAnalyzer
      */
     private function scan(NodeInterface $node): void
     {
-        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && strpos(explode('-', $node->flags ?? '')[0], 'i') !== false) {
+        if ($node instanceof GroupNode && GroupType::InlineFlags() === $node->type && strpos(explode('-', $node->flags ?? '')[0], 'i') !== false) {
             $this->caseless = true;
         }
 
@@ -260,15 +284,15 @@ final class CaptureShapeAnalyzer
             return ['blocked' => false, 'found' => self::captures($node) ? [['alternation' => $node, 'optional' => $optional, 'path' => $path]] : []];
         }
 
-        if ($node instanceof GroupNode && GroupType::BranchReset === $node->type) {
+        if ($node instanceof GroupNode && GroupType::BranchReset() === $node->type) {
             return ['blocked' => self::captures($node), 'found' => []];
         }
 
-        if ($node instanceof GroupNode && \in_array($node->type, self::PATH_GROUPS, true)) {
+        if ($node instanceof GroupNode && \in_array($node->type, self::PATH_GROUPS(), true)) {
             return self::reach($node->child, $optional, $path);
         }
 
-        if (null === $optional && $node instanceof QuantifierNode && $node->node instanceof GroupNode && \in_array($node->node->type, self::PATH_GROUPS, true)) {
+        if (null === $optional && $node instanceof QuantifierNode && $node->node instanceof GroupNode && \in_array($node->node->type, self::PATH_GROUPS(), true)) {
             $bounds = QuantifierBounds::parse($node->quantifier);
             if (null !== $bounds && 0 === $bounds->min && 1 === $bounds->max) {
                 return self::reach($node->node, $node, $path);
@@ -293,7 +317,7 @@ final class CaptureShapeAnalyzer
 
     private static function captures(NodeInterface $node): bool
     {
-        if ($node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type)) {
+        if ($node instanceof GroupNode && (GroupType::Capturing() === $node->type || GroupType::Named() === $node->type)) {
             return true;
         }
 
@@ -367,13 +391,13 @@ final class CaptureShapeAnalyzer
 
         switch (true) {
             case [] === $set:
-                $participation = Participation::Never;
+                $participation = Participation::Never();
                 break;
             case $guaranteed && !$this->accepts:
-                $participation = Participation::Always;
+                $participation = Participation::Always();
                 break;
             default:
-                $participation = Participation::MayBeUnset;
+                $participation = Participation::MayBeUnset();
                 break;
         }
 
@@ -488,7 +512,7 @@ final class CaptureShapeAnalyzer
      */
     private function walkGroup(GroupNode $node, bool $never): array
     {
-        if (GroupType::BranchReset === $node->type) {
+        if (GroupType::BranchReset() === $node->type) {
             // Each branch numbers its groups from the same base.
             $base = $this->next;
             $end = $base;
@@ -503,7 +527,7 @@ final class CaptureShapeAnalyzer
             return self::intersect($sets);
         }
 
-        if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
+        if (GroupType::Capturing() === $node->type || GroupType::Named() === $node->type) {
             $number = $this->next++;
             if ($never) {
                 // A group no match sets holds no value: its lengths are all it says.
@@ -517,7 +541,7 @@ final class CaptureShapeAnalyzer
             return [$number => true] + $this->walk($node->child, $never);
         }
 
-        if (\in_array($node->type, self::NEGATIVE_LOOKAROUNDS, true)) {
+        if (\in_array($node->type, self::NEGATIVE_LOOKAROUNDS(), true)) {
             // PCRE discards what a negative assertion captured.
             $this->walk($node->child, true);
 
@@ -526,7 +550,7 @@ final class CaptureShapeAnalyzer
 
         $guaranteed = $this->walk($node->child, $never);
 
-        return \in_array($node->type, self::TRANSPARENT_GROUPS, true) ? $guaranteed : [];
+        return \in_array($node->type, self::TRANSPARENT_GROUPS(), true) ? $guaranteed : [];
     }
 
     /**

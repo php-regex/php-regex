@@ -178,17 +178,17 @@ final class ExtendedClassLength
         }
 
         switch ($node->operator) {
-            case ClassSetOperator::Union:
-                [$operator, $rightNegated] = [$negated ? ClassSetOperator::Intersection : string::Union, $negated];
+            case ClassSetOperator::Union():
+                [$operator, $rightNegated] = [$negated ? ClassSetOperator::Intersection() : ClassSetOperator::Union(), $negated];
                 break;
-            case ClassSetOperator::Intersection:
-                [$operator, $rightNegated] = [$negated ? ClassSetOperator::Union : string::Intersection, $negated];
+            case ClassSetOperator::Intersection():
+                [$operator, $rightNegated] = [$negated ? ClassSetOperator::Union() : ClassSetOperator::Intersection(), $negated];
                 break;
-            case ClassSetOperator::Difference:
-                [$operator, $rightNegated] = [$negated ? ClassSetOperator::Union : string::Intersection, !$negated];
+            case ClassSetOperator::Difference():
+                [$operator, $rightNegated] = [$negated ? ClassSetOperator::Union() : ClassSetOperator::Intersection(), !$negated];
                 break;
             default:
-                [$operator, $rightNegated] = [ClassSetOperator::SymmetricDifference, $negated];
+                [$operator, $rightNegated] = [ClassSetOperator::SymmetricDifference(), $negated];
                 break;
         }
 
@@ -199,7 +199,7 @@ final class ExtendedClassLength
         }
 
         $result = $this->combine($operator, $left, $right);
-        if (!$negated || ClassSetOperator::SymmetricDifference !== $operator) {
+        if (!$negated || ClassSetOperator::SymmetricDifference() !== $operator) {
             return $result;
         }
 
@@ -269,7 +269,7 @@ final class ExtendedClassLength
         [$leftKind, $leftUnits, $leftOnes, $leftUnknown] = $left;
         [$rightKind, $rightUnits, $rightOnes, $rightUnknown] = $right;
         $unknown = $leftUnknown | $rightUnknown;
-        if (ClassSetOperator::Intersection === $operator) {
+        if (ClassSetOperator::Intersection() === $operator) {
             $ones = $leftOnes & $rightOnes;
             $unknown = ($leftOnes | $leftUnknown) & ($rightOnes | $rightUnknown) & ~$ones;
             switch (true) {
@@ -285,7 +285,7 @@ final class ExtendedClassLength
                     $kept = null;
                     break;
             }
-        } elseif (ClassSetOperator::Union === $operator) {
+        } elseif (ClassSetOperator::Union() === $operator) {
             $ones = $leftOnes | $rightOnes;
             $unknown &= ~$ones;
             switch (true) {

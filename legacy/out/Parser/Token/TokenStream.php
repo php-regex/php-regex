@@ -115,16 +115,16 @@ final class TokenStream
         $targetPos = $this->position + $offset;
 
         if ($targetPos < 0) {
-            return new Token(TokenType::Eof, '', 0);
+            return new Token(TokenType::Eof(), '', 0);
         }
 
         if ($targetPos > $this->maxPosition) {
             $last = $this->tokens[$this->maxPosition] ?? null;
-            if (null !== $last && TokenType::Eof === $last->type) {
+            if (null !== $last && TokenType::Eof() === $last->type) {
                 return $last;
             }
 
-            return new Token(TokenType::Eof, '', (($nullsafeVariable1 = $last) ? $nullsafeVariable1->end() : null) ?? 0);
+            return new Token(TokenType::Eof(), '', (($nullsafeVariable1 = $last) ? $nullsafeVariable1->end() : null) ?? 0);
         }
 
         return $this->tokens[$targetPos];
@@ -151,7 +151,7 @@ final class TokenStream
     /**
      * Whether the token under the cursor has this type.
      *
-     * Past the end there is only TokenType::Eof, which is what a parser
+     * Past the end there is only TokenType::Eof(), which is what a parser
      * asking for it expects to find.
      * @param mixed $type
      */
@@ -161,15 +161,15 @@ final class TokenStream
         // directly, past its end as on its end-of-pattern token.
         $token = $this->tokens[$this->position] ?? null;
 
-        return null === $token ? TokenType::Eof === $type : $token->type === $type;
+        return null === $token ? TokenType::Eof() === $type : $token->type === $type;
     }
 
     /**
-     * The type of the token under the cursor; past the end, TokenType::Eof.
+     * The type of the token under the cursor; past the end, TokenType::Eof().
      */
-    public function currentType(): string
+    public function currentType(): TokenType
     {
-        return isset($this->tokens[$this->position]) ? $this->tokens[$this->position]->type : string::Eof;
+        return isset($this->tokens[$this->position]) ? $this->tokens[$this->position]->type : TokenType::Eof();
     }
 
     /**
@@ -179,7 +179,7 @@ final class TokenStream
     {
         $token = $this->tokens[$this->position] ?? null;
 
-        return null !== $token && TokenType::Literal === $token->type && $token->value === $value;
+        return null !== $token && TokenType::Literal() === $token->type && $token->value === $value;
     }
 
     /**
@@ -190,7 +190,7 @@ final class TokenStream
     {
         $token = $this->tokens[$this->position] ?? null;
         if (null === $token) {
-            return TokenType::Eof === $type;
+            return TokenType::Eof() === $type;
         }
 
         if ($token->type !== $type) {
@@ -198,7 +198,7 @@ final class TokenStream
         }
 
         // The end-of-pattern token is never stepped over.
-        if (TokenType::Eof !== $type) {
+        if (TokenType::Eof() !== $type) {
             $this->position++;
         }
 
@@ -225,7 +225,7 @@ final class TokenStream
     public function advance(): void
     {
         $token = $this->tokens[$this->position] ?? null;
-        if (null !== $token && TokenType::Eof !== $token->type) {
+        if (null !== $token && TokenType::Eof() !== $token->type) {
             $this->position++;
         }
     }
@@ -236,7 +236,7 @@ final class TokenStream
     public function previous(): Token
     {
         // Before the first token there is none: an end-of-pattern stands in.
-        return $this->tokens[$this->position - 1] ?? new Token(TokenType::Eof, '', 0);
+        return $this->tokens[$this->position - 1] ?? new Token(TokenType::Eof(), '', 0);
     }
 
     /**
@@ -252,7 +252,7 @@ final class TokenStream
     {
         $token = $this->tokens[$this->position] ?? null;
         if (null !== $token && $token->type === $type) {
-            if (TokenType::Eof !== $type) {
+            if (TokenType::Eof() !== $type) {
                 $this->position++;
             }
 
@@ -261,7 +261,7 @@ final class TokenStream
 
         // Past the end of a list no end-of-pattern token closes, there is
         // no token to give: current() says so.
-        throw $this->unexpected($error, '(found '.$this->current()->type.')', $code);
+        throw $this->unexpected($error, '(found '.$this->current()->type->value.')', $code);
     }
 
     /**
@@ -283,7 +283,7 @@ final class TokenStream
 
         throw $this->unexpected(
             $error,
-            '(found '.$this->current()->type.' with value '.$this->current()->value.')',
+            '(found '.$this->current()->type->value.' with value '.$this->current()->value.')',
             $code,
         );
     }
@@ -292,7 +292,7 @@ final class TokenStream
     {
         $token = $this->tokens[$this->position] ?? null;
 
-        return null === $token || TokenType::Eof === $token->type;
+        return null === $token || TokenType::Eof() === $token->type;
     }
 
     /**

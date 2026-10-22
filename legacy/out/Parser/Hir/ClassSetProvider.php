@@ -192,8 +192,8 @@ final class ClassSetProvider
     public static function readsScriptsAlone(?PcreTarget $target): bool
     {
         return null !== $target
-            && !$target->supports(PcreFeature::LoosePropertyNames)
-            && PcreTarget::runtime()->supports(PcreFeature::LoosePropertyNames);
+            && !$target->supports(PcreFeature::LoosePropertyNames())
+            && PcreTarget::runtime()->supports(PcreFeature::LoosePropertyNames());
     }
 
     /**
@@ -484,7 +484,7 @@ final class ClassSetProvider
     private static function caselessAscii(string $atom, string $modifiers): ?CharSet
     {
         // "r" is refused before PCRE2 10.43: the scan says so.
-        $restrictOk = 'ir' !== $modifiers || PcreTarget::runtime()->supports(PcreFeature::CaselessRestrictModifier);
+        $restrictOk = 'ir' !== $modifiers || PcreTarget::runtime()->supports(PcreFeature::CaselessRestrictModifier());
         if (('i' !== $modifiers && 'ir' !== $modifiers) || !$restrictOk || 1 !== LibraryPcre::match('/^\\\\x\{([0-7]?[0-9A-F])\}$/', $atom, $digits)) {
             return null;
         }
@@ -569,7 +569,7 @@ final class ClassSetProvider
     private static function onlyOptionsBefore(SequenceNode $sequence, CharClassNode $class): bool
     {
         foreach ($sequence->children as $child) {
-            if ($child !== $class && !($child instanceof GroupNode && GroupType::InlineFlags === $child->type)) {
+            if ($child !== $class && !($child instanceof GroupNode && GroupType::InlineFlags() === $child->type)) {
                 return false;
             }
         }

@@ -119,14 +119,14 @@ final class ExtendedClassParser
                 if (1 === LibraryPcre::match('/^\\\\[pP]\{[^}]*+$/', $escape)) {
                     $end = \strlen($this->pattern);
 
-                    throw $this->state->error(\sprintf('Malformed \\%s sequence: the braced name never closes at position %d.', $escape[1], $end), ErrorCode::UnicodePropertyMalformed, $end);
+                    throw $this->state->error(\sprintf('Malformed \\%s sequence: the braced name never closes at position %d.', $escape[1], $end), ErrorCode::UnicodePropertyMalformed(), $end);
                 }
 
                 // A backslash ends the pattern: PCRE refuses it there.
                 if ('\\' === $escape) {
                     $end = \strlen($this->pattern);
 
-                    throw $this->state->error(\sprintf('A backslash ends the pattern at position %d.', $end), ErrorCode::EscapeTrailingBackslash, $end);
+                    throw $this->state->error(\sprintf('A backslash ends the pattern at position %d.', $end), ErrorCode::EscapeTrailingBackslash(), $end);
                 }
 
                 // "\c" ends the pattern: a "]" after it would be its character.
@@ -147,7 +147,7 @@ final class ExtendedClassParser
 
                 // "[[:<:]]" is no word boundary there, but an unknown name.
                 if ('[[:<:]]' === $class || '[[:>:]]' === $class) {
-                    throw $this->state->error(\sprintf('Unknown POSIX class "%s" at position %d.', $class[3], $at + 6), ErrorCode::PosixInvalid, $at + 6);
+                    throw $this->state->error(\sprintf('Unknown POSIX class "%s" at position %d.', $class[3], $at + 6), ErrorCode::PosixInvalid(), $at + 6);
                 }
 
                 return $this->parseOperandAt($class, $at, true);
@@ -182,7 +182,7 @@ final class ExtendedClassParser
         }
 
         foreach ($operands as $operand) {
-            $expression = new ClassSetOperationNode(ClassSetOperator::Union, $expression, $operand, '+', $expression->getStartPosition(), $operand->getEndPosition());
+            $expression = new ClassSetOperationNode(ClassSetOperator::Union(), $expression, $operand, '+', $expression->getStartPosition(), $operand->getEndPosition());
         }
 
         $flags = $this->state->unicodeMode && strpos($this->flags, 'u') === false ? $this->flags.'u' : $this->flags;
@@ -239,17 +239,17 @@ final class ExtendedClassParser
         $quoted = false;
         foreach ($read as $token) {
             switch ($token->type) {
-                case TokenType::QuoteModeStart:
+                case TokenType::QuoteModeStart():
                     $quoted = true;
                     break;
-                case TokenType::QuoteModeEnd:
+                case TokenType::QuoteModeEnd():
                     $quoted = false;
                     break;
                 default:
                     $quoted = $quoted;
                     break;
             }
-            if ($class && !$quoted && TokenType::Literal === $token->type && \in_array($token->value, [' ', "\t"], true)) {
+            if ($class && !$quoted && TokenType::Literal() === $token->type && \in_array($token->value, [' ', "\t"], true)) {
                 continue;
             }
 
@@ -268,15 +268,15 @@ final class ExtendedClassParser
     private function firstMemberErrorBefore(array $tokens, int $position): ?ParserException
     {
         foreach ($tokens as $token) {
-            if ($token->end() > $position || \in_array($token->type, [TokenType::CharClassOpen, TokenType::CharClassClose, TokenType::Range, TokenType::Eof], true)) {
+            if ($token->end() > $position || \in_array($token->type, [TokenType::CharClassOpen(), TokenType::CharClassClose(), TokenType::Range(), TokenType::Eof()], true)) {
                 continue;
             }
 
             $member = [
-                new Token(TokenType::CharClassOpen, '[', $token->position),
+                new Token(TokenType::CharClassOpen(), '[', $token->position),
                 $token,
-                new Token(TokenType::CharClassClose, ']', $token->end()),
-                new Token(TokenType::Eof, '', $token->end()),
+                new Token(TokenType::CharClassClose(), ']', $token->end()),
+                new Token(TokenType::Eof(), '', $token->end()),
             ];
 
             try {

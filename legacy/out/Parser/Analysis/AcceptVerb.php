@@ -33,13 +33,21 @@ final class AcceptVerb
     /**
      * The groups an "(*ACCEPT)" only ends, not the match.
      */
-    private const ASSERTIONS = [
-        GroupType::LookaheadPositive,
-        GroupType::LookaheadNegative,
-        GroupType::LookbehindPositive,
-        GroupType::LookbehindNegative,
-        GroupType::ScanSubstring,
+    private static function ASSERTIONS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [
+        GroupType::LookaheadPositive(),
+        GroupType::LookaheadNegative(),
+        GroupType::LookbehindPositive(),
+        GroupType::LookbehindNegative(),
+        GroupType::ScanSubstring(),
     ];
+        }
+
+        return $cache;
+    }
 
     /**
      * Whether a "(*ACCEPT)" inside the node may end the match there: not one
@@ -54,7 +62,7 @@ final class AcceptVerb
 
         switch (true) {
             case $node instanceof GroupNode:
-                $children = \in_array($node->type, self::ASSERTIONS, true) ? [] : [$node->child];
+                $children = \in_array($node->type, self::ASSERTIONS(), true) ? [] : [$node->child];
                 break;
             case $node instanceof SequenceNode:
                 $children = $node->children;

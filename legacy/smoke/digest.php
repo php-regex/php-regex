@@ -23,6 +23,18 @@ require __DIR__ . '/../corpus.php';
  */
 function digest(NodeInterface $node): array
 {
+    static $enumTwins = [
+        'PHPRegex\\Parser\\ErrorCode', 'PHPRegex\\Parser\\TraversalAction',
+        'PHPRegex\\Parser\\BsrConvention', 'PHPRegex\\Parser\\NewlineConvention',
+        'PHPRegex\\Parser\\PcreFeature', 'PHPRegex\\Parser\\Token\\TokenType',
+        'PHPRegex\\Parser\\Analysis\\LiteralConfidence', 'PHPRegex\\Parser\\Analysis\\Participation',
+        'PHPRegex\\Parser\\Hir\\AssertionKind', 'PHPRegex\\Parser\\Hir\\Greed',
+        'PHPRegex\\Parser\\Hir\\LookKind', 'PHPRegex\\Parser\\Printer\\FormatRefusal',
+        'PHPRegex\\Parser\\Node\\QuantifierType', 'PHPRegex\\Parser\\Node\\ClassSetOperator',
+        'PHPRegex\\Parser\\Node\\GroupType', 'PHPRegex\\Parser\\Node\\CharLiteralType',
+        'PHPRegex\\Parser\\Validation\\ValidationErrorCategory',
+    ];
+
 	$result = ['c' => (new ReflectionClass($node))->getShortName()];
 
 	$props = [];
@@ -32,7 +44,7 @@ function digest(NodeInterface $node): array
 		}
 
 		$value = $property->getValue($node);
-		if ($value instanceof UnitEnum) {
+		if ($value instanceof UnitEnum || (is_object($value) && in_array(get_class($value), $enumTwins, true))) {
 			$value = $value->value;
 		}
 
@@ -60,6 +72,7 @@ function digest(NodeInterface $node): array
 }
 
 $parser = RegexParser::create();
+
 
 foreach (corpus() as $body) {
 	$pattern = '/' . $body . '/';

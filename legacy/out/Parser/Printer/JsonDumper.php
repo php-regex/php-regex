@@ -115,9 +115,9 @@ final class JsonDumper extends AbstractNodeVisitor
     public function visitGroup(GroupNode $node): array
     {
         return array_merge($this->node('group', $node), [
-            'kind' => $node->type,
+            'kind' => $node->type->value,
             // A substring scan keeps its spelling there; it names nothing.
-            'name' => null === $node->name || GroupType::ScanSubstring === $node->type ? null : self::text($node->name),
+            'name' => null === $node->name || GroupType::ScanSubstring() === $node->type ? null : self::text($node->name),
             'flags' => $node->flags,
             'number' => ($nullsafeVariable2 = $this->groups) ? $nullsafeVariable2->numberOf($node) : null,
             'scanned_groups' => array_map(\Closure::fromCallable([self::class, 'text']), $node->scannedGroups),
@@ -135,7 +135,7 @@ final class JsonDumper extends AbstractNodeVisitor
         // would not read.
         $bounds = QuantifierBounds::parse($node->quantifier);
 
-        return array_merge($this->node('quantifier', $node), ['min' => ($nullsafeVariable3 = $bounds) ? $nullsafeVariable3->min : null, 'max' => ($nullsafeVariable4 = $bounds) ? $nullsafeVariable4->max : null, 'mode' => $node->type, 'child' => $node->node->accept($this)]);
+        return array_merge($this->node('quantifier', $node), ['min' => ($nullsafeVariable3 = $bounds) ? $nullsafeVariable3->min : null, 'max' => ($nullsafeVariable4 = $bounds) ? $nullsafeVariable4->max : null, 'mode' => $node->type->value, 'child' => $node->node->accept($this)]);
     }
 
     /**
@@ -233,7 +233,7 @@ final class JsonDumper extends AbstractNodeVisitor
     #[\Override]
     public function visitCharLiteral(CharLiteralNode $node): array
     {
-        return array_merge($this->node('char_literal', $node), ['code_point' => $node->codePoint, 'kind' => $node->type]);
+        return array_merge($this->node('char_literal', $node), ['code_point' => $node->codePoint, 'kind' => $node->type->value]);
     }
 
     /**
@@ -251,7 +251,7 @@ final class JsonDumper extends AbstractNodeVisitor
     #[\Override]
     public function visitClassSetOperation(ClassSetOperationNode $node): array
     {
-        return array_merge($this->node('class_set_operation', $node), ['operator' => $node->operator, 'left' => ($nullsafeVariable5 = $node->left) ? $nullsafeVariable5->accept($this) : null, 'right' => $node->right->accept($this)]);
+        return array_merge($this->node('class_set_operation', $node), ['operator' => $node->operator->value, 'left' => ($nullsafeVariable5 = $node->left) ? $nullsafeVariable5->accept($this) : null, 'right' => $node->right->accept($this)]);
     }
 
     /**

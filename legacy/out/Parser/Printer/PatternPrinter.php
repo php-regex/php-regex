@@ -456,7 +456,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      *
      * @internal PatternFormatter reports it
      */
-    public function refusal(): ?string
+    public function refusal(): ?FormatRefusal
     {
         return $this->refusal;
     }
@@ -537,7 +537,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     public function countCapture(GroupNode $node): void
     {
-        if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
+        if (GroupType::Capturing() === $node->type || GroupType::Named() === $node->type) {
             $this->capturesOpened++;
         }
     }
@@ -666,7 +666,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $flags = $node->flags ?? '';
 
         if (null !== $this->layout && $this->layout->isActive() && !PatternLayout::isEmpty($node->child)) {
-            $inner = GroupType::InlineFlags === $node->type ? $this->withInlineFlags($this->flags, $flags) : $this->flags;
+            $inner = GroupType::InlineFlags() === $node->type ? $this->withInlineFlags($this->flags, $flags) : $this->flags;
 
             return $this->layout->group($node, $flags, $inner);
         }
@@ -679,7 +679,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // empty string once compact drops them, and sets nothing: it goes
         // too. A quantifier on it writes "(?:)", a separator writes one
         // where its neighbours would read as one item.
-        if ('' === $child && self::MODE_COMPACT === $this->mode && GroupType::NonCapturing === $node->type && !PatternLayout::isEmpty($node->child)) {
+        if ('' === $child && self::MODE_COMPACT === $this->mode && GroupType::NonCapturing() === $node->type && !PatternLayout::isEmpty($node->child)) {
             $this->droppedGroups[spl_object_id($node)] = true;
 
             return '';
@@ -717,10 +717,10 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         switch ($node->type) {
-            case QuantifierType::Lazy:
+            case QuantifierType::Lazy():
                 $suffix = '?';
                 break;
-            case QuantifierType::Possessive:
+            case QuantifierType::Possessive():
                 $suffix = '+';
                 break;
             default:
@@ -880,7 +880,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // "\101" is an octal escape only while fewer than 101 groups open
         // before it; where more have, "\o{101}" still is one. In a class,
         // "\101" is always octal.
-        if (!$this->inCharClass && CharLiteralType::OctalLegacy === $node->type
+        if (!$this->inCharClass && CharLiteralType::OctalLegacy() === $node->type
             && 1 === LibraryPcre::match('/^\\\\([1-7][0-7]*+)$/', $rep, $digits)
             && (\strlen($digits[1]) < 2 || (int) $digits[1] <= $this->capturesOpened)) {
             return '\\o{'.$digits[1].'}';
@@ -1471,19 +1471,19 @@ final class PatternPrinter extends AbstractNodeVisitor
     private function classSetOperand(NodeInterface $operand, $outer, bool $isRight): string
     {
         $text = $operand->accept($this);
-        if (!$operand instanceof ClassSetOperationNode || ClassSetOperator::Complement === $operand->operator) {
+        if (!$operand instanceof ClassSetOperationNode || ClassSetOperator::Complement() === $operand->operator) {
             return $text;
         }
 
         switch (true) {
-            case ClassSetOperator::Complement === $outer:
+            case ClassSetOperator::Complement() === $outer:
                 $parenthesised = true;
                 break;
-            case ClassSetOperator::Intersection === $operand->operator:
-                $parenthesised = ClassSetOperator::Intersection === $outer && $isRight;
+            case ClassSetOperator::Intersection() === $operand->operator:
+                $parenthesised = ClassSetOperator::Intersection() === $outer && $isRight;
                 break;
             default:
-                $parenthesised = ClassSetOperator::Intersection === $outer || $isRight;
+                $parenthesised = ClassSetOperator::Intersection() === $outer || $isRight;
                 break;
         }
 
@@ -1524,29 +1524,29 @@ final class PatternPrinter extends AbstractNodeVisitor
         $name = $node->name ?? '';
 
         switch ($node->type) {
-            case GroupType::Capturing:
+            case GroupType::Capturing():
                 return '(';
-            case GroupType::NonCapturing:
+            case GroupType::NonCapturing():
                 return '(?:';
-            case GroupType::Named:
+            case GroupType::Named():
                 return $node->usePythonSyntax
                     ? '(?P<'.$name.'>'
                     : '(?<'.$name.'>';
-            case GroupType::LookaheadPositive:
+            case GroupType::LookaheadPositive():
                 return self::NON_ATOMIC_FLAG === $flags ? '(?*' : '(?=';
-            case GroupType::LookaheadNegative:
+            case GroupType::LookaheadNegative():
                 return '(?!';
-            case GroupType::LookbehindPositive:
+            case GroupType::LookbehindPositive():
                 return self::NON_ATOMIC_FLAG === $flags ? '(?<*' : '(?<=';
-            case GroupType::LookbehindNegative:
+            case GroupType::LookbehindNegative():
                 return '(?<!';
-            case GroupType::Atomic:
+            case GroupType::Atomic():
                 return '(?>';
-            case GroupType::BranchReset:
+            case GroupType::BranchReset():
                 return '(?|';
-            case GroupType::InlineFlags:
+            case GroupType::InlineFlags():
                 return '(?'.$flags.':';
-            case GroupType::ScanSubstring:
+            case GroupType::ScanSubstring():
                 return $this->scanSubstringOpening($node);
         }
     }
@@ -1562,7 +1562,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     {
         // Under "n", "(...)" does not capture: it is read as "(?:...)" and
         // written back with the "(" the pattern used.
-        if (GroupType::NonCapturing === $node->type && null !== $this->source
+        if (GroupType::NonCapturing() === $node->type && null !== $this->source
             && strpos($this->flags, 'n') !== false
             && '(' === ($this->source[$node->getStartPosition()] ?? '')
             && !\in_array($this->source[$node->getStartPosition() + 1] ?? '', ['?', '*'], true)) {
@@ -1578,7 +1578,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $matches[0];
         }
 
-        if (null === $this->source || GroupType::Named !== $node->type || null === $node->name) {
+        if (null === $this->source || GroupType::Named() !== $node->type || null === $node->name) {
             return $opening;
         }
 
@@ -1862,10 +1862,10 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         return $condition instanceof GroupNode && \in_array($condition->type, [
-            GroupType::LookaheadPositive,
-            GroupType::LookaheadNegative,
-            GroupType::LookbehindPositive,
-            GroupType::LookbehindNegative,
+            GroupType::LookaheadPositive(),
+            GroupType::LookaheadNegative(),
+            GroupType::LookbehindPositive(),
+            GroupType::LookbehindNegative(),
         ], true);
     }
 
@@ -2057,7 +2057,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     {
         $previousFlags = $this->flags;
 
-        if (GroupType::InlineFlags === $node->type) {
+        if (GroupType::InlineFlags() === $node->type) {
             $this->flags = $this->withInlineFlags($previousFlags, $flags);
         }
 
@@ -2207,10 +2207,10 @@ final class PatternPrinter extends AbstractNodeVisitor
                 $refusal = null;
                 break;
             case self::holdsLineBreakInName($node->pattern):
-                $refusal = FormatRefusal::LineBreakInName;
+                $refusal = FormatRefusal::LineBreakInName();
                 break;
             case self::MODE_COMPACT === $this->mode && $this->extendedModeMovesSpacedBraces($node->pattern, $node->flags, str_replace('x', '', $node->flags)):
-                $refusal = FormatRefusal::SpacedQuantifier;
+                $refusal = FormatRefusal::SpacedQuantifier();
                 break;
             default:
                 $refusal = null;
@@ -2231,7 +2231,7 @@ final class PatternPrinter extends AbstractNodeVisitor
                 if (strpos($kept, ')') !== false) {
                     $this->keptComments = [];
                     $this->keptQuotedBrackets = [];
-                    $this->refusal = FormatRefusal::ParenthesisInComment;
+                    $this->refusal = FormatRefusal::ParenthesisInComment();
 
                     return $written ?? $node->accept(self::asWritten());
                 }
@@ -2305,7 +2305,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      *
      * @param list<string> $options the start-of-pattern options
      */
-    private function refusalFor(RegexNode $node, string $flags, bool $hasLineComment, array $options): ?string
+    private function refusalFor(RegexNode $node, string $flags, bool $hasLineComment, array $options): ?FormatRefusal
     {
         $newline = 'LF';
         foreach ($options as $option) {
@@ -2316,13 +2316,13 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         switch (true) {
             case $this->extendedModeMovesSpacedBraces($node->pattern, $node->flags, $flags):
-                return FormatRefusal::SpacedQuantifier;
+                return FormatRefusal::SpacedQuantifier();
             case $hasLineComment && \in_array($newline, ['CR', 'CRLF', 'NUL'], true):
-                return FormatRefusal:: string;
+                return FormatRefusal::NewlineConvention();
             case self::switchesExtendedOffAtTop($node->pattern, $flags):
-                return FormatRefusal::ExtendedModeSwitchedOff;
+                return FormatRefusal::ExtendedModeSwitchedOff();
             case '#' === $node->delimiter && self::holdsComment($node->pattern):
-                return FormatRefusal::DelimiterMisread;
+                return FormatRefusal::DelimiterMisread();
             default:
                 return null;
         }
@@ -2407,7 +2407,7 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         $inner = $flags;
         $innerOther = $other;
-        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type) {
+        if ($node instanceof GroupNode && GroupType::InlineFlags() === $node->type) {
             $inner = self::applyInlineFlags($flags, $node->flags ?? '');
             $innerOther = self::applyInlineFlags($other, $node->flags ?? '');
             if (PatternLayout::isSetting($node) && PatternLayout::isEmpty($node->child)) {
@@ -2511,7 +2511,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $rendered;
         }
 
-        $this->refusal = FormatRefusal::DelimiterMisread;
+        $this->refusal = FormatRefusal::DelimiterMisread();
 
         return $written;
     }

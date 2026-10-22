@@ -66,7 +66,7 @@ final class CompatibilityChecker
     {
         $newest = self::OLDEST_RELEASE;
         foreach (PcreFeature::cases() as $feature) {
-            $newest = max($newest, (int) explode('.', PcreFeature::release($feature))[1]);
+            $newest = max($newest, (int) explode('.', $feature->release())[1]);
         }
 
         return array_map(static function (int $minor): string {

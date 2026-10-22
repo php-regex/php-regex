@@ -31,7 +31,7 @@ final class NodeFinder
     public static function find(NodeInterface $root, \Closure $filter): array
     {
         $found = [];
-        NodeWalker::walk($root, static function (NodeInterface $node) use ($filter, &$found): ?string {
+        NodeWalker::walk($root, static function (NodeInterface $node) use ($filter, &$found): ?TraversalAction {
             if ($filter($node)) {
                 $found[] = $node;
             }
@@ -65,14 +65,14 @@ final class NodeFinder
     public static function findFirst(NodeInterface $root, \Closure $filter): ?NodeInterface
     {
         $first = null;
-        NodeWalker::walk($root, static function (NodeInterface $node) use ($filter, &$first): ?string {
+        NodeWalker::walk($root, static function (NodeInterface $node) use ($filter, &$first): ?TraversalAction {
             if (!$filter($node)) {
                 return null;
             }
 
             $first = $node;
 
-            return TraversalAction::Stop;
+            return TraversalAction::Stop();
         });
 
         return $first;

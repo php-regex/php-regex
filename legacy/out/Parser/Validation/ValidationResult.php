@@ -65,7 +65,7 @@ final class ValidationResult implements \JsonSerializable
      * @param ?\PHPRegex\Parser\Validation\ValidationErrorCategory::* $category
      * @param ?\PHPRegex\Parser\ErrorCode::* $errorCode
      */
-    public function __construct(bool $isValid, ?string $error = null, int $complexityScore = 0, ?string $category = null, ?int $offset = null, ?string $caretSnippet = null, ?string $hint = null, ?string $errorCode = null)
+    public function __construct(bool $isValid, ?string $error = null, int $complexityScore = 0, ?ValidationErrorCategory $category = null, ?int $offset = null, ?string $caretSnippet = null, ?string $hint = null, ?ErrorCode $errorCode = null)
     {
         $this->isValid = $isValid;
         $this->error = $error;

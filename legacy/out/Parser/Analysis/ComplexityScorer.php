@@ -115,11 +115,11 @@ final class ComplexityScorer extends AbstractNodeVisitor
         $childScore = $node->child->accept($this);
 
         switch ($node->type) {
-            case GroupType::LookaheadPositive:
-            case GroupType::LookaheadNegative:
-            case GroupType::LookbehindPositive:
-            case GroupType::LookbehindNegative:
-            case GroupType::ScanSubstring:
+            case GroupType::LookaheadPositive():
+            case GroupType::LookaheadNegative():
+            case GroupType::LookbehindPositive():
+            case GroupType::LookbehindNegative():
+            case GroupType::ScanSubstring():
                 return self::COMPLEX_CONSTRUCT_SCORE + $childScore;
             default:
                 return self::BASE_SCORE + $childScore;

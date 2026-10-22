@@ -529,11 +529,11 @@ final class RegexParser
             false,
             $fullMessage,
             $complexityScore,
-            ValidationErrorCategory::PcreRuntime,
+            ValidationErrorCategory::PcreRuntime(),
             $offset,
             '' !== $snippet ? $snippet : null,
             null,
-            ErrorCode::PcreRuntime,
+            ErrorCode::PcreRuntime(),
         );
     }
 
@@ -676,7 +676,7 @@ final class RegexParser
                 false,
                 $errorMessage,
                 0,
-                ValidationErrorCategory::Semantic,
+                ValidationErrorCategory::Semantic(),
                 $position,
                 '' !== $visualSnippet ? $visualSnippet : null,
                 $hint,
@@ -689,12 +689,12 @@ final class RegexParser
                 false,
                 $errorMessage,
                 0,
-                ValidationErrorCategory::Limit,
+                ValidationErrorCategory::Limit(),
                 $position,
                 '' !== $visualSnippet ? $visualSnippet : null,
                 \sprintf(
                     'A limit of this library, not of PCRE: raise the "%s" option to analyze the pattern.',
-                    ErrorCode::PatternTooLong === $exception->errorCode ? 'max_pattern_length' : 'max_recursion_depth',
+                    ErrorCode::PatternTooLong() === $exception->errorCode ? 'max_pattern_length' : 'max_recursion_depth',
                 ),
                 $errorCode,
             );
@@ -704,7 +704,7 @@ final class RegexParser
             false,
             $errorMessage,
             0,
-            ValidationErrorCategory::Syntax,
+            ValidationErrorCategory::Syntax(),
             $position,
             '' !== $visualSnippet ? $visualSnippet : null,
             $hint,
@@ -792,7 +792,7 @@ final class RegexParser
 
             throw ResourceLimitException::withContext(
                 \sprintf('Regex pattern exceeds maximum length of %d characters.', $this->maxPatternLength),
-                ErrorCode::PatternTooLong,
+                ErrorCode::PatternTooLong(),
                 $offset,
                 $trimmed,
                 null,
@@ -829,25 +829,25 @@ final class RegexParser
     private static function commonHint($errorCode): ?string
     {
         switch ($errorCode) {
-            case ErrorCode::CharclassUnclosed:
+            case ErrorCode::CharclassUnclosed():
                 return 'Close the class with "]", or write "\\[" to match a literal "[".';
-            case ErrorCode::QuantifierNothingToRepeat:
+            case ErrorCode::QuantifierNothingToRepeat():
                 return 'Put the quantifier after the item it repeats, or escape it with a backslash to match it literally.';
-            case ErrorCode::QuantifierInvalidRange:
+            case ErrorCode::QuantifierInvalidRange():
                 return 'Write the smaller count first.';
-            case ErrorCode::QuantifierTooBig:
+            case ErrorCode::QuantifierTooBig():
                 return 'PCRE counts at most 65535 repetitions: lower the count, or use "*" or "+" for an open-ended repeat.';
-            case ErrorCode::RangeReversed:
+            case ErrorCode::RangeReversed():
                 return 'Write the lower end of the range first, or escape the "-" as "\\-" to match it literally.';
-            case ErrorCode::DelimiterInvalid:
+            case ErrorCode::DelimiterInvalid():
                 return 'Wrap the pattern in a pair of delimiters, such as "/.../" or "#...#".';
-            case ErrorCode::GroupNameInvalid:
+            case ErrorCode::GroupNameInvalid():
                 return 'Start a group name with a letter or "_", then use letters, digits and "_" only.';
-            case ErrorCode::GroupDuplicateName:
+            case ErrorCode::GroupDuplicateName():
                 return 'Rename one of the groups, or allow duplicate names with (?J).';
-            case ErrorCode::SubroutineMissingNamedGroup:
+            case ErrorCode::SubroutineMissingNamedGroup():
                 return 'Name the group the call reaches, or call a group the pattern names.';
-            case ErrorCode::UnicodePropertyInvalid:
+            case ErrorCode::UnicodePropertyInvalid():
                 return 'Use a property PCRE2 knows, such as \\p{L}, \\p{Lu}, \\p{N} or a script such as \\p{Greek}.';
             default:
                 return null;

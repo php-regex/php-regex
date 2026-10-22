@@ -36,7 +36,7 @@ final class FormatResult
     /**
      * @param ?\PHPRegex\Parser\Printer\FormatRefusal::* $refusal
      */
-    public function __construct(string $pattern, bool $changed, ?string     $refusal = null)
+    public function __construct(string $pattern, bool $changed, ?FormatRefusal     $refusal = null)
     {
         /**
          * The pattern, delimiters and flags included: laid out, compacted,

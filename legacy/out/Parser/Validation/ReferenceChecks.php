@@ -152,7 +152,7 @@ final class ReferenceChecks
                 $this->raise(
                     'Backreference \\0 is not valid.',
                     $node->startPosition,
-                    ErrorCode::BackrefZero,
+                    ErrorCode::BackrefZero(),
                     'Use \\g<0> for recursion to the whole pattern, or remove the reference.',
                 );
             }
@@ -164,7 +164,7 @@ final class ReferenceChecks
                 $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent group: \\%d.', $num),
                     $this->missingReferenceOffset($node),
-                    ErrorCode::BackrefMissingGroup,
+                    ErrorCode::BackrefMissingGroup(),
                 );
             }
 
@@ -174,7 +174,7 @@ final class ReferenceChecks
         // Relative conditions, "(?(-1)...)" and "(?(+1)...)", count groups
         // from where they stand.
         if (1 === LibraryPcre::match('/^[+-]\d++$/', $ref)) {
-            $this->assertRelativeReferenceExists((int) $ref, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Condition', $node);
+            $this->assertRelativeReferenceExists((int) $ref, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative(), 'Condition', $node);
 
             return;
         }
@@ -186,7 +186,7 @@ final class ReferenceChecks
                 $this->raise(
                     'Backreference 0 is not valid.',
                     $this->missingReferenceOffset($node),
-                    ErrorCode::BackrefZero,
+                    ErrorCode::BackrefZero(),
                     'Use \\g<0> for recursion to the whole pattern, or remove the reference.',
                 );
             }
@@ -194,7 +194,7 @@ final class ReferenceChecks
                 $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent group: %d.', $num),
                     $this->missingReferenceOffset($node),
-                    ErrorCode::BackrefMissingGroup,
+                    ErrorCode::BackrefMissingGroup(),
                 );
             }
 
@@ -204,13 +204,13 @@ final class ReferenceChecks
         // A reference by name, "\k<name>", "\k{name}", "\k'name'".
         if (1 === LibraryPcre::match('/^\\\\k[<{\'](?<name>'.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
             $name = $matches['name'];
-            $this->guardByteModeName($node, $name, ErrorCode::GroupNameUnterminated);
+            $this->guardByteModeName($node, $name, ErrorCode::GroupNameUnterminated());
             if (!$this->numbering->hasNamedGroup($name)) {
                 $suggestion = $this->nameSuggestions($name);
                 $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent named group: "%s".', $name).(null === $suggestion ? '' : ' '.$suggestion),
                     $this->missingReferenceOffset($node),
-                    ErrorCode::BackrefMissingNamedGroup,
+                    ErrorCode::BackrefMissingNamedGroup(),
                     $suggestion,
                 );
             }
@@ -225,7 +225,7 @@ final class ReferenceChecks
                 $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent named group: "%s".', $ref).(null === $suggestion ? '' : ' '.$suggestion),
                     $node->startPosition,
-                    ErrorCode::BackrefMissingNamedGroup,
+                    ErrorCode::BackrefMissingNamedGroup(),
                     $suggestion,
                 );
             }
@@ -243,14 +243,14 @@ final class ReferenceChecks
                 $this->raise(
                     '\g is not followed by a braced, angle-bracketed or quoted name or number, or by a plain number.',
                     $node->startPosition + 2,
-                    ErrorCode::BackrefInvalidSyntax,
+                    ErrorCode::BackrefInvalidSyntax(),
                 );
             }
             if (1 === LibraryPcre::match('/^[+-]?0++$/', $numStr)) {
                 $this->raise(
                     'Backreference \\g{0} is not valid.',
                     $this->missingReferenceOffset($node),
-                    ErrorCode::BackrefZero,
+                    ErrorCode::BackrefZero(),
                     'Use \\g<0> for recursion to the whole pattern.',
                 );
             }
@@ -261,7 +261,7 @@ final class ReferenceChecks
 
             if (strncmp($numStr, '+', strlen('+')) === 0 || strncmp($numStr, '-', strlen('-')) === 0) {
                 $offset = (int) $numStr;
-                $this->assertRelativeReferenceExists($offset, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Backreference', $node);
+                $this->assertRelativeReferenceExists($offset, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative(), 'Backreference', $node);
 
                 return;
             }
@@ -271,7 +271,7 @@ final class ReferenceChecks
                 $this->raiseMissingReference(
                     \sprintf('Backreference to non-existent group: \\g{%d}.', $num),
                     $this->missingReferenceOffset($node),
-                    ErrorCode::BackrefMissingGroup,
+                    ErrorCode::BackrefMissingGroup(),
                 );
             }
 
@@ -284,7 +284,7 @@ final class ReferenceChecks
         $this->raise(
             \sprintf('Invalid backreference syntax: "%s".', '' === $written ? $ref : $written),
             $this->missingReferenceOffset($node),
-            ErrorCode::BackrefInvalidSyntax,
+            ErrorCode::BackrefInvalidSyntax(),
         );
     }
 
@@ -312,7 +312,7 @@ final class ReferenceChecks
             $this->raiseMissingReference(
                 \sprintf('Invalid conditional construct. Condition must be a group reference, lookaround, or (DEFINE). The pattern has no group named "%s".', $ref),
                 $this->missingReferenceOffset($condition),
-                ErrorCode::ConditionalMissingGroup,
+                ErrorCode::ConditionalMissingGroup(),
                 $this->nameSuggestions($ref),
             );
         }
@@ -339,12 +339,12 @@ final class ReferenceChecks
                 $this->raise(
                     \sprintf('Group number %s in a recursion condition is too big: PCRE takes at most 65535.', substr($ref, 1)),
                     $condition->startPosition + $overflow,
-                    ErrorCode::GroupNumberTooBig,
+                    ErrorCode::GroupNumberTooBig(),
                 );
             }
             // Group 0 is the whole pattern: "R0" asks whether any recursion runs.
             if (0 !== $num) {
-                $this->assertSubroutineReferenceExists($num, $this->missingReferenceOffset($condition), ErrorCode::SubroutineRecursion, 'Recursion condition');
+                $this->assertSubroutineReferenceExists($num, $this->missingReferenceOffset($condition), ErrorCode::SubroutineRecursion(), 'Recursion condition');
             }
 
             return true;
@@ -356,7 +356,7 @@ final class ReferenceChecks
                 $this->raiseMissingReference(
                     \sprintf('Recursion condition to non-existent named group: "%s".', substr($ref, 2)),
                     $this->missingReferenceOffset($condition),
-                    ErrorCode::SubroutineMissingNamedGroup,
+                    ErrorCode::SubroutineMissingNamedGroup(),
                     \sprintf('Name a group "%s" with (?<%1$s>...), or test a group the pattern names.', substr($ref, 2)),
                 );
             }
@@ -402,7 +402,7 @@ final class ReferenceChecks
                 $this->raiseMissingReference(
                     \sprintf('Group %s is listed but does not exist.', $group),
                     Ascii::isDigit($group) || strncmp($group, '+', strlen('+')) === 0 ? $at : $at + 1,
-                    ErrorCode::GroupListMissingGroup,
+                    ErrorCode::GroupListMissingGroup(),
                 );
             }
 
@@ -425,14 +425,14 @@ final class ReferenceChecks
 
             if (Ascii::isDigit($numPart)) {
                 $num = (int) $numPart;
-                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineRecursion, 'Recursion condition');
+                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineRecursion(), 'Recursion condition');
 
                 return;
             }
 
             if (strncmp($numPart, '-', strlen('-')) === 0 && Ascii::isDigit((string) substr($numPart, 1))) {
                 $num = (int) $numPart;
-                $this->assertRelativeReferenceExists($num, $node->startPosition, ErrorCode::SubroutineRecursion, 'Recursion condition');
+                $this->assertRelativeReferenceExists($num, $node->startPosition, ErrorCode::SubroutineRecursion(), 'Recursion condition');
 
                 return;
             }
@@ -444,7 +444,7 @@ final class ReferenceChecks
             $this->raise(
                 \sprintf('Subroutine call relative reference cannot be zero: "%s".', $ref),
                 'g' === $node->syntax ? $node->startPosition + 2 : max($node->startPosition, $node->getEndPosition() - 1),
-                ErrorCode::SubroutineRelativeZero,
+                ErrorCode::SubroutineRelativeZero(),
             );
         }
 
@@ -456,21 +456,21 @@ final class ReferenceChecks
                 return; // (?0) is an alias for (?R)
             }
             if (strncmp($ref, '+', strlen('+')) === 0 || strncmp($ref, '-', strlen('-')) === 0) {
-                $this->assertRelativeReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineRelativeMissing, 'Subroutine call', $node);
+                $this->assertRelativeReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineRelativeMissing(), 'Subroutine call', $node);
             } else {
-                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineMissingGroup, 'Subroutine call');
+                $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineMissingGroup(), 'Subroutine call');
             }
 
             return;
         }
 
         // Named reference: (?&name), (?P>name), \g<name>
-        $this->guardByteModeName($node, $ref, ErrorCode::GroupUnclosed);
+        $this->guardByteModeName($node, $ref, ErrorCode::GroupUnclosed());
         if (!$this->numbering->hasNamedGroup($ref)) {
             $this->raiseMissingReference(
                 \sprintf('Subroutine call to non-existent named group: "%s".', $ref),
                 $this->missingReferenceOffset($node),
-                ErrorCode::SubroutineMissingNamedGroup,
+                ErrorCode::SubroutineMissingNamedGroup(),
                 \sprintf('Name a group "%s" with (?<%1$s>...), or call a group the pattern names.', $ref),
             );
         }
@@ -514,7 +514,7 @@ final class ReferenceChecks
         }
 
         $letter = $source[$start + 1];
-        $padded = '}' === $closer && $this->target->supports(PcreFeature::PaddedBracedEscapes);
+        $padded = '}' === $closer && $this->target->supports(PcreFeature::PaddedBracedEscapes());
         $nameStart = $start + 3 + ($padded ? strspn($source, " \t", $start + 3) : 0);
         $digits = [];
         if ('g' === $letter && 1 === LibraryPcre::match('/\G([+-]?)(\d++)/', $source, $digits, 0, $nameStart)) {
@@ -523,7 +523,7 @@ final class ReferenceChecks
                 $this->raise(
                     'Spaces inside \g{} need PCRE2 10.43, which PHP bundles from 8.4.',
                     $start + 2,
-                    $this->braceNumberError($node, $digits[1], $digits[2]) ?? ErrorCode::BackrefInvalidSyntax,
+                    $this->braceNumberError($node, $digits[1], $digits[2]) ?? ErrorCode::BackrefInvalidSyntax(),
                     'Remove the spaces inside the braces, or target PHP 8.4+.',
                 );
             }
@@ -531,7 +531,7 @@ final class ReferenceChecks
             return;
         }
 
-        if ($this->utf && $this->target->supports(PcreFeature::NonAsciiGroupNames)) {
+        if ($this->utf && $this->target->supports(PcreFeature::NonAsciiGroupNames())) {
             $digit = (string) substr($source, $nameStart, NameCharacters::digitAt($source, $nameStart, $this->target));
             $read = '' === $digit ? (string) substr($source, $nameStart, NameCharacters::end($source, $nameStart, $this->target) - $nameStart) : $digit;
         } else {
@@ -550,13 +550,13 @@ final class ReferenceChecks
         $written = (string) substr($source, $start, $node->getEndPosition() - $start);
         switch (true) {
             case '' !== $digit:
-                [$offset, $code, $message] = [$this->target->faultOffset($nameStart + \strlen($digit), \strlen($digit)), ErrorCode::GroupNameInvalid, \sprintf('Invalid reference "%s": a group name must not start with a digit.', $written)];
+                [$offset, $code, $message] = [$this->target->faultOffset($nameStart + \strlen($digit), \strlen($digit)), ErrorCode::GroupNameInvalid(), \sprintf('Invalid reference "%s": a group name must not start with a digit.', $written)];
                 break;
             case '' === $read:
-                [$offset, $code, $message] = [$nameStart, ErrorCode::GroupNameExpected, \sprintf('Invalid reference "%s": a group name is expected at position %d.', $written, $nameStart)];
+                [$offset, $code, $message] = [$nameStart, ErrorCode::GroupNameExpected(), \sprintf('Invalid reference "%s": a group name is expected at position %d.', $written, $nameStart)];
                 break;
             default:
-                [$offset, $code, $message] = [$closeAt, ErrorCode::GroupNameUnterminated, \sprintf('Invalid reference "%s": the group name ends at position %d, and no "%s" closes it there.', $written, $closeAt, $closer)];
+                [$offset, $code, $message] = [$closeAt, ErrorCode::GroupNameUnterminated(), \sprintf('Invalid reference "%s": the group name ends at position %d, and no "%s" closes it there.', $written, $closeAt, $closer)];
                 break;
         }
 
@@ -577,18 +577,18 @@ final class ReferenceChecks
      * before it included; a relative zero; a backward one past the groups
      * opened. Null for a number it reads.
      */
-    private function braceNumberError(BackrefNode $node, string $sign, string $digits): ?string
+    private function braceNumberError(BackrefNode $node, string $sign, string $digits): ?ErrorCode
     {
         $value = (int) $digits;
         $before = ($this->groups->nextNumberAt($node) ?? 1) - 1;
 
         switch (true) {
             case PcreNumber::exceeds($digits) || ('+' === $sign && $value + $before > PcreNumber::MAX):
-                return ErrorCode::GroupNumberTooBig;
+                return ErrorCode::GroupNumberTooBig();
             case '' !== $sign && 0 === $value:
-                return ErrorCode::BackrefZero;
+                return ErrorCode::BackrefZero();
             case '-' === $sign && $value > $before:
-                return ErrorCode::BackrefRelative;
+                return ErrorCode::BackrefRelative();
             default:
                 return null;
         }
@@ -620,7 +620,7 @@ final class ReferenceChecks
         if (1 === LibraryPcre::match('/^\\\\([gk])([{<\'])?\s*+([+-]?)(\d*)/', $text, $matches)) {
             // A name, past the spaces and tabs a brace takes from 10.43.
             if ('' === $matches[4]) {
-                return $start + 3 + ('{' === $matches[2] && $this->target->supports(PcreFeature::PaddedBracedEscapes) ? strspn($text, " \t", 3) : 0);
+                return $start + 3 + ('{' === $matches[2] && $this->target->supports(PcreFeature::PaddedBracedEscapes()) ? strspn($text, " \t", 3) : 0);
             }
 
             // A number past 65535 is refused on the brace that opens it.
@@ -634,7 +634,7 @@ final class ReferenceChecks
             $closing = ['{' => '}', '<' => '>', "'" => "'", '' => ''][$matches[2]];
             $rest = ltrim((string) substr($text, \strlen($matches[0])), " \t\n\r\0\x0B");
             if ('' !== $closing && strncmp($rest, $closing, strlen($closing)) !== 0) {
-                return $this->target->supports(PcreFeature::GReferenceNumberReadBeforeClosing) ? $start + \strlen($matches[0]) : $start + 2;
+                return $this->target->supports(PcreFeature::GReferenceNumberReadBeforeClosing()) ? $start + \strlen($matches[0]) : $start + 2;
             }
 
             $failsWhileRead = '-' === $matches[3] || ('' !== $matches[3] && 0 === (int) $matches[4]);
@@ -706,7 +706,7 @@ final class ReferenceChecks
             return null;
         }
 
-        return $digitsStart + ($this->target->supports(PcreFeature::NumberTooBigPastWholeNumber) ? \strlen($digits) : $read + 1);
+        return $digitsStart + ($this->target->supports(PcreFeature::NumberTooBigPastWholeNumber()) ? \strlen($digits) : $read + 1);
     }
 
     /**
@@ -752,7 +752,7 @@ final class ReferenceChecks
             $this->raise(
                 \sprintf('Group number %s%s is too big: PCRE takes at most 65535.', $sign, $digits),
                 $bracketed ? $node->startPosition + 2 : $this->missingReferenceOffset($node),
-                ErrorCode::GroupNumberTooBig,
+                ErrorCode::GroupNumberTooBig(),
             );
         }
     }

@@ -303,7 +303,7 @@ final class Properties
             $prefix,
             $suffix,
             $body->captureCount,
-            $body->regular && Greed::Possessive !== $greed,
+            $body->regular && Greed::Possessive() !== $greed,
             $body->accepts,
         );
     }

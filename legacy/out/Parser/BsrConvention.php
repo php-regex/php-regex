@@ -2,38 +2,76 @@
 
 declare(strict_types=1);
 
-/*
- * This file is part of the PHPRegex package.
- *
- * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace PHPRegex\Parser;
 
-class BsrConvention
+/**
+ * Cached-instance twin of the BsrConvention enum: GroupType::Capturing()
+ * returns one shared instance, so identity comparisons, ->value and
+ * native type hints keep the enum's semantics on PHP 7.4.
+ */
+final class BsrConvention
 {
-    public const AnyCrLf = 'ANYCRLF';
-    public const Unicode = 'UNICODE';
+    /** @var array<string, self> */
+    private static $instances = [];
 
-    public static function from($value)
+    /** @var string */
+    public $name;
+
+    /** @var string */
+    public $value;
+
+    private function __construct(string $name, string $value)
     {
-        if (!\in_array($value, self::cases(), true)) {
-            throw new \InvalidArgumentException(\sprintf('Unknown value "%s" for %s.', $value, self::class));
+        $this->name = $name;
+        $this->value = $value;
+    }
+
+    public static function AnyCrLf(): self
+    {
+        if (!isset(self::$instances['AnyCrLf'])) {
+            self::$instances['AnyCrLf'] = new self('AnyCrLf', 'ANYCRLF');
         }
 
-        return $value;
+        return self::$instances['AnyCrLf'];
     }
 
-    public static function tryFrom($value)
+    public static function Unicode(): self
     {
-        return \in_array($value, self::cases(), true) ? $value : null;
+        if (!isset(self::$instances['Unicode'])) {
+            self::$instances['Unicode'] = new self('Unicode', 'UNICODE');
+        }
+
+        return self::$instances['Unicode'];
     }
 
-    public static function cases()
+    /** @return list<self> */
+    public static function cases(): array
     {
-        return \array_values((new \ReflectionClass(self::class))->getConstants());
+        return [
+            self::AnyCrLf(),
+            self::Unicode(),
+        ];
+    }
+
+    public static function from(string $value): self
+    {
+        foreach (self::cases() as $case) {
+            if ($case->value === $value) {
+                return $case;
+            }
+        }
+
+        throw new \InvalidArgumentException(sprintf('Unknown value %s for BsrConvention.', $value));
+    }
+
+    public static function tryFrom(string $value): ?self
+    {
+        foreach (self::cases() as $case) {
+            if ($case->value === $value) {
+                return $case;
+            }
+        }
+
+        return null;
     }
 }

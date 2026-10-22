@@ -84,7 +84,7 @@ final class ClassParser
         $this->stream = $state->stream;
         $this->pattern = $state->pattern;
         $this->target = $state->target;
-        $this->pcre2Ten32 = !$state->target->supports(PcreFeature::BadEscapeInClassStaysRefused);
+        $this->pcre2Ten32 = !$state->target->supports(PcreFeature::BadEscapeInClassStaysRefused());
     }
 
     /**
@@ -98,7 +98,7 @@ final class ClassParser
         $isNegated = $this->readPrefix();
         $parts = $this->readMembers();
 
-        $endToken = $this->stream->consume(TokenType::CharClassClose, 'Expected "]" to close character class', ErrorCode::CharclassUnclosed);
+        $endToken = $this->stream->consume(TokenType::CharClassClose(), 'Expected "]" to close character class', ErrorCode::CharclassUnclosed());
 
         return new CharClassNode($parts, $isNegated, $startPosition, $endToken->position + 1);
     }
@@ -124,7 +124,7 @@ final class ClassParser
         // Each node starts inside the one holding it, as written groups do.
         $side = new GroupNode(
             new CharTypeNode('w', $start + 2, $end - 1),
-            '<' === $text[3] ? GroupType::LookaheadPositive : string::LookbehindPositive,
+            '<' === $text[3] ? GroupType::LookaheadPositive() : GroupType::LookbehindPositive(),
             null,
             null,
             $start + 1,
@@ -133,7 +133,7 @@ final class ClassParser
 
         return new GroupNode(
             new SequenceNode([new AssertionNode('b', $start + 1, $start + 1), $side], $start + 1, $end - 1),
-            GroupType::NonCapturing,
+            GroupType::NonCapturing(),
             null,
             null,
             $start,
@@ -153,11 +153,11 @@ final class ClassParser
         $isNegated = false;
 
         while (true) {
-            if ($this->stream->match(TokenType::Negation)) {
+            if ($this->stream->match(TokenType::Negation())) {
                 $isNegated = true;
-            } elseif ($this->stream->match(TokenType::QuoteModeStart)) {
+            } elseif ($this->stream->match(TokenType::QuoteModeStart())) {
                 $this->state->inQuoteMode = true;
-            } elseif ($this->stream->match(TokenType::QuoteModeEnd)) {
+            } elseif ($this->stream->match(TokenType::QuoteModeEnd())) {
                 $this->state->inQuoteMode = false;
             } else {
                 return $isNegated;
@@ -174,16 +174,16 @@ final class ClassParser
         $parts = [];
 
         while (
-            !$this->stream->check(TokenType::CharClassClose)
+            !$this->stream->check(TokenType::CharClassClose())
             && !$this->stream->isAtEnd()
         ) {
             // Silent tokens inside char class
-            if ($this->stream->match(TokenType::QuoteModeStart)) {
+            if ($this->stream->match(TokenType::QuoteModeStart())) {
                 $this->state->inQuoteMode = true;
 
                 continue;
             }
-            if ($this->stream->match(TokenType::QuoteModeEnd)) {
+            if ($this->stream->match(TokenType::QuoteModeEnd())) {
                 $this->state->inQuoteMode = false;
 
                 continue;
@@ -221,7 +221,7 @@ final class ClassParser
         // Before PCRE2 10.45, a range start is refused on the hyphen, a POSIX
         // class ending a range just inside its "[", and a type or a property
         // ending one past its letter.
-        if (!($this->target->supports(PcreFeature::RangeFromTypeReadToItsEnd))) {
+        if (!($this->target->supports(PcreFeature::RangeFromTypeReadToItsEnd()))) {
             switch (true) {
                 case !$isEnd:
                     $position = $position - 1;
@@ -240,7 +240,7 @@ final class ClassParser
                 'Invalid range in character class: a character type, POSIX class, or Unicode property cannot be a range endpoint at position %d.',
                 $position,
             ),
-            ErrorCode::RangeInvalidBounds,
+            ErrorCode::RangeInvalidBounds(),
             $position,
         );
     }
@@ -273,13 +273,13 @@ final class ClassParser
             }
 
             return NamedCharacterBrace::namesCodePoint($this->pattern, $position + 2, $this->target)
-                ? TokenType::UnicodeNamed !== $token->type
+                ? TokenType::UnicodeNamed() !== $token->type
                 : null !== NamedCharacterBrace::errorInClass($this->pattern, $position + 2, $this->target);
         }
 
         // An assertion, or a letter PCRE gives no meaning in a class; "\k" is
         // the letter from PCRE2 10.45.
-        return '' !== $letter && (strpos('ABCFGIJKLMORTUXYZijlmquyz', $letter) !== false || ('k' === $letter && !$this->target->supports(PcreFeature::ClassBackslashKIsLetter)));
+        return '' !== $letter && (strpos('ABCFGIJKLMORTUXYZijlmquyz', $letter) !== false || ('k' === $letter && !$this->target->supports(PcreFeature::ClassBackslashKIsLetter())));
     }
 
     /**
@@ -293,7 +293,7 @@ final class ClassParser
     {
         throw $this->state->error(
             \sprintf('Invalid range in character class: "\%s" cannot end a range, at position %d.', $this->pattern[$endAt + 1], $endAt + 2),
-            ErrorCode::RangeInvalidBounds,
+            ErrorCode::RangeInvalidBounds(),
             $endAt + 2,
         );
     }
@@ -360,19 +360,19 @@ final class ClassParser
             return [$atom, $atom->getEndPosition()];
         }
 
-        if ($this->stream->match(TokenType::CharClassOpen)) {
+        if ($this->stream->match(TokenType::CharClassOpen())) {
             $node = $this->parse();
 
             return [$node, $node->getEndPosition()];
         }
 
-        if ($this->stream->match(TokenType::Range)) {
+        if ($this->stream->match(TokenType::Range())) {
             $token = $this->stream->previous();
 
             return [new LiteralNode($token->value, $startPosition, $token->end()), $token->end()];
         }
 
-        if ($this->stream->match(TokenType::PosixClass)) {
+        if ($this->stream->match(TokenType::PosixClass())) {
             $token = $this->stream->previous();
 
             return [new PosixClassNode($token->value, $startPosition, $token->end()), $token->end()];
@@ -384,7 +384,7 @@ final class ClassParser
                 $this->stream->current()->value,
                 $this->stream->current()->position,
             ),
-            ErrorCode::TokenUnexpected,
+            ErrorCode::TokenUnexpected(),
             $this->stream->current()->position,
         );
     }
@@ -470,13 +470,13 @@ final class ClassParser
         $classEscapeStart = $startNode instanceof CharTypeNode
             || $startNode instanceof PosixClassNode
             || $startNode instanceof UnicodePropNode;
-        if ($singleCharacterStart && (!$classEscapeStart || $this->target->supports(PcreFeature::EmptyQuoteSkippedAfterClassEscape))) {
+        if ($singleCharacterStart && (!$classEscapeStart || $this->target->supports(PcreFeature::EmptyQuoteSkippedAfterClassEscape()))) {
             $this->state->skipEmptyQuotes();
         }
 
         // Check for Range
         $rangePosition = $this->stream->getPosition();
-        if (!$this->stream->match(TokenType::Range)) {
+        if (!$this->stream->match(TokenType::Range())) {
             $this->stream->setPosition($beforeQuotes);
             $this->state->inQuoteMode = $wasInQuoteMode;
 
@@ -487,7 +487,7 @@ final class ClassParser
         // which the lexer skipped, keeps the "-" a member up to PCRE2 10.44:
         // "[\d -z]" is "[\d\-z]". From 10.45 the range forms and fails.
         if ($classEscapeStart && $this->stream->previous()->position > $startNode->getEndPosition()
-            && !$this->target->supports(PcreFeature::SpacedHyphenAfterClassEscapeMakesRange)) {
+            && !$this->target->supports(PcreFeature::SpacedHyphenAfterClassEscapeMakesRange())) {
             $this->stream->setPosition($rangePosition);
 
             return $startNode;
@@ -510,7 +510,7 @@ final class ClassParser
         // before its end is read, unless the pattern ends after the hyphen
         // or a "]" follows it, read as characters: "[\w-\Q\E]" is refused.
         $rangeFromType = $this->isNonRangeEndpointType($startNode);
-        if ($rangeFromType && !$this->target->supports(PcreFeature::RangeFromTypeReadToItsEnd)) {
+        if ($rangeFromType && !$this->target->supports(PcreFeature::RangeFromTypeReadToItsEnd())) {
             if ($afterHyphen >= $length || ']' === $this->pattern[$afterHyphen]) {
                 $this->stream->setPosition($rangePosition);
 
@@ -526,10 +526,10 @@ final class ClassParser
         // them or in a "\Q" that quotes nothing, is one too: the "]" is
         // missing.
         $this->state->skipEmptyQuotes();
-        $quoteEndingThePattern = $this->stream->check(TokenType::QuoteModeStart)
-            && TokenType::Eof === $this->stream->peek()->type && $this->stream->peek()->position >= $length;
+        $quoteEndingThePattern = $this->stream->check(TokenType::QuoteModeStart())
+            && TokenType::Eof() === $this->stream->peek()->type && $this->stream->peek()->position >= $length;
 
-        if ($this->stream->check(TokenType::CharClassClose)
+        if ($this->stream->check(TokenType::CharClassClose())
             || ($rangeFromType && (($this->stream->isAtEnd() && $this->stream->current()->position >= $length) || $quoteEndingThePattern))) {
             $this->stream->setPosition($rangePosition);
 
@@ -549,9 +549,9 @@ final class ClassParser
         // name after it is read. A property PCRE reads is left to
         // guardRangeEndpoint().
         $endAt = $this->stream->current()->position;
-        $endsAsInvalidRange = !$this->target->supports(PcreFeature::ClassEscapeEndingRangeRefusedAsEscape)
+        $endsAsInvalidRange = !$this->target->supports(PcreFeature::ClassEscapeEndingRangeRefusedAsEscape())
             && !($this->state->badEscapeIsLiteral && BadEscape::at($this->pattern, $endAt, true, $this->state->unicodeMode, $this->target, null, true));
-        if ($endsAsInvalidRange && TokenType::UnicodeProp !== $this->stream->current()->type && BadEscape::endsRangeAsInvalidRange($this->pattern, $endAt, $this->pcre2Ten32)) {
+        if ($endsAsInvalidRange && TokenType::UnicodeProp() !== $this->stream->current()->type && BadEscape::endsRangeAsInvalidRange($this->pattern, $endAt, $this->pcre2Ten32)) {
             $this->throwEscapeEndingRange($endAt);
         }
 
@@ -568,7 +568,7 @@ final class ClassParser
 
         $this->guardRangeEndpoint($startNode, $afterHyphen, false);
 
-        if ($this->stream->check(TokenType::CharClassOpen)) {
+        if ($this->stream->check(TokenType::CharClassOpen())) {
             $this->stream->rewind(1);
 
             return $startNode;
@@ -577,8 +577,8 @@ final class ClassParser
         // A quoted end, "[a-\Qcz\E]", ends the range at the first quoted
         // character; the lexer gives a class one quoted character at a time,
         // so the rest stay members.
-        if ($this->stream->check(TokenType::QuoteModeStart)) {
-            if (TokenType::Literal !== $this->stream->peek()->type) {
+        if ($this->stream->check(TokenType::QuoteModeStart())) {
+            if (TokenType::Literal() !== $this->stream->peek()->type) {
                 $this->stream->setPosition($beforeQuotes);
                 $this->state->inQuoteMode = $wasInQuoteMode;
 
@@ -601,7 +601,7 @@ final class ClassParser
                     $this->stream->current()->value,
                     $this->stream->current()->position,
                 ),
-                ErrorCode::TokenUnexpected,
+                ErrorCode::TokenUnexpected(),
                 $this->stream->current()->position,
             );
         }

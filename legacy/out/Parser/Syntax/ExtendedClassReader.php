@@ -84,12 +84,20 @@ final class ExtendedClassReader
      */
     private const MAX_DEPTH = 15;
 
-    private const OPERATORS = [
-        '+' => ClassSetOperator::Union,
-        '|' => ClassSetOperator::Union,
-        '-' => ClassSetOperator::Difference,
-        '^' => ClassSetOperator::SymmetricDifference,
+    private static function OPERATORS(): array
+    {
+        static $cache = null;
+        if ($cache === null) {
+            $cache = [
+        '+' => ClassSetOperator::Union(),
+        '|' => ClassSetOperator::Union(),
+        '-' => ClassSetOperator::Difference(),
+        '^' => ClassSetOperator::SymmetricDifference(),
     ];
+        }
+
+        return $cache;
+    }
 
     /**
      * @var int
@@ -176,16 +184,16 @@ final class ExtendedClassReader
         $this->skipBlanks();
         $char = $this->pattern[$this->at] ?? '';
         if (')' === $char) {
-            $this->refuse('Unmatched ")" in an extended class', ErrorCode::ExtendedClassUnmatchedClose, $this->at + 1);
+            $this->refuse('Unmatched ")" in an extended class', ErrorCode::ExtendedClassUnmatchedClose(), $this->at + 1);
         }
 
         if (']' !== $char) {
-            $this->refuse('Missing "]" to close an extended class', ErrorCode::ExtendedClassUnclosed, $this->length);
+            $this->refuse('Missing "]" to close an extended class', ErrorCode::ExtendedClassUnclosed(), $this->length);
         }
 
         $this->at++;
         if (')' !== ($this->pattern[$this->at] ?? '')) {
-            $this->refuse('The "]" of an extended class must be followed by ")"', ErrorCode::ExtendedClassBracketWithoutParen, $this->at);
+            $this->refuse('The "]" of an extended class must be followed by ")"', ErrorCode::ExtendedClassBracketWithoutParen(), $this->at);
         }
 
         return [$expression, $this->at + 1];
@@ -317,7 +325,7 @@ final class ExtendedClassReader
         while (true) {
             $this->skipBlanks();
             $char = $this->pattern[$this->at] ?? '';
-            $operator = self::OPERATORS[$char] ?? null;
+            $operator = self::OPERATORS()[$char] ?? null;
             if (null === $operator) {
                 $this->refuseOperandAfterOperand();
 
@@ -347,7 +355,7 @@ final class ExtendedClassReader
             $this->countOperation();
             $this->at++;
             $right = $this->readUnary(true);
-            $left = new ClassSetOperationNode(ClassSetOperator::Intersection, $left, $right, '&', $left->getStartPosition(), $right->getEndPosition());
+            $left = new ClassSetOperationNode(ClassSetOperator::Intersection(), $left, $right, '&', $left->getStartPosition(), $right->getEndPosition());
         }
     }
 
@@ -367,7 +375,7 @@ final class ExtendedClassReader
 
         $operand = $this->readPrimary($afterOperator || [] !== $complements);
         foreach (array_reverse($complements) as $start) {
-            $operand = new ClassSetOperationNode(ClassSetOperator::Complement, null, $operand, '!', $start, $operand->getEndPosition());
+            $operand = new ClassSetOperationNode(ClassSetOperator::Complement(), null, $operand, '!', $start, $operand->getEndPosition());
         }
 
         return $operand;
@@ -385,19 +393,19 @@ final class ExtendedClassReader
 
         switch (true) {
             case '' === $char:
-                return $this->refuse('Missing "]" to close an extended class', ErrorCode::ExtendedClassUnclosed, $this->length);
+                return $this->refuse('Missing "]" to close an extended class', ErrorCode::ExtendedClassUnclosed(), $this->length);
             case ']' === $char && $this->depth > 1:
-                return $this->refuse('Missing ")" in an extended class', ErrorCode::ExtendedClassUnclosedParen, $this->at);
+                return $this->refuse('Missing ")" in an extended class', ErrorCode::ExtendedClassUnclosedParen(), $this->at);
             case ')' === $char && 1 === $this->depth:
-                return $this->refuse('Unmatched ")" in an extended class', ErrorCode::ExtendedClassUnmatchedClose, $this->at + 1);
+                return $this->refuse('Unmatched ")" in an extended class', ErrorCode::ExtendedClassUnmatchedClose(), $this->at + 1);
             case $afterOperator && (']' === $char || ')' === $char):
-                return $this->refuse('Operand expected after an operator in an extended class', ErrorCode::ExtendedClassMissingOperand, $this->at + 1);
+                return $this->refuse('Operand expected after an operator in an extended class', ErrorCode::ExtendedClassMissingOperand(), $this->at + 1);
             case ']' === $char:
             case ')' === $char:
-                return $this->refuse('Empty expression in an extended class', ErrorCode::ExtendedClassEmptyExpression, $this->at + 1);
-            case isset(self::OPERATORS[$char]):
+                return $this->refuse('Empty expression in an extended class', ErrorCode::ExtendedClassEmptyExpression(), $this->at + 1);
+            case isset(self::OPERATORS()[$char]):
             case '&' === $char:
-                return $this->refuse(\sprintf('Operator "%s" where an operand is due in an extended class', $char), ErrorCode::ExtendedClassMissingOperand, $this->at + 1);
+                return $this->refuse(\sprintf('Operator "%s" where an operand is due in an extended class', $char), ErrorCode::ExtendedClassMissingOperand(), $this->at + 1);
             default:
                 return $this->readOperand();
         }
@@ -415,18 +423,18 @@ final class ExtendedClassReader
             }
             $this->at++;
             if ($this->at >= $this->length) {
-                $this->refuse('Missing ")" in an extended class', ErrorCode::ExtendedClassUnclosedParen, $this->length);
+                $this->refuse('Missing ")" in an extended class', ErrorCode::ExtendedClassUnclosedParen(), $this->length);
             }
 
             $expression = $this->readUnion();
             $this->skipBlanks();
             $close = $this->pattern[$this->at] ?? '';
             if ('' === $close) {
-                $this->refuse('Missing "]" to close an extended class', ErrorCode::ExtendedClassUnclosed, $this->length);
+                $this->refuse('Missing "]" to close an extended class', ErrorCode::ExtendedClassUnclosed(), $this->length);
             }
 
             if (')' !== $close) {
-                $this->refuse('Missing ")" in an extended class', ErrorCode::ExtendedClassUnclosedParen, $this->at);
+                $this->refuse('Missing ")" in an extended class', ErrorCode::ExtendedClassUnclosedParen(), $this->at);
             }
 
             $this->at++;
@@ -439,7 +447,7 @@ final class ExtendedClassReader
         if ('[' === $char) {
             $posixEnd = self::posixFormEnd($this->pattern, $start);
             if (null !== $posixEnd && ':' !== $this->pattern[$start + 1]) {
-                $this->refuse('POSIX collating elements are not supported', ErrorCode::PosixCollatingElement, $posixEnd);
+                $this->refuse('POSIX collating elements are not supported', ErrorCode::PosixCollatingElement(), $posixEnd);
             }
 
             $end = $posixEnd ?? self::closedClassEnd($this->pattern, $start) ?? $this->refuseUnclosedClass($start);
@@ -464,7 +472,7 @@ final class ExtendedClassReader
             return $this->operands[] = $this->readApart($this->escape, (string) substr($this->pattern, $start, $end - $start), $start);
         }
 
-        return $this->refuse('Unexpected character in an extended class', ErrorCode::ExtendedClassUnexpectedCharacter, $this->pastCharacter($start));
+        return $this->refuse('Unexpected character in an extended class', ErrorCode::ExtendedClassUnexpectedCharacter(), $this->pastCharacter($start));
     }
 
     /**
@@ -499,7 +507,7 @@ final class ExtendedClassReader
             $this->operands[] = $this->readApart($this->escape, (string) substr($this->pattern, $this->at, $end - $this->at), $this->at);
         }
 
-        $this->refuse('Two operands with no operator between them in an extended class', ErrorCode::ExtendedClassMissingOperator, $end);
+        $this->refuse('Two operands with no operator between them in an extended class', ErrorCode::ExtendedClassMissingOperator(), $end);
     }
 
     /**
@@ -510,10 +518,10 @@ final class ExtendedClassReader
     private function refuseQuote(int $start)
     {
         if ($start + 2 >= $this->length) {
-            $this->refuse('Missing "]" to close an extended class', ErrorCode::ExtendedClassUnclosed, $this->length);
+            $this->refuse('Missing "]" to close an extended class', ErrorCode::ExtendedClassUnclosed(), $this->length);
         }
 
-        $this->refuse('Unexpected character in an extended class', ErrorCode::ExtendedClassUnexpectedCharacter, $this->pastCharacter($start + 2));
+        $this->refuse('Unexpected character in an extended class', ErrorCode::ExtendedClassUnexpectedCharacter(), $this->pastCharacter($start + 2));
     }
 
     /**
@@ -536,7 +544,7 @@ final class ExtendedClassReader
     {
         if (++$this->operations > $this->maxOperations) {
             ($this->fail)(
-                RecursionLimitException::withContext(\sprintf('Recursion limit of %d exceeded: the extended class holds more operations than that.', $this->maxOperations), ErrorCode::ExtendedClassTooComplex, $this->at, $this->pattern),
+                RecursionLimitException::withContext(\sprintf('Recursion limit of %d exceeded: the extended class holds more operations than that.', $this->maxOperations), ErrorCode::ExtendedClassTooComplex(), $this->at, $this->pattern),
                 $this->at,
                 $this->operands,
             );
@@ -560,7 +568,7 @@ final class ExtendedClassReader
             }
         }
 
-        $this->refuse('Missing "]" to close a character class', ErrorCode::CharclassUnclosed, $this->length);
+        $this->refuse('Missing "]" to close a character class', ErrorCode::CharclassUnclosed(), $this->length);
     }
 
     /**
@@ -583,7 +591,7 @@ final class ExtendedClassReader
         if (++$this->depth > self::MAX_DEPTH) {
             // Here PCRE2 10.47 moved the offset back: onto the "(", where it
             // was past it.
-            $this->refuse('Extended class nested too deeply', ErrorCode::ExtendedClassNestedTooDeep, $this->target->supports(PcreFeature::ErrorOffsetPastTheFault) ? $position : $position + 1);
+            $this->refuse('Extended class nested too deeply', ErrorCode::ExtendedClassNestedTooDeep(), $this->target->supports(PcreFeature::ErrorOffsetPastTheFault()) ? $position : $position + 1);
         }
     }
 

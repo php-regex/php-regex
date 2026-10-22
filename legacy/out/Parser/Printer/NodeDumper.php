@@ -101,7 +101,7 @@ final class NodeDumper extends AbstractNodeVisitor
         $flags = $node->flags ?? '';
 
         $nameStr = ('' !== $name) ? " name: {$name}" : '';
-        $str = "Group(type: {$node->type}{$nameStr} flags: {$flags})\n";
+        $str = "Group(type: {$node->type->value}{$nameStr} flags: {$flags})\n";
         $this->indent += 2;
         $str .= $node->child->accept($this);
         $this->indent -= 2;
@@ -112,7 +112,7 @@ final class NodeDumper extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): string
     {
-        return "Quantifier(quant: {$node->quantifier}, type: {$node->type})\n".$this->indent(
+        return "Quantifier(quant: {$node->quantifier}, type: {$node->type->value})\n".$this->indent(
             $node->node->accept($this),
         );
     }
@@ -184,16 +184,16 @@ final class NodeDumper extends AbstractNodeVisitor
     public function visitCharLiteral(CharLiteralNode $node): string
     {
         switch ($node->type) {
-            case CharLiteralType::Octal:
+            case CharLiteralType::Octal():
                 $type = 'Octal';
                 break;
-            case CharLiteralType::OctalLegacy:
+            case CharLiteralType::OctalLegacy():
                 $type = 'OctalLegacy';
                 break;
-            case CharLiteralType::Unicode:
+            case CharLiteralType::Unicode():
                 $type = 'Unicode';
                 break;
-            case CharLiteralType::UnicodeNamed:
+            case CharLiteralType::UnicodeNamed():
                 $type = 'UnicodeNamed';
                 break;
         }
