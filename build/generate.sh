@@ -23,23 +23,21 @@ perl -i -pe 's/bool \$changed, \?\s*$/bool \$changed, ?FormatRefusal/' \
 perl -i -pe 's/\?final \$category/?ValidationErrorCategory \$category/; s/\?final \$errorCode/?ErrorCode \$errorCode/' \
 	build/php74/Parser/Validation/ValidationResult.php
 
-# PHP 8.0 syntax Rector leaves behind: $var::class and 0o octal literals.
-# A quiet grep is the success case — nothing left to rewrite.
-grep -rl '\$[a-zA-Z_][a-zA-Z0-9_]*::class' build/php74 --include='*.php' \
-	| while read -r file; do
-		perl -i -pe 's/\$([a-zA-Z_][a-zA-Z0-9_]*)::class/get_class(\$$1)/g' "$file"
-	done || true
-grep -rl '0o[0-7]' build/php74 --include='*.php' \
-	| while read -r file; do
-		perl -i -pe 's/\b0o([0-7]+)\b/0$1/g' "$file"
-	done || true
-
 # style the shipped tree here, not as a gate: what gets verified is what
-# gets published
+# gets published. It runs BEFORE the floor fixes below, because the style
+# fixers know modern PHP and would happily reintroduce the very syntax
+# the twin exists to shed (get_class($x) straight back to $x::class).
 if [ -x tools/php-cs-fixer/vendor/bin/php-cs-fixer ]; then
 	tools/php-cs-fixer/vendor/bin/php-cs-fixer fix build/php74 \
 		--path-mode=override --quiet || true
 fi
+
+# PHP 8.0 syntax Rector and the style pass leave behind: $var::class and
+# 0o octal literals. A quiet grep is the success case — nothing left.
+grep -rl '\$[a-zA-Z_][a-zA-Z0-9_]*::class' build/php74 --include='*.php' \
+	| xargs -r -n1 perl -i -pe 's/\$([a-zA-Z_][a-zA-Z0-9_]*)::class/get_class(\$$1)/g' || true
+grep -rl '0o[0-7]' build/php74 --include='*.php' \
+	| xargs -r -n1 perl -i -pe 's/\b0o([0-7]+)\b/0$1/g' || true
 
 # @readonly docblocks lie in the twin (properties are plain now); the @ is
 # escaped so perl does not interpolate an array out of the pattern
