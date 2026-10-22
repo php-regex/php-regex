@@ -99,14 +99,18 @@ final class StartOptionsTest extends TestCase
     #[DataProvider('provideOptionsAfterWhatPcreReadsAsNothing')]
     public function test_an_option_after_what_pcre_reads_as_nothing_at_the_start_is_out_of_place(string $pattern): void
     {
-        // Oracle: PHP's PCRE refuses it, "(*VERB) not recognized or malformed".
+        // Oracle: PHP's PCRE refuses it, "(*VERB) not recognized or
+        // malformed". Some engine builds word the refusal without the
+        // offset: the offset is compared only where the engine names one.
         $this->assertFalse(@preg_match($pattern, ''));
-        $this->assertSame(1, preg_match('/at offset (\d++)$/', (string) (error_get_last()['message'] ?? ''), $offset), $pattern);
+        $namesOffset = 1 === preg_match('/at offset (\d++)$/', (string) (error_get_last()['message'] ?? ''), $offset);
 
         $result = RegexParser::create(['cache' => null])->validate($pattern);
 
         $this->assertSame(ErrorCode::VerbMisplaced, $result->errorCode, $pattern);
-        $this->assertSame((int) $offset[1], $result->offset, $pattern);
+        if ($namesOffset) {
+            $this->assertSame((int) $offset[1], $result->offset, $pattern);
+        }
     }
 
     /**
