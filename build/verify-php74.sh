@@ -11,7 +11,7 @@ fails=0
 while IFS= read -r file; do
 	if ! php -l "$file" > /dev/null 2>&1; then
 		fails=$((fails + 1))
-		php -l "$file" 2>&1 | head -1
+		php -l "$file" 2>&1 | head -1 || true
 	fi
 done < <(find build/php74 -name '*.php')
 

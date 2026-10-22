@@ -23,6 +23,16 @@ perl -i -pe 's/bool \$changed, \?\s*$/bool \$changed, ?FormatRefusal/' \
 perl -i -pe 's/\?final \$category/?ValidationErrorCategory \$category/; s/\?final \$errorCode/?ErrorCode \$errorCode/' \
 	build/php74/Parser/Validation/ValidationResult.php
 
+# PHP 8.0 syntax Rector leaves behind: $var::class and 0o octal literals
+grep -rl '\$[a-zA-Z_][a-zA-Z0-9_]*::class' build/php74 --include='*.php' \
+	| while read -r file; do
+		perl -i -pe 's/\$([a-zA-Z_][a-zA-Z0-9_]*)::class/get_class(\$$1)/g' "$file"
+	done
+grep -rl '0o[0-7]' build/php74 --include='*.php' \
+	| while read -r file; do
+		perl -i -pe 's/\b0o([0-7]+)\b/0$1/g' "$file"
+	done
+
 # style the shipped tree here, not as a gate: what gets verified is what
 # gets published
 if [ -x tools/php-cs-fixer/vendor/bin/php-cs-fixer ]; then
