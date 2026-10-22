@@ -23,15 +23,16 @@ perl -i -pe 's/bool \$changed, \?\s*$/bool \$changed, ?FormatRefusal/' \
 perl -i -pe 's/\?final \$category/?ValidationErrorCategory \$category/; s/\?final \$errorCode/?ErrorCode \$errorCode/' \
 	build/php74/Parser/Validation/ValidationResult.php
 
-# PHP 8.0 syntax Rector leaves behind: $var::class and 0o octal literals
+# PHP 8.0 syntax Rector leaves behind: $var::class and 0o octal literals.
+# A quiet grep is the success case — nothing left to rewrite.
 grep -rl '\$[a-zA-Z_][a-zA-Z0-9_]*::class' build/php74 --include='*.php' \
 	| while read -r file; do
 		perl -i -pe 's/\$([a-zA-Z_][a-zA-Z0-9_]*)::class/get_class(\$$1)/g' "$file"
-	done
+	done || true
 grep -rl '0o[0-7]' build/php74 --include='*.php' \
 	| while read -r file; do
 		perl -i -pe 's/\b0o([0-7]+)\b/0$1/g' "$file"
-	done
+	done || true
 
 # style the shipped tree here, not as a gate: what gets verified is what
 # gets published

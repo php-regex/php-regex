@@ -7,6 +7,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# freshly generated files can take a moment to appear through the macOS
+# docker file sharing; CI checkouts do not need this
+sleep 3
+
 fails=0
 while IFS= read -r file; do
 	if ! php -l "$file" > /dev/null 2>&1; then
