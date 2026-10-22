@@ -43,24 +43,76 @@ grep -rl '0o[0-7]' build/php74 --include='*.php' \
 # escaped so perl does not interpolate an array out of the pattern
 find build/php74 -name '*.php' -exec perl -i -ne 'print unless /^\s*\* \@readonly\s*$/' {} +
 
-# the twin is a package: the same composer manifest the mirror repository
-# would publish, so consumers install it exactly as CI tested it
+# the twin is a package laid out like any other: code under src/, the
+# repo furniture the split carries (readme with its art, license,
+# changelog, schema, git attributes and workflows, IDE meta) at the root
+mv build/php74/Parser build/php74/src
+for rootFile in .github .gitattributes .phpstorm.meta.php README.md ast.schema.json art LICENSE CHANGELOG.md; do
+	if [ -e "build/php74/src/$rootFile" ]; then
+		mv "build/php74/src/$rootFile" "build/php74/$rootFile"
+	fi
+done
+
+# the split fragment's manifest goes with it; what it says that matters
+# lands in the twin's own manifest below
+rm -f build/php74/src/composer.json
+
+# the same composer manifest the mirror repository publishes, so
+# consumers install it exactly as CI tested it
 cat > build/php74/composer.json <<'MANIFEST'
 {
 	"name": "php-regex/regex-parser-php74",
 	"description": "The PHPRegex parser built to run on hosts PHP 7.4-8.0. On PHP 8.1+, install php-regex/regex-parser instead.",
 	"license": "MIT",
-	"version": "2.x-dev",
 	"type": "library",
+	"keywords": [
+		"regex",
+		"pcre",
+		"pcre2",
+		"parser",
+		"ast",
+		"lexer",
+		"validation"
+	],
+	"homepage": "https://github.com/php-regex/regex-parser-php74",
+	"support": {
+		"issues": "https://github.com/php-regex/regex-parser-php74/issues",
+		"source": "https://github.com/php-regex/regex-parser-php74",
+		"docs": "https://php-regex.com/reference/api/"
+	},
+	"funding": [
+		{
+			"type": "github",
+			"url": "https://github.com/sponsors/yoeunes"
+		}
+	],
+	"authors": [
+		{
+			"name": "Younes ENNAJI",
+			"email": "younes.ennaji.pro@gmail.com",
+			"homepage": "https://www.linkedin.com/in/yoeunes/",
+			"role": "Developer"
+		}
+	],
 	"require": {
 		"php": "^7.4 || ^8.0",
 		"symfony/polyfill-php80": "^1.31",
 		"symfony/polyfill-php81": "^1.31",
 		"symfony/polyfill-mbstring": "^1.31"
 	},
+	"suggest": {
+		"ext-intl": "To resolve \\N{name} escapes by Unicode name.",
+		"psr/cache": "To share the AST cache through a PSR-6 pool.",
+		"psr/simple-cache": "To share the AST cache through a PSR-16 cache."
+	},
 	"autoload": {
 		"psr-4": {
-			"PHPRegex\\Parser\\": "Parser/"
+			"PHPRegex\\Parser\\": "src/"
+		}
+	},
+	"extra": {
+		"branch-alias": {
+			"dev-2.x": "2.x-dev"
 		}
 	},
 	"config": {
@@ -69,4 +121,4 @@ cat > build/php74/composer.json <<'MANIFEST'
 }
 MANIFEST
 
-echo "twin generated: $(find build/php74 -name '*.php' | wc -l | tr -d ' ') files"
+echo "twin generated: $(find build/php74/src -name '*.php' | wc -l | tr -d ' ') files under src/, $(ls build/php74 | grep -v src | wc -l | tr -d ' ') root entries"
