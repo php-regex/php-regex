@@ -239,6 +239,18 @@ Left: `\R` under `(*BSR_ANYCRLF)` described as any Unicode line break,
 not knowing the target release or locale (`\w` says "from PCRE2 10.43"
 instead of choosing).
 
+## The 8.1 builds that lose a shutdown after exhaustion
+
+On the 8.1 build the CI runners use (a setup-php compile), a child that
+dies of memory exhaustion prints no envelope and writes no trace from its
+shutdown handler, while the exit code still arrives: `regex:lint --json`
+would report its internal error through the exit code alone. The official
+8.1 build prints both, as every later PHP does. The test skips on the
+losing builds with a message naming them. To close: reproduce with the
+setup-php 8.1 build (or ask them how their memory manager differs), then
+make the shutdown of that build print — the reserve and the
+past-the-buffers write the official builds need are already in.
+
 ## Test suite: a state leak an order can expose
 
 Running the whole suite in a container, one random order in three makes
