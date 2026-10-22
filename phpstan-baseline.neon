@@ -1,896 +1,247 @@
 parameters:
 	ignoreErrors:
-
-		-
-			rawMessage: 'Attribute references internal class PHPUnit\Framework\Attributes\IgnorePhpunitDeprecations.'
-			identifier: attribute.internalClass
-			count: 1
-			path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
-
-		-
-			rawMessage: 'Static property PHPRegex\Cli\Application::$memoryReserve is never read, only written.'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Cli/Application.php
-
-		-
-			rawMessage: Access to constant on internal class Psalm\Internal\Analyzer\Statements\ExpressionAnalyzer.
-			identifier: classConstant.internalClass
-			count: 1
-			path: src/Psalm/PsalmInternals.php
-
-		-
-			rawMessage: Access to constant on internal class Psalm\Internal\Codebase\Functions.
-			identifier: classConstant.internalClass
-			count: 1
-			path: src/Psalm/PsalmInternals.php
-
-		-
-			rawMessage: Access to constant on internal class Psalm\Internal\Provider\NodeDataProvider.
-			identifier: classConstant.internalClass
-			count: 1
-			path: src/Psalm/PsalmInternals.php
-
-		-
-			rawMessage: 'Call to method functionExists() of internal class Psalm\Internal\Codebase\Functions from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 1
-			path: src/Psalm/PsalmInternals.php
-
-		-
-			rawMessage: 'Call to method getCodebase() of internal class Psalm\Internal\Analyzer\StatementsAnalyzer from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 2
-			path: src/Psalm/PsalmInternals.php
-
-		-
-			rawMessage: 'Call to method setIfFalseAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 1
-			path: src/Psalm/PsalmInternals.php
-
-		-
-			rawMessage: 'Call to method setIfTrueAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 1
-			path: src/Psalm/PsalmInternals.php
-
-		-
-			rawMessage: 'Call to static method analyze() of internal class Psalm\Internal\Analyzer\Statements\ExpressionAnalyzer from outside its root namespace Psalm.'
-			identifier: staticMethod.internalClass
-			count: 1
-			path: src/Psalm/PsalmInternals.php
-
-		-
-			rawMessage: Instanceof references internal class Psalm\Internal\Analyzer\StatementsAnalyzer.
-			identifier: instanceof.internalClass
-			count: 3
-			path: src/Psalm/PsalmInternals.php
-
-		-
-			rawMessage: Instanceof references internal class Psalm\Internal\Provider\NodeDataProvider.
-			identifier: instanceof.internalClass
-			count: 1
-			path: src/Psalm/PsalmInternals.php
-
-		-
-			rawMessage: 'Parameter #1 $config of class PHPRegex\PHPStan\PatternChecker constructor expects array{phpVersion?: int|string|null, pcreVersion?: string|null, locale?: string|null, interop?: list<string>|null, checks?: array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, optimizations?: array{enabled?: bool, minSavings?: int, options?: array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, possessive?: bool, factorize?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool}}, complexity?: array{enabled?: bool, threshold?: int}}}, array{checks: array{complexity: array{enabled: false, threshold: mixed}}} given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleComplexityTest.php
-
-		-
-			rawMessage: 'Replacement reference $1 names group 1, but /b/ has no capturing group: preg_replace() substitutes an empty string.'
-			identifier: regex.replacement.undefinedGroup
-			count: 2
-			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupTest.php
-
-		-
-			rawMessage: 'Replacement reference $10 names group 10, but /(a)/ has 1 capturing group: preg_replace() substitutes an empty string.'
-			identifier: regex.replacement.undefinedGroup
-			count: 1
-			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupTest.php
-
-		-
-			rawMessage: 'Replacement reference $2 names group 2, but /(?|(a)|(b))/ has 1 capturing group: preg_replace() substitutes an empty string.'
-			identifier: regex.replacement.undefinedGroup
-			count: 1
-			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupTest.php
-
-		-
-			rawMessage: 'Replacement reference $2 names group 2, but /(a)/ has 1 capturing group: preg_filter() substitutes an empty string.'
-			identifier: regex.replacement.undefinedGroup
-			count: 1
-			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupTest.php
-
-		-
-			rawMessage: 'Replacement reference $2 names group 2, but /(a)/ has 1 capturing group: preg_replace() substitutes an empty string.'
-			identifier: regex.replacement.undefinedGroup
-			count: 2
-			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupTest.php
-
-		-
-			rawMessage: 'Replacement reference $3 names group 3, but /(a)(b)/ has 2 capturing groups: preg_replace() substitutes an empty string.'
-			identifier: regex.replacement.undefinedGroup
-			count: 1
-			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupTest.php
-
-		-
-			rawMessage: 'Replacement reference ${2} names group 2, but /(a)/ has 1 capturing group: preg_replace() substitutes an empty string.'
-			identifier: regex.replacement.undefinedGroup
-			count: 1
-			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupTest.php
-
-		-
-			rawMessage: 'Replacement reference \2 names group 2, but /(a)/ has 1 capturing group: preg_replace() substitutes an empty string.'
-			identifier: regex.replacement.undefinedGroup
-			count: 1
-			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupTest.php
-
-		-
-			rawMessage: 'Replacement text ${name} is not a group reference: preg_replace() reads group numbers only and leaves it in the result as written.'
-			identifier: regex.replacement.undefinedGroup
-			count: 1
-			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with ''regex.redos.search'' and ''regex.redos.search'' will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleSearchCostTest.php
-
-		-
-			rawMessage: 'Call to internal method Psalm\Context::__construct() from outside its root namespace Psalm.'
-			identifier: method.internal
-			count: 2
-			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
-
-		-
-			rawMessage: 'Call to method __construct() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 3
-			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
-
-		-
-			rawMessage: 'Call to method getIfFalseAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 2
-			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
-
-		-
-			rawMessage: 'Call to method getIfTrueAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 3
-			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
-
-		-
-			rawMessage: Instantiation of internal class Psalm\Internal\Provider\NodeDataProvider.
-			identifier: new.internalClass
-			count: 3
-			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
-
-		-
-			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 4
-			path: tests/Integration/Bridge/Psalm/PsalmPluginBudgetTest.php
-
-		-
-			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 5
-			path: tests/Integration/Bridge/Psalm/PsalmPluginBudgetTest.php
-
-		-
-			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 6
-			path: tests/Integration/Bridge/Psalm/PsalmPluginBudgetTest.php
-
-		-
-			rawMessage: Parameter $issue of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
-			identifier: parameter.internalClass
-			count: 8
-			path: tests/Integration/Bridge/Psalm/PsalmPluginBudgetTest.php
-
-		-
-			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 4
-			path: tests/Integration/Bridge/Psalm/PsalmPluginInvalidPatternTest.php
-
-		-
-			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 6
-			path: tests/Integration/Bridge/Psalm/PsalmPluginInvalidPatternTest.php
-
-		-
-			rawMessage: Access to property $selected_text of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginInvalidPatternTest.php
-
-		-
-			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 6
-			path: tests/Integration/Bridge/Psalm/PsalmPluginInvalidPatternTest.php
-
-		-
-			rawMessage: Parameter $issue of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
-			identifier: parameter.internalClass
-			count: 5
-			path: tests/Integration/Bridge/Psalm/PsalmPluginInvalidPatternTest.php
-
-		-
-			rawMessage: 'Return type of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmPluginInvalidPatternTest::issues() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
-			identifier: return.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginInvalidPatternTest.php
-
-		-
-			rawMessage: Access to property $file_path of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginMatchAllTest.php
-
-		-
-			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 2
-			path: tests/Integration/Bridge/Psalm/PsalmPluginMatchAllTest.php
-
-		-
-			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 2
-			path: tests/Integration/Bridge/Psalm/PsalmPluginMatchAllTest.php
-
-		-
-			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 3
-			path: tests/Integration/Bridge/Psalm/PsalmPluginMatchAllTest.php
-
-		-
-			rawMessage: Parameter $issue of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
-			identifier: parameter.internalClass
-			count: 5
-			path: tests/Integration/Bridge/Psalm/PsalmPluginMatchAllTest.php
-
-		-
-			rawMessage: 'Return type of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmPluginMatchAllTest::issues() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
-			identifier: return.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginMatchAllTest.php
-
-		-
-			rawMessage: Access to property $column_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginParityTest.php
-
-		-
-			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginParityTest.php
-
-		-
-			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginParityTest.php
-
-		-
-			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginParityTest.php
-
-		-
-			rawMessage: Parameter $issue of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
-			identifier: parameter.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginParityTest.php
-
-		-
-			rawMessage: 'Parameter $issues of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmPluginParityTest::described() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
-			identifier: parameter.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginParityTest.php
-
-		-
-			rawMessage: 'Parameter $issues of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmPluginParityTest::tainted() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
-			identifier: parameter.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginParityTest.php
-
-		-
-			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 3
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetMarkerTest.php
-
-		-
-			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 6
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetMarkerTest.php
-
-		-
-			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetTest.php
-
-		-
-			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 5
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetTest.php
-
-		-
-			rawMessage: Access to property $selected_text of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetTest.php
-
-		-
-			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 5
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetTest.php
-
-		-
-			rawMessage: Parameter $issue of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
-			identifier: parameter.internalClass
-			count: 3
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetTest.php
-
-		-
-			rawMessage: 'Parameter $issues of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmPluginTargetTest::assertTraceIs() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
-			identifier: parameter.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetTest.php
-
-		-
-			rawMessage: Access to property $column_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTrailingNewlineTest.php
-
-		-
-			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTrailingNewlineTest.php
-
-		-
-			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTrailingNewlineTest.php
-
-		-
-			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTrailingNewlineTest.php
-
-		-
-			rawMessage: Parameter $issue of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
-			identifier: parameter.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTrailingNewlineTest.php
-
-		-
-			rawMessage: Access to property $file_path of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTypesTest.php
-
-		-
-			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 2
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTypesTest.php
-
-		-
-			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 2
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTypesTest.php
-
-		-
-			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 3
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTypesTest.php
-
-		-
-			rawMessage: Parameter $issue of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
-			identifier: parameter.internalClass
-			count: 5
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTypesTest.php
-
-		-
-			rawMessage: 'Return type of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmPluginTypesTest::issues() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
-			identifier: return.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmPluginTypesTest.php
-
-		-
-			rawMessage: Access to internal property Psalm\Config::$cache_directory from outside its root namespace Psalm.
-			identifier: property.internal
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Access to property $column_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 3
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Access to property $file_path of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 3
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: 'Call to method __construct() of internal class Psalm\Internal\Analyzer\ProjectAnalyzer from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: 'Call to method __construct() of internal class Psalm\Internal\Provider\Providers from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: 'Call to method checkPaths() of internal class Psalm\Internal\Analyzer\ProjectAnalyzer from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: 'Call to method setPhpVersion() of internal class Psalm\Internal\Analyzer\ProjectAnalyzer from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: 'Call to method trackTaintedInputs() of internal class Psalm\Internal\Analyzer\ProjectAnalyzer from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Instantiation of internal class Psalm\Internal\Analyzer\ProjectAnalyzer.
-			identifier: new.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Instantiation of internal class Psalm\Internal\IncludeCollector.
-			identifier: new.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Instantiation of internal class Psalm\Internal\Provider\FileProvider.
-			identifier: new.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Instantiation of internal class Psalm\Internal\Provider\Providers.
-			identifier: new.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Parameter $a of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
-			identifier: parameter.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Parameter $b of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
-			identifier: parameter.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Parameter $issue of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
-			identifier: parameter.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: 'Parameter $issue of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmRun::describe() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
-			identifier: parameter.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: 'Parameter $issues of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmRun::inFile() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
-			identifier: parameter.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Property $runs references internal class Psalm\Internal\Analyzer\IssueData in its type.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: 'Return type of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmRun::analyse() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
-			identifier: return.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: 'Return type of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmRun::inFile() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
-			identifier: return.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: 'Return type of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmRun::issues() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
-			identifier: return.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: 'Return type of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmRun::run() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
-			identifier: return.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmRun.php
-
-		-
-			rawMessage: Access to constant on internal class Psalm\Internal\Analyzer\ProjectAnalyzer.
-			identifier: classConstant.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmTypes.php
-
-		-
-			rawMessage: Access to internal property Psalm\Config::$cache_directory from outside its root namespace Psalm.
-			identifier: property.internal
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmTypes.php
-
-		-
-			rawMessage: 'Call to method __construct() of internal class Psalm\Internal\Analyzer\ProjectAnalyzer from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmTypes.php
-
-		-
-			rawMessage: 'Call to method __construct() of internal class Psalm\Internal\Provider\Providers from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmTypes.php
-
-		-
-			rawMessage: 'Call to method getCodebase() of internal class Psalm\Internal\Analyzer\ProjectAnalyzer from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmTypes.php
-
-		-
-			rawMessage: 'Call to method getConfig() of internal class Psalm\Internal\Analyzer\ProjectAnalyzer from outside its root namespace Psalm.'
-			identifier: method.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmTypes.php
-
-		-
-			rawMessage: 'Call to static method isContainedBy() of internal class Psalm\Internal\Type\Comparator\UnionTypeComparator from outside its root namespace Psalm.'
-			identifier: staticMethod.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmTypes.php
-
-		-
-			rawMessage: Instantiation of internal class Psalm\Internal\Analyzer\ProjectAnalyzer.
-			identifier: new.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmTypes.php
-
-		-
-			rawMessage: Instantiation of internal class Psalm\Internal\Provider\FileProvider.
-			identifier: new.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmTypes.php
-
-		-
-			rawMessage: Instantiation of internal class Psalm\Internal\Provider\Providers.
-			identifier: new.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmTypes.php
-
-		-
-			rawMessage: Property $project references internal class Psalm\Internal\Analyzer\ProjectAnalyzer in its type.
-			identifier: property.internalClass
-			count: 1
-			path: tests/Integration/Bridge/Psalm/PsalmTypes.php
-
-		-
-			rawMessage: 'Parameter #1 $phpVersion of method Rector\Configuration\RectorConfigBuilder::withPhpVersion() expects 50200|50300|50400|50500|50600|70000|70100|70200|70300|70400|80000|80100|80200|80300|80400|80500|80600|100000, 70406 given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Integration/Bridge/Rector/PossessiveRepeatOnceRector/config/php746.php
-
-		-
-			rawMessage: 'Call to function is_subclass_of() with ''PHPRegex\\Rector\\EscapeLiteralBraceRector'' and ''Rector\\VersionBonding\\Contract\\MinPhpVersionInterface'' will always evaluate to false.'
-			identifier: function.impossibleType
-			count: 1
-			path: tests/Integration/Bridge/Rector/RuleContractTest.php
-
-		-
-			rawMessage: 'Call to function is_subclass_of() with ''PHPRegex\\Rector\\PregReplaceToStrReplaceRector'' and ''Rector\\VersionBonding\\Contract\\MinPhpVersionInterface'' will always evaluate to false.'
-			identifier: function.impossibleType
-			count: 1
-			path: tests/Integration/Bridge/Rector/RuleContractTest.php
-
-		-
-			rawMessage: 'Call to function is_subclass_of() with ''PHPRegex\\Rector\\PregSplitToExplodeRector'' and ''Rector\\VersionBonding\\Contract\\MinPhpVersionInterface'' will always evaluate to false.'
-			identifier: function.impossibleType
-			count: 1
-			path: tests/Integration/Bridge/Rector/RuleContractTest.php
-
-		-
-			rawMessage: 'Parameter #1 $config of class PHPRegex\PHPStan\RegexPatternRule constructor expects array{phpVersion?: int|string|null, pcreVersion?: string|null, locale?: string|null, interop?: list<string>|null, checks?: array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, optimizations?: array{enabled?: bool, minSavings?: int, options?: array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, possessive?: bool, factorize?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool}}, complexity?: array{enabled?: bool, threshold?: int}}}, array{checks: array{redos: array{enabled: true, threshold: 3}}} given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Unit/Bridge/PHPStan/RegexPatternRuleThresholdTypeTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertNotSame() with array{} and array{PHPRegex\Parser\ErrorCode::AssertionInvalid, PHPRegex\Parser\ErrorCode::BackrefInvalidSyntax, PHPRegex\Parser\ErrorCode::BackrefMissingGroup, PHPRegex\Parser\ErrorCode::BackrefMissingNamedGroup, PHPRegex\Parser\ErrorCode::BackrefRelative, PHPRegex\Parser\ErrorCode::BackrefZero, PHPRegex\Parser\ErrorCode::CalloutInvalidDelimiter, PHPRegex\Parser\ErrorCode::CalloutOutOfRange, ...} will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/ErrorCodeTest.php
-
-		-
-			rawMessage: 'Parameter #3 $work of method PHPRegex\Linter\Parallel\ForkedWorkerPool::run() expects Closure(list<''a''|''b''>, Closure(int): void): list<mixed>, Closure(array, Closure): ''not a list'' given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Unit/Lint/ForkedWorkerPoolTest.php
-
-		-
-			rawMessage: 'Unable to resolve the template type R in call to method PHPRegex\Linter\Parallel\ForkedWorkerPool::run()'
-			identifier: argument.templateType
-			count: 1
-			path: tests/Unit/Lint/ForkedWorkerPoolTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 8 and 8 will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/Lint/Rule/QuestionBudgetTest.php
-
-		-
-			rawMessage: 'Call to new PHPRegex\Parser\Node\UnicodePropNode() on a separate line has no effect.'
-			identifier: new.resultUnused
-			count: 1
-			path: tests/Unit/Node/UnicodePropNodeTest.php
-
-		-
-			rawMessage: 'Parameter #2 $hasBraces of class PHPRegex\Parser\Node\UnicodePropNode constructor expects bool, int given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Unit/Node/UnicodePropNodeTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertInstanceOf() with ''PHPRegex\\Parser\\AbstractNodeVisitor'' and PHPRegex\Tests\Unit\NodeVisitor\BackrefCollector will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/NodeVisitor/AbstractTraversingVisitorTest.php
-
-		-
-			rawMessage: 'Parameter #2 $options of method PHPRegex\Toolkit\Regex::optimize() expects array{digits?: bool, word?: bool, ranges?: bool, canonicalize_char_classes?: bool, possessive?: bool, factorize?: bool, min_quantifier_count?: int, verify_with_automata?: bool}|PHPRegex\Optimizer\OptimizerOptions, array{autoPossessify: true} given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Unit/Optimizer/OptimizerOptionsTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with array{''json-decode'', ''host-contract'', ''host-return'', ''template-identity'', ''validator-input'', ''protocol-slot'', ''callback-opaque'', ''reflection-sink'', ...} and array{''json-decode'', ''host-contract'', ''host-return'', ''template-identity'', ''validator-input'', ''protocol-slot'', ''callback-opaque'', ''reflection-sink'', ...} will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/Packages/MixedTypeBaselineTest.php
-
-		-
-			rawMessage: 'Parameter #4 $flags of function preg_match expects TFlags of 0|256|512|768, int given.'
-			identifier: argument.type
-			count: 2
-			path: tests/Unit/Parser/CaptureShapeAnalyzerTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 100000 and 100000 will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/Parser/Engine/LibraryPcreTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 1000000 and 1000000 will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/Parser/Engine/LibraryPcreTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertInstanceOf() with ''PHPRegex\\Parser\\Exception\\ExceptionInterface'' and PHPRegex\Parser\Exception\LimitException will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/Parser/LimitOutcomeTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertInstanceOf() with ''PHPRegex\\Parser\\Exception\\RegexException'' and PHPRegex\Parser\Exception\LimitException will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/Parser/LimitOutcomeTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertInstanceOf() with ''PHPRegex\\Parser\\Exception\\VisualContextInterface'' and PHPRegex\Parser\Exception\LimitException will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/Parser/LimitOutcomeTest.php
-
-		-
-			rawMessage: 'Parameter #2 $options of method PHPRegex\Toolkit\Regex::optimize() expects array{digits?: bool, word?: bool, ranges?: bool, canonicalize_char_classes?: bool, possessive?: bool, factorize?: bool, min_quantifier_count?: int, verify_with_automata?: bool}|PHPRegex\Optimizer\OptimizerOptions, array{mode: ''aggressive''|''safe''} given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Unit/Parser/ParserTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with ''2'' and ''2'' will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/Parser/PatternInfoAnalyzerTest.php
-
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 70300 and 70300 will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/Parser/PhpVersionGatesTest.php
-
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertInstanceOf() with ''PHPRegex\\Parser\\Exception\\RegexException'' and PHPRegex\Parser\Exception\FormattingException will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
+			message: '#^Strict comparison using \=\=\= between false and int will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
 			count: 1
-			path: tests/Unit/Parser/Printer/PatternFormatterTest.php
+			path: build/php74/Parser/Analysis/CaptureFacts.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertInstanceOf() with ''PHPRegex\\Redos\\RedosAnalysis'' and PHPRegex\Redos\RedosAnalysis will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
+			message: '#^Strict comparison using \=\=\= between false and string will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
 			count: 1
-			path: tests/Unit/Parser/ScanSubstringTest.php
+			path: build/php74/Parser/Analysis/CaptureFacts.php
 
 		-
-			rawMessage: 'Call to function is_a() with arguments ''PHPRegex\\Parser\\Exception\\ParserException'', ''PHPRegex\\Parser\\Exception\\VisualContextInterface'' and true will always evaluate to true.'
+			message: '#^Call to function is_array\(\) with list\<string\> will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
-			path: tests/Unit/ParserExceptionTest.php
+			path: build/php74/Parser/Analysis/CaptureShapeAnalyzer.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertInstanceOf() with ''PHPRegex\\Parser\\Node\\SequenceNode'' and PHPRegex\Parser\Node\SequenceNode will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
 			count: 1
-			path: tests/Unit/PcreTargetJudgementTest.php
+			path: build/php74/Parser/Analysis/CaptureShapeAnalyzer.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with ''engine limits…'' and ''engine limits…'' will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
+			message: '#^Comparison operation "\>" between int\<1, 4\> and 128 is always false\.$#'
+			identifier: greater.alwaysFalse
 			count: 1
-			path: tests/Unit/Redos/ConfirmationTest.php
+			path: build/php74/Parser/Analysis/LiteralExtractor.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with ''engine limits…'' and ''engine limits…'' will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
+			message: '#^PHPDoc tag @param for parameter \$bsr contains unresolvable type\.$#'
+			identifier: parameter.unresolvableType
 			count: 1
-			path: tests/Unit/Redos/Proven/RedosConfirmedReplayUnavailableTest.php
+			path: build/php74/Parser/Analysis/PatternInfo.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with ''1'' and ''1'' will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
+			message: '#^PHPDoc tag @param for parameter \$newline contains unresolvable type\.$#'
+			identifier: parameter.unresolvableType
 			count: 1
-			path: tests/Unit/Redos/Proven/RedosSearchCostTest.php
+			path: build/php74/Parser/Analysis/PatternInfo.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 100000 and 100000 will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
+			message: '#^Parameter \$bsr of method PHPRegex\\Parser\\Analysis\\PatternInfo\:\:__construct\(\) has invalid type PHPRegex\\Parser\\Analysis\\PHPRegex\\Parser\\NewlineConvention\.$#'
+			identifier: class.notFound
 			count: 1
-			path: tests/Unit/RegexParserTest.php
+			path: build/php74/Parser/Analysis/PatternInfo.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 1024 and 1024 will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
+			message: '#^Parameter \$newline of method PHPRegex\\Parser\\Analysis\\PatternInfo\:\:__construct\(\) has invalid type PHPRegex\\Parser\\Analysis\\PHPRegex\\Parser\\NewlineConvention\.$#'
+			identifier: class.notFound
 			count: 1
-			path: tests/Unit/RegexParserTest.php
+			path: build/php74/Parser/Analysis/PatternInfo.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 255 and 255 will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
+			message: '#^Property PHPRegex\\Parser\\Analysis\\PatternInfo\:\:\$bsr \(PHPRegex\\Parser\\BsrConvention\|null\) does not accept PHPRegex\\Parser\\Analysis\\PHPRegex\\Parser\\NewlineConvention\|null\.$#'
+			identifier: assign.propertyType
 			count: 1
-			path: tests/Unit/RegexParserTest.php
+			path: build/php74/Parser/Analysis/PatternInfo.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with ''10.49'' and ''10.49'' will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
+			message: '#^Property PHPRegex\\Parser\\Analysis\\PatternInfo\:\:\$newline \(PHPRegex\\Parser\\NewlineConvention\|null\) does not accept PHPRegex\\Parser\\Analysis\\PHPRegex\\Parser\\NewlineConvention\|null\.$#'
+			identifier: assign.propertyType
 			count: 1
-			path: tests/Unit/Support/PcreGatesTest.php
+			path: build/php74/Parser/Analysis/PatternInfo.php
 
 		-
-			rawMessage: Catching internal class PHPUnit\Framework\SkippedWithMessageException.
-			identifier: catch.internalClass
-			count: 12
-			path: tests/Unit/Support/PcreGatesTest.php
-
-		-
-			rawMessage: 'Parameter #1 $floor of method PHPRegex\Tests\Unit\Support\PcreGatesTest::requiresPhp() expects ''8.1''|''8.2''|''8.3''|''8.4''|''8.5''|''8.6'', ''99.0'' given.'
+			message: '#^Parameter \#11 \$newline of class PHPRegex\\Parser\\Analysis\\PatternInfo constructor expects PHPRegex\\Parser\\Analysis\\PHPRegex\\Parser\\NewlineConvention\|null, PHPRegex\\Parser\\NewlineConvention\|null given\.$#'
 			identifier: argument.type
 			count: 1
-			path: tests/Unit/Support/PcreGatesTest.php
+			path: build/php74/Parser/Analysis/PatternInfoAnalyzer.php
 
 		-
-			rawMessage: 'Parameter #1 $release of method PHPRegex\Tests\Unit\Support\PcreGatesTest::requiresPcre2() expects ''10.39''|''10.40''|''10.41''|''10.42''|''10.43''|''10.44''|''10.45''|''10.46''|''10.47''|''10.48''|''10.49'', ''10.99'' given.'
+			message: '#^Parameter \#12 \$bsr of class PHPRegex\\Parser\\Analysis\\PatternInfo constructor expects PHPRegex\\Parser\\Analysis\\PHPRegex\\Parser\\NewlineConvention\|null, PHPRegex\\Parser\\BsrConvention\|null given\.$#'
 			identifier: argument.type
 			count: 1
-			path: tests/Unit/Support/PcreGatesTest.php
+			path: build/php74/Parser/Analysis/PatternInfoAnalyzer.php
 
 		-
-			rawMessage: 'Parameter #1 $through of method PHPRegex\Tests\Unit\Support\PcreGatesTest::forbidsPhp() expects ''8.1''|''8.2''|''8.3''|''8.4''|''8.5''|''8.6'', ''5.0'' given.'
+			message: '#^Strict comparison using \=\=\= between false and int will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: build/php74/Parser/Engine/CharacterTables.php
+
+		-
+			message: '#^Call to function is_int\(\) with int will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: build/php74/Parser/Engine/LibraryPcre.php
+
+		-
+			message: '#^Call to function is_array\(\) with list\<int\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: build/php74/Parser/Hir/Properties.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: build/php74/Parser/Hir/Properties.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<int\<0, 255\>\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: build/php74/Parser/Hir/Utf8.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: build/php74/Parser/Lexer.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: build/php74/Parser/Lexer.php
+
+		-
+			message: '#^Static method PHPRegex\\Parser\\Printer\\DelimiterBrackets\:\:groupSpelling\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: build/php74/Parser/Printer/DelimiterBrackets.php
+
+		-
+			message: '#^Comparison operation "\>\=" between 65663\|int\<131199, 1114111\> and 55296 is always true\.$#'
+			identifier: greaterOrEqual.alwaysTrue
+			count: 1
+			path: build/php74/Parser/Printer/DisplayEscaper.php
+
+		-
+			message: '#^PHPDoc tag @param for parameter \$refusal contains unresolvable type\.$#'
+			identifier: parameter.unresolvableType
+			count: 1
+			path: build/php74/Parser/Printer/FormatResult.php
+
+		-
+			message: '#^Variable \$type might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: build/php74/Parser/Printer/NodeDumper.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: build/php74/Parser/Printer/PatternPrinter.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between false and int will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: build/php74/Parser/Printer/PatternPrinter.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between null and int will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: build/php74/Parser/Syntax/CodePointReader.php
+
+		-
+			message: '#^PHPDoc tag @param for parameter \$assertion contains unresolvable type\.$#'
+			identifier: parameter.unresolvableType
+			count: 1
+			path: build/php74/Parser/Syntax/PcreVerb.php
+
+		-
+			message: '#^Parameter \#2 \$assertion of class PHPRegex\\Parser\\Syntax\\PcreVerb constructor expects PHPRegex\\Parser\\Syntax\\PHPRegex\\Parser\\ErrorCode\|null, PHPRegex\\Parser\\Node\\GroupType given\.$#'
 			identifier: argument.type
 			count: 1
-			path: tests/Unit/Support/PcreGatesTest.php
+			path: build/php74/Parser/Syntax/PcreVerb.php
 
 		-
-			rawMessage: 'Parameter #2 $releases of method PHPRegex\Tests\Unit\Support\PcreGatesTest::requiresPcre2For() expects array<''10.39''|''10.40''|''10.41''|''10.42''|''10.43''|''10.44''|''10.45''|''10.46''|''10.47''|''10.48''|''10.49'', list<string>>, array{''10.40'': array{''/a/''}, ''10.99'': array{''/b/'', ''/(?-r)k*+\\x{212A}…''}} given.'
-			identifier: argument.type
+			message: '#^Parameter \$assertion of method PHPRegex\\Parser\\Syntax\\PcreVerb\:\:__construct\(\) has invalid type PHPRegex\\Parser\\Syntax\\PHPRegex\\Parser\\ErrorCode\.$#'
+			identifier: class.notFound
 			count: 1
-			path: tests/Unit/Support/PcreGatesTest.php
+			path: build/php74/Parser/Syntax/PcreVerb.php
 
 		-
-			rawMessage: 'Parameter #2 $releases of method PHPRegex\Tests\Unit\Support\PcreGatesTest::requiresPcre2For() expects array<''10.39''|''10.40''|''10.41''|''10.42''|''10.43''|''10.44''|''10.45''|''10.46''|''10.47''|''10.48''|''10.49'', list<string>>, array{''10.99'': array{''/a/'', ''/b/''}} given.'
-			identifier: argument.type
+			message: '#^Property PHPRegex\\Parser\\Syntax\\PcreVerb\:\:\$assertion \(PHPRegex\\Parser\\Node\\GroupType\|null\) does not accept PHPRegex\\Parser\\Syntax\\PHPRegex\\Parser\\ErrorCode\|null\.$#'
+			identifier: assign.propertyType
 			count: 1
-			path: tests/Unit/Support/PcreGatesTest.php
+			path: build/php74/Parser/Syntax/PcreVerb.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with ''10.40'' and ''10.40'' will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/Tools/Pcre2TestdataExtractorTest.php
+			message: '#^PHPDoc tag @param for parameter \$code contains unresolvable type\.$#'
+			identifier: parameter.unresolvableType
+			count: 2
+			path: build/php74/Parser/Token/TokenStream.php
 
 		-
-			rawMessage: 'Call to function method_exists() with ''PHPRegex\\Parser\\Validation\\ValidationResult'' and ''getErrorMessage'' will always evaluate to false.'
-			identifier: function.impossibleType
-			count: 1
-			path: tests/Unit/ValidationResultTest.php
+			message: '#^Parameter \#1 \$array \(list\<PHPRegex\\Parser\\Node\\NodeInterface\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 2
+			path: build/php74/Parser/Validation/CompiledLength.php
 
 		-
-			rawMessage: 'Call to function method_exists() with ''PHPRegex\\Parser\\Validation\\ValidationResult'' and ''isValid'' will always evaluate to false.'
-			identifier: function.impossibleType
+			message: '#^Expression "null" on a separate line does not do anything\.$#'
+			identifier: expr.resultUnused
+			count: 2
+			path: build/php74/Parser/Validation/EscapeChecks.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
 			count: 1
-			path: tests/Unit/ValidationResultTest.php
+			path: build/php74/Parser/Validation/EscapeChecks.php
+
+		-
+			message: '#^Instanceof between PHPRegex\\Parser\\Exception\\LexerException and PHPRegex\\Parser\\Exception\\LexerException will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: build/php74/Parser/Validation/FirstErrorLocator.php
+
+		-
+			message: '#^Property PHPRegex\\Parser\\Validation\\LookbehindChecks\:\:\$target is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: build/php74/Parser/Validation/LookbehindChecks.php
+
+		-
+			message: '#^PHPDoc tag @param for parameter \$category contains unresolvable type\.$#'
+			identifier: parameter.unresolvableType
+			count: 1
+			path: build/php74/Parser/Validation/ValidationResult.php
+
+		-
+			message: '#^PHPDoc tag @param for parameter \$errorCode contains unresolvable type\.$#'
+			identifier: parameter.unresolvableType
+			count: 1
+			path: build/php74/Parser/Validation/ValidationResult.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between false and int\<0, max\> will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: build/php74/Parser/Validation/Validator.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between false and int will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: build/php74/Parser/Validation/Validator.php

@@ -1,0 +1,8 @@
+parameters:
+	level: 5
+	paths:
+		- build/php74
+	ignoreErrors:
+		-
+			message: '#Psr\\(Cache|SimpleCache)#'
+			identifier: class.notFound
