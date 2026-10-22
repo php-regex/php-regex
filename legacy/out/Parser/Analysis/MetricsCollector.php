@@ -1,0 +1,345 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PHPRegex\Parser\Analysis;
+
+use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\CalloutNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\ClassSetOperationNode;
+use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\ControlCharNode;
+use PHPRegex\Parser\Node\DefineNode;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\ExtendedCharClassNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\KeepNode;
+use PHPRegex\Parser\Node\LimitMatchNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\ScriptRunNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Node\VersionConditionNode;
+
+/**
+ * Collects structural metrics about an AST (node counts and depth).
+ *
+ * @phpstan-type Metrics array{counts: array<string, int>, total: int, maxDepth: int}
+ *
+ * @extends AbstractNodeVisitor<Metrics>
+ */
+final class MetricsCollector extends AbstractNodeVisitor
+{
+    /**
+     * @var array<string, int>
+     */
+    private $counts = [];
+
+    /**
+     * @var int
+     */
+    private $total = 0;
+
+    /**
+     * @var int
+     */
+    private $maxDepth = 0;
+
+    /**
+     * @var int
+     */
+    private $currentDepth = 0;
+
+    #[\Override]
+    public function visitRegex(RegexNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $this->visitChild($node->pattern);
+        });
+    }
+
+    #[\Override]
+    public function visitAlternation(AlternationNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $this->visitChildren($node->alternatives);
+        });
+    }
+
+    #[\Override]
+    public function visitSequence(SequenceNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $this->visitChildren($node->children);
+        });
+    }
+
+    #[\Override]
+    public function visitGroup(GroupNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $this->visitChild($node->child);
+        });
+    }
+
+    #[\Override]
+    public function visitQuantifier(QuantifierNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $this->visitChild($node->node);
+        });
+    }
+
+    #[\Override]
+    public function visitLiteral(LiteralNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitCharLiteral(CharLiteralNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitCharType(CharTypeNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitDot(DotNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitAnchor(AnchorNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitAssertion(AssertionNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitKeep(KeepNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitCharClass(CharClassNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $parts = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
+            $this->visitChildren($parts);
+        });
+    }
+
+    #[\Override]
+    public function visitRange(RangeNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $this->visitChild($node->start);
+            $this->visitChild($node->end);
+        });
+    }
+
+    #[\Override]
+    public function visitBackref(BackrefNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitUnicodeProp(UnicodePropNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitPosixClass(PosixClassNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $this->visitChild($node->expression);
+        });
+    }
+
+    #[\Override]
+    public function visitClassSetOperation(ClassSetOperationNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $this->visitChildren(array_values(array_filter([$node->left, $node->right])));
+        });
+    }
+
+    #[\Override]
+    public function visitControlChar(ControlCharNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitScriptRun(ScriptRunNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            if (null !== $node->content) {
+                $this->visitChild($node->content);
+            }
+        });
+    }
+
+    #[\Override]
+    public function visitVersionCondition(VersionConditionNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitComment(CommentNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitConditional(ConditionalNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $this->visitChild($node->condition);
+            $this->visitChild($node->yes);
+            $this->visitChild($node->no);
+        });
+    }
+
+    #[\Override]
+    public function visitSubroutine(SubroutineNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitPcreVerb(PcreVerbNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitDefine(DefineNode $node): array
+    {
+        return $this->record($node, function () use ($node): void {
+            $this->visitChild($node->content);
+        });
+    }
+
+    #[\Override]
+    public function visitLimitMatch(LimitMatchNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    #[\Override]
+    public function visitCallout(CalloutNode $node): array
+    {
+        return $this->record($node);
+    }
+
+    /**
+     * @param callable(): void|null $traverse
+     *
+     * @return Metrics
+     */
+    private function record(NodeInterface $node, ?callable $traverse = null): array
+    {
+        // The node a run starts on: a reused collector counts each tree
+        // afresh instead of adding it to the trees it measured before.
+        if (0 === $this->currentDepth) {
+            $this->counts = [];
+            $this->total = 0;
+            $this->maxDepth = 0;
+        }
+
+        $this->total++;
+        $type = $this->shortName(get_class($node));
+        $this->counts[$type] = ($this->counts[$type] ?? 0) + 1;
+
+        $this->currentDepth++;
+        $this->maxDepth = max($this->maxDepth, $this->currentDepth);
+
+        if (null !== $traverse) {
+            $traverse();
+        }
+
+        $this->currentDepth--;
+
+        return $this->snapshot();
+    }
+
+    private function visitChild(NodeInterface $child): void
+    {
+        $child->accept($this);
+    }
+
+    /**
+     * @param array<NodeInterface> $children
+     */
+    private function visitChildren(array $children): void
+    {
+        foreach ($children as $child) {
+            $this->visitChild($child);
+        }
+    }
+
+    private function shortName(string $class): string
+    {
+        $pos = strrpos($class, '\\');
+
+        return false === $pos ? $class : (string) substr($class, $pos + 1);
+    }
+
+    /**
+     * @return Metrics
+     */
+    private function snapshot(): array
+    {
+        return [
+            'counts' => $this->counts,
+            'total' => $this->total,
+            'maxDepth' => $this->maxDepth,
+        ];
+    }
+}

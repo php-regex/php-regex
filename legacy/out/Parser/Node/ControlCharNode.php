@@ -1,0 +1,51 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PHPRegex\Parser\Node;
+
+use PHPRegex\Parser\NodeVisitorInterface;
+
+/**
+ * Represents a control character escape sequence (e.g., \cM).
+ *
+ * This node represents control character escapes in PCRE2,
+ * where \c followed by a letter produces the corresponding control character.
+ */
+final class ControlCharNode extends AbstractNode
+{
+    /**
+     * @readonly
+     * @var string
+     */
+    public $char;
+    /**
+     * @readonly
+     * @var int
+     */
+    public $codePoint;
+    public function __construct(
+        string $char,
+        int $codePoint,
+        int $startPosition,
+        int $endPosition
+    ) {
+        $this->char = $char;
+        $this->codePoint = $codePoint;
+        parent::__construct($startPosition, $endPosition);
+    }
+
+    public function accept(NodeVisitorInterface $visitor)
+    {
+        return $visitor->visitControlChar($this);
+    }
+}

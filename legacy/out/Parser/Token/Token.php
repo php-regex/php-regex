@@ -1,0 +1,76 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PHPRegex\Parser\Token;
+
+/**
+ * Represents a single token from the lexer.
+ *
+ * A token knows where it starts and how much of the pattern it covers, which
+ * is not the same as the length of its value: the lexer strips a backslash
+ * from "\d", reads "\p{^Greek}" back as "{^Greek}", and keeps only the name
+ * of "\N{LATIN SMALL LETTER A}". Whoever needs the text as it was written
+ * reads it back from the pattern rather than guessing it from the value.
+ */
+final class Token
+{
+    /**
+     * @readonly
+     * @var \PHPRegex\Parser\Token\TokenType
+     */
+    public $type;
+    /**
+     * @readonly
+     * @var string
+     */
+    public $value;
+    /**
+     * @readonly
+     * @var int
+     */
+    public $position;
+    /**
+     * Bytes of the pattern this token was cut from.
+     * @readonly
+     * @var int
+     */
+    public $sourceLength;
+
+    /**
+     * @internal the lexer builds the tokens
+     *
+     * @param int|null $sourceLength defaults to the length of the value, which
+     *                               is right for every token the lexer does not
+     *                               rewrite
+     * @param mixed $type
+     */
+    public function __construct(
+        $type,
+        string $value,
+        int $position,
+        ?int $sourceLength = null
+    ) {
+        $this->type = $type;
+        $this->value = $value;
+        $this->position = $position;
+        $this->sourceLength = $sourceLength ?? \strlen($value);
+    }
+
+    /**
+     * Offset just past the token, in the pattern it was read from.
+     */
+    public function end(): int
+    {
+        return $this->position + $this->sourceLength;
+    }
+}

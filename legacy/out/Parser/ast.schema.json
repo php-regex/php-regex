@@ -1,0 +1,1060 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/php-regex/php-regex/2.x/src/Parser/ast.schema.json",
+  "title": "PHPRegex Syntax Tree",
+  "description": "The document PHPRegex\\Parser\\Printer\\JsonDumper exports for a parsed pattern: one object per node, its kind under \"type\", its byte offsets under \"start\" and \"end\".",
+  "$ref": "#/$defs/regex",
+  "$defs": {
+    "offset": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "A byte offset in the pattern, between the delimiters."
+    },
+    "node": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/alternation"
+        },
+        {
+          "$ref": "#/$defs/sequence"
+        },
+        {
+          "$ref": "#/$defs/group"
+        },
+        {
+          "$ref": "#/$defs/quantifier"
+        },
+        {
+          "$ref": "#/$defs/literal"
+        },
+        {
+          "$ref": "#/$defs/char_type"
+        },
+        {
+          "$ref": "#/$defs/dot"
+        },
+        {
+          "$ref": "#/$defs/anchor"
+        },
+        {
+          "$ref": "#/$defs/assertion"
+        },
+        {
+          "$ref": "#/$defs/keep"
+        },
+        {
+          "$ref": "#/$defs/char_class"
+        },
+        {
+          "$ref": "#/$defs/range"
+        },
+        {
+          "$ref": "#/$defs/backref"
+        },
+        {
+          "$ref": "#/$defs/char_literal"
+        },
+        {
+          "$ref": "#/$defs/extended_char_class"
+        },
+        {
+          "$ref": "#/$defs/class_set_operation"
+        },
+        {
+          "$ref": "#/$defs/control_char"
+        },
+        {
+          "$ref": "#/$defs/script_run"
+        },
+        {
+          "$ref": "#/$defs/version_condition"
+        },
+        {
+          "$ref": "#/$defs/unicode_property"
+        },
+        {
+          "$ref": "#/$defs/posix_class"
+        },
+        {
+          "$ref": "#/$defs/comment"
+        },
+        {
+          "$ref": "#/$defs/conditional"
+        },
+        {
+          "$ref": "#/$defs/subroutine"
+        },
+        {
+          "$ref": "#/$defs/pcre_verb"
+        },
+        {
+          "$ref": "#/$defs/define"
+        },
+        {
+          "$ref": "#/$defs/limit_match"
+        },
+        {
+          "$ref": "#/$defs/callout"
+        }
+      ]
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "groupNumbers": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "uniqueItems": true
+    },
+    "regex": {
+      "type": "object",
+      "description": "The document: the pattern and its tree.",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "type",
+        "start",
+        "end",
+        "delimiter",
+        "flags",
+        "source",
+        "pattern"
+      ],
+      "properties": {
+        "version": {
+          "const": 1,
+          "description": "The version of this format."
+        },
+        "type": {
+          "const": "regex"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "delimiter": {
+          "type": "string",
+          "description": "The opening delimiter."
+        },
+        "flags": {
+          "type": "string",
+          "description": "The flags after the closing delimiter."
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The pattern between the delimiters; null for a tree built without one."
+        },
+        "pattern": {
+          "$ref": "#/$defs/node"
+        }
+      }
+    },
+    "alternation": {
+      "type": "object",
+      "description": "Either of the alternatives.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "alternatives"
+      ],
+      "properties": {
+        "type": {
+          "const": "alternation"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "alternatives": {
+          "$ref": "#/$defs/nodes",
+          "description": "The branches, in pattern order."
+        }
+      }
+    },
+    "sequence": {
+      "type": "object",
+      "description": "The children, one after the other.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "children"
+      ],
+      "properties": {
+        "type": {
+          "const": "sequence"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "children": {
+          "$ref": "#/$defs/nodes"
+        }
+      }
+    },
+    "group": {
+      "type": "object",
+      "description": "A group of any kind.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "kind",
+        "name",
+        "flags",
+        "number",
+        "scanned_groups",
+        "child"
+      ],
+      "properties": {
+        "type": {
+          "const": "group"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "kind": {
+          "enum": [
+            "capturing",
+            "non_capturing",
+            "named",
+            "lookahead_positive",
+            "lookahead_negative",
+            "lookbehind_positive",
+            "lookbehind_negative",
+            "inline_flags",
+            "atomic",
+            "branch_reset",
+            "scan_substring"
+          ]
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The name of a named group, else null."
+        },
+        "flags": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The flags an inline-flags group sets or unsets, as written (\"i\", \"-x\", \"^\"), else null."
+        },
+        "number": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "The number of a capturing group, branch resets included; null for another group, or for a subtree exported alone."
+        },
+        "scanned_groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "For a substring scan, the groups whose captures it matches, as written (\"1\", \"-1\", \"<name>\")."
+        },
+        "child": {
+          "$ref": "#/$defs/node"
+        }
+      }
+    },
+    "quantifier": {
+      "type": "object",
+      "description": "A repetition of its child.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "min",
+        "max",
+        "mode",
+        "child"
+      ],
+      "properties": {
+        "type": {
+          "const": "quantifier"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "min": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "max": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Null when unbounded."
+        },
+        "mode": {
+          "enum": [
+            "greedy",
+            "lazy",
+            "possessive"
+          ]
+        },
+        "child": {
+          "$ref": "#/$defs/node"
+        }
+      }
+    },
+    "literal": {
+      "type": "object",
+      "description": "Literal text: one character, or a run quoted with \\Q...\\E.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "literal"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "value": {
+          "type": "string",
+          "description": "The text, U+FFFD standing for each byte that is not UTF-8."
+        },
+        "bytes": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{2})+$",
+          "description": "The bytes in hexadecimal, given only when the text is not valid UTF-8."
+        }
+      }
+    },
+    "char_type": {
+      "type": "object",
+      "description": "A character type such as \\d, \\w, \\h, \\R or \\X.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "char_type"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "value": {
+          "type": "string",
+          "description": "The letter after the backslash."
+        }
+      }
+    },
+    "dot": {
+      "type": "object",
+      "description": "The dot.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "type": {
+          "const": "dot"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        }
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "description": "An anchor: ^ or $.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "anchor"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "assertion": {
+      "type": "object",
+      "description": "A backslash assertion such as \\b, \\A, \\z or \\G.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "assertion"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "value": {
+          "type": "string",
+          "description": "The letter after the backslash."
+        }
+      }
+    },
+    "keep": {
+      "type": "object",
+      "description": "\\K: the match restarts here.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "type": {
+          "const": "keep"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        }
+      }
+    },
+    "char_class": {
+      "type": "object",
+      "description": "A character class.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "negated",
+        "members"
+      ],
+      "properties": {
+        "type": {
+          "const": "char_class"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "negated": {
+          "type": "boolean"
+        },
+        "members": {
+          "$ref": "#/$defs/nodes"
+        }
+      }
+    },
+    "range": {
+      "type": "object",
+      "description": "A range in a class.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "from",
+        "to"
+      ],
+      "properties": {
+        "type": {
+          "const": "range"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "from": {
+          "$ref": "#/$defs/node"
+        },
+        "to": {
+          "$ref": "#/$defs/node"
+        }
+      }
+    },
+    "backref": {
+      "type": "object",
+      "description": "A back reference, or the group a conditional tests.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "reference",
+        "groups"
+      ],
+      "properties": {
+        "type": {
+          "const": "backref"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "reference": {
+          "type": "string",
+          "description": "As written: \"\\1\", \"\\g{-1}\", \"\\k<name>\"; in a condition \"1\", \"+1\" or the name."
+        },
+        "groups": {
+          "$ref": "#/$defs/groupNumbers",
+          "description": "The numbers of the groups it may refer to; empty when none exists, or for a subtree exported alone."
+        }
+      }
+    },
+    "char_literal": {
+      "type": "object",
+      "description": "A character written by its code: \\x{...}, \\o{...}, \\N{U+...} or octal.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "code_point",
+        "kind"
+      ],
+      "properties": {
+        "type": {
+          "const": "char_literal"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "code_point": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kind": {
+          "enum": [
+            "unicode",
+            "unicode_named",
+            "octal",
+            "octal_legacy"
+          ]
+        }
+      }
+    },
+    "extended_char_class": {
+      "type": "object",
+      "description": "A Perl extended class, (?[ ... ]).",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "expression"
+      ],
+      "properties": {
+        "type": {
+          "const": "extended_char_class"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "expression": {
+          "$ref": "#/$defs/node"
+        }
+      }
+    },
+    "class_set_operation": {
+      "type": "object",
+      "description": "A set operation inside an extended class.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "operator",
+        "left",
+        "right"
+      ],
+      "properties": {
+        "type": {
+          "const": "class_set_operation"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "operator": {
+          "enum": [
+            "union",
+            "intersection",
+            "difference",
+            "symmetric_difference",
+            "complement"
+          ]
+        },
+        "left": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/node"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null for the complement, which has one operand."
+        },
+        "right": {
+          "$ref": "#/$defs/node"
+        }
+      }
+    },
+    "control_char": {
+      "type": "object",
+      "description": "A control character, \\cX.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "char",
+        "code_point"
+      ],
+      "properties": {
+        "type": {
+          "const": "control_char"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "char": {
+          "type": "string"
+        },
+        "code_point": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "script_run": {
+      "type": "object",
+      "description": "A script run, (*sr:...) or (*asr:...).",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "script",
+        "atomic",
+        "content"
+      ],
+      "properties": {
+        "type": {
+          "const": "script_run"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "script": {
+          "type": "string"
+        },
+        "atomic": {
+          "type": "boolean"
+        },
+        "content": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/node"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "version_condition": {
+      "type": "object",
+      "description": "The condition of (?(VERSION>=10.4)...).",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "operator",
+        "version"
+      ],
+      "properties": {
+        "type": {
+          "const": "version_condition"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "operator": {
+          "description": "The comparison as written. PCRE2 compiles only = and >=; the parser reads the others too, and validation refuses them.",
+          "enum": [
+            "=",
+            ">=",
+            ">",
+            "<=",
+            "<",
+            "==",
+            "!="
+          ]
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "unicode_property": {
+      "type": "object",
+      "description": "A Unicode property, \\p{...} or \\P{...}.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "name",
+        "negated"
+      ],
+      "properties": {
+        "type": {
+          "const": "unicode_property"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "name": {
+          "type": "string"
+        },
+        "negated": {
+          "type": "boolean",
+          "description": "Whether it matches what lacks the property, however the negation is written."
+        }
+      }
+    },
+    "posix_class": {
+      "type": "object",
+      "description": "A POSIX class, [:alpha:], inside a class.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "name",
+        "negated"
+      ],
+      "properties": {
+        "type": {
+          "const": "posix_class"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "name": {
+          "type": "string"
+        },
+        "negated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "comment": {
+      "type": "object",
+      "description": "A comment: (?#...) or, under x, a # comment.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "text",
+        "extended"
+      ],
+      "properties": {
+        "type": {
+          "const": "comment"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "text": {
+          "type": "string"
+        },
+        "extended": {
+          "type": "boolean",
+          "description": "True for a # comment under x."
+        }
+      }
+    },
+    "conditional": {
+      "type": "object",
+      "description": "A conditional group, (?(condition)yes|no).",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "condition",
+        "yes",
+        "no"
+      ],
+      "properties": {
+        "type": {
+          "const": "conditional"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "condition": {
+          "$ref": "#/$defs/node"
+        },
+        "yes": {
+          "$ref": "#/$defs/node"
+        },
+        "no": {
+          "$ref": "#/$defs/node"
+        }
+      }
+    },
+    "subroutine": {
+      "type": "object",
+      "description": "A subroutine call or a recursion, or the recursion a conditional tests.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "reference",
+        "groups",
+        "returned_groups"
+      ],
+      "properties": {
+        "type": {
+          "const": "subroutine"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "reference": {
+          "type": "string",
+          "description": "As written inside the call: \"1\", \"-1\", \"name\", \"R\"; in a condition \"R1\" or \"R&name\"."
+        },
+        "groups": {
+          "$ref": "#/$defs/groupNumbers",
+          "description": "The number of the group the call runs; empty for a recursion of the whole pattern, a recursion test, or a subtree exported alone."
+        },
+        "returned_groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The groups the call returns, as written, in (?1(2,<name>))."
+        }
+      }
+    },
+    "pcre_verb": {
+      "type": "object",
+      "description": "A backtracking control verb or a start-of-pattern option, as written between (* and ).",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "verb"
+      ],
+      "properties": {
+        "type": {
+          "const": "pcre_verb"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "verb": {
+          "type": "string"
+        }
+      }
+    },
+    "define": {
+      "type": "object",
+      "description": "A (?(DEFINE)...) group.",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "content"
+      ],
+      "properties": {
+        "type": {
+          "const": "define"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "content": {
+          "$ref": "#/$defs/node"
+        }
+      }
+    },
+    "limit_match": {
+      "type": "object",
+      "description": "(*LIMIT_MATCH=n).",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "limit"
+      ],
+      "properties": {
+        "type": {
+          "const": "limit_match"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "callout": {
+      "type": "object",
+      "description": "A callout, (?C...).",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "start",
+        "end",
+        "identifier"
+      ],
+      "properties": {
+        "type": {
+          "const": "callout"
+        },
+        "start": {
+          "$ref": "#/$defs/offset"
+        },
+        "end": {
+          "$ref": "#/$defs/offset"
+        },
+        "identifier": {
+          "type": [
+            "integer",
+            "string",
+            "null"
+          ],
+          "description": "The number or the string, null for (?C)."
+        }
+      }
+    }
+  }
+}

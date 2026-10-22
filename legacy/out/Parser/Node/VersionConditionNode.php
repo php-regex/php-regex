@@ -1,0 +1,51 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PHPRegex\Parser\Node;
+
+use PHPRegex\Parser\NodeVisitorInterface;
+
+/**
+ * Represents a version condition in conditional groups (e.g., (?(VERSION>=10.0)...)).
+ *
+ * This node represents PCRE2 version conditions that allow
+ * conditional matching based on the PCRE library version.
+ */
+final class VersionConditionNode extends AbstractNode
+{
+    /**
+     * @readonly
+     * @var string
+     */
+    public $operator;
+    /**
+     * @readonly
+     * @var string
+     */
+    public $version;
+    public function __construct(
+        string $operator,
+        string $version,
+        int $startPosition,
+        int $endPosition
+    ) {
+        $this->operator = $operator;
+        $this->version = $version;
+        parent::__construct($startPosition, $endPosition);
+    }
+
+    public function accept(NodeVisitorInterface $visitor)
+    {
+        return $visitor->visitVersionCondition($this);
+    }
+}

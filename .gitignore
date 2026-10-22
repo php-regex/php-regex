@@ -61,3 +61,4 @@ __pycache__/
 /demo/*/vendor/
 /demo/*/var/
 /demo/*/node_modules/
+/legacy/out/
