@@ -390,7 +390,7 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/gfm.php:250
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/Automattic/jetpack/projects/plugins/jetpack/class.jetpack.php:1913:18
+corpus/Automattic/jetpack/projects/plugins/jetpack/class.jetpack.php:1963:18
     → /^\d+(\.\d+)+$/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -2721,12 +2721,12 @@ corpus/TYPO3/typo3/typo3/sysext/core/Classes/Utility/CsvUtility.php:143:29
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/TYPO3/typo3/typo3/sysext/core/Classes/Utility/GeneralUtility.php:1485:24
+corpus/TYPO3/typo3/typo3/sysext/core/Classes/Utility/GeneralUtility.php:1491:24
     → /^(?:http|ftp)s?|s(?:ftp|cp):/
    WARN  An anchor holds for its own alternative only: "s(?:ftp|cp):" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "^(?:(?:http|ftp)s?|s(?:ftp|cp):)".
 
-corpus/TYPO3/typo3/typo3/sysext/core/Classes/Utility/GeneralUtility.php:1640:32
+corpus/TYPO3/typo3/typo3/sysext/core/Classes/Utility/GeneralUtility.php:1646:32
     → #^(?:[[:alnum:]_]+/)+$#
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -3435,7 +3435,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-query.php:1090:22
        - /^[^%]*%(?:postname)%/
        + /^[^%]*%postname%/
 
-corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-theme.php:1956:23
+corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-theme.php:1958:23
     → /^[A-z0-9\/_-]+$/
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '_' (covered by range 'A'-'z')
@@ -4371,14 +4371,14 @@ corpus/canyongbs/aidingapp/app-modules/contact/src/Imports/OrganizationImporter.
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/canyongbs/aidingapp/app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php:603:28
+corpus/canyongbs/aidingapp/app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php:604:28
     → /^[ \t]*From:[ \t]*.+(?:\r?\n.*){0,5}?\r?\n[ \t]*Subject:[ \t]*.*$/im
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/canyongbs/aidingapp/app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php:651:43
+corpus/canyongbs/aidingapp/app-modules/engagement/src/Jobs/ProcessSesS3InboundEmail.php:652:43
     → /^(?:\s*(?:fwd?|fw)\s*:\s*)+/i
    WARN  Alternation branches "fwd?" and "fw" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
@@ -4817,7 +4817,7 @@ corpus/composer/composer/src/Composer/Package/Version/VersionGuesser.php:170:59
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/composer/composer/src/Composer/Package/Version/VersionSelector.php:328:36
+corpus/composer/composer/src/Composer/Package/Version/VersionSelector.php:346:36
     → {^(\d+\.\d+\.\d+)(\.9999999)-dev$}
    TIP 
        - {^(\d+\.\d+\.\d+)(\.9999999)-dev$}
@@ -4833,7 +4833,7 @@ corpus/composer/composer/src/Composer/Repository/Vcs/HgDriver.php:202:58
    WARN  "*" is a literal character inside a character class, not a quantifier.
        ↳ Inside [...], "*" matches a literal "*". If you meant to quantify a shorthand like \w, use \w* outside the class.
 
-corpus/composer/composer/src/Composer/Repository/VcsRepository.php:350:52
+corpus/composer/composer/src/Composer/Repository/VcsRepository.php:366:52
     → {(\.9{7})+}
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -5747,10 +5747,9 @@ corpus/elementor/elementor/includes/embed.php:178:16
        - /(?|(?:[\?|\&]h={1})([\w]+)|\d\/([\w]+))/
        + /(?|(?:[?|&]h=)([\w]+)|\d\/([\w]+))/
 
-corpus/elementor/elementor/modules/mcp/abilities/appliers/v3-node-bridge.php:270:26
-    → /^\s*[^{}]+\{\s*[\s\S]*\}\s*$/
-   WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
-       ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
+corpus/elementor/elementor/modules/mcp/abilities/appliers/v3/adapters/color-adapter.php:19:27
+    → /^(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix|var)\(\s*[-\w\s.,%\/#()+*]*\)$/i
+   ↳ via self::FUNCTION_PATTERN
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
@@ -7473,7 +7472,7 @@ corpus/jbowens/jBBCode/JBBCode/validators/CssColorValidator.php:28:34
 
 
 ### corpus/jolicode/castor — Target: PHP 8.4.1, PCRE2 10.44 (composer.json config.platform.php) — exit 0
-corpus/jolicode/castor/tools/mkdocs/castor.php:137:37
+corpus/jolicode/castor/tools/doc/castor.php:134:37
     → /### Usage\n([^#]*)\n\n###/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -10811,21 +10810,21 @@ corpus/moodle/moodle/public/lib/minify/matthiasmullie-minify/src/JS.php:441:33
        - /;(\}|$)/s
        + /;(\}|$)/
 
-corpus/moodle/moodle/public/lib/moodlelib.php:7964:32
+corpus/moodle/moodle/public/lib/moodlelib.php:7968:32
     → /^<\s*\/([^\s]+?)\s*>$/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /^<\s*\/([^\s]+?)\s*>$/s
        + /^<\s*\/([^\s]+?)\s*>$/
 
-corpus/moodle/moodle/public/lib/moodlelib.php:7985:39
+corpus/moodle/moodle/public/lib/moodlelib.php:7989:39
     → /^<!--<!\[endif\]-->$/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /^<!--<!\[endif\]-->$/s
        + /^<!--<!\[endif\]-->$/
 
-corpus/moodle/moodle/public/lib/moodlelib.php:8698:25
+corpus/moodle/moodle/public/lib/moodlelib.php:8702:25
     → /(\/|\\){1,}/
    INFO  Quantified capturing group "(...)" with "{1,}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -10833,22 +10832,22 @@ corpus/moodle/moodle/public/lib/moodlelib.php:8698:25
        - /(\/|\\){1,}/
        + /(\/|\\)+/
 
-corpus/moodle/moodle/public/lib/moodlelib.php:8827:25
+corpus/moodle/moodle/public/lib/moodlelib.php:8831:25
     → /^([0-9a-f]{1,4})(:[0-9a-f]{1,4})*$/i
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/moodle/moodle/public/lib/moodlelib.php:8845:36
+corpus/moodle/moodle/public/lib/moodlelib.php:8849:36
     → /(:0)+:0$/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/moodle/moodle/public/lib/moodlelib.php:8850:36
+corpus/moodle/moodle/public/lib/moodlelib.php:8854:36
     → /^(0:){2,7}/
    INFO  Quantified capturing group "(...)" with "{2,7}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/moodle/moodle/public/lib/moodlelib.php:8855:36
+corpus/moodle/moodle/public/lib/moodlelib.php:8859:36
     → /(:0){2,6}:/
    INFO  Quantified capturing group "(...)" with "{2,6}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -13047,27 +13046,22 @@ corpus/nette/application/src/Bridges/ApplicationLatte/UIExtension.php:124:21
 
 
 ### corpus/nette/latte — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
-corpus/nette/latte/src/Latte/Compiler/PrintContext.php:62:4
+corpus/nette/latte/src/Latte/Compiler/PrintContext.php:58:4
     → #% (\d+) \. (escape|modify(?:Content)?) ( \( ([^()]*+|(?-2))+ \) )#xi
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Quantifier "+" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to "".
 
-corpus/nette/latte/src/Latte/Compiler/TemplateParser.php:430:42
+corpus/nette/latte/src/Latte/Compiler/TemplateParser.php:446:42
     → #^[a-z]#iD
    WARN  Flag 'D' is useless: the pattern contains no $ anchor.
 
-corpus/nette/latte/src/Latte/Runtime/Cache.php:111:22
+corpus/nette/latte/src/Latte/Runtime/Cache.php:109:22
     → #([/\\][\w@.-]{3,35}){1,3}$#D
    INFO  Quantified capturing group "(...)" with "{1,3}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/nette/latte/src/Latte/Runtime/HtmlHelpers.php:386:18
-    → #((application|text)/(((x-)?java|ecma|j|live)script|json)|application/.+\+json|text/plain|module|importmap|)$#Ai
-   WARN  Alternation contains an empty alternative.
-       ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
-
-corpus/nette/latte/src/Latte/Runtime/XmlHelpers.php:95:25
+corpus/nette/latte/src/Latte/Runtime/XmlHelpers.php:96:25
     → ~[:A-Z_a-z\x{C0}-\x{D6}\x{D8}-\x{F6}\x{F8}-\x{2FF}\x{370}-\x{37D}\x{37F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}][-.0-9\x{B7}\x{300}-\x{36F}\x{203F}-\x{2040}:A-Z_a-z\x{C0}-\x{D6}\x{D8}-\x{F6}\x{F8}-\x{2FF}\x{370}-\x{37D}\x{37F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]*$~DAu
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '\x{200C}' and '\x{200D}' explicitly instead of a range.
@@ -13076,7 +13070,7 @@ corpus/nette/latte/src/Latte/Runtime/XmlHelpers.php:95:25
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '\x{200C}' and '\x{200D}' explicitly instead of a range.
 
-corpus/nette/latte/src/Latte/Runtime/XmlHelpers.php:110:25
+corpus/nette/latte/src/Latte/Runtime/XmlHelpers.php:111:25
     → ~[:A-Z_a-z\x{C0}-\x{D6}\x{D8}-\x{F6}\x{F8}-\x{2FF}\x{370}-\x{37D}\x{37F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}][-.0-9\x{B7}\x{300}-\x{36F}\x{203F}-\x{2040}:A-Z_a-z\x{C0}-\x{D6}\x{D8}-\x{F6}\x{F8}-\x{2FF}\x{370}-\x{37D}\x{37F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]*$~DAu
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '\x{200C}' and '\x{200D}' explicitly instead of a range.
@@ -14685,7 +14679,7 @@ corpus/pimcore/pimcore/lib/helper-functions.php:255:20
        - #([KMGTP])?B?$#si
        + #([KMGTP])?B?$#i
 
-corpus/pimcore/pimcore/models/Asset.php:720:24
+corpus/pimcore/pimcore/models/Asset.php:725:24
     → @\.ph(p(\d+(\.\d+)*)?|t(ml)?|ps|ar)$@i
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -16745,7 +16739,7 @@ corpus/shopware/shopware/src/Storefront/Theme/ThemeConfigValueAccessor.php:256:2
        ↳ Redundant elements: '-' (duplicate)
 
 corpus/shopware/shopware/src/Storefront/Theme/Validator/SCSSValidator.php:199:24
-    → /.*?(\$(?![0-9])(?:[a-zA-Z0-9-_]|(?:\[!"#$%&'\(\)*+,.\/:;<=>?@\[\]^{|}~]))+)/
+    → /.*?(\$(?![0-9])(?:[a-zA-Z0-9-_]|(?:\[!"#$%&'\(\)*+,.\/:;<=>?@\[\]^{|}~]))+)/D
    WARN  End anchor '$' appears before consuming characters, making it impossible to match.
    WARN  Start anchor '^' appears after consuming characters, making it impossible to match.
 
@@ -20051,6 +20045,11 @@ corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooC
 corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/Logging/RemoteLogger.php:516:28
     → /(\d{4}[- ]?){3}\d{4}/
    INFO  Quantified capturing group "(...)" with "{3}": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/ProductFilters/Params.php:76:51
+    → /^[1-5](,[1-5])*$/
+   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
 corpus/woocommerce/woocommerce/plugins/woocommerce/src/StoreApi/Authentication.php:378:6
