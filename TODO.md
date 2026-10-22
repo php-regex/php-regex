@@ -278,3 +278,77 @@ it (see `LibraryPcre::useIniSetter` and the resets in
   under `## Articles` in `docs/llms.txt`, and give each `/blog/<slug>` its
   entry in the sitemap navigation-coverage check, with the blog-index
   justification.
+
+## Test coverage: the measured gaps to 100%
+
+Measured 2026-10-22 under pcov on the full suite (45,908 tests, 8 skips):
+97.61% of statements (43,260 of 44,319), 1,059 uncovered. Every gap was
+classified line by line: ~630 are reachable by tests written in this
+checkout, ~150 run only in child processes or other environments pcov
+cannot attribute, and the rest are guards or provably dead code.
+
+Decisions the maintainer owns, each worth points on its own:
+
+1. `src/Linter/Formatter/AbstractConsoleTagFormatter.php` is an orphan:
+   nothing constructs or extends it — its rendering moved to
+   `ConsoleTagFormatter` in the 2026-10-20 lint-runner refactor, which
+   redeclares the constructor properties (fatal under inheritance).
+   Delete it (127 statements leave the denominator at once) or give it
+   a direct-instantiation test beside `ConsoleFormatterTest`.
+2. Dead code, each region proven unreachable by probe or invariant —
+   delete rather than test: `RouteConflictAnalyzer:402-406`;
+   `SampleGenerator:1522-1527`; `Rewriter:257-259` (the alternation→class
+   conversion is shadowed), `:1338`, `:1964`; `Lexer:1523`,
+   `:1656-1661` (its guard is provably exclusive with the one gating
+   entry), `:2047` (the `\v` arm is vestigial); `Validator:1525,1545`;
+   `CompiledLength:973` and the never-called `isBlank` block
+   `:1677-1688`; `EscapeChecks:1127` (and `:378` if no PCRE2 release
+   accepts a padded `\N{U+ }`); `ReferenceChecks:388`;
+   `SearchCostProver:981`.
+3. A policy call: hand-built-AST tests are the only route to ~50 guard
+   statements (printer raw literals, HIR empty shapes, transpiler
+   fallthrough arms). The suite already hand-builds nodes in places;
+   decide whether that style is welcome at scale.
+
+Bugs found while measuring (verified, not fixed):
+
+- `transpile()` accepts every `\N{…}` PCRE2 refuses on every release,
+  because it never runs the validator: the printers convert the node the
+  way they convert the legal `\N{U+…}`. `\N{LATIN SMALL LETTER A}`
+  becomes `\x61` with a warning; an unknown name keeps the `-1` sentinel
+  of `CodePointReader`, which `refuseAByteEscape` lets through (a
+  negative code point is not above `0x7F`) and `formatCodePoint` prints
+  as `/\xFFFFFFFFFFFFFFFF/u`, a pattern JavaScript then reads as `\xFF`
+  followed by fourteen literal `F`s; and `/\N{U+41}/` without `u`, which
+  `validate()` refuses (`regex.unicode_named.requires_utf`), is emitted
+  as `\x41` all the same. The javascript, python and html-pattern
+  targets share the hole. Refuse the name form in the printers as
+  `EscapeChecks::characterLiteral` does, and guard `formatCodePoint()`
+  against the `-1` sentinel.
+
+The test-writing plan, by wave (natural-input tests, existing harnesses;
+numbers are uncovered statements):
+
+1. Symfony: the two analyzers (67), the routing conflict pair (67, the
+   forced rows ride the `CompiledAsRoute` double already in the tests),
+   the two commands (31) — 165 statements, +0.4 pt.
+2. LSP code actions (29 — the test helper pins `context.diagnostics` to
+   `[]`, which is why the quickfix family never ran), Explain (25: the
+   `(?i:x)` and `(*MARK:…)` families alone are 16), the three lint rules
+   (37), SampleGenerator (8), Redos (18).
+3. Transpilers (42), the transpile CLI render (12: one console run
+   covers Warnings and Notes), the validation quartet (42, through
+   simulated `pcre_version` targets and direct `CompiledLength::of`).
+4. `ForkedWorkerPool` through a reflection test on `serve()` (29 — the
+   16 child-side statements stay invisible to pcov by construction),
+   parser core (19).
+5. The long tail (~200): one dispatch meta-test for the lint rules (~25
+   at once), the LSP completion contexts (`\`, `(?`), the transpiler
+   flag notes and the Laravel "PARTIAL" render, CLI render branches,
+   Laravel and Symfony bridge rows, automata and parser-internal edges.
+
+Commit each wave when green; mutation-test the new rows. Ceiling: every
+writable test lands ~99.0%; the deletions above take it to ~99.3%;
+blessing hand-built AST tests, ~99.5%. A literal 100% is not reachable
+by tests on this setup — the statements that run only in forked workers
+and child processes are the floor.
