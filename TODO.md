@@ -352,3 +352,23 @@ writable test lands ~99.0%; the deletions above take it to ~99.3%;
 blessing hand-built AST tests, ~99.5%. A literal 100% is not reachable
 by tests on this setup — the statements that run only in forked workers
 and child processes are the floor.
+
+## PHPRegex in phpstan-src: the fourth pull request and after
+
+Stack on the fork `php-regex/phpstan-src` (never upstream; the
+maintainer opens those): #1 seam, #2 walkers (merged), #3 target
+validity, #4 capture shapes — all green on `NodeScopeResolverTest`
+1879/1879. What the series still owes:
+
+1. The fifth pull request: `RegularExpressionPatternRule` judging the
+   pattern for the analysed PHP and its engine rather than the running
+   one; the trailing `J` modifier accepted now that the analysis reads
+   it; `RegexExpressionHelper` retired into the reader. Branch
+   `consume-the-capture-shape` is the base.
+2. Once `2.0.0` is tagged and the php74 twin reaches Packagist, pin the
+   `php-regex/regex-parser-php74` requirement to an exact version (the
+   precedent is `hoa/compiler`, pinned to a release).
+3. A quality follow-up the review may ask for: under `i` without `u`
+   the analysis drops constant unions for non-ASCII literals
+   (`(£|€)` reads `non-falsy-string` instead of `'£'|'€'`), sound but
+   coarser than it could be — case folding only touches ASCII there.
