@@ -360,20 +360,20 @@ maintainer opens those): #1 seam, #2 walkers (merged), #3 target
 validity, #4 capture shapes — all green on `NodeScopeResolverTest`
 1879/1879. What the series still owes:
 
-1. `RegexExpressionHelper` still serves the quoting rule and the concat
-   resolution; folding the rest of its duties into the reader can wait
-   for the split the maintainer will ask for.
+1. Nothing left of the folding: the reader splits what it reads and
+   answers the rule in one call; the helper keeps the expression duties
+   only (concat resolution, quoting delimiters).
 2. Once `2.0.0` is tagged and the php74 twin reaches Packagist, pin the
    `php-regex/regex-parser-php74` requirement to an exact version (the
    precedent is `hoa/compiler`, pinned to a release).
-3. A quality follow-up the review may ask for: under `i` without `u`
-   the analysis drops constant unions for non-ASCII literals
-   (`(£|€)` reads `non-falsy-string` instead of `'£'|'€'`), sound but
-   coarser than it could be — case folding only touches ASCII there.
-4. The 8.6 baseline stays a guess until its GA (2026-11-19): 8.5.0 was
-   verified to ship 10.44 — the RCs carried 10.46 until php-src #20380
-   downgraded them — so re-check 8.6 after its first release and add the
-   pinning row then.
-5. Publish the measurement: pattern reading ran ~99x faster than the Hoa
-   chain on the corpus (same machine, A/A) — put the numbers and the
-   method beside the series.
+3. Done: without `u` the engine folds ASCII letters only, so `(£|€)`
+   under `i` reads its constants; under `u` it folds by Unicode and
+   nothing past seven bits is provable — the analysis is mode-aware.
+4. The 8.6 entry reads 10.44 and php-src master carries 10.44 today, so
+   the map stands corroborated; the one gesture left is re-reading
+   master after the 8.6 GA (2026-11-19) in case a release-cut downgrade
+   like 8.5's happens.
+5. Done: the throughput subject reads the realistic corpus at 7,837
+   patterns a second (first touch 4,310, AST cache off, plain
+   interpreter); the number and the method sit in the series' pull
+   request.
