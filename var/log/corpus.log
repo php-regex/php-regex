@@ -841,7 +841,7 @@ corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/Sanitizer/BrowserHtmlSani
        - #<style\b[^>]*/?>#is
        + #<style\b[^>]*/?>#i
 
-corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2366:20
+corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2371:20
     → /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -3500,7 +3500,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3924:4
        - /^\s*(?:(?:EXPLAIN\s+(?:EXTENDED\s+)?)?SELECT.*?\s+FROM|DESCRIBE|DESC|EXPLAIN|HANDLER|(?:LOCK|UNLOCK)\s+TABLE(?:S)?|(?:RENAME|OPTIMIZE|BACKUP|RESTORE|CHECK|CHECKSUM|ANALYZE|REPAIR).*\s+TABLE|TRUNCATE(?:\s+TABLE)?|CREATE(?:\s+TEMPORARY)?\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?|ALTER(?:\s+IGNORE)?\s+TABLE|DROP\s+TABLE(?:\s+IF\s+EXISTS)?|CREATE(?:\s+\w+)?\s+INDEX.*\s+ON|DROP\s+INDEX.*\s+ON|LOAD\s+DATA.*INFILE.*INTO\s+TABLE|(?:GRANT|REVOKE).*ON\s+TABLE|SHOW\s+(?:.*FROM|.*TABLE))\s+\(*\s*((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)\s*\)*/is
        + /^\s*(?:(?:EXPLAIN\s+(?:EXTENDED\s+)?)?SELECT.*?\s+FROM|DESCRIBE|DESC|EXPLAIN|HANDLER|(?:LOCK|UNLOCK)\s+TABLES?|(?:RENAME|OPTIMIZE|BACKUP|RESTORE|CHECK|CHECKSUM|ANALYZE|REPAIR).*\s+TABLE|TRUNCATE(?:\s+TABLE)?|CREATE(?:\s+TEMPORARY)?\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?|ALTER(?:\s+IGNORE)?\s+TABLE|DROP\s+TABLE(?:\s+IF\s+EXISTS)?|CREATE(?:\s+\w+)?\s+INDEX.*\s+ON|DROP\s+INDEX.*\s+ON|LOAD\s+DATA.*INFILE.*INTO\s+TABLE|(?:GRANT|REVOKE).*ON\s+TABLE|SHOW\s+(?:.*FROM|.*TABLE))\s+\(*\s*((?:[0-9a-zA-Z$_.`\-]|[\xC2-\xDF][\x80-\xBF])+)\s*\)*/is
 
-corpus/WordPress/wordpress-develop/src/wp-includes/comment.php:3297:19
+corpus/WordPress/wordpress-develop/src/wp-includes/comment.php:3344:19
     → #(image|audio|video|model)/#is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -3564,14 +3564,14 @@ corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2061:29
        - #\p{Zs}#siu
        + #\p{Zs}#iu
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2455:19
+corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2456:19
     → /^\s*(([a-z0-9_]+|`[a-z0-9_]+`)(\s+(ASC|DESC))?\s*(,\s*(?=[a-z0-9_`])|$))+$/i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2650:24
+corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2651:24
     → #<([0-9]{1})#
    WARN  Quantifier is redundant; it matches exactly once.
        ↳ Remove the {1} quantifier; it does not change the match.
@@ -3579,35 +3579,35 @@ corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2650:24
        - #<([0-9]{1})#
        + #<([0-9])#
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2667:3
+corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2668:3
     → #<(/?)((?:[a-z](?:[a-z0-9._]*)-(?:[a-z0-9._-]+)+)|(?:[\w:]+))(?:\s*(/?)|(\s+)([^>]*))>#
    ↳ via $tag_pattern
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:3268:34
+corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:3269:34
     → #([\s>])((www|ftp)\.[\w\x80-\xff\#$%&~/.\-;:=,?@\[\]+]+)#is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - #([\s>])((www|ftp)\.[\w\x80-\xff\#$%&~/.\-;:=,?@\[\]+]+)#is
        + #([\s>])((www|ftp)\.[\w\x80-\xff\#$%&~/.\-;:=,?@\[\]+]+)#i
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:3269:34
+corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:3270:34
     → #([\s>])([.0-9a-z_+-]+)@(([0-9a-z-]+\.)+[0-9a-z]{2,})#i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:4957:23
+corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:4958:23
     → |^(https?:)?//[^/]+(/?.*)|i
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:5167:65
+corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:5168:65
     → |^([a-zA-Z0-9-\.])+$|
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:6413:19
+corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:6414:19
     → |^#([A-Fa-f0-9]{3}){1,2}$|
    INFO  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -3677,7 +3677,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/pluggable.php:1567:15
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '\x{EE}' and '\x{EF}' explicitly instead of a range.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/rest-api.php:1386:11
+corpus/WordPress/wordpress-develop/src/wp-includes/rest-api.php:1398:11
     → |^#([A-Fa-f0-9]{3}){1,2}$|
    ↳ via $regex
    INFO  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
@@ -4397,7 +4397,7 @@ corpus/canyongbs/aidingapp/app-modules/form/src/Rules/IsDomain.php:52:26
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/canyongbs/aidingapp/app-modules/project/src/Filament/Resources/Projects/Pages/ListProjects.php:123:38
+corpus/canyongbs/aidingapp/app-modules/project/src/Filament/Resources/Projects/Pages/ListProjects.php:122:38
     → /(\s|\x{3164}|\x{1160})+/u
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -4851,7 +4851,7 @@ corpus/composer/composer/src/Composer/Util/ProcessExecutor.php:131:56
 
 
 ### corpus/composer/packagist — Target: PHP 8.4.11, PCRE2 10.44 (composer.json config.platform.php) — exit 0
-corpus/composer/packagist/src/Controller/PackageController.php:1451:40
+corpus/composer/packagist/src/Controller/PackageController.php:1452:40
     → {\.9999999$}
    TIP 
        - {\.9999999$}
@@ -6352,37 +6352,33 @@ corpus/filp/whoops/src/Whoops/Util/TemplateHelper.php:228:30
 
 
 ### corpus/flarum/framework — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
-corpus/flarum/framework/extensions/package-manager/src/Command/RequireExtensionHandler.php:96:33
-    → /^([A-z0-9-_\/]+)(?::.*|)$/i
-   WARN  Redundant elements detected in character class.
-       ↳ Redundant elements: '_' (covered by range 'A'-'z')
-   WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
-       ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
-   WARN  Alternation contains an empty alternative.
-       ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
+corpus/flarum/framework/extensions/package-manager/src/Api/Controller/CompatController.php:52:52
+    → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
+   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/flarum/framework/extensions/package-manager/src/Exception/ComposerCommandFailedException.php:32:29
-    → /^([A-z0-9-_\/]+)(?::.*|)$/i
-   WARN  Redundant elements detected in character class.
-       ↳ Redundant elements: '_' (covered by range 'A'-'z')
-   WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
-       ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
-   WARN  Alternation contains an empty alternative.
-       ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
+corpus/flarum/framework/extensions/package-manager/src/Api/Controller/StartController.php:157:30
+    → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
+   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/flarum/framework/extensions/package-manager/src/Exception/MajorUpdateFailedException.php:18:40
-    → /^ +- (?<ext>[A-z0-9\/-]+) [A-z0-9.-_\/]+ requires flarum\/core (?<coreReq>(?:[A-z0-9.><=_ -](?!->))+)/m
-   ↳ via self::INCOMPATIBLE_REGEX
-   WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
-       ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
-   WARN  Redundant elements detected in character class.
-       ↳ Redundant elements: ranges 'A'-'z' and '.'-'_' overlap: merge them into '.'-'z', '/' (covered by range '.'-'_')
-   WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
-       ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
-   WARN  Redundant elements detected in character class.
-       ↳ Redundant elements: '_' (covered by range 'A'-'z')
-   WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
-       ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
+corpus/flarum/framework/extensions/package-manager/src/Console/UpdateCommand.php:146:30
+    → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
+   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+corpus/flarum/framework/extensions/package-manager/src/Discover/Packagist.php:237:27
+    → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
+   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
 
 
@@ -14568,7 +14564,7 @@ corpus/phpstan/phpstan-src/src/Reflection/ClassNameHelper.php:19:63
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/phpstan/phpstan-src/src/Type/Constant/ConstantArrayType.php:3612:36
+corpus/phpstan/phpstan-src/src/Type/Constant/ConstantArrayType.php:3644:36
     → ~^(?:[\\]?+[a-z_\x80-\xFF][0-9a-z_\x80-\xFF-]*+)++$~si
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -14583,7 +14579,7 @@ corpus/phpstan/phpstan-src/src/Type/Php/SscanfFunctionDynamicReturnTypeExtension
        - /%(\d*)(\[[^\]]+\]|[cdeEfosux]{1})/
        + /%(\d*)(\[[^\]]+]|[cdeEfosux])/
 
-corpus/phpstan/phpstan-src/turbo-ext/bin/side-by-side.php:514:19
+corpus/phpstan/phpstan-src/turbo-ext/bin/side-by-side.php:515:19
     → /^\t(?:static\s+)?(?:[\w:<>]+(?:\s*[&*])?\s+)+(\w+?)(_?)\(/
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -20034,32 +20030,37 @@ corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/Admin/OrderMiles
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:69:5
+corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:73:78
+    → /text-align\s*:\s*[^;]+;/
+   WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+       ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
+
+corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:81:5
     → /color\s*:\s*[^;]+;/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:70:5
+corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:82:5
     → /font-family\s*:\s*[^;]+;/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:71:5
+corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:83:5
     → /font-size\s*:\s*[^;]+;/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:72:5
+corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:84:5
     → /font-weight\s*:\s*[^;]+;/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:73:5
+corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:85:5
     → /line-height\s*:\s*[^;]+;/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:74:5
+corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php:86:5
     → /letter-spacing\s*:\s*[^;]+;/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
