@@ -1,453 +1,243 @@
 ---
 layout: tutorial
-description: "Test and debug regex patterns with PHPRegex: explain them in plain English, validate syntax, get proven ReDoS verdicts, generate samples and diagram the AST."
+description: "Learn a simple way to test and debug regex patterns using plain PHP first."
 ---
 
-# Chapter 9: Testing and Debugging with PHPRegex
+# Chapter 9: Testing & Debugging
 
-> **Goal:** Use PHPRegex to understand, validate, and test your patterns.
-
----
-
-## Prerequisites
-
-This chapter uses the `Regex` facade and the `vendor/bin/regex` binary. The facade comes from `php-regex/regex-toolkit`, and the binary from `php-regex/regex-cli`. You need PHP 8.1 or newer with the `mbstring` extension. The [Quick Start](../quick-start.md) walks through the same setup in full.
-
-{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+> **Goal:** Build a practical workflow to test, understand, and fix patterns.
 
 ---
 
-## Why Use PHPRegex for Testing?
+## 1) Start Simple with PHP
 
-PHPRegex turns cryptic patterns into **readable explanations** and helps you find issues **before** they reach production:
-
-```
-Pattern: /^(?<user>\w+)@(?<host>\w+)$/
-
-Without PHPRegex:
-  - Stare at the pattern
-  - Guess what it does
-  - Hope it's correct
-
-With PHPRegex:
-  - See plain English explanation
-  - Validate syntax automatically
-  - Detect potential ReDoS risk
-  - Generate test strings
-```
-
----
-
-## Core Features for Testing
-
-### 1. Explain Patterns in Plain English
+You don't need any extra tools to test patterns. PHP's built-in functions are more than enough for learning.
 
 ```php
-use PHPRegex\Toolkit\Regex;
+$pattern = '/\d{3}/';
+$text = 'Order 123 and 456';
 
-$regex = Regex::create();
-
-echo $regex->explain('/^(?<user>\w+)@(?<host>\w+)$/');
-```
-
-**Output:**
-```
-Regex matches
-  Anchor: the start of the subject
-  Capturing group (named: 'user')
-    Character Type: A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C (one or more times)
-  End group
-  '@'
-  Capturing group (named: 'host')
-    Character Type: A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C (one or more times)
-  End group
-  Anchor: the end of the subject, or just before a newline (\n) that ends it
-```
-
-### 2. Validate Syntax
-
-```php
-use PHPRegex\Toolkit\Regex;
-
-$regex = Regex::create();
-
-$result = $regex->validate('/(?<=a+)b/');
-
-if (!$result->isValid) {
-    echo "Error: " . $result->error . "\n";
-    echo "Hint: " . $result->hint . "\n";
-    echo "Snippet:\n" . $result->caretSnippet . "\n";
+if (preg_match($pattern, $text, $matches)) {
+    echo "Found: " . $matches[0]; // "123"
 }
 ```
 
-**Output:**
-```
-Error: Lookbehind is unbounded. PCRE requires a bounded maximum length.
-Hint: Use a bounded quantifier instead of "+".
-Snippet:
-Line 1: (?<=a+)b
-        ^
-```
-
-### 3. Visualize Pattern Structure
-
-```bash
-# CLI: Show AST diagram
-vendor/bin/regex diagram '/^(?<user>\w+)@(?<host>\w+)$/'
-```
-
-**Output:**
-```
-PHPRegex 2.0.0-DEV by Younes ENNAJI
-
-Runtime : PHP 8.4.26
-Command : diagram
-Format  : console
-
-  [1/1] Rendering diagram
-  Pattern
-      → /^(?<user>\w+)@(?<host>\w+)$/
-
-Regex
-\-- Sequence
-    |-- Anchor (^)
-    |-- Group (named) name="user"
-    |   \-- Quantifier (+, greedy)
-    |       \-- CharType (\w)
-    |-- Literal ('@')
-    |-- Group (named) name="host"
-    |   \-- Quantifier (+, greedy)
-    |       \-- CharType (\w)
-    \-- Anchor ($)
-```
-
-### 4. Syntax Highlighting
-
-```bash
-# CLI: Colorized output
-vendor/bin/regex highlight '/^(?<user>\w+)@(?<host>\w+)$/'
-```
-
-### 5. Generate Test Strings
+To find **all** matches:
 
 ```php
-use PHPRegex\Toolkit\Regex;
-
-$regex = Regex::create();
-
-// Generate sample that matches pattern
-$sample = $regex->generate('/[a-z]{3}\d{2}/');
-echo $sample;  // Example output: "bjv69" (random — yours will differ)
+preg_match_all('/\d+/', 'a1 b22 c333', $matches);
+print_r($matches[0]); // ["1", "22", "333"]
 ```
 
 ---
 
-## Testing Workflow
+## 2) A Practical Testing Workflow
 
-### Step 1: Write Your Pattern
+When a pattern doesn't behave the way you expect, go step by step:
 
-```php
-// You want to validate email addresses
-$pattern = '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i';
-```
+### Step 1: Write a small test
 
-### Step 2: Explain It
+Keep it minimal. Test on the exact string you're trying to match.
 
 ```php
-use PHPRegex\Toolkit\Regex;
-
-$regex = Regex::create();
-
-echo $regex->explain($pattern);
+$pattern = '/^hello$/';
+var_dump(preg_match($pattern, 'hello')); // int(1)
+var_dump(preg_match($pattern, 'hello!')); // int(0)
 ```
 
-**Output:**
-```
-Regex matches (with flags: i)
-  Anchor: the start of the subject
-  Character Class: any character in [ Range: from 'a' to 'z', Range: from '0' to '9', '.', '_', '%', '+', '-' ] (one or more times)
-  '@'
-  Character Class: any character in [ Range: from 'a' to 'z', Range: from '0' to '9', '.', '-' ] (one or more times)
-  '.'
-  Character Class: any character in [ Range: from 'a' to 'z' ] (at least 2 times)
-  Anchor: the end of the subject, or just before a newline (\n) that ends it
-```
+### Step 2: Check anchors and scope
 
-### Step 3: Check for ReDoS Risk
+If it's matching too much or too little, check [anchors](03-anchors-boundaries.md).
 
 ```php
-$analysis = $regex->redos($pattern);
+// Matches anywhere
+preg_match('/cat/', 'category'); // matches "cat"
 
-echo "Severity: " . $analysis->severity->value . "\n";
-echo "Score: " . $analysis->score . "\n";
+// Match whole word only
+preg_match('/\bcat\b/', 'category'); // no match
+```
 
-if ($analysis->severity->value === 'safe') {
-    echo "No structural ReDoS risk detected.\n";
+### Step 3: Check quantifiers
+
+If it's greedy when you want lazy, or vice versa, check [quantifiers](04-quantifiers.md).
+
+```php
+$text = '<b>hi</b>';
+
+// Too much
+preg_match('/<.+>/', $text, $m);  // <b>hi</b>
+
+// Just right
+preg_match('/<.+?>/', $text, $m); // <b>
+```
+
+### Step 4: Check groups and alternation
+
+If `|` is behaving oddly, it's usually a grouping issue ([Chapter 5](05-groups-alternation.md)).
+
+```php
+// Wrong scope
+preg_match('/jpg|png\.gif/', 'a.png.gif', $m); // matches "png.gif" but for wrong reason
+// Better
+preg_match('/(?:jpg|png)\.gif/', 'a.png.gif', $m);
+```
+
+---
+
+## 3) Common Debugging Tricks
+
+### Use `var_dump` on matches
+
+```php
+preg_match('/(\w+)@(\w+)\.(\w+)/', 'user@example.com', $matches);
+var_dump($matches);
+// Shows full match + each captured group
+```
+
+### Test with `preg_match_all` to see all matches
+
+```php
+preg_match_all('/\b\w{4}\b/', 'cat dog bird fish', $matches);
+print_r($matches[0]); // ["bird", "fish"]
+```
+
+### Isolate pieces
+
+If a long pattern fails, break it down. Test each part separately, then combine.
+
+```php
+// Test parts
+preg_match('/^\w+$/', 'user');      // yes
+preg_match('/^@/', '@example');     // yes
+preg_match('/^\w+\.\w+$/', 'com');  // yes
+```
+
+### Watch for escaping
+
+Remember [Chapter 1](01-basics.md): in PHP strings, backslashes need care. In single quotes less so, but better to be aware.
+
+```php
+// In PHP string
+$pattern = '/\d+/'; // \d is fine in single quotes
+```
+
+### Check case sensitivity
+
+```php
+preg_match('/hello/', 'HELLO');   // no match
+preg_match('/hello/i', 'HELLO'); // match
+```
+
+---
+
+## 4) Testing Checklist
+
+Before using a pattern anywhere important, ask yourself:
+
+- [ ] **Does it match what I want?** Test positive cases
+- [ ] **Does it reject what I don't want?** Test negative cases
+- [ ] **Does it match the whole thing or just part?** Consider [anchors](03-anchors-boundaries.md)
+- [ ] **Is it too greedy?** Try [lazy](04-quantifiers.md#5-lazy-non-greedy-matching) if needed
+- [ ] **Is it safe?** Check for [nested quantifiers](08-performance-redos.md)
+- [ ] **Does it handle edge cases?** Empty string, single char, special chars
+- [ ] **Is it readable?** If it's too complex, can you simplify it?
+
+---
+
+## 5) Exercises
+
+### Exercise 1: Debug a broken pattern
+This pattern is supposed to match dates like `2025-10-23`, but something's wrong. Fix it.
+
+```php
+$pattern = '/\d{4}\d{2}\d{2}/'; // broken
+```
+
+<details markdown="1">
+<summary>Solution</summary>
+
+Missing the dashes:
+
+```php
+$pattern = '/\d{4}-\d{2}-\d{2}/';
+```
+
+</details>
+
+### Exercise 2: Greedy vs lazy
+Extract just `title` from `<title>My Page</title>`. Use a lazy match.
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+preg_match('/<title>(.*?)<\/title>/', '<title>My Page</title>', $matches);
+echo $matches[1]; // "My Page"
+```
+
+</details>
+
+### Exercise 3: Whole word only
+Fix this so it matches `cat` only as a whole word, not in `category`.
+
+```php
+$pattern = '/cat/';
+```
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+$pattern = '/\bcat\b/';
+```
+
+</details>
+
+### Exercise 4: Build a test
+Write a small test script that checks if an email-like string is valid using anchors and a simple pattern.
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+$pattern = '/^[\w.-]+@[\w.-]+\.[a-z]{2,}$/i';
+
+$tests = ['a@b.com', 'bad-email', 'user.name@test.org'];
+foreach ($tests as $t) {
+    echo $t . ': ' . (preg_match($pattern, $t) ? 'OK' : 'NO') . PHP_EOL;
 }
 ```
 
-**Output:**
-```
-Severity: safe
-Score: 0
-No structural ReDoS risk detected.
-```
-
-### Step 4: Generate Test Cases
-
-```php
-// Generate matching samples
-$validSamples = [
-    $regex->generate($pattern),
-    $regex->generate($pattern),
-    $regex->generate($pattern),
-];
-
-print_r($validSamples);
-```
-
-**Output** (the generator is random — yours will differ):
-```
-Array
-(
-    [0] => t@.6-h.mcvcc
-    [1] => %.%e@.d.zpdz
-    [2] => _@7-.jmj
-)
-```
-
-Every sample satisfies the pattern — which is exactly the point: it gives you concrete inputs your test suite can assert on.
-
-### Step 5: Validate in PHP
-
-```php
-$testCases = [
-    'test@example.com',
-    'user.name@domain.org',
-    'admin@sub.domain.co.uk',
-    'invalid-email',      // Should NOT match
-    '@missing-local.com', // Should NOT match
-];
-
-foreach ($testCases as $email) {
-    $result = preg_match($pattern, $email) ? 'VALID' : 'INVALID';
-    echo "$email: $result\n";
-}
-```
-
-**Output:**
-```
-test@example.com: VALID
-user.name@domain.org: VALID
-admin@sub.domain.co.uk: VALID
-invalid-email: INVALID
-@missing-local.com: INVALID
-```
-
----
-
-## Debugging Common Issues
-
-### Issue 1: Pattern Not Matching Expected Input
-
-```php
-// Your pattern
-$pattern = '/^[0-9]+$/';
-$input = '123abc';
-
-preg_match($pattern, $input, $matches);
-echo count($matches) > 0 ? "Match" : "No match";  // "No match"
-```
-
-**Debug with PHPRegex:**
-
-```php
-use PHPRegex\Toolkit\Regex;
-
-$regex = Regex::create();
-
-echo $regex->explain($pattern);
-// Regex matches
-//   Anchor: the start of the subject
-//   Character Class: any character in [ Range: from '0' to '9' ] (one or more times)
-//   Anchor: the end of the subject, or just before a newline (\n) that ends it
-
-echo "Input: '$input'\n";
-echo "The pattern requires ALL characters to be digits.\n";
-echo "'123abc' contains non-digit characters.\n";
-```
-
-**Solution:**
-```php
-// Match string containing digits (not just digits)
-$pattern = '/[0-9]+/';  // Remove anchors
-```
-
-### Issue 2: Potential ReDoS Risk
-
-```php
-// Suspicious pattern
-$pattern = '/(a+)+$/';
-
-// Test with PHPRegex
-$analysis = $regex->redos($pattern);
-
-echo "Severity: " . $analysis->severity->value . "\n";
-// Output: "critical"
-
-echo $analysis->headline() . "\n";
-// Output: "Exponential backtracking (proven)"
-
-echo "Attack: " . $analysis->witness->render() . "\n";
-// Output: Attack: "a" x n . "!"
-
-echo $analysis->recommendations[1] . "\n";
-// Output: Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...).
-```
-
-**Fix:**
-```php
-$safePattern = '/a+$/';  // Simplify!
-```
-
-### Issue 3: Variable-Length Lookbehind
-
-```php
-// Invalid in PCRE
-$pattern = '/(?<=a+)b/';
-
-$result = $regex->validate($pattern);
-
-echo $result->error . "\n";
-echo $result->hint . "\n";
-```
-
-**Output:**
-```
-Lookbehind is unbounded. PCRE requires a bounded maximum length.
-Use a bounded quantifier instead of "+".
-```
-
----
-
-## Testing Checklist
-
-Before using a pattern in production:
-
-- [ ] **Explain** - Can you understand what it does?
-- [ ] **Validate** - Does PHPRegex report any errors?
-- [ ] **Security** - Does ReDoS analysis show "safe"?
-- [ ] **Coverage** - Does it match all expected cases?
-- [ ] **Edge cases** - Does it handle empty strings, special characters?
-- [ ] **Performance** - Test with long inputs
-
----
-
-## Exercise: Testing Workflow
-
-### Your Task
-
-Test this pattern for password validation:
-
-```php
-$pattern = '/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)[A-Za-z\d]{8,}$/';
-```
-
-### Solution
-
-```php
-use PHPRegex\Toolkit\Regex;
-
-$regex = Regex::create();
-
-// 1. Explain the pattern
-echo "=== Pattern Explanation ===\n";
-echo $regex->explain($pattern) . "\n\n";
-
-// 2. Validate syntax
-echo "=== Syntax Validation ===\n";
-$result = $regex->validate($pattern);
-echo $result->isValid ? "Valid\n\n" : "Invalid: " . $result->error . "\n\n";
-
-// 3. Check for ReDoS
-echo "=== ReDoS Analysis ===\n";
-$analysis = $regex->redos($pattern);
-echo "Severity: " . $analysis->severity->value . "\n";
-echo "Score: " . $analysis->score . "\n\n";
-
-// 4. Generate test cases
-echo "=== Sample Matching Strings ===\n";
-for ($i = 0; $i < 3; $i++) {
-    $sample = $regex->generate($pattern);
-    echo "- $sample\n";
-}
-```
-
-Output (the samples are random — yours will differ):
-
-```
-=== Pattern Explanation ===
-Regex matches
-  Anchor: the start of the subject
-  Positive lookahead
-    Wildcard: any character but a newline (\n) (zero or more times)
-    Character Class: any character in [ Range: from 'A' to 'Z' ]
-  End group
-  Positive lookahead
-    Wildcard: any character but a newline (\n) (zero or more times)
-    Character Class: any character in [ Range: from 'a' to 'z' ]
-  End group
-  Positive lookahead
-    Wildcard: any character but a newline (\n) (zero or more times)
-    Character Type: A digit: [0-9]
-  End group
-  Character Class: any character in [ Range: from 'A' to 'Z', Range: from 'a' to 'z', Character Type: A digit: [0-9] ] (at least 8 times)
-  Anchor: the end of the subject, or just before a newline (\n) that ends it
-
-=== Syntax Validation ===
-Valid
-
-=== ReDoS Analysis ===
-Severity: safe
-Score: 0
-
-=== Sample Matching Strings ===
-- 9u7iUao9
-- Aj0Ek4sT5
-- FV0Fo5q6jC
-```
+</details>
 
 ---
 
 ## Key Takeaways
 
-1. **Always explain** patterns to ensure understanding
-2. **Validate early** - catch syntax errors before testing
-3. **Check ReDoS** - prevent catastrophic backtracking
-4. **Generate samples** - create test data automatically
-5. **Visualize structure** - see pattern as a tree
+- **Test small** — Start with a tiny example and grow
+- **Use `preg_match`/`preg_match_all`** with `$matches` to inspect results
+- **Break it down** — Isolate complex patterns into parts
+- **Think about scope** — Anchors, word boundaries, and grouping fix most issues
+- **Test negative cases** — Making sure it *doesn't* match is just as important
 
 ---
 
-## When You Get Stuck
+## Optional: Extra Tools
 
-1. **Use the CLI** - `vendor/bin/regex explain <pattern>`
-2. **Try diagram** - `vendor/bin/regex diagram <pattern>`
-3. **Check documentation** - [Regex in PHP guide](../guides/regex-in-php.md)
-4. **Ask for help** - [GitHub Issues](https://github.com/php-regex/php-regex/issues)
+If you'd like to explain or visualize patterns while debugging, there are optional tools available. You can skip these entirely and still follow everything above.
+
+```bash
+vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/'
+vendor/bin/regex diagram '/(\w+)\s+\1/'
+```
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+$regex = Regex::create();
+echo $regex->explain('/^[a-z]+$/i');
+```
 
 ---
-
-## Recap
-
-In this chapter you used every testing tool the library offers:
-
-- **explain()** and the `explain` command — plain-English walkthroughs
-- **validate()** — syntax errors with hints and caret snippets
-- **redos()** and the `debug` command — proven risk verdicts with attack inputs
-- **generate()** — sample strings your tests can assert on
-- **diagram** — the AST as a tree
-
-Combined with the testing checklist above, that is the full loop: explain, validate, analyze, generate, assert.
 
 **Next:** [Chapter 10: Real-World Patterns in PHP](10-real-world-php.md)
