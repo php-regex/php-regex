@@ -360,11 +360,12 @@ maintainer opens those): #1 seam, #2 walkers (merged), #3 target
 validity, #4 capture shapes — all green on `NodeScopeResolverTest`
 1879/1879. What the series still owes:
 
-1. The fifth pull request: `RegularExpressionPatternRule` judging the
-   pattern for the analysed PHP and its engine rather than the running
-   one; the trailing `J` modifier accepted now that the analysis reads
-   it; `RegexExpressionHelper` retired into the reader. Branch
-   `consume-the-capture-shape` is the base.
+1. The next piece of #1 (the series travels as one pull request until
+   the maintainer asks for the split): `RegularExpressionPatternRule`
+   judging the pattern for the analysed PHP and its engine rather than
+   the running one; the trailing `J` modifier accepted now that the
+   analysis reads it; `RegexExpressionHelper` retired into the reader.
+   Branch `read-regex-shapes-through-phpregex` carries the whole series.
 2. Once `2.0.0` is tagged and the php74 twin reaches Packagist, pin the
    `php-regex/regex-parser-php74` requirement to an exact version (the
    precedent is `hoa/compiler`, pinned to a release).
