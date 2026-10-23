@@ -1,398 +1,279 @@
 ---
 layout: tutorial
-description: "Seven production-ready PHP patterns — email, dates, phones, URLs, logs, tags, passwords — each explained, usage shown, and ReDoS-rated before you ship it."
+description: "Practical regex patterns for everyday tasks in PHP."
 ---
 
 # Chapter 10: Real-World Patterns in PHP
 
-> **Goal:** Apply everything you've learned to common, practical use cases.
+> **Goal:** Put everything together with patterns you'll actually use.
 
 ---
 
-## Why Real-World Patterns Are Different
+## 1) Email (simple and practical)
 
-Tutorial patterns are simple. Production patterns must:
-- Validate user input
-- Handle edge cases
-- Be secure (no ReDoS)
-- Be maintainable
-- Be documented
+For most applications, you don't need a perfect RFC email regex. A simple, anchored one is usually enough.
 
-This chapter shows **battle-tested patterns** with explanations.
+```php
+$pattern = '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/';
+
+if (preg_match($pattern, 'user@example.com')) {
+    echo "Looks valid";
+}
+```
+
+**Notes:**
+- `^` and `$` ensure the **entire** string matches
+- Use [character classes](02-character-classes.md) to be explicit
+- Add `i` flag if you want to be case-insensitive
+
+```php
+$pattern = '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i';
+```
 
 ---
 
-## Email Validation
+## 2) Dates (YYYY-MM-DD)
 
-### The Pattern
-
-```php
-$pattern = '/^[a-z0-9]+(?:[._%+-][a-z0-9]+)*+@[a-z0-9-]+(?:\.[a-z0-9-]+)*+$/i';
-```
-
-### Explanation
-
-```
-Start of string
-  Local part:
-    One or more alphanumeric characters
-    Zero or more of:
-      (literal . _ % + -) followed by one or more alphanumeric
-  @
-  Domain:
-    One or more alphanumeric or hyphen
-    Zero or more of:
-      (literal .) followed by one or more alphanumeric or hyphen
-End of string (case-insensitive)
-```
-
-### Structure summary
-
-- Local part: `[a-z0-9]+`
-- Separator: `@`
-- Domain: `[a-z0-9-]+` with dot-separated segments
-- TLD: `[a-z0-9-]+`
-
-### Usage
+Validate the format with [anchors](03-anchors-boundaries.md) and [alternation](05-groups-alternation.md).
 
 ```php
-use PHPRegex\Toolkit\Regex;
+$pattern = '/^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/';
 
-$regex = Regex::create();
-
-// Validate the pattern itself before using it
-$result = $regex->validate($pattern);
-if (!$result->isValid) {
-    echo "Invalid pattern: " . $result->error;
-    return;
-}
-
-// Check for potential ReDoS risk
-$analysis = $regex->redos($pattern);
-if ($analysis->severity->value !== 'safe') {
-    throw new RuntimeException("Pattern has potential ReDoS risk");
-}
-
-// Use safely
-if (preg_match($pattern, $userInput)) {
-    echo "Valid email";
+if (preg_match($pattern, '2025-10-23')) {
+    echo "Valid format";
 }
 ```
 
-### Why This Pattern?
-
-| Feature          | Benefit                             |
-|------------------|-------------------------------------|
-| `^...$`          | Anchored - validates entire string  |
-| `*+`             | Possessive - no backtracking        |
-| `[a-z0-9]`       | No special characters in local part |
-| Case-insensitive | Accepts any case                    |
-
----
-
-## Date Validation (YYYY-MM-DD)
-
-### The Pattern
+To check if it's a **real** calendar date, combine with PHP's `checkdate()`:
 
 ```php
-$pattern = '/^(?<year>\d{4})-(?<month>0[1-9]|1[0-2])-(?<day>0[1-9]|[12][0-9]|3[01])$/';
-```
-
-### Explanation
-
-```
-Start of string
-  Year: 4 digits (named 'year')
-  Literal: -
-  Month: 01-12 (named 'month')
-    0[1-9]  = 01-09
-    |1[0-2] = 10-12
-  Literal: -
-  Day: 01-31 (named 'day')
-    0[1-9]   = 01-09
-    |[12][0-9] = 10-29
-    |3[01]   = 30-31
-End of string
-```
-
-### Usage
-
-```php
-preg_match($pattern, '2024-01-15', $matches);
-
-$year = $matches['year'];   // "2024"
-$month = $matches['month']; // "01"
-$day = $matches['day'];     // "15"
-```
-
-### Note
-
-This validates **format**, not **validity**. "2024-02-30" passes but isn't a real date. For real dates, combine with PHP's `checkdate()`:
-
-```php
-if (preg_match($pattern, $input, $m)) {
-    if (checkdate((int)$m['month'], (int)$m['day'], (int)$m['year'])) {
-        echo "Valid date!";
-    } else {
-        echo "Invalid calendar date";
+if (preg_match('/^(?<y>(?:19|20)\d{2})-(?<m>0[1-9]|1[0-2])-(?<d>0[1-9]|[12]\d|3[01])$/', $input, $m)) {
+    if (checkdate((int)$m['m'], (int)$m['d'], (int)$m['y'])) {
+        echo "Valid date";
     }
 }
 ```
 
 ---
 
-## Phone Numbers (US Format)
+## 3) URLs
 
-### The Pattern
-
-```php
-$pattern = '/^\+?1?\s*\(?([0-9]{3})\)?\s*-?[0-9]{3}\s*-?[0-9]{4}$/';
-```
-
-### Explanation
-
-```
-Start of string
-  Optional: +1 (country code)
-  Optional: whitespace
-  Optional: (
-  Area code: 3 digits (captured as group 1)
-  Optional: )
-  Optional: whitespace or hyphen
-  Prefix: 3 digits
-  Optional: whitespace or hyphen
-  Line number: 4 digits
-End of string
-```
-
-### Usage
+A practical pattern for `http://` and `https://`.
 
 ```php
-preg_match($pattern, '(555) 123-4567', $matches);
-$areaCode = $matches[1];  // "555"
-```
+$pattern = '~^https?://[a-z0-9.-]+\.[a-z]{2,}(/[^\s]*)?$~i';
 
----
-
-## URLs (HTTP/HTTPS)
-
-### The Pattern
-
-```php
-$pattern = '/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/';
-```
-
-### Explanation
-
-```
-Start of string
-  http:// or https://
-  Optional: www.
-  Domain: 1-256 characters (alphanumeric, @, %, _, ~, #, =)
-  .
-  TLD: 1-6 alphanumeric or parentheses
-  Word boundary
-  Optional path/query: any characters
-End of string
-```
-
-### Usage
-
-```php
-if (preg_match($pattern, $url)) {
-    echo "Valid URL format";
+$urls = ['https://example.com', 'http://site.org/path?q=1'];
+foreach ($urls as $url) {
+    echo preg_match($pattern, $url) ? "OK\n" : "NO\n";
 }
 ```
 
-### A Note on Risk
+Notice we used `~` as [delimiter](01-basics.md#3-delimiters-wrapping-the-pattern) to avoid escaping `/`.
 
-PHPRegex rates this pattern **medium** — "Polynomial backtracking, degree 2 (proven)". A quadratic pattern turns 10× the input into 100× the work; the backtrack limit does not catch it. If URLs come from untrusted sources and can be long, tighten the pattern (the two character classes overlap on many characters) or cap the input length first. Check yours the same way:
+---
 
-```bash
-vendor/bin/regex debug '/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/'
+## 4) Phone Numbers (simple)
+
+Covers common formats with spaces, dashes, or parentheses.
+
+```php
+$pattern = '/^\+?\d{1,3}[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/';
+
+preg_match($pattern, '+1 (555) 123-4567'); // matches
+preg_match($pattern, '555-123-4567');     // matches
+```
+
+This is flexible on purpose. If you need strict validation for one specific format, tighten it with [groups](05-groups-alternation.md).
+
+---
+
+## 5) Extracting Data
+
+Regex shines at pulling parts out of strings.
+
+### Extract hashtags
+
+```php
+$text = 'Learning #php and #regex today!';
+
+preg_match_all('/#(\w+)/', $text, $matches);
+print_r($matches[1]); // ["php", "regex"]
+```
+
+### Extract domain from email
+
+```php
+preg_match('/@(.+)$/', 'user@example.com', $m);
+echo $m[1]; // "example.com"
+```
+
+### Extract numbers from a string
+
+```php
+preg_match_all('/-?\d+/', 'Price: $49, Tax: $5', $matches);
+print_r($matches[0]); // ["49", "5"]
 ```
 
 ---
 
-## Log Parsing
+## 6) Replacing Text
 
-### The Pattern
+Use `preg_replace()` to transform strings.
 
-```php
-$pattern = '/^(?<level>INFO|WARN|ERROR|DEBUG)\s+(?<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+(?<message>.+)$/';
-```
-
-### Explanation
-
-```
-Start of string
-  Level: INFO, WARN, ERROR, or DEBUG (named 'level')
-  Whitespace
-  Timestamp: YYYY-MM-DD HH:MM:SS (named 'timestamp')
-  Whitespace
-  Message: rest of line (named 'message')
-End of string
-```
-
-### Usage
+### Clean up whitespace
 
 ```php
-$logLine = 'INFO 2024-01-15 10:30:45 User logged in successfully';
+$text = "Hello   world\n\nfrom   PHP";
+$clean = preg_replace('/\s+/', ' ', $text);
+echo $clean; // "Hello world from PHP"
+```
 
-preg_match($pattern, $logLine, $matches);
+### Mask credit card (keep last 4)
 
-echo $matches['level'];      // "INFO"
-echo $matches['timestamp'];  // "2024-01-15 10:30:45"
-echo $matches['message'];    // "User logged in successfully"
+```php
+$card = '1234567812345678';
+$masked = preg_replace('/\d(?=\d{4})/', 'X', $card);
+echo $masked; // "XXXXXXXXXXXX5678"
+```
+
+Here `(?=\d{4})` is a [lookahead](06-lookarounds.md) — it checks for 4 digits ahead without consuming them.
+
+---
+
+## 7) Validating Forms
+
+A quick example combining what you've learned.
+
+```php
+function isValidUsername(string $u): bool {
+    // 3-16 chars, letters, numbers, underscore
+    return (bool) preg_match('/^[a-zA-Z0-9_]{3,16}$/', $u);
+}
+
+function isStrongPassword(string $p): bool {
+    // Min 8, at least one letter and one number
+    return (bool) preg_match('/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/', $p);
+}
+
+var_dump(isValidUsername('john_doe')); // true
+var_dump(isStrongPassword('pass1234')); // true
 ```
 
 ---
 
-## Tags (HTML-like)
+## 8) Tips for Production
 
-### The Pattern
-
-```php
-$pattern = '/^<([a-z][a-z0-9]*)([^>]*)>(.*?)<\/\1>$/i';
-```
-
-### Explanation
-
-```
-Start of string
-  Opening tag:
-    <letter followed by letters/numbers>
-    Zero or more attributes (not >)
-  >
-  Content: any characters (lazy)
-  Closing tag: </same opening tag>
-End of string (case-insensitive)
-```
-
-### Usage
-
-```php
-preg_match($pattern, '<div class="container">Content</div>', $matches);
-
-echo $matches[1];   // "div"
-echo $matches[2];   // ' class="container"'
-echo $matches[3];   // "Content"
-```
+- **Anchor your validation** - Use `^` and `$` when you want the *entire* string to match
+- **Don't over-validate** - A complex email regex won't catch everything; sometimes a simple check is enough
+- **Watch for ReDoS** - If patterns are user-generated or very complex, be mindful of [Chapter 8](08-performance-redos.md)
+- **Prefer specific over broad** - `[0-9]` instead of `.`, `[a-z]+` instead of `.*`
+- **Use built-in functions when possible** - Sometimes `filter_var()` with `FILTER_VALIDATE_EMAIL` is better than a regex
+- **Test negative cases** - Make sure invalid inputs don't pass
 
 ---
 
-## Password Strength
+## 9) Exercises
 
-### The Pattern
+### Exercise 1: Slug
+Create a pattern to convert spaces to hyphens and remove unwanted characters. Use `preg_replace()`.
 
-```php
-$pattern = '/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/';
-```
-
-### Explanation
-
-```
-Start of string
-  Lookahead: at least one uppercase
-  Lookahead: at least one lowercase
-  Lookahead: at least one digit
-  Lookahead: at least one special char (@$!%*?&)
-  Main: 8+ characters from allowed set
-End of string
-```
-
-### Usage
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-if (preg_match($pattern, $password)) {
-    echo "Password is strong";
-} else {
-    echo "Password doesn't meet requirements";
+$text = "Hello World! & PHP";
+$slug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $text));
+$slug = trim($slug, '-');
+echo $slug; // "hello-world-php"
+```
+
+</details>
+
+### Exercise 2: Extract all emails
+Extract all email addresses from a text using `preg_match_all()`.
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+$text = 'Contact us at a@b.com or support@test.org';
+preg_match_all('/[\w.-]+@[\w.-]+\.[a-z]{2,}/i', $text, $matches);
+print_r($matches[0]);
+```
+
+</details>
+
+### Exercise 3: Zip code (US)
+Write a pattern for a 5-digit US zip code, optionally followed by a dash and 4 digits (`12345-6789`).
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+$pattern = '/^\d{5}(?:-\d{4})?$/';
+```
+
+</details>
+
+### Exercise 4: Username validation
+Create a function that validates a username: starts with a letter, 3-20 chars, only letters, numbers, underscore.
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+function validateUsername(string $u): bool {
+    return (bool) preg_match('/^[a-z][a-z0-9_]{2,19}$/i', $u);
 }
 ```
 
----
-
-## Comparison Table
-
-Verdicts generated with `$regex->redos()` on the exact patterns above:
-
-| Use Case | Pattern from this chapter                                                                                           | Anchored | ReDoS verdict               | Capture                          |
-|----------|---------------------------------------------------------------------------------------------------------------------|----------|-----------------------------|----------------------------------|
-| Email    | `/^[a-z0-9]+(?:[._%+-][a-z0-9]+)*+@[a-z0-9-]+(?:\.[a-z0-9-]+)*+$/i`                                                 | Yes      | safe (proven)               | none                             |
-| Date     | `/^(?<year>\d{4})-(?<month>0[1-9]\|1[0-2])-(?<day>0[1-9]\|[12][0-9]\|3[01])$/`                                       | Yes      | safe (proven)               | named (`year`, `month`, `day`)   |
-| URL      | `/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/` | Yes      | medium — quadratic (proven) | none                             |
-| Phone    | `/^\+?1?\s*\(?([0-9]{3})\)?\s*-?[0-9]{3}\s*-?[0-9]{4}$/`                                                             | Yes      | safe (proven)               | numbered (1: area code)          |
-| Password | `/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/`                                            | Yes      | safe (proven)               | none                             |
-
-The URL row is the one to remember: a pattern can look reasonable, anchor everything, and still carry a proven quadratic cost — the verdict column is why you run the analysis instead of eyeballing it.
-
----
-
-## Exercise: Build and Test a Pattern
-
-### Challenge
-
-Create a pattern to validate a **GitHub username**:
-- Starts with letter or number
-- Contains letters, numbers, hyphens
-- Cannot start or end with hyphen
-- Max 39 characters
-
-### Solution
-
-```php
-use PHPRegex\Toolkit\Regex;
-
-$pattern = '/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/';
-
-// Explanation
-// ^                Start of string
-// [a-zA-Z0-9]     Must start with letter or number
-// (?:...)?        Optional tail (allows a single character)
-// [a-zA-Z0-9-]{0,37} Middle: 0-37 chars
-// [a-zA-Z0-9]     Must end with letter or number
-// $                End of string
-
-// Test with PHPRegex
-$regex = Regex::create();
-echo $regex->explain($pattern);
-```
+</details>
 
 ---
 
 ## Key Takeaways
 
-1. **Production patterns** need anchors (`^...$`) for exact matching
-2. **Use named groups** for clarity and maintainability
-3. **Validate format first**, then validate logic separately
-4. **Always check ReDoS risk** before using patterns — with a tool, not by eye
-5. **Lookaheads** are great for validation without consuming
+- **Anchoring is crucial** for validation (`^...$`)
+- **`preg_match_all`** is perfect for extracting multiple matches
+- **`preg_replace`** is great for cleaning and transforming
+- **Lookaheads** are useful for masking/replacing without consuming
+- **Combine regex with PHP** - sometimes `checkdate()` or `filter_var()` is better than going overboard
 
 ---
 
-## You're a Regex Master!
+## Congratulations!
 
-Tutorial summary:
+You've completed the entire **Regex Tutorial**. 
 
-1. Basics - Your first patterns
-2. Character Classes - Matching sets
-3. Anchors - Controlling position
-4. Quantifiers - Controlling repetition
-5. Groups - Structuring patterns
-6. Lookarounds - Context matching
-7. Backreferences - Self-reference
-8. Performance - Avoiding ReDoS
-9. Testing - Debugging patterns
-10. Real-World - Practical patterns
+You now know how to:
+- Write patterns from scratch
+- Use character classes, anchors, quantifiers, groups, and lookarounds
+- Handle backreferences and recursion
+- Avoid ReDoS and write safe patterns
+- Test and debug with confidence
+- Apply regex to real PHP problems
 
-### Next Steps
-
-- **[Cookbook](../cookbook.md)** - More pattern examples
-- **[ReDoS Guide](../guides/redos.md)** - Deep dive on risk and mitigation
-- **[API Reference](../reference/api.md)** - API documentation
-- Apply what you've learned in your own project
+Keep practicing. The best way to learn is to take patterns you need in real projects and build them step by step.
 
 ---
 
-Tutorial finished.
+## Optional: Tools to Inspect Patterns
+
+If you'd like to explain or visualize patterns, these tools are optional and not necessary to follow this chapter.
+
+```bash
+vendor/bin/regex explain '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i'
+vendor/bin/regex diagram '/^(?=.*\d)[A-Za-z\d]{8,}$/'
+```
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+$regex = Regex::create();
+echo $regex->explain('/\d{5}(?:-\d{4})?$/');
+```
+
+---
+
+**End of Tutorial**
