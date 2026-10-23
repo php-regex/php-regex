@@ -1,439 +1,248 @@
 ---
 layout: tutorial
-description: "Write your first PHP regex patterns — delimiters, flags and escaping — and validate and explain every one of them with PHPRegex before you run it."
+description: "Learn what a regex pattern is, match literal text, understand delimiters and escaping — with no prior regex knowledge required."
 ---
 
 # Chapter 1: Regex Basics
 
-> **Goal:** Write your first patterns and understand how regex works.
+> **Goal:** Understand what a pattern is, match plain text, and learn just enough syntax to write your first safe patterns.
 
 ---
 
-## What is a Pattern?
+## 1) What is a Pattern?
 
-A **regex pattern** is a search template. It describes what text looks like:
+A **regular expression** (regex) is a way to describe text. A **pattern** is that description.
+
+Think of it like a wanted poster: instead of saying "find the exact word cat", you write a short description that the engine uses to look for matches in some text.
 
 ```
-Text: "The cat sat on the mat"
+Text:    "The cat sat on the mat"
+Pattern: cat
+Match:   "cat"
+```
+
+For now, think in the simplest terms: **a pattern matches characters in order**.
+
+---
+
+## 2) Matching Literal Text
+
+The easiest patterns are **literals**. A literal character matches exactly that character.
+
+```text
 Pattern: /cat/
-Match: "cat" (at position 4)
+Matches: "cat", "a cat is here"
+Does not match: "cut", "bat", "CAT" (by default)
 ```
 
-Think of a pattern like a **wanted poster** for text. You describe what you're looking for, and the regex engine finds matches.
+By default, matching is **case-sensitive**. `cat` is not the same as `CAT`.
 
-### Real-World Analogy
+### Trying it in PHP
 
-| Scenario                               | Pattern     | What It Finds         |
-|----------------------------------------|-------------|-----------------------|
-| Looking for "Alice" in a list          | `/Alice/`   | Anyone named Alice    |
-| Looking for any 3-digit number         | `/\d{3}/`   | 123, 456, 999...      |
-| Looking for words starting with "test" | `/test\w*/` | test, testing, tested |
-
----
-
-## Your First Pattern
-
-The examples below use the PHPRegex facade. If you have not installed it yet, see [Before You Start](README.md#before-you-start) — one `composer require` is enough. From here on, **every PHP block in this chapter assumes this import** at the top of your script:
+If you want to test quickly, you can use PHP's built-in engine:
 
 ```php
-use PHPRegex\Toolkit\Regex;
-```
+$text = 'The cat sat on the mat';
 
-### The Simplest Pattern: Literal Text
-
-```php
-$pattern = '/hello/';  // Match the word "hello"
-```
-
-The pattern `/hello/` will match:
-- Yes "**hello** world"
-- Yes "say **hello**"
-- No "HELLO" (case-sensitive by default)
-- No "hell" (missing "o")
-
-### Try It
-
-```php
-use PHPRegex\Toolkit\Regex;
-
-$regex = Regex::create();
-
-// Test a pattern
-$result = $regex->validate('/hello/');
-
-if ($result->isValid) {
-    echo "Pattern is valid!\n";
-
-    // See what it means
-    echo $regex->explain('/hello/') . "\n";
-}
-
-// Output:
-// Pattern is valid!
-// Regex matches
-//   'h'
-//   'e'
-//   'l'
-//   'l'
-//   'o'
-```
-
-The explanation walks the pattern piece by piece — here, five literal characters, one per line.
-
-### Using in PHP
-
-```php
-$pattern = '/hello/';
-$text = 'Hello world, hello PHP!';
-
-if (preg_match($pattern, $text)) {
-    echo "Found 'hello'!";
+if (preg_match('/cat/', $text)) {
+    echo "Found it!";
 }
 ```
 
-**But wait** — the match is case-sensitive: this finds the lower-case `hello`,
-not `Hello`. Let's make it match both.
+You don't need any extra library to follow this chapter. What matters is understanding the **pattern**, not the function.
 
 ---
 
-## Pattern Modifiers (Flags)
+## 3) Delimiters: Wrapping the Pattern
 
-Add flags after the closing `/` to change behavior:
+In PHP and PCRE, a regex pattern is almost always **wrapped by delimiters**. The delimiters tell PHP: "everything between these two characters is the pattern, everything after is a [modifier/flag](#5-case-and-flags)".
 
-### Common Flags
-
-| Flag | Name             | Effect                            |
-|------|------------------|-----------------------------------|
-| `i`  | Case-insensitive | `/hello/i` matches "HELLO"        |
-| `m`  | Multiline        | `^` and `$` match line boundaries |
-| `s`  | Dot-all          | `.` matches newlines              |
-| `u`  | Unicode          | Unicode support                   |
-| `x`  | Extended         | Ignore whitespace, allow comments |
-
-### Example: Case-Insensitive Match
+The most common delimiter is `/`:
 
 ```php
-$pattern = '/hello/i';
-
-preg_match($pattern, 'HELLO world');  // Match: yes
-preg_match($pattern, 'Hello PHP');    // Match: yes
-preg_match($pattern, 'heLLo');        // Match: yes
+/pattern/
 ```
 
-### Try It
+### Why delimiters exist
+
+Imagine your pattern needs to contain a `/` itself, like a URL. If you also used `/` as delimiter, it would be ambiguous. To avoid that, you can pick a different delimiter.
 
 ```php
-$regex = Regex::create();
-
-echo $regex->explain('/hello/i');
-// Output:
-// Regex matches (with flags: i)
-//   'h'
-//   'e'
-//   'l'
-//   'l'
-//   'o'
+// Using / as delimiter would conflict with the slashes inside
+#https://example.com#  // Using # instead
+~https://example.com~  // Using ~ instead
 ```
 
-The flags in use are announced on the first line — here the `i`.
+Both are perfectly valid.
+
+### Minimal rules
+
+- Delimiters must be **non-alphanumeric**, **not a backslash** `\`, and **not whitespace**.
+- The opening and closing delimiter are usually the same character.
+- You can also use paired delimiters like `()`, `[]`, `{}`, `<>` where the closing one matches its pair.
+
+For now, you only need to remember one thing: **the `/ ... /` you see around patterns are delimiters**. We'll go deeper only if needed later.
 
 ---
 
-## Delimiters: The / Characters
+## 4) Escaping Special Characters
 
-Every PHP regex pattern needs **delimiters** - characters that mark the beginning and end:
+Some characters have a **special meaning** in regex. If you want to match them **literally**, you need to escape them with a backslash `\`.
+
+### Start small: the dot `.`
+
+The dot `.` is special. By itself, it means: *"match any single character except a newline"*.
+
+```text
+Pattern: /c.t/
+Matches: "cat", "cot", "c t"
+Does not match: "ct", "coat"
+```
+
+Now, if you actually want to match a **literal dot** (like in `example.com`), you must escape it:
+
+```text
+Pattern: /example\.com/
+Matches: "example.com"
+Does not match: "exampleXcom"
+```
+
+Notice the difference: `.` vs `\.`. This is the most important first escape to learn.
+
+### Other characters you might see
+
+Later you'll run into characters like `^`, `$`, `*`, `+`, `?`, `(`, `)`, `[`, `]`, `{`, `}`, `|`, `\`. 
+
+- **Outside of [character classes](02-character-classes.md)**, many of them are special and need `\` to be matched literally.
+- **Inside [character classes](02-character-classes.md)**, the rules change slightly. We'll cover that at the right time.
+
+For now, **focus on `.` vs `\.`**. Don't try to memorize the entire list yet.
+
+---
+
+## 5) Case and Flags
+
+Sometimes you want to ignore case. You can add a **flag** after the closing delimiter.
+
+The most common one to know right now is `i` (case-insensitive):
 
 ```php
-// Standard: use / as delimiter
-'/pattern/'
-
-// When pattern contains /, use a different delimiter
-'#https?://#'   // Example match: http:// or https://
-'~email: \S+~'  // Example match: "email: something@something"
+preg_match('/cat/i', 'CAT'); // matches
+preg_match('/cat/i', 'Cat'); // matches
 ```
 
-### Valid Delimiters
+Other flags exist (`m`, `s`, `u`, `x`...), but we only introduce them when a chapter actually needs them. For now, `i` is more than enough.
 
-Any character that is **not alphanumeric, not a backslash and not whitespace** can serve as a delimiter. The most common choices:
+---
 
-```
-/ # ~ % , ; : ! ' " ( ) [ ] { } < > |
-```
+## 6) A Gentle Note on What's Next
 
-but `+ - . = @ * ?` and others work just as well.
+As you progress, you'll see terms like:
 
-**Rules:**
-- Delimiter cannot be alphanumeric
-- Delimiter cannot be a backslash `\`
-- Delimiter cannot be whitespace
-- Opening and closing delimiters are the same character — unless the opening one is a bracket pair `()`, `[]`, `{}` or `<>`, where the closing one is its match: `(pattern)` works, `(pattern]` does not
+- **[Anchors](03-anchors-boundaries.md)** (`^`, `$`) — match *positions*, not characters
+- **[Character classes](02-character-classes.md)** (`[abc]`, `\d`, `\w`) — match *one* character from a set
+- **[Quantifiers](04-quantifiers.md)** (`*`, `+`, `?`, `{n,m}`) — say *how many* times
+- **[Groups and alternation](05-groups-alternation.md)** (`(...)`, `|`) — group or choose between options
+
+**You don't need any of these to understand this chapter.** Whenever we touch them later, we'll explain them from scratch and link back here if useful.
+
+Also, notice the email example you might have seen elsewhere: a realistic email pattern combines anchors, character classes, a literal dot and quantifiers all at once. That's great for later, but it's **too much** for a first day. We'll build up to it step by step.
+
+---
+
+## 7) Exercises
+
+Do only what you've just learned. Don't reach for anything from future chapters.
+
+### Exercise 1: Literal matching
+Write a pattern that matches the word `hello` exactly as lowercase.
+
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-// Wrong: spaces cannot delimit — this is not a pattern
-preg_match(' hello ', 'hello');  // false ("Internal error")
-
-// Right: a real delimiter
-preg_match('/hello/', 'hello');  // 1
+'/hello/'
 ```
 
-### Example: URL Pattern
+</details>
+
+### Exercise 2: Case-insensitive
+Write a pattern that matches `hello`, `HELLO` or `Hello`.
+
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-// Problem: / appears in the pattern
-'/https://example.com/'
+'/hello/i'
+```
 
-// Solution: Use different delimiter
+</details>
+
+### Exercise 3: Literal dot
+Write a pattern that matches `file.txt` literally (not "file" followed by any character followed by "txt").
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+'/file\.txt/'
+```
+
+</details>
+
+### Exercise 4: Different delimiter
+Take the pattern `/https://example.com/` and rewrite it using `#` as the delimiter instead. Don't forget to escape the `.`
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
 '#https://example\.com#'
-// Note: We escape the . with \.
 ```
 
-### Try It
-
-```php
-$regex = Regex::create();
-
-echo $regex->explain('#https://example\.com#');
-// Output:
-// Regex matches
-//   'h'
-//   't'
-//   't'
-//   'p'
-//   's'
-//   ':'
-//   '/'
-//   '/'
-//   'e'
-//   'x'
-//   'a'
-//   'm'
-//   'p'
-//   'l'
-//   'e'
-//   '.'
-//   'c'
-//   'o'
-//   'm'
-```
-
-The escaped `\.` appears in the explanation as a plain `'.'` — it matched a literal dot, not "any character".
-
----
-
-## Escaping Special Characters
-
-Some characters have special meaning in regex. To match them literally, use `\`:
-
-### Special Characters (Must Escape)
-
-```
-. ^ $ * + ? ( ) [ ] { } | \
-```
-
-### Examples
-
-| Pattern | What It Matches                 |
-|---------|---------------------------------|
-| `/\./`  | A literal dot (`.`)             |
-| `/\$/`  | A literal dollar sign (`$`)     |
-| `/\[/`  | A literal opening bracket (`[`) |
-| `/\\/`  | A literal backslash (`\`)       |
-
-### Without Escaping (Special Meaning)
-
-| Pattern | Meaning                              |
-|---------|--------------------------------------|
-| `/./`   | **Any single character**             |
-| `/^/`   | Start of string                      |
-| `/$/`   | End of string                        |
-| `/a*/`  | Zero or more `a`s (the `*` quantifier) |
-
-The quantifiers need something to repeat: `a*` is "zero or more `a`s". The pattern `/*/` is not that — `\*` is the *escaped* form from the table above, a literal star.
-
-### Try It
-
-```php
-$regex = Regex::create();
-
-// Literal dot vs any character
-echo $regex->explain('/\./');
-// Output:
-// Regex matches
-//   '.'
-
-echo $regex->explain('/./');
-// Output:
-// Regex matches
-//   Wildcard: any character but a newline (\n)
-```
-
----
-
-## Your First Example
-
-### Validate an Email (Simple Version)
-
-```php
-use PHPRegex\Toolkit\Regex;
-
-$regex = Regex::create();
-
-// A simple email pattern
-$pattern = '/^[a-z]+@[a-z]+\.[a-z]+$/';
-
-$result = $regex->validate($pattern);
-
-if ($result->isValid) {
-    echo "Valid email pattern!\n";
-    echo "Explanation: " . $regex->explain($pattern) . "\n";
-} else {
-    echo "Error: " . $result->error . "\n";
-}
-```
-
-### What the Pattern Does
-
-Pattern components:
-- `/` delimiters
-- `^` start of string
-- `[a-z]+` one or more letters (local part)
-- `@` literal at sign
-- `[a-z]+` one or more letters (domain)
-- `\.` literal dot
-- `[a-z]+` one or more letters (TLD)
-- `$` end of string
-
----
-
-## Good Patterns vs Bad Patterns
-
-### Good: Clear and Specific
-
-```php
-// Match exactly "error" at the start of a line
-'/^error/'
-
-// Match email addresses (basic)
-'/^[a-z]+@[a-z]+\.[a-z]+$/'
-
-// Match phone numbers (US format)
-'/^\d{3}-\d{4}$/'
-```
-
-### Bad: Too Broad or Wrong
-
-```php
-// Too broad - matches almost anything
-'/.*/'
-
-// No anchors - matches partial emails
-'/[a-z]+@[a-z]+\.[a-z]+/'
-
-// Using [A-z] instead of [A-Za-z]
-# [A-z] includes characters between Z and a in ASCII!
-'/^[A-z]+$/'
-```
-
----
-
-## Exercises
-
-### Exercise 1: Basic Matching
-
-Create patterns that match:
-
-1. The word "PHP" (case-insensitive)
-2. Any 3-digit number
-3. A dollar amount like "$99.99"
-
-The last two need the character classes and quantifiers of chapters 2 and 4 —
-meet them there and come back, or read the solutions as a preview.
-
-```php
-// Solution 1
-$pattern1 = '/PHP/i';
-
-// Solution 2
-$pattern2 = '/\d{3}/';
-
-// Solution 3
-$pattern3 = '/\$\d+\.\d{2}/';
-```
-
-### Exercise 2: Validate Your Patterns
-
-```php
-$regex = Regex::create();
-
-$patterns = [
-    '/PHP/i',
-    '/\d{3}/',
-    '/\$\d+\.\d{2}/',
-];
-
-foreach ($patterns as $pattern) {
-    $result = $regex->validate($pattern);
-    echo "$pattern: " . ($result->isValid ? "Valid" : "Invalid") . "\n";
-}
-```
-
-### Exercise 3: Explain Your Patterns
-
-```php
-$regex = Regex::create();
-
-echo $regex->explain('/PHP/i');
-echo $regex->explain('/\d{3}/');
-echo $regex->explain('/\$\d+\.\d{2}/');
-```
+</details>
 
 ---
 
 ## Key Takeaways
 
-1. **Patterns** describe text you want to match
-2. **Delimiters** (`/`) mark the start and end
-3. **Flags** (`i`, `m`, etc.) modify behavior
-4. **Escape** special characters with `\` to match literally
-5. **Anchors** (`^` and `$`) control where matches occur
-6. **Use PHPRegex** to validate and explain your patterns!
+- A **pattern** describes text to look for.
+- **Literals** match themselves. By default it's **case-sensitive**.
+- Patterns in PHP/PCRE are wrapped by **delimiters** (`/`, `#`, `~`, ...).
+- Some characters are **special**. Use `\` to match them **literally** (start with `.` -> `\.`).
+- **Flags** like `i` change behaviour. Add them after the closing delimiter.
+- Learn one thing at a time. Concepts like anchors, classes and quantifiers will come in their own chapters with links between them.
 
 ---
 
-## Common Errors
+## Optional: Tools to Inspect Patterns
 
-### Error: Unknown regex flag(s) found: "a"
+If you ever want a second opinion on "what does this pattern actually mean?", there are tools that can explain it to you. These are **completely optional**. You can skip this section and come back to it later.
 
-```php
-// Wrong: 'a' after the closing / is read as a flag — and no such flag exists
-$result = $regex->validate('/hello/a');
-echo $result->error;
-// Output: Unknown regex flag(s) found: "a".
+### PHPRegex CLI
 
-// Right: Put real flags after the closing /
-$result = $regex->validate('/hello/i');
+```bash
+vendor/bin/regex explain '/cat/i'
+vendor/bin/regex diagram '/cat/i'
+vendor/bin/regex validate '/cat/i'
 ```
 
-### Error: Expected ) at end of input (found eof).
+### PHPRegex API
 
 ```php
-// Wrong: Unclosed parenthesis
-$result = $regex->validate('/(hello/');
-echo $result->error;
-// Output: Expected ) at end of input (found eof).
+use PHPRegex\Toolkit\Regex;
 
-// Right: Matching parentheses
-$result = $regex->validate('/(hello)/');
+$regex = Regex::create();
+
+// Validate
+$result = $regex->validate('/cat/i');
+
+// Explain
+echo $regex->explain('/cat/i');
 ```
+
+**You do not need these to learn regex.** They're here to help debug or visualize once you already understand the pattern you're looking at.
 
 ---
 
-## Recap
-
-You now understand:
-- What regex patterns are
-- How to write basic patterns
-- Flags and delimiters
-- Escaping special characters
-
-**Next:** [Chapter 2: Character Classes](02-character-classes.md)
+**Next:** [Chapter 2: Character Classes & Escapes](02-character-classes.md)
