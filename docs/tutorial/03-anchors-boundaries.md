@@ -1,361 +1,261 @@
 ---
 layout: tutorial
-description: "Control where matches occur with ^, $, \\A, \\z and word boundaries — including why $ also matches before a final newline, and when to prefer \\z."
+description: "Control where a match can happen with anchors (^, $, \A, \z) and word boundaries (\b)."
 ---
 
-# Chapter 3: Anchors and Boundaries
+# Chapter 3: Anchors & Boundaries
 
-> **Goal:** Control where your pattern matches using start/end markers and word boundaries.
-
----
-
-## What are Anchors?
-
-**Anchors** don't match characters - they match **positions** in the text. Think of them like **bookmarks** in a document:
-
-```
-Text: "hello world"
-
-Pattern: /^hello/
-         ^^
-         Anchors to the START of the string
-
-Pattern: /world$/
-              ^^
-              Anchors to the END of the string
-```
-
-### Real-World Analogy
-
-| Anchor | Analogy           | Matches                                               |
-|--------|-------------------|-------------------------------------------------------|
-| `^`    | Start of the line | Start of the string (or of any line, with `/m`)       |
-| `$`    | End of the line   | End of the string (or of any line, with `/m`)         |
-| `\b`   | Fence post        | Between word and non-word                             |
+> **Goal:** Match *positions* in a string, not characters.
 
 ---
 
-## Start and End Anchors
+## 1) Positions, not characters
 
-### The Caret - Start of String
+Most of what we've seen so far matches **characters**. 
 
-Matches the beginning of the input:
+**Anchors** are different. They don't consume any text, they just say: *"the match is only allowed at this position"*.
 
-```php
-// Does the string START with "error"?
-preg_match('/^error/i', 'Error occurred');     // Match: yes
-preg_match('/^error/i', 'File error occurred'); // Match: no (not at start)
-```
-
-### The Dollar Sign $ - End of String
-
-Matches the end of the input:
-
-```php
-// Does the string END with "error"?
-preg_match('/error$/i', 'File error');         // Match: yes
-preg_match('/error$/i', 'error in file');      // Match: no (not at end)
-```
-
-### Together: Exact Match
-
-Combine `^` and `$` to match the **entire** string:
-
-```php
-// Is the string EXACTLY "hello"?
-preg_match('/^hello$/', 'hello');    // Match: yes
-preg_match('/^hello$/', 'hello!');   // Match: no (has '!')
-preg_match('/^hello$/', 'say hello'); // Match: no (not exact)
-```
-
-### Anchor intuition
-
-Text: `"error occurred"`
-
-- `/^error/` matches because `error` starts at position 0.
-- `/error$/` does not match because `error` is not at the end.
-- `/^error$/` does not match because the string has extra characters.
+Think of them like bookmarks: start of string, end of string, or the edge between a word and something else.
 
 ---
 
-## Absolute Anchors
+## 2) Start and End: `^` and `$`
 
-### `\A` - Start of Subject (Always)
+### `^` — start of the string
 
-Unlike `^`, `\A` never matches at line boundaries (even with `/m` flag):
-
-```php
-// Multiline text
-$text = "line1\nline2\nline3";
-
-// ^ matches at start of ANY line with /m
-preg_match('/^line2/m', $text);  // Match: yes (line2 starts a line)
-
-// \A ONLY matches at the absolute start
-preg_match('/\Aline2/m', $text); // Match: no (the string starts with line1)
-```
-
-### `\z` - End of Subject (Always)
-
-Unlike `$`, `\z` only matches the absolute end:
+`^` matches the very beginning of the subject.
 
 ```php
-$text = "line1\nline2\nline3";
-
-// $ matches at end of ANY line with /m
-preg_match('/line3$/m', $text);  // Match: yes
-
-// \z ONLY matches at the absolute end
-preg_match('/line3\z/m', $text); // Match: yes
-preg_match('/line2\z/m', $text); // Match: no (not at absolute end)
+preg_match('/^cat/', 'cat food'); // matches
+preg_match('/^cat/', 'The cat');  // no match (not at start)
 ```
 
-### The Trailing-Newline Trap
+### `$` — end of the string
 
-Even **without** `/m`, `$` matches in one extra place: just before a single newline at the very end of the string.
+`$` matches the very end of the subject.
 
 ```php
-// The subject is "hello\n" — six characters
-preg_match('/^hello$/', "hello\n");  // Match: yes! ($ also matches before the final newline)
-preg_match('/^hello\z/', "hello\n"); // Match: no  (\z matches at the very end only)
+preg_match('/cat$/', 'The cat');  // matches
+preg_match('/cat$/', 'cat food'); // no match (not at end)
 ```
 
-If you validate user input with `/^...$/`, a trailing newline slips through. When "the whole input, exactly" is what you mean, `\A...\z` is the honest spelling. `\Z` sits between the two: like `$` without `/m`, it matches at the end of the string **or** before one final newline.
+### Matching the entire string
 
-### When to Use Absolute Anchors
+Combine `^` and `$` to require an **exact match** of the whole string.
 
-| Anchor | Use When                           |
-|--------|------------------------------------|
-| `^`    | You want `/m` to affect behavior   |
-| `$`    | You want `/m` to affect behavior   |
-| `\A`   | Always need start of entire string |
-| `\z`   | Always need end of entire string   |
+```php
+preg_match('/^cat$/', 'cat');      // matches
+preg_match('/^cat$/', 'cat food'); // no match
+preg_match('/^cat$/', 'The cat');  // no match
+```
+
+This is extremely useful for validation. If you want "this input must be exactly X", anchors are your friend.
 
 ---
 
-## Word Boundaries `\b`
+## 3) A Quick Word About Multiline
 
-A `\b` matches the **boundary between a word character** (`\w`) **and a non-word character** (`\W`):
+With the `m` ([multiline](01-basics.md#5-case-and-flags)) flag, `^` and `$` can also match at the start/end of **each line** instead of only the whole string.
 
 ```php
-// Match whole word "cat"
-preg_match('/\bcat\b/', 'category');    // Match: no (cat is part of word)
-preg_match('/\bcat\b/', 'the cat sat'); // Match: yes (standalone word)
-preg_match('/\bcat\b/', 'catastrophe'); // Match: no (starts word)
+$text = "cat\nbird";
+
+preg_match('/^cat/m', $text);  // matches (start of first line)
+preg_match('/^bird/m', $text); // matches (start of second line)
 ```
 
-### Word Boundary Examples
-
-| Pattern     | Text              | Match? | Why                      |
-|-------------|-------------------|--------|--------------------------|
-| `/\bcat\b/` | "the **cat** sat" | Yes      | Boundaries on both sides |
-| `/\bcat\b/` | "**cat**astrophe" | No      | No boundary after cat    |
-| `/\bcat\b/` | "wild**cat**"     | No      | No boundary before cat   |
-| `/\bcat/`   | "**cat**egory"    | Yes      | Boundary before cat      |
-| `/cat\b/`   | "wild**cat**"     | Yes      | Boundary after cat       |
-
-### Word boundary intuition
-
-`\b` matches the boundary between a word character (`[A-Za-z0-9_]`) and a non-word character. In `"the cat sat"`, the word "cat" is bounded by spaces, so `\bcat\b` matches.
+For now, just know this exists. We'll not rely on `m` in this chapter's exercises.
 
 ---
 
-## Combining Anchors with Other Patterns
+## 4) Absolute Anchors: `\A` and `\z`
 
-### Anchor Use Cases
+Sometimes you want to be strict and **ignore** the multiline behavior entirely.
 
-| Pattern            | Use Case                    |
-|--------------------|-----------------------------|
-| `/^[0-9]+$/`       | String is all digits        |
-| `/^error:/i`       | String starts with "error:" |
-| `/\.txt$/`         | String ends with ".txt"     |
-| `/\b\w+\b/`        | Whole words only            |
-| `/^\w+@\w+\.\w+$/` | Simple email format         |
-
-### Examples
+- `\A` — matches only the **absolute start** of the string
+- `\z` — matches only the **absolute end** of the string
 
 ```php
-// Check if string is a number
-preg_match('/^\d+$/', '12345');     // Match: yes
-preg_match('/^\d+$/', '123-45');    // Match: no (has hyphen)
+$text = "cat\nbird";
 
-// Validate file extension
-preg_match('/\.(jpg|png|gif)$/i', 'image.jpg');  // Match: yes
-preg_match('/\.(jpg|png|gif)$/i', 'image.doc');  // Match: no
-
-// Check for exact phrase
-preg_match('/^hello world$/', 'hello world');    // Match: yes
-preg_match('/^hello world$/', 'hello world!');   // Match: no
+preg_match('/\Acat/m', $text);  // matches (absolute start)
+preg_match('/\Abird/m', $text); // no match
+preg_match('/bird\z/m', $text); // matches (absolute end)
 ```
+
+### The trailing newline trap
+
+One subtle point: without `m`, `$` can match **just before a final newline**. `\z` never does this — it only matches at the very end with nothing after it.
+
+```php
+preg_match('/^cat$/', "cat\n"); // matches (before the final newline)
+preg_match('/^cat\z/', "cat\n"); // no match
+```
+
+If you truly mean "the entire input must be exactly this", `\A...\z` is the clearest and safest choice.
 
 ---
 
-## Good Patterns vs Bad Patterns
+## 5) Word Boundaries `\b`
 
-### Good: Properly Anchored
+A **word boundary** `\b` matches a position between a [word character](02-character-classes.md#5-shorthand-character-classes) (`\w`: letters, digits, underscore) and a **non-word character** (`\W`), or between a word character and the start/end of the string.
 
-```php
-// Match whole word
-'/\b\w+\b/'
+Crucially, `\b` matches **a position, not a space**. It won't add extra characters to your match.
 
-// Validate email format
-'/^[^\s@]+@[^\s@]+\.[^\s@]+$/'
-
-// Check file extension
-'/\.(?:txt|md|json)$/i'
-```
-
-### Bad: Missing Anchors
+### Matching whole words
 
 ```php
-// Without anchors, matches partial strings
-'/[a-z]+@[a-z]+\.[a-z]+/'  // Example match: "foo@bar.com" in "xyz foo@bar.com xyz"
-
-// With anchors, matches entire string
-'/^[a-z]+@[a-z]+\.[a-z]+$/'  // Only matches if ENTIRE string is an email
-
-// Forgetting \b allows partial word matches
-'/cat/'  // Example match: "cat" in "category"
-
-// With \b, matches whole words only
-'/\bcat\b/'  // Only matches "cat" as a standalone word
+preg_match('/\bcat\b/', 'the cat sat'); // matches "cat"
+preg_match('/\bcat\b/', 'category');    // no match (cat is part of the word)
+preg_match('/\bcat\b/', 'wildcat');     // no match
 ```
+
+### Seeing it differently
+
+| Pattern | Text | Match | Explanation |
+| --- | --- | --- | --- |
+| `/\bcat/` | `"category"` | yes | Boundary before `cat`, but no boundary after it |
+| `/cat\b/` | `"wildcat"` | yes | Boundary after `cat`, but no boundary before it |
+| `/\bcat\b/` | `"the cat"` | yes | Boundaries on both sides |
+
+You can also use `\B` for the **opposite**: a position where there is **no** word boundary (i.e. between two word characters, or two non-word characters).
+
+```php
+preg_match('/\Bcat\B/', 'concatenate'); // matches "cat" in the middle
+preg_match('/\Bcat\B/', 'the cat');     // no match
+```
+
+You won't need `\B` often as a beginner, but it's good to know it exists.
 
 ---
 
-## Exercises
+## 6) Putting It Together
 
-### Exercise 1: Identify Matches
+Anchors and boundaries become really practical when you mix them with [character classes](02-character-classes.md) and [quantifiers](04-quantifiers.md).
 
-For each pattern, determine if it matches the text:
-
-1. Pattern: `/^hello$/`, Text: "hello world"
-2. Pattern: `/hello$/`, Text: "say hello"
-3. Pattern: `/\bcat\b/`, Text: "the category"
-4. Pattern: `/^[0-9]+$/`, Text: "123abc"
+A few examples to get the idea:
 
 ```php
-// Answers:
-// 1. No - "hello world" is not exactly "hello"
-// 2. Yes - text ends with "hello"
-// 3. No - "category" has "cat" as part of a larger word
-// 4. No - "123abc" contains non-digits
+// Only digits
+preg_match('/^\d+$/', '12345'); // matches
+
+// Starts with "http://"
+preg_match('/^https?:\/\//', 'https://example.com'); // matches
+
+// Ends with ".txt"
+preg_match('/\.txt$/', 'readme.txt'); // matches
+
+// Whole word only
+preg_match('/\berror\b/', 'error: failed'); // matches
+preg_match('/\berror\b/', 'errorCode');     // no match
 ```
 
-### Exercise 2: Write Patterns
+Don't worry about `+` yet — we'll cover [quantifiers](04-quantifiers.md) in the next chapter.
 
-Write patterns that:
+---
 
-1. Match strings that start with "http://"
-2. Match strings that end with ".json"
-3. Match the word "test" as a whole word
-4. Match strings containing only letters and spaces
+## 7) Exercises
+
+Only use what you've learned in this chapter and the previous ones.
+
+### Exercise 1: Start of string
+Write a pattern that matches strings that **start with** `hello`.
+
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-// Solution 1
-$pattern1 = '/^http:\/\//';
-
-// Solution 2
-$pattern2 = '/\.json$/';
-
-// Solution 3
-$pattern3 = '/\btest\b/';
-
-// Solution 4
-$pattern4 = '/^[A-Za-z ]+$/';
+'/^hello/'
 ```
 
-### Exercise 3: Validate and Explain
+</details>
+
+### Exercise 2: End of string
+Write a pattern that matches strings that **end with** `.txt`.
+
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-use PHPRegex\Toolkit\Regex;
-
-$regex = Regex::create();
-
-$patterns = [
-    '/^error/',
-    '/error$/',
-    '/\bword\b/',
-    '/^\d{3}-\d{4}$/',
-];
-
-foreach ($patterns as $pattern) {
-    $result = $regex->validate($pattern);
-    echo "$pattern: " . ($result->isValid ? "Valid" : "Invalid") . "\n";
-    echo "  Explanation: " . $regex->explain($pattern) . "\n\n";
-}
+'/\.txt$/'
 ```
+
+</details>
+
+### Exercise 3: Exact match
+Write a pattern that matches **only** the exact string `PHP`.
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+'/^PHP$/'
+```
+
+</details>
+
+### Exercise 4: Whole word
+Write a pattern that matches the word `test` only when it's a **separate word**.
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+'/\btest\b/'
+```
+
+</details>
+
+### Exercise 5: Strict from start to end
+Write a pattern using `\A` and `\z` that matches **exactly** `cat`.
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+'/\Acat\z/'
+```
+
+</details>
 
 ---
 
 ## Key Takeaways
 
-1. **Anchors** `^`, `$`, `\A`, `\z` match positions, not characters
-2. **`^`** matches the start of the string (or of any line, with `/m`)
-3. **`$`** matches the end of the string (or of any line, with `/m`) — and, even alone, just before a final newline
-4. **`\A`** always matches the absolute start
-5. **`\z`** always matches the absolute end (`\Z`: end, or before a final newline)
-6. **`\b`** matches word boundaries (between `\w` and `\W`)
-7. **Combine anchors** `^` and `$` for exact matches
+- **Anchors** (`^`, `$`) match **positions**, not characters.
+- `^` = start of string, `$` = end of string.
+- Use `^...$` to match the **entire** string.
+- `\A` and `\z` are **always** absolute (ignore multiline).
+- `$` can match before a final newline. `\z` does not.
+- **Word boundaries** `\b` match the edge between `\w` and `\W`.
+- `\B` matches where there is **no** word boundary.
 
 ---
 
-## Common Errors
+## Common Pitfalls
 
-### Error: Forgetting Anchors in Validation
+- **Forgetting anchors in validation** — `/\d+/` will match digits *inside* a longer string. `/^\d+$/` requires the whole string to be digits.
+- **Mixing up `\b` and spaces** — `\b` doesn't match a space, it matches the *position* between space and word.
+- **Using `$` when you mean "end, no newline"** — in strict validation, consider `\z` over `$`.
 
-```php
-// Wrong: Partial match
-preg_match('/^[0-9]+$/', '123-456');  // Match: no (has hyphen)
-preg_match('/[0-9]+/', '123-456');    // Match: yes ("123")
+---
 
-// Correct: Anchors for validation
-preg_match('/^[0-9]+$/', '123456');   // Match: yes
+## Optional: Tools to Inspect Patterns
+
+If you'd like to see how anchors and boundaries are parsed, these optional tools can help:
+
+```bash
+vendor/bin/regex explain '/^\d+$/'
+vendor/bin/regex diagram '/\bcat\b/'
 ```
 
-### Error: `$` vs `\z`
-
 ```php
-$text = "line1\nline2\nline3";
+use PHPRegex\Toolkit\Regex;
 
-// $ matches the last line with /m
-preg_match('/line2$/m', $text);  // Match: yes (line2 is end of a line)
-
-// \z only matches the absolute end
-preg_match('/line2\z/m', $text); // Match: no (line2 is not at end)
-```
-
-The same trap without `/m`: a single newline at the end of the string.
-
-```php
-// $ matches before the final newline
-preg_match('/^hello$/', "hello\n");  // Match: yes
-
-// \z does not
-preg_match('/^hello\z/', "hello\n"); // Match: no
-```
-
-### Error: Word Boundary Confusion
-
-```php
-// Underscore IS a word character, and the string edge next to a
-// word character counts as a boundary: the whole "_hello_" matches
-preg_match('/\b_\w+_\b/', '_hello_');  // Match: yes (the whole "_hello_")
-
-// The flip side: \b cannot split "_" from "h", because no boundary
-// exists between two word characters
-preg_match('/\bhello\b/', '_hello_');  // Match: no (no boundary beside "hello")
+$regex = Regex::create();
+echo $regex->explain('/^hello$/');
 ```
 
 ---
 
-## Recap
-
-You now understand:
-- Start (`^`) and end (`$`) anchors
-- Absolute anchors (`\A`, `\z`)
-- Word boundaries (`\b`)
-- Combining anchors with patterns
-- Common pitfalls and fixes
-
-**Next:** [Chapter 4: Quantifiers and Greediness](04-quantifiers.md)
+**Next:** [Chapter 4: Quantifiers & Greediness](04-quantifiers.md)
