@@ -1,6 +1,7 @@
 # Dependencies
 /vendor/
 /tools/**/vendor/
+/build/smoke/vendor/
 /composer.lock
 
 # IDEs

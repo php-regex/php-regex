@@ -4,7 +4,7 @@ Question: can the parser ship as a PHP 7.4-compatible artifact (the model
 phpstan-src consumes through its downgraded better-reflection fork), produced
 mechanically and verified against the original?
 
-The generated tree lives in out/ (gitignored); everything here is the
+The generated tree lives in php74/ (gitignored); everything here is the
 toolchain that produces and verifies it.
 
 ## Regenerate
@@ -29,6 +29,9 @@ toolchain that produces and verifies it.
 
 ## Verify
 
+- Prerequisite: `composer install --working-dir build/smoke` once — the
+  polyfill autoload the twin digest loads. The twin workflow runs the same
+  install before its gates.
 - Lint: every file must `php -l` clean under `docker run php:7.4-cli`
   (197/197)
 - Function: `php build/smoke/digest.php vendor/autoload.php > 84.jsonl`
