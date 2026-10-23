@@ -968,6 +968,22 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'caseless' => ['pattern' => '/(foo)/i', 'group' => 1, 'values' => null];
         yield 'inline caseless' => ['pattern' => '/(?i)(foo)/', 'group' => 1, 'values' => null];
         yield 'unbounded' => ['pattern' => '/(a+)/', 'group' => 1, 'values' => null];
+        // A class the members of which are a small finite set reads as that set:
+        // preg_match('/([a-c])/', 'b') sets group 1 to 'b' (PHP 8.4.26, PCRE2 10.49).
+        yield 'class of members' => ['pattern' => '/([abc])/', 'group' => 1, 'values' => ['a', 'b', 'c']];
+        yield 'class with escapes' => ['pattern' => '/([\~,\.?])/', 'group' => 1, 'values' => ['~', ',', '.', '?']];
+        yield 'class of a range' => ['pattern' => '/([a-c])/', 'group' => 1, 'values' => ['a', 'b', 'c']];
+        yield 'class of a long range' => ['pattern' => '/([a-z])/', 'group' => 1, 'values' => ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']];
+        yield 'class past the limit' => ['pattern' => '/([a-zA-Z])/', 'group' => 1, 'values' => null];
+        yield 'class of a range past the limit' => ['pattern' => '/([A-a])/', 'group' => 1, 'values' => null];
+        yield 'negative class' => ['pattern' => '/([^a])/', 'group' => 1, 'values' => null];
+        yield 'class with a type' => ['pattern' => '/([a\d])/', 'group' => 1, 'values' => null];
+        yield 'class of an escape' => ['pattern' => '/([\x41])/', 'group' => 1, 'values' => ['A']];
+        yield 'class of a control escape' => ['pattern' => '/([\cA])/', 'group' => 1, 'values' => ["\x01"]];
+        // A surrogate is no character of the encoding: mb_chr leaves it
+        // unnamed and the class unread, rather than reading false as one.
+        yield 'class of a surrogate' => ['pattern' => '/([\x{D800}])/u', 'group' => 1, 'values' => null];
+        yield 'class of a range over a surrogate' => ['pattern' => '/([\x{D7FE}-\x{D801}])/u', 'group' => 1, 'values' => null];
         // A bounded repeat holds each count of its body: preg_match('/(a{1,3})/', 'aa') -> ['aa', 'aa'] (PHP 8.4.26).
         yield 'bounded repeat' => ['pattern' => '/(a{1,3})/', 'group' => 1, 'values' => ['a', 'aa', 'aaa']];
         yield 'bounded repeat from zero' => ['pattern' => '/(a{0,2})/', 'group' => 1, 'values' => ['', 'a', 'aa']];
