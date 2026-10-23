@@ -1,81 +1,81 @@
 name: php74 twin
 
 on:
-	push:
-		branches: [2.x]
-		paths:
-			- 'src/Parser/**'
-			- 'build/**'
-			- '.github/workflows/php74-twin.yml'
-	pull_request:
-		paths:
-			- 'src/Parser/**'
-			- 'build/**'
-			- '.github/workflows/php74-twin.yml'
-	workflow_dispatch:
+  push:
+    branches: [2.x]
+    paths:
+      - 'src/Parser/**'
+      - 'build/**'
+      - '.github/workflows/php74-twin.yml'
+  pull_request:
+    paths:
+      - 'src/Parser/**'
+      - 'build/**'
+      - '.github/workflows/php74-twin.yml'
+  workflow_dispatch:
 
 jobs:
-	twin:
-		name: generate and gate the PHP 7.4 twin
-		runs-on: ubuntu-latest
-		steps:
-			- uses: actions/checkout@v4
+  twin:
+    name: generate and gate the PHP 7.4 twin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-			- name: Install PHP 8.4 (toolchain)
-				uses: shivammathur/setup-php@v2
-				with:
-					php-version: '8.4'
-					coverage: none
+      - name: Install PHP 8.4 (toolchain)
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
 
-			- name: Install the toolchain
-				run: |
-					composer install --no-interaction --no-progress
-					composer install --no-interaction --no-progress --working-dir tools/rector
-					composer install --no-interaction --no-progress --working-dir tools/php-cs-fixer
+      - name: Install the toolchain
+        run: |
+          composer install --no-interaction --no-progress
+          composer install --no-interaction --no-progress --working-dir tools/rector
+          composer install --no-interaction --no-progress --working-dir tools/php-cs-fixer
 
-			- name: Generate the twin
-				run: bash build/generate.sh
+      - name: Generate the twin
+        run: bash build/generate.sh
 
-			- name: Reference digest under 8.4
-				run: php build/smoke/digest.php vendor/autoload.php > /tmp/reference-digest.jsonl
+      - name: Reference digest under 8.4
+        run: php build/smoke/digest.php vendor/autoload.php > /tmp/reference-digest.jsonl
 
-			- name: Install the twin's polyfills
-				run: composer install --no-interaction --no-progress --working-dir build/smoke
+      - name: Install the twin's polyfills
+        run: composer install --no-interaction --no-progress --working-dir build/smoke
 
-			- name: Install PHP 7.4 (gates)
-				uses: shivammathur/setup-php@v2
-				with:
-					php-version: '7.4'
-					coverage: none
+      - name: Install PHP 7.4 (gates)
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
 
-			- name: Lint and digest the twin under 7.4
-				run: bash build/verify-php74.sh /tmp/reference-digest.jsonl
+      - name: Lint and digest the twin under 7.4
+        run: bash build/verify-php74.sh /tmp/reference-digest.jsonl
 
-			- name: Install PHP 8.x (static analysis of the twin)
-				uses: shivammathur/setup-php@v2
-				with:
-					php-version: '8.4'
-					coverage: none
+      - name: Install PHP 8.x (static analysis of the twin)
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
 
-			- name: Install PHPStan
-				run: composer install --no-interaction --no-progress --working-dir tools/phpstan
+      - name: Install PHPStan
+        run: composer install --no-interaction --no-progress --working-dir tools/phpstan
 
-			- name: Analyze the twin
-				# census, not yet a gate: ~44 downgrade artifacts wait to be
-				# triaged into explicit ignores or fixes before this blocks
-				continue-on-error: true
-				run: tools/phpstan/vendor/bin/phpstan analyse build/php74 -c build/phpstan-php74.neon -a build/twin-autoload.php --no-progress
+      - name: Analyze the twin
+        # census, not yet a gate: ~44 downgrade artifacts wait to be
+        # triaged into explicit ignores or fixes before this blocks
+        continue-on-error: true
+        run: tools/phpstan/vendor/bin/phpstan analyse build/php74 -c build/phpstan-php74.neon -a build/twin-autoload.php --no-progress
 
-	# Release: the same gates, then publish the verified tree to the mirror
-	# repository php-regex/regex-parser-php74 under the triggering tag.
-	# Stays manual until the two documented lexer deltas are adjudicated and
-	# the mirror repository exists.
-	#
-	# release:
-	# 	name: publish the verified twin
-	# 	runs-on: ubuntu-latest
-	# 	if: startsWith(github.ref, 'refs/tags/')
-	# 	needs: twin
-	# 	steps:
-	# 		- ... regenerate, gate again, rewrite composer.json (name +
-	# 		  php ^7.4 || ^8.0 + symfony/polyfill-*), push to the mirror
+  # Release: the same gates, then publish the verified tree to the mirror
+  # repository php-regex/regex-parser-php74 under the triggering tag.
+  # Stays manual until the two documented lexer deltas are adjudicated and
+  # the mirror repository exists.
+  #
+  # release:
+  #   name: publish the verified twin
+  #   runs-on: ubuntu-latest
+  #   if: startsWith(github.ref, 'refs/tags/')
+  #   needs: twin
+  #   steps:
+  #     - ... regenerate, gate again, rewrite composer.json (name +
+  #       php ^7.4 || ^8.0 + symfony/polyfill-*), push to the mirror
