@@ -1,307 +1,238 @@
 ---
 layout: tutorial
-description: "Match context without consuming it: the four lookaround types, zero-width behavior, and PCRE's bounded-lookbehind rule with its per-PHP-version limits."
+description: "Match context without consuming it with lookaheads and lookbehinds — positive and negative."
 ---
 
-# Chapter 6: Lookarounds and Assertions
+# Chapter 6: Lookarounds & Assertions
 
-> **Goal:** Match based on what comes before or after, without including it in the match.
-
----
-
-## What are Lookarounds?
-
-**Lookarounds** check what's around a position without consuming it. They assert context rather than match text.
-
-Example:
-- Pattern: `/(?<=\$)\d+/`
-- `(?<=\$)` asserts that a `$` appears before the digits.
-- `\d+` matches the digits.
-- Match: `"100"` (the `$` is not included).
-
-### Real-World Analogy
-
-| Lookaround | Analogy                       | Example                       |
-|------------|-------------------------------|-------------------------------|
-| `(?=...)`  | "Make sure X is ahead"        | Drive if "gas station ahead"  |
-| `(?!...)`  | "Make sure X is NOT ahead"    | Go if "no construction ahead" |
-| `(?<=...)` | "Check rearview mirror for X" | Turn if "sign behind you"     |
-| `(?<!...)` | "Check X is NOT behind"       | Drive if "no car behind"      |
+> **Goal:** Check what's before or after a match, without including it in the result.
 
 ---
 
-## Types of Lookarounds
+## 1) What are Lookarounds?
 
-### 1. Lookahead: What's Ahead?
+A **lookaround** is a zero-width assertion. It doesn't match any characters, it just checks: *"Is there X before/after this position?"*
 
-#### Positive Lookahead `(?=...)`
+If the check passes, the engine continues. If not, it fails.
 
-Match only if **followed by** something:
+This is perfect when you want to **filter by context** without capturing the context itself.
+
+---
+
+## 2) Lookaheads: Check What's Ahead
+
+### Positive lookahead `(?=...)`
+
+Match only if what follows matches `...`
 
 ```php
-// Match digits followed by "USD"
-preg_match('/\d+(?=USD)/', '100USD', $matches);
-echo $matches[0];  // "100" (USD is not included!)
+preg_match('/\d+(?=USD)/', 'Price: 100USD', $matches);
+echo $matches[0]; // "100" (USD is not included)
+```
 
-// Match words followed by a number
+### Negative lookahead `(?!...)`
+
+Match only if what follows **does not** match `...`
+
+```php
+preg_match('/\d+(?!USD)/', 'Price: 100EUR', $matches);
+echo $matches[0]; // "100"
+
+preg_match('/\d+(?!USD)/', 'Price: 100USD', $matches); // no match
+```
+
+### Greedy + lookahead matters
+
+Remember [quantifiers](04-quantifiers.md) are greedy by default. The lookahead is checked at the position where the quantifier **stops**.
+
+```php
+// Greedy \w+ takes as much as it can
 preg_match('/\w+(?=\d)/', 'test123', $matches);
-echo $matches[0];  // "test12" — \w+ is greedy: it keeps the longest
-                   // prefix whose next character is still a digit
+echo $matches[0]; // "test12"
 
-// Lazy \w+? starts small instead — the shortest prefix followed by a digit
+// Lazy \w+? takes as little as possible
 preg_match('/\w+?(?=\d)/', 'test123', $matches);
-echo $matches[0];  // "test"
+echo $matches[0]; // "test"
 ```
 
-The greedy/lazy distinction matters here more than anywhere: the lookahead only checks the position where the previous part stopped.
+Both pass the lookahead — the difference is *where* they stop.
 
-#### Negative Lookahead `(?!...)`
+---
 
-Match only if **NOT followed by** something:
+## 3) Lookbehinds: Check What's Behind
+
+### Positive lookbehind `(?<=...)`
+
+Match only if what **precedes** matches `...`
 
 ```php
-// Match digits NOT followed by "USD"
-preg_match('/\d+(?!USD)/', '100EUR', $matches);
-echo $matches[0];  // "100"
-
-// Match words NOT followed by a number
-preg_match('/\w+(?!\d)/', 'test', $matches);
-echo $matches[0];  // "test" (test is not followed by digit)
+preg_match('/(?<=\$)\d+/', 'Total: $49', $matches);
+echo $matches[0]; // "49" ($ is not included)
 ```
 
-### 2. Lookbehind: What's Behind?
+### Negative lookbehind `(?<!...)`
 
-#### Positive Lookbehind `(?<=...)`
-
-Match only if **preceded by** something:
+Match only if what **precedes does not** match `...`
 
 ```php
-// Match "100" preceded by "$"
-preg_match('/(?<=\$)\d+/', 'price is $100', $matches);
-echo $matches[0];  // "100"
+preg_match('/(?<!\$)\d+/', 'Total: 49', $matches);
+echo $matches[0]; // "49"
 
-// Match words preceded by "@"
-preg_match('/(?<=@)\w+/', 'email: @username', $matches);
-echo $matches[0];  // "username"
-```
-
-#### Negative Lookbehind `(?<!...)`
-
-Match only if **NOT preceded by** something:
-
-```php
-// Match "100" NOT preceded by "$"
-preg_match('/(?<!\$)\d{3}/', 'cost: 100', $matches);
-echo $matches[0];  // "100"
+preg_match('/(?<!\$)\d+/', 'Total: $49', $matches); // no match
 ```
 
 ---
 
-## Lookaround Examples
+## 4) Practical Examples
 
-### Validate Without Matching
+### Get filename without extension
 
 ```php
-// Check password has digit ahead (without including it)
-preg_match('/.+(?=\d)/', 'password1', $matches);
-echo $matches[0];  // "password" (digit not included)
-
-// Extract the local part of an address: what precedes the @
-preg_match('/^[a-z]+(?=@)/', 'user@example', $matches);
-echo $matches[0];  // "user" (checks for @ ahead)
+preg_match('/^.+?(?=\.[a-z]+$)/i', 'document.pdf', $matches);
+echo $matches[0]; // "document"
 ```
 
-### Password Validation
+### Match word only if not followed by "ing"
 
 ```php
-// Password with at least one digit ahead (not included)
-$password = 'secure123';
-if (preg_match('/.{6,}(?=\d)/', $password)) {
-    echo "Valid: has digits ahead";
-}
-
-// Negative lookahead: no spaces
-if (!preg_match('/\s/', $password)) {
-    echo "Valid: no spaces";
-}
+preg_match('/\bwalk(?!ing)\b/', 'I walk to work', $matches);   // matches
+preg_match('/\bwalk(?!ing)\b/', 'I am walking', $matches);    // no match
 ```
 
-### File Extension Check
+### Simple password-like check
+
+You can chain lookaheads at the start to assert things exist, without consuming them:
 
 ```php
-// Match filename before extension
-preg_match('/^.+(?=\.(?:jpg|png|gif)$)/', 'image.jpg', $matches);
-echo $matches[0];  // "image" (extension not included)
+// Must be at least 8 chars and contain at least one digit
+$pattern = '/^(?=.*\d).{8,}$/';
+preg_match($pattern, 'abcdefg1', $matches); // matches
+preg_match($pattern, 'abcdefg',  $matches); // no match
+```
+
+Here `(?=.*\d)` scans ahead from the start to see if any digit exists. It doesn't add to the match, `.{8,}` does the actual consuming.
+
+---
+
+## 5) Lookbehind Constraints in PCRE
+
+This is important to know in PHP/PCRE:
+
+- **Fixed-length lookbehinds** are always fine: `(?<=\$)`, `(?<=abc)`, `(?<=\d{3})`
+- **Variable-length lookbehinds** must have a **known maximum length**. `(?<=a{1,3})` is allowed in modern PCRE2. `(?<=a+)` (unbounded) is **not** allowed.
+- Support for arbitrary variable-length lookbehinds depends on PCRE2 version. PHP ships with PCRE2, but older PHP versions may be stricter.
+
+If you're ever unsure, test with a fixed length, or restructure with a lookahead instead.
+
+```php
+// Unbounded — usually invalid
+preg_match('/(?<=a+)b/', 'aaab'); // may error
+
+// Bounded — safer
+preg_match('/(?<=a{1,5})b/', 'aaab'); // more likely to work
 ```
 
 ---
 
-## Important: Lookbehind Limitations
+## 6) Exercises
 
-In PCRE, lookbehind must have a **bounded maximum length**:
+Use chapters [1](01-basics.md)–[5](05-groups-alternation.md).
 
-```php
-// Invalid: Unbounded lookbehind (infinite possible)
-preg_match('/(?<=a+)b/', 'aaab');  // Error: unbounded lookbehind
+### Exercise 1: Price without symbol
+Match the number only from `$199` using a positive lookbehind.
 
-// Valid: Bounded lookbehind (max 3 characters)
-preg_match('/(?<=a{1,3})b/', 'aaab');  // Match: yes
-```
-
-A bounded but variable length such as `{1,3}` needs PCRE2 10.43, which PHP bundles from 8.4. On PHP 8.2 and 8.3,
-give each top-level branch a fixed length instead: `(?<=a|bc)` works everywhere, `(?<=(?:a|bc))` does not.
-
-### Variable-Length Lookbehind Detection
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-use PHPRegex\Toolkit\Regex;
-
-$regex = Regex::create(['runtime_pcre_validation' => true]);
-$result = $regex->validate('/(?<=a+)b/');
-
-if (!$result->isValid) {
-    echo $result->error;
-    // Output: "Lookbehind is unbounded. PCRE requires a bounded maximum length."
-}
+'/(?<=\$)\d+/'
 ```
 
----
+</details>
 
-## Good Patterns vs Bad Patterns
+### Exercise 2: File extension ahead
+Match `readme` only if it's followed by `.txt`.
 
-### Good: Proper Lookarounds
-
-```
-// Match word before period (period not included)
-/\w+(?=\.)/
-
-// Match number preceded by $ (dollar not included)
-/(?<=\$)\d+/
-
-// Validate without consuming
-'/^(?=.*[A-Z]).{8,}$/'  // At least 8 chars, has uppercase
-```
-
-### Bad: Invalid or Confusing
-
-```
-// Unbounded lookbehind (invalid in PCRE)
-/(?<=a+)b/
-
-// Using lookbehind when lookahead is clearer
-// Match "foo" after "bar" - lookbehind is harder
-/(?<=bar)foo/
-
-// Match "bar" before "foo" - lookahead is clearer
-/bar(?=foo)/
-```
-
----
-
-## Exercises
-
-### Exercise 1: Predict Matches
-
-For each pattern, what matches?
-
-1. `/\w+(?=\d)/` on "test123"
-2. `/(?<=\$)\d+/` on "price $50"
-3. `/\w+(?!\d)/` on "hello"
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-// Answers:
-// 1. "test12" (greedy \w+ keeps the longest prefix followed by a digit)
-// 2. "50" (digits preceded by $)
-// 3. "hello" (word not followed by digit)
+'/readme(?=\.txt)/'
 ```
 
-### Exercise 2: Write Patterns
+</details>
 
-Write patterns that:
+### Exercise 3: Not followed by comma
+Match `hello` only if it's **not** followed by a comma.
 
-1. Match "test" only if followed by "123"
-2. Match "end" only if preceded by "the "
-3. Match a word that's NOT followed by a number
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-// Solution 1
-$pattern1 = '/test(?=123)/';
-
-// Solution 2
-$pattern2 = '/(?<=the )end/';
-
-// Solution 3 — the \b boundaries matter: without them, the greedy \w+
-// backtracks into a shorter match and the lookahead never excludes anything
-$pattern3 = '/\b[a-z]+\b(?!\d)/i';
+'/hello(?!,)/'
 ```
 
-### Exercise 3: Validate Lookbehind
+</details>
+
+### Exercise 4: Not preceded by hash
+Match digits only if they're **not** preceded by `#`.
+
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-use PHPRegex\Toolkit\Regex;
-
-$regex = Regex::create(['runtime_pcre_validation' => true]);
-
-$pattern = '/(?<=\d{2,4})\w/';  // Bounded: 2 to 4 digits
-$result = $regex->validate($pattern);
-echo $pattern . ": " . ($result->isValid ? "Valid" : "Invalid") . "\n";
-
-$pattern = '/(?<=\d+)\w/';      // Unbounded
-$result = $regex->validate($pattern);
-echo $pattern . ": " . ($result->isValid ? "Valid" : "Invalid") . "\n";
+'/(?<!#)\d+/'
 ```
 
-The bounded `(?<=\d{2,4})` is the variable-length lookbehind the chapter warned
-about: PCRE2 10.43, which PHP bundles from 8.4. On PHP 8.2 and 8.3 the validator
-reports it invalid; only the fixed length `(?<=\d{3})` works everywhere.
+</details>
+
+### Exercise 5: Extract domain from email
+Extract just the domain from `user@example.com` using lookarounds (no capturing groups needed, just match the domain).
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+'/(?<=@)[^@]+/'
+```
+
+</details>
 
 ---
 
 ## Key Takeaways
 
-1. **Lookarounds** check context without matching
-2. **Lookahead** `(?=...)` checks what's ahead
-3. **Negative lookahead** `(?!...)` checks what's NOT ahead
-4. **Lookbehind** `(?<=...)` checks what's behind
-5. **Negative lookbehind** `(?<!...)` checks what's NOT behind
-6. Lookarounds are **zero-width** (don't consume characters)
-7. **PCRE requires bounded lookbehind** (max length)
+- **Lookaheads** `(?=...)` / `(?!...)` check ahead, **lookbehinds** `(?<=...)` / `(?<!...)` check behind
+- Lookarounds are **zero-width** — they don't consume characters
+- Use them to match **context without including context**
+- **Lookbehinds** must be bounded in PCRE
+- Combine with [groups](05-groups-alternation.md) and [quantifiers](04-quantifiers.md) for flexible checks
 
 ---
 
-## Common Errors
+## Common Pitfalls
 
-### Error: Variable-Length Lookbehind
+- **Forgetting zero-width** — `/(?=\d)\d/` matches a single digit; the lookahead doesn't "add" it
+- **Unbounded lookbehind** — avoid `+`, `*` inside lookbehind unless bounded
+- **Using lookbehind when lookahead reads better** — often `/X(?=Y)/` is clearer than trying to reverse things
+- **Greedy conflicts** — check the position where your quantified part actually stops
 
-`/(?<=a+)b/` fails to compile — see [Lookbehind Limitations](#important-lookbehind-limitations) above. In short: give the lookbehind a bounded maximum (`(?<=a{1,3})b`, needs PCRE2 10.43 / PHP 8.4+) or a fixed length (`(?<=a{3})b`, works on every PHP version).
+---
 
-### Error: Forgetting Lookaround is Zero-Width
+## Optional: Tools to Inspect Patterns
+
+```bash
+vendor/bin/regex explain '/(?<=\$)\d+/'
+vendor/bin/regex diagram '/^(?=.*\d).{8,}$/'
+```
 
 ```php
-// What gets matched?
-preg_match('/(?=\d)\d/', '5', $matches);
-echo $matches[0];  // "5" (same position checked twice!)
-```
+use PHPRegex\Toolkit\Regex;
 
-### Error: Using Lookbehind When Lookahead Is Better
-
-```
-// Checking if "foo" comes after "bar"
-// Unnatural: Lookbehind reads backward (matches "foo")
-/(?<=bar)foo/
-
-// Better: Lookahead reads forward (matches "bar")
-/bar(?=foo)/
+$regex = Regex::create();
+echo $regex->explain('/\d+(?=USD)/');
 ```
 
 ---
 
-## Recap
-
-You now understand:
-- All four lookaround types
-- Zero-width behavior
-- PCRE limitations
-- Common pitfalls and fixes
-
-**Next:** [Chapter 7: Backreferences and Recursion](07-backreferences-recursion.md)
+**Next:** [Chapter 7: Backreferences & Recursion](07-backreferences-recursion.md)
