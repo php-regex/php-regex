@@ -23,15 +23,6 @@ Match:   "cat"
 
 For now, think in the simplest terms: **a pattern matches characters in order**.
 
-<div class="regex-visual">
-<svg width="400" height="80" viewBox="0 0 400 80">
-  <text x="10" y="30" font-family="monospace" font-size="14" fill="var(--text)">Text: "The cat sat"</text>
-  <text x="10" y="55" font-family="monospace" font-size="14" fill="var(--accent)">Pattern: /cat/</text>
-  <rect x="130" y="38" width="30" height="18" fill="rgba(16, 185, 129, 0.3)" rx="3"/>
-  <text x="145" y="51" font-family="monospace" font-size="12" text-anchor="middle" fill="var(--text)">cat</text>
-</svg>
-</div>
-
 ---
 
 ## 2) Matching Literal Text
