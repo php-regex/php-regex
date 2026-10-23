@@ -372,3 +372,9 @@ validity, #4 capture shapes — all green on `NodeScopeResolverTest`
    the analysis drops constant unions for non-ASCII literals
    (`(£|€)` reads `non-falsy-string` instead of `'£'|'€'`), sound but
    coarser than it could be — case folding only touches ASCII there.
+4. The baseline engines the map guesses for unreleased minors (8.5, 8.6
+   both read 10.44) are a conjecture: check them against the php-src
+   branches once 8.5.0 nears, and move the map then.
+5. Publish the measurement: pattern reading ran ~99x faster than the Hoa
+   chain on the corpus (same machine, A/A) — put the numbers and the
+   method beside the series.
