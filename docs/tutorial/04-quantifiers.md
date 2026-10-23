@@ -1,389 +1,269 @@
 ---
 layout: tutorial
-description: "Control repetition with *, +, ?, {n,m}: greedy versus lazy matching, possessive quantifiers, and why nested quantifiers — not missing bounds — cause ReDoS."
+description: "Control repetition with *, +, ?, and {n,m} — and understand greedy vs lazy matching."
 ---
 
-# Chapter 4: Quantifiers and Greediness
+# Chapter 4: Quantifiers & Greediness
 
-> **Goal:** Control how many times a pattern should match using quantifiers like `*`, `+`, `?`, and `{n,m}`.
-
----
-
-## What are Quantifiers?
-
-**Quantifiers** specify **how many times** the previous element should match. Think of them like **quantity indicators** in English:
-
-| English           | Regex   | Meaning         |
-|-------------------|---------|-----------------|
-| "zero or more"    | `*`     | 0 to unlimited  |
-| "one or more"     | `+`     | 1 to unlimited  |
-| "optional"        | `?`     | 0 or 1          |
-| "exactly n"       | `{n}`   | Exactly n times |
-| "at least n"      | `{n,}`  | n or more       |
-| "between n and m" | `{n,m}` | n to m times    |
-
-### Real-World Analogy
-
-```
-You need to order pizza for a group:
-
-Pattern: /pizza+/
-         "pizz" + "a" one or more times
-
-Options:
-  pizza    Match: yes (1 a)
-  pizzza   Match: yes (3 a's)
-  pizz     Match: no (need at least 1 a)
-
-Pattern: /chips{0,2}/
-         "chip" + "s" 0 to 2 times
-
-Options:
-  chip     Match: yes (0 s)
-  chips    Match: yes (1 s)
-  chipss   Match: yes (2 s)
-  chipsss  Match: no (too many s)
-```
+> **Goal:** Say *how many times* something should match.
 
 ---
 
-## Basic Quantifiers
+## 1) What are Quantifiers?
 
-### * - Zero or More
+A **quantifier** applies to the element right before it. It tells the engine: *"match this thing this many times"*.
 
-Matches 0 or more occurrences:
+We've already seen them in passing, now we'll look at them properly.
+
+| Quantifier | Meaning | Example |
+|------------|---------|---------|
+| `*` | Zero or more | `a*` matches "", "a", "aa", ... |
+| `+` | One or more | `a+` matches "a", "aa", ... (at least one) |
+| `?` | Zero or one | `a?` matches "" or "a" (optional) |
+| `{n}` | Exactly `n` | `a{3}` matches "aaa" |
+| `{n,}` | At least `n` | `a{2,}` matches "aa", "aaa", ... |
+| `{n,m}` | Between `n` and `m` | `a{2,4}` matches "aa", "aaa", "aaaa" |
+
+They work on a single character, a [character class](02-character-classes.md), or a [group](05-groups-alternation.md) (we'll see groups next chapter).
+
+---
+
+## 2) The Basics
+
+### `*` — zero or more
 
 ```php
-// "a" followed by zero or more "b"s
-preg_match('/ab*/', 'a');      // Match: yes (0 b's)
-preg_match('/ab*/', 'ab');     // Match: yes (1 b)
-preg_match('/ab*/', 'abbb');   // Match: yes (3 b's)
+preg_match('/ab*/', 'a');    // matches "a" (zero 'b's)
+preg_match('/ab*/', 'ab');   // matches "ab"
+preg_match('/ab*/', 'abbb'); // matches "abbb"
 ```
 
-### + - One or More
-
-Matches 1 or more occurrences:
+### `+` — one or more
 
 ```php
-// "a" followed by one or more "b"s
-preg_match('/ab+/', 'a');      // Match: no (need at least 1 b)
-preg_match('/ab+/', 'ab');     // Match: yes (1 b)
-preg_match('/ab+/', 'abbb');   // Match: yes (3 b's)
+preg_match('/ab+/', 'a');    // no match (needs at least one 'b')
+preg_match('/ab+/', 'ab');   // matches "ab"
+preg_match('/ab+/', 'abbb'); // matches "abbb"
 ```
 
-### ? - Zero or One (Optional)
-
-Matches 0 or 1 occurrence (makes something optional):
+### `?` — zero or one (optional)
 
 ```php
-// "a" followed by optional "b"
-preg_match('/ab?/', 'a');      // Match: yes (0 b)
-preg_match('/ab?/', 'ab');     // Match: yes (1 b)
-preg_match('/ab?/', 'abb');    // Match: yes ("ab", only 1 b)
+preg_match('/ab?/', 'a');   // matches "a"
+preg_match('/ab?/', 'ab');  // matches "ab"
+preg_match('/ab?/', 'abb'); // matches "ab" (only takes one 'b')
 ```
 
-### Examples with "abbb"
+### Combining with character classes
 
-- `/ab*/` matches `"abbb"` (a followed by zero or more b).
-- `/ab+/` matches `"abbb"` (a followed by one or more b).
-- `/ab?/` matches `"ab"` (a followed by an optional b).
-
----
-
-## Exact Quantifiers with Braces
-
-Use `{}` for precise control:
-
-| Pattern | Meaning          | Example Matches                  |
-|---------|------------------|----------------------------------|
-| `{n}`   | Exactly n times  | `a{3}` -> "aaa"                   |
-| `{n,}`  | At least n times | `a{2,}` -> "aa", "aaa", "aaaa"... |
-| `{n,m}` | Between n and m  | `a{2,4}` -> "aa", "aaa", "aaaa"   |
-
-### Examples
+This is where quantifiers become really useful.
 
 ```php
-// Exactly 3 digits
-preg_match('/\d{3}/', '123');      // Match: yes
-preg_match('/\d{3}/', '12');       // Match: no (only 2)
-preg_match('/\d{3}/', '1234');     // Match: yes ("123", first 3)
-
-// At least 2 digits
-preg_match('/\d{2,}/', '123');     // Match: yes
-preg_match('/\d{2,}/', '1');       // Match: no (only 1)
-
-// Between 2 and 4 digits
-preg_match('/\d{2,4}/', '123');    // Match: yes
-preg_match('/\d{2,4}/', '12345');  // Match: yes ("1234", first 4)
+preg_match('/\d+/', 'Order 123');      // matches "123"
+preg_match('/[a-z]+/', 'Hello World'); // matches "ello"
+preg_match('/\s*/', 'abc');            // matches "" (zero spaces)
 ```
 
 ---
 
-## Greediness: The Default Behavior
+## 3) Exact Ranges with `{}`
 
-By default, quantifiers are **greedy** - they match as many characters as possible:
+When you need precision, use curly braces.
 
 ```php
-$text = "12345";
-
-preg_match('/\d+/', $text, $matches);
-echo $matches[0];  // Output: "12345" (ALL digits!)
+preg_match('/\d{3}/', '123');     // matches "123"
+preg_match('/\d{3}/', '12');      // no match
+preg_match('/\d{3}/', '12345');   // matches "123" (first 3)
+preg_match('/\d{2,4}/', '12345'); // matches "1234" (up to 4)
+preg_match('/\d{2,}/', '1');      // no match (needs at least 2)
+preg_match('/\d{2,}/', '123');    // matches "123"
 ```
 
-### How Greedy Matching Works
-
-Text: `"<p>hello</p>"`
-
-- Pattern: `/<.+>/`
-- `<` is literal.
-- `.` matches any character.
-- `+` repeats one or more times.
-- Greedy matching consumes the longest possible span, so the match is `"<p>hello</p>"`.
-
-### What Happens When Greedy Fails: Backtracking
-
-Greedy does not mean stubborn. If the rest of the pattern fails after a greedy quantifier has eaten too much, the engine gives characters back — one at a time, right to left — and retries. This "giving back" is called **backtracking**, and it is the engine's normal way of working: with `/<.+>/` on `"<p>a</p>"`, the `.+` first eats `p>a</p`, then gives characters back until `>` can match. Lazy quantifiers simply start small and grow, instead of starting big and shrinking.
-
-Backtracking becomes a security problem only when a failing input leaves the engine exponentially many ways to split the text — that is [ReDoS](../guides/redos.md) (Regular Expression Denial of Service), the subject of [Chapter 8](08-performance-redos.md).
+A common example: a 3-digit code: `/^\d{3}$/` with [anchors](03-anchors-boundaries.md) to match the whole string.
 
 ---
 
-## Lazy (Non-Greedy) Matching
+## 4) Greedy by Default
 
-Add `?` after a quantifier to make it **lazy** - match as few characters as possible:
+By default, quantifiers are **greedy**. That means: *"take as much as possible while still allowing the rest of the pattern to match"*.
 
 ```php
 $text = "<p>hello</p>";
 
-// Greedy: matches as much as possible
 preg_match('/<.+>/', $text, $matches);
-echo $matches[0];  // Output: "<p>hello</p>"
+echo $matches[0]; // Output: "<p>hello</p>"
+```
 
-// Lazy: matches as little as possible
+The `.+` could stop earlier, but greedy makes it go all the way to the last `>`.
+
+### How does it actually work?
+
+The engine tries to match greedily first. If later parts of the pattern fail, it **backtracks**: it gives back one character at a time and tries again.
+
+This is normal behaviour. Backtracking only becomes problematic in very specific cases with nested quantifiers — we'll touch on that briefly at the end and go deeper in [Chapter 8](08-performance-redos.md).
+
+---
+
+## 5) Lazy (Non-Greedy) Matching
+
+To make a quantifier **lazy**, add `?` after it: `*?`, `+?`, `??`, `{n,m}?`
+
+A lazy quantifier does the opposite: *"take as little as possible"*.
+
+```php
+$text = "<p>hello</p>";
+
 preg_match('/<.+?>/', $text, $matches);
-echo $matches[0];  // Output: "<p>" (first tag only)
+echo $matches[0]; // Output: "<p>"
 ```
 
-### Greedy vs Lazy Comparison
-
-| Pattern   | Text       | Match      | Why                                    |
-|-----------|------------|------------|----------------------------------------|
-| `/.+/`    | "abc"      | "abc"      | Greedy: all characters                 |
-| `/.+?/`   | "abc"      | "a"        | Lazy: one character is enough          |
-| `/<.+>/`  | "<p>x</p>" | "<p>x</p>" | Greedy: everything                     |
-| `/<.+?>/` | "<p>x</p>" | "<p>"      | Lazy: stops at first `>`               |
-
-### When to Use Lazy
+### Greedy vs Lazy side by side
 
 ```php
-// Extract content between tags (lazy)
-preg_match('/<p>(.+?)<\/p>/', '<p>hello</p><p>world</p>', $matches);
-echo $matches[1];  // Output: "hello" (first paragraph only)
+$text = "<div>test</div>";
 
-// Get all paragraphs (need preg_match_all)
-preg_match_all('/<p>(.+?)<\/p>/', '<p>hello</p><p>world</p>', $matches);
-print_r($matches[1]);
-// Output:
-// Array
-// (
-//     [0] => hello
-//     [1] => world
-// )
+preg_match('/<.+>/',  $text, $m1);  // greedy
+preg_match('/<.+?>/', $text, $m2);  // lazy
+
+echo $m1[0]; // <div>test</div>
+echo $m2[0]; // <div>
+```
+
+### Extracting content between tags
+
+To get just the inside of the first tag, lazy is perfect:
+
+```php
+$text = "<p>hello</p><p>world</p>";
+
+preg_match('/<p>(.+?)<\/p>/', $text, $matches);
+echo $matches[1]; // "hello"
+```
+
+If you want **all** matches, use `preg_match_all()`.
+
+```php
+preg_match_all('/<p>(.+?)<\/p>/', $text, $matches);
+print_r($matches[1]); // ["hello", "world"]
 ```
 
 ---
 
-## Possessive Quantifiers (Performance)
+## 6) A Note on Possessive Quantifiers
 
-Add `++`, `*+`, `?+` to forbid backtracking (a first line of defense against [ReDoS](../guides/redos.md)):
+You might see `++`, `*+`, `?+`. These are **possessive** quantifiers: they never give back characters if something goes wrong. They can help in specific performance cases, but they're not something you need to reach for on day one.
 
-```php
-// Regular quantifier (can backtrack)
-preg_match('/a+b/', 'aaab');  // Match: yes
-
-// Possessive (never backtracks - faster when it matches)
-preg_match('/a++b/', 'aaab');  // Match: yes (no backtracking)
-```
-
-A possessive quantifier keeps every character it has matched — on failure it does not give anything back. `a+b` is perfectly safe here (a single linear quantifier); possessive matters when a quantifier sits inside another one, as in Chapter 8.
-
-### When to Use Possessive
-
-| Scenario            | Pattern    | Benefit         |
-|---------------------|------------|-----------------|
-| Match possessive    | `/a++b/`   | No backtracking |
-| Character class     | `/[ab]++/` | Faster matching |
-| Optional possessive | `/a?+b/`   | Prevent ReDoS   |
+For now, just know they exist. We'll cover when they matter in [Chapter 8: Performance & ReDoS](08-performance-redos.md).
 
 ---
 
-## Good Patterns vs Bad Patterns
+## 7) Exercises
 
-### Good: Specific and Safe
+Use only what you've learned so far ([Chapters 1-3](01-basics.md)).
 
-```php
-// Match 1-3 digits
-'/\d{1,3}/'
+### Exercise 1: Zero or more
+Write a pattern that matches `go`, `goo`, `gooo`, etc. using `*`.
 
-// Match word with optional plural
-'/\w+s?/'
-
-// Match HTML tags (lazy)
-'/<[^>]+>/'
-
-// Match with possessive (performance)
-'/[a-z]++/'
-```
-
-### Bad: Too Vague or Dangerous
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-// Too greedy - matches too much
-'/.*/'
-
-// Nested quantifiers - ReDoS risk!
-'/(a+)+$/'
+'/go*/'
 ```
 
-What about "unbounded" quantifiers like `/x{1,}/` on user input? A **single** quantifier is linear, bound or not — `/x{1,}/` is no more dangerous than `/x{1,100}/`. The danger above comes from the **nesting**, where the engine can split the input between two quantifiers in exponentially many ways.
+</details>
 
----
+### Exercise 2: One or more
+Write a pattern using `\d+` that matches one or more digits.
 
-## Exercises
-
-### Exercise 1: Identify Matches
-
-For each pattern, what does it match?
-
-1. `/a*/` on "aaa"
-2. `/a+/` on "aaa"
-3. `/a?/` on "aaa"
-4. `/a{2,3}/` on "aaaa"
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-// Answers:
-// 1. "aaa" (zero or more a's = all a's)
-// 2. "aaa" (one or more a's = all a's)
-// 3. "a" (zero or one a = first a only)
-// 4. "aaa" (2-3 a's = first 3 a's)
+'/\d+/'
 ```
 
-### Exercise 2: Write Patterns
+</details>
 
-Write patterns that match:
+### Exercise 3: Optional letter
+Write a pattern that matches `color` or `colour` (the `u` is optional).
 
-1. One or more digits
-2. 10-digit phone number
-3. Optional file extension
-4. HTML tag content (lazy)
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-// Solution 1
-$pattern1 = '/\d+/';
-
-// Solution 2
-$pattern2 = '/\d{10}/';
-
-// Solution 3 — the ? group makes the extension optional, and the dot
-// lives only inside that group, so a trailing dot is refused
-$pattern3 = '/^[\w-]+(\.[a-z]+)?$/i';
-// "file"     => Match: yes
-// "file.txt" => Match: yes
-// "file."    => Match: no
-
-// Not an answer: /\.[a-z]+/i — nothing optional about it; it matches
-// ".xxx" anywhere in any string
-
-// Solution 4
-$pattern4 = '/>(.+?)</';
+'/colou?r/'
 ```
 
-### Exercise 3: Test Greedy vs Lazy
+</details>
+
+### Exercise 4: Exact count
+Write a pattern that matches exactly 4 digits.
+
+<details markdown="1">
+<summary>Solution</summary>
 
 ```php
-$text = "<div>hello</div>";
-
-preg_match('/<.+>/', $text, $m);
-echo "Greedy: " . $m[0] . "\n";
-
-preg_match('/<.+?>/', $text, $m);
-echo "Lazy: " . $m[0] . "\n";
+'/\d{4}/'
 ```
+
+</details>
+
+### Exercise 5: Greedy vs lazy
+Given `<b>bold</b>`, write two patterns:
+1. A greedy one that matches the whole thing
+2. A lazy one that matches only `<b>`
+
+<details markdown="1">
+<summary>Solution</summary>
+
+```php
+// 1) Greedy
+'/<.+>/' 
+
+// 2) Lazy
+'/<.+?>/'
+```
+
+</details>
 
 ---
 
 ## Key Takeaways
 
-1. **Quantifiers** control repetition: `*`, `+`, `?`, `{n,m}`
-2. **`*`** = 0 or more (zero or more)
-3. **`+`** = 1 or more (at least one)
-4. **`?`** = 0 or 1 (optional)
-5. **`{n,m}`** = exact range
-6. **Greedy** = matches maximum (default)
-7. **Lazy** = matches minimum (add `?`)
-8. **Backtracking** = how the engine retries by giving characters back
-9. **Possessive** = no backtracking (add `++`, `*+`, `?+`)
+- **Quantifiers** control how many times to repeat: `*`, `+`, `?`, `{n,m}`
+- `*` = 0 or more, `+` = 1 or more, `?` = 0 or 1
+- Use `{n}`, `{n,}`, `{n,m}` for precise counts
+- **Greedy** (default) = match as much as possible
+- **Lazy** (`?` after quantifier) = match as little as possible
+- Mix with [character classes](02-character-classes.md) and [anchors](03-anchors-boundaries.md) for powerful patterns
 
 ---
 
-## Common Errors
+## Common Pitfalls
 
-### Error: Forgetting Quantifier Defaults to Greedy
+- **Forgetting `+` needs at least one** — `/\d+/` won't match an empty string
+- **Greedy going too far** — use lazy `+?`/`*?` when you want the *first* match between delimiters
+- **Not anchoring when validating** — `/\d+/` finds digits anywhere. If you want *only* digits, use `/^\d+$/`
 
-```php
-$text = "123 456 789";
+---
 
-// Greedy by default: each \d+ takes a whole run of digits
-preg_match('/\d+\s+\d+/', $text, $m);
-echo $m[0];  // "123 456" (two full runs - the match ends once the pattern is satisfied)
+## Optional: Tools to Inspect Patterns
 
-// Lazy: each quantifier stops as soon as it can
-preg_match('/\d+?\s+\d+?/', $text, $m);
-echo $m[0];  // "123 4" (the trailing \d+? stops after one digit)
-```
-
-### Error: Nested Quantifiers (ReDoS Risk)
-
-```php
-// Dangerous: Can cause exponential backtracking
-'/(a+)+$/'  // DO NOT USE!
-
-// Safe: Use possessive quantifiers
-'/(a++)+$/'   // Better
-'/a+$/'       // Even better - simplify!
-```
-
-### Error: Thinking a Bound Fixes Nesting
-
-```php
-// Dangerous: nested quantifiers, exponential backtracking
-'/(a+)+$/'
-
-// Just as dangerous: the outer {1,100} does not cap the number of
-// ways to split the input between the two quantifiers
-'/(a+){1,100}$/'
-
-// Safe: one quantifier (linear), or an inner quantifier that cannot backtrack
-'/a+$/'
-'/(a++)+$/'
-'/(?>a+)+$/'
-```
-
-An upper bound like `{1,100}` is still useful — it limits what a match may consume, a sane length policy — but it is **not** a security fix. The risk comes from the nesting, and only removing the nesting or locking the inner quantifier removes it. PHPRegex confirms the verdicts above — run each through the analyzer to see for yourself:
+If you'd like to visualize greedy vs lazy behavior, these tools are optional:
 
 ```bash
-vendor/bin/regex analyze '/(a+)+$/'
-vendor/bin/regex analyze '/(a+){1,100}$/'
+vendor/bin/regex explain '/<.+?>/'
+vendor/bin/regex diagram '/\d{2,4}/'
+```
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+$regex = Regex::create();
+echo $regex->explain('/a+?/');
 ```
 
 ---
 
-## Recap
-
-You now understand:
-- All quantifier types (`*`, `+`, `?`, `{n,m}`)
-- Greedy vs lazy matching
-- Backtracking and possessive quantifiers
-- Common pitfalls and fixes
-
-**Next:** [Chapter 5: Groups and Alternation](05-groups-alternation.md)
+**Next:** [Chapter 5: Groups & Alternation](05-groups-alternation.md)
