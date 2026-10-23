@@ -1023,6 +1023,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'a boundary branch before a zero-width prefix and a word' => ['pattern' => '/\b|^foo/', 'group' => 0, 'values' => ['']];
         yield 'a boundary branch before a grouped word' => ['pattern' => '/\b|(?:foo)/', 'group' => 0, 'values' => ['']];
         yield 'a boundary branch before a class keeps both' => ['pattern' => '/\b|\d+x/', 'group' => 0, 'values' => null];
+        yield 'a boundary branch before an all-zero-width branch' => ['pattern' => '/\b|(?=x)$/', 'group' => 0, 'values' => ['']];
     }
 
     /**
