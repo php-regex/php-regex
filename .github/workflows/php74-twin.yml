@@ -19,10 +19,10 @@ jobs:
     name: generate and gate the PHP 7.4 twin
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install PHP 8.4 (toolchain)
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@\eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.4'
           coverage: none
@@ -43,7 +43,7 @@ jobs:
         run: composer install --no-interaction --no-progress --working-dir build/smoke
 
       - name: Install PHP 7.4 (gates)
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@\eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '7.4'
           coverage: none
@@ -52,7 +52,7 @@ jobs:
         run: bash build/verify-php74.sh /tmp/reference-digest.jsonl
 
       - name: Install PHP 8.x (static analysis of the twin)
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@\eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.4'
           coverage: none
