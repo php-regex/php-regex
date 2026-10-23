@@ -18,7 +18,7 @@ declare(strict_types=1);
  * @return array{version: string, digests: array<string, string>}
  */
 return [
-    'version' => '3',
+    'version' => '4',
     'digests' => [
         '/(a)(z)?/' => 'fceffee5528c62d919aa50fe9f9a0e4f57b34252',
         '/(z)?(a)/' => 'dad1b8133f483a94938631586006071bd8a02a22',
@@ -214,7 +214,7 @@ u/x' => '88ca49fb2d88671cedd9fb2488d7a05b788f3e92',
         '/(?r)(k)/iu' => 'fc5c68ab9c356f0dc0c318b6ddb3ebbfc3c015ad',
         '/(s)/iu' => 'fc5c68ab9c356f0dc0c318b6ddb3ebbfc3c015ad',
         '/(é)/iu' => 'fc5c68ab9c356f0dc0c318b6ddb3ebbfc3c015ad',
-        '/(é)/i' => 'fc5c68ab9c356f0dc0c318b6ddb3ebbfc3c015ad',
+        '/(é)/i' => 'e2266fe0424cf39db1b85863958a2c2c15dd5231',
         '/(*UTF)(é)/i' => 'fc5c68ab9c356f0dc0c318b6ddb3ebbfc3c015ad',
         '/(?i)(ǅ)/u' => 'fc5c68ab9c356f0dc0c318b6ddb3ebbfc3c015ad',
         '/([a-z]+)/i' => 'fc5c68ab9c356f0dc0c318b6ddb3ebbfc3c015ad',

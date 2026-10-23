@@ -50,7 +50,7 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '3';
+    public const ANALYSIS_VERSION = '4';
 
     private const MAX_CASES = 16;
 

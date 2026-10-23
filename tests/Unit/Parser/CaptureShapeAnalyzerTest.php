@@ -967,6 +967,13 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'class' => ['pattern' => '/(\d)/', 'group' => 1, 'values' => null];
         yield 'caseless' => ['pattern' => '/(foo)/i', 'group' => 1, 'values' => null];
         yield 'inline caseless' => ['pattern' => '/(?i)(foo)/', 'group' => 1, 'values' => null];
+        // Under /i the engine folds ASCII letters only — preg_match('/(é)/i', 'É') is 0 —
+        // so a literal free of them keeps its values — preg_match('/(£|€)/i', '£') and
+        // preg_match('/(£|€)/i', '€') match as spelled — while one ASCII letter folds:
+        // preg_match('/(ab£)/i', 'AB£') matches (PHP 8.4.27, PCRE2 10.49).
+        yield 'caseless, letters past ASCII' => ['pattern' => '/(£|€)/i', 'group' => 1, 'values' => ['£', '€']];
+        yield 'caseless, one character past ASCII' => ['pattern' => '/(é)/i', 'group' => 1, 'values' => ['é']];
+        yield 'caseless, one ASCII letter' => ['pattern' => '/(ab£)/i', 'group' => 1, 'values' => null];
         yield 'unbounded' => ['pattern' => '/(a+)/', 'group' => 1, 'values' => null];
         // A class the members of which are a small finite set reads as that set:
         // preg_match('/([a-c])/', 'b') sets group 1 to 'b' (PHP 8.4.26, PCRE2 10.49).
