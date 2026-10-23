@@ -360,12 +360,9 @@ maintainer opens those): #1 seam, #2 walkers (merged), #3 target
 validity, #4 capture shapes — all green on `NodeScopeResolverTest`
 1879/1879. What the series still owes:
 
-1. The next piece of #1 (the series travels as one pull request until
-   the maintainer asks for the split): `RegularExpressionPatternRule`
-   judging the pattern for the analysed PHP and its engine rather than
-   the running one; the trailing `J` modifier accepted now that the
-   analysis reads it; `RegexExpressionHelper` retired into the reader.
-   Branch `read-regex-shapes-through-phpregex` carries the whole series.
+1. `RegexExpressionHelper` still serves the quoting rule and the concat
+   resolution; folding the rest of its duties into the reader can wait
+   for the split the maintainer will ask for.
 2. Once `2.0.0` is tagged and the php74 twin reaches Packagist, pin the
    `php-regex/regex-parser-php74` requirement to an exact version (the
    precedent is `hoa/compiler`, pinned to a release).
@@ -373,9 +370,10 @@ validity, #4 capture shapes — all green on `NodeScopeResolverTest`
    the analysis drops constant unions for non-ASCII literals
    (`(£|€)` reads `non-falsy-string` instead of `'£'|'€'`), sound but
    coarser than it could be — case folding only touches ASCII there.
-4. The baseline engines the map guesses for unreleased minors (8.5, 8.6
-   both read 10.44) are a conjecture: check them against the php-src
-   branches once 8.5.0 nears, and move the map then.
+4. The 8.6 baseline stays a guess until its GA (2026-11-19): 8.5.0 was
+   verified to ship 10.44 — the RCs carried 10.46 until php-src #20380
+   downgraded them — so re-check 8.6 after its first release and add the
+   pinning row then.
 5. Publish the measurement: pattern reading ran ~99x faster than the Hoa
    chain on the corpus (same machine, A/A) — put the numbers and the
    method beside the series.
