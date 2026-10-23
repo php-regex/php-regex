@@ -4,9 +4,39 @@ permalink: /tutorial/
 description: "Learn regular expressions from scratch, step by step — with clear examples, exercises, and PHP `preg_match()` along the way."
 ---
 
-# Regex Tutorial
 
-Learn regular expressions from the ground up. This tutorial assumes **no prior knowledge** and introduces one concept at a time, building on what you just learned.
+
+<div class="tutorial-callout tip">
+  <div class="callout-title">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 5a1 1 0 012 0v6a1 1 0 11-2 0V5zm1 10a1 1 0 100-2 1 1 0 000 2z"/></svg>
+    Start here if you're new to regex
+  </div>
+  <p>Learn regular expressions from the ground up. This tutorial assumes <strong>no prior knowledge</strong> and introduces one concept at a time, building on what you just learned.</p>
+</div>
+
+Most examples use plain PHP's `preg_match()` to show matches, but the concepts you'll learn apply to almost any regex flavor that uses PCRE.
+
+<div class="regex-diagram-container">
+  <h3 style="margin-top:0">Your Learning Path</h3>
+  <div class="regex-flow">
+    <span class="regex-node">Basics</span>
+    <span class="regex-arrow">→</span>
+    <span class="regex-node">Character Classes</span>
+    <span class="regex-arrow">→</span>
+    <span class="regex-node">Anchors</span>
+    <span class="regex-arrow">→</span>
+    <span class="regex-node">Quantifiers</span>
+    <span class="regex-arrow">→</span>
+    <span class="regex-node">Groups</span>
+    <span class="regex-arrow">→</span>
+    <span class="regex-node">Lookarounds</span>
+    <span class="regex-arrow">→</span>
+    <span class="regex-node">Advanced</span>
+    <span class="regex-arrow">→</span>
+    <span class="regex-node">Practice</span>
+  </div>
+</div>
+ This tutorial assumes **no prior knowledge** and introduces one concept at a time, building on what you just learned.
 
 Most examples use plain PHP's `preg_match()` to show matches, but the concepts you'll learn apply to almost any regex flavor that uses PCRE.
 
