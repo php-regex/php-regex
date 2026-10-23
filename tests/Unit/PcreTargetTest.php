@@ -54,7 +54,10 @@ final class PcreTargetTest extends TestCase
         yield 'PHP 8.2' => ['phpVersionId' => 80200, 'release' => '10.40'];
         yield 'PHP 8.2 patch' => ['phpVersionId' => 80227, 'release' => '10.40'];
         yield 'PHP 8.3' => ['phpVersionId' => 80300, 'release' => '10.42'];
+        // PHP 8.4.0 shipped PCRE2 10.44.
         yield 'PHP 8.4' => ['phpVersionId' => 80400, 'release' => '10.44'];
+        // PHP 8.5.0 shipped 10.44 too: its release candidates carried 10.46
+        // until php-src brought them back to 10.44 for the release.
         yield 'PHP 8.5' => ['phpVersionId' => 80500, 'release' => '10.44'];
         // php-src reverted to 10.44 after its 10.45/10.46 upgrades, and GA
         // 8.6 keeps that bundle.

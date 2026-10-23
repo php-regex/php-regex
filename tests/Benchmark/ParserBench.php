@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Benchmark;
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Groups;
 use PhpBench\Attributes\Iterations;
+use PhpBench\Attributes\OutputMode;
 use PhpBench\Attributes\OutputTimeUnit;
 use PhpBench\Attributes\ParamProviders;
 use PhpBench\Attributes\Revs;
@@ -28,9 +29,9 @@ use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 use PHPRegex\Toolkit\Regex;
 
 /**
- * The parser: the realistic corpus, the pathological parser cases, a few
- * everyday patterns, the cost of building the facade, and a parse followed
- * by printing or explaining the tree.
+ * The parser: the realistic corpus, the reading throughput over it, the
+ * pathological parser cases, a few everyday patterns, the cost of building
+ * the facade, and a parse followed by printing or explaining the tree.
  *
  * Cold subjects run once per iteration. Their before-method runs the same
  * work once, so the code is loaded, then empties the caches: the measured run
@@ -72,6 +73,8 @@ final class ParserBench
 
     private string $pattern = '';
 
+    private int $cursor = 0;
+
     private readonly PatternPrinter $printer;
 
     public function __construct()
@@ -92,6 +95,24 @@ final class ParserBench
         foreach ($this->patterns as $pattern) {
             $this->regex->parse($pattern);
         }
+    }
+
+    /**
+     * The reading throughput an embedder sees: one pattern a revolution,
+     * the next of the realistic corpus each time, so a run reads a slice of
+     * it, no pattern twice. One parser, no AST cache: every read pays the
+     * full parse. Throughput mode: the number is the patterns read a
+     * second, and the slice's bytes a pattern turn it into bytes a second.
+     */
+    #[BeforeMethods('setUpThroughput')]
+    #[Revs(1000)]
+    #[Iterations(5)]
+    #[OutputMode('throughput')]
+    #[OutputTimeUnit('seconds')]
+    public function benchParseCorpusThroughput(): void
+    {
+        $this->regex->parse($this->patterns[$this->cursor]);
+        $this->cursor = ($this->cursor + 1) % \count($this->patterns);
     }
 
     /**
@@ -187,6 +208,14 @@ final class ParserBench
         $this->setUpRealistic();
         $this->benchParseRealistic();
         $this->regex = ColdStart::regex();
+        PeakMemory::reset();
+    }
+
+    public function setUpThroughput(): void
+    {
+        $this->setUpRealistic();
+        $this->cursor = 0;
+        $this->benchParseCorpusThroughput();
         PeakMemory::reset();
     }
 
