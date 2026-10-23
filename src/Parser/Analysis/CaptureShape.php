@@ -256,8 +256,8 @@ final class CaptureShape
         }
 
         return match (true) {
-            $group->digitsOnly && $group->nonFalsy => 'non-falsy-string&numeric-string',
-            $group->digitsOnly => 'numeric-string',
+            $group->digitsOnly && $group->nonFalsy => 0 === $group->minLength ? "''|non-falsy-string&numeric-string" : 'non-falsy-string&numeric-string',
+            $group->digitsOnly => 0 === $group->minLength ? "''|numeric-string" : 'numeric-string',
             $group->nonFalsy => 'non-falsy-string',
             $group->minLength > 0 => 'non-empty-string',
             default => 'string',

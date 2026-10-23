@@ -1332,7 +1332,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield '\p{Nd} under /u' => ['pattern' => '/(\p{Nd}+)/u', 'group' => 1, 'expected' => false];
         yield 'a range with escaped endpoints' => ['pattern' => '/([\x30-\x39]+)/', 'group' => 1, 'expected' => true];
         yield 'a digit then a letter' => ['pattern' => '/(1a)/', 'group' => 1, 'expected' => false];
-        yield 'may be empty' => ['pattern' => '/(\d*)/', 'group' => 1, 'expected' => false];
+        // a digit run of any length is digits or the empty string: the fact
+        // describes every non-empty value, the readers compose the '' arm
+        yield 'may be empty' => ['pattern' => '/(\d*)/', 'group' => 1, 'expected' => true];
         yield 'never set' => ['pattern' => '/(?!(1))a/', 'group' => 1, 'expected' => false];
         yield 'optional group: the fact describes the set value' => ['pattern' => '/(\d+)?/', 'group' => 1, 'expected' => true];
         yield 'the zero literal is digits' => ['pattern' => '/(0)/', 'group' => 1, 'expected' => true];
@@ -1370,10 +1372,10 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'facts: /(a?)(\1)/' => ['pattern' => '/(a?)(\1)/', 'subjects' => ['', 'aa'], 'facts' => [0 => [], 1 => [], 2 => []]];
         yield 'facts: /(0(*ACCEPT)1)/' => ['pattern' => '/(0(*ACCEPT)1)/', 'subjects' => ['01'], 'facts' => [0 => [], 1 => []]];
         yield 'facts: /([1-9])/' => ['pattern' => '/([1-9])/', 'subjects' => ['1'], 'facts' => [0 => ['nonFalsy', 'digitsOnly'], 1 => ['nonFalsy', 'digitsOnly']]];
-        yield 'facts: /(\d+)?/' => ['pattern' => '/(\d+)?/', 'subjects' => ['', '0'], 'facts' => [0 => [], 1 => ['digitsOnly']]];
+        yield 'facts: /(\d+)?/' => ['pattern' => '/(\d+)?/', 'subjects' => ['', '0'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
         yield 'facts: /(ab)?/' => ['pattern' => '/(ab)?/', 'subjects' => ['', 'ab'], 'facts' => [0 => [], 1 => ['nonFalsy']]];
         yield 'facts: /(1a)/' => ['pattern' => '/(1a)/', 'subjects' => ['1a'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
-        yield 'facts: /(\d*)/' => ['pattern' => '/(\d*)/', 'subjects' => ['', '7'], 'facts' => [0 => [], 1 => []]];
+        yield 'facts: /(\d*)/' => ['pattern' => '/(\d*)/', 'subjects' => ['', '7'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
         yield 'facts: /(.)/' => ['pattern' => '/(.)/', 'subjects' => ['0'], 'facts' => [0 => [], 1 => []]];
         yield 'facts: /(é)/u' => ['pattern' => '/(é)/u', 'subjects' => ['é'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
         yield 'facts: /(ab)/i' => ['pattern' => '/(ab)/i', 'subjects' => ['AB'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
@@ -1396,12 +1398,12 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'digits, may be "0", offsets' => ['pattern' => '/(\d+)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => 'array{0: array{numeric-string, int<0, max>}, 1: array{numeric-string, int<0, max>}}'];
         yield 'digits, at least two' => ['pattern' => '/(\d\d+)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string}'];
         yield 'letters, never "0"' => ['pattern' => '/([a-z]+)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, 1: non-falsy-string}'];
-        yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'expected' => 'array{0: string, 1: string}'];
-        yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'expected' => 'array{0: string, 1?: numeric-string}'];
-        yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: string, 1: numeric-string|null}'];
+        yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'expected' => "array{0: ''|numeric-string, 1: ''|numeric-string}"];
+        yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'expected' => "array{0: ''|numeric-string, 1?: numeric-string}"];
+        yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: ''|numeric-string, 1: numeric-string|null}"];
         yield 'digits under /u are not proven' => ['pattern' => '/(\d+)/u', 'flags' => 0, 'expected' => 'array{0: non-empty-string, 1: non-empty-string}'];
         // PHPStan's type parser reads an intersection inside a union only in parentheses.
-        yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: string, 1: (non-falsy-string&numeric-string)|null}'];
+        yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: ''|numeric-string, 1: (non-falsy-string&numeric-string)|null}"];
     }
 
     /**
@@ -1650,9 +1652,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
 
         // Facts in the list values.
         yield 'pattern order: facts' => ['pattern' => '/(\d+)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => 'array{0: list<numeric-string>, 1: list<numeric-string>}'];
-        yield 'pattern order: facts of a group that may be unset' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<string>, 1: list<''|(non-falsy-string&numeric-string)>}"];
-        yield 'pattern order: facts of a group that may be unset, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: list<string>, 1: list<(non-falsy-string&numeric-string)|null>}'];
-        yield 'pattern order: facts of a group that may be unset, offsets' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{string, int<0, max>}>, 1: list<array{''|(non-falsy-string&numeric-string), int<-1, max>}>}"];
+        yield 'pattern order: facts of a group that may be unset' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<''|numeric-string>, 1: list<''|(non-falsy-string&numeric-string)>}"];
+        yield 'pattern order: facts of a group that may be unset, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<''|numeric-string>, 1: list<(non-falsy-string&numeric-string)|null>}"];
+        yield 'pattern order: facts of a group that may be unset, offsets' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{''|numeric-string, int<0, max>}>, 1: list<array{''|(non-falsy-string&numeric-string), int<-1, max>}>}"];
         yield 'pattern order: facts of a split pattern, merged' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<non-empty-string>, 1: list<''|numeric-string>, 2: list<''|non-falsy-string>}"];
         yield 'set order: facts of a split pattern, per case' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: numeric-string, 1: numeric-string}|array{0: non-falsy-string, 1: '', 2: non-falsy-string}>"];
     }
@@ -1809,7 +1811,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
                 return false;
             }
 
-            if (($group->nonFalsy && !(bool) $value) || ($group->digitsOnly && !ctype_digit($value))) {
+            if (($group->nonFalsy && !(bool) $value) || ($group->digitsOnly && '' !== $value && !ctype_digit($value))) {
                 return false;
             }
 
@@ -1844,7 +1846,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
                 if ($group->nonFalsy) {
                     $this->assertTrue((bool) $value, $context.', proven non-falsy.');
                 }
-                if ($group->digitsOnly) {
+                if ($group->digitsOnly && '' !== $value) {
                     $this->assertTrue(ctype_digit($value), $context.', proven digits only.');
                 }
             }

@@ -130,7 +130,9 @@ final class CaptureFacts
             'max' => $max,
             'values' => $values,
             'nonFalsy' => $this->nonFalsy($node, $min, $values),
-            'digitsOnly' => $min > 0 && $this->digitsOnly($node),
+            // a digit run of any length is digits or the empty string; the
+            // readers compose the empty arm with the length themselves
+            'digitsOnly' => $this->digitsOnly($node),
         ];
     }
 
