@@ -1005,6 +1005,24 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'whole match' => ['pattern' => '/a(b|c)/', 'group' => 0, 'values' => ['ab', 'ac']];
         yield 'keep resets the whole match' => ['pattern' => '/a\K(b)/', 'group' => 0, 'values' => null];
         yield 'too many' => ['pattern' => '/((?:a|b|c|d)(?:a|b|c|d)(?:a|b|c|d))/', 'group' => 1, 'values' => null];
+        // The engine tries the branches left to right at each position and
+        // takes the leftmost position: a zero-width branch read first wins
+        // before any later branch is ever reached.
+        // preg_match('/^|foo/', 'xfoo') sets matches[0] to ''.
+        yield 'a caret branch wins the whole match' => ['pattern' => '/^|foo/', 'group' => 0, 'values' => ['']];
+        yield 'a caret branch wins inside a group' => ['pattern' => '/(^|foo)/', 'group' => 1, 'values' => ['']];
+        yield 'a word boundary branch wins the whole match' => ['pattern' => '/\b|foo/', 'group' => 0, 'values' => ['']];
+        yield 'a word boundary branch wins inside a group' => ['pattern' => '/(\b|foo)/', 'group' => 1, 'values' => ['']];
+        yield 'a caret branch loses after a consuming prefix' => ['pattern' => '/x(^|foo)/', 'group' => 0, 'values' => ['x', 'xfoo']];
+        // '\b' still wins at the first boundary, but a branch that may start
+        // where no boundary sits keeps its value: preg_match('/\b|-x/', '!x')
+        // reads '' while '-x' reads '-x'.
+        yield 'a boundary branch beside a non-word start keeps both' => ['pattern' => '/\b|-x/', 'group' => 0, 'values' => ['', '-x']];
+        yield 'a zero-width branch read second stays' => ['pattern' => '/(foo|$)/', 'group' => 1, 'values' => ['foo', '']];
+        yield 'a boundary branch before an escaped word character' => ['pattern' => '/\b|\x41/', 'group' => 0, 'values' => ['']];
+        yield 'a boundary branch before a zero-width prefix and a word' => ['pattern' => '/\b|^foo/', 'group' => 0, 'values' => ['']];
+        yield 'a boundary branch before a grouped word' => ['pattern' => '/\b|(?:foo)/', 'group' => 0, 'values' => ['']];
+        yield 'a boundary branch before a class keeps both' => ['pattern' => '/\b|\d+x/', 'group' => 0, 'values' => null];
     }
 
     /**
@@ -1297,6 +1315,11 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'an empty alternative, then a character that may be zero' => ['pattern' => '/((?:a|)\w)/', 'group' => 1, 'expected' => false];
         yield 'a quoted run of two code points is not zero alone' => ['pattern' => '/((?:\Qab\E)?[1-9])/u', 'group' => 1, 'expected' => true];
         yield 'a quoted run of two code points, then a character that may be zero' => ['pattern' => '/((?:\Qab\E)?\w)/u', 'group' => 1, 'expected' => false];
+        yield 'a mandatory literal pins the value away from zero' => ['pattern' => '/(3(?:\/.*)?)?/', 'group' => 1, 'expected' => true];
+        yield 'an optional letter prefix keeps the set value truthy' => ['pattern' => '/(c(\d+)?)?/', 'group' => 1, 'expected' => true];
+        yield 'a mandatory suffix keeps the set value truthy' => ['pattern' => '/([0-9]*\$)?/', 'group' => 1, 'expected' => true];
+        yield 'whole match pinned by a mandatory literal' => ['pattern' => '/3(?:\/.*)?$/', 'group' => 0, 'expected' => true];
+        yield 'a lone zero beside optionals still reads falsy' => ['pattern' => '/((a)?0)?/', 'group' => 1, 'expected' => false];
     }
 
     /**
@@ -1615,7 +1638,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'pattern order: a group never set, offsets' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{'a', int<0, max>}>, 1: list<array{'', int<-1, max>}>}"];
         yield 'set order: a group never set is left out' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'a'}>"];
         yield 'set order: a group never set, as null' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_SET_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "list<array{0: 'a', 1: null}>"];
-        yield 'pattern order: groups inside DEFINE' => ['pattern' => '/(?(DEFINE)(?<d>x))(a)(?&d)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<non-empty-string>, d: list<''>, 1: list<''>, 2: list<'a'>}"];
+        yield 'pattern order: groups inside DEFINE' => ['pattern' => '/(?(DEFINE)(?<d>x))(a)(?&d)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<non-falsy-string>, d: list<''>, 1: list<''>, 2: list<'a'>}"];
 
         // Names shared under (?J): in pattern order the list of the last group bearing the name, set or not.
         yield 'pattern order: a shared name holds the list of its last group' => ['pattern' => '/(?J)(?<n>a)(?<n>z)?(c)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'ac'|'azc'>, n: list<''|'z'>, 1: list<'a'>, 2: list<''|'z'>, 3: list<'c'>}"];

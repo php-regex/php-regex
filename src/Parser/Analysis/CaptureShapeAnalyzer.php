@@ -50,7 +50,7 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '2';
+    public const ANALYSIS_VERSION = '3';
 
     private const MAX_CASES = 16;
 
@@ -155,6 +155,7 @@ final class CaptureShapeAnalyzer
     private function shape(NodeInterface $pattern): CaptureShape
     {
         $this->reset();
+        $this->collectAtStart($pattern);
 
         $guaranteed = $this->walk($pattern, false);
 
@@ -169,9 +170,36 @@ final class CaptureShapeAnalyzer
             return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, 0, null, null), $groups, $this->marks);
         }
 
-        $whole = $this->facts->of($this->rebuild($pattern) ?? self::nothing($pattern));
+        $wholePattern = $this->rebuild($pattern) ?? self::nothing($pattern);
+        $this->collectAtStart($wholePattern);
+        $whole = $this->facts->of($wholePattern);
 
         return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, $whole['min'], $whole['max'], $whole['values'], $whole['nonFalsy'], $whole['digitsOnly']), $groups, $this->marks);
+    }
+
+    /**
+     * Marks the nodes the scan reaches before any part of the pattern may
+     * have read a character: everything below a node, and past a sibling
+     * only while every earlier sibling reads nothing.
+     */
+    private function collectAtStart(NodeInterface $node): void
+    {
+        $this->facts->markAtStart($node);
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                $this->collectAtStart($child);
+                if (0 !== ($this->facts->lengths($child)[1] ?? 1)) {
+                    return;
+                }
+            }
+
+            return;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            $this->collectAtStart($child);
+        }
     }
 
     private function reset(): void
