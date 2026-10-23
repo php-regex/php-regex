@@ -14,12 +14,17 @@ on:
       - '.github/workflows/php74-twin.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   twin:
     name: generate and gate the PHP 7.4 twin
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Install PHP 8.4 (toolchain)
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
