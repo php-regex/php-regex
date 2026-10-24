@@ -1517,6 +1517,12 @@ are unchanged.
 The compare command answers to `regex:compare` only; replace the
 `debug:compare` alias in scripts and CI jobs.
 
+#### Symfony: `regex:routes --check-conflicts` is gone
+
+`regex:routes` always checks for conflicts, and the option changed
+nothing; the command now refuses it as an unknown option. Drop it from
+scripts and CI jobs.
+
 #### Symfony: the bundle configuration in 2.0
 
 The configuration moves from `regex_parser:` to `php_regex:`, with these keys:

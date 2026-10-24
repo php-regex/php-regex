@@ -352,7 +352,7 @@ and options:
 | Command | Arguments | Options |
 |---|---|---|
 | `regex:lint` | `[paths]...` | `--exclude=...` (default: `exclude`), `--min-savings=1`, `-j`/`--jobs=N`, `--no-routes`, `--no-validators`, `--format=console\|json\|github\|checkstyle\|junit` |
-| `regex:routes` | | `--show-overlaps`; `--check-conflicts` is accepted and changes nothing, conflicts being always checked |
+| `regex:routes` | | `--show-overlaps` (conflicts are always checked) |
 | `regex:security` | | `--show-overlaps`, `-c`/`--config=<file>...`, `--skip-firewalls`, `--redos-threshold=high` |
 | `regex:analyze` | | `--only=routes\|security...`, `--show-overlaps`, `-c`/`--config=<file>...`, `--skip-firewalls`, `--redos-threshold=high`, `--format=console\|json`, `--debug`, `--fail-on=shadowed,redos,critical` (also `overlap`, `any`, `none`) |
 | `regex:compare` | `<pattern1> <pattern2>` | `--method=intersection\|subset\|equivalence`, `--minimizer=hopcroft\|moore`, `--determinizer=subset-indexed\|subset` (defaults: `automata.*`) |
