@@ -204,7 +204,6 @@ final class Lexer
     private const ESCAPE_NEWLINE = "\n";
     private const ESCAPE_CARRIAGE_RETURN = "\r";
     private const ESCAPE_FORM_FEED = "\f";
-    private const ESCAPE_VERTICAL_TAB = "\v";
     private const ESCAPE_ESCAPE = "\x1B";
     private const ESCAPE_BELL = "\x07";
 
@@ -1518,11 +1517,6 @@ final class Lexer
             );
         }
 
-        // Unreachable: a successful match always holds its whole-match string.
-        if (!isset($matches[0]) || !\is_string($matches[0])) {
-            throw InternalFailureException::unexpectedState('A token the lexer matched holds no text.');
-        }
-
         $matchedValue = (string) $matches[0];
         $startPos = $this->position;
         $this->position += \strlen($matchedValue);
@@ -2044,7 +2038,6 @@ final class Lexer
             'n' => self::ESCAPE_NEWLINE,
             'r' => self::ESCAPE_CARRIAGE_RETURN,
             'f' => self::ESCAPE_FORM_FEED,
-            'v' => self::ESCAPE_VERTICAL_TAB,
             'e' => self::ESCAPE_ESCAPE,
             'a' => self::ESCAPE_BELL,
             default => $char,

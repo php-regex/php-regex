@@ -276,7 +276,7 @@ final class RouteConflictAnalyzer
         }
 
         $hostRegex = $this->resolveHostRegex($compiled);
-        $hostPattern = null;
+        $hostPattern = '';
         $hostValue = $route->getHost();
         $hasHostRequirement = '' !== $hostValue;
         $hostUnsupported = false;
@@ -394,13 +394,6 @@ final class RouteConflictAnalyzer
         $hostChecks++;
 
         if ($left['hostUnsupported'] || $right['hostUnsupported']) {
-            $hostSkipped++;
-
-            return true;
-        }
-
-        if (null === $left['hostPattern'] || null === $right['hostPattern']) {
-            $skippedPairs++;
             $hostSkipped++;
 
             return true;

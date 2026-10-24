@@ -1120,13 +1120,6 @@ final class EscapeChecks
      */
     private function validateNamedCharacterBraces(string $source, int $position): void
     {
-        // Unreachable: the lexer only leaves "\N" as an escaped letter when
-        // a brace follows it, and inside a class "{U+" is checked first. It
-        // guards a caller that did not check.
-        if ('{' !== ($source[$position] ?? '')) {
-            return;
-        }
-
         if ($this->startsNamedCodePoint($source, $position)) {
             $digits = $position + 1 + strspn($source, self::BRACE_PADDING, $position + 1) + 2;
 
