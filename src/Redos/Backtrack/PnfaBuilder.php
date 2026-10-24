@@ -31,7 +31,6 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
@@ -40,7 +39,6 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreTarget;
-use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
  * Builds the prioritized NFA of a pattern, Thompson style, from its AST.
@@ -295,7 +293,7 @@ final class PnfaBuilder
             $node instanceof QuantifierNode => $this->quantifier($node, $next, $flags, $pnfa, $search),
             $node instanceof LiteralNode => $this->literal($node, $next, $flags, $pnfa),
             $node instanceof AnchorNode, $node instanceof AssertionNode => $this->anchor($node, $next, $flags, $pnfa),
-            $node instanceof KeepNode, $node instanceof CommentNode, $node instanceof PcreVerbNode => $next,
+            $node instanceof KeepNode, $node instanceof CommentNode => $next,
             default => $this->char($pnfa, $this->charSet($node, $flags), $next),
         };
     }
@@ -1030,7 +1028,7 @@ final class PnfaBuilder
 
         // The options are the whole scope: a pattern-wide /r is a bit of
         // them already, and "(?-r)" takes it off.
-        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, StartOptions::of($this->source));
+        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers);
         if (null !== $set) {
             return $set;
         }
