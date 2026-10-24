@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Explain;
 
+use PHPRegex\Parser\BsrConvention;
 use PHPRegex\Parser\NewlineConvention;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Text\Ascii;
@@ -66,6 +67,12 @@ final class MatchSettings
          * or an inline setting.
          */
         public readonly bool $dotAll = false,
+        /**
+         * What "\R" matches, which a leading "(*BSR_ANYCRLF)" or
+         * "(*BSR_UNICODE)" sets; any Unicode linebreak, the convention PHP
+         * builds PCRE2 with, when none does.
+         */
+        public readonly BsrConvention $bsr = BsrConvention::Unicode,
     ) {}
 
     /**
@@ -102,6 +109,7 @@ final class MatchSettings
             $this->ucp,
             $asciiTypes,
             self::turns('s', $on, $off, $this->dotAll),
+            $this->bsr,
         );
     }
 
@@ -115,13 +123,19 @@ final class MatchSettings
     }
 
     /**
-     * The settings once a leading option, such as "(*CR)", has set what a
-     * newline is.
+     * The settings once a leading option, such as "(*CR)" or
+     * "(*BSR_ANYCRLF)", has set what a newline or a linebreak is.
      */
     public function withOption(string $option): self
     {
         if ('UCP' === $option) {
-            return new self($this->utf, $this->multiline, $this->dollarEndOnly, $this->newline, true, $this->asciiTypes, $this->dotAll);
+            return new self($this->utf, $this->multiline, $this->dollarEndOnly, $this->newline, true, $this->asciiTypes, $this->dotAll, $this->bsr);
+        }
+
+        if (str_starts_with($option, 'BSR_')) {
+            $bsr = BsrConvention::tryFrom(substr($option, 4));
+
+            return null === $bsr ? $this : new self($this->utf, $this->multiline, $this->dollarEndOnly, $this->newline, $this->ucp, $this->asciiTypes, $this->dotAll, $bsr);
         }
 
         $newline = NewlineConvention::tryFrom($option);
@@ -129,7 +143,7 @@ final class MatchSettings
             return $this;
         }
 
-        return new self($this->utf, $this->multiline, $this->dollarEndOnly, $newline, $this->ucp, $this->asciiTypes, $this->dotAll);
+        return new self($this->utf, $this->multiline, $this->dollarEndOnly, $newline, $this->ucp, $this->asciiTypes, $this->dotAll, $this->bsr);
     }
 
     /**

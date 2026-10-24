@@ -54,6 +54,20 @@ final class ExplainCharacterTypeTest extends TestCase
 
     private const BYTE = 'One code unit: a single byte, a newline included';
 
+    private const HSPACE = 'A horizontal whitespace character: [ \t\xA0]';
+
+    private const UNICODE_HSPACE = 'A horizontal whitespace character: [ \t\xA0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]';
+
+    private const VSPACE = 'A vertical whitespace character: [\n\x0B\f\r\x85]';
+
+    private const UNICODE_VSPACE = 'A vertical whitespace character: [\n\x0B\f\r\x85\u2028\u2029]';
+
+    private const LINEBREAK = 'Any linebreak sequence (\r\n|[\n\x0B\f\r\x85])';
+
+    private const UNICODE_LINEBREAK = 'Any Unicode linebreak sequence (\u000D\u000A|[\u000A\u000B\u000C\u000D\u0085\u2028\u2029])';
+
+    private const ANYCRLF_LINEBREAK = 'A CR, LF or CRLF linebreak sequence, as (*BSR_ANYCRLF) sets: (\r\n|[\n\r])';
+
     /**
      * The rows that hold from a PCRE2 newer than the floor: every pattern
      * with an ASCII option is 10.43's syntax, refused before.
@@ -142,6 +156,19 @@ final class ExplainCharacterTypeTest extends TestCase
         yield 'a dot after s is turned off' => ['pattern' => '/(?-s)a.b/s', 'description' => 'any character but a newline (\n)', 'subject' => "a\nb", 'matches' => 0];
         yield 'a dot after a caret reset' => ['pattern' => '/(?^)a.b/s', 'description' => 'any character but a newline (\n)', 'subject' => "a\nb", 'matches' => 0];
         yield 'a dot under CR' => ['pattern' => '/(*CR)a.b/', 'description' => 'any character but a newline (\r)', 'subject' => "a\rb", 'matches' => 0];
+        // Without UTF, "\h", "\v" and "\R" read one byte: none past 0xFF.
+        yield 'a horizontal space without u' => ['pattern' => '/^\h$/', 'description' => self::HSPACE, 'subject' => "\xA0", 'matches' => 1];
+        yield 'an ideographic space is no horizontal space without u' => ['pattern' => '/^\h$/', 'description' => self::HSPACE, 'subject' => "\u{3000}", 'matches' => 0];
+        yield 'an ideographic space is a horizontal space under u' => ['pattern' => '/^\h$/u', 'description' => self::UNICODE_HSPACE, 'subject' => "\u{3000}", 'matches' => 1];
+        yield 'a next line byte is a vertical space without u' => ['pattern' => '/^\v$/', 'description' => self::VSPACE, 'subject' => "\x85", 'matches' => 1];
+        yield 'a line separator is no vertical space without u' => ['pattern' => '/^\v$/', 'description' => self::VSPACE, 'subject' => "\u{2028}", 'matches' => 0];
+        yield 'a line separator is a vertical space under u' => ['pattern' => '/^\v$/u', 'description' => self::UNICODE_VSPACE, 'subject' => "\u{2028}", 'matches' => 1];
+        yield 'a line separator is no linebreak without u' => ['pattern' => '/^\R$/', 'description' => self::LINEBREAK, 'subject' => "\u{2028}", 'matches' => 0];
+        yield 'a line separator is a linebreak under u' => ['pattern' => '/^\R$/u', 'description' => self::UNICODE_LINEBREAK, 'subject' => "\u{2028}", 'matches' => 1];
+        yield 'a vertical tab is no linebreak under BSR_ANYCRLF' => ['pattern' => '/(*BSR_ANYCRLF)^\R$/u', 'description' => self::ANYCRLF_LINEBREAK, 'subject' => "\x0B", 'matches' => 0];
+        yield 'a CRLF is one linebreak under BSR_ANYCRLF' => ['pattern' => '/(*BSR_ANYCRLF)^\R\z/', 'description' => self::ANYCRLF_LINEBREAK, 'subject' => "\r\n", 'matches' => 1];
+        yield 'a next line byte is a linebreak under BSR_UNICODE' => ['pattern' => '/(*BSR_UNICODE)^\R$/', 'description' => self::LINEBREAK, 'subject' => "\x85", 'matches' => 1];
+        yield 'the last BSR option holds' => ['pattern' => '/(*BSR_ANYCRLF)(*BSR_UNICODE)^\R$/u', 'description' => self::UNICODE_LINEBREAK, 'subject' => "\x0B", 'matches' => 1];
     }
 
     /**

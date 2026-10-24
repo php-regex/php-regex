@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Explain;
 
+use PHPRegex\Parser\BsrConvention;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\NewlineConvention;
 use PHPRegex\Parser\Node\BackrefNode;
@@ -84,10 +85,21 @@ final class Vocabulary
     ];
 
     /**
+     * The types that read one byte without UTF, where they match no
+     * character past 0xFF.
+     */
+    private const BYTE_CHAR_TYPES = [
+        'h' => 'A horizontal whitespace character: [ \\t\\xA0]',
+        'v' => 'A vertical whitespace character: [\\n\\x0B\\f\\r\\x85]',
+        'R' => 'Any linebreak sequence (\\r\\n|[\\n\\x0B\\f\\r\\x85])',
+    ];
+
+    /**
      * What a character type matches, by the settings in force: "\d", "\s"
      * and "\w" by the Unicode tables under Unicode properties, by ASCII
-     * otherwise, "\N" by what a newline is; null for a type the table does
-     * not hold.
+     * otherwise, "\h", "\v" and "\R" past 0xFF under UTF only, "\R" by what
+     * a linebreak is, "\N" by what a newline is; null for a type the table
+     * does not hold.
      */
     public static function charType(string $type, MatchSettings $settings): ?string
     {
@@ -97,6 +109,14 @@ final class Vocabulary
 
         if ('N' === $type) {
             return \sprintf('Any character but %s, whatever s says', self::newline($settings->newline));
+        }
+
+        if ('R' === $type && BsrConvention::AnyCrLf === $settings->bsr) {
+            return 'A CR, LF or CRLF linebreak sequence, as (*BSR_ANYCRLF) sets: (\\r\\n|[\\n\\r])';
+        }
+
+        if (!$settings->utf && isset(self::BYTE_CHAR_TYPES[$type])) {
+            return self::BYTE_CHAR_TYPES[$type];
         }
 
         return self::CHAR_TYPES[$type] ?? null;

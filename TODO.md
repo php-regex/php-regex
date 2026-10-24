@@ -239,9 +239,8 @@ say so where the transpiler is described.
 
 ## Explainers: after the fix
 
-The explanations follow the flags, UCP and the newline convention now.
-Left: `\R` under `(*BSR_ANYCRLF)` described as any Unicode line break,
-`\h` and `\v` given their Unicode lists in byte mode, and the explainers
+The explanations follow the flags, UCP, the newline and the linebreak
+conventions, and UTF for `\h`, `\v` and `\R`, now. Left: the explainers
 not knowing the target release or locale (`\w` says "from PCRE2 10.43"
 instead of choosing).
 

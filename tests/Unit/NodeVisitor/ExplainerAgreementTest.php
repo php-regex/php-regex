@@ -49,8 +49,10 @@ final class ExplainerAgreementTest extends TestCase
     public static function provideDescriptions(): iterable
     {
         yield 'a digit' => ['pattern' => '/\d/', 'description' => 'A digit: [0-9]'];
-        yield 'a horizontal space' => ['pattern' => '/\h/', 'description' => 'A horizontal whitespace character: [ \t\xA0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]'];
-        yield 'a linebreak' => ['pattern' => '/\R/', 'description' => 'Any Unicode linebreak sequence'];
+        yield 'a horizontal space' => ['pattern' => '/\h/', 'description' => 'A horizontal whitespace character: [ \t\xA0]'];
+        yield 'a horizontal space under u' => ['pattern' => '/\h/u', 'description' => 'A horizontal whitespace character: [ \t\xA0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]'];
+        yield 'a linebreak' => ['pattern' => '/\R/', 'description' => 'Any linebreak sequence'];
+        yield 'a linebreak under u' => ['pattern' => '/\R/u', 'description' => 'Any Unicode linebreak sequence'];
         yield 'a grapheme cluster' => ['pattern' => '/\X/', 'description' => 'An extended grapheme cluster: a character with the marks that combine with it, or a \r\n pair'];
         yield 'anything but a newline' => ['pattern' => '/\N/', 'description' => 'Any character but a newline (\n), whatever s says'];
         yield 'one byte' => ['pattern' => '/\C/', 'description' => 'One code unit: a single byte, a newline included'];
