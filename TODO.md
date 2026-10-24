@@ -2,16 +2,13 @@
 
 ## Suite reds older than the 2026-10-24 series
 
-Both fail at 034669605b already:
-
 - `CaptureShapeParityTest` fails on `/^|\d{1,2}$/` (php-src bug78853,
   subject `"7"`), before and after the scan-whole change: under
   `PREG_SET_ORDER`, and for the callback of `preg_replace_callback()`, the
   shape still types group 0 as `''` where the engine writes `"7"` from the
   second match on.
-- `MonorepoArchiveTest`: the archive ships `build/`, tracked since the
-  twin layout (798a8c7d1d) and missing from `.gitattributes`'
-  `export-ignore` list.
+- ~~`MonorepoArchiveTest`: fixed by adding `build/` to `.gitattributes`
+  `export-ignore`.~~
 
 ## (*UCP) in the ReDoS prover
 
