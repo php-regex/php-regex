@@ -48,6 +48,7 @@
 
 # Directories not needed in distribution
 /art                    export-ignore
+/build                  export-ignore
 /corpus                 export-ignore
 /corpus.json            export-ignore
 /var                    export-ignore

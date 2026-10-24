@@ -1655,6 +1655,11 @@ final class Lexer
                 );
             }
 
+            // A name too long is refused as one before it is looked up.
+            if ($this->namesReadWhole) {
+                $this->refuseVerbNameTooLong(\strlen($name), $startPos);
+            }
+
             // A name PCRE knows opens a body read in place.
             throw LexerException::withContext(
                 \sprintf('Unknown alphabetic assertion "(*%s:".', $name),
