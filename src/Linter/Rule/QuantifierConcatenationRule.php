@@ -79,11 +79,21 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             }
 
             if ($left->node instanceof GroupNode && null !== $left->node->flags) {
-                continue;
+                $turnsIOn = GroupType::InlineFlags === $left->node->type
+                    && !str_contains($flags[$i], 'i')
+                    && str_contains(NodePredicates::applyInlineFlags($flags[$i], $left->node->flags), 'i');
+                if (!$turnsIOn) {
+                    continue;
+                }
             }
 
             if ($right->node instanceof GroupNode && null !== $right->node->flags) {
-                continue;
+                $turnsIOn = GroupType::InlineFlags === $right->node->type
+                    && !str_contains($flags[$i], 'i')
+                    && str_contains(NodePredicates::applyInlineFlags($flags[$i], $right->node->flags), 'i');
+                if (!$turnsIOn) {
+                    continue;
+                }
             }
 
             if ($this->nodeContainsCapturingGroup($left->node) || $this->nodeContainsCapturingGroup($right->node)) {
@@ -151,11 +161,12 @@ final class QuantifierConcatenationRule extends AbstractLintRule
 
     /**
      * Whether every character the run takes is one the other run takes. The
-     * sets stop at 0x7F and fold no case. Above ASCII the run is known to
-     * fit only when it is held to ASCII, or the other takes every character
-     * there: "\\h" takes "\\xA0", which "[\\t ]" does not. Under i a
-     * negated class refuses both cases of a letter it holds, which its set
-     * does not say: "A" also takes "a", which "[^a]" refuses.
+     * sets stop at 0x7F. Above ASCII the run is known to fit only when it
+     * is held to ASCII, or the other takes every character there.
+     *
+     * Under the i flag both sets are case-folded before comparison. For a
+     * negated class `[^x]` the fold is `complement(fold(excluded))` to
+     * avoid the unsoundness of folding a complement directly.
      */
     private function isKnownSubset(NodeInterface $run, ByteCharSet $set, NodeInterface $other, ByteCharSet $otherSet, LintContext $context, string $flags): bool
     {
@@ -163,11 +174,88 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             return false;
         }
 
-        if (str_contains($flags, 'i') && self::holdsANegatedClass($other) && !self::isCaseClosed($otherSet)) {
+        $caseless = str_contains($flags, 'i')
+            || NodePredicates::turnsCaselessOn($run)
+            || NodePredicates::turnsCaselessOn($other);
+
+        if (!$caseless) {
+            return CharClassSets::isSubset($set, $otherSet);
+        }
+
+        $foldedSet = self::foldByteSet($set);
+        if ($foldedSet->isUnknown()) {
             return false;
         }
 
-        return CharClassSets::isSubset($set, $otherSet);
+        $foldedOther = $this->foldedSetFor($other, $otherSet, $context, $flags);
+        if ($foldedOther->isUnknown()) {
+            return false;
+        }
+
+        return CharClassSets::isSubset($foldedSet, $foldedOther);
+    }
+
+    /**
+     * The correctly case-folded character set for the other run in a subset
+     * check. For a negated class, the fold is applied to the excluded set
+     * and the result complemented, which avoids the soundness problem of
+     * folding a wide complement directly.
+     */
+    private function foldedSetFor(NodeInterface $other, ByteCharSet $otherSet, LintContext $context, string $flags): ByteCharSet
+    {
+        $core = $other;
+        while ($core instanceof GroupNode
+            && (GroupType::NonCapturing === $core->type || GroupType::InlineFlags === $core->type)
+        ) {
+            if (GroupType::InlineFlags === $core->type && null !== $core->flags) {
+                $flags = NodePredicates::applyInlineFlags($flags, $core->flags);
+            }
+            $core = $core->child;
+        }
+
+        if ($core instanceof CharClassNode && $core->isNegated) {
+            $excludedSet = $context->firstChars($core->expression, $flags);
+            if (!$excludedSet->isUnknown()) {
+                $foldedExcluded = self::foldByteSet($excludedSet);
+                if (!$foldedExcluded->isUnknown()) {
+                    return $foldedExcluded->complement();
+                }
+            }
+
+            return ByteCharSet::unknown();
+        }
+
+        return self::foldByteSet($otherSet);
+    }
+
+    /**
+     * The set with the other ASCII case of each letter added. Returns
+     * unknown when the set holds a byte above ASCII (case variants of those
+     * code points are not representable in the byte set).
+     */
+    private static function foldByteSet(ByteCharSet $set): ByteCharSet
+    {
+        if ($set->isUnknown()) {
+            return $set;
+        }
+
+        for ($byte = 0x80; $byte <= 0xFF; $byte++) {
+            if ($set->intersects(ByteCharSet::fromChar(\chr($byte)))) {
+                return ByteCharSet::unknown();
+            }
+        }
+
+        $folded = $set;
+        for ($lower = \ord('a'); $lower <= \ord('z'); $lower++) {
+            $upper = $lower - 0x20;
+            $lowerSet = ByteCharSet::fromChar(\chr($lower));
+            $upperSet = ByteCharSet::fromChar(\chr($upper));
+            if ($set->intersects($lowerSet) || $set->intersects($upperSet)) {
+                $folded = $folded->union($lowerSet)->union($upperSet);
+            }
+        }
+
+        return $folded;
     }
 
     private static function holdsANegatedClass(NodeInterface $node): bool
