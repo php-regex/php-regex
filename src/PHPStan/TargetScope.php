@@ -251,7 +251,7 @@ final class TargetScope
                 $options['php_version'] = $phpVersion->getVersionId();
             }
         } elseif ('runtime' !== $setting) {
-            $named = ParserOptions::fromArray(['php_version' => $setting])->target->phpVersionId;
+            $named = ParserOptions::phpVersionIdOf($setting);
             if ($named < $firstOnPcre2) {
                 ProjectTarget::belowPcre2($named, 'phpRegex.phpVersion', null, []);
             }

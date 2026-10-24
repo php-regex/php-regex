@@ -131,11 +131,12 @@ final class PregCall
      * with the PCRE2 its sources bundle, under the locale Rector runs with:
      * Rector names no other, and a rule rewrites no pattern whose answer
      * moves with the locale (see TrivialMatchClassifier). Rector takes
-     * targets from PHP 5.3, which the library judges from PHP 7.0.
+     * targets from PHP 5.3 to PHP 10.0, which the library judges from PHP
+     * 7.0 to PHP 9.99.
      */
     public static function targetParser(int $phpVersion): RegexParser
     {
-        $phpVersion = max($phpVersion, ParserOptions::OLDEST_PHP_VERSION_ID);
+        $phpVersion = min(max($phpVersion, ParserOptions::OLDEST_PHP_VERSION_ID), ParserOptions::LATEST_PHP_VERSION_ID);
 
         return RegexParser::create(['php_version' => $phpVersion, 'pcre_version' => PcreTarget::bundledWith($phpVersion)->pcreVersion]);
     }

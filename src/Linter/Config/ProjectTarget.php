@@ -489,6 +489,6 @@ final class ProjectTarget
      */
     private static function phpVersionId(string|int $version): int
     {
-        return ParserOptions::fromArray(['php_version' => $version])->target->phpVersionId;
+        return ParserOptions::phpVersionIdOf($version);
     }
 }

@@ -87,7 +87,7 @@ final class CallTarget
         self::check('locale', 'locale', $locale, 'a locale this machine can set, like "tr_TR.UTF-8"');
 
         if (null !== $phpVersion && 'runtime' !== $phpVersion) {
-            $named = ParserOptions::fromArray(['php_version' => $phpVersion])->target->phpVersionId;
+            $named = ParserOptions::phpVersionIdOf($phpVersion);
             if ($named < PcreTarget::phpVersionBoundaries()[0]) {
                 ProjectTarget::belowPcre2($named, '<phpVersion>', null, []);
             }
@@ -222,7 +222,8 @@ final class CallTarget
         }
 
         try {
-            ParserOptions::fromArray([$option => $value]);
+            // A PHP on PCRE1 is refused after, with its own reason.
+            'php_version' === $option ? ParserOptions::phpVersionIdOf($value) : ParserOptions::fromArray([$option => $value]);
         } catch (InvalidRegexOptionException $e) {
             throw new InvalidRegexOptionException(\sprintf('The <%s> option of %s must be %s; got "%s".', $element, Plugin::class, $expected, $value), 0, $e);
         }

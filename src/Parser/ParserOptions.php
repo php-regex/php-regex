@@ -74,6 +74,11 @@ final class ParserOptions
     public const OLDEST_PHP_VERSION_ID = 70000;
 
     /**
+     * The largest PHP_VERSION_ID "php_version" takes, PHP 9.99.99's.
+     */
+    public const LATEST_PHP_VERSION_ID = 99999;
+
+    /**
      * Allowed option keys for configuration.
      */
     private const VALID_OPTIONS = [
@@ -174,6 +179,62 @@ final class ParserOptions
         $target = self::getTarget($options);
 
         return new self($maxLength, $lookbehindLength, $cache, $patterns, $runtimeValidation, $recursionDepth, $target);
+    }
+
+    /**
+     * The PHP_VERSION_ID a "php_version" names: an integer, its digits, or a
+     * version, "8.2" or "8.2.1", each part of the version after the major at
+     * most 99, as PHP_VERSION_ID counts them, up to PHP 9.99.99; "runtime"
+     * names the running PHP. A version names its release however old: "5.6" is PHP 5.6, which a bridge
+     * refuses as no PHP on PCRE2 with its own reason. An integer below PHP
+     * 7.0's id is refused, and a number of one or two digits that reads as
+     * PHP 7, 8 or 9, a major or a major and a minor run together, with the
+     * way to write it.
+     *
+     * @internal
+     *
+     * @throws InvalidRegexOptionException
+     */
+    public static function phpVersionIdOf(int|string $version): int
+    {
+        $written = $version;
+        if (\is_string($version)) {
+            $version = $written = trim($version, " \t\n\r\0\x0B");
+            if ('runtime' === Ascii::lower($version)) {
+                return \PHP_VERSION_ID;
+            }
+
+            if (1 === LibraryPcre::match('/^([0-9]++)\.([0-9]{1,2})(?:\.([0-9]{1,2}))?$/D', $version, $parts)) {
+                $version = (int) $parts[1] * 10000 + (int) $parts[2] * 100 + (int) ($parts[3] ?? 0);
+                if (0 === $version) {
+                    throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED);
+                }
+
+                return self::notPastTheLatest($version, $written);
+            }
+
+            $version = Ascii::isDigit($version) && \strlen($version) <= 9 ? (int) $version : null;
+        }
+
+        if (!\is_int($version)) {
+            throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED);
+        }
+
+        if ($version <= 0) {
+            throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED);
+        }
+
+        if ($version >= self::OLDEST_PHP_VERSION_ID) {
+            return self::notPastTheLatest($version, $written);
+        }
+
+        // 8 reads as PHP 8.0, 82 as PHP 8.2: a version written as a number.
+        [$major, $minor] = $version < 10 ? [$version, 0] : [intdiv($version, 10), $version % 10];
+        if ($version < 100 && $major >= 7) {
+            throw new InvalidRegexOptionException(\sprintf('"php_version" %d is no PHP_VERSION_ID: write PHP %2$d.%3$d as %4$d or "%2$d.%3$d".', $version, $major, $minor, $major * 10000 + $minor * 100));
+        }
+
+        throw new InvalidRegexOptionException(\sprintf('"php_version" %d is below %d, the PHP_VERSION_ID of PHP 7.0: write a version as "8.2", or as its PHP_VERSION_ID, 80200.', $version, self::OLDEST_PHP_VERSION_ID));
     }
 
     /**
@@ -330,12 +391,7 @@ final class ParserOptions
     }
 
     /**
-     * The PHP_VERSION_ID a "php_version" names: an integer, its digits, or a
-     * version, "8.2" or "8.2.1", each part of the version after the major at
-     * most 99, as PHP_VERSION_ID counts them. An integer below PHP 7.0's id
-     * is refused, and a number of one or two digits that reads as PHP 7, 8
-     * or 9, a major or a major and a minor run together, with the way to
-     * write it.
+     * The PHP_VERSION_ID a "php_version" names, from PHP 7.0 to PHP 9.99.
      *
      * @param array<string, mixed> $options Configuration options
      */
@@ -347,37 +403,25 @@ final class ParserOptions
             return null;
         }
 
-        if (\is_string($version)) {
-            $version = trim($version, " \t\n\r\0\x0B");
-
-            // A version names a release, old as it may be: "5.6" is PHP
-            // 5.6, which the caller may refuse as no PHP on PCRE2.
-            if (1 === LibraryPcre::match('/^([0-9]++)\.([0-9]{1,2})(?:\.([0-9]{1,2}))?$/D', $version, $parts)) {
-                return (int) $parts[1] * 10000 + (int) $parts[2] * 100 + (int) ($parts[3] ?? 0);
-            }
-
-            $version = Ascii::isDigit($version) && \strlen($version) <= 9 ? (int) $version : null;
-        }
-
-        if (!\is_int($version)) {
+        if (!\is_int($version) && !\is_string($version)) {
             throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED);
         }
 
-        if ($version <= 0) {
-            throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED);
+        $phpVersionId = self::phpVersionIdOf($version);
+        if ($phpVersionId < self::OLDEST_PHP_VERSION_ID) {
+            throw new InvalidRegexOptionException(\sprintf('"php_version" %s is below 7.0: write a version as "8.2", or as its PHP_VERSION_ID, 80200.', trim((string) $version, " \t\n\r\0\x0B")));
         }
 
-        if ($version >= self::OLDEST_PHP_VERSION_ID) {
-            return $version;
+        return $phpVersionId;
+    }
+
+    private static function notPastTheLatest(int $phpVersionId, int|string $written): int
+    {
+        if ($phpVersionId > self::LATEST_PHP_VERSION_ID) {
+            throw new InvalidRegexOptionException(\sprintf('"php_version" %s is past PHP 9.99: write a version as "8.2", or as its PHP_VERSION_ID, 80200.', $written));
         }
 
-        // 8 reads as PHP 8.0, 82 as PHP 8.2: a version written as a number.
-        [$major, $minor] = $version < 10 ? [$version, 0] : [intdiv($version, 10), $version % 10];
-        if ($version < 100 && $major >= 7) {
-            throw new InvalidRegexOptionException(\sprintf('"php_version" %d is no PHP_VERSION_ID: write PHP %2$d.%3$d as %4$d or "%2$d.%3$d".', $version, $major, $minor, $major * 10000 + $minor * 100));
-        }
-
-        throw new InvalidRegexOptionException(\sprintf('"php_version" %d is below %d, the PHP_VERSION_ID of PHP 7.0: write a version as "8.2", or as its PHP_VERSION_ID, 80200.', $version, self::OLDEST_PHP_VERSION_ID));
+        return $phpVersionId;
     }
 
     /**

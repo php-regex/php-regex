@@ -186,9 +186,6 @@ would mean replaying their internal form of the pattern (10.35 fixed it).
 
 ## Parser and integrations: the last pass before 2.0.0
 
-Parser bugs, each reproduced against the engine: `php_version` and
-`ParserOptions` accept nonsense values.
-
 Parser structure: the extended-class parsing still in `TokenParser`
 (`parseExtendedClass`, `parseOperandAt`) apart; the error-offset rule read
 through `PcreTarget::faultOffset()` in `Validator`, `Lexer` and
