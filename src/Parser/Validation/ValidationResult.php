@@ -40,6 +40,32 @@ final class ValidationResult implements \JsonSerializable
      * ("Hint: …"), each part left out when the result does not carry it.
      * An empty string for a valid pattern. No colour, no trailing newline.
      */
+    /**
+     * Whether the library stopped before reading the whole pattern: its
+     * own limit — length, recursion, anything it bounds — was reached.
+     * Never a verdict on the pattern: the engine may well take what the
+     * library stopped reading, so a consumer degrades, it does not
+     * refuse.
+     */
+    public function isLimit(): bool
+    {
+        return !$this->isValid && $this->category === ValidationErrorCategory::Limit;
+    }
+
+    /**
+     * Whether the pattern is refused — for the engine the library judges,
+     * or by its own grammar. Null when the run said nothing: the pattern
+     * is valid, or the library stopped at a limit of its own.
+     */
+    public function isPatternRefused(): ?bool
+    {
+        if ($this->isValid) {
+            return null;
+        }
+
+        return !$this->isLimit();
+    }
+
     public function render(): string
     {
         if ($this->isValid) {
