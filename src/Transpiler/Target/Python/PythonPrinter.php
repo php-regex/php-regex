@@ -259,11 +259,20 @@ final class PythonPrinter extends AbstractTargetPrinter
     public function visitCharLiteral(CharLiteralNode $node): string
     {
         $codePoint = $node->codePoint;
-        $this->refuseAByteEscape($codePoint, $node);
 
         if (CharLiteralType::UnicodeNamed === $node->type) {
+            if ($codePoint < 0) {
+                return $this->unsupported('Unicode named character escape with unknown name cannot be converted.', $node);
+            }
+
+            if (1 !== LibraryPcre::match('/^\\\\N\\{[ \\t]*U\\+/', $node->originalRepresentation)) {
+                return $this->unsupported('Unicode named character \N{name} is not supported in Python re; use \N{U+hhhh} in the source pattern.', $node);
+            }
+
             $this->context->addWarning('Converted Unicode named character to code point escape.');
         }
+
+        $this->refuseAByteEscape($codePoint, $node);
 
         if ($this->inCharClass) {
             return $this->formatCodePoint($codePoint);

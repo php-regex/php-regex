@@ -263,4 +263,25 @@ final class JavaScriptTranspilerTest extends TestCase
         $this->expectException(TranspileException::class);
         $regex->transpile('/a++/', 'javascript');
     }
+
+    #[Test]
+    public function test_rejects_unicode_named_character_name_form(): void
+    {
+        // Oracle: \N{LATIN SMALL LETTER A} is a PCRE2 name-form escape;
+        // JavaScript has no \N{name} syntax, so the printer must refuse it.
+        $this->expectException(TranspileException::class);
+
+        Regex::create(['cache' => null])->transpile('/\N{LATIN SMALL LETTER A}/u', 'javascript');
+    }
+
+    #[Test]
+    public function test_rejects_unicode_named_character_unknown_name(): void
+    {
+        // Oracle: \N{UNKNOWN} is refused by PCRE2 (no such name). The
+        // library parser keeps it as codePoint = -1; the printer must not
+        // silently emit \xFFFFFFFFFFFFFFFF.
+        $this->expectException(TranspileException::class);
+
+        Regex::create(['cache' => null])->transpile('/\N{UNKNOWN NAME}/u', 'javascript');
+    }
 }

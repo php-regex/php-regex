@@ -312,20 +312,6 @@ Decisions the maintainer owns, each worth points on its own:
 
 Bugs found while measuring (verified, not fixed):
 
-- `transpile()` accepts every `\N{…}` PCRE2 refuses on every release,
-  because it never runs the validator: the printers convert the node the
-  way they convert the legal `\N{U+…}`. `\N{LATIN SMALL LETTER A}`
-  becomes `\x61` with a warning; an unknown name keeps the `-1` sentinel
-  of `CodePointReader`, which `refuseAByteEscape` lets through (a
-  negative code point is not above `0x7F`) and `formatCodePoint` prints
-  as `/\xFFFFFFFFFFFFFFFF/u`, a pattern JavaScript then reads as `\xFF`
-  followed by fourteen literal `F`s; and `/\N{U+41}/` without `u`, which
-  `validate()` refuses (`regex.unicode_named.requires_utf`), is emitted
-  as `\x41` all the same. The javascript, python and html-pattern
-  targets share the hole. Refuse the name form in the printers as
-  `EscapeChecks::characterLiteral` does, and guard `formatCodePoint()`
-  against the `-1` sentinel.
-
 - `OverlappingAlternationRule` is completely blind when any branch contains
   `\w`, `\d`, or `\s` under `/u`: `CharSetAnalyzer` returns `unknown()` for
   those shorthands in Unicode mode, so the intersection test never runs.
