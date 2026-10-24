@@ -201,10 +201,6 @@ settle before the tag.
 
 Integrations:
 
-- Symfony: validator-mapped patterns are never linted (the bundle wires a
-  service FrameworkBundle does not define); the
-  `ide` fallback never fires; `AbstractBundle`, no container parameters,
-  no autowirable internal services.
 - `ExtractorInterface` is marked internal, yet the `extractor_service`
   setting asks users to implement it: making it public means adding it to
   the public surface (`tests/Support/PublicSurface.php` and
