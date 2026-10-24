@@ -154,20 +154,32 @@ final class CaptureFacts
     }
 
     /**
+     * What the node reads across a whole scan, every branch joined: the
+     * dominance above speaks for one match, and a scan that resumes after
+     * an empty match still reaches the later branches.
+     *
+     * @return list<string>|null
+     */
+    public function scanValues(NodeInterface $node): ?array
+    {
+        return $this->values($node, true);
+    }
+
+    /**
      * The strings a node can match, when they are a small finite set read
      * from literals alone.
      *
      * @return list<string>|null
      */
-    private function values(NodeInterface $node): ?array
+    private function values(NodeInterface $node, bool $scan = false): ?array
     {
         return match (true) {
             $node instanceof LiteralNode => $this->folds($node->value) ? null : [$node->value],
             $node instanceof CharLiteralNode => $this->character($node->codePoint),
-            $node instanceof SequenceNode => $this->product(array_map($this->values(...), $node->children)),
-            $node instanceof AlternationNode => $this->alternationValues($node),
-            $node instanceof GroupNode => self::isLookaround($node) ? [''] : $this->values($node->child),
-            $node instanceof QuantifierNode => $this->repeat($node),
+            $node instanceof SequenceNode => $this->product(array_map(fn (NodeInterface $child): ?array => $this->values($child, $scan), $node->children)),
+            $node instanceof AlternationNode => $this->alternationValues($node, $scan),
+            $node instanceof GroupNode => self::isLookaround($node) ? [''] : $this->values($node->child, $scan),
+            $node instanceof QuantifierNode => $this->repeat($node, $scan),
             $node instanceof CharClassNode => $this->classMembers($node),
             $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof CommentNode,
             $node instanceof KeepNode, $node instanceof DefineNode, $node instanceof CalloutNode => [''],
@@ -185,13 +197,13 @@ final class CaptureFacts
      *
      * @return list<string>|null
      */
-    private function alternationValues(AlternationNode $node): ?array
+    private function alternationValues(AlternationNode $node, bool $scan = false): ?array
     {
-        if (($this->atStart[spl_object_id($node)] ?? false) && $this->dominatesFromStart($node->alternatives)) {
+        if (!$scan && ($this->atStart[spl_object_id($node)] ?? false) && $this->dominatesFromStart($node->alternatives)) {
             return [''];
         }
 
-        return $this->union(array_map($this->values(...), $node->alternatives));
+        return $this->union(array_map(fn (NodeInterface $branch): ?array => $this->values($branch, $scan), $node->alternatives));
     }
 
     /**
@@ -377,10 +389,10 @@ final class CaptureFacts
     /**
      * @return list<string>|null
      */
-    private function repeat(QuantifierNode $node): ?array
+    private function repeat(QuantifierNode $node, bool $scan = false): ?array
     {
         $bounds = QuantifierBounds::parse($node->quantifier);
-        $body = $this->values($node->node);
+        $body = $this->values($node->node, $scan);
         if (null === $bounds || null === $body || null === $bounds->max) {
             return null;
         }

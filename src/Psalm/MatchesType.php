@@ -103,7 +103,9 @@ final class MatchesType
 
         $flags &= \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL;
         if (\PREG_SET_ORDER === $order) {
-            return $matched ? Type::getNonEmptyList(self::ofMatch($shape, $flags)) : Type::getList(self::ofMatch($shape, $flags));
+            $entry = null === $shape->scanWhole ? self::ofMatch($shape, $flags) : self::ofScanRows($shape, $flags);
+
+            return $matched ? Type::getNonEmptyList($entry) : Type::getList($entry);
         }
 
         return new Union([self::patternOrderShape($shape, $flags, $matched)]);
@@ -126,6 +128,20 @@ final class MatchesType
         }
 
         return $count;
+    }
+
+    /**
+     * @return non-empty-array<int|string, Union>
+     */
+    /**
+     * One row of a set-order scan: a scan resumes after an empty match, so
+     * the whole a row reads joins the later branches' values.
+     */
+    private static function ofScanRows(CaptureShape $shape, int $flags): Union
+    {
+        $scanShape = new CaptureShape($shape->scanWhole ?? $shape->whole, $shape->groups, $shape->marks, $shape->cases);
+
+        return self::ofMatch($scanShape, $flags);
     }
 
     /**
@@ -168,6 +184,11 @@ final class MatchesType
             if ($key->holdsMarksOnly()) {
                 $value = $marks;
             } else {
+                // a scan resumes after an empty match: the whole a scan
+                // reads joins the later branches' values
+                if (0 === $key->key && null !== $shape->scanWhole) {
+                    $key = new CaptureKey($key->key, $key->optional, [$shape->scanWhole], $key->unset, $key->marks, $key->alwaysSet);
+                }
                 $entry = self::entry(self::groupType($key, $asNull), $key->alwaysSet, $offsets);
                 $value = $matched ? Type::getNonEmptyList($entry) : Type::getList($entry);
                 // Once a match sets a mark, PHP writes the marks over the list of a group named MARK.
@@ -258,11 +279,21 @@ final class MatchesType
         }
 
         // No numeric-string: Psalm 6.19's combiner reads numeric-string|'a' as numeric-string.
-        return new Union([match (true) {
+        // A group whose content may read empty admits the empty string
+        // beside what it reads set: a digit run of any length is digits or
+        // the empty string, and the empty arm composes here as matchShape
+        // composes it.
+        $type = match (true) {
             $group->nonFalsy => new TNonFalsyString(),
             $group->digitsOnly || $group->minLength > 0 => new TNonEmptyString(),
             default => new TString(),
-        }]);
+        };
+
+        if (0 === $group->minLength) {
+            return new Union([TLiteralString::make(''), $type]);
+        }
+
+        return new Union([$type]);
     }
 
     private static function markType(CaptureShape $shape): Union

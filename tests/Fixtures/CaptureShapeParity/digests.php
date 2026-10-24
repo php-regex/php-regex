@@ -18,7 +18,7 @@ declare(strict_types=1);
  * @return array{version: string, digests: array<string, string>}
  */
 return [
-    'version' => '4',
+    'version' => '5',
     'digests' => [
         '/(a)(z)?/' => 'fceffee5528c62d919aa50fe9f9a0e4f57b34252',
         '/(z)?(a)/' => 'dad1b8133f483a94938631586006071bd8a02a22',
@@ -85,7 +85,7 @@ return [
         '/foo/i
 ' => '16deaf3ac7f88ce33fbf6a68a5a0441218c895ce',
         '/abc/' => 'f6f39027a050938a3d147019952885b66546d6bd',
-        '/^|\\d{1,2}$/' => 'c4470c1dff6d4222bde205472c82a0b1456c6405',
+        '/^|\\d{1,2}$/' => 'cf3e5935525bc64816088fc650e78cdd071507a9',
         '/(?J)(?:(?<g>foo)|(?<g>bar))/' => '600474d30e31462d138f94749f7424390a222c78',
         '/(?J)(?:(?<g>foo)|(?<g>bar))(?<h>baz)/' => '61a1172f1d8d83083f265f797e292d29282e2e9f',
         '/([a-z]+_[a-z]+_*[a-z]+)_?(d+)?/' => 'f75e801d2ab5c84cf78401e615f28c8d7f99e957',

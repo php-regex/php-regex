@@ -258,35 +258,6 @@ final class QuantifierConcatenationRule extends AbstractLintRule
         return $folded;
     }
 
-    private static function holdsANegatedClass(NodeInterface $node): bool
-    {
-        if ($node instanceof CharClassNode && $node->isNegated) {
-            return true;
-        }
-
-        foreach ($node->getChildren() as $child) {
-            if (self::holdsANegatedClass($child)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Whether the set holds both cases of each ASCII letter it holds.
-     */
-    private static function isCaseClosed(ByteCharSet $set): bool
-    {
-        for ($upper = 0x41; $upper <= 0x5A; $upper++) {
-            if ($set->intersects(ByteCharSet::fromChar(\chr($upper))) !== $set->intersects(ByteCharSet::fromChar(\chr($upper + 0x20)))) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     /**
      * The character set of an atom matching one character, and the bodies
      * of the negative lookaheads that may follow that character inside it,

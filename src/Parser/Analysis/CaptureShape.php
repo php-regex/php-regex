@@ -43,6 +43,7 @@ final class CaptureShape
         public readonly array $groups,
         public readonly array $marks,
         public readonly array $cases = [],
+        public readonly ?CaptureGroupShape $scanWhole = null,
     ) {}
 
     /**
@@ -143,10 +144,11 @@ final class CaptureShape
         $marks = 'array<int, '.implode('|', $this->markTypes()).'>';
         $items = [];
         foreach (CaptureLayout::ofMatchAll($this)->keys as $key) {
+            $whole = $this->scanWhole($key);
             $items[] = self::keyName($key).': '.($key->holdsMarksOnly()
                 ? $marks
                 // Once a match sets a mark, PHP writes the marks over the list of a group named MARK.
-                : 'list<'.self::entry(self::groupTypes($key, $unset), $key->alwaysSet, $offsets).'>'.($key->marks ? '|'.$marks : ''));
+                : 'list<'.self::entry(self::groupTypes($whole ?? $key, $unset), $key->alwaysSet, $offsets).'>'.($key->marks ? '|'.$marks : ''));
         }
 
         return 'array{'.implode(', ', $items).'}';
@@ -200,9 +202,26 @@ final class CaptureShape
      *
      * @return list<string>
      */
+    /**
+     * The key of the whole match read for a scan: a scan that resumes after
+     * an empty match reaches the later branches, so the whole widens to
+     * what a scan reads.
+     */
+    private function scanWhole(CaptureKey $key): ?CaptureKey
+    {
+        if (0 !== $key->key || null === $this->scanWhole || $key->groups !== [$this->whole]) {
+            return null;
+        }
+
+        return new CaptureKey($key->key, $key->optional, [$this->scanWhole], $key->unset, $key->marks, $key->alwaysSet);
+    }
+
+    /**
+     * @return list<string>
+     */
     private static function groupTypes(CaptureKey $key, string $unset): array
     {
-        $types = array_map(self::valueType(...), $key->groups);
+        $types = array_values(array_map(self::valueType(...), $key->groups));
         if ($key->unset) {
             $types[] = $unset;
         }

@@ -50,7 +50,7 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '4';
+    public const ANALYSIS_VERSION = '5';
 
     private const MAX_CASES = 16;
 
@@ -174,7 +174,17 @@ final class CaptureShapeAnalyzer
         $this->collectAtStart($wholePattern);
         $whole = $this->facts->of($wholePattern);
 
-        return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, $whole['min'], $whole['max'], $whole['values'], $whole['nonFalsy'], $whole['digitsOnly']), $groups, $this->marks);
+        // a zero-width first branch wins every single match and not the
+        // scan: the whole a scan reads joins the later branches' values
+        $scanWhole = null;
+        if ([''] === $whole['values']) {
+            $scan = $this->facts->scanValues($wholePattern);
+            if ($scan !== ['']) {
+                $scanWhole = new CaptureGroupShape(0, null, Participation::Always, $whole['min'], $whole['max'], $scan, $whole['nonFalsy'], $whole['digitsOnly']);
+            }
+        }
+
+        return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, $whole['min'], $whole['max'], $whole['values'], $whole['nonFalsy'], $whole['digitsOnly']), $groups, $this->marks, scanWhole: $scanWhole);
     }
 
     /**
