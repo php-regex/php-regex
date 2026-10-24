@@ -99,6 +99,11 @@ final class LoopShape
         $codePoint = match (true) {
             $inner->node instanceof LiteralNode && 1 === \strlen($inner->node->value) => \ord($inner->node->value),
             $inner->node instanceof CharLiteralNode => $inner->node->codePoint,
+            $inner->node instanceof CharClassNode && !$inner->node->isNegated
+                && $inner->node->expression instanceof LiteralNode
+                && 1 === \strlen($inner->node->expression->value) => \ord($inner->node->expression->value),
+            $inner->node instanceof CharClassNode && !$inner->node->isNegated
+                && $inner->node->expression instanceof CharLiteralNode => $inner->node->expression->codePoint,
             default => null,
         };
 

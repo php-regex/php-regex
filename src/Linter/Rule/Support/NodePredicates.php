@@ -424,7 +424,7 @@ final class NodePredicates
     }
 
     /**
-     * @phpstan-assert-if-true AnchorNode|AssertionNode $node
+     * @phpstan-assert-if-true AnchorNode|AssertionNode|GroupNode $node
      */
     public static function isEndAnchorNode(NodeInterface $node): bool
     {
@@ -434,6 +434,12 @@ final class NodePredicates
 
         if ($node instanceof AssertionNode) {
             return \in_array($node->value, ['z', 'Z'], true);
+        }
+
+        if ($node instanceof GroupNode && GroupType::LookaheadPositive === $node->type) {
+            $child = self::unwrapTransparentNode($node->child);
+
+            return self::isEndAnchorNode($child);
         }
 
         return false;

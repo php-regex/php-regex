@@ -76,7 +76,7 @@ final class NodePredicatesAssertTest extends TestCase
 
         yield 'end anchor' => [
             'method' => 'isEndAnchorNode',
-            'expected' => 'PHPRegex\Parser\Node\AnchorNode|PHPRegex\Parser\Node\AssertionNode',
+            'expected' => 'PHPRegex\Parser\Node\AnchorNode|PHPRegex\Parser\Node\AssertionNode|PHPRegex\Parser\Node\GroupNode',
         ];
     }
 

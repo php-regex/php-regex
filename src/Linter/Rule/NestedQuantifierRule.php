@@ -20,6 +20,7 @@ use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\DefineNode;
@@ -65,6 +66,10 @@ final class NestedQuantifierRule extends AbstractLintRule
         }
 
         if ($isAtomicQuantifier || !QuantifierMath::isRepeatable($node->quantifier)) {
+            return [];
+        }
+
+        if ($context->isInsideAtomicOrPossessiveContext()) {
             return [];
         }
 
@@ -165,7 +170,7 @@ final class NestedQuantifierRule extends AbstractLintRule
 
         $innerFlags = $context->flagsAt($nested, $outer->node);
         $innerCaseless = self::isReadCaseless($nested->node, $innerFlags);
-        $innerBoundary = $this->boundaryCharSet($nested->node, $context, $innerFlags);
+        $innerBoundary = $this->correctlyFoldedBoundary($nested->node, $context, $innerFlags, $innerCaseless);
         if ($innerBoundary->isUnknown() || $innerBoundary->isEmpty()) {
             return false;
         }
@@ -184,8 +189,16 @@ final class NestedQuantifierRule extends AbstractLintRule
             return true;
         }
 
-        return $index + 1 < \count($children)
-            && $this->separates($children[$index + 1], $flags[$index + 1], $innerBoundary, $innerCaseless, $innerTakesAboveAscii, $context);
+        $count = \count($children);
+        for ($afterIdx = $index + 1; $afterIdx < $count; $afterIdx++) {
+            if (!NodePredicates::isConsuming($children[$afterIdx])) {
+                continue;
+            }
+
+            return $this->separates($children[$afterIdx], $flags[$afterIdx], $innerBoundary, $innerCaseless, $innerTakesAboveAscii, $context);
+        }
+
+        return false;
     }
 
     /**
@@ -270,6 +283,32 @@ final class NestedQuantifierRule extends AbstractLintRule
     private function boundaryCharSet(NodeInterface $node, LintContext $context, ?string $flags): ByteCharSet
     {
         return $context->firstChars($node, $flags)->union($context->lastChars($node, $flags));
+    }
+
+    /**
+     * The boundary set of the node, correctly folded under caseless mode.
+     *
+     * For a negated class `[^x]` under the i flag, the raw boundary is
+     * complement({x}), which contains the partner case (e.g. `X`). Naively
+     * folding that set adds `x` back in, making the boundary look like
+     * "all ASCII". The correct fold is complement(fold(excluded_set)):
+     * fold {x} to {x, X}, then negate to get "all ASCII except x and X".
+     */
+    private function correctlyFoldedBoundary(NodeInterface $node, LintContext $context, ?string $flags, bool $caseless): ByteCharSet
+    {
+        $boundary = $this->boundaryCharSet($node, $context, $flags);
+
+        if ($caseless && $node instanceof CharClassNode && $node->isNegated) {
+            $excludedSet = $context->firstChars($node->expression, $flags);
+            if (!$excludedSet->isUnknown()) {
+                $foldedExcluded = $this->fold($excludedSet, true);
+                if (!$foldedExcluded->isUnknown()) {
+                    return $foldedExcluded->complement();
+                }
+            }
+        }
+
+        return $boundary;
     }
 
     /**
