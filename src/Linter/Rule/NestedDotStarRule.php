@@ -60,6 +60,7 @@ final class NestedDotStarRule extends AbstractLintRule
             || ($node->node instanceof GroupNode && GroupType::Atomic === $node->node->type);
 
         if ($isAtomicQuantifier
+            || $context->isInsideAtomicOrPossessiveContext()
             || !QuantifierMath::isUnbounded($node->quantifier)
             || !$this->containsDotStar($node->node)
             || $this->isSeparated($node, $context)
@@ -99,7 +100,7 @@ final class NestedDotStarRule extends AbstractLintRule
     private function containsDotStar(NodeInterface $node): bool
     {
         if ($node instanceof QuantifierNode && $node->node instanceof DotNode) {
-            return QuantifierMath::isUnbounded($node->quantifier);
+            return QuantifierMath::isUnbounded($node->quantifier) && QuantifierType::Possessive !== $node->type;
         }
 
         if ($node instanceof GroupNode) {
