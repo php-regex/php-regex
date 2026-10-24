@@ -366,3 +366,17 @@ validity, #4 capture shapes — all green on `NodeScopeResolverTest`
    commit hygiene (a few ungrammatical subjects, two discarded
    architectures inside the line) settles when the maintainer asks for
    the split into stacked pull requests.
+
+## The engine-gated test rows: the CI's red line
+
+Engines and Coverage stay red on one shared cause: 76 test rows across
+about 14 classes read the validator and the lexer against PCRE2 10.44
+(the php:8.4-cli image the workflow pins) while their expectations were
+verified against 10.49 — QuantifiedMultibyteLiteral, ValidatorEdgeCase,
+CompiledLengthLocale, AlphaAssertionBody, PatternTooLargeLocale,
+PatternPrinterRoundTrip, PatternLinterCorpus, InlineOptionLetters,
+PropertyNegationSpacing, CaptureShapePhpStanType, QuoteMode,
+UnicodePropertyRelease. The rows are sound on one engine and wrong on
+the other; each needs the release gate named (the PcreGates trait, one
+call per row) or an expectation per release. The pcre-gates spec that
+waits for GO planned the same migration for the ~60 lint sites.
