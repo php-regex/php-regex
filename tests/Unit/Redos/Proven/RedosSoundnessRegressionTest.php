@@ -393,6 +393,43 @@ final class RedosSoundnessRegressionTest extends TestCase
     }
 
     /**
+     * Oracle: chr(0xC9) is É; under (*UCP) it is a Unicode word character,
+     * so \w and \xC9 overlap. The prover must use the (*UCP)-aware character
+     * set for \w to detect the overlap and prove exponential backtracking.
+     *
+     * Engine fact (no JIT): @preg_match('/(*UCP)(?:\w|\xC9)+$/',
+     * str_repeat(chr(0xC9), 15).'!') exhausts the backtrack limit.
+     */
+    #[Test]
+    public function test_ucp_word_overlap_with_latin1_byte_is_proven_exponential(): void
+    {
+        $pattern = '/(*UCP)(?:\w|\xC9)+$/';
+
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+
+        $this->assertSame(
+            RedosProof::Proven,
+            $analysis->proof,
+            $pattern.' was "'.$analysis->headline().'" instead of proven exponential',
+        );
+        $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $pattern);
+    }
+
+    #[Test]
+    public function test_engine_fact_ucp_word_overlap_exhausts_backtrack_limit(): void
+    {
+        // Oracle: chr(0xC9) is É, a Unicode word character under (*UCP).
+        $pattern = '/(*UCP)(?:\w|\xC9)+$/';
+        $input = str_repeat(chr(0xC9), 15).'!';
+
+        ini_set('pcre.backtrack_limit', '1000');
+        $result = @preg_match(PcreInterpreter::pattern($pattern), $input);
+
+        $this->assertFalse($result, $pattern.' did not exhaust the backtrack limit');
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error(), $pattern);
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, input: string, withMatches: bool, offset?: int}>
      */
     private static function counterexamples(): iterable

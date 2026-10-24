@@ -51,7 +51,7 @@ final class CharSetAnalyzer
      */
     public function __construct(string $flags = '', private readonly string $startOptions = '')
     {
-        $this->unicodeMode = str_contains($flags, 'u');
+        $this->unicodeMode = str_contains($flags, 'u') || str_contains($startOptions, '(*UCP)');
         $this->dot = self::dotSet(str_contains($flags, 's'), StartOptions::newline($startOptions));
     }
 
