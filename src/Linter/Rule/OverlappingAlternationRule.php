@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\NodePredicates;
+use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\DotNode;
@@ -159,7 +160,8 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 // If we can't analyze any charset, skip semantic overlap detection
                 return null;
             }
-            $charSets[] = $charSet;
+            $caseless = str_contains($flags, 'i') || NodePredicates::turnsCaselessOn($node->alternatives[$index]);
+            $charSets[] = $caseless ? self::foldCharSet($charSet) : $charSet;
         }
 
         $total = \count($charSets);
@@ -265,6 +267,37 @@ final class OverlappingAlternationRule extends AbstractLintRule
     private static function fold(string $text, LintContext $context): string
     {
         return $context->pattern->unicodeMode ? mb_strtolower($text, 'UTF-8') : Ascii::lower($text);
+    }
+
+    /**
+     * The character set with the other case of each ASCII letter added, so
+     * that two sets containing only ASCII letters can be compared for
+     * overlap under the i flag. Returns the input unchanged when it holds
+     * a byte above ASCII (those code points are out of range for the set).
+     */
+    private static function foldCharSet(ByteCharSet $set): ByteCharSet
+    {
+        if ($set->isUnknown()) {
+            return $set;
+        }
+
+        for ($byte = 0x80; $byte <= 0xFF; $byte++) {
+            if ($set->intersects(ByteCharSet::fromChar(\chr($byte)))) {
+                return ByteCharSet::unknown();
+            }
+        }
+
+        $folded = $set;
+        for ($lower = \ord('a'); $lower <= \ord('z'); $lower++) {
+            $upper = $lower - 0x20;
+            $lowerSet = ByteCharSet::fromChar(\chr($lower));
+            $upperSet = ByteCharSet::fromChar(\chr($upper));
+            if ($set->intersects($lowerSet) || $set->intersects($upperSet)) {
+                $folded = $folded->union($lowerSet)->union($upperSet);
+            }
+        }
+
+        return $folded;
     }
 
     /**
