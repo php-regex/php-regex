@@ -189,7 +189,7 @@ final class CharSetAnalyzer
 
     private function fromCharType(string $type): ByteCharSet
     {
-        if ($this->unicodeMode && \in_array($type, ['d', 'D', 'w', 'W'], true)) {
+        if ($this->unicodeMode && \in_array($type, ['D', 'W'], true)) {
             return ByteCharSet::unknown();
         }
 

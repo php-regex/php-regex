@@ -201,6 +201,39 @@ final class ReDoSRegressionTest extends TestCase
     /**
      * @return iterable<string, array{pattern: string}>
      */
+    public static function provideShorthandOverlapUnderU(): iterable
+    {
+        yield '\w overlaps literal letter under /u' => [
+            // Oracle: php -r 'for($i=0;$i<20;$i++){$t=microtime(1);preg_match("/(?:\w|a)+$/u",str_repeat("a",$i)."!");$d=microtime(1)-$t;echo "$i: ".round($d*1e3,2)."ms\n";}'
+            // n=20 takes ~160 ms without JIT; \w includes all ASCII letters under /u.
+            'pattern' => '/(?:\w|a)+$/u',
+        ];
+
+        yield '\d overlaps literal digit under /u' => [
+            // Oracle: php -r 'for($i=0;$i<20;$i++){$t=microtime(1);preg_match("/(?:\d|1)+$/u",str_repeat("1",$i)."!");$d=microtime(1)-$t;echo "$i: ".round($d*1e3,2)."ms\n";}'
+            // \d under /u still includes ASCII digits 0-9.
+            'pattern' => '/(?:\d|1)+$/u',
+        ];
+    }
+
+    /**
+     * Under `/u`, `\w` and `\d` extend to Unicode but their ASCII subsets
+     * are exact and sufficient to prove overlap with ASCII literals.
+     */
+    #[Test]
+    #[DataProvider('provideShorthandOverlapUnderU')]
+    public function test_overlapping_alternation_detects_shorthand_overlap_under_u(string $pattern): void
+    {
+        $this->assertContains(
+            'regex.lint.overlap.charset',
+            $this->issueIds($pattern),
+            $pattern,
+        );
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
     public static function provideConcatenationSubsetUnderI(): iterable
     {
         yield 'literal subset of uppercase range under /i' => [

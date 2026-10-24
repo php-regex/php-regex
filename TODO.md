@@ -312,19 +312,6 @@ Decisions the maintainer owns, each worth points on its own:
 
 Bugs found while measuring (verified, not fixed):
 
-- `OverlappingAlternationRule` is completely blind when any branch contains
-  `\w`, `\d`, or `\s` under `/u`: `CharSetAnalyzer` returns `unknown()` for
-  those shorthands in Unicode mode, so the intersection test never runs.
-  `/(?:\w|a)+$/u` is catastrophic without JIT (n=15: ~5 ms, n=20: ~160 ms,
-  n=25: ~1.9 s) but the rule emits nothing. The overlap between `\w` and `a`
-  is provably real (ASCII letters are word characters in every mode), yet the
-  rule gives up the moment either set is `unknown()`. Fix: the rule could
-  skip to the `LoopShape` prover path when sets include a wide shorthand
-  under `/u`, rather than treating the entire pair as unanalyzable; or the
-  `CharSetAnalyzer` could return a conservative lower bound for `\w` under
-  `/u` (the ASCII subset) instead of `unknown()`, so at least subset-of-ASCII
-  overlaps are still detected.
-
 - `CharSetAnalyzer` and `PnfaBuilder` are both blind to `(*UCP)` as a
   source of Unicode-property semantics. `CharSetAnalyzer` sets `unicodeMode`
   from `str_contains($flags, 'u')` only, ignoring `startOptions`; under byte
