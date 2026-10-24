@@ -60,7 +60,7 @@ final class NestedDotStarRule extends AbstractLintRule
             || ($node->node instanceof GroupNode && GroupType::Atomic === $node->node->type);
 
         if ($isAtomicQuantifier
-            || $context->isInsideAtomicOrPossessiveContext()
+            || $context->isTheTailOfAnAtomicGroup($node)
             || !QuantifierMath::isUnbounded($node->quantifier)
             || !$this->containsDotStar($node->node)
             || $this->isSeparated($node, $context)

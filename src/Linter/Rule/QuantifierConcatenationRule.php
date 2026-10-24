@@ -164,9 +164,12 @@ final class QuantifierConcatenationRule extends AbstractLintRule
      * sets stop at 0x7F. Above ASCII the run is known to fit only when it
      * is held to ASCII, or the other takes every character there.
      *
-     * Under the i flag both sets are case-folded before comparison. For a
-     * negated class `[^x]` the fold is `complement(fold(excluded))` to
-     * avoid the unsoundness of folding a complement directly.
+     * Each run is case-folded when it reads its letters in either case,
+     * the other run only when all of it does. For a negated class `[^x]`
+     * the fold is `complement(fold(excluded))` to avoid the unsoundness of
+     * folding a complement directly. In UTF mode a caseless "k" or "s" also
+     * takes the Kelvin sign or the long s, which a case-sensitive run does
+     * not hold.
      */
     private function isKnownSubset(NodeInterface $run, ByteCharSet $set, NodeInterface $other, ByteCharSet $otherSet, LintContext $context, string $flags): bool
     {
@@ -174,25 +177,84 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             return false;
         }
 
-        $caseless = str_contains($flags, 'i')
-            || NodePredicates::turnsCaselessOn($run)
-            || NodePredicates::turnsCaselessOn($other);
+        // Folding the run only widens it: a run partly caseless is folded.
+        $runCaseless = self::readsCaseless($run, $flags) ?? true;
+        $otherCaseless = self::readsCaseless($other, $flags);
+        if (null === $otherCaseless) {
+            return false;
+        }
 
-        if (!$caseless) {
+        if (!$runCaseless && !$otherCaseless) {
             return CharClassSets::isSubset($set, $otherSet);
         }
 
-        $foldedSet = self::foldByteSet($set);
-        if ($foldedSet->isUnknown()) {
+        $runSet = $runCaseless ? self::foldByteSet($set) : $set;
+        if ($runSet->isUnknown()) {
             return false;
         }
 
-        $foldedOther = $this->foldedSetFor($other, $otherSet, $context, $flags);
-        if ($foldedOther->isUnknown()) {
+        if ($runCaseless && !$otherCaseless && $context->pattern->unicodeMode && $runSet->intersects(self::lettersWithAPartnerAboveAscii())) {
             return false;
         }
 
-        return CharClassSets::isSubset($foldedSet, $foldedOther);
+        $otherRead = $otherCaseless ? $this->foldedSetFor($other, $otherSet, $context, $flags) : $otherSet;
+        if ($otherRead->isUnknown()) {
+            return false;
+        }
+
+        return CharClassSets::isSubset($runSet, $otherRead);
+    }
+
+    /**
+     * Whether the run reads its letters in either case, through the groups
+     * around it that only set flags; null when a group inside it sets
+     * flags of its own, so that part of it may read them otherwise.
+     */
+    private static function readsCaseless(NodeInterface $node, string $flags): ?bool
+    {
+        while ($node instanceof GroupNode
+            && (GroupType::NonCapturing === $node->type || GroupType::InlineFlags === $node->type)
+        ) {
+            if (null !== $node->flags) {
+                $flags = NodePredicates::applyInlineFlags($flags, $node->flags);
+            }
+            $node = $node->child;
+        }
+
+        return self::holdsFlagGroup($node) ? null : str_contains($flags, 'i');
+    }
+
+    /**
+     * Whether a group inside the node sets flags its character is read
+     * under: a lookaround guard reads no character of the run.
+     */
+    private static function holdsFlagGroup(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && !NodePredicates::isTransparentGroup($node->type)) {
+            return false;
+        }
+
+        if ($node instanceof GroupNode && null !== $node->flags) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsFlagGroup($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * "k", "K", "s" and "S": under a caseless UTF option they also match
+     * U+212A KELVIN SIGN and U+017F LATIN SMALL LETTER LONG S.
+     */
+    private static function lettersWithAPartnerAboveAscii(): ByteCharSet
+    {
+        return ByteCharSet::fromChar('k')->union(ByteCharSet::fromChar('K'))
+            ->union(ByteCharSet::fromChar('s'))->union(ByteCharSet::fromChar('S'));
     }
 
     /**

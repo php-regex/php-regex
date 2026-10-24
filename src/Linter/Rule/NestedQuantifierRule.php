@@ -69,7 +69,7 @@ final class NestedQuantifierRule extends AbstractLintRule
             return [];
         }
 
-        if ($context->isInsideAtomicOrPossessiveContext()) {
+        if ($context->isTheTailOfAnAtomicGroup($node)) {
             return [];
         }
 

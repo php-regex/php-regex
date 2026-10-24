@@ -163,65 +163,43 @@ final class LintContext
      * Check if the current node is inside an unbounded quantifier (*, +, {n,}).
      * Used to determine if overlapping alternations pose a ReDoS risk.
      *
-     * The search stops at an atomic lookaround: once it holds, the engine
-     * never comes back into it, so a loop around it cannot retry its
-     * branches.
+     * The search stops at an atomic lookaround, an atomic group or a
+     * possessive quantifier: once it holds, the engine never comes back
+     * into it, so a loop around it cannot retry its branches. A loop that
+     * is the tail of such a group is not retried either.
      */
     public function isInsideUnboundedQuantifier(): bool
     {
-        $foundDangerous = false;
-
-        foreach (array_reverse($this->parentStack) as $parent) {
-            if ($parent instanceof GroupNode && self::isAtomicLookaround($parent)) {
+        $parents = array_reverse($this->parentStack);
+        foreach ($parents as $index => $parent) {
+            if ($parent instanceof GroupNode && (self::isAtomicLookaround($parent) || GroupType::Atomic === $parent->type)) {
                 return false;
-            }
-
-            if ($parent instanceof GroupNode && GroupType::Atomic === $parent->type) {
-                return false;
-            }
-
-            if ($parent instanceof QuantifierNode) {
-                if (QuantifierType::Possessive === $parent->type) {
-                    if ($foundDangerous) {
-                        return false;
-                    }
-
-                    continue;
-                }
-
-                if ($parent->node instanceof GroupNode && GroupType::Atomic === $parent->node->type) {
-                    continue;
-                }
-
-                if (QuantifierMath::isUnbounded($parent->quantifier)) {
-                    $foundDangerous = true;
-                }
-            }
-        }
-
-        return $foundDangerous;
-    }
-
-    /**
-     * Whether the current node is directly enclosed by an atomic group or
-     * the body of a possessive quantifier. Rules whose dangerous pattern
-     * needs an outer backtracking loop can skip their check when this holds:
-     * the atomic or possessive context prevents the engine from ever
-     * retrying the dangerous structure from outside.
-     */
-    public function isInsideAtomicOrPossessiveContext(): bool
-    {
-        foreach ($this->parentStack as $parent) {
-            if ($parent instanceof GroupNode && GroupType::Atomic === $parent->type) {
-                return true;
             }
 
             if ($parent instanceof QuantifierNode && QuantifierType::Possessive === $parent->type) {
-                return true;
+                return false;
+            }
+
+            if ($parent instanceof QuantifierNode && QuantifierMath::isUnbounded($parent->quantifier)) {
+                return !self::isAtomicTail($parent, \array_slice($parents, $index + 1));
             }
         }
 
         return false;
+    }
+
+    /**
+     * Whether the node is the tail of an atomic group or of the body of a
+     * possessive quantifier taken at most once before its other iterations,
+     * looking only through sequences it ends, alternatives and groups that
+     * do not change what is retried. Once such a group has matched, the
+     * engine never comes back into it, and nothing after the node inside it
+     * can fail and send the engine back into the node: "(?>(?:a+)+)" never
+     * retries its loop, "(?>(?:a+)+b)" does, when "b" fails.
+     */
+    public function isTheTailOfAnAtomicGroup(NodeInterface $node): bool
+    {
+        return self::isAtomicTail($node, array_reverse($this->parentStack));
     }
 
     /**
@@ -325,6 +303,41 @@ final class LintContext
     public function popAlternationBranch(): void
     {
         array_pop($this->alternationStack);
+    }
+
+    /**
+     * @param list<NodeInterface> $parents the parents of the node, the closest first
+     */
+    private static function isAtomicTail(NodeInterface $node, array $parents): bool
+    {
+        $child = $node;
+        foreach ($parents as $parent) {
+            if ($parent instanceof SequenceNode) {
+                $children = $parent->children;
+                if ($child !== end($children)) {
+                    return false;
+                }
+            } elseif ($parent instanceof GroupNode) {
+                if (GroupType::Atomic === $parent->type) {
+                    return true;
+                }
+
+                if (!\in_array($parent->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags, GroupType::BranchReset], true)) {
+                    return false;
+                }
+            } elseif ($parent instanceof QuantifierNode) {
+                // A possessive "X++" is an atomic group around "X+": a
+                // second iteration that fails leaves the first, unless the
+                // count needs it.
+                return QuantifierType::Possessive === $parent->type && QuantifierMath::parseRange($parent->quantifier)[0] <= 1;
+            } elseif (!$parent instanceof AlternationNode) {
+                return false;
+            }
+
+            $child = $parent;
+        }
+
+        return false;
     }
 
     /**

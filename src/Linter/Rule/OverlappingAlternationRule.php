@@ -14,10 +14,13 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\NodePredicates;
+use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
@@ -25,8 +28,10 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -185,39 +190,97 @@ final class OverlappingAlternationRule extends AbstractLintRule
     }
 
     /**
-     * Fallback overlap check using ClassSetProvider for above-ASCII and other
-     * ranges that ByteCharSet cannot represent.
+     * The overlap read from the characters PCRE gives the first atom of
+     * each branch, for sets the byte sets cannot hold (above ASCII). A
+     * branch whose first character is not one atom, or that may start
+     * with what follows it, is not judged.
      */
     private function checkWithClassSetProvider(AlternationNode $node, LintContext $context): ?RuleViolation
     {
-        $unicode = $context->pattern->unicodeMode;
-        $modifiers = $context->pattern->flags;
+        $startVerbs = StartOptions::of($context->pattern->source);
+        $unicodeFlag = str_contains($context->pattern->flags, 'u');
 
-        $pcreCharSets = [];
-        foreach ($node->alternatives as $i => $alternative) {
-            $atom = self::headAtom($alternative);
-            $text = self::asWritten($atom);
-            $charSet = ClassSetProvider::query($text, $unicode, $modifiers);
-            if (null === $charSet) {
+        $flagsAt = $context->flagsAtEachChild($node);
+        $sets = [];
+        foreach ($node->alternatives as $index => $alternative) {
+            $atom = self::firstAtom($alternative, $context->pattern->unicodeMode);
+            $modifiers = self::probeModifiers($flagsAt[$index] ?? $context->activeFlags());
+            if (null === $atom || null === $modifiers) {
                 return null;
             }
-            $pcreCharSets[$i] = $charSet;
+
+            $set = ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag);
+            if (null === $set) {
+                return null;
+            }
+
+            $sets[] = $set;
         }
 
-        $total = \count($pcreCharSets);
-        $indices = array_keys($pcreCharSets);
-        for ($ii = 0; $ii < $total; $ii++) {
-            for ($jj = $ii + 1; $jj < $total; $jj++) {
-                $i = $indices[$ii];
-                $j = $indices[$jj];
-                if (!$pcreCharSets[$i]->isEmpty() && !$pcreCharSets[$j]->isEmpty()
-                    && !$pcreCharSets[$i]->intersect($pcreCharSets[$j])->isEmpty()) {
+        $total = \count($sets);
+        for ($i = 0; $i < $total; $i++) {
+            for ($j = $i + 1; $j < $total; $j++) {
+                if (!$sets[$i]->intersect($sets[$j])->isEmpty()) {
                     return $this->makeCharsetViolation($node, $i, $j, $context);
                 }
             }
         }
 
         return null;
+    }
+
+    /**
+     * The atom a branch reads its first character with, as the probe takes
+     * it, or null: through groups that only capture, the first item of a
+     * sequence and a quantifier taken at least once.
+     */
+    private static function firstAtom(NodeInterface $node, bool $unicode): ?string
+    {
+        while (true) {
+            if ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named], true)) {
+                $node = $node->child;
+            } elseif ($node instanceof SequenceNode && [] !== $node->children) {
+                $node = $node->children[0];
+            } elseif ($node instanceof QuantifierNode && QuantifierMath::parseRange($node->quantifier)[0] >= 1) {
+                $node = $node->node;
+            } else {
+                break;
+            }
+        }
+
+        if ($node instanceof LiteralNode) {
+            if ('' === $node->value) {
+                return null;
+            }
+
+            $codePoint = $unicode ? mb_ord(mb_substr($node->value, 0, 1, 'UTF-8'), 'UTF-8') : \ord($node->value[0]);
+
+            return false === $codePoint ? null : \sprintf($unicode ? '\\x{%X}' : '\\x%02X', $codePoint);
+        }
+
+        if ($node instanceof CharClassNode || $node instanceof CharTypeNode || $node instanceof DotNode
+            || $node instanceof UnicodePropNode || $node instanceof CharLiteralNode
+        ) {
+            return $node->accept(PatternPrinter::asWritten());
+        }
+
+        return null;
+    }
+
+    /**
+     * The options the probe reads an atom under, from the flags in effect
+     * at it, or null for the ASCII-restricting ones it is not told about.
+     */
+    private static function probeModifiers(string $flags): ?string
+    {
+        if (str_contains($flags, 'a')) {
+            return null;
+        }
+
+        return (str_contains($flags, 'i') ? 'i' : '')
+            .(str_contains($flags, 's') ? 's' : '')
+            .(str_contains($flags, 'xx') ? 'xx' : (str_contains($flags, 'x') ? 'x' : ''))
+            .(str_contains($flags, 'r') ? 'r' : '');
     }
 
     private function makeCharsetViolation(AlternationNode $node, int $i, int $j, LintContext $context): RuleViolation
@@ -233,19 +296,6 @@ final class OverlappingAlternationRule extends AbstractLintRule
             'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
             end: $node->getEndPosition(),
         );
-    }
-
-    /**
-     * Navigate past leading quantifiers to reach the first atomic node, which
-     * can be serialised to text and handed to ClassSetProvider::query.
-     */
-    private static function headAtom(NodeInterface $node): NodeInterface
-    {
-        while ($node instanceof QuantifierNode) {
-            $node = $node->node;
-        }
-
-        return $node;
     }
 
     private function extractLiteralSequence(NodeInterface $node): ?string

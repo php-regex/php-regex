@@ -217,8 +217,9 @@ final class ReDoSRegressionTest extends TestCase
     }
 
     /**
-     * Under `/u`, `\w` and `\d` extend to Unicode but their ASCII subsets
-     * are exact and sufficient to prove overlap with ASCII literals.
+     * Under `/u`, `\w` and `\d` extend past ASCII, where the byte sets
+     * stop: the overlap is read from the characters PCRE gives each
+     * branch's first atom.
      */
     #[Test]
     #[DataProvider('provideShorthandOverlapUnderU')]
@@ -309,6 +310,131 @@ final class ReDoSRegressionTest extends TestCase
             $this->issueIds($pattern),
             $pattern,
         );
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, ruleId: string}>
+     */
+    public static function provideLoopsAtomicityDoesNotShield(): iterable
+    {
+        // Oracle: each exhausts pcre.backtrack_limit=1000000 without JIT
+        // on str_repeat('a', 28).'cb': the group is atomic only once it
+        // has matched, and what follows the loop inside it fails first.
+        yield 'nested quantifier followed inside an atomic group' => [
+            'pattern' => '/(?>(?:a+)+b)/',
+            'ruleId' => 'regex.lint.quantifier.nested',
+        ];
+
+        yield 'nested quantifier followed inside a possessive body' => [
+            'pattern' => '/(?:(?:a+)+b)++/',
+            'ruleId' => 'regex.lint.quantifier.nested',
+        ];
+
+        yield 'overlapping branches followed inside an atomic group' => [
+            'pattern' => '/(?>(?:a|a)+b)/',
+            'ruleId' => 'regex.lint.overlap.charset',
+        ];
+
+        yield 'overlapping branches followed inside a possessive body' => [
+            'pattern' => '/(?:(?:a|a)+b)++/',
+            'ruleId' => 'regex.lint.overlap.charset',
+        ];
+
+        yield 'nested dot-star followed inside an atomic group' => [
+            'pattern' => '/(?>(?:.*a)+b)/s',
+            'ruleId' => 'regex.lint.dotstar.nested',
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideLoopsAtomicityDoesNotShield')]
+    public function test_redos_rules_fire_when_the_loop_is_not_the_tail_of_the_atomic_group(string $pattern, string $ruleId): void
+    {
+        $this->assertContains($ruleId, $this->issueIds($pattern), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideDisjointBranchesAboveAscii(): iterable
+    {
+        // A class without "[" and a branch opening on "[": the first
+        // characters are disjoint, whatever the class holds above ASCII.
+        yield 'negated class against a bracketed run' => [
+            'pattern' => '/\[((?:[^\x17[\]]|\[[^\x17[\]]*\])*)\]/',
+        ];
+
+        yield 'high-byte class against a literal opening a sequence' => [
+            'pattern' => '/(?:[\x80-\xFF]|ab)+$/',
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideDisjointBranchesAboveAscii')]
+    public function test_overlapping_alternation_reads_only_the_first_character_of_each_branch(string $pattern): void
+    {
+        $this->assertNotContains('regex.lint.overlap.charset', $this->issueIds($pattern), $pattern);
+    }
+
+    /**
+     * Oracle: /(*UCP)(?:\w|\xC9)+$/ exhausts the backtrack limit without
+     * JIT on twenty "\xC9" and "!": under (*UCP) "\w" takes the Latin-1
+     * letter.
+     */
+    #[Test]
+    public function test_overlapping_alternation_reads_the_start_verbs_above_ascii(): void
+    {
+        $this->assertContains('regex.lint.overlap.charset', $this->issueIds('/(*UCP)(?:\w|\xC9)+$/'));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideRunsCaselessOnOneSideOnly(): iterable
+    {
+        // {a, A} against {A, b}: neither holds the other.
+        yield 'caseless run before a case-sensitive class' => [
+            'pattern' => '/(?i:a)*[Ab]*/',
+        ];
+
+        yield 'case-sensitive class before a caseless run' => [
+            'pattern' => '/[Ab]*(?i:a)*/',
+        ];
+
+        // Under /i, "(?-i:a)" takes "a" only, and "A" takes "a" and "A";
+        // the bounded first run leaves the other direction unasked.
+        yield 'run turning i off' => [
+            'pattern' => '/A{0,3}(?:(?-i:a))*/i',
+        ];
+
+        // Oracle: preg_match('/^(?i:k)$/u', "\u{212A}") is 1, and
+        // preg_match('/^[kK]$/u', "\u{212A}") is 0.
+        yield 'caseless k takes the Kelvin sign under u' => [
+            'pattern' => '/(?i:k){0,3}[kK]*/u',
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideRunsCaselessOnOneSideOnly')]
+    public function test_quantifier_concatenation_folds_only_the_caseless_run(string $pattern): void
+    {
+        $this->assertNotContains('regex.lint.quantifier.concatenation', $this->issueIds($pattern), $pattern);
+    }
+
+    #[Test]
+    public function test_quantifier_concatenation_still_finds_a_run_inside_the_caseless_one(): void
+    {
+        $this->assertContains('regex.lint.quantifier.concatenation', $this->issueIds('/a*(?i:[ab])*/'));
+    }
+
+    #[Test]
+    public function test_impossible_end_anchor_names_an_end_anchor_lookahead(): void
+    {
+        $visitor = new PatternLinter();
+        Regex::create()->parse('/a(?=$)b/')->accept($visitor);
+        $messages = array_map(static fn (object $issue): string => $issue->message, $visitor->getIssues());
+
+        $this->assertContains("End anchor '(?=\$)' appears before consuming characters, making it impossible to match.", $messages);
     }
 
     // -------------------------------------------------------------------------
