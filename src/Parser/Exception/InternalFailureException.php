@@ -19,6 +19,11 @@ namespace PHPRegex\Parser\Exception;
  * was reading, which is never reported as the pattern's fault: it is not a
  * RegexException, and validate() and parseTolerant() let it through.
  *
+ * A consumer that catches ExceptionInterface treats this as "no answer":
+ * degrade the result, do not crash, do not report the pattern invalid.
+ * The classic triggers are a low pcre.backtrack_limit in an environment
+ * where ini_set() is disabled.
+ *
  * The usual cause is a host where PHP refuses to raise pcre.backtrack_limit
  * or pcre.recursion_limit (a disabled ini_set(), a php_admin_value) while
  * they stand below PHP's defaults: raising them, or allowing ini_set(),
