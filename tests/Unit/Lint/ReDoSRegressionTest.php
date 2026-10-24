@@ -234,6 +234,34 @@ final class ReDoSRegressionTest extends TestCase
     /**
      * @return iterable<string, array{pattern: string}>
      */
+    public static function provideAboveAsciiOverlap(): iterable
+    {
+        yield 'superset branch and subset branch above ASCII' => [
+            // Oracle: php -r 'for($i=0;$i<22;$i++){$t=microtime(1);preg_match("/(?:[\x80-\xFF]+|[\xC0-\xDF])+$/",str_repeat("\xC1",$i)."\x01");$d=microtime(1)-$t;echo "$i: ".round($d*1e3,2)."ms\n";}'
+            // n=15 ~144ms, n=20 ~1.6s — catastrophic above-ASCII overlap.
+            'pattern' => '/(?:[\x80-\xFF]+|[\xC0-\xDF])+$/',
+        ];
+    }
+
+    /**
+     * When alternation branches cover overlapping above-ASCII byte ranges
+     * (e.g. [\x80-\xFF] and [\xC0-\xDF]), the rule must detect the overlap
+     * even though ByteCharSet cannot model ranges above 0x7F.
+     */
+    #[Test]
+    #[DataProvider('provideAboveAsciiOverlap')]
+    public function test_overlapping_alternation_detects_above_ascii_char_class_overlap(string $pattern): void
+    {
+        $this->assertContains(
+            'regex.lint.overlap.charset',
+            $this->issueIds($pattern),
+            $pattern,
+        );
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
     public static function provideConcatenationSubsetUnderI(): iterable
     {
         yield 'literal subset of uppercase range under /i' => [

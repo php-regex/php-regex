@@ -310,22 +310,6 @@ Decisions the maintainer owns, each worth points on its own:
    fallthrough arms). The suite already hand-builds nodes in places;
    decide whether that style is welcome at scale.
 
-Bugs found while measuring (verified, not fixed):
-
-- `OverlappingAlternationRule` and `QuantifierConcatenationRule` are silent
-  on character-class overlap when the overlapping bytes are above ASCII
-  (> 0x7F). `ByteCharSet` models only the 0x00–0x7F range, so both rules
-  bail out early via `LoopShape::mayTakeACharacterAboveAscii` and
-  `takesEveryCharacterAboveAscii` rather than computing a concrete subset
-  relation. `/(?:[\x80-\xFF]+|[\xC0-\xDF])+$/` is catastrophic without JIT
-  (n=15: ~144 ms, n=20: ~1.6 s): the second class IS a subset of the first,
-  creating the same exponential path splitting as `(a+)+$`, but both rules
-  emit only `quantifier.nested`. The same gap applies to any pattern whose
-  ReDoS stems from overlap between character ranges entirely above 0x7F.
-  Fix: extend the byte-range intersection and subset logic past 0x7F, or use
-  `ClassSetProvider` to probe the actual PCRE character sets and determine
-  the subset relation directly.
-
 The test-writing plan, by wave (natural-input tests, existing harnesses;
 numbers are uncovered statements):
 

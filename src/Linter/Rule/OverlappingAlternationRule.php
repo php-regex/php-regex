@@ -15,6 +15,7 @@ namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\DotNode;
@@ -22,6 +23,7 @@ use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Printer\PatternPrinter;
@@ -154,36 +156,96 @@ final class OverlappingAlternationRule extends AbstractLintRule
         // Each alternative reads the flags in effect there, with the ones an
         // earlier alternative carries into it.
         $charSets = [];
+        $anyUnknown = false;
         foreach ($context->flagsAtEachChild($node) as $index => $flags) {
             $charSet = $context->firstChars($node->alternatives[$index], $flags);
             if ($charSet->isUnknown()) {
-                // If we can't analyze any charset, skip semantic overlap detection
-                return null;
+                $anyUnknown = true;
             }
             $caseless = str_contains($flags, 'i') || NodePredicates::turnsCaselessOn($node->alternatives[$index]);
             $charSets[] = $caseless ? self::foldCharSet($charSet) : $charSet;
         }
 
-        $total = \count($charSets);
-        for ($i = 0; $i < $total; $i++) {
-            for ($j = $i + 1; $j < $total; $j++) {
-                if (!$charSets[$i]->isEmpty() && !$charSets[$j]->isEmpty() && $charSets[$i]->intersects($charSets[$j])) {
-                    return new RuleViolation(
-                        self::ID_CHARSET,
-                        \sprintf(
-                            'Alternation branches "%s" and "%s" have overlapping character sets, which may cause unnecessary backtracking.',
-                            self::spell(self::asWritten($node->alternatives[$i]), $context),
-                            self::spell(self::asWritten($node->alternatives[$j]), $context),
-                        ),
-                        $node->startPosition,
-                        'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
-                        end: $node->getEndPosition(),
-                    );
+        if (!$anyUnknown) {
+            $total = \count($charSets);
+            for ($i = 0; $i < $total; $i++) {
+                for ($j = $i + 1; $j < $total; $j++) {
+                    if (!$charSets[$i]->isEmpty() && !$charSets[$j]->isEmpty() && $charSets[$i]->intersects($charSets[$j])) {
+                        return $this->makeCharsetViolation($node, $i, $j, $context);
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // At least one charset is unknown (e.g. above-ASCII byte ranges that
+        // ByteCharSet cannot model). Fall back to PCRE-queried sets.
+        return $this->checkWithClassSetProvider($node, $context);
+    }
+
+    /**
+     * Fallback overlap check using ClassSetProvider for above-ASCII and other
+     * ranges that ByteCharSet cannot represent.
+     */
+    private function checkWithClassSetProvider(AlternationNode $node, LintContext $context): ?RuleViolation
+    {
+        $unicode = $context->pattern->unicodeMode;
+        $modifiers = $context->pattern->flags;
+
+        $pcreCharSets = [];
+        foreach ($node->alternatives as $i => $alternative) {
+            $atom = self::headAtom($alternative);
+            $text = self::asWritten($atom);
+            $charSet = ClassSetProvider::query($text, $unicode, $modifiers);
+            if (null === $charSet) {
+                return null;
+            }
+            $pcreCharSets[$i] = $charSet;
+        }
+
+        $total = \count($pcreCharSets);
+        $indices = array_keys($pcreCharSets);
+        for ($ii = 0; $ii < $total; $ii++) {
+            for ($jj = $ii + 1; $jj < $total; $jj++) {
+                $i = $indices[$ii];
+                $j = $indices[$jj];
+                if (!$pcreCharSets[$i]->isEmpty() && !$pcreCharSets[$j]->isEmpty()
+                    && !$pcreCharSets[$i]->intersect($pcreCharSets[$j])->isEmpty()) {
+                    return $this->makeCharsetViolation($node, $i, $j, $context);
                 }
             }
         }
 
         return null;
+    }
+
+    private function makeCharsetViolation(AlternationNode $node, int $i, int $j, LintContext $context): RuleViolation
+    {
+        return new RuleViolation(
+            self::ID_CHARSET,
+            \sprintf(
+                'Alternation branches "%s" and "%s" have overlapping character sets, which may cause unnecessary backtracking.',
+                self::spell(self::asWritten($node->alternatives[$i]), $context),
+                self::spell(self::asWritten($node->alternatives[$j]), $context),
+            ),
+            $node->startPosition,
+            'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
+            end: $node->getEndPosition(),
+        );
+    }
+
+    /**
+     * Navigate past leading quantifiers to reach the first atomic node, which
+     * can be serialised to text and handed to ClassSetProvider::query.
+     */
+    private static function headAtom(NodeInterface $node): NodeInterface
+    {
+        while ($node instanceof QuantifierNode) {
+            $node = $node->node;
+        }
+
+        return $node;
     }
 
     private function extractLiteralSequence(NodeInterface $node): ?string

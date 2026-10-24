@@ -185,6 +185,7 @@ final class LintContext
                     if ($foundDangerous) {
                         return false;
                     }
+
                     continue;
                 }
 
