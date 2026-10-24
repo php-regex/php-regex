@@ -419,6 +419,40 @@ names what is missing, never new analysis — the facts are computed.
    `config.platform.lib-pcre` — the policy the fork settled, said in
    one voice.
 
+## The third pass over the preg_ family
+
+Mined 2026-10-24, second gold rush. The bare-false preg_split bug is
+fixed; this is the rest, engine-verified:
+
+1. preg_filter on an array subject erases its keys (array<int, string>
+   for every subject) while the engine preserves them — map the subject
+   like the replace extension maps its own, or route preg_filter
+   through ReplaceFunctions (subject at position 2, replace at 1).
+2. The replace trio (preg_replace, _callback, _callback_array) marks
+   every array-subject key optional — the engine keeps them all; only
+   preg_filter filters. makeAllArrayKeysOptional belongs to filter
+   alone.
+3. preg_grep has no return-type extension at all: the subject mapped,
+   keys kept, |false.
+4. preg_replace_callback with an ARRAY of literal patterns leaves its
+   callback unshaped — one Type-based entry on the matcher (matchExpr
+   takes an Expr; the union across the array'"'"'s constant strings is
+   what matchPatternType already does) feeds the closure extension.
+5. preg_match_all base return type carries null the engine never
+   returns; the $matches out-type fallback string[] stands exactly
+   where the shapes fail to reach.
+6. Upstream issues granted by the shapes, for the pull request body:
+   #11589 (J duplicate named groups), #12397 ($matches a list),
+   #11291 (branch-reset tuple), #14809 (nested optionals),
+   #11311 (PREG_UNMATCHED_AS_NULL trailing groups), #14302
+   (variable-length lookbehind judged for the analysed engine);
+   near-misses with a seam: #11479, #11744, #12126.
+7. The false branches: preg_match_all overwrites $matches with array{}
+   where the engine leaves the populated empty columns under
+   PREG_PATTERN_ORDER; the elseif subject narrowing composes, nothing
+   to fix; the quoting rule and the pattern rule keep two drifting
+   hand-written lists of the preg_ functions that take patterns.
+
 ## The engine-gated test rows: the CI's red line
 
 Engines and Coverage stay red on one shared cause: 76 test rows across
