@@ -41,8 +41,8 @@ final class ErrorFactory
 
     private const DOC_LINKS = [
         'catastrophic backtracking' => 'https://php-regex.com/reference/rules/#catastrophic-backtracking',
-        'possessive quantifiers' => 'https://php-regex.com/tutorial/04-quantifiers/#possessive-quantifiers-performance',
-        'atomic groups' => 'https://php-regex.com/tutorial/08-performance-redos/#1-atomic-groups-',
+        'possessive quantifiers' => 'https://php-regex.com/tutorial/04-quantifiers/#6-a-note-on-possessive-quantifiers',
+        'atomic groups' => 'https://php-regex.com/tutorial/08-performance-redos/#use-atomic-groups-',
     ];
 
     /**

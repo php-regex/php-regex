@@ -76,8 +76,8 @@ final class RegexPatternRuleDocLinksTest extends TestCase
     {
         $links = self::constantMap('DOC_LINKS');
 
-        $this->assertSame(self::SITE.'tutorial/04-quantifiers/#possessive-quantifiers-performance', $links['possessive quantifiers']);
-        $this->assertSame(self::SITE.'tutorial/08-performance-redos/#1-atomic-groups-', $links['atomic groups']);
+        $this->assertSame(self::SITE.'tutorial/04-quantifiers/#6-a-note-on-possessive-quantifiers', $links['possessive quantifiers']);
+        $this->assertSame(self::SITE.'tutorial/08-performance-redos/#use-atomic-groups-', $links['atomic groups']);
         $this->assertSame(self::SITE.'reference/rules/#catastrophic-backtracking', $links['catastrophic backtracking']);
     }
 
