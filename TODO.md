@@ -407,6 +407,36 @@ names what is missing, never new analysis — the facts are computed.
    `config.platform.lib-pcre` — the policy the fork settled, said in
    one voice.
 
+## The strict review the POC drew, and what it settles for 2.0.0
+
+An external review of the phpstan-src proof of concept confirmed real
+integration bugs (all fixed there) and named what the library itself
+should settle before a stable tag:
+
+1. Document `Participation` — Always, MayBeUnset, Never — with the exact
+   recipe a consumer follows to type `$matches`: key optionality, the
+   trailing-group omission, `PREG_UNMATCHED_AS_NULL`, and the empty
+   string a non-trailing unset group still carries. The proof of concept
+   dropped the fact a consumer needs; the contract was right, the
+   consumer guidance absent.
+2. Document `ValidationResult`: `isValid=false` with
+   `ValidationErrorCategory::Limit` is the library's own limit, never a
+   verdict on the pattern. Consider a convenience `isLimit()` so no
+   consumer can misread it again.
+3. State the exception hierarchy for consumers: `ExceptionInterface` is
+   the only catch point, and `InternalFailureException` means "no
+   verdict" — an analyser must degrade its type, never crash.
+4. `PcreTarget::bundledWith()` is a heuristic of the bundled engine;
+   document runtime vs bundled vs explicit pin, and that a PHP version
+   never determines the linked PCRE2.
+5. Publish a conformance suite: patterns with the preg_match oracle,
+   covering participation, optionality, offsets, flags, named groups,
+   (*ACCEPT), conditions, verbs, branch reset, \Q..\E, /x, (?n), (?J),
+   ASCII-only /i.
+6. `(a|\d)` loses the alternation the engine unions ('a' plus digits):
+   either CaptureShape represents it or the limit is documented — a
+   stable tag should not ship a case where the old grammar read finer.
+
 ## The third pass over the preg_ family
 
 Mined 2026-10-24, second gold rush. The bare-false preg_split bug is
