@@ -390,6 +390,38 @@ validity, #4 capture shapes — all green on `NodeScopeResolverTest`
    architectures inside the line) settles when the maintainer asks for
    the split into stacked pull requests.
 
+## The PHPStan gold rush: what the analysis already knows and does not say
+
+Mined 2026-10-24, four probes over the phpstan-src fork. Each item
+names what is missing, never new analysis — the facts are computed.
+
+1. phpstan#12997: `preg_replace()` keeps `non-empty-string` on the
+   return while a lazy backreference in the replacement (`'$1'` against
+   `(.*?)`) can expand to the empty string — the group shape the reader
+   already holds, folded into `ReplaceFunctionsDynamicReturnTypeExtension`,
+   drops the accessory.
+2. phpstan#11438: `preg_replace_callback_array()` gives its callbacks no
+   `$matches` shape — the array-of-callables first argument never reaches
+   the closure extension; feeding each constant key to the matcher the
+   way `preg_replace_callback()` does is the wiring.
+3. Eleven `\K` wishes in the nsrt fixtures: the group slots are exact,
+   the whole-match slot ignores `\K` — the kept suffix the engine writes
+   is the whole a match reads after the reset.
+4. Conditionals on an always-set group keep the dead arm:
+   `/(a)(?(1)b|(c))/` types `'c'|''` where the engine never fills 2 —
+   the participation fact exists; the conditional does not read it. Same
+   family: `(?(*ACCEPT)` groups after the cut, a backreference widening
+   its group, `(?(R)` with no recursion anywhere, and `(?(VERSION>=…)`
+   never folding against the judged engine.
+5. Tagged-union decorrelation (bug11604 and friends): a top-level
+   alternation splits shapes the engine writes atomically — the
+   optional-group split phpstan#11602 needs, again.
+6. The package'"'"'s `TargetScope` lets the running engine stand in for
+   the analysed PHP without the fork'"'"'s minor-sharing rule, never
+   states the pin is honoured in both directions, and does not read
+   `config.platform.lib-pcre` — the policy the fork settled, said in
+   one voice.
+
 ## The engine-gated test rows: the CI's red line
 
 Engines and Coverage stay red on one shared cause: 76 test rows across
