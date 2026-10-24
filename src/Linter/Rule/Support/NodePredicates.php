@@ -455,6 +455,11 @@ final class NodePredicates
             return '\\'.$node->value;
         }
 
+        // A lookahead holding only an end anchor stands for it.
+        if ($node instanceof GroupNode && GroupType::LookaheadPositive === $node->type) {
+            return '(?='.self::anchorDisplay(self::unwrapTransparentNode($node->child)).')';
+        }
+
         return '';
     }
 

@@ -17,6 +17,7 @@ use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Analysis\LookbehindLength;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -970,7 +971,7 @@ final class CompiledLength
         foreach ($characters as $character) {
             $units = $this->characterLength($this->utf ? (int) mb_ord($character, 'UTF-8') : \ord($character), $caseless);
             if (null === $units) {
-                throw new \LogicException('Unreachable: characterLength() always returns non-null for byte-mode bytes and UTF-8 code points.');
+                throw InternalFailureException::unexpectedState('A character of a literal has no compiled length.');
             }
 
             $length += $units;

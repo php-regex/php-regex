@@ -18,6 +18,7 @@ use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -1520,7 +1521,7 @@ final class Validator extends AbstractNodeVisitor
             return $node->codePoint >= 0 ? $node->codePoint : null;
         }
 
-        throw new \LogicException('Unreachable: only CharLiteralNode and ControlCharNode reach codePointOf().');
+        throw InternalFailureException::unexpectedState('A range endpoint is neither a literal, a character escape nor a control character.');
     }
 
     private function describeRange(RangeNode $node): string
@@ -1540,7 +1541,7 @@ final class Validator extends AbstractNodeVisitor
             $node instanceof LiteralNode => $node->value,
             $node instanceof CharLiteralNode => $node->originalRepresentation,
             $node instanceof ControlCharNode => '\c'.$node->char,
-            default => throw new \LogicException('Unreachable: describeRangeEndpoint() only receives LiteralNode, CharLiteralNode, or ControlCharNode.'),
+            default => throw InternalFailureException::unexpectedState('A range endpoint is neither a literal, a character escape nor a control character.'),
         };
     }
 

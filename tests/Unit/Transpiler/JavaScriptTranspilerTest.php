@@ -267,11 +267,16 @@ final class JavaScriptTranspilerTest extends TestCase
     #[Test]
     public function test_rejects_unicode_named_character_name_form(): void
     {
-        // Oracle: \N{LATIN SMALL LETTER A} is a PCRE2 name-form escape;
-        // JavaScript has no \N{name} syntax, so the printer must refuse it.
-        $this->expectException(TranspileException::class);
+        // Oracle: preg_match() refuses \N{LATIN SMALL LETTER A}: "PCRE2
+        // does not support \F, \L, \l, \N{name}, \U, or \u".
+        try {
+            Regex::create(['cache' => null])->transpile('/\N{LATIN SMALL LETTER A}/u', 'javascript');
+            $message = '';
+        } catch (TranspileException $e) {
+            $message = $e->getMessage();
+        }
 
-        Regex::create(['cache' => null])->transpile('/\N{LATIN SMALL LETTER A}/u', 'javascript');
+        $this->assertSame('PCRE2 does not support \N{name}: write the character as \N{U+hhhh}.', $message);
     }
 
     #[Test]

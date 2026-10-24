@@ -17,6 +17,8 @@ use PHPRegex\Linter\PatternOccurrence;
 
 /**
  * Interface for regex pattern extraction implementations.
+ *
+ * @internal
  */
 interface ExtractorInterface
 {

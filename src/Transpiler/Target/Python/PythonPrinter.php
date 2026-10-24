@@ -266,7 +266,7 @@ final class PythonPrinter extends AbstractTargetPrinter
             }
 
             if (1 !== LibraryPcre::match('/^\\\\N\\{[ \\t]*U\\+/', $node->originalRepresentation)) {
-                return $this->unsupported('Unicode named character \N{name} is not supported in Python re; use \N{U+hhhh} in the source pattern.', $node);
+                return $this->unsupported('PCRE2 does not support \N{name}: write the character as \N{U+hhhh}.', $node);
             }
 
             $this->context->addWarning('Converted Unicode named character to code point escape.');
