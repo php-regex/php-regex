@@ -186,8 +186,7 @@ settle before the tag.
 Integrations:
 
 - Symfony: validator-mapped patterns are never linted (the bundle wires a
-  service FrameworkBundle does not define); `regex:security` counts a narrower `access_control` rule placed
-  first on purpose (`^/admin/public` before `^/admin`) as an overlap; the
+  service FrameworkBundle does not define); the
   `ide` fallback never fires; `AbstractBundle`, no container parameters,
   no autowirable internal services.
 - PHPStan: a repo-only rule ships in the public extension;
@@ -196,12 +195,6 @@ Integrations:
   server's error stream still written through a static.
 - The target settings (PHP, PCRE2, locale) enter through one class, and
   every parser derived for another target keeps the locale.
-
-## Public API: the last decisions before 2.0.0
-
-- `ExtractorInterface` is marked internal, yet the `extractor_service`
-  setting asks users to implement it: make it public, as the extension
-  point it is.
 
 ## Analysis engines: the last pass before 2.0.0
 
@@ -290,12 +283,11 @@ Decisions the maintainer owns, each worth points on its own:
 
 1. Dead code, each region proven unreachable by probe or invariant —
    delete rather than test:
-   `SampleGenerator:1522-1527`; `Rewriter:257-259` (the alternation→class
-   conversion is shadowed), `:1338`, `:1964`; `Lexer:1656-1661` (its guard
-   is provably exclusive with the one gating entry); `Validator:1525,1545`;
-   `CompiledLength:973` and the never-called `isBlank` block
-   `:1677-1688`; `EscapeChecks:378` (if no PCRE2 release accepts a padded
-   `\N{U+ }`); `ReferenceChecks:388`; `SearchCostProver:981`.
+   `Rewriter:1338`; `Lexer:1656-1661` (its guard
+   is provably exclusive with the one gating entry);
+   `CompiledLength` never-called `isBlank` SequenceNode block `:1677-1688`;
+   `EscapeChecks:378` (if no PCRE2 release accepts a padded `\N{U+ }`);
+   `ReferenceChecks:388`; `SearchCostProver:981`.
 3. A policy call: hand-built-AST tests are the only route to ~50 guard
    statements (printer raw literals, HIR empty shapes, transpiler
    fallthrough arms). The suite already hand-builds nodes in places;

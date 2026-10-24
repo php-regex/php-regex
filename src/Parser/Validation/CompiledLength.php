@@ -963,14 +963,14 @@ final class CompiledLength
         return $this->characterRepeat($codePoint, $caseless)[1] ?? null;
     }
 
-    private function literalLength(string $value, bool $caseless): ?int
+    private function literalLength(string $value, bool $caseless): int
     {
         $characters = $this->utf ? mb_str_split($value, 1, 'UTF-8') : Bytes::split($value);
         $length = 0;
         foreach ($characters as $character) {
             $units = $this->characterLength($this->utf ? (int) mb_ord($character, 'UTF-8') : \ord($character), $caseless);
             if (null === $units) {
-                return null;
+                throw new \LogicException('Unreachable: characterLength() always returns non-null for byte-mode bytes and UTF-8 code points.');
             }
 
             $length += $units;

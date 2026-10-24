@@ -1520,9 +1520,7 @@ final class Validator extends AbstractNodeVisitor
             return $node->codePoint >= 0 ? $node->codePoint : null;
         }
 
-        // Unreachable from a parsed pattern: guardRangeEndpoint() and
-        // isSingleCharNode() leave only the node types above as endpoints.
-        return null;
+        throw new \LogicException('Unreachable: only CharLiteralNode and ControlCharNode reach codePointOf().');
     }
 
     private function describeRange(RangeNode $node): string
@@ -1542,7 +1540,7 @@ final class Validator extends AbstractNodeVisitor
             $node instanceof LiteralNode => $node->value,
             $node instanceof CharLiteralNode => $node->originalRepresentation,
             $node instanceof ControlCharNode => '\c'.$node->char,
-            default => '?',
+            default => throw new \LogicException('Unreachable: describeRangeEndpoint() only receives LiteralNode, CharLiteralNode, or ControlCharNode.'),
         };
     }
 
