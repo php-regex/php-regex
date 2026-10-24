@@ -1,5 +1,28 @@
 # TODO
 
+## Suite reds older than the 2026-10-24 series
+
+Both fail at 034669605b already:
+
+- `CaptureShapeParityTest` fails on `/^|\d{1,2}$/` (php-src bug78853,
+  subject `"7"`), before and after the scan-whole change: under
+  `PREG_SET_ORDER`, and for the callback of `preg_replace_callback()`, the
+  shape still types group 0 as `''` where the engine writes `"7"` from the
+  second match on.
+- `MonorepoArchiveTest`: the archive ships `build/`, tracked since the
+  twin layout (798a8c7d1d) and missing from `.gitattributes`'
+  `export-ignore` list.
+
+## (*UCP) in the ReDoS prover
+
+`/(*UCP)(?:\w|\xC9)+$/` exhausts the backtrack limit, yet the verdict is a
+medium heuristic: a start verb is out of the prover's model, which the
+verb rows of `RedosSoundnessFuzzTest` hold (`(*UCP)a+` and `(*UCP)\w+/i`
+included). Treating every verb as zero-width proved `(*SKIP)`, `(*COMMIT)`,
+`(*FAIL)`, `(*CR)` and `(*ANY)` patterns, and was reverted. Bringing
+`(*UCP)` alone into the model means passing the start options to every
+class-set query and moving the fuzz rows that name it.
+
 ## Composer manifests: the pre-tag review
 
 The manifests are ready; what remains is on the release side:
@@ -189,6 +212,11 @@ Integrations:
   service FrameworkBundle does not define); the
   `ide` fallback never fires; `AbstractBundle`, no container parameters,
   no autowirable internal services.
+- `ExtractorInterface` is marked internal, yet the `extractor_service`
+  setting asks users to implement it: making it public means adding it to
+  the public surface (`tests/Support/PublicSurface.php` and
+  `docs/reference/backward-compatibility.md`), and with it the
+  `PatternOccurrence` an implementer must build, still internal.
 - PHPStan: a repo-only rule ships in the public extension;
   `PatternChecker` split.
 - CLI: `OutputFormat` split per method in the facade; the language
@@ -285,10 +313,13 @@ Decisions the maintainer owns, each worth points on its own:
    delete rather than test:
    `Rewriter:1338`; `Lexer:1656-1661` (its guard
    is provably exclusive with the one gating entry);
+   `Validator:1524,1544` and `CompiledLength:974`, which now throw where
+   they returned: the statements stay, so narrowing the endpoint types
+   would be what removes them;
    `CompiledLength` never-called `isBlank` SequenceNode block `:1677-1688`;
    `EscapeChecks:378` (if no PCRE2 release accepts a padded `\N{U+ }`);
    `ReferenceChecks:388`; `SearchCostProver:981`.
-3. A policy call: hand-built-AST tests are the only route to ~50 guard
+2. A policy call: hand-built-AST tests are the only route to ~50 guard
    statements (printer raw literals, HIR empty shapes, transpiler
    fallthrough arms). The suite already hand-builds nodes in places;
    decide whether that style is welcome at scale.
