@@ -208,26 +208,6 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $result);
     }
 
-    public function test_try_convert_alternation_to_char_class_range_and_null(): void
-    {
-        $optimizer = new Rewriter();
-
-        $range = $this->invokePrivate($optimizer, 'tryConvertAlternationToCharClass', [[
-            new LiteralNode('a', 0, 1),
-            new LiteralNode('b', 1, 2),
-            new LiteralNode('c', 2, 3),
-        ], 0, 3]);
-
-        $this->assertInstanceOf(CharClassNode::class, $range);
-
-        $null = $this->invokePrivate($optimizer, 'tryConvertAlternationToCharClass', [[
-            new LiteralNode('a', 0, 1),
-            new LiteralNode('c', 1, 2),
-            new LiteralNode('d', 2, 3),
-        ], 0, 3]);
-
-        $this->assertNull($null);
-    }
 
     public function test_visit_regex_is_covered(): void
     {
@@ -994,31 +974,6 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertFalse($result);
     }
 
-    public function test_try_convert_alternation_to_char_class_covers_cases(): void
-    {
-        $optimizer = new Rewriter();
-
-        // Test with too few literals
-        $alternatives = [new LiteralNode('a', 0, 1)];
-        $result = $this->invokePrivate($optimizer, 'tryConvertAlternationToCharClass', [$alternatives, 0, 1]);
-        $this->assertNull($result);
-
-        // Test with char class metacharacter
-        $alternatives = [new LiteralNode('a', 0, 1), new LiteralNode(']', 1, 2)];
-        $result = $this->invokePrivate($optimizer, 'tryConvertAlternationToCharClass', [$alternatives, 0, 2]);
-        $this->assertNull($result);
-
-        // Test with valid consecutive range
-        $alternatives = [
-            new LiteralNode('a', 0, 1),
-            new LiteralNode('b', 1, 2),
-            new LiteralNode('c', 2, 3),
-            new LiteralNode('d', 3, 4),
-            new LiteralNode('e', 4, 5),
-        ];
-        $result = $this->invokePrivate($optimizer, 'tryConvertAlternationToCharClass', [$alternatives, 0, 5]);
-        $this->assertInstanceOf(CharClassNode::class, $result);
-    }
 
     public function test_should_build_range_covers_cases(): void
     {

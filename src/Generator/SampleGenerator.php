@@ -1519,13 +1519,6 @@ final class SampleGenerator extends AbstractNodeVisitor
             return $this->rootPattern;
         }
 
-        if (str_starts_with($ref, 'R')) {
-            $ref = substr($ref, 1);
-            if ('' === $ref) {
-                return $this->rootPattern;
-            }
-        }
-
         if (Ascii::isDigit($ref)) {
             $index = (int) $ref;
 

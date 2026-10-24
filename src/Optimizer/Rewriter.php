@@ -251,14 +251,6 @@ final class Rewriter extends AbstractNodeVisitor
             return new CharClassNode($expression, false, $node->startPosition, $node->endPosition);
         }
 
-        // Try to convert simple alternations to character classes
-        $charClass = $this->tryConvertAlternationToCharClass($optimizedAlts, $node->startPosition, $node->endPosition);
-        if (null !== $charClass) {
-            $this->changed(self::ALTERNATION_TO_CLASS);
-
-            return $charClass;
-        }
-
         if (!$hasChanged) {
             return $node;
         }
@@ -1960,11 +1952,7 @@ final class Rewriter extends AbstractNodeVisitor
             } elseif ($node instanceof CharTypeNode) {
                 // Convert char type to equivalent char class parts
                 $charClass = $this->convertCharTypeToCharClass($node);
-                if ($charClass->expression instanceof AlternationNode) {
-                    $allParts = array_merge($allParts, $charClass->expression->alternatives);
-                } else {
-                    $allParts[] = $charClass->expression;
-                }
+                $allParts[] = $charClass->expression;
             }
         }
 
@@ -1972,68 +1960,5 @@ final class Rewriter extends AbstractNodeVisitor
         $mergedExpression = new AlternationNode($allParts, $startPos, $endPos);
 
         return new CharClassNode($mergedExpression, false, $startPos, $endPos);
-    }
-
-    /**
-     * Tries to convert an alternation to a character class if it's beneficial.
-     * Only converts when it's clearly safe (no special char class metacharacters).
-     *
-     * @param array<NodeInterface> $alternatives
-     */
-    private function tryConvertAlternationToCharClass(array $alternatives, int $startPos, int $endPos): ?CharClassNode
-    {
-        if (\count($alternatives) < 3) {
-            return null; // Not worth it for small alternations
-        }
-
-        $literals = [];
-        $other = [];
-
-        foreach ($alternatives as $alt) {
-            if ($alt instanceof LiteralNode && 1 === \strlen($alt->value)) {
-                $char = $alt->value;
-                // Don't convert if it contains char class metacharacters that would change meaning
-                if (!isset(self::CHAR_CLASS_META[$char])) {
-                    $literals[] = $char;
-                } else {
-                    return null; // Contains metacharacter, don't convert
-                }
-            } else {
-                $other[] = $alt;
-            }
-        }
-
-        if (!empty($other)) {
-            return null; // Can't convert if there are non-literal parts
-        }
-
-        // Only convert if we have enough literals that form a consecutive range
-        if (\count($literals) >= 3) {
-            $sortedLiterals = $literals;
-            sort($sortedLiterals);
-
-            // Check if they form a consecutive range
-            $first = $sortedLiterals[0];
-            $last = end($sortedLiterals);
-            $expected = [];
-            for ($i = \ord($first); $i <= \ord($last); $i++) {
-                $expected[] = \chr($i);
-            }
-
-            if ($sortedLiterals === $expected) {
-                // Create a range instead
-                $startLiteral = new LiteralNode($first, $startPos, $startPos + 1);
-                $endLiteral = new LiteralNode($last, $endPos - 1, $endPos);
-
-                return new CharClassNode(
-                    new RangeNode($startLiteral, $endLiteral, $startPos, $endPos),
-                    false,
-                    $startPos,
-                    $endPos,
-                );
-            }
-        }
-
-        return null;
     }
 }
