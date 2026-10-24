@@ -202,7 +202,6 @@ Integrations:
 - `ExtractorInterface` is marked internal, yet the `extractor_service`
   setting asks users to implement it: make it public, as the extension
   point it is.
-- `regex:routes --check-conflicts` does nothing: remove it before the tag.
 
 ## Analysis engines: the last pass before 2.0.0
 
@@ -289,13 +288,7 @@ cannot attribute, and the rest are guards or provably dead code.
 
 Decisions the maintainer owns, each worth points on its own:
 
-1. `src/Linter/Formatter/AbstractConsoleTagFormatter.php` is an orphan:
-   nothing constructs or extends it — its rendering moved to
-   `ConsoleTagFormatter` in the 2026-10-20 lint-runner refactor, which
-   redeclares the constructor properties (fatal under inheritance).
-   Delete it (127 statements leave the denominator at once) or give it
-   a direct-instantiation test beside `ConsoleFormatterTest`.
-2. Dead code, each region proven unreachable by probe or invariant —
+1. Dead code, each region proven unreachable by probe or invariant —
    delete rather than test: `RouteConflictAnalyzer:402-406`;
    `SampleGenerator:1522-1527`; `Rewriter:257-259` (the alternation→class
    conversion is shadowed), `:1338`, `:1964`; `Lexer:1523`,

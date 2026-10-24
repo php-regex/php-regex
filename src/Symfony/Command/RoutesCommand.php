@@ -56,7 +56,6 @@ final class RoutesCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('check-conflicts', null, InputOption::VALUE_NONE, 'Check for route conflicts (default).')
             ->addOption('show-overlaps', null, InputOption::VALUE_NONE, 'Include partial overlaps in the report.')
             ->setHelp(<<<'EOF'
                 The <info>%command.name%</info> command inspects Symfony routes and detects ordering conflicts.
