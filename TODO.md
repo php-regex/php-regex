@@ -326,18 +326,6 @@ Bugs found while measuring (verified, not fixed):
   `EscapeChecks::characterLiteral` does, and guard `formatCodePoint()`
   against the `-1` sentinel.
 
-- `OverlappingAlternationRule` produces false negatives when the overlapping
-  branches are character classes rather than literals, even under `/i`.
-  `/(?:[a-z]|[A-Z])+$/i`, `/(?:a|[A-Z])+$/i`, and `/(?:[a-c]|[B-D])+$/i`
-  are all catastrophic without JIT (n=20: ~154 ms, n=25: ~1.8 s), but the
-  rule emits no issue; it queries `CharSetAnalyzer` per branch without
-  applying caseless folding to ranges, so the overlap that `/i` creates is
-  invisible. The literal-branch case (`/(?:a|A)+$/i`) was fixed separately;
-  the shared root is `CharSetAnalyzer` not applying case-fold when computing
-  sets for class branches inside `OverlappingAlternationRule`. Fix: pass the
-  active flags (including `i`) through `CharSetAnalyzer::withFlags()` when
-  computing the sets to compare.
-
 - `OverlappingAlternationRule` is completely blind when any branch contains
   `\w`, `\d`, or `\s` under `/u`: `CharSetAnalyzer` returns `unknown()` for
   those shorthands in Unicode mode, so the intersection test never runs.
@@ -366,22 +354,6 @@ Bugs found while measuring (verified, not fixed):
   pass `StartOptions::of($this->source)` as `$startVerbs` in the
   `ClassSetProvider::query()` call in `PnfaBuilder`.
 
-- `QuantifierConcatenationRule` misses subset relationships when `/i` is
-  active, because `CharSetAnalyzer` never applies case-folding when computing
-  first/last character sets. For `/(?:a+[A-Z]+)+$/i` the rule sees
-  `{a}` vs `{A-Z}` (byte sets without folding), determines neither is a
-  subset of the other, and emits only `quantifier.nested` — not the more
-  specific `quantifier.concatenation` diagnosis — even though the pattern IS
-  catastrophically exponential (n=20: ~45 ms, n=25: ~1.5 s without JIT).
-  The same gap exists for all `/i` forms: pattern flag `/i`, inline `(?i)`,
-  inline group `(?i:…)`. Root cause: `CharSetAnalyzer` computes `firstChars`
-  and `lastChars` as raw byte sets with no knowledge of the `/i` flag; a
-  literal `a` under `/i` should yield `{a, A}` not `{a}`, and a range
-  `[A-Z]` should yield `{A-Z, a-z}` not just `{A-Z}`. This is the same
-  root as the `/i` charset-class overlap entry above; `QuantifierConcatenationRule`
-  relies on `isKnownSubset → CharClassSets::isSubset`, which gets unfold-aware
-  byte sets and never detects cross-case subsets.
-
 - `OverlappingAlternationRule` and `QuantifierConcatenationRule` are silent
   on character-class overlap when the overlapping bytes are above ASCII
   (> 0x7F). `ByteCharSet` models only the 0x00–0x7F range, so both rules
@@ -395,108 +367,6 @@ Bugs found while measuring (verified, not fixed):
   Fix: extend the byte-range intersection and subset logic past 0x7F, or use
   `ClassSetProvider` to probe the actual PCRE character sets and determine
   the subset relation directly.
-
-- `NestedQuantifierRule`, `OverlappingAlternationRule`, and
-  `NestedDotStarRule` all fire false positives when the dangerous nested
-  structure sits inside an outer atomic group `(?>...)` or is the body of
-  a possessive quantifier `(...|...)++`. Neither construct allows the engine
-  to backtrack into the group, so the normally dangerous ambiguity never
-  materialises. Oracle confirms safety at n=25 (0 ms without JIT) for all
-  of: `/(?>(?:a+)+)$/` (`quantifier.nested`), `/(?>(?:a|a)+)$/`
-  (`overlap.charset`), `/(?>(?:.*)+)/s` (`dotstar.nested`),
-  `/(?:(?:a+)+)++$/` (`quantifier.nested`), `/((?:a|a)+)++$/`
-  (`overlap.charset`), `/(?:(?:.*)+)++$/s` (`dotstar.nested`). The rules
-  visit inner nodes without querying whether an enclosing atomic group or
-  possessive-quantifier body eliminates backtracking.
-  Fix: each rule should track whether the current traversal is inside an
-  atomic group or possessive quantifier body via `LintContext`, and skip
-  the ReDoS-safety checks within that scope.
-
-- `NestedDotStarRule` fires a false positive `dotstar.nested` when the
-  dot-star it finds inside the outer loop is itself possessive (`.*+`).
-  `/(?:.*+)+$/s` is safe (0 ms at n=30 without JIT) because the possessive
-  inner quantifier never gives characters back, making each outer iteration
-  deterministic; yet `containsDotStar` returns `true` for possessive
-  `.*+` (it checks only that the inner quantifier wraps a dot and is
-  unbounded, not its possessiveness). By contrast, `NestedQuantifierRule`
-  correctly ignores possessive inner quantifiers in `findNestedQuantifier`.
-  Fix: extend `containsDotStar` to return `false` (or have `isSeparated`
-  treat the loop as separated) when the dotstar quantifier's type is
-  `Possessive`.
-
-- `QuantifierConcatenationRule` emits only `quantifier.nested` — never
-  `quantifier.concatenation` — for patterns where the concatenated runs
-  overlap solely because `/i` is active and one of the runs is a negated
-  character class. `/(?:[^z]+a+)+$/i` and `/(?:[^z]+A+)+$/i` are both
-  catastrophic without JIT (n=20: ~52 ms, n=25: ~1.7 s), yet the rule
-  stops at `quantifier.nested`. The root is `isKnownSubset` (line 166 of
-  `QuantifierConcatenationRule.php`): the guard returns `false` whenever
-  the "other" run holds a negated class under `/i` and the raw set is not
-  case-closed, even when the run's characters (`a` → `{a, A}`) fall
-  entirely outside the excluded set of the negated class (`{z, Z}`). For
-  the non-`/i` case (`/(?:[^b]+a+)+$/`) the guard does not fire and the
-  rule correctly emits both diagnostics. Fix: instead of returning `false`
-  immediately, fold the run's character set and verify that the folded set
-  does not intersect the chars excluded by the negated class; proceed with
-  the subset check when they are disjoint.
-
-- `NestedQuantifierRule` fires a false positive `quantifier.nested` on
-  patterns of the form `(?:[c]+){1,2}$` where `[c]` is a single-character
-  class such as `[a]` or `[\x61]`. The pattern is safe — oracle step count
-  is identical to `(?:a+){1,2}$` which PCRE auto-possessifies at the
-  trailing `$` — but `isShortRunBeforeTheEnd` does not recognise
-  `CharClassNode` as a single literal. The method derives `$codePoint` via
-  a `match` that handles only `LiteralNode` (a bare literal, e.g. `a`) and
-  `CharLiteralNode` (an escape like `\x61`); for `CharClassNode` it falls
-  through to `default => null`, disabling the exemption. Fix: extend the
-  `match` to handle a `CharClassNode` whose expression reduces to a single
-  code point (a one-member class with no range, no negation, and no
-  shorthand).
-
-- `NestedQuantifierRule` fires a false positive `quantifier.nested` on
-  patterns such as `/(?:[^z]+Z+)+$/i` whose inner runs are provably
-  disjoint under `/i` and therefore safely separated. Oracle confirms the
-  pattern is linear (0 ms at n=25 without JIT): under `/i`, `[^z]` is
-  "not `z` and not `Z`", and `Z+` (caseless) is `{Z, z}` — the two sets
-  are disjoint so each outer iteration's characters partition uniquely. The
-  rule's `isSafelySeparatedNestedQuantifier` fails to reach this conclusion
-  because its `fold()` helper is unsound for negated classes: the raw byte
-  set of `[^z]` is `{all except z=0x7A}`, which contains `Z=0x5A`; the
-  fold adds `z` back in (because the pair `Z/z` is partly present), making
-  the boundary look like `{all ASCII}` and the separator `Z+` (folded:
-  `{Z, z}`) appear to intersect. Fix: before folding an inner boundary,
-  check whether the inner run is a negated class; if so, either skip
-  folding for that run and compute the complement of the (folded) excluded
-  set, or fall back to a PCRE oracle probe rather than the raw-set
-  heuristic.
-
-- `NestedQuantifierRule` fires a false positive `quantifier.nested` on
-  patterns such as `/(?:a+(?=b)b+)+$/` that are safely separated by a
-  consuming item adjacent to the inner loop, when a non-consuming node
-  (a lookahead or anchor) sits between the inner loop and the consuming
-  separator. Oracle confirms the pattern is linear (0 ms at n=25 without
-  JIT with all adversarial inputs): `(?=b)` prevents `a+` from consuming
-  `b`s, and `b+` then exclusively takes them, so each outer iteration
-  partitions uniquely. The root is `isSafelySeparatedNestedQuantifier`
-  (line 187): when searching for the separator at `$index + 1`, the method
-  calls `separates($children[$index + 1], ...)`, which returns `false` for
-  `(?=b)` because it is non-consuming. The actual exclusive separator
-  `b+` at `$index + 2` is never examined. Fix: skip non-consuming items
-  (lookaheads, zero-width assertions, comments) in both the "item before"
-  and "item after" separator searches in `isSafelySeparatedNestedQuantifier`.
-
-- `NestedQuantifierRule` and `LoopShape::isShortRunBeforeTheEnd` fire a
-  false positive `quantifier.nested` when the only node following the outer
-  loop is a positive lookahead asserting end of string `(?=$)`, rather than
-  a literal `$` anchor. `/(?:a+){1,2}(?=$)/` is safe (0 ms at n=25 without
-  JIT) because `(?=$)` is semantically equivalent to `$` for the purpose of
-  PCRE's trailing-loop auto-possessification. The root is
-  `Continuation::onlyAllowedFollow` (line 192): with `$endAnchorsMayFollow
-  = true`, only `AnchorNode('$')` and `AssertionNode('\z' or '\Z')` satisfy
-  the end-anchor test; a `GroupNode` of type `Lookahead` containing `$` is
-  not recognised. Fix: extend `NodePredicates::isEndAnchorNode` (or
-  `onlyAllowedFollow`) to also accept a positive lookahead whose sole
-  content is an end anchor.
 
 The test-writing plan, by wave (natural-input tests, existing harnesses;
 numbers are uncovered statements):
