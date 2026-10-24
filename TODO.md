@@ -312,21 +312,6 @@ Decisions the maintainer owns, each worth points on its own:
 
 Bugs found while measuring (verified, not fixed):
 
-- `CharSetAnalyzer` and `PnfaBuilder` are both blind to `(*UCP)` as a
-  source of Unicode-property semantics. `CharSetAnalyzer` sets `unicodeMode`
-  from `str_contains($flags, 'u')` only, ignoring `startOptions`; under byte
-  mode with `(*UCP)`, `\w` widens to include high bytes with Unicode word
-  properties (e.g. `\xC9` = É in Latin-1), but the analyzer models `\w` as
-  ASCII-only. Likewise `PnfaBuilder` calls `ClassSetProvider::query($atom,
-  $this->unicode, $modifiers)` without passing `startVerbs`, so the PCRE
-  probe that `ClassSetProvider::scanned()` runs is missing `(*UCP)` and
-  computes the wrong set. Result: `/(*UCP)(?:\w|\xC9)+$/` is catastrophic
-  without JIT (n=20: ~160 ms, n=25: ~1.9 s) but the linter and the ReDoS
-  prover are both silent. Fix: derive `unicodeMode` in `CharSetAnalyzer` as
-  `str_contains($flags, 'u') || str_contains($startOptions, '(*UCP)')`, and
-  pass `StartOptions::of($this->source)` as `$startVerbs` in the
-  `ClassSetProvider::query()` call in `PnfaBuilder`.
-
 - `OverlappingAlternationRule` and `QuantifierConcatenationRule` are silent
   on character-class overlap when the overlapping bytes are above ASCII
   (> 0x7F). `ByteCharSet` models only the 0x00–0x7F range, so both rules
@@ -378,9 +363,9 @@ validity, #4 capture shapes — all green on `NodeScopeResolverTest`
 1. Nothing left of the folding: the reader splits what it reads and
    answers the rule in one call; the helper keeps the expression duties
    only (concat resolution, quoting delimiters).
-2. Once `2.0.0` is tagged and the php74 twin reaches Packagist, pin the
-   `php-regex/regex-parser-php74` requirement to an exact version (the
-   precedent is `hoa/compiler`, pinned to a release).
+2. Once `2.0.0` is tagged and the php74 twin reaches Packagist, replace
+   the `2.x-dev#<hash>` pin with the exact version (the precedent is
+   `hoa/compiler`, pinned to a release).
 3. Done: without `u` the engine folds ASCII letters only, so `(£|€)`
    under `i` reads its constants; under `u` it folds by Unicode and
    nothing past seven bits is provable — the analysis is mode-aware.
@@ -392,3 +377,17 @@ validity, #4 capture shapes — all green on `NodeScopeResolverTest`
    patterns a second (first touch 4,310, AST cache off, plain
    interpreter); the number and the method sit in the series' pull
    request.
+6. phpstan#11602: `isset($matches[3])` should imply its nested groups 4
+   and 5 exist — needs the shape analysis to split an optional
+   capture-bearing group into the case where it runs and the case where
+   it is skipped; the alternation-split machinery exists, the optional-
+   group split does not.
+7. The php74 twin's `CaptureShape::matchShape()` render drops key names
+   and optional markers outside the marks-only branch, against its own
+   docblock contract — fix the render, rise the analysis version, re-
+   record the digests, and let the next twin cycle carry it.
+8. Known imprecision in the series, documented in the pull request: a
+   lone `(?(DEFINE)...)` group renders as a union of two true arms; and
+   commit hygiene (a few ungrammatical subjects, two discarded
+   architectures inside the line) settles when the maintainer asks for
+   the split into stacked pull requests.
