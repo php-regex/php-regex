@@ -169,25 +169,54 @@ final class LintContext
      */
     public function isInsideUnboundedQuantifier(): bool
     {
+        $foundDangerous = false;
+
         foreach (array_reverse($this->parentStack) as $parent) {
             if ($parent instanceof GroupNode && self::isAtomicLookaround($parent)) {
                 return false;
             }
 
+            if ($parent instanceof GroupNode && GroupType::Atomic === $parent->type) {
+                return false;
+            }
+
             if ($parent instanceof QuantifierNode) {
-                // Skip possessive quantifiers - they don't backtrack
                 if (QuantifierType::Possessive === $parent->type) {
+                    if ($foundDangerous) {
+                        return false;
+                    }
                     continue;
                 }
 
-                // Check if the quantifier's child is an atomic group - atomic groups don't backtrack
                 if ($parent->node instanceof GroupNode && GroupType::Atomic === $parent->node->type) {
                     continue;
                 }
 
                 if (QuantifierMath::isUnbounded($parent->quantifier)) {
-                    return true;
+                    $foundDangerous = true;
                 }
+            }
+        }
+
+        return $foundDangerous;
+    }
+
+    /**
+     * Whether the current node is directly enclosed by an atomic group or
+     * the body of a possessive quantifier. Rules whose dangerous pattern
+     * needs an outer backtracking loop can skip their check when this holds:
+     * the atomic or possessive context prevents the engine from ever
+     * retrying the dangerous structure from outside.
+     */
+    public function isInsideAtomicOrPossessiveContext(): bool
+    {
+        foreach ($this->parentStack as $parent) {
+            if ($parent instanceof GroupNode && GroupType::Atomic === $parent->type) {
+                return true;
+            }
+
+            if ($parent instanceof QuantifierNode && QuantifierType::Possessive === $parent->type) {
+                return true;
             }
         }
 
