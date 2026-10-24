@@ -40,6 +40,29 @@ Features
 * Stable identifiers for `ignoreErrors` and baselines: `regex.invalidForTarget`, `regexp.pattern` (a marked parameter), `regex.replacement.undefinedGroup`, `regex.redos`, `regex.redos.search`, `regex.optimization`, `regex.trivialMatch`, `regex.lint.<rule>`, `regex.lint.complexity`.
 * The `phpRegex` parameter is validated by a Neon schema before analysis starts; a version or threshold that names no real value stops the run there.
 
+The shape of `$matches`
+-----------------------
+
+The extension reports patterns; it does not widen the array PHPStan core
+types into `$matches`, and no extension can. The shape of `preg_match()`'s
+third argument is written by PHPStan's own pipeline — today it reads its
+patterns through the PCRE grammar it vendors — and a third-party extension
+cannot replace it: a `FunctionParameterOutTypeExtension` registered for
+`preg_match()` at any tag priority loses to the built-in one, without even
+a union showing through. The same extension, registered for a function
+PHPStan types nothing about, writes its array whole — the mechanism works,
+the ground is reserved.
+
+What PHPRegex reads instead is the analysis: its [Psalm
+plugin](https://github.com/php-regex/php-regex/tree/2.x/src/Psalm) builds
+the full `$matches` type from its capture shape — sealed array shapes,
+honouring `PREG_OFFSET_CAPTURE` and `PREG_UNMATCHED_AS_NULL` — because
+Psalm's plugin ground is open to it. On PHPStan, the same capture shape
+feeds PHPStan's own pipeline through the [phpstan-src
+fork](https://github.com/php-regex/phpstan-src/pull/1), which swaps the
+vendored grammar for PHPRegex whole: every `$matches` shape comes from the
+capture shape analysis, sharper at every line PHPStan's grammar misread.
+
 Installation
 ------------
 
