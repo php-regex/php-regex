@@ -28,7 +28,7 @@ final class CaptureGroupShape
     /**
      * @internal built by CaptureShapeAnalyzer::analyze(), for CaptureShape::$whole and CaptureShape::$groups
      *
-     * @param list<string>|null $values     every string the group can hold, or null when they are not a small finite set
+     * @param list<string>|null $values     every string the group can hold, or null when they are not a small finite set. An alternation that mixes enumerable and non-enumerable arms - (a|\d) - reads as null: the digits arm holds infinitely many strings, and the scalar facts below carry only what holds for every arm together. A consumer needing per-arm facts walks the tree the shape was read from
      * @param bool              $nonFalsy   every value is truthy: neither '' nor '0'
      * @param bool              $digitsOnly every value satisfies ctype_digit(): a non-empty run of ASCII 0-9
      */
