@@ -35,9 +35,9 @@ final class CaptureShapeMixedAlternationLimitTest extends TestCase
 
         $group = $shape->groups[1];
 
-        self::assertNull($group->values, 'the digit arm holds infinitely many strings');
-        self::assertFalse($group->digitsOnly, 'the constant arm is not digits');
-        self::assertFalse($group->nonFalsy, 'the digit arm may read "0"');
-        self::assertSame(1, $group->minLength);
+        $this->assertNull($group->values, 'the digit arm holds infinitely many strings');
+        $this->assertFalse($group->digitsOnly, 'the constant arm is not digits');
+        $this->assertFalse($group->nonFalsy, 'the digit arm may read "0"');
+        $this->assertSame(1, $group->minLength);
     }
 }

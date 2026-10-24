@@ -24,9 +24,9 @@ final class ValidationLimitVerdictTest extends TestCase
     {
         $result = RegexParser::create()->validate('/a'.\str_repeat(' ', 100000).'/x');
 
-        self::assertFalse($result->isValid);
-        self::assertTrue($result->isLimit(), 'a limit of the library says nothing about the pattern');
-        self::assertFalse($result->isPatternRefused(), 'no refusal to read from a limit');
+        $this->assertFalse($result->isValid);
+        $this->assertTrue($result->isLimit(), 'a limit of the library says nothing about the pattern');
+        $this->assertFalse($result->isPatternRefused(), 'no refusal to read from a limit');
     }
 
     #[Test]
@@ -34,7 +34,7 @@ final class ValidationLimitVerdictTest extends TestCase
     {
         $result = RegexParser::create()->validate('/a'.\str_repeat(' ', 100000).'/x');
 
-        self::assertStringContainsString('maximum length', $result->render(), 'the limit renders as the message the library writes');
+        $this->assertStringContainsString('maximum length', $result->render(), 'the limit renders as the message the library writes');
     }
 
     #[Test]
@@ -42,9 +42,9 @@ final class ValidationLimitVerdictTest extends TestCase
     {
         $result = RegexParser::create()->validate('/(/');
 
-        self::assertFalse($result->isValid);
-        self::assertFalse($result->isLimit());
-        self::assertTrue($result->isPatternRefused());
+        $this->assertFalse($result->isValid);
+        $this->assertFalse($result->isLimit());
+        $this->assertTrue($result->isPatternRefused());
     }
 
     #[Test]
@@ -52,8 +52,8 @@ final class ValidationLimitVerdictTest extends TestCase
     {
         $result = RegexParser::create()->validate('/a/');
 
-        self::assertTrue($result->isValid);
-        self::assertFalse($result->isLimit());
-        self::assertNull($result->isPatternRefused());
+        $this->assertTrue($result->isValid);
+        $this->assertFalse($result->isLimit());
+        $this->assertNull($result->isPatternRefused());
     }
 }

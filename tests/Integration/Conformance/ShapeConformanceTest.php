@@ -60,7 +60,7 @@ final class ShapeConformanceTest extends TestCase
                         }
                     }
 
-                    self::assertCount(
+                    $this->assertCount(
                         $engineCount,
                         $shape->groups,
                         \sprintf('%s on %s (flags %d): the engine numbers %d groups, the shape %d', $pattern, $subject, $flags, $engineCount, \count($shape->groups)),
@@ -72,7 +72,7 @@ final class ShapeConformanceTest extends TestCase
                     $label = \sprintf('%s group %d on %s (flags %d)', $pattern, $group->number, $subject, $flags);
 
                     if (null === $written || (($flags & \PREG_UNMATCHED_AS_NULL) === 0 && '' === $written && !\array_key_exists($group->number, $matches))) {
-                        self::assertNotSame(
+                        $this->assertNotSame(
                             Participation::Always,
                             $group->participation,
                             $label.': the engine left it unset, the shape says it never is',
@@ -94,19 +94,19 @@ final class ShapeConformanceTest extends TestCase
                     }
 
                     if (null !== $group->values) {
-                        self::assertContains($written, $group->values, $label.': the engine wrote a value outside the enumerated set');
+                        $this->assertContains($written, $group->values, $label.': the engine wrote a value outside the enumerated set');
                     }
 
                     if ($group->digitsOnly) {
-                        self::assertTrue(\ctype_digit($written) && '' !== $written, $label.': the engine wrote a non-digit or empty value against digitsOnly');
+                        $this->assertTrue(\ctype_digit($written) && '' !== $written, $label.': the engine wrote a non-digit or empty value against digitsOnly');
                     }
 
                     if ($group->nonFalsy) {
-                        self::assertNotSame('', $written, $label.': the engine wrote the empty string against nonFalsy');
-                        self::assertNotSame('0', $written, $label.': the engine wrote "0" against nonFalsy');
+                        $this->assertNotSame('', $written, $label.': the engine wrote the empty string against nonFalsy');
+                        $this->assertNotSame('0', $written, $label.': the engine wrote "0" against nonFalsy');
                     }
 
-                    self::assertGreaterThanOrEqual($group->minLength, \strlen($written), $label.': the engine wrote a shorter value than the minimum');
+                    $this->assertGreaterThanOrEqual($group->minLength, \strlen($written), $label.': the engine wrote a shorter value than the minimum');
                 }
             }
         }
