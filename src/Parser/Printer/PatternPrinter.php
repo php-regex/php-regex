@@ -601,11 +601,25 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         $result = $this->ignorableText($node->getStartPosition(), $children[0]->getStartPosition());
-        $result .= $children[0]->accept($this);
 
-        for ($i = 1, $count = \count($children); $i < $count; $i++) {
-            $next = $children[$i]->accept($this);
-            $result .= $this->separator($result, $children[$i - 1], $children[$i], $next).$next;
+        $previous = null;
+        for ($i = 0, $count = \count($children); $i < $count; $i++) {
+            $child = $children[$i];
+
+            // Under a "#" delimiter PHP reads a comment only right after a
+            // "\c\", which hides its "#": one the parser moved past the
+            // quantifier of that "\c\" goes back before the quantifier,
+            // where the "\c\" still hides it, as it stood in the source.
+            $hidden = '';
+            if ('#' === $this->delimiter && $child instanceof QuantifierNode) {
+                while ($i + 1 < $count && $children[$i + 1] instanceof CommentNode) {
+                    $hidden .= $children[++$i]->accept($this);
+                }
+            }
+
+            $next = '' === $hidden ? $child->accept($this) : $this->quantified($child, $hidden);
+            $result .= (null === $previous ? '' : $this->separator($result, $previous, $child, $next)).$next;
+            $previous = $children[$i];
         }
 
         $last = $children[\count($children) - 1];
@@ -664,26 +678,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): string
     {
-        $nodeCompiled = $node->node->accept($this);
-
-        // A group compact dropped, "(?:#c\n)*", still carries the quantifier.
-        if ('' === $nodeCompiled && $node->node instanceof GroupNode) {
-            $nodeCompiled = '(?:)';
-        }
-
-        if ($node->node instanceof SequenceNode || $node->node instanceof AlternationNode) {
-            $nodeCompiled = '(?:'.$nodeCompiled.')';
-        }
-
-        $suffix = match ($node->type) {
-            QuantifierType::Lazy => '?',
-            QuantifierType::Possessive => '+',
-            default => '',
-        };
-
-        $quantifier = $this->normalizeQuantifier($node->quantifier);
-
-        return $nodeCompiled.$quantifier.$suffix;
+        return $this->quantified($node, '');
     }
 
     #[\Override]
@@ -1372,6 +1367,34 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         return [] === $skipped ? $result : strtr($result, $skipped);
+    }
+
+    /**
+     * The quantified item, then what stood between it and its quantifier,
+     * then the quantifier.
+     */
+    private function quantified(QuantifierNode $node, string $between): string
+    {
+        $nodeCompiled = $node->node->accept($this);
+
+        // A group compact dropped, "(?:#c\n)*", still carries the quantifier.
+        if ('' === $nodeCompiled && $node->node instanceof GroupNode) {
+            $nodeCompiled = '(?:)';
+        }
+
+        if ($node->node instanceof SequenceNode || $node->node instanceof AlternationNode) {
+            $nodeCompiled = '(?:'.$nodeCompiled.')';
+        }
+
+        $suffix = match ($node->type) {
+            QuantifierType::Lazy => '?',
+            QuantifierType::Possessive => '+',
+            default => '',
+        };
+
+        $quantifier = $this->normalizeQuantifier($node->quantifier);
+
+        return $nodeCompiled.$between.$quantifier.$suffix;
     }
 
     /**

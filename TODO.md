@@ -215,9 +215,6 @@ Integrations:
 
 ## Analysis engines: the last pass before 2.0.0
 
-- The printer writes a quantifier before the comments that sit between an
-  atom and it; under `#`, where a `\c\` hides the delimiter in such a
-  comment, PHP then reads the printed pattern differently.
 - The character-set analysis gives an unknown set for a script run.
 - A proven polynomial degree does not add what a lookahead in a loop reads
   again: `/^(?:(?!a*a*b)a)*$/` is proven of degree 2 (its upper bound says

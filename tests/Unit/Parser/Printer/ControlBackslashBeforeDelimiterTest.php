@@ -30,7 +30,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class ControlBackslashBeforeDelimiterTest extends TestCase
 {
-    private const SUBJECTS = ["\x1c", "\x1c{", "\x1c{}", "\x1c}", "a\x1c/b", "\x1c#a", '}', '{', '\\', '/'];
+    private const SUBJECTS = ["\x1c", "\x1c{", "\x1c{}", "\x1c}", "a\x1c/b", "\x1c#a", '}', '{', '\\', '/', "\x1c\x1c", "a\x1c\x1c", "\x1cb"];
 
     #[Test]
     #[DataProvider('providePatterns')]
@@ -59,6 +59,12 @@ final class ControlBackslashBeforeDelimiterTest extends TestCase
         yield 'the delimiter after it' => ['pattern' => '/a\c\/b/', 'subject' => "a\x1c/b"];
         yield 'an escaped delimiter after it, a space between under x' => ['pattern' => '/a\c\ \/b/x', 'subject' => "a\x1c/b"];
         yield 'a hash delimiter after it' => ['pattern' => '#\c\#a#', 'subject' => "\x1c#a"];
+        // Under x, "#c" is a comment PHP reads only after the "\c\", and the
+        // quantifier after it repeats the "\c\": written between them, the
+        // quantifier would bare the "#", and PHP end the pattern there.
+        yield 'a quantifier after a comment it hides' => ['pattern' => "#a\\c\\#c\n+#x", 'subject' => "a\x1c\x1c"];
+        yield 'a lazy quantifier after a comment it hides' => ['pattern' => "#\\c\\# c\n*?b#x", 'subject' => "\x1cb"];
+        yield 'a counted quantifier after a comment it hides' => ['pattern' => "#\\c\\#c\n{2}#x", 'subject' => "\x1c\x1c"];
     }
 
     private function assertSameMatches(string $source, string $printed, string $printer): void
