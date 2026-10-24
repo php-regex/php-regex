@@ -118,6 +118,16 @@ final class PcreTarget
      * but for 8.1: 8.1.0 bundled 10.37, and 8.1.1 onwards 10.39. PHP 7.4.6
      * moved to 10.34 and 7.4.12 to 10.35, judged as 10.33. PHP 7.2 and
      * earlier link PCRE1, which no PCRE2 release stands for: they get 10.32.
+     *
+     * An approximation, not a promise. A PHP version never determines the
+     * PCRE2 a build links: distributions compile against their own
+     * libpcre2, and patch releases carry whatever was current when they
+     * were cut - 8.4.0 bundles 10.44 while 8.4.27 links 10.49. Three
+     * answers exist and none collapses into another: the engine the
+     * running PHP links (PCRE_VERSION), the one bundledWith() estimates
+     * for an analysed PHP, and an explicit pin the consumer holds. When
+     * they disagree, the pin wins, the running engine speaks for the
+     * analysed PHP it shares a minor with, and the estimate is the floor.
      */
     public static function bundledWith(int $phpVersionId): self
     {
