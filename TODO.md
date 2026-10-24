@@ -311,14 +311,14 @@ Decisions the maintainer owns, each worth points on its own:
 
 1. Dead code, each region proven unreachable by probe or invariant —
    delete rather than test:
-   `Rewriter:1338`; `Lexer:1656-1661` (its guard
-   is provably exclusive with the one gating entry);
    `Validator:1524,1544` and `CompiledLength:974`, which now throw where
    they returned: the statements stay, so narrowing the endpoint types
-   would be what removes them;
-   `CompiledLength` never-called `isBlank` SequenceNode block `:1677-1688`;
-   `EscapeChecks:378` (if no PCRE2 release accepts a padded `\N{U+ }`);
-   `ReferenceChecks:388`; `SearchCostProver:981`.
+   would be what removes them.
+   `Lexer:1656-1661` is NOT dead: the `namesReadWhole` guard fires for
+   targets where PCRE2 reads the whole name (tested by
+   `BeforePcre2Ten39Test`); it was incorrectly listed.
+   Deleted: `Rewriter:1338`, `CompiledLength:1677-1688`,
+   `EscapeChecks:378`, `ReferenceChecks:388`, `SearchCostProver:981`.
 2. A policy call: hand-built-AST tests are the only route to ~50 guard
    statements (printer raw literals, HIR empty shapes, transpiler
    fallthrough arms). The suite already hand-builds nodes in places;
