@@ -35,12 +35,6 @@ final class ValidationResult implements \JsonSerializable
     ) {}
 
     /**
-     * The result as plain text, as a console prints it: the message, the
-     * line of the pattern with a caret under the fault, then the hint
-     * ("Hint: …"), each part left out when the result does not carry it.
-     * An empty string for a valid pattern. No colour, no trailing newline.
-     */
-    /**
      * Whether the library stopped before reading the whole pattern: its
      * own limit — length, recursion, anything it bounds — was reached.
      * Never a verdict on the pattern: the engine may well take what the
@@ -49,7 +43,7 @@ final class ValidationResult implements \JsonSerializable
      */
     public function isLimit(): bool
     {
-        return !$this->isValid && $this->category === ValidationErrorCategory::Limit;
+        return !$this->isValid && ValidationErrorCategory::Limit === $this->category;
     }
 
     /**
@@ -66,6 +60,12 @@ final class ValidationResult implements \JsonSerializable
         return !$this->isLimit();
     }
 
+    /**
+     * The result as plain text, as a console prints it: the message, the
+     * line of the pattern with a caret under the fault, then the hint
+     * ("Hint: …"), each part left out when the result does not carry it.
+     * An empty string for a valid pattern. No colour, no trailing newline.
+     */
     public function render(): string
     {
         if ($this->isValid) {

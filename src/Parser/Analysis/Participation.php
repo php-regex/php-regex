@@ -15,6 +15,16 @@ namespace PHPRegex\Parser\Analysis;
 
 /**
  * Whether a capturing group holds a value after a successful match.
+ *
+ * The recipe for typing `$matches` off these cases, as the engine writes
+ * it: a group with `Always` sits in every match array, its key present;
+ * `MayBeUnset` means the key may be absent — the engine omits a trailing
+ * group left unset, and writes `''` (or `null` under
+ * PREG_UNMATCHED_AS_NULL, where even a trailing unset group appears)
+ * for one that is not trailing; `Never` fills nothing — the group counts
+ * in the numbering, and a non-trailing one still appears as `''`/`null`
+ * while a trailing one is omitted. When in doubt, wider wins: an
+ * optional key with a union value is never wrong.
  */
 enum Participation: string
 {

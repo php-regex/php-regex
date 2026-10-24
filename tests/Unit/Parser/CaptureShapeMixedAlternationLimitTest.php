@@ -8,7 +8,7 @@ declare(strict_types=1);
  * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
  *
  * For the full copyright and license information, please view the LICENSE
- * file that is distributed with this source code.
+ * file that was distributed with this source code.
  */
 
 namespace PHPRegex\Tests\Unit\Parser;
@@ -26,18 +26,18 @@ use PHPUnit\Framework\TestCase;
  */
 final class CaptureShapeMixedAlternationLimitTest extends TestCase
 {
-	#[Test]
-	public function test_a_mixed_alternation_reads_no_values_and_the_shared_facts_only(): void
-	{
-		$shape = (new CaptureShapeAnalyzer())->analyze(
-			RegexParser::create()->parse('/(a|\d)/'),
-		);
+    #[Test]
+    public function test_a_mixed_alternation_reads_no_values_and_the_shared_facts_only(): void
+    {
+        $shape = (new CaptureShapeAnalyzer())->analyze(
+            RegexParser::create()->parse('/(a|\d)/'),
+        );
 
-		$group = $shape->groups[1];
+        $group = $shape->groups[1];
 
-		self::assertNull($group->values, 'the digit arm holds infinitely many strings');
-		self::assertFalse($group->digitsOnly, 'the constant arm is not digits');
-		self::assertFalse($group->nonFalsy, 'the digit arm may read "0"');
-		self::assertSame(1, $group->minLength);
-	}
+        self::assertNull($group->values, 'the digit arm holds infinitely many strings');
+        self::assertFalse($group->digitsOnly, 'the constant arm is not digits');
+        self::assertFalse($group->nonFalsy, 'the digit arm may read "0"');
+        self::assertSame(1, $group->minLength);
+    }
 }
