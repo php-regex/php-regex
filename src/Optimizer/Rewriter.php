@@ -1322,15 +1322,8 @@ final class Rewriter extends AbstractNodeVisitor
     private function charFromCodePoint(int $codePoint): string
     {
         $char = mb_chr($codePoint);
-        if (false !== $char) {
-            return $char;
-        }
 
-        if ($codePoint >= 0 && $codePoint <= 0xFF) {
-            return \chr($codePoint);
-        }
-
-        return '';
+        return false !== $char ? $char : '';
     }
 
     /**

@@ -1675,16 +1675,6 @@ final class CompiledLength
      */
     private function isBlank(NodeInterface $node): bool
     {
-        if ($node instanceof SequenceNode) {
-            foreach ($node->children as $child) {
-                if (!$this->isBlank($child)) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
         return self::isEmpty($node) || $node instanceof CommentNode
             || ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && $this->setsOptionsOnly($node));
     }

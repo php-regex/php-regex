@@ -976,11 +976,7 @@ final class SearchCostProver
         }
 
         $current = self::set($automaton->initials[0]['items']);
-        foreach ($prefix as $index => $class) {
-            if ($index > 0) {
-                $current += self::set($automaton->laterStart(self::contextOf($automaton, $automaton->representatives[$prefix[$index - 1]])));
-            }
-
+        foreach ($prefix as $class) {
             $current = $automaton->stepSet($current, $class);
             if (null === $current) {
                 return null;

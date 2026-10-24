@@ -384,8 +384,6 @@ final class ReferenceChecks
             if (str_starts_with($numPart, '-') && Ascii::isDigit(substr($numPart, 1))) {
                 $num = (int) $numPart;
                 $this->assertRelativeReferenceExists($num, $node->startPosition, ErrorCode::SubroutineRecursion, 'Recursion condition');
-
-                return;
             }
         }
 

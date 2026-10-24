@@ -374,8 +374,6 @@ final class EscapeChecks
             // as outside a class.
             if (null !== $this->source && $this->startsNamedCodePoint($this->source, $node->getEndPosition())) {
                 $this->validateNamedCharacterBraces($this->source, $node->getEndPosition());
-
-                return;
             }
 
             // "\N{" that is no count PCRE2 reads there, and any from 10.45,
