@@ -1361,6 +1361,12 @@ when those flags are passed.
 | `redos`                                      | PHP refuses to compile the pattern or the `--safe` one; a slow run alone leaves 0 |
 | `self-update`                                | The update fails                                                                   |
 
+Every command also exits with 1, `Error: A regex of the library gave up: …` on
+stderr, when one of the library's own regexes gives up: `pcre.backtrack_limit`
+or `pcre.recursion_limit` stands below PHP's default and `ini_set()` cannot
+raise it. No verdict is given on the pattern; raise the limit, or allow
+`ini_set()`.
+
 The lint rules of error severity target patterns that compile but do not do
 what they say without `/u`: a multibyte character in a class, a quantified
 multibyte character, a Unicode property. The `lint` summary counts them as lint

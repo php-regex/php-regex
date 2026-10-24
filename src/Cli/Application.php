@@ -17,6 +17,7 @@ use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\Command\HelpCommand;
 use PHPRegex\Cli\Command\JsonCommandInterface;
 use PHPRegex\Parser\Engine\IniFlag;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\NearMiss;
@@ -98,7 +99,15 @@ final class Application
         // The command's own options are not read yet: whether JSON was asked
         // for is read from the whole command line.
         if (!$this->asksForJson(\array_slice($argv, 1), $args)) {
-            return $this->dispatch($args, $options, false);
+            try {
+                return $this->dispatch($args, $options, false);
+            } catch (InternalFailureException $e) {
+                // The library could not finish: what to do about it, not
+                // where in the library it stopped.
+                $this->output->writeError($this->output->error('Error: '.$e->getMessage())."\n");
+
+                return CommandInterface::FAILURE;
+            }
         }
 
         // Where ini_get() or ini_set() is disabled the setting is left as it

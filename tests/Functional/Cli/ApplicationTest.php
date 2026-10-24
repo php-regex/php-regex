@@ -20,6 +20,7 @@ use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Linter\LintException;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\JsonEncodingException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Tests\TestUtils\OutputFactory;
@@ -278,6 +279,29 @@ final class ApplicationTest extends TestCase
         $this->assertInstanceOf(LintException::class, $failure);
         $this->assertSame('Parallel analysis failed.', $failure->getMessage());
         $this->assertSame('', $buffer);
+    }
+
+    /**
+     * A regex of the library that gave up says why and how to fix it, on
+     * the error stream, where PHP printed an uncaught exception and its
+     * stack trace.
+     */
+    #[Test]
+    public function test_text_run_reports_a_library_regex_that_gave_up(): void
+    {
+        $output = OutputFactory::create();
+        $app = new Application(new GlobalOptionsParser(), $output, new DummyCommand('help'));
+        $app->register(new FailingJsonCommand(InternalFailureException::pcreGaveUp(\PREG_BACKTRACK_LIMIT_ERROR)));
+
+        $buffer = '';
+        $exitCode = $this->runApp($app, ['regex', 'fail'], $buffer);
+
+        $this->assertSame(1, $exitCode);
+        $this->assertSame('', $buffer);
+        $this->assertSame(
+            "Error: A regex of the library gave up: the backtrack limit (pcre.backtrack_limit) was exhausted. Raise the limit, or allow ini_set() so the library can raise it for its own regexes.\n",
+            OutputFactory::errors($output),
+        );
     }
 
     /**
