@@ -538,7 +538,7 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/modules/shortcodes/recipe.php
    WARN  Quantifier "+" repeats an item that can match the empty string: an empty iteration matches nothing more.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches "&#8211;" and "&#8212;" have overlapping character sets, which may cause unnecessary backtracking.
+   WARN  Alternation branches "[\\-\\xE2\\x80\\x93\\xE2\\x80\\x94]+" and "&#8211;" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    FAIL  Character class holds "–", which without /u is the bytes \xE2 \x80 \x93: the class matches each byte on its own.
        ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
@@ -3764,7 +3764,7 @@ corpus/Yoast/wordpress-seo/src/llms-txt/application/markdown-escaper.php:23:14
 
 
 
-### corpus/akaunting/akaunting — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+### corpus/akaunting/akaunting — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/akaunting/akaunting/app/Http/Middleware/AuthenticateOnceWithDynamicApi.php:54:52
     → /^\s*(\w+)\s+/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -4198,7 +4198,7 @@ corpus/bolt/core/src/DataFixtures/ContentFixtures.php:276:17
     → /{([\w]+)}/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/bolt/core/src/Storage/SelectQuery.php:528:35
+corpus/bolt/core/src/Storage/SelectQuery.php:529:35
     → /content\.([^\s])*/
    ↳ via $originalLeftExpression
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -4280,6 +4280,14 @@ corpus/cakephp/cakephp/src/Database/Driver/Mysql.php:349:28
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
+corpus/cakephp/cakephp/src/Database/Expression/QueryExpression.php:884:24
+    → /^(?:['"])?[a-zA-Z0-9_\.]+(?:['"])?$/
+   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   TIP 
+       - /^(?:['"])?[a-zA-Z0-9_\.]+(?:['"])?$/
+       + /^['"]?[a-zA-Z0-9_.]+['"]?$/
+
 corpus/cakephp/cakephp/src/Database/Schema/SqliteSchemaDialect.php:712:20
     → /(?:CONSTRAINT\s+([^\s]+)\s+)?CHECK\s*\(([^)]+(?:\([^)]*\)[^)]*)*)\)/is
    ↳ via $pattern
@@ -4334,7 +4342,7 @@ corpus/cakephp/cakephp/src/TestSuite/IntegrationTestTrait.php:738:37
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/cakephp/cakephp/src/TestSuite/TestCase.php:781:45
+corpus/cakephp/cakephp/src/TestSuite/TestCase.php:807:45
     → /\s+/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
@@ -4571,7 +4579,7 @@ corpus/codeigniter4/CodeIgniter4/preload.php:92:17
    WARN  Quantifier "+" on an assertion changes nothing: PCRE checks it once.
        ↳ Remove the quantifier.
 
-corpus/codeigniter4/CodeIgniter4/system/CLI/CLI.php:334:39
+corpus/codeigniter4/CodeIgniter4/system/CLI/CLI.php:337:28
     → /^\d+(,\d+)*$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -6304,7 +6312,12 @@ corpus/facebook/php-graph-sdk/src/Facebook/Url/FacebookUrlDetectionHandler.php:1
 
 
 ### corpus/filamentphp/filament — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
-corpus/filamentphp/filament/packages/panels/src/Commands/MakeThemeCommand.php:250:20
+corpus/filamentphp/filament/packages/panels/src/Resources/Resource/Concerns/HasGlobalSearch.php:198:37
+    → /(\s|\x{3164}|\x{1160})+/u
+   INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+corpus/filamentphp/filament/packages/support/src/Commands/Concerns/CanConfigureVite.php:25:20
     → /(\binput\s*:\s*\[)([^\]]*?)(\])/s
    ↳ via $pattern
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -6312,19 +6325,14 @@ corpus/filamentphp/filament/packages/panels/src/Commands/MakeThemeCommand.php:25
        - /(\binput\s*:\s*\[)([^\]]*?)(\])/s
        + /(\binput\s*:\s*\[)([^\]]*?)(\])/
 
-corpus/filamentphp/filament/packages/panels/src/Resources/Resource/Concerns/HasGlobalSearch.php:198:37
-    → /(\s|\x{3164}|\x{1160})+/u
-   INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
-       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-
-corpus/filamentphp/filament/packages/support/src/SupportServiceProvider.php:207:33
+corpus/filamentphp/filament/packages/support/src/SupportServiceProvider.php:212:33
     → /\s*@trim\s*/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /\s*@trim\s*/m
        + /\s*@trim\s*/
 
-corpus/filamentphp/filament/packages/tables/src/Concerns/CanSearchRecords.php:135:37
+corpus/filamentphp/filament/packages/tables/src/Concerns/CanSearchRecords.php:139:37
     → /(\s|\x{3164}|\x{1160})+/u
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -6577,6 +6585,8 @@ corpus/freescout-help-desk/freescout/overrides/laravel/framework/src/Illuminate/
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+   WARN  Alternation branches "[\\pL]" and "xn--[\\pL\\pN\\-]+" have overlapping character sets, which may cause unnecessary backtracking.
+       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    TIP 
          ~^
                      ((aaa|aaas|about|acap|acct|acr|adiumxtra|afp|afs|aim|apt|attachment|aw|barion|beshare|bitcoin|blob|bolo|callto|cap|chrome|chrome-extension|cid|coap|coaps|com-eventbrite-attendee|content|crid|cvs|data|dav|dict|dlna-playcontainer|dlna-playsingle|dns|dntp|dtn|dvb|ed2k|example|facetime|fax|feed|feedready|file|filesystem|finger|fish|ftp|geo|gg|git|gizmoproject|go|gopher|gtalk|h323|ham|hcp|http|https|iax|icap|icon|im|imap|info|iotdisco|ipn|ipp|ipps|irc|irc6|ircs|iris|iris.beep|iris.lwz|iris.xpc|iris.xpcs|itms|jabber|jar|jms|keyparc|lastfm|ldap|ldaps|magnet|mailserver|mailto|maps|market|message|mid|mms|modem|ms-help|ms-settings|ms-settings-airplanemode|ms-settings-bluetooth|ms-settings-camera|ms-settings-cellular|ms-settings-cloudstorage|ms-settings-emailandaccounts|ms-settings-language|ms-settings-location|ms-settings-lock|ms-settings-nfctransactions|ms-settings-notifications|ms-settings-power|ms-settings-privacy|ms-settings-proximity|ms-settings-screenrotation|ms-settings-wifi|ms-settings-workplace|msnim|msrp|msrps|mtqp|mumble|mupdate|mvn|news|nfs|ni|nih|nntp|notes|oid|opaquelocktoken|pack|palm|paparazzi|pkcs11|platform|pop|pres|prospero|proxy|psyc|query|redis|rediss|reload|res|resource|rmi|rsync|rtmfp|rtmp|rtsp|rtsps|rtspu|secondlife|s3|service|session|sftp|sgn|shttp|sieve|sip|sips|skype|smb|sms|smtp|snews|snmp|soap.beep|soap.beeps|soldat|spotify|ssh|steam|stun|stuns|submit|svn|tag|teamspeak|tel|teliaeid|telnet|tftp|things|thismessage|tip|tn3270|turn|turns|tv|udp|unreal|urn|ut2004|vemmi|ventrilo|videotex|view-source|wais|webcal|ws|wss|wtai|wyciwyg|xcon|xcon-userid|xfire|xmlrpc\.beep|xmlrpc.beeps|xmpp|xri|ymsgr|z39\.50|z39\.50r|z39\.50s))://                                 # protocol
@@ -12229,6 +12239,11 @@ corpus/moodle/moodle/public/privacy/classes/local/request/contextlist.php:145:28
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+corpus/moodle/moodle/public/question/format/gift/format.php:628:24
+    → ~ \[id: ( (?:\\]|[^][:cntrl:]])+ ) ]~x
+   WARN  Alternation branches "\\\\]" and "[^\\][:cntrl:]]" have overlapping character sets, which may cause unnecessary backtracking.
+       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+
 corpus/moodle/moodle/public/question/format/gift/format.php:646:28
     → ~ \[tag: ( (?:\\]|[^]<>`[:cntrl:]]|)+ ) ]~x
    WARN  Alternation contains an empty alternative.
@@ -13109,8 +13124,6 @@ corpus/nette/tracy/src/Tracy/Helpers.php:623:4
     → ( (?: (^|[-+\([{}=,:;!%^&*|?~]|/(?![/*])|return|throw) (?:\s|//[^\n]*+\n|/\*(?:[^*]|\*(?!/))*+\*/)* (/(?![/*])(?:\\[^\n]|[^[\n/\\]|\[(?:\\[^\n]|[^]])++)+/) |(^ |'(?:\\.|[^\n'\\])*' |"(?:\\.|[^\n"\\])*" |([0-9A-Za-z_$]+) |([-+]+) |. ) )(?:\s|//[^\n]*+\n|/\*(?:[^*]|\*(?!/))*+\*/)* ())sx
    WARN  Alternation branches "\\/\\/[^\\n]*+\\n" and "\\/\\*(?:[^*]|\\*(?!\\/))*+\\*\\/" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches "\\\\[^\\n]" and "[^\\]]" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Alternation branches "\\/\\/[^\\n]*+\\n" and "\\/\\*(?:[^*]|\\*(?!\\/))*+\\*\\/" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
@@ -13192,14 +13205,14 @@ corpus/nextcloud/server/apps/user_ldap/lib/Access.php:1375:24
        - #&([A-Za-z]{2})(?:lig);#
        + #&([A-Za-z]{2})lig;#
 
-corpus/nextcloud/server/build/integration/features/bootstrap/Auth.php:68:45
+corpus/nextcloud/server/build/integration/features/bootstrap/Auth.php:67:45
     → /(.*)data-requesttoken="(.*)">(.*)/sm
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /(.*)data-requesttoken="(.*)">(.*)/sm
        + /(.*)data-requesttoken="(.*)">(.*)/s
 
-corpus/nextcloud/server/build/integration/features/bootstrap/BasicStructure.php:284:45
+corpus/nextcloud/server/build/integration/features/bootstrap/BasicStructure.php:281:45
     → /(.*)data-requesttoken="(.*)">(.*)/sm
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
@@ -13826,11 +13839,6 @@ corpus/phpDocumentor/ReflectionDocBlock/src/DocBlock/Tags/Example.php:111:28
 corpus/phpDocumentor/ReflectionDocBlock/src/DocBlock/Tags/Source.php:63:24
     → /^([1-9]\d*)\s*(?:((?1))\s+)?(.*)$/sux
    WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
-
-corpus/phpDocumentor/ReflectionDocBlock/src/DocBlockFactory.php:177:13
-    → / \A (?:(\#\@\+|\#\@\-)\n?)? (?: (?! @\pL ) ( [^\n.]+ (?: (?! \. \n | \n{2} ) [\n.]* (?! [ \t]* @\pL ) [^\n.]+ )* \.? )? ) (?: \s* (?! @\pL ) ( [^\n]+ (?: \n+ (?! [ \t]* @\pL ) [^\n]+ )* ) )? (\s+ [\s\S]*)?/ux
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 
 
@@ -14463,7 +14471,7 @@ corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1529:47
    WARN  An anchor holds for its own alternative only: "/(?=/)" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "(?:/(?=/)|/)$".
 
-corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:2575:24
+corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:2571:24
     → #^[^/]([r-][w-][xstST-]){3}#
    INFO  Quantified capturing group "(...)" with "{3}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -15009,12 +15017,6 @@ corpus/rectorphp/rector-src/src/BetterPhpDocParser/PhpDocParser/BetterPhpDocPars
    WARN  Quantified named group "(?<new_line>...)" with "{2,}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/rectorphp/rector-src/src/Set/ValueObject/ComposerTriggeredSet.php:37:47
-    → #^\d+(\.\d+)*$#
-   ↳ via self::BARE_VERSION_REGEX
-   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
-       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-
 corpus/rectorphp/rector-src/src/Util/NodePrinter.php:17:45
     → #(?<class_name>PhpParser(.*?))\(#ms
    ↳ via self::CLASS_NAME_REGEX
@@ -15032,7 +15034,7 @@ corpus/rectorphp/rector-src/src/Util/NodePrinter.php:22:47
 
 
 ### corpus/roundcube/roundcubemail — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-corpus/roundcube/roundcubemail/plugins/archive/archive.php:483:20
+corpus/roundcube/roundcubemail/plugins/archive/archive.php:493:20
     → /[\b<](.+@.+)[\b>]/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -15133,7 +15135,7 @@ corpus/roundcube/roundcubemail/program/include/rcmail_output_html.php:1312:19
    WARN  Alternation branches "[^>]" and "\\\\>" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
-corpus/roundcube/roundcubemail/program/include/rcmail_output_html.php:2410:30
+corpus/roundcube/roundcubemail/program/include/rcmail_output_html.php:2404:30
     → /[\s\t\n,]+/
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
@@ -15461,6 +15463,8 @@ corpus/s9e/TextFormatter/src/Plugins/Litedown/Parser/Passes/Links.php:117:4
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+   WARN  Alternation branches "\\([^\\x17\\s()]*\\)" and "[^\\x17\\s)]" have overlapping character sets, which may cause unnecessary backtracking.
+       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    TIP 
        - /\[(?:[^\x17[\]]|\[[^\x17[\]]*\])*\]\(( *(?:\([^\x17\s()]*\)|[^\x17\s)])*(?=[ )]) *(?:"[^\x17]*?"|'[^\x17]*?'|\([^\x17)]*\))? *)\)/
        + /\[(?:[^\x17[\]]|\[[^\x17[\]]*])*\]\(( *(?:\([^\x17\s()]*\)|[^\x17\s)])*(?=[ )]) *(?:"[^\x17]*?"|'[^\x17]*?'|\([^\x17)]*\))? *)\)/
@@ -18288,7 +18292,7 @@ corpus/symfony/symfony/src/Symfony/Component/Cache/Adapter/CouchbaseCollectionAd
        - /^(?:\/(?<bucketName>[^\/\?]+))(?:(?:\/(?<scopeName>[^\/]+))(?:\/(?<collectionName>[^\/\?]+)))?(?:\/)?$/
        + /^(?:\/(?<bucketName>[^\/?]+))(?:(?:\/(?<scopeName>[^\/]+))(?:\/(?<collectionName>[^\/?]+)))?\/?$/
 
-corpus/symfony/symfony/src/Symfony/Component/Console/Command/Command.php:731:25
+corpus/symfony/symfony/src/Symfony/Component/Console/Command/Command.php:732:25
     → /^[^\:]++(\:[^\:]++)*$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -18653,7 +18657,7 @@ corpus/symfony/ux/src/Toolkit/src/Registry/GitHubRegistry.php:50:34
 ### corpus/symfony/ux-turbo — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
 
 ### corpus/tecnickcom/TCPDF — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
-corpus/tecnickcom/TCPDF/tcpdf.php:1458:37
+corpus/tecnickcom/TCPDF/tcpdf.php:1491:37
     → #[0-9.]+( [0-9.]+)* (scn|SCN|rg|RG|g|G|k|K)(?![a-zA-Z])#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -18764,6 +18768,63 @@ corpus/tempestphp/tempest-framework/src/Tempest/Framework/Commands/MetaViewCompo
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
        ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
+
+
+
+### corpus/thecodingmachine/safe — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+corpus/thecodingmachine/safe/generator/config/detectErrorType.php:69:20
+    → /&false;\s+otherwise/m
+   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   TIP 
+       - /&false;\s+otherwise/m
+       + /&false;\s+otherwise/
+
+corpus/thecodingmachine/safe/generator/config/detectErrorType.php:69:68
+    → /(returns\s+&true;|&true;\s+on\s+success|&true;\s+if)/im
+   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   TIP 
+       - /(returns\s+&true;|&true;\s+on\s+success|&true;\s+if)/im
+       + /(returns\s+&true;|&true;\s+on\s+success|&true;\s+if)/i
+
+corpus/thecodingmachine/safe/generator/config/detectErrorType.php:72:20
+    → /may\s+return\s+&false;/m
+   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   TIP 
+       - /may\s+return\s+&false;/m
+       + /may\s+return\s+&false;/
+
+corpus/thecodingmachine/safe/generator/config/detectErrorType.php:72:71
+    → /(returns\s+&true;|&true;\s+on\s+success|&true;\s+if)/im
+   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   TIP 
+       - /(returns\s+&true;|&true;\s+on\s+success|&true;\s+if)/im
+       + /(returns\s+&true;|&true;\s+on\s+success|&true;\s+if)/i
+
+corpus/thecodingmachine/safe/generator/src/XmlDocParser/DocPage.php:81:29
+    → /<\/?methodsynopsis[\s\S]*?>[\s\S]*?<\/methodsynopsis>/m
+   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   TIP 
+       - /<\/?methodsynopsis[\s\S]*?>[\s\S]*?<\/methodsynopsis>/m
+       + /<\/?methodsynopsis[\s\S]*?>[\s\S]*?<\/methodsynopsis>/
+
+corpus/thecodingmachine/safe/generator/src/XmlDocParser/DocPage.php:88:46
+    → /&(.*);/m
+   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   TIP 
+       - /&(.*);/m
+       + /&(.*);/
+
+corpus/thecodingmachine/safe/generator/src/XmlDocParser/DocPage.php:273:29
+    → /<entity\s+name="([^"]+)"[^>]*>([\s\S]*?)<\/entity>/s
+   WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+   TIP 
+       - /<entity\s+name="([^"]+)"[^>]*>([\s\S]*?)<\/entity>/s
+       + /<entity\s+name="([^"]+)"[^>]*>([\s\S]*?)<\/entity>/
+
+corpus/thecodingmachine/safe/generator/src/XmlDocParser/Scanner.php:96:24
+    → /function\s+([\w_]+)\(/
+   WARN  Character class contains duplicate elements that do not add new matches.
+       ↳ Remove the redundant character class element.
 
 
 
@@ -19552,7 +19613,7 @@ corpus/wikimedia/mediawiki/includes/Search/SearchHighlighter.php:478:25
        - /'''''/
        + /'{5}/
 
-corpus/wikimedia/mediawiki/includes/Title/Title.php:2243:21
+corpus/wikimedia/mediawiki/includes/Title/Title.php:2215:21
     → /^(.*&|)action=([^&]*)(&(.*)|)$/
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
@@ -20632,7 +20693,7 @@ corpus/yiisoft/yii2/framework/db/conditions/LikeConditionBuilder.php:108:25
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
-corpus/yiisoft/yii2/framework/db/mssql/QueryBuilder.php:124:29
+corpus/yiisoft/yii2/framework/db/mssql/QueryBuilder.php:125:29
     → /^([\s(])*SELECT(\s+DISTINCT)?(?!\s*TOP\s*\()/i
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
