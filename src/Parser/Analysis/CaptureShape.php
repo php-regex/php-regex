@@ -126,10 +126,27 @@ final class CaptureShape
 
         $flags &= \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL;
         if (\PREG_SET_ORDER === $order) {
-            return 'list<'.$this->matchShape($flags).'>';
+            return 'list<'.$this->scanShape($flags).'>';
         }
 
         return $this->renderPatternOrder($flags);
+    }
+
+    /**
+     * The shape one match of a scan reads: the shape preg_replace_callback()
+     * hands its callback on each call and the shape of one row under
+     * PREG_SET_ORDER. A scan resumes after an empty match, so the whole
+     * widens to the scan values — a zero-width first branch that wins the
+     * single match does not win the scan. The flags are read as
+     * matchShape() reads them.
+     */
+    public function scanShape(int $flags = 0): string
+    {
+        if (null === $this->scanWhole) {
+            return $this->matchShape($flags);
+        }
+
+        return (new self($this->scanWhole, $this->groups, $this->marks, $this->cases))->matchShape($flags);
     }
 
     /**

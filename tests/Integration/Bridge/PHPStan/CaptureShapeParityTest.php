@@ -182,8 +182,8 @@ final class CaptureShapeParityTest extends PHPStanTestCase
         $failures = [];
         foreach ($replays as $flagNames => [$flags, $arrayFlags]) {
             $written = [
-                $shape->matchShape($flags & (\PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL)),
-                $shape->matchShape($arrayFlags & (\PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL)),
+                $shape->scanShape($flags & (\PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL)),
+                $shape->scanShape($arrayFlags & (\PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL)),
             ];
             $types = array_map($resolver->resolve(...), $written);
 

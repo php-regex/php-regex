@@ -34,6 +34,9 @@ final class ShapeConformanceTest extends TestCase
         \PREG_UNMATCHED_AS_NULL,
     ];
 
+    /**
+     * @param list<string> $subjects
+     */
     #[Test]
     #[DataProvider('provideCases')]
     public function test_every_shape_claim_holds_for_what_the_engine_writes(string $pattern, array $subjects): void
@@ -42,12 +45,16 @@ final class ShapeConformanceTest extends TestCase
             RegexParser::create()->parse($pattern),
         );
 
+        $held = 0;
+
         foreach ($subjects as $subject) {
             foreach (self::FLAG_SETS as $flags) {
                 $matched = @\preg_match($pattern, $subject, $matches, $flags);
                 if (1 !== $matched) {
                     continue; // a subject the pattern does not match says nothing
                 }
+
+                $held++;
 
                 // only under PREG_UNMATCHED_AS_NULL does the engine keep
                 // every numbered group in the array; without it the trailing
@@ -98,7 +105,7 @@ final class ShapeConformanceTest extends TestCase
                     }
 
                     if ($group->digitsOnly) {
-                        $this->assertTrue(\ctype_digit($written) && '' !== $written, $label.': the engine wrote a non-digit or empty value against digitsOnly');
+                        $this->assertTrue(\ctype_digit($written), $label.': the engine wrote a non-digit or empty value against digitsOnly');
                     }
 
                     if ($group->nonFalsy) {
@@ -111,7 +118,7 @@ final class ShapeConformanceTest extends TestCase
             }
         }
 
-        $this->addToAssertionCount(1); // every matching subject/flag pair held
+        $this->assertGreaterThan(0, $held, 'at least one subject/flag pair matched and held');
     }
 
     /**
@@ -119,6 +126,7 @@ final class ShapeConformanceTest extends TestCase
      */
     public static function provideCases(): iterable
     {
+        /** @var array{cases: list<array{pattern: string, subjects: list<string>}>} $fixture */
         $fixture = \json_decode(
             (string) \file_get_contents(__DIR__.'/../../Fixtures/Conformance/engine-claims.json'),
             true,

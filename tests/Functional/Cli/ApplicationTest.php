@@ -294,7 +294,9 @@ final class ApplicationTest extends TestCase
         $app->register(new FailingJsonCommand(InternalFailureException::pcreGaveUp(\PREG_BACKTRACK_LIMIT_ERROR)));
 
         $buffer = '';
-        $exitCode = $this->runApp($app, ['regex', 'fail'], $buffer);
+        // --no-ansi: the assertion reads the plain message, whatever
+        // terminal the suite runs on
+        $exitCode = $this->runApp($app, ['regex', 'fail', '--no-ansi'], $buffer);
 
         $this->assertSame(1, $exitCode);
         $this->assertSame('', $buffer);

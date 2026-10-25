@@ -197,11 +197,11 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
         yield 'digits, may be "0", offsets' => ['pattern' => '/(\d+)/', 'flags' => \PREG_OFFSET_CAPTURE, 'printed' => 'array{array{numeric-string, int<0, max>}, array{numeric-string, int<0, max>}}'];
         yield 'digits, at least two' => ['pattern' => '/(\d\d+)/', 'flags' => 0, 'printed' => 'array{non-falsy-string&numeric-string, non-falsy-string&numeric-string}'];
         yield 'letters, never "0"' => ['pattern' => '/([a-z]+)/', 'flags' => 0, 'printed' => 'array{non-falsy-string, non-falsy-string}'];
-        yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'printed' => 'array{string, string}'];
-        yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'printed' => 'array{0: string, 1?: numeric-string}'];
-        yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => 'array{string, numeric-string|null}'];
+        yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'printed' => 'array{\'\'|numeric-string, \'\'|numeric-string}'];
+        yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'printed' => 'array{0: \'\'|numeric-string, 1?: numeric-string}'];
+        yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => 'array{\'\'|numeric-string, numeric-string|null}'];
         yield 'digits under /u are not proven' => ['pattern' => '/(\d+)/u', 'flags' => 0, 'printed' => 'array{non-empty-string, non-empty-string}'];
-        yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => 'array{string, (non-falsy-string&numeric-string)|null}'];
+        yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => 'array{\'\'|numeric-string, (non-falsy-string&numeric-string)|null}'];
 
         // Cases. Oracle in CaptureShapeAnalyzerTest::provideCaseShapes().
         yield 'two branches' => ['pattern' => '/(a)|(b)/', 'flags' => 0, 'printed' => "array{'a', 'a'}|array{'b', '', 'b'}"];

@@ -50,6 +50,6 @@ final class ResultPropertiesTest extends TestCase
         yield 'AnalysisReport' => ['class' => AnalysisReport::class, 'methods' => ['__construct']];
         // render() composes the properties into the text a console prints;
         // it repeats none of them.
-        yield 'ValidationResult' => ['class' => ValidationResult::class, 'methods' => ['__construct', 'jsonSerialize', 'render']];
+        yield 'ValidationResult' => ['class' => ValidationResult::class, 'methods' => ['__construct', 'isLimit', 'isPatternRefused', 'jsonSerialize', 'render']];
     }
 }
