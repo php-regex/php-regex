@@ -141,10 +141,10 @@ final class ExplainCharacterTypeTest extends TestCase
         yield 'a grapheme cluster under u' => ['pattern' => '/^\X$/u', 'description' => self::GRAPHEME, 'subject' => "e\u{301}", 'matches' => 1];
         yield 'a carriage return and line feed as one cluster' => ['pattern' => '/^\X$/u', 'description' => self::GRAPHEME, 'subject' => "\r\n", 'matches' => 1];
         yield 'a grapheme cluster of bytes without u' => ['pattern' => '/^\X$/', 'description' => self::GRAPHEME, 'subject' => "e\u{301}", 'matches' => 0];
-        yield 'anything but a newline' => ['pattern' => '/a\Nb/', 'description' => 'Any character but a newline (\n), whatever s says', 'subject' => "a\nb", 'matches' => 0];
-        yield 'anything but a newline under s' => ['pattern' => '/a\Nb/s', 'description' => 'Any character but a newline (\n), whatever s says', 'subject' => "a\nb", 'matches' => 0];
-        yield 'anything but a newline under CR' => ['pattern' => '/(*CR)a\Nb/', 'description' => 'Any character but a newline (\r), whatever s says', 'subject' => "a\nb", 'matches' => 1];
-        yield 'anything but a newline is one character under u' => ['pattern' => '/^\N$/u', 'description' => 'Any character but a newline (\n), whatever s says', 'subject' => 'é', 'matches' => 1];
+        yield 'anything but a newline' => ['pattern' => '/a\Nb/', 'description' => 'Any character but a newline (\n), regardless of the s (DOTALL) flag', 'subject' => "a\nb", 'matches' => 0];
+        yield 'anything but a newline under s' => ['pattern' => '/a\Nb/s', 'description' => 'Any character but a newline (\n), regardless of the s (DOTALL) flag', 'subject' => "a\nb", 'matches' => 0];
+        yield 'anything but a newline under CR' => ['pattern' => '/(*CR)a\Nb/', 'description' => 'Any character but a newline (\r), regardless of the s (DOTALL) flag', 'subject' => "a\nb", 'matches' => 1];
+        yield 'anything but a newline is one character under u' => ['pattern' => '/^\N$/u', 'description' => 'Any character but a newline (\n), regardless of the s (DOTALL) flag', 'subject' => 'é', 'matches' => 1];
         yield 'one byte, a newline included' => ['pattern' => '/^\C$/', 'description' => self::BYTE, 'subject' => "\n", 'matches' => 1];
         yield 'one byte of a character' => ['pattern' => '/^\C\C$/', 'description' => self::BYTE, 'subject' => 'é', 'matches' => 1];
         // The dot takes a newline under s only.

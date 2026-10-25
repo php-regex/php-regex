@@ -37,7 +37,7 @@ final class TextExplainerEdgeCasesTest extends TestCase
         $visitor = new TextExplainer();
         $control = new ControlCharNode('A', 1, 0, 0);
 
-        $this->assertSame('Control character: the character 0x01', $control->accept($visitor));
+        $this->assertSame('Control Character: the character 0x01', $control->accept($visitor));
     }
 
     public function test_unicode_named_character_extracts_name(): void

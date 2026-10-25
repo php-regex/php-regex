@@ -150,7 +150,7 @@ final class ExtendedCharClassTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
         $explained = $regex->parse('/(?[ \\d - [3] & ![a] ^ \\n | \\t ])/')->accept(new TextExplainer());
 
-        $this->assertStringContainsString('Extended character class: one character of', $explained);
+        $this->assertStringContainsString('Extended Character Class: one character of', $explained);
         $this->assertStringContainsString(' but not (', $explained);
         $this->assertStringContainsString(' and not ', $explained);
         $this->assertStringContainsString(' or else ', $explained);

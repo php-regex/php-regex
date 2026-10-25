@@ -202,7 +202,7 @@ final class ExplanationBuilder extends AbstractNodeVisitor
     #[\Override]
     public function visitExtendedCharClass(ExtendedCharClassNode $node): Explanation
     {
-        return Explanation::leaf('one character of '.$node->expression->accept($this)->inline(), 'Extended character class');
+        return Explanation::leaf('one character of '.$node->expression->accept($this)->inline(), 'Extended Character Class');
     }
 
     #[\Override]
@@ -226,7 +226,7 @@ final class ExplanationBuilder extends AbstractNodeVisitor
     #[\Override]
     public function visitControlChar(ControlCharNode $node): Explanation
     {
-        return Explanation::leaf(\sprintf('the character 0x%02X', $node->codePoint), 'Control character', '\c'.$node->char);
+        return Explanation::leaf(\sprintf('the character 0x%02X', $node->codePoint), 'Control Character', '\c'.$node->char);
     }
 
     #[\Override]
@@ -243,7 +243,7 @@ final class ExplanationBuilder extends AbstractNodeVisitor
     #[\Override]
     public function visitVersionCondition(VersionConditionNode $node): Explanation
     {
-        return Explanation::leaf(\sprintf('PCRE2 %s %s', $node->operator, $node->version), 'Version condition');
+        return Explanation::leaf(\sprintf('PCRE2 %s %s', $node->operator, $node->version), 'Version Condition');
     }
 
     #[\Override]

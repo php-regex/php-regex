@@ -54,7 +54,7 @@ final class ExplainerAgreementTest extends TestCase
         yield 'a linebreak' => ['pattern' => '/\R/', 'description' => 'Any linebreak sequence'];
         yield 'a linebreak under u' => ['pattern' => '/\R/u', 'description' => 'Any Unicode linebreak sequence'];
         yield 'a grapheme cluster' => ['pattern' => '/\X/', 'description' => 'An extended grapheme cluster: a character with the marks that combine with it, or a \r\n pair'];
-        yield 'anything but a newline' => ['pattern' => '/\N/', 'description' => 'Any character but a newline (\n), whatever s says'];
+        yield 'anything but a newline' => ['pattern' => '/\N/', 'description' => 'Any character but a newline (\n), regardless of the s (DOTALL) flag'];
         yield 'one byte' => ['pattern' => '/\C/', 'description' => 'One code unit: a single byte, a newline included'];
         yield 'the start of the subject' => ['pattern' => '/^a/', 'description' => 'the start of the subject'];
         yield 'the start of a line' => ['pattern' => '/^a/m', 'description' => 'the start of a line: the start of the subject, or just after a newline (\n) that does not end it'];

@@ -166,7 +166,7 @@ final class ExtendedCharClassDisplayTest extends TestCase
     {
         $explained = Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse('/(?[ \\d ])/')->accept(new TextExplainer());
 
-        $this->assertStringContainsString("\n  Extended character class: one character of Character Type: A digit: [0-9]", $explained);
+        $this->assertStringContainsString("\n  Extended Character Class: one character of Character Type: A digit: [0-9]", $explained);
     }
 
     #[Test]
