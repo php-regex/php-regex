@@ -7,7 +7,7 @@ The PHPStan extension reads the regex patterns passed to `preg_*` functions
 (each pattern of an array given to `preg_replace()`, `preg_replace_callback()`
 or `preg_filter()`, and each key of the map given to
 `preg_replace_callback_array()`, included), to their namespaced drop-ins
-(`Safe\preg_match()`), to the static methods of the wrapper libraries
+(`Safe\preg_match()` from [`thecodingmachine/safe`](https://github.com/thecodingmachine/safe)), to the static methods of the wrapper libraries
 `regex lint` reads ([Wrapper libraries](#wrapper-libraries)), and to your own
 functions and methods that mark a parameter as a pattern,
 and reports what PHPStan itself cannot see: a pattern the PHP your project

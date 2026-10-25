@@ -70,7 +70,7 @@ PHPRegex CLI provides these commands:
 | `debug`       | Detailed ReDoS analysis with heatmap                     |
 | `redos`       | Benchmark regex patterns for ReDoS behavior              |
 | `diagram`     | Render AST diagram                                       |
-| `graph`       | Generate a graph diagram (DOT/Mermaid) of the NFA        |
+| `graph`       | Generate a graph diagram (DOT/Mermaid) of the NFA (nondeterministic finite automaton) |
 | `highlight`   | Syntax highlighting (console or HTML)                    |
 | `validate`    | Validate pattern syntax                                  |
 | `transpile`   | Transpile a PCRE regex to JavaScript (`js`), an HTML `pattern` attribute (`html`) or Python (`py`) |

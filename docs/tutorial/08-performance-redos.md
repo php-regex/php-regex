@@ -197,7 +197,7 @@ Because on a **failing** match, the engine still tries all possible splits regar
 
 - **Catastrophic backtracking** happens with nested quantifiers or overlapping alternatives
 - **Simplify first** — often the easiest and safest fix
-- **Atomic groups** `(?>...)` and **possessive quantifiers** `++/*+/??+` prevent backtracking
+- **Atomic groups** `(?>...)` and **possessive quantifiers** `++`/`*+`/`?+` prevent backtracking
 - **Reordering alternatives** won't help on failing matches
 - **Be skeptical** of patterns with quantifiers inside quantifiers
 

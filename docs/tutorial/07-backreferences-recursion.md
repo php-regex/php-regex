@@ -32,7 +32,7 @@ preg_match('/\b(?<word>\w+)\s+\k<word>\b/', 'test test', $matches);
 echo $matches[0]; // "test test"
 ```
 
-### Matching matching quotes
+### Matching quotes
 
 ```php
 preg_match('/(["\'])(.*?)\1/', '"hello"', $matches);

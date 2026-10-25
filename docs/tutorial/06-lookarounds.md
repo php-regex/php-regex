@@ -37,8 +37,19 @@ Match only if what follows **does not** match `...`
 ```php
 preg_match('/\d+(?!USD)/', 'Price: 100EUR', $matches);
 echo $matches[0]; // "100"
+```
 
-preg_match('/\d+(?!USD)/', 'Price: 100USD', $matches); // no match
+**Watch out with greedy quantifiers here.** You might expect `\d+(?!USD)` to fail on `"100USD"`, but it won't — the greedy `\d+` backtracks to `"10"` (which is not followed by `"USD"`), so it matches `"10"` instead:
+
+```php
+preg_match('/\d+(?!USD)/', 'Price: 100USD', $matches);
+echo $matches[0]; // "10" — not "no match"!
+```
+
+To truly reject `"100USD"`, anchor the pattern or add context so there's nowhere to backtrack to:
+
+```php
+preg_match('/\b\d+\b(?!USD)/', 'Price: 100USD', $matches); // no match (word boundary prevents partial)
 ```
 
 ### Greedy + lookahead matters
@@ -77,8 +88,19 @@ Match only if what **precedes does not** match `...`
 ```php
 preg_match('/(?<!\$)\d+/', 'Total: 49', $matches);
 echo $matches[0]; // "49"
+```
 
-preg_match('/(?<!\$)\d+/', 'Total: $49', $matches); // no match
+**The same backtracking pitfall applies here.** You might expect `(?<!\$)\d+` to fail on `"$49"`, but `\d+` can start at the `"9"` — which is preceded by `"4"`, not `"$"` — so it matches `"9"`:
+
+```php
+preg_match('/(?<!\$)\d+/', 'Total: $49', $matches);
+echo $matches[0]; // "9" — not "no match"!
+```
+
+To reject the entire number, anchor it so the engine can't skip the first digit:
+
+```php
+preg_match('/(?<!\$)\b\d+/', 'Total: $49', $matches); // no match (word boundary forces start at "4")
 ```
 
 ---
