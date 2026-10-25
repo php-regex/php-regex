@@ -115,6 +115,8 @@ jobs:
           tools: phplint
 
       - name: Run PHPLint
+        env:
+          PLINT_DIAGNOSTIC: never
         run: tools/phplint/vendor/bin/phplint lint
 
   deptrac:

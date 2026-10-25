@@ -18,6 +18,10 @@ tasks:
     method: checksum
 
   phplint:
+    env:
+      # 9.8 prints version/configuration metadata after the report unless
+      # the automatic diagnostic is switched off.
+      PLINT_DIAGNOSTIC: never
     cmds:
       - cmd: tools/phplint/vendor/bin/phplint lint {{.CLI_ARGS}}
       - cmd: touch .task/phplint.success

@@ -45,6 +45,16 @@ final class StaticAnalysisWorkflowTest extends TestCase
     }
 
     /**
+     * PHPLint 9.8 is a multi-command application: run without the "lint"
+     * subcommand it prints the command list, exits 0, and reports nothing.
+     */
+    #[Test]
+    public function test_the_phplint_job_runs_the_lint_subcommand(): void
+    {
+        $this->assertStringContainsString('run: tools/phplint/vendor/bin/phplint lint', self::jobs()['phplint'] ?? '');
+    }
+
+    /**
      * @return array<string, string> the body of each job, by job id
      */
     private static function jobs(): array
