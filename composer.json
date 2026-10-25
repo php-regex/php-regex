@@ -79,7 +79,7 @@
         "phpstan": "tools/phpstan/vendor/bin/phpstan analyse",
         "rector": "tools/rector/vendor/bin/rector process",
         "phpcs": "tools/php-cs-fixer/vendor/bin/php-cs-fixer fix",
-        "phplint": "tools/phplint/vendor/bin/phplint",
+        "phplint": "tools/phplint/vendor/bin/phplint lint",
         "bench": "tools/phpbench/vendor/bin/phpbench run",
         "cache-version": "php tests/Tools/update_cache_version.php",
         "infection": "tools/infection/vendor/bin/infection",

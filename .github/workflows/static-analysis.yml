@@ -115,7 +115,7 @@ jobs:
           tools: phplint
 
       - name: Run PHPLint
-        run: tools/phplint/vendor/bin/phplint
+        run: tools/phplint/vendor/bin/phplint lint
 
   deptrac:
     # One layer per future package: the core depends on nothing, the

@@ -19,7 +19,7 @@ tasks:
 
   phplint:
     cmds:
-      - cmd: tools/phplint/vendor/bin/phplint {{.CLI_ARGS}}
+      - cmd: tools/phplint/vendor/bin/phplint lint {{.CLI_ARGS}}
       - cmd: touch .task/phplint.success
     sources:
       - .phplint.yml

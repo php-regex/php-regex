@@ -10,7 +10,7 @@ exclude:
 
 jobs: 10
 
-extensions:
+file-extensions:
     - php
 
 cache-dir: .cache/phplint/
