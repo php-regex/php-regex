@@ -72,7 +72,7 @@ final class CaptureShapeAnalyzer
     private int $next = 1;
 
     /**
-     * @var array<int<1, max>, list<array{name: ?string, never: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool}>>
+     * @var array<int<1, max>, list<array{name: ?string, never: bool, after_accept: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool}>>
      */
     private array $occurrences = [];
 
@@ -370,8 +370,8 @@ final class CaptureShapeAnalyzer
     }
 
     /**
-     * @param int<1, max>                                                                                                                   $number
-     * @param list<array{name: ?string, never: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool}> $occurrences
+     * @param int<1, max>                                                                                                                                       $number
+     * @param list<array{name: ?string, never: bool, after_accept: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool}> $occurrences
      */
     private function group(int $number, array $occurrences, bool $guaranteed): CaptureGroupShape
     {
@@ -382,9 +382,9 @@ final class CaptureShapeAnalyzer
             $name ??= $occurrence['name'];
         }
 
-        $set = array_values(array_filter($occurrences, static fn (array $occurrence): bool => !$occurrence['never']));
+        $set = array_values(array_filter($occurrences, static fn (array $occurrence): bool => false === $occurrence['never']));
 
-        $beforeAnyAccept = $set !== [] && !\in_array(true, array_map(
+        $beforeAnyAccept = [] !== $set && !\in_array(true, array_map(
             static fn (array $occurrence): bool => $occurrence['after_accept'],
             $set,
         ), true);

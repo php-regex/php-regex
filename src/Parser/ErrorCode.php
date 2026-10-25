@@ -126,7 +126,7 @@ enum ErrorCode: string
     case ConditionalTooManyBranches = 'regex.conditional.too_many_branches';
 
     /**
-     * "\c" is not followed by a printable ASCII character.
+     * "\c" is not followed by a character it can XOR with 0x40.
      */
     case ControlCharInvalid = 'regex.control_char.invalid';
 

@@ -57,14 +57,14 @@ final class ClassParser
     /**
      * Whether the PCRE2 judged is 10.32.
      */
-    private readonly bool $pcre2Ten32;
+    private readonly bool $classBadEscapeStaysRefused;
 
     public function __construct(private readonly ParseState $state)
     {
         $this->stream = $state->stream;
         $this->pattern = $state->pattern;
         $this->target = $state->target;
-        $this->pcre2Ten32 = !$state->target->supports(PcreFeature::BadEscapeInClassStaysRefused);
+        $this->classBadEscapeStaysRefused = !$state->target->supports(PcreFeature::BadEscapeInClassStaysRefused);
     }
 
     /**
@@ -525,7 +525,7 @@ final class ClassParser
         $endAt = $this->stream->current()->position;
         $endsAsInvalidRange = !$this->target->supports(PcreFeature::ClassEscapeEndingRangeRefusedAsEscape)
             && !($this->state->badEscapeIsLiteral && BadEscape::at($this->pattern, $endAt, true, $this->state->unicodeMode, $this->target, null, true));
-        if ($endsAsInvalidRange && TokenType::UnicodeProp !== $this->stream->current()->type && BadEscape::endsRangeAsInvalidRange($this->pattern, $endAt, $this->pcre2Ten32)) {
+        if ($endsAsInvalidRange && TokenType::UnicodeProp !== $this->stream->current()->type && BadEscape::endsRangeAsInvalidRange($this->pattern, $endAt, $this->classBadEscapeStaysRefused)) {
             $this->throwEscapeEndingRange($endAt);
         }
 

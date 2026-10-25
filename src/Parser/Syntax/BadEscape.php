@@ -423,7 +423,7 @@ final class BadEscape
     }
 
     /**
-     * "\c" and a printable ASCII character.
+     * "\c" and the character it XORs with 0x40.
      */
     private static function controlFails(string $pattern, int $after): bool
     {

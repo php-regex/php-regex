@@ -116,7 +116,9 @@ enum PcreFeature
     case LargeOpenCountIsText;
 
     /**
-     * A backslash and digits past 214748363, as "\214748364", is an octal escape and text instead of a number too big.
+     * A backslash and digits past 214748363, as "\777777777777", reads as
+     * an octal escape then text instead of a number too big: the engine
+     * takes its three octal digits and lets the rest read as itself.
      */
     case OverflowingBackslashNumberIsOctal;
 
