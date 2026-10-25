@@ -550,7 +550,7 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.conditional.version_syntax` | `ConditionalVersionSyntax` | A VERSION condition does not name a version as major.minor. |
 | `regex.conditional.invalid` | `ConditionalInvalid` | A condition is neither a group reference, a lookaround, nor DEFINE. |
 | `regex.conditional.too_many_branches` | `ConditionalTooManyBranches` | A conditional group has more than two branches. |
-| `regex.control_char.invalid` | `ControlCharInvalid` | "\c" is not followed by a printable ASCII character. |
+| `regex.control_char.invalid` | `ControlCharInvalid` | "\c" is not followed by a character it can XOR with 0x40. |
 | `regex.define.too_many_branches` | `DefineTooManyBranches` | A "(?(DEFINE)...)" group has more than one branch. |
 | `regex.delimiter.invalid` | `DelimiterInvalid` | The pattern opens with an alphanumeric, backslash or NUL delimiter. |
 | `regex.delimiter.unclosed` | `DelimiterUnclosed` | The pattern has no closing delimiter. |

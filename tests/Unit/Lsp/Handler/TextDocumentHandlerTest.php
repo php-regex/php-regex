@@ -152,7 +152,7 @@ final class TextDocumentHandlerTest extends TestCase
         $this->assertSame([
             ['jsonrpc' => '2.0', 'id' => 1, 'result' => ['contents' => ['kind' => 'markdown', 'value' => "**Regex Error**\n\nExpected ) at end of input (found eof)."]]],
             ['jsonrpc' => '2.0', 'id' => 2, 'result' => null],
-            ['jsonrpc' => '2.0', 'id' => 3, 'result' => ['contents' => ['kind' => 'markdown', 'value' => "**Regex Error**\n\n\\c must be followed by a printable ASCII character."]]],
+            ['jsonrpc' => '2.0', 'id' => 3, 'result' => ['contents' => ['kind' => 'markdown', 'value' => "**Regex Error**\n\n\\c must be followed by a character it can read."]]],
         ], array_map(static fn (string $frame): mixed => json_decode($frame, true, 512, \JSON_THROW_ON_ERROR), $frames));
     }
 
