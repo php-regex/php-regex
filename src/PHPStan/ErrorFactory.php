@@ -121,6 +121,9 @@ final class ErrorFactory
             ->build();
     }
 
+    /**
+     * A pattern the optimizer can shorten: the tip shows the rewrite.
+     */
     public static function optimization(string $pattern, string $optimized, int $lineNumber): IdentifierRuleError
     {
         return RuleErrorBuilder::message(\sprintf('Regex pattern can be optimized: "%s"', self::displayPattern($pattern)))

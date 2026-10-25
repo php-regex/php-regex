@@ -15,6 +15,9 @@ namespace PHPRegex\Parser\Node;
 
 use PHPRegex\Parser\NodeVisitorInterface;
 
+/**
+ * Represents a callout in a regular expression.
+ */
 final class CalloutNode extends AbstractNode
 {
     public function __construct(

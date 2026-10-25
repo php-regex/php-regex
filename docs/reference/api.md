@@ -367,8 +367,8 @@ echo $report->highlighted;        // Syntax-highlighted pattern
 | `errors`        | array\<string\>      | Validation error messages      |
 | `lintIssues`    | array                | Lint findings                  |
 | `redos`         | RedosAnalysis        | ReDoS analysis result          |
-| `optimizations` | OptimizationResult   | Suggested optimizations        |
-| `explain`       | string               | Human explanation              |
+| `optimization`  | OptimizationResult   | Suggested optimizations        |
+| `explanation`   | string               | Human explanation              |
 | `highlighted`   | string               | Highlighted pattern            |
 
 ---
@@ -684,7 +684,7 @@ echo $sample;  // e.g., "Word12"
 
 ### explain(string $regex, string|OutputFormat $format = OutputFormat::Text): string
 
-Generates a human-readable explanation of the pattern. The format is one of the `PHPRegex\Toolkit\OutputFormat` cases — `Text`, `Html`, `Console` — or the matching string (`'text'`, `'html'`, `'console'`).
+Generates a human-readable explanation of the pattern. The format is one of the `PHPRegex\Toolkit\OutputFormat` cases — `Text` or `Html` — or the matching string (`'text'`, `'html'`).
 
 ```php
 use PHPRegex\Toolkit\Regex;
