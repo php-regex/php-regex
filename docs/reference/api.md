@@ -316,7 +316,7 @@ use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->validate('/foo|bar/');
 
-echo $result->isValid;             // true
+var_export($result->isValid);       // true
 echo $result->complexityScore;     // 7
 var_dump($result->category);       // NULL: no error, no category
 ```
@@ -351,7 +351,7 @@ use PHPRegex\Toolkit\Regex;
 
 $report = Regex::create()->analyze('/(a+)+b/');
 
-echo $report->isValid;           // true/false
+var_export($report->isValid);     // true or false
 echo count($report->errors);      // Validation errors
 echo count($report->lintIssues);  // Lint warnings
 echo $report->redos->severity->value;  // 'critical', 'safe', etc.
@@ -976,8 +976,11 @@ try {
 | Method                  | Returns                 | Purpose           |
 |-------------------------|-------------------------|-------------------|
 | `create($options)`      | Regex                   | Factory method    |
+| `fromOptions($options)` | Regex                   | Factory from ParserOptions |
+| `withTarget($target)`   | Regex                   | Copy with a different PcreTarget |
 | `tokenize($regex)`      | list<Token>             | Lex into tokens   |
 | `parse($pattern)`       | RegexNode               | Parse to AST      |
+| `parsePattern($pattern, $flags, $delimiter)` | RegexNode | Parse bare pattern without delimiters |
 | `parseTolerant($pattern)` | TolerantParseResult   | Parse with errors |
 | `validate($regex)`      | ValidationResult        | Check validity    |
 | `analyze($regex, ...)`  | AnalysisReport          | Analysis report   |
@@ -989,10 +992,14 @@ try {
 | `transpile($regex, $target)` | TranspileResult    | Convert dialects  |
 | `explain($regex)`       | string                  | Human explanation |
 | `highlight($regex)`     | string                  | Syntax highlight  |
+| `format($regex, $width)` | FormatResult           | Pretty-print with line wrapping |
+| `compact($regex)`       | FormatResult            | Minify a pattern  |
 | `generate($regex)`      | string                  | Generate sample   |
 | `literals($regex)`      | LiteralExtractionResult | Extract literals  |
 | `parser()`              | RegexParser             | The parser the facade uses |
 | `target()`              | PcreTarget              | The PHP and PCRE2 judged for |
+| `getCache()`            | CacheInterface          | The shared AST cache |
+| `getCacheStats()`       | array                   | Hit/miss/size counters |
 | `clearCaches()`         | void                    | Empty every process-wide cache |
 
 ## Importable Type Aliases

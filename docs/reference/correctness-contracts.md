@@ -38,9 +38,10 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 ## ReDoS Analysis
 
 **ReDoS Analyzer**
-- **Semantics:** A prioritized NFA models PCRE's backtracking order; the analyzer computes the complexity class of one
+- **Semantics:** A prioritized NFA (nondeterministic finite automaton whose branches are tried in PCRE's
+  left-to-right order) models PCRE's backtracking order; the analyzer computes the complexity class of one
   match attempt (linear, polynomial of degree k, exponential) and, for a vulnerable pattern, a witness
-  `prefix . pump x n . suffix`.
+  string built as `prefix + pump repeated n times + suffix` — a concrete input that triggers the worst case.
 - **Guarantee:** A `safe (proven)` verdict is **sound** for the model: it is given only when the model holds no
   exponential and no polynomial ambiguity, so in one match attempt at one start position no input drives a
   backtracking engine that follows PCRE's order beyond a linear number of steps, on the pattern as analysed. PCRE's
@@ -109,8 +110,10 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 **Compare / Equivalence / Subset / Intersection**
 - **Semantics:** The solver builds its NFA from the pattern's normalized form, where every character set — classes,
   `\w\s\d`, dot, POSIX classes, `\p{...}` properties, extended classes and case-insensitive folds — has already been
-  asked from the PCRE2 that runs in the PHP process, then determinizes and compares languages using BFS over the
-  product automaton. Counter-examples are shortest strings in the modeled language.
+  asked from the PCRE2 that runs in the PHP process, then determinizes and compares languages using
+  breadth-first search (BFS) over the product automaton (the state machine built by combining the two
+  automata so that every shared or diverging path can be walked). Counter-examples are shortest strings
+  in the modeled language.
 - **Guarantee:** **Sound and complete** for the supported regular subset, **relative to the running PCRE2**: what a
   class, property or fold matches is what that engine matches, never a table the library maintains. Verdicts are
   deterministic for one PCRE2 release, and every result carries it in `pcreVersion`. Without `/u` the alphabet is the
@@ -142,9 +145,11 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   Symfony's `[^/]++` route requirements keep being analyzed.
 
 **Match modes**
-- **FULL:** Models the exact match language `L(P)` (as if the pattern is wrapped in `\A(?:P)\z`). A `^` or `$` at the
-  edge of the pattern is redundant under FULL because the whole string is already constrained.
-- **PARTIAL:** Models search semantics `Σ* L(P) Σ*`. If a pattern is start-anchored (`\A`, or `^` without `/m`) the
+- **FULL:** Models the exact match language `L(P)` — the set of all strings that pattern P matches in full
+  (as if the pattern is wrapped in `\A(?:P)\z`). A `^` or `$` at the edge of the pattern is redundant
+  under FULL because the whole string is already constrained.
+- **PARTIAL:** Models search semantics `Σ* L(P) Σ*` (where `Σ*` means "any string" — the alphabet is every
+  possible character). If a pattern is start-anchored (`\A`, or `^` without `/m`) the
   leading `Σ*` is removed; if it is end-anchored (`\z`, or `$` without `/m`) the trailing `Σ*` is removed, `$` still
   letting a final newline follow. Under `/m`, `^` and `$` do not anchor the search: they also hold at the line breaks
   inside the subject, so `/^a/m` finds the `a` of `"x\na"`.

@@ -157,7 +157,7 @@ $ast = Regex::create()->parse('/[broken/');  // Throws LexerException (extends R
 
 // Tolerant parsing - returns partial AST
 $result = Regex::create()->parseTolerant('/[broken/');
-echo $result->ast instanceof \PHPRegex\Parser\Node\RegexNode;  // true (partial)
+var_dump($result->ast instanceof \PHPRegex\Parser\Node\RegexNode);  // bool(true) — partial AST
 echo count($result->errors);  // 1
 ```
 
@@ -226,7 +226,7 @@ use PHPRegex\Toolkit\Regex;
 
 $analysis = Regex::create()->redos('/(a+)+b/');
 
-echo $analysis->severity->value;          // 'critical' ('safe', 'low', 'medium', 'unknown', 'high', 'critical')
+echo $analysis->severity->value;          // 'critical' ('safe', 'low', 'unknown', 'medium', 'high', 'critical')
 echo $analysis->headline();               // 'Exponential backtracking (proven)'
 echo $analysis->confidence->value; // 'medium' ('high' once replayed on PCRE)
 echo $analysis->recommendations[0];       // Suggested fix

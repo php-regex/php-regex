@@ -39,7 +39,7 @@ Input:   "aaaaaaaaaaaaaaaaaaa!"
 
 ## How ReDoS shows up in PHP
 
-In PHP, a vulnerable pattern rarely hangs: it fails silently. Measured with PHP 8.4 and PCRE2 10.49, the default `pcre.backtrack_limit` of 1,000,000 and the JIT on:
+In PHP, a vulnerable pattern rarely hangs: it fails silently. Measured with PHP 8.4 and PCRE2 10.49, the default `pcre.backtrack_limit` of 1,000,000 and the JIT (PCRE2's just-in-time compiler, enabled by default since PHP 7.0 via `pcre.jit=1`) on:
 
 - `/(a+)+$/`, `/(\w+\s?)+$/` and `/^(\d+)*$/` make `preg_match()` return `false` ("Backtrack limit exhausted") on 19 characters followed by `!`, after about 2 ms. `/(a|aa)*$/` fails from 29 bytes, `/a*a*a*$/` from 1,412. Code that reads the result as a boolean lets through, or rejects, whatever it is given.
 - A polynomial pattern is a CPU problem the limit does not see. `/a*a*$/` never trips it, but takes about 20 ms on 10,000 characters, 0.4 s on 50,000 and 6.5 s on 200,000.
@@ -75,9 +75,11 @@ Every consumer prints the same headline, from `RedosAnalysis::headline()`. It ne
 |---|---|
 | `safe (proven)` | proven linear |
 | `Polynomial backtracking, degree 3 (proven)` | proven polynomial, with its degree |
+| `Polynomial backtracking (proven)` | proven polynomial, degree not determined |
 | `Exponential backtracking (proven)` | proven exponential |
 | `Potential backtracking (heuristic)` | the heuristics found a risk, inside or over the budget |
 | `no risk found (heuristic)` | the heuristics found nothing |
+| `not analyzed` | the mode was off or the pattern was ignored |
 | `not analyzed (budget exceeded)` | over the budget, and the heuristics found nothing |
 | `not analyzed (analysis error)` | the analysis failed, or the pattern is invalid |
 
