@@ -16,6 +16,12 @@ declare(strict_types=1);
  * Lint every repository under corpus/, each judged under the PHP its own
  * composer.json requires, and merge the per-repository logs into one file.
  *
+ * Each repository produces a per-repository part file and a manifest entry
+ * that stores its section header and notes. After every run the merged log
+ * is rebuilt from ALL existing parts and the manifest, so a partial re-lint
+ * (--only, --limit, or an interrupted full sweep) updates only the targeted
+ * repositories while keeping every earlier section intact.
+ *
  * One lint run resolves one target from the composer.json of the directory
  * it runs in; a single run over corpus/ would judge every repository under
  * this checkout's floor instead. This script runs the linter once per
@@ -414,6 +420,109 @@ function parseCorpusLintArgs(array $argv): array
 }
 
 /**
+ * Read the manifest that stores per-repository metadata (section header,
+ * notes) so a partial re-lint can rebuild the full merged log.
+ *
+ * @return array<string, array{header: string, notes: list<string>}>
+ */
+function readManifest(string $partsDir): array
+{
+    $file = $partsDir.'/manifest.json';
+    if (!is_file($file)) {
+        return [];
+    }
+
+    $data = json_decode((string) file_get_contents($file), true);
+
+    return \is_array($data) ? $data : [];
+}
+
+/**
+ * Seed the manifest from an existing merged log so the first partial
+ * re-lint after the migration preserves every earlier section.
+ *
+ * @return array<string, array{header: string, notes: list<string>}>
+ */
+function seedManifestFromLog(string $outputFile): array
+{
+    if (!is_file($outputFile)) {
+        return [];
+    }
+
+    $content = (string) file_get_contents($outputFile);
+    $sections = preg_split('/^(?=### corpus\/)/m', $content, -1, \PREG_SPLIT_NO_EMPTY);
+    if (false === $sections || [] === $sections) {
+        return [];
+    }
+
+    $manifest = [];
+
+    foreach ($sections as $section) {
+        if (!preg_match('/^### corpus\/(\S+)/', $section, $m)) {
+            continue;
+        }
+
+        $repo = $m[1];
+        $lines = explode("\n", $section);
+        $header = array_shift($lines);
+
+        $notes = [];
+        while ([] !== $lines && preg_match('/^(?:Note|Error): /', $lines[0])) {
+            $notes[] = array_shift($lines);
+        }
+
+        $manifest[$repo] = ['header' => $header, 'notes' => $notes];
+    }
+
+    return $manifest;
+}
+
+/**
+ * @param array<string, array{header: string, notes: list<string>}> $manifest
+ */
+function writeManifest(string $partsDir, array $manifest): void
+{
+    ksort($manifest);
+    file_put_contents(
+        $partsDir.'/manifest.json',
+        json_encode($manifest, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)."\n",
+    );
+}
+
+/**
+ * Rebuild the merged log from every manifest entry and its part file.
+ * Repositories are sorted alphabetically so the output is stable
+ * regardless of the order they were linted in.
+ */
+function rebuildMergedLog(string $outputFile, string $partsDir, array $manifest): bool
+{
+    $handle = fopen($outputFile, 'w');
+    if (!\is_resource($handle)) {
+        return false;
+    }
+
+    ksort($manifest);
+
+    foreach ($manifest as $repo => $meta) {
+        fwrite($handle, $meta['header']."\n");
+        foreach ($meta['notes'] as $note) {
+            fwrite($handle, $note."\n");
+        }
+
+        $partFile = $partsDir.'/'.str_replace('/', '__', $repo).'.log';
+        $part = is_file($partFile) ? (string) file_get_contents($partFile) : '';
+        if ('' !== rtrim($part)) {
+            fwrite($handle, $part."\n");
+        }
+        fwrite($handle, "\n");
+    }
+
+    fclose($handle);
+
+    return true;
+}
+
+/**
  * @param list<string> $argv
  */
 function corpusLintMain(array $argv): int
@@ -469,7 +578,10 @@ function corpusLintMain(array $argv): int
         return 1;
     }
 
-    $merged = null;
+    $manifest = readManifest($partsDir);
+    if ([] === $manifest) {
+        $manifest = seedManifestFromLog($outputFile);
+    }
 
     $total = \count($repos);
     $notClean = false;
@@ -481,32 +593,15 @@ function corpusLintMain(array $argv): int
         $plan = planRepositoryLint($repoDir, $options['php'], $partFile);
         [$exitCode, $console] = runLint($plan);
 
-        // Open the merged log only once a first section is ready: a sweep
-        // aborted before its first repository completes must leave the
-        // previous log intact instead of truncating it.
-        if (null === $merged) {
-            $merged = fopen($outputFile, 'w');
-            if (!\is_resource($merged)) {
-                $io->error(sprintf('unable to write %s.', $outputFile));
-
-                return 1;
-            }
-        }
-
         $targetLine = extractTargetLine($console);
         $notes = extractNotes($console, $plan['env'] ?? '');
         $part = is_file($partFile) ? (string) file_get_contents($partFile) : '';
         $severities = countSeverities($part);
 
-        fwrite($merged, sectionHeader('corpus/'.$repo, $targetLine, $exitCode, $plan['fallback'])."\n");
-        foreach ($notes as $note) {
-            fwrite($merged, $note."\n");
-        }
-        if ('' !== rtrim($part)) {
-            fwrite($merged, $part."\n");
-        }
-        fwrite($merged, "\n");
-        fflush($merged);
+        $manifest[$repo] = [
+            'header' => sectionHeader('corpus/'.$repo, $targetLine, $exitCode, $plan['fallback']),
+            'notes' => $notes,
+        ];
 
         if (0 !== $exitCode) {
             $notClean = true;
@@ -517,7 +612,13 @@ function corpusLintMain(array $argv): int
         $io->info($io->cyan(paginationPrefix($index + 1, $total)).' '.$name.'  '.$io->dim($target));
     }
 
-    fclose($merged);
+    writeManifest($partsDir, $manifest);
+
+    if (!rebuildMergedLog($outputFile, $partsDir, $manifest)) {
+        $io->error(sprintf('unable to write %s.', $outputFile));
+
+        return 1;
+    }
 
     return $notClean ? 1 : 0;
 }

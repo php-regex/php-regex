@@ -76,9 +76,11 @@ final class RedundantGroupRule extends AbstractLintRule
             return [];
         }
 
+        $written = LanguageQuestions::text($node, $context);
+
         return [new RuleViolation(
             self::ID,
-            'Redundant non-capturing group; it can be removed without changing behavior.',
+            \sprintf('Redundant non-capturing group "%s" at offset %d; it can be removed without changing behavior.', $written, $node->startPosition),
             $node->startPosition,
             end: $node->getEndPosition(),
         )];

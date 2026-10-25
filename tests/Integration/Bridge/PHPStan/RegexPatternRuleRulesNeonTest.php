@@ -44,7 +44,7 @@ final class RegexPatternRuleRulesNeonTest extends RuleTestCase
         // Line 25 compiles wherever the target (the running PHP) is judged: no validity error.
         $this->analyse([__DIR__.'/Fixtures/NeonConfigFixture.php'], [
             [
-                'Redundant non-capturing group; it can be removed without changing behavior.',
+                'Redundant non-capturing group "(?:a)" at offset 0; it can be removed without changing behavior.',
                 20,
                 'Read more: '.self::DOCS.'#redundant-non-capturing-group',
             ],

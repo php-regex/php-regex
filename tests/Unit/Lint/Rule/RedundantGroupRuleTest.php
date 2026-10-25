@@ -121,6 +121,23 @@ final class RedundantGroupRuleTest extends TestCase
         yield 'multibyte letter without u' => ['pattern' => '/^(?:é)+$/', 'without' => '/^é+$/', 'subject' => 'éé'];
     }
 
+    #[Test]
+    public function test_two_redundant_groups_produce_distinct_messages(): void
+    {
+        $pattern = "/^(?:['\"])?[a-zA-Z0-9_.]+(?:['\"])?$/";
+
+        $linter = new PatternLinter();
+        Regex::create()->parse($pattern)->accept($linter);
+
+        $violations = array_values(array_filter(
+            $linter->getIssues(),
+            static fn (RuleViolation $v): bool => self::ID === $v->id,
+        ));
+
+        $this->assertCount(2, $violations, 'Expected two redundant-group violations for '.$pattern);
+        $this->assertNotSame($violations[0]->message, $violations[1]->message, 'The two warnings should have distinct messages so the reader knows which group each one refers to.');
+    }
+
     private function violation(string $pattern): ?RuleViolation
     {
         $linter = new PatternLinter();
