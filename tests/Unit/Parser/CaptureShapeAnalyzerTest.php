@@ -947,7 +947,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'conditional assertion' => ['pattern' => '/(?(?=(a))a|b)/', 'expected' => [1 => $maybe]];
         yield 'atomic' => ['pattern' => '/(?>(a))/', 'expected' => [1 => $always]];
         yield 'recursion' => ['pattern' => '/(a(?1)?b)/', 'expected' => [1 => $always]];
-        yield 'accept cuts the match short' => ['pattern' => '/(a(*ACCEPT)b)c/', 'expected' => [1 => $maybe]];
+        yield 'accept cuts the match short' => ['pattern' => '/(a(*ACCEPT)b)c/', 'expected' => [1 => $always]];
     }
 
     /**

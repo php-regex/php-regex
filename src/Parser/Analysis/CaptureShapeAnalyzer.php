@@ -50,7 +50,7 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '6';
+    public const ANALYSIS_VERSION = '7';
 
     private const MAX_CASES = 16;
 
@@ -384,9 +384,14 @@ final class CaptureShapeAnalyzer
 
         $set = array_values(array_filter($occurrences, static fn (array $occurrence): bool => !$occurrence['never']));
 
+        $beforeAnyAccept = $set !== [] && !\in_array(true, array_map(
+            static fn (array $occurrence): bool => $occurrence['after_accept'],
+            $set,
+        ), true);
+
         $participation = match (true) {
             [] === $set => Participation::Never,
-            $guaranteed && !$this->accepts => Participation::Always,
+            $guaranteed && $beforeAnyAccept => Participation::Always,
             default => Participation::MayBeUnset,
         };
 
@@ -514,7 +519,7 @@ final class CaptureShapeAnalyzer
             } else {
                 $read = $this->facts->of($node->child);
             }
-            $this->occurrences[$number][] = ['name' => $node->name, 'never' => $never] + $read;
+            $this->occurrences[$number][] = ['name' => $node->name, 'never' => $never, 'after_accept' => $this->accepts] + $read;
 
             return [$number => true] + $this->walk($node->child, $never);
         }
