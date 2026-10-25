@@ -612,6 +612,10 @@ Notes:
   Unicode, JavaScript gets `\p{Nd}`, a class of the word characters and one of the spaces, and Python, without `u`,
   `re.ASCII`.
 - JavaScript targets may add `/u` when Unicode properties or code point escapes are used.
+- Without `u`, PHP reads the pattern byte by byte where JavaScript and Python read it character by character: a
+  multibyte character written whole stays that character (`/café/` passes through), and a lone byte above `0x7F`,
+  which matches that byte alone in PCRE and has no character equivalent in the targets, is refused — add `u`, or
+  write the character itself (`/\xC3/` is refused with that advice).
 - A script property takes the name JavaScript reads: PCRE2 reads `\p{Han}` as the script's extensions, so it is
   `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused. For a
   target before PCRE2 10.40 (PHP 8.1), which reads `\p{Han}` as the script alone, it is `\p{Script=Han}`.
