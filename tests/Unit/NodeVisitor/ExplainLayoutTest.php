@@ -48,7 +48,7 @@ final class ExplainLayoutTest extends TestCase
         yield 'a character type' => ['pattern' => '/\d/', 'item' => '<li><span title="Character Type: A digit: [0-9]">Character Type: <strong>\d</strong> (A digit: [0-9])</span></li>'];
         yield 'an assertion' => ['pattern' => '/\b/', 'item' => '<li><span title="Assertion: a word boundary">Assertion: <strong>\b</strong> (a word boundary)</span></li>'];
         yield 'a non-word boundary' => ['pattern' => '/\B/', 'item' => 'Assertion: <strong>\B</strong> (a non-word boundary)'];
-        yield 'a control character' => ['pattern' => '/\cA/', 'item' => 'Control character: <strong>\cA</strong> (the character 0x01)'];
+        yield 'a control character' => ['pattern' => '/\cA/', 'item' => 'Control Character: <strong>\cA</strong> (the character 0x01)'];
         yield 'a property' => ['pattern' => '/\p{Lu}/u', 'item' => 'Unicode Property: <strong>\p{Lu}</strong> (An uppercase letter (category))'];
         yield 'a negated property' => ['pattern' => '/\P{Lu}/u', 'item' => 'Unicode Property: <strong>\P{Lu}</strong> (Any character except an uppercase letter (category))'];
         yield 'a property negated inside its braces' => ['pattern' => '/\p{^Lu}/u', 'item' => 'Unicode Property: <strong>\P{Lu}</strong>'];

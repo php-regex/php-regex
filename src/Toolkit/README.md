@@ -78,7 +78,7 @@ Regex matches
   Character Type: A digit: [0-9] (exactly 4 times)
 ```
 
-Validate a pattern before it reaches `preg_match` — the failing branch says where and why:
+Validate a pattern before it reaches `preg_match()` — the failing branch says where and why:
 
 ```php
 $result = $regex->validate('/(?<year>\d{4})-(\k<month>/');

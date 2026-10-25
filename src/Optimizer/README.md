@@ -26,14 +26,14 @@ Documentation: [php-regex.com](https://php-regex.com) — the [API reference](ht
 Features
 --------
 
-- `[0-9]` becomes `\d`; character class members are sorted, merged and deduplicated
-- Repeated items collapse into a quantifier, `/aaaa/` becoming `/a{4}/`, from `min_quantifier_count` repetitions on
-- Alternatives sharing a prefix share it, `/abc|abd/` becoming `/ab(?:c|d)/` — opt-in
-- A quantifier becomes possessive where nothing after it can take back what it matched, `/[0-9]+;/` becoming `/\d++;/` — opt-in
-- Each rewrite can be proven by the automata engine to write the same `$matches`, or at least to match the same strings, before it is offered — opt-in
-- `RedosRepairer` repairs a pattern open to catastrophic backtracking, `/href="([^"]+)*"/` becoming `/href="([^"]*)"/`, each repair proven linear and, when the automata can tell, proven to match the same subjects
-- A `Modernizer` visitor cleans legacy syntax: unneeded escapes dropped, redundant non-capturing groups unwrapped, `\1` written `\g{1}`
-- A pattern that cannot be improved comes back unchanged, with an empty change log
+* `[0-9]` becomes `\d`; character class members are sorted, merged and deduplicated
+* Repeated items collapse into a quantifier, `/aaaa/` becoming `/a{4}/`, from `min_quantifier_count` repetitions on
+* Alternatives sharing a prefix share it, `/abc|abd/` becoming `/ab(?:c|d)/` — opt-in
+* A quantifier becomes possessive where nothing after it can take back what it matched, `/[0-9]+;/` becoming `/\d++;/` — opt-in
+* Each rewrite can be proven by the automata engine to write the same `$matches`, or at least to match the same strings, before it is offered — opt-in
+* `RedosRepairer` repairs a pattern open to catastrophic backtracking, `/href="([^"]+)*"/` becoming `/href="([^"]*)"/`, each repair proven linear and, when the automata can tell, proven to match the same subjects
+* A `Modernizer` visitor cleans legacy syntax: unneeded escapes dropped, redundant non-capturing groups unwrapped, `\1` written `\g{1}`
+* A pattern that cannot be improved comes back unchanged, with an empty change log
 
 Installation
 ------------
@@ -171,10 +171,10 @@ locales give `\s` the no-break space, byte `0xA0`, which the class does not hold
 Documentation
 -------------
 
-- [API reference](https://php-regex.com/reference/api/) — `optimize()` in full: both option spellings and `OptimizationResult`
-- [Correctness contracts](https://php-regex.com/reference/correctness-contracts/) — what the optimizer guarantees, and when it declines a rewrite
-- [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — the public surface of this package and what stays stable within 2.x
-- [Feature support matrix](https://php-regex.com/reference/feature-support-matrix/) — which constructs each analyzer, the optimizer included, handles
+* [API reference](https://php-regex.com/reference/api/) — `optimize()` in full: both option spellings and `OptimizationResult`
+* [Correctness contracts](https://php-regex.com/reference/correctness-contracts/) — what the optimizer guarantees, and when it declines a rewrite
+* [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — the public surface of this package and what stays stable within 2.x
+* [Feature support matrix](https://php-regex.com/reference/feature-support-matrix/) — which constructs each analyzer, the optimizer included, handles
 
 Resources
 ---------

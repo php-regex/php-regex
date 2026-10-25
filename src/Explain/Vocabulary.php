@@ -108,7 +108,7 @@ final class Vocabulary
         }
 
         if ('N' === $type) {
-            return \sprintf('Any character but %s, whatever s says', self::newline($settings->newline));
+            return \sprintf('Any character but %s, regardless of the s (DOTALL) flag', self::newline($settings->newline));
         }
 
         if ('R' === $type && BsrConvention::AnyCrLf === $settings->bsr) {
