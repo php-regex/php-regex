@@ -443,14 +443,21 @@ fixed; this is the rest, engine-verified:
 
 ## The engine-gated test rows: the CI's red line
 
-Engines and Coverage stay red on one shared cause: 76 test rows across
-about 14 classes read the validator and the lexer against PCRE2 10.44
-(the php:8.4-cli image the workflow pins) while their expectations were
-verified against 10.49 — QuantifiedMultibyteLiteral, ValidatorEdgeCase,
-CompiledLengthLocale, AlphaAssertionBody, PatternTooLargeLocale,
-PatternPrinterRoundTrip, PatternLinterCorpus, InlineOptionLetters,
-PropertyNegationSpacing, CaptureShapePhpStanType, QuoteMode,
-UnicodePropertyRelease. The rows are sound on one engine and wrong on
+Engines and Coverage stay red on one shared cause: several hundred test
+rows across ~14 classes read the validator, the lexer and the inline
+options against PCRE2 10.40-10.44 (the images the workflows pin) while
+their expectations were verified against 10.49 — by row count:
+ForkedWorkerPool (PHP-version rows, not PCRE), QuantifiedMultibyteLiteral,
+ValidatorEdgeCase, RedosInlineOptions, SolverInlineOptions,
+CompiledLengthLocale, AlphaAssertionBody, PatternPrinterRoundTrip,
+CaptureShapeParity, PatternTooLargeLocale, MatchesType (Psalm bridge),
+InlineOptionLetters, PropertyNegationSpacing, QuoteMode,
+UnicodePropertyRelease. Each row needs the release gate the PcreGates
+trait already writes (requiresPcre2 / requiresPcre2For, one call per
+row, engine-verified) or an expectation per release — the migration the
+pcre-gates spec that waits for GO planned. The default-engine Tests and
+Static analysis workflows are green; only the multi-engine matrices are
+red. The rows are sound on one engine and wrong on
 the other; each needs the release gate named (the PcreGates trait, one
 call per row) or an expectation per release. The pcre-gates spec that
 waits for GO planned the same migration for the ~60 lint sites.
