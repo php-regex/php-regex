@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Conformance;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Analysis\Participation;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class ShapeConformanceTest extends TestCase
 {
+    use PcreGates;
     private const FLAG_SETS = [
         0,
         \PREG_UNMATCHED_AS_NULL,
@@ -41,6 +43,8 @@ final class ShapeConformanceTest extends TestCase
     #[DataProvider('provideCases')]
     public function test_every_shape_claim_holds_for_what_the_engine_writes(string $pattern, array $subjects): void
     {
+        $this->requiresCompile($pattern);
+
         $shape = (new CaptureShapeAnalyzer())->analyze(
             RegexParser::create()->parse($pattern),
         );

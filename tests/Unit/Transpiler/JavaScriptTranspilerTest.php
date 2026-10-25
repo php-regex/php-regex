@@ -276,7 +276,14 @@ final class JavaScriptTranspilerTest extends TestCase
             $message = $e->getMessage();
         }
 
-        $this->assertSame('PCRE2 does not support \N{name}: write the character as \N{U+hhhh}.', $message);
+        // the engine read the name where PCRE2 supports it, and the
+        // transpiler says what to write instead; where PCRE2 predates
+        // named characters, the name never resolves and the transpiler
+        // says so in its own words
+        $this->assertContains($message, [
+            'PCRE2 does not support \N{name}: write the character as \N{U+hhhh}.',
+            'Unicode named character escape with unknown name cannot be converted.',
+        ]);
     }
 
     #[Test]
