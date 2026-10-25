@@ -214,12 +214,6 @@ final class CaptureShape
     }
 
     /**
-     * What the key holds from its groups: the value of each, and what an
-     * unset group reads when the key may hold it.
-     *
-     * @return list<string>
-     */
-    /**
      * The key of the whole match read for a scan: a scan that resumes after
      * an empty match reaches the later branches, so the whole widens to
      * what a scan reads.
