@@ -208,7 +208,6 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $result);
     }
 
-
     public function test_visit_regex_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -973,7 +972,6 @@ final class RewriterEdgeCasesTest extends TestCase
         $result = $this->invokePrivate($optimizer, 'canConvertCharTypeToCharClass', [$wordType]);
         $this->assertFalse($result);
     }
-
 
     public function test_should_build_range_covers_cases(): void
     {
