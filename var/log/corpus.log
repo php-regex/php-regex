@@ -218,7 +218,7 @@ corpus/Automattic/jetpack/projects/packages/sync/src/replicastore/class-table-ch
 corpus/Automattic/jetpack/projects/packages/videopress/src/videopress-divi/class-videopress-divi-module.php:31:27
     → /^(?:(?:http(?:s)?:\/\/)?(?:www\.)?video(?:\.word)?press\.com\/(?:v|embed)\/)?([a-zA-Z\d]+)(?:.*)?/i
    ↳ via self::VIDEOPRESS_REGEX
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:s)" at offset 11; it can be removed without changing behavior.
    TIP 
        - /^(?:(?:http(?:s)?:\/\/)?(?:www\.)?video(?:\.word)?press\.com\/(?:v|embed)\/)?([a-zA-Z\d]+)(?:.*)?/i
        + /^(?:(?:https?:\/\/)?(?:www\.)?video(?:\.word)?press\.com\/(?:v|embed)\/)?([a-zA-Z\d]+)(?:.*)?/i
@@ -518,7 +518,7 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/modules/shortcodes/googlemaps
 
 corpus/Automattic/jetpack/projects/plugins/jetpack/modules/shortcodes/medium.php:104:25
     → /^\/(?:s)\/(.+)$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:s)" at offset 3; it can be removed without changing behavior.
    TIP 
        - /^\/(?:s)\/(.+)$/
        + /^\/s\/(.+)$/
@@ -599,7 +599,7 @@ corpus/Automattic/jetpack/projects/plugins/vaultpress/vaultpress.php:1387:20
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Alternation branches "\\s+LOW_PRIORITY" and "\\s+QUICK" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:S)" at offset 339; it can be removed without changing behavior.
    WARN  Duplicate alternation branch "OPTIMIZE".
        ↳ Remove the redundant alternative.
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -925,7 +925,7 @@ corpus/FakerPHP/Faker/test/Provider/ro_RO/PersonTest.php:16:35
 ### corpus/Humbug/php-scoper — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/Humbug/php-scoper/src/Patcher/SymfonyPatcher.php:35:13
     → /use (Symfony(\\(?:\\)?)Component\\.+?;)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\\)" at offset 15; it can be removed without changing behavior.
    TIP 
        - /use (Symfony(\\(?:\\)?)Component\\.+?;)/
        + /use (Symfony(\\\\?)Component\\.+?;)/
@@ -956,7 +956,7 @@ corpus/Humbug/php-scoper/src/Scoper/PhpScoper.php:32:32
 corpus/Humbug/php-scoper/src/Scoper/Symfony/XmlScoper.php:37:39
     → /<prototype.*\snamespace="(?:(?<namespace>(?:[^\\]+(?<separator>\\(?:\\)?))))"/
    ↳ via self::NAMESPACE_PATTERN
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\\)" at offset 65; it can be removed without changing behavior.
    TIP 
        - /<prototype.*\snamespace="(?:(?<namespace>(?:[^\\]+(?<separator>\\(?:\\)?))))"/
        + /<prototype.*\snamespace="(?:(?<namespace>(?:[^\\]+(?<separator>\\\\?))))"/
@@ -964,14 +964,14 @@ corpus/Humbug/php-scoper/src/Scoper/Symfony/XmlScoper.php:37:39
 corpus/Humbug/php-scoper/src/Scoper/Symfony/XmlScoper.php:38:42
     → /(?:(?<singleClass>(?:[\p{L}_][\p{L}_\d]*(?<singleSeparator>\\(?:\\)?))):)|(?<class>(?:[\p{L}_][\p{L}_\d]*(?<separator>\\(?:\\)?)+)+[\p{L}_\d]+)/u
    ↳ via self::SINGLE_CLASS_PATTERN
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\\)" at offset 61; it can be removed without changing behavior.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Quantified named group "(?<separator>...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\\)" at offset 120; it can be removed without changing behavior.
    TIP 
        - /(?:(?<singleClass>(?:[\p{L}_][\p{L}_\d]*(?<singleSeparator>\\(?:\\)?))):)|(?<class>(?:[\p{L}_][\p{L}_\d]*(?<separator>\\(?:\\)?)+)+[\p{L}_\d]+)/u
        + /(?:(?<singleClass>(?:[\p{L}_][\p{L}_\d]*(?<singleSeparator>\\\\?))):)|(?<class>(?:[\p{L}_][\p{L}_\d]*(?<separator>\\\\?)+)+[\p{L}_\d]+)/u
@@ -979,14 +979,14 @@ corpus/Humbug/php-scoper/src/Scoper/Symfony/XmlScoper.php:38:42
 corpus/Humbug/php-scoper/src/Scoper/Symfony/YamlScoper.php:37:35
     → /(?:(?<singleClass>(?:[\p{L}_][\p{L}_\d]*(?<singleSeparator>\\(?:\\)?))):)|(?<class>(?:[\p{L}_][\p{L}_\d]*(?<separator>\\(?:\\)?)+)+[\p{L}_\d]+)/u
    ↳ via self::CLASS_PATTERN
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\\)" at offset 61; it can be removed without changing behavior.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Quantified named group "(?<separator>...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\\)" at offset 120; it can be removed without changing behavior.
    TIP 
        - /(?:(?<singleClass>(?:[\p{L}_][\p{L}_\d]*(?<singleSeparator>\\(?:\\)?))):)|(?<class>(?:[\p{L}_][\p{L}_\d]*(?<separator>\\(?:\\)?)+)+[\p{L}_\d]+)/u
        + /(?:(?<singleClass>(?:[\p{L}_][\p{L}_\d]*(?<singleSeparator>\\\\?))):)|(?<class>(?:[\p{L}_][\p{L}_\d]*(?<separator>\\\\?)+)+[\p{L}_\d]+)/u
@@ -1316,7 +1316,7 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php:1
 corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php:1203:30
     → /^((?<string>"(?:[^"]|"")*")|(?<function>@?(?:_xlfn\.)?(?:_xlws\.)?((?:__xludf\.)?[\p{L}][\p{L}\p{N}\.]*)[\s]*\()|(?<cellRef>((([^\s,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.]))|(?<colRange>(((([^\s\(,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\".(?:[^\"]|\"[^!])?\"))!)?(\$?[a-z]{1,3})):(?![.*]))|(?<rowRange>(((([^\s\(,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?(\$?[1-9][0-9]{0,6})):(?![.*]))|(?<number>[-+]?\d*\.?\d+(e[-+]?\d+)?)|(?<openBrace>\()|(?<structuredReference>([\p{L}_\\][\p{L}\p{N}\._]+)?(\[(?:[^\d\]+-])?))|(?<definedName>((([^\s,!&%^\/\*\+<>=-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?([_\p{L}][_\p{L}\p{N}\.]*))|(?<error>\#[A-Z][A-Z0_\/]*[!\?]?))/sui
    ↳ via $regexpMatchString
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\d\]+-])" at offset 594; it can be removed without changing behavior.
    TIP 
        - /^((?<string>"(?:[^"]|"")*")|(?<function>@?(?:_xlfn\.)?(?:_xlws\.)?((?:__xludf\.)?[\p{L}][\p{L}\p{N}\.]*)[\s]*\()|(?<cellRef>((([^\s,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.]))|(?<colRange>(((([^\s\(,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\".(?:[^\"]|\"[^!])?\"))!)?(\$?[a-z]{1,3})):(?![.*]))|(?<rowRange>(((([^\s\(,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?(\$?[1-9][0-9]{0,6})):(?![.*]))|(?<number>[-+]?\d*\.?\d+(e[-+]?\d+)?)|(?<openBrace>\()|(?<structuredReference>([\p{L}_\\][\p{L}\p{N}\._]+)?(\[(?:[^\d\]+-])?))|(?<definedName>((([^\s,!&%^\/\*\+<>=-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?([_\p{L}][_\p{L}\p{N}\.]*))|(?<error>\#[A-Z][A-Z0_\/]*[!\?]?))/sui
        + /^((?<string>"(?:[^"]|"")*")|(?<function>@?(?:_xlfn\.)?(?:_xlws\.)?((?:__xludf\.)?[\p{L}][\p{L}\p{N}.]*)[\s]*\()|(?<cellRef>((([^\s,!&%\^\/*+<>=:`\-]*)|('(?:[^']|'[^!])+?')|("(?:[^"]|"[^!])+?"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.]))|(?<colRange>(((([^\s(,!&%\^\/*+<>=:`\-]*)|('(?:[^']|'[^!])+?')|(".(?:[^"]|"[^!])?"))!)?(\$?[a-z]{1,3})):(?![.*]))|(?<rowRange>(((([^\s(,!&%\^\/*+<>=:`\-]*)|('(?:[^']|'[^!])+?')|("(?:[^"]|"[^!])+?"))!)?(\$?[1-9][0-9]{0,6})):(?![.*]))|(?<number>[\-+]?\d*\.?\d+(e[\-+]?\d+)?)|(?<openBrace>\()|(?<structuredReference>([\p{L}_\\][\p{L}\p{N}._]+)?(\[[^\d\]+\-]?))|(?<definedName>((([^\s,!&%\^\/*+<>=\-]*)|('(?:[^']|'[^!])+?')|("(?:[^"]|"[^!])+?"))!)?([_\p{L}][_\p{L}\p{N}.]*))|(?<error>#[A-Z][A-Z0_\/]*[!?]?))/sui
@@ -1324,7 +1324,7 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php:1
 corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php:1474:38
     → /^([\p{L}_\\][\p{L}\p{N}\._]+)?(\[(?:[^\d\]+-])?)$/miu
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\d\]+-])" at offset 33; it can be removed without changing behavior.
    TIP 
        - /^([\p{L}_\\][\p{L}\p{N}\._]+)?(\[(?:[^\d\]+-])?)$/miu
        + /^([\p{L}_\\][\p{L}\p{N}._]+)?(\[[^\d\]+\-]?)$/miu
@@ -1348,7 +1348,7 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php:1
 corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php:1671:40
     → /^([\p{L}_\\][\p{L}\p{N}\._]+)?(\[(?:[^\d\]+-])?).*/miu
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\d\]+-])" at offset 33; it can be removed without changing behavior.
    TIP 
        - /^([\p{L}_\\][\p{L}\p{N}\._]+)?(\[(?:[^\d\]+-])?).*/miu
        + /^([\p{L}_\\][\p{L}\p{N}._]+)?(\[[^\d\]+\-]?).*/miu
@@ -2449,13 +2449,13 @@ corpus/Respect/Validation/src/Validators/Consonant.php:42:27
 
 corpus/Respect/Validation/src/Validators/Emoji.php:64:27
     → /^(?: [\x{1F1E6}-\x{1F1FF}]{2} | \x{1F3F4}[\x{E0020}-\x{E007E}]+\x{E007F} | [0-9#*](?:\x{FE0F})?\x{20E3} | \p{Extended_Pictographic} (?:\x{FE0F})? (?:[\x{1F3FB}-\x{1F3FF}])? (?: \x{200D} (?: \p{Extended_Pictographic} | [\x{2640}\x{2642}\x{26A7}] ) (?:\x{FE0F})? (?:[\x{1F3FB}-\x{1F3FF}])? )* )+$/ux
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\x{FE0F})" at offset 203; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\x{FE0F})" at offset 322; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[\x{1F3FB}-\x{1F3FF}])" at offset 400; it can be removed without changing behavior.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\x{FE0F})" at offset 828; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[\x{1F3FB}-\x{1F3FF}])" at offset 902; it can be removed without changing behavior.
    TIP 
          /^(?:
              # Tag sequence for country flags
@@ -2864,7 +2864,7 @@ corpus/WhichBrowser/Parser/src/Analyser/Header/Useragent/Browser.php:1459:34
     → /(?:Obigo|Teleca)[- ]([WAP|[A-Z])?0?([0-9.]+[A-Z]?)(?:[0-9])?(?:[\/;]|$)/ui
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: 'W' (covered by range 'A'-'Z'), 'A' (covered by range 'A'-'Z'), 'P' (covered by range 'A'-'Z')
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[0-9])" at offset 50; it can be removed without changing behavior.
    TIP 
        - /(?:Obigo|Teleca)[- ]([WAP|[A-Z])?0?([0-9.]+[A-Z]?)(?:[0-9])?(?:[\/;]|$)/ui
        + /(?:Obigo|Teleca)[\- ]([WAP|[A-Z])?0?([0-9.]+[A-Z]?)[0-9]?(?:[\/;]|$)/ui
@@ -2894,8 +2894,8 @@ corpus/WhichBrowser/Parser/src/Analyser/Header/Useragent/Engine.php:104:28
 
 corpus/WhichBrowser/Parser/src/Analyser/Header/Useragent/Os.php:209:32
     → /Andr[0o]id(?: )?(?:AllPhone_|CyanogenMod_|OUYA )?(?:\/)?v?([0-9.]+)/ui
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\/)" at offset 49; it can be removed without changing behavior.
    TIP 
        - /Andr[0o]id(?: )?(?:AllPhone_|CyanogenMod_|OUYA )?(?:\/)?v?([0-9.]+)/ui
        + /Andr[0o]id ?(?:AllPhone_|CyanogenMod_|OUYA )?\/?v?([0-9.]+)/ui
@@ -2979,7 +2979,7 @@ Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the ol
 corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/DB/PreparedSQLPlaceholdersSniff.php:101:40
     → `(?: (?<!%) ( % (?! %[^%] | %%[dfFsi] ) (?:[0-9]+\\??\$)?+ [+-]?+ (?: (?:0|'.)?+ -?+ [0-9]*+ (?:\.(?:[ 0]|'.)?[0-9]+)?+ | (?:[ ])?+ -?+ [0-9]++ (?:\.(?:[ 0]|'.)?[0-9]+)?+ ) (?![dfFsi]) (?:[^ '"]*|$) ) )`x
    ↳ via self::UNSUPPORTED_PLACEHOLDER_REGEX
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[ ])" at offset 892; it can be removed without changing behavior.
    TIP 
          `(?:
                  (?<!%)                     # Don't match a literal % (%%).
@@ -3012,7 +3012,7 @@ corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/DB/PreparedSQLPlace
 
 corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/DB/PreparedSQLPlaceholdersSniff.php:349:36
     → `(?: (?<![^%]%) (?: % (?:[0-9]+\\?\$)? [+-]? (?: (?:0|'.)? -? [0-9]* (?:\.(?:[ 0]|'.)?[0-9]+)? | (?:[ ])? -? [0-9]+ (?:\.(?:[ 0]|'.)?[0-9]+)? ) [dfFsi] ) )`x
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[ ])" at offset 720; it can be removed without changing behavior.
    TIP 
          `(?:
                  (?<![^%]%)                     # Don't match a literal % (%%), including when it could overlap with a placeholder.
@@ -3039,7 +3039,7 @@ corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/DB/PreparedSQLPlace
 
 corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/DB/PreparedSQLPlaceholdersSniff.php:453:26
     → `(?: (?<![^%]%) (?: % (?:[0-9]+\\?\$)? [+-]? (?: (?:0|'.)? -? [0-9]* (?:\.(?:[ 0]|'.)?[0-9]+)? | (?:[ ])? -? [0-9]+ (?:\.(?:[ 0]|'.)?[0-9]+)? ) [dfFsi] ) )`x
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[ ])" at offset 720; it can be removed without changing behavior.
    TIP 
          `(?:
                  (?<![^%]%)                     # Don't match a literal % (%%), including when it could overlap with a placeholder.
@@ -3067,7 +3067,7 @@ corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/DB/PreparedSQLPlace
 corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/WP/I18nSniff.php:47:36
     → /(?: (?<!%) ( % (?:[0-9]+\$)? [+-]? (?: (?:0|'.)? -? [0-9]* (?:\.(?:[ 0]|'.)?[0-9]+)? | (?:[ ])? -? [0-9]+ (?:\.(?:[ 0]|'.)?[0-9]+)? ) [bcdeEfFgGhHosuxX] ) )/x
    ↳ via self::SPRINTF_PLACEHOLDER_REGEX
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[ ])" at offset 664; it can be removed without changing behavior.
    TIP 
          /(?:
                  (?<!%)                     # Don't match a literal % (%%).
@@ -3095,7 +3095,7 @@ corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/WP/I18nSniff.php:47
 corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/WP/I18nSniff.php:71:46
     → /(?: (?<!%) % [+-]? (?: (?:0|'.)? -? [0-9]* (?:\.(?:[ 0]|'.)?[0-9]+)? | (?:[ ])? -? [0-9]+ (?:\.(?:[ 0]|'.)?[0-9]+)? ) [bcdeEfFgGhHosuxX] )/x
    ↳ via self::UNORDERED_SPRINTF_PLACEHOLDER_REGEX
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[ ])" at offset 580; it can be removed without changing behavior.
    TIP 
          /(?:
                  (?<!%)                     # Don't match a literal % (%%).
@@ -3288,7 +3288,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/PHPMailer/SMTP.php:322:37
 
 corpus/WordPress/wordpress-develop/src/wp-includes/Requests/src/IdnaEncoder.php:144:22
     → /(?:[^\x00-\x7F])/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\x00-\x7F])" at offset 0; it can be removed without changing behavior.
    TIP 
        - /(?:[^\x00-\x7F])/
        + /[^\x00-\x7F]/
@@ -3301,7 +3301,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/Requests/src/Requests.php:855
     → /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\r\n])" at offset 46; it can be removed without changing behavior.
    TIP 
        - /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
        + /^([0-9a-f]+)(?:;(?:[\w\-]*)(?:=(?:(?:[\w\-]*)*|"[^\r\n]*"))?)*\r\n/i
@@ -3310,23 +3310,23 @@ corpus/WordPress/wordpress-develop/src/wp-includes/Requests/src/Requests.php:863
     → /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\r\n])" at offset 46; it can be removed without changing behavior.
    TIP 
        - /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
        + /^([0-9a-f]+)(?:;(?:[\w\-]*)(?:=(?:(?:[\w\-]*)*|"[^\r\n]*"))?)*\r\n/i
 
 corpus/WordPress/wordpress-develop/src/wp-includes/SimplePie/src/Item.php:2304:115
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
 corpus/WordPress/wordpress-develop/src/wp-includes/SimplePie/src/Item.php:2329:115
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
@@ -3345,32 +3345,32 @@ corpus/WordPress/wordpress-develop/src/wp-includes/SimplePie/src/Sanitize.php:57
 
 corpus/WordPress/wordpress-develop/src/wp-includes/SimplePie/src/SimplePie.php:2987:102
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
 corpus/WordPress/wordpress-develop/src/wp-includes/SimplePie/src/SimplePie.php:3012:102
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
 corpus/WordPress/wordpress-develop/src/wp-includes/SimplePie/src/Source.php:472:117
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
 corpus/WordPress/wordpress-develop/src/wp-includes/SimplePie/src/Source.php:488:117
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
@@ -3464,7 +3464,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-xmlrpc-server.php:72
 corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:2106:15
     → #^(?:\[)?(?P<host>[0-9a-fA-F:]+)(?:\]:(?P<port>[\d]+))?#
    ↳ via $pattern
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\[)" at offset 1; it can be removed without changing behavior.
    TIP 
        - #^(?:\[)?(?P<host>[0-9a-fA-F:]+)(?:\]:(?P<port>[\d]+))?#
        + #^\[?(?P<host>[0-9a-fA-F:]+)(?:\]:(?P<port>[\d]+))?#
@@ -3489,7 +3489,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3918:20
 
 corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3924:4
     → /^\s*(?:(?:EXPLAIN\s+(?:EXTENDED\s+)?)?SELECT.*?\s+FROM|DESCRIBE|DESC|EXPLAIN|HANDLER|(?:LOCK|UNLOCK)\s+TABLE(?:S)?|(?:RENAME|OPTIMIZE|BACKUP|RESTORE|CHECK|CHECKSUM|ANALYZE|REPAIR).*\s+TABLE|TRUNCATE(?:\s+TABLE)?|CREATE(?:\s+TEMPORARY)?\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?|ALTER(?:\s+IGNORE)?\s+TABLE|DROP\s+TABLE(?:\s+IF\s+EXISTS)?|CREATE(?:\s+\w+)?\s+INDEX.*\s+ON|DROP\s+INDEX.*\s+ON|LOAD\s+DATA.*INFILE.*INTO\s+TABLE|(?:GRANT|REVOKE).*ON\s+TABLE|SHOW\s+(?:.*FROM|.*TABLE))\s+\(*\s*((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)\s*\)*/is
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:S)" at offset 108; it can be removed without changing behavior.
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the second quantifier to its minimum.
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -3722,7 +3722,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/script-loader.php:4347:24
 Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/Yoast/wordpress-seo/inc/options/class-wpseo-option-social.php:274:20
     → `^http(?:s)?://(?:www\.)?(?:twitter|x)\.com/(?P<handle>[A-Za-z0-9_]{1,25})/?$`
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:s)" at offset 5; it can be removed without changing behavior.
    TIP 
        - `^http(?:s)?://(?:www\.)?(?:twitter|x)\.com/(?P<handle>[A-Za-z0-9_]{1,25})/?$`
        + `^https?://(?:www\.)?(?:twitter|x)\.com/(?P<handle>[A-Za-z0-9_]{1,25})/?$`
@@ -4112,7 +4112,7 @@ Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the ol
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/bobthecow/psysh/scoper.inc.php:146:17
     → /'(PhpParser\\.+(?:\\)?)'/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\\)" at offset 15; it can be removed without changing behavior.
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
    TIP 
@@ -4131,14 +4131,14 @@ corpus/bobthecow/psysh/src/Completion/Refiner/CommandSyntaxRefiner.php:36:25
 
 corpus/bobthecow/psysh/src/Readline/Hoa/FileFinder.php:229:31
     → #^(<|<=|>|>=|=)\s*(\d+)\s*((?:[KMGTPEZY])b)?$#
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[KMGTPEZY])" at offset 26; it can be removed without changing behavior.
    TIP 
        - #^(<|<=|>|>=|=)\s*(\d+)\s*((?:[KMGTPEZY])b)?$#
        + #^(<|<=|>|>=|=)\s*(\d+)\s*([KMGTPEZY]b)?$#
 
 corpus/bobthecow/psysh/src/Readline/Interactive/Suggestion/WordExtractor.php:29:13
     → /(?:\$)?[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*/u
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\$)" at offset 0; it can be removed without changing behavior.
    TIP 
        - /(?:\$)?[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*/u
        + /\$?[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*/u
@@ -4282,8 +4282,8 @@ corpus/cakephp/cakephp/src/Database/Driver/Mysql.php:349:28
 
 corpus/cakephp/cakephp/src/Database/Expression/QueryExpression.php:884:24
     → /^(?:['"])?[a-zA-Z0-9_\.]+(?:['"])?$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:['"])" at offset 1; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:['"])" at offset 25; it can be removed without changing behavior.
    TIP 
        - /^(?:['"])?[a-zA-Z0-9_\.]+(?:['"])?$/
        + /^['"]?[a-zA-Z0-9_.]+['"]?$/
@@ -4321,7 +4321,7 @@ corpus/cakephp/cakephp/src/Http/HeaderUtility.php:56:28
 
 corpus/cakephp/cakephp/src/Http/HeaderUtility.php:117:13
     → @(\w+)=(?:(?:")([^"]+)"|([^\s,$]+))@
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:")" at offset 9; it can be removed without changing behavior.
    TIP 
        - @(\w+)=(?:(?:")([^"]+)"|([^\s,$]+))@
        + @(\w+)=(?:"([^"]+)"|([^\s,$]+))@
@@ -4702,7 +4702,7 @@ corpus/composer/composer/src/Composer/Autoload/AutoloadGenerator.php:529:42
 
 corpus/composer/composer/src/Composer/Command/GlobalCommand.php:157:48
     → {\bg(?:l(?:o(?:b(?:a(?:l)?)?)?)?)?\b}
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:l)" at offset 19; it can be removed without changing behavior.
    TIP 
        - {\bg(?:l(?:o(?:b(?:a(?:l)?)?)?)?)?\b}
        + {\bg(?:l(?:o(?:b(?:al?)?)?)?)?\b}
@@ -7051,7 +7051,7 @@ corpus/google/recaptcha/src/ReCaptcha/RequestMethod/SocketPost.php:134:29
 Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/google/site-kit-wp/includes/Core/Authentication/Authentication.php:1023:27
     → /(?:[^\x00-\x7F])/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\x00-\x7F])" at offset 0; it can be removed without changing behavior.
    TIP 
        - /(?:[^\x00-\x7F])/
        + /[^\x00-\x7F]/
@@ -7071,7 +7071,7 @@ corpus/google/site-kit-wp/includes/Core/Util/URL.php:86:4
 
 corpus/google/site-kit-wp/includes/Core/Util/URL.php:148:27
     → /(?:[^\x00-\x7F])/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\x00-\x7F])" at offset 0; it can be removed without changing behavior.
    TIP 
        - /(?:[^\x00-\x7F])/
        + /[^\x00-\x7F]/
@@ -7240,7 +7240,7 @@ corpus/hyperf/hyperf/src/rpn/src/Calculator.php:93:24
     → /((?:[0-9\.]+)|(?:[\(\)\+\-\*\/])){1}/
    WARN  Quantifier is redundant; it matches exactly once.
        ↳ Remove the {1} quantifier; it does not change the match.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[\(\)\+\-\*\/])" at offset 14; it can be removed without changing behavior.
    TIP 
        - /((?:[0-9\.]+)|(?:[\(\)\+\-\*\/])){1}/
        + /((?:[0-9.]+)|[()+\-*\/])/
@@ -8279,7 +8279,7 @@ corpus/laravel/pint/app/PrettierFormatters/EmbeddedBladeMasker.php:70:13
 ### corpus/laravel/prompts — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/laravel/prompts/src/Task.php:243:34
     → /\e\[(?:1)?G\e\[2K/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:1)" at offset 4; it can be removed without changing behavior.
    TIP 
        - /\e\[(?:1)?G\e\[2K/
        + /\e\[1?G\e\[2K/
@@ -8305,7 +8305,7 @@ corpus/laravel/roster/src/Detectors/Approaches/ModelKeyStyle.php:33:24
 Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/laravel/valet/cli/Valet/PhpFpm.php:275:29
     → /(?:php@?)?([0-9+])(?:.)?([0-9+])/i
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:.)" at offset 18; it can be removed without changing behavior.
    TIP 
        - /(?:php@?)?([0-9+])(?:.)?([0-9+])/i
        + /(?:php@?)?([0-9+]).?([0-9+])/i
@@ -8520,7 +8520,7 @@ corpus/magento/magento2/app/code/Magento/Csp/Helper/InlineUtil.php:134:24
 corpus/magento/magento2/app/code/Magento/Customer/Model/Validator/Name.php:18:34
     → /(?:[\p{L}\p{M}\,\-\_\.'’`&\s\d]){1,255}+/u
    ↳ via self::PATTERN_NAME
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[\p{L}\p{M}\,\-\_\.'’`&\s\d])" at offset 0; it can be removed without changing behavior.
    TIP 
        - /(?:[\p{L}\p{M}\,\-\_\.'’`&\s\d]){1,255}+/u
        + /[\p{L}\p{M},\-_.'’`&\s\d]{1,255}+/u
@@ -8560,7 +8560,7 @@ corpus/magento/magento2/app/code/Magento/Elasticsearch/Model/Config/Backend/Mini
 
 corpus/magento/magento2/app/code/Magento/Email/Model/AbstractTemplate.php:322:24
     → /<!--@vars\s*((?:.)*?)\s*@-->/us
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:.)" at offset 13; it can be removed without changing behavior.
    TIP 
        - /<!--@vars\s*((?:.)*?)\s*@-->/us
        + /<!--@vars\s*(.*?)\s*@-->/us
@@ -9877,8 +9877,8 @@ corpus/moodle/moodle/public/admin/tool/brickfield/classes/local/htmlchecker/comm
 corpus/moodle/moodle/public/admin/tool/brickfield/classes/local/htmlchecker/reporters/report_demo.php:96:20
     → /^(?:(http[s]?):\/\/(?:(.*):(.*)@)?([^\/]+))?((?:[\/])?(?:[^\.]*?)?(?:[\/])?)?(?:([^\/^\.]+)\.([^\?]+))?(?:\?(.+))?$/i
    ↳ via $pattern
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[\/])" at offset 45; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[\/])" at offset 66; it can be removed without changing behavior.
    TIP 
        - /^(?:(http[s]?):\/\/(?:(.*):(.*)@)?([^\/]+))?((?:[\/])?(?:[^\.]*?)?(?:[\/])?)?(?:([^\/^\.]+)\.([^\?]+))?(?:\?(.+))?$/i
        + /^(?:(http[s]?):\/\/(?:(.*):(.*)@)?([^\/]+))?([\/]?(?:[^.]*?)?[\/]?)?(?:([^\/\^.]+)\.([^?]+))?(?:\?(.+))?$/i
@@ -10985,7 +10985,7 @@ corpus/moodle/moodle/public/lib/phpmailer/src/SMTP.php:311:37
 corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php:1069:30
     → /^((?<string>"(?:[^"]|"")*")|(?<function>@?(?:_xlfn\.)?(?:_xlws\.)?((?:__xludf\.)?[\p{L}][\p{L}\p{N}\.]*)[\s]*\()|(?<cellRef>((([^\s,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.]))|(?<colRange>(((([^\s\(,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\".(?:[^\"]|\"[^!])?\"))!)?(\$?[a-z]{1,3})):(?![.*]))|(?<rowRange>(((([^\s\(,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?(\$?[1-9][0-9]{0,6})):(?![.*]))|(?<number>[-+]?\d*\.?\d+(e[-+]?\d+)?)|(?<openBrace>\()|(?<structuredReference>([\p{L}_\\][\p{L}\p{N}\._]+)?(\[(?:[^\d\]+-])?))|(?<definedName>((([^\s,!&%^\/\*\+<>=-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?([_\p{L}][_\p{L}\p{N}\.]*))|(?<error>\#[A-Z][A-Z0_\/]*[!\?]?))/sui
    ↳ via $regexpMatchString
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\d\]+-])" at offset 594; it can be removed without changing behavior.
    TIP 
        - /^((?<string>"(?:[^"]|"")*")|(?<function>@?(?:_xlfn\.)?(?:_xlws\.)?((?:__xludf\.)?[\p{L}][\p{L}\p{N}\.]*)[\s]*\()|(?<cellRef>((([^\s,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.]))|(?<colRange>(((([^\s\(,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\".(?:[^\"]|\"[^!])?\"))!)?(\$?[a-z]{1,3})):(?![.*]))|(?<rowRange>(((([^\s\(,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?(\$?[1-9][0-9]{0,6})):(?![.*]))|(?<number>[-+]?\d*\.?\d+(e[-+]?\d+)?)|(?<openBrace>\()|(?<structuredReference>([\p{L}_\\][\p{L}\p{N}\._]+)?(\[(?:[^\d\]+-])?))|(?<definedName>((([^\s,!&%^\/\*\+<>=-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?([_\p{L}][_\p{L}\p{N}\.]*))|(?<error>\#[A-Z][A-Z0_\/]*[!\?]?))/sui
        + /^((?<string>"(?:[^"]|"")*")|(?<function>@?(?:_xlfn\.)?(?:_xlws\.)?((?:__xludf\.)?[\p{L}][\p{L}\p{N}.]*)[\s]*\()|(?<cellRef>((([^\s,!&%\^\/*+<>=:`\-]*)|('(?:[^']|'[^!])+?')|("(?:[^"]|"[^!])+?"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.]))|(?<colRange>(((([^\s(,!&%\^\/*+<>=:`\-]*)|('(?:[^']|'[^!])+?')|(".(?:[^"]|"[^!])?"))!)?(\$?[a-z]{1,3})):(?![.*]))|(?<rowRange>(((([^\s(,!&%\^\/*+<>=:`\-]*)|('(?:[^']|'[^!])+?')|("(?:[^"]|"[^!])+?"))!)?(\$?[1-9][0-9]{0,6})):(?![.*]))|(?<number>[\-+]?\d*\.?\d+(e[\-+]?\d+)?)|(?<openBrace>\()|(?<structuredReference>([\p{L}_\\][\p{L}\p{N}._]+)?(\[[^\d\]+\-]?))|(?<definedName>((([^\s,!&%\^\/*+<>=\-]*)|('(?:[^']|'[^!])+?')|("(?:[^"]|"[^!])+?"))!)?([_\p{L}][_\p{L}\p{N}.]*))|(?<error>#[A-Z][A-Z0_\/]*[!?]?))/sui
@@ -10993,7 +10993,7 @@ corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet
 corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php:1341:38
     → /^([\p{L}_\\][\p{L}\p{N}\._]+)?(\[(?:[^\d\]+-])?)$/miu
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\d\]+-])" at offset 33; it can be removed without changing behavior.
    TIP 
        - /^([\p{L}_\\][\p{L}\p{N}\._]+)?(\[(?:[^\d\]+-])?)$/miu
        + /^([\p{L}_\\][\p{L}\p{N}._]+)?(\[[^\d\]+\-]?)$/miu
@@ -11017,7 +11017,7 @@ corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet
 corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php:1533:40
     → /^([\p{L}_\\][\p{L}\p{N}\._]+)?(\[(?:[^\d\]+-])?).*/miu
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\d\]+-])" at offset 33; it can be removed without changing behavior.
    TIP 
        - /^([\p{L}_\\][\p{L}\p{N}\._]+)?(\[(?:[^\d\]+-])?).*/miu
        + /^([\p{L}_\\][\p{L}\p{N}._]+)?(\[[^\d\]+\-]?).*/miu
@@ -11393,16 +11393,16 @@ corpus/moodle/moodle/public/lib/scssphp/src/Compiler.php:1741:66
 
 corpus/moodle/moodle/public/lib/simplepie/src/Item.php:2304:115
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
 corpus/moodle/moodle/public/lib/simplepie/src/Item.php:2329:115
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
@@ -11421,32 +11421,32 @@ corpus/moodle/moodle/public/lib/simplepie/src/Sanitize.php:577:30
 
 corpus/moodle/moodle/public/lib/simplepie/src/SimplePie.php:2987:102
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
 corpus/moodle/moodle/public/lib/simplepie/src/SimplePie.php:3012:102
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
 corpus/moodle/moodle/public/lib/simplepie/src/Source.php:472:117
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
 corpus/moodle/moodle/public/lib/simplepie/src/Source.php:488:117
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
@@ -13193,8 +13193,8 @@ corpus/nextcloud/server/apps/theming/lib/Controller/ThemingController.php:451:30
 
 corpus/nextcloud/server/apps/updatenotification/lib/Manager.php:87:28
     → /^## (?:\[)?(?:v)?(\d+\.\d+(\.\d+)?)/m
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\[)" at offset 4; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:v)" at offset 11; it can be removed without changing behavior.
    TIP 
        - /^## (?:\[)?(?:v)?(\d+\.\d+(\.\d+)?)/m
        + /^## \[?v?(\d+\.\d+(\.\d+)?)/m
@@ -13742,7 +13742,7 @@ corpus/phan/phan/src/Phan/Language/Type/LiteralStringType.php:370:43
 corpus/phan/phan/src/Phan/Library/ConversionSpec.php:58:40
     → /%%|%(\d+\$)?([0 ]?|'.)([+-]?)(\d*)(\.\d*)?(?:l)?([bcdeEfFgGosuxX])/
    ↳ via self::FORMAT_STRING_REGEX
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:l)" at offset 42; it can be removed without changing behavior.
    TIP 
        - /%%|%(\d+\$)?([0 ]?|'.)([+-]?)(\d*)(\.\d*)?(?:l)?([bcdeEfFgGosuxX])/
        + /%%|%(\d+\$)?([0 ]?|'.)([+\-]?)(\d*)(\.\d*)?l?([bcdeEfFgGosuxX])/
@@ -13792,7 +13792,7 @@ corpus/php-debugbar/php-debugbar/src/DataFormatter/QueryFormatter.php:17:29
        ↳ Redundant elements: '\'' (duplicate)
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '\'' (duplicate)
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\?)" at offset 37; it can be removed without changing behavior.
    TIP 
        - /\?(?=(?:[^'\\']*'[^'\']*')*[^'\\']*$)(?:\?)/
        + /\?(?=(?:[^'\\']*'[^'']*')*[^'\\']*$)\?/
@@ -13823,7 +13823,7 @@ Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the ol
 Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/phpDocumentor/ReflectionDocBlock/src/DocBlock/StandardTagFactory.php:230:25
     → /^@([\w\-\_\\:]+)((?:[\s\(\{])\s*([^\s].*)|$)/us
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[\s\(\{])" at offset 17; it can be removed without changing behavior.
    TIP 
        - /^@([\w\-\_\\:]+)((?:[\s\(\{])\s*([^\s].*)|$)/us
        + /^@([\w\-_\\:]+)([\s({]\s*([^\s].*)|$)/us
@@ -14025,7 +14025,7 @@ corpus/phpbb/phpbb/phpBB/includes/message_parser.php:437:21
 
 corpus/phpbb/phpbb/phpBB/includes/message_parser.php:782:22
     → #\[((?:/)?(?:[a-z]+))#i
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:/)" at offset 3; it can be removed without changing behavior.
    TIP 
        - #\[((?:/)?(?:[a-z]+))#i
        + #\[(/?(?:[a-z]+))#i
@@ -15521,7 +15521,7 @@ corpus/sabre-io/vobject/lib/DateTimeParser.php:60:30
 corpus/sabre-io/vobject/lib/DateTimeParser.php:267:18
     → /^ (?: (?: (?: (?<year> [0-9]{4}) (?: -)?| --) (?<month> [0-9]{2})? |---) (?<date> [0-9]{2})? )? (?:T (?<hour> [0-9]{2} | -) (?<minute> [0-9]{2} | -)? (?<second> [0-9]{2})? (?: \.[0-9]{3})? (?P<timezone> Z | (?: \+|-)(?: [0-9]{4}) )? )? $/x
    ↳ via $regex
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: -)" at offset 94; it can be removed without changing behavior.
    TIP 
          /^
                      (?:  # date part
@@ -15550,7 +15550,7 @@ corpus/sabre-io/vobject/lib/DateTimeParser.php:267:18
 
 corpus/sabre-io/vobject/lib/Parameter.php:209:33
     → #(?: [\n":;\^,\+] )#x
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: [\n":;\^,\+] )" at offset 0; it can be removed without changing behavior.
    TIP 
        - #(?: [\n":;\^,\+] )#x
        ---
@@ -15559,7 +15559,7 @@ corpus/sabre-io/vobject/lib/Parameter.php:209:33
 corpus/sabre-io/vobject/lib/Parser/MimeDir.php:667:18
     → /^ (?: [^:])+ (?: "[^"]")* : (.*)$/xs
    ↳ via $regex
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: [^:])" at offset 14; it can be removed without changing behavior.
    TIP 
          /^
        -             (?: [^:])+ # Anything but a colon
@@ -15582,7 +15582,7 @@ corpus/sabre-io/vobject/lib/StringUtil.php:20:24
 
 corpus/sabre-io/vobject/lib/StringUtil.php:40:29
     → %(?:[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F])%
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F])" at offset 0; it can be removed without changing behavior.
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '\x0B' and '\x0C' explicitly instead of a range.
    TIP 
@@ -16950,16 +16950,16 @@ Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCR
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/simplepie/simplepie/src/Item.php:2305:115
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
 corpus/simplepie/simplepie/src/Item.php:2330:115
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
@@ -16978,32 +16978,32 @@ corpus/simplepie/simplepie/src/Sanitize.php:577:30
 
 corpus/simplepie/simplepie/src/SimplePie.php:2991:102
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
 corpus/simplepie/simplepie/src/SimplePie.php:3016:102
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
 corpus/simplepie/simplepie/src/Source.php:472:117
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
 corpus/simplepie/simplepie/src/Source.php:488:117
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
    TIP 
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
@@ -18059,8 +18059,8 @@ corpus/statamic/cms/src/View/Antlers/Language/Runtime/RuntimeParser.php:231:24
 ### corpus/stecman/symfony-console-completion — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/stecman/symfony-console-completion/src/CompletionContext.php:300:35
     → /^(?:['"])(.*?)(?:['"])?$/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:['"])" at offset 1; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:['"])" at offset 14; it can be removed without changing behavior.
    TIP 
        - /^(?:['"])(.*?)(?:['"])?$/
        + /^['"](.*?)['"]?$/
@@ -18287,7 +18287,7 @@ corpus/symfony/symfony/src/Symfony/Component/AssetMapper/ImportMap/ImportMapMana
 corpus/symfony/symfony/src/Symfony/Component/Cache/Adapter/CouchbaseCollectionAdapter.php:63:24
     → /^(?:\/(?<bucketName>[^\/\?]+))(?:(?:\/(?<scopeName>[^\/]+))(?:\/(?<collectionName>[^\/\?]+)))?(?:\/)?$/
    ↳ via $pathPattern
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:\/)" at offset 94; it can be removed without changing behavior.
    TIP 
        - /^(?:\/(?<bucketName>[^\/\?]+))(?:(?:\/(?<scopeName>[^\/]+))(?:\/(?<collectionName>[^\/\?]+)))?(?:\/)?$/
        + /^(?:\/(?<bucketName>[^\/?]+))(?:(?:\/(?<scopeName>[^\/]+))(?:\/(?<collectionName>[^\/?]+)))?\/?$/
@@ -19235,7 +19235,7 @@ corpus/voku/portable-utf8/src/voku/helper/UTF8.php:3742:21
 corpus/voku/portable-utf8/src/voku/helper/UTF8.php:3783:22
     → /^(?:http(?:s)?:\/\/).*?(?:\.localhost)/iu
    ↳ via $regex
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:s)" at offset 8; it can be removed without changing behavior.
    TIP 
        - /^(?:http(?:s)?:\/\/).*?(?:\.localhost)/iu
        + /^(?:https?:\/\/).*?\.localhost/iu
@@ -19243,7 +19243,7 @@ corpus/voku/portable-utf8/src/voku/helper/UTF8.php:3783:22
 corpus/voku/portable-utf8/src/voku/helper/UTF8.php:3790:18
     → /^(?:http(?:s)?:\/\/)(?:[\p{L}0-9][\p{L}0-9_-]*(?:\.[\p{L}0-9][\p{L}0-9_-]*))(?:\d+)?(?:\/\.*)?/iu
    ↳ via $regex
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:s)" at offset 8; it can be removed without changing behavior.
    TIP 
        - /^(?:http(?:s)?:\/\/)(?:[\p{L}0-9][\p{L}0-9_-]*(?:\.[\p{L}0-9][\p{L}0-9_-]*))(?:\d+)?(?:\/\.*)?/iu
        + /^(?:https?:\/\/)(?:[\p{L}0-9][\p{L}0-9_\-]*(?:\.[\p{L}0-9][\p{L}0-9_\-]*))(?:\d+)?(?:\/\.*)?/iu
@@ -19284,101 +19284,101 @@ Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCR
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/voku/urlify/src/voku/helper/URLify.php:538:21
     → /(?:\s|^)(\d+)(?: )*€(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 13; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:539:21
     → /(?:\s|^)\$(?: )*(\d+)(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
    TIP 
        - /(?:\s|^)\$(?: )*(\d+)(?:\s|$)/
        + /(?:\s|^)\$ *(\d+)(?:\s|$)/
 
 corpus/voku/urlify/src/voku/helper/URLify.php:540:21
     → /(?:\s|^)£(?: )*(\d+)(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:541:21
     → /(?:\s|^)¥(?: )*(\d+)(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:542:21
     → /(?:\s|^)(\d+)[.|,](\d+)(?: )*€(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 23; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:543:21
     → /(?:\s|^)\$(?: )*(\d+)[.|,](\d+)(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
    TIP 
        - /(?:\s|^)\$(?: )*(\d+)[.|,](\d+)(?:\s|$)/
        + /(?:\s|^)\$ *(\d+)[.|,](\d+)(?:\s|$)/
 
 corpus/voku/urlify/src/voku/helper/URLify.php:544:21
     → /(?:\s|^)£(?: )*(\d+)[.|,](\d+)(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:561:17
     → /(?:\s|^)1(?: )*€(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 9; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:562:17
     → /(?:\s|^)(\d+)(?: )*€(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 13; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:563:17
     → /(?:\s|^)\$(?: )*1(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
    TIP 
        - /(?:\s|^)\$(?: )*1(?:\s|$)/
        + /(?:\s|^)\$ *1(?:\s|$)/
 
 corpus/voku/urlify/src/voku/helper/URLify.php:564:17
     → /(?:\s|^)\$(?: )*(\d+)(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
    TIP 
        - /(?:\s|^)\$(?: )*(\d+)(?:\s|$)/
        + /(?:\s|^)\$ *(\d+)(?:\s|$)/
 
 corpus/voku/urlify/src/voku/helper/URLify.php:565:17
     → /(?:\s|^)£(?: )*1(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:566:17
     → /(?:\s|^)£(?: )*(\d+)(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:567:17
     → /(?:\s|^)¥(?: )*(\d+)(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:568:17
     → /(?:\s|^)1[.|,](\d+)(?: )*€(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 19; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:569:17
     → /(?:\s|^)(\d+)[.|,](\d+)(?: )*€(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 23; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:570:17
     → /(?:\s|^)1[.|,](\d+)(?: )*$(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 19; it can be removed without changing behavior.
    TIP 
        - /(?:\s|^)1[.|,](\d+)(?: )*$(?:\s|$)/
        + /(?:\s|^)1[.|,](\d+) *$(?:\s|$)/
 
 corpus/voku/urlify/src/voku/helper/URLify.php:571:17
     → /(?:\s|^)\$(?: )*(\d+)[.|,](\d+)(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
    TIP 
        - /(?:\s|^)\$(?: )*(\d+)[.|,](\d+)(?:\s|$)/
        + /(?:\s|^)\$ *(\d+)[.|,](\d+)(?:\s|$)/
 
 corpus/voku/urlify/src/voku/helper/URLify.php:572:17
     → /(?:\s|^)1[.|,](\d+)(?: )*£(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 19; it can be removed without changing behavior.
 
 corpus/voku/urlify/src/voku/helper/URLify.php:573:17
     → /(?:\s|^)£(?: )*(\d+)[.|,](\d+)(?:\s|$)/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?: )" at offset 10; it can be removed without changing behavior.
 
 
 
@@ -20154,7 +20154,7 @@ Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCR
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/wp-cli/wp-cli/bundle/rmccue/requests/src/IdnaEncoder.php:144:22
     → /(?:[^\x00-\x7F])/
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\x00-\x7F])" at offset 0; it can be removed without changing behavior.
    TIP 
        - /(?:[^\x00-\x7F])/
        + /[^\x00-\x7F]/
@@ -20167,7 +20167,7 @@ corpus/wp-cli/wp-cli/bundle/rmccue/requests/src/Requests.php:855:19
     → /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\r\n])" at offset 46; it can be removed without changing behavior.
    TIP 
        - /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
        + /^([0-9a-f]+)(?:;(?:[\w\-]*)(?:=(?:(?:[\w\-]*)*|"[^\r\n]*"))?)*\r\n/i
@@ -20176,7 +20176,7 @@ corpus/wp-cli/wp-cli/bundle/rmccue/requests/src/Requests.php:863:36
     → /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Redundant non-capturing group "(?:[^\r\n])" at offset 46; it can be removed without changing behavior.
    TIP 
        - /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
        + /^([0-9a-f]+)(?:;(?:[\w\-]*)(?:=(?:(?:[\w\-]*)*|"[^\r\n]*"))?)*\r\n/i
