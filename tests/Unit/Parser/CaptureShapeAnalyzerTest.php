@@ -70,6 +70,23 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $this->assertSame($values, $this->group($pattern, $group)->values);
     }
 
+    /**
+     * A group that reads either constants or digits keeps both: the join
+     * of (a|\d) holds no value set and no digit fact, its arms hold 'a' and
+     * a digit: preg_match('/(a|\d)/', 'a') -> ["a","a"] and
+     * preg_match('/(a|\d)/', '5') -> ["5","5"] (PHP 8.4.27, PCRE2 10.49).
+     *
+     * @param list<array{values: list<string>|null, digitsOnly: bool}> $arms
+     */
+    #[Test]
+    #[DataProvider('provideArms')]
+    public function test_a_group_keeps_the_arms_its_join_loses(string $pattern, int $group, array $arms): void
+    {
+        $actual = array_map(static fn (CaptureGroupShape $arm): array => ['values' => $arm->values, 'digitsOnly' => $arm->digitsOnly], $this->group($pattern, $group)->arms);
+
+        $this->assertSame($arms, $actual);
+    }
+
     #[Test]
     #[DataProvider('provideLengths')]
     public function test_a_group_knows_its_length(string $pattern, int $group, int $min, ?int $max): void
@@ -1078,6 +1095,27 @@ final class CaptureShapeAnalyzerTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{pattern: string, group: int, arms: list<array{values: list<string>|null, digitsOnly: bool}>}>
+     */
+    public static function provideArms(): iterable
+    {
+        yield 'a constant beside digits' => ['pattern' => '/(a|\d)/', 'group' => 1, 'arms' => [['values' => ['a'], 'digitsOnly' => false], ['values' => null, 'digitsOnly' => true]]];
+        yield 'through a group that does not capture' => ['pattern' => '/((?:a|\d+))/', 'group' => 1, 'arms' => [['values' => ['a'], 'digitsOnly' => false], ['values' => null, 'digitsOnly' => true]]];
+        yield 'the whole match' => ['pattern' => '/a|\d/', 'group' => 0, 'arms' => [['values' => ['a'], 'digitsOnly' => false], ['values' => null, 'digitsOnly' => true]]];
+        yield 'each branch of a branch reset' => ['pattern' => '/(?|(a)|(\d))/', 'group' => 1, 'arms' => [['values' => ['a'], 'digitsOnly' => false], ['values' => null, 'digitsOnly' => true]]];
+        yield 'arms that read the same once' => ['pattern' => '/(a|\d|\d)/', 'group' => 1, 'arms' => [['values' => ['a'], 'digitsOnly' => false], ['values' => null, 'digitsOnly' => true]]];
+        // A scan from offset 1 reads past the "^" a first match would stop at:
+        // preg_match('/\d|(?:^|x)/', '1x', $m, 0, 1) -> ["x"].
+        yield 'the whole match of a scan' => ['pattern' => '/\d|(?:^|x)/', 'group' => 0, 'arms' => [['values' => null, 'digitsOnly' => true], ['values' => ['', 'x'], 'digitsOnly' => false]]];
+        yield 'values the join already holds' => ['pattern' => '/(a|b)/', 'group' => 1, 'arms' => []];
+        yield 'digits the join already holds' => ['pattern' => '/(\d|\d\d)/', 'group' => 1, 'arms' => []];
+        yield 'arms that say nothing more' => ['pattern' => '/(a+|b+)/', 'group' => 1, 'arms' => []];
+        yield 'a repeated alternation' => ['pattern' => '/((?:a|\d)+)/', 'group' => 1, 'arms' => []];
+        yield 'a group that may hold what a cut left' => ['pattern' => '/(a|\d(*ACCEPT))/', 'group' => 1, 'arms' => []];
+        yield 'a group no match sets' => ['pattern' => '/(?!(a|\d))b/', 'group' => 1, 'arms' => []];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, group: int, min: int, max: int|null}>
      */
     public static function provideLengths(): iterable
@@ -1109,6 +1147,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'never set, last' => ['pattern' => '/(?!(b))a/', 'flags' => 0, 'expected' => "array{0: 'a'}"];
         yield 'never set, last, as null' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: null}"];
         yield 'mark' => ['pattern' => '/(*MARK:m)a/', 'flags' => 0, 'expected' => "array{0: 'a', MARK?: 'm'}"];
+        yield 'a constant beside digits' => ['pattern' => '/(a|\d)/', 'flags' => 0, 'expected' => "array{0: 'a'|numeric-string, 1: 'a'|numeric-string}"];
+        yield 'a constant beside digits, with offsets' => ['pattern' => '/(a|\d+)x/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{non-falsy-string, int<0, max>}, 1: array{'a'|numeric-string, int<0, max>}}"];
         // preg_match('/(?<x>a)(*MARK:m)b/', 'ab') -> {"0":"ab","x":"a","1":"a","MARK":"m"}: x keeps its own value, MARK comes last (PHP 8.4.26)
         yield 'named group next to a mark verb' => ['pattern' => '/(?<x>a)(*MARK:m)b/', 'flags' => 0, 'expected' => "array{0: 'ab', x: 'a', 1: 'a', MARK?: 'm'}"];
         // preg_match('/(?<MARK>a)/', 'a') -> {"0":"a","MARK":"a","1":"a"}: without a verb the key holds the group alone
@@ -1155,6 +1195,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield '/[é]/' => ['pattern' => '/[é]/', 'subjects' => ["\xc3", "\xa9"]];
         yield '/([\xad])/' => ['pattern' => '/([\xad])/', 'subjects' => ["\xad"]];
         yield '/(?i:a)(b)/' => ['pattern' => '/(?i:a)(b)/', 'subjects' => ['ab', 'Ab']];
+        yield '/(a|\d)/' => ['pattern' => '/(a|\d)/', 'subjects' => ['a', '5', 'x7']];
+        yield '/(?|(a)|(\d))/' => ['pattern' => '/(?|(a)|(\d))/', 'subjects' => ['a', '5']];
+        yield '/(a|\d+)x/' => ['pattern' => '/(a|\d+)x/', 'subjects' => ['ax', '12x']];
         yield '/((?i)a)(b)/' => ['pattern' => '/((?i)a)(b)/', 'subjects' => ['ab', 'Ab']];
         yield '/(a(?i)b|c)/' => ['pattern' => '/(a(?i)b|c)/', 'subjects' => ['ab', 'aB', 'c', 'C']];
         yield '/(?i:(?-i)(a))(b)/i' => ['pattern' => '/(?i:(?-i)(a))(b)/i', 'subjects' => ['ab', 'aB']];

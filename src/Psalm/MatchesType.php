@@ -224,7 +224,9 @@ final class MatchesType
     {
         $type = null;
         foreach ($key->groups as $group) {
-            $type = self::union($type, self::valueType($group));
+            foreach ([] === $group->arms ? [$group] : $group->arms as $arm) {
+                $type = self::union($type, self::valueType($arm));
+            }
         }
 
         if ($key->unset) {

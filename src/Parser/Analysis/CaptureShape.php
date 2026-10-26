@@ -233,7 +233,12 @@ final class CaptureShape
      */
     private static function groupTypes(CaptureKey $key, string $unset): array
     {
-        $types = array_values(array_map(self::valueType(...), $key->groups));
+        $types = [];
+        foreach ($key->groups as $group) {
+            foreach ([] === $group->arms ? [$group] : $group->arms as $arm) {
+                $types[] = self::valueType($arm);
+            }
+        }
         if ($key->unset) {
             $types[] = $unset;
         }

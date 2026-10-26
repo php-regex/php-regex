@@ -46,6 +46,8 @@ use PHPRegex\Parser\Node\SubroutineNode;
  *
  *     $shape = (new CaptureShapeAnalyzer())->analyze($parser->parse('/(a)(b)?/'));
  *     $shape->matchShape(); // "array{0: 'a'|'ab', 1: 'a', 2?: 'b'}"
+ *
+ * @phpstan-import-type Facts from CaptureFacts
  */
 final class CaptureShapeAnalyzer
 {
@@ -53,9 +55,14 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '9';
+    public const ANALYSIS_VERSION = '10';
 
     private const MAX_CASES = 16;
+
+    /**
+     * Past this many arms, a group keeps only the join of their facts.
+     */
+    private const MAX_ARMS = 8;
 
     /**
      * Groups that neither capture nor assert: the split alternation may sit
@@ -75,7 +82,7 @@ final class CaptureShapeAnalyzer
     private int $next = 1;
 
     /**
-     * @var array<int<1, max>, list<array{name: ?string, never: bool, after_accept: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool}>>
+     * @var array<int<1, max>, list<array{name: ?string, never: bool, after_accept: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool, arms: list<Facts>}>>
      */
     private array $occurrences = [];
 
@@ -187,7 +194,11 @@ final class CaptureShapeAnalyzer
             }
         }
 
-        return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, $whole['min'], $whole['max'], $whole['values'], $whole['nonFalsy'], $whole['digitsOnly']), $groups, $this->marks, scanWhole: $scanWhole);
+        // read as a group's are, with no zero-width first branch winning:
+        // the arms hold for every match of a scan too
+        $arms = self::arms(0, null, Participation::Always, $whole['values'], $whole['digitsOnly'], $this->facts->arms($wholePattern, true));
+
+        return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, $whole['min'], $whole['max'], $whole['values'], $whole['nonFalsy'], $whole['digitsOnly'], $arms), $groups, $this->marks, scanWhole: $scanWhole);
     }
 
     /**
@@ -452,8 +463,8 @@ final class CaptureShapeAnalyzer
     }
 
     /**
-     * @param int<1, max>                                                                                                                                       $number
-     * @param list<array{name: ?string, never: bool, after_accept: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool}> $occurrences
+     * @param int<1, max>                                                                                                                                                          $number
+     * @param list<array{name: ?string, never: bool, after_accept: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool, arms: list<Facts>}> $occurrences
      */
     private function group(int $number, array $occurrences, bool $guaranteed): CaptureGroupShape
     {
@@ -500,7 +511,39 @@ final class CaptureShapeAnalyzer
             return new CaptureGroupShape($number, $name, $participation, 0, null, null);
         }
 
-        return new CaptureGroupShape($number, $name, $participation, $min ?? 0, $max, [] === $set ? null : $values, $nonFalsy, $digitsOnly);
+        $arms = [];
+        foreach ($set as $occurrence) {
+            $arms = [...$arms, ...$occurrence['arms']];
+        }
+
+        return new CaptureGroupShape($number, $name, $participation, $min ?? 0, $max, [] === $set ? null : $values, $nonFalsy, $digitsOnly, self::arms($number, $name, $participation, $values, $digitsOnly, $arms));
+    }
+
+    /**
+     * The shape of each arm, when their join loses what they say: it holds
+     * no value set and no digit fact, while an arm holds one of them.
+     * Arms that read the same count once; past MAX_ARMS, the join stands.
+     *
+     * @param list<string>|null $values     the values of the join
+     * @param bool              $digitsOnly the digit fact of the join
+     * @param list<Facts>       $arms
+     *
+     * @return list<CaptureGroupShape>
+     */
+    private static function arms(int $number, ?string $name, Participation $participation, ?array $values, bool $digitsOnly, array $arms): array
+    {
+        if (null !== $values || $digitsOnly) {
+            return [];
+        }
+
+        $shapes = [];
+        $telling = false;
+        foreach ($arms as $arm) {
+            $telling = $telling || null !== $arm['values'] || $arm['digitsOnly'];
+            $shapes[serialize([$arm['min'], $arm['max'], $arm['values'], $arm['nonFalsy'], $arm['digitsOnly']])] = new CaptureGroupShape($number, $name, $participation, $arm['min'], $arm['max'], $arm['values'], $arm['nonFalsy'], $arm['digitsOnly']);
+        }
+
+        return $telling && \count($shapes) > 1 && \count($shapes) <= self::MAX_ARMS ? array_values($shapes) : [];
     }
 
     /**
@@ -597,9 +640,11 @@ final class CaptureShapeAnalyzer
             if ($never) {
                 // A group no match sets holds no value: its lengths are all it says.
                 [$min, $max] = $this->facts->lengths($node->child);
-                $read = ['min' => $min, 'max' => $max, 'values' => null, 'nonFalsy' => false, 'digitsOnly' => false];
+                $read = ['min' => $min, 'max' => $max, 'values' => null, 'nonFalsy' => false, 'digitsOnly' => false, 'arms' => []];
             } else {
                 $read = $this->facts->of($node->child, true);
+                // each way the group is set: each branch of what it reads, or the group as a whole
+                $read += ['arms' => $this->facts->arms($node->child, true) ?: [$read]];
             }
             $this->occurrences[$number][] = ['name' => $node->name, 'never' => $never, 'after_accept' => $this->accepts] + $read;
 

@@ -72,6 +72,11 @@ final class CaptureFacts
      */
     private const ZERO_FREE_POSIX = ['alpha', 'upper', 'lower', 'space', 'blank', 'cntrl', 'punct'];
 
+    /**
+     * Groups that read what their content reads.
+     */
+    private const READ_THROUGH = [GroupType::Capturing, GroupType::Named, GroupType::NonCapturing, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags];
+
     private const LOOKAROUNDS = [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative];
 
     private readonly LengthRangeCalculator $calculator;
@@ -183,6 +188,26 @@ final class CaptureFacts
             // readers compose the empty arm with the length themselves
             'digitsOnly' => $this->digitsOnly($node),
         ];
+    }
+
+    /**
+     * What each branch reads, when the node is an alternation, seen through
+     * the groups that read what their content reads: (a|\d) reads 'a' or a
+     * digit. Empty for any other node.
+     *
+     * @return list<Facts>
+     */
+    public function arms(NodeInterface $node, bool $group = false): array
+    {
+        while ($node instanceof GroupNode && \in_array($node->type, self::READ_THROUGH, true) && !self::isBareOption($node)) {
+            $node = $node->child;
+        }
+
+        if (!$node instanceof AlternationNode) {
+            return [];
+        }
+
+        return array_map(fn (NodeInterface $branch): array => $this->of($branch, $group), $node->alternatives);
     }
 
     /**
@@ -832,6 +857,15 @@ final class CaptureFacts
         $codePoint = mb_ord($node->value, 'UTF-8');
 
         return false === $codePoint ? null : $codePoint;
+    }
+
+    /**
+     * Whether the group is a bare "(?i)", which spans its flags and three
+     * bytes and reads nothing, rather than a scoped "(?i:...)".
+     */
+    private static function isBareOption(GroupNode $node): bool
+    {
+        return GroupType::InlineFlags === $node->type && $node->getEndPosition() - $node->getStartPosition() === \strlen($node->flags ?? '') + 3;
     }
 
     private static function isLookaround(GroupNode $node): bool

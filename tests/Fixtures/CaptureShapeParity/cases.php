@@ -83,6 +83,9 @@ return [
     ['source' => 'analyzer', 'pattern' => '/(?i:(?-i)(a))(b)/i', 'subjects' => ['ab', 'aB']],
     ['source' => 'analyzer', 'pattern' => '/(?<t>a)(?:&(?<t2>(?&t)))?/', 'subjects' => ['a', 'a&a']],
     ['source' => 'analyzer', 'pattern' => '/(?i:(a))((?1))/', 'subjects' => ['aa', 'AA', 'aA']],
+    ['source' => 'analyzer', 'pattern' => '/(a|\d)/', 'subjects' => ['a', '5', 'x7']],
+    ['source' => 'analyzer', 'pattern' => '/(?|(a)|(\d))/', 'subjects' => ['a', '5']],
+    ['source' => 'analyzer', 'pattern' => '/(a|\d+)x/', 'subjects' => ['ax', '12x']],
 
     // preg_match() rows of the php-src PCRE tests (php_pcre_comprehensive.php).
     ['source' => 'php-src bug37911.phpt', 'pattern' => '|(?P<name>blub)|', 'subjects' => ['bla blub blah']],

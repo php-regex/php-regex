@@ -28,9 +28,10 @@ final class CaptureGroupShape
     /**
      * @internal built by CaptureShapeAnalyzer::analyze(), for CaptureShape::$whole and CaptureShape::$groups
      *
-     * @param list<string>|null $values     every string the group can hold, or null when they are not a small finite set. An alternation that mixes enumerable and non-enumerable arms - (a|\d) - reads as null: the digits arm holds infinitely many strings, and the scalar facts below carry only what holds for every arm together. A consumer needing per-arm facts walks the tree the shape was read from
+     * @param list<string>|null $values     every string the group can hold, or null when they are not a small finite set. An alternation that mixes enumerable and non-enumerable arms - (a|\d) - reads as null: the digits arm holds infinitely many strings, and the scalar facts below carry only what holds for every arm together; $arms keeps each arm
      * @param bool              $nonFalsy   every value is truthy: neither '' nor '0'
      * @param bool              $digitsOnly every value satisfies ctype_digit(): a non-empty run of ASCII 0-9
+     * @param list<self>        $arms       the shape of each way the group is set - each branch of the alternation it reads, each group of a branch reset bearing its number - when their join loses what they say: (a|\d) holds 'a' or digits. Empty when the facts above say it all. An arm bears the number, the name and the participation of the group
      */
     public function __construct(
         public readonly int $number,
@@ -41,5 +42,6 @@ final class CaptureGroupShape
         public readonly ?array $values,
         public readonly bool $nonFalsy = false,
         public readonly bool $digitsOnly = false,
+        public readonly array $arms = [],
     ) {}
 }

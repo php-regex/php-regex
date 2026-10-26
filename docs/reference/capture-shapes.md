@@ -72,10 +72,18 @@ from 1: in `/(a)(?<x>b)/n`, `$groups[1]` is `x`.
 | `values` | every string the group can hold, when they are a small finite set read from literals, or `null` |
 | `nonFalsy` | `true` when every value satisfies `(bool) $v`: it is neither `''` nor `'0'` ([Facts](#facts)) |
 | `digitsOnly` | `true` when every value satisfies `ctype_digit($v)`: a non-empty run of ASCII `0` to `9` ([Facts](#facts)) |
+| `arms` | the record of each way the group is set, each branch it reads or each group of a branch reset, when joining them loses what they say; empty otherwise (below) |
 
 The lengths, the values and the facts describe the group when it is set. What PHP
 writes for an unset group, `''` or `null`, is told by the participation: a `MayBeUnset`
 group with `minLength` 1 still reads `''` when a match leaves it unset.
+
+A group that reads either constants or digits keeps both in `arms`. In `/(a|\d)/`, the
+join of the two branches holds no value set and no digit fact, so `values` is `null` and
+`digitsOnly` is `false`; `arms` holds one record whose `values` is `['a']` and one whose
+`digitsOnly` is `true`. Each arm bears the group's number, name and participation. The
+list stays empty when the join says it all, as in `/(a|b)/` or `/(\d|\d\d)/`, and past
+eight distinct arms.
 
 A branch-reset record takes the name any of its branches gives. In `/(?|(x)|(?<a>y))/`,
 group 1 is named `a`, and PHP writes `a` on `x` too. PCRE refuses two different names
@@ -182,7 +190,8 @@ $shape->matchShape(PREG_UNMATCHED_AS_NULL);
 //       day: (non-falsy-string&numeric-string)|null, 3: (non-falsy-string&numeric-string)|null}
 ```
 
-A group's value is written, from the most precise to the least:
+A group's value is written, from the most precise to the least, once per arm when it has
+`arms`: `/(a|\d)/` writes group 1 `'a'|numeric-string`.
 
 - as a union of constant strings, when its values are known;
 - `''`, when it is always empty;
