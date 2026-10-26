@@ -14292,6 +14292,14 @@ corpus/phpbb/phpbb/phpBB/posting.php:1762:42
 
 
 
+### corpus/phplrt/phplrt — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+corpus/phplrt/phplrt/libs/components/lexer-builder/src/Compiler/RegexValidationLexerCompilerPass.php:83:43
+    → /([\w_]+\(\):\h+)/
+   WARN  Character class contains duplicate elements that do not add new matches.
+       ↳ Remove the redundant character class element.
+
+
+
 ### corpus/phpmd/phpmd — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/phpmd/phpmd/public/scripts/update-rules.php:70:25
     → (\s+)s
