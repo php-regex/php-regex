@@ -14,6 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -86,6 +90,31 @@ final class LengthRangeCalculatorTest extends TestCase
         [$min, $max] = $ast->accept($this->visitor);
         $this->assertSame(1, $min);
         $this->assertNull($max);
+    }
+
+    public function test_subroutine_follows_the_body_a_resolver_gives(): void
+    {
+        // preg_match('/(ab)x(?1)c/', 'abxabc') matches six characters (PHP 8.4.27, PCRE2 10.49).
+        $ast = Regex::create()->parse('/(ab)x(?1)c/');
+        $group = $ast->pattern instanceof SequenceNode ? $ast->pattern->children[0] : null;
+        $this->assertInstanceOf(GroupNode::class, $group);
+        $calls = [];
+        $visitor = new LengthRangeCalculator(calledBody: static function (SubroutineNode $call) use ($group, &$calls): NodeInterface {
+            $calls[] = $call->reference;
+
+            return $group->child;
+        });
+
+        $this->assertSame([6, 6], $ast->accept($visitor));
+        $this->assertSame(['1'], $calls);
+    }
+
+    public function test_subroutine_stays_unbounded_where_the_resolver_gives_no_body(): void
+    {
+        $ast = Regex::create()->parse('/(a(?1)?b)x(?1)/');
+        $visitor = new LengthRangeCalculator(calledBody: static fn (SubroutineNode $call): ?NodeInterface => null);
+
+        $this->assertSame([3, null], $ast->accept($visitor));
     }
 
     public function test_pcre_verb_pattern(): void

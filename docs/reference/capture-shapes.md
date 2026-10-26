@@ -445,8 +445,10 @@ cannot tell, the answer widens rather than guesses:
 - `\K` and `(*ACCEPT)` cut a match short: the whole match then keeps only its presence,
   and `(*ACCEPT)` makes every group `MayBeUnset` with unknown values.
 - A subroutine call reads what the group it calls reads, with the options of that
-  group: in `/(?<t>a)&((?&t))/` group 2 holds `'a'`. A call of the group that holds it,
-  or of the whole pattern, and a backreference, have unknown values.
+  group: in `/(?<t>a)&((?&t))/` group 2 holds `'a'`. Its length is the length of that
+  group, wherever the call stands: in `/(?<t>\w\w)x((?&t)c)/` group 2 is three
+  characters long. A call of the group that holds it, or of the whole pattern, and a
+  backreference, have unknown values, and a length unbounded from zero.
 - A call that returns groups, `(?1(2))` in PCRE2 10.47, sets them as the group it runs
   does: in `/(?(DEFINE)((Sat)urday))(?1(2)),\2/` group 2 holds `'Sat'`, and is `MayBeUnset`.
 - A substring scan, `(*scan_substring:...)` or `(*scs:...)` in PCRE2 10.45, reads no

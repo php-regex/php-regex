@@ -1182,6 +1182,25 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'accept leaves the group open after some text' => ['pattern' => '/(a(*ACCEPT)b)c/', 'group' => 1, 'min' => 0, 'max' => null];
         // preg_match('/a\Kb?/', 'a') -> [""]: \K leaves the whole match empty, so its minimum is exactly 0
         yield 'keep cuts the whole match short' => ['pattern' => '/a\Kb?/', 'group' => 0, 'min' => 0, 'max' => null];
+        // A call reads as long as the body of the group it calls, wherever it stands
+        // (PHP 8.4.27, PCRE2 10.49): preg_match('/(?<t>ab)x((?&t)c)/', 'abxabc') sets
+        // group 2 to 'abc'; preg_match('/(?<t>a{1,3})x((?&t)c)/', 'axaaac') to 'aaac';
+        // preg_match('/(x)((?1)(?1))((?2)z)/', 'xxxxxz') group 3 to 'xxz';
+        // preg_match('/(?(DEFINE)(?<d>\d\d))((?&d)-(?&d))/', '12-34') group 2 to '12-34';
+        // preg_match('/(?<t>éé)x((?&t)c)/u', 'ééxééc') group 2 to 'ééc', three code points.
+        yield 'a call in a sequence reads the body it calls' => ['pattern' => '/(?<t>ab)x((?&t)c)/', 'group' => 2, 'min' => 3, 'max' => 3];
+        yield 'a call of a bounded repeat' => ['pattern' => '/(?<t>a{1,3})x((?&t)c)/', 'group' => 2, 'min' => 2, 'max' => 4];
+        yield 'a call of an unbounded repeat' => ['pattern' => '/(?<t>a+)x((?&t)c)/', 'group' => 2, 'min' => 2, 'max' => null];
+        yield 'a call of a group that calls another' => ['pattern' => '/(x)((?1)(?1))((?2)z)/', 'group' => 3, 'min' => 3, 'max' => 3];
+        yield 'calls of a group in DEFINE' => ['pattern' => '/(?(DEFINE)(?<d>\d\d))((?&d)-(?&d))/', 'group' => 2, 'min' => 5, 'max' => 5];
+        yield 'a call counts code points under /u' => ['pattern' => '/(?<t>éé)x((?&t)c)/u', 'group' => 2, 'min' => 3, 'max' => 3];
+        yield 'a call in the whole match' => ['pattern' => '/(?<t>\w\w)x(?&t)/', 'group' => 0, 'min' => 5, 'max' => 5];
+        // A recursion stays unbounded from zero, followed or not:
+        // preg_match('/(?<t>a(?<u>b(?&u)?))x((?&t)c)/', 'abxabbbc') sets group 3 to
+        // 'abbbc', preg_match('/(a(?1)?b)/', 'aabb') group 1 to 'aabb'.
+        yield 'a call of a group that holds a recursion' => ['pattern' => '/(?<t>a(?<u>b(?&u)?))x((?&t)c)/', 'group' => 3, 'min' => 3, 'max' => null];
+        yield 'a recursion reads unbounded' => ['pattern' => '/(a(?1)?b)/', 'group' => 1, 'min' => 2, 'max' => null];
+        yield 'a call of a recursive group reads unbounded from zero' => ['pattern' => '/(?<t>\d(?&t)?)x((?:(?&t)))/', 'group' => 2, 'min' => 0, 'max' => null];
     }
 
     /**
@@ -1255,6 +1274,15 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield '/(?<t>a)(?:&(?<t2>(?&t)))?/' => ['pattern' => '/(?<t>a)(?:&(?<t2>(?&t)))?/', 'subjects' => ['a', 'a&a']];
         yield '/(?i:(a))((?1))/' => ['pattern' => '/(?i:(a))((?1))/', 'subjects' => ['aa', 'AA', 'aA']];
         yield '/(a(?1)?b)/' => ['pattern' => '/(a(?1)?b)/', 'subjects' => ['ab', 'aabb']];
+        yield '/(?<t>ab)x((?&t)c)/' => ['pattern' => '/(?<t>ab)x((?&t)c)/', 'subjects' => ['abxabc']];
+        yield '/(?<t>a{1,3})x((?&t)c)/' => ['pattern' => '/(?<t>a{1,3})x((?&t)c)/', 'subjects' => ['axac', 'aaaxaaac']];
+        yield '/(x)((?1)(?1))((?2)z)/' => ['pattern' => '/(x)((?1)(?1))((?2)z)/', 'subjects' => ['xxxxxz']];
+        yield '/(?(DEFINE)(?<d>\d\d))((?&d)-(?&d))/' => ['pattern' => '/(?(DEFINE)(?<d>\d\d))((?&d)-(?&d))/', 'subjects' => ['12-34']];
+        yield '/(?<t>éé)x((?&t)c)/u' => ['pattern' => '/(?<t>éé)x((?&t)c)/u', 'subjects' => ['ééxééc']];
+        yield '/(?(DEFINE)(?<t>a(*ACCEPT)bb))x((?&t)c)/' => ['pattern' => '/(?(DEFINE)(?<t>a(*ACCEPT)bb))x((?&t)c)/', 'subjects' => ['xac']];
+        yield '/(?<t>\w\w)x((?:(?&t)|ab))/' => ['pattern' => '/(?<t>\w\w)x((?:(?&t)|ab))/', 'subjects' => ['abx00', 'abxab']];
+        yield '/(?<t>a(?<u>b(?&u)?))x((?&t)c)/' => ['pattern' => '/(?<t>a(?<u>b(?&u)?))x((?&t)c)/', 'subjects' => ['abxabc', 'abxabbbc']];
+        yield '/(?<t>\d(?&t)?)x((?:(?&t)))/' => ['pattern' => '/(?<t>\d(?&t)?)x((?:(?&t)))/', 'subjects' => ['1x0', '12x345']];
         yield '/(?<n>a)(b)/' => ['pattern' => '/(?<n>a)(b)/', 'subjects' => ['ab']];
         yield '/(?J)(?<n>a)|(?<n>b)/' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'subjects' => ['a', 'b']];
         yield '/(a){0}b/' => ['pattern' => '/(a){0}b/', 'subjects' => ['b']];
@@ -1475,6 +1503,11 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'a mandatory suffix keeps the set value truthy' => ['pattern' => '/([0-9]*\$)?/', 'group' => 1, 'expected' => true];
         yield 'whole match pinned by a mandatory literal' => ['pattern' => '/3(?:\/.*)?$/', 'group' => 0, 'expected' => true];
         yield 'a lone zero beside optionals still reads falsy' => ['pattern' => '/((a)?0)?/', 'group' => 1, 'expected' => false];
+        // preg_match('/(?<t>\w\w)x((?:(?&t)|ab))/', 'abx00') sets group 2 to '00':
+        // two characters either way, so never '' or '0' (PHP 8.4.27, PCRE2 10.49).
+        yield 'a call nested in a group reads the length of its body' => ['pattern' => '/(?<t>\w\w)x((?:(?&t)|ab))/', 'group' => 2, 'expected' => true];
+        // preg_match('/(?<t>\d(?&t)?)x((?:(?&t)))/', '1x0') sets group 2 to '0'.
+        yield 'a call of a recursive group may read zero' => ['pattern' => '/(?<t>\d(?&t)?)x((?:(?&t)))/', 'group' => 2, 'expected' => false];
     }
 
     /**

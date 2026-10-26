@@ -142,7 +142,7 @@ final class CaptureFacts
         private readonly bool $ucp = false,
         private readonly ?GroupIndex $groups = null,
     ) {
-        $this->calculator = new LengthRangeCalculator($unicode);
+        $this->calculator = new LengthRangeCalculator($unicode, $this->calledBody(...));
         $this->lengths = new \WeakMap();
         $this->facts = new \WeakMap();
         $this->groupFacts = new \WeakMap();
@@ -155,10 +155,6 @@ final class CaptureFacts
      */
     public function lengths(NodeInterface $node): array
     {
-        if ($node instanceof SubroutineNode && null !== ($body = $this->calledBody($node))) {
-            return $this->lengths[$node] ??= $this->lengths($body);
-        }
-
         return $this->lengths[$node] ??= $node->accept($this->calculator);
     }
 

@@ -18,7 +18,7 @@ declare(strict_types=1);
  * @return array{version: string, digests: array<string, string>}
  */
 return [
-    'version' => '11',
+    'version' => '12',
     'digests' => [
         '/(a)(z)?/' => 'fceffee5528c62d919aa50fe9f9a0e4f57b34252',
         '/(z)?(a)/' => 'dad1b8133f483a94938631586006071bd8a02a22',
@@ -77,6 +77,15 @@ return [
         '/(?i:(?-i)(a))(b)/i' => '40b4697b351b4846273ab78c12e9ac1a4cfcdab5',
         '/(?<t>a)(?:&(?<t2>(?&t)))?/' => 'eeeba17a5cdcfe42cd8dfb7e326d22ec530da859',
         '/(?i:(a))((?1))/' => 'c87d313a8c07434a4b059e531659d172564fc09e',
+        '/(?<t>ab)x((?&t)c)/' => '17334a59fad1ef57d1466229bb25746d15207943',
+        '/(?<t>a{1,3})x((?&t)c)/' => '78bf7676107b40e6844b12cd90f4647ab1e2b93a',
+        '/(x)((?1)(?1))((?2)z)/' => '6d6a90098ea5e4e83ac722f51f862191fd48c06e',
+        '/(?(DEFINE)(?<d>\\d\\d))((?&d)-(?&d))/' => 'b72d398ccf5c11be6858d11b2c1102d342986315',
+        '/(?<t>éé)x((?&t)c)/u' => 'a58945493bf3afa5339a1392a3c8d79b276778b6',
+        '/(?(DEFINE)(?<t>a(*ACCEPT)bb))x((?&t)c)/' => '6954d30c9e02e836702fdb0c8b26a7dfa1af9f17',
+        '/(?<t>\\w\\w)x((?:(?&t)|ab))/' => 'df9a70d0bc2df819af874d96d46a2e0c06c82750',
+        '/(?<t>a(?<u>b(?&u)?))x((?&t)c)/' => '49a810cc715f1945be615e995d9f052eb74485e7',
+        '/(?<t>\\d(?&t)?)x((?:(?&t)))/' => 'fad0d276b937a14ca1a22a3914aa9d674794e1b7',
         '/(a|\\d)/' => 'cfc47cbd1a6ecef0fb9e8947ab63d9b916911c6c',
         '/(?|(a)|(\\d))/' => 'cfc47cbd1a6ecef0fb9e8947ab63d9b916911c6c',
         '/(a|\\d+)x/' => '43498d924645230278235a31d8edf10058f62f23',
