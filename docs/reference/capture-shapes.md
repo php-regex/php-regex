@@ -281,16 +281,55 @@ atomic `(?>...)`, option groups such as `(?i:...)`). Each alternative gives one 
 - An alternation inside an alternative is not on the path, and stays merged within its
   case: `/(a)|b(?:(c)|(d))/` gives two cases, the second keeping `c` and `d` merged.
 
+Without such an alternation, the analyzer splits on one conditional group holding a
+capturing group, reached the same way: one case for its yes branch, one for its no
+branch. The condition runs in both. An assertion keeps what it captured where its body
+matched: a positive one in the yes case, a negative one in the no case, as
+`preg_match('/(?(?!(a))x|a)/', 'a', $m)` writes `['a', 'a']`. So group 1 below is
+written whenever group 2 is set, though its group may be unset:
+
+```php
+// preg_match('/(?(?=(a))a|(c))/', 'c', $m): ['c', '', 'c']
+$shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse('/(?(?=(a))a|(c))/'));
+
+$shape->matchShape();
+// array{0: 'a', 1: 'a'}|array{0: 'c', 1: '', 2: 'c'}
+```
+
+A `?` around the conditional group adds the case where it is skipped, as for an
+alternation.
+
+Without either, the analyzer splits on one optional group (`?`, `??`, `?+`, `{0,1}`)
+holding two capturing groups or more, itself included, reached the same way: one case
+where it runs and sets its groups together, one where it is skipped and sets none.
+Checking that the outer group is set then tells that the groups it holds are set too:
+
+```php
+$shape = (new CaptureShapeAnalyzer())->analyze(
+    RegexParser::create()->parse('/^([A-Z]{1,3})([0-9]{1,7})(:([A-Z]{1,3})([0-9]{1,7}))?$/'),
+);
+
+$shape->matchShape();
+// array{0: non-falsy-string, 1: non-falsy-string, 2: numeric-string, 3: non-falsy-string, 4: non-falsy-string, 5: numeric-string}
+// |array{0: non-falsy-string, 1: non-falsy-string, 2: numeric-string}
+```
+
+Merged, the same matches read
+`array{0: non-falsy-string, 1: non-falsy-string, 2: numeric-string, 3?: ''|non-falsy-string, 4?: ''|non-falsy-string, 5?: numeric-string}`,
+where `isset($m[3])` says nothing of `$m[5]`. An optional group holding one capturing
+group, `/(a)?/` or `/(?:x(a))?/`, says as much merged, and is not split.
+
 Nothing is split when:
 
-- the alternation sits under another quantifier (`*`, `+`, `{2}`), inside a capturing
-  group, or inside a lookaround;
-- the root reaches a second alternation holding capturing groups, as in
-  `/(?:(a)|(b))(?:(c)|(d))/`;
+- the alternation, the conditional group or the optional group sits under another
+  quantifier (`*`, `+`, `{2}`), inside a capturing group, or inside a lookaround;
+- every kind the root reaches, it reaches twice or more, as in
+  `/(?:(a)|(b))(?:(c)|(d))/` or `/(?:(a)(b))?(?:(c)(d))?/`. A kind reached twice gives
+  way to the next one: `/(?:(a)|(b))(?:(c)|(d))(?:(e)(f))?/` splits on its optional group;
 - the root reaches a branch reset `(?|...)` holding capturing groups: its alternatives
   share their numbers;
 - the split would give more than 16 cases. Sixteen alternatives split; seventeen do not,
-  nor sixteen under `?`.
+  nor sixteen under `?`, and the analyzer moves on to the next kind.
 
 Each case reads the pattern as PCRE does, options included. An inline option set in one
 alternative stays in force in the following ones. In `/a(?i)b|(c)/` the `(?i)` makes the

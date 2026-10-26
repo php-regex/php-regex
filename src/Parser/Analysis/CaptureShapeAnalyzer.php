@@ -42,7 +42,11 @@ use PHPRegex\Parser\Node\SubroutineNode;
  * One alternation holding capturing groups, reached from the root through
  * sequences and groups that neither capture nor repeat, splits the answer
  * into one case per branch, plus one where no branch is taken when that
- * group is optional. Each case reads the pattern in its own option flow.
+ * group is optional. Without such an alternation, one conditional group
+ * holding capturing groups splits it the same way, a case per branch; and
+ * without either, one optional group holding two capturing groups or more
+ * splits it into the case where the group runs and the case where it is
+ * skipped. Each case reads the pattern in its own option flow.
  *
  *     $shape = (new CaptureShapeAnalyzer())->analyze($parser->parse('/(a)(b)?/'));
  *     $shape->matchShape(); // "array{0: 'a'|'ab', 1: 'a', 2?: 'b'}"
@@ -65,7 +69,7 @@ final class CaptureShapeAnalyzer
     private const MAX_ARMS = 8;
 
     /**
-     * Groups that neither capture nor assert: the split alternation may sit
+     * Groups that neither capture nor assert: the split node may sit
      * inside them.
      */
     private const PATH_GROUPS = [GroupType::NonCapturing, GroupType::Atomic, GroupType::InlineFlags];
@@ -75,6 +79,14 @@ final class CaptureShapeAnalyzer
     private const TRANSPARENT_GROUPS = [GroupType::NonCapturing, GroupType::Atomic, GroupType::InlineFlags, GroupType::LookaheadPositive, GroupType::LookbehindPositive];
 
     private const NEGATIVE_LOOKAROUNDS = [GroupType::LookaheadNegative, GroupType::LookbehindNegative];
+
+    private const POSITIVE_LOOKAROUNDS = [GroupType::LookaheadPositive, GroupType::LookbehindPositive];
+
+    /**
+     * What a pattern splits on, in the order the analyzer tries them: the
+     * first kind reached exactly once, within MAX_CASES, is the split.
+     */
+    private const SPLIT_KINDS = [AlternationNode::class, ConditionalNode::class, QuantifierNode::class];
 
     /**
      * @var int<1, max>
@@ -106,11 +118,12 @@ final class CaptureShapeAnalyzer
     private bool $hasCalls = false;
 
     /**
-     * The case under analysis: the alternation it splits, the branch it
-     * takes (null for none: the optional group is skipped), the optional
+     * The case under analysis: the node it splits (an alternation, a
+     * conditional group, or an optional group alone), the branch it takes
+     * (null for none: the optional group is skipped), the optional
      * quantifier around it, and the nodes between the root and it.
      *
-     * @var array{alternation: AlternationNode, branch: NodeInterface|null, optional: QuantifierNode|null, path: array<int, true>}|null
+     * @var array{choice: AlternationNode|ConditionalNode|QuantifierNode, branch: NodeInterface|null, optional: QuantifierNode|null, path: array<int, true>}|null
      */
     private ?array $selection = null;
 
@@ -121,7 +134,7 @@ final class CaptureShapeAnalyzer
 
     /**
      * What each node reads, measured once per analysis: a capturing group's
-     * body never holds the split alternation, so it reads the same in every
+     * body never holds the split node, so it reads the same in every
      * case.
      */
     private CaptureFacts $facts;
@@ -152,7 +165,7 @@ final class CaptureShapeAnalyzer
         }
 
         $cases = [];
-        foreach ([...$split['alternation']->alternatives, ...(null === $split['optional'] ? [] : [null])] as $branch) {
+        foreach ([...self::branches($split['choice']), ...(null === $split['optional'] ? [] : [null])] as $branch) {
             $this->selection = ['branch' => $branch] + $split;
             $cases[] = $this->shape($ast->pattern);
         }
@@ -342,44 +355,57 @@ final class CaptureShapeAnalyzer
     }
 
     /**
-     * The one alternation holding capturing groups that the root reaches
-     * through sequences and groups that neither capture nor repeat, a `?` on
-     * one of them making it optional; null when there is none, more than
-     * one, a branch reset in the way, or more cases than MAX_CASES.
+     * What the root splits on: the one alternation holding capturing groups
+     * that it reaches through sequences and groups that neither capture nor
+     * repeat, a `?` on one of them making it optional; else the one
+     * conditional group holding capturing groups reached the same way; else
+     * the one optional group holding two capturing groups or more. Null when
+     * no kind is reached exactly once within MAX_CASES, or when a branch
+     * reset is in the way.
      *
-     * @return array{alternation: AlternationNode, optional: QuantifierNode|null, path: array<int, true>}|null
+     * @return array{choice: AlternationNode|ConditionalNode|QuantifierNode, optional: QuantifierNode|null, path: array<int, true>}|null
      */
     private function split(NodeInterface $pattern): ?array
     {
         $reached = self::reach($pattern, null, []);
-        if ($reached['blocked'] || 1 !== \count($reached['found'])) {
+        if ($reached['blocked']) {
             return null;
         }
 
-        $split = $reached['found'][0];
-        if (\count($split['alternation']->alternatives) + (null === $split['optional'] ? 0 : 1) > self::MAX_CASES) {
-            return null;
+        foreach (self::SPLIT_KINDS as $kind) {
+            $found = [];
+            foreach ($reached['found'] as $split) {
+                if ($split['choice'] instanceof $kind) {
+                    $found[] = $split;
+                }
+            }
+
+            if (1 === \count($found) && \count(self::branches($found[0]['choice'])) + (null === $found[0]['optional'] ? 0 : 1) <= self::MAX_CASES) {
+                return $found[0];
+            }
         }
 
-        return $split;
+        return null;
     }
 
     /**
-     * The alternations holding capturing groups that the node reaches
-     * through sequences and groups that neither capture nor repeat, the
-     * search stopping past the second; blocked when a branch reset holding
-     * capturing groups is on the way, which prevents the split.
+     * The nodes holding capturing groups that the node reaches through
+     * sequences and groups that neither capture nor repeat: alternations,
+     * conditional groups, and optional groups holding two capturing groups
+     * or more, those holding neither an alternation nor a conditional group
+     * reached the same way; blocked when a branch reset holding capturing
+     * groups is on the way, which prevents the split.
      *
      * @param array<int, true> $path
      *
-     * @return array{blocked: bool, found: list<array{alternation: AlternationNode, optional: QuantifierNode|null, path: array<int, true>}>}
+     * @return array{blocked: bool, found: list<array{choice: AlternationNode|ConditionalNode|QuantifierNode, optional: QuantifierNode|null, path: array<int, true>}>}
      */
     private static function reach(NodeInterface $node, ?QuantifierNode $optional, array $path): array
     {
         $path[spl_object_id($node)] = true;
 
-        if ($node instanceof AlternationNode) {
-            return ['blocked' => false, 'found' => self::captures($node) ? [['alternation' => $node, 'optional' => $optional, 'path' => $path]] : []];
+        if ($node instanceof AlternationNode || $node instanceof ConditionalNode) {
+            return ['blocked' => false, 'found' => self::captures($node) ? [['choice' => $node, 'optional' => $optional, 'path' => $path]] : []];
         }
 
         if ($node instanceof GroupNode && GroupType::BranchReset === $node->type) {
@@ -390,11 +416,18 @@ final class CaptureShapeAnalyzer
             return self::reach($node->child, $optional, $path);
         }
 
-        if (null === $optional && $node instanceof QuantifierNode && $node->node instanceof GroupNode && \in_array($node->node->type, self::PATH_GROUPS, true)) {
-            $bounds = QuantifierBounds::parse($node->quantifier);
-            if (null !== $bounds && 0 === $bounds->min && 1 === $bounds->max) {
-                return self::reach($node->node, $node, $path);
+        if (null === $optional && $node instanceof QuantifierNode && $node->node instanceof GroupNode && self::isOptional($node)) {
+            if (\in_array($node->node->type, self::PATH_GROUPS, true)) {
+                $reached = self::reach($node->node, $node, $path);
+                if ($reached['blocked'] || [] !== $reached['found']) {
+                    return $reached;
+                }
             }
+
+            // Run or skipped, the group sets its groups together: split when it holds more than one.
+            $splits = \in_array($node->node->type, [...self::PATH_GROUPS, GroupType::Capturing, GroupType::Named], true) && self::countCaptures($node->node) > 1;
+
+            return ['blocked' => false, 'found' => $splits ? [['choice' => $node, 'optional' => $node, 'path' => $path]] : []];
         }
 
         $found = [];
@@ -405,12 +438,42 @@ final class CaptureShapeAnalyzer
             }
 
             $found = [...$found, ...$reached['found']];
-            if (\count($found) > 1) {
-                break;
-            }
         }
 
         return ['blocked' => false, 'found' => $found];
+    }
+
+    /**
+     * The branches a split node gives a case each: the alternatives of an
+     * alternation, the two branches of a conditional group, the group of
+     * an optional quantifier (the case where it runs).
+     *
+     * @return list<NodeInterface>
+     */
+    private static function branches(AlternationNode|ConditionalNode|QuantifierNode $node): array
+    {
+        return match (true) {
+            $node instanceof AlternationNode => $node->alternatives,
+            $node instanceof ConditionalNode => [$node->yes, $node->no],
+            default => [$node->node],
+        };
+    }
+
+    private static function isOptional(QuantifierNode $node): bool
+    {
+        $bounds = QuantifierBounds::parse($node->quantifier);
+
+        return null !== $bounds && 0 === $bounds->min && 1 === $bounds->max;
+    }
+
+    private static function countCaptures(NodeInterface $node): int
+    {
+        $count = $node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type) ? 1 : 0;
+        foreach ($node->getChildren() as $child) {
+            $count += self::countCaptures($child);
+        }
+
+        return $count;
     }
 
     private static function captures(NodeInterface $node): bool
@@ -429,10 +492,12 @@ final class CaptureShapeAnalyzer
     }
 
     /**
-     * The node as the selected case reads it: the split alternation replaced
-     * by the branch the case takes, its optional quantifier by its group, or
-     * dropped (null) when the case takes no branch. Only the nodes between
-     * the root and the alternation are rebuilt.
+     * The node as the selected case reads it: the split node replaced by the
+     * branch the case takes (a conditional group by its branch alone, its
+     * condition left out, which only widens what the case reads), its
+     * optional quantifier by its group, or dropped (null) when the case
+     * takes no branch. Only the nodes between the root and the split node
+     * are rebuilt.
      */
     private function rebuild(NodeInterface $node): ?NodeInterface
     {
@@ -445,7 +510,7 @@ final class CaptureShapeAnalyzer
             return null === $selection['branch'] ? null : $this->rebuild($selection['optional']->node);
         }
 
-        if ($node === $selection['alternation']) {
+        if ($node === $selection['choice']) {
             return $selection['branch'];
         }
 
@@ -559,7 +624,7 @@ final class CaptureShapeAnalyzer
     private function walk(NodeInterface $node, bool $never): array
     {
         $selection = $this->selection;
-        if (null !== $selection && ($node === $selection['alternation'] || $node === $selection['optional'])) {
+        if (null !== $selection && ($node === $selection['choice'] || $node === $selection['optional'])) {
             return $this->walkSelected($node, $selection, $never);
         }
 
@@ -591,23 +656,24 @@ final class CaptureShapeAnalyzer
     }
 
     /**
-     * Walks the split alternation, or the optional quantifier around it, in
-     * the selected case: the branch it takes as usual, the others numbered
-     * but never set.
+     * Walks the split node, or the optional quantifier around it, in the
+     * selected case: the branch it takes as usual, the others numbered but
+     * never set. The condition of a conditional group runs in every case,
+     * and holds in the case of its yes branch.
      *
-     * @param array{alternation: AlternationNode, branch: NodeInterface|null, optional: QuantifierNode|null, path: array<int, true>} $selection
+     * @param array{choice: AlternationNode|ConditionalNode|QuantifierNode, branch: NodeInterface|null, optional: QuantifierNode|null, path: array<int, true>} $selection
      *
      * @return array<int, true>
      */
-    private function walkSelected(NodeInterface $node, array $selection, bool $never): array
+    private function walkSelected(AlternationNode|ConditionalNode|QuantifierNode $node, array $selection, bool $never): array
     {
         $taken = $node === $selection['optional'] && null !== $selection['branch'] ? $selection['optional']->node : $selection['branch'];
-        $guaranteed = [];
+        $guaranteed = $node instanceof ConditionalNode ? $this->walkCondition($node, $never, $node->yes === $taken) : [];
 
         // In order: the branches before the one taken number their groups first.
-        foreach ($node instanceof AlternationNode ? $node->alternatives : $node->getChildren() as $branch) {
+        foreach (self::branches($node) as $branch) {
             if ($branch === $taken) {
-                $guaranteed = $this->walk($branch, $never);
+                $guaranteed += $this->walk($branch, $never);
 
                 continue;
             }
@@ -708,10 +774,55 @@ final class CaptureShapeAnalyzer
      */
     private function walkConditional(ConditionalNode $node, bool $never): array
     {
-        // What the condition captures is set only when it holds.
-        $this->walk($node->condition, $never);
+        $this->walkCondition($node, $never, null);
 
         return self::intersect([$this->walk($node->yes, $never), $this->walk($node->no, $never)]);
+    }
+
+    /**
+     * Walks the condition of a conditional group, read as holding, failing,
+     * or either (null), and returns the groups it sets whenever it reads so.
+     * An assertion keeps what it captured when its body matched: a positive
+     * one where it holds, a negative one where it fails, as in
+     * preg_match('/(?(?!(a))x|a)/', 'a') -> ["a","a"].
+     *
+     * @return array<int, true>
+     */
+    private function walkCondition(ConditionalNode $node, bool $never, ?bool $holds): array
+    {
+        $assertion = self::assertionOf($node->condition);
+        if (null === $assertion) {
+            $this->walk($node->condition, $never);
+
+            return [];
+        }
+
+        if (null === $holds) {
+            $this->walk($assertion->child, $never);
+
+            return [];
+        }
+
+        if ($holds !== \in_array($assertion->type, self::POSITIVE_LOOKAROUNDS, true)) {
+            // Its body did not match: PCRE discards what it captured.
+            $this->walk($assertion->child, true);
+
+            return [];
+        }
+
+        return $this->walk($assertion->child, $never);
+    }
+
+    /**
+     * The assertion a condition tests, after the callouts the parser lets
+     * come before it, as in (?(?C1)(?=a)...); null for a condition that is
+     * no assertion, such as a group number.
+     */
+    private static function assertionOf(NodeInterface $condition): ?GroupNode
+    {
+        $assertion = $condition instanceof SequenceNode && [] !== $condition->children ? $condition->children[array_key_last($condition->children)] : $condition;
+
+        return $assertion instanceof GroupNode && \in_array($assertion->type, [...self::POSITIVE_LOOKAROUNDS, ...self::NEGATIVE_LOOKAROUNDS], true) ? $assertion : null;
     }
 
     private function readVerb(PcreVerbNode $node): void

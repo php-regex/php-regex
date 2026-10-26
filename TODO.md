@@ -346,29 +346,29 @@ pattern with the engine.
 1. Once `2.0.0` is tagged and the php74 twin reaches Packagist, replace
    the `2.x-dev#<hash>` pin with the exact version (the precedent is
    `ondrejmirtes/phplrt-runtime`, pinned to an exact release).
-2. Rebuild the phar from the pull request with the twin at `03ac9a3`
-   and run it on `php:7.4-cli` and `php:8.4-cli`: the last phar build
-   predates the twin fixes (it failed on 7.4 with `WeakMap`).
+2. Rebuild the phar from the pull request on its last twin pin and run it
+   on `php:7.4-cli` and `php:8.4-cli`. The phar of f97d3ef48 stopped on
+   7.4 on a nullsafe operator the downgrade does not rewrite (fixed
+   since); with it rewritten, 7.4 and 8.4 print the same types.
 3. The 8.6 entry reads 10.44 and php-src master carries 10.44 today, so
    the map stands corroborated; the one gesture left is re-reading
    master after the 8.6 GA (2026-11-19) in case a release-cut downgrade
    like 8.5's happens.
-4. phpstan#11602: `isset($matches[3])` should imply its nested groups 4
-   and 5 exist — needs the shape analysis to split an optional
-   capture-bearing group into the case where it runs and the case where
-   it is skipped; the alternation-split machinery exists, the optional-
-   group split does not.
-5. A condition group, `(?(?=(a))b|(c))`, reads as an unset group may be,
-   its key optional when it is last, though the engine writes it: the
-   shape cannot yet tell "unset only when a later group is set".
-6. A lone `(?(DEFINE)...)` group renders as a union of two true arms.
-7. phpstan-src 2.3.x types an alternation under a repeat as if one
+4. phpstan-src 2.3.x types an alternation under a repeat as if one
    branch ran: `/(?:(a)|(b))+/` reads `array{string, '', 'b'}|array{string, 'a'}`
    while `preg_match('/(?:(a)|(b))+/', 'ab')` writes `['ab', 'a', 'b']`.
-   A small pull request there: no tagged union for an alternation under
-   a quantifier whose maximum is above one, with an nsrt row.
-8. Split the single commit into stacked pull requests once the
+   The fix is ready as one commit on the local branch
+   `repeated-alternation-keeps-earlier-rounds` of the phpstan-src clone,
+   with nsrt rows; push it and open the pull request.
+5. Split the single commit into stacked pull requests once the
    maintainer asks for it.
+6. The capture shape splits on one node: two optional groups holding
+   groups, `/(?:(a)(b))?(?:(c)(d))?/`, or an alternation beside an
+   optional group, stay merged for all but one. A product of the
+   splits, within the 16-case budget, would keep each.
+7. Any `(*ACCEPT)` in a pattern makes every group read unbounded from
+   zero with unknown values, even when the verb only ends a call or
+   sits in a branch the group never reaches. Sound, and loose.
 
 ## The PHPStan gold rush: what the analysis already knows and does not say
 
