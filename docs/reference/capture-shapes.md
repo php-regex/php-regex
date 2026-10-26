@@ -262,18 +262,18 @@ $shape = (new CaptureShapeAnalyzer())->analyze(
 
 $shape->matchShape();
 // array{0: lowercase-string&non-falsy-string&uppercase-string,
-//       year: lowercase-string&non-falsy-string&numeric-string&uppercase-string,
-//       1: lowercase-string&non-falsy-string&numeric-string&uppercase-string,
+//       year: non-falsy-string&numeric-string,
+//       1: non-falsy-string&numeric-string,
 //       month: ..., 2: ..., day?: ..., 3?: ...}  (each the same as year)
 
 $shape->matchShape(PREG_UNMATCHED_AS_NULL);
 // array{0: ..., year: ..., 1: ..., month: ..., 2: ...,
-//       day: (lowercase-string&non-falsy-string&numeric-string&uppercase-string)|null,
-//       3: (lowercase-string&non-falsy-string&numeric-string&uppercase-string)|null}
+//       day: (non-falsy-string&numeric-string)|null,
+//       3: (non-falsy-string&numeric-string)|null}
 ```
 
 A group's value is written, from the most precise to the least, once per arm when it has
-`arms`: `/(a|\d)/` writes group 1 `'a'|(lowercase-string&numeric-string&uppercase-string)`.
+`arms`: `/(a|\d)/` writes group 1 `'a'|numeric-string`.
 
 - as a union of constant strings, when its values are known;
 - `''`, when it is always empty;
@@ -285,7 +285,7 @@ A group's value is written, from the most precise to the least, once per arm whe
   `nonFalsy` (else `non-empty-string` when it cannot be empty), `numeric-string` for
   `digitsOnly` (a run of digits is a numeric string, never empty), `uppercase-string`
   for `uppercase`. `/^([a-z]+)$/` writes group 1 `lowercase-string&non-falsy-string`,
-  `/(\d+)/` writes it `lowercase-string&numeric-string&uppercase-string`;
+  `/(\d+)/` writes it `numeric-string`;
 - `''|` before that intersection, in parentheses, when `digitsOnly` holds and the group
   may be empty, as `(\d*)`;
 - `string` when no fact holds.
@@ -344,12 +344,12 @@ $shape = (new CaptureShapeAnalyzer())->analyze(
 
 count($shape->cases);  // 2
 $shape->matchShape();
-// array{0: lowercase-string&numeric-string&uppercase-string, 1: lowercase-string&numeric-string&uppercase-string}
+// array{0: numeric-string, 1: numeric-string}
 // |array{0: lowercase-string&non-falsy-string, 1: '', 2: lowercase-string&non-falsy-string}
 ```
 
 Merged, the same matches read
-`array{0: lowercase-string&non-empty-string, 1?: ''|(lowercase-string&numeric-string&uppercase-string), 2?: lowercase-string&non-falsy-string}`.
+`array{0: lowercase-string&non-empty-string, 1?: ''|numeric-string, 2?: lowercase-string&non-falsy-string}`.
 
 - `$cases` is non-empty only when the analyzer splits the pattern. Otherwise it is `[]`,
   and `$whole` and `$groups` are the whole answer.
@@ -403,7 +403,7 @@ $shape = (new CaptureShapeAnalyzer())->analyze(
 
 $shape->matchShape();
 // array{0: U, 1: U, 2: D, 3: U, 4: U, 5: D}|array{0: U, 1: U, 2: D}
-// where U is non-falsy-string&uppercase-string and D is lowercase-string&numeric-string&uppercase-string
+// where U is non-falsy-string&uppercase-string and D is numeric-string
 ```
 
 Merged, the same matches read

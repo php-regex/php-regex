@@ -193,15 +193,15 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
     public static function providePrintedShapes(): iterable
     {
         // Facts. A digit run is a numeric-string, which PHPStan already reads as non-empty.
-        yield 'digits, may be "0"' => ['pattern' => '/(\d+)/', 'flags' => 0, 'printed' => 'array{lowercase-string&numeric-string&uppercase-string, lowercase-string&numeric-string&uppercase-string}'];
-        yield 'digits, may be "0", offsets' => ['pattern' => '/(\d+)/', 'flags' => \PREG_OFFSET_CAPTURE, 'printed' => 'array{array{lowercase-string&numeric-string&uppercase-string, int<0, max>}, array{lowercase-string&numeric-string&uppercase-string, int<0, max>}}'];
-        yield 'digits, at least two' => ['pattern' => '/(\d\d+)/', 'flags' => 0, 'printed' => 'array{lowercase-string&non-falsy-string&numeric-string&uppercase-string, lowercase-string&non-falsy-string&numeric-string&uppercase-string}'];
+        yield 'digits, may be "0"' => ['pattern' => '/(\d+)/', 'flags' => 0, 'printed' => 'array{numeric-string, numeric-string}'];
+        yield 'digits, may be "0", offsets' => ['pattern' => '/(\d+)/', 'flags' => \PREG_OFFSET_CAPTURE, 'printed' => 'array{array{numeric-string, int<0, max>}, array{numeric-string, int<0, max>}}'];
+        yield 'digits, at least two' => ['pattern' => '/(\d\d+)/', 'flags' => 0, 'printed' => 'array{non-falsy-string&numeric-string, non-falsy-string&numeric-string}'];
         yield 'letters, never "0"' => ['pattern' => '/([a-z]+)/', 'flags' => 0, 'printed' => 'array{lowercase-string&non-falsy-string, lowercase-string&non-falsy-string}'];
-        yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'printed' => "array{''|(lowercase-string&numeric-string&uppercase-string), ''|(lowercase-string&numeric-string&uppercase-string)}"];
-        yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'printed' => "array{0: ''|(lowercase-string&numeric-string&uppercase-string), 1?: lowercase-string&numeric-string&uppercase-string}"];
-        yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => "array{''|(lowercase-string&numeric-string&uppercase-string), (lowercase-string&numeric-string&uppercase-string)|null}"];
+        yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'printed' => "array{''|numeric-string, ''|numeric-string}"];
+        yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'printed' => "array{0: ''|numeric-string, 1?: numeric-string}"];
+        yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => "array{''|numeric-string, numeric-string|null}"];
         yield 'digits under /u are not proven' => ['pattern' => '/(\d+)/u', 'flags' => 0, 'printed' => 'array{lowercase-string&non-empty-string&uppercase-string, lowercase-string&non-empty-string&uppercase-string}'];
-        yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => "array{''|(lowercase-string&numeric-string&uppercase-string), (lowercase-string&non-falsy-string&numeric-string&uppercase-string)|null}"];
+        yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => "array{''|numeric-string, (non-falsy-string&numeric-string)|null}"];
         yield 'lowercase letters, anchored' => ['pattern' => '/^[a-z]+$/', 'flags' => 0, 'printed' => 'array{lowercase-string&non-falsy-string}'];
         yield 'letters read caselessly' => ['pattern' => '/([a-z]+)/i', 'flags' => 0, 'printed' => 'array{non-falsy-string, non-falsy-string}'];
         yield 'uppercase letters' => ['pattern' => '/([A-Z]+)/', 'flags' => 0, 'printed' => 'array{non-falsy-string&uppercase-string, non-falsy-string&uppercase-string}'];
@@ -212,8 +212,8 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
         yield 'two branches' => ['pattern' => '/(a)|(b)/', 'flags' => 0, 'printed' => "array{'a', 'a'}|array{'b', '', 'b'}"];
         yield 'two branches, as null' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => "array{'a', 'a', null}|array{'b', null, 'b'}"];
         yield 'two branches, offsets' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_OFFSET_CAPTURE, 'printed' => "array{array{'a', int<0, max>}, array{'a', int<0, max>}}|array{array{'b', int<0, max>}, array{'', int<-1, max>}, array{'b', int<0, max>}}"];
-        yield 'anchored, in a non-capturing group' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => 0, 'printed' => "array{lowercase-string&non-falsy-string, '', lowercase-string&non-falsy-string}|array{lowercase-string&numeric-string&uppercase-string, lowercase-string&numeric-string&uppercase-string}"];
-        yield 'anchored, in a non-capturing group, as null' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => 'array{lowercase-string&non-falsy-string, null, lowercase-string&non-falsy-string}|array{lowercase-string&numeric-string&uppercase-string, lowercase-string&numeric-string&uppercase-string, null}'];
+        yield 'anchored, in a non-capturing group' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => 0, 'printed' => "array{lowercase-string&non-falsy-string, '', lowercase-string&non-falsy-string}|array{numeric-string, numeric-string}"];
+        yield 'anchored, in a non-capturing group, as null' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => 'array{lowercase-string&non-falsy-string, null, lowercase-string&non-falsy-string}|array{numeric-string, numeric-string, null}'];
         yield 'after a literal' => ['pattern' => '/x(?:(a)|(b))/', 'flags' => 0, 'printed' => "array{'xa', 'a'}|array{'xb', '', 'b'}"];
         yield 'optional: a case where no branch group is set' => ['pattern' => '/(?:(a)|(b))?/', 'flags' => 0, 'printed' => "array{''}|array{'a', 'a'}|array{'b', '', 'b'}"];
         yield 'optional: a case where no branch group is set, as null' => ['pattern' => '/(?:(a)|(b))?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => "array{'', null, null}|array{'a', 'a', null}|array{'b', null, 'b'}"];

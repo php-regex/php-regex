@@ -294,16 +294,17 @@ final class CaptureShape
         }
 
         // In the order PHPStan prints an intersection. decimal-int-string
-        // implies numeric-string, non-empty-string and both letter cases.
+        // implies numeric-string, non-empty-string and both letter cases; a
+        // run of digits holds no letter, so its case says nothing.
         $accessories = array_keys(array_filter($group->decimalInt
             ? ['decimal-int-string' => true, 'non-falsy-string' => $group->nonFalsy]
             : [
-                'lowercase-string' => $group->lowercase,
+                'lowercase-string' => $group->lowercase && !$group->digitsOnly,
                 // numeric-string is never empty
                 'non-empty-string' => !$group->nonFalsy && !$group->digitsOnly && $group->minLength > 0,
                 'non-falsy-string' => $group->nonFalsy,
                 'numeric-string' => $group->digitsOnly,
-                'uppercase-string' => $group->uppercase,
+                'uppercase-string' => $group->uppercase && !$group->digitsOnly,
             ]));
         $type = [] === $accessories ? 'string' : implode('&', $accessories);
 

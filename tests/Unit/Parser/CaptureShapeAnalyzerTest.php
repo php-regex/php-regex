@@ -1342,13 +1342,13 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'never set, last' => ['pattern' => '/(?!(b))a/', 'flags' => 0, 'expected' => "array{0: 'a'}"];
         yield 'never set, last, as null' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: null}"];
         yield 'mark' => ['pattern' => '/(*MARK:m)a/', 'flags' => 0, 'expected' => "array{0: 'a', MARK?: 'm'}"];
-        yield 'a constant beside digits' => ['pattern' => '/(a|\d)/', 'flags' => 0, 'expected' => "array{0: 'a'|(lowercase-string&numeric-string&uppercase-string), 1: 'a'|(lowercase-string&numeric-string&uppercase-string)}"];
-        yield 'a constant beside digits, with offsets' => ['pattern' => '/(a|\d+)x/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{lowercase-string&non-falsy-string, int<0, max>}, 1: array{'a'|(lowercase-string&numeric-string&uppercase-string), int<0, max>}}"];
+        yield 'a constant beside digits' => ['pattern' => '/(a|\d)/', 'flags' => 0, 'expected' => "array{0: 'a'|numeric-string, 1: 'a'|numeric-string}"];
+        yield 'a constant beside digits, with offsets' => ['pattern' => '/(a|\d+)x/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{lowercase-string&non-falsy-string, int<0, max>}, 1: array{'a'|numeric-string, int<0, max>}}"];
         // preg_match('/(?<x>a)(*MARK:m)b/', 'ab') -> {"0":"ab","x":"a","1":"a","MARK":"m"}: x keeps its own value, MARK comes last (PHP 8.4.26)
         yield 'named group next to a mark verb' => ['pattern' => '/(?<x>a)(*MARK:m)b/', 'flags' => 0, 'expected' => "array{0: 'ab', x: 'a', 1: 'a', MARK?: 'm'}"];
         // preg_match('/(?<MARK>a)/', 'a') -> {"0":"a","MARK":"a","1":"a"}: without a verb the key holds the group alone
         yield 'group named MARK, no mark verb' => ['pattern' => '/(?<MARK>a)/', 'flags' => 0, 'expected' => "array{0: 'a', MARK: 'a', 1: 'a'}"];
-        yield 'trailing optional named group' => ['pattern' => '/(?<y>\d{4})(?:-(?<d>\d\d))?/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string&uppercase-string, y: lowercase-string&non-falsy-string&numeric-string&uppercase-string, 1: lowercase-string&non-falsy-string&numeric-string&uppercase-string, d?: lowercase-string&non-falsy-string&numeric-string&uppercase-string, 2?: lowercase-string&non-falsy-string&numeric-string&uppercase-string}'];
+        yield 'trailing optional named group' => ['pattern' => '/(?<y>\d{4})(?:-(?<d>\d\d))?/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string&uppercase-string, y: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string, d?: non-falsy-string&numeric-string, 2?: non-falsy-string&numeric-string}'];
         // A root alternation holding groups splits into one shape per branch:
         // preg_match('/(?J)(?<n>a)|(?<n>b)/', 'a') -> {"0":"a","n":"a","1":"a"}, on 'b' -> {"0":"b","n":"b","1":"","2":"b"}
         yield 'duplicate names' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'flags' => 0, 'expected' => "array{0: 'a', n: 'a', 1: 'a'}|array{0: 'b', n: 'b', 1: '', 2: 'b'}"];
@@ -1983,16 +1983,16 @@ final class CaptureShapeAnalyzerTest extends TestCase
      */
     public static function provideFactShapes(): iterable
     {
-        yield 'digits, may be "0"' => ['pattern' => '/(\d+)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&numeric-string&uppercase-string, 1: lowercase-string&numeric-string&uppercase-string}'];
-        yield 'digits, may be "0", offsets' => ['pattern' => '/(\d+)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => 'array{0: array{lowercase-string&numeric-string&uppercase-string, int<0, max>}, 1: array{lowercase-string&numeric-string&uppercase-string, int<0, max>}}'];
-        yield 'digits, at least two' => ['pattern' => '/(\d\d+)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string&numeric-string&uppercase-string, 1: lowercase-string&non-falsy-string&numeric-string&uppercase-string}'];
+        yield 'digits, may be "0"' => ['pattern' => '/(\d+)/', 'flags' => 0, 'expected' => 'array{0: numeric-string, 1: numeric-string}'];
+        yield 'digits, may be "0", offsets' => ['pattern' => '/(\d+)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => 'array{0: array{numeric-string, int<0, max>}, 1: array{numeric-string, int<0, max>}}'];
+        yield 'digits, at least two' => ['pattern' => '/(\d\d+)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string}'];
         yield 'letters, never "0"' => ['pattern' => '/([a-z]+)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string, 1: lowercase-string&non-falsy-string}'];
-        yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'expected' => "array{0: ''|(lowercase-string&numeric-string&uppercase-string), 1: ''|(lowercase-string&numeric-string&uppercase-string)}"];
-        yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'expected' => "array{0: ''|(lowercase-string&numeric-string&uppercase-string), 1?: lowercase-string&numeric-string&uppercase-string}"];
-        yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: ''|(lowercase-string&numeric-string&uppercase-string), 1: (lowercase-string&numeric-string&uppercase-string)|null}"];
+        yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'expected' => "array{0: ''|numeric-string, 1: ''|numeric-string}"];
+        yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'expected' => "array{0: ''|numeric-string, 1?: numeric-string}"];
+        yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: ''|numeric-string, 1: numeric-string|null}"];
         yield 'digits under /u are not proven' => ['pattern' => '/(\d+)/u', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-empty-string&uppercase-string, 1: lowercase-string&non-empty-string&uppercase-string}'];
         // PHPStan's type parser reads an intersection inside a union only in parentheses.
-        yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: ''|(lowercase-string&numeric-string&uppercase-string), 1: (lowercase-string&non-falsy-string&numeric-string&uppercase-string)|null}"];
+        yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: ''|numeric-string, 1: (non-falsy-string&numeric-string)|null}"];
         // phpstan/phpstan#15018: lowercase letters are a lowercase-string, the
         // whole match and the group alike; caseless, they are not.
         yield 'lowercase letters, anchored' => ['pattern' => '/^[a-z]+$/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string}'];
@@ -2004,7 +2004,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         // eighteen of them, are a decimal-int-string; \d+ may read '007'.
         yield 'a decimal integer' => ['pattern' => '/^(0|[1-9]\d{0,17})$/D', 'flags' => 0, 'expected' => 'array{0: decimal-int-string, 1: decimal-int-string}'];
         yield 'a decimal integer that is never zero, as null' => ['pattern' => '/(-?[1-9]\d{0,17})?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: lowercase-string&uppercase-string, 1: (decimal-int-string&non-falsy-string)|null}'];
-        yield 'digits hold no letter of either case' => ['pattern' => '/(\d+)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&numeric-string&uppercase-string, 1: lowercase-string&numeric-string&uppercase-string}'];
+        yield 'digits hold no letter of either case' => ['pattern' => '/(\d+)/', 'flags' => 0, 'expected' => 'array{0: numeric-string, 1: numeric-string}'];
     }
 
     /**
@@ -2024,11 +2024,11 @@ final class CaptureShapeAnalyzerTest extends TestCase
     public static function provideCaseShapes(): iterable
     {
         yield 'two branches' => ['pattern' => '/(a)|(b)/', 'flags' => 0, 'expected' => "array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}"];
-        yield 'through a capturing group' => ['pattern' => '/Price: (£|(\d)|x)/i', 'flags' => 0, 'expected' => "array{0: non-falsy-string, 1: '£'|(lowercase-string&numeric-string&uppercase-string)|non-falsy-string}|array{0: non-falsy-string, 1: '£'|(lowercase-string&numeric-string&uppercase-string)|non-falsy-string, 2: lowercase-string&numeric-string&uppercase-string}"];
+        yield 'through a capturing group' => ['pattern' => '/Price: (£|(\d)|x)/i', 'flags' => 0, 'expected' => "array{0: non-falsy-string, 1: '£'|numeric-string|non-falsy-string}|array{0: non-falsy-string, 1: '£'|numeric-string|non-falsy-string, 2: numeric-string}"];
         yield 'two branches, as null' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: 'a', 2: null}|array{0: 'b', 1: null, 2: 'b'}"];
         yield 'two branches, offsets' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'a', int<0, max>}, 1: array{'a', int<0, max>}}|array{0: array{'b', int<0, max>}, 1: array{'', int<-1, max>}, 2: array{'b', int<0, max>}}"];
-        yield 'anchored, in a non-capturing group' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => 0, 'expected' => "array{0: lowercase-string&numeric-string&uppercase-string, 1: lowercase-string&numeric-string&uppercase-string}|array{0: lowercase-string&non-falsy-string, 1: '', 2: lowercase-string&non-falsy-string}"];
-        yield 'anchored, in a non-capturing group, as null' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: lowercase-string&numeric-string&uppercase-string, 1: lowercase-string&numeric-string&uppercase-string, 2: null}|array{0: lowercase-string&non-falsy-string, 1: null, 2: lowercase-string&non-falsy-string}'];
+        yield 'anchored, in a non-capturing group' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => 0, 'expected' => "array{0: numeric-string, 1: numeric-string}|array{0: lowercase-string&non-falsy-string, 1: '', 2: lowercase-string&non-falsy-string}"];
+        yield 'anchored, in a non-capturing group, as null' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: numeric-string, 1: numeric-string, 2: null}|array{0: lowercase-string&non-falsy-string, 1: null, 2: lowercase-string&non-falsy-string}'];
         yield 'after a literal' => ['pattern' => '/x(?:(a)|(b))/', 'flags' => 0, 'expected' => "array{0: 'xa', 1: 'a'}|array{0: 'xb', 1: '', 2: 'b'}"];
         yield 'optional: a case where no branch group is set' => ['pattern' => '/(?:(a)|(b))?/', 'flags' => 0, 'expected' => "array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}|array{0: ''}"];
         yield 'optional: a case where no branch group is set, as null' => ['pattern' => '/(?:(a)|(b))?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: 'a', 2: null}|array{0: 'b', 1: null, 2: 'b'}|array{0: '', 1: null, 2: null}"];
@@ -2040,8 +2040,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'a name shared under /J, as null' => ['pattern' => '/(?<n>a)|(?<n>b)/J', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', n: 'a', 1: 'a', 2: null}|array{0: 'b', n: 'b', 1: null, 2: 'b'}"];
         // preg_match('/^([A-Z]{1,3})([0-9]{1,7})(:([A-Z]{1,3})([0-9]{1,7}))?$/', 'A1') -> ["A1","A","1"]; on 'A1:B2' -> ["A1:B2","A","1",":B2","B","2"];
         // with UNMATCHED_AS_NULL on 'A1' -> ["A1","A","1",null,null,null] (PHP 8.4.27, PCRE2 10.49)
-        yield 'an optional group holding groups: they run together' => ['pattern' => '/^([A-Z]{1,3})([0-9]{1,7})(:([A-Z]{1,3})([0-9]{1,7}))?$/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string, 2: lowercase-string&numeric-string&uppercase-string, 3: non-falsy-string&uppercase-string, 4: non-falsy-string&uppercase-string, 5: lowercase-string&numeric-string&uppercase-string}|array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string, 2: lowercase-string&numeric-string&uppercase-string}'];
-        yield 'an optional group holding groups, as null' => ['pattern' => '/^([A-Z]{1,3})([0-9]{1,7})(:([A-Z]{1,3})([0-9]{1,7}))?$/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string, 2: lowercase-string&numeric-string&uppercase-string, 3: non-falsy-string&uppercase-string, 4: non-falsy-string&uppercase-string, 5: lowercase-string&numeric-string&uppercase-string}|array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string, 2: lowercase-string&numeric-string&uppercase-string, 3: null, 4: null, 5: null}'];
+        yield 'an optional group holding groups: they run together' => ['pattern' => '/^([A-Z]{1,3})([0-9]{1,7})(:([A-Z]{1,3})([0-9]{1,7}))?$/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string, 2: numeric-string, 3: non-falsy-string&uppercase-string, 4: non-falsy-string&uppercase-string, 5: numeric-string}|array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string, 2: numeric-string}'];
+        yield 'an optional group holding groups, as null' => ['pattern' => '/^([A-Z]{1,3})([0-9]{1,7})(:([A-Z]{1,3})([0-9]{1,7}))?$/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string, 2: numeric-string, 3: non-falsy-string&uppercase-string, 4: non-falsy-string&uppercase-string, 5: numeric-string}|array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string, 2: numeric-string, 3: null, 4: null, 5: null}'];
         // preg_match('/(?:(a)(b))?c/', 'c') -> ["c"]; on 'abc' -> ["abc","a","b"]
         yield 'an optional non-capturing group holding groups' => ['pattern' => '/(?:(a)(b))?c/', 'flags' => 0, 'expected' => "array{0: 'abc', 1: 'a', 2: 'b'}|array{0: 'c'}"];
         // preg_match('/(?:(a)(b))?(c)/', 'c') -> ["c","","","c"]; on 'abc' -> ["abc","a","b","c"]
@@ -2326,12 +2326,12 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'set order: an optional split' => ['pattern' => '/(?:(a)|(b))?c/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'ac', 1: 'a'}|array{0: 'bc', 1: '', 2: 'b'}|array{0: 'c'}>"];
 
         // Facts in the list values.
-        yield 'pattern order: facts' => ['pattern' => '/(\d+)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => 'array{0: list<lowercase-string&numeric-string&uppercase-string>, 1: list<lowercase-string&numeric-string&uppercase-string>}'];
-        yield 'pattern order: facts of a group that may be unset' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<''|(lowercase-string&numeric-string&uppercase-string)>, 1: list<''|(lowercase-string&non-falsy-string&numeric-string&uppercase-string)>}"];
-        yield 'pattern order: facts of a group that may be unset, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<''|(lowercase-string&numeric-string&uppercase-string)>, 1: list<(lowercase-string&non-falsy-string&numeric-string&uppercase-string)|null>}"];
-        yield 'pattern order: facts of a group that may be unset, offsets' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{''|(lowercase-string&numeric-string&uppercase-string), int<0, max>}>, 1: list<array{''|(lowercase-string&non-falsy-string&numeric-string&uppercase-string), int<-1, max>}>}"];
-        yield 'pattern order: facts of a split pattern, merged' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<lowercase-string&non-empty-string>, 1: list<''|(lowercase-string&numeric-string&uppercase-string)>, 2: list<''|(lowercase-string&non-falsy-string)>}"];
-        yield 'set order: facts of a split pattern, per case' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: lowercase-string&numeric-string&uppercase-string, 1: lowercase-string&numeric-string&uppercase-string}|array{0: lowercase-string&non-falsy-string, 1: '', 2: lowercase-string&non-falsy-string}>"];
+        yield 'pattern order: facts' => ['pattern' => '/(\d+)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => 'array{0: list<numeric-string>, 1: list<numeric-string>}'];
+        yield 'pattern order: facts of a group that may be unset' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<''|numeric-string>, 1: list<''|(non-falsy-string&numeric-string)>}"];
+        yield 'pattern order: facts of a group that may be unset, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<''|numeric-string>, 1: list<(non-falsy-string&numeric-string)|null>}"];
+        yield 'pattern order: facts of a group that may be unset, offsets' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{''|numeric-string, int<0, max>}>, 1: list<array{''|(non-falsy-string&numeric-string), int<-1, max>}>}"];
+        yield 'pattern order: facts of a split pattern, merged' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<lowercase-string&non-empty-string>, 1: list<''|numeric-string>, 2: list<''|(lowercase-string&non-falsy-string)>}"];
+        yield 'set order: facts of a split pattern, per case' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: numeric-string, 1: numeric-string}|array{0: lowercase-string&non-falsy-string, 1: '', 2: lowercase-string&non-falsy-string}>"];
     }
 
     /**
