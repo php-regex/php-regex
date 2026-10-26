@@ -242,7 +242,7 @@ final class CaptureShapeParityTest extends PHPStanTestCase
         $corpus = array_column(EngineMatches::corpus(), 'subjects', 'pattern');
 
         $missing = [];
-        $rows = [...CaptureShapeAnalyzerTest::provideEngineRows(), ...CaptureShapeAnalyzerTest::provideFactEngineRows(), ...CaptureShapeAnalyzerTest::provideCaseEngineRows()];
+        $rows = [...CaptureShapeAnalyzerTest::provideEngineRows(), ...CaptureShapeAnalyzerTest::provideFactEngineRows(), ...CaptureShapeAnalyzerTest::provideCaseEngineRows(), ...CaptureShapeAnalyzerTest::provideSubjectEngineRows()];
         foreach ($rows as $row) {
             $subjects = $corpus[$row['pattern']] ?? [];
             foreach ($row['subjects'] as $subject) {

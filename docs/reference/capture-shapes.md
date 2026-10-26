@@ -6,8 +6,8 @@ description: "What CaptureShapeAnalyzer reads from a pattern alone: which groups
 
 `CaptureShapeAnalyzer` reads, from the pattern alone, what a successful `preg_match()`
 writes into `$matches`: which groups every match sets, which some matches leave unset,
-which no match sets, the strings each group can hold, and facts such as "never falsy"
-or "digits only". It is built for static
+which no match sets, the strings each group can hold, facts such as "never falsy",
+"digits only" or "lowercase", and what a match proves of the whole subject. It is built for static
 analysers that type `$matches`, and for anyone who wants to know what a pattern
 captures before running it.
 
@@ -54,8 +54,8 @@ the split packages, install through the monorepo — see the
 
 `analyze()` returns a `CaptureShape`: `$whole` for `$matches[0]`, `$groups` with one
 `CaptureGroupShape` per group number, `$marks`, the names a `(*MARK)` verb, or a
-verb that sets a mark, may leave under the `MARK` key, and `$cases`, described in
-[Cases](#cases).
+verb that sets a mark, may leave under the `MARK` key, `$cases`, described in
+[Cases](#cases), and `$subject`, described in [The subject](#the-subject).
 
 `$groups` is keyed by group number: `$shape->groups[1]` is group 1. Its keys are exactly
 `1` to `N`, in order, with no gap, so `count($shape->groups)` is the number of capturing
@@ -72,6 +72,9 @@ from 1: in `/(a)(?<x>b)/n`, `$groups[1]` is `x`.
 | `values` | every string the group can hold, when they are a small finite set read from literals, or `null` |
 | `nonFalsy` | `true` when every value satisfies `(bool) $v`: it is neither `''` nor `'0'` ([Facts](#facts)) |
 | `digitsOnly` | `true` when every value satisfies `ctype_digit($v)`: a non-empty run of ASCII `0` to `9` ([Facts](#facts)) |
+| `decimalInt` | `true` when every value satisfies `(string) (int) $v === $v`: `'0'`, or digits without a leading zero after an optional `-` ([Facts](#facts)) |
+| `lowercase` | `true` when every value satisfies `strtolower($v) === $v`: it holds no ASCII letter `A` to `Z` ([Facts](#facts)) |
+| `uppercase` | `true` when every value satisfies `strtoupper($v) === $v`: it holds no ASCII letter `a` to `z` ([Facts](#facts)) |
 | `arms` | the record of each way the group is set, each branch it reads or each group of a branch reset, when joining them loses what they say; empty otherwise (below) |
 
 The lengths, the values and the facts describe the group when it is set. What PHP
@@ -81,9 +84,11 @@ group with `minLength` 1 still reads `''` when a match leaves it unset.
 A group that reads either constants or digits keeps both in `arms`. In `/(a|\d)/`, the
 join of the two branches holds no value set and no digit fact, so `values` is `null` and
 `digitsOnly` is `false`; `arms` holds one record whose `values` is `['a']` and one whose
-`digitsOnly` is `true`. Each arm bears the group's number, name and participation. The
-list stays empty when the join says it all, as in `/(a|b)/` or `/(\d|\d\d)/`, and past
-eight distinct arms.
+`digitsOnly` is `true`. Each arm bears the group's number, name and participation. An arm
+also stays when it proves `decimalInt`, `lowercase` or `uppercase` and the join does
+not: in `/([a-z]+|[A-Z]+)/` neither case holds for the group, and each holds for one arm.
+The list stays empty when the join says it all, as in `/(a|b)/`, `/(\d|\d\d)/` or
+`/(a+|b+)/`, and past eight distinct arms.
 
 A branch-reset record takes the name any of its branches gives. In `/(?|(x)|(?<a>y))/`,
 group 1 is named `a`, and PHP writes `a` on `x` too. PCRE refuses two different names
@@ -99,16 +104,19 @@ for one number.
 
 ### Facts
 
-`nonFalsy` and `digitsOnly` are PHP predicates on every value `$v` the group holds when it is
-set:
+The facts are PHP predicates on every value `$v` the group holds when it is set. Each of
+the last three is the one PHPStan reads its accessory type with:
 
 | fact | `true` when every value satisfies |
 |---|---|
 | `nonFalsy` | `(bool) $v` |
 | `digitsOnly` | `ctype_digit($v)` |
+| `decimalInt` | `(string) (int) $v === $v`, PHPStan's `decimal-int-string` |
+| `lowercase` | `strtolower($v) === $v`, PHPStan's `lowercase-string` |
+| `uppercase` | `strtoupper($v) === $v`, PHPStan's `uppercase-string` |
 
 A fact is `true` only when the pattern proves it. `false` means "not proven", not "false
-for some value". Both facts are `false` for a `Never` group, which holds no value.
+for some value". Every fact is `false` for a `Never` group, which holds no value.
 
 `nonFalsy` holds when the group reads at least two characters, or at least one and never
 `'0'` alone. PHP treats only `''` and `'0'` as falsy, so `'00'` is truthy. `digitsOnly`
@@ -148,15 +156,90 @@ $shape->groups[1]->digitsOnly;  // false
 $shape->groups[2]->digitsOnly;  // true
 ```
 
+`decimalInt` holds where every value is `'0'`, or ASCII digits after an optional `-`, the
+first of them not `0`, and no more than 18 of them, which stay below `PHP_INT_MAX` on a
+64-bit build (9 on a 32-bit one): `(int)` caps a longer number, so
+`'9999999999999999999'` is no decimal integer string. `\d+` does not prove it, since it
+may read `'007'`; nor does `-?\d+`, which may read `'-0'`, nor `\+?[1-9]`, which may read
+`'+1'`:
+
+```php
+$shape = (new CaptureShapeAnalyzer())->analyze(
+    RegexParser::create()->parse('/^(\d+)-(0|[1-9]\d{0,17})-(-?[1-9][0-9]{0,8})$/'),
+);
+
+$shape->groups[1]->decimalInt;  // false: '007'
+$shape->groups[2]->decimalInt;  // true
+$shape->groups[3]->decimalInt;  // true
+```
+
+`lowercase` and `uppercase` read letters as `strtolower()` and `strtoupper()` do: since
+PHP 8.2 they fold the ASCII letters alone, so `'É'` is lowercase and `'é'` uppercase, and
+a value without a letter, as `'42'` or `'-'`, is both. A group of digits, white space or
+punctuation proves both; `[a-z]`, `[[:lower:]]` and `\p{Ll}` prove `lowercase`. Where the
+engine reads caselessly, under `/i`, `(?i)` or `(?i:...)`, a letter reads in either case,
+and so does `\p{Ll}` or `[[:lower:]]`. Under `/iu` a code point past ASCII may fold into
+an ASCII letter: `preg_match('/^\x{212A}$/iu', 'K')` returns 1 for the KELVIN SIGN, so
+there no character past ASCII proves a case. A negated class, a backreference and `.`
+prove no case:
+
+```php
+$shape = (new CaptureShapeAnalyzer())->analyze(
+    RegexParser::create()->parse('/^([a-z]+)-([A-Z]+)-(\d+)-(?i:([a-z]+))$/'),
+);
+
+$shape->groups[1]->lowercase;  // true
+$shape->groups[2]->uppercase;  // true
+$shape->groups[3]->lowercase;  // true, and uppercase too: no letter
+$shape->groups[4]->lowercase;  // false: read caselessly, it may hold 'AB'
+```
+
+## The subject
+
+`$subject` says what the whole subject holds when `preg_match()` returns 1, for a pattern
+that pins both ends: every match starts at the start of the subject, `\A` or `^` without
+multiline, and ends at its end, `\z`, or `$` under `/D`, without multiline. It is a
+`CaptureGroupShape` numbered 0, read as the whole match is, or `null` when the pattern
+does not pin both ends. A start offset never lets `^` or `\A` match, so it holds whatever
+the offset; `\G` and `/A` stand at the offset, and pin nothing.
+
+`$` without `/D`, and `\Z`, also match before a final newline:
+`preg_match('/^[a-z]+$/', "abc\n")` returns 1. The subject is then what the pattern reads,
+or that followed by one newline: `/^(a|b)$/` gives the values `'a'`, `'b'`, `"a\n"` and
+`"b\n"`. A newline holds no letter and keeps a value truthy, so `lowercase`, `uppercase`
+and `nonFalsy` survive it; `digitsOnly` and `decimalInt` do not. The newline is the one of
+the pattern's convention: `"\n"`, unless a leading `(*CR)`, `(*CRLF)`, `(*ANYCRLF)`,
+`(*ANY)` or `(*NUL)` says otherwise, the last of them holding.
+
+```php
+$shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse('/^[a-z]+$/'));
+$shape->subject->lowercase;   // true, "abc\n" included
+$shape->subject->maxLength;   // null
+
+$shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse('/^(0|[1-9]\d{0,17})$/D'));
+$shape->subject->decimalInt;  // true
+
+$shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse('/^(0|[1-9]\d{0,17})$/'));
+$shape->subject->decimalInt;  // false: "7\n" matches
+```
+
+`\K` moves the start of the match, not of the subject: `/^a\Kb$/D` writes `'b'` and
+proves the subject `'ab'`. `(*ACCEPT)` may end the match before the end anchor, and leaves
+`$subject` `null`. Under `(?m)` or `/m`, `^` and `$` stand at any line, and pin nothing.
+Each case holds the subject of its own matches: in `/^(?:(\d+)|([a-z]+))$/D` the case
+of the digits proves `digitsOnly`, the other one `lowercase`, and the merged subject
+proves `lowercase` alone.
 ## The shape of `$matches`
 
 `matchShape(int $flags = 0)` writes the array `preg_match()` fills on success as a type
 in PHPStan's syntax: array shapes, constant strings, `int<a, b>`, `non-empty-string`,
-`non-falsy-string`, `numeric-string`, and a union of shapes when the pattern has
+`non-falsy-string`, `numeric-string`, `decimal-int-string`, `lowercase-string`,
+`uppercase-string`, and a union of shapes when the pattern has
 [cases](#cases). The records it is written from, above, are engine-neutral: any other
 type system can be fed from them. The [Psalm plugin](../guides/psalm.md) builds its
-types from them, key for key the same facts, but `numeric-string`: Psalm gets none,
-because Psalm 6.19's type combiner collapses `numeric-string|'a'` to `numeric-string`.
+types from them, key for key the same facts, but `numeric-string`, `decimal-int-string`
+and the letter cases: Psalm gets no `numeric-string`, because Psalm 6.19's type combiner
+collapses `numeric-string|'a'` to `numeric-string`, and has no type for the others.
 
 It takes the flags `preg_match()` takes, `PREG_OFFSET_CAPTURE` and
 `PREG_UNMATCHED_AS_NULL`, and checks the rest as `preg_match()` does. A bit of the low
@@ -178,40 +261,46 @@ $shape = (new CaptureShapeAnalyzer())->analyze(
 );
 
 $shape->matchShape();
-// array{0: non-falsy-string,
-//       year: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string,
-//       month: non-falsy-string&numeric-string, 2: non-falsy-string&numeric-string,
-//       day?: non-falsy-string&numeric-string, 3?: non-falsy-string&numeric-string}
+// array{0: lowercase-string&non-falsy-string&uppercase-string,
+//       year: lowercase-string&non-falsy-string&numeric-string&uppercase-string,
+//       1: lowercase-string&non-falsy-string&numeric-string&uppercase-string,
+//       month: ..., 2: ..., day?: ..., 3?: ...}  (each the same as year)
 
 $shape->matchShape(PREG_UNMATCHED_AS_NULL);
-// array{0: non-falsy-string,
-//       year: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string,
-//       month: non-falsy-string&numeric-string, 2: non-falsy-string&numeric-string,
-//       day: (non-falsy-string&numeric-string)|null, 3: (non-falsy-string&numeric-string)|null}
+// array{0: ..., year: ..., 1: ..., month: ..., 2: ...,
+//       day: (lowercase-string&non-falsy-string&numeric-string&uppercase-string)|null,
+//       3: (lowercase-string&non-falsy-string&numeric-string&uppercase-string)|null}
 ```
 
 A group's value is written, from the most precise to the least, once per arm when it has
-`arms`: `/(a|\d)/` writes group 1 `'a'|numeric-string`.
+`arms`: `/(a|\d)/` writes group 1 `'a'|(lowercase-string&numeric-string&uppercase-string)`.
 
 - as a union of constant strings, when its values are known;
 - `''`, when it is always empty;
-- `non-falsy-string&numeric-string`, when both facts hold;
-- `numeric-string`, when `digitsOnly` holds: a run of digits is a numeric string, never empty;
-- `non-falsy-string`, when `nonFalsy` holds;
-- `non-empty-string`, when it cannot be empty;
-- `string` otherwise.
+- `decimal-int-string` when `decimalInt` holds, with `&non-falsy-string` when `nonFalsy`
+  holds too: PHPStan reads a decimal integer string as numeric, non-empty and of both
+  cases already;
+- otherwise as the intersection of the accessory types the facts prove, in the order
+  PHPStan prints them: `lowercase-string` for `lowercase`, `non-falsy-string` for
+  `nonFalsy` (else `non-empty-string` when it cannot be empty), `numeric-string` for
+  `digitsOnly` (a run of digits is a numeric string, never empty), `uppercase-string`
+  for `uppercase`. `/^([a-z]+)$/` writes group 1 `lowercase-string&non-falsy-string`,
+  `/(\d+)/` writes it `lowercase-string&numeric-string&uppercase-string`;
+- `''|` before that intersection, in parentheses, when `digitsOnly` holds and the group
+  may be empty, as `(\d*)`;
+- `string` when no fact holds.
 
 PHPStan reads an intersection inside a union only in parentheses, so a group that may be
-unset is written `(non-falsy-string&numeric-string)|null`.
+unset is written `(lowercase-string&non-falsy-string)|null`.
 
 The keys come in the order PHP writes them: `0`, then for each group its name, when it
 has one, before its number, then `MARK`.
 
 The string is PHPRegex's own spelling of the type. PHPStan resolves it into a type, and
 prints that type its own way: it writes a shape whose keys run from 0 with no gap as a
-list without keys, and it sorts the members of a union. `/(\d+)/` is written
-`array{0: numeric-string, 1: numeric-string}`, and PHPStan prints
-`array{numeric-string, numeric-string}`. An adapter should resolve the string and rely on
+list without keys, and it sorts the members of a union. `/([a-z]+)/` is written
+`array{0: lowercase-string&non-falsy-string, 1: lowercase-string&non-falsy-string}`, and
+PHPStan prints `array{lowercase-string&non-falsy-string, lowercase-string&non-falsy-string}`. An adapter should resolve the string and rely on
 the type it gets, never on the text.
 
 ### Shared names and `MARK`
@@ -255,11 +344,12 @@ $shape = (new CaptureShapeAnalyzer())->analyze(
 
 count($shape->cases);  // 2
 $shape->matchShape();
-// array{0: numeric-string, 1: numeric-string}|array{0: non-falsy-string, 1: '', 2: non-falsy-string}
+// array{0: lowercase-string&numeric-string&uppercase-string, 1: lowercase-string&numeric-string&uppercase-string}
+// |array{0: lowercase-string&non-falsy-string, 1: '', 2: lowercase-string&non-falsy-string}
 ```
 
 Merged, the same matches read
-`array{0: non-empty-string, 1?: ''|numeric-string, 2?: non-falsy-string}`.
+`array{0: lowercase-string&non-empty-string, 1?: ''|(lowercase-string&numeric-string&uppercase-string), 2?: lowercase-string&non-falsy-string}`.
 
 - `$cases` is non-empty only when the analyzer splits the pattern. Otherwise it is `[]`,
   and `$whole` and `$groups` are the whole answer.
@@ -312,12 +402,12 @@ $shape = (new CaptureShapeAnalyzer())->analyze(
 );
 
 $shape->matchShape();
-// array{0: non-falsy-string, 1: non-falsy-string, 2: numeric-string, 3: non-falsy-string, 4: non-falsy-string, 5: numeric-string}
-// |array{0: non-falsy-string, 1: non-falsy-string, 2: numeric-string}
+// array{0: U, 1: U, 2: D, 3: U, 4: U, 5: D}|array{0: U, 1: U, 2: D}
+// where U is non-falsy-string&uppercase-string and D is lowercase-string&numeric-string&uppercase-string
 ```
 
 Merged, the same matches read
-`array{0: non-falsy-string, 1: non-falsy-string, 2: numeric-string, 3?: ''|non-falsy-string, 4?: ''|non-falsy-string, 5?: numeric-string}`,
+`array{0: U, 1: U, 2: D, 3?: ''|(U), 4?: ''|(U), 5?: D}`,
 where `isset($m[3])` says nothing of `$m[5]`. An optional group holding one capturing
 group, `/(a)?/` or `/(?:x(a))?/`, says as much merged, and is not split.
 
@@ -498,6 +588,9 @@ cannot tell, the answer widens rather than guesses:
   branches, is written optional.
 - A fact is `true` only when every character the group can read proves it. A part the
   analysis cannot read, as a backreference or a recursive call, proves no fact.
+- `decimalInt` counts on a 64-bit build: up to 18 digits, 9 on a 32-bit one. It reads the
+  digits as `digitsOnly` does, so `\d` under `/u` or `(*UCP)` proves no decimal integer.
+- `$subject` assumes the newline PHP's bundled PCRE2 uses when no verb sets one, `"\n"`.
 
 The facts and the cases are computed from the pattern alone. No character table of the
 running engine is read, so the same pattern gives the same answer on every machine, and

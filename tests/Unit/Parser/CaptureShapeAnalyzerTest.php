@@ -480,12 +480,131 @@ final class CaptureShapeAnalyzerTest extends TestCase
     }
 
     /**
+     * lowercase: every value the group holds when it is set satisfies
+     * strtolower($value) === $value, PHPStan's lowercase-string: it holds no
+     * ASCII letter A-Z. false means "not proven".
+     */
+    #[Test]
+    #[DataProvider('provideLowercase')]
+    public function test_lowercase_is_proven_from_the_pattern(string $pattern, int $group, bool $expected): void
+    {
+        $this->assertSame($expected, $this->group($pattern, $group)->lowercase);
+    }
+
+    /**
+     * uppercase: every value the group holds when it is set satisfies
+     * strtoupper($value) === $value, PHPStan's uppercase-string: it holds no
+     * ASCII letter a-z. false means "not proven".
+     */
+    #[Test]
+    #[DataProvider('provideUppercase')]
+    public function test_uppercase_is_proven_from_the_pattern(string $pattern, int $group, bool $expected): void
+    {
+        $this->assertSame($expected, $this->group($pattern, $group)->uppercase);
+    }
+
+    /**
+     * decimalInt: every value the group holds when it is set satisfies
+     * (string) (int) $value === $value, PHPStan's decimal-int-string. false
+     * means "not proven".
+     */
+    #[Test]
+    #[DataProvider('provideDecimalInt')]
+    public function test_decimal_int_is_proven_from_the_pattern(string $pattern, int $group, bool $expected): void
+    {
+        $this->assertSame($expected, $this->group($pattern, $group)->decimalInt);
+    }
+
+    /**
+     * What a match proves of the subject when the pattern pins both ends:
+     * its lengths, its values and its facts; null when it does not.
+     *
+     * @param array{min: int, max: int|null, values: list<string>|null, facts: list<string>}|null $expected
+     */
+    #[Test]
+    #[DataProvider('provideSubject')]
+    public function test_the_subject_is_read_when_the_pattern_pins_both_ends(string $pattern, ?array $expected): void
+    {
+        $subject = $this->analyze($pattern)->subject;
+        if (null === $expected) {
+            $this->assertNull($subject, $pattern);
+
+            return;
+        }
+
+        $this->assertInstanceOf(CaptureGroupShape::class, $subject, $pattern);
+        $this->assertSame($expected, ['min' => $subject->minLength, 'max' => $subject->maxLength, 'values' => $subject->values, 'facts' => self::provenFacts($subject)], $pattern);
+    }
+
+    /**
+     * Each subject the engine matches follows what the shape proves of the
+     * subject, the trailing newline a "$" without /D lets through included,
+     * and one of its arms, when it has some.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideSubjectEngineRows')]
+    public function test_the_subject_follows_what_the_engine_matches(string $pattern, array $subjects): void
+    {
+        $shape = $this->analyze($pattern);
+        $this->assertInstanceOf(CaptureGroupShape::class, $shape->subject, $pattern);
+        $unicode = RegexParser::create()->parse($pattern)->isUnicode();
+
+        foreach ($subjects as $subject) {
+            $this->assertSame(1, preg_match($pattern, $subject), \sprintf('%s must match %s.', $pattern, json_encode($subject)));
+            $context = \sprintf('%s on %s', $pattern, json_encode($subject, \JSON_UNESCAPED_UNICODE));
+            $this->assertSame([], self::refusals($shape->subject, $subject, $unicode), $context);
+
+            $held = [] === $shape->subject->arms;
+            foreach ($shape->subject->arms as $arm) {
+                $held = $held || [] === self::refusals($arm, $subject, $unicode);
+            }
+            $this->assertTrue($held, $context.': no arm holds it.');
+        }
+    }
+
+    /**
+     * Each case reads the subject of its own matches: preg_match('/^(?:(\d+)|([a-z]+))$/D',
+     * '0') -> ["0","0"], on 'ab' -> ["ab","","ab"] (PHP 8.4.27, PCRE2 10.49).
+     */
+    #[Test]
+    public function test_each_case_reads_its_own_subject(): void
+    {
+        $shape = $this->analyze('/^(?:(\d+)|([a-z]+))$/D');
+
+        $this->assertCount(2, $shape->cases);
+        $this->assertSame(['lowercase'], self::provenFacts($shape->subject ?? $this->fail('The merged shape reads no subject.')));
+        $this->assertSame(['digitsOnly', 'lowercase', 'uppercase'], self::provenFacts($shape->cases[0]->subject ?? $this->fail('The first case reads no subject.')));
+        $this->assertSame(['nonFalsy', 'lowercase'], self::provenFacts($shape->cases[1]->subject ?? $this->fail('The second case reads no subject.')));
+    }
+
+    /**
+     * A join that loses the case of its arms keeps them: in /([a-z]+|[A-Z]+)/
+     * neither case holds for every value, each holds for one branch;
+     * preg_match('/([a-z]+|[A-Z]+)/', 'AB') -> ["AB","AB"] (PHP 8.4.27, PCRE2 10.49).
+     * A join that loses no fact keeps none.
+     */
+    #[Test]
+    public function test_a_group_keeps_the_arms_whose_case_its_join_loses(): void
+    {
+        $group = $this->group('/([a-z]+|[A-Z]+)/', 1);
+
+        $this->assertFalse($group->lowercase);
+        $this->assertFalse($group->uppercase);
+        $this->assertSame([['nonFalsy', 'lowercase'], ['nonFalsy', 'uppercase']], array_map(self::provenFacts(...), $group->arms));
+        $this->assertSame([['nonFalsy', 'lowercase'], ['digitsOnly', 'lowercase', 'uppercase']], array_map(self::provenFacts(...), $this->group('/([a-z]+|\d+)/', 1)->arms));
+        $this->assertSame([['nonFalsy', 'decimalInt', 'lowercase', 'uppercase'], ['nonFalsy', 'digitsOnly', 'lowercase', 'uppercase']], array_map(self::provenFacts(...), $this->group('/(-?[1-9]\d?|00)/', 1)->arms));
+        $this->assertSame([], $this->group('/(a+|b+)/', 1)->arms);
+    }
+
+    /**
      * The analysis proves the facts the row lists, and a fact proven true
      * holds for every value the engine writes into a set group; the unset
      * slot ('' or null) is the participation's business.
      *
-     * @param list<string>                              $subjects
-     * @param array<int, list<'nonFalsy'|'digitsOnly'>> $facts
+     * @param list<string>                                                                   $subjects
+     * @param array<int, list<'nonFalsy'|'digitsOnly'|'decimalInt'|'lowercase'|'uppercase'>> $facts
      */
     #[Test]
     #[DataProvider('provideFactEngineRows')]
@@ -495,7 +614,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
 
         $proven = [];
         foreach ([$shape->whole, ...$shape->groups] as $group) {
-            $proven[$group->number] = array_keys(array_filter(['nonFalsy' => $group->nonFalsy, 'digitsOnly' => $group->digitsOnly]));
+            $proven[$group->number] = self::provenFacts($group);
         }
         $this->assertSame($facts, $proven, $pattern);
 
@@ -731,6 +850,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
             $proven = Participation::Always === $group->participation;
             $this->assertSame($proven, $group->nonFalsy);
             $this->assertSame($proven, $group->digitsOnly);
+            $this->assertSame($proven, $group->lowercase);
+            $this->assertSame($proven, $group->uppercase);
         }
         $this->assertEqualsCanonicalizing([Participation::Always, Participation::Never], $participations);
     }
@@ -1215,27 +1336,27 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'trailing optional group is left out' => ['pattern' => '/(a)(z)?/', 'flags' => 0, 'expected' => "array{0: 'a'|'az', 1: 'a', 2?: 'z'}"];
         yield 'middle optional group is empty' => ['pattern' => '/(z)?(a)/', 'flags' => 0, 'expected' => "array{0: 'a'|'za', 1: ''|'z', 2: 'a'}"];
         yield 'unmatched as null' => ['pattern' => '/(a)(x)?(b)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'ab'|'axb', 1: 'a', 2: 'x'|null, 3: 'b'}"];
-        yield 'named group' => ['pattern' => '/(?<n>a+)(b)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, n: non-falsy-string, 1: non-falsy-string, 2: \'b\'}'];
+        yield 'named group' => ['pattern' => '/(?<n>a+)(b)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string, n: lowercase-string&non-falsy-string, 1: lowercase-string&non-falsy-string, 2: \'b\'}'];
         yield 'offset capture' => ['pattern' => '/(z)?(a)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'a'|'za', int<0, max>}, 1: array{''|'z', int<-1, max>}, 2: array{'a', int<0, max>}}"];
         yield 'never set, then set' => ['pattern' => '/(?!(b))(a)/', 'flags' => 0, 'expected' => "array{0: 'a', 1: '', 2: 'a'}"];
         yield 'never set, last' => ['pattern' => '/(?!(b))a/', 'flags' => 0, 'expected' => "array{0: 'a'}"];
         yield 'never set, last, as null' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: null}"];
         yield 'mark' => ['pattern' => '/(*MARK:m)a/', 'flags' => 0, 'expected' => "array{0: 'a', MARK?: 'm'}"];
-        yield 'a constant beside digits' => ['pattern' => '/(a|\d)/', 'flags' => 0, 'expected' => "array{0: 'a'|numeric-string, 1: 'a'|numeric-string}"];
-        yield 'a constant beside digits, with offsets' => ['pattern' => '/(a|\d+)x/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{non-falsy-string, int<0, max>}, 1: array{'a'|numeric-string, int<0, max>}}"];
+        yield 'a constant beside digits' => ['pattern' => '/(a|\d)/', 'flags' => 0, 'expected' => "array{0: 'a'|(lowercase-string&numeric-string&uppercase-string), 1: 'a'|(lowercase-string&numeric-string&uppercase-string)}"];
+        yield 'a constant beside digits, with offsets' => ['pattern' => '/(a|\d+)x/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{lowercase-string&non-falsy-string, int<0, max>}, 1: array{'a'|(lowercase-string&numeric-string&uppercase-string), int<0, max>}}"];
         // preg_match('/(?<x>a)(*MARK:m)b/', 'ab') -> {"0":"ab","x":"a","1":"a","MARK":"m"}: x keeps its own value, MARK comes last (PHP 8.4.26)
         yield 'named group next to a mark verb' => ['pattern' => '/(?<x>a)(*MARK:m)b/', 'flags' => 0, 'expected' => "array{0: 'ab', x: 'a', 1: 'a', MARK?: 'm'}"];
         // preg_match('/(?<MARK>a)/', 'a') -> {"0":"a","MARK":"a","1":"a"}: without a verb the key holds the group alone
         yield 'group named MARK, no mark verb' => ['pattern' => '/(?<MARK>a)/', 'flags' => 0, 'expected' => "array{0: 'a', MARK: 'a', 1: 'a'}"];
-        yield 'trailing optional named group' => ['pattern' => '/(?<y>\d{4})(?:-(?<d>\d\d))?/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, y: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string, d?: non-falsy-string&numeric-string, 2?: non-falsy-string&numeric-string}'];
+        yield 'trailing optional named group' => ['pattern' => '/(?<y>\d{4})(?:-(?<d>\d\d))?/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string&uppercase-string, y: lowercase-string&non-falsy-string&numeric-string&uppercase-string, 1: lowercase-string&non-falsy-string&numeric-string&uppercase-string, d?: lowercase-string&non-falsy-string&numeric-string&uppercase-string, 2?: lowercase-string&non-falsy-string&numeric-string&uppercase-string}'];
         // A root alternation holding groups splits into one shape per branch:
         // preg_match('/(?J)(?<n>a)|(?<n>b)/', 'a') -> {"0":"a","n":"a","1":"a"}, on 'b' -> {"0":"b","n":"b","1":"","2":"b"}
         yield 'duplicate names' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'flags' => 0, 'expected' => "array{0: 'a', n: 'a', 1: 'a'}|array{0: 'b', n: 'b', 1: '', 2: 'b'}"];
         yield 'unknown text' => ['pattern' => '/(\w*)/', 'flags' => 0, 'expected' => 'array{0: string, 1: string}'];
         yield 'quote in a value' => ['pattern' => "/(it's)/", 'flags' => 0, 'expected' => "array{0: 'it\\'s', 1: 'it\\'s'}"];
-        yield 'unprintable value' => ['pattern' => '/(\x01)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, 1: non-falsy-string}'];
+        yield 'unprintable value' => ['pattern' => '/(\x01)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string&uppercase-string, 1: lowercase-string&non-falsy-string&uppercase-string}'];
         yield 'empty group of unknown text' => ['pattern' => '/(\b)a/i', 'flags' => 0, 'expected' => "array{0: non-falsy-string, 1: ''}"];
-        yield 'too many values to write' => ['pattern' => '/(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, 1: non-falsy-string}'];
+        yield 'too many values to write' => ['pattern' => '/(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string, 1: lowercase-string&non-falsy-string}'];
         // preg_match('/(a)(?<x>b)/n', 'ab') -> {"0":"ab","x":"b","1":"b"}, the same under (?n) (PHP 8.4.26)
         yield 'no auto capture' => ['pattern' => '/(a)(?<x>b)/n', 'flags' => 0, 'expected' => "array{0: 'ab', x: 'b', 1: 'b'}"];
         yield 'inline no auto capture' => ['pattern' => '/(?n)(a)(?<x>b)/', 'flags' => 0, 'expected' => "array{0: 'ab', x: 'b', 1: 'b'}"];
@@ -1562,43 +1683,294 @@ final class CaptureShapeAnalyzerTest extends TestCase
     }
 
     /**
+     * PHPStan reads a constant string as lowercase-string when
+     * strtolower($v) === $v, which since PHP 8.2 folds the ASCII letters
+     * only: strtolower('É') === 'É'. A value is lowercase when it holds no
+     * byte A-Z. Oracle (PHP 8.4.27, PCRE2 10.49):
+     *   preg_match('/([a-z]+)/i', 'AB')                  -> ["AB","AB"]
+     *   preg_match('/(?i:x)([a-z]+)/', 'XAB')            -> 0: the option ends with its group
+     *   preg_match('/(\d+)/u', "\u{663}")                -> 1: a digit of another script, no letter
+     *   preg_match('/(\w+)/', 'A')                       -> ["A","A"]
+     *   preg_match('/^\W$/i', 'A')                       -> 0: \W reads no letter, caseless or not
+     *   preg_match('/(\xE9)/i', "\xC9")                  -> 0: without /u nothing past ASCII folds
+     *   preg_match('/(é)/iu', 'É')                       -> ["É","É"]: lowercase by strtolower(), not proven
+     *   preg_match('/(\x{212A})/iu', 'K')                -> ["K","K"]: KELVIN SIGN folds into ASCII
+     *   preg_match('/(\x{17F})/iu', 'S')                 -> ["S","S"]: LATIN SMALL LETTER LONG S too
+     *   preg_match('/(\p{Ll}+)/iu', 'A')                 -> ["A","A"]: caseless, Ll reads any cased letter
+     *   preg_match('/([[:lower:]]+)/i', 'A')             -> ["A","A"]
+     *   preg_match('/(a(?i)b)/', 'aB')                   -> ["aB","aB"]
+     *   preg_match('/(?i)(?<t>[a-z])(?-i)x((?&t))/', 'axB') -> {"0":"axB","t":"a","1":"a","2":"B"}: a call reads with the options of its group
+     *   preg_match('/([Z-a]+)/', 'Z')                    -> ["Z","Z"]
+     *   preg_match('/([0-9_.-]+)/i', '0_.-')             -> 1: no digit or punctuation folds
+     *
+     * @return iterable<string, array{pattern: string, group: int, expected: bool}>
+     */
+    public static function provideLowercase(): iterable
+    {
+        yield 'a class of lowercase letters' => ['pattern' => '/([a-z]+)/', 'group' => 1, 'expected' => true];
+        yield 'a class of uppercase letters' => ['pattern' => '/([A-Z]+)/', 'group' => 1, 'expected' => false];
+        yield 'caseless, a letter reads in either case' => ['pattern' => '/([a-z]+)/i', 'group' => 1, 'expected' => false];
+        yield 'a scoped caseless option ends with its group' => ['pattern' => '/(?i:x)([a-z]+)/', 'group' => 1, 'expected' => true];
+        yield 'a caseless option turned off again' => ['pattern' => '/(?i)x(?-i)([a-z]+)/', 'group' => 1, 'expected' => true];
+        yield 'digits hold no letter' => ['pattern' => '/(\d+)/', 'group' => 1, 'expected' => true];
+        yield 'digits of any script hold no ASCII letter' => ['pattern' => '/(\d+)/u', 'group' => 1, 'expected' => true];
+        yield 'word characters' => ['pattern' => '/(\w+)/', 'group' => 1, 'expected' => false];
+        yield 'non-word characters, caseless' => ['pattern' => '/(\W+)/i', 'group' => 1, 'expected' => true];
+        yield 'white space or a line break' => ['pattern' => '/(\s+|\R)/', 'group' => 1, 'expected' => true];
+        // A deliberate over-approximation: a negated class is not read.
+        yield 'a negated class' => ['pattern' => '/([^A-Z]+)/', 'group' => 1, 'expected' => false];
+        yield 'a code point past ASCII' => ['pattern' => '/(é)/u', 'group' => 1, 'expected' => true];
+        // A deliberate over-approximation: 'É' is lowercase for strtolower(),
+        // but under /iu the analysis reads no fold past ASCII, as \x{212A} shows.
+        yield 'a code point past ASCII, caseless' => ['pattern' => '/(é)/iu', 'group' => 1, 'expected' => false];
+        yield 'the Kelvin sign folds into K' => ['pattern' => '/(\x{212A})/iu', 'group' => 1, 'expected' => false];
+        yield 'the long s folds into S' => ['pattern' => '/(\x{17F})/iu', 'group' => 1, 'expected' => false];
+        yield 'a byte past ASCII that strtolower() keeps' => ['pattern' => '/(\xC9)/', 'group' => 1, 'expected' => true];
+        yield 'a byte past ASCII, caseless, without /u' => ['pattern' => '/(\xE9)/i', 'group' => 1, 'expected' => true];
+        yield 'lowercase letters of any script' => ['pattern' => '/(\p{Ll}+)/u', 'group' => 1, 'expected' => true];
+        yield 'lowercase letters of any script, caseless' => ['pattern' => '/(\p{Ll}+)/iu', 'group' => 1, 'expected' => false];
+        yield 'lowercase letters of any script, in a class' => ['pattern' => '/([\p{Ll}\d]+)/u', 'group' => 1, 'expected' => true];
+        yield 'the POSIX lower class' => ['pattern' => '/([[:lower:]]+)/', 'group' => 1, 'expected' => true];
+        yield 'the POSIX lower class, caseless' => ['pattern' => '/([[:lower:]]+)/i', 'group' => 1, 'expected' => false];
+        yield 'the POSIX upper class' => ['pattern' => '/([[:upper:]]+)/', 'group' => 1, 'expected' => false];
+        yield 'any character' => ['pattern' => '/(.)/', 'group' => 1, 'expected' => false];
+        yield 'constants beside digits' => ['pattern' => '/(abc|\d+)/', 'group' => 1, 'expected' => true];
+        yield 'an inline caseless option inside the group' => ['pattern' => '/(a(?i)b)/', 'group' => 1, 'expected' => false];
+        yield 'a call of a group of lowercase letters' => ['pattern' => '/(?<t>[a-z]+)-((?&t))/', 'group' => 2, 'expected' => true];
+        yield 'a call reads with the options of its group' => ['pattern' => '/(?i)(?<t>[a-z])(?-i)x((?&t))/', 'group' => 2, 'expected' => false];
+        // A deliberate over-approximation: a backreference is not read.
+        yield 'a backreference' => ['pattern' => '/([a-z])(\1)/', 'group' => 2, 'expected' => false];
+        yield 'optional group: the fact describes the set value' => ['pattern' => '/([a-z]+)?/', 'group' => 1, 'expected' => true];
+        yield 'never set' => ['pattern' => '/(?!([a-z]))A/', 'group' => 1, 'expected' => false];
+        yield 'an uppercase letter spelled as an escape' => ['pattern' => '/(\x41)/', 'group' => 1, 'expected' => false];
+        yield 'a range with escaped endpoints' => ['pattern' => '/([\x61-\x7a]+)/', 'group' => 1, 'expected' => true];
+        yield 'a range across both cases' => ['pattern' => '/([Z-a]+)/', 'group' => 1, 'expected' => false];
+        yield 'digits and punctuation, caseless' => ['pattern' => '/([0-9_.-]+)/i', 'group' => 1, 'expected' => true];
+        yield 'whole match' => ['pattern' => '/[a-z]+\d/', 'group' => 0, 'expected' => true];
+    }
+
+    /**
+     * PHPStan reads a constant string as uppercase-string when
+     * strtoupper($v) === $v: it holds no byte a-z, so strtoupper('é') === 'é'
+     * is uppercase too. Oracle (PHP 8.4.27, PCRE2 10.49):
+     *   preg_match('/([A-Z]+)/i', 'ab')        -> ["ab","ab"]
+     *   preg_match('/(\p{Lu}+)/iu', 'a')       -> ["a","a"]
+     *   preg_match('/([[:upper:]]+)/i', 'a')   -> ["a","a"]
+     *   preg_match('/(\x{212A})/iu', 'k')      -> ["k","k"]
+     *   preg_match('/(\p{Lt})/u', "\u{1C5}")   -> 1: a titlecase letter is no ASCII letter
+     *
+     * @return iterable<string, array{pattern: string, group: int, expected: bool}>
+     */
+    public static function provideUppercase(): iterable
+    {
+        yield 'a class of uppercase letters' => ['pattern' => '/([A-Z]+)/', 'group' => 1, 'expected' => true];
+        yield 'a class of lowercase letters' => ['pattern' => '/([a-z]+)/', 'group' => 1, 'expected' => false];
+        yield 'caseless, a letter reads in either case' => ['pattern' => '/([A-Z]+)/i', 'group' => 1, 'expected' => false];
+        yield 'digits hold no letter' => ['pattern' => '/(\d+)/', 'group' => 1, 'expected' => true];
+        yield 'uppercase letters of any script' => ['pattern' => '/(\p{Lu}+)/u', 'group' => 1, 'expected' => true];
+        yield 'uppercase letters of any script, caseless' => ['pattern' => '/(\p{Lu}+)/iu', 'group' => 1, 'expected' => false];
+        yield 'lowercase letters of any script' => ['pattern' => '/(\p{Ll}+)/u', 'group' => 1, 'expected' => false];
+        yield 'titlecase letters' => ['pattern' => '/(\p{Lt})/u', 'group' => 1, 'expected' => true];
+        yield 'the POSIX upper class' => ['pattern' => '/([[:upper:]]+)/', 'group' => 1, 'expected' => true];
+        yield 'the POSIX upper class, caseless' => ['pattern' => '/([[:upper:]]+)/i', 'group' => 1, 'expected' => false];
+        yield 'an uppercase code point past ASCII' => ['pattern' => '/(É)/u', 'group' => 1, 'expected' => true];
+        yield 'a lowercase code point past ASCII, which strtoupper() keeps' => ['pattern' => '/(é)/u', 'group' => 1, 'expected' => true];
+        yield 'the Kelvin sign folds into k' => ['pattern' => '/(\x{212A})/iu', 'group' => 1, 'expected' => false];
+        yield 'constants and digits' => ['pattern' => '/(ABC|\d+)/', 'group' => 1, 'expected' => true];
+        yield 'whole match' => ['pattern' => '/[A-Z]+-\d/', 'group' => 0, 'expected' => true];
+    }
+
+    /**
+     * PHPStan reads a constant string as decimal-int-string when
+     * (string) (int) $v === $v: no leading zero, no '+', no '-0', and no
+     * value past PHP_INT_MAX, which (int) caps. Up to 18 digits are always
+     * below it on a 64-bit build. Oracle (PHP 8.4.27, PCRE2 10.49):
+     *   preg_match('/(\d+)/', '007')                               -> ["007","007"]
+     *   preg_match('/^(0|[1-9]\d{0,18})$/', '9999999999999999999') -> 1, (int) gives PHP_INT_MAX
+     *   preg_match('/^(-?(?:0|[1-9]\d*))$/', '-0')                 -> ["-0","-0"]
+     *   preg_match('/(-?\d)/', '-0')                               -> ["-0","-0"]
+     *   preg_match('/([1-9]\d*)/', '99999999999999999999')         -> 1
+     *   preg_match('/(\+?[1-9])/', '+1')                           -> ["+1","+1"]
+     *   preg_match('/([1-9]\d{0,17})/u', "1\u{663}")               -> 1: \d under /u
+     *   preg_match('/((?:0|[1-9])\d)/', '05')                      -> ["05","05"]
+     *
+     * @return iterable<string, array{pattern: string, group: int, expected: bool}>
+     */
+    public static function provideDecimalInt(): iterable
+    {
+        yield 'digits may lead with zero' => ['pattern' => '/(\d+)/', 'group' => 1, 'expected' => false];
+        yield 'zero, or up to eighteen digits without a leading zero' => ['pattern' => '/^(0|[1-9]\d{0,17})$/', 'group' => 1, 'expected' => true];
+        yield 'nineteen digits may pass PHP_INT_MAX' => ['pattern' => '/^(0|[1-9]\d{0,18})$/', 'group' => 1, 'expected' => false];
+        yield 'a sign before up to nine digits' => ['pattern' => '/^(-?[1-9][0-9]{0,8})$/', 'group' => 1, 'expected' => true];
+        yield 'a sign before zero' => ['pattern' => '/^(-?(?:0|[1-9]\d*))$/', 'group' => 1, 'expected' => false];
+        yield 'a sign before any digit' => ['pattern' => '/(-?\d)/', 'group' => 1, 'expected' => false];
+        yield 'unbounded digits' => ['pattern' => '/([1-9]\d*)/', 'group' => 1, 'expected' => false];
+        yield 'a plus sign' => ['pattern' => '/(\+?[1-9])/', 'group' => 1, 'expected' => false];
+        yield 'one digit that is not zero' => ['pattern' => '/([1-9])/', 'group' => 1, 'expected' => true];
+        yield 'zero alone' => ['pattern' => '/(0)/', 'group' => 1, 'expected' => true];
+        yield 'two zeros' => ['pattern' => '/(00)/', 'group' => 1, 'expected' => false];
+        yield 'minus zero' => ['pattern' => '/(-0)/', 'group' => 1, 'expected' => false];
+        yield 'a negative number of up to eighteen digits' => ['pattern' => '/(-[1-9]\d{0,17})/', 'group' => 1, 'expected' => true];
+        yield 'an optional sign before up to eighteen digits' => ['pattern' => '/(-?[1-9]\d{0,17})/', 'group' => 1, 'expected' => true];
+        yield 'an optional sign in a group' => ['pattern' => '/((?:-|)[1-9])/', 'group' => 1, 'expected' => true];
+        yield '\d under /u reads digits of other scripts' => ['pattern' => '/([1-9]\d{0,17})/u', 'group' => 1, 'expected' => false];
+        yield 'ASCII digits under /u' => ['pattern' => '/([1-9][0-9]{0,17})/u', 'group' => 1, 'expected' => true];
+        yield 'a leading digit that may be zero' => ['pattern' => '/((?:0|[1-9])\d)/', 'group' => 1, 'expected' => false];
+        // A deliberate over-approximation: a branch that reads nothing is not
+        // read as no first digit, though every value here is one digit.
+        yield 'a branch that reads nothing' => ['pattern' => '/((?:[1-9]|\b(?(?=a)))\d)/', 'group' => 1, 'expected' => false];
+        yield 'zero as the last branch' => ['pattern' => '/([1-9]\d?|0)/', 'group' => 1, 'expected' => true];
+        yield 'an assertion reads nothing' => ['pattern' => '/(\b[1-9]\d{0,2})/', 'group' => 1, 'expected' => true];
+        yield 'a repeat that starts without zero' => ['pattern' => '/((?:[1-9]\d{0,8}){2})/', 'group' => 1, 'expected' => true];
+        yield 'a repeat that may pass eighteen digits' => ['pattern' => '/((?:[1-9]\d{0,8}){3})/', 'group' => 1, 'expected' => false];
+        yield 'a call of a decimal group' => ['pattern' => '/(?<n>[1-9]\d?)x((?&n))/', 'group' => 2, 'expected' => true];
+        yield 'digits beside a letter' => ['pattern' => '/([1-9]\d{0,17}|[a-z])/', 'group' => 1, 'expected' => false];
+        yield 'optional group: the fact describes the set value' => ['pattern' => '/([1-9]\d{0,17})?/', 'group' => 1, 'expected' => true];
+        yield 'never set' => ['pattern' => '/(?!([1-9]))a/', 'group' => 1, 'expected' => false];
+        yield 'whole match' => ['pattern' => '/^(?:0|[1-9]\d{0,17})$/D', 'group' => 0, 'expected' => true];
+        yield 'whole match with a sign' => ['pattern' => '/^-?[1-9]\d{0,17}$/', 'group' => 0, 'expected' => true];
+    }
+
+    /**
+     * The subject is known when every match starts at its start, "\A" or
+     * "^" without multiline, and ends at its end: "\z", or "$" under /D, both
+     * without multiline. "$" without /D and "\Z" also match before a final
+     * newline, the one of the newline convention, "\n" by default. Oracle
+     * (PHP 8.4.27, PCRE2 10.49):
+     *   preg_match('/^[a-z]+$/', "abc\n")        -> ["abc"]: the subject ends in a newline
+     *   preg_match('/^[a-z]+$/D', "abc\n")       -> 0
+     *   preg_match('/^\d+$/', "0\n")             -> ["0"]
+     *   preg_match('/(*CRLF)^a$/', "a\r\n")      -> 1, and on "a\n" -> 0
+     *   preg_match('/(*ANYCRLF)^a$/', "a\r")     -> 1
+     *   preg_match('/(*CR)^a$/', "a\r")          -> 1
+     *   preg_match('/(*CR)(*LF)^a$/', "a\r")     -> 0: the last convention holds
+     *   preg_match('/(*ANY)^a$/', "a\x85")       -> 1, and under /u on "a\u{2028}"
+     *   preg_match('/^a\Kb$/D', 'ab')            -> ["b"]: the subject is still 'ab'
+     *   preg_match('/[a-z]+$/', 'ABc')           -> ["c"]
+     *   preg_match('/^[a-z]+/', 'abC')           -> ["ab"]
+     *   preg_match('/^[a-z]+$/m', "ab\nCD")      -> ["ab"], and so under (?m), or (?m) after "^"
+     *   preg_match('/^a$|b/', 'xb')              -> ["b"]
+     *   preg_match('/^a/', 'ba', $m, 0, 1)       -> 0: an offset never lets "^" or "\A" match
+     *   preg_match('/\Ga$/', 'ba', $m, 0, 1)     -> 1: "\G" stands at the offset
+     *
+     * @return iterable<string, array{pattern: string, expected: array{min: int, max: int|null, values: list<string>|null, facts: list<string>}|null}>
+     */
+    public static function provideSubject(): iterable
+    {
+        yield 'lowercase letters, then "$"' => ['pattern' => '/^[a-z]+$/', 'expected' => ['min' => 1, 'max' => null, 'values' => null, 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'lowercase letters, then "$" under /D' => ['pattern' => '/^[a-z]+$/D', 'expected' => ['min' => 1, 'max' => null, 'values' => null, 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'lowercase letters in a group' => ['pattern' => '/^([a-z]+)$/', 'expected' => ['min' => 1, 'max' => null, 'values' => null, 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'a decimal integer under /D' => ['pattern' => '/^(0|[1-9]\d{0,17})$/D', 'expected' => ['min' => 1, 'max' => 18, 'values' => null, 'facts' => ['digitsOnly', 'decimalInt', 'lowercase', 'uppercase']]];
+        yield 'a decimal integer, then a newline "$" lets through' => ['pattern' => '/^(0|[1-9]\d{0,17})$/', 'expected' => ['min' => 1, 'max' => 19, 'values' => null, 'facts' => ['lowercase', 'uppercase']]];
+        yield 'digits, then "$"' => ['pattern' => '/^\d+$/', 'expected' => ['min' => 1, 'max' => null, 'values' => null, 'facts' => ['lowercase', 'uppercase']]];
+        yield 'constants, then "$"' => ['pattern' => '/^(a|b)$/', 'expected' => ['min' => 1, 'max' => 2, 'values' => ['a', 'b', "a\n", "b\n"], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'constants, then "\z"' => ['pattern' => '/^(a|b)\z/', 'expected' => ['min' => 1, 'max' => 1, 'values' => ['a', 'b'], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield '"\Z" ignores /D' => ['pattern' => '/\A(a|b)\Z/D', 'expected' => ['min' => 1, 'max' => 2, 'values' => ['a', 'b', "a\n", "b\n"], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'each branch anchored' => ['pattern' => '/^a$|^b$/', 'expected' => ['min' => 1, 'max' => 2, 'values' => ['a', 'b', "a\n", "b\n"], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'each branch anchored at the start' => ['pattern' => '/(?:^a|^b)\z/', 'expected' => ['min' => 1, 'max' => 1, 'values' => ['a', 'b'], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'a branch that may leave a newline' => ['pattern' => '/^(?:a\z|b$)/', 'expected' => ['min' => 1, 'max' => 2, 'values' => ['a', 'b', "a\n", "b\n"], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'an option before "^"' => ['pattern' => '/(?i)^a$/', 'expected' => ['min' => 1, 'max' => 2, 'values' => null, 'facts' => ['nonFalsy']]];
+        yield 'caseless letters' => ['pattern' => '/^(?i)[a-z]+$/', 'expected' => ['min' => 1, 'max' => null, 'values' => null, 'facts' => ['nonFalsy']]];
+        yield 'the CRLF convention' => ['pattern' => '/(*CRLF)^a$/', 'expected' => ['min' => 1, 'max' => 3, 'values' => ['a', "a\r\n"], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'the ANYCRLF convention' => ['pattern' => '/(*ANYCRLF)^a$/', 'expected' => ['min' => 1, 'max' => 3, 'values' => ['a', "a\r", "a\n", "a\r\n"], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'the ANY convention' => ['pattern' => '/(*ANY)^a$/', 'expected' => ['min' => 1, 'max' => 3, 'values' => ['a', "a\r", "a\n", "a\r\n", "a\x0b", "a\x0c", "a\x85"], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'the ANY convention under /u' => ['pattern' => '/(*ANY)^a$/u', 'expected' => ['min' => 1, 'max' => 3, 'values' => ['a', "a\r", "a\n", "a\r\n", "a\x0b", "a\x0c", "a\u{85}", "a\u{2028}", "a\u{2029}"], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'the NUL convention' => ['pattern' => '/(*NUL)^a$/', 'expected' => ['min' => 1, 'max' => 2, 'values' => ['a', "a\0"], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'the CR convention' => ['pattern' => '/(*CR)^a$/', 'expected' => ['min' => 1, 'max' => 2, 'values' => ['a', "a\r"], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'the last convention holds' => ['pattern' => '/(*CR)(*LF)^a$/', 'expected' => ['min' => 1, 'max' => 2, 'values' => ['a', "a\n"], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'a keep moves the match, not the subject' => ['pattern' => '/^a\Kb$/D', 'expected' => ['min' => 2, 'max' => 2, 'values' => ['ab'], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'a lookahead after "$"' => ['pattern' => '/^a$(?=\n)/', 'expected' => ['min' => 1, 'max' => 2, 'values' => ['a', "a\n"], 'facts' => ['nonFalsy', 'lowercase']]];
+        yield 'no start anchor' => ['pattern' => '/[a-z]+$/', 'expected' => null];
+        yield 'no end anchor' => ['pattern' => '/^[a-z]+/', 'expected' => null];
+        yield 'multiline' => ['pattern' => '/^[a-z]+$/m', 'expected' => null];
+        yield 'multiline, inline' => ['pattern' => '/(?m)^[a-z]+$/', 'expected' => null];
+        yield 'multiline from after the start anchor' => ['pattern' => '/^(?m)[a-z]+$/', 'expected' => null];
+        yield 'a branch without anchors' => ['pattern' => '/^a$|b/', 'expected' => null];
+        yield 'a branch without a start anchor' => ['pattern' => '/^a$|b$/', 'expected' => null];
+        yield 'nothing read before the end' => ['pattern' => '/\b\z/', 'expected' => null];
+        yield 'an optional start anchor' => ['pattern' => '/(?:^)?a$/', 'expected' => null];
+        yield '"\G" stands at the offset' => ['pattern' => '/\Ga$/', 'expected' => null];
+        yield 'an accept ends the match early' => ['pattern' => '/^a(*ACCEPT)b$/', 'expected' => null];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: list<string>}>
+     */
+    public static function provideSubjectEngineRows(): iterable
+    {
+        yield 'subject: /^[a-z]+$/' => ['pattern' => '/^[a-z]+$/', 'subjects' => ['abc', "abc\n"]];
+        yield 'subject: /^[a-z]+$/D' => ['pattern' => '/^[a-z]+$/D', 'subjects' => ['abc']];
+        yield 'subject: /^(0|[1-9]\d{0,17})$/D' => ['pattern' => '/^(0|[1-9]\d{0,17})$/D', 'subjects' => ['0', '7', '999999999999999999']];
+        yield 'subject: /^(0|[1-9]\d{0,17})$/' => ['pattern' => '/^(0|[1-9]\d{0,17})$/', 'subjects' => ['0', "0\n", '999999999999999999']];
+        yield 'subject: /^\d+$/' => ['pattern' => '/^\d+$/', 'subjects' => ['0', "0\n"]];
+        yield 'subject: /^(a|b)$/' => ['pattern' => '/^(a|b)$/', 'subjects' => ['a', "b\n"]];
+        yield 'subject: /\A(a|b)\Z/D' => ['pattern' => '/\A(a|b)\Z/D', 'subjects' => ['a', "b\n"]];
+        yield 'subject: /^(?:a\z|b$)/' => ['pattern' => '/^(?:a\z|b$)/', 'subjects' => ['a', "b\n"]];
+        yield 'subject: /(?i)^a$/' => ['pattern' => '/(?i)^a$/', 'subjects' => ['a', "A\n"]];
+        yield 'subject: /^(?i)[a-z]+$/' => ['pattern' => '/^(?i)[a-z]+$/', 'subjects' => ['AB', "ab\n"]];
+        yield 'subject: /(*CRLF)^a$/' => ['pattern' => '/(*CRLF)^a$/', 'subjects' => ['a', "a\r\n"]];
+        yield 'subject: /(*ANYCRLF)^a$/' => ['pattern' => '/(*ANYCRLF)^a$/', 'subjects' => ['a', "a\r", "a\n", "a\r\n"]];
+        yield 'subject: /(*ANY)^a$/' => ['pattern' => '/(*ANY)^a$/', 'subjects' => ["a\x0b", "a\x0c", "a\x85", "a\r\n"]];
+        yield 'subject: /(*ANY)^a$/u' => ['pattern' => '/(*ANY)^a$/u', 'subjects' => ["a\u{85}", "a\u{2028}", "a\u{2029}"]];
+        yield 'subject: /(*NUL)^a$/' => ['pattern' => '/(*NUL)^a$/', 'subjects' => ['a', "a\0"]];
+        yield 'subject: /(*CR)^a$/' => ['pattern' => '/(*CR)^a$/', 'subjects' => ['a', "a\r"]];
+        yield 'subject: /^a\Kb$/D' => ['pattern' => '/^a\Kb$/D', 'subjects' => ['ab']];
+        yield 'subject: /^a$(?=\n)/' => ['pattern' => '/^a$(?=\n)/', 'subjects' => ["a\n"]];
+        yield 'subject: /^(?:(\d+)|([a-z]+))$/D' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/D', 'subjects' => ['0', 'ab']];
+        yield 'subject: /^(?:[a-z]+|\d+)$/' => ['pattern' => '/^(?:[a-z]+|\d+)$/', 'subjects' => ['ab', "12\n"]];
+    }
+
+    /**
      * Each subject reaches the value that makes a fact false, or proves a
      * true one: the replay fails on a wrong true. The facts list, for each
      * group number, 0 included, the facts the analysis proves.
      *
-     * @return iterable<string, array{pattern: string, subjects: list<string>, facts: array<int, list<'nonFalsy'|'digitsOnly'>>}>
+     * @return iterable<string, array{pattern: string, subjects: list<string>, facts: array<int, list<'nonFalsy'|'digitsOnly'|'decimalInt'|'lowercase'|'uppercase'>>}>
      */
     public static function provideFactEngineRows(): iterable
     {
-        yield 'facts: /(\d+)/' => ['pattern' => '/(\d+)/', 'subjects' => ['0', '123'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
-        yield 'facts: /(\d+)/u' => ['pattern' => '/(\d+)/u', 'subjects' => ['0', "\u{663}"], 'facts' => [0 => [], 1 => []]];
-        yield 'facts: /(*UTF)(*UCP)(\d+)/' => ['pattern' => '/(*UTF)(*UCP)(\d+)/', 'subjects' => ["\u{663}"], 'facts' => [0 => [], 1 => []]];
-        yield 'facts: /(*UCP)(\d+)/' => ['pattern' => '/(*UCP)(\d+)/', 'subjects' => ['0', '9'], 'facts' => [0 => [], 1 => []]];
-        yield 'facts: /(*UTF)(\d+)/' => ['pattern' => '/(*UTF)(\d+)/', 'subjects' => ['12'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
-        yield 'facts: /(\d+)/i' => ['pattern' => '/(\d+)/i', 'subjects' => ['12'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
-        yield 'facts: /([0-9]+)/u' => ['pattern' => '/([0-9]+)/u', 'subjects' => ['09'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
-        yield 'facts: /([[:digit:]]+)/u' => ['pattern' => '/([[:digit:]]+)/u', 'subjects' => ["\u{663}"], 'facts' => [0 => [], 1 => []]];
-        yield 'facts: /(\p{Nd}+)/u' => ['pattern' => '/(\p{Nd}+)/u', 'subjects' => ["\u{663}"], 'facts' => [0 => [], 1 => []]];
-        yield 'facts: /([\x30-\x39]+)/' => ['pattern' => '/([\x30-\x39]+)/', 'subjects' => ['09'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
-        yield 'facts: /(\d\d)/' => ['pattern' => '/(\d\d)/', 'subjects' => ['00'], 'facts' => [0 => ['nonFalsy', 'digitsOnly'], 1 => ['nonFalsy', 'digitsOnly']]];
-        yield 'facts: /(\d)/' => ['pattern' => '/(\d)/', 'subjects' => ['0'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
-        yield 'facts: /(0)/' => ['pattern' => '/(0)/', 'subjects' => ['0'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
-        yield 'facts: /(a|0b)/' => ['pattern' => '/(a|0b)/', 'subjects' => ['a', '0b'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
-        yield 'facts: /(a|0)/' => ['pattern' => '/(a|0)/', 'subjects' => ['a', '0'], 'facts' => [0 => [], 1 => []]];
-        yield 'facts: /(a?)/' => ['pattern' => '/(a?)/', 'subjects' => ['', 'a'], 'facts' => [0 => [], 1 => []]];
-        yield 'facts: /(a?)(\1)/' => ['pattern' => '/(a?)(\1)/', 'subjects' => ['', 'aa'], 'facts' => [0 => [], 1 => [], 2 => []]];
+        yield 'facts: /(\d+)/' => ['pattern' => '/(\d+)/', 'subjects' => ['0', '123'], 'facts' => [0 => ['digitsOnly', 'lowercase', 'uppercase'], 1 => ['digitsOnly', 'lowercase', 'uppercase']]];
+        yield 'facts: /(\d+)/u' => ['pattern' => '/(\d+)/u', 'subjects' => ['0', "\u{663}"], 'facts' => [0 => ['lowercase', 'uppercase'], 1 => ['lowercase', 'uppercase']]];
+        yield 'facts: /(*UTF)(*UCP)(\d+)/' => ['pattern' => '/(*UTF)(*UCP)(\d+)/', 'subjects' => ["\u{663}"], 'facts' => [0 => ['lowercase', 'uppercase'], 1 => ['lowercase', 'uppercase']]];
+        yield 'facts: /(*UCP)(\d+)/' => ['pattern' => '/(*UCP)(\d+)/', 'subjects' => ['0', '9'], 'facts' => [0 => ['lowercase', 'uppercase'], 1 => ['lowercase', 'uppercase']]];
+        yield 'facts: /(*UTF)(\d+)/' => ['pattern' => '/(*UTF)(\d+)/', 'subjects' => ['12'], 'facts' => [0 => ['digitsOnly', 'lowercase', 'uppercase'], 1 => ['digitsOnly', 'lowercase', 'uppercase']]];
+        yield 'facts: /(\d+)/i' => ['pattern' => '/(\d+)/i', 'subjects' => ['12'], 'facts' => [0 => ['digitsOnly', 'lowercase', 'uppercase'], 1 => ['digitsOnly', 'lowercase', 'uppercase']]];
+        yield 'facts: /([0-9]+)/u' => ['pattern' => '/([0-9]+)/u', 'subjects' => ['09'], 'facts' => [0 => ['digitsOnly', 'lowercase', 'uppercase'], 1 => ['digitsOnly', 'lowercase', 'uppercase']]];
+        yield 'facts: /([[:digit:]]+)/u' => ['pattern' => '/([[:digit:]]+)/u', 'subjects' => ["\u{663}"], 'facts' => [0 => ['lowercase', 'uppercase'], 1 => ['lowercase', 'uppercase']]];
+        yield 'facts: /(\p{Nd}+)/u' => ['pattern' => '/(\p{Nd}+)/u', 'subjects' => ["\u{663}"], 'facts' => [0 => ['lowercase', 'uppercase'], 1 => ['lowercase', 'uppercase']]];
+        yield 'facts: /([\x30-\x39]+)/' => ['pattern' => '/([\x30-\x39]+)/', 'subjects' => ['09'], 'facts' => [0 => ['digitsOnly', 'lowercase', 'uppercase'], 1 => ['digitsOnly', 'lowercase', 'uppercase']]];
+        yield 'facts: /(\d\d)/' => ['pattern' => '/(\d\d)/', 'subjects' => ['00'], 'facts' => [0 => ['nonFalsy', 'digitsOnly', 'lowercase', 'uppercase'], 1 => ['nonFalsy', 'digitsOnly', 'lowercase', 'uppercase']]];
+        yield 'facts: /(\d)/' => ['pattern' => '/(\d)/', 'subjects' => ['0'], 'facts' => [0 => ['digitsOnly', 'lowercase', 'uppercase'], 1 => ['digitsOnly', 'lowercase', 'uppercase']]];
+        yield 'facts: /(0)/' => ['pattern' => '/(0)/', 'subjects' => ['0'], 'facts' => [0 => ['digitsOnly', 'decimalInt', 'lowercase', 'uppercase'], 1 => ['digitsOnly', 'decimalInt', 'lowercase', 'uppercase']]];
+        yield 'facts: /(a|0b)/' => ['pattern' => '/(a|0b)/', 'subjects' => ['a', '0b'], 'facts' => [0 => ['nonFalsy', 'lowercase'], 1 => ['nonFalsy', 'lowercase']]];
+        yield 'facts: /(a|0)/' => ['pattern' => '/(a|0)/', 'subjects' => ['a', '0'], 'facts' => [0 => ['lowercase'], 1 => ['lowercase']]];
+        yield 'facts: /(a?)/' => ['pattern' => '/(a?)/', 'subjects' => ['', 'a'], 'facts' => [0 => ['lowercase'], 1 => ['lowercase']]];
+        yield 'facts: /(a?)(\1)/' => ['pattern' => '/(a?)(\1)/', 'subjects' => ['', 'aa'], 'facts' => [0 => [], 1 => ['lowercase'], 2 => []]];
         yield 'facts: /(0(*ACCEPT)1)/' => ['pattern' => '/(0(*ACCEPT)1)/', 'subjects' => ['01'], 'facts' => [0 => [], 1 => []]];
-        yield 'facts: /([1-9])/' => ['pattern' => '/([1-9])/', 'subjects' => ['1'], 'facts' => [0 => ['nonFalsy', 'digitsOnly'], 1 => ['nonFalsy', 'digitsOnly']]];
-        yield 'facts: /(\d+)?/' => ['pattern' => '/(\d+)?/', 'subjects' => ['', '0'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
-        yield 'facts: /(ab)?/' => ['pattern' => '/(ab)?/', 'subjects' => ['', 'ab'], 'facts' => [0 => [], 1 => ['nonFalsy']]];
-        yield 'facts: /(1a)/' => ['pattern' => '/(1a)/', 'subjects' => ['1a'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
-        yield 'facts: /(\d*)/' => ['pattern' => '/(\d*)/', 'subjects' => ['', '7'], 'facts' => [0 => ['digitsOnly'], 1 => ['digitsOnly']]];
+        yield 'facts: /([1-9])/' => ['pattern' => '/([1-9])/', 'subjects' => ['1'], 'facts' => [0 => ['nonFalsy', 'digitsOnly', 'decimalInt', 'lowercase', 'uppercase'], 1 => ['nonFalsy', 'digitsOnly', 'decimalInt', 'lowercase', 'uppercase']]];
+        yield 'facts: /(\d+)?/' => ['pattern' => '/(\d+)?/', 'subjects' => ['', '0'], 'facts' => [0 => ['digitsOnly', 'lowercase', 'uppercase'], 1 => ['digitsOnly', 'lowercase', 'uppercase']]];
+        yield 'facts: /(ab)?/' => ['pattern' => '/(ab)?/', 'subjects' => ['', 'ab'], 'facts' => [0 => ['lowercase'], 1 => ['nonFalsy', 'lowercase']]];
+        yield 'facts: /(1a)/' => ['pattern' => '/(1a)/', 'subjects' => ['1a'], 'facts' => [0 => ['nonFalsy', 'lowercase'], 1 => ['nonFalsy', 'lowercase']]];
+        yield 'facts: /(\d*)/' => ['pattern' => '/(\d*)/', 'subjects' => ['', '7'], 'facts' => [0 => ['digitsOnly', 'lowercase', 'uppercase'], 1 => ['digitsOnly', 'lowercase', 'uppercase']]];
         yield 'facts: /(.)/' => ['pattern' => '/(.)/', 'subjects' => ['0'], 'facts' => [0 => [], 1 => []]];
-        yield 'facts: /(é)/u' => ['pattern' => '/(é)/u', 'subjects' => ['é'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
+        yield 'facts: /(é)/u' => ['pattern' => '/(é)/u', 'subjects' => ['é'], 'facts' => [0 => ['nonFalsy', 'lowercase', 'uppercase'], 1 => ['nonFalsy', 'lowercase', 'uppercase']]];
         yield 'facts: /(ab)/i' => ['pattern' => '/(ab)/i', 'subjects' => ['AB'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
-        yield 'facts: /(\d+)\.(\d+)/' => ['pattern' => '/(\d+)\.(\d+)/', 'subjects' => ['1.5'], 'facts' => [0 => ['nonFalsy'], 1 => ['digitsOnly'], 2 => ['digitsOnly']]];
-        yield 'facts: /(\d\d+)/' => ['pattern' => '/(\d\d+)/', 'subjects' => ['00'], 'facts' => [0 => ['nonFalsy', 'digitsOnly'], 1 => ['nonFalsy', 'digitsOnly']]];
-        yield 'facts: /([a-z]+)/' => ['pattern' => '/([a-z]+)/', 'subjects' => ['abc'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
+        yield 'facts: /(\d+)\.(\d+)/' => ['pattern' => '/(\d+)\.(\d+)/', 'subjects' => ['1.5'], 'facts' => [0 => ['nonFalsy', 'lowercase', 'uppercase'], 1 => ['digitsOnly', 'lowercase', 'uppercase'], 2 => ['digitsOnly', 'lowercase', 'uppercase']]];
+        yield 'facts: /(\d\d+)/' => ['pattern' => '/(\d\d+)/', 'subjects' => ['00'], 'facts' => [0 => ['nonFalsy', 'digitsOnly', 'lowercase', 'uppercase'], 1 => ['nonFalsy', 'digitsOnly', 'lowercase', 'uppercase']]];
+        yield 'facts: /([a-z]+)/' => ['pattern' => '/([a-z]+)/', 'subjects' => ['abc'], 'facts' => [0 => ['nonFalsy', 'lowercase'], 1 => ['nonFalsy', 'lowercase']]];
+        yield 'facts: /([A-Z]+)/' => ['pattern' => '/([A-Z]+)/', 'subjects' => ['ABC'], 'facts' => [0 => ['nonFalsy', 'uppercase'], 1 => ['nonFalsy', 'uppercase']]];
+        yield 'facts: /([a-z]+)/i' => ['pattern' => '/([a-z]+)/i', 'subjects' => ['AB', 'ab'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
+        yield 'facts: /(\W+)/i' => ['pattern' => '/(\W+)/i', 'subjects' => ['-', '.,'], 'facts' => [0 => ['nonFalsy', 'lowercase', 'uppercase'], 1 => ['nonFalsy', 'lowercase', 'uppercase']]];
+        yield 'facts: /(\x{212A})/iu' => ['pattern' => '/(\x{212A})/iu', 'subjects' => ['K', 'k', "\u{212A}"], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
+        yield 'facts: /(é)/iu' => ['pattern' => '/(é)/iu', 'subjects' => ['É'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
+        yield 'facts: /(\xE9)/i' => ['pattern' => '/(\xE9)/i', 'subjects' => ["\xE9"], 'facts' => [0 => ['nonFalsy', 'lowercase', 'uppercase'], 1 => ['nonFalsy', 'lowercase', 'uppercase']]];
+        yield 'facts: /(\p{Ll}+)/u' => ['pattern' => '/(\p{Ll}+)/u', 'subjects' => ['a', 'é'], 'facts' => [0 => ['lowercase'], 1 => ['lowercase']]];
+        yield 'facts: /([[:lower:]]+)/i' => ['pattern' => '/([[:lower:]]+)/i', 'subjects' => ['A'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy']]];
+        yield 'facts: /(?i)(?<t>[a-z])(?-i)x((?&t))/' => ['pattern' => '/(?i)(?<t>[a-z])(?-i)x((?&t))/', 'subjects' => ['axB'], 'facts' => [0 => ['nonFalsy'], 1 => ['nonFalsy'], 2 => ['nonFalsy']]];
+        yield 'facts: /^(0|[1-9]\d{0,17})$/' => ['pattern' => '/^(0|[1-9]\d{0,17})$/', 'subjects' => ['0', '7', '999999999999999999'], 'facts' => [0 => ['digitsOnly', 'decimalInt', 'lowercase', 'uppercase'], 1 => ['digitsOnly', 'decimalInt', 'lowercase', 'uppercase']]];
+        yield 'facts: /^(-?[1-9][0-9]{0,8})$/' => ['pattern' => '/^(-?[1-9][0-9]{0,8})$/', 'subjects' => ['-1', '999999999'], 'facts' => [0 => ['nonFalsy', 'decimalInt', 'lowercase', 'uppercase'], 1 => ['nonFalsy', 'decimalInt', 'lowercase', 'uppercase']]];
+        yield 'facts: /(-?[1-9]\d?|00)/' => ['pattern' => '/(-?[1-9]\d?|00)/', 'subjects' => ['-5', '00', '42'], 'facts' => [0 => ['nonFalsy', 'lowercase', 'uppercase'], 1 => ['nonFalsy', 'lowercase', 'uppercase']]];
+        yield 'facts: /((?:[1-9]\d{0,8}){2})/' => ['pattern' => '/((?:[1-9]\d{0,8}){2})/', 'subjects' => ['1010', '999999999999999999'], 'facts' => [0 => ['nonFalsy', 'digitsOnly', 'decimalInt', 'lowercase', 'uppercase'], 1 => ['nonFalsy', 'digitsOnly', 'decimalInt', 'lowercase', 'uppercase']]];
     }
 
     /**
@@ -1611,16 +1983,28 @@ final class CaptureShapeAnalyzerTest extends TestCase
      */
     public static function provideFactShapes(): iterable
     {
-        yield 'digits, may be "0"' => ['pattern' => '/(\d+)/', 'flags' => 0, 'expected' => 'array{0: numeric-string, 1: numeric-string}'];
-        yield 'digits, may be "0", offsets' => ['pattern' => '/(\d+)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => 'array{0: array{numeric-string, int<0, max>}, 1: array{numeric-string, int<0, max>}}'];
-        yield 'digits, at least two' => ['pattern' => '/(\d\d+)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string}'];
-        yield 'letters, never "0"' => ['pattern' => '/([a-z]+)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, 1: non-falsy-string}'];
-        yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'expected' => "array{0: ''|numeric-string, 1: ''|numeric-string}"];
-        yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'expected' => "array{0: ''|numeric-string, 1?: numeric-string}"];
-        yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: ''|numeric-string, 1: numeric-string|null}"];
-        yield 'digits under /u are not proven' => ['pattern' => '/(\d+)/u', 'flags' => 0, 'expected' => 'array{0: non-empty-string, 1: non-empty-string}'];
+        yield 'digits, may be "0"' => ['pattern' => '/(\d+)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&numeric-string&uppercase-string, 1: lowercase-string&numeric-string&uppercase-string}'];
+        yield 'digits, may be "0", offsets' => ['pattern' => '/(\d+)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => 'array{0: array{lowercase-string&numeric-string&uppercase-string, int<0, max>}, 1: array{lowercase-string&numeric-string&uppercase-string, int<0, max>}}'];
+        yield 'digits, at least two' => ['pattern' => '/(\d\d+)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string&numeric-string&uppercase-string, 1: lowercase-string&non-falsy-string&numeric-string&uppercase-string}'];
+        yield 'letters, never "0"' => ['pattern' => '/([a-z]+)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string, 1: lowercase-string&non-falsy-string}'];
+        yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'expected' => "array{0: ''|(lowercase-string&numeric-string&uppercase-string), 1: ''|(lowercase-string&numeric-string&uppercase-string)}"];
+        yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'expected' => "array{0: ''|(lowercase-string&numeric-string&uppercase-string), 1?: lowercase-string&numeric-string&uppercase-string}"];
+        yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: ''|(lowercase-string&numeric-string&uppercase-string), 1: (lowercase-string&numeric-string&uppercase-string)|null}"];
+        yield 'digits under /u are not proven' => ['pattern' => '/(\d+)/u', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-empty-string&uppercase-string, 1: lowercase-string&non-empty-string&uppercase-string}'];
         // PHPStan's type parser reads an intersection inside a union only in parentheses.
-        yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: ''|numeric-string, 1: (non-falsy-string&numeric-string)|null}"];
+        yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: ''|(lowercase-string&numeric-string&uppercase-string), 1: (lowercase-string&non-falsy-string&numeric-string&uppercase-string)|null}"];
+        // phpstan/phpstan#15018: lowercase letters are a lowercase-string, the
+        // whole match and the group alike; caseless, they are not.
+        yield 'lowercase letters, anchored' => ['pattern' => '/^[a-z]+$/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string}'];
+        yield 'lowercase letters in a group' => ['pattern' => '/^([a-z]+)$/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string, 1: lowercase-string&non-falsy-string}'];
+        yield 'letters read caselessly' => ['pattern' => '/([a-z]+)/i', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, 1: non-falsy-string}'];
+        yield 'uppercase letters' => ['pattern' => '/([A-Z]+)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string}'];
+        yield 'lowercase letters, may be empty' => ['pattern' => '/([a-z]*)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string, 1: lowercase-string}'];
+        // phpstan/phpstan#14909: zero, or digits without a leading zero, up to
+        // eighteen of them, are a decimal-int-string; \d+ may read '007'.
+        yield 'a decimal integer' => ['pattern' => '/^(0|[1-9]\d{0,17})$/D', 'flags' => 0, 'expected' => 'array{0: decimal-int-string, 1: decimal-int-string}'];
+        yield 'a decimal integer that is never zero, as null' => ['pattern' => '/(-?[1-9]\d{0,17})?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: lowercase-string&uppercase-string, 1: (decimal-int-string&non-falsy-string)|null}'];
+        yield 'digits hold no letter of either case' => ['pattern' => '/(\d+)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&numeric-string&uppercase-string, 1: lowercase-string&numeric-string&uppercase-string}'];
     }
 
     /**
@@ -1640,11 +2024,11 @@ final class CaptureShapeAnalyzerTest extends TestCase
     public static function provideCaseShapes(): iterable
     {
         yield 'two branches' => ['pattern' => '/(a)|(b)/', 'flags' => 0, 'expected' => "array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}"];
-        yield 'through a capturing group' => ['pattern' => '/Price: (£|(\d)|x)/i', 'flags' => 0, 'expected' => "array{0: non-falsy-string, 1: '£'|numeric-string|non-falsy-string}|array{0: non-falsy-string, 1: '£'|numeric-string|non-falsy-string, 2: numeric-string}"];
+        yield 'through a capturing group' => ['pattern' => '/Price: (£|(\d)|x)/i', 'flags' => 0, 'expected' => "array{0: non-falsy-string, 1: '£'|(lowercase-string&numeric-string&uppercase-string)|non-falsy-string}|array{0: non-falsy-string, 1: '£'|(lowercase-string&numeric-string&uppercase-string)|non-falsy-string, 2: lowercase-string&numeric-string&uppercase-string}"];
         yield 'two branches, as null' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: 'a', 2: null}|array{0: 'b', 1: null, 2: 'b'}"];
         yield 'two branches, offsets' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'a', int<0, max>}, 1: array{'a', int<0, max>}}|array{0: array{'b', int<0, max>}, 1: array{'', int<-1, max>}, 2: array{'b', int<0, max>}}"];
-        yield 'anchored, in a non-capturing group' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => 0, 'expected' => "array{0: numeric-string, 1: numeric-string}|array{0: non-falsy-string, 1: '', 2: non-falsy-string}"];
-        yield 'anchored, in a non-capturing group, as null' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: numeric-string, 1: numeric-string, 2: null}|array{0: non-falsy-string, 1: null, 2: non-falsy-string}'];
+        yield 'anchored, in a non-capturing group' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => 0, 'expected' => "array{0: lowercase-string&numeric-string&uppercase-string, 1: lowercase-string&numeric-string&uppercase-string}|array{0: lowercase-string&non-falsy-string, 1: '', 2: lowercase-string&non-falsy-string}"];
+        yield 'anchored, in a non-capturing group, as null' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: lowercase-string&numeric-string&uppercase-string, 1: lowercase-string&numeric-string&uppercase-string, 2: null}|array{0: lowercase-string&non-falsy-string, 1: null, 2: lowercase-string&non-falsy-string}'];
         yield 'after a literal' => ['pattern' => '/x(?:(a)|(b))/', 'flags' => 0, 'expected' => "array{0: 'xa', 1: 'a'}|array{0: 'xb', 1: '', 2: 'b'}"];
         yield 'optional: a case where no branch group is set' => ['pattern' => '/(?:(a)|(b))?/', 'flags' => 0, 'expected' => "array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}|array{0: ''}"];
         yield 'optional: a case where no branch group is set, as null' => ['pattern' => '/(?:(a)|(b))?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: 'a', 2: null}|array{0: 'b', 1: null, 2: 'b'}|array{0: '', 1: null, 2: null}"];
@@ -1656,8 +2040,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'a name shared under /J, as null' => ['pattern' => '/(?<n>a)|(?<n>b)/J', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', n: 'a', 1: 'a', 2: null}|array{0: 'b', n: 'b', 1: null, 2: 'b'}"];
         // preg_match('/^([A-Z]{1,3})([0-9]{1,7})(:([A-Z]{1,3})([0-9]{1,7}))?$/', 'A1') -> ["A1","A","1"]; on 'A1:B2' -> ["A1:B2","A","1",":B2","B","2"];
         // with UNMATCHED_AS_NULL on 'A1' -> ["A1","A","1",null,null,null] (PHP 8.4.27, PCRE2 10.49)
-        yield 'an optional group holding groups: they run together' => ['pattern' => '/^([A-Z]{1,3})([0-9]{1,7})(:([A-Z]{1,3})([0-9]{1,7}))?$/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, 1: non-falsy-string, 2: numeric-string, 3: non-falsy-string, 4: non-falsy-string, 5: numeric-string}|array{0: non-falsy-string, 1: non-falsy-string, 2: numeric-string}'];
-        yield 'an optional group holding groups, as null' => ['pattern' => '/^([A-Z]{1,3})([0-9]{1,7})(:([A-Z]{1,3})([0-9]{1,7}))?$/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: non-falsy-string, 1: non-falsy-string, 2: numeric-string, 3: non-falsy-string, 4: non-falsy-string, 5: numeric-string}|array{0: non-falsy-string, 1: non-falsy-string, 2: numeric-string, 3: null, 4: null, 5: null}'];
+        yield 'an optional group holding groups: they run together' => ['pattern' => '/^([A-Z]{1,3})([0-9]{1,7})(:([A-Z]{1,3})([0-9]{1,7}))?$/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string, 2: lowercase-string&numeric-string&uppercase-string, 3: non-falsy-string&uppercase-string, 4: non-falsy-string&uppercase-string, 5: lowercase-string&numeric-string&uppercase-string}|array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string, 2: lowercase-string&numeric-string&uppercase-string}'];
+        yield 'an optional group holding groups, as null' => ['pattern' => '/^([A-Z]{1,3})([0-9]{1,7})(:([A-Z]{1,3})([0-9]{1,7}))?$/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string, 2: lowercase-string&numeric-string&uppercase-string, 3: non-falsy-string&uppercase-string, 4: non-falsy-string&uppercase-string, 5: lowercase-string&numeric-string&uppercase-string}|array{0: non-falsy-string&uppercase-string, 1: non-falsy-string&uppercase-string, 2: lowercase-string&numeric-string&uppercase-string, 3: null, 4: null, 5: null}'];
         // preg_match('/(?:(a)(b))?c/', 'c') -> ["c"]; on 'abc' -> ["abc","a","b"]
         yield 'an optional non-capturing group holding groups' => ['pattern' => '/(?:(a)(b))?c/', 'flags' => 0, 'expected' => "array{0: 'abc', 1: 'a', 2: 'b'}|array{0: 'c'}"];
         // preg_match('/(?:(a)(b))?(c)/', 'c') -> ["c","","","c"]; on 'abc' -> ["abc","a","b","c"]
@@ -1942,12 +2326,12 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'set order: an optional split' => ['pattern' => '/(?:(a)|(b))?c/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'ac', 1: 'a'}|array{0: 'bc', 1: '', 2: 'b'}|array{0: 'c'}>"];
 
         // Facts in the list values.
-        yield 'pattern order: facts' => ['pattern' => '/(\d+)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => 'array{0: list<numeric-string>, 1: list<numeric-string>}'];
-        yield 'pattern order: facts of a group that may be unset' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<''|numeric-string>, 1: list<''|(non-falsy-string&numeric-string)>}"];
-        yield 'pattern order: facts of a group that may be unset, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<''|numeric-string>, 1: list<(non-falsy-string&numeric-string)|null>}"];
-        yield 'pattern order: facts of a group that may be unset, offsets' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{''|numeric-string, int<0, max>}>, 1: list<array{''|(non-falsy-string&numeric-string), int<-1, max>}>}"];
-        yield 'pattern order: facts of a split pattern, merged' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<non-empty-string>, 1: list<''|numeric-string>, 2: list<''|non-falsy-string>}"];
-        yield 'set order: facts of a split pattern, per case' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: numeric-string, 1: numeric-string}|array{0: non-falsy-string, 1: '', 2: non-falsy-string}>"];
+        yield 'pattern order: facts' => ['pattern' => '/(\d+)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => 'array{0: list<lowercase-string&numeric-string&uppercase-string>, 1: list<lowercase-string&numeric-string&uppercase-string>}'];
+        yield 'pattern order: facts of a group that may be unset' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<''|(lowercase-string&numeric-string&uppercase-string)>, 1: list<''|(lowercase-string&non-falsy-string&numeric-string&uppercase-string)>}"];
+        yield 'pattern order: facts of a group that may be unset, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<''|(lowercase-string&numeric-string&uppercase-string)>, 1: list<(lowercase-string&non-falsy-string&numeric-string&uppercase-string)|null>}"];
+        yield 'pattern order: facts of a group that may be unset, offsets' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{''|(lowercase-string&numeric-string&uppercase-string), int<0, max>}>, 1: list<array{''|(lowercase-string&non-falsy-string&numeric-string&uppercase-string), int<-1, max>}>}"];
+        yield 'pattern order: facts of a split pattern, merged' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<lowercase-string&non-empty-string>, 1: list<''|(lowercase-string&numeric-string&uppercase-string)>, 2: list<''|(lowercase-string&non-falsy-string)>}"];
+        yield 'set order: facts of a split pattern, per case' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: lowercase-string&numeric-string&uppercase-string, 1: lowercase-string&numeric-string&uppercase-string}|array{0: lowercase-string&non-falsy-string, 1: '', 2: lowercase-string&non-falsy-string}>"];
     }
 
     /**
@@ -2053,6 +2437,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
                 $this->assertContains($value, $group->values, \sprintf('%s: group %d took a value outside its set.', $context, $group->number));
             }
 
+            $this->assertSame([], self::factRefusals($group, $value), \sprintf('%s: group %d', $context, $group->number));
+
             // Lengths count code points in UTF mode, bytes otherwise.
             $length = $unicode ? mb_strlen($value, 'UTF-8') : \strlen($value);
             $this->assertGreaterThanOrEqual($group->minLength, $length, \sprintf('%s: group %d is shorter than its minimum.', $context, $group->number));
@@ -2102,7 +2488,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
                 return false;
             }
 
-            if (($group->nonFalsy && !(bool) $value) || ($group->digitsOnly && '' !== $value && !ctype_digit($value))) {
+            if ([] !== self::factRefusals($group, $value)) {
                 return false;
             }
 
@@ -2134,12 +2520,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
                 }
 
                 $context = \sprintf('%s on %s: group %d holds %s', $pattern, json_encode($subject, \JSON_UNESCAPED_UNICODE), $group->number, json_encode($value, \JSON_UNESCAPED_UNICODE));
-                if ($group->nonFalsy) {
-                    $this->assertTrue((bool) $value, $context.', proven non-falsy.');
-                }
-                if ($group->digitsOnly && '' !== $value) {
-                    $this->assertTrue(ctype_digit($value), $context.', proven digits only.');
-                }
+                $this->assertSame([], self::factRefusals($group, $value), $context);
             }
         }
     }
@@ -2259,6 +2640,57 @@ final class CaptureShapeAnalyzerTest extends TestCase
         }
 
         return $keys;
+    }
+
+    /**
+     * The facts a record proves, in a fixed order.
+     *
+     * @return list<'nonFalsy'|'digitsOnly'|'decimalInt'|'lowercase'|'uppercase'>
+     */
+    private static function provenFacts(CaptureGroupShape $group): array
+    {
+        return array_keys(array_filter([
+            'nonFalsy' => $group->nonFalsy,
+            'digitsOnly' => $group->digitsOnly,
+            'decimalInt' => $group->decimalInt,
+            'lowercase' => $group->lowercase,
+            'uppercase' => $group->uppercase,
+        ]));
+    }
+
+    /**
+     * The facts a record proves that the value breaks, as PHP and PHPStan
+     * read them: a digit run of any length is digits or ''.
+     *
+     * @return list<string>
+     */
+    private static function factRefusals(CaptureGroupShape $group, string $value): array
+    {
+        return array_keys(array_filter([
+            'nonFalsy' => $group->nonFalsy && !(bool) $value,
+            'digitsOnly' => $group->digitsOnly && '' !== $value && !ctype_digit($value),
+            'decimalInt' => $group->decimalInt && (string) (int) $value !== $value,
+            'lowercase' => $group->lowercase && strtolower($value) !== $value,
+            'uppercase' => $group->uppercase && strtoupper($value) !== $value,
+        ]));
+    }
+
+    /**
+     * What a record says that the value breaks: its values, its lengths and
+     * its facts.
+     *
+     * @return list<string>
+     */
+    private static function refusals(CaptureGroupShape $group, string $value, bool $unicode): array
+    {
+        $length = $unicode ? mb_strlen($value, 'UTF-8') : \strlen($value);
+
+        return [
+            ...(null === $group->values || \in_array($value, $group->values, true) ? [] : ['values']),
+            ...($length < $group->minLength ? ['minLength'] : []),
+            ...(null !== $group->maxLength && $length > $group->maxLength ? ['maxLength'] : []),
+            ...self::factRefusals($group, $value),
+        ];
     }
 
     private function analyze(string $pattern): CaptureShape

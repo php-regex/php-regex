@@ -34,9 +34,10 @@ final class CaptureShape
     /**
      * @internal built by CaptureShapeAnalyzer::analyze()
      *
-     * @param array<int<1, max>, CaptureGroupShape> $groups keyed by group number, 1 to the capture count with no gap; branch reset groups sharing a number share a record
-     * @param list<string>                          $marks  the names a (*MARK) verb, or a verb that sets one, may leave under "MARK"
-     * @param list<self>                            $cases  shapes whose union covers every match, empty when the pattern is not split; a case shares no index with the alternatives of the pattern
+     * @param array<int<1, max>, CaptureGroupShape> $groups  keyed by group number, 1 to the capture count with no gap; branch reset groups sharing a number share a record
+     * @param list<string>                          $marks   the names a (*MARK) verb, or a verb that sets one, may leave under "MARK"
+     * @param list<self>                            $cases   shapes whose union covers every match, empty when the pattern is not split; a case shares no index with the alternatives of the pattern
+     * @param CaptureGroupShape|null                $subject what the subject holds when preg_match() returns 1, for a pattern every match of which starts at the start of the subject ("\A", or "^" without multiline) and ends at its end ("\z", or "$" under /D without multiline). "$" without /D, and "\Z", also match before a final newline: the subject is then a value of the whole match or one followed by one newline of the pattern's convention ("\n" unless (*CR), (*CRLF), (*ANYCRLF), (*ANY) or (*NUL) says otherwise), which keeps lowercase, uppercase and nonFalsy, and drops digitsOnly and decimalInt. \K moves the match, not the subject. Null when the pattern does not pin both ends, or holds an (*ACCEPT) that may end the match early. A start offset never lets "^" or "\A" match, so it holds for any offset; in a case, it holds for the subjects of the case
      */
     public function __construct(
         public readonly CaptureGroupShape $whole,
@@ -44,6 +45,7 @@ final class CaptureShape
         public readonly array $marks,
         public readonly array $cases = [],
         public readonly ?CaptureGroupShape $scanWhole = null,
+        public readonly ?CaptureGroupShape $subject = null,
     ) {}
 
     /**
@@ -291,13 +293,26 @@ final class CaptureShape
             return "''";
         }
 
-        return match (true) {
-            $group->digitsOnly && $group->nonFalsy => 0 === $group->minLength ? "''|non-falsy-string&numeric-string" : 'non-falsy-string&numeric-string',
-            $group->digitsOnly => 0 === $group->minLength ? "''|numeric-string" : 'numeric-string',
-            $group->nonFalsy => 'non-falsy-string',
-            $group->minLength > 0 => 'non-empty-string',
-            default => 'string',
-        };
+        // In the order PHPStan prints an intersection. decimal-int-string
+        // implies numeric-string, non-empty-string and both letter cases.
+        $accessories = array_keys(array_filter($group->decimalInt
+            ? ['decimal-int-string' => true, 'non-falsy-string' => $group->nonFalsy]
+            : [
+                'lowercase-string' => $group->lowercase,
+                // numeric-string is never empty
+                'non-empty-string' => !$group->nonFalsy && !$group->digitsOnly && $group->minLength > 0,
+                'non-falsy-string' => $group->nonFalsy,
+                'numeric-string' => $group->digitsOnly,
+                'uppercase-string' => $group->uppercase,
+            ]));
+        $type = [] === $accessories ? 'string' : implode('&', $accessories);
+
+        // A digit run of any length is digits or the empty string.
+        if ($group->digitsOnly && 0 === $group->minLength) {
+            return "''|".(\count($accessories) > 1 ? '('.$type.')' : $type);
+        }
+
+        return $type;
     }
 
     /**

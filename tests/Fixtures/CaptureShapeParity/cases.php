@@ -285,7 +285,7 @@ return [
     ['source' => 'parity: caseless', 'pattern' => '/(é)/i', 'subjects' => ['é']],
     ['source' => 'parity: caseless', 'pattern' => '/(*UTF)(é)/i', 'subjects' => ['É']],
     ['source' => 'parity: caseless', 'pattern' => "/(?i)(\u{1C5})/u", 'subjects' => ["\u{1C4}", "\u{1C5}", "\u{1C6}"]],
-    ['source' => 'parity: caseless', 'pattern' => '/([a-z]+)/i', 'subjects' => ['ABC']],
+    ['source' => 'parity: caseless', 'pattern' => '/([a-z]+)/i', 'subjects' => ['ABC', 'AB', 'ab']],
 
     // Keep: \K moves the start of the whole match.
     ['source' => 'parity: keep', 'pattern' => '/(a)\K(b)/', 'subjects' => ['ab']],
@@ -425,6 +425,45 @@ return [
     ['source' => 'parity: values', 'pattern' => '/(ab)/i', 'subjects' => ['AB']],
     ['source' => 'parity: values', 'pattern' => '/(\d+)\.(\d+)/', 'subjects' => ['1.5']],
     ['source' => 'parity: values', 'pattern' => '/(\d\d+)/', 'subjects' => ['00']],
+
+    // Facts: letter case, as strtolower() and strtoupper() read it, ASCII only,
+    // and decimal integers, as (string) (int) $v === $v reads them. Under /iu the
+    // KELVIN SIGN folds into ASCII: preg_match('/(\x{212A})/iu', 'k') -> ["k","k"];
+    // a call reads with the options of its group: preg_match('/(?i)(?<t>[a-z])(?-i)x((?&t))/',
+    // 'axB') sets group 2 to "B" (PHP 8.4.27, PCRE2 10.49).
+    ['source' => 'analyzer', 'pattern' => '/(\W+)/i', 'subjects' => ['-', '.,']],
+    ['source' => 'analyzer', 'pattern' => '/(\x{212A})/iu', 'subjects' => ['K', 'k', "\u{212A}"]],
+    ['source' => 'analyzer', 'pattern' => '/(\xE9)/i', 'subjects' => ["\xE9"]],
+    ['source' => 'analyzer', 'pattern' => '/(\p{Ll}+)/u', 'subjects' => ['a', 'é']],
+    ['source' => 'analyzer', 'pattern' => '/([[:lower:]]+)/i', 'subjects' => ['A']],
+    ['source' => 'analyzer', 'pattern' => '/(?i)(?<t>[a-z])(?-i)x((?&t))/', 'subjects' => ['axB']],
+    ['source' => 'analyzer', 'pattern' => '/^(0|[1-9]\d{0,17})$/', 'subjects' => ['0', '7', '999999999999999999', "0\n"]],
+    ['source' => 'analyzer', 'pattern' => '/^(-?[1-9][0-9]{0,8})$/', 'subjects' => ['-1', '999999999']],
+    ['source' => 'analyzer', 'pattern' => '/(-?[1-9]\d?|00)/', 'subjects' => ['-5', '00', '42']],
+    ['source' => 'analyzer', 'pattern' => '/((?:[1-9]\d{0,8}){2})/', 'subjects' => ['1010', '999999999999999999']],
+
+    // The subject of an anchored pattern: "$" without /D and "\Z" also match
+    // before a final newline, the one of the newline convention:
+    // preg_match('/^[a-z]+$/', "abc\n") -> ["abc"], preg_match('/(*CRLF)^a$/', "a\r\n") -> ["a"].
+    ['source' => 'analyzer', 'pattern' => '/^[a-z]+$/', 'subjects' => ['abc', "abc\n"]],
+    ['source' => 'analyzer', 'pattern' => '/^[a-z]+$/D', 'subjects' => ['abc']],
+    ['source' => 'analyzer', 'pattern' => '/^(0|[1-9]\d{0,17})$/D', 'subjects' => ['0', '7', '999999999999999999']],
+    ['source' => 'analyzer', 'pattern' => '/^\d+$/', 'subjects' => ['0', "0\n"]],
+    ['source' => 'analyzer', 'pattern' => '/^(a|b)$/', 'subjects' => ['a', "b\n"]],
+    ['source' => 'analyzer', 'pattern' => '/\A(a|b)\Z/D', 'subjects' => ['a', "b\n"]],
+    ['source' => 'analyzer', 'pattern' => '/^(?:a\z|b$)/', 'subjects' => ['a', "b\n"]],
+    ['source' => 'analyzer', 'pattern' => '/(?i)^a$/', 'subjects' => ['a', "A\n"]],
+    ['source' => 'analyzer', 'pattern' => '/^(?i)[a-z]+$/', 'subjects' => ['AB', "ab\n"]],
+    ['source' => 'analyzer', 'pattern' => '/(*CRLF)^a$/', 'subjects' => ['a', "a\r\n"]],
+    ['source' => 'analyzer', 'pattern' => '/(*ANYCRLF)^a$/', 'subjects' => ['a', "a\r", "a\n", "a\r\n"]],
+    ['source' => 'analyzer', 'pattern' => '/(*ANY)^a$/', 'subjects' => ["a\x0b", "a\x0c", "a\x85", "a\r\n"]],
+    ['source' => 'analyzer', 'pattern' => '/(*ANY)^a$/u', 'subjects' => ["a\u{85}", "a\u{2028}", "a\u{2029}"]],
+    ['source' => 'analyzer', 'pattern' => '/(*NUL)^a$/', 'subjects' => ['a', "a\0"]],
+    ['source' => 'analyzer', 'pattern' => '/(*CR)^a$/', 'subjects' => ['a', "a\r"]],
+    ['source' => 'analyzer', 'pattern' => '/^a\Kb$/D', 'subjects' => ['ab']],
+    ['source' => 'analyzer', 'pattern' => '/^a$(?=\n)/', 'subjects' => ["a\n"]],
+    ['source' => 'analyzer', 'pattern' => '/^(?:(\d+)|([a-z]+))$/D', 'subjects' => ['0', 'ab']],
+    ['source' => 'analyzer', 'pattern' => '/^(?:[a-z]+|\d+)$/', 'subjects' => ['ab', "12\n"]],
 
     // Cases: an alternation reachable from the root, split per branch. An
     // option set in one alternative stays on in the next ones:

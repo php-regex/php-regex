@@ -36,6 +36,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
 
@@ -53,7 +54,7 @@ use PHPRegex\Parser\Text\Bytes;
  *
  * @phpstan-import-type LengthRange from LengthRangeCalculator
  *
- * @phpstan-type Facts array{min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool}
+ * @phpstan-type Facts array{min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool, decimalInt: bool, lowercase: bool, uppercase: bool}
  */
 final class CaptureFacts
 {
@@ -71,6 +72,30 @@ final class CaptureFacts
      * POSIX classes that never hold "0", whatever the case.
      */
     private const ZERO_FREE_POSIX = ['alpha', 'upper', 'lower', 'space', 'blank', 'cntrl', 'punct'];
+
+    /**
+     * \d, \s, \h, \v, \R and \W never match an ASCII letter, caseless or
+     * not, under UCP too: preg_match('/^\W$/i', 'A') is 0.
+     */
+    private const LETTER_FREE_TYPES = ['d', 's', 'h', 'v', 'R', 'W'];
+
+    /**
+     * POSIX classes that never hold an ASCII letter, caseless or not, under
+     * UCP too.
+     */
+    private const LETTER_FREE_POSIX = ['digit', 'space', 'blank', 'cntrl', 'punct'];
+
+    /**
+     * Unicode properties that hold no ASCII letter when read with case:
+     * titlecase letters and numbers. Caseless, \p{Lt} matches "A".
+     */
+    private const LETTER_FREE_PROPERTIES = ['Lt', 'N', 'Nd'];
+
+    /**
+     * The most digits a decimal integer may run to and still be below
+     * PHP_INT_MAX, which (int) caps: 18 on a 64-bit build, 9 on a 32-bit one.
+     */
+    private const MAX_INT_DIGITS = \PHP_INT_SIZE >= 8 ? 18 : 9;
 
     /**
      * Groups that read what their content reads.
@@ -160,8 +185,11 @@ final class CaptureFacts
 
     /**
      * What the node reads, as a capture holds it once set: its length range,
-     * its values, whether every value is truthy (nonFalsy), and whether
-     * every value is a non-empty run of ASCII digits (digitsOnly).
+     * its values, whether every value is truthy (nonFalsy), whether every
+     * value is a non-empty run of ASCII digits (digitsOnly), whether every
+     * value is a decimal integer as (string) (int) $v === $v reads it
+     * (decimalInt), and whether no value holds an ASCII letter A-Z
+     * (lowercase) or a-z (uppercase).
      *
      * A group's facts hold for every match of a scan, so they never take
      * the dominance of a zero-width first branch: a scan resumes after an
@@ -187,6 +215,10 @@ final class CaptureFacts
             // a digit run of any length is digits or the empty string; the
             // readers compose the empty arm with the length themselves
             'digitsOnly' => $this->digitsOnly($node),
+            'decimalInt' => $this->decimalInt($node, $values, $group),
+            // strtolower() and strtoupper() fold ASCII alone since PHP 8.2
+            'lowercase' => null !== $values ? self::allValues($values, static fn (string $value): bool => Ascii::lower($value) === $value) : $this->holdsNoLetter($node, true),
+            'uppercase' => null !== $values ? self::allValues($values, static fn (string $value): bool => Ascii::upper($value) === $value) : $this->holdsNoLetter($node, false),
         ];
     }
 
@@ -199,10 +231,7 @@ final class CaptureFacts
      */
     public function arms(NodeInterface $node, bool $group = false): array
     {
-        while ($node instanceof GroupNode && \in_array($node->type, self::READ_THROUGH, true) && !self::isBareOption($node)) {
-            $node = $node->child;
-        }
-
+        $node = self::readThrough($node);
         if (!$node instanceof AlternationNode) {
             return [];
         }
@@ -235,18 +264,6 @@ final class CaptureFacts
     public function markAtEnd(NodeInterface $node): void
     {
         $this->atEnd[spl_object_id($node)] = true;
-    }
-
-    /**
-     * What the node reads across a whole scan, every branch joined: the
-     * dominance above speaks for one match, and a scan that resumes after
-     * an empty match still reaches the later branches.
-     *
-     * @return list<string>|null
-     */
-    public function scanValues(NodeInterface $node): ?array
-    {
-        return $this->values($node, true);
     }
 
     /**
@@ -818,6 +835,237 @@ final class CaptureFacts
     private static function isDigit(?int $codePoint): bool
     {
         return null !== $codePoint && $codePoint >= 0x30 && $codePoint <= 0x39;
+    }
+
+    /**
+     * Whether every value the node reads is a decimal integer as
+     * (string) (int) $v === $v reads it, PHPStan's decimal-int-string: "0",
+     * or ASCII digits after an optional "-", the first of them not "0", no
+     * more of them than PHP_INT_MAX always holds. A cut by (*ACCEPT) may
+     * leave the sign alone. False when unsure.
+     *
+     * @param list<string>|null $values what the node reads
+     */
+    private function decimalInt(NodeInterface $node, ?array $values, bool $scan): bool
+    {
+        if (null !== $values) {
+            return [] !== $values && self::allValues($values, static fn (string $value): bool => (string) (int) $value === $value);
+        }
+
+        if (self::accepts($node)) {
+            return false;
+        }
+
+        $node = self::readThrough($node);
+        if ($node instanceof AlternationNode) {
+            return self::all($node->alternatives, fn (NodeInterface $branch): bool => $this->of($branch, $scan)['decimalInt']);
+        }
+
+        // what reads nothing, an anchor or an assertion, leaves the value as it is
+        $parts = array_values(array_filter($node instanceof SequenceNode ? $node->children : [$node], fn (NodeInterface $part): bool => 0 !== $this->lengths($part)[1]));
+        if (1 === \count($parts) && $parts[0] !== $node) {
+            return $this->of($parts[0], $scan)['decimalInt'];
+        }
+
+        // the node itself, read through its groups, holds no value set
+        $signs = [] === $parts || $parts[0] === $node ? null : $this->of($parts[0], $scan)['values'];
+        if (null !== $signs && \in_array('-', $signs, true) && [] === array_diff($signs, ['', '-'])) {
+            array_shift($parts);
+        }
+
+        if ([] === $parts || !self::all($parts, $this->digitsOnly(...))) {
+            return false;
+        }
+
+        $digits = 0;
+        foreach ($parts as $part) {
+            $max = $this->lengths($part)[1];
+            if (null === $max) {
+                return false;
+            }
+            $digits += $max;
+        }
+
+        return $digits <= self::MAX_INT_DIGITS && $this->startsWithNonZero($parts[0], $scan);
+    }
+
+    /**
+     * Whether every value the node reads is non-empty and starts with
+     * another character than "0". False when unsure.
+     */
+    private function startsWithNonZero(NodeInterface $node, bool $scan): bool
+    {
+        $values = $this->values($node, $scan);
+        if (null !== $values) {
+            return [] !== $values && self::allValues($values, static fn (string $value): bool => '' !== $value && '0' !== $value[0]);
+        }
+
+        $node = self::readThrough($node);
+
+        return match (true) {
+            $node instanceof AlternationNode => self::all($node->alternatives, fn (NodeInterface $branch): bool => $this->startsWithNonZero($branch, $scan)),
+            $node instanceof SequenceNode => $this->sequenceStartsWithNonZero($node->children, $scan),
+            $node instanceof QuantifierNode => (QuantifierBounds::parse($node->quantifier)->min ?? 0) >= 1 && $this->startsWithNonZero($node->node, $scan),
+            $node instanceof SubroutineNode => null !== ($body = $this->calledBody($node)) && $this->startsWithNonZero($body, $scan),
+            $node instanceof CharClassNode, $node instanceof CharTypeNode => $this->lengths($node)[0] >= 1 && !$this->mayBeZero($node),
+            default => false,
+        };
+    }
+
+    /**
+     * Whether the first child that may read a character reads one at least,
+     * and never starts with "0".
+     *
+     * @param list<NodeInterface> $children
+     */
+    private function sequenceStartsWithNonZero(array $children, bool $scan): bool
+    {
+        $reading = array_values(array_filter($children, fn (NodeInterface $child): bool => 0 !== $this->lengths($child)[1]));
+
+        return [] !== $reading && $this->lengths($reading[0])[0] >= 1 && $this->startsWithNonZero($reading[0], $scan);
+    }
+
+    /**
+     * Whether no value the node reads holds an ASCII letter of the case:
+     * A-Z when $upper, a-z otherwise, the only letters strtolower() and
+     * strtoupper() fold. Where the engine reads caselessly a letter may read
+     * in either case, and under /u a code point past ASCII may fold into
+     * one: preg_match('/\x{212A}/iu', 'K') is 1. False when unsure.
+     */
+    private function holdsNoLetter(NodeInterface $node, bool $upper): bool
+    {
+        $caseless = $this->readsCaselessly($node);
+
+        return match (true) {
+            $node instanceof LiteralNode => $this->stringHoldsNoLetter($node->value, $caseless, $upper),
+            $node instanceof CharLiteralNode, $node instanceof ControlCharNode => $this->rangeHoldsNoLetter($node->codePoint, $node->codePoint, $caseless, $upper),
+            $node instanceof CharTypeNode => \in_array($node->value, self::LETTER_FREE_TYPES, true),
+            $node instanceof CharClassNode => !$node->isNegated && $this->memberHoldsNoLetter($node->expression, $caseless, $upper),
+            $node instanceof UnicodePropNode => self::propertyHoldsNoLetter($node, $caseless, $upper),
+            $node instanceof SequenceNode => self::all($node->children, fn (NodeInterface $child): bool => $this->holdsNoLetter($child, $upper)),
+            $node instanceof AlternationNode => self::all($node->alternatives, fn (NodeInterface $branch): bool => $this->holdsNoLetter($branch, $upper)),
+            $node instanceof GroupNode => self::isLookaround($node) || $this->holdsNoLetter($node->child, $upper),
+            $node instanceof QuantifierNode => $this->holdsNoLetter($node->node, $upper),
+            $node instanceof SubroutineNode => null !== ($body = $this->calledBody($node)) && $this->holdsNoLetter($body, $upper),
+            default => self::consumesNothing($node),
+        };
+    }
+
+    /**
+     * Whether a class member holds no ASCII letter of the case, read with
+     * the caselessness of its class.
+     */
+    private function memberHoldsNoLetter(NodeInterface $member, bool $caseless, bool $upper): bool
+    {
+        return match (true) {
+            $member instanceof AlternationNode => self::all($member->alternatives, fn (NodeInterface $alternative): bool => $this->memberHoldsNoLetter($alternative, $caseless, $upper)),
+            $member instanceof LiteralNode => $this->stringHoldsNoLetter($member->value, $caseless, $upper),
+            $member instanceof CharLiteralNode, $member instanceof ControlCharNode => $this->rangeHoldsNoLetter($member->codePoint, $member->codePoint, $caseless, $upper),
+            $member instanceof RangeNode => null !== ($range = $this->range($member)) && $this->rangeHoldsNoLetter($range[0], $range[1], $caseless, $upper),
+            $member instanceof CharTypeNode => \in_array($member->value, self::LETTER_FREE_TYPES, true),
+            $member instanceof PosixClassNode => \in_array($member->class, self::LETTER_FREE_POSIX, true)
+                || (!$caseless && ($upper ? 'lower' : 'upper') === $member->class),
+            $member instanceof UnicodePropNode => self::propertyHoldsNoLetter($member, $caseless, $upper),
+            default => false,
+        };
+    }
+
+    /**
+     * Whether no byte of a literal is an ASCII letter of the case, or, read
+     * caselessly, may fold into one.
+     */
+    private function stringHoldsNoLetter(string $value, bool $caseless, bool $upper): bool
+    {
+        for ($i = 0, $n = \strlen($value); $i < $n; $i++) {
+            if (!$this->rangeHoldsNoLetter(\ord($value[$i]), \ord($value[$i]), $caseless, $upper)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether no code point from $from to $to is an ASCII letter of the
+     * case, or, read caselessly, may fold into one: an ASCII letter folds
+     * into the other case, and under /u a code point past ASCII may fold
+     * into an ASCII letter. Without /u nothing past ASCII folds.
+     */
+    private function rangeHoldsNoLetter(int $from, int $to, bool $caseless, bool $upper): bool
+    {
+        if ($caseless) {
+            return !($this->unicode && $to >= 0x80) && !self::overlaps($from, $to, 0x41, 0x5A) && !self::overlaps($from, $to, 0x61, 0x7A);
+        }
+
+        return $upper ? !self::overlaps($from, $to, 0x41, 0x5A) : !self::overlaps($from, $to, 0x61, 0x7A);
+    }
+
+    private static function overlaps(int $from, int $to, int $low, int $high): bool
+    {
+        return $from <= $high && $to >= $low;
+    }
+
+    /**
+     * Whether a Unicode property holds no ASCII letter of the case: \p{Ll}
+     * holds no A-Z, \p{Lu} no a-z, and the titlecase letters and the numbers
+     * neither. Caseless, \p{Ll}, \p{Lu} and \p{Lt} match any cased letter,
+     * and no property is read; nor is a negated one.
+     */
+    private static function propertyHoldsNoLetter(UnicodePropNode $node, bool $caseless, bool $upper): bool
+    {
+        if ($caseless) {
+            return false;
+        }
+
+        $property = trim($node->prop, '{}');
+
+        return \in_array($property, self::LETTER_FREE_PROPERTIES, true) || ($upper ? 'Ll' : 'Lu') === $property;
+    }
+
+    /**
+     * Whether the node holds an (*ACCEPT), which may end the match anywhere
+     * after it.
+     */
+    private static function accepts(NodeInterface $node): bool
+    {
+        if ($node instanceof PcreVerbNode) {
+            return str_starts_with($node->verb, 'ACCEPT');
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::accepts($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The node under the groups that read what their content reads.
+     */
+    private static function readThrough(NodeInterface $node): NodeInterface
+    {
+        while ($node instanceof GroupNode && \in_array($node->type, self::READ_THROUGH, true) && !self::isBareOption($node)) {
+            $node = $node->child;
+        }
+
+        return $node;
+    }
+
+    /**
+     * @param list<string>           $values
+     * @param callable(string): bool $test
+     */
+    private static function allValues(array $values, callable $test): bool
+    {
+        foreach ($values as $value) {
+            if (!$test($value)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
