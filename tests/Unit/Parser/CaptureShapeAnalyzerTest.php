@@ -1073,6 +1073,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'a call into a group that holds it' => ['pattern' => '/(a(?1)?b)/', 'group' => 1, 'values' => null];
         yield 'a call of the whole pattern' => ['pattern' => '/(x|(?R))/', 'group' => 1, 'values' => null];
         yield 'a call of a group a call holds' => ['pattern' => '/(a(?2)?)(b(?1)?)/', 'group' => 1, 'values' => null];
+        // preg_match('/(x)((?1)(?1))((?2))/', 'xxxxx') sets group 3 to 'xx'.
+        yield 'a call of a group that calls another twice' => ['pattern' => '/(x)((?1)(?1))((?2))/', 'group' => 3, 'values' => ['xx']];
     }
 
     /**

@@ -103,9 +103,6 @@ return [
         'PHPRegex\PHPStan\PatternChecker::complexityThreshold()' => ['validator-input', 1],
         'PHPRegex\PHPStan\PatternChecker::redosThreshold()' => ['validator-input', 1],
     ],
-    'src/Parser/Analysis/CaptureFacts.php' => [
-        'PHPRegex\Parser\Analysis\CaptureFacts::called()' => ['template-identity', 2],
-    ],
     'src/Parser/Cache/PsrCacheAdapter.php' => [
         'PHPRegex\Parser\Cache\PsrCacheAdapter::__construct()' => ['callback-opaque', 1],
     ],

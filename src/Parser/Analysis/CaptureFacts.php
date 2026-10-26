@@ -100,12 +100,12 @@ final class CaptureFacts
     private array $caseless = [];
 
     /**
-     * Groups whose body is read through a call, by object id: a call met
-     * again while its group is read is a recursion.
+     * Whether a group runs itself again through the calls it holds, by
+     * object id.
      *
-     * @var array<int, true>
+     * @var array<int, bool>
      */
-    private array $calling = [];
+    private array $recursive = [];
 
     /**
      * Nodes the scan reaches before any part of the pattern may have read
@@ -146,8 +146,8 @@ final class CaptureFacts
      */
     public function lengths(NodeInterface $node): array
     {
-        if ($node instanceof SubroutineNode) {
-            return $this->lengths[$node] ??= $this->called($node, $this->lengths(...), [0, null]);
+        if ($node instanceof SubroutineNode && null !== ($body = $this->calledBody($node))) {
+            return $this->lengths[$node] ??= $this->lengths($body);
         }
 
         return $this->lengths[$node] ??= $node->accept($this->calculator);
@@ -243,37 +243,70 @@ final class CaptureFacts
             $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof CommentNode,
             $node instanceof KeepNode, $node instanceof DefineNode, $node instanceof CalloutNode => [''],
             $node instanceof PcreVerbNode => str_starts_with($node->verb, 'ACCEPT') ? null : [''],
-            $node instanceof SubroutineNode => $this->called($node, fn (NodeInterface $body): ?array => $this->values($body, $scan), null),
+            $node instanceof SubroutineNode => null === ($body = $this->calledBody($node)) ? null : $this->values($body, $scan),
             default => null,
         };
     }
 
     /**
-     * What a call reads: what the body of the group it calls reads, with the
-     * options of that group. A call of the whole pattern or of no group, or
-     * one met again while its group is read, gives $unknown.
-     *
-     * @template T
-     *
-     * @param callable(NodeInterface): T $read
-     * @param T                          $unknown
-     *
-     * @return T
+     * The body a call runs, read with the options of its group; null for a
+     * call of the whole pattern or of no group, and for a group that runs
+     * itself again: what a recursion reads is unknown.
      */
-    private function called(SubroutineNode $call, callable $read, mixed $unknown): mixed
+    private function calledBody(SubroutineNode $call): ?NodeInterface
     {
         $group = $this->groups?->groupsCalledBy($call)[0] ?? null;
-        if (null === $group || isset($this->calling[$id = spl_object_id($group)])) {
-            return $unknown;
+        if (null === $group) {
+            return null;
         }
 
-        $this->calling[$id] = true;
+        $seen = [];
 
-        try {
-            return $read($group->child);
-        } finally {
-            unset($this->calling[$id]);
+        return ($this->recursive[spl_object_id($group)] ??= $this->reaches($group, $group, $seen)) ? null : $group->child;
+    }
+
+    /**
+     * Whether a call the group holds runs the target, directly or through
+     * the groups it calls in turn.
+     *
+     * @param array<int, true> $seen the groups already followed
+     */
+    private function reaches(GroupNode $group, GroupNode $target, array &$seen): bool
+    {
+        foreach (self::callsIn($group->child) as $call) {
+            $called = $this->groups?->groupsCalledBy($call)[0] ?? null;
+            if ($called === $target) {
+                return true;
+            }
+
+            if (null === $called || isset($seen[$id = spl_object_id($called)])) {
+                continue;
+            }
+
+            $seen[$id] = true;
+            if ($this->reaches($called, $target, $seen)) {
+                return true;
+            }
         }
+
+        return false;
+    }
+
+    /**
+     * @return list<SubroutineNode>
+     */
+    private static function callsIn(NodeInterface $node): array
+    {
+        if ($node instanceof SubroutineNode) {
+            return [$node];
+        }
+
+        $calls = [];
+        foreach ($node->getChildren() as $child) {
+            $calls = [...$calls, ...self::callsIn($child)];
+        }
+
+        return $calls;
     }
 
     private function readsCaselessly(NodeInterface $node): bool
@@ -642,7 +675,7 @@ final class CaptureFacts
     private function mayBeZero(NodeInterface $node): bool
     {
         return match (true) {
-            $node instanceof SubroutineNode => $this->called($node, $this->mayBeZero(...), true),
+            $node instanceof SubroutineNode => null === ($body = $this->calledBody($node)) || $this->mayBeZero($body),
             $node instanceof CharClassNode => $node->isNegated ? !$this->holdsZero($node->expression) : $this->classMayHoldZero($node->expression),
             $node instanceof SequenceNode => $this->sequenceMayBeZero($node->children),
             $node instanceof AlternationNode => self::any($node->alternatives, $this->mayBeZero(...)),
@@ -737,7 +770,7 @@ final class CaptureFacts
             $node instanceof AlternationNode => self::all($node->alternatives, $this->digitsOnly(...)),
             $node instanceof GroupNode => self::isLookaround($node) || $this->digitsOnly($node->child),
             $node instanceof QuantifierNode => $this->digitsOnly($node->node),
-            $node instanceof SubroutineNode => $this->called($node, $this->digitsOnly(...), false),
+            $node instanceof SubroutineNode => null !== ($body = $this->calledBody($node)) && $this->digitsOnly($body),
             default => self::consumesNothing($node),
         };
     }
