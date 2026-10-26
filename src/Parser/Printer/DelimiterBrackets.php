@@ -226,12 +226,13 @@ final class DelimiterBrackets
                 $at = $i + $markLength;
                 $quoted = 'Q' === $body[$at];
                 $bracket = $body[$quoted ? $at + 1 : $at];
-                $bare[$i] = !$quoted && match ($bracket) {
+                $standsBare = match ($bracket) {
                     '{' => 1 !== LibraryPcre::match($repeat, $body, $matches, 0, $at)
                         && !($i >= 2 && '\\' === $body[$i - 2] && Ascii::isAlpha($body[$i - 1])),
                     '[' => !str_contains(':.=', $body[$at + 1] ?? ':'),
                     default => true,
                 };
+                $bare[$i] = !$quoted && $standsBare;
                 $tokens[] = [$i, $opening === $bracket, true];
                 $i = $quoted ? $at + 2 : $at + 1;
 
@@ -259,11 +260,12 @@ final class DelimiterBrackets
         while (false !== ($at = strpos($body, $mark, $from))) {
             $bracketAt = $at + $markLength + ('Q' === $body[$at + $markLength] ? 1 : 0);
             $bracket = $body[$bracketAt];
-            $result .= substr($body, $from, $at - $from).match (true) {
+            $spelling = match (true) {
                 !isset($unescaped[$at]) => '\\'.$bracket,
                 $bare[$at] => $bracket,
                 default => '\\Q'.$bracket.'\\E',
             };
+            $result .= substr($body, $from, $at - $from).$spelling;
             $from = $bracketAt + 1;
         }
 
@@ -315,13 +317,14 @@ final class DelimiterBrackets
                 continue;
             }
 
-            $result .= substr($body, $from, $start - $from).match (true) {
+            $spelling = match (true) {
                 self::KIND_GROUP === $kind => self::groupSpelling(substr($body, $start + \strlen($mark) + 1, $end - $start - \strlen($mark) - 1), $included[$index]),
                 self::KIND_COMMENT === $kind => $included[$index] ? $bracket : '',
                 !$included[$index] => '\\'.$bracket,
                 self::KIND_LITERAL === $kind && self::standsBare($body, $start, $end, $bracket, $mark) => $bracket,
                 default => '\\Q'.$bracket.'\\E',
             };
+            $result .= substr($body, $from, $start - $from).$spelling;
             $from = $end;
         }
 

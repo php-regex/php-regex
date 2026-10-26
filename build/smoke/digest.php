@@ -13,7 +13,11 @@ declare(strict_types=1);
 
 require $argv[1];
 
+use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
+use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 
 require __DIR__ . '/../corpus.php';
@@ -71,6 +75,34 @@ function digest(NodeInterface $node): array
 	return $result;
 }
 
+/**
+ * What the analyses read from the tree: the capture shape and the settings
+ * the pattern starts with. A shape is computed for every pattern a consumer
+ * types, so the twin has to compute it the way the original does.
+ *
+ * @return array<string, mixed>
+ */
+function analyses(RegexNode $ast, RegexParser $parser): array
+{
+	try {
+		$shape = (new CaptureShapeAnalyzer())->analyze($ast);
+		$info = (new PatternInfoAnalyzer($parser->target()))->analyze($ast);
+
+		return [
+			'match' => $shape->matchShape(),
+			'all' => $shape->matchAllShape(),
+			'scan' => $shape->scanShape(),
+			'captures' => $info->captureCount,
+			'newline' => $info->newline === null ? null : $info->newline->value,
+			'bsr' => $info->bsr === null ? null : $info->bsr->value,
+			'written' => $ast->accept(PatternPrinter::asWritten()),
+			'normalized' => $ast->accept(PatternPrinter::normalized()),
+		];
+	} catch (Throwable $e) {
+		return ['e' => get_class($e)];
+	}
+}
+
 // the reference runs the ORIGINAL parser but judges for the same target the
 // twin serves: how each PHP reads the escapes its engine refuses (a \x{...}
 // without /u becomes the letter x then text on 7.4) is target behaviour,
@@ -82,8 +114,17 @@ foreach (corpus() as $body) {
 
 	try {
 		$ast = $parser->parse($pattern);
-		echo json_encode(['p' => $body, 'ok' => true, 'd' => digest($ast->pattern)], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), "\n";
+		echo json_encode(['p' => $body, 'ok' => true, 'd' => digest($ast->pattern), 'a' => analyses($ast, $parser)], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), "\n";
 	} catch (Throwable $e) {
 		echo json_encode(['p' => $body, 'ok' => false, 'e' => get_class($e)], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), "\n";
+	}
+
+	// a bracket delimiter makes the printers balance the brackets of the body
+	try {
+		$ast = $parser->parse('{' . $body . '}');
+		$printed = $ast->accept(PatternPrinter::asWritten()) . ' ' . $ast->accept(PatternPrinter::normalized());
+		echo json_encode(['p' => '{' . $body . '}', 'ok' => true, 'printed' => $printed], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), "\n";
+	} catch (Throwable $e) {
+		echo json_encode(['p' => '{' . $body . '}', 'ok' => false, 'e' => get_class($e)], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), "\n";
 	}
 }

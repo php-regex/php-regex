@@ -196,12 +196,13 @@ final class CaptureShape
             }
 
             $types = self::groupTypes($key, $unset);
-            $items[] = self::keyName($key).': '.match (true) {
+            $entry = match (true) {
                 !$key->marks => self::entry($types, $key->alwaysSet, $offsets),
                 // A group named MARK shares its key with the mark verbs, whose names PHP writes as plain strings over it.
                 $offsets => self::entry($types, $key->alwaysSet, true).'|'.implode('|', $this->markTypes()),
                 default => self::entry([...$types, ...$this->markTypes()], $key->alwaysSet, false),
             };
+            $items[] = self::keyName($key).': '.$entry;
             $values += $pair;
         }
 

@@ -202,7 +202,7 @@ final class DisplayEscaper
 
         for ($i = 0; $i < $length; $i++) {
             $byte = \ord($value[$i]);
-            $escaped .= match ($byte) {
+            $spelling = match ($byte) {
                 0x0A => '\\n',
                 0x0D => '\\r',
                 0x09 => '\\t',
@@ -212,6 +212,7 @@ final class DisplayEscaper
                     ? \sprintf('\\x%02X', $byte)
                     : $value[$i],
             };
+            $escaped .= $spelling;
         }
 
         return $open.'"'.$escaped.'"'.$close;

@@ -129,6 +129,23 @@ function corpus(): array
 		'(?n)',
 		'(?J)',
 		'(*SCRIPT_RUN:a)',
+		// alpha assertions and the start-of-pattern settings
+		'(*pla:a)(a)',
+		'(*positive_lookahead:a)',
+		'(*nla:a)',
+		'(*plb:a)',
+		'(*nlb:a)',
+		'(*napla:a)',
+		'(*naplb:a)',
+		'(*atomic:a)',
+		'(*sr:a)',
+		'(*asr:a)',
+		'(*CRLF)(a)$',
+		'(*BSR_ANYCRLF)\\R',
+		'(*UTF)(*UCP)(\\d)',
+		// brackets a bracket delimiter has to balance
+		'a{2}\\{b\\}',
+		'[{]\\Q{\\E',
 		'[[:word:]]',
 	];
 }

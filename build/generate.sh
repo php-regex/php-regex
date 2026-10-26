@@ -6,6 +6,15 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Rector drops what stands before a match expression it turns into a
+# switch inside a binary operation ($a && match, 'x'.match) or a compound
+# assignment ($s .= match): the source writes such a match to a variable
+# first
+if grep -rnE '(\.|&&|\|\||\?\?) ?match \(|(\.|\+|-|\*|/|\?\?|\|)= ?match \(' src/Parser --include='*.php'; then
+	echo 'generate.sh: a match expression inside a binary operation or a compound assignment, which Rector downgrades wrong' >&2
+	exit 1
+fi
+
 rm -rf build/php74
 mkdir -p build/php74
 cp -R src/Parser build/php74/Parser
@@ -23,6 +32,15 @@ perl -i -pe 's/bool \$changed, \?\s*$/bool \$changed, ?FormatRefusal/' \
 perl -i -pe 's/\?final \$category/?ValidationErrorCategory \$category/; s/\?final \$errorCode/?ErrorCode \$errorCode/' \
 	build/php74/Parser/Validation/ValidationResult.php
 
+# the promoted nullable enum parameters Rector types with another enum of
+# the namespace, written relative: restored from the original declarations
+php build/restore-enum-types.php
+
+# WeakMap is PHP 8.0: the analyses key their per-node caches with it, and
+# SplObjectStorage gives the same array access on 7.4
+grep -rl 'WeakMap' build/php74 --include='*.php' \
+	| xargs -r -n1 perl -i -pe 's/\\WeakMap\b/\\SplObjectStorage/g' || true
+
 # style the shipped tree here, not as a gate: what gets verified is what
 # gets published. It runs BEFORE the floor fixes below, because the style
 # fixers know modern PHP and would happily reintroduce the very syntax
@@ -38,6 +56,13 @@ grep -rl '\$[a-zA-Z_][a-zA-Z0-9_]*::class' build/php74 --include='*.php' \
 	| xargs -r -n1 perl -i -pe 's/\$([a-zA-Z_][a-zA-Z0-9_]*)::class/get_class(\$$1)/g' || true
 grep -rl '0o[0-7]' build/php74 --include='*.php' \
 	| xargs -r -n1 perl -i -pe 's/\b0o([0-7]+)\b/0$1/g' || true
+
+# nothing PHP 7.4 cannot load is left: no WeakMap, no relative PHPRegex\
+# type in a namespaced file
+if grep -rnE 'WeakMap|[(,] *\??PHPRegex\\' build/php74 --include='*.php'; then
+	echo 'generate.sh: a PHP 8.0 class or a relative type is left in the twin' >&2
+	exit 1
+fi
 
 # @readonly docblocks lie in the twin (properties are plain now); the @ is
 # escaped so perl does not interpolate an array out of the pattern

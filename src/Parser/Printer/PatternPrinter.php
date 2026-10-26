@@ -1352,7 +1352,7 @@ final class PatternPrinter extends AbstractNodeVisitor
                 $result .= ($this->bracketMarkFor($char) ?? '\\').$char;
             } elseif (\ord($char) < 32 || 127 === \ord($char) || (!$unicodeMode && \ord($char) >= 128)) {
                 // Escape control characters and extended ASCII
-                $result .= match (\ord($char)) {
+                $escape = match (\ord($char)) {
                     8 => $this->inCharClass ? '\\b' : '\\x08', // Backspace: \b only valid inside char class
                     9 => '\\t',
                     10 => '\\n',
@@ -1361,6 +1361,7 @@ final class PatternPrinter extends AbstractNodeVisitor
                     27 => '\\e',
                     default => '\\x'.Ascii::upper(str_pad(dechex(\ord($char)), 2, '0', \STR_PAD_LEFT)),
                 };
+                $result .= $escape;
             } else {
                 $result .= $char;
             }
