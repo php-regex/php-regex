@@ -677,7 +677,7 @@ final class CaptureShapeAnalyzer
      */
     private function walkReturned(SubroutineNode $node, bool $never): array
     {
-        foreach ($this->groups->groupsReturnedBy($node) as $number => $group) {
+        foreach ($this->groups->groupsReturnedBy($node) as ['number' => $number, 'group' => $group]) {
             $read = $this->facts->of($group->child, true);
             $read += ['arms' => $this->facts->arms($group->child, true) ?: [$read]];
             $this->occurrences[$number][] = ['name' => $group->name, 'never' => $never, 'after_accept' => $this->accepts] + $read;

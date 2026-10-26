@@ -1156,6 +1156,11 @@ final class CaptureShapeAnalyzerTest extends TestCase
         // A name returns every group bearing it: on 'abcd!' the engine sets
         // group 2 to 'ab' and group 3 to 'cd', both named n.
         yield 'a call returns every group bearing a name' => ['pattern' => '/^(?>(?1(<n>)))!(?(DEFINE)((?<n>..)(?<n>..)))|abcde/J', 'group' => 3, 'values' => null, 'participation' => Participation::MayBeUnset, 'subjects' => ['abcd!', '1221!']];
+        // A returned number is the capture of whichever branch of a branch
+        // reset ran: preg_match('/(?(DEFINE)(?<w>(?|(Sat)urday|(Sun)day)))(?&w(2)),\2/', 'Saturday,Sat')
+        // sets group 2 to 'Sat', by name as by number.
+        yield 'a call returns a branch reset group by number' => ['pattern' => '/(?(DEFINE)(?<w>(?|(Sat)urday|(Sun)day)))(?&w(2)),\2/', 'group' => 2, 'values' => ['Sat', 'Sun'], 'participation' => Participation::MayBeUnset, 'subjects' => ['Saturday,Sat', 'Sunday,Sun']];
+        yield 'a call returns a branch reset group by name' => ['pattern' => '/(?(DEFINE)(?<w>(?|(?<s>Sat)urday|(?<s>Sun)day)))(?&w(<s>)),\k<s>/', 'group' => 2, 'values' => ['Sat', 'Sun'], 'participation' => Participation::MayBeUnset, 'subjects' => ['Saturday,Sat', 'Sunday,Sun']];
         yield 'a call leaves the group it runs unset' => ['pattern' => '/(?(DEFINE)((Sat)urday))(?1(2)),\2/', 'group' => 1, 'values' => null, 'participation' => Participation::Never, 'subjects' => ['Saturday,Sat']];
         yield 'a substring scan reads no character' => ['pattern' => "/(?<AA>a)(*scan_substring:(1,'AA',1,<AA>)a)b/", 'group' => 0, 'values' => ['ab'], 'participation' => Participation::Always, 'subjects' => ['ab']];
         yield 'a substring scan after an alternation' => ['pattern' => "/(?:(?'A'a)|(?<A>b))(*scs:('A')b)c/J", 'group' => 0, 'values' => ['ac', 'bc'], 'participation' => Participation::Always, 'subjects' => ['bc']];
