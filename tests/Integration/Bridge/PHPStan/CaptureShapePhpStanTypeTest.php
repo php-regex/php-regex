@@ -200,13 +200,13 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
         yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'printed' => "array{''|numeric-string, ''|numeric-string}"];
         yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'printed' => "array{0: ''|numeric-string, 1?: numeric-string}"];
         yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => "array{''|numeric-string, numeric-string|null}"];
-        yield 'digits under /u are not proven' => ['pattern' => '/(\d+)/u', 'flags' => 0, 'printed' => 'array{lowercase-string&non-empty-string&uppercase-string, lowercase-string&non-empty-string&uppercase-string}'];
+        yield 'digits under /u are not proven' => ['pattern' => '/(\d+)/u', 'flags' => 0, 'printed' => 'array{non-empty-string, non-empty-string}'];
         yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => "array{''|numeric-string, (non-falsy-string&numeric-string)|null}"];
         yield 'lowercase letters, anchored' => ['pattern' => '/^[a-z]+$/', 'flags' => 0, 'printed' => 'array{lowercase-string&non-falsy-string}'];
         yield 'letters read caselessly' => ['pattern' => '/([a-z]+)/i', 'flags' => 0, 'printed' => 'array{non-falsy-string, non-falsy-string}'];
         yield 'uppercase letters' => ['pattern' => '/([A-Z]+)/', 'flags' => 0, 'printed' => 'array{non-falsy-string&uppercase-string, non-falsy-string&uppercase-string}'];
         yield 'a decimal integer' => ['pattern' => '/^(0|[1-9]\d{0,17})$/D', 'flags' => 0, 'printed' => 'array{decimal-int-string, decimal-int-string}'];
-        yield 'a decimal integer that is never zero, as null' => ['pattern' => '/(-?[1-9]\d{0,17})?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => 'array{lowercase-string&uppercase-string, (decimal-int-string&non-falsy-string)|null}'];
+        yield 'a decimal integer that is never zero, as null' => ['pattern' => '/(-?[1-9]\d{0,17})?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => 'array{string, (decimal-int-string&non-falsy-string)|null}'];
 
         // Cases. Oracle in CaptureShapeAnalyzerTest::provideCaseShapes().
         yield 'two branches' => ['pattern' => '/(a)|(b)/', 'flags' => 0, 'printed' => "array{'a', 'a'}|array{'b', '', 'b'}"];

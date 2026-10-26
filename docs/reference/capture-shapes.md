@@ -261,7 +261,7 @@ $shape = (new CaptureShapeAnalyzer())->analyze(
 );
 
 $shape->matchShape();
-// array{0: lowercase-string&non-falsy-string&uppercase-string,
+// array{0: non-falsy-string,
 //       year: non-falsy-string&numeric-string,
 //       1: non-falsy-string&numeric-string,
 //       month: ..., 2: ..., day?: ..., 3?: ...}  (each the same as year)
@@ -284,8 +284,10 @@ A group's value is written, from the most precise to the least, once per arm whe
   PHPStan prints them: `lowercase-string` for `lowercase`, `non-falsy-string` for
   `nonFalsy` (else `non-empty-string` when it cannot be empty), `numeric-string` for
   `digitsOnly` (a run of digits is a numeric string, never empty), `uppercase-string`
-  for `uppercase`. `/^([a-z]+)$/` writes group 1 `lowercase-string&non-falsy-string`,
-  `/(\d+)/` writes it `numeric-string`;
+  for `uppercase`. A case is written when it alone holds: a value with no letter, a run
+  of digits among them, is both lowercase and uppercase, which says nothing.
+  `/^([a-z]+)$/` writes group 1 `lowercase-string&non-falsy-string`, `/(\d+)/` writes it
+  `numeric-string`;
 - `''|` before that intersection, in parentheses, when `digitsOnly` holds and the group
   may be empty, as `(\d*)`;
 - `string` when no fact holds.

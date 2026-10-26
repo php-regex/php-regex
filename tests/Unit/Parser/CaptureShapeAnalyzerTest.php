@@ -1348,13 +1348,13 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'named group next to a mark verb' => ['pattern' => '/(?<x>a)(*MARK:m)b/', 'flags' => 0, 'expected' => "array{0: 'ab', x: 'a', 1: 'a', MARK?: 'm'}"];
         // preg_match('/(?<MARK>a)/', 'a') -> {"0":"a","MARK":"a","1":"a"}: without a verb the key holds the group alone
         yield 'group named MARK, no mark verb' => ['pattern' => '/(?<MARK>a)/', 'flags' => 0, 'expected' => "array{0: 'a', MARK: 'a', 1: 'a'}"];
-        yield 'trailing optional named group' => ['pattern' => '/(?<y>\d{4})(?:-(?<d>\d\d))?/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string&uppercase-string, y: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string, d?: non-falsy-string&numeric-string, 2?: non-falsy-string&numeric-string}'];
+        yield 'trailing optional named group' => ['pattern' => '/(?<y>\d{4})(?:-(?<d>\d\d))?/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, y: non-falsy-string&numeric-string, 1: non-falsy-string&numeric-string, d?: non-falsy-string&numeric-string, 2?: non-falsy-string&numeric-string}'];
         // A root alternation holding groups splits into one shape per branch:
         // preg_match('/(?J)(?<n>a)|(?<n>b)/', 'a') -> {"0":"a","n":"a","1":"a"}, on 'b' -> {"0":"b","n":"b","1":"","2":"b"}
         yield 'duplicate names' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'flags' => 0, 'expected' => "array{0: 'a', n: 'a', 1: 'a'}|array{0: 'b', n: 'b', 1: '', 2: 'b'}"];
         yield 'unknown text' => ['pattern' => '/(\w*)/', 'flags' => 0, 'expected' => 'array{0: string, 1: string}'];
         yield 'quote in a value' => ['pattern' => "/(it's)/", 'flags' => 0, 'expected' => "array{0: 'it\\'s', 1: 'it\\'s'}"];
-        yield 'unprintable value' => ['pattern' => '/(\x01)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string&uppercase-string, 1: lowercase-string&non-falsy-string&uppercase-string}'];
+        yield 'unprintable value' => ['pattern' => '/(\x01)/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, 1: non-falsy-string}'];
         yield 'empty group of unknown text' => ['pattern' => '/(\b)a/i', 'flags' => 0, 'expected' => "array{0: non-falsy-string, 1: ''}"];
         yield 'too many values to write' => ['pattern' => '/(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q)/', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-falsy-string, 1: lowercase-string&non-falsy-string}'];
         // preg_match('/(a)(?<x>b)/n', 'ab') -> {"0":"ab","x":"b","1":"b"}, the same under (?n) (PHP 8.4.26)
@@ -1990,7 +1990,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'digits, may be empty' => ['pattern' => '/(\d*)/', 'flags' => 0, 'expected' => "array{0: ''|numeric-string, 1: ''|numeric-string}"];
         yield 'optional digits' => ['pattern' => '/(\d+)?/', 'flags' => 0, 'expected' => "array{0: ''|numeric-string, 1?: numeric-string}"];
         yield 'optional digits, as null' => ['pattern' => '/(\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: ''|numeric-string, 1: numeric-string|null}"];
-        yield 'digits under /u are not proven' => ['pattern' => '/(\d+)/u', 'flags' => 0, 'expected' => 'array{0: lowercase-string&non-empty-string&uppercase-string, 1: lowercase-string&non-empty-string&uppercase-string}'];
+        yield 'digits under /u are not proven' => ['pattern' => '/(\d+)/u', 'flags' => 0, 'expected' => 'array{0: non-empty-string, 1: non-empty-string}'];
         // PHPStan's type parser reads an intersection inside a union only in parentheses.
         yield 'optional digits, at least two, as null' => ['pattern' => '/(\d\d+)?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: ''|numeric-string, 1: (non-falsy-string&numeric-string)|null}"];
         // phpstan/phpstan#15018: lowercase letters are a lowercase-string, the
@@ -2003,7 +2003,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         // phpstan/phpstan#14909: zero, or digits without a leading zero, up to
         // eighteen of them, are a decimal-int-string; \d+ may read '007'.
         yield 'a decimal integer' => ['pattern' => '/^(0|[1-9]\d{0,17})$/D', 'flags' => 0, 'expected' => 'array{0: decimal-int-string, 1: decimal-int-string}'];
-        yield 'a decimal integer that is never zero, as null' => ['pattern' => '/(-?[1-9]\d{0,17})?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: lowercase-string&uppercase-string, 1: (decimal-int-string&non-falsy-string)|null}'];
+        yield 'a decimal integer that is never zero, as null' => ['pattern' => '/(-?[1-9]\d{0,17})?/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => 'array{0: string, 1: (decimal-int-string&non-falsy-string)|null}'];
         yield 'digits hold no letter of either case' => ['pattern' => '/(\d+)/', 'flags' => 0, 'expected' => 'array{0: numeric-string, 1: numeric-string}'];
     }
 
