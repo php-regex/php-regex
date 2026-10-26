@@ -362,15 +362,12 @@ pattern with the engine.
    its key optional when it is last, though the engine writes it: the
    shape cannot yet tell "unset only when a later group is set".
 6. A lone `(?(DEFINE)...)` group renders as a union of two true arms.
-7. `Lexer` and `ClassParser` name `classBadEscapeStaysRefused` the
-   negation of `PcreFeature::BadEscapeInClassStaysRefused`: the name
-   says the opposite of what the flag holds.
-8. phpstan-src 2.3.x types an alternation under a repeat as if one
+7. phpstan-src 2.3.x types an alternation under a repeat as if one
    branch ran: `/(?:(a)|(b))+/` reads `array{string, '', 'b'}|array{string, 'a'}`
    while `preg_match('/(?:(a)|(b))+/', 'ab')` writes `['ab', 'a', 'b']`.
    A small pull request there: no tagged union for an alternation under
    a quantifier whose maximum is above one, with an nsrt row.
-9. Split the single commit into stacked pull requests once the
+8. Split the single commit into stacked pull requests once the
    maintainer asks for it.
 
 ## The PHPStan gold rush: what the analysis already knows and does not say
