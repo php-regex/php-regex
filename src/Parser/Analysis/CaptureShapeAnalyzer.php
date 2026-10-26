@@ -55,7 +55,7 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '10';
+    public const ANALYSIS_VERSION = '11';
 
     private const MAX_CASES = 16;
 
@@ -126,9 +126,12 @@ final class CaptureShapeAnalyzer
      */
     private CaptureFacts $facts;
 
+    private GroupIndex $groups;
+
     public function __construct()
     {
         $this->facts = new CaptureFacts();
+        $this->groups = GroupIndex::empty();
     }
 
     public function analyze(RegexNode $ast): CaptureShape
@@ -136,7 +139,8 @@ final class CaptureShapeAnalyzer
         $this->ucp = str_contains($ast->flags, 'u');
         $this->hasCalls = false;
         $this->scan($ast->pattern);
-        $this->facts = new CaptureFacts($ast->isUnicode(), $this->ucp, GroupIndex::of($ast->pattern));
+        $this->groups = GroupIndex::of($ast->pattern);
+        $this->facts = new CaptureFacts($ast->isUnicode(), $this->ucp, $this->groups);
         $this->collectCaseless($ast->pattern, str_contains($ast->flags, 'i'));
         $this->selection = null;
 
@@ -581,6 +585,7 @@ final class CaptureShapeAnalyzer
             $node instanceof QuantifierNode => $this->walkQuantifier($node, $never),
             $node instanceof ConditionalNode => $this->walkConditional($node, $never),
             $node instanceof ScriptRunNode && null !== $node->content => $this->walk($node->content, $never),
+            $node instanceof SubroutineNode => $this->walkReturned($node, $never),
             default => [],
         };
     }
@@ -661,6 +666,24 @@ final class CaptureShapeAnalyzer
         $guaranteed = $this->walk($node->child, $never);
 
         return \in_array($node->type, self::TRANSPARENT_GROUPS, true) ? $guaranteed : [];
+    }
+
+    /**
+     * A call that returns groups, "(?1(2))" in PCRE2 10.47, sets them as the
+     * group it runs does: in /(?(DEFINE)((Sat)urday))(?1(2)),\2/ group 2
+     * holds 'Sat'. No match is sure to set them.
+     *
+     * @return array<int, true>
+     */
+    private function walkReturned(SubroutineNode $node, bool $never): array
+    {
+        foreach ($this->groups->groupsReturnedBy($node) as $number => $group) {
+            $read = $this->facts->of($group->child, true);
+            $read += ['arms' => $this->facts->arms($group->child, true) ?: [$read]];
+            $this->occurrences[$number][] = ['name' => $group->name, 'never' => $never, 'after_accept' => $this->accepts] + $read;
+        }
+
+        return [];
     }
 
     /**

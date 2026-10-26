@@ -18,7 +18,7 @@ declare(strict_types=1);
  * @return array{version: string, digests: array<string, string>}
  */
 return [
-    'version' => '10',
+    'version' => '11',
     'digests' => [
         '/(a)(z)?/' => 'fceffee5528c62d919aa50fe9f9a0e4f57b34252',
         '/(z)?(a)/' => 'dad1b8133f483a94938631586006071bd8a02a22',

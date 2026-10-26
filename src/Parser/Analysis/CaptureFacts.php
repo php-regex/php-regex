@@ -77,7 +77,11 @@ final class CaptureFacts
      */
     private const READ_THROUGH = [GroupType::Capturing, GroupType::Named, GroupType::NonCapturing, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags];
 
-    private const LOOKAROUNDS = [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative];
+    /**
+     * Groups that read no character of the subject: the lookarounds, and a
+     * substring scan, which matches inside a capture already read.
+     */
+    private const LOOKAROUNDS = [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring];
 
     private readonly LengthRangeCalculator $calculator;
 

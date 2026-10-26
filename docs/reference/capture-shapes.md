@@ -447,6 +447,10 @@ cannot tell, the answer widens rather than guesses:
 - A subroutine call reads what the group it calls reads, with the options of that
   group: in `/(?<t>a)&((?&t))/` group 2 holds `'a'`. A call of the group that holds it,
   or of the whole pattern, and a backreference, have unknown values.
+- A call that returns groups, `(?1(2))` in PCRE2 10.47, sets them as the group it runs
+  does: in `/(?(DEFINE)((Sat)urday))(?1(2)),\2/` group 2 holds `'Sat'`, and is `MayBeUnset`.
+- A substring scan, `(*scan_substring:...)` or `(*scs:...)` in PCRE2 10.45, reads no
+  character of the subject, as a lookahead does.
 - A key that every match writes, but only through different groups in different
   branches, is written optional.
 - A fact is `true` only when every character the group can read proves it. A part the

@@ -87,6 +87,36 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $this->assertSame($arms, $actual);
     }
 
+    /**
+     * Syntax of PCRE2 10.45 and 10.47 reads what the engine writes: a call
+     * that returns groups sets them, preg_match('/(?(DEFINE)((Sat)urday))(?1(2)),\2/',
+     * 'Saturday,Sat') -> ["Saturday,Sat","","Sat"], and a substring scan
+     * reads no character of the subject, preg_match("/(?<AA>a)(*scan_substring:(1,'AA',1,<AA>)a)b/",
+     * 'ab') -> {"0":"ab","AA":"a","1":"a"} (PHP 8.4.27, PCRE2 10.49).
+     *
+     * @param list<string>|null $values
+     * @param list<string>      $subjects
+     */
+    #[Test]
+    #[DataProvider('provideNewerSyntax')]
+    public function test_newer_syntax_reads_what_the_engine_writes(string $pattern, int $group, ?array $values, Participation $participation, array $subjects): void
+    {
+        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create(['pcre_version' => '10.47'])->parse($pattern));
+        $groups = [0 => $shape->whole] + $shape->groups;
+        $this->assertArrayHasKey($group, $groups);
+        $actual = $groups[$group];
+
+        $this->assertSame($values, $actual->values);
+        $this->assertSame($participation, $actual->participation);
+
+        $this->requiresPcre2('10.47', $pattern);
+        foreach ($subjects as $subject) {
+            $matches = [];
+            $this->assertSame(1, preg_match($pattern, $subject, $matches, \PREG_UNMATCHED_AS_NULL), \sprintf('%s must match "%s".', $pattern, $subject));
+            $this->assertMatchesFollow($shape, $matches, \PREG_UNMATCHED_AS_NULL, false, \sprintf('%s on "%s"', $pattern, $subject));
+        }
+    }
+
     #[Test]
     #[DataProvider('provideLengths')]
     public function test_a_group_knows_its_length(string $pattern, int $group, int $min, ?int $max): void
@@ -1113,6 +1143,22 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'a repeated alternation' => ['pattern' => '/((?:a|\d)+)/', 'group' => 1, 'arms' => []];
         yield 'a group that may hold what a cut left' => ['pattern' => '/(a|\d(*ACCEPT))/', 'group' => 1, 'arms' => []];
         yield 'a group no match sets' => ['pattern' => '/(?!(a|\d))b/', 'group' => 1, 'arms' => []];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, group: int, values: list<string>|null, participation: Participation, subjects: list<string>}>
+     */
+    public static function provideNewerSyntax(): iterable
+    {
+        yield 'a call returns a group by number' => ['pattern' => '/(?(DEFINE)((Sat)urday))(?1(2)),\2/', 'group' => 2, 'values' => ['Sat'], 'participation' => Participation::MayBeUnset, 'subjects' => ['Saturday,Sat']];
+        yield 'a call returns a group by relative number' => ['pattern' => '/(?(DEFINE)((Sat)urday))(?-2(-1)),\2/', 'group' => 2, 'values' => ['Sat'], 'participation' => Participation::MayBeUnset, 'subjects' => ['Saturday,Sat']];
+        yield 'a call returns a group by name' => ['pattern' => '/(?(DEFINE)(?<fn>(?<ret>Sat)urday))(?&fn(<ret>)),\k<ret>/', 'group' => 2, 'values' => ['Sat'], 'participation' => Participation::MayBeUnset, 'subjects' => ['Saturday,Sat']];
+        // A name returns every group bearing it: on 'abcd!' the engine sets
+        // group 2 to 'ab' and group 3 to 'cd', both named n.
+        yield 'a call returns every group bearing a name' => ['pattern' => '/^(?>(?1(<n>)))!(?(DEFINE)((?<n>..)(?<n>..)))|abcde/J', 'group' => 3, 'values' => null, 'participation' => Participation::MayBeUnset, 'subjects' => ['abcd!', '1221!']];
+        yield 'a call leaves the group it runs unset' => ['pattern' => '/(?(DEFINE)((Sat)urday))(?1(2)),\2/', 'group' => 1, 'values' => null, 'participation' => Participation::Never, 'subjects' => ['Saturday,Sat']];
+        yield 'a substring scan reads no character' => ['pattern' => "/(?<AA>a)(*scan_substring:(1,'AA',1,<AA>)a)b/", 'group' => 0, 'values' => ['ab'], 'participation' => Participation::Always, 'subjects' => ['ab']];
+        yield 'a substring scan after an alternation' => ['pattern' => "/(?:(?'A'a)|(?<A>b))(*scs:('A')b)c/J", 'group' => 0, 'values' => ['ac', 'bc'], 'participation' => Participation::Always, 'subjects' => ['bc']];
     }
 
     /**
