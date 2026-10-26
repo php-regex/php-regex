@@ -841,7 +841,7 @@ corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/Sanitizer/BrowserHtmlSani
        - #<style\b[^>]*/?>#is
        + #<style\b[^>]*/?>#i
 
-corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2371:20
+corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2373:20
     → /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -3677,7 +3677,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/pluggable.php:1567:15
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '\x{EE}' and '\x{EF}' explicitly instead of a range.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/rest-api.php:1398:11
+corpus/WordPress/wordpress-develop/src/wp-includes/rest-api.php:1485:11
     → |^#([A-Fa-f0-9]{3}){1,2}$|
    ↳ via $regex
    INFO  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
@@ -4846,7 +4846,7 @@ corpus/composer/composer/src/Composer/Repository/VcsRepository.php:366:52
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/composer/composer/src/Composer/Util/Platform.php:382:42
+corpus/composer/composer/src/Composer/Util/Platform.php:389:42
     → {-?v?\d+(\.\d+)*$}
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -5134,7 +5134,7 @@ corpus/contao/contao/core-bundle/contao/controllers/BackendPopup.php:73:98
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/contao/contao/core-bundle/contao/dca/tl_content.php:1086:25
+corpus/contao/contao/core-bundle/contao/dca/tl_content.php:1097:25
     → /<!--(.|\s)*?-->/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -5536,7 +5536,7 @@ corpus/drupal/drupal/core/lib/Drupal/Component/Utility/Color.php:24:23
    INFO  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/drupal/drupal/core/lib/Drupal/Component/Utility/UrlHelper.php:446:32
+corpus/drupal/drupal/core/lib/Drupal/Component/Utility/UrlHelper.php:456:32
     →          /^ (?:ftp|https?|feed):\/\/ (?: (?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)* (?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@ )? (?: (?:[a-z0-9\-\.]|%[0-9a-f]{2})+ |(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]) ) (?::[0-9]+)? (?:[\/|\?] (?:[\w#!:\.\?\+=&@$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2}) *)? $/xi
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '+' (duplicate)
@@ -12756,14 +12756,14 @@ corpus/mpdf/mpdf/src/Mpdf.php:25625:20
        - /(<.*?>)/ms
        + /(<.*?>)/s
 
-corpus/mpdf/mpdf/src/Mpdf.php:26798:19
+corpus/mpdf/mpdf/src/Mpdf.php:26801:19
     → /<(.*?)>/ms
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /<(.*?)>/ms
        + /<(.*?)>/s
 
-corpus/mpdf/mpdf/src/Mpdf.php:27039:25
+corpus/mpdf/mpdf/src/Mpdf.php:27042:25
     → /\n/si
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -12771,55 +12771,55 @@ corpus/mpdf/mpdf/src/Mpdf.php:27039:25
        - /\n/si
        + /\n/i
 
-corpus/mpdf/mpdf/src/Mpdf.php:27085:24
+corpus/mpdf/mpdf/src/Mpdf.php:27088:24
     → /<br \/>\s*/is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /<br \/>\s*/is
        + /<br \/>\s*/i
 
-corpus/mpdf/mpdf/src/Mpdf.php:27087:24
+corpus/mpdf/mpdf/src/Mpdf.php:27090:24
     → /<wbr[ \/]*>\s*/is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /<wbr[ \/]*>\s*/is
        + /<wbr[ \/]*>\s*/i
 
-corpus/mpdf/mpdf/src/Mpdf.php:27175:24
+corpus/mpdf/mpdf/src/Mpdf.php:27178:24
     → /<textarea([^>]*)><\/textarea>/si
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /<textarea([^>]*)><\/textarea>/si
        + /<textarea([^>]*)><\/textarea>/i
 
-corpus/mpdf/mpdf/src/Mpdf.php:27179:31
+corpus/mpdf/mpdf/src/Mpdf.php:27182:31
     → /<(h[1-6])([^>]*(?<!\/))(>[^>]*<\/\1>\s*<table)/si
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /<(h[1-6])([^>]*(?<!\/))(>[^>]*<\/\1>\s*<table)/si
        + /<(h[1-6])([^>]*(?<!\/))(>[^>]*<\/\1>\s*<table)/i
 
-corpus/mpdf/mpdf/src/Mpdf.php:27189:24
+corpus/mpdf/mpdf/src/Mpdf.php:27192:24
     → /(&#[x]{0,1}[0-9a-f]{1,5})</i
    TIP 
        - /(&#[x]{0,1}[0-9a-f]{1,5})</i
        + /(&#[x]?[0-9a-f]{1,5})</i
 
-corpus/mpdf/mpdf/src/Mpdf.php:27245:18
+corpus/mpdf/mpdf/src/Mpdf.php:27248:18
     → /(\d+) 0 R /s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /(\d+) 0 R /s
        + /(\d+) 0 R /
 
-corpus/mpdf/mpdf/src/Mpdf.php:27310:14
+corpus/mpdf/mpdf/src/Mpdf.php:27313:14
     → /startxref\n(\d+)\n%%EOF/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /startxref\n(\d+)\n%%EOF/s
        + /startxref\n(\d+)\n%%EOF/
 
-corpus/mpdf/mpdf/src/Mpdf.php:27313:23
+corpus/mpdf/mpdf/src/Mpdf.php:27316:23
     → /startxref\n(\d+)\n%%EOF/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -17836,6 +17836,10 @@ corpus/spiral/framework/src/Cookies/src/Config/CookiesConfig.php:49:25
     → /^(\d{1,3}){4}:\d+$/
    INFO  Quantified capturing group "(...)" with "{4}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+corpus/spiral/framework/src/SendIt/src/Renderer/ViewRenderer.php:55:13
+    → ~<(style|script|textarea|title)\b[^>]*+>(?>[^<]++|<(?!/\1\s*>))*+</\1\s*>(*SKIP)(*FAIL)|(?<!\]>)<!--(?!\[if\b|<!|>)(?>[^-]++|-(?!->))*+-->~is
+   WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
 
 
 
