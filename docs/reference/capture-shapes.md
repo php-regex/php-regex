@@ -271,9 +271,11 @@ Merged, the same matches read
 ### When the pattern splits
 
 The analyzer splits on one alternation: the one holding a capturing group that the root
-reaches through sequences and through groups that neither capture nor repeat (`(?:...)`,
-atomic `(?>...)`, option groups such as `(?i:...)`). Each alternative gives one case.
-`/(a)|(b)/`, `/^(?:(\d+)|([a-z]+))$/` and `/x(?:(a)|(b))/` split.
+reaches through sequences and through groups that do not repeat (`(?:...)`, atomic
+`(?>...)`, option groups such as `(?i:...)`, and capturing groups, set in every case).
+Each alternative gives one case. `/(a)|(b)/`, `/^(?:(\d+)|([a-z]+))$/`,
+`/x(?:(a)|(b))/` and `/Price: (£|(\d)|x)/i` split: in the last, group 2 is set in the
+case of the digit only.
 
 - A `?` on that group, or `??`, `?+`, `{0,1}`, adds a case where no alternative is taken,
   so no group of the alternation is set: `/(?:(a)|(b))?c/` gives three cases, the last

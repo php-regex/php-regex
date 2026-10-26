@@ -1640,6 +1640,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
     public static function provideCaseShapes(): iterable
     {
         yield 'two branches' => ['pattern' => '/(a)|(b)/', 'flags' => 0, 'expected' => "array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}"];
+        yield 'through a capturing group' => ['pattern' => '/Price: (£|(\d)|x)/i', 'flags' => 0, 'expected' => "array{0: non-falsy-string, 1: '£'|numeric-string|non-falsy-string}|array{0: non-falsy-string, 1: '£'|numeric-string|non-falsy-string, 2: numeric-string}"];
         yield 'two branches, as null' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: 'a', 2: null}|array{0: 'b', 1: null, 2: 'b'}"];
         yield 'two branches, offsets' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'a', int<0, max>}, 1: array{'a', int<0, max>}}|array{0: array{'b', int<0, max>}, 1: array{'', int<-1, max>}, 2: array{'b', int<0, max>}}"];
         yield 'anchored, in a non-capturing group' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'flags' => 0, 'expected' => "array{0: numeric-string, 1: numeric-string}|array{0: non-falsy-string, 1: '', 2: non-falsy-string}"];
@@ -1681,6 +1682,13 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'anchored, in a non-capturing group' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'count' => 2];
         yield 'after a literal' => ['pattern' => '/x(?:(a)|(b))/', 'count' => 2];
         yield 'optional: one more case' => ['pattern' => '/(?:(a)|(b))?/', 'count' => 3];
+        // A capturing group on the way is set whatever the branch: preg_match('/Price: (£|(\d)|x)/i',
+        // 'Price: 5') -> ["Price: 5","5","5"] and on 'Price: x' -> ["Price: x","x"] (PHP 8.4.27, PCRE2 10.49).
+        yield 'through a capturing group' => ['pattern' => '/Price: (£|(\d)|x)/i', 'count' => 3];
+        yield 'through a named group' => ['pattern' => '/(?<v>a|(b))c/', 'count' => 2];
+        yield 'inside a capturing group' => ['pattern' => '/((a)|(b))/', 'count' => 2];
+        yield 'an optional group holding a branch reset with groups' => ['pattern' => '/(?:(?|(a)|(b))(c))?/', 'count' => 2];
+        yield 'an optional group holding groups, inside a capturing group' => ['pattern' => '/(x(?:(a)(b))?)/', 'count' => 2];
         yield 'a branch with no group' => ['pattern' => '/(a)|b/', 'count' => 2];
         yield 'an empty branch' => ['pattern' => '/(a)|/', 'count' => 2];
         yield 'a name shared under /J' => ['pattern' => '/(?<n>a)|(?<n>b)/J', 'count' => 2];
@@ -1726,7 +1734,6 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'repeated at least once' => ['pattern' => '/(?:(a)|(b))+/'];
         yield 'repeated any number of times' => ['pattern' => '/(?:(a)|(b))*/'];
         yield 'repeated twice' => ['pattern' => '/(?:(a)|(b)){2}/'];
-        yield 'inside a capturing group' => ['pattern' => '/((a)|(b))/'];
         yield 'inside a lookahead' => ['pattern' => '/(?=(a)|(b))\w/'];
         yield 'an alternation without groups' => ['pattern' => '/(x)(?:a|b)/'];
         yield 'a root alternation without groups' => ['pattern' => '/a|b/'];
@@ -1735,8 +1742,6 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'an optional capturing group alone' => ['pattern' => '/(a)?(b)/'];
         yield 'two optional groups holding groups' => ['pattern' => '/(?:(a)(b))?(?:(c)(d))?/'];
         yield 'an optional group holding groups, repeated' => ['pattern' => '/(?:(a)(b)){0,2}/'];
-        yield 'an optional group holding groups, inside a capturing group' => ['pattern' => '/(x(?:(a)(b))?)/'];
-        yield 'an optional group holding a branch reset with groups' => ['pattern' => '/(?:(?|(a)|(b))(c))?/'];
         yield 'a condition without groups' => ['pattern' => '/(a)(?(1)b|c)/'];
         yield 'a condition under a repeat' => ['pattern' => '/(?:(?(?=(a))a|(c)))+/'];
     }
@@ -1771,6 +1776,11 @@ final class CaptureShapeAnalyzerTest extends TestCase
      */
     public static function provideCaseEngineRows(): iterable
     {
+        yield '/Price: (£|(\d)|x)/i' => ['pattern' => '/Price: (£|(\d)|x)/i', 'subjects' => ['Price: £', 'Price: 5', 'Price: x', 'PRICE: X']];
+        yield '/(?<v>a|(b))c/' => ['pattern' => '/(?<v>a|(b))c/', 'subjects' => ['ac', 'bc']];
+        yield '/((a)|(b))/' => ['pattern' => '/((a)|(b))/', 'subjects' => ['a', 'b']];
+        yield '/(?:(?|(a)|(b))(c))?/' => ['pattern' => '/(?:(?|(a)|(b))(c))?/', 'subjects' => ['', 'ac', 'bc']];
+        yield '/(x(?:(a)(b))?)/' => ['pattern' => '/(x(?:(a)(b))?)/', 'subjects' => ['x', 'xab']];
         yield 'cases: /(a)|(b)/' => ['pattern' => '/(a)|(b)/', 'subjects' => ['a', 'b']];
         yield 'cases: /(a)|(b)|(c)/' => ['pattern' => '/(a)|(b)|(c)/', 'subjects' => ['a', 'b', 'c']];
         yield 'cases: /^(?:(\d+)|([a-z]+))$/' => ['pattern' => '/^(?:(\d+)|([a-z]+))$/', 'subjects' => ['0', '42', 'ab']];
