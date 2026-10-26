@@ -334,44 +334,44 @@ blessing hand-built AST tests, ~99.5%. A literal 100% is not reachable
 by tests on this setup — the statements that run only in forked workers
 and child processes are the floor.
 
-## PHPRegex in phpstan-src: the fourth pull request and after
+## PHPRegex in phpstan-src: what the proof of concept still owes
 
-Stack on the fork `php-regex/phpstan-src` (never upstream; the
-maintainer opens those): #1 seam, #2 walkers (merged), #3 target
-validity, #4 capture shapes — all green on `NodeScopeResolverTest`
-1879/1879. What the series still owes:
+The fork `php-regex/phpstan-src` carries the proof of concept as pull
+request #1, one commit on `2.3.x` (never upstream; the maintainer opens
+that one). It pins the php74 twin at `0574849`; all fixtures green, and
+a test there matches every fixture pattern with the engine.
 
-1. Nothing left of the folding: the reader splits what it reads and
-   answers the rule in one call; the helper keeps the expression duties
-   only (concat resolution, quoting delimiters).
-2. Once `2.0.0` is tagged and the php74 twin reaches Packagist, replace
+1. Once `2.0.0` is tagged and the php74 twin reaches Packagist, replace
    the `2.x-dev#<hash>` pin with the exact version (the precedent is
    `hoa/compiler`, pinned to a release).
-3. Done: without `u` the engine folds ASCII letters only, so `(£|€)`
-   under `i` reads its constants; under `u` it folds by Unicode and
-   nothing past seven bits is provable — the analysis is mode-aware.
-4. The 8.6 entry reads 10.44 and php-src master carries 10.44 today, so
+2. Rebuild the phar from the pull request with the twin at `0574849`
+   and run it on `php:7.4-cli` and `php:8.4-cli`: the last phar build
+   predates the twin fixes (it failed on 7.4 with `WeakMap`).
+3. The 8.6 entry reads 10.44 and php-src master carries 10.44 today, so
    the map stands corroborated; the one gesture left is re-reading
    master after the 8.6 GA (2026-11-19) in case a release-cut downgrade
    like 8.5's happens.
-5. Done: the throughput subject reads the realistic corpus at 7,837
-   patterns a second (first touch 4,310, AST cache off, plain
-   interpreter); the number and the method sit in the series' pull
-   request.
-6. phpstan#11602: `isset($matches[3])` should imply its nested groups 4
+4. phpstan#11602: `isset($matches[3])` should imply its nested groups 4
    and 5 exist — needs the shape analysis to split an optional
    capture-bearing group into the case where it runs and the case where
    it is skipped; the alternation-split machinery exists, the optional-
    group split does not.
-7. The php74 twin's `CaptureShape::matchShape()` render drops key names
-   and optional markers outside the marks-only branch, against its own
-   docblock contract — fix the render, rise the analysis version, re-
-   record the digests, and let the next twin cycle carry it.
-8. Known imprecision in the series, documented in the pull request: a
-   lone `(?(DEFINE)...)` group renders as a union of two true arms; and
-   commit hygiene (a few ungrammatical subjects, two discarded
-   architectures inside the line) settles when the maintainer asks for
-   the split into stacked pull requests.
+5. A group that is either a constant or digits, `(a|\d)`, reads
+   `non-empty-string` where the old grammar read `'a'|numeric-string`:
+   the capture shape has no way to say "these constants or digits".
+6. An inline `(?i:...)` or `(?i)` turns caseless reading on for the
+   whole pattern: `/(?i:a)(b)/` types group 1 `non-falsy-string` instead
+   of `'b'`. Sound, less precise; the scope of the flag is known to the
+   parser.
+7. A condition group, `(?(?=(a))b|(c))`, reads as an unset group may be,
+   its key optional when it is last, though the engine writes it: the
+   shape cannot yet tell "unset only when a later group is set".
+8. A lone `(?(DEFINE)...)` group renders as a union of two true arms.
+9. `Lexer` and `ClassParser` name `classBadEscapeStaysRefused` the
+   negation of `PcreFeature::BadEscapeInClassStaysRefused`: the name
+   says the opposite of what the flag holds.
+10. Split the single commit into stacked pull requests once the
+    maintainer asks for it.
 
 ## The PHPStan gold rush: what the analysis already knows and does not say
 
