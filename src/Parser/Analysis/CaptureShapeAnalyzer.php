@@ -14,11 +14,14 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Analysis;
 
 use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
+use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\QuantifierBounds;
@@ -50,7 +53,7 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '8';
+    public const ANALYSIS_VERSION = '9';
 
     private const MAX_CASES = 16;
 
@@ -84,8 +87,6 @@ final class CaptureShapeAnalyzer
     private bool $accepts = false;
 
     private bool $keeps = false;
-
-    private bool $caseless = false;
 
     /**
      * \d and [[:digit:]] match non-ASCII digits: /u, or (*UCP).
@@ -125,11 +126,11 @@ final class CaptureShapeAnalyzer
 
     public function analyze(RegexNode $ast): CaptureShape
     {
-        $this->caseless = str_contains($ast->flags, 'i');
         $this->ucp = str_contains($ast->flags, 'u');
         $this->hasCalls = false;
         $this->scan($ast->pattern);
-        $this->facts = new CaptureFacts($ast->isUnicode(), $this->caseless, $this->ucp);
+        $this->facts = new CaptureFacts($ast->isUnicode(), $this->ucp, GroupIndex::of($ast->pattern));
+        $this->collectCaseless($ast->pattern, str_contains($ast->flags, 'i'));
         $this->selection = null;
 
         $merged = $this->shape($ast->pattern);
@@ -255,14 +256,10 @@ final class CaptureShapeAnalyzer
     }
 
     /**
-     * Reads what the whole pattern turns on: caseless matching, UCP, calls.
+     * Reads what the whole pattern turns on: UCP, calls.
      */
     private function scan(NodeInterface $node): void
     {
-        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && str_contains(explode('-', $node->flags ?? '')[0], 'i')) {
-            $this->caseless = true;
-        }
-
         if ($node instanceof PcreVerbNode && 'UCP' === $node->verb) {
             $this->ucp = true;
         }
@@ -274,6 +271,59 @@ final class CaptureShapeAnalyzer
         foreach ($node->getChildren() as $child) {
             $this->scan($child);
         }
+    }
+
+    /**
+     * Marks the characters and classes the engine reads caselessly, and
+     * returns whether it reads caselessly after the node. As in PCRE, a bare
+     * "(?i)" holds to the end of its group, the following branches
+     * included; a scoped "(?i:...)" holds inside; any group, like a
+     * conditional, gives back at its end what held at its start.
+     */
+    private function collectCaseless(NodeInterface $node, bool $caseless): bool
+    {
+        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && null !== $node->flags) {
+            $inside = self::caselessAfter($caseless, $node->flags);
+            // a bare "(?i)" spans its flags and three bytes, a scoped "(?i:)" one more
+            if ($node->getEndPosition() - $node->getStartPosition() === \strlen($node->flags) + 3) {
+                return $inside;
+            }
+
+            $this->collectCaseless($node->child, $inside);
+
+            return $caseless;
+        }
+
+        if ($node instanceof LiteralNode || $node instanceof CharLiteralNode || $node instanceof CharClassNode) {
+            if ($caseless) {
+                $this->facts->markCaseless($node);
+            }
+
+            return $caseless;
+        }
+
+        $carried = $caseless;
+        foreach ($node->getChildren() as $child) {
+            $carried = $this->collectCaseless($child, $carried);
+        }
+
+        return $node instanceof SequenceNode || $node instanceof AlternationNode ? $carried : $caseless;
+    }
+
+    /**
+     * Whether caseless matching holds after inline flags such as "i", "-i",
+     * "^" or "i-i", when it held before them.
+     */
+    private static function caselessAfter(bool $caseless, string $flags): bool
+    {
+        if (str_starts_with($flags, '^')) {
+            $caseless = false;
+            $flags = substr($flags, 1);
+        }
+
+        [$on, $off] = explode('-', $flags, 2) + [1 => ''];
+
+        return !str_contains($off, 'i') && ($caseless || str_contains($on, 'i'));
     }
 
     /**

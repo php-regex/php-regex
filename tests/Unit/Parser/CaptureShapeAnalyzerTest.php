@@ -1044,6 +1044,35 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'a class escape past seven bits is a byte without u' => ['pattern' => '/([\xad])/', 'group' => 1, 'values' => ["\xad"]];
         yield 'a class range past seven bits is bytes without u' => ['pattern' => '/[\xe0-\xe2]/', 'group' => 0, 'values' => ["\xe0", "\xe1", "\xe2"]];
         yield 'a class reads characters under u' => ['pattern' => '/[é]/u', 'group' => 0, 'values' => ['é']];
+        // An inline option holds where PCRE says it does: inside its group when
+        // scoped, to the end of the enclosing group when bare, and into the
+        // following branches: preg_match('/(?i:a)(b)/', 'aB') is 0,
+        // preg_match('/((?i)a)(b)/', 'aB') is 0, preg_match('/(a(?i)b|c)/', 'C')
+        // -> ["C","C"], preg_match('/(?i)(?-i:(a))/', 'A') is 0 and
+        // preg_match('/(?i:x(?^)(a))/', 'xA') is 0 (PHP 8.4.27, PCRE2 10.49).
+        yield 'a scoped caseless option ends with its group' => ['pattern' => '/(?i:a)(b)/', 'group' => 1, 'values' => ['b']];
+        yield 'a bare caseless option ends with its group' => ['pattern' => '/((?i)a)(b)/', 'group' => 2, 'values' => ['b']];
+        yield 'a bare caseless option reads its own group caselessly' => ['pattern' => '/((?i)a)(b)/', 'group' => 1, 'values' => null];
+        yield 'a bare caseless option reaches the following branches' => ['pattern' => '/(a(?i)b|c)/', 'group' => 1, 'values' => null];
+        yield 'a scoped option turns caseless off' => ['pattern' => '/(?i)(?-i:(a))/', 'group' => 1, 'values' => ['a']];
+        yield 'a bare option turns caseless off to the end of its group' => ['pattern' => '/(?i:(?-i)(a))(b)/i', 'group' => 1, 'values' => ['a']];
+        yield 'a bare option turns caseless off inside its group only' => ['pattern' => '/(?i:(?-i)(a))(b)/i', 'group' => 2, 'values' => null];
+        yield 'a reset option turns caseless off' => ['pattern' => '/(?i:x(?^)(a))/', 'group' => 1, 'values' => ['a']];
+        // A call reads what the group it calls reads, with the options of
+        // that group: preg_match('/(?<t>a)(?:&(?<t2>(?&t)))?/', 'a&a') sets
+        // t2 to 'a', preg_match('/(?i:(a))((?1))/', 'aA') sets group 2 to 'A'
+        // and preg_match('/(a)(?i:((?1)))/', 'aA') is 0 (PHP 8.4.27, PCRE2 10.49).
+        yield 'a call by name' => ['pattern' => '/(?<t>a)(?:&(?<t2>(?&t)))?/', 'group' => 2, 'values' => ['a']];
+        yield 'a call by number' => ['pattern' => '/(a)((?1))/', 'group' => 2, 'values' => ['a']];
+        yield 'a relative call back' => ['pattern' => '/(a)((?-2))/', 'group' => 2, 'values' => ['a']];
+        // "(?-1)" in group 2 calls group 2 itself: preg_match('/(a)((?-1))/', 'aa') is 0.
+        yield 'a relative call of the group that holds it' => ['pattern' => '/(a)((?-1))/', 'group' => 2, 'values' => null];
+        yield 'a relative call forward' => ['pattern' => '/((?+1))(a)/', 'group' => 1, 'values' => ['a']];
+        yield 'a call reads with the options of the group it calls' => ['pattern' => '/(?i:(a))((?1))/', 'group' => 2, 'values' => null];
+        yield 'a call ignores the options around it' => ['pattern' => '/(a)(?i:((?1)))/', 'group' => 2, 'values' => ['a']];
+        yield 'a call into a group that holds it' => ['pattern' => '/(a(?1)?b)/', 'group' => 1, 'values' => null];
+        yield 'a call of the whole pattern' => ['pattern' => '/(x|(?R))/', 'group' => 1, 'values' => null];
+        yield 'a call of a group a call holds' => ['pattern' => '/(a(?2)?)(b(?1)?)/', 'group' => 1, 'values' => null];
     }
 
     /**
@@ -1123,6 +1152,13 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield '/(^|a)b/' => ['pattern' => '/(^|a)b/', 'subjects' => ['b', 'ab']];
         yield '/[é]/' => ['pattern' => '/[é]/', 'subjects' => ["\xc3", "\xa9"]];
         yield '/([\xad])/' => ['pattern' => '/([\xad])/', 'subjects' => ["\xad"]];
+        yield '/(?i:a)(b)/' => ['pattern' => '/(?i:a)(b)/', 'subjects' => ['ab', 'Ab']];
+        yield '/((?i)a)(b)/' => ['pattern' => '/((?i)a)(b)/', 'subjects' => ['ab', 'Ab']];
+        yield '/(a(?i)b|c)/' => ['pattern' => '/(a(?i)b|c)/', 'subjects' => ['ab', 'aB', 'c', 'C']];
+        yield '/(?i:(?-i)(a))(b)/i' => ['pattern' => '/(?i:(?-i)(a))(b)/i', 'subjects' => ['ab', 'aB']];
+        yield '/(?<t>a)(?:&(?<t2>(?&t)))?/' => ['pattern' => '/(?<t>a)(?:&(?<t2>(?&t)))?/', 'subjects' => ['a', 'a&a']];
+        yield '/(?i:(a))((?1))/' => ['pattern' => '/(?i:(a))((?1))/', 'subjects' => ['aa', 'AA', 'aA']];
+        yield '/(a(?1)?b)/' => ['pattern' => '/(a(?1)?b)/', 'subjects' => ['ab', 'aabb']];
         yield '/(?<n>a)(b)/' => ['pattern' => '/(?<n>a)(b)/', 'subjects' => ['ab']];
         yield '/(?J)(?<n>a)|(?<n>b)/' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'subjects' => ['a', 'b']];
         yield '/(a){0}b/' => ['pattern' => '/(a){0}b/', 'subjects' => ['b']];
@@ -1132,7 +1168,6 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield '/(a b)/x' => ['pattern' => '/(a b)/x', 'subjects' => ['ab']];
         yield '/(?<y>\d{4})-(?<m>\d\d)?/' => ['pattern' => '/(?<y>\d{4})-(?<m>\d\d)?/', 'subjects' => ['2026-10', '2026-']];
         yield '/(x)?(?(1)(a)|(b))/' => ['pattern' => '/(x)?(?(1)(a)|(b))/', 'subjects' => ['xa', 'b']];
-        yield '/(a(?1)?b)/' => ['pattern' => '/(a(?1)?b)/', 'subjects' => ['ab', 'aabb']];
         yield '/a\K(b)/' => ['pattern' => '/a\K(b)/', 'subjects' => ['ab']];
         yield '/(*MARK:m)(a)|(b)/' => ['pattern' => '/(*MARK:m)(a)|(b)/', 'subjects' => ['a', 'b']];
         yield '/(é)+/' => ['pattern' => '/(é)+/', 'subjects' => ['éé']];
@@ -1665,7 +1700,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'pattern order: a group never set, offsets' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{'a', int<0, max>}>, 1: list<array{'', int<-1, max>}>}"];
         yield 'set order: a group never set is left out' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'a'}>"];
         yield 'set order: a group never set, as null' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_SET_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "list<array{0: 'a', 1: null}>"];
-        yield 'pattern order: groups inside DEFINE' => ['pattern' => '/(?(DEFINE)(?<d>x))(a)(?&d)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<non-falsy-string>, d: list<''>, 1: list<''>, 2: list<'a'>}"];
+        yield 'pattern order: groups inside DEFINE' => ['pattern' => '/(?(DEFINE)(?<d>x))(a)(?&d)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'ax'>, d: list<''>, 1: list<''>, 2: list<'a'>}"];
 
         // Names shared under (?J): in pattern order the list of the last group bearing the name, set or not.
         yield 'pattern order: a shared name holds the list of its last group' => ['pattern' => '/(?J)(?<n>a)(?<n>z)?(c)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'ac'|'azc'>, n: list<''|'z'>, 1: list<'a'>, 2: list<''|'z'>, 3: list<'c'>}"];

@@ -430,15 +430,18 @@ every string the group can take, a length bound holds every match. When the patt
 cannot tell, the answer widens rather than guesses:
 
 - Values come from literals only, through alternations and bounded repeats: `(a{1,3})`
-  holds `'a'`, `'aa'` or `'aaa'`, up to 32 strings. Under `/i`, or once `(?i)` appears
-  anywhere, they are unknown.
+  holds `'a'`, `'aa'` or `'aaa'`, up to 32 strings. Where caseless matching holds, a
+  letter that may fold leaves them unknown: under `/i`, from `(?i)` to the end of its
+  group, or inside `(?i:...)`. In `/(?i:a)(b)/` group 1 still holds `'b'`.
 - `\K` and `(*ACCEPT)` cut a match short: the whole match then keeps only its presence,
   and `(*ACCEPT)` makes every group `MayBeUnset` with unknown values.
-- A group read through a subroutine call, or a backreference, has unknown values.
+- A subroutine call reads what the group it calls reads, with the options of that
+  group: in `/(?<t>a)&((?&t))/` group 2 holds `'a'`. A call of the group that holds it,
+  or of the whole pattern, and a backreference, have unknown values.
 - A key that every match writes, but only through different groups in different
   branches, is written optional.
 - A fact is `true` only when every character the group can read proves it. A part the
-  analysis cannot read, as a backreference or a subroutine call, proves no fact.
+  analysis cannot read, as a backreference or a recursive call, proves no fact.
 
 The facts and the cases are computed from the pattern alone. No character table of the
 running engine is read, so the same pattern gives the same answer on every machine, and

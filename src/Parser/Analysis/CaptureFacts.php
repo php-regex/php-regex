@@ -35,6 +35,7 @@ use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
 
@@ -43,9 +44,9 @@ use PHPRegex\Parser\Text\Bytes;
  *
  * What a node reads, from the tree alone, for CaptureShapeAnalyzer: its
  * length range, its values when they are a small finite set, and the facts
- * every value satisfies. An answer depends on the node and on the options
- * of the whole pattern only, so each node is measured once, and its answer
- * kept as long as the node lives.
+ * every value satisfies. An answer depends on the node, on the options in
+ * force where it stands and on the groups it calls, so each node is
+ * measured once, and its answer kept as long as the node lives.
  *
  * Every answer is sound: when the tree alone cannot tell, the values are
  * unknown and the facts are false.
@@ -91,6 +92,22 @@ final class CaptureFacts
     private readonly \WeakMap $groupFacts;
 
     /**
+     * Characters and classes the engine reads caselessly, by object id: a
+     * value that may fold is not read there.
+     *
+     * @var array<int, true>
+     */
+    private array $caseless = [];
+
+    /**
+     * Groups whose body is read through a call, by object id: a call met
+     * again while its group is read is a recursion.
+     *
+     * @var array<int, true>
+     */
+    private array $calling = [];
+
+    /**
      * Nodes the scan reaches before any part of the pattern may have read
      * a character, by object id: an alternation there is read at the start.
      *
@@ -107,14 +124,14 @@ final class CaptureFacts
     private array $atEnd = [];
 
     /**
-     * @param bool $unicode  lengths count code points, and literals read as UTF-8
-     * @param bool $caseless some part of the pattern matches caselessly: a value that may fold is not read
-     * @param bool $ucp      \d and [[:digit:]] match non-ASCII digits: /u, or (*UCP)
+     * @param bool            $unicode lengths count code points, and literals read as UTF-8
+     * @param bool            $ucp     \d and [[:digit:]] match non-ASCII digits: /u, or (*UCP)
+     * @param GroupIndex|null $groups  the groups of the pattern, which its calls read
      */
     public function __construct(
         private readonly bool $unicode = false,
-        private readonly bool $caseless = false,
         private readonly bool $ucp = false,
+        private readonly ?GroupIndex $groups = null,
     ) {
         $this->calculator = new LengthRangeCalculator($unicode);
         $this->lengths = new \WeakMap();
@@ -129,6 +146,10 @@ final class CaptureFacts
      */
     public function lengths(NodeInterface $node): array
     {
+        if ($node instanceof SubroutineNode) {
+            return $this->lengths[$node] ??= $this->called($node, $this->lengths(...), [0, null]);
+        }
+
         return $this->lengths[$node] ??= $node->accept($this->calculator);
     }
 
@@ -174,6 +195,15 @@ final class CaptureFacts
     }
 
     /**
+     * Marks a character or a class the engine reads caselessly. The
+     * analysis collects them before it asks for facts.
+     */
+    public function markCaseless(NodeInterface $node): void
+    {
+        $this->caseless[spl_object_id($node)] = true;
+    }
+
+    /**
      * Marks a node nothing in the pattern follows. The analysis collects
      * them before it asks for facts.
      */
@@ -203,8 +233,8 @@ final class CaptureFacts
     private function values(NodeInterface $node, bool $scan = false): ?array
     {
         return match (true) {
-            $node instanceof LiteralNode => $this->folds($node->value) ? null : [$node->value],
-            $node instanceof CharLiteralNode => $this->character($node->codePoint),
+            $node instanceof LiteralNode => $this->folds($node->value, $this->readsCaselessly($node)) ? null : [$node->value],
+            $node instanceof CharLiteralNode => $this->character($node->codePoint, $this->readsCaselessly($node)),
             $node instanceof SequenceNode => $this->product(array_map(fn (NodeInterface $child): ?array => $this->values($child, $scan), $node->children)),
             $node instanceof AlternationNode => $this->alternationValues($node, $scan),
             $node instanceof GroupNode => self::isLookaround($node) ? [''] : $this->values($node->child, $scan),
@@ -213,8 +243,42 @@ final class CaptureFacts
             $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof CommentNode,
             $node instanceof KeepNode, $node instanceof DefineNode, $node instanceof CalloutNode => [''],
             $node instanceof PcreVerbNode => str_starts_with($node->verb, 'ACCEPT') ? null : [''],
+            $node instanceof SubroutineNode => $this->called($node, fn (NodeInterface $body): ?array => $this->values($body, $scan), null),
             default => null,
         };
+    }
+
+    /**
+     * What a call reads: what the body of the group it calls reads, with the
+     * options of that group. A call of the whole pattern or of no group, or
+     * one met again while its group is read, gives $unknown.
+     *
+     * @template T
+     *
+     * @param callable(NodeInterface): T $read
+     * @param T                          $unknown
+     *
+     * @return T
+     */
+    private function called(SubroutineNode $call, callable $read, mixed $unknown): mixed
+    {
+        $group = $this->groups?->groupsCalledBy($call)[0] ?? null;
+        if (null === $group || isset($this->calling[$id = spl_object_id($group)])) {
+            return $unknown;
+        }
+
+        $this->calling[$id] = true;
+
+        try {
+            return $read($group->child);
+        } finally {
+            unset($this->calling[$id]);
+        }
+    }
+
+    private function readsCaselessly(NodeInterface $node): bool
+    {
+        return isset($this->caseless[spl_object_id($node)]);
     }
 
     /**
@@ -279,7 +343,7 @@ final class CaptureFacts
         }
 
         if ($node instanceof CharLiteralNode) {
-            $chars = $this->character($node->codePoint);
+            $chars = $this->character($node->codePoint, $this->readsCaselessly($node));
 
             return null === $chars ? null : $chars[0];
         }
@@ -324,6 +388,7 @@ final class CaptureFacts
             return null;
         }
 
+        $caseless = $this->readsCaselessly($node);
         $members = $node->expression instanceof AlternationNode
             ? $node->expression->alternatives
             : [$node->expression];
@@ -341,7 +406,7 @@ final class CaptureFacts
                 }
 
                 for ($codePoint = $from; $codePoint <= $to; $codePoint++) {
-                    $character = $this->character($codePoint);
+                    $character = $this->character($codePoint, $caseless);
                     if (null === $character) {
                         return null;
                     }
@@ -359,7 +424,7 @@ final class CaptureFacts
                 // /u a class matches one byte: [é] matches "\xc3" and "\xa9"
                 $characters = $this->unicode ? mb_str_split($member->value, encoding: 'UTF-8') : Bytes::split($member->value);
                 foreach ($characters as $character) {
-                    if ($this->folds($character)) {
+                    if ($this->folds($character, $caseless)) {
                         return null;
                     }
 
@@ -374,7 +439,7 @@ final class CaptureFacts
             $memberCodePoint = $this->codePointOf($member);
             // a code point no character of the encoding spells — a
             // surrogate under /u, past 255 without it — leaves the class unread
-            $character = null === $memberCodePoint ? null : $this->character($memberCodePoint);
+            $character = null === $memberCodePoint ? null : $this->character($memberCodePoint, $caseless);
             if (null === $character) {
                 return null;
             }
@@ -451,9 +516,9 @@ final class CaptureFacts
     /**
      * @return list<string>|null
      */
-    private function character(int $codePoint): ?array
+    private function character(int $codePoint, bool $caseless): ?array
     {
-        if ($this->foldsCodePoint($codePoint)) {
+        if ($caseless && $this->foldsCodePoint($codePoint)) {
             return null;
         }
 
@@ -475,10 +540,6 @@ final class CaptureFacts
      */
     private function foldsCodePoint(int $codePoint): bool
     {
-        if (!$this->caseless) {
-            return false;
-        }
-
         if (self::isAsciiLetter($codePoint)) {
             return true;
         }
@@ -487,12 +548,16 @@ final class CaptureFacts
     }
 
     /**
-     * Whether any byte of a string may fold, by the code point of each of
-     * them: past 7 bits, a byte is a code point in its own right without
-     * /u, and a piece of one under it.
+     * Whether any byte of a string read caselessly may fold, by the code
+     * point of each of them: past 7 bits, a byte is a code point in its own
+     * right without /u, and a piece of one under it.
      */
-    private function folds(string $value): bool
+    private function folds(string $value, bool $caseless): bool
     {
+        if (!$caseless) {
+            return false;
+        }
+
         for ($i = 0, $n = \strlen($value); $i < $n; $i++) {
             if ($this->foldsCodePoint(\ord($value[$i]))) {
                 return true;
@@ -577,6 +642,7 @@ final class CaptureFacts
     private function mayBeZero(NodeInterface $node): bool
     {
         return match (true) {
+            $node instanceof SubroutineNode => $this->called($node, $this->mayBeZero(...), true),
             $node instanceof CharClassNode => $node->isNegated ? !$this->holdsZero($node->expression) : $this->classMayHoldZero($node->expression),
             $node instanceof SequenceNode => $this->sequenceMayBeZero($node->children),
             $node instanceof AlternationNode => self::any($node->alternatives, $this->mayBeZero(...)),
@@ -671,6 +737,7 @@ final class CaptureFacts
             $node instanceof AlternationNode => self::all($node->alternatives, $this->digitsOnly(...)),
             $node instanceof GroupNode => self::isLookaround($node) || $this->digitsOnly($node->child),
             $node instanceof QuantifierNode => $this->digitsOnly($node->node),
+            $node instanceof SubroutineNode => $this->called($node, $this->digitsOnly(...), false),
             default => self::consumesNothing($node),
         };
     }

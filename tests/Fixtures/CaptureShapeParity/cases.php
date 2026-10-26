@@ -75,6 +75,14 @@ return [
     ['source' => 'analyzer', 'pattern' => '/(?<p>a)(b)(?<q>c)/n', 'subjects' => ['abc']],
     ['source' => 'analyzer', 'pattern' => '/(?(DEFINE)(?<d>x))(a)(?&d)/', 'subjects' => ['ax']],
     ['source' => 'analyzer', 'pattern' => '/(?|(a)|(b)(c))(d)/', 'subjects' => ['ad', 'bcd']],
+    ['source' => 'analyzer', 'pattern' => '/(^|a)b/', 'subjects' => ['b', 'ab']],
+    ['source' => 'analyzer', 'pattern' => '/[é]/', 'subjects' => ["\xc3", "\xa9"]],
+    ['source' => 'analyzer', 'pattern' => '/([\xad])/', 'subjects' => ["\xad"]],
+    ['source' => 'analyzer', 'pattern' => '/((?i)a)(b)/', 'subjects' => ['ab', 'Ab']],
+    ['source' => 'analyzer', 'pattern' => '/(a(?i)b|c)/', 'subjects' => ['ab', 'aB', 'c', 'C']],
+    ['source' => 'analyzer', 'pattern' => '/(?i:(?-i)(a))(b)/i', 'subjects' => ['ab', 'aB']],
+    ['source' => 'analyzer', 'pattern' => '/(?<t>a)(?:&(?<t2>(?&t)))?/', 'subjects' => ['a', 'a&a']],
+    ['source' => 'analyzer', 'pattern' => '/(?i:(a))((?1))/', 'subjects' => ['aa', 'AA', 'aA']],
 
     // preg_match() rows of the php-src PCRE tests (php_pcre_comprehensive.php).
     ['source' => 'php-src bug37911.phpt', 'pattern' => '|(?P<name>blub)|', 'subjects' => ['bla blub blah']],
@@ -231,7 +239,7 @@ return [
 
     // Caseless matching, inline and as a modifier, ASCII and beyond.
     ['source' => 'parity: caseless', 'pattern' => '/(?i)(a)/', 'subjects' => ['a', 'A']],
-    ['source' => 'parity: caseless', 'pattern' => '/(?i:a)(b)/', 'subjects' => ['Ab']],
+    ['source' => 'parity: caseless', 'pattern' => '/(?i:a)(b)/', 'subjects' => ['Ab', 'ab']],
     ['source' => 'parity: caseless', 'pattern' => '/((?i)a)b/', 'subjects' => ['Ab']],
     ['source' => 'parity: caseless', 'pattern' => '/(?i)(a)(?-i)(b)/', 'subjects' => ['Ab']],
     ['source' => 'parity: caseless', 'pattern' => '/(a)(?i)(b)/', 'subjects' => ['aB']],
