@@ -1014,12 +1014,19 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'too many' => ['pattern' => '/((?:a|b|c|d)(?:a|b|c|d)(?:a|b|c|d))/', 'group' => 1, 'values' => null];
         // The engine tries the branches left to right at each position and
         // takes the leftmost position: a zero-width branch read first wins
-        // before any later branch is ever reached.
-        // preg_match('/^|foo/', 'xfoo') sets matches[0] to ''.
+        // before any later branch is ever reached, when nothing after it can
+        // fail. preg_match('/^|foo/', 'xfoo') sets matches[0] to ''.
         yield 'a caret branch wins the whole match' => ['pattern' => '/^|foo/', 'group' => 0, 'values' => ['']];
-        yield 'a caret branch wins inside a group' => ['pattern' => '/(^|foo)/', 'group' => 1, 'values' => ['']];
         yield 'a word boundary branch wins the whole match' => ['pattern' => '/\b|foo/', 'group' => 0, 'values' => ['']];
-        yield 'a word boundary branch wins inside a group' => ['pattern' => '/(\b|foo)/', 'group' => 1, 'values' => ['']];
+        // A group keeps every branch: a scan resumes after the empty match,
+        // where the caret no longer matches. preg_match_all('/(^|bar)/', 'bar')
+        // sets group 1 to '' then 'bar'.
+        yield 'a caret branch inside a group keeps the later branches' => ['pattern' => '/(^|foo)/', 'group' => 1, 'values' => ['', 'foo']];
+        yield 'a word boundary branch inside a group keeps the later branches' => ['pattern' => '/(\b|foo)/', 'group' => 1, 'values' => ['', 'foo']];
+        // The engine backtracks into the later branches when what follows
+        // fails: preg_match('/(^|a)b/', 'ab') sets matches[0] to 'ab'.
+        yield 'a caret branch loses when what follows it fails' => ['pattern' => '/(?:^|a)b/', 'group' => 0, 'values' => ['b', 'ab']];
+        yield 'a caret branch loses inside a group when what follows it fails' => ['pattern' => '/(^|a)b/', 'group' => 1, 'values' => ['', 'a']];
         yield 'a caret branch loses after a consuming prefix' => ['pattern' => '/x(^|foo)/', 'group' => 0, 'values' => ['x', 'xfoo']];
         // '\b' still wins at the first boundary, but a branch that may start
         // where no boundary sits keeps its value: preg_match('/\b|-x/', '!x')
@@ -1031,6 +1038,12 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'a boundary branch before a grouped word' => ['pattern' => '/\b|(?:foo)/', 'group' => 0, 'values' => ['']];
         yield 'a boundary branch before a class keeps both' => ['pattern' => '/\b|\d+x/', 'group' => 0, 'values' => null];
         yield 'a boundary branch before an all-zero-width branch' => ['pattern' => '/\b|(?=x)$/', 'group' => 0, 'values' => ['']];
+        // Without /u a class matches one byte: preg_match('/[é]/', "\xc3")
+        // and preg_match('/[é]/', "\xa9") both match.
+        yield 'a class reads bytes without u' => ['pattern' => '/[é]/', 'group' => 0, 'values' => ["\xc3", "\xa9"]];
+        yield 'a class escape past seven bits is a byte without u' => ['pattern' => '/([\xad])/', 'group' => 1, 'values' => ["\xad"]];
+        yield 'a class range past seven bits is bytes without u' => ['pattern' => '/[\xe0-\xe2]/', 'group' => 0, 'values' => ["\xe0", "\xe1", "\xe2"]];
+        yield 'a class reads characters under u' => ['pattern' => '/[é]/u', 'group' => 0, 'values' => ['é']];
     }
 
     /**
@@ -1107,6 +1120,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield '/(?|(a)|(b))/' => ['pattern' => '/(?|(a)|(b))/', 'subjects' => ['a', 'b']];
         yield '/(?|(a)(b)|(c))/' => ['pattern' => '/(?|(a)(b)|(c))/', 'subjects' => ['ab', 'c']];
         yield '/((a)|b)+/' => ['pattern' => '/((a)|b)+/', 'subjects' => ['ab', 'ba', 'bb']];
+        yield '/(^|a)b/' => ['pattern' => '/(^|a)b/', 'subjects' => ['b', 'ab']];
+        yield '/[é]/' => ['pattern' => '/[é]/', 'subjects' => ["\xc3", "\xa9"]];
+        yield '/([\xad])/' => ['pattern' => '/([\xad])/', 'subjects' => ["\xad"]];
         yield '/(?<n>a)(b)/' => ['pattern' => '/(?<n>a)(b)/', 'subjects' => ['ab']];
         yield '/(?J)(?<n>a)|(?<n>b)/' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'subjects' => ['a', 'b']];
         yield '/(a){0}b/' => ['pattern' => '/(a){0}b/', 'subjects' => ['b']];
@@ -1623,6 +1639,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
     public static function provideMatchAllShapes(): iterable
     {
         // Orders and flags: every key, an unset group read as '' (null, or a pair at -1), no trailing trimming in pattern order.
+        // A scan resumes after an empty match, where the caret no longer
+        // matches: preg_match_all('/(^|bar)/', 'bar') sets group 1 to '' then 'bar'.
+        yield 'pattern order: a caret branch does not win across the scan' => ['pattern' => '/(^|bar)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<''|'bar'>, 1: list<''|'bar'>}"];
         yield 'pattern order: every group key' => ['pattern' => '/(a)(b)?(c)?/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'|'ac'|'ab'|'abc'>, 1: list<'a'>, 2: list<''|'b'>, 3: list<''|'c'>}"];
         yield 'pattern order: every group key, as null' => ['pattern' => '/(a)(b)?(c)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list<'a'|'ac'|'ab'|'abc'>, 1: list<'a'>, 2: list<'b'|null>, 3: list<'c'|null>}"];
         yield 'pattern order: every group key, offsets' => ['pattern' => '/(a)(b)?(c)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<array{'a'|'ac'|'ab'|'abc', int<0, max>}>, 1: list<array{'a', int<0, max>}>, 2: list<array{''|'b', int<-1, max>}>, 3: list<array{''|'c', int<-1, max>}>}"];
