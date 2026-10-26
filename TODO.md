@@ -354,19 +354,13 @@ pattern with the engine.
    the map stands corroborated; the one gesture left is re-reading
    master after the 8.6 GA (2026-11-19) in case a release-cut downgrade
    like 8.5's happens.
-4. phpstan-src 2.3.x types an alternation under a repeat as if one
-   branch ran: `/(?:(a)|(b))+/` reads `array{string, '', 'b'}|array{string, 'a'}`
-   while `preg_match('/(?:(a)|(b))+/', 'ab')` writes `['ab', 'a', 'b']`.
-   The fix is ready as one commit on the local branch
-   `repeated-alternation-keeps-earlier-rounds` of the phpstan-src clone,
-   with nsrt rows; push it and open the pull request.
-5. Split the single commit into stacked pull requests once the
+4. Split the single commit into stacked pull requests once the
    maintainer asks for it.
-6. The capture shape splits on one node: two optional groups holding
+5. The capture shape splits on one node: two optional groups holding
    groups, `/(?:(a)(b))?(?:(c)(d))?/`, or an alternation beside an
    optional group, stay merged for all but one. A product of the
    splits, within the 16-case budget, would keep each.
-7. Any `(*ACCEPT)` in a pattern makes every group read unbounded from
+6. Any `(*ACCEPT)` in a pattern makes every group read unbounded from
    zero with unknown values, even when the verb only ends a call or
    sits in a branch the group never reaches. Sound, and loose.
 
