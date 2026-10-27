@@ -234,3 +234,232 @@ two parsers read differently.
   run.sh` takes docker images only; a mode taking a local PHP binary
   would compare the twin on PHP 7.4 to the original on the same engine,
   with no engine-dependent exemption.
+
+## Found by the 2026-10-27 audit pass, each reproduced
+
+The literal-fragment builder, the repairer and the confirmed mode first:
+they answer wrong, not just incomplete.
+
+- `Regex::literals()` builds search fragments that reject subjects the
+  pattern matches. The fragments carry a `^` whatever the pattern anchors:
+  `/user-\d{4}/` gives `^user\-`, which rejects `"id=user-1234"` — the
+  prefilter of the docs example then misses every match the engine finds
+  (`LiteralSet` holds match text, and the facade cannot tell `/foo/` from
+  `/^foo/`). The pattern's `m` is dropped the same way: `literals('/^foo/m')`
+  gives `^foo`, which rejects `"bar\nfoo"`. And a suffix pinned by `\z` or
+  `D` (`/bar\z/`, `/foo$/D`) is spelled `bar$`, which accepts `"xxbar\n"`
+  the engine refuses — the doctrine `docs/reference/prefilters.md` states
+  itself. The fragments need the pattern's anchoring and flags, or an
+  unanchored, contains-shaped degradation (`Regex.php:585-600`).
+- `RedosRepairer::repair()` ships rewrites that change the language, and
+  the class's own docblock example reads `repair(...)[0]`:
+  `/(x+x+)+y/` has no certified repair, so `[0]` is `/(x++x+)+y/`
+  (not certified), which rejects `"xxy"` the original matches. The
+  `sameSubjects` guard only drops `false` — a solver `null` (cannot judge)
+  reaches the list — and its comment ("a possessive the solver reads is
+  inert") is what the divergence disproves. A certified repair can also
+  change `$matches`: `/^((a)*)*$/` → `/^((a)*)$/` keeps `$1=''` where the
+  engine had `'aaaa'` (`RedosRepairer.php:92-97`).
+- Confirmed-mode lint drops genuinely catastrophic every-character loops:
+  for `/([\d\D]+)+!/` the model proves exponential, but the published
+  witness is `"\"" x n` — no rejecting suffix holding the `!` — and PCRE2's
+  required-code-unit start-up rejects each witness subject in one step, so
+  the replay says `replayed: false` and the verdict is dropped. Theoretical
+  lint reports the CRITICAL warning, confirmed lint reports nothing
+  (`BacktrackProver.php:200-216`, the drop in `RedosVerdict.php:70-77`).
+  The witness has to weave the required literal in, as `SearchCostProver`'s
+  breakers already do — or the verdict must stand when no reproducing
+  witness was even constructible.
+- The `{n}` cutoff of the backtracking model reads an exact count as
+  unbounded: `/(?:a{17})+b/` is judged critical/exponential/proven with
+  `"{17} at offset 3 analysed as {17,}"`, while the engine answers it in
+  0.07 ms at n=100,000 (an exact-count chunk loop has no partition
+  ambiguity — its sibling `/(?:a{16})+b/` is proven linear, and `{1,17}`
+  is correctly exponential). Confirmed mode then fails to reproduce the
+  imaginary blowup and drops it: engine linear, theoretical critical,
+  confirmed silent (`PnfaBuilder.php:591-594`, the abstraction documented
+  in `RedosOptions.php:36`). A `min === max` case is missing.
+- `redosIgnoredPatterns` matches the body only, flags dropped: listing
+  `/(a+)+b/` also skips `/(a+)+b/i` and `/(a+)+b/su`, whose analysis the
+  flags change. The README documents delimiter-insensitivity alone
+  (`RedosAnalyzer.php:320-344`).
+- `regex redos`'s auto input omits the pattern's required literal:
+  `/(a+)+b/` benchmarks `"aaa…a!"` — no `b` anywhere — so the required-
+  code-unit scan answers in one step and the report reads `vuln: no,
+  0.03 ms` for the textbook evil pattern. `/(a+)+$/` only works because
+  the anchor ends it (`InputGenerator.php:27-48`).
+- The Python target emits a lookbehind Python's `re` refuses to compile:
+  `/(?<=a{1,3})b/` (valid PCRE2 10.43+, engine matches `"aab"`)
+  transpiles to `r'(?a)(?<=a{1,3})b'` → `re.error: look-behind requires
+  fixed-width pattern`, no refusal, no note. `(?<=a??)b/` and
+  `(?<=(?:ab|cd){1,2})x` alike; `splitLookbehind` decomposes top-level
+  alternations only, quantified bodies pass through untouched
+  (`PythonPrinter.php:172-174, 628-639`).
+- `SampleGenerator` (and `TestCaseGenerator` after it) gives up on negated
+  classes under `i`: the candidate probe spells the pattern without the
+  flag (`SampleGenerator.php:985` — the `u` is spelled, the `i` is not)
+  and `applyFlags` tracks `s`/`m` only, so `(?i)` never sets caseless
+  either. `generate('/[^a-z]x/i')` throws on every redraw — the candidate
+  list draws `'A'` first, which the class matches caselessly — although
+  `"0x"` matches. `/(?i)^[^a-f]+$/` and the `\b`-adjacent forms alike;
+  zero matching test cases are produced for a pattern with plenty.
+- The every-flag strictness of the analysis methods disagrees: `info()`
+  throws `SemanticErrorException` for `/\k<x>/` (the engine answers
+  "Internal error"), while `captureShape()` describes a full match shape
+  (`array{0: string}`), and `literals()`, `optimize()`, `explain()` answer
+  too, for a pattern that can never run. One policy for engine-refused
+  patterns across the five (`Regex.php:427-443`).
+- The delimiter tables are ASCII where PHP reads the locale: under this
+  machine's default `LC_CTYPE` (a UTF-8 locale), `"\xFF\xFF"` is judged
+  VALID — PHP refuses it, "Delimiter must not be alphanumeric, backslash,
+  or NUL byte", because `isalnum()` answers true for the high bytes — and
+  `"\xA0/a/"` is judged INVALID where PHP accepts and matches `"a"`
+  (`isspace(0xA0)`). The judged engine's locale decides both tables; the
+  library's own `locale` option reads them for classes but not for the
+  delimiter scan (`PatternParser.php:40,50,202-207`, `Text/Ascii.php`).
+  glibc UTF-8 locales agree with the library; BSD/macOS ones do not.
+- `pcre_version: '10.4'` is silently read as 10.04: `judgedWith()` answers
+  `"10.39"`, and `/\p{greek}/` is INVALID under `'10.4'`, VALID under
+  `'10.40'`. The one-digit minor is a release that never existed;
+  `pcreAtLeast()` refuses it by message ("a minor is written with two
+  digits at least") — the constructor does not (`PcreTarget.php:78-84,
+  272-290` against `:173-184`).
+- Two lint rules advise rewrites the optimizer itself refuses as unsafe.
+  `ZeroQuantifierRule` tells the user `{0}` "can be removed" where
+  `RepeatRewrites::normalizeQuantifier` guards the removal — capture
+  numbering (`(x){0}(y)` loses `$2` and changes `$1`) and PCRE2's gated
+  start: `/(?:x|(?=a)){0}\w/` matches `"a"`, `/\w/` does not. On the same
+  pattern `ImpossibleLookaroundRule` fires "can never match through here"
+  while the engine matches — and it gets there by building `{0,-1}` (its
+  `max - 1` when `max` is 0), which PCRE2 reads as literal text, so the
+  automaton answers a question about `{`, `0`, `,`, `-`, `1`, `}`
+  (`ZeroQuantifierRule.php:54-60`; `ImpossibleLookaroundRule.php:215`;
+  the right guards sit in `RepeatRewrites.php:179-187`).
+- `UselessQuantifierRule` fires on a possessive `{1}+`: "Remove the {1}
+  quantifier; it does not change the match" — but `/(a|ab){1}+ab/`
+  answers 0 on `"ababx"` where the de-quantified `/(a|ab)ab/` answers 1;
+  `RepeatRewrites.php:173` excludes the possessive for exactly this
+  ("never gives back"), the rule does not (`UselessQuantifierRule.php:49-59`).
+- `optimize()` is not idempotent: `(?:a|b|c)*d` becomes `(?:[abc])*d` on
+  the first pass and `[a-c]*d` on the second — inside a quantifier the
+  unwrapping guard reads the original child, not the optimized one — and
+  a factorized group is never revisited, so `^(get|set)` waits for the
+  next pass to become `[gs]et`. The second run reports "Removed a group
+  that changes nothing" for its own output (`Rewriter.php:352, 228-243`).
+- `optimize()` also ships an optimization of a pattern PCRE2 refuses to
+  compile: `/(?:\d){65536}/` → `/\d{65536}/`, both compile errors; the
+  safety net at `Optimizer.php:128` only guards "optimized invalid AND
+  original valid".
+- `--redos-threshold` has no effect on `analyze` in theoretical mode: the
+  payload and console output are byte-identical with and without it, a
+  medium finding stays with `--redos-threshold=critical`; only `lint`
+  filters (`AnalyzeCommand.php:105` passes it, `RedosAnalyzer.php:85-89`
+  gates the confirmation run only).
+- The error-message furniture disagrees with its own caret in two places:
+  the removed-`e` message fires whenever `e` appears among the unknown
+  flags, so `/a/ze` reports the `e` flag at the offset of `z` (PHP names
+  `z`), and `/a/(e)` names `e` at `(` (`PatternParser.php:163-170`); the
+  snippet's caret column counts bytes, so a multibyte `u` pattern puts the
+  caret past the fault it marks — `/あいう[/u`, offset 10, caret six
+  columns right of `[` (`Snippet.php:79-82`).
+- `max_pattern_length` counts the delimited string — delimiters, flags,
+  skipped leading whitespace included — while the option says "pattern
+  length … characters", and its limit error draws the caret from the body
+  origin against the full string, a column left of the last character
+  allowed (`RegexParser.php:737-755`).
+- The PSR cache adapters' `clear()` clears the whole application pool, not
+  the prefixed entries: through the Laravel store, `Regex::clearCaches()`
+  ("Empty the library's process-wide caches") wipes every key of the store
+  it shares. `getCacheStats()` counts front-cache hits but drops its
+  misses, so the miss count understates the lookups
+  (`PsrCacheAdapter.php:68`, `PsrSimpleCacheAdapter.php:67`,
+  `RegexParser.php:318-327`).
+
+### Smaller points, each reproduced once
+
+- `literals('/^$/')` and `literals('/(?=a)/')` report `['']` with High
+  confidence: an always-true `str_contains($s, '')` prefilter at the
+  strongest confidence level, and `''` leaks into results for
+  engine-refused patterns too (`/(?1)a/` → `['', 'a']`).
+- `analyze()`'s `redos->error` carries the exception class prefix
+  ("PHPRegex\Parser\Exception\ParserException: No closing delimiter…")
+  while `errors[]` holds the same failure's clean message — one failure,
+  two spellings, one report.
+- The `quantifier.zero`/`lookaround.impossible` pair above fires on
+  `/(?:x|(?=a)){0}\w/` with both messages wrong for the engine.
+- `Regex::transpile('/ a # c/x', 'javascript')` drops the comment with a
+  note, `/(?x) a # c/` aborts the transpile ("Inline comments are not
+  supported in JavaScript") — the parser has applied `x` in both, the
+  comment is as droppable in both (`JavaScriptPrinter.php:114, 465-477`).
+- A pattern spelling `\e` reaches the highlighters as a raw ESC byte:
+  `highlight("/a\e]0;PWNEDb/", 'html')` holds one 0x1B inside the HTML
+  (no contiguous OSC can form, so no terminal injection — display
+  corruption only). The text explainer says `\e` (`AbstractHighlighter.php:148`).
+- `deduplicateAlternation` removes capture-bearing duplicates under
+  `verifyWithAutomata: false`: `/(a)|(a)/` → `/(a)/`, `$m[2]` vanishes
+  under `PREG_UNMATCHED_AS_NULL` (`AlternationRewrites.php:44-58`).
+- `new OptimizerOptions(minQuantifierCount: 1)` names the snake_case key
+  in its error message; the same constructor takes the camelCase argument.
+- The language server's `PositionConverter` counts `\n` alone as a line
+  break: a `\r`-only document puts every diagnostic on line 0, and a
+  position past the document maps to line 0, character 0 (the document
+  start) where a clamp to the end reads truer
+  (`PositionConverter.php:70-76, 82-87, 192-204`).
+- `verify_with_automata` is forced on by both framework lint commands and
+  accepted by `OptimizerOptions::fromArray`, but the Symfony config tree
+  defines no such node (a user setting it is refused) and the published
+  Laravel config never documents it — while `regex.schema.json` documents
+  `verifyWithAutomata` for `regex.json` (`PHPRegexBundle.php:214-259`,
+  `src/Laravel/config/php-regex.php`).
+- `src/Toolkit/.phpstorm.meta.php` still overrides `Regex::parse(1)` with
+  a `bool $tolerant` map — the signature `354f4b1afb` removed on 1
+  October; `parse()` takes a string and always returns `RegexNode`.
+- `isSafe()` answers true for a pattern the analysis skipped (ignored or
+  off): the headline says "not analyzed", boolean consumers read safe
+  (`RedosAnalysis.php:155-158`). The heuristic score of `Unknown` equals
+  Medium's 5, so score triage cannot tell a failed analysis from a real
+  risk (`RedosAnalyzer.php:295-305`).
+- The confirmation timeout checks a running average, so one slow
+  `preg_match` runs to completion, bounded by the pcre limits alone, never
+  by `timeoutMs` (`ConfirmationRunner.php:100-104`); for heuristic
+  verdicts its attack subject is built from the culprit's first-char set
+  only, so backref- and alternation-driven evils never confirm and vanish
+  from confirmed-mode lint while staying heuristic warnings in theoretical
+  mode (`:62-172`).
+- `--input -x` is refused in the space form (`--input=-x` works) because
+  every free-text value starting with `-` reads as an option
+  (`Options.php:163`); `--repeat 0` is refused where `--time-limit 0`
+  means "none" — zero has two meanings two options apart
+  (`RedosArguments.php:165-174`).
+- `ComplexityScorer` resets `quantifierDepth` only in `visitRegex()`, so
+  an accept started on a subtree inherits the last run's depth; the same
+  shape in `MetricsCollector::record`, which resets all counters when
+  depth reaches 0 mid-traversal (`ComplexityScorer.php:78`,
+  `MetricsCollector.php:281-285`).
+- The `\G` of `/\Gfoo/` is read as a start anchor: the fragment `^foo`
+  cannot match `"xfoo"` at offset 1 where `\G` does
+  (`LiteralExtractor.php:279-284`).
+- `PatternInfoAnalyzer` is not the only reader that could refuse
+  `/\k<x>/`; `ParserOptions::fromArray` accepts `cache` arrays whose
+  `max_entries` of 0 discards every write without a word
+  (`ArrayCache.php:36`).
+
+### Probed hard, nothing found
+
+Worth recording so the next pass does not re-walk them: the automata's
+partial-match language agreed with `preg_match` on every subject up to
+length 4 over 28 hand-built anchor patterns and 600 generated ones
+(19,200 differential checks, the 120 regular-subset refusals aside); the
+`r` modifier is gated PHP 8.4 + PCRE2 10.43 and `n` leaves zero capture
+groups exactly as the engine does; `regex.schema.json`'s rule list and
+defaults match `RuleCatalog` entry for entry; the PHPStan bridge fires on
+invalid literal patterns with no false positive on valid ones;
+`format()`/`compact()` round-trip and preserve `[ ]`, `[#]`, `\ `, `\Q…\E`
+and `(?(1)…)` layouts; the JSON-RPC framing caps and drains refused
+frames; `optimize()` itself produced no divergent rewrite over ~520
+patterns × ~95 subjects under five option configs; `CaptureShapeAnalyzer`
+matched the engine on branch reset, `(?J)`, recursion, conditionals,
+`\K`, `(*ACCEPT)` and `(*MARK)`; the transpiled JS/Python outputs matched
+PCRE2 on 40+ differential subjects including the Kelvin, ſ and İ/ı case
+folds; and the HTML explainer escapes markup injection.
+
