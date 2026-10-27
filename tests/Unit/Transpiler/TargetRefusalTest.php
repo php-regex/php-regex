@@ -73,6 +73,13 @@ final class TargetRefusalTest extends TestCase
         yield 'Python: a Unicode property' => ['target' => 'python', 'pattern' => '/a\pL/u', 'message' => 'Unicode properties (\p) are not supported in Python standard re module.', 'position' => 1];
         yield 'Python: an inline n' => ['target' => 'python', 'pattern' => '/a(?n)(b)+/', 'message' => 'The inline flags (?n) cannot be carried into Python re.', 'position' => 1];
         yield 'Python: a relative backreference' => ['target' => 'python', 'pattern' => '/(a)\g{-1}/', 'message' => 'Unsupported backreference syntax for Python: \g{-1}.', 'position' => 3];
+        // Python re needs every branch of a lookbehind to have one length:
+        // re.compile() refuses these (Python 3.10, "look-behind requires
+        // fixed-width pattern"), which PCRE2 10.43 and later compile.
+        yield 'Python: a lookbehind of a range' => ['target' => 'python', 'pattern' => '/(?<=a{1,3})b/', 'message' => 'Python re needs a lookbehind of one length: this branch is 1 to 3 characters long.', 'position' => 0];
+        yield 'Python: a lookbehind of an optional letter' => ['target' => 'python', 'pattern' => '/(?<=a??)b/', 'message' => 'Python re needs a lookbehind of one length: this branch is 0 to 1 characters long.', 'position' => 0];
+        yield 'Python: a lookbehind of a repeated alternation' => ['target' => 'python', 'pattern' => '/(?<=(?:ab|cd){1,2})x/', 'message' => 'Python re needs a lookbehind of one length: this branch is 2 to 4 characters long.', 'position' => 0];
+        yield 'Python: a lookbehind branch of a range' => ['target' => 'python', 'pattern' => '/(?<=ab|c{1,2})x/', 'message' => 'Python re needs a lookbehind of one length: this branch is 1 to 2 characters long.', 'position' => 7];
     }
 
     /**

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\Python;
 
+use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
@@ -169,11 +170,18 @@ final class PythonPrinter extends AbstractTargetPrinter
         $this->lookbehinds += $lookbehind ? 1 : 0;
 
         try {
+            // The body first, whose own refusals say more than its length.
             if ($lookbehind && $node->child instanceof AlternationNode) {
-                return $this->splitLookbehind($node, $node->child, $scope);
+                $split = $this->splitLookbehind($node, $node->child, $scope);
+                $this->refuseAVariableLookbehind($node);
+
+                return $split;
             }
 
             $child = $node->child->accept($this);
+            if ($lookbehind) {
+                $this->refuseAVariableLookbehind($node);
+            }
         } finally {
             $this->lookbehinds -= $lookbehind ? 1 : 0;
         }
@@ -636,6 +644,24 @@ final class PythonPrinter extends AbstractTargetPrinter
         $this->restoreScope($scope);
 
         return $positive ? '(?:'.implode('|', $written).')' : implode('', $written);
+    }
+
+    /**
+     * Python re compiles a lookbehind of one length only, each branch of a
+     * top-level alternation on its own once split: "(?<=a{1,3})" is refused
+     * by re.compile(), which PCRE2 from 10.43 reads.
+     *
+     * @throws TranspileException
+     */
+    private function refuseAVariableLookbehind(GroupNode $node): void
+    {
+        $branches = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
+        foreach ($branches as $branch) {
+            [$min, $max] = $branch->accept(new LengthRangeCalculator($this->unicode));
+            if ($min !== $max) {
+                $this->unsupported(\sprintf('Python re needs a lookbehind of one length: this branch is %d to %s characters long.', $min, null === $max ? 'any number of' : (string) $max), \count($branches) > 1 ? $branch : $node);
+            }
+        }
     }
 
     /**

@@ -240,13 +240,6 @@ two parsers read differently.
 The literal-fragment builder, the repairer and the confirmed mode first:
 they answer wrong, not just incomplete.
 
-- The Python target emits a lookbehind Python's `re` refuses to compile:
-  `/(?<=a{1,3})b/` (valid PCRE2 10.43+, engine matches `"aab"`)
-  transpiles to `r'(?a)(?<=a{1,3})b'` → `re.error: look-behind requires
-  fixed-width pattern`, no refusal, no note. `(?<=a??)b/` and
-  `(?<=(?:ab|cd){1,2})x` alike; `splitLookbehind` decomposes top-level
-  alternations only, quantified bodies pass through untouched
-  (`PythonPrinter.php:172-174, 628-639`).
 - `SampleGenerator` (and `TestCaseGenerator` after it) gives up on negated
   classes under `i`: the candidate probe spells the pattern without the
   flag (`SampleGenerator.php:985` — the `u` is spelled, the `i` is not)
