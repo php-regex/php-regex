@@ -34,15 +34,15 @@ use PHPUnit\Framework\TestCase;
 final class ToolkitDocblockContractTest extends TestCase
 {
     #[Test]
-    public function test_optimizer_optimize_declares_the_invalid_option_throws_tag(): void
+    public function test_optimizer_optimize_declares_no_invalid_option_throws_tag(): void
     {
         $tags = self::throwsTags(Optimizer::class, 'optimize');
 
-        $this->assertContains(
+        $this->assertNotContains(
             InvalidRegexOptionException::class,
             $tags,
-            'Optimizer::optimize() must keep @throws InvalidRegexOptionException: an option key it does not know,'
-            .' or a value of the wrong type, raises it through OptimizerOptions::fromArray().',
+            'Optimizer::optimize() takes its options as a value, already checked: an option key it does not know,'
+            .' or a value of the wrong type, raises InvalidRegexOptionException in OptimizerOptions::fromArray() instead.',
         );
     }
 
