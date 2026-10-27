@@ -430,7 +430,10 @@ before a wider one, `/users/list` before `/users/{id}`, is the order the
 router expects and is not reported. Two hosts the analysis cannot compare,
 a host it cannot read or one the solver gives up on (a conditional in a
 host requirement, say), leave the paths to decide, and the finding notes
-`Host requirements were not evaluated.`
+`Host requirements were not evaluated.` A route that names no method or no
+scheme takes any; one given only empty ones, `setMethods([''])` or
+`setSchemes([''])`, takes no request, as Symfony's matchers read it, and
+conflicts with no other route.
 
 `regex:security` reads `access_control` the same way: the first rule whose
 path, host, methods and addresses take a request applies to it. A later

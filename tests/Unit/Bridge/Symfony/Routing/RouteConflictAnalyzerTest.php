@@ -19,6 +19,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\CompiledRoute;
+use Symfony\Component\Routing\Matcher\CompiledUrlMatcher;
+use Symfony\Component\Routing\Matcher\Dumper\CompiledUrlMatcherDumper;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\Route;
@@ -515,6 +517,71 @@ final class RouteConflictAnalyzerTest extends TestCase
             'methods' => ['PUT'],
             'schemes' => ['https'],
         ];
+    }
+
+    /**
+     * Methods or schemes given as [''] are not "any": Symfony's matchers,
+     * the UrlMatcher and the compiled one, send no request to such a
+     * route, whatever its method (GET, HEAD, POST, PUT) or scheme. The
+     * route takes no request, so it holds no other route back and no other
+     * route holds it back.
+     *
+     * @param array{0: list<string>, 1: list<string>} $earlier
+     * @param array{0: list<string>, 1: list<string>} $later
+     */
+    #[Test]
+    #[DataProvider('provideRoutesTakingNoRequest')]
+    public function test_a_route_given_only_empty_methods_or_schemes_takes_no_request(array $earlier, array $later, string $winner, string $filtered): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route('/x'))->setMethods($earlier[0])->setSchemes($earlier[1]));
+        $collection->add('later', (new Route('/x'))->setMethods($later[0])->setSchemes($later[1]));
+
+        $compiled = (new CompiledUrlMatcherDumper($collection))->getCompiledRoutes();
+        foreach (['GET', 'HEAD', 'POST', 'PUT'] as $method) {
+            foreach (['http', 'https'] as $scheme) {
+                $context = new RequestContext(method: $method, scheme: $scheme);
+                $this->assertSame($winner, (new UrlMatcher($collection, $context))->match('/x')['_route'], $method.' '.$scheme);
+                $this->assertSame($winner, (new CompiledUrlMatcher($compiled, $context))->match('/x')['_route'], $method.' '.$scheme.', compiled');
+            }
+        }
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame([], $report->conflicts);
+        $this->assertSame(1, $report->stats[$filtered]);
+        $this->assertSame(0, $report->stats['path_intersections']);
+    }
+
+    /**
+     * @return iterable<string, array{earlier: array{0: list<string>, 1: list<string>}, later: array{0: list<string>, 1: list<string>}, winner: string, filtered: string}>
+     */
+    public static function provideRoutesTakingNoRequest(): iterable
+    {
+        yield 'empty methods before any' => ['earlier' => [[''], []], 'later' => [[], []], 'winner' => 'later', 'filtered' => 'pairs_filtered_methods'];
+        yield 'empty schemes before any' => ['earlier' => [[], ['']], 'later' => [[], []], 'winner' => 'later', 'filtered' => 'pairs_filtered_schemes'];
+        yield 'any before empty methods' => ['earlier' => [[], []], 'later' => [[''], []], 'winner' => 'earlier', 'filtered' => 'pairs_filtered_methods'];
+        yield 'any before empty schemes' => ['earlier' => [[], []], 'later' => [[], ['']], 'winner' => 'earlier', 'filtered' => 'pairs_filtered_schemes'];
+    }
+
+    /**
+     * An empty method beside a real one leaves the real one: ['GET', '']
+     * takes GET (and HEAD), which the matcher sends to it first.
+     */
+    #[Test]
+    public function test_an_empty_method_beside_a_real_one_leaves_the_real_one(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route('/x'))->setMethods(['GET', '']));
+        $collection->add('later', new Route('/x'));
+
+        $this->assertSame('earlier', (new UrlMatcher($collection, new RequestContext(method: 'GET')))->match('/x')['_route']);
+        $this->assertSame('later', (new UrlMatcher($collection, new RequestContext(method: 'POST')))->match('/x')['_route']);
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertCount(1, $report->conflicts);
+        $this->assertSame(['GET'], $report->conflicts[0]['methods']);
     }
 
     /**

@@ -42,6 +42,13 @@ final class RouteConflictAnalyzer
 
     private const IGNORED_FLAGS = ['D'];
 
+    /**
+     * The methods or the schemes of a route that lists some, every one of
+     * them empty, as setMethods(['']) does: Symfony's matchers send no
+     * request to it, where a route that lists none takes any.
+     */
+    private const NO_REQUEST = [''];
+
     private readonly LanguageSolver $solver;
 
     public function __construct(
@@ -459,7 +466,7 @@ final class RouteConflictAnalyzer
             $normalized[] = strtoupper($method);
         }
 
-        return array_values(array_unique($normalized));
+        return [] === $normalized ? self::NO_REQUEST : array_values(array_unique($normalized));
     }
 
     /**
@@ -481,7 +488,7 @@ final class RouteConflictAnalyzer
             $normalized[] = strtolower($scheme);
         }
 
-        return array_values(array_unique($normalized));
+        return [] === $normalized ? self::NO_REQUEST : array_values(array_unique($normalized));
     }
 
     /**
@@ -536,6 +543,10 @@ final class RouteConflictAnalyzer
      */
     private function methodsOverlap(array $left, array $right): bool
     {
+        if (self::NO_REQUEST === $left || self::NO_REQUEST === $right) {
+            return false;
+        }
+
         if ([] === $left || [] === $right) {
             return true;
         }
@@ -549,6 +560,10 @@ final class RouteConflictAnalyzer
      */
     private function schemesOverlap(array $left, array $right): bool
     {
+        if (self::NO_REQUEST === $left || self::NO_REQUEST === $right) {
+            return false;
+        }
+
         if ([] === $left || [] === $right) {
             return true;
         }
