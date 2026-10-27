@@ -134,41 +134,22 @@ each exactly, checked with the first-pass length of pcre2test 10.32 to 10.49:
 The DEFINE quirk of PCRE2 10.32 to 10.34 stays documented, not planned: it
 would mean replaying their internal form of the pattern (10.35 fixed it).
 
-## Architecture and contributor path: the last pass before 2.0.0
+## Architecture: after the tag
 
-- `new Optimizer()` and
-  `new Transpiler()` without a parser, `Optimizer::optimize()` without
-  arrays, `SampleGenerator` without its seed setters, `Regex::lint()`;
-  the Psalm and PHPStan bridges without
-  the whole linter (the target resolution and the PHP-source helpers move
-  out of `regex-linter`); one placement and naming rule for exceptions; the
-  test conventions (`#[Test]` everywhere, the four inline ignores moved to
-  the config); release notes for 2.0.0 instead of the 805-line section.
-- Internal, so it may follow the tag: split `Validator` (1,830 lines) by
-  concern and `TokenParser` (2,665) by family of constructs.
+The public signatures are settled for 2.0.0. Internal, so these may follow
+the tag:
 
-## Parser and integrations: the last pass before 2.0.0
-
-Parser structure: the error-offset rule read through
-`PcreTarget::faultOffset()` in `VersionCondition` too, and
-`PcreVerb::limitValueErrorOffset()` taking the target instead of a boolean;
-then `Validator` split by concern; `QuantifierNode` carrying its bounds instead
-of 53 re-parses; the 65535 limit and the UTF-8 width written once; the
-`SemanticErrorException` constructor aligned with its siblings; the public
-renames (node properties, error codes, getters, `PcreFeature`) to settle
-before the tag.
-
-Integrations:
-
-- `ExtractorInterface` is marked internal, yet the `extractor_service`
-  setting asks users to implement it: making it public means adding it to
-  the public surface (`tests/Support/PublicSurface.php` and
-  `docs/reference/backward-compatibility.md`), and with it the
-  `PatternOccurrence` an implementer must build, still internal.
-- CLI: `OutputFormat` split per method in the facade; the language
-  server's error stream still written through a static.
-- The target settings (PHP, PCRE2, locale) enter through one class, and
-  every parser derived for another target keeps the locale.
+- The Psalm and PHPStan bridges without the whole linter: the target
+  resolution and the PHP-source helpers they import need a home below
+  `regex-linter`, a new split package or a lower one. Removing a `require`
+  is never a break.
+- The target settings (PHP, PCRE2, locale) entering through one class:
+  `ParserOptions` and the linter's `ProjectTarget` resolve them apart.
+- `TokenParser` (2,665 lines) split by family of constructs, the
+  `Rewriter` split, and the semantic facts (nullability, length ranges,
+  flag scope) read from one layer instead of five copies.
+- The test conventions: `#[Test]` on every test method, the four inline
+  ignores of the tests moved to the configuration.
 
 ## Analysis engines: the last pass before 2.0.0
 
@@ -180,9 +161,10 @@ Integrations:
   the degree short. A lookahead that reads a run but stops at once,
   `(?=a+?)`, or that holds where the loop could go on, `(?!a+)` before
   `a`, loses its linear proof: telling when a body stops would keep it.
-- The railroad layout, the solver's internal methods on its public class,
-  and the semantic facts (nullability, length ranges, flag scope) read
-  from one layer instead of five copies; the Rewriter split.
+- `lookaround.impossible` reports `/(?=\w)\xE9/` under a Latin-1 locale
+  target, where the engine matches `"\xE9"`: the solver's `\w` without `u`
+  does not follow the target's character tables.
+- The railroad layout and the solver's internal methods on its public class.
 
 ## Transpiler: after the oracle
 
