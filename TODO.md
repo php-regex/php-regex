@@ -154,6 +154,13 @@ the tag:
 
 ## Analysis engines: the last pass before 2.0.0
 
+- Before PCRE2 10.45 the engine misses a match past a lookahead:
+  `/(?=x)a?x/` does not match `"x"` on 10.42 and 10.44, JIT or not, and
+  `(*NO_START_OPT)` brings the match back; 10.45 fixed the first and last
+  code unit read with lookaheads (#444). The library reads what the
+  pattern means: `generate()` gives `"x"` for a 10.44 target, which PHP 8.4
+  to 8.6, bundling 10.44, do not match. Whether a target before 10.45 is
+  judged by that defect is a call to make.
 - The character-set analysis gives an unknown set for a script run.
 - A proven polynomial degree does not add what a lookahead in a loop reads
   again: `/^(?:(?!a*a*b)a)*$/` is proven of degree 2 (its upper bound says
