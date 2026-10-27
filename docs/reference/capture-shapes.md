@@ -628,8 +628,12 @@ cannot tell, the answer widens rather than guesses:
   what it reads: `/(a)|b(*ACCEPT)(c)/` writes group 1 `'a'` and group 2 `'c'` where set.
   One in a lookaround ends the assertion, and one in a group a call runs ends the call:
   `preg_match('/(?(DEFINE)(?<t>a(*ACCEPT)bb))x((?&t)c)/', 'xac', $m)` writes group 2
-  `'ac'`, and the whole match stays known. One in `(?(DEFINE)...)`, under `{0}` or in a
-  negative lookaround ends nothing the match sees.
+  `'ac'`, and the whole match stays known. A group open around one in a lookaround is
+  closed, and the assertion keeps it: `preg_match('/(?=(a(*ACCEPT)))(?(1)(a)|b)/', 'a', $m)`
+  writes `['a', 'a', 'a']`. A value such a cut leaves may be shorter than what follows the
+  verb would make it: `preg_match('/(?=(0(*ACCEPT)1))/', '0', $m)` writes group 1 `'0'`,
+  which is falsy. One in `(?(DEFINE)...)`, under `{0}` or in a negative lookaround ends
+  nothing the match sees.
 - A subroutine call reads what the group it calls reads, with the options of that
   group: in `/(?<t>a)&((?&t))/` group 2 holds `'a'`. Its length is the length of that
   group, wherever the call stands: in `/(?<t>\w\w)x((?&t)c)/` group 2 is three

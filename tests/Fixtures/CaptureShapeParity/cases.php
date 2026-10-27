@@ -558,4 +558,42 @@ return [
     ['source' => 'parity: cases', 'pattern' => '/(?:(\d\d)|(a))/', 'subjects' => ['00', 'a']],
     ['source' => 'parity: cases', 'pattern' => '/(?:(a)|(b\K))(?2)/', 'subjects' => ['ab', 'bb']],
     ['source' => 'parity: cases', 'pattern' => '/(?:(a)|(b(*MARK:m)))(?2)/', 'subjects' => ['ab', 'bb']],
+
+    // An (*ACCEPT) inside a capturing group inside an assertion closes the group: the assertion keeps it.
+    ['source' => 'parity: (*ACCEPT) in an assertion', 'pattern' => '/(?=(a(*ACCEPT)))(?(1)(a)|b)/', 'subjects' => ['a']],
+    ['source' => 'parity: (*ACCEPT) in an assertion', 'pattern' => '/(*pla:(a(*ACCEPT)))(?(1)(a)|b)/', 'subjects' => ['a']],
+    ['source' => 'parity: (*ACCEPT) in an assertion', 'pattern' => '/(*napla:(a(*ACCEPT)))(?(1)(a)|b)/', 'subjects' => ['a']],
+    ['source' => 'parity: (*ACCEPT) in an assertion', 'pattern' => '/(?<=(a(*ACCEPT)))(?(1)(b)|c)/', 'subjects' => ['ab']],
+    ['source' => 'parity: (*ACCEPT) in an assertion', 'pattern' => '/(?(?=(a(*ACCEPT)))a|b)(?(1)(c)|d)/', 'subjects' => ['ac']],
+    ['source' => 'parity: (*ACCEPT) in an assertion', 'pattern' => '/(?=(a)((*ACCEPT)))(?(2)(a)|b)/', 'subjects' => ['a']],
+    ['source' => 'parity: (*ACCEPT) in an assertion', 'pattern' => '/(?=(?=(a(*ACCEPT))))(?(1)(a)|b)/', 'subjects' => ['a']],
+    ['source' => 'parity: (*ACCEPT) in an assertion', 'pattern' => '/(?=(?>(a(*ACCEPT))))(?(1)(a)|b)/', 'subjects' => ['a']],
+    ['source' => 'parity: (*ACCEPT) in an assertion', 'pattern' => '/(?=(a(*ACCEPT))?)(?(1)(a)|b)/', 'subjects' => ['a']],
+    ['source' => 'parity: (*ACCEPT) in an assertion', 'pattern' => '/^(?=(a(*ACCEPT)))(?(1)a|b)$/D', 'subjects' => ['a']],
+
+    // A value an (*ACCEPT) that ends an assertion or a call cuts short may be "0".
+    ['source' => 'parity: a value an (*ACCEPT) cuts short', 'pattern' => '/(?=(0(*ACCEPT)1))/', 'subjects' => ['0']],
+    ['source' => 'parity: a value an (*ACCEPT) cuts short', 'pattern' => '/(?1)(?(DEFINE)(0(*ACCEPT)1))/', 'subjects' => ['0']],
+    ['source' => 'parity: a value an (*ACCEPT) cuts short', 'pattern' => '/((?2))(?(DEFINE)(0(*ACCEPT)1))/', 'subjects' => ['0']],
+    ['source' => 'parity: a value an (*ACCEPT) cuts short', 'pattern' => '/(?<=(0(*ACCEPT)1))/', 'subjects' => ['0', '01']],
+    ['source' => 'parity: a value an (*ACCEPT) cuts short', 'pattern' => '/(?=(\\d(*ACCEPT)\\d))/', 'subjects' => ['0']],
+    ['source' => 'parity: a value an (*ACCEPT) cuts short', 'pattern' => '/(?=([0-9](*ACCEPT)[0-9]+))/', 'subjects' => ['0']],
+    ['source' => 'parity: a value an (*ACCEPT) cuts short', 'pattern' => '/(?=(\\d(*ACCEPT)x))/', 'subjects' => ['0']],
+    ['source' => 'parity: a value an (*ACCEPT) cuts short', 'pattern' => '/(?=(0(*ACCEPT)1|c))/', 'subjects' => ['0']],
+    ['source' => 'parity: a value an (*ACCEPT) cuts short', 'pattern' => '/(?=(?<d>0(*ACCEPT)1))/', 'subjects' => ['0']],
+    ['source' => 'parity: a value an (*ACCEPT) cuts short', 'pattern' => '/^(?1)$(?(DEFINE)(0(*ACCEPT)1))/', 'subjects' => ['0']],
+
+    // A bare option at the end of the arm a conditional drops still holds in the other arm.
+    ['source' => 'parity: options through a folded conditional', 'pattern' => '/(?(1)a(?i)|b)(c)/', 'subjects' => ['Bc']],
+    ['source' => 'parity: options through a folded conditional', 'pattern' => '/(?(1)a(?i)|(?<x>b))(c)/', 'subjects' => ['Bc']],
+    ['source' => 'parity: options through a folded conditional', 'pattern' => '/(?(1)a(?i)|b+)(c)/', 'subjects' => ['BBc']],
+    ['source' => 'parity: options through a folded conditional', 'pattern' => '/(?(1)a(?i)|[a-c])(c)/', 'subjects' => ['Bc']],
+    ['source' => 'parity: options through a folded conditional', 'pattern' => '/(?(1)a(?i)|\\x62)(c)/', 'subjects' => ['Bc']],
+    ['source' => 'parity: options through a folded conditional', 'pattern' => '/(?(1)a(?i)|(?:b|d))(c)/', 'subjects' => ['Bc']],
+    ['source' => 'parity: options through a folded conditional', 'pattern' => '/(?(<n>)a(?i)|b)(?<n>c)/', 'subjects' => ['Bc']],
+    ['source' => 'parity: options through a folded conditional', 'pattern' => '/(?(R)a(?i)|b)/', 'subjects' => ['B']],
+    ['source' => 'parity: options through a folded conditional', 'pattern' => '/(?(R1)a(?i)|b)(c)/', 'subjects' => ['Bc']],
+    ['source' => 'parity: options through a folded conditional', 'pattern' => '/(?(R&n)a(?i)|b)(?<n>c)/', 'subjects' => ['Bc']],
+    ['source' => 'parity: options through a folded conditional', 'pattern' => '/^(?(R)a(?m)|b$)/', 'subjects' => ["b\nzz"]],
+    ['source' => 'parity: options through a folded conditional', 'pattern' => '/^(?(1)(a)(?m)|b$)/', 'subjects' => ["b\nzz"]],
 ];

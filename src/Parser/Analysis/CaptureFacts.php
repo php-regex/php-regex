@@ -731,7 +731,8 @@ final class CaptureFacts
     /**
      * Whether a concatenation may read "0" alone: some child reads it while
      * every other child reads nothing — a mandatory character anywhere else
-     * pins the value off zero.
+     * pins the value off zero, unless an (*ACCEPT) before it may cut the
+     * sequence short.
      *
      * @param list<NodeInterface> $children
      */
@@ -742,11 +743,17 @@ final class CaptureFacts
                 continue;
             }
 
+            // a child past an (*ACCEPT) that may end the sequence may not
+            // run: preg_match('/(?=(0(*ACCEPT)1))/', '0') sets group 1 to "0"
             $pinned = false;
             foreach ($children as $child) {
                 if ($child !== $candidate && $this->lengths($child)[0] >= 1) {
                     $pinned = true;
 
+                    break;
+                }
+
+                if (AcceptVerb::mayEndMatch($child)) {
                     break;
                 }
             }

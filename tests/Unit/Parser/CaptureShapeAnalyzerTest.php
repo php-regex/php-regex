@@ -682,6 +682,41 @@ final class CaptureShapeAnalyzerTest extends TestCase
     }
 
     /**
+     * The subject, where the analysis reads one, holds what the engine
+     * matched (PHP 8.4.27, PCRE2 10.49, and 8.1 to 8.4 alike):
+     *   preg_match('/^(?=(a(*ACCEPT)))(?(1)a|b)$/D', 'a') -> 1: the assertion keeps group 1
+     *   preg_match('/^(?1)$(?(DEFINE)(0(*ACCEPT)1))/', '0') -> 1: the call ends after "0"
+     *   preg_match('/^(?(R)a(?m)|b$)/', "b\nzz") -> 1, and so does /^(?(1)(a)(?m)|b$)/:
+     *   the (?m) the dropped arm sets holds in the other one
+     *
+     * @param non-empty-list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideSubjectsReadOrNot')]
+    public function test_a_subject_read_holds_what_the_engine_matches(string $pattern, array $subjects): void
+    {
+        $shape = $this->analyze($pattern);
+
+        foreach ($subjects as $subject) {
+            $this->assertSame(1, preg_match($pattern, $subject), \sprintf('%s must match %s.', $pattern, json_encode($subject)));
+            if (null !== $shape->subject) {
+                $this->assertSame([], self::refusals($shape->subject, $subject, false), \sprintf('%s on %s', $pattern, json_encode($subject)));
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: non-empty-list<string>}>
+     */
+    public static function provideSubjectsReadOrNot(): iterable
+    {
+        yield 'an (*ACCEPT) in an assertion closes its group' => ['pattern' => '/^(?=(a(*ACCEPT)))(?(1)a|b)$/D', 'subjects' => ['a']];
+        yield 'an (*ACCEPT) cuts a call short' => ['pattern' => '/^(?1)$(?(DEFINE)(0(*ACCEPT)1))/', 'subjects' => ['0']];
+        yield 'a multiline option the dropped arm sets' => ['pattern' => '/^(?(R)a(?m)|b$)/', 'subjects' => ["b\nzz"]];
+        yield 'a multiline option the dropped arm sets, on a group' => ['pattern' => '/^(?(1)(a)(?m)|b$)/', 'subjects' => ["b\nzz"]];
+    }
+
+    /**
      * Each case reads the subject of its own matches: preg_match('/^(?:(\d+)|([a-z]+))$/D',
      * '0') -> ["0","0"], on 'ab' -> ["ab","","ab"] (PHP 8.4.27, PCRE2 10.49).
      */
@@ -1406,6 +1441,11 @@ final class CaptureShapeAnalyzerTest extends TestCase
         // sets group 2 to 'Sat', by name as by number.
         yield 'a call returns a branch reset group by number' => ['pattern' => '/(?(DEFINE)(?<w>(?|(Sat)urday|(Sun)day)))(?&w(2)),\2/', 'group' => 2, 'values' => ['Sat', 'Sun'], 'participation' => Participation::Always, 'subjects' => ['Saturday,Sat', 'Sunday,Sun']];
         yield 'a call returns a branch reset group by name' => ['pattern' => '/(?(DEFINE)(?<w>(?|(?<s>Sat)urday|(?<s>Sun)day)))(?&w(<s>)),\k<s>/', 'group' => 2, 'values' => ['Sat', 'Sun'], 'participation' => Participation::Always, 'subjects' => ['Saturday,Sat', 'Sunday,Sun']];
+        // A substring scan numbers the groups it holds where they stand: preg_match('/(a)(*scs:(1)(a))(b)/', 'ab')
+        // -> ["ab","a","a","b"] (PHP 8.4.27, PCRE2 10.49), and the condition on its group reads it set.
+        yield 'a substring scan numbers its groups' => ['pattern' => '/(a)(*scs:(1)(a))(b)/', 'group' => 3, 'values' => ['b'], 'participation' => Participation::Always, 'subjects' => ['ab']];
+        yield 'a group a substring scan holds' => ['pattern' => '/(a)(*scs:(1)(a))(b)/', 'group' => 2, 'values' => ['a'], 'participation' => Participation::MayBeUnset, 'subjects' => ['ab']];
+        yield 'a condition on a group a substring scan holds' => ['pattern' => '/(a)(*scs:(1)(a))(?(2)(b)|c)/', 'group' => 0, 'values' => ['ab'], 'participation' => Participation::Always, 'subjects' => ['ab']];
         yield 'a call leaves the group it runs unset' => ['pattern' => '/(?(DEFINE)((Sat)urday))(?1(2)),\2/', 'group' => 1, 'values' => null, 'participation' => Participation::Never, 'subjects' => ['Saturday,Sat']];
         yield 'a substring scan reads no character' => ['pattern' => "/(?<AA>a)(*scan_substring:(1,'AA',1,<AA>)a)b/", 'group' => 0, 'values' => ['ab'], 'participation' => Participation::Always, 'subjects' => ['ab']];
         yield 'a substring scan after an alternation' => ['pattern' => "/(?:(?'A'a)|(?<A>b))(*scs:('A')b)c/J", 'group' => 0, 'values' => ['ac', 'bc'], 'participation' => Participation::Always, 'subjects' => ['bc']];

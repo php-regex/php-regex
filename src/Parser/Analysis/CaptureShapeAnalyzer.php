@@ -59,7 +59,7 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '17';
+    public const ANALYSIS_VERSION = '18';
 
     private const MAX_CASES = 16;
 
@@ -224,8 +224,11 @@ final class CaptureShapeAnalyzer
         $pattern = ConditionalFolding::fold($ast->pattern, $groups);
         $this->groups = $pattern === $ast->pattern ? $groups : GroupIndex::of($pattern);
         $this->facts = new CaptureFacts($ast->isUnicode(), $this->ucp, $this->groups);
-        $this->collectOption($pattern, str_contains($ast->flags, 'i'), 'i', $this->facts->markCaseless(...));
-        $this->collectOption($pattern, str_contains($ast->flags, 'm'), 'm', function (NodeInterface $node): void {
+        // options are read on the pattern as written: a bare "(?i)" ending
+        // the arm a fold drops still holds in the other one, and the fold
+        // keeps the nodes the options mark
+        $this->collectOption($ast->pattern, str_contains($ast->flags, 'i'), 'i', $this->facts->markCaseless(...));
+        $this->collectOption($ast->pattern, str_contains($ast->flags, 'm'), 'm', function (NodeInterface $node): void {
             $this->multiline[spl_object_id($node)] = true;
         });
         $this->selection = null;

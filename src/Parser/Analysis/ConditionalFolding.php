@@ -64,6 +64,22 @@ final class ConditionalFolding
      */
     private array $accepted = [];
 
+    /**
+     * The numbers of the capturing groups open where the walk stands, the
+     * innermost last: an (*ACCEPT) closes those its assertion opened.
+     *
+     * @var list<int>
+     */
+    private array $open = [];
+
+    /**
+     * How many groups were open where each enclosing assertion starts, the
+     * innermost last.
+     *
+     * @var list<int>
+     */
+    private array $openAtAssertion = [];
+
     private function __construct(private readonly GroupIndex $groups) {}
 
     public static function fold(NodeInterface $pattern, GroupIndex $groups): NodeInterface
@@ -120,7 +136,16 @@ final class ConditionalFolding
     private function flowGroup(GroupNode $node, array $state): ?array
     {
         if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
-            return self::set($this->flow($node->child, $state), $this->groups->numberOf($node));
+            $number = $this->groups->numberOf($node);
+            if (null !== $number) {
+                $this->open[] = $number;
+            }
+            $out = $this->flow($node->child, $state);
+            if (null !== $number) {
+                array_pop($this->open);
+            }
+
+            return self::set($out, $number);
         }
 
         if (GroupType::LookaheadNegative === $node->type || GroupType::LookbehindNegative === $node->type) {
@@ -234,15 +259,23 @@ final class ConditionalFolding
 
     /**
      * An (*ACCEPT) ends the innermost assertion with the state it stands
-     * in, or the match: no path goes on past it.
+     * in, or the match: no path goes on past it. PCRE closes every group
+     * open around it, and the assertion keeps them:
+     * preg_match('/(?=(a(*ACCEPT)))(?(1)(a)|b)/', 'a') writes ["a","a","a"].
      *
      * @param array{may: array<int, true>, sure: array<int, true>} $state
      */
     private function cut(array $state): void
     {
-        if ([] !== $this->accepted) {
-            $this->accepted[array_key_last($this->accepted)][] = $state;
+        if ([] === $this->accepted) {
+            return;
         }
+
+        $assertion = array_key_last($this->accepted);
+        foreach (\array_slice($this->open, $this->openAtAssertion[$assertion]) as $number) {
+            $state = self::set($state, $number) ?? $state;
+        }
+        $this->accepted[$assertion][] = $state;
     }
 
     /**
@@ -256,7 +289,9 @@ final class ConditionalFolding
     private function assertion(NodeInterface $body, array $state): ?array
     {
         $this->accepted[] = [];
+        $this->openAtAssertion[] = \count($this->open);
         $out = $this->flow($body, $state);
+        array_pop($this->openAtAssertion);
         $accepted = array_pop($this->accepted);
 
         return self::join([$out, ...$accepted]);
