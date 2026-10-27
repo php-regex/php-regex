@@ -133,10 +133,11 @@ final class ClassLength
      * From 10.45, what the class last measured compiles to: whether it is
      * an extended class, whether it holds characters below 256, whether
      * the characters past 255 it holds are turned over, its ranges merged,
-     * its properties, whether properties may add to its map, and whether
-     * the locale may add to it past ASCII.
+     * its properties, whether properties add to its map, whether the
+     * locale may add to it past ASCII, and the map of the characters below
+     * 256 its properties set, null where a property is not known.
      *
-     * @var array{0: bool, 1: bool, 2: bool, 3: list<array{0: int, 1: int}>, 4: int, 5: bool, 6: bool}|null
+     * @var array{0: bool, 1: bool, 2: bool, 3: list<array{0: int, 1: int}>, 4: int, 5: bool, 6: bool, 7: string|null}|null
      */
     private ?array $shape = null;
 
@@ -214,17 +215,19 @@ final class ClassLength
             return null;
         }
 
-        [$extended, $map, $flip, $ranges, $properties, $mapFromProperties, $localeMaps] = $this->shape;
-        $ones = ExtendedClassLength::NO_BYTE;
-        foreach ($ranges as [$low, $high]) {
-            for ($byte = $low; $byte <= min($high, 0xFF); $byte++) {
-                $ones[$byte >> 3] = \chr(\ord($ones[$byte >> 3]) | 1 << ($byte & 7));
-            }
+        [$extended, $map, $flip, $ranges, $properties, , $localeMaps, $propertyMap] = $this->shape;
+
+        // Each property sets what it matches below 256, from the tables of
+        // the release; without UTF what the locale sets past ASCII is not
+        // known where its tables are not given.
+        $ones = self::mapOf($ranges);
+        $unknown = ExtendedClassLength::NO_BYTE;
+        if (null === $propertyMap) {
+            $unknown = ~$ones;
+        } else {
+            $ones |= $propertyMap;
         }
 
-        // What a property sets below 256 is not known here, nor without
-        // UTF what the locale sets past ASCII where its tables are not given.
-        $unknown = $properties > 0 || $mapFromProperties ? ~$ones : ExtendedClassLength::NO_BYTE;
         if (!$this->utf && null === $this->tables && ($localeMaps || $caseless)) {
             $unknown |= ~$ones & ExtendedClassLength::PAST_ASCII;
         }
@@ -364,6 +367,7 @@ final class ClassLength
         $map = false;
         $flip = false;
         $properties = 0;
+        $propertyMap = ExtendedClassLength::NO_BYTE;
         $localeMaps = false;
         $complements = [];
         foreach ($members as [$kind, $first, $second]) {
@@ -386,13 +390,18 @@ final class ClassLength
                 }
 
                 $properties++;
+                $propertyMap = self::withProperty($propertyMap, PropertyBytes::ofProperty((string) $first, $caseless, $this->target), (bool) $second);
 
                 continue;
             }
 
             [$name, $negatedMember] = 'type' === $kind ? [Ascii::lower((string) $first), (string) $first !== Ascii::lower((string) $first)] : [(string) $first, (bool) $second];
-            if ($this->ucp && ('type' === $kind ? \in_array($name, ['d', 's', 'w'], true) : (\in_array($name, self::POSIX_PROPERTIES, true) || 'xdigit' === $name))) {
+            // UCP reads "\d", "\s", "\w" and the POSIX names but "ascii" and
+            // "blank" as properties.
+            $key = ('type' === $kind ? PropertyBytes::UCP_TYPES : PropertyBytes::UCP_POSIX)[$name] ?? null;
+            if ($this->ucp && null !== $key) {
                 $properties++;
+                $propertyMap = self::withProperty($propertyMap, PropertyBytes::ofKey($key, $this->target), $negatedMember);
 
                 continue;
             }
@@ -442,7 +451,7 @@ final class ClassLength
             $wide = array_values(array_filter($ranges, static fn (array $range): bool => $range[1] > 0xFF));
         }
 
-        $this->shape = [$properties > 0 || [] !== $wide, $map, $flip, $ranges, $properties, $mapFromProperties, $localeMaps];
+        $this->shape = [$properties > 0 || [] !== $wide, $map, $flip, $ranges, $properties, $mapFromProperties, $localeMaps, $propertyMap];
         if ($properties > 0 || [] !== $wide) {
             $length = 4 + ($map ? 32 : 0) + 3 * $properties;
             if (\count($wide) >= 6) {
@@ -561,7 +570,7 @@ final class ClassLength
 
             if ($member instanceof UnicodePropNode) {
                 $any = 'any' === Ascii::lower(str_replace([' ', '_', '-', '^', '{', '}'], '', $member->prop));
-                $members[] = ['property', $any ? 'any' : 'other', str_contains($member->prop, '^')];
+                $members[] = ['property', $any ? 'any' : $member->prop, str_contains($member->prop, '^')];
 
                 continue;
             }
@@ -874,6 +883,37 @@ final class ClassLength
         }
 
         return $complement;
+    }
+
+    /**
+     * The map of characters below 256 a class sets, with those a property
+     * matches, or turned over those it does not; null once one is not
+     * known.
+     */
+    private static function withProperty(?string $map, ?string $property, bool $negated): ?string
+    {
+        if (null === $map || null === $property) {
+            return null;
+        }
+
+        return $map | ($negated ? ~$property : $property);
+    }
+
+    /**
+     * The map of the characters below 256 of ranges.
+     *
+     * @param list<array{0: int, 1: int}> $ranges
+     */
+    private static function mapOf(array $ranges): string
+    {
+        $map = ExtendedClassLength::NO_BYTE;
+        foreach ($ranges as [$low, $high]) {
+            for ($byte = $low; $byte <= min($high, 0xFF); $byte++) {
+                $map[$byte >> 3] = \chr(\ord($map[$byte >> 3]) | 1 << ($byte & 7));
+            }
+        }
+
+        return $map;
     }
 
     /**

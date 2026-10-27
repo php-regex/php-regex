@@ -123,7 +123,7 @@ final class ExtendedClassLength
 
         // The header, then each operand and operation. Where it is not
         // known whether the class holds every byte, an operand is a map of
-        // what a property or the locale holds, which counted 33 units: the
+        // what the locale holds without UTF, which counted 33 units: the
         // class counts as many whatever it is written as, but a count
         // repeats it as a type or as a class.
         $counted = 4 + $this->counted;

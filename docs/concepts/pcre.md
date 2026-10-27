@@ -325,12 +325,15 @@ Where the library still departs from what the target's PCRE2 reports:
   `(*TURKISH_CASING)`), and those of a byte from the character tables of
   the locale (see [Which locale judges a pattern](#which-locale-judges-a-pattern)):
   `/(?:[à-ž]x){1214}/iu` is refused on every release, `/(?:[à-ž]x){1213}/iu`
-  compiles. A few lengths it does not know for sure: from 10.45, a class
-  that holds every character past 255 and a property, whose characters below
-  256 may complete its map, as `[[:^ascii:][:^blank:][:space:]]` under `u`;
-  a counted extended class that would match every character but for what
-  a property it holds matches below 256, as `(?[ [^a] | !\D ]){2}` under
-  `u`, which a count then repeats as a type or as a class; up to PCRE2
+  compiles. From 10.45 an extended class sets in its map the characters
+  below 256 each of its properties matches, read from the Unicode tables of
+  that release, which decide whether it is a match of any character, which
+  a count repeats as a type, or a class: under `u`, `(?[ [^5] | \d ]){2}`
+  is the first, `(?[ [^a] | !\D ]){2}` the second. A few lengths it does
+  not know for sure: from 10.45, a class that holds every character past
+  255 and a property, whose characters below 256 may complete its map, as
+  `[[:^ascii:][:^blank:][:space:]]` under `u`, alone or as an operand of
+  an extended class; up to PCRE2
   10.34, a lookbehind after a DEFINE
   group that opens on a group inside a lookbehind, and on 10.34 one after
   the second DEFINE group of a pattern that opens on a group, which these

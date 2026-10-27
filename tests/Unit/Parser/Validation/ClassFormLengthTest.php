@@ -15,14 +15,21 @@ namespace PHPRegex\Tests\Unit\Parser\Validation;
 
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
 use PHPRegex\Parser\Node\ClassSetOperator;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Parser\Validation\ClassLength;
 use PHPRegex\Parser\Validation\CompiledLength;
+use PHPRegex\Parser\Validation\ExtendedClassLength;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -66,9 +73,10 @@ final class ClassFormLengthTest extends TestCase
 
     /**
      * Whether a counted extended class is a match of any character may
-     * follow what a property holds below 256, or without UTF what the
-     * locale holds past ASCII where its tables are not given; a name no
-     * group bears is refused before any measure.
+     * follow what an operand of every character past 255 and a property
+     * holds below 256, or without UTF what the locale holds past ASCII
+     * where its tables are not given; a name no group bears is refused
+     * before any measure.
      */
     #[Test]
     #[DataProvider('provideLengthsNotKnown')]
@@ -82,15 +90,15 @@ final class ClassFormLengthTest extends TestCase
      */
     public static function provideLengthsNotKnown(): iterable
     {
-        yield 'counted class that may hold every character but for a property' => ['pattern' => '/(?[ [^a] | !\\D ]){2}/u'];
+        // An operand of every character past 255 and a property writes no
+        // property, whose characters below 256 may complete its map.
+        yield 'counted union of every character past 255 and the letters, and every character but a' => ['pattern' => '/(?[ [\\x{100}-\\x{10ffff}\\p{L}] | [^a] ]){2}/u'];
         yield 'counted class that may hold every byte but for the locale' => ['pattern' => '/(?[ \\d ^ \\D ]){2}/'];
         yield 'substring scan of a name no group bears' => ['pattern' => '/(*scs:(<x>)a)/'];
         // Without UTF, what the locale holds past ASCII may complete a map.
         yield 'caseless classes of every byte, that of ASCII first' => ['pattern' => '/(?[ [\\x00-\\x7f] | [\\x80-\\xff] ])/i'];
         yield 'caseless class of every ASCII byte joined after a letter' => ['pattern' => '/(?[ [a] | [\\x00-\\x7f] ])/i'];
         yield 'counted caseless class that may hold every byte but for the locale' => ['pattern' => '/(?[ [^\\x00-\\x7e] | [\\x00-\\x7e] ]){2}/i'];
-        yield 'counted union of what may hold every character without UTF' => ['pattern' => '/(?[ [^a] | !\\p{Lu} ]){2}/i'];
-        yield 'counted intersection with every character of what may hold every character' => ['pattern' => '/(?[ ( [^a] | !\\D ) & \\p{Any} ]){2}/u'];
     }
 
     /**
@@ -113,6 +121,32 @@ final class ClassFormLengthTest extends TestCase
         yield 'counted class of every byte, a type and its negation' => ['pattern' => '/(?[ \\d ^ \\D ]){2}/', 'length' => 80];
         yield 'caseless classes of every byte, that of ASCII first' => ['pattern' => '/(?[ [\\x00-\\x7f] | [\\x80-\\xff] ])/i', 'length' => 77];
         yield 'counted caseless class of every byte' => ['pattern' => '/(?[ [^\\x00-\\x7e] | [\\x00-\\x7e] ]){2}/i', 'length' => 80];
+    }
+
+    /**
+     * A class built without a pattern may hold a property no release
+     * knows, which the parser refuses before any measure: what it sets
+     * below 256 is not known, nor whether a class of every character past
+     * 255 that holds it is a match of any character, unless the rest of
+     * its map holds every byte.
+     */
+    #[Test]
+    public function test_a_property_the_release_does_not_know_sets_what_is_not_known(): void
+    {
+        $classes = new ClassLength(true, false, false, false, new PcreTarget(80400, '10.49'), CharacterTables::builtIn());
+        $class = static fn (NodeInterface ...$members): CharClassNode => new CharClassNode(new AlternationNode($members, 1, 20), false, 0, 21);
+        $unknown = static fn (): UnicodePropNode => new UnicodePropNode('{nonsense}', true, 3, 15);
+
+        $this->assertNull($classes->of($class(new CharTypeNode('D', 1, 3), $unknown()), false, false));
+        $this->assertSame(1, $classes->of($class(new CharTypeNode('D', 1, 3), new LiteralNode('0123456789', 3, 13), $unknown()), false, false));
+
+        $a = ExtendedClassLength::NO_BYTE;
+        $a[0x61 >> 3] = \chr(1 << (0x61 & 7));
+        foreach ([[$unknown()], [$unknown(), new UnicodePropNode('{L}', true, 15, 20)]] as $properties) {
+            $operand = $classes->operand($class(new LiteralNode('a', 1, 2), ...$properties), false, false, false);
+            $this->assertNotNull($operand);
+            $this->assertSame([$a, ~$a], [$operand[3], $operand[4]]);
+        }
     }
 
     /**
@@ -296,6 +330,27 @@ final class ClassFormLengthTest extends TestCase
         // byte changes nothing: it counted 33 units.
         yield 'class of what the locale holds past ASCII and a property, 10.47' => ['pattern' => '/(?[ [^\\W\\x00-\\x7f] + \\p{L} ])/', 'release' => '10.47', 'length' => 52];
         yield 'class that may hold every character but for a property, 10.48' => ['pattern' => '/(?[ [^a] | !\\D ])/u', 'release' => '10.48', 'length' => 52];
+        // A property sets in the map the characters below 256 it matches,
+        // from the tables of the release: a count repeats the class as a
+        // type where they complete a match of any character, as a class
+        // where they do not.
+        yield 'counted class of every character but a, and the digits, 10.45' => ['pattern' => '/(?[ [^a] | !\\D ]){2}/u', 'release' => '10.45', 'length' => 57];
+        yield 'counted class of every character but a, and the digits, 10.49' => ['pattern' => '/(?[ [^a] | !\\D ]){2}/u', 'release' => '10.49', 'length' => 57];
+        yield 'counted class of every character but a, and the small letters, 10.46' => ['pattern' => '/(?[ [^a] | !\\P{Ll} ]){2}/u', 'release' => '10.46', 'length' => 55];
+        yield 'counted class of every character but the feminine ordinal, and the other letters, 10.47' => ['pattern' => '/(?[ [^\\xaa] | \\p{Lo} ]){2}/u', 'release' => '10.47', 'length' => 55];
+        yield 'counted class of every character but the middle dot, and the Greek script extensions, 10.48' => ['pattern' => '/(?[ [^\\xb7] | \\p{Greek} ]){2}/u', 'release' => '10.48', 'length' => 55];
+        yield 'counted class of every character but the middle dot, and the Greek script, 10.48' => ['pattern' => '/(?[ [^\\xb7] | \\p{sc:Greek} ]){2}/u', 'release' => '10.48', 'length' => 57];
+        yield 'counted class of every character but 5, and the digits under UCP, 10.49' => ['pattern' => '/(?[ [^5] | \\d ]){2}/u', 'release' => '10.49', 'length' => 55];
+        yield 'counted class of every character but é, and the POSIX letters under UCP, 10.45' => ['pattern' => '/(?[ [^\\xe9] | [:alpha:] ]){2}/u', 'release' => '10.45', 'length' => 55];
+        yield 'counted caseless class of every character but a, and the capital letters, 10.46' => ['pattern' => '/(?[ [^a] | \\p{Lu} ]){2}/iu', 'release' => '10.46', 'length' => 55];
+        yield 'counted class of every character but a, and the capital letters, 10.46' => ['pattern' => '/(?[ [^a] | \\p{Lu} ]){2}/u', 'release' => '10.46', 'length' => 57];
+        yield 'counted class of every character but the section sign, and the POSIX punctuation under UCP, 10.47' => ['pattern' => '/(?[ [^\\xa7] | [:punct:] ]){2}/u', 'release' => '10.47', 'length' => 55];
+        yield 'counted class of every character but the cent sign, and the POSIX punctuation under UCP, 10.47' => ['pattern' => '/(?[ [^\\xa2] | [:punct:] ]){2}/u', 'release' => '10.47', 'length' => 57];
+        yield 'counted intersection with every character of every character but a, and the digits, 10.48' => ['pattern' => '/(?[ ( [^a] | !\\D ) & \\p{Any} ]){2}/u', 'release' => '10.48', 'length' => 58];
+        yield 'counted intersection with every character of every character but 5, and the digits, 10.48' => ['pattern' => '/(?[ ( [^5] | \\d ) & \\p{Any} ]){2}/u', 'release' => '10.48', 'length' => 56];
+        yield 'counted class of every byte but a, and the small letters under UCP, 10.49' => ['pattern' => '/(*UCP)(?[ [^a] | \\p{Ll} ]){2}/', 'release' => '10.49', 'length' => 55];
+        yield 'counted class of every byte but a, and the small letters, 10.45' => ['pattern' => '/(?[ [^a] | \\p{Ll} ]){2}/', 'release' => '10.45', 'length' => 55];
+        yield 'counted caseless class of every byte but a, and what is not a letter, 10.47' => ['pattern' => '/(?[ [^a] | !\\p{Lu} ]){2}/i', 'release' => '10.47', 'length' => 57];
         yield 'class of no byte joined to a letter, 10.45' => ['pattern' => '/(?[ [^\\d\\D] + [a] ])/', 'release' => '10.45', 'length' => 77];
         yield 'letter joined to the class of no character, 10.49' => ['pattern' => '/(?[ [a] + \\P{Any} ])/u', 'release' => '10.49', 'length' => 77];
         // Every character: a match of any character after the length that
@@ -379,6 +434,10 @@ final class ClassFormLengthTest extends TestCase
         yield 'class of three hundred characters past 255, in lists, 10.48' => ['template' => '(?:['.self::wide(0x100, 300, 2).']c){%d}', 'flags' => 'u', 'release' => '10.48', 'largest' => 4057, 'offset' => 0];
         yield 'class of three hundred negated types under UCP, 10.45' => ['template' => '(?:['.str_repeat('\\D', 300).']c){%d}', 'flags' => 'u', 'release' => '10.45', 'largest' => 71, 'offset' => -1];
         yield 'class of three hundred negated types under UCP, 10.48' => ['template' => '(?:['.str_repeat('\\D', 300).']c){%d}', 'flags' => 'u', 'release' => '10.48', 'largest' => 71, 'offset' => 0];
+        yield 'counted class of every character but a, and the digits, 10.45' => ['template' => '(?:(?[ [^a] | !\\D ]){2}c){%d}', 'flags' => 'u', 'release' => '10.45', 'largest' => 1129, 'offset' => -1];
+        yield 'counted class of every character but a, and the digits, 10.48' => ['template' => '(?:(?[ [^a] | !\\D ]){2}c){%d}', 'flags' => 'u', 'release' => '10.48', 'largest' => 1129, 'offset' => 0];
+        yield 'counted class of every character but 5, and the digits, 10.45' => ['template' => '(?:(?[ [^5] | \\d ]){2}c){%d}', 'flags' => 'u', 'release' => '10.45', 'largest' => 1170, 'offset' => -1];
+        yield 'counted class of every character but 5, and the digits, 10.48' => ['template' => '(?:(?[ [^5] | \\d ]){2}c){%d}', 'flags' => 'u', 'release' => '10.48', 'largest' => 1170, 'offset' => 0];
     }
 
     /**
