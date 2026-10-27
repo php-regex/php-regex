@@ -69,6 +69,18 @@ final class DebugRedosSubjectDisplayTest extends TestCase
     }
 
     /**
+     * Without an input, debug runs on the input redos builds: the witness
+     * of a proven verdict, with the "b" every match of /(a+)+b/ needs.
+     */
+    #[Test]
+    public function test_debug_builds_its_input_from_the_witness(): void
+    {
+        $buffer = $this->runCommand(new DebugCommand(), 'debug', ['/(a+)+b/']);
+
+        $this->assertStringContainsString('"'.str_repeat('a', 32).'!b" (auto)', $buffer);
+    }
+
+    /**
      * The line that shows the subject, without its trailing newline.
      */
     private function inputLine(string $command, string $subject): string

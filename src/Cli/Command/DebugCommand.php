@@ -34,7 +34,6 @@ use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Redos\Heatmap;
-use PHPRegex\Redos\InputGenerator;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
@@ -186,13 +185,9 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             }
 
             $inputSource = '';
-            if (null === $inputValue && null !== $analysis->culpritNode) {
-                $inputValue = (new InputGenerator())->generate(
-                    $analysis->culpritNode,
-                    $patternInfo->flags,
-                    $analysis->severity,
-                );
-                $inputSource = ' (auto)';
+            if (null === $inputValue) {
+                $inputValue = RedosInput::forAnalysis($analysis, $patternInfo->flags);
+                $inputSource = null === $inputValue ? '' : ' (auto)';
             }
             $inputSourceLabel = null;
             if (null !== $inputValue) {

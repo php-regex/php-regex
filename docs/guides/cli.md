@@ -302,7 +302,7 @@ vendor/bin/regex debug '/(a+)+$/'
   Trigger:    quantifier +
   Hotspots:   2
   Attack: "a" x n . "!"
-  Input:      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!" (auto)
+  Input:      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!" (auto)
 
   [2/2] Findings
   - [MEDIUM] Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...).
@@ -886,10 +886,10 @@ vendor/bin/regex redos '/(a+)+$/'
 
   [2/3] Input
   Source       : auto
-  Base length  : 51
-  Final length : 51
+  Base length  : 33
+  Final length : 33
   Iterations   : 1 (warmup 0)
-  Preview      : "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!"
+  Preview      : "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!"
 
   [3/3] Benchmark
 case     | result |    wall_ms |     avg_ms |     cpu_ms |     mem_kb |    peak_kb | err
@@ -897,6 +897,9 @@ case     | result |    wall_ms |     avg_ms |     cpu_ms |     mem_kb |    peak_
 vuln     | error  |       2.57 |       2.57 |       2.39 |       +0.0 |       +0.0 | Backtrack limit exhausted
 ```
 
+The input is the witness of a proven verdict, 32 pumps of an exponential one and 1,000 of a polynomial one, so it holds
+what every match needs: `/(a+)+b/` runs on `"a" x 32 . "!b"`, where `"a" x 50 . "!"` would be rejected before any
+backtracking for want of a `b`. Without a proof, the input is built from the culprit the heuristics name.
 `--safe '<pattern>'` measures a fixed variant alongside, `--input` pins the subject,
 `--jit 0` forces the interpreter. See the [ReDoS guide](redos.md#confirmed-mode) for
 what a replay does and does not prove.

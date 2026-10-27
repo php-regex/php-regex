@@ -240,11 +240,6 @@ two parsers read differently.
 The literal-fragment builder, the repairer and the confirmed mode first:
 they answer wrong, not just incomplete.
 
-- `regex redos`'s auto input omits the pattern's required literal:
-  `/(a+)+b/` benchmarks `"aaa…a!"` — no `b` anywhere — so the required-
-  code-unit scan answers in one step and the report reads `vuln: no,
-  0.03 ms` for the textbook evil pattern. `/(a+)+$/` only works because
-  the anchor ends it (`InputGenerator.php:27-48`).
 - The Python target emits a lookbehind Python's `re` refuses to compile:
   `/(?<=a{1,3})b/` (valid PCRE2 10.43+, engine matches `"aab"`)
   transpiles to `r'(?a)(?<=a{1,3})b'` → `re.error: look-behind requires

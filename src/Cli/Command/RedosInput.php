@@ -16,6 +16,8 @@ namespace PHPRegex\Cli\Command;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Redos\InputGenerator;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -31,6 +33,15 @@ final class RedosInput
      * How much of the subject the report shows unless asked for all of it.
      */
     public const PREVIEW_LIMIT = 120;
+
+    /**
+     * The pumps of a witness the generated input holds: enough for an
+     * exponential attempt to reach any backtrack limit, and for a
+     * polynomial one to take time without a long subject.
+     */
+    private const EXPONENTIAL_PUMPS = 32;
+
+    private const POLYNOMIAL_PUMPS = 1000;
 
     /**
      * @param string  $value   the input before it is repeated
@@ -84,22 +95,38 @@ final class RedosInput
     }
 
     /**
-     * An input built to make the culprit of the pattern backtrack, or the
-     * default one when there is none.
+     * The input built for an analysis: its witness when the verdict is
+     * proven, which holds the literals every match needs that PCRE2 looks
+     * for before it backtracks, else one that makes its culprit backtrack;
+     * null when it has neither.
+     */
+    public static function forAnalysis(RedosAnalysis $analysis, string $flags): ?string
+    {
+        $witness = $analysis->witness;
+        if (null !== $witness) {
+            return $witness->build(RedosComplexity::Exponential === $analysis->complexity ? self::EXPONENTIAL_PUMPS : self::POLYNOMIAL_PUMPS);
+        }
+
+        if (null === $analysis->culpritNode) {
+            return null;
+        }
+
+        $generated = (new InputGenerator())->generate($analysis->culpritNode, $flags, $analysis->severity);
+
+        return '' === $generated ? null : $generated;
+    }
+
+    /**
+     * An input built for the pattern, or the default one when there is none.
      *
      * @return array{0: string, 1: string, 2: ?string}
      */
     private static function generate(Regex $regex, string $pattern): array
     {
         try {
-            $analysis = $regex->redos($pattern);
-            $culprit = $analysis->culpritNode;
-            if (null !== $culprit) {
-                $patternInfo = DelimitedPattern::fromDelimited($pattern, $regex->target());
-                $generated = (new InputGenerator())->generate($culprit, $patternInfo->flags, $analysis->severity);
-                if ('' !== $generated) {
-                    return [$generated, 'auto', null];
-                }
+            $generated = self::forAnalysis($regex->redos($pattern), DelimitedPattern::fromDelimited($pattern, $regex->target())->flags);
+            if (null !== $generated) {
+                return [$generated, 'auto', null];
             }
         } catch (\Throwable) {
             // Fall back to default input.

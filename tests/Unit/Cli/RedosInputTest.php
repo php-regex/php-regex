@@ -73,6 +73,27 @@ final class RedosInputTest extends TestCase
         $this->assertSame($input->value, $input->subject);
     }
 
+    /**
+     * A proven verdict carries its witness, the input that drives the worst
+     * case: the generated input is that witness, which holds the literal
+     * every match needs. "a" x 50 . "!" holds no "b", and PCRE2 rejects it
+     * for /(a+)+b/ before it backtracks; the witness runs into the backtrack
+     * limit (PHP 8.4.27, PCRE2 10.49, no JIT).
+     */
+    #[Test]
+    public function test_a_proven_verdict_runs_on_its_witness(): void
+    {
+        $regex = Regex::create();
+        $input = RedosInput::from(new RedosArguments('/(a+)+b/'), $regex);
+
+        $this->assertInstanceOf(RedosInput::class, $input);
+        $this->assertSame('auto', $input->source);
+        $witness = $regex->redos('/(a+)+b/')->witness;
+        $this->assertNotNull($witness);
+        $this->assertSame($witness->build(32), $input->value);
+        $this->assertStringContainsString('b', $input->value);
+    }
+
     #[Test]
     public function test_a_pattern_without_a_culprit_runs_on_the_default_input(): void
     {
