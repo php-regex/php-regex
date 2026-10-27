@@ -15,7 +15,6 @@ namespace PHPRegex\Parser\Validation;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\GroupIndex;
-use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SemanticErrorException;
@@ -57,15 +56,16 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
-use PHPRegex\Parser\Text\Bytes;
 
 /**
  * The semantic checks of a parsed pattern: what PCRE2 refuses in a tree the
  * parser could build, at the offset the release judged reports it.
  *
  * It walks the tree once, in the order PCRE2 reads the pattern, and keeps
- * the checks that need that walk: the nesting limit and callouts. PCRE2
- * refuses some things only once it has read the whole pattern: a lookbehind it cannot
+ * what needs that walk: the nesting limit, where the walk stands (in a
+ * class, a lookaround, a repeat, the payload of a "(*pla:...)" parsed
+ * apart), and when an error found late is raised. PCRE2 refuses some
+ * things only once it has read the whole pattern: a lookbehind it cannot
  * measure, a reference to a group the pattern does not have, a "\K" in a
  * lookaround from PHP 8.5, a conditional of more than two branches. The
  * walk keeps the first error of each of those passes and raises the
@@ -76,10 +76,11 @@ use PHPRegex\Parser\Text\Bytes;
  * hands the text being read: EscapeChecks for one escape as written,
  * ReferenceChecks for what names a group, VerbChecks for a verb and the
  * settings of the opening run, ClassChecks for the brackets and quotes of
- * a class, RangeChecks for its ranges, ConditionalChecks for the branches
- * of a conditional and the version it compares with, QuantifierChecks for
- * the count of a repeat, LookbehindChecks for the measure of lookbehinds, CompiledSize
- * for the 64 KiB limit.
+ * a class, RangeChecks for its ranges, QuantifierChecks for the count of a
+ * repeat, ConditionalChecks for the branches of a conditional and the
+ * version it compares with, CalloutChecks for the number of a callout,
+ * LookbehindChecks for the measure of lookbehinds, CompiledSize for the
+ * 64 KiB limit.
  *
  * Each walk starts from a clean state. FirstErrorLocator also asks it about
  * a class parsed alone, and about the part of a pattern read before a
@@ -276,6 +277,11 @@ final class Validator extends AbstractNodeVisitor
     private QuantifierChecks $quantifiers;
 
     /**
+     * The check of the callouts of the text being read.
+     */
+    private CalloutChecks $callouts;
+
+    /**
      * The measure of the lookbehinds of the pattern.
      */
     private LookbehindChecks $lookbehindChecks;
@@ -299,6 +305,7 @@ final class Validator extends AbstractNodeVisitor
         $this->ranges = new RangeChecks($this->target, $pattern);
         $this->conditionals = new ConditionalChecks($this->target, $this->keepBranchCountError(...), $pattern);
         $this->quantifiers = new QuantifierChecks($this->target, $pattern);
+        $this->callouts = new CalloutChecks($pattern);
         $this->lookbehindChecks = new LookbehindChecks($groups, $this->target, $this->checkMeasuredReference(...), $pattern, $maxLookbehindLength, false);
     }
 
@@ -411,8 +418,10 @@ final class Validator extends AbstractNodeVisitor
             $this->measureLookbehind($node);
         }
 
-        $text = [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes, $this->ranges, $this->conditionals, $this->quantifiers];
-        if ($node->child->getStartPosition() <= $node->startPosition) {
+        $source = $this->source;
+        $positionOffset = $this->positionOffset;
+        $readApart = $node->child->getStartPosition() <= $node->startPosition;
+        if ($readApart) {
             $this->enterPayload($node->startPosition, $node->endPosition);
             $this->readText();
         }
@@ -446,7 +455,11 @@ final class Validator extends AbstractNodeVisitor
         try {
             $node->child->accept($this);
         } finally {
-            [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes, $this->ranges, $this->conditionals, $this->quantifiers] = $text;
+            $this->source = $source;
+            $this->positionOffset = $positionOffset;
+            if ($readApart) {
+                $this->readText();
+            }
             if ($nests) {
                 $this->nestingDepth--;
             }
@@ -813,15 +826,7 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitCallout(CalloutNode $node): void
     {
-        // Any string is a valid argument, the empty one included: PCRE2
-        // compiles (?C""), (?C'') and (?C{}). A number goes up to 255.
-        if (\is_int($node->identifier) && ($node->identifier < 0 || $node->identifier > 255)) {
-            $this->raiseSemanticError(
-                \sprintf('Callout identifier must be between 0 and 255, got %d.', $node->identifier),
-                $this->calloutOverflowOffset($node),
-                ErrorCode::CalloutOutOfRange,
-            );
-        }
+        $this->callouts->callout($node);
     }
 
     /**
@@ -905,6 +910,7 @@ final class Validator extends AbstractNodeVisitor
         $this->ranges = new RangeChecks($this->target, $this->pattern, $node->source, 0, $this->unicodeMode);
         $this->conditionals = new ConditionalChecks($this->target, $this->keepBranchCountError(...), $this->pattern, $node->source, 0, $this->unicodeMode);
         $this->quantifiers = new QuantifierChecks($this->target, $this->pattern, $node->source);
+        $this->callouts = new CalloutChecks($this->pattern, $node->source);
         // A measure of its own: what an earlier pattern measured is gone.
         $this->lookbehindChecks = new LookbehindChecks($groups, $this->target, $this->checkMeasuredReference(...), $this->pattern, $this->maxLookbehindLength, $this->unicodeMode);
 
@@ -945,27 +951,6 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * PCRE reads the number of a callout digit by digit, and stops past the
-     * one that takes it over 255.
-     */
-    private function calloutOverflowOffset(CalloutNode $node): int
-    {
-        $digits = null !== $this->source && 1 === LibraryPcre::match('/\G\d++/', $this->source, $matches, 0, $node->startPosition + 3)
-            ? $matches[0]
-            : (string) $node->identifier; // Unreachable from a parsed pattern: only a hand-built callout has no source.
-
-        $number = 0;
-        foreach (Bytes::split($digits) as $index => $digit) {
-            $number = $number * 10 + (int) $digit;
-            if ($number > 255) {
-                return $node->startPosition + 4 + $index;
-            }
-        }
-
-        return $node->startPosition + 4; // Unreachable from a parsed pattern, whose number is over 255 here.
-    }
-
-    /**
      * "(?C1)(?=a)" as the condition of a conditional.
      */
     private function isCalloutThenAssertion(NodeInterface $condition): bool
@@ -978,8 +963,7 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * Whether the version numbers of "(?(VERSION...)" are read whole, as
-     * PCRE2 10.47 does; before, the minor is two digits.
+     * Whether the PCRE2 judged has $feature.
      */
     private function supports(PcreFeature $feature): bool
     {
@@ -1022,8 +1006,8 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * Point the checks that read the text at the one read now, after a step
-     * into a payload.
+     * Point the checks that read the text at the one read now: the payload
+     * of a "(*pla:...)" stepped into, or the text around it once left.
      */
     private function readText(): void
     {
@@ -1034,6 +1018,7 @@ final class Validator extends AbstractNodeVisitor
         $this->ranges = $this->ranges->reading($this->source, $this->positionOffset);
         $this->conditionals = $this->conditionals->reading($this->source, $this->positionOffset);
         $this->quantifiers = $this->quantifiers->reading($this->source, $this->positionOffset);
+        $this->callouts = $this->callouts->reading($this->source, $this->positionOffset);
     }
 
     /**
