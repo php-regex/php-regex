@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Config;
 
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 
@@ -114,6 +115,6 @@ final class JudgedRange
             }
         }
 
-        return new PcreTarget($phpVersionId, $this->pinnedPcre ?? PcreTarget::bundledWith($phpVersionId)->pcreVersion, $this->floor->target()->locale);
+        return ParserOptions::resolveTarget($phpVersionId, $this->pinnedPcre, $this->floor->target()->locale);
     }
 }

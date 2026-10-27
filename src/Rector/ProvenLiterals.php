@@ -15,7 +15,7 @@ namespace PHPRegex\Rector;
 
 use PHPRegex\Automata\TrivialMatch;
 use PHPRegex\Automata\TrivialMatchClassifier;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\RegexParser;
 
 /**
@@ -125,6 +125,6 @@ final class ProvenLiterals
      */
     private static function targetKey(int $phpVersion): string
     {
-        return PcreTarget::bundledWith($phpVersion)->key();
+        return ParserOptions::resolveTarget($phpVersion)->key();
     }
 }

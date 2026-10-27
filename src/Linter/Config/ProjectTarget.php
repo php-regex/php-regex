@@ -181,11 +181,9 @@ final class ProjectTarget
         }
 
         $pinnedPcre = $pcreVersion;
-        $pcreVersion ??= $runningPhp ? PcreTarget::runtime()->pcreVersion : PcreTarget::bundledWith($phpVersionId)->pcreVersion;
-
         $source = null === $pcreSource || $pcreSource === $phpSource ? $phpSource : $phpSource.'; '.$pcreSource;
         $source = null === $localeSource || str_contains('; '.$source.';', '; '.$localeSource.';') ? $source : $source.'; '.$localeSource;
-        $target = new PcreTarget($phpVersionId, $pcreVersion, $localeName);
+        $target = ParserOptions::resolveTarget($runningPhp ? null : $phpVersionId, $pcreVersion, $localeName);
         $range = self::rangeFor($target, $constraint, $pinnedPcre);
         $admitted = null === $constraint ? null : self::admittedFrom($phpVersionId, ComposerConstraint::intervals($constraint) ?? []);
 
@@ -475,7 +473,7 @@ final class ProjectTarget
             // A branch that allows nothing, ">=8.4 <8.2", holds no point.
             foreach ($intervals as [$lowest, $below]) {
                 if ($point >= $lowest && (null === $below || $point < $below)) {
-                    $range[] = new PcreTarget($point, $pinnedPcre ?? PcreTarget::bundledWith($point)->pcreVersion, $floor->locale);
+                    $range[] = ParserOptions::resolveTarget($point, $pinnedPcre, $floor->locale);
 
                     continue 2;
                 }

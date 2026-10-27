@@ -28,7 +28,6 @@ use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ParserOptions;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use Rector\ValueObject\PhpVersion;
 
@@ -138,7 +137,7 @@ final class PregCall
     {
         $phpVersion = min(max($phpVersion, ParserOptions::OLDEST_PHP_VERSION_ID), ParserOptions::LATEST_PHP_VERSION_ID);
 
-        return RegexParser::create(['php_version' => $phpVersion, 'pcre_version' => PcreTarget::bundledWith($phpVersion)->pcreVersion]);
+        return RegexParser::create(['php_version' => $phpVersion]);
     }
 
     /**

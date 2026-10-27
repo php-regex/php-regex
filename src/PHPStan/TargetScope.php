@@ -292,8 +292,7 @@ final class TargetScope
                 continue;
             }
 
-            $pcre = \is_string($pcreVersion) ? $pcreVersion : PcreTarget::bundledWith($phpVersionId)->pcreVersion;
-            $target = new PcreTarget($phpVersionId, $pcre, $floor->locale);
+            $target = ParserOptions::resolveTarget($phpVersionId, \is_string($pcreVersion) ? $pcreVersion : null, $floor->locale);
             $parsers[] = [$floorParser->withTarget($target), self::label($target)];
         }
 

@@ -73,11 +73,11 @@ final class RangeDiff
 
         $base ??= RegexParser::create();
         $locale = $base->target()->locale;
-        $first = $base->withTarget(ParserOptions::fromArray(['php_version' => $from, 'pcre_version' => PcreTarget::bundledWith($from)->pcreVersion, 'locale' => $locale])->target);
+        $first = $base->withTarget(ParserOptions::fromArray(['php_version' => $from, 'locale' => $locale])->target);
         $later = [];
         foreach (PcreTarget::phpVersionBoundaries() as $point) {
             if ($point > $from && $point <= $to) {
-                $later[] = $base->withTarget(new PcreTarget($point, PcreTarget::bundledWith($point)->pcreVersion, $locale));
+                $later[] = $base->withTarget(ParserOptions::resolveTarget($point, null, $locale));
             }
         }
 

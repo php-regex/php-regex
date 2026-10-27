@@ -238,6 +238,31 @@ final class ParserOptions
     }
 
     /**
+     * The target of a PHP, a PCRE2 release and a locale, each named or
+     * not: the one place the options, the lint and the bridges resolve it.
+     * A release named is used as is, older or newer than the one the PHP
+     * bundles. Without one, the running PHP gets the PCRE2 it links, and a
+     * PHP named, the running one included, the PCRE2 its sources bundle
+     * (PcreTarget::bundledWith()). The locale is the runtime's unless one
+     * is named.
+     *
+     * @internal
+     *
+     * @param int|null    $phpVersionId a PHP_VERSION_ID, null for the running PHP
+     * @param string|null $pcreVersion  a PCRE2 release, "10.44", as PCRE_VERSION spells it or without its date
+     * @param string|null $locale       an LC_CTYPE locale, "tr_TR.UTF-8"
+     *
+     * @throws InvalidRegexOptionException when $pcreVersion names no release, or $locale one this machine
+     *                                     cannot set
+     */
+    public static function resolveTarget(?int $phpVersionId, ?string $pcreVersion = null, ?string $locale = null): PcreTarget
+    {
+        $pcreVersion ??= null === $phpVersionId ? \PCRE_VERSION : PcreTarget::bundledWith($phpVersionId)->pcreVersion;
+
+        return new PcreTarget($phpVersionId ?? \PHP_VERSION_ID, $pcreVersion, $locale);
+    }
+
+    /**
      * Create default configuration with no custom options.
      *
      * @return self Default configuration instance
@@ -378,16 +403,10 @@ final class ParserOptions
         // the PCRE2 it links unless a release is given beside it.
         $phpVersion = $options['php_version'] ?? null;
         if (\is_string($phpVersion) && 'runtime' === Ascii::lower(trim($phpVersion, " \t\n\r\0\x0B"))) {
-            return new PcreTarget(\PHP_VERSION_ID, $pcreVersion ?? \PCRE_VERSION, $locale);
+            return self::resolveTarget(null, $pcreVersion, $locale);
         }
 
-        $phpVersionId = self::getPhpVersionId($options);
-
-        return new PcreTarget(
-            $phpVersionId ?? \PHP_VERSION_ID,
-            $pcreVersion ?? (null === $phpVersionId ? \PCRE_VERSION : PcreTarget::bundledWith($phpVersionId)->pcreVersion),
-            $locale,
-        );
+        return self::resolveTarget(self::getPhpVersionId($options), $pcreVersion, $locale);
     }
 
     /**
