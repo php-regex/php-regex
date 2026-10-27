@@ -61,6 +61,16 @@ final class LiteralRunCompactionTest extends TestCase
         $this->assertSame('/a{4}/', (new Optimizer(RegexParser::create()))->optimize('/aaaa/')->optimized);
     }
 
+    #[Test]
+    public function test_a_quoted_run_compacts_between_escapes(): void
+    {
+        // Oracle: the quoted run is five "a", no fewer.
+        $this->assertSame(1, preg_match('/\d\Qaaaaa\E\d/', '1aaaaa2'));
+        $this->assertSame(0, preg_match('/\d\Qaaaaa\E\d/', '1aaaa2'));
+
+        $this->assertSame('/\da{5}\d/', (new Optimizer(RegexParser::create(['cache' => null])))->optimize('/\d\Qaaaaa\E\d/')->optimized);
+    }
+
     /**
      * @return iterable<string, array{pattern: string, subjects: list<string>}>
      */
