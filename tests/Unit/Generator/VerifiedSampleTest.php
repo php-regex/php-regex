@@ -64,6 +64,9 @@ final class VerifiedSampleTest extends TestCase
         yield 'condition with one valid branch' => ['pattern' => '/(?(?<!foo)cat|bar)/'];
         yield 'backreference' => ['pattern' => '/(a|b)\1/'];
         yield 'star delimiter' => ['pattern' => '*b\*c*'];
+        // The class holds every delimiter the generator would test it
+        // between: it falls back to "!", which the class matches.
+        yield 'a class written with every delimiter' => ['pattern' => '/[^\/~#%@;a-zA-Z0-9]/'];
     }
 
     #[Test]

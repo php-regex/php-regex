@@ -625,4 +625,28 @@ final class RailroadSvgRendererTest extends TestCase
 
         $this->assertStringContainsString('Group (branch reset)', $svg);
     }
+
+    /**
+     * A word longer than a line of a label, the name of a reference, is
+     * cut into lines of 28 bytes at most, nothing of it lost or moved.
+     */
+    #[Test]
+    public function test_svg_cuts_a_word_longer_than_a_label_line(): void
+    {
+        $name = 'averyveryverylongnameofthirtychars';
+        $pattern = '/(?<'.$name.'>a)\\k<'.$name.'>/';
+        $this->assertSame(1, preg_match($pattern, 'aa'), 'Oracle: PCRE reads the long name.');
+
+        /** @var string $svg */
+        $svg = Regex::create()->parse($pattern)->accept(new RailroadSvgRenderer());
+        preg_match_all('#<text[^>]*>(.*?)</text>#s', $svg, $texts);
+        $lines = array_map(static fn (string $text): string => html_entity_decode($text, \ENT_QUOTES | \ENT_XML1), $texts[1]);
+        $start = array_search('Backref', $lines, true);
+        $this->assertIsInt($start);
+
+        $this->assertSame(['Backref', '(\\k<averyveryverylongnameoft', 'hirtychars>)'], \array_slice($lines, $start, 3));
+        foreach (\array_slice($lines, $start, 3) as $line) {
+            $this->assertLessThanOrEqual(28, \strlen($line), $line);
+        }
+    }
 }
