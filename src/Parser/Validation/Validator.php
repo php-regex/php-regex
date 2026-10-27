@@ -59,7 +59,6 @@ use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\PcreNumber;
-use PHPRegex\Parser\Syntax\PosixItem;
 use PHPRegex\Parser\Syntax\RepeatCount;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Syntax\VersionCondition;
@@ -72,20 +71,20 @@ use PHPRegex\Parser\Text\Bytes;
  *
  * It walks the tree once, in the order PCRE2 reads the pattern, and keeps
  * the checks that need that walk: the nesting limit, repeat counts, the
- * ranges and POSIX items of classes, version conditions and callouts. PCRE2
- * refuses some things only once it
- * has read the whole pattern: a lookbehind it cannot measure, a reference to
- * a group the pattern does not have, a "\K" in a lookaround from PHP 8.5, a
- * conditional of more than two branches. The walk keeps the first error of
- * each of those passes and raises the earliest pass's once it ends, unless
- * an error read on the way, or a pattern too large to compile, stops PCRE2
- * before.
+ * ranges of classes, version conditions and callouts. PCRE2 refuses some
+ * things only once it has read the whole pattern: a lookbehind it cannot
+ * measure, a reference to a group the pattern does not have, a "\K" in a
+ * lookaround from PHP 8.5, a conditional of more than two branches. The
+ * walk keeps the first error of each of those passes and raises the
+ * earliest pass's once it ends, unless an error read on the way, or a
+ * pattern too large to compile, stops PCRE2 before.
  *
  * The checks that need no walk stand in classes of their own, which it
  * hands the text being read: EscapeChecks for one escape as written,
  * ReferenceChecks for what names a group, VerbChecks for a verb and the
- * settings of the opening run, LookbehindChecks for the measure of
- * lookbehinds, CompiledSize for the 64 KiB limit.
+ * settings of the opening run, ClassChecks for the brackets and quotes of
+ * a class, LookbehindChecks for the measure of lookbehinds, CompiledSize
+ * for the 64 KiB limit.
  *
  * Each walk starts from a clean state. FirstErrorLocator also asks it about
  * a class parsed alone, and about the part of a pattern read before a
@@ -108,17 +107,6 @@ final class Validator extends AbstractNodeVisitor
     private const VALID_ASSERTIONS = [
         'A' => true, 'z' => true, 'Z' => true,
         'G' => true, 'b' => true, 'B' => true,
-    ];
-
-    /**
-     * The names of POSIX classes PCRE2 knows, matched case-sensitively.
-     */
-    private const VALID_POSIX_CLASSES = [
-        'alnum' => true, 'alpha' => true, 'ascii' => true,
-        'blank' => true, 'cntrl' => true, 'digit' => true,
-        'graph' => true, 'lower' => true, 'print' => true,
-        'punct' => true, 'space' => true, 'upper' => true,
-        'word' => true, 'xdigit' => true,
     ];
 
     /**
@@ -273,6 +261,11 @@ final class Validator extends AbstractNodeVisitor
     private VerbChecks $verbs;
 
     /**
+     * The checks of the brackets of the classes of the text being read.
+     */
+    private ClassChecks $classes;
+
+    /**
      * The measure of the lookbehinds of the pattern.
      */
     private LookbehindChecks $lookbehindChecks;
@@ -292,6 +285,7 @@ final class Validator extends AbstractNodeVisitor
         $this->escapes = new EscapeChecks($this->target, $pattern, engine: $engine);
         $this->references = new ReferenceChecks($groups, $groups->numbering(), $this->target, $this->keepMissingReference(...), $pattern);
         $this->verbs = new VerbChecks($this->target, $pattern);
+        $this->classes = new ClassChecks($this->target, $pattern);
         $this->lookbehindChecks = new LookbehindChecks($groups, $this->target, $this->checkMeasuredReference(...), $pattern, $maxLookbehindLength, false);
     }
 
@@ -404,7 +398,7 @@ final class Validator extends AbstractNodeVisitor
             $this->measureLookbehind($node);
         }
 
-        $text = [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs];
+        $text = [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes];
         if ($node->child->getStartPosition() <= $node->startPosition) {
             $this->enterPayload($node->startPosition, $node->endPosition);
             $this->readText();
@@ -439,7 +433,7 @@ final class Validator extends AbstractNodeVisitor
         try {
             $node->child->accept($this);
         } finally {
-            [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs] = $text;
+            [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes] = $text;
             if ($nests) {
                 $this->nestingDepth--;
             }
@@ -555,8 +549,8 @@ final class Validator extends AbstractNodeVisitor
             return;
         }
 
-        if ($this->charClassDepth > 0 && '[' === $node->value && $this->isUnquotedClassBracket($this->source, $node)) {
-            $this->validateBracketInClass($this->source, $node->startPosition);
+        if ($this->charClassDepth > 0 && '[' === $node->value && $this->classes->isUnquotedBracket($node, $this->classQuoteOpen)) {
+            $this->classes->bracket($node->startPosition);
 
             return;
         }
@@ -655,16 +649,12 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitCharClass(CharClassNode $node): void
     {
-        if (0 === $this->charClassDepth && null !== $this->source) {
-            $start = $node->startPosition;
-
-            // "[[:<:]]" and "[[:>:]]" are the old POSIX word boundaries,
-            // which PCRE reads as such outside a class.
-            if (\in_array(substr($this->source, $start, 7), ['[[:<:]]', '[[:>:]]'], true)) {
+        if (0 === $this->charClassDepth) {
+            if ($this->classes->isWordBoundary($node->startPosition)) {
                 return;
             }
 
-            $this->validatePosixOutsideClass($this->source, $start);
+            $this->classes->posixOutsideClass($node->startPosition);
         }
 
         $parts = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
@@ -676,7 +666,7 @@ final class Validator extends AbstractNodeVisitor
         try {
             $end = $node->startPosition;
             foreach ($parts as $part) {
-                $this->readClassQuotes($end, $part->getStartPosition());
+                $this->classQuoteOpen = $this->classes->quoteOpenAfter($end, $part->getStartPosition(), $this->classQuoteOpen);
                 $part->accept($this);
                 $end = $part->getEndPosition();
             }
@@ -723,11 +713,11 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $node->start->accept($this);
-        $this->readClassQuotes($node->start->getEndPosition(), $node->end->getStartPosition());
+        $this->classQuoteOpen = $this->classes->quoteOpenAfter($node->start->getEndPosition(), $node->end->getStartPosition(), $this->classQuoteOpen);
 
         // "[a-[.x.]]": a collating element is no range end.
-        if (null !== $this->source && $node->end instanceof LiteralNode && '[' === $node->end->value && $this->isUnquotedClassBracket($this->source, $node->end)) {
-            $this->validateBracketInClass($this->source, $node->end->startPosition, true);
+        if ($node->end instanceof LiteralNode && '[' === $node->end->value && $this->classes->isUnquotedBracket($node->end, $this->classQuoteOpen)) {
+            $this->classes->bracket($node->end->startPosition, true);
         }
 
         $this->endsRange = true;
@@ -788,15 +778,7 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitPosixClass(PosixClassNode $node): void
     {
-        // PCRE matches the name case-sensitively: "[[:ALPHA:]]" is unknown.
-        if (!$this->isPosixClassName($node->class)) {
-            // Past the class from PCRE2 10.45, on its name before.
-            $this->raiseSemanticError(
-                \sprintf('Invalid POSIX class: "%s".', $node->class),
-                $this->supports(PcreFeature::PosixItemErrorPastItsEnd) ? $node->getEndPosition() : $node->startPosition + 2 + (str_starts_with($node->class, '^') ? 1 : 0),
-                ErrorCode::PosixInvalid,
-            );
-        }
+        $this->classes->posixClass($node);
     }
 
     #[\Override]
@@ -1071,6 +1053,7 @@ final class Validator extends AbstractNodeVisitor
         $groups = GroupIndex::of($node->pattern);
         $this->references = new ReferenceChecks($groups, $groups->numbering(), $this->target, $this->keepMissingReference(...), $this->pattern, $node->source, 0, $this->unicodeMode);
         $this->verbs = VerbChecks::forPattern($this->target, $this->pattern, $node->source, $this->unicodeMode);
+        $this->classes = new ClassChecks($this->target, $this->pattern, $node->source);
         // A measure of its own: what an earlier pattern measured is gone.
         $this->lookbehindChecks = new LookbehindChecks($groups, $this->target, $this->checkMeasuredReference(...), $this->pattern, $this->maxLookbehindLength, $this->unicodeMode);
 
@@ -1210,123 +1193,6 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * Whether a "[" read inside a class was written as is, rather than
-     * escaped or quoted: PCRE reads a quoted "[" as text, so "[\Qc[:(\E:]"
-     * opens no POSIX class.
-     */
-    private function isUnquotedClassBracket(string $source, LiteralNode $node): bool
-    {
-        $start = $node->startPosition;
-
-        return !$this->classQuoteOpen && 1 === $node->endPosition - $start && '[' === ($source[$start] ?? '');
-    }
-
-    /**
-     * Follow the "\Q" and "\E" written between two items of a class, from
-     * $from to $to: no node records them, and nothing else sits there but
-     * the class opener, the "^" that negates it, the "-" of a range and,
-     * under "xx", blanks, none of them a backslash, so the last one decides.
-     * Each stretch is read once, which keeps a long quoted class linear.
-     */
-    private function readClassQuotes(int $from, int $to): void
-    {
-        if (null === $this->source || $to <= $from) {
-            return;
-        }
-
-        $between = substr($this->source, $from, $to - $from);
-        $open = strrpos($between, '\Q');
-        $close = strrpos($between, '\E');
-        if (false !== $open || false !== $close) {
-            $this->classQuoteOpen = false === $close || (false !== $open && $open > $close);
-        }
-    }
-
-    /**
-     * A "[" inside a class starts a POSIX item when one closes after it:
-     * "[[:alpha:]]" is known, "[[:foo:]]" and "[[.ch.]]" are errors.
-     *
-     * @param bool $isRangeEnd whether the item ends a range, as in "[a-[.x.]]"
-     */
-    private function validateBracketInClass(string $source, int $start, bool $isRangeEnd = false): void
-    {
-        $terminator = $this->findPosixTerminator($source, $start + 1);
-        if (null === $terminator) {
-            return;
-        }
-
-        // Past the element from PCRE2 10.45; before, on the "[" that opens
-        // a collating element, or on the name of a class.
-        $past = $this->supports(PcreFeature::PosixItemErrorPastItsEnd);
-
-        // As a range end, "[a-[.x.]]", just inside its "[", and refused as a
-        // range PCRE cannot make before its name is read: "[a-[:\d:]]", a
-        // name the lexer reads as no class, too.
-        if ($isRangeEnd) {
-            $this->raiseSemanticError('Invalid range in character class: a POSIX item cannot end a range.', $past ? $terminator + 2 : $start + 1, ErrorCode::RangeInvalidBounds);
-        }
-
-        // After a hyphen that is a member, "[-[.x.]]", on its "[".
-        if (':' !== $source[$start + 1]) {
-            $this->raiseSemanticError('POSIX collating elements are not supported.', $past ? $terminator + 2 : $start, ErrorCode::PosixCollatingElement);
-        }
-
-        $name = substr($source, $start + 2, $terminator - $start - 2);
-        if (!$this->isPosixClassName($name)) {
-            $this->raiseSemanticError(
-                \sprintf('Invalid POSIX class: "%s".', $name),
-                $past ? $terminator + 2 : $start + 2 + (str_starts_with($name, '^') ? 1 : 0),
-                ErrorCode::PosixInvalid,
-            );
-        }
-    }
-
-    /**
-     * "[:alpha:]" written as a class of its own is a POSIX item outside a
-     * class, which PCRE refuses rather than reading as a set of characters.
-     */
-    private function validatePosixOutsideClass(string $source, int $start): void
-    {
-        $terminator = $this->findPosixTerminator($source, $start + 1);
-        if (null === $terminator) {
-            return;
-        }
-
-        // Past its end from PCRE2 10.47, on its "[" before.
-        $offset = $this->target->faultOffset($terminator + 2, $terminator + 2 - $start);
-
-        if (':' === $source[$start + 1]) {
-            $this->raiseSemanticError(
-                'POSIX named classes are supported only within a class.',
-                $offset,
-                ErrorCode::PosixOutsideClass,
-            );
-        }
-
-        $this->raiseSemanticError(
-            'POSIX collating elements are not supported.',
-            $offset,
-            ErrorCode::PosixCollatingElement,
-        );
-    }
-
-    /**
-     * PCRE2's check_posix_syntax(): after "[:", "[." or "[=", find the
-     * matching ":]", ".]" or "=]" before any "]" or a new "[:"-like opener.
-     *
-     * @return int|null the offset of the closing ":", "." or "="
-     */
-    private function findPosixTerminator(string $source, int $offset): ?int
-    {
-        return PosixItem::terminator($source, $offset - 1);
-    }
-
-    private function isPosixClassName(string $name): bool
-    {
-        return isset(self::VALID_POSIX_CLASSES[str_starts_with($name, '^') ? substr($name, 1) : $name]);
-    }
-
-    /**
      * The value an endpoint gives the range. Without Unicode mode PCRE reads
      * the pattern byte by byte, so a multibyte character written as is ends
      * a range start with its last byte and begins a range end with its first:
@@ -1424,6 +1290,7 @@ final class Validator extends AbstractNodeVisitor
         $this->escapes = $this->escapes->reading($this->source, $this->positionOffset);
         $this->references = $this->references->reading($this->source, $this->positionOffset);
         $this->verbs = $this->verbs->reading($this->source, $this->positionOffset);
+        $this->classes = $this->classes->reading($this->source, $this->positionOffset);
     }
 
     /**
