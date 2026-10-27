@@ -43,7 +43,6 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierNode;
-use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
@@ -56,8 +55,6 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\InlineFlags;
-use PHPRegex\Parser\Syntax\PcreNumber;
-use PHPRegex\Parser\Syntax\RepeatCount;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
@@ -67,9 +64,8 @@ use PHPRegex\Parser\Text\Bytes;
  * parser could build, at the offset the release judged reports it.
  *
  * It walks the tree once, in the order PCRE2 reads the pattern, and keeps
- * the checks that need that walk: the nesting limit, repeat counts and
- * callouts. PCRE2 refuses some things only once it has read the whole
- * pattern: a lookbehind it cannot
+ * the checks that need that walk: the nesting limit and callouts. PCRE2
+ * refuses some things only once it has read the whole pattern: a lookbehind it cannot
  * measure, a reference to a group the pattern does not have, a "\K" in a
  * lookaround from PHP 8.5, a conditional of more than two branches. The
  * walk keeps the first error of each of those passes and raises the
@@ -81,7 +77,8 @@ use PHPRegex\Parser\Text\Bytes;
  * ReferenceChecks for what names a group, VerbChecks for a verb and the
  * settings of the opening run, ClassChecks for the brackets and quotes of
  * a class, RangeChecks for its ranges, ConditionalChecks for the branches
- * of a conditional and the version it compares with, LookbehindChecks for the measure of lookbehinds, CompiledSize
+ * of a conditional and the version it compares with, QuantifierChecks for
+ * the count of a repeat, LookbehindChecks for the measure of lookbehinds, CompiledSize
  * for the 64 KiB limit.
  *
  * Each walk starts from a clean state. FirstErrorLocator also asks it about
@@ -274,6 +271,11 @@ final class Validator extends AbstractNodeVisitor
     private ConditionalChecks $conditionals;
 
     /**
+     * The checks of the counts of the repeats of the text being read.
+     */
+    private QuantifierChecks $quantifiers;
+
+    /**
      * The measure of the lookbehinds of the pattern.
      */
     private LookbehindChecks $lookbehindChecks;
@@ -296,6 +298,7 @@ final class Validator extends AbstractNodeVisitor
         $this->classes = new ClassChecks($this->target, $pattern);
         $this->ranges = new RangeChecks($this->target, $pattern);
         $this->conditionals = new ConditionalChecks($this->target, $this->keepBranchCountError(...), $pattern);
+        $this->quantifiers = new QuantifierChecks($this->target, $pattern);
         $this->lookbehindChecks = new LookbehindChecks($groups, $this->target, $this->checkMeasuredReference(...), $pattern, $maxLookbehindLength, false);
     }
 
@@ -408,7 +411,7 @@ final class Validator extends AbstractNodeVisitor
             $this->measureLookbehind($node);
         }
 
-        $text = [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes, $this->ranges, $this->conditionals];
+        $text = [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes, $this->ranges, $this->conditionals, $this->quantifiers];
         if ($node->child->getStartPosition() <= $node->startPosition) {
             $this->enterPayload($node->startPosition, $node->endPosition);
             $this->readText();
@@ -443,7 +446,7 @@ final class Validator extends AbstractNodeVisitor
         try {
             $node->child->accept($this);
         } finally {
-            [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes, $this->ranges, $this->conditionals] = $text;
+            [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes, $this->ranges, $this->conditionals, $this->quantifiers] = $text;
             if ($nests) {
                 $this->nestingDepth--;
             }
@@ -492,27 +495,7 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): void
     {
-        // "\N{4 }", "\N{,2}": before PCRE2 10.43 such a count does not repeat
-        // "\N", and "\N{" that is no repeat is refused where the "\N" ends.
-        // "a{ 4 }" and "a{,2}" are literal text there, which the lexer reads
-        // as such.
-        if ($node->node instanceof CharTypeNode && 'N' === $node->node->value && 0 === $this->charClassDepth
-            && str_starts_with($node->quantifier, '{')
-            && 1 !== LibraryPcre::match('/^\{\d++(?:,\d*+)?\}/', $node->quantifier)
-            && !$this->supports(PcreFeature::OpenAndPaddedRepeatCounts)) {
-            // Before 10.37 its digits are read first: one past 65535 is
-            // refused as too big a count, at the same place.
-            if (!$this->supports(PcreFeature::LargeOpenCountIsText) && null !== RepeatCount::overflowBeforeTen37($node->quantifier, 0)) {
-                $this->raiseSemanticError('Number too big in the count after \N: PCRE allows at most 65535 repetitions.', $node->node->getEndPosition(), ErrorCode::QuantifierTooBig);
-            }
-
-            $this->raiseSemanticError(
-                \sprintf('The count "%s" after \N needs PCRE2 10.43, which PHP bundles from 8.4.', $node->quantifier),
-                $node->node->getEndPosition(),
-                ErrorCode::EscapeUnsupported,
-                'Write the count as {n}, {n,} or {n,m} without spaces, or target PHP 8.4+.',
-            );
-        }
+        $this->quantifiers->countAfterN($node, $this->charClassDepth > 0);
 
         // PCRE reads the item before its count: what it refuses there comes
         // first, and what it checks once the pattern is read waits.
@@ -524,32 +507,7 @@ final class Validator extends AbstractNodeVisitor
             $this->repeatDepth--;
         }
 
-        [$min, $max] = QuantifierCounts::of($node->quantifier);
-
-        // PCRE caps repetition counts at 65535, and checks each number as
-        // it reads it, before it compares the two.
-        [$minEnd, $maxEnd] = $this->quantifierNumberEnds($node);
-
-        // Right after "\N", PCRE reads the count to tell it from a character
-        // name, and refuses it where the "\N" ends.
-        $afterN = $node->node instanceof CharTypeNode && 'N' === $node->node->value && null !== $this->source
-            && '{' === ($this->source[$node->node->getEndPosition()] ?? '') ? $node->node->getEndPosition() : null;
-        if ($min > PcreNumber::MAX || $max > PcreNumber::MAX) {
-            $this->raiseSemanticError(
-                \sprintf('Number too big in "%s" quantifier: PCRE allows at most 65535 repetitions.', $node->quantifier),
-                $afterN ?? ($min > PcreNumber::MAX ? $minEnd : $maxEnd),
-                ErrorCode::QuantifierTooBig,
-            );
-        }
-
-        if (-1 !== $max && $min > $max) {
-            $this->raiseSemanticError(
-                \sprintf('Invalid quantifier range "%s": min > max.', $node->quantifier),
-                $afterN ?? $maxEnd,
-                ErrorCode::QuantifierInvalidRange,
-                \sprintf('Write the smaller count first: "{%d,%d}".', $max, $min),
-            );
-        }
+        $this->quantifiers->counts($node);
     }
 
     #[\Override]
@@ -946,6 +904,7 @@ final class Validator extends AbstractNodeVisitor
         $this->classes = new ClassChecks($this->target, $this->pattern, $node->source);
         $this->ranges = new RangeChecks($this->target, $this->pattern, $node->source, 0, $this->unicodeMode);
         $this->conditionals = new ConditionalChecks($this->target, $this->keepBranchCountError(...), $this->pattern, $node->source, 0, $this->unicodeMode);
+        $this->quantifiers = new QuantifierChecks($this->target, $this->pattern, $node->source);
         // A measure of its own: what an earlier pattern measured is gone.
         $this->lookbehindChecks = new LookbehindChecks($groups, $this->target, $this->checkMeasuredReference(...), $this->pattern, $this->maxLookbehindLength, $this->unicodeMode);
 
@@ -1004,56 +963,6 @@ final class Validator extends AbstractNodeVisitor
         }
 
         return $node->startPosition + 4; // Unreachable from a parsed pattern, whose number is over 255 here.
-    }
-
-    /**
-     * Where the two numbers of a "{n,m}" quantifier end in the pattern, the
-     * places PCRE reports a number it refuses.
-     *
-     * @return array{0: int, 1: int}
-     */
-    private function quantifierNumberEnds(QuantifierNode $node): array
-    {
-        // A lazy or possessive quantifier ends with one more character.
-        $suffix = QuantifierType::Greedy === $node->type ? 0 : 1;
-        $braceStart = $node->getEndPosition() - $suffix - \strlen($node->quantifier);
-        // A comment may stand between the count and its "+" or "?": the
-        // count is found in the source, past the item it repeats.
-        $written = null === $this->source ? false : strpos($this->source, $node->quantifier, $node->node->getEndPosition());
-        if (false !== $written && $written < $braceStart) {
-            $braceStart = $written;
-        }
-
-        if (1 !== LibraryPcre::match('/^\{\s*+(\d*+)\s*+(?:,\s*+(\d*+))?/', $node->quantifier, $matches, \PREG_OFFSET_CAPTURE)) {
-            return [$node->startPosition, $node->startPosition];
-        }
-
-        $minEnd = $braceStart + $matches[1][1] + $this->digitsReadForCount($matches[1][0]);
-        $maxEnd = isset($matches[2]) ? $braceStart + $matches[2][1] + $this->digitsReadForCount($matches[2][0]) : $minEnd;
-
-        return [$minEnd, $maxEnd];
-    }
-
-    /**
-     * How many digits of a count PCRE has read when it refuses one over
-     * 65535: every one from PCRE2 10.45; before, up to the digit that takes
-     * it over.
-     */
-    private function digitsReadForCount(string $digits): int
-    {
-        if ($this->supports(PcreFeature::NumberTooBigPastWholeNumber)) {
-            return \strlen($digits);
-        }
-
-        $value = 0;
-        foreach (Bytes::split($digits) as $index => $digit) {
-            $value = $value * 10 + (int) $digit;
-            if ($value > PcreNumber::MAX) {
-                return $index + 1;
-            }
-        }
-
-        return \strlen($digits);
     }
 
     /**
@@ -1124,6 +1033,7 @@ final class Validator extends AbstractNodeVisitor
         $this->classes = $this->classes->reading($this->source, $this->positionOffset);
         $this->ranges = $this->ranges->reading($this->source, $this->positionOffset);
         $this->conditionals = $this->conditionals->reading($this->source, $this->positionOffset);
+        $this->quantifiers = $this->quantifiers->reading($this->source, $this->positionOffset);
     }
 
     /**

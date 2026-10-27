@@ -53,6 +53,7 @@ final class AstFingerprint
         'src/Parser/Validation/ClassChecks.php',
         'src/Parser/Validation/RangeChecks.php',
         'src/Parser/Validation/ConditionalChecks.php',
+        'src/Parser/Validation/QuantifierChecks.php',
         'src/Parser/Validation/ClassLength.php',
         'src/Parser/Validation/ExtendedClassLength.php',
         'src/Parser/Validation/OtherCases.php',
