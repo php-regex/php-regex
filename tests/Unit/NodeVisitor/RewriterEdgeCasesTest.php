@@ -418,7 +418,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_nullable_status_covers_all_branches(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'possessiveRewrites');
 
         // Test LiteralNode with empty string
         $emptyLiteral = new LiteralNode('', 0, 0);
@@ -478,7 +478,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_quantifier_allows_zero_covers_all_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'possessiveRewrites');
 
         // Test quantifiers that allow zero
         $this->assertTrue($this->invokePrivate($optimizer, 'quantifierAllowsZero', [new QuantifierNode(new LiteralNode('a', 0, 1), '*', QuantifierType::Greedy, 0, 1)]));
@@ -683,7 +683,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_is_possessify_candidate_covers_all_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'possessiveRewrites');
 
         // Test with + quantifier
         $quantifier1 = new QuantifierNode(new LiteralNode('a', 0, 1), '+', QuantifierType::Greedy, 0, 2);
@@ -719,7 +719,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_can_match_empty_covers_all_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'possessiveRewrites');
 
         // Test with nullable node (empty literal)
         $emptyLiteral = new LiteralNode('', 0, 0);
