@@ -318,9 +318,20 @@ Configuration
 -------------
 
 Patterns are judged for the PHP version Psalm analyses for (`phpVersion` in
-`psalm.xml`, `--php-version`, or your `composer.json`), 8.1 at least, with the
-PCRE2 release that PHP bundles: 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3,
-10.44 for 8.4 and 8.5. The plugin's options override it:
+`psalm.xml`, `--php-version`, or your `composer.json`), 8.1 at least. That
+version, and each version a guard or a marker keeps, gets its PCRE2 in this
+order:
+
+1. the release `<pcreVersion>` names, else the one the `composer.json` of
+   Psalm's base directory pins in `config.platform.lib-pcre` (`"10.42"`, or
+   `"10.42.0"` as Composer spells it), used as is, older or newer than the one
+   that PHP bundles;
+2. the PCRE2 of the PHP running Psalm, when the version judged is its minor
+   version: on a PHP 8.4.27 that links 10.49, PHP 8.4 is judged with 10.49;
+3. the PCRE2 that PHP bundles: 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3,
+   10.44 for 8.4 and 8.5.
+
+The plugin's options override the version and the release:
 
 ```xml
 <plugins>

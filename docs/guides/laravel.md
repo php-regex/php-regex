@@ -216,9 +216,22 @@ supports. It picks the target in this order:
    [the standalone command does](cli.md#several-php-versions);
 3. the PHP running the command.
 
-Each version is chosen on its own: without `pcre_version`, the lint uses the
-PCRE2 release the target PHP bundles (10.40 for PHP 8.2, 10.42 for 8.3, 10.44
-for 8.4 and 8.5). The locale is `locale`, else the one of the PHP running the
+Each version is chosen on its own, and every version judged (the target,
+each later version of the range, each version a guard or a marker keeps) gets
+its PCRE2 in this order, the [order of every entry point](cli.md#target-php-and-pcre2):
+
+1. `pcre_version`, else the release `composer.json` at `base_path()` pins in `config.platform.lib-pcre`
+   (`"10.42"`, or `"10.42.0"` as Composer spells it). A pin is used as is,
+   older or newer than the one that PHP bundles;
+2. the PCRE2 of the PHP running the command, when the version judged is its minor version:
+   on a PHP 8.4.27 that links 10.49, PHP 8.4 is judged with 10.49;
+3. the PCRE2 that PHP bundles: 10.32 for PHP 7.3, 10.33 for 7.4, 10.35 for
+   8.0, 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3, 10.44 for 8.4 and 8.5.
+
+A `config.platform.lib-pcre` that names no PCRE2 release is passed over with
+a notice.
+
+The locale is `locale`, else the one of the PHP running the
 command (see
 [Which locale judges a pattern](../concepts/pcre.md#which-locale-judges-a-pattern)):
 its character tables decide the size of a few classes, and one the machine

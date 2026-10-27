@@ -128,8 +128,8 @@ final class PcreTarget
      * for an analysed PHP, and an explicit pin the consumer holds.
      * ParserOptions::resolveTarget() decides between them, for every entry
      * point: the pin wins; the running engine speaks for the running PHP,
-     * and in the PHPStan extension for every PHP of its minor version; the
-     * estimate answers for the rest.
+     * and, in the lint, the language server and the bridges, for every PHP
+     * of its minor version; the estimate answers for the rest.
      */
     public static function bundledWith(int $phpVersionId): self
     {

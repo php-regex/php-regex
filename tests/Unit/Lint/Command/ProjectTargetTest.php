@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint\Command;
 
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +29,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class ProjectTargetTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     #[Test]
@@ -48,7 +50,7 @@ final class ProjectTargetTest extends TestCase
 
         $resolved = ProjectTarget::resolve(null, null, ['phpVersion' => '8.4'], $directory, []);
 
-        $this->assertTarget(80400, '10.44', $resolved);
+        $this->assertTarget(80400, self::judgedPcre(80400), $resolved);
         $this->assertSame('regex.json', $resolved->source());
     }
 
@@ -86,14 +88,15 @@ final class ProjectTargetTest extends TestCase
     }
 
     #[Test]
-    public function test_resolve_pairs_a_composer_php_with_its_bundled_pcre_not_the_running_one(): void
+    public function test_resolve_pairs_a_composer_php_with_the_pcre_the_rule_gives_it(): void
     {
-        // PHP 8.4 bundles PCRE2 10.44, whatever release the running PHP links.
+        // PHP 8.4 bundles PCRE2 10.44; the running PCRE2 speaks for it under
+        // a running PHP 8.4, whatever release that one links.
         $directory = $this->makeProject(['composer.json' => self::composer('^8.4')]);
 
         $resolved = ProjectTarget::resolve(null, null, [], $directory, []);
 
-        $this->assertTarget(80400, '10.44', $resolved);
+        $this->assertTarget(80400, self::judgedPcre(80400), $resolved);
     }
 
     #[Test]
@@ -281,7 +284,7 @@ final class ProjectTargetTest extends TestCase
 
         $resolved = ProjectTarget::resolve(null, null, [], $directory, ['COMPOSER' => 'composer.alt.json']);
 
-        $this->assertTarget(80400, '10.44', $resolved);
+        $this->assertTarget(80400, self::judgedPcre(80400), $resolved);
         $this->assertStringContainsString('require.php', $resolved->source());
     }
 

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint\Command;
 
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,12 +27,14 @@ use PHPUnit\Framework\TestCase;
  * changes at (8.3, 8.4, 8.4.25, 8.5, 8.5.10) that the constraint allows, up
  * to its ceiling (the newest known when it is open-ended), and the lowest
  * version of each OR branch above the floor. Each point with
- * the PCRE2 its PHP bundles, or the pinned release at every point. A source
+ * the PCRE2 its PHP bundles, the running one for the running PHP's minor,
+ * or the pinned release at every point. A source
  * that names one version (--php-version, regex.json, config.platform.php)
  * is a range of one.
  */
 final class ProjectTargetRangeTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     /**
@@ -49,7 +52,7 @@ final class ProjectTargetRangeTest extends TestCase
         $this->assertSame($expected, array_map(static fn (PcreTarget $target): int => $target->phpVersionId, $range));
         $this->assertEquals($resolved->target(), $range[0], 'The floor comes first.');
         foreach (\array_slice($range, 1) as $target) {
-            $this->assertSame(PcreTarget::bundledWith($target->phpVersionId)->pcreVersion, $target->pcreVersion, (string) $target->phpVersionId);
+            $this->assertSame(self::judgedPcre($target->phpVersionId), $target->pcreVersion, (string) $target->phpVersionId);
         }
     }
 
@@ -116,6 +119,11 @@ final class ProjectTargetRangeTest extends TestCase
 
         $resolved = ProjectTarget::resolve(null, $pcreFlag, [], $directory, []);
 
+        // The rows name the release each PHP bundles; the running PHP's
+        // minor is judged with the running one when none is pinned.
+        if (null === $pcreFlag) {
+            $expected = array_map(static fn (array $point): array => ['php' => $point['php'], 'pcre' => explode('/', self::judgedLabel($point['php'].'/'.$point['pcre']))[1]], $expected);
+        }
         $this->assertSame($expected, $resolved->toArray()['range']);
     }
 
@@ -237,14 +245,14 @@ final class ProjectTargetRangeTest extends TestCase
         // php as major.minor, or major.minor.patch when the patch is not 0.
         $this->assertSame([
             'php' => '8.4',
-            'pcre' => '10.44',
+            'pcre' => self::judgedPcre(80400),
             'locale' => 'C',
             'source' => 'composer.json require.php',
             'range' => [
-                ['php' => '8.4', 'pcre' => '10.44'],
-                ['php' => '8.4.25', 'pcre' => '10.44'],
-                ['php' => '8.5', 'pcre' => '10.44'],
-                ['php' => '8.5.10', 'pcre' => '10.44'],
+                ['php' => '8.4', 'pcre' => self::judgedPcre(80400)],
+                ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)],
+                ['php' => '8.5', 'pcre' => self::judgedPcre(80500)],
+                ['php' => '8.5.10', 'pcre' => self::judgedPcre(80510)],
             ],
         ], $resolved->toArray());
     }

@@ -186,7 +186,9 @@ php bin/corpus-lint
 
 One lint run per repository, the target read from its own `composer.json`:
 `config.platform.php` when it declares a plain version, else the lowest PHP
-`require.php` allows, with the PCRE2 release bundled with that PHP. A release
+`require.php` allows, with the PCRE2 release `config.platform.lib-pcre` pins,
+else the running one for the running PHP's minor, else the one bundled with
+that PHP. A release
 older than the library knows in full is judged with the oldest rules it does
 — the notice the linter prints is carried into the log — and a repository
 without `require.php` falls back to `--php` (`8.1` by default). PHP 7.2 and

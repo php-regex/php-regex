@@ -104,6 +104,20 @@ final class LaravelTargetConfigTest extends LaravelTestCase
         $this->assertSame(1, $json['stats']['errors'] ?? null, 'PHP 8.2 bundles PCRE2 10.40, which refuses a variable-length lookbehind.');
     }
 
+    /**
+     * The running PHP's minor is judged with the running PCRE2, the rule of
+     * every entry point, whatever release that minor bundles.
+     */
+    #[Test]
+    public function test_the_running_minor_drives_the_lint_command_with_the_running_pcre2(): void
+    {
+        config()->set('php-regex.php_version', \sprintf('%d.%d', intdiv(\PHP_VERSION_ID, 10000), intdiv(\PHP_VERSION_ID, 100) % 100));
+
+        [, $json] = $this->lintJson();
+
+        $this->assertSame(PcreTarget::runtime()->pcreVersion, $json['target']['pcre'] ?? null);
+    }
+
     #[Test]
     #[WithConfig('php-regex.pcre_version', '10.42')]
     public function test_pcre_version_alone_drives_the_lint_command_target(): void

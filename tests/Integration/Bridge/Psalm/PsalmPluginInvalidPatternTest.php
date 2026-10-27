@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,8 @@ use Psalm\Internal\Analyzer\IssueData;
  */
 final class PsalmPluginInvalidPatternTest extends TestCase
 {
+    use PcreRule;
+
     private const FILE = 'Invalid/invalid_patterns.php';
 
     private const MARKER = '~//\s*InvalidRegexPattern:\s*(\S+)\s*$~';
@@ -42,7 +45,8 @@ final class PsalmPluginInvalidPatternTest extends TestCase
     #[DataProvider('provideInvalidPatterns')]
     public function test_plugin_reports_an_invalid_pattern_on_its_argument(int $line, string $argument, string $pattern): void
     {
-        $validation = RegexParser::create(['php_version' => '8.4'])->validate($pattern);
+        // Psalm on PHP 8.4, judged with the PCRE2 the rule gives it.
+        $validation = RegexParser::create(['php_version' => '8.4', 'pcre_version' => self::judgedPcre(80400)])->validate($pattern);
         $this->assertFalse($validation->isValid, $pattern.' is valid for PHP 8.4: the row is wrong.');
         $this->assertNotNull($validation->error);
         $this->assertNotNull($validation->offset);
@@ -55,13 +59,13 @@ final class PsalmPluginInvalidPatternTest extends TestCase
         $this->assertCount(1, $reported, \sprintf('Line %d: one InvalidRegexPattern expected.', $line));
         $issue = $reported[0];
         $this->assertSame($argument, $issue->selected_text, 'The issue points at the pattern argument.');
-        $this->assertStringStartsWith('Regex pattern is invalid for PHP 8.4 with PCRE2 10.44: ', $issue->message);
+        $this->assertStringStartsWith('Regex pattern is invalid for PHP 8.4 with PCRE2 '.self::judgedPcre(80400).': ', $issue->message);
         $this->assertStringContainsString(rtrim($validation->error, '.'), (string) $issue->message);
         $this->assertStringContainsString('offset '.$validation->offset, (string) $issue->message);
         // As the docs print it: the first line of the library's message, its
         // final period moved past the offset.
         $reason = rtrim(explode("\n", $validation->error)[0], '.');
-        $this->assertSame(\sprintf('Regex pattern is invalid for PHP 8.4 with PCRE2 10.44: %s (offset %d).', $reason, $validation->offset), $issue->message);
+        $this->assertSame(\sprintf('Regex pattern is invalid for PHP 8.4 with PCRE2 %s: %s (offset %d).', self::judgedPcre(80400), $reason, $validation->offset), $issue->message);
     }
 
     #[Test]

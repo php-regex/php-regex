@@ -28,8 +28,12 @@ use PHPRegex\Parser\Validation\RangeDiff;
  * The PHP version is the --php-version option, else regex.json's
  * phpVersion, else composer.json (config.platform.php, then the lowest
  * version require.php allows), else the running PHP. The PCRE2 release is
- * the --pcre-version option, else regex.json's pcreVersion, else the one the
- * PHP version bundles (the running one when the PHP is the running PHP).
+ * the --pcre-version option, else regex.json's pcreVersion, else the one
+ * composer.json pins in config.platform.lib-pcre, each used as is, older or
+ * newer than the one the PHP bundles; else the running PCRE2 when the PHP is
+ * the running PHP's minor version; else the one the PHP bundles
+ * (ParserOptions::resolveTarget()). The same order gives the PCRE2 of every
+ * later version of the range, and of each version a guard or a marker keeps.
  * The LC_CTYPE locale is the --locale option, else regex.json's locale,
  * else the runtime's: it is the same at every version of the range.
  * A project is judged for its lowest PHP because a pattern must compile on
@@ -38,8 +42,7 @@ use PHPRegex\Parser\Validation\RangeDiff;
  * When require.php gives the PHP, the range also holds every PHP version a
  * rule of the library changes at that the constraint allows above its
  * floor, up to its ceiling: a pattern valid on the floor may be refused by
- * a later PHP the project installs on. Each with the PCRE2 its PHP bundles,
- * or the release named at every point. Every other source names one
+ * a later PHP the project installs on. Every other source names one
  * version, and the range is that version.
  *
  * A PCRE2 release older than 10.39, the oldest whose rules the library
@@ -53,7 +56,8 @@ use PHPRegex\Parser\Validation\RangeDiff;
  * for, and a notice says the versions below 7.3 are not judged.
  *
  * Reading composer.json never fails: what cannot be read becomes a notice
- * and the running PHP is used.
+ * and the running PHP is used; a lib-pcre that names no release is passed
+ * over with a notice.
  *
  * @internal
  *
@@ -180,10 +184,17 @@ final class ProjectTarget
             }
         }
 
+        if (null === $pcreVersion && null !== $projectDir) {
+            [$pcreVersion, $pcreSource, $passedOver] = self::libPcre($projectDir, $env);
+            if (null !== $passedOver) {
+                $notices[] = $passedOver.': passed over.';
+            }
+        }
+
         $pinnedPcre = $pcreVersion;
         $source = null === $pcreSource || $pcreSource === $phpSource ? $phpSource : $phpSource.'; '.$pcreSource;
         $source = null === $localeSource || str_contains('; '.$source.';', '; '.$localeSource.';') ? $source : $source.'; '.$localeSource;
-        $target = ParserOptions::resolveTarget($runningPhp ? null : $phpVersionId, $pcreVersion, $localeName);
+        $target = ParserOptions::resolveTarget($runningPhp ? null : $phpVersionId, $pcreVersion, $localeName, true);
         $range = self::rangeFor($target, $constraint, $pinnedPcre);
         $admitted = null === $constraint ? null : self::admittedFrom($phpVersionId, ComposerConstraint::intervals($constraint) ?? []);
 
@@ -216,7 +227,9 @@ final class ProjectTarget
     {
         if (null !== $projectDir) {
             $target = self::fromSources([], [], $projectDir, $env, $locale);
-            if ('running PHP' !== $target->source) {
+            // The PHP came from composer.json unless it is the running one;
+            // a lib-pcre read beside it names no PHP.
+            if (!str_starts_with($target->source, 'running PHP')) {
                 return $target;
             }
         }
@@ -440,9 +453,28 @@ final class ProjectTarget
      */
     public static function composerPcre(string $projectDir, array $env): ?string
     {
+        [$release, , $unreadable] = self::libPcre($projectDir, $env);
+        if (null !== $unreadable) {
+            throw new InvalidRegexOptionException($unreadable.': fix it, or remove it to judge with the PCRE2 the analysed PHP bundles.');
+        }
+
+        return $release;
+    }
+
+    /**
+     * The PCRE2 release config.platform.lib-pcre pins, as composerPcre()
+     * reads it, and where it was read; or, when it names no release, what
+     * says so.
+     *
+     * @param array<string, string> $env
+     *
+     * @return array{string|null, string|null, string|null} the release, its source, and why it cannot be read
+     */
+    private static function libPcre(string $projectDir, array $env): array
+    {
         $pinned = ComposerPlatform::pcre($projectDir, $env);
         if (null === $pinned) {
-            return null;
+            return [null, null, null];
         }
 
         [$written, $name] = $pinned;
@@ -452,9 +484,9 @@ final class ProjectTarget
             : $written;
 
         try {
-            return (new PcreTarget(\PHP_VERSION_ID, $release))->pcreVersion;
-        } catch (InvalidRegexOptionException $e) {
-            throw new InvalidRegexOptionException(\sprintf('%s config.platform.lib-pcre "%s" is not a PCRE2 release like "10.44": fix it, or remove it to judge with the PCRE2 the analysed PHP bundles.', $name, $written), 0, $e);
+            return [(new PcreTarget(\PHP_VERSION_ID, $release))->pcreVersion, $name.' config.platform.lib-pcre', null];
+        } catch (InvalidRegexOptionException) {
+            return [null, null, \sprintf('%s config.platform.lib-pcre "%s" is not a PCRE2 release like "10.44"', $name, $written)];
         }
     }
 
@@ -503,7 +535,7 @@ final class ProjectTarget
             // A branch that allows nothing, ">=8.4 <8.2", holds no point.
             foreach ($intervals as [$lowest, $below]) {
                 if ($point >= $lowest && (null === $below || $point < $below)) {
-                    $range[] = ParserOptions::resolveTarget($point, $pinnedPcre, $floor->locale);
+                    $range[] = ParserOptions::resolveTarget($point, $pinnedPcre, $floor->locale, true);
 
                     continue 2;
                 }

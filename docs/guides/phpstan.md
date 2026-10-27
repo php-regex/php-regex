@@ -83,9 +83,8 @@ they were cut. Each version the extension judges gets its PCRE2 in this order:
 The order holds for the target, each later version of a range, and each
 version a guard or a `@regex-target` marker keeps. A
 `config.platform.lib-pcre` that names no PCRE2 release stops the analysis
-when it starts. [`regex lint`](cli.md) judges a version it is told with the
-PCRE2 that version bundles, and the running PHP alone with the PCRE2 it
-links: give it `--pcre-version` to judge for another engine.
+when it starts. [`regex lint`](cli.md), the language server, the Symfony and
+Laravel bridges and the Psalm plugin follow the same order.
 
 A range, `phpVersion: {min: 80400, max: 80599}`, is read whole: a pattern the
 lowest version accepts is also validated at each later PHP up to `max` where

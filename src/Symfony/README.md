@@ -53,7 +53,7 @@ Every key is optional and lives under `php_regex` in `config/packages/php_regex.
 |--------|---------|------|
 | `max_pattern_length`, `max_lookbehind_length` | `100000`, `255` | Longest pattern string; longest variable-length lookbehind |
 | `runtime_pcre_validation` | `false` | The service also compiles each pattern with the running PHP |
-| `php_version`, `pcre_version` | `null` | PHP version and PCRE2 release `regex:lint` judges for (`"8.2"`, `"10.42"`) |
+| `php_version`, `pcre_version` | `null` | PHP version and PCRE2 release `regex:lint` judges for (`"8.2"`, `"10.42"`); without `pcre_version`, `config.platform.lib-pcre` in `composer.json`, else the running PCRE2 for the running PHP's minor, else the one the PHP bundles |
 | `locale` | `null` | `LC_CTYPE` locale `regex:lint` judges under (`"tr_TR.UTF-8"`); `null` for the one of the PHP running the command. The `php_regex.regex` service judges under the running PHP's |
 | `cache.pool`, `cache.directory`, `cache.prefix` | `null`, `'%kernel.cache_dir%/php_regex'`, `'regex_'` | Cache for parsed ASTs: a PSR-6 pool, else this directory |
 | `extractor_service` | `null` | Service id of your own pattern extractor, an `ExtractorInterface` whose `extract()` returns `PatternOccurrence::found()` occurrences; it replaces the built-in extractors, and the `@regex-ignore` markers of the files it reads still apply ([guide](https://php-regex.com/guides/symfony/#configuration)) |

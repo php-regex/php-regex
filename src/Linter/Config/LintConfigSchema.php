@@ -144,7 +144,7 @@ final class LintConfigSchema
                     'examples' => ['8.2', '8.4', 80300],
                 ],
                 'pcreVersion' => [
-                    'description' => 'The PCRE2 release the patterns are judged for, as "10.44". Omit to use the release bundled with the target PHP, or the running PCRE2 when the target is the running PHP. The --pcre-version option wins over it.',
+                    'description' => 'The PCRE2 release the patterns are judged for, as "10.44", used as is. Omit to use the one composer.json pins in config.platform.lib-pcre, else the running PCRE2 when the target is the running PHP\'s minor version, else the release bundled with the target PHP. The --pcre-version option wins over it.',
                     'x-expected' => 'a PCRE2 release like "10.44"',
                     'type' => 'string',
                     'pattern' => '^[0-9]+\.[0-9]{2}$',

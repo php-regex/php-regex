@@ -57,7 +57,7 @@ The lint command reads `regex.dist.json` (the committed defaults), then `regex.j
 | Key | Default | What it does |
 | --- | --- | --- |
 | `paths`, `exclude` | working directory, `vendor` | Directories or files to scan, and paths to skip |
-| `phpVersion`, `pcreVersion` | from composer.json | The PHP (`"8.3"`, `80300`, `"runtime"`) and PCRE2 (`"10.44"`) releases the patterns are judged for |
+| `phpVersion`, `pcreVersion` | from composer.json | The PHP (`"8.3"`, `80300`, `"runtime"`) and PCRE2 (`"10.44"`) releases the patterns are judged for; without `pcreVersion`, `config.platform.lib-pcre` in `composer.json`, else the running PCRE2 for the running PHP's minor, else the one the PHP bundles |
 | `locale` | the running PHP's | The `LC_CTYPE` locale (`"tr_TR.UTF-8"`) the patterns run under |
 | `jobs` | logical CPUs | Parallel workers: the CPUs the process may use, within a container's CPU quota; 1 without `pcntl` |
 | `format` | `console` | `console`, `json`, `github`, `checkstyle` or `junit` |

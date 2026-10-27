@@ -27,6 +27,7 @@ use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -43,6 +44,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class TargetMarkerLintTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     protected function tearDown(): void
@@ -81,7 +83,7 @@ final class TargetMarkerLintTest extends TestCase
         $this->assertSame([
             [4, 'regex.group.syntax', null],
             [7, 'regex.keep.in_lookaround', ['php' => '8.5', 'pcre' => '10.44']],
-            [9, 'regex.lint.compat.meaningChanges', ['php' => '8.4', 'pcre' => '10.44']],
+            [9, 'regex.lint.compat.meaningChanges', ['php' => '8.4', 'pcre' => self::judgedPcre(80400)]],
         ], self::issues($report));
     }
 
@@ -103,7 +105,7 @@ final class TargetMarkerLintTest extends TestCase
             PHP);
 
         $this->assertSame([
-            [2, 'regex.lint.charclass.redundant', ['php' => '8.4', 'pcre' => '10.44', 'guard' => '>=8.4']],
+            [2, 'regex.lint.charclass.redundant', ['php' => '8.4', 'pcre' => self::judgedPcre(80400), 'guard' => '>=8.4']],
             [3, 'regex.keep.in_lookaround', ['php' => '8.5', 'pcre' => '10.44', 'guard' => '>=8.4', 'guard_pcre' => '>=10.43']],
         ], self::issues($report, true));
     }

@@ -23,6 +23,7 @@ use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
 use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -37,6 +38,7 @@ use PHPUnit\Framework\TestCase;
 final class LintCommandProjectConfigTest extends TestCase
 {
     use InstalledLocales;
+    use PcreRule;
     use TemporaryProject;
 
     private const PHP_FILE = <<<'PHP'
@@ -131,7 +133,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src']);
 
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => '10.44'], ['php' => '8.4.25', 'pcre' => '10.44'], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $payload['target'] ?? null);
     }
 
     #[Test]
@@ -144,7 +146,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src'], '8.4');
 
-        $this->assertSame(['php' => '8.4', 'pcre' => '10.44', 'locale' => 'C', 'source' => '--php-version', 'range' => [['php' => '8.4', 'pcre' => '10.44']]], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.4', 'pcre' => self::judgedPcre(80400), 'locale' => 'C', 'source' => '--php-version', 'range' => [['php' => '8.4', 'pcre' => self::judgedPcre(80400)]]], $payload['target'] ?? null);
     }
 
     #[Test]
@@ -171,7 +173,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src']);
 
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => '10.44'], ['php' => '8.4.25', 'pcre' => '10.44'], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $payload['target'] ?? null);
     }
 
     /**
@@ -187,8 +189,8 @@ final class LintCommandProjectConfigTest extends TestCase
             'src/a.php' => self::PHP_FILE,
         ]);
 
-        $this->assertSame(['php' => '8.4', 'pcre' => '10.44', 'locale' => 'C', 'source' => 'regex.json', 'range' => [['php' => '8.4', 'pcre' => '10.44']]], $this->lintJson(['src'])['target'] ?? null);
-        $this->assertSame(['php' => '8.4', 'pcre' => '10.44', 'locale' => 'fr_FR.ISO8859-1', 'source' => 'regex.json; --locale', 'range' => [['php' => '8.4', 'pcre' => '10.44']]], $this->lintJson(['src'], null, 'fr_FR.ISO8859-1')['target'] ?? null);
+        $this->assertSame(['php' => '8.4', 'pcre' => self::judgedPcre(80400), 'locale' => 'C', 'source' => 'regex.json', 'range' => [['php' => '8.4', 'pcre' => self::judgedPcre(80400)]]], $this->lintJson(['src'])['target'] ?? null);
+        $this->assertSame(['php' => '8.4', 'pcre' => self::judgedPcre(80400), 'locale' => 'fr_FR.ISO8859-1', 'source' => 'regex.json; --locale', 'range' => [['php' => '8.4', 'pcre' => self::judgedPcre(80400)]]], $this->lintJson(['src'], null, 'fr_FR.ISO8859-1')['target'] ?? null);
     }
 
     /**

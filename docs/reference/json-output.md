@@ -327,8 +327,9 @@ each pattern is also validated (parsed and checked, without the lint rules)
 at every PHP version above the floor that a rule of the library changes at
 and that the constraint allows, and at the lowest version of each branch of an
 OR constraint above the floor (`~8.3.0 || >=8.5.3` adds `8.5.3`), with the
-PCRE2 that PHP bundles, or with the release `--pcre-version` or `pcreVersion`
-names. See
+PCRE2 the [target order](../guides/cli.md#target-php-and-pcre2) gives it: the
+release pinned, else the running one for the running PHP's minor, else the one
+that PHP bundles. See
 [Several PHP versions](../guides/cli.md#several-php-versions).
 
 ### Host: `lint.host`

@@ -245,8 +245,9 @@ final class ParserOptions
      * PHP named the PCRE2 its sources bundle (PcreTarget::bundledWith()):
      * the running one included, unless $runningSpeaksForItsMinor lets the
      * running PCRE2 judge every PHP of the running PHP's minor version, as
-     * the PHPStan extension does. The locale is the runtime's unless one is
-     * named.
+     * the lint, the language server and the bridges do; the options and
+     * the library's own estimates (RangeDiff, the Rector rules) leave it
+     * off. The locale is the runtime's unless one is named.
      *
      * @internal
      *

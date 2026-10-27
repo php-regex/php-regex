@@ -22,6 +22,7 @@ use PHPRegex\Linter\Extraction\GuardRegions;
 use PHPRegex\Linter\Extraction\PhpParserGuards;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
+use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
@@ -29,8 +30,8 @@ use PHPRegex\Parser\RegexParser;
 use Psalm\Codebase;
 
 /**
- * The versions a call is judged for: the PHP Psalm analyses for, with the
- * PCRE2 it bundles, or what the plugin's options name, narrowed by the
+ * The versions a call is judged for: the PHP Psalm analyses for, or what
+ * the plugin's options name, with the PCRE2 parser() gives it, narrowed by the
  * guards on PHP_VERSION_ID around the call and the "@regex-target" markers
  * of its line. A PHP below 7.3 is judged as regex lint judges it.
  *
@@ -45,9 +46,25 @@ final class CallTarget
     private static ?string $locale = null;
 
     /**
-     * @var array<string, RegexParser> by target options
+     * @var array<string, RegexParser> by PHP, PCRE2 pinned and locale
      */
     private static array $parsers = [];
+
+    /**
+     * The PCRE2 release composer.json pins in config.platform.lib-pcre, by
+     * Psalm's base directory.
+     *
+     * @var array<string, string|null>
+     */
+    private static array $composerPcre = [];
+
+    /**
+     * The PCRE2 release pinned for every version a marker narrows to, by
+     * target.
+     *
+     * @var array<string, string|null>
+     */
+    private static array $pinnedPcre = [];
 
     /**
      * The PHP each PHP below 7.3 Psalm analyses for is judged for, by the
@@ -116,12 +133,17 @@ final class CallTarget
     }
 
     /**
-     * The parser judging patterns for the PHP Psalm analyses for, with the
-     * PCRE2 it bundles, or for what the options name. A PHP below 7.3 is
-     * judged as regex lint judges it: from the lowest PHP on PCRE2 of the
-     * composer.json Psalm read it from, refused when Psalm was told it.
+     * The parser judging patterns for the PHP Psalm analyses for, or the
+     * one <phpVersion> names, with the PCRE2 <pcreVersion> names, else the
+     * one the composer.json of Psalm's base directory pins in
+     * config.platform.lib-pcre, used as is; else the running PCRE2 when the
+     * PHP is the running PHP's minor version; else the one it bundles. A PHP
+     * below 7.3 is judged as regex lint judges it: from the lowest PHP on
+     * PCRE2 of the composer.json Psalm read it from, refused when Psalm was
+     * told it.
      *
-     * @throws UnsupportedTargetException when the PHP Psalm analyses for ships PCRE1
+     * @throws UnsupportedTargetException  when the PHP Psalm analyses for ships PCRE1
+     * @throws InvalidRegexOptionException when composer.json's lib-pcre names no PCRE2 release
      */
     public static function parser(Codebase $codebase): RegexParser
     {
@@ -131,15 +153,19 @@ final class CallTarget
             $phpVersion = self::$belowPcre2[$phpVersion.'@'.($composer ?? '')] ??= ProjectTarget::belowPcre2($phpVersion, 'Psalm phpVersion', $composer, getenv())->target()->phpVersionId;
         }
 
-        $options = ['php_version' => $phpVersion];
-        if (null !== self::$pcreVersion) {
-            $options['pcre_version'] = self::$pcreVersion;
+        $baseDir = $codebase->config->base_dir;
+        if (!\array_key_exists($baseDir, self::$composerPcre)) {
+            self::$composerPcre[$baseDir] = ProjectTarget::composerPcre($baseDir, getenv());
         }
-        if (null !== self::$locale) {
-            $options['locale'] = self::$locale;
+        $pinned = self::$pcreVersion ?? self::$composerPcre[$baseDir];
+        $key = serialize([$phpVersion, $pinned, self::$locale]);
+        if (!isset(self::$parsers[$key])) {
+            $target = ParserOptions::resolveTarget(ParserOptions::phpVersionIdOf($phpVersion), $pinned, self::$locale, true);
+            self::$parsers[$key] = RegexParser::fromOptions(new ParserOptions(ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH, new ArrayCache(), target: $target));
+            self::$pinnedPcre[$target->key()] = $pinned;
         }
 
-        return self::$parsers[serialize($options)] ??= RegexParser::create($options);
+        return self::$parsers[$key];
     }
 
     /**
@@ -209,7 +235,7 @@ final class CallTarget
     {
         $target = $parser->target();
 
-        return self::$judgedRanges[self::key($parser)] ??= new JudgedRange([$target], [[$target->phpVersionId, (intdiv($target->phpVersionId, 100) + 1) * 100]], self::$pcreVersion, $parser);
+        return self::$judgedRanges[self::key($parser)] ??= new JudgedRange([$target], [[$target->phpVersionId, (intdiv($target->phpVersionId, 100) + 1) * 100]], self::$pinnedPcre[$target->key()] ?? self::$pcreVersion, $parser);
     }
 
     /**

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Cli;
 
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class LintCommandRangeTest extends TestCase
 {
+    use PcreRule;
     use RunsRegexCli;
     use TemporaryProject;
 
@@ -42,15 +44,6 @@ final class LintCommandRangeTest extends TestCase
      * (pcre2test 10.49: error 199).
      */
     private const KEEP_IN_LOOKBEHIND = "<?php\n\npreg_match('/(?<=a\\Kb)c/', \$s);\n";
-
-    private const FULL_RANGE = [
-        ['php' => '8.2', 'pcre' => '10.40'],
-        ['php' => '8.3', 'pcre' => '10.42'],
-        ['php' => '8.4', 'pcre' => '10.44'],
-        ['php' => '8.4.25', 'pcre' => '10.44'],
-        ['php' => '8.5', 'pcre' => '10.44'],
-        ['php' => '8.5.10', 'pcre' => '10.44'],
-    ];
 
     #[Test]
     public function test_lint_reports_a_pattern_a_later_php_of_the_range_refuses(): void
@@ -158,7 +151,7 @@ final class LintCommandRangeTest extends TestCase
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('lint', $document);
         $this->assertSame(
-            ['php' => '8.2', 'pcre' => '10.40', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => self::FULL_RANGE],
+            ['php' => '8.2', 'pcre' => '10.40', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => self::fullRange()],
             $document['target'] ?? null,
         );
     }
@@ -222,7 +215,7 @@ final class LintCommandRangeTest extends TestCase
         $document = JsonContract::decodeDocument($stdout);
         $range = JsonContract::asArray(JsonContract::asArray($document['target'] ?? null)['range'] ?? null);
         $pcres = array_values(array_map(static fn (mixed $entry): mixed => JsonContract::asArray($entry)['pcre'] ?? null, $range));
-        $this->assertCount(\count(self::FULL_RANGE), $pcres);
+        $this->assertCount(\count(self::fullRange()), $pcres);
         $this->assertSame(array_fill(0, \count($pcres), '10.43'), $pcres);
         $this->assertSame(['php' => '8.5', 'pcre' => '10.43', 'guard' => null, 'guard_pcre' => null], self::issues($document)[0]['target'] ?? null);
     }
@@ -253,5 +246,23 @@ final class LintCommandRangeTest extends TestCase
         }
 
         return $issues;
+    }
+
+    /**
+     * Every version of the range, each with the PCRE2 it bundles, the
+     * running one for the running PHP's minor.
+     *
+     * @return list<array{php: string, pcre: string}>
+     */
+    private static function fullRange(): array
+    {
+        return [
+            ['php' => '8.2', 'pcre' => self::judgedPcre(80200)],
+            ['php' => '8.3', 'pcre' => self::judgedPcre(80300)],
+            ['php' => '8.4', 'pcre' => self::judgedPcre(80400)],
+            ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)],
+            ['php' => '8.5', 'pcre' => self::judgedPcre(80500)],
+            ['php' => '8.5.10', 'pcre' => self::judgedPcre(80510)],
+        ];
     }
 }

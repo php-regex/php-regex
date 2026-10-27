@@ -18,6 +18,7 @@ use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\WorkspaceSettings;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -237,6 +238,24 @@ final class WorkspaceSettingsTest extends TestCase
             'initializationOptions.locale "xx_NOWHERE.UTF-8" is not a locale this machine can set: ignored.',
             'initializationOptions.phpVersion "eight" is not a version: ignored.',
         ], $this->logged(2));
+    }
+
+    /**
+     * The PCRE2 of the target follows the rule of every entry point: a pin
+     * as is, composer.json's config.platform.lib-pcre at the workspace root
+     * included; else the running PCRE2 for the running PHP's minor; else the
+     * one that PHP bundles.
+     */
+    #[Test]
+    public function test_workspace_target_reads_the_pcre2_by_the_rule_of_every_entry_point(): void
+    {
+        $runningMinor = intdiv(\PHP_VERSION_ID, 100) * 100;
+        $this->assertSame(PcreTarget::runtime()->pcreVersion, $this->read(['initializationOptions' => ['phpVersion' => $runningMinor]])->target()->target()->pcreVersion);
+
+        $root = $this->workspace();
+        file_put_contents($root.'/composer.json', '{"config": {"platform": {"php": "8.2", "lib-pcre": "10.43"}}}');
+        $this->assertSame('10.43', $this->read(['rootUri' => 'file://'.$root])->target()->target()->pcreVersion);
+        $this->assertSame('10.39', $this->read(['rootUri' => 'file://'.$root, 'initializationOptions' => ['pcreVersion' => '10.39']])->target()->target()->pcreVersion);
     }
 
     #[Test]

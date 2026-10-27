@@ -19,6 +19,7 @@ use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Symfony\Command\SecurityCommand;
 use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -38,6 +39,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 final class BundleConfigurationTest extends TestCase
 {
     use InstalledLocales;
+    use PcreRule;
     use PhpUnitForwardCompat;
 
     /**
@@ -136,7 +138,7 @@ final class BundleConfigurationTest extends TestCase
 
         $report = $this->lint($container);
 
-        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.2', 'pcre' => '10.40'], ['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => '10.44'], ['php' => '8.4.25', 'pcre' => '10.44'], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $report['target']);
+        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.2', 'pcre' => '10.40'], ['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => self::judgedPcre(80500)], ['php' => '8.5.10', 'pcre' => self::judgedPcre(80510)]]], $report['target']);
         $this->assertSame(1, $report['errors']);
     }
 

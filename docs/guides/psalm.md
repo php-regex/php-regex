@@ -386,10 +386,19 @@ other:
 ## The PHP version judged
 
 Patterns are judged for the PHP version Psalm analyses for (below 7.3, see
-below), with the PCRE2 release that version bundles: 10.32 for 7.3, 10.33 for 7.4,
-10.35 for 8.0, 10.39 for 8.1, 10.40 for 8.2,
-10.42 for 8.3, 10.44 for 8.4 and 8.5. Two options of the plugin override it,
-and a third names the locale:
+below). That version, and each version a guard or a marker keeps, gets its
+PCRE2 in this order, the [order of every entry point](cli.md#target-php-and-pcre2):
+
+1. `<pcreVersion>`, else the release `composer.json` in Psalm's base directory` pins in `config.platform.lib-pcre`
+   (`"10.42"`, or `"10.42.0"` as Composer spells it). A pin is used as is,
+   older or newer than the one that PHP bundles;
+2. the PCRE2 of the PHP running Psalm, when the version judged is its minor version:
+   on a PHP 8.4.27 that links 10.49, PHP 8.4 is judged with 10.49;
+3. the PCRE2 that PHP bundles: 10.32 for PHP 7.3, 10.33 for 7.4, 10.35 for
+   8.0, 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3, 10.44 for 8.4 and 8.5.
+
+Two options of the plugin override the version and the release, and a third
+names the locale:
 
 ```xml
 <plugins>
@@ -404,7 +413,8 @@ and a third names the locale:
 `<phpVersion>` takes a version (`8.2`), a `PHP_VERSION_ID` (`80200`) or
 `runtime`, the PHP running Psalm and the PCRE2 it links. `<pcreVersion>`
 takes a PCRE2 release, for a PHP linked against another PCRE2 than the one it
-bundles. `<locale>` takes the `LC_CTYPE` locale the patterns run under, the
+bundles. A `config.platform.lib-pcre` that names no release stops Psalm.
+`<locale>` takes the `LC_CTYPE` locale the patterns run under, the
 one of the PHP running Psalm by default: its character tables decide the size
 of a few classes (see
 [Which locale judges a pattern](../concepts/pcre.md#which-locale-judges-a-pattern)).

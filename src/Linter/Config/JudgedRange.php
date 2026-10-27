@@ -35,20 +35,20 @@ final class JudgedRange
     private array $parsers = [];
 
     /**
-     * @param list<PcreTarget>           $points                   the versions judged, the floor first
-     * @param list<array{int, int|null}> $admitted                 the PHP versions the project installs on
-     * @param string|null                $pinnedPcre               the PCRE2 release named for every version
-     * @param RegexParser                $floor                    the parser of the floor, whose locale every version keeps
-     * @param bool                       $runningSpeaksForItsMinor whether a version of the running PHP's minor
-     *                                                             is judged with the running PCRE2 when none is
-     *                                                             named (ParserOptions::resolveTarget())
+     * A version that is no point of the range is judged with the PCRE2
+     * named, else the running one when it is the running PHP's minor, else
+     * the one it bundles (ParserOptions::resolveTarget()).
+     *
+     * @param list<PcreTarget>           $points     the versions judged, the floor first
+     * @param list<array{int, int|null}> $admitted   the PHP versions the project installs on
+     * @param string|null                $pinnedPcre the PCRE2 release named for every version
+     * @param RegexParser                $floor      the parser of the floor, whose locale every version keeps
      */
     public function __construct(
         private readonly array $points,
         private readonly array $admitted,
         private readonly ?string $pinnedPcre,
         private readonly RegexParser $floor,
-        private readonly bool $runningSpeaksForItsMinor = false,
     ) {}
 
     /**
@@ -119,6 +119,6 @@ final class JudgedRange
             }
         }
 
-        return ParserOptions::resolveTarget($phpVersionId, $this->pinnedPcre, $this->floor->target()->locale, $this->runningSpeaksForItsMinor);
+        return ParserOptions::resolveTarget($phpVersionId, $this->pinnedPcre, $this->floor->target()->locale, true);
     }
 }

@@ -17,6 +17,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,12 +25,13 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The versions judged under a constraint: the lowest version the project
- * range and the constraint both admit, with the PCRE2 it bundles or the one
- * named for every version, then each later version of the range the
+ * range and the constraint both admit, with the PCRE2 it bundles, the
+ * running one for the running PHP's minor, or the one named for every version, then each later version of the range the
  * constraint admits. A constraint that keeps none judges nothing.
  */
 final class JudgedRangeTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     protected function tearDown(): void
@@ -69,7 +71,9 @@ final class JudgedRangeTest extends TestCase
     {
         $target = ProjectTarget::resolve(null, null, [], $this->makeProject(['composer.json' => (string) json_encode(['require' => ['php' => $require]])]), []);
 
-        $this->assertSame($expected, self::labels($target->judgedRange(RegexParser::create($target->regexOptions()))->narrow(self::constraint($constraint))));
+        // The rows name the release each PHP bundles; the running PHP's
+        // minor is judged with the running one.
+        $this->assertSame(array_map(self::judgedLabel(...), $expected), self::labels($target->judgedRange(RegexParser::create($target->regexOptions()))->narrow(self::constraint($constraint))));
     }
 
     /**

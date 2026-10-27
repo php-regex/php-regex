@@ -1075,11 +1075,23 @@ pattern for one target, chosen in this order:
 the command and the PCRE2 it links, as PHPStan's `phpVersion` does: a project
 that lints for its floor can still ask what the engine at hand says.
 
-Each version is chosen on its own. Without a PCRE2 release, the command uses
-the one the target PHP bundles (10.32 for PHP 7.3, 10.33 for 7.4, 10.35 for
-8.0, 10.39 for 8.1, 10.40 for 8.2, 10.42 for
-8.3, 10.44 for 8.4 and 8.5), or the PCRE2 of the running PHP when the target is the running
-PHP.
+Each version is chosen on its own. A PHP version does not decide the PCRE2 a
+build links, so every version judged (the target, each later version of the
+range, each version a guard or a marker keeps) gets its PCRE2 in this order:
+
+1. `--pcre-version`, else `pcreVersion` in `regex.json`, else the release
+   `composer.json` pins in `config.platform.lib-pcre` (`"10.42"`, or
+   `"10.42.0"` as Composer spells it). A pin is used as is, older or newer
+   than the one that PHP bundles;
+2. the PCRE2 of the running PHP, when the version judged is the running PHP's
+   minor version: on a PHP 8.4.27 that links 10.49, `--php-version=8.4` is
+   judged with 10.49;
+3. the PCRE2 that PHP bundles: 10.32 for PHP 7.3, 10.33 for 7.4, 10.35 for
+   8.0, 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3, 10.44 for 8.4 and 8.5.
+
+A `config.platform.lib-pcre` that names no PCRE2 release is passed over with a
+notice. The language server, the Symfony and Laravel bridges, the PHPStan
+extension and the Psalm plugin follow the same order.
 
 #### The locale
 
@@ -1186,8 +1198,8 @@ installs on: PHP 8.5 refuses `\K` in a lookaround, which PHP 8.4 compiles.
 When the target comes from `require.php`, the command therefore also
 validates every pattern at each PHP version above the floor where a rule of
 the library changes, as long as the constraint allows it: today 8.3, 8.4,
-8.4.25, 8.5 and 8.5.10. Each is judged with the PCRE2 release it bundles, or
-with the one `--pcre-version` or `pcreVersion` names. `>=8.2 <8.5` stops at
+8.4.25, 8.5 and 8.5.10. Each is judged with the PCRE2 release the order above
+gives it. `>=8.2 <8.5` stops at
 8.4.25, `~8.3.0` is 8.3 alone, and an open constraint such as `>=8.2` runs to
 the newest version the library knows. Each branch of an OR constraint is also
 validated at its own lowest version, which no rule change stands for:
@@ -1311,7 +1323,7 @@ final class AsciiMatcher
 Under `require.php` `^8.2`, `(?a)` (an option PCRE2 10.43 added) is judged
 for 8.4, 8.4.25, 8.5 and 8.5.10, and not reported; without the marker, PHP
 8.2 refuses it. The versions judged are the lowest one the marker keeps, with
-the PCRE2 it bundles (or the one named), then each later version of the
+the PCRE2 the [target order](#target-php-and-pcre2) gives it, then each later version of the
 range it keeps. `pcre>=10.43` keeps the versions whose PCRE2 is 10.43 or
 later.
 

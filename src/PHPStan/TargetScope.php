@@ -204,7 +204,6 @@ final class TargetScope
                 [[$lowest, $highest + 1]],
                 $this->pinnedPcre,
                 $this->regex,
-                true,
             );
         }
 

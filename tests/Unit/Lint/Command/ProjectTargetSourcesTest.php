@@ -19,6 +19,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,6 +33,7 @@ use PHPUnit\Framework\TestCase;
 final class ProjectTargetSourcesTest extends TestCase
 {
     use InstalledLocales;
+    use PcreRule;
     use PhpUnitForwardCompat;
     use TemporaryProject;
 
@@ -139,7 +141,7 @@ final class ProjectTargetSourcesTest extends TestCase
         $resolved = ProjectTarget::fromSources(['regex.json' => '8.4'], [], null, [], ['regex.json' => 'C']);
 
         $this->assertSame('regex.json', $resolved->source());
-        $this->assertSame('PHP 8.4, PCRE2 10.44', $resolved->label());
+        $this->assertSame('PHP 8.4, PCRE2 '.self::judgedPcre(80400), $resolved->label());
     }
 
     #[Test]

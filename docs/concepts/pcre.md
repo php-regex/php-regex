@@ -193,8 +193,18 @@ A release older than 10.39 is judged with the 10.39 rules, a release newer than
 the library knows with the newest rules it has. The command line takes the same
 pair as `--php-version` and `--pcre-version` (see [the CLI guide](../guides/cli.md)).
 
+`regex lint`, the language server, the Symfony and Laravel bridges, the PHPStan
+extension and the Psalm plugin give every version they judge its PCRE2 in one
+order ([the CLI guide](../guides/cli.md#target-php-and-pcre2) says it whole):
+a release pinned by their own setting, `regex.json`, or `composer.json`'s
+`config.platform.lib-pcre`, used as is, older or newer than the one that PHP
+bundles; else the running PCRE2 when the version judged is the running PHP's
+minor version; else the PCRE2 that PHP bundles. `Regex::create()` keeps the
+table above: a `php_version` alone, the running one included, gets the PCRE2
+its sources bundle.
+
 The PHPStan extension (see [the PHPStan guide](../guides/phpstan.md)) judges
-for PHPStan's own `phpVersion`, with the PCRE2 that PHP bundles. PHPStan takes the PHP running it unless `phpVersion` is
+for PHPStan's own `phpVersion`, with the PCRE2 that order gives it. PHPStan takes the PHP running it unless `phpVersion` is
 configured; when it is a range, the lowest version, the one least likely to
 know recent syntax.
 Its parameters name another target:

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Lint;
 
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,6 +27,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class LintTargetMarkerTest extends TestCase
 {
+    use PcreRule;
     use RunsRegexCli;
     use TemporaryProject;
 
@@ -59,7 +61,7 @@ final class LintTargetMarkerTest extends TestCase
         }
 
         $this->assertSame([
-            [2, 'regex.lint.charclass.redundant', ['php' => '8.4', 'pcre' => '10.44', 'guard' => '>=8.4', 'guard_pcre' => null]],
+            [2, 'regex.lint.charclass.redundant', ['php' => '8.4', 'pcre' => self::judgedPcre(80400), 'guard' => '>=8.4', 'guard_pcre' => null]],
             [4, 'regex.group.syntax', null],
         ], $issues);
     }

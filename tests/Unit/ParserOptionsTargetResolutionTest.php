@@ -25,8 +25,9 @@ use PHPUnit\Framework\TestCase;
  * The PHP, the PCRE2 and the locale a pattern is judged for are resolved
  * in one place: a PCRE2 release named is used as is, older or newer than
  * the one the PHP bundles; the running PHP gets the PCRE2 it links; a PHP
- * named gets the one its sources bundle. The options, the lint and the
- * bridges read their target from there.
+ * named gets the one its sources bundle, or, for the lint and the
+ * bridges, the running one when it is the running PHP's minor. The
+ * options, the lint and the bridges read their target from there.
  */
 final class ParserOptionsTargetResolutionTest extends TestCase
 {
@@ -97,8 +98,10 @@ final class ParserOptionsTargetResolutionTest extends TestCase
     }
 
     /**
-     * The options and the lint resolve alike: the same names give the
-     * same target, the floor and every later point of a range.
+     * The options and the lint resolve through the same method: the lint,
+     * as every entry point, lets the running PCRE2 speak for its minor;
+     * the options judge a PHP named with the PCRE2 it bundles. The floor
+     * and every later point of a range resolve alike.
      */
     #[Test]
     public function test_the_options_and_the_lint_resolve_alike(): void
@@ -108,8 +111,8 @@ final class ParserOptionsTargetResolutionTest extends TestCase
             $lint = ProjectTarget::fromSources(['--php-version' => $php], ['--pcre-version' => $pcre], null, []);
             $named = null === $php || 'runtime' === $php ? null : ParserOptions::phpVersionIdOf($php);
 
-            $this->assertSame(ParserOptions::resolveTarget($named, $pcre)->key(), $lint->target()->key());
-            $this->assertSame(ParserOptions::fromArray($options)->target->key(), $lint->target()->key());
+            $this->assertSame(ParserOptions::resolveTarget($named, $pcre, null, true)->key(), $lint->target()->key());
+            $this->assertSame(ParserOptions::fromArray($options)->target->key(), ParserOptions::resolveTarget($named, $pcre)->key());
         }
 
         $directory = sys_get_temp_dir().'/phpregex-target-resolution-'.bin2hex(random_bytes(4));
@@ -120,12 +123,12 @@ final class ParserOptionsTargetResolutionTest extends TestCase
             $range = ProjectTarget::fromSources([], [], $directory, [])->range();
             $this->assertGreaterThan(1, \count($range));
             foreach ($range as $point) {
-                $this->assertSame(ParserOptions::resolveTarget($point->phpVersionId)->key(), $point->key());
+                $this->assertSame(ParserOptions::resolveTarget($point->phpVersionId, null, null, true)->key(), $point->key());
             }
 
             $pinned = ProjectTarget::fromSources([], ['--pcre-version' => '10.39'], $directory, [])->range();
             foreach ($pinned as $point) {
-                $this->assertSame(ParserOptions::resolveTarget($point->phpVersionId, '10.39')->key(), $point->key());
+                $this->assertSame(ParserOptions::resolveTarget($point->phpVersionId, '10.39', null, true)->key(), $point->key());
             }
         } finally {
             @unlink($directory.'/composer.json');
