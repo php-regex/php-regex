@@ -210,12 +210,10 @@ the build or on the compile call, not on the pattern.
 `Regex::compatibility()` runs the validator on the pattern at every PHP
 version a rule of the library changes at, each with every PCRE2 release from
 10.40 to the newest the library knows a change in. The target of the facade
-does not matter. One answer comes from the running engine: a Unicode property
-name in `\p{...}` or `\P{...}` is looked up there, at every point, unless the
-library knows the PCRE2 release that added the name, in which case that
-release decides at each point. An undated name is accepted at every point
-when the running engine knows it, and refused at every point when it does
-not.
+does not matter. A Unicode property name in `\p{...}` or `\P{...}` is judged
+at each point by the names of that point's PCRE2 release, which the library
+holds for every release from 10.40; the running engine is asked only at the
+point that is that engine.
 
 ```php
 use PHPRegex\Toolkit\Regex;

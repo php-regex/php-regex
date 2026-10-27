@@ -102,6 +102,7 @@ final class AstFingerprint
         'src/Parser/Syntax/PcreNumber.php',
         'src/Parser/Syntax/PcreVerb.php',
         'src/Parser/Syntax/PosixItem.php',
+        'src/Parser/Syntax/PropertyNameTables.php',
         'src/Parser/Syntax/PropertyNames.php',
         'src/Parser/Syntax/RepeatCount.php',
         'src/Parser/Syntax/StartOptions.php',

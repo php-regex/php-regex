@@ -53,6 +53,7 @@ writes its files under a temporary directory of its own, and resets in
 ### CI/CD
 - Tests run in GitHub Actions (see `.github/workflows/tests.yml`, and `engines.yml` for the runs on each engine).
 - The engine claims, `tests/Fixtures/EngineClaims/engine-claims.json`, are what the library claims of the engines PHP 7.3 to 8.6 run; `engines.yml` checks them inside each official `php:X-cli` image with `tests/Tools/verify_engine_claims.php`, which needs no dependency and runs on PHP 7.3. When a verdict moves, `EngineClaimsTest` fails until `php tests/Tools/write_engine_claims.php` writes them again.
+- The property names of each PCRE2 release from 10.40, `src/Parser/Syntax/PropertyNameTables.php`, are written by `php tests/Tools/write_property_names.php <release source tree>...` from the release tarballs of https://github.com/PCRE2Project/pcre2/releases, extracted (`--check` writes nothing and fails when the file is out of date). `PropertyNameTablesTest` holds the file to what the script writes and every name to the running engine; add the new release's tree when the library learns a release.
 - Lint and static analysis via PHPStan and PHPLint.
 
 For contributions, ensure new tests fit the pyramid: prefer Unit > Integration > Functional.

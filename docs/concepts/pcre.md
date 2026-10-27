@@ -243,11 +243,19 @@ bundles (8.2 with 10.40, 8.3 with 10.42, 8.4 and 8.5 with 10.44), with the
 10.42 Ubuntu 24.04 ships, and with the latest release, so the answers taken
 from the running engine are checked against each of them.
 
+Whether a Unicode property or script name exists is read from the names of
+the release judged, not from the running engine: the library holds the names
+each PCRE2 release from 10.40 to 10.49 lists, read from the sources of each
+release, and reads a name as that release does (case, spaces, `\t` to `\r`,
+hyphens and underscores dropped, `bc:`, `sc:` and `scx:` with their long
+names, `sc:` and `scx:` taking a script only), so PHP 8.1 judging for PHP
+8.4 accepts `\p{greek}` and `\p{Alphabetic}`, which its own PCRE2 10.39
+refuses. For PCRE2 10.39 and older, the library's table of the exact names
+10.39 knows decides; only when the target is the running engine is that
+engine asked.
+
 A few answers still come from the running engine, because PCRE2 exposes no
-other way to get them: whether a Unicode property or script name exists (the
-running engine is asked, then a table of the names each release added corrects
-the answer for another target; for PCRE2 10.39, the library's own table of the
-names it knows decides), the samples `generate()` checks, the ReDoS
+other way to get them: the samples `generate()` checks, the ReDoS
 confirmation run, and `runtime_pcre_validation`, which compiles with the
 running PHP and is refused with a target that is not that engine.
 

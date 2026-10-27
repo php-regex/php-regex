@@ -27,6 +27,7 @@ use PHPRegex\Tests\Unit\Parser\BadEscapeIsLiteralTest;
 use PHPRegex\Tests\Unit\Parser\BeforePcre2Ten39Test;
 use PHPRegex\Tests\Unit\Parser\GroupNameLengthReleaseTest;
 use PHPRegex\Tests\Unit\Parser\NulByteBeforePhp82Test;
+use PHPRegex\Tests\Unit\Parser\PropertyNameReleaseTest;
 
 /**
  * What the library claims the engines of PHP 7.3 to 8.6 do, written down for
@@ -90,6 +91,7 @@ final class EngineClaims
         [PaddedBraceVersionTest::class, ['providePaddedEscapes'], self::KNOWN_IN_FULL],
         [GroupNameLengthReleaseTest::class, ['provideLongNames', 'provideReferencesToLongNames'], self::KNOWN_IN_FULL],
         [ErrorOffsetReleaseTest::class, ['provideErrors'], self::KNOWN_IN_FULL],
+        [PropertyNameReleaseTest::class, ['provideNames', 'provideNulBytes'], self::KNOWN_IN_FULL],
     ];
 
     /**
