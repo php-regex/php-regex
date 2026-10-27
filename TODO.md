@@ -225,3 +225,26 @@ two parsers read differently.
   JIT setting or the ini setter changed: the Laravel lint failure one random
   order in three exposed in a container (seed 1792566553) did not reproduce
   in this pass; the guard names the culprit the next time it does.
+- The suite only runs on the PCRE2 the official images bundle from 10.40:
+  no CI job runs PHP 8.1's bundled 10.39 (the 8.1 jobs link 10.42). On
+  `php:8.1-cli`, four rows hold a 10.40 reading without saying so, each a
+  gate to add (the library refuses what the engine refuses there):
+  `Pcre84FeatureComplianceTest` ("script property", `\p{Script=Greek}`),
+  `AdvancedFeaturesComplianceTest` ("unicode_extended_property",
+  `\p{Alpha}`), `LinterUnicodeRulesTest` ("braced with spaces", whose
+  oracle `/\p{ L }/` 10.39 refuses) and `JavaScriptTranspilerTest` ("a
+  script negated with a caret": `\P{^Latin}` is the script before 10.40,
+  the script extensions after, so `Script=Latin` is right on 10.39). Then
+  a bundled 10.39 cell in the Engines workflow keeps them held.
+- `CompiledSizeTest::compiles()` reads `error_get_last()`, which PHPUnit
+  10.5's error handler leaves empty: under `tools/phpunit-81` on
+  `php:8.2-cli`, 29 rows say a pattern the engine refuses compiles. Read
+  the refusal from `preg_match()` returning false and `preg_last_error()`
+  instead, as the size verdicts agree with 10.40, 10.42 and 10.44 at the
+  limit (`/(?:\p{L}a){5958}/u` refused, 5957 compiled, on all three).
+- A local check of the twin without containers runs only the PHP side:
+  every Homebrew PHP (7.3, 7.4, 8.2, 8.3, 8.4) links the same PCRE2 10.49,
+  so the release differences stay with the twin workflow. `build/verify/
+  run.sh` takes docker images only; a mode taking a local PHP binary
+  would compare the twin on PHP 7.4 to the original on the same engine,
+  with no engine-dependent exemption.
