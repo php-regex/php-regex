@@ -363,11 +363,7 @@ final class PcreVerb
             return $at;
         }
 
-        if (')' === ($pattern[$at + $digits] ?? '')) {
-            return null;
-        }
-
-        return $at + $digits + ($target->supports(PcreFeature::LimitValueErrorOnFaultingCharacter) ? 0 : 1);
+        return ')' === ($pattern[$at + $digits] ?? '') ? null : $at + $digits + ($target->supports(PcreFeature::LimitValueErrorOnFaultingCharacter) ? 0 : 1);
     }
 
     /**
