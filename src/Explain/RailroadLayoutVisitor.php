@@ -51,7 +51,10 @@ use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
 
 /**
- * Generates a basic railroad-style SVG diagram of the regex AST.
+ * Lays out the railroad diagram of a pattern: each node of the tree gives
+ * the boxes, paths and texts that draw it, at the origin, and the pattern
+ * the whole diagram with its start and end terminals. RailroadSvgRenderer
+ * writes the layout as SVG.
  *
  * @phpstan-type SvgPoint array{0: int, 1: int}
  * @phpstan-type SvgPath array{points: list<SvgPoint>, class: string, markerEnd?: bool}
@@ -75,15 +78,18 @@ use PHPRegex\Parser\Text\Bytes;
  *
  * @internal RailroadSvgRenderer draws the diagram; this is its layout, node by node
  *
- * @extends AbstractNodeVisitor<string|SvgLayout>
+ * @extends AbstractNodeVisitor<SvgLayout>
  */
 final class RailroadLayoutVisitor extends AbstractNodeVisitor
 {
-    private const FONT_SIZE = 12;
+    /**
+     * The height of a line of a node's label, which the renderer stacks
+     * the lines of a wrapped label by.
+     */
+    public const LINE_HEIGHT = 14;
+
     private const CHAR_WIDTH = 7;
-    private const LINE_HEIGHT = 14;
     private const NODE_HEIGHT = 26;
-    private const NODE_RADIUS = 7;
     private const NODE_PADDING_X = 12;
     private const NODE_PADDING_Y = 6;
     private const MIN_NODE_WIDTH = 26;
@@ -95,7 +101,6 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
     private const BYPASS_HEIGHT = 12;
     private const LABEL_HEIGHT = 12;
     private const LABEL_GAP = 6;
-    private const CANVAS_PADDING = 18;
     private const TERMINAL_RADIUS = 7;
     private const TERMINAL_GAP = 12;
     private const GROUP_PADDING_X = 16;
@@ -113,8 +118,14 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
 
     private int $negatedCharClassDepth = 0;
 
+    /**
+     * The whole diagram: the pattern between its terminals, the flags
+     * above it.
+     *
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitRegex(RegexNode $node): string
+    public function visitRegex(RegexNode $node): array
     {
         $this->groupCounter = 0;
         $this->charClassDepth = 0;
@@ -122,9 +133,8 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
 
         $patternLayout = $this->layoutFor($node->pattern);
         $flags = '' !== $node->flags ? $node->flags : null;
-        $layout = $this->wrapWithTerminals($patternLayout, $flags);
 
-        return $this->renderSvg($layout);
+        return $this->wrapWithTerminals($patternLayout, $flags);
     }
 
     /**
@@ -503,22 +513,7 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
      */
     private function layoutFor(NodeInterface $node): array
     {
-        $layout = $node->accept($this);
-        $this->assertLayout($layout);
-
-        return $layout;
-    }
-
-    /**
-     * @param string|SvgLayout $layout
-     *
-     * @phpstan-assert SvgLayout $layout
-     */
-    private function assertLayout(string|array $layout): void
-    {
-        if (!\is_array($layout)) {
-            throw new \LogicException('Expected layout array.');
-        }
+        return $node->accept($this);
     }
 
     /**
@@ -1089,153 +1084,6 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
             self::NODE_HEIGHT,
             (self::LINE_HEIGHT * $lineCount) + (self::NODE_PADDING_Y * 2),
         );
-    }
-
-    /**
-     * @param SvgLayout $layout
-     */
-    private function renderSvg(array $layout): string
-    {
-        $offsetLayout = $this->offsetLayout($layout, self::CANVAS_PADDING, self::CANVAS_PADDING);
-        $width = (int) $layout['width'] + (self::CANVAS_PADDING * 2);
-        $height = (int) $layout['height'] + (self::CANVAS_PADDING * 2);
-
-        $svg = [];
-        $svg[] = '<?xml version="1.0" encoding="UTF-8"?>';
-        $svg[] = \sprintf(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d">',
-            $width,
-            $height,
-            $width,
-            $height,
-        );
-        $svg[] = '<defs>';
-        $svg[] = '<style>';
-        $svg[] = '  .path { stroke: #7b8794; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }';
-        $svg[] = '  .path.loop, .path.bypass { stroke-dasharray: 4 4; }';
-        $svg[] = '  .node { fill: #e1e7ef; stroke: #a3aebd; stroke-width: 1.6; }';
-        $svg[] = '  .node.literal { fill: #dbe2ea; }';
-        $svg[] = '  .node.anchor { fill: #b7e8c9; stroke: #5fb184; }';
-        $svg[] = '  .node.control { fill: #f6c7d6; stroke: #dd8da7; }';
-        $svg[] = '  .node.anychar { fill: #cfe9c8; stroke: #79b879; }';
-        $svg[] = '  .node.class-negated { fill: #f6b6b6; stroke: #e07e7e; }';
-        $svg[] = '  .node.class-positive { fill: #f4d3a1; stroke: #d7a46b; }';
-        $svg[] = '  .label { font-family: monospace; font-size: '.self::FONT_SIZE.'px; fill: #2f3b4c; text-anchor: middle; dominant-baseline: middle; }';
-        $svg[] = '  .group-box { fill: none; stroke: #c2ccd7; stroke-width: 1.5; stroke-dasharray: 3 3; }';
-        $svg[] = '  .group-label { font-family: monospace; font-size: 11px; fill: #6b7785; text-anchor: middle; dominant-baseline: middle; }';
-        $svg[] = '  .class-label { font-family: monospace; font-size: 11px; fill: #6b7785; text-anchor: middle; dominant-baseline: middle; }';
-        $svg[] = '  .quantifier-label { font-family: monospace; font-size: 11px; fill: #6b7785; text-anchor: middle; dominant-baseline: middle; }';
-        $svg[] = '  .meta { font-family: monospace; font-size: 11px; fill: #6b7785; text-anchor: start; dominant-baseline: middle; }';
-        $svg[] = '  .terminal.start { fill: #62d28c; stroke: #4fb173; stroke-width: 2; }';
-        $svg[] = '  .terminal.end { fill: #6aa3ff; stroke: #4a83df; stroke-width: 2; }';
-        $svg[] = '</style>';
-        $svg[] = '<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">';
-        $svg[] = '  <polygon points="0 0, 10 3.5, 0 7" fill="#7b8794" />';
-        $svg[] = '</marker>';
-        $svg[] = '</defs>';
-        $svg[] = \sprintf('<rect width="%d" height="%d" fill="#f4f7f8"/>', $width, $height);
-
-        foreach ($offsetLayout['boxes'] as $box) {
-            $svg[] = \sprintf(
-                '<rect class="%s" x="%d" y="%d" width="%d" height="%d" rx="%d" ry="%d"/>',
-                $this->escapeAttribute($box['class']),
-                $box['x'],
-                $box['y'],
-                $box['width'],
-                $box['height'],
-                $box['rx'],
-                $box['ry'],
-            );
-        }
-
-        foreach ($offsetLayout['paths'] as $path) {
-            $markerEnd = isset($path['markerEnd']) && $path['markerEnd'] ? ' marker-end="url(#arrowhead)"' : '';
-            $svg[] = \sprintf(
-                '<path class="%s"%s d="%s"/>',
-                $this->escapeAttribute($path['class'] ?? 'path'),
-                $markerEnd,
-                $this->renderPath($path['points']),
-            );
-        }
-
-        foreach ($offsetLayout['markers'] as $marker) {
-            $svg[] = \sprintf(
-                '<circle class="%s" cx="%d" cy="%d" r="%d"/>',
-                $this->escapeAttribute($marker['class']),
-                $marker['cx'],
-                $marker['cy'],
-                $marker['r'],
-            );
-        }
-
-        foreach ($offsetLayout['nodes'] as $node) {
-            $svg[] = \sprintf(
-                '<rect class="%s" x="%d" y="%d" width="%d" height="%d" rx="%d" ry="%d"/>',
-                $this->escapeAttribute($node['class']),
-                $node['x'],
-                $node['y'],
-                $node['width'],
-                $node['height'],
-                self::NODE_RADIUS,
-                self::NODE_RADIUS,
-            );
-            $labelLines = $node['labelLines'] ?? [$node['label']];
-            $lineCount = \count($labelLines);
-            $textBlockHeight = self::LINE_HEIGHT * $lineCount;
-            $centerX = $node['x'] + (int) floor($node['width'] / 2);
-            $startY = $node['y'] + (int) floor(((int) $node['height'] - $textBlockHeight) / 2);
-
-            foreach ($labelLines as $index => $line) {
-                $lineY = $startY + ($index * self::LINE_HEIGHT) + (int) floor(self::LINE_HEIGHT / 2);
-                $svg[] = \sprintf(
-                    '<text class="label" x="%d" y="%d">%s</text>',
-                    $centerX,
-                    $lineY,
-                    $this->escapeText($line),
-                );
-            }
-        }
-
-        foreach ($offsetLayout['texts'] as $text) {
-            $svg[] = \sprintf(
-                '<text class="%s" x="%d" y="%d">%s</text>',
-                $this->escapeAttribute($text['class']),
-                $text['x'],
-                $text['y'],
-                $this->escapeText($text['text']),
-            );
-        }
-
-        $svg[] = '</svg>';
-
-        return implode("\n", $svg);
-    }
-
-    /**
-     * @param list<SvgPoint> $points
-     */
-    private function renderPath(array $points): string
-    {
-        if (0 === \count($points)) {
-            return '';
-        }
-
-        $commands = ['M '.$points[0][0].' '.$points[0][1]];
-        for ($i = 1; $i < \count($points); $i++) {
-            $commands[] = 'L '.$points[$i][0].' '.$points[$i][1];
-        }
-
-        return implode(' ', $commands);
-    }
-
-    private function escapeText(string $text): string
-    {
-        return htmlspecialchars($text, \ENT_XML1 | \ENT_SUBSTITUTE | \ENT_QUOTES, 'UTF-8');
-    }
-
-    private function escapeAttribute(string $value): string
-    {
-        return htmlspecialchars($value, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
     }
 
     /**
