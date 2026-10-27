@@ -31,7 +31,7 @@ corpus/Alexia/php7mar/classes/tests.php:177:21
 
 
 ### corpus/Automattic/jetpack — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 1
-corpus/Automattic/jetpack/projects/packages/agents-manager/src/class-agents-manager.php:439:30
+corpus/Automattic/jetpack/projects/packages/agents-manager/src/class-agents-manager.php:438:30
     → /([-_].*)$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -282,12 +282,12 @@ corpus/Automattic/jetpack/projects/plugins/boost/app/lib/minify/functions-servic
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php:3105:70
+corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php:3094:70
     → /custom\-[0-1]+/i
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '0' and '1' explicitly instead of a range.
 
-corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php:3148:70
+corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/class.core-rest-api-endpoints.php:3137:70
     → /^@?\w{1,15}$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -390,7 +390,7 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/gfm.php:250
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/Automattic/jetpack/projects/plugins/jetpack/class.jetpack.php:1963:18
+corpus/Automattic/jetpack/projects/plugins/jetpack/class.jetpack.php:1964:18
     → /^\d+(\.\d+)+$/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -922,6 +922,30 @@ corpus/FakerPHP/Faker/test/Provider/ro_RO/PersonTest.php:16:35
 
 ### corpus/GitLabPHP/Client — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
+### corpus/Heyosseus/sloppy — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
+corpus/Heyosseus/sloppy/src/Architecture/Profile.php:37:37
+    → /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
+   ↳ via self::ROLE_NAME
+   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+corpus/Heyosseus/sloppy/src/Rules/Php/UnexplainedSuppressionRule.php:171:48
+    → #^[\s*/]+#
+   WARN  "*" is a literal character inside a character class, not a quantifier.
+       ↳ Inside [...], "*" matches a literal "*". If you meant to quantify a shorthand like \w, use \w* outside the class.
+
+corpus/Heyosseus/sloppy/src/Rules/Php/UnexplainedSuppressionRule.php:185:59
+    → #^[\s*/]+#
+   WARN  "*" is a literal character inside a character class, not a quantifier.
+       ↳ Inside [...], "*" matches a literal "*". If you meant to quantify a shorthand like \w, use \w* outside the class.
+
+corpus/Heyosseus/sloppy/src/Rules/Php/UnexplainedSuppressionRule.php:220:66
+    → #[\s*/]+#
+   WARN  "*" is a literal character inside a character class, not a quantifier.
+       ↳ Inside [...], "*" matches a literal "*". If you meant to quantify a shorthand like \w, use \w* outside the class.
+
+
+
 ### corpus/Humbug/php-scoper — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/Humbug/php-scoper/src/Patcher/SymfonyPatcher.php:35:13
     → /use (Symfony(\\(?:\\)?)Component\\.+?;)/
@@ -1000,7 +1024,7 @@ Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest th
 Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/Jexactyl/Jexactyl — Target: PHP 8.4, PCRE2 10.44 (composer.json config.platform.php) — exit 0
+### corpus/Jexactyl/Jexactyl — Target: PHP 8.4, PCRE2 10.49 (composer.json config.platform.php) — exit 0
 corpus/Jexactyl/Jexactyl/app/Traits/Commands/EnvironmentWriterTrait.php:20:63
     → /([^\w.\-+\/])+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -2500,9 +2524,9 @@ corpus/Respect/Validation/src/Validators/MacAddress.php:42:27
 
 
 
-### corpus/Roave/BackwardCompatibilityCheck — Target: PHP 8.4.99, PCRE2 10.44 (composer.json config.platform.php) — exit 0
+### corpus/Roave/BackwardCompatibilityCheck — Target: PHP 8.4.99, PCRE2 10.49 (composer.json config.platform.php) — exit 0
 
-### corpus/Roave/BetterReflection — Target: PHP 8.4.99, PCRE2 10.44 (composer.json config.platform.php) — exit 0
+### corpus/Roave/BetterReflection — Target: PHP 8.4.99, PCRE2 10.49 (composer.json config.platform.php) — exit 0
 corpus/Roave/BetterReflection/src/Identifier/Identifier.php:19:46
     → /([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*/
    ↳ via self::VALID_NAME_REGEXP
@@ -3429,13 +3453,13 @@ corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-plugin-dependencies.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-query.php:1090:22
+corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-query.php:1095:22
     → /^[^%]*%(?:postname)%/
    TIP 
        - /^[^%]*%(?:postname)%/
        + /^[^%]*%postname%/
 
-corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-theme.php:1958:23
+corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-theme.php:1973:23
     → /^[A-z0-9\/_-]+$/
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '_' (covered by range 'A'-'z')
@@ -4373,7 +4397,7 @@ corpus/cakephp/cakephp/src/View/StringTemplate.php:334:25
 
 
 
-### corpus/canyongbs/aidingapp — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/canyongbs/aidingapp — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 corpus/canyongbs/aidingapp/app-modules/contact/src/Imports/OrganizationImporter.php:184:42
     → /^(?!-)([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,63}$/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -4405,7 +4429,7 @@ corpus/canyongbs/aidingapp/app-modules/form/src/Rules/IsDomain.php:52:26
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/canyongbs/aidingapp/app-modules/project/src/Filament/Resources/Projects/Pages/ListProjects.php:122:38
+corpus/canyongbs/aidingapp/app-modules/project/src/Filament/Resources/Projects/Pages/ListProjects.php:123:38
     → /(\s|\x{3164}|\x{1160})+/u
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -4549,7 +4573,7 @@ corpus/cebe/markdown/inline/UrlLinkTrait.php:25:14
 
 
 
-### corpus/chillerlan/php-qrcode — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/chillerlan/php-qrcode — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 corpus/chillerlan/php-qrcode/src/Output/CssColorModuleValueTrait.php:46:17
     → /^#([\da-f]{3}){1,2}$|^#([\da-f]{4}){1,2}$/i
    INFO  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
@@ -4579,7 +4603,7 @@ corpus/codeigniter4/CodeIgniter4/preload.php:92:17
    WARN  Quantifier "+" on an assertion changes nothing: PCRE checks it once.
        ↳ Remove the quantifier.
 
-corpus/codeigniter4/CodeIgniter4/system/CLI/CLI.php:337:28
+corpus/codeigniter4/CodeIgniter4/system/CLI/CLI.php:341:28
     → /^\d+(,\d+)*$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -4858,7 +4882,7 @@ corpus/composer/composer/src/Composer/Util/ProcessExecutor.php:131:56
 
 
 
-### corpus/composer/packagist — Target: PHP 8.4.11, PCRE2 10.44 (composer.json config.platform.php) — exit 0
+### corpus/composer/packagist — Target: PHP 8.4.11, PCRE2 10.49 (composer.json config.platform.php) — exit 0
 corpus/composer/packagist/src/Controller/PackageController.php:1452:40
     → {\.9999999$}
    TIP 
@@ -5128,13 +5152,13 @@ corpus/concretecms/concretecms/concrete/src/Validation/SanitizeService.php:37:32
 
 
 
-### corpus/contao/contao — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/contao/contao — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 corpus/contao/contao/core-bundle/contao/controllers/BackendPopup.php:73:98
     → @(://)+@
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/contao/contao/core-bundle/contao/dca/tl_content.php:1097:25
+corpus/contao/contao/core-bundle/contao/dca/tl_content.php:1093:25
     → /<!--(.|\s)*?-->/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -5272,17 +5296,17 @@ corpus/craftcms/cms/src/helpers/Json.php:96:25
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the second quantifier to its minimum.
 
-corpus/craftcms/cms/src/helpers/StringHelper.php:1035:20
+corpus/craftcms/cms/src/helpers/StringHelper.php:1024:20
     → /<\/?\w+(?:(?:\s+\w+(?:\s*=\s*(?:".*?"|'.*?'|[^'">\s]+))?)*\s*|\s*)\/?>/u
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/craftcms/cms/src/helpers/StringHelper.php:1446:29
+corpus/craftcms/cms/src/helpers/StringHelper.php:1435:29
     → #/\r\n|\r|\n|<br.*/?>#isU
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/craftcms/cms/src/helpers/StringHelper.php:1865:29
+corpus/craftcms/cms/src/helpers/StringHelper.php:1854:29
     → #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -5293,7 +5317,7 @@ corpus/craftcms/cms/src/helpers/StringHelper.php:1865:29
        - #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
        + #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isuU
 
-corpus/craftcms/cms/src/helpers/StringHelper.php:2505:32
+corpus/craftcms/cms/src/helpers/StringHelper.php:2494:32
     → /['"‘’“”ʻ\[\]\(\)\{\}:]/
    FAIL  Character class holds "‘", which without /u is the bytes \xE2 \x80 \x98: the class matches each byte on its own.
        ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
@@ -6360,28 +6384,28 @@ corpus/filp/whoops/src/Whoops/Util/TemplateHelper.php:228:30
 
 
 ### corpus/flarum/framework — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
-corpus/flarum/framework/extensions/package-manager/src/Api/Controller/CompatController.php:52:52
+corpus/flarum/framework/extensions/package-manager/src/Api/Controller/CompatController.php:56:52
     → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/flarum/framework/extensions/package-manager/src/Api/Controller/StartController.php:157:30
+corpus/flarum/framework/extensions/package-manager/src/Api/Controller/StartController.php:159:30
     → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/flarum/framework/extensions/package-manager/src/Console/UpdateCommand.php:146:30
+corpus/flarum/framework/extensions/package-manager/src/Console/UpdateCommand.php:148:30
     → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/flarum/framework/extensions/package-manager/src/Discover/Packagist.php:237:27
+corpus/flarum/framework/extensions/package-manager/src/Discover/Packagist.php:251:27
     → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -6766,14 +6790,6 @@ corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Header.php:1
 
 
 ### corpus/getgrav/grav — Target: PHP 8.3, PCRE2 10.42 (composer.json config.platform.php) — exit 0
-corpus/getgrav/grav/system/src/Grav/Common/Assets/Pipeline.php:51:51
-    → ~("(?:[^"\\\r\n]|\\(?:\r\n|.))*"|'(?:[^'\\\r\n]|\\(?:\r\n|.))*')|(/\*!.*?\*/)|/\*.*?\*/~s
-   ↳ via self::CSS_STRING_OR_COMMENT_REGEX
-   WARN  Alternation branches "\\r\\n" and "." have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches "\\r\\n" and "." have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
 corpus/getgrav/grav/system/src/Grav/Common/Data/Validation.php:277:31
     → /\r\n|\r/um
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -7036,7 +7052,7 @@ corpus/google/google-cloud-php/dev/src/ReleaseNotes.php:91:24
 
 
 
-### corpus/google/recaptcha — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/google/recaptcha — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 corpus/google/recaptcha/src/ReCaptcha/RequestMethod/SocketPost.php:134:29
     → #\n\s*\n#Uis
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -7477,7 +7493,7 @@ corpus/jbowens/jBBCode/JBBCode/validators/CssColorValidator.php:28:34
 
 
 
-### corpus/jolicode/castor — Target: PHP 8.4.1, PCRE2 10.44 (composer.json config.platform.php) — exit 0
+### corpus/jolicode/castor — Target: PHP 8.4.1, PCRE2 10.49 (composer.json config.platform.php) — exit 0
 corpus/jolicode/castor/tools/doc/castor.php:134:37
     → /### Usage\n([^#]*)\n\n###/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -7846,6 +7862,14 @@ Note: composer.json require.php allows PHP 7.0, and PHP 7.2 and earlier ship PCR
 Note: PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/laminas/laminas-code — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+corpus/laminas/laminas-code/src/Generator/AttributeGenerator.php:43:43
+    → /^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*(\\[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)*$/
+   ↳ via self::NAME_PATTERN
+   INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+   WARN  Nested quantifiers can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+
 corpus/laminas/laminas-code/src/Generator/FileGenerator.php:437:24
     → #/\* Laminas_Code_Generator_Php_File-(.*?)Marker:#m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -8966,7 +8990,7 @@ corpus/magento/magento2/setup/src/Magento/Setup/Module/Di/Code/Scanner/PhpScanne
 
 
 
-### corpus/maglnet/ComposerRequireChecker — Target: PHP 8.4.99, PCRE2 10.44 (composer.json config.platform.php) — exit 0
+### corpus/maglnet/ComposerRequireChecker — Target: PHP 8.4.99, PCRE2 10.49 (composer.json config.platform.php) — exit 0
 
 ### corpus/mamuz/PhpDependencyAnalysis — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
@@ -9802,20 +9826,20 @@ corpus/mockery/mockery/library/Mockery/Generator/StringManipulation/Pass/RemoveD
 
 
 ### corpus/modelcontextprotocol/php-sdk — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:775:24
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:785:24
     → /^int\s*<\s*[^<>]+\s*>$/i
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:816:24
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:826:24
     → /^(\??)([\w\\]+)\s*\[\]$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:832:27
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:842:27
     → /^(\??)([\w\\]+)\s*\[\]\[\]$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:929:31
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:964:27
     → /^([\w\\]+)\s*\[\]$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -13320,7 +13344,7 @@ corpus/nikic/PHP-Parser/lib/PhpParser/Comment.php:127:24
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
 
-corpus/nikic/PHP-Parser/lib/PhpParser/ParserAbstract.php:698:81
+corpus/nikic/PHP-Parser/lib/PhpParser/ParserAbstract.php:721:81
     → /\A#!.*\r?\n\z/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
@@ -13359,7 +13383,7 @@ Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the ol
 Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/nunomaduro/phpinsights — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/nunomaduro/phpinsights — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 
 ### corpus/nunomaduro/termwind — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/nunomaduro/termwind/src/ValueObjects/Styles.php:29:34
@@ -13508,7 +13532,7 @@ corpus/owncloud/core/lib/private/legacy/helper.php:611:14
 
 
 
-### corpus/paratestphp/paratest — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/paratestphp/paratest — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:255:32
     → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-\w+)?\n\n/
    TIP 
@@ -14459,27 +14483,27 @@ corpus/phpseclib/phpseclib/phpseclib/File/SPKAC.php:132:30
        - #(?:SPKAC=)|[ \r\n\\]#
        + #SPKAC=|[ \r\n\\]#
 
-corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1033:43
+corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1039:43
     → #^/|/(?=/)|/$#
    WARN  An anchor holds for its own alternative only: "/(?=/)" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "^(?:/|/(?=/)|/)$".
 
-corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1068:43
+corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1074:43
     → #^/|/(?=/)|/$#
    WARN  An anchor holds for its own alternative only: "/(?=/)" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "^(?:/|/(?=/)|/)$".
 
-corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1094:43
+corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1100:43
     → #^/|/(?=/)|/$#
    WARN  An anchor holds for its own alternative only: "/(?=/)" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "^(?:/|/(?=/)|/)$".
 
-corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1529:47
+corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1535:47
     → #/(?=/)|/$#
    WARN  An anchor holds for its own alternative only: "/(?=/)" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "(?:/(?=/)|/)$".
 
-corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:2571:24
+corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:2577:24
     → #^[^/]([r-][w-][xstST-]){3}#
    INFO  Quantified capturing group "(...)" with "{3}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -14608,7 +14632,7 @@ Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library 
 ### corpus/phpstan/phpstan-symfony — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/phpunit/environment — Target: PHP 8.4.1, PCRE2 10.44 (composer.json config.platform.php) — exit 0
+### corpus/phpunit/environment — Target: PHP 8.4.1, PCRE2 10.49 (composer.json config.platform.php) — exit 0
 corpus/phpunit/environment/src/Console.php:221:32
     → /--------+\r?\n.+?(\d+)\r?\n.+?(\d+)\r?\n/
    TIP 
@@ -14625,7 +14649,7 @@ corpus/phpunit/phpunit/src/Util/Color.php:206:17
 
 
 
-### corpus/pimcore/pimcore — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/pimcore/pimcore — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 corpus/pimcore/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:184:42
     → /\s+/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -14974,7 +14998,7 @@ corpus/reactphp/socket/src/UnixServer.php:69:29
 ### corpus/rectorphp/rector — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/rectorphp/rector-src — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/rectorphp/rector-src — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 corpus/rectorphp/rector-src/rules/CodingStyle/Rector/Catch_/CatchExceptionNameMatchingTypeRector.php:37:59
     → #^([A-Za-z]+?)([A-Z]{1}[a-z]{1})([A-Za-z]*)#
    ↳ via self::STARTS_WITH_ABBREVIATION_REGEX
@@ -15019,7 +15043,7 @@ corpus/rectorphp/rector-src/src/BetterPhpDocParser/NodeDecorator/DoctrineAnnotat
        - #^\s*\*#ms
        + #^\s*\*#m
 
-corpus/rectorphp/rector-src/src/BetterPhpDocParser/PhpDocParser/BetterPhpDocParser.php:47:50
+corpus/rectorphp/rector-src/src/BetterPhpDocParser/PhpDocParser/BetterPhpDocParser.php:44:50
     → #(?<new_line>\r\n|\n){2,}#
    ↳ via self::MULTI_NEW_LINES_REGEX
    WARN  Quantified named group "(?<new_line>...)" with "{2,}": only the last iteration's capture is retained.
@@ -18026,11 +18050,11 @@ corpus/statamic/cms/src/Search/Comb/Comb.php:480:29
        - #\s+#ism
        + #\s+#i
 
-corpus/statamic/cms/src/Search/Comb/Comb.php:871:43
+corpus/statamic/cms/src/Search/Comb/Comb.php:876:43
     → /\s+/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/statamic/cms/src/Search/Comb/Comb.php:888:33
+corpus/statamic/cms/src/Search/Comb/Comb.php:893:33
     → /\s+/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -18122,7 +18146,7 @@ corpus/symfony/maker-bundle/src/Util/ClassSourceManipulator.php:925:33
 
 
 
-### corpus/symfony/mime — Target: PHP 8.4.1, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/symfony/mime — Target: PHP 8.4.1, PCRE2 10.49 (composer.json require.php) — exit 0
 corpus/symfony/mime/Header/AbstractHeader.php:99:25
     → /^(?:(?:(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?[a-zA-Z0-9!#\$%&'\*\+\-\/=\?\^_`\{\}\|~]+(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?)|(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?"((?:(?:[ \t]*(?:\r\n))?[ \t])?(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21\x23-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])))*(?:(?:[ \t]*(?:\r\n))?[ \t])?"(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?))+?)$/D
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -18260,7 +18284,7 @@ corpus/symfony/polyfill-mbstring/Mbstring.php:634:31
 
 ### corpus/symfony/recipes — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 
-### corpus/symfony/symfony — Target: PHP 8.4.1, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/symfony/symfony — Target: PHP 8.4.1, PCRE2 10.49 (composer.json require.php) — exit 0
 corpus/symfony/symfony/src/Symfony/Bundle/FrameworkBundle/Console/Descriptor/Descriptor.php:156:29
     → /\n\s*/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -18309,12 +18333,16 @@ corpus/symfony/symfony/src/Symfony/Component/Console/Command/Command.php:732:25
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/symfony/symfony/src/Symfony/Component/Console/Helper/Table.php:671:45
+corpus/symfony/symfony/src/Symfony/Component/Console/Helper/Table.php:674:82
     → /^<(\w+|(\w+=[\w,]+;?)*)>.+<\/(\w+|(\w+=\w+;?)*)?>$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+corpus/symfony/symfony/src/Symfony/Component/Console/Helper/Table.php:924:28
+    → #<(?:[a-z](?:[^\\<>]*+|\\.)*|/(?:[a-z][^<>]*+)?)>#i
+   WARN  Quantifier "*" repeats an item that can match the empty string: an empty iteration matches nothing more.
 
 corpus/symfony/symfony/src/Symfony/Component/Console/Input/StringInput.php:69:34
     → /([^\s\\]+?)/A
@@ -18664,9 +18692,9 @@ corpus/symfony/ux/src/Toolkit/src/Registry/GitHubRegistry.php:50:34
 
 
 
-### corpus/symfony/ux-live-component — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/symfony/ux-live-component — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 
-### corpus/symfony/ux-turbo — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/symfony/ux-turbo — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 
 ### corpus/tecnickcom/TCPDF — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/tecnickcom/TCPDF/tcpdf.php:1491:37
@@ -18676,7 +18704,7 @@ corpus/tecnickcom/TCPDF/tcpdf.php:1491:37
 
 
 
-### corpus/tempestphp/highlight — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/tempestphp/highlight — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
 corpus/tempestphp/highlight/src/Languages/Base/Injections/AdditionInjection.php:25:24
     → /(\{\+)((.|\n)*?)(\+})/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -19931,7 +19959,7 @@ corpus/woocommerce/woocommerce/plugins/woocommerce/includes/class-wc-product-dow
     → #^//+(/[^/].+)$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/woocommerce/woocommerce/plugins/woocommerce/includes/import/class-wc-product-csv-importer.php:673:20
+corpus/woocommerce/woocommerce/plugins/woocommerce/includes/import/class-wc-product-csv-importer.php:693:20
     → /^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])([ 01-9:]*)$/
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '1' and '2' explicitly instead of a range.
