@@ -17,6 +17,7 @@ use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,6 +31,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RegexLintTest extends TestCase
 {
+    use PcreGates;
+
     private const TARGET_DEPENDENT = '/(?=\{)a{,2}\{/';
 
     #[Test]
@@ -52,14 +55,25 @@ final class RegexLintTest extends TestCase
     }
 
     /**
+     * From 10.43 "a{,2}" repeats, so the lookahead holds and the engine
+     * matches "{". Before 10.45 it misses that match all the same: past a
+     * lookahead it looked for a wrong first code unit, which 10.45 fixed.
+     */
+    #[Test]
+    public function test_the_running_engine_matches_where_the_lookahead_holds(): void
+    {
+        $this->requiresPcre2('10.45', self::TARGET_DEPENDENT);
+
+        $this->assertSame(1, preg_match(self::TARGET_DEPENDENT, '{'));
+    }
+
+    /**
      * @param list<string> $ids
      */
     #[Test]
     #[DataProvider('provideTargets')]
     public function test_lint_reads_the_pattern_for_the_facades_target(string $pcreVersion, array $ids): void
     {
-        $this->assertSame(1, preg_match(self::TARGET_DEPENDENT, '{'), 'Oracle: the running PCRE2 repeats "a{,2}".');
-
         $regex = Regex::create(['cache' => null, 'pcre_version' => $pcreVersion]);
 
         $this->assertSame($ids, self::ids($regex->lint(self::TARGET_DEPENDENT)));

@@ -144,7 +144,28 @@ final class VerbNamesTest extends TestCase
         }
 
         VerbNames::refuseLongLetterRun($old, 32, 0);
-        VerbNames::refuseTooLong(self::text('(*'.str_repeat('A', 128).')'), 128, 0);
+    }
+
+    /**
+     * A verb name is held to the length of a group name: 32 code units
+     * before PCRE2 10.44, 128 from it.
+     */
+    #[Test]
+    public function test_a_name_longer_than_a_group_name_is_refused_where_it_ends(): void
+    {
+        $name = '(*'.str_repeat('A', 128).')';
+        VerbNames::refuseTooLong(new PatternText(new TargetSyntax(new PcreTarget(80400, '10.44')), $name, '', $name, 0), 128, 0);
+
+        $before = new PatternText(new TargetSyntax(new PcreTarget(80300, '10.42')), $name, '', $name, 0);
+        VerbNames::refuseTooLong($before, 32, 0);
+
+        try {
+            VerbNames::refuseTooLong($before, 33, 0);
+            $this->fail('A name of 33 code units was read by PCRE2 10.42.');
+        } catch (LexerException $exception) {
+            $this->assertSame(ErrorCode::GroupNameTooLong, $exception->errorCode);
+            $this->assertSame(35, $exception->position);
+        }
     }
 
     #[Test]

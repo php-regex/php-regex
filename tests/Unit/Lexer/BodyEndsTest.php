@@ -30,7 +30,8 @@ final class BodyEndsTest extends TestCase
     /**
      * The ")" found is the one PCRE closes the body with: in each pattern
      * the ")" after it is the first one PCRE finds unmatched, or there is
-     * none and the pattern compiles.
+     * none and the pattern compiles. PCRE2 reports that ")" past it from
+     * 10.47, on it before.
      */
     #[Test]
     #[DataProvider('provideClosedBodies')]
@@ -41,7 +42,7 @@ final class BodyEndsTest extends TestCase
             $this->assertSame(0, $compiled);
         } else {
             $this->assertFalse($compiled);
-            $this->assertStringContainsString('unmatched closing parenthesis at offset '.($unmatched + 1 + ($extended ? 4 : 0)), error_get_last()['message'] ?? '');
+            $this->assertStringContainsString('unmatched closing parenthesis at offset '.PcreTarget::runtime()->faultOffset($unmatched + 1 + ($extended ? 4 : 0)), error_get_last()['message'] ?? '');
         }
 
         $this->assertSame($end, (new BodyEnds())->assertionEnd(self::text($pattern), 0, $opener, $extended, false));
