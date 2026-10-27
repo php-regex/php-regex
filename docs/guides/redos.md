@@ -281,6 +281,10 @@ vendor/bin/regex analyze '/(a)\1+$/'
   Confidence : MEDIUM
 ```
 
+A condition that asks whether a group is set, `(?(1)…)` or `(?(<name>)…)`, or whether a recursion runs, `(?(R)…)`, reads no character: the heuristics read it neither as a backreference nor as a subroutine call. `/((?(1)|b))+/`, which PCRE2 reads in 5 steps whatever the length of the subject, gets no backreference finding.
+
+A recursion into the whole pattern that the attempt tries first, before it reads a character, as in `/((?R)?a?)+/`, enters the pattern again where it started. PCRE2 stops the match there: `preg_match()` returns `false` on every subject the engine runs the pattern on, whatever its length, from PCRE2 10.39 to 10.49. Without the JIT, `preg_last_error()` is `PREG_INTERNAL_ERROR`, a recursion loop found at the 7th step on PCRE2 10.49; with it, `PREG_JIT_STACKLIMIT_ERROR`, once the JIT stack runs out, in about 0.01 ms at 1, 1,000 or 100,000 letters. Nothing after the recursion runs and nothing backtracks, so the verdict is `low`, with one finding that says so. A recursion after a step that reads a character (`/a(?R)?b/`), one tried last (`/(?R)??a/`), or one behind an anchor or a lookaround keeps the heuristics' verdict.
+
 The model works within a budget counted in states and steps, never in time, so the same pattern gets the same verdict on every machine. Past it, the heuristics decide:
 
 ```bash

@@ -49,6 +49,7 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -164,6 +165,23 @@ final class RedosProfiler extends AbstractNodeVisitor
         $this->backrefLoopDetected = false;
         $this->culpritNode = null;
         $this->culpritSeverity = RedosSeverity::Safe;
+
+        // A recursion the attempt tries first, before it reads a character,
+        // enters the pattern again where it started, and PCRE2 stops the
+        // match there with an error: nothing after it ever runs.
+        $recursion = $this->firstTriedStep($node->pattern);
+        if ($recursion instanceof SubroutineNode) {
+            $this->addVulnerability(
+                RedosSeverity::Low,
+                'PCRE stops every match attempt it runs before it backtracks: the attempt tries this recursion first, before it reads a character, and enters the pattern again where it started, so preg_match() returns false, with PREG_INTERNAL_ERROR (a recursion loop) without the JIT and PREG_JIT_STACKLIMIT_ERROR with it.',
+                $recursion,
+                'Read a character before the recursion, or try the recursion after the branch that reads one.',
+                RedosConfidence::High,
+                'Low false-positive risk; the engine stops the attempt at its first step whatever the subject.',
+            );
+
+            return RedosSeverity::Low;
+        }
 
         return $node->pattern->accept($this);
     }
@@ -558,9 +576,10 @@ final class RedosProfiler extends AbstractNodeVisitor
     #[\Override]
     public function visitConditional(ConditionalNode $node): RedosSeverity
     {
-        // The condition itself may be a lookaround that backtracks.
+        // The condition itself may be a lookaround that backtracks; one that
+        // asks whether a group is set or a recursion runs reads nothing.
         return $this->maxSeverity(
-            $node->condition->accept($this),
+            self::isReferenceCondition($node) ? RedosSeverity::Safe : $node->condition->accept($this),
             $this->maxSeverity(
                 $node->yes->accept($this),
                 $node->no->accept($this),
@@ -1263,12 +1282,76 @@ final class RedosProfiler extends AbstractNodeVisitor
             return [$node->child];
         }
         if ($node instanceof ConditionalNode) {
-            return [$node->condition, $node->yes, $node->no];
+            return self::isReferenceCondition($node) ? [$node->yes, $node->no] : [$node->condition, $node->yes, $node->no];
         }
         if ($node instanceof ScriptRunNode && null !== $node->content) {
             return [$node->content];
         }
 
         return [];
+    }
+
+    /**
+     * Whether the condition asks whether a group is set, "(?(1)…)" or
+     * "(?(<name>)…)", or whether a recursion runs, "(?(R)…)": a test that
+     * reads no character and calls nothing, neither a backreference nor a
+     * subroutine call.
+     */
+    private static function isReferenceCondition(ConditionalNode $node): bool
+    {
+        return $node->condition instanceof BackrefNode || $node->condition instanceof SubroutineNode;
+    }
+
+    /**
+     * Follows the step an attempt tries first, from the node, as long as it
+     * reads no character and cannot fail: the recursion into the whole
+     * pattern it reaches, true when the node lets it through without
+     * reading, false when it reads, may fail, or the analysis cannot tell.
+     */
+    private function firstTriedStep(NodeInterface $node): SubroutineNode|bool
+    {
+        if ($node instanceof SubroutineNode) {
+            return \in_array($node->reference, ['R', '0'], true) ? $node : false;
+        }
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                $step = $this->firstTriedStep($child);
+                if (true !== $step) {
+                    return $step;
+                }
+            }
+
+            return true;
+        }
+
+        if ($node instanceof AlternationNode) {
+            return [] === $node->alternatives ? false : $this->firstTriedStep($node->alternatives[0]);
+        }
+
+        if ($node instanceof GroupNode) {
+            if (!\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags, GroupType::Atomic, GroupType::BranchReset], true)) {
+                return false;
+            }
+
+            return $this->firstTriedStep($node->child);
+        }
+
+        if ($node instanceof QuantifierNode) {
+            [$min, $max] = $this->quantifierBounds($node);
+            if (0 === $max || (0 === $min && QuantifierType::Lazy === $node->type)) {
+                return true;
+            }
+
+            return $this->firstTriedStep($node->node);
+        }
+
+        // The options of the opening run, a comment, a DEFINE block and \K
+        // let the attempt through where it stands.
+        return ($node instanceof LiteralNode && '' === $node->value)
+            || $node instanceof CommentNode
+            || $node instanceof DefineNode
+            || $node instanceof KeepNode
+            || ($node instanceof PcreVerbNode && isset(StartOptions::NAMES[$node->verb]));
     }
 }
