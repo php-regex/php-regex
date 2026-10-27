@@ -1,8 +1,48 @@
+# The twin is held to the bar of the code it comes from: src/Parser passes
+# level max with no baseline entry, so the twin does too, judged as PHP 7.4
+# code under the same reading of PHPDoc types as phpstan.dist.neon. A
+# finding here is a downgrade that changed what the code says; it is fixed
+# in the generator. The entries below are what the analysis's map of PHP 7.4
+# gets wrong, each checked on php:7.4-cli; an entry that stops matching
+# fails the analysis.
 parameters:
-	level: 5
+	level: max
+	phpVersion: 70400
+	treatPhpDocTypesAsCertain: false
 	paths:
-		- build/php74
+		- php74/src
+	tmpDir: ../.cache/phpstan-php74
+	bootstrapFiles:
+		# the polyfills and PSR interfaces the twin's manifest requires or
+		# suggests, as a consumer installs them on PHP 7.4
+		- smoke/vendor/autoload.php
+	scanFiles:
+		# what the PHP 8.0 and 8.1 polyfills declare on 7.4 only: the
+		# analysis runs on a newer PHP, where their bootstraps return early
+		- smoke/vendor/symfony/polyfill-php80/bootstrap.php
+		- smoke/vendor/symfony/polyfill-php80/Resources/stubs/Stringable.php
+		- smoke/vendor/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php
+		- smoke/vendor/symfony/polyfill-php80/Resources/stubs/ValueError.php
+		- smoke/vendor/symfony/polyfill-php81/bootstrap.php
 	ignoreErrors:
+		# PHP 7 returns null from an internal function only when its arguments
+		# fail to parse, and every file of the twin declares strict_types=1,
+		# under which they throw a TypeError instead:
+		# preg_match_all([], 'a') throws on php:7.4-cli.
 		-
-			message: '#Psr\\(Cache|SimpleCache)#'
-			identifier: class.notFound
+			rawMessage: 'Method PHPRegex\Parser\Engine\LibraryPcre::matchAll() should return int<0, max>|false but returns int<0, max>|false|null.'
+			identifier: return.type
+			path: php74/src/Engine/LibraryPcre.php
+			count: 1
+		-
+			rawMessage: 'Parameter #2 $call of method PHPRegex\Parser\Engine\PcreEngine::run() expects Closure(string): (int|false), Closure(string): (int<0, max>|false|null) given.'
+			identifier: argument.type
+			path: php74/src/Engine/PcreEngine.php
+			count: 1
+		# ini_parse_quantity() is PHP 8.2's, called behind function_exists():
+		# the closure's type is unknown on 7.4, where the call never runs.
+		-
+			rawMessage: 'Unable to resolve the template type T in call to static method PHPRegex\Parser\Engine\LibraryPcre::quietly()'
+			identifier: argument.templateType
+			path: php74/src/Engine/LibraryPcre.php
+			count: 1

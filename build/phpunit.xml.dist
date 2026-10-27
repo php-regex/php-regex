@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    The twin's own suite, PHPUnit 9.6 so it runs on every PHP the twin
+    serves, 7.4 to 8.6. TWIN_REFERENCE names the directory the original's
+    readings were written to (patterns.json, the witnesses, api.json).
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="smoke/vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="smoke/vendor/autoload.php"
+         colors="true"
+         cacheResult="false"
+         failOnRisky="true"
+         failOnWarning="true"
+         convertDeprecationsToExceptions="true"
+         beStrictAboutOutputDuringTests="true"
+         beStrictAboutTestsThatDoNotTestAnything="true">
+    <testsuites>
+        <testsuite name="twin">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

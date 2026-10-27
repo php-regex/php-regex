@@ -22,9 +22,24 @@ cp -R src/Parser build/php74/Parser
 tools/rector/vendor/bin/rector process build/php74/Parser \
 	--config build/rector-downgrade.php --no-progress-bar --no-diffs
 
-php build/emit-enum-factories.php > /dev/null
+# what the downgrade writes that the source does not mean: loose switches
+# from strict matches, a fall-through where a match throws, properties in
+# another order
+# the order the original declares its properties in, which the downgrade
+# loses when it unfolds a promoting constructor
+php build/property-order.php build/php74/property-order.json
+TWIN_PROPERTY_ORDER=build/php74/property-order.json tools/rector/vendor/bin/rector process build/php74/Parser \
+	--config build/rector-post.php --no-progress-bar --no-diffs --clear-cache
+rm build/php74/property-order.json
+
+# mixed and the other types PHP 7.4 cannot declare, which the downgrade
+# drops without a tag, written back as PHPDoc from the original signatures
+php build/restore-docblock-types.php
+
+php build/emit-enum-factories.php
 php build/rewrite-enum-calls.php
 php build/hoist-enum-consts.php
+php build/patch-twin-cache.php
 
 # the two signatures Rector mangles, by hand
 perl -i -pe 's/bool \$changed, \?\s*$/bool \$changed, ?FormatRefusal/' \
@@ -32,30 +47,21 @@ perl -i -pe 's/bool \$changed, \?\s*$/bool \$changed, ?FormatRefusal/' \
 perl -i -pe 's/\?final \$category/?ValidationErrorCategory \$category/; s/\?final \$errorCode/?ErrorCode \$errorCode/' \
 	build/php74/Parser/Validation/ValidationResult.php
 
-# the promoted nullable enum parameters Rector types with another enum of
-# the namespace, written relative: restored from the original declarations
-php build/restore-enum-types.php
-
 # WeakMap is PHP 8.0: the analyses key their per-node caches with it, and
 # SplObjectStorage gives the same array access on 7.4
 grep -rl 'WeakMap' build/php74 --include='*.php' \
 	| xargs -r -n1 perl -i -pe 's/\\WeakMap\b/\\SplObjectStorage/g' || true
 
 # style the shipped tree here, not as a gate: what gets verified is what
-# gets published. It runs BEFORE the floor fixes below, because the style
-# fixers know modern PHP and would happily reintroduce the very syntax
-# the twin exists to shed (get_class($x) straight back to $x::class).
-if [ -x tools/php-cs-fixer/vendor/bin/php-cs-fixer ]; then
-	tools/php-cs-fixer/vendor/bin/php-cs-fixer fix build/php74 \
-		--path-mode=override --quiet || true
-fi
+# gets published. The twin has its own rules (build/php-cs-fixer-twin.php):
+# the repository's migrate to PHP 8.2. A style pass that fails stops the
+# build.
+tools/php-cs-fixer/vendor/bin/php-cs-fixer fix build/php74 \
+	--config build/php-cs-fixer-twin.php --path-mode=override --quiet
 
-# PHP 8.0 syntax Rector and the style pass leave behind: $var::class and
-# 0o octal literals. A quiet grep is the success case — nothing left.
-grep -rl '\$[a-zA-Z_][a-zA-Z0-9_]*::class' build/php74 --include='*.php' \
-	| xargs -r -n1 perl -i -pe 's/\$([a-zA-Z_][a-zA-Z0-9_]*)::class/get_class(\$$1)/g' || true
-grep -rl '0o[0-7]' build/php74 --include='*.php' \
-	| xargs -r -n1 perl -i -pe 's/\b0o([0-7]+)\b/0$1/g' || true
+# $object::class and 0o octal literals, PHP 8.0 and 8.1 syntax the downgrade
+# rewrites, are left to the PHP 7.4 lint of the verification, which refuses
+# both: no text rewrite here can tell them from a string that spells them.
 
 # nothing PHP 7.4 cannot load is left: no WeakMap, no relative PHPRegex\
 # type in a namespaced file

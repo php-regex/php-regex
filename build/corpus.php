@@ -1,8 +1,8 @@
 <?php declare(strict_types = 1);
 
 /**
- * Pattern bodies (no delimiters) shared by the Hoa and PHPRegex dump
- * harnesses. Delimiter when re-wrapping: '/'.
+ * Pattern bodies (no delimiters) the twin is compared to the original on,
+ * beside the repository's corpora. Delimiter when re-wrapping: '/'.
  *
  * @return list<string>
  */
@@ -28,6 +28,10 @@ function corpus(): array
 		'(?i:a)',
 		'(?i)',
 		'(?|a|(b))',
+		// a branch reset of one branch: one set of groups to intersect,
+		// which PHP 7.4's array_intersect_key() refuses
+		'(?|(a))',
+		'x(?|(\\d+))y',
 		'(?>a+)',
 		'()',
 		// quantifiers, all four families and their lazy/possessive forms

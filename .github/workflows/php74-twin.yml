@@ -6,20 +6,26 @@ on:
     paths:
       - 'src/Parser/**'
       - 'build/**'
+      - 'tests/**'
       - '.github/workflows/php74-twin.yml'
   pull_request:
     paths:
       - 'src/Parser/**'
       - 'build/**'
+      - 'tests/**'
       - '.github/workflows/php74-twin.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: php74-twin-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  twin:
-    name: generate and gate the PHP 7.4 twin
+  generate:
+    name: generate and analyse the twin
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -37,50 +43,139 @@ jobs:
           composer install --no-interaction --no-progress
           composer install --no-interaction --no-progress --working-dir tools/rector
           composer install --no-interaction --no-progress --working-dir tools/php-cs-fixer
+          composer install --no-interaction --no-progress --working-dir tools/phpstan
 
       - name: Generate the twin
         run: bash build/generate.sh
 
-      - name: Reference digest under 8.4
-        run: php build/smoke/digest.php vendor/autoload.php > /tmp/reference-digest.jsonl
-
-      - name: Install the twin's polyfills
+      - name: Install the twin's environment
         run: composer install --no-interaction --no-progress --working-dir build/smoke
 
-      - name: Install PHP 7.4 (gates)
-        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+      # level max, judged as PHP 7.4 code: the bar src/Parser passes
+      - name: Analyse the twin
+        run: tools/phpstan/vendor/bin/phpstan analyse -c build/phpstan-php74.neon --no-progress --memory-limit=-1
+
+      - name: Analyse the code that checks the twin
+        run: tools/phpstan/vendor/bin/phpstan analyse -c build/phpstan-verify.neon --no-progress --memory-limit=-1
+
+      - name: List the patterns the twin is compared on
+        run: php build/verify/patterns.php > patterns.json
+
+      - uses: actions/upload-artifact@v7
         with:
-          php-version: '7.4'
-          coverage: none
+          name: twin
+          path: |
+            build/php74/
+            build/smoke/vendor/
+            patterns.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
 
-      - name: Lint and digest the twin under 7.4
-        run: bash build/verify-php74.sh /tmp/reference-digest.jsonl
-
-      - name: Install PHP 8.x (static analysis of the twin)
-        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+  # PHP 7.4 and 8.0 are older than the original runs on: their twin is
+  # compared to the original on the oldest PHP it serves
+  reference:
+    name: the original's readings on PHP 8.1
+    needs: generate
+    runs-on: ubuntu-latest
+    container: php:8.1-cli
+    steps:
+      - uses: actions/checkout@v7
         with:
-          php-version: '8.4'
-          coverage: none
+          persist-credentials: false
 
-      - name: Install PHPStan
-        run: composer install --no-interaction --no-progress --working-dir tools/phpstan
+      - uses: actions/download-artifact@v8
+        with:
+          name: twin
 
-      - name: Analyze the twin
-        # census, not yet a gate: ~44 downgrade artifacts wait to be
-        # triaged into explicit ignores or fixes before this blocks
-        continue-on-error: true
-        run: tools/phpstan/vendor/bin/phpstan analyse build/php74 -c build/phpstan-php74.neon -a build/twin-autoload.php --no-progress
+      - name: Read every pattern with the original
+        run: |
+          mkdir -p reference
+          cp patterns.json reference/
+          for i in 0 1 2 3; do
+            php -d memory_limit=2G build/verify/run-witness.php build/verify/original-autoload.php reference/patterns.json "$i/4" --hash > "reference/witnesses-$i.jsonl" &
+          done
+          wait
+          php build/verify/api.php build/verify/original-autoload.php src/Parser > reference/api.json
 
-  # Release: the same gates, then publish the verified tree to the mirror
-  # repository php-regex/regex-parser-php74 under the triggering tag.
-  # Stays manual until the two documented lexer deltas are adjudicated and
-  # the mirror repository exists.
-  #
-  # release:
-  #   name: publish the verified twin
-  #   runs-on: ubuntu-latest
-  #   if: startsWith(github.ref, 'refs/tags/')
-  #   needs: twin
-  #   steps:
-  #     - ... regenerate, gate again, rewrite composer.json (name +
-  #       php ^7.4 || ^8.0 + symfony/polyfill-*), push to the mirror
+      - uses: actions/upload-artifact@v7
+        with:
+          name: reference-8.1
+          path: reference/
+          if-no-files-found: error
+          retention-days: 7
+
+  # each PHP the original runs on: the original and the twin read every
+  # pattern on the same engine, and every reading must be the same
+  twin:
+    name: twin on PHP ${{ matrix.php }}
+    needs: generate
+    runs-on: ubuntu-latest
+    container: php:${{ matrix.php }}-cli
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5', '8.6-rc']
+    steps:
+      - name: Install multibyte support
+        # the 8.6-rc image ships without mbstring, which the original and
+        # PHPUnit read; compiling it needs oniguruma
+        if: startsWith(matrix.php, '8.6')
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends libonig-dev
+          docker-php-ext-install mbstring
+
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: twin
+
+      - name: Read every pattern with the original
+        run: |
+          mkdir -p reference
+          cp patterns.json reference/
+          for i in 0 1 2 3; do
+            php -d memory_limit=2G build/verify/run-witness.php build/verify/original-autoload.php reference/patterns.json "$i/4" --hash > "reference/witnesses-$i.jsonl" &
+          done
+          wait
+          php build/verify/api.php build/verify/original-autoload.php src/Parser > reference/api.json
+
+      - name: Run the twin's suite
+        env:
+          TWIN_REFERENCE: reference
+        run: php -d memory_limit=2G build/smoke/vendor/bin/phpunit -c build/phpunit.xml.dist
+
+  twin-below-the-original:
+    name: twin on PHP ${{ matrix.php }}
+    needs: reference
+    runs-on: ubuntu-latest
+    container: php:${{ matrix.php }}-cli
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.0']
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: twin
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: reference-8.1
+          path: reference
+
+      - name: Run the twin's suite
+        env:
+          TWIN_REFERENCE: reference
+        run: php -d memory_limit=2G build/smoke/vendor/bin/phpunit -c build/phpunit.xml.dist
+
+  # Release: publish the verified tree to the mirror repository
+  # php-regex/regex-parser-php74 under the triggering tag. A manual gesture
+  # until then: the tree to publish is the "twin" artifact of a green run.

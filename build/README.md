@@ -1,56 +1,83 @@
-# build/ — a PHP 7.4 twin of src/Parser
+# build/ — the PHP 7.4 twin of src/Parser
 
-Question: can the parser ship as a PHP 7.4-compatible artifact (the model
-phpstan-src consumes through its downgraded better-reflection fork), produced
-mechanically and verified against the original?
+The parser package, rewritten mechanically to run on PHP 7.4 to 8.6, and
+published as `php-regex/regex-parser-php74` for hosts that cannot require
+PHP 8.1, as a tool's PHAR downgraded to PHP 7.4 does. The generated tree
+lives in `php74/` (git-ignored); everything here produces it and proves it
+reads every pattern as the original does.
 
-The generated tree lives in php74/ (gitignored); everything here is the
-toolchain that produces and verifies it.
+## Generate
 
-## Regenerate
+```sh
+bash build/generate.sh
+```
 
-1. `cp -R src/Parser build/php74/Parser`
-2. `tools/rector/vendor/bin/rector process build/php74/Parser --config build/rector-downgrade.php --no-progress-bar --no-diffs`
-3. `php build/emit-enum-factories.php` — regenerates the 17 enum files as
-   cached-instance twins: `GroupType::Capturing()` returns one shared
-   instance, so `===`, `switch`, `->value`, `->name`, `instanceof` and the
-   native `GroupType` type hints all keep the enum's semantics. Pure enum
-   methods (`PcreFeature::release()`, `CharLiteralType::label()`) are ported
-   as per-case maps read off the original by reflection.
-4. `php build/rewrite-enum-calls.php` — `Enum::Case` becomes `Enum::Case()`
-   (1182 sites; `::class`, `::from()` and friends start lowercase and never
-   match).
-5. `php build/hoist-enum-consts.php` — class constants holding enum
-   factories become lazy static methods of the same name, rewritten only in
-   the file where each constant lived (11 constants; a name can repeat
-   across classes, so a global rewrite collides).
-6. Fix the two signatures Rector mangles by hand (`?` without a type in
-   FormatResult, `final` instead of the class name in ValidationResult).
+1. `src/Parser` is copied and downgraded by Rector (`rector-downgrade.php`:
+   the PHP 8.1 and 8.0 sets, which bring the code to 7.4 and keep its typed
+   properties; the enum rule is left out, step 4 writes the enums).
+2. A second Rector pass (`rector-post.php`, rules in `rector/`) puts back
+   what the downgrade loses:
+   - `StrictSwitchRector`: each switch written from a match compares
+     strictly (PHP 7.4 holds `'a' == 0` and `'1' == '01'` true) and throws
+     `UnhandledMatchError` where no case holds, as the match did;
+   - `SingleArraySetRector`: `array_intersect_key(...$sets)` and its
+     siblings give back the one array they get, as PHP 8.0 does (7.4 asks
+     for two);
+   - `PropertyOrderRector`: properties are declared in the original's order
+     (`property-order.php` reads it), which reflection, `get_object_vars()`,
+     `serialize()` and the structural fingerprint see;
+   - `DowngradeLeftoversRector`: the `null;` statements and the
+     `iterator_to_array()` fallbacks of array spreads the twin does not need.
+3. `restore-docblock-types.php` writes back as PHPDoc each native type the
+   downgrade drops untagged (`mixed`), from the original's signatures.
+4. `emit-enum-factories.php` writes each enum as a class of shared
+   instances: `GroupType::Capturing()` returns one instance, so `===`,
+   `->name`, `->value`, `instanceof` and the native type hints hold;
+   `from()` throws PHP's `ValueError` with PHP's message; the classes
+   implement the twin's `UnitEnum` / `BackedEnum`. An enum with a constant,
+   an interface or a method with parameters stops the build.
+5. `rewrite-enum-calls.php` turns `Enum::Case` into `Enum::Case()` and
+   `\UnitEnum` / `\BackedEnum` into the twin's interfaces, reading tokens and
+   resolving names, so no string or comment is touched.
+6. `hoist-enum-consts.php` turns each private constant that holds enum cases
+   into a typed static property filled once and a method of the same name.
+7. `patch-twin-cache.php` lets a cache restore the twin's enum cases and
+   gives each its shared instance back (`EnumCases::shared()`).
+8. php-cs-fixer styles the tree with `php-cs-fixer-twin.php`, layout rules
+   only: the repository's rules migrate to PHP 8.2.
 
 ## Verify
 
-- Prerequisite: `composer install --working-dir build/smoke` once — the
-  polyfill autoload the twin digest loads. The twin workflow runs the same
-  install before its gates.
-- Lint: every file must `php -l` clean under `docker run php:7.4-cli`
-  (197/197)
-- Function: `php build/smoke/digest.php vendor/autoload.php > 84.jsonl`
-  (original through this checkout's vendor) versus
-  `docker run ... php build/smoke/digest.php build/smoke/vendor/autoload.php
-  > 74.jsonl` (twin through polyfills php80/php81/mbstring). The digests must
-  match; enum values normalize to their backing string on both sides.
+```sh
+composer install --working-dir build/smoke          # the twin's environment
+tools/phpstan/vendor/bin/phpstan analyse -c build/phpstan-php74.neon
+tools/phpstan/vendor/bin/phpstan analyse -c build/phpstan-verify.neon
+bash build/verify/run.sh                            # 7.4 8.0 8.1 … 8.6-rc
+```
 
-## Findings
+- **Static analysis**: the twin at level max, judged as PHP 7.4 code, the
+  bar `src/Parser` passes. The three entries of `phpstan-php74.neon` are
+  where the analysis's map of PHP 7.4 is wrong, each checked on
+  `php:7.4-cli`.
+- **The twin's suite** (`tests/`, PHPUnit 9.6, run on the official image of
+  each PHP):
+  - `TwinParityTest`: every pattern of `verify/patterns.php` (the corpus
+    fixtures and every delimited literal of the test suite, some 17,000),
+    for six targets, read by the twin and by the original
+    (`verify/Witness.php`: tokens, tree, tolerant tree, validation, capture
+    shapes under each flag set, pattern settings, literals, lengths,
+    complexity, metrics, character set, printers, dumpers, fingerprint, the
+    tree a cache gives back). On PHP 8.1 and later the original reads them
+    on the same PHP and every reading must be the same; on 7.4 and 8.0 the
+    reference is the original on 8.1, and only the patterns
+    `tests/engine-dependent.php` names, each with its reason, may differ;
+  - `TwinSurfaceTest`: the same classes, methods, parameters, properties,
+    constants and enum cases as the original;
+  - `EnumCasesTest`, `CacheRoundTripTest`: the classes of cases behave as
+    enums, and a tree read back from a cache directory reads as the tree
+    parsed;
+  - `TwinLintTest`: every file compiles on the PHP that runs, with no
+    notice.
 
-- 197/197 lint clean under PHP 7.4.33; 108/108 identical parse statuses
-  (refusals included); 106/108 identical AST structures
-- Two deltas remain, both on the container's PCRE2 10.35: `\x{1F600}` and
-  `\g{-1}` tokenize as literals instead of their escape/backreference nodes.
-  The master lexer reads both on 10.49 — version-aware lexer construction or
-  engine behavior, not the downgrade transform; a permanent 7.4 lane
-  adjudicates this against the engine, and one of them may be a real
-  old-target bug on our side
-- The cached-instance strategy beats string constants: native enum type
-  hints stay (no widening of 36 return types and 3 params), `->value` and
-  `->name` reads stay, and the only caller rewrite is the purely syntactic
-  `::Case` to `::Case()`
+`verify/show.php` prints one reading of one pattern, to see what a
+difference is made of.
