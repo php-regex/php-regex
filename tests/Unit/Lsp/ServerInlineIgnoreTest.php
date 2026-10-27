@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -30,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 final class ServerInlineIgnoreTest extends TestCase
 {
     use InstalledLocales;
+    use PcreRule;
 
     /**
      * @var resource
@@ -151,6 +153,7 @@ final class ServerInlineIgnoreTest extends TestCase
     #[Test]
     public function test_a_target_marker_narrows_the_versions_judged(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         file_put_contents($this->root.'/composer.json', '{"require": {"php": "^8.2"}}');
         $uri = $this->uri('src/Matcher.php');
 
@@ -232,6 +235,7 @@ final class ServerInlineIgnoreTest extends TestCase
     #[Test]
     public function test_a_guard_narrows_the_versions_judged(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         file_put_contents($this->root.'/composer.json', '{"require": {"php": "^8.2"}}');
         $uri = $this->uri('src/Matcher.php');
 

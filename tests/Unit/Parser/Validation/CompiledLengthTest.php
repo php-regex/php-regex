@@ -657,7 +657,7 @@ final class CompiledLengthTest extends TestCase
     public function test_a_group_of_branches_of_no_known_ceiling_passing_the_limit_where_it_ends(): void
     {
         $pattern = '/(?:(?:a){8189}abc(?a)\\d|d)/u';
-        $regex = RegexParser::create(['cache' => null, 'runtime_pcre_validation' => false])->parse($pattern);
+        $regex = RegexParser::create(['cache' => null, 'runtime_pcre_validation' => false, 'php_version' => '8.4', 'pcre_version' => '10.49'])->parse($pattern);
 
         $this->assertFalse((new CompiledLength(static fn (): int => 0, (string) $regex->source, true, true, $regex->flags, new PcreTarget(80400, '10.49')))->passedInsideABranch($regex->pattern));
     }

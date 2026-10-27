@@ -29,7 +29,9 @@ use PHPUnit\Framework\TestCase;
  * patterns fails, whatever the subject and its length, without the JIT on
  * a recursion loop (PREG_INTERNAL_ERROR, in 7 steps on 10.49), and with it
  * once the JIT stack runs out (PREG_JIT_STACKLIMIT_ERROR, in about 0.01 ms
- * at 1, 1,000 and 100,000 letters).
+ * at 1, 1,000 and 100,000 letters), or on the loop where the JIT leaves the
+ * pattern to the interpreter (10.40 and 10.42 on the official images, and
+ * the x86-64 runners, for some of them).
  */
 final class RedosRecursionLoopTest extends TestCase
 {
@@ -56,7 +58,7 @@ final class RedosRecursionLoopTest extends TestCase
         $jit = true === \constant('PCRE_JIT_SUPPORT') && '1' === ini_get('pcre.jit');
         foreach (self::SUBJECTS as $subject) {
             $this->assertFalse(@preg_match($started, $subject), 'Oracle: the attempt stops on '.var_export($subject, true).'.');
-            $this->assertSame($jit ? \PREG_JIT_STACKLIMIT_ERROR : \PREG_INTERNAL_ERROR, preg_last_error());
+            $this->assertContains(preg_last_error(), $jit ? [\PREG_JIT_STACKLIMIT_ERROR, \PREG_INTERNAL_ERROR] : [\PREG_INTERNAL_ERROR]);
         }
     }
 

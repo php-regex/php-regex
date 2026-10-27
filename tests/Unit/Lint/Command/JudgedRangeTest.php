@@ -69,6 +69,12 @@ final class JudgedRangeTest extends TestCase
     #[DataProvider('provideConstraints')]
     public function test_the_versions_judged_under_a_constraint(string $require, string $constraint, array $expected): void
     {
+        // A release in the constraint keeps the versions by the release
+        // each bundles, which the running PHP's minor does not use.
+        if (str_contains($constraint, 'pcre')) {
+            $this->requiresBundledPcre2(\PHP_VERSION_ID, $constraint);
+        }
+
         $target = ProjectTarget::resolve(null, null, [], $this->makeProject(['composer.json' => (string) json_encode(['require' => ['php' => $require]])]), []);
 
         // The rows name the release each PHP bundles; the running PHP's
@@ -100,8 +106,8 @@ final class JudgedRangeTest extends TestCase
         $target = ProjectTarget::resolve('8.2', null, [], $this->makeProject(), []);
         $judged = $target->judgedRange(RegexParser::create($target->regexOptions()));
 
-        $this->assertSame(['8.2/10.40'], self::labels($judged->narrow(self::constraint('php>=8.0'))));
-        $this->assertSame(['8.2.5/10.40'], self::labels($judged->narrow(self::constraint('php>=8.2.5'))));
+        $this->assertSame([self::judgedLabel('8.2/10.40')], self::labels($judged->narrow(self::constraint('php>=8.0'))));
+        $this->assertSame([self::judgedLabel('8.2.5/10.40')], self::labels($judged->narrow(self::constraint('php>=8.2.5'))));
         $this->assertSame([], $judged->narrow(self::constraint('php>=8.4')));
         $this->assertSame('>=8.2 <8.3', $judged->describe());
     }
@@ -127,7 +133,8 @@ final class JudgedRangeTest extends TestCase
         $other = $judged->parserFor(new PcreTarget(80400, '10.42'));
         $this->assertNotSame($parser, $other);
         $this->assertSame('10.42', $other->target()->pcreVersion);
-        $this->assertNotSame($floor, $judged->parserFor(new PcreTarget($target->target()->phpVersionId, '10.42')));
+        $another = '10.42' === $target->target()->pcreVersion ? '10.43' : '10.42';
+        $this->assertNotSame($floor, $judged->parserFor(new PcreTarget($target->target()->phpVersionId, $another)));
     }
 
     /**

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
 use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPStan\Analyser\Error;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
@@ -27,6 +28,8 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexPatternRuleExtensionNeonTargetTest extends RuleTestCase
 {
+    use PcreRule;
+
     public static function getAdditionalConfigFiles(): array
     {
         return [
@@ -38,6 +41,7 @@ final class RegexPatternRuleExtensionNeonTargetTest extends RuleTestCase
     #[Test]
     public function test_a_target_specific_refusal_is_the_only_error(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         // Line 25 ("(?aD)") needs PCRE2 10.43: reported only where the running engine compiles it;
         // on an engine that refuses it, PHPStan core reports it and this rule stays silent.
         $this->analyse(
@@ -51,6 +55,7 @@ final class RegexPatternRuleExtensionNeonTargetTest extends RuleTestCase
     #[Test]
     public function test_a_target_specific_refusal_is_identified_as_invalid_for_target(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         $identifiers = array_map(
             static fn (Error $error): array => [$error->getLine(), $error->getIdentifier()],
             $this->gatherAnalyserErrors([__DIR__.'/Fixtures/NeonConfigFixture.php']),

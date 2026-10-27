@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Cli;
 
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -28,6 +29,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class JsonErrorEnvelopeTest extends TestCase
 {
+    use PcreRule;
     use RunsRegexCli;
     use TemporaryProject;
 
@@ -252,6 +254,7 @@ final class JsonErrorEnvelopeTest extends TestCase
     #[Test]
     public function test_a_pattern_command_judges_the_pcre2_named_beside_the_php(): void
     {
+        $this->requiresBundledPcre2(80400, __FUNCTION__);
         [$exitCode] = $this->runRegex(['--php-version=8.4', '--pcre-version=10.40', 'validate', '/(?aD)x/']);
         $this->assertSame(1, $exitCode);
 

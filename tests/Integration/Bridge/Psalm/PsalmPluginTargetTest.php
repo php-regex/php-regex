@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,6 +38,7 @@ use Psalm\Internal\Analyzer\IssueData;
 final class PsalmPluginTargetTest extends TestCase
 {
     use PcreGates;
+    use PcreRule;
 
     private const FILE = 'Target/target.php';
 
@@ -65,6 +67,7 @@ final class PsalmPluginTargetTest extends TestCase
     #[DataProvider('provideTargets')]
     public function test_plugin_judges_for_the_target(string $phpVersion, array $options, array $reported, array $narrowed): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         // Judged as "runtime", the row also reports what the running engine
         // refuses: "(?aD)" needs PCRE2 10.43, and where the engine cannot
         // read it the plugin reports it as invalid. The row is replayed
@@ -244,6 +247,7 @@ final class PsalmPluginTargetTest extends TestCase
     #[Test]
     public function test_plugin_types_a_pattern_as_each_target_reads_it(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $file = 'Target/short_quantifier.php';
         $expected = [
             '8.2' => "array{0: 'a{,3}', 1: 'a{,3}'}",

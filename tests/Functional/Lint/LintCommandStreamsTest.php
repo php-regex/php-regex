@@ -25,6 +25,7 @@ use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresFunction;
@@ -38,6 +39,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class LintCommandStreamsTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     private const PHP_FILE = "<?php\n\npreg_match('/^[a-z]+$/', 'abc');\n";
@@ -98,7 +100,7 @@ final class LintCommandStreamsTest extends TestCase
         $runningPcre = PcreTarget::runtime()->pcreVersion;
         $this->assertStringContainsString(
             self::bannerRow('Runtime', 'PHP '.\PHP_VERSION.', PCRE2 '.$runningPcre)
-            .self::bannerRow('Target', 'PHP 8.3, PCRE2 10.42 (composer.json require.php)')
+            .self::bannerRow('Target', 'PHP 8.3, PCRE2 '.self::judgedPcre(80300).' (composer.json require.php)')
             .self::bannerRow('Processes', '1'),
             $stdout,
         );

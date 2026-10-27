@@ -496,6 +496,18 @@ final class EscapeChecks
             $this->raiseUnknownProperty($node, $key);
         }
 
+        // A name a later release added, the running engine that old: said
+        // as for another engine, before what the name holds.
+        $needs = PropertyNames::firstReleaseKnowing($name, $braced);
+        if (null !== $needs && !$this->target->pcreAtLeast($needs) && !$this->compilesProperty($key)) {
+            $this->raise(
+                \sprintf('Invalid or unsupported Unicode property: \\%s. It needs PCRE2 %s, and the target is PCRE2 %s.', $key, $needs, $this->target->pcreVersion),
+                $node->getEndPosition(),
+                ErrorCode::UnicodePropertyInvalid,
+                \sprintf('Target a PHP whose PCRE2 is %s or later, or use another property.', $needs),
+            );
+        }
+
         // The name as the release reads it, past the "^" that negates: no
         // property name holds another "^". From PCRE2 10.45 the "^" may
         // follow spaces, hyphens or underscores.
@@ -505,26 +517,24 @@ final class EscapeChecks
             $key = 'p{'.($read[0] ? '^' : '').$read[1].'}';
         }
 
+        if (!$this->compilesProperty($key)) {
+            $this->raiseUnknownProperty($node, $key);
+        }
+    }
+
+    /**
+     * Whether the running engine compiles the property, as written after
+     * the backslash, once per spelling.
+     */
+    private function compilesProperty(string $key): bool
+    {
         if (!isset(self::$unicodePropCache[$key])) {
             StaticCaches::register(self::class, self::clearCaches(...));
             self::$unicodePropCache = StaticCaches::makeRoom(self::$unicodePropCache);
             self::$unicodePropCache[$key] = $this->compiles($key);
         }
 
-        if (false === self::$unicodePropCache[$key]) {
-            // A name a later release added: the running engine is that old.
-            $needs = PropertyNames::firstReleaseKnowing($name, $braced);
-            if (null !== $needs && !$this->target->pcreAtLeast($needs)) {
-                $this->raise(
-                    \sprintf('Invalid or unsupported Unicode property: \\%s.', $key),
-                    $node->getEndPosition(),
-                    ErrorCode::UnicodePropertyInvalid,
-                    \sprintf('Target a PHP whose PCRE2 is %s or later, or use another property.', $needs),
-                );
-            }
-
-            $this->raiseUnknownProperty($node, $key);
-        }
+        return self::$unicodePropCache[$key];
     }
 
     /**

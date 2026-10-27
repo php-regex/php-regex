@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use Orchestra\Testbench\Attributes\WithConfig;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -25,7 +26,10 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RoutesCommandVerdictTest extends LaravelTestCase
 {
+    // The local disk serves its files through routes of its own, whose path
+    // is constrained, from Laravel 11.
     #[Test]
+    #[WithConfig('filesystems.disks.local.serve', false)]
     public function test_routes_without_a_constraint_are_said_to_hold_none(): void
     {
         Route::get('/plain', static fn (): string => '')->name('plain');

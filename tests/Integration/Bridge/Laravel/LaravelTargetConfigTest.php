@@ -18,6 +18,7 @@ use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\InstalledLocales;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
@@ -34,6 +35,7 @@ use PHPUnit\Framework\Attributes\Test;
 #[WithConfig('php-regex.cache.store', null)]
 final class LaravelTargetConfigTest extends LaravelTestCase
 {
+    use PcreRule;
     use InstalledLocales;
 
     /**
@@ -96,6 +98,7 @@ final class LaravelTargetConfigTest extends LaravelTestCase
     #[WithConfig('php-regex.php_version', '8.2')]
     public function test_php_version_drives_the_lint_command_target(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         [$status, $json] = $this->lintJson();
 
         $this->assertSame(1, $status);
@@ -133,6 +136,7 @@ final class LaravelTargetConfigTest extends LaravelTestCase
     #[WithConfig('php-regex.php_version', '8.2')]
     public function test_the_lint_command_does_not_inherit_runtime_validation(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         // Runtime validation compiles with the running PHP, which cannot
         // judge PHP 8.2: the Regex service keeps it, the lint does not.
         $this->assertTrue($this->runtimeValidationOf($this->regexService()->parser()));

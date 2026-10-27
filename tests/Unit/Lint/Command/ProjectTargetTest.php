@@ -39,7 +39,7 @@ final class ProjectTargetTest extends TestCase
 
         $resolved = ProjectTarget::resolve('8.3', null, ['phpVersion' => '8.4'], $directory, []);
 
-        $this->assertTarget(80300, '10.42', $resolved);
+        $this->assertTarget(80300, self::judgedPcre(80300), $resolved);
         $this->assertSame('--php-version', $resolved->source());
     }
 
@@ -59,7 +59,7 @@ final class ProjectTargetTest extends TestCase
     {
         $resolved = ProjectTarget::resolve(null, null, ['phpVersion' => 80300], $this->makeProject(), []);
 
-        $this->assertTarget(80300, '10.42', $resolved);
+        $this->assertTarget(80300, self::judgedPcre(80300), $resolved);
         $this->assertSame('regex.json', $resolved->source());
     }
 
@@ -70,7 +70,7 @@ final class ProjectTargetTest extends TestCase
 
         $resolved = ProjectTarget::resolve(null, null, [], $directory, []);
 
-        $this->assertTarget(80310, '10.42', $resolved);
+        $this->assertTarget(80310, self::judgedPcre(80310), $resolved);
         $this->assertSame('composer.json config.platform.php', $resolved->source());
         $this->assertSame([], $resolved->notices());
     }
@@ -82,7 +82,7 @@ final class ProjectTargetTest extends TestCase
 
         $resolved = ProjectTarget::resolve(null, null, [], $directory, []);
 
-        $this->assertTarget(80300, '10.42', $resolved);
+        $this->assertTarget(80300, self::judgedPcre(80300), $resolved);
         $this->assertSame('composer.json require.php', $resolved->source());
         $this->assertSame([], $resolved->notices());
     }
@@ -143,7 +143,7 @@ final class ProjectTargetTest extends TestCase
         $resolved = ProjectTarget::resolve(null, null, [], $directory, []);
 
         $this->assertSame($phpVersionId, $resolved->target()->phpVersionId);
-        $this->assertSame(PcreTarget::bundledWith($phpVersionId)->pcreVersion, $resolved->target()->pcreVersion);
+        $this->assertSame(self::judgedPcre($phpVersionId), $resolved->target()->pcreVersion);
         $this->assertSame('composer.json require.php', $resolved->source());
         $this->assertSame([], $resolved->notices());
     }
@@ -191,7 +191,7 @@ final class ProjectTargetTest extends TestCase
 
         $this->assertTarget($phpVersionId, $pcre, $resolved);
         $this->assertSame([$notice], $resolved->notices());
-        $this->assertSame($range, \array_slice($resolved->toArray()['range'], 0, \count($range)));
+        $this->assertSame(array_map(self::judgedRow(...), $range), \array_slice($resolved->toArray()['range'], 0, \count($range)));
     }
 
     /**
@@ -307,7 +307,7 @@ final class ProjectTargetTest extends TestCase
 
         $resolved = ProjectTarget::resolve('8.3', null, [], $directory, []);
 
-        $this->assertTarget(80300, '10.42', $resolved);
+        $this->assertTarget(80300, self::judgedPcre(80300), $resolved);
     }
 
     private function assertTarget(int $phpVersionId, string $pcreVersion, ProjectTarget $resolved): void

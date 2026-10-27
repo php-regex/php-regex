@@ -17,6 +17,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -30,6 +31,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class ProjectTargetEdgeCasesTest extends TestCase
 {
+    use PcreRule;
     use PhpUnitForwardCompat;
     use TemporaryProject;
 
@@ -251,10 +253,10 @@ final class ProjectTargetEdgeCasesTest extends TestCase
         $resolved = ProjectTarget::fromSources([], [], $this->makeProject(['composer.json' => $composer]), []);
 
         $this->assertSame($phpVersionId, $resolved->target()->phpVersionId);
-        $this->assertSame($pcre, $resolved->target()->pcreVersion);
+        $this->assertSame(self::judgedPcre($phpVersionId), $resolved->target()->pcreVersion);
         $this->assertSame('composer.json require.php', $resolved->source());
         $this->assertSame($notices, $resolved->notices());
-        $this->assertSame($range, \array_slice($resolved->toArray()['range'], 0, \count($range)));
+        $this->assertSame(array_map(self::judgedRow(...), $range), \array_slice($resolved->toArray()['range'], 0, \count($range)));
     }
 
     /**
@@ -338,10 +340,10 @@ final class ProjectTargetEdgeCasesTest extends TestCase
         $resolved = ProjectTarget::fromSources([], [], $directory, []);
 
         $this->assertSame($phpVersionId, $resolved->target()->phpVersionId);
-        $this->assertSame($pcre, $resolved->target()->pcreVersion);
+        $this->assertSame(self::judgedPcre($phpVersionId), $resolved->target()->pcreVersion);
         $this->assertSame('composer.json require.php', $resolved->source());
         $this->assertSame($notices, $resolved->notices());
-        $this->assertSame($range, \array_slice($resolved->toArray()['range'], 0, \count($range)));
+        $this->assertSame(array_map(self::judgedRow(...), $range), \array_slice($resolved->toArray()['range'], 0, \count($range)));
     }
 
     /**

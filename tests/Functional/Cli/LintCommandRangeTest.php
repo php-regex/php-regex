@@ -65,7 +65,7 @@ final class LintCommandRangeTest extends TestCase
         $this->assertIsString($message);
         $this->assertStringContainsString('PHP 8.5 and later', (string) $message);
         // The lowest target that refuses it.
-        $this->assertSame(['php' => '8.5', 'pcre' => '10.44', 'guard' => null, 'guard_pcre' => null], $issue['target'] ?? null);
+        $this->assertSame(['php' => '8.5', 'pcre' => self::judgedPcre(80500), 'guard' => null, 'guard_pcre' => null], $issue['target'] ?? null);
     }
 
     /**
@@ -113,9 +113,9 @@ final class LintCommandRangeTest extends TestCase
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('lint', $document);
         $this->assertSame([
-            ['php' => '8.3', 'pcre' => '10.42'],
-            ['php' => '8.5.3', 'pcre' => '10.44'],
-            ['php' => '8.5.10', 'pcre' => '10.44'],
+            ['php' => '8.3', 'pcre' => self::judgedPcre(80300)],
+            ['php' => '8.5.3', 'pcre' => self::judgedPcre(80503)],
+            ['php' => '8.5.10', 'pcre' => self::judgedPcre(80510)],
         ], JsonContract::asArray($document['target'] ?? null)['range'] ?? null);
 
         $issues = self::issues($document);
@@ -124,7 +124,7 @@ final class LintCommandRangeTest extends TestCase
         $message = $issues[0]['message'] ?? null;
         $this->assertIsString($message);
         $this->assertStringContainsString('PHP 8.5.3 and later', (string) $message);
-        $this->assertSame(['php' => '8.5.3', 'pcre' => '10.44', 'guard' => null, 'guard_pcre' => null], $issues[0]['target'] ?? null);
+        $this->assertSame(['php' => '8.5.3', 'pcre' => self::judgedPcre(80503), 'guard' => null, 'guard_pcre' => null], $issues[0]['target'] ?? null);
     }
 
     #[Test]
@@ -137,7 +137,7 @@ final class LintCommandRangeTest extends TestCase
         $this->assertSame(0, $exitCode, $stdout);
         $document = JsonContract::decodeDocument($stdout);
         $this->assertSame([], $document['results'] ?? null);
-        $this->assertSame([['php' => '8.2', 'pcre' => '10.40']], JsonContract::asArray($document['target'] ?? null)['range'] ?? null);
+        $this->assertSame([['php' => '8.2', 'pcre' => self::judgedPcre(80200)]], JsonContract::asArray($document['target'] ?? null)['range'] ?? null);
     }
 
     #[Test]
@@ -151,7 +151,7 @@ final class LintCommandRangeTest extends TestCase
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('lint', $document);
         $this->assertSame(
-            ['php' => '8.2', 'pcre' => '10.40', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => self::fullRange()],
+            ['php' => '8.2', 'pcre' => self::judgedPcre(80200), 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => self::fullRange()],
             $document['target'] ?? null,
         );
     }
@@ -201,7 +201,7 @@ final class LintCommandRangeTest extends TestCase
         $this->assertCount(1, $byPattern['/(?<=a\Kb)c(/'], $stdout);
         $this->assertNull($byPattern['/(?<=a\Kb)c(/'][0]['target']);
         $this->assertSame('regex.group.unclosed', $byPattern['/(?<=a\Kb)c(/'][0]['issue_id'] ?? null);
-        $this->assertSame(['php' => '8.5', 'pcre' => '10.44', 'guard' => null, 'guard_pcre' => null], $byPattern['/(?<=a\Kb)c/'][0]['target'] ?? null);
+        $this->assertSame(['php' => '8.5', 'pcre' => self::judgedPcre(80500), 'guard' => null, 'guard_pcre' => null], $byPattern['/(?<=a\Kb)c/'][0]['target'] ?? null);
     }
 
     #[Test]

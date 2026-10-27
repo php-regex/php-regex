@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
 use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Tests\Support\BundleContainer;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,6 +31,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 final class LintCommandTargetMarkerTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     private const FILE = "<?php\n\npreg_match('/(?a)\\d+/', \$subject); // @regex-target php>=8.4\npreg_match('/(?a)\\d+/', \$subject);\n";
@@ -42,6 +44,7 @@ final class LintCommandTargetMarkerTest extends TestCase
     #[Test]
     public function test_a_marker_narrows_the_versions_judged(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $this->assertSame([[3, 'regex.target.empty'], [4, 'regex.group.syntax']], $this->lintIssues(['php_version' => '8.2']));
     }
 

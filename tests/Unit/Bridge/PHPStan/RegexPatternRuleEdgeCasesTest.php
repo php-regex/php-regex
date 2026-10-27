@@ -25,6 +25,7 @@ use PhpParser\Node\Scalar\String_;
 use PHPRegex\PHPStan\ErrorFactory;
 use PHPRegex\PHPStan\OptimizationFormat;
 use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPStan\Analyser\CollectedDataEmitter;
 use PHPStan\Analyser\DependencyTracker;
 use PHPStan\Analyser\NodeCallbackInvoker;
@@ -43,6 +44,7 @@ use PHPUnit\Framework\TestCase;
 
 final class RegexPatternRuleEdgeCasesTest extends TestCase
 {
+    use PcreRule;
     /**
      * Every check on, the lowest ReDoS threshold: what stays silent here is
      * silent whatever the configuration.
@@ -185,6 +187,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
     #[Test]
     public function test_a_target_specific_refusal_is_reported_as_invalid_for_target(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         // "(?aD)" arrived in PCRE2 10.43; PHP 8.2 bundles 10.40. Where the running
         // engine refuses it too, PHPStan core reports it and this rule stays silent.
         $pattern = '/(?aD)x/';
@@ -203,6 +206,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
     #[Test]
     public function test_the_hint_on_a_target_specific_refusal_is_the_tip(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         $pattern = '/(?<=ab?)x/';
         $errors = $this->errorsFor(new RegexPatternRule(config: ['phpVersion' => '8.2']), $pattern, 7);
 

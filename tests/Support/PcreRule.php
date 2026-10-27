@@ -43,4 +43,44 @@ trait PcreRule
 
         return intdiv($phpVersionId, 100) === intdiv(\PHP_VERSION_ID, 100) ? $php.'/'.PcreTarget::runtime()->pcreVersion : $php.'/'.$pcre;
     }
+
+    /**
+     * A version of a report, a "php" and a "pcre" beside what else it
+     * says, as the rule judges it.
+     *
+     * @param array{php: string, pcre: string} $row
+     *
+     * @return array{php: string, pcre: string}
+     */
+    private static function judgedRow(array $row): array
+    {
+        $row['pcre'] = explode('/', self::judgedLabel($row['php'].'/'.$row['pcre']), 2)[1];
+
+        return $row;
+    }
+
+    /**
+     * Skip a row written for the PCRE2 a version bundles under that
+     * version's minor when the running PHP links another release: the rule
+     * judges it with the running one there, and every other PHP keeps the
+     * row.
+     */
+    private function requiresBundledPcre2(int $phpVersionId, string $subject): void
+    {
+        $bundled = PcreTarget::bundledWith($phpVersionId)->pcreVersion;
+        if (intdiv($phpVersionId, 100) === intdiv(\PHP_VERSION_ID, 100) && PcreTarget::runtime()->pcreVersion !== $bundled) {
+            $this->markTestSkipped(\sprintf('%s is verified against PHP %d.%d with the PCRE2 %s it bundles; PHP %s links PCRE2 %s.', $subject, intdiv($phpVersionId, 10000), intdiv($phpVersionId, 100) % 100, $bundled, \PHP_VERSION, \PCRE_VERSION));
+        }
+    }
+
+    /**
+     * The gate above for a row that judges every version from one minor to
+     * another, each with the release it bundles.
+     */
+    private function requiresBundledPcre2Within(int $from, int $through, string $subject): void
+    {
+        if (\PHP_VERSION_ID >= intdiv($from, 100) * 100 && \PHP_VERSION_ID < (intdiv($through, 100) + 1) * 100) {
+            $this->requiresBundledPcre2(\PHP_VERSION_ID, $subject);
+        }
+    }
 }

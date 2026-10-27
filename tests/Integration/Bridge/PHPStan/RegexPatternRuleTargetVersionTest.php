@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPStan\Analyser\Error;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Rules\Rule;
@@ -37,6 +38,7 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexPatternRuleTargetVersionTest extends RuleTestCase
 {
+    use PcreRule;
     private const ASCII_OPTION = '/(?aD)x/';
 
     private const SCAN_SUBSTRING = '/(a)(*scs:(1)a)/';
@@ -51,6 +53,7 @@ final class RegexPatternRuleTargetVersionTest extends RuleTestCase
     #[Test]
     public function test_a_project_on_php_8_2_is_judged_with_the_pcre2_php_8_2_bundles(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         // 80200 names PHP 8.2 itself; only a PHP 8.2.0 runner would be the running engine.
         $this->phpVersion = new PhpVersion(80200);
 
@@ -65,6 +68,7 @@ final class RegexPatternRuleTargetVersionTest extends RuleTestCase
     #[Test]
     public function test_a_target_specific_refusal_is_reported_under_invalid_for_target(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         $this->phpVersion = new PhpVersion(80400);
         $this->config = ['phpVersion' => '8.2'];
 
@@ -99,6 +103,7 @@ final class RegexPatternRuleTargetVersionTest extends RuleTestCase
     #[Test]
     public function test_a_php_version_parameter_names_the_version(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         $this->phpVersion = new PhpVersion(80400);
         $this->config = ['phpVersion' => '8.2'];
 
@@ -133,6 +138,7 @@ final class RegexPatternRuleTargetVersionTest extends RuleTestCase
     #[Test]
     public function test_a_pattern_the_running_engine_refuses_is_left_to_phpstan_core(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         // Line 23 ("/a{2,1}/") is refused by every PCRE2: no error from this rule. Line 21
         // needs PCRE2 10.45, so it is reported only where the running engine compiles it.
         // The library's reason already ends with a period: the message carries one, not two.

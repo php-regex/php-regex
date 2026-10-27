@@ -19,6 +19,7 @@ use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintConfigResult;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,6 +31,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class LintConfigLoaderStrictTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     #[Test]
@@ -236,7 +238,8 @@ final class LintConfigLoaderStrictTest extends TestCase
 
         $target = ProjectTarget::resolve(null, null, $result->config, $directory, []);
         $this->assertSame($phpVersionId, $target->target()->phpVersionId);
-        $this->assertSame($pcreVersion, $target->target()->pcreVersion);
+        // A release named is kept; without one, the rule gives it.
+        $this->assertSame(str_contains($json, 'pcreVersion') ? $pcreVersion : self::judgedPcre($phpVersionId), $target->target()->pcreVersion);
         $this->assertSame('regex.json', $target->source());
     }
 

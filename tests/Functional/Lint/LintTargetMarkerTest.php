@@ -44,6 +44,7 @@ final class LintTargetMarkerTest extends TestCase
     #[Test]
     public function test_the_json_report_names_the_versions_a_marker_keeps(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $this->enterProject([
             'composer.json' => '{"require": {"php": "^8.2"}}',
             'src/a.php' => "<?php\npreg_match('/[11]/', \$s); // @regex-target php>=8.4\npreg_match('/(?a)\\d+/', \$s); // @regex-target php>=8.4\npreg_match('/(?a)\\d+/', \$s);\n",

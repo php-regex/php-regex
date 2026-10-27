@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Tests\Support\PcreRule;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
 use PHPUnit\Framework\Attributes\Test;
@@ -33,6 +34,7 @@ use Symfony\Component\Console\Output\StreamOutput;
 #[WithConfig('php-regex.cache.store', null)]
 final class LaravelLazyConfigTest extends LaravelTestCase
 {
+    use PcreRule;
     private string $sourceDir;
 
     protected function setUp(): void
@@ -150,7 +152,7 @@ final class LaravelLazyConfigTest extends LaravelTestCase
 
         $this->assertSame(0, $status, $report.$errors);
         $this->assertIsArray(json_decode($report, true), 'stdout is not JSON: '.$report);
-        $this->assertStringContainsString('Target: PHP 8.2, PCRE2 10.40 (config php-regex.php_version)', $errors);
+        $this->assertStringContainsString('Target: PHP 8.2, PCRE2 '.self::judgedPcre(80200).' (config php-regex.php_version)', $errors);
         $this->assertStringNotContainsString('ignore_patterns', $errors);
     }
 

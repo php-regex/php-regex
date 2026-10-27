@@ -21,6 +21,7 @@ use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Command\LintCommand;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +35,7 @@ use Symfony\Component\Console\Tester\CommandTester;
  */
 final class LintCommandTargetOutputTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     private const PATTERN_FILE = "<?php\n\npreg_match('/^[a-z]+\$/', \$subject);\n";
@@ -57,6 +59,7 @@ final class LintCommandTargetOutputTest extends TestCase
     #[Test]
     public function test_other_formats_say_the_target_on_stderr(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         $project = $this->makeProject(['composer.json' => '{"name": "acme/app"}', 'src/Pattern.php' => self::PATTERN_FILE]);
         $tester = new CommandTester($this->command(projectDir: $project, phpVersion: '8.2'));
 

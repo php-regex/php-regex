@@ -26,6 +26,7 @@ use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -43,6 +44,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class GuardedTargetLintTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     private const CODE = <<<'PHP_WRAP'
@@ -168,6 +170,7 @@ final class GuardedTargetLintTest extends TestCase
     #[Test]
     public function test_the_php_parser_reads_every_guard_form(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $this->assertSame(self::BOTH, self::issues($this->lint(PhpParserExtractionStrategy::class, self::CODE)));
     }
 
@@ -178,6 +181,7 @@ final class GuardedTargetLintTest extends TestCase
     #[Test]
     public function test_the_tokenizer_reads_the_branches_and_the_early_exits(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $expected = [...self::BOTH, [81, 'regex.group.syntax'], [81, 'regex.keep.in_lookaround'], [87, 'regex.group.syntax']];
         sort($expected);
 
@@ -191,6 +195,7 @@ final class GuardedTargetLintTest extends TestCase
     #[Test]
     public function test_an_issue_under_a_guard_names_the_versions_kept(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $targets = [];
         foreach ($this->lint(TokenBasedExtractionStrategy::class, self::CODE)->results as $result) {
             foreach ($result['issues'] as $issue) {
@@ -198,9 +203,9 @@ final class GuardedTargetLintTest extends TestCase
             }
         }
 
-        $this->assertSame(['php' => '8.5', 'pcre' => '10.44', 'guard' => '>=8.5'], $targets[15] ?? null);
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'guard' => '>=8.3 <8.4'], $targets[24] ?? null);
-        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'guard' => '<8.4 || >=8.4.1'], $targets[51] ?? null);
+        $this->assertSame(['php' => '8.5', 'pcre' => self::judgedPcre(80500), 'guard' => '>=8.5'], $targets[15] ?? null);
+        $this->assertSame(['php' => '8.3', 'pcre' => self::judgedPcre(80300), 'guard' => '>=8.3 <8.4'], $targets[24] ?? null);
+        $this->assertSame(['php' => '8.2', 'pcre' => self::judgedPcre(80200), 'guard' => '<8.4 || >=8.4.1'], $targets[51] ?? null);
         $this->assertNull($targets[11] ?? null);
     }
 
@@ -213,6 +218,7 @@ final class GuardedTargetLintTest extends TestCase
     #[Test]
     public function test_a_constant_of_the_namespace_named_php_version_id_is_not_read(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $shadowed = <<<'PHP_WRAP'
             <?php
             namespace Shadow;

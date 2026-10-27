@@ -270,6 +270,7 @@ final class CaptureShapeParityTest extends PHPStanTestCase
     #[DataProvider('provideCorpus')]
     public function test_parity_corpus_shape_is_the_type_phpstan_prints(string $source, string $pattern, array $subjects): void
     {
+        $this->requiresCompile($pattern, $source);
         $shape = self::shapeOf($pattern);
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
 

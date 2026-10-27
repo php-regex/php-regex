@@ -68,6 +68,7 @@ final class TargetMarkerLintTest extends TestCase
     #[DataProvider('provideStrategies')]
     public function test_a_marker_judges_the_versions_it_names(string $strategy): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $report = $this->lint($strategy, <<<'PHP'
             <?php
             // @regex-target-next-line php>=8.4
@@ -82,7 +83,7 @@ final class TargetMarkerLintTest extends TestCase
 
         $this->assertSame([
             [4, 'regex.group.syntax', null],
-            [7, 'regex.keep.in_lookaround', ['php' => '8.5', 'pcre' => '10.44']],
+            [7, 'regex.keep.in_lookaround', ['php' => '8.5', 'pcre' => self::judgedPcre(80500)]],
             [9, 'regex.lint.compat.meaningChanges', ['php' => '8.4', 'pcre' => self::judgedPcre(80400)]],
         ], self::issues($report));
     }
@@ -98,6 +99,7 @@ final class TargetMarkerLintTest extends TestCase
     #[DataProvider('provideStrategies')]
     public function test_an_issue_under_a_marker_names_the_versions_judged(string $strategy): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $report = $this->lint($strategy, <<<'PHP'
             <?php
             preg_match('/[11]/', $s); // @regex-target php>=8.4
@@ -106,7 +108,7 @@ final class TargetMarkerLintTest extends TestCase
 
         $this->assertSame([
             [2, 'regex.lint.charclass.redundant', ['php' => '8.4', 'pcre' => self::judgedPcre(80400), 'guard' => '>=8.4']],
-            [3, 'regex.keep.in_lookaround', ['php' => '8.5', 'pcre' => '10.44', 'guard' => '>=8.4', 'guard_pcre' => '>=10.43']],
+            [3, 'regex.keep.in_lookaround', ['php' => '8.5', 'pcre' => self::judgedPcre(80500), 'guard' => '>=8.4', 'guard_pcre' => '>=10.43']],
         ], self::issues($report, true));
     }
 
@@ -120,6 +122,7 @@ final class TargetMarkerLintTest extends TestCase
     #[DataProvider('provideStrategies')]
     public function test_a_marker_on_a_declaration_covers_it_and_markers_intersect(string $strategy): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $report = $this->lint($strategy, <<<'PHP'
             <?php
 
@@ -152,6 +155,7 @@ final class TargetMarkerLintTest extends TestCase
     #[DataProvider('provideStrategies')]
     public function test_an_empty_or_malformed_marker_is_an_error(string $strategy): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $report = $this->lint($strategy, <<<'PHP'
             <?php
             preg_match('/(a/', $s); // @regex-target php>=9.0

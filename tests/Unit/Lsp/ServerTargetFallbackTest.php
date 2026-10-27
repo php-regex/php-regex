@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +29,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class ServerTargetFallbackTest extends TestCase
 {
+    use PcreRule;
     /**
      * "(?a)" arrived in PCRE2 10.43: 10.40 (PHP 8.2) refuses it, 10.44
      * (PHP 8.4) compiles it.
@@ -75,6 +77,7 @@ final class ServerTargetFallbackTest extends TestCase
     #[Test]
     public function test_an_unreadable_php_version_option_falls_back_to_regex_json(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         file_put_contents($this->root.'/regex.json', (string) json_encode(['phpVersion' => '8.2']));
 
         $this->serve(['rootUri' => $this->rootUri(), 'initializationOptions' => ['phpVersion' => 'eight']]);

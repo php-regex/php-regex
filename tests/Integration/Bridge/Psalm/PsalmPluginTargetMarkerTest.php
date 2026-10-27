@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
+use PHPRegex\Tests\Support\PcreRule;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -26,11 +27,13 @@ use PHPUnit\Framework\TestCase;
  */
 final class PsalmPluginTargetMarkerTest extends TestCase
 {
+    use PcreRule;
     private const FILE = 'Target/markers.php';
 
     #[Test]
     public function test_a_marker_narrows_the_versions_a_call_is_judged_for(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $found = [];
         foreach (PsalmRun::inFile(PsalmRun::issues([self::FILE], '8.2'), self::FILE) as $issue) {
             if ('Trace' !== $issue->type) {
@@ -60,6 +63,7 @@ final class PsalmPluginTargetMarkerTest extends TestCase
     #[Test]
     public function test_a_guard_narrows_the_versions_a_call_is_judged_for(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $found = [];
         foreach (PsalmRun::inFile(PsalmRun::issues(['Target/guards.php'], '8.2'), 'Target/guards.php') as $issue) {
             if ('Trace' !== $issue->type) {
@@ -84,6 +88,7 @@ final class PsalmPluginTargetMarkerTest extends TestCase
     #[Test]
     public function test_the_guards_of_a_file_php_cannot_parse_are_not_read(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $found = [];
         foreach (PsalmRun::inFile(PsalmRun::issues(['Target/guards_unparsed.php'], '8.2'), 'Target/guards_unparsed.php') as $issue) {
             if ('Trace' !== $issue->type) {

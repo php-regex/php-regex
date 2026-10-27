@@ -42,6 +42,7 @@ final class PsalmPluginPcreRuleTest extends TestCase
     public function test_the_running_minor_is_judged_with_the_running_pcre2(): void
     {
         $this->requiresPcre2('10.45', self::SCAN);
+        $this->forbidsPhp('8.5', 'Psalm analysing for the running minor', 'is a version Psalm refuses to analyse for');
         $minor = \sprintf('%d.%d', intdiv(\PHP_VERSION_ID, 10000), intdiv(\PHP_VERSION_ID, 100) % 100);
 
         $this->assertSame([], $this->reported('RunningMinor', $minor, []));

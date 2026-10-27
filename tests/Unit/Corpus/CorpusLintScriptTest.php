@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Corpus;
 
+use PHPRegex\Tests\Support\PcreRule;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class CorpusLintScriptTest extends TestCase
 {
+    use PcreRule;
+
     private string $root = '';
 
     protected function setUp(): void
@@ -69,7 +72,7 @@ final class CorpusLintScriptTest extends TestCase
 
         $this->assertSame(1, $code, $output);
         $this->assertSame(
-            '### corpus/ownerA/repoNew — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0',
+            '### corpus/ownerA/repoNew — Target: PHP 8.2, PCRE2 '.self::judgedPcre(80200).' (composer.json require.php) — exit 0',
             $this->line($log, '### corpus/ownerA/repoNew'),
             $output.$log,
         );
@@ -79,7 +82,7 @@ final class CorpusLintScriptTest extends TestCase
             $log,
         );
         $this->assertSame(
-            '### corpus/ownerC/repoBare — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0',
+            '### corpus/ownerC/repoBare — Target: PHP 8.1, PCRE2 '.self::judgedPcre(80100).' (--php-version, fallback: no require.php) — exit 0',
             $this->line($log, '### corpus/ownerC/repoBare'),
             $log,
         );
@@ -130,10 +133,10 @@ final class CorpusLintScriptTest extends TestCase
         // One bare paginated row per repository — counter, name, then its
         // own target — with no tag and no findings detail: the merged log
         // and the summary carry those.
-        $this->assertSame('[1/4] ownerA/repoNew  PHP 8.2, PCRE2 10.40', $lines[0]);
+        $this->assertSame('[1/4] ownerA/repoNew  PHP 8.2, PCRE2 '.self::judgedPcre(80200), $lines[0]);
         $this->assertStringContainsString('[2/4] ownerB/repoOld  PHP 7.4, PCRE2 10.33', $output);
-        $this->assertStringContainsString('[3/4] ownerC/repoBare  PHP 8.1, PCRE2 10.39', $output);
-        $this->assertStringContainsString('[4/4] ownerD/repoClean  PHP 8.1, PCRE2 10.39', $output);
+        $this->assertStringContainsString('[3/4] ownerC/repoBare  PHP 8.1, PCRE2 '.self::judgedPcre(80100), $output);
+        $this->assertStringContainsString('[4/4] ownerD/repoClean  PHP 8.1, PCRE2 '.self::judgedPcre(80100), $output);
 
         $this->assertStringNotContainsString('[OK]', $output);
         $this->assertStringNotContainsString('[WARN]', $output);

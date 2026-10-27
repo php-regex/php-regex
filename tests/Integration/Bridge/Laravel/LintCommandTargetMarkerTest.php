@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -27,6 +28,7 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class LintCommandTargetMarkerTest extends LaravelTestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     private const FILE = "<?php\n\npreg_match('/(?a)\\d+/', \$subject); // @regex-target php>=8.4\npreg_match('/(?a)\\d+/', \$subject);\n";
@@ -34,6 +36,7 @@ final class LintCommandTargetMarkerTest extends LaravelTestCase
     #[Test]
     public function test_a_marker_narrows_the_versions_judged(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         self::configOf($this->application())->set('php-regex.php_version', '8.2');
 
         $this->assertSame([[3, 'regex.target.empty'], [4, 'regex.group.syntax']], $this->lintIssues());

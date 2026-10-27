@@ -133,7 +133,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src']);
 
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.3', 'pcre' => self::judgedPcre(80300), 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => self::judgedPcre(80300)], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => self::judgedPcre(80500)], ['php' => '8.5.10', 'pcre' => self::judgedPcre(80510)]]], $payload['target'] ?? null);
     }
 
     #[Test]
@@ -160,7 +160,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src']);
 
-        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'locale' => 'C', 'source' => 'regex.json', 'range' => [['php' => '8.2', 'pcre' => '10.40']]], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.2', 'pcre' => self::judgedPcre(80200), 'locale' => 'C', 'source' => 'regex.json', 'range' => [['php' => '8.2', 'pcre' => self::judgedPcre(80200)]]], $payload['target'] ?? null);
     }
 
     #[Test]
@@ -173,7 +173,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src']);
 
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.3', 'pcre' => self::judgedPcre(80300), 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => self::judgedPcre(80300)], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => self::judgedPcre(80500)], ['php' => '8.5.10', 'pcre' => self::judgedPcre(80510)]]], $payload['target'] ?? null);
     }
 
     /**

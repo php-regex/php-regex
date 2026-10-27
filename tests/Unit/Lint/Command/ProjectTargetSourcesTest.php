@@ -50,7 +50,7 @@ final class ProjectTargetSourcesTest extends TestCase
         );
 
         $this->assertSame(80200, $resolved->target()->phpVersionId);
-        $this->assertSame('10.40', $resolved->target()->pcreVersion);
+        $this->assertSame(self::judgedPcre(80200), $resolved->target()->pcreVersion);
         $this->assertSame('regex.json', $resolved->source());
     }
 
@@ -64,7 +64,7 @@ final class ProjectTargetSourcesTest extends TestCase
             [],
         );
 
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'locale' => 'C', 'source' => 'php_regex.php_version', 'range' => [['php' => '8.3', 'pcre' => '10.42']]], $resolved->toArray());
+        $this->assertSame(['php' => '8.3', 'pcre' => self::judgedPcre(80300), 'locale' => 'C', 'source' => 'php_regex.php_version', 'range' => [['php' => '8.3', 'pcre' => self::judgedPcre(80300)]]], $resolved->toArray());
     }
 
     #[Test]
@@ -116,7 +116,7 @@ final class ProjectTargetSourcesTest extends TestCase
         $this->assertSame('fr_FR.ISO8859-1', $resolved->target()->locale);
         $this->assertSame('composer.json require.php; regex.json', $resolved->source());
         $this->assertSame('fr_FR.ISO8859-1', $resolved->regexOptions()['locale']);
-        $this->assertSame('PHP 8.2, PCRE2 10.40, locale fr_FR.ISO8859-1', $resolved->label());
+        $this->assertSame('PHP 8.2, PCRE2 '.self::judgedPcre(80200).', locale fr_FR.ISO8859-1', $resolved->label());
         $this->assertSame('fr_FR.ISO8859-1', $resolved->toArray()['locale']);
         foreach ($resolved->range() as $target) {
             $this->assertSame('fr_FR.ISO8859-1', $target->locale);

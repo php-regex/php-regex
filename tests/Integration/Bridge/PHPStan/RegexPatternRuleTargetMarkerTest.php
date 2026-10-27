@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
@@ -31,9 +32,12 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexPatternRuleTargetMarkerTest extends RuleTestCase
 {
+    use PcreRule;
+
     #[Test]
     public function test_a_marker_narrows_the_versions_a_call_is_judged_for(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $refusal = RegexParser::create(['php_version' => '8.2', 'pcre_version' => '10.40', 'runtime_pcre_validation' => false])->validate('/(?a)\d+/');
         $this->assertFalse($refusal->isValid);
         $reason = explode("\n", (string) $refusal->error)[0];

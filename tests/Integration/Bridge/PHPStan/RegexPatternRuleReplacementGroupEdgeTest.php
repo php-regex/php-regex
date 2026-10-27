@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,6 +30,7 @@ use PHPUnit\Framework\Attributes\Test;
 final class RegexPatternRuleReplacementGroupEdgeTest extends RuleTestCase
 {
     use PcreGates;
+    use PcreRule;
 
     private const FIXTURE = __DIR__.'/Fixtures/ReplacementGroupEdgeFixture.php';
 
@@ -51,6 +53,7 @@ final class RegexPatternRuleReplacementGroupEdgeTest extends RuleTestCase
     #[Test]
     public function test_only_a_pairing_certain_on_a_readable_pattern_is_reported(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         $errors = [];
         foreach ($this->gatherAnalyserErrors([self::FIXTURE]) as $error) {
             if (RegexPatternRule::IDENTIFIER_REPLACEMENT_UNDEFINED_GROUP === $error->getIdentifier()) {

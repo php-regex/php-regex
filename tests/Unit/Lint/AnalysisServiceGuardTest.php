@@ -22,6 +22,7 @@ use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -35,6 +36,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class AnalysisServiceGuardTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     protected function tearDown(): void
@@ -45,6 +47,7 @@ final class AnalysisServiceGuardTest extends TestCase
     #[Test]
     public function test_a_guard_keeping_every_version_judges_the_pattern_as_it_is(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $analysis = $this->analysis();
 
         $kept = $analysis->lint([self::occurrence('/(?a)\d+/', 'php>=8.0')]);
@@ -96,6 +99,7 @@ final class AnalysisServiceGuardTest extends TestCase
     #[Test]
     public function test_each_narrowed_pattern_takes_its_own_reading(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $analysis = $this->analysis();
         $patterns = [
             self::occurrence('/[0-9]+x/', 'php>=8.4'),
@@ -120,9 +124,10 @@ final class AnalysisServiceGuardTest extends TestCase
     #[Test]
     public function test_a_guarded_pattern_is_validated_at_the_later_versions_kept(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $issues = $this->analysis()->lint([self::occurrence('/(?<=a\Kb)c/', 'php>=8.4.25 <8.5.10')]);
 
-        $this->assertSame([['php' => '8.5', 'pcre' => '10.44', 'guard' => '>=8.4.25 <8.5.10']], array_map(static fn (LintIssue $issue): ?array => $issue->target, $issues));
+        $this->assertSame([['php' => '8.5', 'pcre' => self::judgedPcre(80500), 'guard' => '>=8.4.25 <8.5.10']], array_map(static fn (LintIssue $issue): ?array => $issue->target, $issues));
     }
 
     /**

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class CliReadmeGithubExampleTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     private const COMMAND = 'vendor/bin/regex lint src/ --format=github --no-visuals';
@@ -31,6 +33,7 @@ final class CliReadmeGithubExampleTest extends TestCase
     #[Test]
     public function test_the_readme_github_example_is_the_output_of_a_real_run(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         $project = $this->makeProject([
             'composer.json' => '{"name": "acme/demo", "require": {"php": "^8.2"}}',
             'src/demo.php' => "<?php\n\npreg_match('/(a+)+b/', \$subject);\n",

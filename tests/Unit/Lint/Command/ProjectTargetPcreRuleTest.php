@@ -18,6 +18,7 @@ use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class ProjectTargetPcreRuleTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     protected function tearDown(): void
@@ -128,7 +130,7 @@ final class ProjectTargetPcreRuleTest extends TestCase
 
         $target = ProjectTarget::resolve(null, null, [], $project, []);
 
-        $this->assertSame(PcreTarget::bundledWith(80200)->pcreVersion, $target->target()->pcreVersion);
+        $this->assertSame(self::judgedPcre(80200), $target->target()->pcreVersion);
         $this->assertContains('composer.json config.platform.lib-pcre "ten" is not a PCRE2 release like "10.44": passed over.', $target->notices());
     }
 

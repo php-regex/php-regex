@@ -640,7 +640,7 @@ final class RailroadSvgRendererTest extends TestCase
     #[Test]
     public function test_svg_cuts_a_word_longer_than_a_label_line(): void
     {
-        $name = 'averyveryverylongnameofthirtychars';
+        $name = 'averyveryverylongnameofthirtytwo';
         $pattern = '/(?<'.$name.'>a)\\k<'.$name.'>/';
         $this->assertSame(1, preg_match($pattern, 'aa'), 'Oracle: PCRE reads the long name.');
 
@@ -651,7 +651,7 @@ final class RailroadSvgRendererTest extends TestCase
         $start = array_search('Backref', $lines, true);
         $this->assertIsInt($start);
 
-        $this->assertSame(['Backref', '(\\k<averyveryverylongnameoft', 'hirtychars>)'], \array_slice($lines, $start, 3));
+        $this->assertSame(['Backref', '(\\k<averyveryverylongnameoft', 'hirtytwo>)'], \array_slice($lines, $start, 3));
         foreach (\array_slice($lines, $start, 3) as $line) {
             $this->assertLessThanOrEqual(28, \strlen($line), $line);
         }

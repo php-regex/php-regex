@@ -22,6 +22,7 @@ use PHPRegex\Linter\Source\PhpFilePatternSource;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,6 +37,7 @@ use Symfony\Component\Console\Tester\CommandTester;
  */
 final class LintCommandRangeTest extends TestCase
 {
+    use PcreRule;
     use TemporaryProject;
 
     private const COMPOSER = '{"name": "acme/app", "require": {"php": ">=8.2"}}';
@@ -61,9 +63,9 @@ final class LintCommandRangeTest extends TestCase
         $message = $issues[0]['message'] ?? null;
         $this->assertIsString($message);
         $this->assertStringContainsString('PHP 8.5 and later', (string) $message);
-        $this->assertSame(['php' => '8.5', 'pcre' => '10.44', 'guard' => null, 'guard_pcre' => null], $issues[0]['target'] ?? null);
+        $this->assertSame(['php' => '8.5', 'pcre' => self::judgedPcre(80500), 'guard' => null, 'guard_pcre' => null], $issues[0]['target'] ?? null);
         $range = JsonContract::asArray(JsonContract::asArray($document['target'] ?? null)['range'] ?? null);
-        $this->assertSame(['php' => '8.2', 'pcre' => '10.40'], $range[0] ?? null);
+        $this->assertSame(['php' => '8.2', 'pcre' => self::judgedPcre(80200)], $range[0] ?? null);
     }
 
     #[Test]
@@ -75,7 +77,7 @@ final class LintCommandRangeTest extends TestCase
 
         $this->assertSame(Command::SUCCESS, $status);
         $this->assertSame([], self::issues($document));
-        $this->assertSame([['php' => '8.2', 'pcre' => '10.40']], JsonContract::asArray($document['target'] ?? null)['range'] ?? null);
+        $this->assertSame([['php' => '8.2', 'pcre' => self::judgedPcre(80200)]], JsonContract::asArray($document['target'] ?? null)['range'] ?? null);
     }
 
     /**

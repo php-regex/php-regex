@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
 use PHPRegex\PHPStan\RegexPatternArgumentRule;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPStan\Analyser\Error;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
@@ -27,6 +28,8 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexPatternArgumentRuleTargetTest extends RuleTestCase
 {
+    use PcreRule;
+
     public static function getAdditionalConfigFiles(): array
     {
         return [
@@ -38,6 +41,7 @@ final class RegexPatternArgumentRuleTargetTest extends RuleTestCase
     #[Test]
     public function test_a_pattern_the_target_refuses_is_invalid_for_target(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         // "(?aD)" needs PCRE2 10.43: an engine that refuses it has the
         // running-engine error reported instead, in its own words.
         $refusal = self::runningEngineRefusal('/(?aD)x/');
@@ -52,6 +56,7 @@ final class RegexPatternArgumentRuleTargetTest extends RuleTestCase
     #[Test]
     public function test_a_pattern_the_target_refuses_carries_the_target_identifier(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         $identifiers = array_map(
             static fn (Error $error): array => [$error->getLine(), $error->getIdentifier()],
             $this->gatherAnalyserErrors([__DIR__.'/Fixtures/RegexPatternArgumentChecksFixture.php']),

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 final class ServerTargetTest extends TestCase
 {
     use InstalledLocales;
+    use PcreRule;
 
     /**
      * "(?a)", ASCII-only classes, arrived in PCRE2 10.43
@@ -73,6 +75,7 @@ final class ServerTargetTest extends TestCase
     #[Test]
     public function test_initialization_options_set_the_target(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         $this->serve(['rootUri' => $this->rootUri(), 'initializationOptions' => ['phpVersion' => '8.2']]);
 
         $this->assertNotSame([], $this->diagnostics(), 'PHP 8.2 bundles PCRE2 10.40, which refuses "(?a)".');
@@ -105,6 +108,7 @@ final class ServerTargetTest extends TestCase
     #[Test]
     public function test_regex_json_at_the_root_sets_the_target(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         file_put_contents($this->root.'/regex.json', (string) json_encode(['phpVersion' => '8.2']));
 
         $this->serve(['rootUri' => $this->rootUri()]);
@@ -118,6 +122,7 @@ final class ServerTargetTest extends TestCase
     #[Test]
     public function test_regex_json_wins_over_composer_json(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         file_put_contents($this->root.'/regex.json', (string) json_encode(['phpVersion' => '8.2']));
         file_put_contents($this->root.'/composer.json', (string) json_encode(['require' => ['php' => '>=8.4']]));
 
@@ -130,6 +135,7 @@ final class ServerTargetTest extends TestCase
     #[Test]
     public function test_composer_json_of_the_first_workspace_folder_sets_the_target(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         file_put_contents($this->root.'/composer.json', (string) json_encode(['require' => ['php' => '^8.2']]));
 
         $this->serve(['workspaceFolders' => [
@@ -243,7 +249,7 @@ final class ServerTargetTest extends TestCase
 
         $this->serve(['rootUri' => $this->rootUri()]);
 
-        $this->assertSame(['Target: PHP 8.2, PCRE2 10.40, locale fr_FR.ISO8859-1 (regex.json)'], $this->targetLogs());
+        $this->assertSame(['Target: PHP 8.2, PCRE2 '.self::judgedPcre(80200).', locale fr_FR.ISO8859-1 (regex.json)'], $this->targetLogs());
     }
 
     /**

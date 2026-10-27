@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
@@ -37,6 +38,7 @@ use PHPUnit\Framework\Attributes\Test;
 final class RegexPatternRuleGuardedTargetTest extends RuleTestCase
 {
     use PcreGates;
+    use PcreRule;
 
     private const ASCII = '/(?a)\d+/';
 
@@ -59,6 +61,7 @@ final class RegexPatternRuleGuardedTargetTest extends RuleTestCase
     #[Test]
     public function test_a_guard_judges_the_versions_its_branch_runs_on(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $this->analyse([__DIR__.'/Fixtures/GuardedTargetFixture.php'], self::refusals([
             [self::ASCII, '8.2', '10.40', 28],
             [self::ASCII, '8.3', '10.42', 57],
@@ -161,6 +164,7 @@ final class RegexPatternRuleGuardedTargetTest extends RuleTestCase
     #[Test]
     public function test_one_version_judged_ignores_the_guards(): void
     {
+        $this->requiresBundledPcre2Within(80200, 80700, __FUNCTION__);
         $this->range = ['min' => 80200, 'max' => 80599];
         $this->config = ['phpVersion' => '8.2'];
 

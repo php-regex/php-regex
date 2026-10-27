@@ -93,6 +93,7 @@ final class BundleConfigurationTest extends TestCase
     #[Test]
     public function test_php_version_drives_the_lint_command_target(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         $container = $this->compile(['php_version' => '8.2']);
 
         $report = $this->lint($container);
@@ -117,6 +118,7 @@ final class BundleConfigurationTest extends TestCase
     #[Test]
     public function test_the_lint_command_does_not_inherit_runtime_validation(): void
     {
+        $this->requiresBundledPcre2(80200, __FUNCTION__);
         // Runtime validation compiles with the running PHP, which cannot
         // judge PHP 8.2: handed to the lint command, it would make the
         // target unusable. The runtime service keeps it.
@@ -138,7 +140,7 @@ final class BundleConfigurationTest extends TestCase
 
         $report = $this->lint($container);
 
-        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.2', 'pcre' => '10.40'], ['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => self::judgedPcre(80500)], ['php' => '8.5.10', 'pcre' => self::judgedPcre(80510)]]], $report['target']);
+        $this->assertSame(['php' => '8.2', 'pcre' => self::judgedPcre(80200), 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.2', 'pcre' => self::judgedPcre(80200)], ['php' => '8.3', 'pcre' => self::judgedPcre(80300)], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => self::judgedPcre(80500)], ['php' => '8.5.10', 'pcre' => self::judgedPcre(80510)]]], $report['target']);
         $this->assertSame(1, $report['errors']);
     }
 
