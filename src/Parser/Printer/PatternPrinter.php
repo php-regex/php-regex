@@ -1784,7 +1784,11 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         if (1 === LibraryPcre::match('/^\\\\(?:o\\{([0-7]+)\\}|([0-7]{1,3}))$/', $text, $matches)) {
-            return (int) octdec($matches[1] ?: ($matches[2] ?? ''));
+            // Past seven digits an octal value is past U+10FFFF, and past
+            // what an integer holds.
+            $digits = ltrim($matches[1] ?: ($matches[2] ?? ''), '0');
+
+            return \strlen($digits) > 7 ? null : (int) octdec('' === $digits ? '0' : $digits);
         }
 
         if (1 === LibraryPcre::match('/^.$/us', $text)) {

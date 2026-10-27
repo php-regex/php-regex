@@ -29,6 +29,25 @@ use PHPUnit\Framework\TestCase;
 
 final class PatternPrinterEdgeCasesTest extends TestCase
 {
+    /**
+     * An octal escape past seven significant digits writes a value past
+     * U+10FFFF, no code point: PCRE refuses it ("character code point value
+     * in \x{} or \o{} is too large"), and octdec() gives a float for it,
+     * which no integer holds (PHP 8.5 warns of the cast).
+     */
+    #[Test]
+    public function test_an_octal_escape_past_every_code_point_names_none(): void
+    {
+        $codePointOf = (new \ReflectionClass(PatternPrinter::class))->getMethod('codePointOf');
+        $printer = PatternPrinter::asWritten();
+
+        $this->assertNull($codePointOf->invoke($printer, '\o{1000000000000000000000}'));
+        $this->assertNull($codePointOf->invoke($printer, '\o{10000000}'));
+        $this->assertSame(0x1FFFFF, $codePointOf->invoke($printer, '\o{7777777}'));
+        $this->assertSame(0x1FFFFF, $codePointOf->invoke($printer, '\o{0007777777}'));
+        $this->assertSame(65, $codePointOf->invoke($printer, '\o{101}'));
+    }
+
     #[Test]
     public function test_pretty_group_prefixes_are_rendered(): void
     {
