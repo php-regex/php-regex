@@ -18,7 +18,6 @@ use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
-use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -55,7 +54,6 @@ use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\PhpVersionGates;
-use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\PcreNumber;
@@ -70,9 +68,9 @@ use PHPRegex\Parser\Text\Bytes;
  * parser could build, at the offset the release judged reports it.
  *
  * It walks the tree once, in the order PCRE2 reads the pattern, and keeps
- * the checks that need that walk: the nesting limit, repeat counts, the
- * ranges of classes, version conditions and callouts. PCRE2 refuses some
- * things only once it has read the whole pattern: a lookbehind it cannot
+ * the checks that need that walk: the nesting limit, repeat counts,
+ * version conditions and callouts. PCRE2 refuses some things only once it
+ * has read the whole pattern: a lookbehind it cannot
  * measure, a reference to a group the pattern does not have, a "\K" in a
  * lookaround from PHP 8.5, a conditional of more than two branches. The
  * walk keeps the first error of each of those passes and raises the
@@ -83,7 +81,7 @@ use PHPRegex\Parser\Text\Bytes;
  * hands the text being read: EscapeChecks for one escape as written,
  * ReferenceChecks for what names a group, VerbChecks for a verb and the
  * settings of the opening run, ClassChecks for the brackets and quotes of
- * a class, LookbehindChecks for the measure of lookbehinds, CompiledSize
+ * a class, RangeChecks for its ranges, LookbehindChecks for the measure of lookbehinds, CompiledSize
  * for the 64 KiB limit.
  *
  * Each walk starts from a clean state. FirstErrorLocator also asks it about
@@ -266,6 +264,11 @@ final class Validator extends AbstractNodeVisitor
     private ClassChecks $classes;
 
     /**
+     * The checks of the ranges of the classes of the text being read.
+     */
+    private RangeChecks $ranges;
+
+    /**
      * The measure of the lookbehinds of the pattern.
      */
     private LookbehindChecks $lookbehindChecks;
@@ -286,6 +289,7 @@ final class Validator extends AbstractNodeVisitor
         $this->references = new ReferenceChecks($groups, $groups->numbering(), $this->target, $this->keepMissingReference(...), $pattern);
         $this->verbs = new VerbChecks($this->target, $pattern);
         $this->classes = new ClassChecks($this->target, $pattern);
+        $this->ranges = new RangeChecks($this->target, $pattern);
         $this->lookbehindChecks = new LookbehindChecks($groups, $this->target, $this->checkMeasuredReference(...), $pattern, $maxLookbehindLength, false);
     }
 
@@ -398,7 +402,7 @@ final class Validator extends AbstractNodeVisitor
             $this->measureLookbehind($node);
         }
 
-        $text = [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes];
+        $text = [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes, $this->ranges];
         if ($node->child->getStartPosition() <= $node->startPosition) {
             $this->enterPayload($node->startPosition, $node->endPosition);
             $this->readText();
@@ -433,7 +437,7 @@ final class Validator extends AbstractNodeVisitor
         try {
             $node->child->accept($this);
         } finally {
-            [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes] = $text;
+            [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes, $this->ranges] = $text;
             if ($nests) {
                 $this->nestingDepth--;
             }
@@ -679,38 +683,7 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitRange(RangeNode $node): void
     {
-        // 1. Validation: Ensure start and end nodes represent a single character.
-        // We allow LiteralNode, but also CharLiteralNode and friends.
-        // Unreachable from a parsed pattern: the parser refuses such an
-        // endpoint first, with the same code; only a hand-built range gets here.
-        if (!$this->isSingleCharNode($node->start) || !$this->isSingleCharNode($node->end)) {
-            $this->raiseSemanticError(
-                \sprintf(
-                    'Invalid range: ranges must be between literal characters or single escape sequences. Found %s and %s.',
-                    $node->start::class,
-                    $node->end::class,
-                ),
-                $node->startPosition,
-                ErrorCode::RangeInvalidBounds,
-            );
-        }
-
-        // 2. Validation: Ensure characters are single codepoint (for LiteralNodes).
-        // Use mb_strlen for proper Unicode character counting.
-        if ($node->start instanceof LiteralNode && mb_strlen($node->start->value, 'UTF-8') > 1) {
-            $this->raiseSemanticError(
-                'Invalid range: start char must be a single character.',
-                $node->startPosition,
-                ErrorCode::RangeInvalidStart,
-            );
-        }
-        if ($node->end instanceof LiteralNode && mb_strlen($node->end->value, 'UTF-8') > 1) {
-            $this->raiseSemanticError(
-                'Invalid range: end char must be a single character.',
-                $node->startPosition,
-                ErrorCode::RangeInvalidEnd,
-            );
-        }
+        $this->ranges->endpoints($node);
 
         $node->start->accept($this);
         $this->classQuoteOpen = $this->classes->quoteOpenAfter($node->start->getEndPosition(), $node->end->getStartPosition(), $this->classQuoteOpen);
@@ -728,20 +701,7 @@ final class Validator extends AbstractNodeVisitor
             $this->endsRange = false;
         }
 
-        // 3. Validation: order check, on the code points of both endpoints.
-        // PCRE reports it where the range ends.
-        $startCodePoint = $this->rangeEndpointCodePoint($node->start, true);
-        $endCodePoint = $this->rangeEndpointCodePoint($node->end, false);
-        if (null !== $startCodePoint && null !== $endCodePoint && $startCodePoint > $endCodePoint) {
-            // Without Unicode mode, a multibyte end ends the range on its
-            // first byte.
-            $endsAt = !$this->unicodeMode && $node->end instanceof LiteralNode ? $node->getEndPosition() - \strlen($node->end->value) + 1 : $node->getEndPosition();
-            $this->raiseSemanticError(
-                \sprintf('Invalid range "%s": start character comes after end character.', $this->describeRange($node)),
-                $this->target->faultOffset($endsAt),
-                ErrorCode::RangeReversed,
-            );
-        }
+        $this->ranges->order($node);
     }
 
     #[\Override]
@@ -1054,6 +1014,7 @@ final class Validator extends AbstractNodeVisitor
         $this->references = new ReferenceChecks($groups, $groups->numbering(), $this->target, $this->keepMissingReference(...), $this->pattern, $node->source, 0, $this->unicodeMode);
         $this->verbs = VerbChecks::forPattern($this->target, $this->pattern, $node->source, $this->unicodeMode);
         $this->classes = new ClassChecks($this->target, $this->pattern, $node->source);
+        $this->ranges = new RangeChecks($this->target, $this->pattern, $node->source, 0, $this->unicodeMode);
         // A measure of its own: what an earlier pattern measured is gone.
         $this->lookbehindChecks = new LookbehindChecks($groups, $this->target, $this->checkMeasuredReference(...), $this->pattern, $this->maxLookbehindLength, $this->unicodeMode);
 
@@ -1164,13 +1125,6 @@ final class Validator extends AbstractNodeVisitor
         return \strlen($digits);
     }
 
-    private function isSingleCharNode(NodeInterface $node): bool
-    {
-        return $node instanceof LiteralNode
-            || $node instanceof CharLiteralNode
-            || $node instanceof ControlCharNode;
-    }
-
     /**
      * "(?C1)(?=a)" as the condition of a conditional.
      */
@@ -1190,60 +1144,6 @@ final class Validator extends AbstractNodeVisitor
     private function supports(PcreFeature $feature): bool
     {
         return $this->target->supports($feature);
-    }
-
-    /**
-     * The value an endpoint gives the range. Without Unicode mode PCRE reads
-     * the pattern byte by byte, so a multibyte character written as is ends
-     * a range start with its last byte and begins a range end with its first:
-     * "[\u{e9}-\xe0]" is the range from 0xA9 to 0xE0.
-     *
-     * @param bool $isStart whether the node is the start of the range
-     */
-    private function rangeEndpointCodePoint(NodeInterface $node, bool $isStart): ?int
-    {
-        if ($node instanceof LiteralNode) {
-            // Unreachable from a parsed pattern: the parser never gives a
-            // range an empty endpoint. It guards a tree built by hand.
-            if ('' === $node->value) {
-                return null;
-            }
-
-            if (!$this->unicodeMode) {
-                return \ord($isStart ? $node->value[\strlen($node->value) - 1] : $node->value[0]);
-            }
-
-            $codePoint = mb_ord($node->value, 'UTF-8');
-
-            return false === $codePoint ? \ord($node->value) : $codePoint;
-        }
-
-        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
-            return $node->codePoint >= 0 ? $node->codePoint : null;
-        }
-
-        throw InternalFailureException::unexpectedState('A range endpoint is neither a literal, a character escape nor a control character.');
-    }
-
-    private function describeRange(RangeNode $node): string
-    {
-        $text = null === $this->source
-            ? $this->describeRangeEndpoint($node->start).'-'.$this->describeRangeEndpoint($node->end)
-            : substr($this->source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
-
-        // A range from the last byte of a character, without UTF, starts in
-        // the middle of it: its bytes are spelled.
-        return mb_check_encoding($text, 'UTF-8') ? $text : DisplayEscaper::escapeFragment($text, false);
-    }
-
-    private function describeRangeEndpoint(NodeInterface $node): string
-    {
-        return match (true) {
-            $node instanceof LiteralNode => $node->value,
-            $node instanceof CharLiteralNode => $node->originalRepresentation,
-            $node instanceof ControlCharNode => '\c'.$node->char,
-            default => throw InternalFailureException::unexpectedState('A range endpoint is neither a literal, a character escape nor a control character.'),
-        };
     }
 
     private function isLookaround(GroupNode $node): bool
@@ -1291,6 +1191,7 @@ final class Validator extends AbstractNodeVisitor
         $this->references = $this->references->reading($this->source, $this->positionOffset);
         $this->verbs = $this->verbs->reading($this->source, $this->positionOffset);
         $this->classes = $this->classes->reading($this->source, $this->positionOffset);
+        $this->ranges = $this->ranges->reading($this->source, $this->positionOffset);
     }
 
     /**
