@@ -159,7 +159,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_factorize_alternation_returns_prefix_only_when_suffixes_empty(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'alternationRewrites');
         $alts = [new LiteralNode('ab', 0, 2), new LiteralNode('ab', 0, 2)];
 
         $result = $this->invokePrivate($optimizer, 'factorizeAlternation', [$alts]);
@@ -171,7 +171,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_factorize_suffix_all_suffix_only(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'alternationRewrites');
         $alts = [new LiteralNode('ab', 0, 2), new LiteralNode('ab', 0, 2)];
 
         $result = $this->invokePrivate($optimizer, 'factorizeSuffix', [$alts]);
@@ -183,7 +183,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_factorize_suffix_single_prefix_branch(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'alternationRewrites');
         $alts = [new LiteralNode('ab', 0, 2), new LiteralNode('cab', 0, 3)];
 
         $result = $this->invokePrivate($optimizer, 'factorizeSuffix', [$alts]);
@@ -195,7 +195,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_shared_start_of_strings_sharing_nothing_is_empty(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'alternationRewrites');
 
         $result = $this->invokePrivate($optimizer, 'sharedStart', [['abc', 'def']]);
 
@@ -514,7 +514,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_factorize_alternation_with_literal_nodes(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'alternationRewrites');
 
         // Create literal nodes for testing
         $abc = new LiteralNode('abc', 0, 3);
@@ -532,7 +532,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_factorize_alternation_no_common_prefix(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'alternationRewrites');
 
         $abc = new LiteralNode('abc', 0, 3);
         $def = new LiteralNode('def', 0, 3);
@@ -547,7 +547,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_factorize_suffix_with_literal_nodes(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'alternationRewrites');
 
         $cab = new LiteralNode('cab', 0, 3);
         $dab = new LiteralNode('dab', 0, 3);
@@ -564,7 +564,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_shared_end_keeps_whole_characters(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'alternationRewrites');
 
         $this->assertSame('bc', $this->invokePrivate($optimizer, 'sharedEnd', [['abc', 'xbc']]));
         $this->assertSame('é', $this->invokePrivate($optimizer, 'sharedEnd', [['aé', 'bé']]));
@@ -577,7 +577,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_shared_start_covers_edge_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'alternationRewrites');
 
         // A single string shares all of itself
         $this->assertSame('abc', $this->invokePrivate($optimizer, 'sharedStart', [['abc']]));
@@ -903,7 +903,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_deduplicate_alternation_covers_case(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'alternationRewrites');
 
         // Test with duplicates
         $alternatives = [
