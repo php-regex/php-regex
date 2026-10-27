@@ -15,12 +15,38 @@ namespace PHPRegex\Tests\Unit\Parser\Validation;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\EscapeChecks;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class EscapeChecksTest extends TestCase
 {
+    /**
+     * Whether a property exists is asked of the running engine, with the X
+     * modifier: PHP 7.3 and 7.4 compile without it under
+     * PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL, which reads an unknown property as
+     * the letters it spells, so the probe would find every name. On
+     * php:7.4-cli, preg_match('/^\p{Bogus}$/u', '') gives 0 and
+     * preg_match('/^\p{Bogus}$/uX', '') refuses the name; from PHP 8.0 both
+     * refuse it, and X changes nothing.
+     */
+    #[Test]
+    public function test_a_property_is_probed_as_php_8_reads_it_whichever_php_runs(): void
+    {
+        $probe = (new \ReflectionClass(EscapeChecks::class))->getMethod('propertyProbe');
+
+        $this->assertSame('/^\p{Greek}$/uX', $probe->invoke(null, 'p{Greek}'));
+
+        $unknown = $probe->invoke(null, 'p{Bogus}');
+        $this->assertIsString($unknown);
+        $this->assertFalse(@preg_match($unknown, ''));
+
+        $letter = $probe->invoke(null, 'p{L}');
+        $this->assertIsString($letter);
+        $this->assertSame(1, preg_match($letter, 'a'));
+    }
+
     /**
      * Each verified with preg_match() on PCRE2 10.49: the first error PCRE
      * meets, reported where it is.

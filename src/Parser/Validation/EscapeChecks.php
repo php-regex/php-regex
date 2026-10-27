@@ -791,7 +791,18 @@ final class EscapeChecks
      */
     private function compiles(string $key): bool
     {
-        return null === $this->engine->compile("/^\\{$key}$/u");
+        return null === $this->engine->compile(self::propertyProbe($key));
+    }
+
+    /**
+     * The pattern the property is probed with. X makes PHP 7.3 and 7.4,
+     * which compile without it under PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL,
+     * refuse an unknown name instead of reading its letters; from PHP 8.0
+     * it changes nothing.
+     */
+    private static function propertyProbe(string $key): string
+    {
+        return "/^\\{$key}$/uX";
     }
 
     private function validateUnicode(CharLiteralNode $node): void
