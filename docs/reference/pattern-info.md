@@ -133,6 +133,10 @@ did not have.
 The unit follows the mode: `/é{2}/u` has a length of 2, and `/é{2}/` of 3,
 as without `u` the `é` is two bytes and `{2}` repeats the second.
 
+A length past `PHP_INT_MAX`, which the parser takes and PCRE refuses as too
+large, as in `/(?:(?:(?:(?:a{65535}){65535}){65535}){65535}){65535}/`, gives a
+`minMatchLength` of `PHP_INT_MAX` and a `maxMatchLength` of `null`.
+
 `$info->minMatchLength === 0` says the pattern is not proven to need a
 character: it may match the empty string. Any other value is proven.
 

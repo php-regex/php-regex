@@ -309,7 +309,10 @@ final class CaptureShapeAnalyzer
 
         $longest = max(array_map(fn (string $newline): int => $this->unicode ? mb_strlen($newline, 'UTF-8') : \strlen($newline), $newlines));
 
-        return ['values' => $values, 'max' => null === $facts['max'] ? null : $facts['max'] + $longest, 'digitsOnly' => false, 'decimalInt' => false] + $facts;
+        // a length past PHP_INT_MAX reads as unbounded
+        $max = null === $facts['max'] || $facts['max'] > \PHP_INT_MAX - $longest ? null : $facts['max'] + $longest;
+
+        return ['values' => $values, 'max' => $max, 'digitsOnly' => false, 'decimalInt' => false] + $facts;
     }
 
     /**

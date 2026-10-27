@@ -79,7 +79,9 @@ from 1: in `/(a)(?<x>b)/n`, `$groups[1]` is `x`.
 
 The lengths, the values and the facts describe the group when it is set. What PHP
 writes for an unset group, `''` or `null`, is told by the participation: a `MayBeUnset`
-group with `minLength` 1 still reads `''` when a match leaves it unset.
+group with `minLength` 1 still reads `''` when a match leaves it unset. A length past
+`PHP_INT_MAX`, which the parser takes and PCRE refuses as too large, gives a `minLength`
+of `PHP_INT_MAX` and a `maxLength` of `null`.
 
 A group that reads either constants or digits keeps both in `arms`. In `/(a|\d)/`, the
 join of the two branches holds no value set and no digit fact, so `values` is `null` and

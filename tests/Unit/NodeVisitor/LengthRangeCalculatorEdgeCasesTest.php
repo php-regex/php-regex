@@ -18,6 +18,8 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\RegexParser;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -34,5 +36,40 @@ final class LengthRangeCalculatorEdgeCasesTest extends TestCase
         $range = $alternation->accept($visitor);
 
         $this->assertSame([0, null], $range);
+    }
+
+    /**
+     * The parser takes a length no integer holds, which PCRE refuses as too
+     * large (PHP 8.4.27, PCRE2 10.49):
+     *   preg_match('/(?:(?:(?:(?:a{65535}){65535}){65535}){65535}){65535}/', '') -> false,
+     *   "regular expression is too large". The minimum saturates at
+     * PHP_INT_MAX, which stays below what the pattern reads, and the maximum
+     * reads as unbounded: both are integers, or null, never a float.
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideLengthsPastPhpIntMax(): iterable
+    {
+        yield 'a product of repeats' => ['pattern' => '/(?:(?:(?:(?:a{65535}){65535}){65535}){65535}){65535}/'];
+        yield 'a sum of two repeats each within an integer' => ['pattern' => '/(?:(?:(?:a{65535}){65535}){65535}){20000}(?:(?:(?:a{65535}){65535}){65535}){20000}/'];
+        yield 'a repeat of a sum' => ['pattern' => '/(?:(?:(?:(?:a{65535}){65535}){65535}){20000}b){2}/'];
+    }
+
+    #[Test]
+    #[DataProvider('provideLengthsPastPhpIntMax')]
+    public function test_a_length_past_php_int_max_saturates_instead_of_turning_float(string $pattern): void
+    {
+        $range = RegexParser::create()->parse($pattern)->accept(new LengthRangeCalculator());
+
+        $this->assertSame([\PHP_INT_MAX, null], $range);
+    }
+
+    #[Test]
+    public function test_a_length_within_php_int_max_stays_exact(): void
+    {
+        // 65535 ** 3 * 20000 = 5629241840107500000, below PHP_INT_MAX.
+        $range = RegexParser::create()->parse('/(?:(?:(?:a{65535}){65535}){65535}){20000}/')->accept(new LengthRangeCalculator());
+
+        $this->assertSame([5629241840107500000, 5629241840107500000], $range);
     }
 }

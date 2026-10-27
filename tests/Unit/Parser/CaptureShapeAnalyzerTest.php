@@ -127,6 +127,38 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $this->assertSame($max, $shape->maxLength);
     }
 
+    /**
+     * analyze() answers every tree parse() returns: a length past
+     * PHP_INT_MAX, which PCRE refuses as too large (PHP 8.4.27, PCRE2 10.49:
+     * preg_match() returns false, "regular expression is too large"),
+     * saturates its minimum and reads its maximum as unbounded.
+     */
+    #[Test]
+    public function test_a_length_past_php_int_max_saturates(): void
+    {
+        $shape = $this->analyze('/((?:(?:(?:(?:a{65535}){65535}){65535}){65535}){65535})(b)?/');
+
+        foreach ([$shape->whole, $shape->groups[1]] as $group) {
+            $this->assertSame(\PHP_INT_MAX, $group->minLength);
+            $this->assertNull($group->maxLength);
+            $this->assertNull($group->values);
+        }
+        $this->assertSame('array{0: lowercase-string&non-falsy-string, 1: lowercase-string&non-falsy-string, 2?: \'b\'}', $shape->matchShape());
+
+        $subject = $this->analyze('/^(?:(?:(?:(?:a{65535}){65535}){65535}){65535}){65535}$/')->subject;
+        $this->assertNotNull($subject);
+        $this->assertSame(\PHP_INT_MAX, $subject->minLength);
+        $this->assertNull($subject->maxLength);
+
+        // PHP_INT_MAX = 32769 * 65535 ** 3 + 32770 * 65535 ** 2 + 32769 * 65535 + 32767:
+        // the whole reads exactly PHP_INT_MAX, and the final newline "$" lets through one more.
+        $exact = $this->analyze('/^(?:(?:(?:a{65535}){65535}){65535}){32769}(?:(?:a{65535}){65535}){32770}(?:a{65535}){32769}a{32767}$/');
+        $this->assertSame(\PHP_INT_MAX, $exact->whole->maxLength);
+        $this->assertNotNull($exact->subject);
+        $this->assertSame(\PHP_INT_MAX, $exact->subject->minLength);
+        $this->assertNull($exact->subject->maxLength);
+    }
+
     #[Test]
     public function test_names_and_numbers_are_both_known(): void
     {

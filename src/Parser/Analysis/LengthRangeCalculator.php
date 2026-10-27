@@ -119,14 +119,15 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
 
             // Past a "(*ACCEPT)" the match may already be over.
             if (!$accepted) {
-                $totalMin += $childMin;
+                $totalMin = self::sum($totalMin, $childMin) ?? \PHP_INT_MAX;
             }
             $accepted = $accepted || AcceptVerb::mayEndMatch($child);
 
-            if (null === $childMax) {
+            $sum = null === $childMax ? null : self::sum($totalMax, $childMax);
+            if (null === $sum) {
                 $hasInfinite = true;
             } else {
-                $totalMax += $childMax;
+                $totalMax = $sum;
             }
         }
 
@@ -157,10 +158,10 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
         $qMin = $range[0];
         $qMax = $range[1];
 
-        $min = $childMin * $qMin;
+        $min = self::product($childMin, $qMin) ?? \PHP_INT_MAX;
         $max = null;
         if (null !== $childMax && null !== $qMax) {
-            $max = $childMax * $qMax;
+            $max = self::product($childMax, $qMax);
         }
 
         return [$min, $max];
@@ -331,6 +332,24 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     public function visitKeep(KeepNode $node): array
     {
         return [0, 0];
+    }
+
+    /**
+     * The sum of two lengths, or null past PHP_INT_MAX: the parser takes a
+     * pattern longer than any integer, which PCRE refuses as too large. A
+     * minimum saturates there, a maximum reads as unbounded.
+     */
+    private static function sum(int $a, int $b): ?int
+    {
+        return $a > \PHP_INT_MAX - $b ? null : $a + $b;
+    }
+
+    /**
+     * The product of a length and a count, or null past PHP_INT_MAX.
+     */
+    private static function product(int $length, int $count): ?int
+    {
+        return 0 !== $count && $length > intdiv(\PHP_INT_MAX, $count) ? null : $length * $count;
     }
 
     /**

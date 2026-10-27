@@ -249,6 +249,10 @@ final class PatternInfoAnalyzerTest extends TestCase
         // for /(?<=a\Kb)c/ on "abc", longer than the one byte consumed.
         yield '\K inside a lookbehind' => ['pattern' => '/(?<=a\Kb)c/', 'min' => 0, 'max' => null];
         yield '\K reached from a call inside a lookbehind' => ['pattern' => '/(?<=(?1))c(a\Kb)?/', 'min' => 0, 'max' => null];
+        // parse() takes a length past PHP_INT_MAX, which PCRE refuses as too
+        // large (PHP 8.4.27, PCRE2 10.49): the minimum saturates, the maximum
+        // reads as unbounded.
+        yield 'a length past PHP_INT_MAX' => ['pattern' => '/(?:(?:(?:(?:a{65535}){65535}){65535}){65535}){65535}/', 'min' => \PHP_INT_MAX, 'max' => null];
     }
 
     /**
