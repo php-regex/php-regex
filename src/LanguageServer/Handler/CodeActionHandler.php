@@ -220,8 +220,9 @@ final class CodeActionHandler
             }
         }
 
-        if ($hasUnicodeIssue && !str_contains($occurrence->pattern, '/u')) {
-            // Create action to add /u flag
+        if ($hasUnicodeIssue) {
+            // Null when the flags already hold u: a "/u" in the body, as in
+            // "#/users/\p{L}+#", is no flag.
             $newPattern = $this->addUnicodeFlag($occurrence->pattern);
 
             if (null !== $newPattern) {

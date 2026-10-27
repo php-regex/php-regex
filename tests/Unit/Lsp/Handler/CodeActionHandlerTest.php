@@ -722,6 +722,121 @@ final class CodeActionHandlerTest extends TestCase
     }
 
     /**
+     * A Unicode diagnostic the client sends is answered with the quick fix
+     * adding u, which names the Unicode diagnostics it fixes and only
+     * those. Without u, \p{L} reads bytes: the engine finds no letter in
+     * "é" until the flag is there.
+     */
+    #[Test]
+    public function test_the_unicode_quick_fix_answers_the_diagnostics_the_client_sends(): void
+    {
+        $this->assertSame(0, preg_match('/^\p{L}+$/', 'é'));
+        $this->assertSame(1, preg_match('/^\p{L}+$/u', 'é'));
+
+        $unicode = ['code' => 'regex.lint.unicode.propertyWithoutU', 'message' => 'Unicode property without u'];
+        $other = ['code' => 'regex.lint.flag.useless.i', 'message' => 'Useless i'];
+        $source = self::source('/\p{L}+/', 0);
+
+        $fix = self::action($this->codeActionsOnLiteral($source, [$other, $unicode]), 'Add /u flag for Unicode support');
+
+        $this->assertNotNull($fix);
+        $this->assertSame('quickfix', $fix['kind'] ?? null);
+        $this->assertTrue($fix['isPreferred'] ?? null);
+        $this->assertSame([$unicode], $fix['diagnostics'] ?? null);
+        $this->assertSame(self::source('/\p{L}+/u', 0), self::applyEdit($source, $fix));
+    }
+
+    /**
+     * Without a diagnostic from the client, the handler lints the literal
+     * itself: the fix is offered all the same, naming no diagnostic. A
+     * literal that already has u, or whose delimiters leave no room for a
+     * flag, is offered none.
+     */
+    #[Test]
+    #[DataProvider('provideUnicodeQuickFixes')]
+    public function test_the_unicode_quick_fix_is_offered_where_the_linter_finds_a_unicode_issue(string $pattern, ?string $fixed): void
+    {
+        $source = self::source($pattern, 0);
+
+        $fix = self::action($this->codeActionsOnLiteral($source), 'Add /u flag for Unicode support');
+
+        if (null === $fixed) {
+            $this->assertNull($fix);
+
+            return;
+        }
+
+        $this->assertNotNull($fix);
+        $this->assertSame([], $fix['diagnostics'] ?? null);
+        $this->assertSame(self::source($fixed, 0), self::applyEdit($source, $fix));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, fixed: string|null}>
+     */
+    public static function provideUnicodeQuickFixes(): iterable
+    {
+        yield 'a property' => ['pattern' => '/\p{L}+/', 'fixed' => '/\p{L}+/u'];
+        yield 'a property after flags' => ['pattern' => '/\p{L}+/i', 'fixed' => '/\p{L}+/ui'];
+        // "/u" in the body is no flag: the engine reads "#/users/\p{L}+#"
+        // in bytes and finds no letter in "/users/é" without the flag.
+        yield 'a path holding "/u" in its body' => ['pattern' => '#/users/\p{L}+#', 'fixed' => '#/users/\p{L}+#u'];
+        yield 'a literal that already has u' => ['pattern' => '/\p{L}+/u', 'fixed' => null];
+        yield 'a literal without a Unicode issue' => ['pattern' => '/[a-z]+/', 'fixed' => null];
+    }
+
+    #[Test]
+    public function test_the_engine_reads_a_path_holding_slash_u_in_bytes_without_the_flag(): void
+    {
+        $this->assertSame(0, preg_match('#^/users/\p{L}+$#', '/users/é'));
+        $this->assertSame(1, preg_match('#^/users/\p{L}+$#u', '/users/é'));
+    }
+
+    /**
+     * A pattern the parser refuses gets no action from the linter's route,
+     * nor any other; a Unicode diagnostic the client sends for a literal
+     * with no closing delimiter is answered with no fix either, there being
+     * no place for the flag.
+     *
+     * @param list<array<string, mixed>> $diagnostics
+     */
+    #[Test]
+    #[DataProvider('provideLiteralsWithoutAFix')]
+    public function test_no_action_is_offered_on_a_literal_the_parser_refuses(string $pattern, array $diagnostics): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), 'Oracle: PHP refuses the pattern.');
+
+        $this->assertSame([], $this->codeActionsOnLiteral(self::source($pattern, 0), $diagnostics));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, diagnostics: list<array<string, mixed>>}>
+     */
+    public static function provideLiteralsWithoutAFix(): iterable
+    {
+        yield 'an unclosed group' => ['pattern' => '/(\p{L}/', 'diagnostics' => []];
+        yield 'no closing delimiter, a Unicode diagnostic sent' => ['pattern' => '/\p{L}', 'diagnostics' => [['code' => 'regex.lint.unicode.propertyWithoutU']]];
+    }
+
+    /**
+     * A range that ends before the literal starts, or starts after it
+     * ends, offers nothing; one on the literal offers its actions.
+     */
+    #[Test]
+    public function test_only_a_range_reaching_the_literal_is_offered_its_actions(): void
+    {
+        $source = "<?php\n\n\$x = 1; preg_match('/\\p{L}+/', \$s); \$y = 2;\n";
+
+        $before = $this->codeActions($source, ['line' => 2, 'character' => 0], ['line' => 2, 'character' => 3]);
+        $after = $this->codeActions($source, ['line' => 2, 'character' => 40], ['line' => 2, 'character' => 42]);
+        $on = $this->codeActions($source, ['line' => 2, 'character' => 20], ['line' => 2, 'character' => 22]);
+
+        $this->assertSame([], $before);
+        $this->assertSame([], $after);
+        $this->assertNotNull(self::action($on, 'Add /u flag for Unicode support'));
+    }
+
+    /**
      * A one-statement PHP file: the literal on a line indented $indent spaces.
      */
     private static function source(string $pattern, int $indent): string
@@ -731,11 +846,14 @@ final class CodeActionHandlerTest extends TestCase
 
     /**
      * The code actions offered with the cursor just inside the opening quote
-     * of the file's only preg_match() literal.
+     * of the file's only preg_match() literal, the client sending the
+     * diagnostics given in the request's context.
+     *
+     * @param list<array<string, mixed>> $diagnostics
      *
      * @return list<array<mixed>>
      */
-    private function codeActionsOnLiteral(string $source): array
+    private function codeActionsOnLiteral(string $source, array $diagnostics = []): array
     {
         $offset = strpos($source, "preg_match('");
         $this->assertIsInt($offset);
@@ -744,18 +862,20 @@ final class CodeActionHandlerTest extends TestCase
         $character = $offset - (int) strrpos("\n".substr($source, 0, $offset), "\n");
         $position = ['line' => $line, 'character' => $character];
 
-        return $this->codeActions($source, $position, $position);
+        return $this->codeActions($source, $position, $position, $diagnostics);
     }
 
     /**
-     * The code actions offered on a range of the document.
+     * The code actions offered on a range of the document, the client
+     * sending the diagnostics given in the request's context.
      *
      * @param array{line: int, character: int} $start
      * @param array{line: int, character: int} $end
+     * @param list<array<string, mixed>>       $diagnostics
      *
      * @return list<array<mixed>>
      */
-    private function codeActions(string $source, array $start, array $end): array
+    private function codeActions(string $source, array $start, array $end, array $diagnostics = []): array
     {
         $this->documents->open(self::URI, $source);
 
@@ -771,7 +891,7 @@ final class CodeActionHandlerTest extends TestCase
             params: [
                 'textDocument' => ['uri' => self::URI],
                 'range' => ['start' => $start, 'end' => $end],
-                'context' => ['diagnostics' => []],
+                'context' => ['diagnostics' => $diagnostics],
             ],
         ));
 
