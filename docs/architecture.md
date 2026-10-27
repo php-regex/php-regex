@@ -139,6 +139,8 @@ Built-in visitors live in the package that owns their concern, and include:
 - `Redos\RedosProfiler` (`src/Redos/`)
 - `Optimizer\Rewriter` (`src/Optimizer/`)
 
+`Rewriter` keeps the walk and decides where each rewrite applies; each family of rewrites has a class of its own beside it in `src/Optimizer/`: `ClassRewrites` (shorthands, sorted and merged class members, the classes of an alternation), `RepeatRewrites` (runs written as a count, quantifiers in their short form), `AlternationRewrites` (duplicate alternatives, the start or end the alternatives share), `PossessiveRewrites` (repeats made possessive) and `FlagRewrites` (the flags nothing reads). They share one `RewriteState`: the modes the flags of the pattern set and the rewrites made so far.
+
 Traversal details are in [docs/design/ast-traversal.md](design/ast-traversal.md).
 
 ## The Normalized Form (HIR)
