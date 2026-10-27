@@ -16,12 +16,12 @@ namespace PHPRegex\Parser;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Lexing\ClassRanges;
 use PHPRegex\Parser\Lexing\PatternText;
 use PHPRegex\Parser\Lexing\TargetSyntax;
 use PHPRegex\Parser\Lexing\TokenValue;
 use PHPRegex\Parser\Lexing\VerbNames;
 use PHPRegex\Parser\Syntax\BadEscape;
-use PHPRegex\Parser\Syntax\CodePointReader;
 use PHPRegex\Parser\Syntax\ExtendedClassReader;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Parser\Syntax\PosixItem;
@@ -665,7 +665,7 @@ final class Lexer
         // PHP 7.3 and 7.4 read an escape PCRE2 refuses as it reads it as the
         // character after the backslash, then what follows as pattern text.
         if ($this->text->badEscapeIsLiteral && '\\' === $this->pattern[$this->position]
-            && BadEscape::at($this->pattern, $this->position, $this->inCharClass, $this->text->utf, $this->syntax->target, null, $this->startsRangeEnd($tokens))) {
+            && BadEscape::at($this->pattern, $this->position, $this->inCharClass, $this->text->utf, $this->syntax->target, null, ClassRanges::startsRangeEnd($this->text, $tokens, $this->position, $this->inCharClass ? $this->charClassStartPositions[\count($this->charClassStartPositions) - 1] : null))) {
             $tokens[] = new Token(TokenType::LiteralEscaped, $this->pattern[$this->position + 1], $this->position, 2);
             $this->literalEscapes[$this->position] = true;
             $this->position += 2;
@@ -1782,142 +1782,6 @@ final class Lexer
     }
 
     /**
-     * Whether what the cursor reads in a class of PCRE2 10.32 ends a range:
-     * a character, then a "-" that starts a range from it. A class escape
-     * there is refused, and read as its letter under
-     * PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL.
-     *
-     * @param list<Token> $tokens
-     */
-    private function startsRangeEnd(array $tokens): bool
-    {
-        // Only a class escape may be refused there; a character never is.
-        if (!$this->syntax->classBadEscapeReadAsLetter || !$this->inCharClass || !str_contains(BadEscape::CLASS_ESCAPE_LETTERS, $this->pattern[$this->position + 1] ?? '')) {
-            return false;
-        }
-
-        $classStart = $this->charClassStartPositions[\count($this->charClassStartPositions) - 1];
-        $first = \count($tokens);
-        while ($first > 0 && !(TokenType::CharClassOpen === $tokens[$first - 1]->type && $tokens[$first - 1]->position === $classStart)) {
-            $first--;
-        }
-
-        $state = 'none';
-        foreach (\array_slice($tokens, $first) as $token) {
-            $state = match ($token->type) {
-                TokenType::QuoteModeStart, TokenType::QuoteModeEnd, TokenType::Negation => $state,
-                TokenType::Range => match ($state) {
-                    'character' => 'range',
-                    'range' => 'none',
-                    default => 'character',
-                },
-                // Without UTF mode a multibyte end leaves its last byte, a
-                // character a "-" may start a range from.
-                TokenType::Literal, TokenType::LiteralEscaped => 'range' === $state && 1 === $this->multibyteLength($token) ? 'none' : 'character',
-                TokenType::Unicode, TokenType::Octal, TokenType::OctalLegacy,
-                TokenType::UnicodeNamed, TokenType::ControlChar => 'range' === $state ? 'none' : 'character',
-                default => 'none',
-            };
-        }
-
-        return 'range' === $state;
-    }
-
-    /**
-     * The offset past the first reversed range of the class opened at
-     * $classStart, "z-a", whose bounds each name one character: a literal,
-     * quoted or not, or an escape such as "\x7A", "\172" or "\N{U+7A}". PCRE
-     * skips the quotes on either side of the "-". Null when it has none.
-     *
-     * @param list<Token> $tokens
-     */
-    private function reversedRangeEnd(array $tokens, int $classStart): ?int
-    {
-        $members = [];
-        $open = false;
-        $quoted = false;
-        foreach ($tokens as $token) {
-            if (!$open) {
-                $open = TokenType::CharClassOpen === $token->type && $token->position === $classStart;
-            } elseif (TokenType::QuoteModeStart === $token->type || TokenType::QuoteModeEnd === $token->type) {
-                $quoted = TokenType::QuoteModeStart === $token->type;
-            } elseif (!$quoted && TokenType::Literal === $token->type && '[' === $token->value && null !== PosixItem::terminator($this->pattern, $token->position)) {
-                // The "[" of a POSIX item, "[.a.]", names no character:
-                // PCRE refuses the item, or a range it ends.
-                $members[] = new Token(TokenType::PosixClass, '', $token->position, 1);
-            } else {
-                $members[] = $token;
-            }
-        }
-
-        $count = \count($members);
-        for ($i = 0; $i + 2 < $count; $i++) {
-            if (TokenType::Range !== $members[$i + 1]->type) {
-                continue;
-            }
-
-            $start = $this->rangeBound($members[$i], true);
-            $end = $this->rangeBound($members[$i + 2], false);
-            $endLength = $this->multibyteLength($members[$i + 2]);
-            if (null !== $start && null !== $end && $start > $end) {
-                // On the first byte of a multibyte end.
-                return $members[$i + 2]->end() - $endLength + 1;
-            }
-
-            // Without UTF mode, a multibyte end may start the next range
-            // from its last byte.
-            $i += $endLength > 1 ? 1 : 2;
-        }
-
-        return null;
-    }
-
-    /**
-     * The character a class member names as a bound of a range, null when it
-     * names none or one this reading leaves alone. Without UTF mode PCRE
-     * reads bytes: a multibyte literal starts a range at its last byte, and
-     * ends one at its first. A "-" right after the one that makes the range
-     * is its end.
-     */
-    private function rangeBound(Token $token, bool $start): ?int
-    {
-        // "\x" with no digit is NUL where PCRE takes it (up to 10.44). A
-        // "\x{" PCRE2 refuses, which PHP 7.3 and 7.4 read as the letter x
-        // then text, stays the x.
-        if (TokenType::LiteralEscaped === $token->type && 2 === $token->end() - $token->position && '\\x' === substr($this->pattern, $token->position, 2)
-            && '{' !== ($this->pattern[$token->end()] ?? '')) {
-            return 0;
-        }
-
-        $value = $token->value;
-        $codePoint = match ($token->type) {
-            TokenType::Literal, TokenType::LiteralEscaped, TokenType::Range => match (true) {
-                1 === \strlen($value) => \ord($value),
-                $this->text->utf && 1 === mb_strlen($value, 'UTF-8') => mb_ord($value, 'UTF-8'),
-                !$this->text->utf && \strlen($value) > 1 => \ord(substr($value, $start ? -1 : 0, 1)),
-                default => null,
-            },
-            TokenType::Unicode => CodePointReader::fromHexEscape($value),
-            TokenType::Octal => CodePointReader::fromOctalEscape($value),
-            TokenType::OctalLegacy => CodePointReader::fromOctalEscape('\\'.$value),
-            TokenType::UnicodeNamed => CodePointReader::fromNamedEscape('\\N{'.$value.'}'),
-            TokenType::ControlChar => 1 === \strlen($value) && \ord($value) < 0x80 ? \ord(Ascii::upper($value)) ^ 0x40 : null,
-            default => null,
-        };
-
-        return null === $codePoint || $codePoint < 0 || (!$this->text->utf && $codePoint > 0xFF) ? null : $codePoint;
-    }
-
-    /**
-     * The bytes of a literal PCRE reads one at a time, without UTF mode: a
-     * multibyte character ends a range on its first byte. One otherwise.
-     */
-    private function multibyteLength(Token $token): int
-    {
-        return !$this->text->utf && \in_array($token->type, [TokenType::Literal, TokenType::LiteralEscaped], true) ? max(1, \strlen($token->value)) : 1;
-    }
-
-    /**
      * Whether the class at $position is the "[" of "(?[", a Perl extended
      * class PCRE2 only reads from 10.45; before, PCRE2 refuses that "[",
      * whatever follows it. Only a group opener ending there does: in
@@ -1974,7 +1838,7 @@ final class Lexer
 
             // PCRE reads the ranges of the class first: a reversed one is
             // refused past its end, one byte before it up to 10.46.
-            $reversed = $this->reversedRangeEnd($tokens, $classStart);
+            $reversed = ClassRanges::reversedRangeEnd($this->text, $tokens, $classStart);
             if (null !== $reversed) {
                 throw LexerException::withContext(
                     'Range out of order in character class.',
