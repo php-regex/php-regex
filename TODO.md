@@ -148,6 +148,9 @@ the tag:
 - `TokenParser` (2,665 lines) split by family of constructs, the
   `Rewriter` split, and the semantic facts (nullability, length ranges,
   flag scope) read from one layer instead of five copies.
+- `Rewriter::MAX_COUNT` repeats the 65535 limit of `PcreNumber`. Reading it
+  from there needs `PcreNumber` public: it is internal to the parser
+  package, and the optimizer may not use another package's internals.
 
 ## Analysis engines: the last pass before 2.0.0
 
@@ -295,6 +298,9 @@ read differently.
 6. Any `(*ACCEPT)` in a pattern makes every group read unbounded from
    zero with unknown values, even when the verb only ends a call or
    sits in a branch the group never reaches. Sound, and loose.
+7. On the next twin pin, `RegexGroupParser` reads `$node->bounds`, which
+   2.x now computes once on the node, instead of
+   `QuantifierBounds::parse($node->quantifier)`.
 
 ## The PHPStan gold rush: what the analysis already knows and does not say
 
