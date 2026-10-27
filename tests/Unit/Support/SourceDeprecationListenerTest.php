@@ -196,8 +196,7 @@ final class SourceDeprecationListenerTest extends TestCase
 
     /**
      * The probe runs under the PHPUnit the test itself runs under: the
-     * PHPUnit 10.5 of tools/phpunit-81 on PHP 8.1, the PHPUnit of
-     * tools/phpunit, 11 or 12 as the PHP takes, everywhere else.
+     * major tools/phpunit resolves for the PHP, from 10.5 on PHP 8.1.
      *
      * @return array{0: int, 1: string}
      */

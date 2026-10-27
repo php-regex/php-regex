@@ -55,12 +55,16 @@ work without the links: `composer phpunit`, `composer phpstan`,
 `composer lint`, and the others in the `scripts` section of `composer.json`.
 
 The tools are locked for PHP 8.4. To run the suite on an older PHP, resolve
-PHPUnit for it first with `composer update -d tools/phpunit`. PHP 8.1 runs it
-with PHPUnit 10.5:
+PHPUnit for it first with `composer update -d tools/phpunit`: it takes the
+newest major that PHP runs, down to PHPUnit 10.5 on PHP 8.1. PHPUnit 10.5
+refuses two settings of `phpunit.xml.dist` that arrived in PHPUnit 11, so
+PHP 8.1 runs the suite from a local `phpunit.xml` without them, as the CI
+does:
 
 ```bash
-composer update -d tools/phpunit-81
-tools/phpunit-81/vendor/bin/phpunit -c tools/phpunit-81/phpunit.xml.dist
+composer update -d tools/phpunit --with 'rector/rector:^2.6.3'
+sed -e '/displayDetailsOnAllIssues=/d' -e '/displayDetailsOnPhpunitDeprecations=/d' phpunit.xml.dist > phpunit.xml
+tools/phpunit/vendor/bin/phpunit
 ```
 
 ## Development Workflow

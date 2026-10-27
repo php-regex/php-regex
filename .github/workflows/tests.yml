@@ -64,12 +64,12 @@ jobs:
         run: tools/phpunit/vendor/bin/phpunit --colors=always
 
   tests-php81:
-    # PHPUnit 12 needs PHP 8.3: PHPUnit 10.5, from tools/phpunit-81, runs the
-    # suite on PHP 8.1. The lowest row runs Symfony 6.4.0, Laravel 10.37.3
-    # (the first Laravel 10 that Testbench 8.18, the first with the attributes
-    # the tests use, takes) and PHPUnit 10.5.0. That sandbox's Rector floor is
-    # 2.6.3, the first release that resets the PHP version between test
-    # classes; tools/phpunit, on the 8.4 stack, keeps the bridge's own 2.4.
+    # tools/phpunit resolves PHPUnit 10.5 on PHP 8.1, the only major that
+    # runs there. The lowest row runs Symfony 6.4.0, Laravel 10.37.3 (the
+    # first Laravel 10 that Testbench 8.18, the first with the attributes the
+    # tests use, takes) and PHPUnit 10.5.0. Rector is held to 2.6.3 here, the
+    # first release that resets the PHP version between test classes; the
+    # other rows keep the bridge's own floor, 2.4.
     name: Tests (PHP 8.1, ${{ matrix.dependency }})
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -98,13 +98,18 @@ jobs:
             | xargs -0 -n1 php -l | (grep -v '^No syntax errors detected' || true)
 
       - name: Install the PHPUnit 10.5 Tooling (${{ matrix.dependency }})
-        run: composer update -d tools/phpunit-81 --${{ matrix.dependency }} --prefer-stable --no-interaction --no-progress
+        run: composer update -d tools/phpunit --${{ matrix.dependency }} --prefer-stable --with 'rector/rector:^2.6.3' --no-interaction --no-progress
+
+      - name: Configure PHPUnit 10.5
+        # The two details settings arrived in PHPUnit 11: 10.5 refuses the
+        # configuration that names them. phpunit.xml is read before the .dist.
+        run: sed -e '/displayDetailsOnAllIssues=/d' -e '/displayDetailsOnPhpunitDeprecations=/d' phpunit.xml.dist > phpunit.xml
 
       - name: Smoke test
-        run: php tests/Tools/php81_smoke.php --phpstan=tools/phpunit-81/vendor/bin/phpstan
+        run: php tests/Tools/php81_smoke.php --phpstan=tools/phpunit/vendor/bin/phpstan
 
       - name: Run Test Suite
-        run: tools/phpunit-81/vendor/bin/phpunit -c tools/phpunit-81/phpunit.xml.dist --colors=always
+        run: tools/phpunit/vendor/bin/phpunit --colors=always
 
   tests-experimental:
     # A watchtower, not readiness: PHP 8.7 is a moving branch and nothing is

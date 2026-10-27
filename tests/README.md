@@ -25,7 +25,7 @@ This test suite follows the **Testing Pyramid** structure, ensuring fast, reliab
 - What a pattern means is checked against PCRE first, in the test itself: run the pattern through `preg_match()` before you assert what the library says about it.
 
 ### PHPUnit Versions
-- The suite runs on PHPUnit 10.5 (PHP 8.1, `tools/phpunit-81`) through the newest major `tools/phpunit` installs. A test that needs a method only the newest PHPUnit has, such as `expectExceptionMessageIsOrContains()`, uses the `PhpUnitForwardCompat` trait from `tests/Support/PhpUnitCompat/`: the native method runs where PHPUnit has it, a polyfill on the older API elsewhere. Its docblock says how to polyfill one more method.
+- The suite runs on whichever major `tools/phpunit` resolves for the PHP: PHPUnit 10.5 on PHP 8.1, up to the newest on PHP 8.4 and later. A test that needs a method only the newest PHPUnit has, such as `expectExceptionMessageIsOrContains()`, uses the `PhpUnitForwardCompat` trait from `tests/Support/PhpUnitCompat/`: the native method runs where PHPUnit has it, a polyfill on the older API elsewhere. Its docblock says how to polyfill one more method.
 
 ### Unit Tests
 - Focus on isolated logic; mock external dependencies (filesystem, network) using PHPUnit mocks or stubs.
