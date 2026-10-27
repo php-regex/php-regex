@@ -26,6 +26,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Bytes;
@@ -136,6 +137,11 @@ final class CharSetAnalyzer
 
         if ($node instanceof GroupNode) {
             return $this->walk($node->child, $fromStart);
+        }
+
+        // A script run matches what its body matches, in one script.
+        if ($node instanceof ScriptRunNode) {
+            return null === $node->content ? ByteCharSet::unknown() : $this->walk($node->content, $fromStart);
         }
 
         if ($node instanceof ExtendedCharClassNode) {
@@ -296,6 +302,10 @@ final class CharSetAnalyzer
 
         if ($node instanceof GroupNode) {
             return $this->isOptionalNode($node->child, $fromStart);
+        }
+
+        if ($node instanceof ScriptRunNode) {
+            return null !== $node->content && $this->isOptionalNode($node->content, $fromStart);
         }
 
         if ($node instanceof SequenceNode) {

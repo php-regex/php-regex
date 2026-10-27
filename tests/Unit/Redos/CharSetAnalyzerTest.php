@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -249,5 +250,51 @@ final class CharSetAnalyzerTest extends TestCase
         $set = (new CharSetAnalyzer())->firstChars($quantified);
 
         $this->assertFalse($set->intersects(ByteCharSet::fromChar('y')));
+    }
+
+    /**
+     * A script run matches what its body matches, held to one script: its
+     * characters are those of the body. One whose body can match nothing
+     * lets the next item lead: "/^(*sr:a?)b/" and "/^(*sr:)b/" match "b"
+     * (PHP 8.4.27, PCRE2 10.49), "/^(*asr:\d+)x/" does not match "x".
+     *
+     * @param list<string> $in
+     * @param list<string> $out
+     */
+    #[Test]
+    #[DataProvider('provideScriptRuns')]
+    public function test_a_script_run_reads_the_set_of_its_body(string $pattern, bool $fromStart, array $in, array $out): void
+    {
+        $this->assertNotFalse(@preg_match($pattern, ''), $pattern);
+        $regex = RegexParser::create(['cache' => null])->parse($pattern);
+        $analyzer = CharSetAnalyzer::forRegex($regex);
+        $set = $fromStart ? $analyzer->firstChars($regex) : $analyzer->lastChars($regex);
+
+        $this->assertFalse($set->isUnknown(), $pattern);
+        foreach ($in as $char) {
+            $this->assertTrue($set->intersects(ByteCharSet::fromChar($char)), $pattern.': '.$char);
+        }
+        foreach ($out as $char) {
+            $this->assertFalse($set->intersects(ByteCharSet::fromChar($char)), $pattern.': '.$char);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, fromStart: bool, in: list<string>, out: list<string>}>
+     */
+    public static function provideScriptRuns(): iterable
+    {
+        yield 'first characters of a script run' => ['pattern' => '/(*sr:ab)c/', 'fromStart' => true, 'in' => ['a'], 'out' => ['b', 'c']];
+        yield 'last characters of a script run' => ['pattern' => '/a(*script_run:bc)/', 'fromStart' => false, 'in' => ['c'], 'out' => ['a', 'b']];
+        yield 'an atomic script run' => ['pattern' => '/(*asr:\d+)x/', 'fromStart' => true, 'in' => ['0', '9'], 'out' => ['x', 'a']];
+        yield 'a body that can match nothing' => ['pattern' => '/(*sr:a?)b/', 'fromStart' => true, 'in' => ['a', 'b'], 'out' => ['c']];
+        yield 'an empty script run' => ['pattern' => '/(*sr:)b/', 'fromStart' => true, 'in' => ['b'], 'out' => ['a']];
+        yield 'a script run that matches something' => ['pattern' => '/(*sr:a+)b/', 'fromStart' => true, 'in' => ['a'], 'out' => ['b']];
+    }
+
+    #[Test]
+    public function test_a_script_run_without_its_body_is_unknown(): void
+    {
+        $this->assertTrue((new CharSetAnalyzer())->firstChars(new ScriptRunNode('', 0, 6))->isUnknown());
     }
 }
