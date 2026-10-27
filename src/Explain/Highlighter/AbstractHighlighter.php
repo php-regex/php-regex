@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Explain\Highlighter;
 
+use PHPRegex\Explain\InlineSetting;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\InternalFailureException;
@@ -119,7 +120,7 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
                 .$this->wrap(')', 'group')
                 .$child
                 .$close,
-            GroupType::InlineFlags => $this->renderInlineFlagsGroup($flags, $child, $open, $close),
+            GroupType::InlineFlags => $this->renderInlineFlagsGroup($node, $flags, $child, $open, $close),
         };
     }
 
@@ -460,11 +461,15 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
         ));
     }
 
-    private function renderInlineFlagsGroup(string $flags, string $child, string $open, string $close): string
+    /**
+     * A bare setting "(?i)" without a colon; an empty scope "(?i:)" keeps
+     * it, being another pattern: the setting applies to what follows it.
+     */
+    private function renderInlineFlagsGroup(GroupNode $node, string $flags, string $child, string $open, string $close): string
     {
         $flagToken = '' !== $flags ? $this->wrap($this->escape($flags), 'flag') : '';
 
-        if ('' === $child) {
+        if (InlineSetting::is($node)) {
             return $open.$this->wrap('?', 'group').$flagToken.$close;
         }
 
