@@ -20,6 +20,7 @@ use PHPRegex\Explain\TextExplainer;
 use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
@@ -222,10 +223,7 @@ final class Regex
             // a failure of any other kind is a bug in the library, and a
             // report saying "invalid pattern" would bury it.
             try {
-                $ast = $this->parse($regex);
-                $linter = new PatternLinter();
-                $ast->accept($linter);
-                $lintIssues = $linter->getIssues();
+                $lintIssues = $this->lint($regex);
             } catch (ExceptionInterface $e) {
                 $errors[] = self::patternError($e);
                 $isValid = false;
@@ -262,6 +260,27 @@ final class Regex
             $explain,
             $highlighted,
         );
+    }
+
+    /**
+     * Run the lint rules on a pattern, read for this instance's target.
+     *
+     * The rules alone: no validation, ReDoS analysis, optimization, inline
+     * ignores or baseline, so not what the "regex lint" command reports.
+     *
+     * @param string $regex The regular expression to lint
+     *
+     * @throws ParserException when the pattern does not parse, as parse() throws
+     * @throws LexerException  when the pattern does not tokenize
+     *
+     * @return list<RuleViolation> The violations, in the order the rules report them
+     */
+    public function lint(string $regex): array
+    {
+        $linter = new PatternLinter([], $this->parser->target());
+        $this->parser->parse($regex)->accept($linter);
+
+        return $linter->getIssues();
     }
 
     /**

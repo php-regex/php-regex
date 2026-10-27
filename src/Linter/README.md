@@ -94,6 +94,10 @@ regex.lint.quantifier.nested: Nested quantifiers can cause catastrophic backtrac
 regex.lint.group.quantifiedCapture: Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
 ```
 
+The constructor takes the target second, `new PatternLinter([], $parser->target())`: a rule that asks what a
+part of the pattern matches then reads it as that PHP and PCRE2 read it, the running ones without it. With the
+toolkit installed, `Regex::create()->lint('/(a+)+b/')` runs the rules for the facade's target in one call.
+
 Turn rules on or off by id — the same map `checks.lint.rules` reads from `regex.json`, each id without `regex.lint.` or in full. An id the linter does not run throws `UnknownLintRuleException`, which names the nearest one:
 
 ```php

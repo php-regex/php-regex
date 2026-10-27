@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Laravel\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Analysis\CaptureShape;
@@ -52,6 +53,7 @@ use PHPRegex\Transpiler\TranspileResult;
  * @method static ValidationResult              validate(string $regex)
  * @method static RegexNode                     parsePattern(string $pattern, string $flags = '', string $delimiter = '/')
  * @method static AnalysisReport                analyze(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null)
+ * @method static list<RuleViolation>           lint(string $regex)
  * @method static RedosAnalysis                 redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null)
  * @method static OptimizationResult            optimize(string $regex, ?OptimizerOptions $options = null)
  * @method static FormatResult                  format(string $regex, int $width = 80)

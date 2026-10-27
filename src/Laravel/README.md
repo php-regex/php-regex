@@ -123,7 +123,7 @@ $result->constructor; // 'new RegExp("^[a-z]+(?=\\d)(?=\\n?$)", "i")'
 ```
 
 The facade mirrors the whole service: `create`, `fromOptions`, `parse`, `parseTolerant`, `parsePattern`, `parser`, `validate`,
-`analyze`, `redos`, `optimize`, `transpile`, `explain`, `highlight`, `literals`, `captureShape`, `info`,
+`analyze`, `lint`, `redos`, `optimize`, `transpile`, `explain`, `highlight`, `literals`, `captureShape`, `info`,
 `compatibility`, `generate`, `tokenize`, `target`, `getCache`, `getCacheStats` and `clearCaches`.
 
 One of those calls bypasses the configured singleton: `Regex::create()` returns a fresh instance, so the cache

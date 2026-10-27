@@ -365,11 +365,34 @@ echo $report->highlighted;        // Syntax-highlighted pattern
 |-----------------|----------------------|--------------------------------|
 | `isValid`       | bool                 | Pattern is syntactically valid |
 | `errors`        | array\<string\>      | Validation error messages      |
-| `lintIssues`    | array                | Lint findings                  |
+| `lintIssues`    | list\<RuleViolation\> | Lint findings, as `lint()` gives them |
 | `redos`         | RedosAnalysis        | ReDoS analysis result          |
 | `optimization`  | OptimizationResult   | Suggested optimizations        |
 | `explanation`   | string               | Human explanation              |
 | `highlighted`   | string               | Highlighted pattern            |
+
+---
+
+### lint(string $regex): list<RuleViolation>
+
+Runs the lint rules on the pattern, read for the instance's target: a rule that asks what a part of the pattern
+matches reads it as the PHP and PCRE2 judged read it. It runs the rules only — no validation, ReDoS analysis,
+optimization, `@regex-ignore` marker or baseline — so it is not what the `regex lint` command reports for a
+project. A pattern that does not parse throws the `ParserException` `parse()` throws.
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+foreach (Regex::create()->lint('/(?=a)b/') as $violation) {
+    echo $violation->id;       // 'regex.lint.lookaround.impossible'
+    echo $violation->message;  // 'Lookahead "(?=a)" asks for what the pattern after it can never read: ...'
+    echo $violation->offset;   // 0, in bytes from the start of the pattern body
+}
+```
+
+Each `RuleViolation` (`PHPRegex\Linter\Rule\RuleViolation`) carries the rule's `id`, its `message`, the `offset`
+and `end` of the text it names in the pattern body, a `hint` when the rule has one, and its `severity`
+(`LintSeverity`). `analyze()` puts the same list in `$report->lintIssues`.
 
 ---
 

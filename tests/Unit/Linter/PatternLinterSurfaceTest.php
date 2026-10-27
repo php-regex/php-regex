@@ -18,6 +18,7 @@ use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,12 +31,18 @@ use PHPUnit\Framework\TestCase;
  */
 final class PatternLinterSurfaceTest extends TestCase
 {
+    /**
+     * The target comes after the rules, in the order withDfaCache() takes
+     * them: the questions a rule asks are read for it.
+     */
     #[Test]
-    public function test_the_constructor_takes_the_enabled_rules_only(): void
+    public function test_the_constructor_takes_the_enabled_rules_and_the_target(): void
     {
         $constructor = new \ReflectionMethod(PatternLinter::class, '__construct');
 
-        $this->assertSame(['enabledRules'], array_map(static fn (\ReflectionParameter $parameter): string => $parameter->getName(), $constructor->getParameters()));
+        $this->assertSame(['enabledRules', 'target'], array_map(static fn (\ReflectionParameter $parameter): string => $parameter->getName(), $constructor->getParameters()));
+        $this->assertSame('?'.PcreTarget::class, (string) $constructor->getParameters()[1]->getType());
+        $this->assertNull($constructor->getParameters()[1]->getDefaultValue());
         $this->assertStringContainsString('@internal', (string) (new \ReflectionMethod(PatternLinter::class, 'withRegistry'))->getDocComment());
     }
 

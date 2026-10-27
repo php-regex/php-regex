@@ -119,8 +119,6 @@ final class PatternLinter extends AbstractNodeVisitor
      */
     private ?DfaCacheInterface $dfaCache = null;
 
-    private ?PcreTarget $target = null;
-
     /**
      * The rules to turn on or off by id, short or in full.
      *
@@ -132,10 +130,13 @@ final class PatternLinter extends AbstractNodeVisitor
      * @param array<string, bool> $enabledRules the rules to turn on or off by id, as regex.json's
      *                                          checks.lint.rules names them, without "regex.lint." or
      *                                          in full; the others keep their default
+     * @param PcreTarget|null     $target       the PHP, PCRE2 and locale the rules read the pattern
+     *                                          for, as RegexParser::target() gives them; the running
+     *                                          ones when null
      *
      * @throws UnknownLintRuleException when the map names a rule the linter does not run
      */
-    public function __construct(array $enabledRules = [])
+    public function __construct(array $enabledRules = [], private readonly ?PcreTarget $target = null)
     {
         $this->enabledRules = self::known($enabledRules);
         $this->charSetAnalyzer = new CharSetAnalyzer();
@@ -171,9 +172,8 @@ final class PatternLinter extends AbstractNodeVisitor
      */
     public static function withDfaCache(array $enabledRules, DfaCacheInterface $dfaCache, ?PcreTarget $target = null): self
     {
-        $linter = new self($enabledRules);
+        $linter = new self($enabledRules, $target);
         $linter->dfaCache = $dfaCache;
-        $linter->target = $target;
 
         return $linter;
     }
