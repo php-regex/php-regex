@@ -35,6 +35,22 @@ final class TargetRangeFloorTest extends TestCase
     }
 
     /**
+     * Each target of the range is the parser the rules read the target's
+     * patterns with, for that PHP: the first is that parser's target, under
+     * the locale Rector runs with.
+     */
+    #[Test]
+    public function test_the_range_is_read_by_the_target_parser(): void
+    {
+        $range = TargetRange::from(80200);
+
+        $this->assertEquals(PregCall::targetParser(80200)->target(), $range->from()->target());
+        foreach ($range->targets() as $target) {
+            $this->assertSame(PregCall::targetParser(80200)->target()->locale, $target->locale);
+        }
+    }
+
+    /**
      * The parser a rule reads the target's patterns with takes the same
      * floor: PregSplitToExplodeRector and PregReplaceToStrReplaceRector run
      * on a project that targets PHP 5.6.

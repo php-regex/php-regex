@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Toolkit;
 
+use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Parser\Exception\ParserException;
@@ -102,6 +103,11 @@ final class RegexLintTest extends TestCase
         $regex->parse(self::TARGET_DEPENDENT)->accept($linter);
 
         $this->assertSame(['regex.lint.lookaround.impossible'], self::ids($linter->getIssues()));
+
+        $cached = PatternLinter::withDfaCache([], new InMemoryDfaCache(), $regex->target());
+        $regex->parse(self::TARGET_DEPENDENT)->accept($cached);
+
+        $this->assertSame(['regex.lint.lookaround.impossible'], self::ids($cached->getIssues()), 'A linter keeping its DFAs reads for its target too.');
     }
 
     /**
