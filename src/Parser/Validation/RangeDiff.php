@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Validation;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\RegexParser;
@@ -45,18 +46,22 @@ final class RangeDiff
     /**
      * From one PHP version to another, each with the PCRE2 its sources
      * bundle: the first, then every PHP version a verdict may change at
-     * above it, up to the last (PcreTarget::phpVersionBoundaries()). The
-     * later targets share the cache of the first and never compile with
-     * the running PHP.
+     * above it, up to the last (PcreTarget::phpVersionBoundaries()). Each
+     * target is the base parser for it (RegexParser::withTarget()): the
+     * locale, recursion depth, limits and cache of the base hold at every
+     * point, and only a target that is the running engine compiles with the
+     * running PHP, when the base does.
      *
-     * @param int $from a PHP_VERSION_ID, 70400 for PHP 7.4
-     * @param int $to   a PHP_VERSION_ID at or after $from
+     * @param int              $from a PHP_VERSION_ID, 70400 for PHP 7.4
+     * @param int              $to   a PHP_VERSION_ID at or after $from
+     * @param RegexParser|null $base the parser whose options every target keeps; null reads the
+     *                               defaults, under the runtime's locale
      *
      * @throws InvalidRegexOptionException when the range ends before it starts, or starts
      *                                     below 70000, PHP 7.0's PHP_VERSION_ID, which
      *                                     "php_version" refuses
      */
-    public static function between(int $from, int $to): self
+    public static function between(int $from, int $to, ?RegexParser $base = null): self
     {
         if ($to < $from) {
             throw new InvalidRegexOptionException(\sprintf(
@@ -66,16 +71,13 @@ final class RangeDiff
             ));
         }
 
-        $first = RegexParser::create(['php_version' => $from, 'pcre_version' => PcreTarget::bundledWith($from)->pcreVersion]);
+        $base ??= RegexParser::create();
+        $locale = $base->target()->locale;
+        $first = $base->withTarget(ParserOptions::fromArray(['php_version' => $from, 'pcre_version' => PcreTarget::bundledWith($from)->pcreVersion, 'locale' => $locale])->target);
         $later = [];
         foreach (PcreTarget::phpVersionBoundaries() as $point) {
             if ($point > $from && $point <= $to) {
-                $later[] = RegexParser::create([
-                    'php_version' => $point,
-                    'pcre_version' => PcreTarget::bundledWith($point)->pcreVersion,
-                    'cache' => $first->getCache(),
-                    'runtime_pcre_validation' => false,
-                ]);
+                $later[] = $base->withTarget(new PcreTarget($point, PcreTarget::bundledWith($point)->pcreVersion, $locale));
             }
         }
 

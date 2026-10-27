@@ -75,16 +75,17 @@ final class TargetRange
     /**
      * From the PHP the code targets to the newest the library knows,
      * through every PHP version a verdict may change at: never a single
-     * target. One range per PHP version, kept for the run. Rector takes
-     * targets from PHP 5.3 to PHP 10.0, which the library judges from PHP
-     * 7.0 to PHP 9.99.
+     * target. One range per PHP version, kept for the run, each target read
+     * by the parser of the PHP the code targets (PregCall::targetParser()).
+     * Rector takes targets from PHP 5.3 to PHP 10.0, which the library
+     * judges from PHP 7.0 to PHP 9.99.
      */
     public static function from(int $phpVersion): RangeDiff
     {
         $phpVersion = min(max($phpVersion, ParserOptions::OLDEST_PHP_VERSION_ID), ParserOptions::LATEST_PHP_VERSION_ID);
         $boundaries = PcreTarget::phpVersionBoundaries();
 
-        return self::$ranges[$phpVersion] ??= RangeDiff::between($phpVersion, max($phpVersion, $boundaries[\count($boundaries) - 1]));
+        return self::$ranges[$phpVersion] ??= RangeDiff::between($phpVersion, max($phpVersion, $boundaries[\count($boundaries) - 1]), PregCall::targetParser($phpVersion));
     }
 
     /**

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Toolkit;
 
 use PHPRegex\Parser\Validation\CompatibilityChecker;
 use PHPRegex\Parser\Validation\TargetVerdict;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,6 +28,46 @@ use PHPUnit\Framework\TestCase;
  */
 final class RegexCompatibilityTest extends TestCase
 {
+    use InstalledLocales;
+
+    /**
+     * Each target is judged under the locale of the instance. Oracle: PHP
+     * 8.4 (PCRE2 10.49) compiles "(?:[\xe9\xc9]){8000}" under
+     * setlocale(LC_CTYPE, "fr_FR.ISO8859-1"), where é and É are each
+     * other's case and the class one caseless character, and refuses it
+     * under "C", "regular expression is too large at offset 0"; PCRE2 10.33
+     * refuses it under both (see PatternTooLargeLocaleTest).
+     *
+     * @param bool $validFrom1034 whether the targets from PCRE2 10.34 accept the pattern
+     */
+    #[Test]
+    #[DataProvider('provideLocales')]
+    public function test_compatibility_judges_every_target_under_the_instance_locale(string $locale, bool $validFrom1034): void
+    {
+        if ('C' !== $locale) {
+            $this->requiresLocale($locale, 'A repeated pair of Latin-1 letters');
+        }
+
+        $compatibility = Regex::create(['cache' => null, 'locale' => $locale])->compatibility('/(?:[\xe9\xc9]){8000}/');
+
+        $this->assertNotSame([], $compatibility->verdicts());
+        foreach ($compatibility->verdicts() as $verdict) {
+            $label = \sprintf('PHP %d, PCRE2 %s: %s', $verdict->target->phpVersionId, $verdict->target->pcreVersion, (string) $verdict->validation->error);
+
+            $this->assertSame($locale, $verdict->target->locale, $label);
+            $this->assertSame($validFrom1034 && version_compare($verdict->target->pcreVersion, '10.34', '>='), $verdict->validation->isValid, $label);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{locale: string, validFrom1034: bool}>
+     */
+    public static function provideLocales(): iterable
+    {
+        yield 'Latin-1, where the pair is one caseless character' => ['locale' => 'fr_FR.ISO8859-1', 'validFrom1034' => true];
+        yield 'C, where it is a class' => ['locale' => 'C', 'validFrom1034' => false];
+    }
+
     #[Test]
     #[DataProvider('providePatterns')]
     public function test_compatibility_is_the_checker_answer(string $regex): void

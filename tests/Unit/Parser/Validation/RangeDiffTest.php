@@ -13,11 +13,13 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Validation;
 
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\RangeDiff;
 use PHPRegex\Parser\Validation\TargetVerdict;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,7 +32,40 @@ use PHPUnit\Framework\TestCase;
  */
 final class RangeDiffTest extends TestCase
 {
+    use InstalledLocales;
     use PhpUnitForwardCompat;
+
+    /**
+     * Every target of the range is the base parser for it: its recursion
+     * depth and its locale hold at each point (oracle in
+     * PatternTooLargeLocaleTest: "(?:[\xe9\xc9]){8000}" compiles under
+     * Latin-1 from PCRE2 10.34, never under "C").
+     */
+    #[Test]
+    public function test_every_target_of_the_range_is_the_base_parser_for_it(): void
+    {
+        $deep = '/'.str_repeat('(', 40).'a'.str_repeat(')', 40).'/';
+        $base = RegexParser::create(['cache' => null, 'max_recursion_depth' => 10, 'locale' => 'C']);
+        $range = RangeDiff::between(80200, 80510, $base);
+
+        $this->assertTrue(RangeDiff::between(80200, 80510)->diff($deep)->from->validation->isValid);
+        $this->assertSame(ErrorCode::NestingTooDeep, $range->diff($deep)->from->validation->errorCode);
+        $this->assertSame([80200, 80300, 80400, 80425, 80500, 80510], array_map(static fn (PcreTarget $target): int => $target->phpVersionId, $range->targets()));
+        $this->assertSame(['C'], array_values(array_unique(array_map(static fn (PcreTarget $target): string => $target->locale, $range->targets()))));
+        $this->assertFalse($range->diff('/(?:[\xe9\xc9]){8000}/')->from->validation->isValid);
+    }
+
+    #[Test]
+    public function test_the_range_reads_the_pattern_under_the_base_locale(): void
+    {
+        $this->requiresLocale('fr_FR.ISO8859-1', 'A repeated pair of Latin-1 letters');
+        $range = RangeDiff::between(80200, 80510, RegexParser::create(['cache' => null, 'locale' => 'fr_FR.ISO8859-1']));
+        $verdict = $range->diff('/(?:[\xe9\xc9]){8000}/');
+
+        $this->assertSame(['fr_FR.ISO8859-1'], array_values(array_unique(array_map(static fn (PcreTarget $target): string => $target->locale, $range->targets()))));
+        $this->assertTrue($verdict->from->validation->isValid);
+        $this->assertNull($verdict->refusedBy());
+    }
 
     #[Test]
     public function test_the_range_holds_every_boundary_from_the_first_php_to_the_last(): void

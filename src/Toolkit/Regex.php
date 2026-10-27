@@ -444,7 +444,7 @@ final class Regex
 
     /**
      * On which PHP versions and PCRE2 releases the pattern is valid, judged at every target the library knows a rule
-     * boundary for, whatever target this instance judges for.
+     * boundary for, whatever target this instance judges for, each under this instance's locale and limits.
      *
      * A pattern is never a reason to throw: one no target accepts, a missing delimiter included, gets a verdict
      * refusing it at every target.
@@ -453,7 +453,7 @@ final class Regex
      */
     public function compatibility(string $regex): PatternCompatibility
     {
-        return (new CompatibilityChecker())->check($regex);
+        return (new CompatibilityChecker($this->parser))->check($regex);
     }
 
     /**

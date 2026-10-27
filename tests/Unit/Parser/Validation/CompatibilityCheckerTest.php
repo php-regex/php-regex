@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Validation;
 
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
@@ -47,6 +48,25 @@ final class CompatibilityCheckerTest extends TestCase
      * \C under "u" (8.4.25, 8.5.10), \K in a lookaround (8.5).
      */
     private const PHP_POINTS = [70300, 70400, 80000, 80100, 80200, 80300, 80400, 80425, 80500, 80510];
+
+    /**
+     * Every target is the base parser for it: its recursion depth holds at
+     * each point, and its target is not one of them.
+     */
+    #[Test]
+    public function test_every_target_is_the_base_parser_for_it(): void
+    {
+        $deep = '/'.str_repeat('(', 40).'a'.str_repeat(')', 40).'/';
+        $base = RegexParser::create(['cache' => null, 'max_recursion_depth' => 10, 'php_version' => '8.2']);
+
+        $this->assertTrue((new CompatibilityChecker())->check($deep)->isValidEverywhere());
+
+        $verdicts = (new CompatibilityChecker($base))->check($deep)->verdicts();
+        $this->assertEquals(array_map(static fn (TargetVerdict $verdict): PcreTarget => $verdict->target, (new CompatibilityChecker())->check($deep)->verdicts()), array_map(static fn (TargetVerdict $verdict): PcreTarget => $verdict->target, $verdicts));
+        foreach ($verdicts as $verdict) {
+            $this->assertSame(ErrorCode::NestingTooDeep, $verdict->validation->errorCode);
+        }
+    }
 
     #[Test]
     public function test_verdicts_run_every_php_point_then_every_pcre2_release(): void

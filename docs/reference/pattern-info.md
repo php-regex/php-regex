@@ -234,7 +234,28 @@ $verdict->validation->offset;             // 10
 ```
 
 `PHPRegex\Parser\Validation\CompatibilityChecker::check()` gives the same
-answer from `php-regex/regex-parser` alone.
+answer from `php-regex/regex-parser` alone. Each point is judged under the
+locale, recursion depth and limits of the facade: `compatibility()` hands its
+parser to the checker, `new CompatibilityChecker($parser)`, which judges each
+point with `$parser->withTarget()`. Without a parser the checker reads the
+defaults, under the runtime's locale. Where a verdict follows the locale, as
+the size of a class of two bytes that are each other's case does, the matrix
+follows it too:
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+// é and É are one caseless character under Latin-1 from PCRE2 10.34, a class under C.
+$pattern = '/(?:[\xe9\xc9]){8000}/';
+
+$latin1 = Regex::create(['locale' => 'fr_FR.ISO8859-1'])->compatibility($pattern);
+$latin1->isValidEverywhere();               // false: PCRE2 10.32 and 10.33 find it too large
+$latin1->verdicts()[2]->target->pcreVersion; // '10.34', on PHP 7.3
+$latin1->verdicts()[2]->validation->isValid; // true
+
+$c = Regex::create(['locale' => 'C'])->compatibility($pattern);
+count($c->invalidVerdicts()) === count($c->verdicts()); // true: too large at every point
+```
 
 `verdicts()` holds one `TargetVerdict` per point of the matrix, ordered by PHP
 version, then by PCRE2 release. Each carries its `PcreTarget` and the
@@ -309,6 +330,11 @@ says it in the words the lint prints:
 RangeDiff::between(70300, 80400)->diff('/a/')->notice();
 // 'PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.'
 ```
+
+`between()` takes a third argument, the parser whose options every target
+keeps: each target is that parser for it (`RegexParser::withTarget()`), under
+its locale and limits, `RangeDiff::between(80200, 80510, $parser)`. Without
+one the range reads the defaults, under the runtime's locale.
 
 The lint range and the Rector rules ask their questions through it.
 

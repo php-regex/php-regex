@@ -499,8 +499,9 @@ are sound bounds a minor release may narrow. A static analysis extension calls `
 ### compatibility(string $regex): PatternCompatibility
 
 Judges the pattern on every PHP version a rule of the library changes at, each with every PCRE2 release from 10.32 to
-the newest the library knows, whatever target the facade judges for. It never throws for the pattern: one no target
-accepts, a missing delimiter included, gets a verdict refusing it at every point.
+the newest the library knows, whatever target the facade judges for, each under the facade's locale, recursion depth
+and limits. It never throws for the pattern: one no target accepts, a missing delimiter included, gets a verdict
+refusing it at every point.
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -514,7 +515,8 @@ $compatibility->invalidVerdicts()[0]->target->phpVersionId; // 80500
 `verdicts()` lists one `TargetVerdict` per point, ordered by PHP version, then by PCRE2 release: its `target` (a
 `PcreTarget`) and its `validation` (a `ValidationResult`). `invalidVerdicts()` keeps the ones that refuse the pattern.
 Validity is not monotone, and the matrix widens when the library learns a PHP or PCRE2 release, so a minor release may
-add verdicts. `CompatibilityChecker` gives the same answer from `php-regex/regex-parser`. See
+add verdicts. `new CompatibilityChecker($parser)` gives the same answer from `php-regex/regex-parser`, each point judged
+by `$parser->withTarget()`. See
 [Pattern Info](pattern-info.md#compatibility-where-a-pattern-is-valid).
 
 ---

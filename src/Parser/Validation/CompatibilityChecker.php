@@ -15,6 +15,7 @@ namespace PHPRegex\Parser\Validation;
 
 use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Parser\RegexParser;
 
@@ -34,21 +35,33 @@ use PHPRegex\Parser\RegexParser;
  *
  * A pattern is never a reason to throw: one no target can read, a missing
  * delimiter included, gets a verdict refusing it at every point.
+ *
+ * Each point is judged by the base parser for that target
+ * (RegexParser::withTarget()): the locale, recursion depth, limits and
+ * cache of the base hold at every point, while its own PHP and PCRE2 are
+ * only judged where a point names them.
  */
 final class CompatibilityChecker
 {
     private const OLDEST_RELEASE = 32;
 
+    /**
+     * @param RegexParser|null $base the parser whose options every point keeps; null reads the defaults
+     *                               under the runtime's locale, with a cache of its own for each check
+     */
+    public function __construct(private readonly ?RegexParser $base = null) {}
+
     public function check(string $regex): PatternCompatibility
     {
         // Targets that read a pattern the same way share one cached tree:
         // a patch point runs the validator only.
-        $cache = new ArrayCache();
+        $base = $this->base ?? RegexParser::create(['cache' => new ArrayCache()]);
+        $locale = $base->target()->locale;
 
         $verdicts = [];
         foreach (PhpVersionGates::POINTS as $php) {
             foreach (self::releases() as $release) {
-                $parser = RegexParser::create(['php_version' => $php, 'pcre_version' => $release, 'cache' => $cache]);
+                $parser = $base->withTarget(new PcreTarget($php, $release, $locale));
                 $verdicts[] = new TargetVerdict($parser->target(), $parser->validate($regex));
             }
         }
