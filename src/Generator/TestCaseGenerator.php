@@ -92,8 +92,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
             // reference to a group; fixed seeds keep the cases stable.
             $samples = [];
             foreach ([1, 2, 3] as $seed) {
-                $generator = new SampleGenerator(engine: $this->engine);
-                $generator->setSeed($seed);
+                $generator = new SampleGenerator(engine: $this->engine, seed: $seed);
 
                 try {
                     $samples[] = $node->accept($generator);

@@ -49,7 +49,8 @@ Configuration
 -------------
 
 - `maxRepetition` (int, default `3`): extra repetitions drawn for `*`, `+` and `{n,}`
-- `setSeed(int $seed)` and `resetSeed()`: lock the random source for reproducible samples
+- `seed` (`?int`, default `null`, last argument of the `SampleGenerator` constructor): locks the random source for reproducible samples; each sample drawn starts again from it
+- `setSeed(int $seed)` and `resetSeed()`: lock the random source later, or unlock it
 - `PcreEngine $engine` (constructor of both generators): the engine asked what a class or a property holds
 
 Usage
@@ -71,8 +72,7 @@ Visiting the tree draws from the tree alone, unchecked; a sample, made reproduci
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\RegexParser;
 
-$generator = new SampleGenerator();
-$generator->setSeed(42);
+$generator = new SampleGenerator(seed: 42);
 
 echo RegexParser::create()->parse('/[A-Z]{3}-\d{4}/')->accept($generator); // "VEL-0403"
 ```

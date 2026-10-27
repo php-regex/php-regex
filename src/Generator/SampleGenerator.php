@@ -220,10 +220,15 @@ final class SampleGenerator extends AbstractNodeVisitor
     /**
      * @param int        $maxRepetition Maximum repetitions for quantifiers like `*` or `+`
      * @param PcreEngine $engine        Asks the running engine what a class or a property holds
+     * @param int|null   $seed          Locks the random source, as setSeed() does: each sample starts again from it
      */
-    public function __construct(private readonly int $maxRepetition = 3, private readonly PcreEngine $engine = new PcreEngine())
-    {
-        $this->resetRandomizer();
+    public function __construct(
+        private readonly int $maxRepetition = 3,
+        private readonly PcreEngine $engine = new PcreEngine(),
+        ?int $seed = null
+    ) {
+        $this->seed = $seed;
+        $this->resetRandomizer($seed);
     }
 
     public function setSeed(int $seed): void
