@@ -14,11 +14,13 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\TestUtils;
 
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Lexing\LexerState;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
 
 /**
- * Accessor class to expose and manipulate private methods/properties of the Lexer for unit testing.
+ * Accessor class to expose and manipulate private methods of the Lexer and
+ * the state it reads with, for unit testing.
  */
 final class LexerAccessor
 {
@@ -45,70 +47,79 @@ final class LexerAccessor
     }
 
     /**
-     * Sets the private position property.
+     * The state the Lexer reads with, the one the readers of its modes are
+     * handed.
+     */
+    public function state(): LexerState
+    {
+        $state = $this->reflection->getProperty('state')->getValue($this->lexer);
+        \assert($state instanceof LexerState);
+
+        return $state;
+    }
+
+    /**
+     * Sets the position of the state.
      */
     public function setPosition(int $position): void
     {
-        $property = $this->reflection->getProperty('position');
-        $property->setValue($this->lexer, $position);
+        $this->state()->position = $position;
     }
 
     /**
-     * Gets the private position property.
+     * Gets the position of the state.
      */
     public function getPosition(): int
     {
-        $property = $this->reflection->getProperty('position');
-        $value = $property->getValue($this->lexer);
-        \assert(\is_int($value));
-
-        return $value;
+        return $this->state()->position;
     }
 
     /**
-     * Sets the private inQuoteMode property.
+     * Sets whether the state is in quote mode.
      */
     public function setInQuoteMode(bool $inQuoteMode): void
     {
-        $property = $this->reflection->getProperty('inQuoteMode');
-        $property->setValue($this->lexer, $inQuoteMode);
+        $this->state()->inQuoteMode = $inQuoteMode;
     }
 
     /**
-     * Gets the private inQuoteMode property.
+     * Gets whether the state is in quote mode.
      */
     public function getInQuoteMode(): bool
     {
-        $property = $this->reflection->getProperty('inQuoteMode');
-
-        return (bool) $property->getValue($this->lexer);
+        return $this->state()->inQuoteMode;
     }
 
     /**
-     * Sets the private inCommentMode property.
+     * Sets whether the state is in comment mode.
      */
     public function setInCommentMode(bool $inCommentMode): void
     {
-        $property = $this->reflection->getProperty('inCommentMode');
-        $property->setValue($this->lexer, $inCommentMode);
+        $this->state()->inCommentMode = $inCommentMode;
     }
 
     /**
-     * Sets the private pattern property.
+     * Gets whether the state is in comment mode.
+     */
+    public function getInCommentMode(): bool
+    {
+        return $this->state()->inCommentMode;
+    }
+
+    /**
+     * Sets the text the state reads.
      */
     public function setPattern(string $pattern): void
     {
-        $property = $this->reflection->getProperty('pattern');
-        $property->setValue($this->lexer, $pattern);
+        $this->state()->pattern = $pattern;
     }
 
     /**
-     * Sets the private length property.
+     * Sets the length of the text the state reads.
      */
     public function setLength(int $length): void
     {
-        $property = $this->reflection->getProperty('length');
-        $property->setValue($this->lexer, $length);
+        $this->state()->length = $length;
     }
 
     /**

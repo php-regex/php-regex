@@ -14,7 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lexer;
 
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Lexing\Tunnels;
 use PHPRegex\Parser\Token\Token;
+use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\TestUtils\LexerAccessor;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -38,12 +40,12 @@ final class LexerInternalStateTest extends TestCase
         $accessor->setPosition(3); // After (?#
         $accessor->setInCommentMode(true);
 
-        // Direct call to private method
-        $result = $accessor->callPrivateMethod('consumeCommentMode');
+        // Direct call to the reader of the comment
+        $result = Tunnels::comment($accessor->state());
 
         // It must first return a token with the comment text
-        $this->assertNotNull($result);
-        $this->assertInstanceof(Token::class, $result);
+        $this->assertInstanceOf(Token::class, $result);
+        $this->assertSame(TokenType::Literal, $result->type);
         $this->assertSame(' ... sans fin', $result->value);
         // Position must be at the end of the text
         $this->assertSame(16, $accessor->getPosition());
@@ -61,11 +63,11 @@ final class LexerInternalStateTest extends TestCase
         $lexer->tokenize('\Q ... sans fin');
         $accessor->setPosition(2); // After \Q
 
-        $result = $accessor->callPrivateMethod('consumeQuoteMode');
+        $result = Tunnels::quoted($accessor->state());
 
         // It must first return a token with the literal text
-        $this->assertNotNull($result);
-        $this->assertInstanceof(Token::class, $result);
+        $this->assertInstanceOf(Token::class, $result);
+        $this->assertSame(TokenType::Literal, $result->type);
         $this->assertSame(' ... sans fin', $result->value);
         // Position must be at the end of the text
         $this->assertSame(15, $accessor->getPosition());

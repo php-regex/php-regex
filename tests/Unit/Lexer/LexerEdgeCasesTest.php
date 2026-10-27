@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lexer;
 use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Lexing\TokenValue;
+use PHPRegex\Parser\Lexing\Tunnels;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
@@ -36,11 +37,10 @@ final class LexerEdgeCasesTest extends TestCase
     {
         $lexer = new Lexer();
         $ref = new \ReflectionClass($lexer);
+        $accessor = new LexerAccessor($lexer);
 
-        $pattern = $ref->getProperty('pattern');
-        $pattern->setValue($lexer, 'abc');
-        $position = $ref->getProperty('position');
-        $position->setValue($lexer, 0);
+        $accessor->setPattern('abc');
+        $accessor->setPosition(0);
 
         $method = $ref->getMethod('matchAtPosition');
 
@@ -64,9 +64,10 @@ final class LexerEdgeCasesTest extends TestCase
     {
         $lexer = new Lexer();
         $ref = new \ReflectionClass($lexer);
-        $ref->getProperty('pattern')->setValue($lexer, 'a\\');
-        $ref->getProperty('length')->setValue($lexer, 2);
-        $ref->getProperty('position')->setValue($lexer, 0);
+        $accessor = new LexerAccessor($lexer);
+        $accessor->setPattern('a\\');
+        $accessor->setLength(2);
+        $accessor->setPosition(0);
 
         $this->expectException(InternalFailureException::class);
         $this->expectExceptionMessageIsOrContains('No token of the lexer starts at offset 0 of the pattern.');
@@ -80,8 +81,7 @@ final class LexerEdgeCasesTest extends TestCase
         $lexer = new Lexer();
         $ref = new \ReflectionClass($lexer);
 
-        $pattern = $ref->getProperty('pattern');
-        $pattern->setValue($lexer, 'abc');
+        (new LexerAccessor($lexer))->setPattern('abc');
 
         $method = $ref->getMethod('createToken');
 
@@ -170,7 +170,7 @@ final class LexerEdgeCasesTest extends TestCase
         $this->expectException(InternalFailureException::class);
         $this->expectExceptionMessageIsOrContains('The regex reading a quoted run did not match.');
 
-        $accessor->callPrivateMethod('consumeQuoteMode');
+        Tunnels::quoted($accessor->state());
     }
 
     #[Test]
@@ -185,7 +185,7 @@ final class LexerEdgeCasesTest extends TestCase
         $accessor->setPosition(\strlen($pattern));
         $accessor->setInQuoteMode(true);
 
-        $result = $accessor->callPrivateMethod('consumeQuoteMode');
+        $result = Tunnels::quoted($accessor->state());
 
         $this->assertNull($result);
         $this->assertSame(\strlen($pattern), $accessor->getPosition());
@@ -204,13 +204,13 @@ final class LexerEdgeCasesTest extends TestCase
         $accessor->setPosition(2); // start after \Q
         $accessor->setInQuoteMode(true);
 
-        $literalToken = $accessor->callPrivateMethod('consumeQuoteMode');
+        $literalToken = Tunnels::quoted($accessor->state());
         $this->assertInstanceOf(Token::class, $literalToken);
         $this->assertSame('abc', $literalToken->value);
         $this->assertSame(2, $literalToken->position);
         $this->assertTrue($accessor->getInQuoteMode());
 
-        $endToken = $accessor->callPrivateMethod('consumeQuoteMode');
+        $endToken = Tunnels::quoted($accessor->state());
         $this->assertInstanceOf(Token::class, $endToken);
         $this->assertSame(TokenType::QuoteModeEnd, $endToken->type);
         $this->assertFalse($accessor->getInQuoteMode());
@@ -233,7 +233,7 @@ final class LexerEdgeCasesTest extends TestCase
         $this->expectException(InternalFailureException::class);
         $this->expectExceptionMessageIsOrContains('The regex reading a comment did not match.');
 
-        $accessor->callPrivateMethod('consumeCommentMode');
+        Tunnels::comment($accessor->state());
     }
 
     #[Test]
@@ -248,11 +248,11 @@ final class LexerEdgeCasesTest extends TestCase
         $accessor->setPosition(\strlen($pattern));
         $accessor->setInCommentMode(true);
 
-        $result = $accessor->callPrivateMethod('consumeCommentMode');
+        $result = Tunnels::comment($accessor->state());
 
         $this->assertNull($result);
         $this->assertSame(\strlen($pattern), $accessor->getPosition());
-        $this->assertTrue($this->getPrivateBool($lexer, 'inCommentMode'));
+        $this->assertTrue($accessor->getInCommentMode());
     }
 
     #[Test]
@@ -267,16 +267,16 @@ final class LexerEdgeCasesTest extends TestCase
         $accessor->setPosition(3); // after 'tex'
         $accessor->setInCommentMode(true);
 
-        $literal = $accessor->callPrivateMethod('consumeCommentMode');
+        $literal = Tunnels::comment($accessor->state());
         $this->assertInstanceOf(Token::class, $literal);
         $this->assertSame('t', $literal->value);
         $this->assertSame(3, $literal->position);
-        $this->assertTrue($this->getPrivateBool($lexer, 'inCommentMode'));
+        $this->assertTrue($accessor->getInCommentMode());
 
-        $closing = $accessor->callPrivateMethod('consumeCommentMode');
+        $closing = Tunnels::comment($accessor->state());
         $this->assertInstanceOf(Token::class, $closing);
         $this->assertSame(TokenType::GroupClose, $closing->type);
-        $this->assertFalse($this->getPrivateBool($lexer, 'inCommentMode'));
+        $this->assertFalse($accessor->getInCommentMode());
     }
 
     #[Test]
@@ -295,12 +295,5 @@ final class LexerEdgeCasesTest extends TestCase
         $value = TokenValue::of(TokenType::Literal, 'X', [], false);
 
         $this->assertSame('X', $value);
-    }
-
-    private function getPrivateBool(object $object, string $property): bool
-    {
-        $ref = new \ReflectionProperty($object, $property);
-
-        return (bool) $ref->getValue($object);
     }
 }

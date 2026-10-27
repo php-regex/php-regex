@@ -25,6 +25,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Tests\Support\PcreInterpreter;
+use PHPRegex\Tests\TestUtils\LexerAccessor;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -280,7 +281,7 @@ final class RedosCallerPcreLimitsTest extends TestCase
                 $read = (new \ReflectionProperty(Lexer::class, 'regexes'))->getValue($lexer);
                 // The regex reading the items of a body belongs to the
                 // reader of the bodies the lexer holds.
-                $bodies = (new \ReflectionProperty(Lexer::class, 'bodies'))->getValue($lexer);
+                $bodies = (new LexerAccessor($lexer))->state()->bodies;
                 if ($bodies instanceof BodyEnds) {
                     $read = array_merge(\is_array($read) ? $read : [], (array) (new \ReflectionProperty(BodyEnds::class, 'regexes'))->getValue($bodies));
                 }

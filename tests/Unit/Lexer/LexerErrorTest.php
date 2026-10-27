@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lexer;
 
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Lexing\Tunnels;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\LexerAccessor;
@@ -59,14 +60,14 @@ final class LexerErrorTest extends TestCase
         $accessor->setInQuoteMode(true);
 
         // 2. Must find 'abc'
-        $token = $accessor->callPrivateMethod('consumeQuoteMode');
+        $token = Tunnels::quoted($accessor->state());
         $this->assertInstanceOf(Token::class, $token);
         $this->assertSame('abc', $token->value);
         $this->assertSame(10, $accessor->getPosition()); // Position after 'abc' (7 + 3)
         $this->assertTrue($accessor->getInQuoteMode()); // Still in quote mode
 
         // 3. Must find \E token (now emitted instead of returning null)
-        $token = $accessor->callPrivateMethod('consumeQuoteMode');
+        $token = Tunnels::quoted($accessor->state());
         $this->assertInstanceOf(Token::class, $token);
         $this->assertSame('\E', $token->value);
         $this->assertSame(12, $accessor->getPosition()); // Position after \E (10 + 2)
@@ -85,12 +86,12 @@ final class LexerErrorTest extends TestCase
         $accessor->setInQuoteMode(true);
 
         // 2. Must find 'abc'
-        $token = $accessor->callPrivateMethod('consumeQuoteMode');
+        $token = Tunnels::quoted($accessor->state());
         $this->assertInstanceOf(Token::class, $token);
         $this->assertSame('abc', $token->value);
 
         // 3. Must reach end of string (position 5)
-        $token = $accessor->callPrivateMethod('consumeQuoteMode');
+        $token = Tunnels::quoted($accessor->state());
         $this->assertNull($token);
         $this->assertSame(5, $accessor->getPosition());
         // Remains in $inQuoteMode = true at end of string (PCRE behavior)

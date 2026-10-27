@@ -28,6 +28,7 @@ use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPRegex\Tests\TestUtils\LexerAccessor;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -759,13 +760,14 @@ final class AlphaAssertionBodyTest extends TestCase
         $lexer = new Lexer();
         $lexer->tokenize('(*pla:a)');
         $regexes = new \ReflectionProperty(Lexer::class, 'regexes');
-        $bodies = new \ReflectionProperty(Lexer::class, 'bodies');
-        $read = $bodies->getValue($lexer);
+        // Where the bodies end is kept by the state the lexer reads with.
+        $bodies = static fn (Lexer $lexer): ?BodyEnds => (new LexerAccessor($lexer))->state()->bodies;
+        $read = $bodies($lexer);
         $this->assertInstanceOf(BodyEnds::class, $read);
         $this->assertNotSame([], array_filter((array) (new \ReflectionProperty(BodyEnds::class, 'regexes'))->getValue($read), static fn (string $key): bool => str_starts_with($key, 'body'), \ARRAY_FILTER_USE_KEY));
 
         $this->assertSame([], $regexes->getValue(new Lexer()));
-        $this->assertNull($bodies->getValue(new Lexer()));
+        $this->assertNull($bodies(new Lexer()));
     }
 
     /**
