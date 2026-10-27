@@ -454,6 +454,7 @@ Reads what a successful `preg_match()` writes into `$matches`, from the pattern 
 the facade's cache, and an invalid one throws what `parse()` throws. `$groups` is keyed by group number;
 `matchShape()` writes the array as a PHPStan type and takes `PREG_OFFSET_CAPTURE` and `PREG_UNMATCHED_AS_NULL`;
 `matchAllShape()` writes what `preg_match_all()` fills, under `PREG_PATTERN_ORDER` or `PREG_SET_ORDER`, with the same flags.
+A `(?(VERSION>=10.45)...)` condition is read for the facade's target, its `pcre_version`.
 
 ```php
 use PHPRegex\Toolkit\Regex;

@@ -25,6 +25,9 @@ use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\VersionCondition;
 
 /**
  * @internal
@@ -33,14 +36,16 @@ use PHPRegex\Parser\Node\SubroutineNode;
  * it, for CaptureShapeAnalyzer: "(?(1)" holds where every path sets group
  * 1 before it, and fails where none does, as before the group closes or
  * after an (*ACCEPT) that always ends the match first; "(?(R)" fails where
- * nothing recurses. A back reference that matched proves its group set,
- * and one to a group no path sets never matches.
+ * nothing recurses; "(?(VERSION>=10.4)" reads as the target's release reads
+ * it, when there is one. A back reference that matched proves its group
+ * set, and one to a group no path sets never matches.
  *
  * The tree it gives holds each such conditional as its two arms in a row
  * inside a non-capturing group, the arm the engine never runs under {0}:
  * the groups of both keep their numbers, and that arm reads nothing and
- * sets no group. It folds nothing in a pattern that calls a group or
- * itself, where a conditional may run with other groups set.
+ * sets no group. In a pattern that calls a group or itself, where a
+ * conditional may run with other groups set, it folds the version
+ * conditions alone.
  *
  * A state holds the numbers of the groups that may be set ("may") and of
  * those surely set ("sure") where the walk stands; null where no path
@@ -80,15 +85,28 @@ final class ConditionalFolding
      */
     private array $openAtAssertion = [];
 
-    private function __construct(private readonly GroupIndex $groups) {}
+    /**
+     * @param bool $calls whether the pattern calls a group or itself: only
+     *                    a version condition then reads the same everywhere
+     */
+    private function __construct(
+        private readonly GroupIndex $groups,
+        private readonly ?PcreTarget $target,
+        private readonly bool $calls
+    ) {}
 
-    public static function fold(NodeInterface $pattern, GroupIndex $groups): NodeInterface
+    /**
+     * @param PcreTarget|null $target the release a "(?(VERSION" condition is
+     *                                read for; null folds none
+     */
+    public static function fold(NodeInterface $pattern, GroupIndex $groups, ?PcreTarget $target = null): NodeInterface
     {
-        if ([] !== $groups->subroutineTargets() || $groups->recursesWhole()) {
+        $calls = [] !== $groups->subroutineTargets() || $groups->recursesWhole();
+        if ($calls && null === $target) {
             return $pattern;
         }
 
-        $folding = new self($groups);
+        $folding = new self($groups, $target, $calls);
         $folding->flow($pattern, ['may' => [], 'sure' => []]);
 
         return [] === $folding->holds ? $pattern : $folding->rebuild($pattern);
@@ -203,7 +221,10 @@ final class ConditionalFolding
         $holds = null;
         $entry = $state;
 
-        if ($condition instanceof BackrefNode) {
+        if ($condition instanceof VersionConditionNode) {
+            // the release reads it the same wherever it runs
+            $holds = null === $this->target ? null : VersionCondition::holdsOn($condition->operator, $condition->version, $this->target);
+        } elseif ($condition instanceof BackrefNode && !$this->calls) {
             $numbers = $this->referenced($condition);
             // a duplicate name holds where any group bearing it is set
             if ([] !== array_intersect_key(array_flip($numbers), $state['sure'])) {
@@ -213,7 +234,7 @@ final class ConditionalFolding
             }
         } elseif ($condition instanceof SubroutineNode) {
             // a recursion test, where nothing recurses
-            $holds = false;
+            $holds = $this->calls ? null : false;
         } else {
             // an assertion keeps what it captured on either side, as the
             // negative one that fails does; a callout, a version, nothing

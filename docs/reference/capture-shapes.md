@@ -413,8 +413,24 @@ $shape->matchShape();
 // array{0: 'ab', 1: 'a'}
 ```
 
-`(?(VERSION>=10.0)...)` keeps both arms: the analyzer is not told which PCRE2 release
-the pattern runs on.
+`(?(VERSION>=10.45)...)` keeps the arm the release the analyzer is given takes:
+`new CaptureShapeAnalyzer($target)` takes a `PcreTarget`, and `Regex::captureShape()`
+passes the facade's own. Before PCRE2 10.47 a one-digit minor reads as tens, so
+`(?(VERSION>=10.5)...)` holds on 10.49 and not on 10.44, where it reads 10.50. A
+release reads the condition the same wherever it runs, so it folds in a pattern that
+calls a group too. Without a target, `new CaptureShapeAnalyzer()`, both arms stay:
+
+```php
+use PHPRegex\Parser\PcreTarget;
+
+// preg_match('/(?(VERSION>=10.45)(a)|(b))/', 'ab', $m): ['b', '', 'b'] on PCRE2 10.44, ['a', 'a'] on 10.49
+$regex = RegexParser::create(['pcre_version' => '10.44'])->parse('/(?(VERSION>=10.45)(a)|(b))/');
+
+(new CaptureShapeAnalyzer(new PcreTarget(80400, '10.44')))->analyze($regex)->matchShape();
+// array{0: 'b', 1: '', 2: 'b'}
+(new CaptureShapeAnalyzer())->analyze($regex)->matchShape();
+// array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}
+```
 
 And it splits on an optional group (`?`, `??`, `?+`, `{0,1}`) holding two capturing
 groups or more, itself included, reached the same way, that holds no alternation or

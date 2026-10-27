@@ -39,8 +39,20 @@ final class RegexCaptureShapeTest extends TestCase
     {
         $shape = Regex::create(['cache' => new NullCache()])->captureShape($pattern);
 
-        $this->assertEquals((new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern)), $shape);
+        $this->assertEquals((new CaptureShapeAnalyzer(RegexParser::create()->target()))->analyze(RegexParser::create()->parse($pattern)), $shape);
         $this->assertSame($expected, $shape->matchShape());
+    }
+
+    /**
+     * The facade reads a version condition at its parser's target:
+     * preg_match('/(?(VERSION>=10.45)(a)|(b))/', 'ab') takes the no arm on
+     * PCRE2 10.44 (PHP 8.4.27) and the yes arm on 10.49.
+     */
+    #[Test]
+    public function test_regex_facade_capture_shape_reads_a_version_condition_at_its_target(): void
+    {
+        $this->assertSame("array{0: 'b', 1: '', 2: 'b'}", Regex::create(['cache' => new NullCache(), 'php_version' => '8.4', 'pcre_version' => '10.44'])->captureShape('/(?(VERSION>=10.45)(a)|(b))/')->matchShape());
+        $this->assertSame("array{0: 'a', 1: 'a'}", Regex::create(['cache' => new NullCache(), 'php_version' => '8.4', 'pcre_version' => '10.49'])->captureShape('/(?(VERSION>=10.45)(a)|(b))/')->matchShape());
     }
 
     #[Test]

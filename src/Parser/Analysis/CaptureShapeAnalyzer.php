@@ -29,6 +29,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * Reads, from the tree alone, what a successful preg_match() writes into
@@ -59,7 +60,7 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '18';
+    public const ANALYSIS_VERSION = '19';
 
     private const MAX_CASES = 16;
 
@@ -204,7 +205,12 @@ final class CaptureShapeAnalyzer
 
     private GroupIndex $groups;
 
-    public function __construct()
+    /**
+     * @param PcreTarget|null $target the PCRE2 release the pattern runs on: a
+     *                                "(?(VERSION>=10.4)" condition keeps the
+     *                                arm that release takes; null keeps both
+     */
+    public function __construct(private readonly ?PcreTarget $target = null)
     {
         $this->facts = new CaptureFacts();
         $this->groups = GroupIndex::empty();
@@ -221,7 +227,7 @@ final class CaptureShapeAnalyzer
         $this->scan($ast->pattern);
         // a conditional that reads the same on every path keeps the arm the engine runs
         $groups = GroupIndex::of($ast->pattern);
-        $pattern = ConditionalFolding::fold($ast->pattern, $groups);
+        $pattern = ConditionalFolding::fold($ast->pattern, $groups, $this->target);
         $this->groups = $pattern === $ast->pattern ? $groups : GroupIndex::of($pattern);
         $this->facts = new CaptureFacts($ast->isUnicode(), $this->ucp, $this->groups);
         // options are read on the pattern as written: a bare "(?i)" ending

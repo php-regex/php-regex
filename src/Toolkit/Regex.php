@@ -426,7 +426,7 @@ final class Regex
      */
     public function captureShape(string $regex): CaptureShape
     {
-        return (new CaptureShapeAnalyzer())->analyze($this->parse($regex));
+        return (new CaptureShapeAnalyzer($this->target()))->analyze($this->parse($regex));
     }
 
     /**

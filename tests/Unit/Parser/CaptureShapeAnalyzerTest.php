@@ -19,6 +19,7 @@ use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Analysis\Participation;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\PcreGates;
@@ -242,6 +243,56 @@ final class CaptureShapeAnalyzerTest extends TestCase
                 $this->assertMatchesFollow($shape, $matches, $flags, false, \sprintf('%s on "%s" with flags %d', $pattern, $subject, $flags));
             }
         }
+    }
+
+    /**
+     * Given a target, a version condition keeps the arm that release takes;
+     * without one it keeps both. Before PCRE2 10.47 a one-digit minor reads
+     * as tens, from 10.47 as written. Oracle, the arm the engine runs:
+     *   (?(VERSION>=10.45)y|n): 10.39 n, 10.44 n, 10.49 y
+     *   (?(VERSION>=10.5)y|n):  10.39 n, 10.44 n (10.50), 10.49 y (10.05)
+     *   (?(VERSION>=10.4)y|n):  10.39 n (10.40), 10.44 y, 10.49 y
+     *   (?(VERSION=10.44)y|n):  10.39 n, 10.44 y, 10.49 n
+     * (PHP 8.1.34 with PCRE2 10.39, 8.4.27 with 10.44 and with 10.49.)
+     */
+    #[Test]
+    #[DataProvider('provideVersionFolds')]
+    public function test_a_version_condition_keeps_the_arm_the_target_takes(string $pattern, ?string $release, string $expected, string $subject = 'ab'): void
+    {
+        $target = null === $release ? null : new PcreTarget(80400, $release);
+        $shape = (new CaptureShapeAnalyzer($target))->analyze(RegexParser::create(['php_version' => '8.4', 'pcre_version' => $release ?? '10.44'])->parse($pattern));
+
+        $this->assertSame($expected, $shape->matchShape());
+
+        // The running engine agrees where the target is its release.
+        if (null !== $release && $release === explode(' ', \PCRE_VERSION)[0]) {
+            $matches = [];
+            $this->assertSame(1, preg_match($pattern, $subject, $matches));
+            $this->assertStringContainsString("0: '".$matches[0]."'", $shape->matchShape());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, release: string|null, expected: string, subject?: string}>
+     */
+    public static function provideVersionFolds(): iterable
+    {
+        $both = "array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}";
+        $yes = "array{0: 'a', 1: 'a'}";
+        $no = "array{0: 'b', 1: '', 2: 'b'}";
+        yield 'no target keeps both arms' => ['pattern' => '/(?(VERSION>=10.45)(a)|(b))/', 'release' => null, 'expected' => $both];
+        yield '>=10.45 on 10.39' => ['pattern' => '/(?(VERSION>=10.45)(a)|(b))/', 'release' => '10.39', 'expected' => $no];
+        yield '>=10.45 on 10.44' => ['pattern' => '/(?(VERSION>=10.45)(a)|(b))/', 'release' => '10.44', 'expected' => $no];
+        yield '>=10.45 on 10.49' => ['pattern' => '/(?(VERSION>=10.45)(a)|(b))/', 'release' => '10.49', 'expected' => $yes];
+        yield '>=10.5 reads 10.50 on 10.44' => ['pattern' => '/(?(VERSION>=10.5)(a)|(b))/', 'release' => '10.44', 'expected' => $no];
+        yield '>=10.5 reads 10.05 on 10.49' => ['pattern' => '/(?(VERSION>=10.5)(a)|(b))/', 'release' => '10.49', 'expected' => $yes];
+        yield '>=10.4 reads 10.40 on 10.39' => ['pattern' => '/(?(VERSION>=10.4)(a)|(b))/', 'release' => '10.39', 'expected' => $no];
+        yield '>=10.4 on 10.44' => ['pattern' => '/(?(VERSION>=10.4)(a)|(b))/', 'release' => '10.44', 'expected' => $yes];
+        yield '=10.44 on 10.39' => ['pattern' => '/(?(VERSION=10.44)(a)|(b))/', 'release' => '10.39', 'expected' => $no];
+        yield '=10.44 on 10.44' => ['pattern' => '/(?(VERSION=10.44)(a)|(b))/', 'release' => '10.44', 'expected' => $yes];
+        yield '=10.44 on 10.49' => ['pattern' => '/(?(VERSION=10.44)(a)|(b))/', 'release' => '10.49', 'expected' => $no];
+        // a call elsewhere leaves the version as it is
+        yield 'beside a call' => ['pattern' => '/(?(VERSION>=10.0)(a)|(b))(?1)/', 'release' => '10.49', 'expected' => "array{0: 'aa', 1: 'a'}", 'subject' => 'aa'];
     }
 
     #[Test]

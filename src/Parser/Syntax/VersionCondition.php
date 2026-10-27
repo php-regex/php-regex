@@ -42,6 +42,26 @@ final class VersionCondition
     private function __construct(public readonly string $operator, public readonly string $version) {}
 
     /**
+     * Whether "(?(VERSION>=10.4)" holds on the target's release: before
+     * PCRE2 10.47 a one-digit minor reads as tens, "10.4" as 10.40, and
+     * from 10.47 as written, 10.04. Null for a comparison PCRE does not
+     * take, or a version it does not read.
+     */
+    public static function holdsOn(string $operator, string $version, PcreTarget $target): ?bool
+    {
+        if (('>=' !== $operator && '=' !== $operator) || !self::isVersionNumber($version) || substr_count($version, '.') > 1) {
+            return null;
+        }
+
+        [$major, $minor] = explode('.', $version, 2) + [1 => '0'];
+        $tens = 1 === \strlen($minor) && !$target->supports(PcreFeature::VersionConditionWholeNumbers) ? 10 : 1;
+        [$releaseMajor, $releaseMinor] = array_map(intval(...), explode('.', $target->pcreVersion, 2));
+        $order = [$releaseMajor, $releaseMinor] <=> [(int) $major, (int) $minor * $tens];
+
+        return '=' === $operator ? 0 === $order : $order >= 0;
+    }
+
+    /**
      * Read "VERSION>=10.4", or null when the text says something else.
      */
     public static function read(string $text): ?self
