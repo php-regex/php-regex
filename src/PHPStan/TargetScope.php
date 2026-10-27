@@ -22,6 +22,7 @@ use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
+use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
@@ -39,6 +40,12 @@ use PHPStan\Type\TypeCombinator;
  * "pcreVersion" and "locale" settings or of PHPStan's own phpVersion, the
  * later PHPs of PHPStan's range, and, at one call, the versions a guard on
  * PHP_VERSION_ID and the "@regex-target" markers covering its line leave.
+ *
+ * Each version is judged with the PCRE2 release "pcreVersion" names, else
+ * the one composer.json pins in config.platform.lib-pcre, used as is, older
+ * or newer than the one that PHP bundles; else the PCRE2 running PHPStan
+ * when the version is the running PHP's minor; else the PCRE2 its sources
+ * bundle (ParserOptions::resolveTarget()).
  *
  * @internal
  *
@@ -75,7 +82,8 @@ final class TargetScope
     private readonly ?array $guardable;
 
     /**
-     * The PCRE2 release "pcreVersion" names for every version judged.
+     * The PCRE2 release "pcreVersion" names, else composer.json's
+     * config.platform.lib-pcre, for every version judged.
      */
     private readonly ?string $pinnedPcre;
 
@@ -96,8 +104,9 @@ final class TargetScope
      * @param ConfigArray                        $config             the "phpRegex" parameter: "phpVersion", "pcreVersion" and
      *                                                               "locale" are read here, every key optional
      * @param PhpVersion|null                    $phpVersion         the PHP version PHPStan analyses the project for: patterns are
-     *                                                               judged for it, with the PCRE2 it bundles, unless "phpVersion"
-     *                                                               is "runtime" or names a version, and "pcreVersion" a release
+     *                                                               judged for it unless "phpVersion" is "runtime" or names a
+     *                                                               version, with the PCRE2 pinned, the running one or the one it
+     *                                                               bundles
      * @param int|array{min: int, max: int}|null $phpVersionRange    PHPStan's "phpVersion" parameter: with {min, max}, a pattern is
      *                                                               also validated at each later PHP up to max where a rule of the
      *                                                               library changes, unless "phpVersion" names one version; a guard
@@ -105,7 +114,8 @@ final class TargetScope
      * @param ReflectionProvider|null            $reflectionProvider tells whether PHP_VERSION_ID names the global constant in a
      *                                                               namespace, for a guard written without a leading backslash
      *
-     * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "locale" cannot be read
+     * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion", "locale" or composer.json's
+     *                                     config.platform.lib-pcre cannot be read
      * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1, as regex lint refuses it
      */
     public function __construct(
@@ -115,14 +125,21 @@ final class TargetScope
         private readonly ?ReflectionProvider $reflectionProvider = null
     ) {
         // Built now, so that an unreadable version stops PHPStan before any file is read.
-        $this->regex = RegexParser::fromOptions(ParserOptions::fromArray(self::targetOptions($config, $phpVersion, $phpVersionRange)));
+        $locale = $config['locale'] ?? null;
+        $phpVersionId = self::targetPhp($config, $phpVersion, $phpVersionRange, $locale);
+        $cwd = getcwd();
+        $this->pinnedPcre = $config['pcreVersion'] ?? (false === $cwd ? null : ProjectTarget::composerPcre($cwd, getenv()));
+        $this->regex = RegexParser::fromOptions(new ParserOptions(
+            ParserOptions::DEFAULT_MAX_PATTERN_LENGTH,
+            ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH,
+            new ArrayCache(),
+            target: ParserOptions::resolveTarget($phpVersionId, $this->pinnedPcre, $locale, true),
+        ));
         $target = $this->regex->target();
-        $this->range = self::rangeParsers($config, $this->regex, $phpVersionRange);
+        $this->range = self::rangeParsers($config, $this->regex, $phpVersionRange, $this->pinnedPcre);
         $this->guardable = null === ($config['phpVersion'] ?? null) && \is_array($phpVersionRange) && $phpVersionRange['max'] >= $target->phpVersionId
             ? [$target->phpVersionId, $phpVersionRange['max']]
             : null;
-        $pcreVersion = $config['pcreVersion'] ?? null;
-        $this->pinnedPcre = \is_string($pcreVersion) ? $pcreVersion : null;
         $this->targetLabel = $target->isRunningEngine() ? null : \sprintf(
             'PHP %d.%d with PCRE2 %s%s',
             intdiv($target->phpVersionId, 10000),
@@ -187,6 +204,7 @@ final class TargetScope
                 [[$lowest, $highest + 1]],
                 $this->pinnedPcre,
                 $this->regex,
+                true,
             );
         }
 
@@ -211,11 +229,9 @@ final class TargetScope
     }
 
     /**
-     * The "php_version", "pcre_version" and "locale" options of the target:
-     * PHPStan's PHP version with the PCRE2 it bundles by default, the
-     * running PHP and the PCRE2 it links when that version is the running
-     * one or the setting is "runtime", else the version the setting names;
-     * the locale "locale" names, else the runtime's.
+     * The PHP_VERSION_ID patterns are judged for, null for the running PHP:
+     * the version "phpVersion" names, the running PHP when it is "runtime",
+     * else PHPStan's PHP version, else the running PHP.
      *
      * A PHP below the first on PCRE2 is judged as regex lint judges it:
      * refused when "phpVersion" or PHPStan names it, judged from the lowest
@@ -228,56 +244,49 @@ final class TargetScope
      * @throws InvalidRegexOptionException when "phpVersion" names no version, or "locale" a locale the machine
      *                                     cannot set
      * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1
-     *
-     * @return array{php_version?: string|int, pcre_version?: string, locale?: string}
      */
-    private static function targetOptions(array $config, ?PhpVersion $phpVersion, int|array|null $phpVersionRange): array
+    private static function targetPhp(array $config, ?PhpVersion $phpVersion, int|array|null $phpVersionRange, ?string $locale): ?int
     {
-        $options = [];
-        $locale = $config['locale'] ?? null;
-        if (null !== $locale) {
-            $options['locale'] = $locale;
-        }
-
         $firstOnPcre2 = PcreTarget::phpVersionBoundaries()[0];
         $setting = $config['phpVersion'] ?? null;
         if (null === $setting) {
-            if (null !== $phpVersion && $phpVersion->getVersionId() < $firstOnPcre2) {
-                $target = \is_array($phpVersionRange)
-                    ? ProjectTarget::fromRange($phpVersionRange['min'], $phpVersionRange['max'], 'phpVersion', ['phpRegex.locale' => $locale])
-                    : ProjectTarget::belowPcre2($phpVersion->getVersionId(), 'phpVersion', PhpVersion::SOURCE_COMPOSER_PLATFORM_PHP === $phpVersion->getSource() ? (getcwd() ?: null) : null, getenv(), ['phpRegex.locale' => $locale]);
-                $options['php_version'] = $target->target()->phpVersionId;
-            } elseif (null !== $phpVersion && \PHP_VERSION_ID !== $phpVersion->getVersionId()) {
-                $options['php_version'] = $phpVersion->getVersionId();
+            if (null === $phpVersion || $phpVersion->getVersionId() >= $firstOnPcre2) {
+                return $phpVersion?->getVersionId();
             }
-        } elseif ('runtime' !== $setting) {
-            $named = ParserOptions::phpVersionIdOf($setting);
-            if ($named < $firstOnPcre2) {
-                ProjectTarget::belowPcre2($named, 'phpRegex.phpVersion', null, []);
-            }
-            $options['php_version'] = $setting;
+
+            $target = \is_array($phpVersionRange)
+                ? ProjectTarget::fromRange($phpVersionRange['min'], $phpVersionRange['max'], 'phpVersion', ['phpRegex.locale' => $locale])
+                : ProjectTarget::belowPcre2($phpVersion->getVersionId(), 'phpVersion', PhpVersion::SOURCE_COMPOSER_PLATFORM_PHP === $phpVersion->getSource() ? (getcwd() ?: null) : null, getenv(), ['phpRegex.locale' => $locale]);
+
+            return $target->target()->phpVersionId;
         }
 
-        $pcreVersion = $config['pcreVersion'] ?? null;
-        if (null !== $pcreVersion) {
-            $options['pcre_version'] = $pcreVersion;
+        if ('runtime' === $setting) {
+            return null;
         }
 
-        return $options;
+        $named = ParserOptions::phpVersionIdOf($setting);
+        if ($named < $firstOnPcre2) {
+            ProjectTarget::belowPcre2($named, 'phpRegex.phpVersion', null, []);
+        }
+
+        return $named;
     }
 
     /**
      * A parser and its label for each PHP where a rule of the library
      * changes, above the floor and up to the max of PHPStan's range; none
      * when "phpVersion" names the version patterns are judged for, or when
-     * PHPStan names one version.
+     * PHPStan names one version. Each is judged with the PCRE2 pinned, else
+     * the running one when it shares the running PHP's minor, else the one
+     * it bundles.
      *
      * @param ConfigArray                        $config
      * @param int|array{min: int, max: int}|null $phpVersionRange
      *
      * @return list<array{RegexParser, string}>
      */
-    private static function rangeParsers(array $config, RegexParser $floorParser, int|array|null $phpVersionRange): array
+    private static function rangeParsers(array $config, RegexParser $floorParser, int|array|null $phpVersionRange, ?string $pinnedPcre): array
     {
         $floor = $floorParser->target();
         $max = \is_array($phpVersionRange) ? $phpVersionRange['max'] : null;
@@ -285,14 +294,13 @@ final class TargetScope
             return [];
         }
 
-        $pcreVersion = $config['pcreVersion'] ?? null;
         $parsers = [];
         foreach (PcreTarget::phpVersionBoundaries() as $phpVersionId) {
             if ($phpVersionId <= $floor->phpVersionId || $phpVersionId > $max) {
                 continue;
             }
 
-            $target = ParserOptions::resolveTarget($phpVersionId, \is_string($pcreVersion) ? $pcreVersion : null, $floor->locale);
+            $target = ParserOptions::resolveTarget($phpVersionId, $pinnedPcre, $floor->locale, true);
             $parsers[] = [$floorParser->withTarget($target), self::label($target)];
         }
 

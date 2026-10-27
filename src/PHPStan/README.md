@@ -98,7 +98,7 @@ in `ignoreErrors`, as with any PHPStan rule. The defaults as shipped:
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `phpVersion` | `null` | PHP the patterns are judged for: `null` for PHPStan's `phpVersion` (a `{min, max}` range there is validated at each later PHP up to `max` where a rule changes), `'runtime'` for the PHP running the analysis, `'8.2'` or `80200` for a release |
-| `pcreVersion` | `null` | PCRE2 release the patterns are judged for, `'10.42'`; `null` for the one the PHP version bundles |
+| `pcreVersion` | `null` | PCRE2 release the patterns are judged for, `'10.42'`, used as is; `null` for the one `composer.json` pins in `config.platform.lib-pcre`, else the PCRE2 running PHPStan when the PHP judged is its minor version, else the one the PHP version bundles |
 | `locale` | `null` | `LC_CTYPE` locale the patterns run under, `'tr_TR.UTF-8'`; `null` for the one of the PHP running PHPStan. Its character tables decide the size of a few classes |
 | `interop` | `null` | Libraries whose static methods carry a pattern, as `extraction.interop` of `regex lint`: `composer-pcre`, `nette-utils`, `spatie-regex`, `illuminate-support`, `phpunit`, `webmozart-assert`, `beberlei-assert`, `symfony-validator`; `null` for every preset, a list for exactly those, `[]` for the native functions only; an unknown name stops PHPStan as it loads the configuration |
 | `checks.lint.enabled` | `false` | lint rules |
@@ -115,6 +115,23 @@ compile: PHPStan core's own `regexp.pattern` rule reports those, for the
 engine it runs on. What that engine does compile, the rules judge for the
 target the options above name; `pcreVersion` judges it for any PCRE2 release,
 not only the one the PHP version bundles.
+
+A PHP version does not decide the PCRE2 a build links, so each version
+judged gets its PCRE2 in this order:
+
+1. the release `pcreVersion` names, else the one `composer.json` pins in
+   `config.platform.lib-pcre` (`"10.42"`, or `"10.42.0"` as Composer spells
+   it), used as is, older or newer than the one that PHP bundles;
+2. the PCRE2 running PHPStan, when the version judged is the running PHP's
+   minor version: PHP 8.4.0 is judged with the PCRE2 of the PHP 8.4.27
+   running the analysis;
+3. the PCRE2 that PHP's sources bundle: 10.40 for 8.2, 10.42 for 8.3, 10.44
+   for 8.4 and 8.5.
+
+The order holds for the target, each later PHP of a `phpVersion` range, and
+each version a guard or a `@regex-target` marker keeps. A
+`config.platform.lib-pcre` that names no PCRE2 release stops PHPStan as it
+starts.
 
 Usage
 -----

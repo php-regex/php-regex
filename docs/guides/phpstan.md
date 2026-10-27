@@ -58,9 +58,34 @@ Regex pattern is invalid for PHP 8.2 with PCRE2 10.40: Invalid group modifier sy
 ```
 
 The target is PHPStan's `phpVersion` (the PHP running PHPStan unless your
-configuration sets it; the lowest version of a range) with the PCRE2 that PHP
-bundles. When the target is the PHP running PHPStan and the PCRE2 it links,
-there is nothing PHPStan misses, and the extension reports no invalid pattern.
+configuration sets it; the lowest version of a range) with the PCRE2 the
+order below gives it. When the target is the PHP running PHPStan's minor
+version and the PCRE2 it links, there is nothing PHPStan misses, and the
+extension reports no invalid pattern.
+
+### Which PCRE2 judges a version
+
+A PHP version does not decide the PCRE2 a build links: distributions compile
+against their own libpcre2, and patch releases carry whatever was current when
+they were cut. Each version the extension judges gets its PCRE2 in this order:
+
+1. The release `phpRegex.pcreVersion` names, else the one `composer.json`
+   pins in `config.platform.lib-pcre` (`"10.42"`, or `"10.42.0"` as Composer
+   spells it). A pin is used as is, older or newer than the one that PHP
+   bundles: `pcreVersion: '10.49'` judges PHP 8.2 with 10.49, and
+   `pcreVersion: '10.39'` judges PHP 8.4 with 10.39.
+2. The PCRE2 running PHPStan, when the version judged is the running PHP's
+   minor version: on a PHP 8.4.27 that links 10.49, `phpVersion: 80400` is
+   judged with 10.49.
+3. The PCRE2 that PHP's sources bundle: 10.40 for 8.2, 10.42 for 8.3, 10.44
+   for 8.4 and 8.5.
+
+The order holds for the target, each later version of a range, and each
+version a guard or a `@regex-target` marker keeps. A
+`config.platform.lib-pcre` that names no PCRE2 release stops the analysis
+when it starts. [`regex lint`](cli.md) judges a version it is told with the
+PCRE2 that version bundles, and the running PHP alone with the PCRE2 it
+links: give it `--pcre-version` to judge for another engine.
 
 A range, `phpVersion: {min: 80400, max: 80599}`, is read whole: a pattern the
 lowest version accepts is also validated at each later PHP up to `max` where
@@ -81,7 +106,7 @@ A `phpRegex.phpVersion` naming one version judges that version alone.
 A call that runs on some PHP versions of the range only is judged for those.
 PHPStan narrows `PHP_VERSION_ID` under a guard, and the extension reads that
 narrowed type at the call: the versions judged are the lowest one the guard
-keeps, with the PCRE2 it bundles (or `phpRegex.pcreVersion`), then each later
+keeps, with the PCRE2 the order above gives it, then each later
 version of the range above it. Under `phpVersion: {min: 80200, max: 80599}`:
 
 ```php
@@ -367,8 +392,9 @@ parameters:
         # 'runtime' for the PHP running PHPStan, a version like '8.2', or a
         # PHP_VERSION_ID like 80200.
         phpVersion: null
-        # The PCRE2 release, like '10.42', for a PHP that links another one
-        # than it bundles; null for the bundled one.
+        # The PCRE2 release, like '10.42', used as is; null for the one
+        # composer.json pins in config.platform.lib-pcre, else the running
+        # PCRE2 for the running PHP's minor version, else the bundled one.
         pcreVersion: null
         # The LC_CTYPE locale the patterns run under, like 'tr_TR.UTF-8':
         # its character tables decide the size of a few classes. null for

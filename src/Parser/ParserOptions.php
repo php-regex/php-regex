@@ -242,22 +242,29 @@ final class ParserOptions
      * not: the one place the options, the lint and the bridges resolve it.
      * A release named is used as is, older or newer than the one the PHP
      * bundles. Without one, the running PHP gets the PCRE2 it links, and a
-     * PHP named, the running one included, the PCRE2 its sources bundle
-     * (PcreTarget::bundledWith()). The locale is the runtime's unless one
-     * is named.
+     * PHP named the PCRE2 its sources bundle (PcreTarget::bundledWith()):
+     * the running one included, unless $runningSpeaksForItsMinor lets the
+     * running PCRE2 judge every PHP of the running PHP's minor version, as
+     * the PHPStan extension does. The locale is the runtime's unless one is
+     * named.
      *
      * @internal
      *
-     * @param int|null    $phpVersionId a PHP_VERSION_ID, null for the running PHP
-     * @param string|null $pcreVersion  a PCRE2 release, "10.44", as PCRE_VERSION spells it or without its date
-     * @param string|null $locale       an LC_CTYPE locale, "tr_TR.UTF-8"
+     * @param int|null    $phpVersionId             a PHP_VERSION_ID, null for the running PHP
+     * @param string|null $pcreVersion              a PCRE2 release, "10.44", as PCRE_VERSION spells it or
+     *                                              without its date
+     * @param string|null $locale                   an LC_CTYPE locale, "tr_TR.UTF-8"
+     * @param bool        $runningSpeaksForItsMinor whether a PHP named of the running PHP's minor version gets
+     *                                              the running PCRE2
      *
      * @throws InvalidRegexOptionException when $pcreVersion names no release, or $locale one this machine
      *                                     cannot set
      */
-    public static function resolveTarget(?int $phpVersionId, ?string $pcreVersion = null, ?string $locale = null): PcreTarget
+    public static function resolveTarget(?int $phpVersionId, ?string $pcreVersion = null, ?string $locale = null, bool $runningSpeaksForItsMinor = false): PcreTarget
     {
-        $pcreVersion ??= null === $phpVersionId ? \PCRE_VERSION : PcreTarget::bundledWith($phpVersionId)->pcreVersion;
+        $pcreVersion ??= null === $phpVersionId || ($runningSpeaksForItsMinor && intdiv($phpVersionId, 100) === intdiv(\PHP_VERSION_ID, 100))
+            ? \PCRE_VERSION
+            : PcreTarget::bundledWith($phpVersionId)->pcreVersion;
 
         return new PcreTarget($phpVersionId ?? \PHP_VERSION_ID, $pcreVersion, $locale);
     }

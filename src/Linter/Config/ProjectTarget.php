@@ -429,6 +429,36 @@ final class ProjectTarget
     }
 
     /**
+     * The PCRE2 release the composer.json of $projectDir, or the file the
+     * COMPOSER variable names, pins in config.platform.lib-pcre: Composer
+     * spells a platform version with up to four numbers, "10.42.0", and a
+     * PCRE2 release has two. Null when the file cannot be read or pins none.
+     *
+     * @param array<string, string> $env the environment, for COMPOSER
+     *
+     * @throws InvalidRegexOptionException when the release pinned names no PCRE2 release
+     */
+    public static function composerPcre(string $projectDir, array $env): ?string
+    {
+        $pinned = ComposerPlatform::pcre($projectDir, $env);
+        if (null === $pinned) {
+            return null;
+        }
+
+        [$written, $name] = $pinned;
+        $parts = explode('.', trim($written, " \t\n\r\0\x0B"));
+        $release = \count($parts) > 2 && \count($parts) <= 4 && Ascii::isDigit(implode('', \array_slice($parts, 2))) && !\in_array('', $parts, true)
+            ? $parts[0].'.'.$parts[1]
+            : $written;
+
+        try {
+            return (new PcreTarget(\PHP_VERSION_ID, $release))->pcreVersion;
+        } catch (InvalidRegexOptionException $e) {
+            throw new InvalidRegexOptionException(\sprintf('%s config.platform.lib-pcre "%s" is not a PCRE2 release like "10.44": fix it, or remove it to judge with the PCRE2 the analysed PHP bundles.', $name, $written), 0, $e);
+        }
+    }
+
+    /**
      * The intervals require.php allows, from the floor up: the versions on
      * PCRE1 and those below a pinned platform are not installed on.
      *

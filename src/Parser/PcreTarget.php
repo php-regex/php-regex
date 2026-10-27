@@ -125,9 +125,11 @@ final class PcreTarget
      * were cut - 8.4.0 bundles 10.44 while 8.4.27 links 10.49. Three
      * answers exist and none collapses into another: the engine the
      * running PHP links (PCRE_VERSION), the one bundledWith() estimates
-     * for an analysed PHP, and an explicit pin the consumer holds. When
-     * they disagree, the pin wins, the running engine speaks for the
-     * analysed PHP it shares a minor with, and the estimate is the floor.
+     * for an analysed PHP, and an explicit pin the consumer holds.
+     * ParserOptions::resolveTarget() decides between them, for every entry
+     * point: the pin wins; the running engine speaks for the running PHP,
+     * and in the PHPStan extension for every PHP of its minor version; the
+     * estimate answers for the rest.
      */
     public static function bundledWith(int $phpVersionId): self
     {

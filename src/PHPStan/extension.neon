@@ -5,7 +5,9 @@ parametersSchema:
         # running PHPStan, a version like '8.2' or a PHP_VERSION_ID like 80200
         phpVersion: schema(anyOf(schema(string(), pattern('runtime|\d{5,}|\d+\.\d{1,2}(\.\d{1,2})?')), schema(int(), min(1))), nullable()),
         # PCRE2 release patterns are judged for, like '10.42' or PCRE_VERSION
-        # ('10.44 2024-06-07'); null for the one the PHP version bundles
+        # ('10.44 2024-06-07'), used as is; null for the one composer.json
+        # pins in config.platform.lib-pcre, else the running PCRE2 for the
+        # running PHP's minor version, else the one the PHP version bundles
         pcreVersion: schema(string(), pattern('\d+\.\d+(-[A-Za-z0-9]+)?(\s.*)?'), nullable()),
         # LC_CTYPE locale patterns are judged under, like 'tr_TR.UTF-8':
         # its character tables decide the size of some classes; null for
@@ -56,7 +58,8 @@ parameters:
         - bootstrap.php
 
     phpRegex:
-        # Judge patterns for PHPStan's phpVersion, with the PCRE2 it bundles.
+        # Judge patterns for PHPStan's phpVersion, with the PCRE2 the running
+        # PHP links when it is that minor version, else the one it bundles.
         # A pattern is reported only when the running engine compiles it and
         # the target refuses it: PHPStan itself reports what the running
         # engine refuses.

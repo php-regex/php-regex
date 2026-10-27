@@ -20,7 +20,8 @@ use PHPRegex\Parser\PcreTarget;
  * The lowest PHP a project installs on, as its composer.json says it:
  * config.platform.php, else the lowest version require.php allows on
  * PCRE2. Reading never fails: what cannot be read becomes a notice, and
- * the caller judges for the running PHP.
+ * the caller judges for the running PHP. The PCRE2 release
+ * config.platform.lib-pcre pins is read apart (pcre()).
  *
  * @internal
  */
@@ -42,13 +43,7 @@ final class ComposerPlatform
      */
     public static function read(string $projectDir, array $env, array &$notices): ?array
     {
-        $name = ($env['COMPOSER'] ?? '') ?: 'composer.json';
-        // A Windows drive prefix is read from the name itself: a check of
-        // the file system needs no regex of the engine, which a pinned
-        // limit would leave giving up on.
-        $windowsDrive = \strlen($name) >= 3 && \ctype_alpha($name[0]) && ':' === $name[1]
-            && ('/' === $name[2] || '\\' === $name[2]);
-        $path = str_starts_with($name, '/') || $windowsDrive ? $name : $projectDir.'/'.$name;
+        [$name, $path] = self::locate($projectDir, $env);
 
         $contents = is_file($path) ? @file_get_contents($path) : false;
         if (false === $contents) {
@@ -129,6 +124,45 @@ final class ComposerPlatform
         }
 
         return [ProjectTarget::onPcre2($floor, $name.' require.php allows'), $name.' require.php', $constraint];
+    }
+
+    /**
+     * The PCRE2 release config.platform.lib-pcre pins, as written, read
+     * from the composer.json of $projectDir, or the file the COMPOSER
+     * variable names; null when the file cannot be read or pins none.
+     *
+     * @param array<string, string> $env
+     *
+     * @return array{string, string}|null the release, and the name of the file it was read from
+     */
+    public static function pcre(string $projectDir, array $env): ?array
+    {
+        [$name, $path] = self::locate($projectDir, $env);
+        $contents = is_file($path) ? @file_get_contents($path) : false;
+        $composer = false === $contents ? null : json_decode($contents, true);
+        $release = \is_array($composer) ? self::at($composer, 'config', 'platform', 'lib-pcre') : null;
+
+        return \is_string($release) ? [$release, $name] : null;
+    }
+
+    /**
+     * The name of the composer.json read, COMPOSER's or "composer.json",
+     * and its path.
+     *
+     * @param array<string, string> $env
+     *
+     * @return array{string, string}
+     */
+    private static function locate(string $projectDir, array $env): array
+    {
+        $name = ($env['COMPOSER'] ?? '') ?: 'composer.json';
+        // A Windows drive prefix is read from the name itself: a check of
+        // the file system needs no regex of the engine, which a pinned
+        // limit would leave giving up on.
+        $windowsDrive = \strlen($name) >= 3 && \ctype_alpha($name[0]) && ':' === $name[1]
+            && ('/' === $name[2] || '\\' === $name[2]);
+
+        return [$name, str_starts_with($name, '/') || $windowsDrive ? $name : $projectDir.'/'.$name];
     }
 
     /**

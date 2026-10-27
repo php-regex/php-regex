@@ -61,6 +61,23 @@ final class ParserOptionsTargetResolutionTest extends TestCase
         yield 'a release as PCRE_VERSION spells it' => ['php' => 80300, 'pcre' => '10.44 2024-06-07', 'expected' => 80300, 'expectedPcre' => '10.44'];
     }
 
+    /**
+     * The PHPStan extension lets the running PCRE2 judge every PHP of the
+     * running PHP's minor version; a release named still wins.
+     */
+    #[Test]
+    public function test_the_running_pcre2_may_speak_for_its_minor(): void
+    {
+        $sameMinor = intdiv(\PHP_VERSION_ID, 100) * 100;
+        $otherMinor = 802 === intdiv(\PHP_VERSION_ID, 100) ? 80300 : 80200;
+
+        $this->assertSame(PcreTarget::runtime()->pcreVersion, ParserOptions::resolveTarget($sameMinor, null, null, true)->pcreVersion);
+        $this->assertSame(PcreTarget::runtime()->pcreVersion, ParserOptions::resolveTarget($sameMinor + 99, null, null, true)->pcreVersion);
+        $this->assertSame(PcreTarget::bundledWith($otherMinor)->pcreVersion, ParserOptions::resolveTarget($otherMinor, null, null, true)->pcreVersion);
+        $this->assertSame('10.40', ParserOptions::resolveTarget($sameMinor, '10.40', null, true)->pcreVersion);
+        $this->assertSame(PcreTarget::bundledWith($sameMinor)->pcreVersion, ParserOptions::resolveTarget($sameMinor)->pcreVersion);
+    }
+
     #[Test]
     public function test_the_locale_named_is_kept_and_the_runtime_s_by_default(): void
     {
