@@ -332,7 +332,9 @@ final class RegexTest extends TestCase
 
     /**
      * What literals() reads, spelled once: the helper typing must not move
-     * one literal, one search pattern or one confidence level.
+     * one literal, one search pattern or one confidence level. A search
+     * pattern is a literal a matching subject contains, never anchored: the
+     * literals describe the match, not where it sits in the subject.
      *
      * @param list<string> $literals
      * @param list<string> $patterns
@@ -353,12 +355,16 @@ final class RegexTest extends TestCase
      */
     public static function provideLiteralExtractions(): iterable
     {
-        yield 'a repeated literal' => ['pattern' => '/a+/', 'literals' => ['a'], 'patterns' => ['^a'], 'confidence' => 'medium'];
-        yield 'an anchored head and tail' => ['pattern' => '/^foo.*bar$/', 'literals' => ['foo', 'bar'], 'patterns' => ['^foo', 'bar$'], 'confidence' => 'medium'];
-        yield 'two whole-word alternatives' => ['pattern' => '/abc|abd/', 'literals' => ['abc', 'abd'], 'patterns' => ['^abc', '^abd', 'abc$', 'abd$'], 'confidence' => 'high'];
+        yield 'a repeated literal' => ['pattern' => '/a+/', 'literals' => ['a'], 'patterns' => ['a'], 'confidence' => 'medium'];
+        yield 'an anchored head and tail' => ['pattern' => '/^foo.*bar$/', 'literals' => ['foo', 'bar'], 'patterns' => ['foo', 'bar'], 'confidence' => 'medium'];
+        yield 'two whole-word alternatives' => ['pattern' => '/abc|abd/', 'literals' => ['abc', 'abd'], 'patterns' => ['abc', 'abd'], 'confidence' => 'high'];
         yield 'no literal at all' => ['pattern' => '/\\d+/', 'literals' => [], 'patterns' => [], 'confidence' => 'low'];
-        yield 'a repeated group before a literal' => ['pattern' => '/(a|b)+c/', 'literals' => ['a', 'b', 'c'], 'patterns' => ['^a', '^b', 'c$'], 'confidence' => 'medium'];
-        yield 'literals around a class' => ['pattern' => '/x[0-9]y/', 'literals' => ['x', 'y'], 'patterns' => ['^x', 'y$'], 'confidence' => 'medium'];
+        yield 'a repeated group before a literal' => ['pattern' => '/(a|b)+c/', 'literals' => ['a', 'b', 'c'], 'patterns' => ['a', 'b', 'c'], 'confidence' => 'medium'];
+        yield 'literals around a class' => ['pattern' => '/x[0-9]y/', 'literals' => ['x', 'y'], 'patterns' => ['x', 'y'], 'confidence' => 'medium'];
+        yield 'a literal a match starts with, anywhere in the subject' => ['pattern' => '/user-\\d{4}/', 'literals' => ['user-'], 'patterns' => ['user\\-'], 'confidence' => 'medium'];
+        // Only the empty string: nothing a subject must contain.
+        yield 'an empty match' => ['pattern' => '/^$/', 'literals' => [], 'patterns' => [], 'confidence' => 'low'];
+        yield 'a lookahead alone' => ['pattern' => '/(?=a)/', 'literals' => [], 'patterns' => [], 'confidence' => 'low'];
     }
 
     #[Test]

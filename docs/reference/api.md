@@ -680,13 +680,17 @@ match consumes: every match starts with one of `literalSet->prefixes` and ends w
 an empty list says nothing about that end. Lookarounds add nothing, `(*ACCEPT)` drops the suffixes, and a set too large
 to keep is dropped rather than cut.
 
+`patterns` are those literals quoted for a `/` delimiter, never anchored: a subject the pattern matches holds one of
+them, wherever the match sits in it, so they can reject a subject before `preg_match()` runs, never accept one. An
+empty literal, held by every subject, is left out, and a pattern with no other literal is `low` confidence.
+
 ```php
 use PHPRegex\Toolkit\Regex;
 
 $result = Regex::create()->literals('/user-\d{4}/');
 
 print_r($result->literals);                     // ['user-']
-echo $result->patterns[0];                      // '^user\-'
+echo $result->patterns[0];                      // 'user\-'
 echo $result->literalSet->getLongestPrefix();   // 'user-'
 print_r($result->literalSet->suffixes);         // [] (the digits vary)
 echo $result->confidence->value;                // 'medium' (LiteralConfidence::Medium)

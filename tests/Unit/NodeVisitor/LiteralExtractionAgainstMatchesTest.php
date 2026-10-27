@@ -44,6 +44,43 @@ final class LiteralExtractionAgainstMatchesTest extends TestCase
     }
 
     /**
+     * A subject the pattern matches holds one of the search patterns: they
+     * prefilter the subject, before preg_match() runs.
+     */
+    #[Test]
+    #[DataProvider('provideMatches')]
+    #[DataProvider('provideSubjectsAroundTheMatch')]
+    public function test_a_subject_the_pattern_matches_holds_one_of_the_search_patterns(string $pattern, string $subject): void
+    {
+        $this->assertSame(1, preg_match($pattern, $subject), $pattern);
+
+        $patterns = Regex::create(['cache' => null])->literals($pattern)->patterns;
+        if ([] === $patterns) {
+            return;
+        }
+
+        $held = array_filter($patterns, static fn (string $fragment): bool => 1 === preg_match('/'.$fragment.'/', $subject));
+        $this->assertNotSame([], $held, \sprintf('%s matches "%s", which holds none of %s', $pattern, addcslashes($subject, "\n"), json_encode($patterns)));
+    }
+
+    /**
+     * Where the match sits in the subject, and the flags that move its
+     * ends: the engine's answers on PHP 8.4.27 (PCRE2 10.49).
+     *
+     * @return iterable<string, array{pattern: string, subject: string}>
+     */
+    public static function provideSubjectsAroundTheMatch(): iterable
+    {
+        yield 'a match inside the subject' => ['pattern' => '/user-\\d{4}/', 'subject' => 'id=user-1234'];
+        yield 'a line start under m' => ['pattern' => '/^foo/m', 'subject' => "bar\nfoo"];
+        yield 'a line end under m' => ['pattern' => '/foo$/m', 'subject' => "foo\nbar"];
+        yield 'an end before a final newline' => ['pattern' => '/foo$/', 'subject' => "xfoo\n"];
+        yield 'an end pinned by \\z' => ['pattern' => '/bar\\z/', 'subject' => 'xxbar'];
+        yield 'a match where the search starts' => ['pattern' => '/\\Gfoo/', 'subject' => 'foox'];
+        yield 'a branch of two' => ['pattern' => '/abc|xyz/', 'subject' => '--xyz--'];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, subject: string}>
      */
     public static function provideMatches(): iterable

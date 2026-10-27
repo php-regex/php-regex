@@ -411,8 +411,8 @@ final class Regex
         $literalSet = $ast->accept(new LiteralExtractor());
 
         $uniqueLiterals = $this->extractUniqueLiterals($literalSet);
-        $searchPatterns = $this->buildSearchPatterns($literalSet);
-        $confidenceLevel = $this->determineConfidenceLevel($literalSet);
+        $searchPatterns = $this->buildSearchPatterns($uniqueLiterals);
+        $confidenceLevel = [] === $uniqueLiterals ? LiteralConfidence::Low : $this->determineConfidenceLevel($literalSet);
 
         return new LiteralExtractionResult($uniqueLiterals, $searchPatterns, $confidenceLevel, $literalSet);
     }
@@ -544,59 +544,28 @@ final class Regex
      *
      * @param LiteralSet $literalSet The literal set from extraction
      *
-     * @return array<string> Unique literals
+     * @return list<string> Unique literals
      */
     private function extractUniqueLiterals(LiteralSet $literalSet): array
     {
-        $prefixes = $literalSet->prefixes;
-        $suffixes = $literalSet->suffixes;
+        // An empty literal is held by every subject: it says nothing.
+        $literals = array_filter(array_merge($literalSet->prefixes, $literalSet->suffixes), static fn (string $literal): bool => '' !== $literal);
 
-        return array_values(array_unique(array_merge($prefixes, $suffixes)));
+        return array_values(array_unique($literals));
     }
 
     /**
-     * @param LiteralSet               $literalSet     The literal set to read $property from
-     * @param callable(string): string $patternBuilder
+     * The literals as patterns a subject the pattern matches holds one of.
+     * Never anchored: the literals describe the match, not where it sits in
+     * the subject, and "m", "D", "\z" or "\G" move where it may sit.
      *
-     * @return array<string>
+     * @param list<string> $literals
+     *
+     * @return list<string>
      */
-    private function processLiteralPatterns(LiteralSet $literalSet, string $property, callable $patternBuilder): array
+    private function buildSearchPatterns(array $literals): array
     {
-        /** @var iterable<string> $items */
-        $items = $literalSet->$property;
-        $patterns = [];
-
-        foreach ($items as $item) {
-            if (\is_string($item) && '' !== $item) {
-                $patterns[] = $patternBuilder($item);
-            }
-        }
-
-        return array_values(array_unique($patterns));
-    }
-
-    /**
-     * Build search patterns from prefixes and suffixes.
-     *
-     * @param LiteralSet $literalSet The literal set containing prefixes/suffixes
-     *
-     * @return array<string> Search patterns
-     */
-    private function buildSearchPatterns(LiteralSet $literalSet): array
-    {
-        $prefixPatterns = $this->processLiteralPatterns(
-            $literalSet,
-            'prefixes',
-            static fn (string $prefix): string => '^'.preg_quote($prefix, '/'),
-        );
-
-        $suffixPatterns = $this->processLiteralPatterns(
-            $literalSet,
-            'suffixes',
-            static fn (string $suffix): string => preg_quote($suffix, '/').'$',
-        );
-
-        return array_values(array_unique(array_merge($prefixPatterns, $suffixPatterns)));
+        return array_map(static fn (string $literal): string => preg_quote($literal, '/'), $literals);
     }
 
     /**

@@ -127,9 +127,8 @@ final class ToolkitDocblockContractTest extends TestCase
 
     public static function provideLiteralSetHelpers(): iterable
     {
+        // The search patterns are built from the literals, not the set.
         yield 'extractUniqueLiterals' => ['extractUniqueLiterals'];
-        yield 'processLiteralPatterns' => ['processLiteralPatterns'];
-        yield 'buildSearchPatterns' => ['buildSearchPatterns'];
         yield 'determineConfidenceLevel' => ['determineConfidenceLevel'];
     }
 

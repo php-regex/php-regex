@@ -240,17 +240,6 @@ two parsers read differently.
 The literal-fragment builder, the repairer and the confirmed mode first:
 they answer wrong, not just incomplete.
 
-- `Regex::literals()` builds search fragments that reject subjects the
-  pattern matches. The fragments carry a `^` whatever the pattern anchors:
-  `/user-\d{4}/` gives `^user\-`, which rejects `"id=user-1234"` — the
-  prefilter of the docs example then misses every match the engine finds
-  (`LiteralSet` holds match text, and the facade cannot tell `/foo/` from
-  `/^foo/`). The pattern's `m` is dropped the same way: `literals('/^foo/m')`
-  gives `^foo`, which rejects `"bar\nfoo"`. And a suffix pinned by `\z` or
-  `D` (`/bar\z/`, `/foo$/D`) is spelled `bar$`, which accepts `"xxbar\n"`
-  the engine refuses — the doctrine `docs/reference/prefilters.md` states
-  itself. The fragments need the pattern's anchoring and flags, or an
-  unanchored, contains-shaped degradation (`Regex.php:585-600`).
 - `RedosRepairer::repair()` ships rewrites that change the language, and
   the class's own docblock example reads `repair(...)[0]`:
   `/(x+x+)+y/` has no certified repair, so `[0]` is `/(x++x+)+y/`
@@ -377,10 +366,6 @@ they answer wrong, not just incomplete.
 
 ### Smaller points, each reproduced once
 
-- `literals('/^$/')` and `literals('/(?=a)/')` report `['']` with High
-  confidence: an always-true `str_contains($s, '')` prefilter at the
-  strongest confidence level, and `''` leaks into results for
-  engine-refused patterns too (`/(?1)a/` → `['', 'a']`).
 - `analyze()`'s `redos->error` carries the exception class prefix
   ("PHPRegex\Parser\Exception\ParserException: No closing delimiter…")
   while `errors[]` holds the same failure's clean message — one failure,
@@ -436,9 +421,6 @@ they answer wrong, not just incomplete.
   shape in `MetricsCollector::record`, which resets all counters when
   depth reaches 0 mid-traversal (`ComplexityScorer.php:78`,
   `MetricsCollector.php:281-285`).
-- The `\G` of `/\Gfoo/` is read as a start anchor: the fragment `^foo`
-  cannot match `"xfoo"` at offset 1 where `\G` does
-  (`LiteralExtractor.php:279-284`).
 - `PatternInfoAnalyzer` is not the only reader that could refuse
   `/\k<x>/`; `ParserOptions::fromArray` accepts `cache` arrays whose
   `max_entries` of 0 discards every write without a word
