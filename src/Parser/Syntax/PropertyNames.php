@@ -169,10 +169,9 @@ final class PropertyNames
     public static function firstReleaseKnowing(string $name, bool $braced): ?string
     {
         $names = self::namesFrom1040();
-        $releases = array_unique([...array_column($names, 0), PcreFeature::MalformedPropertyName->release()]);
-        usort($releases, static fn (string $a, string $b): int => version_compare($a, $b));
 
-        foreach ($releases as $release) {
+        // The releases read, from the oldest.
+        foreach (array_keys(PropertyNameTables::RELEASES) as $release) {
             if (self::knownTo(self::lookedUp($name, $braced, $release), $release, $names)) {
                 return $release;
             }

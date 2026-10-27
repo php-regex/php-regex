@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\PropertyNames;
 use PHPRegex\Parser\Syntax\PropertyNameTables;
 use PHPRegex\Parser\Validation\OtherCaseTables;
 use PHPRegex\Tests\Support\PcreGateLimits;
@@ -76,6 +77,25 @@ final class PropertyNameTablesTest extends TestCase
         }
 
         $this->assertSame(array_values(array_unique($names)), $names);
+    }
+
+    /**
+     * Each name is known from the release that lists it, a script in the
+     * script tables too, and a name in another table than its own never.
+     */
+    #[Test]
+    public function test_each_name_is_known_from_the_release_that_lists_it(): void
+    {
+        foreach (['scripts' => PropertyNameTables::SCRIPTS, 'properties' => PropertyNameTables::PROPERTIES] as $kind => $lists) {
+            foreach ($lists as $release => $list) {
+                foreach (explode(' ', $list) as $name) {
+                    $this->assertSame((string) $release, PropertyNames::firstReleaseKnowing($name, true), $name);
+                    $this->assertSame(version_compare((string) $release, '10.45', '<') ? '10.45' : (string) $release, PropertyNames::firstReleaseKnowing('  ^ '.strtoupper($name), true), $name.' after a "^" put off the brace');
+                    $this->assertSame('scripts' === $kind ? (string) $release : null, PropertyNames::firstReleaseKnowing('Script_Extensions = '.$name, true), 'scx '.$name);
+                    $this->assertNull(PropertyNames::firstReleaseKnowing('gc='.$name, true), 'gc '.$name);
+                }
+            }
+        }
     }
 
     #[Test]
