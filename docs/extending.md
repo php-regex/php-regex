@@ -534,7 +534,7 @@ the new node belongs there.
 |---|---|---|
 | `Node/CalloutNode.php` | the node | `AcceptReturnTypeContractTest` for a native return type on `accept()` |
 | `Token/TokenType.php`, `Lexer.php` | the token: case, pattern, priority | your parser tests: the syntax is read as something else, or the lexer stops with an internal error |
-| `Syntax/TokenParser.php` | the `case` in `parseAtom()`, the reader | your parser tests |
+| `Syntax/TokenParser.php` | the `case` in `parseAtom()`, the reader, in the reader of its family (`GroupParser`, `VerbParser`, ...) when it has one | your parser tests |
 | `ErrorCode.php` | one case per way the syntax can be wrong | `ErrorCodeDocumentationTest`, until `docs/reference/diagnostics.md` lists it |
 | `PcreFeature.php` | a case for each behaviour that changed by release | `PcreFeatureTableTest`, until `docs/concepts/pcre.md` lists it |
 | `NodeVisitorInterface.php`, `AbstractNodeVisitor.php` | the visit method and its default | every visitor of the library, with a PHP error |

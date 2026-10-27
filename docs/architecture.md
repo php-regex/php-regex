@@ -88,6 +88,8 @@ The parser implements precedence by control flow:
 - `parseQuantifiedAtom()` parses one atom, then checks for a trailing quantifier and wraps it in a `QuantifierNode`.
 - `parseAtom()` delegates to specialized handlers for groups, character classes, verbs, assertions, and literals.
 
+`TokenParser` keeps the reading loop and the dispatch; each family of constructs has a reader of its own beside it in `src/Parser/Syntax/`: `QuantifierParser`, `ReferenceParser` (back references and the escapes read in their place), `GroupParser` (the groups `(?` opens and the option settings), `SubroutineParser`, `VerbParser`, `ClassParser`, `ExtendedClassParser` and `ConditionParser`. They share one `ParseState`: the stream, the options in force and the groups numbered so far.
+
 Extended mode (`/x`) is handled inside `parseSequence()` via `consumeExtendedModeContent()`. Whitespace and inline comments become nodes where necessary so the compiler can round-trip the original pattern.
 
 ## Step 4: AST Structure

@@ -48,19 +48,24 @@ use PHPRegex\Parser\Token\TokenType;
  * A recursive descent over the tokens the lexer gives: an alternation of
  * sequences of quantified atoms, and a group read for each "(" with the
  * alternation inside it. It follows the PCRE2 release of its target, down
- * to the offset each error is reported at, and reads in this order: the
- * entry and the sequences, with the trivia of "x"; quantifiers; atoms,
- * escapes and references; groups, inline options and verbs; extended
- * classes; names and the faults of a "(?" group it cannot read.
+ * to the offset each error is reported at. This parser holds the reading
+ * loop, the entry, the alternatives and the sequences with the trivia of
+ * "x", and the dispatch: the type of the token under the cursor, and after
+ * "(?" what follows it, picks the reader of the item.
  *
- * The parts with a grammar of their own are read apart: a character class
- * by ClassParser and the condition of a conditional by ConditionParser,
- * both sharing this parser's ParseState, the stream and the modes. Where
- * PCRE refuses a count, an unclosed verb or a callout is asked of
- * RepeatCount, PcreVerb and Callout, which read no parser state. A body
- * PCRE reads from the text, the payload of an alphabetic assertion or an
- * operand of an extended class, is lexed and read by a parser of its own,
- * its offsets moved into the whole pattern.
+ * Each family of constructs is read by a reader of its own: quantifiers by
+ * QuantifierParser, back references and the escapes PCRE reads in their
+ * place by ReferenceParser, the groups a "(?" opens and the option settings
+ * by GroupParser, the calls by SubroutineParser, verbs by VerbParser, a
+ * character class by ClassParser, an extended class by ExtendedClassParser
+ * and the condition of a conditional by ConditionParser. They share this
+ * parser's ParseState, the stream, the modes and the group count, and are
+ * made for each reading on the first item of their family. Where PCRE
+ * refuses a count, an unclosed verb or a callout is asked of RepeatCount,
+ * PcreVerb and Callout, which read no parser state. A body PCRE reads from
+ * the text, the payload of an alphabetic assertion or an operand of an
+ * extended class, is lexed and read by a parser of its own, its offsets
+ * moved into the whole pattern.
  *
  * A pattern with a recursion test written before the group its name gives,
  * "(?(R2)b|c)(?<R2>a)", is read a second time, knowing every name.
