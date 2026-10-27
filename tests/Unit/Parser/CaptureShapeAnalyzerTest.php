@@ -146,7 +146,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $this->assertSame('array{0: lowercase-string&non-falsy-string, 1: lowercase-string&non-falsy-string, 2?: \'b\'}', $shape->matchShape());
 
         $subject = $this->analyze('/^(?:(?:(?:(?:a{65535}){65535}){65535}){65535}){65535}$/')->subject;
-        $this->assertNotNull($subject);
+        $this->assertInstanceOf(CaptureGroupShape::class, $subject);
         $this->assertSame(\PHP_INT_MAX, $subject->minLength);
         $this->assertNull($subject->maxLength);
 
@@ -154,7 +154,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         // the whole reads exactly PHP_INT_MAX, and the final newline "$" lets through one more.
         $exact = $this->analyze('/^(?:(?:(?:a{65535}){65535}){65535}){32769}(?:(?:a{65535}){65535}){32770}(?:a{65535}){32769}a{32767}$/');
         $this->assertSame(\PHP_INT_MAX, $exact->whole->maxLength);
-        $this->assertNotNull($exact->subject);
+        $this->assertInstanceOf(CaptureGroupShape::class, $exact->subject);
         $this->assertSame(\PHP_INT_MAX, $exact->subject->minLength);
         $this->assertNull($exact->subject->maxLength);
     }
