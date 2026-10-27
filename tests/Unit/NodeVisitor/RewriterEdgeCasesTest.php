@@ -757,7 +757,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_parse_quantifier_count_covers_all_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'repeatRewrites');
 
         // Test exact count {3}
         $result = $this->invokePrivate($optimizer, 'parseQuantifierCount', [new QuantifierNode(new LiteralNode('a', 0, 1), '{3}', QuantifierType::Greedy, 0, 1)]);
@@ -779,7 +779,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_is_capture_sensitive_covers_all_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'repeatRewrites');
 
         // Test capturing group
         $capturingGroup = new GroupNode(new LiteralNode('a', 1, 2), GroupType::Capturing, null, null, 0, 3);
@@ -820,7 +820,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_create_quantified_node_covers_all_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'repeatRewrites');
 
         // Test with count > 1
         $node = new LiteralNode('a', 0, 1);
@@ -836,7 +836,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_normalize_quantifier_covers_all_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'repeatRewrites');
 
         $node = new LiteralNode('a', 0, 1);
 
@@ -919,7 +919,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_compact_sequence_covers_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'repeatRewrites');
 
         // Test empty sequence
         $result = $this->invokePrivate($optimizer, 'compactSequence', [[]]);
@@ -942,7 +942,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_are_nodes_equal_covers_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'repeatRewrites');
 
         // Test same type, same content
         $node1 = new LiteralNode('abc', 0, 3);
