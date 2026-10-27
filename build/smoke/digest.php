@@ -61,6 +61,9 @@ function digest(NodeInterface $node): array
 		$props[$property->getName()] = $value;
 	}
 
+	// the order properties are declared in is not behaviour: the twin
+	// declares the promoted ones where the downgrade writes them
+	ksort($props);
 	$result['p'] = $props;
 
 	$children = [];

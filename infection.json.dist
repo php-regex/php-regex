@@ -9,6 +9,7 @@
             "Symfony",
             "PHPStan",
             "Psalm",
+            "Rector",
             "Parser/.phpstorm.meta.php",
             "Redos/.phpstorm.meta.php",
             "Toolkit/.phpstorm.meta.php"
