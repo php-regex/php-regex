@@ -233,11 +233,14 @@ the releases on the other side of 10.43 than the running one. A
 locale the machine cannot set is refused with an
 `InvalidRegexOptionException` that names it.
 
-The automata the lint rules ask read a class without `u` for the same
-tables: each set is asked of the engine with `LC_CTYPE` set to the target's
-locale for the time of the scan. Under `fr_FR.ISO8859-1`, `\w` holds `\xE9`,
-so `/(?=\w)\xE9/` is no impossible lookahead there, as `preg_match()` matches
-`"\xE9"` under that locale and not under `C`, where the rule reports it.
+The automata the lint rules ask, and the ReDoS proof, read a class without
+`u` for the same tables: each set is asked of the engine with `LC_CTYPE` set
+to the target's locale for the time of the scan. Under `fr_FR.ISO8859-1`,
+`\w` holds `\xE9`, so `/(?=\w)\xE9/` is no impossible lookahead there, as
+`preg_match()` matches `"\xE9"` under that locale and not under `C`, where the
+rule reports it; and `/^(?:\w|\xE9)+$/`, `safe (proven)` under `C`, is
+exponential there, as PHP exhausts the backtrack limit on 30 `"\xE9"` and a
+`"!"` under that locale.
 
 The command line takes `--locale`, `regex.json` takes `locale`, and every
 bridge has a `locale` setting beside its PHP and PCRE2 ones. The runtime

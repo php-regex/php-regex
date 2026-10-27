@@ -220,6 +220,12 @@ final class PnfaBuilder
     private readonly string $startOptions;
 
     /**
+     * The locale whose character tables the sets without /u are read
+     * under, the target's; the one PHP compiles under when null.
+     */
+    private readonly ?string $locale;
+
+    /**
      * @param bool $inPlace whether the lookarounds are read in place, in the
      *                      pattern's own search, instead of as searches of
      *                      their own
@@ -232,6 +238,7 @@ final class PnfaBuilder
         private readonly bool $inPlace = false,
     ) {
         $this->scriptsAlone = ClassSetProvider::readsScriptsAlone($target);
+        $this->locale = $target?->locale;
         $this->unicode = str_contains($regex->flags, 'u');
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
         $this->source = $regex->source ?? '';
@@ -1057,8 +1064,9 @@ final class PnfaBuilder
 
         // The options are the whole scope: a pattern-wide /r is a bit of
         // them already, and "(?-r)" takes it off. The start options change
-        // what a class matches, "(*UCP)" without u the bytes past ASCII.
-        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startOptions);
+        // what a class matches, "(*UCP)" without u the bytes past ASCII, and
+        // so do the tables of the locale without u.
+        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startOptions, true, $this->locale);
         if (null !== $set) {
             return $set;
         }
