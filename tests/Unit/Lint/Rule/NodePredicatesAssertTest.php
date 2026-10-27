@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\Rule\Support\NodePredicates;
-use PHPRegex\Optimizer\Rewriter;
+use PHPRegex\Optimizer\ClassRewrites;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -26,7 +26,7 @@ use PHPUnit\Framework\TestCase;
  * node IS an X: their docblocks owe callers an @phpstan-assert-if-true, the
  * half of the contract that lets the lint rules' instanceof branches narrow
  * for real — the true arm reads ->flags, ->type, ->value without re-asserting
- * the class. The Rewriter row is the same contract for an array of nodes:
+ * the class. The ClassRewrites row is the same contract for an array of nodes:
  * when canAlternationBeCharClass() says yes, every alternative is a
  * LiteralNode, and the sole caller's ignored inline @var becomes real
  * narrowing.
@@ -83,11 +83,11 @@ final class NodePredicatesAssertTest extends TestCase
     #[Test]
     public function test_rewriter_char_class_check_asserts_literal_alternatives(): void
     {
-        $assert = self::assertTag(Rewriter::class, 'canAlternationBeCharClass');
+        $assert = self::assertTag(ClassRewrites::class, 'canAlternationBeCharClass');
 
         $this->assertNotNull(
             $assert,
-            'Rewriter::canAlternationBeCharClass() must carry @phpstan-assert-if-true on $alternatives: a true'
+            'ClassRewrites::canAlternationBeCharClass() must carry @phpstan-assert-if-true on $alternatives: a true'
             .' answer means every alternative passed the LiteralNode branch of its loop, so the caller\'s inline'
             .' `@var array<Node\LiteralNode>` becomes real narrowing and can go.',
         );
@@ -100,7 +100,7 @@ final class NodePredicatesAssertTest extends TestCase
             sprintf('The assert must name the array of nodes it proved, array<...>; it says %s.', $type),
         );
 
-        [$useMap, $namespace] = self::fileImports(Rewriter::class);
+        [$useMap, $namespace] = self::fileImports(ClassRewrites::class);
         $this->assertSame(
             LiteralNode::class,
             self::resolveTypeName($member[1], $useMap, $namespace),
