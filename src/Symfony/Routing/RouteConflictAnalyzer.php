@@ -131,7 +131,7 @@ final class RouteConflictAnalyzer
                     continue;
                 }
 
-                if (!$this->hostsOverlap(
+                $hostsOverlap = $this->hostsOverlap(
                     $earlier,
                     $later,
                     $options,
@@ -139,7 +139,8 @@ final class RouteConflictAnalyzer
                     $hostChecks,
                     $hostIntersections,
                     $hostSkipped,
-                )) {
+                );
+                if (false === $hostsOverlap) {
                     continue;
                 }
 
@@ -158,7 +159,7 @@ final class RouteConflictAnalyzer
                     continue;
                 }
 
-                $notes = $this->buildNotes($earlier, $later);
+                $notes = $this->buildNotes($earlier, $later, null === $hostsOverlap);
 
                 if (null === $equivalence->rightOnlyExample) {
                     // Every path of the later route goes to the earlier one.
@@ -375,6 +376,10 @@ final class RouteConflictAnalyzer
     }
 
     /**
+     * Whether the hosts of the two routes can match the same name: null
+     * when the solver gives up on them, which leaves the pair compared on
+     * its paths with its hosts unread.
+     *
      * @phpstan-param RouteDescriptor $left
      * @phpstan-param RouteDescriptor $right
      */
@@ -386,7 +391,7 @@ final class RouteConflictAnalyzer
         int &$hostChecks,
         int &$hostIntersections,
         int &$hostSkipped,
-    ): bool {
+    ): ?bool {
         if (!$left['hasHostRequirement'] || !$right['hasHostRequirement']) {
             return true;
         }
@@ -406,19 +411,21 @@ final class RouteConflictAnalyzer
             $skippedPairs++;
             $hostSkipped++;
 
-            return true;
+            return null;
         }
 
         return !$intersection->isEmpty;
     }
 
     /**
+     * @param bool $hostsUnread whether the solver gave up on the two hosts
+     *
      * @phpstan-param RouteDescriptor $left
      * @phpstan-param RouteDescriptor $right
      *
      * @return array<int, string>
      */
-    private function buildNotes(array $left, array $right): array
+    private function buildNotes(array $left, array $right, bool $hostsUnread): array
     {
         $notes = [];
 
@@ -426,7 +433,7 @@ final class RouteConflictAnalyzer
             $notes[] = 'Route conditions were not evaluated.';
         }
 
-        if ($left['hostUnsupported'] || $right['hostUnsupported']) {
+        if ($hostsUnread || $left['hostUnsupported'] || $right['hostUnsupported']) {
             $notes[] = 'Host requirements were not evaluated.';
         }
 

@@ -427,7 +427,10 @@ never be reached. Two routes that share some paths but not all are an
 **overlap**, listed with `--show-overlaps`: `/blog/{slug}` (`[a-z]+`) declared
 before `/blog/{id}` (`\d+|new`) takes `/blog/new`. A narrower route declared
 before a wider one, `/users/list` before `/users/{id}`, is the order the
-router expects and is not reported.
+router expects and is not reported. Two hosts the analysis cannot compare,
+a host it cannot read or one the solver gives up on (a conditional in a
+host requirement, say), leave the paths to decide, and the finding notes
+`Host requirements were not evaluated.`
 
 `regex:security` reads `access_control` the same way: the first rule whose
 path, host, methods and addresses take a request applies to it. A later

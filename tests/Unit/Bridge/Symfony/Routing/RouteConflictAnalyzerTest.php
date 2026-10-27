@@ -602,6 +602,30 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
+     * A host check the solver gives up on, a conditional it does not read,
+     * leaves the hosts unread: the conflict it still reports says so, as
+     * for a host it cannot read at all. The matcher sends "bb.example.com"
+     * to the earlier route.
+     */
+    #[Test]
+    public function test_a_host_check_given_up_on_complexity_is_named_on_the_conflict(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('echo', (new Route('/x'))->setHost('{sub}.example.com')->setRequirement('sub', '(?(?=b)bb|c)'));
+        $collection->add('any', (new Route('/x'))->setHost('{name}.example.com'));
+
+        $this->assertSame('echo', (new UrlMatcher($collection, new RequestContext(host: 'bb.example.com')))->match('/x')['_route']);
+        $this->assertSame('any', (new UrlMatcher($collection, new RequestContext(host: 'b.example.com')))->match('/x')['_route']);
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame([], $report->routesWithUnsupportedHosts);
+        $this->assertSame(1, $report->stats['host_skipped']);
+        $this->assertCount(1, $report->conflicts);
+        $this->assertContains('Host requirements were not evaluated.', $report->conflicts[0]['notes']);
+    }
+
+    /**
      * A host the analysis cannot read is never compared: the pair is
      * compared on its paths, and the conflict says the host was not
      * evaluated. A route can hold a host requirement its compiled route
