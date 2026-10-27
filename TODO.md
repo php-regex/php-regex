@@ -240,15 +240,6 @@ two parsers read differently.
 The literal-fragment builder, the repairer and the confirmed mode first:
 they answer wrong, not just incomplete.
 
-- The `{n}` cutoff of the backtracking model reads an exact count as
-  unbounded: `/(?:a{17})+b/` is judged critical/exponential/proven with
-  `"{17} at offset 3 analysed as {17,}"`, while the engine answers it in
-  0.07 ms at n=100,000 (an exact-count chunk loop has no partition
-  ambiguity — its sibling `/(?:a{16})+b/` is proven linear, and `{1,17}`
-  is correctly exponential). Confirmed mode then fails to reproduce the
-  imaginary blowup and drops it: engine linear, theoretical critical,
-  confirmed silent (`PnfaBuilder.php:591-594`, the abstraction documented
-  in `RedosOptions.php:36`). A `min === max` case is missing.
 - `redosIgnoredPatterns` matches the body only, flags dropped: listing
   `/(a+)+b/` also skips `/(a+)+b/i` and `/(a+)+b/su`, whose analysis the
   flags change. The README documents delimiter-insensitivity alone

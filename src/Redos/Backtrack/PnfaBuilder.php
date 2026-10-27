@@ -576,7 +576,7 @@ final class PnfaBuilder
 
             // Copies that read the same input in two ways: the unbounded loop
             // carries that ambiguity, the unrolled copies hide it.
-            if ($max <= $this->boundedRepeatCutoff && $this->repeatsAmbiguously($node->node, $flags)) {
+            if (($max <= $this->boundedRepeatCutoff || $max === $min) && $this->repeatsAmbiguously($node->node, $flags)) {
                 $abstracted = true;
                 $this->ambiguousRepeats[$node->getStartPosition()] ??= \sprintf(
                     '%s at offset %d analysed as {%d,} (its copies read the same input in two ways)',
@@ -588,7 +588,9 @@ final class PnfaBuilder
             }
         }
 
-        if (null !== $max && $max > $this->boundedRepeatCutoff) {
+        // An exact count has no optional copy: its copies are one chain,
+        // as many as the loop it would become unrolls, kept as written.
+        if (null !== $max && $max > $this->boundedRepeatCutoff && $max !== $min) {
             $abstracted = true;
             $max = null;
         }
@@ -773,7 +775,7 @@ final class PnfaBuilder
     {
         if ($node instanceof QuantifierNode) {
             $bounds = $node->bounds;
-            if (null !== $bounds && null !== $bounds->max && $bounds->max > $this->boundedRepeatCutoff) {
+            if (null !== $bounds && null !== $bounds->max && $bounds->max > $this->boundedRepeatCutoff && $bounds->max !== $bounds->min) {
                 $this->abstractions[] = \sprintf(
                     '%s at offset %d analysed as {%d,}',
                     $node->quantifier,

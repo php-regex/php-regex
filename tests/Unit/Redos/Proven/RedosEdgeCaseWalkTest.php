@@ -84,6 +84,42 @@ final class RedosEdgeCaseWalkTest extends TestCase
     }
 
     /**
+     * An exact count has no optional copy to unroll: past the cutoff it is
+     * kept as written, its copies one chain, and splits the input one way
+     * only. The engine answers /(?:a{17})+b/ in 0.08 ms on 100,000 "a" and a
+     * "!" (PHP 8.4.27, PCRE2 10.49, no JIT), as it does /(?:a{16})+b/; read
+     * as {17,}, the outer loop and the copies would share every run.
+     *
+     * @param list<string> $abstractions
+     */
+    #[Test]
+    #[DataProvider('provideCountsAroundTheCutoff')]
+    public function test_an_exact_count_past_the_cutoff_is_kept_as_written(string $pattern, RedosComplexity $complexity, array $abstractions): void
+    {
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+
+        $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);
+        $this->assertSame($complexity, $analysis->complexity, $pattern);
+        $this->assertSame($abstractions, $analysis->abstractions, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, complexity: RedosComplexity, abstractions: list<string>}>
+     */
+    public static function provideCountsAroundTheCutoff(): iterable
+    {
+        yield 'an exact count at the cutoff' => ['pattern' => '/(?:a{16})+b/', 'complexity' => RedosComplexity::Linear, 'abstractions' => []];
+        yield 'an exact count past the cutoff' => ['pattern' => '/(?:a{17})+b/', 'complexity' => RedosComplexity::Linear, 'abstractions' => []];
+        yield 'an exact count of a group' => ['pattern' => '/(?:(?:ab){30})+c/', 'complexity' => RedosComplexity::Linear, 'abstractions' => []];
+        // Copies that read the same input in two ways are a loop at any
+        // count: the engine runs into the backtrack limit from 30 "a", a "!"
+        // and a "b".
+        yield 'an exact count of an ambiguous body' => ['pattern' => '/(?:(?:a|aa){17})+b/', 'complexity' => RedosComplexity::Exponential, 'abstractions' => ['{17} at offset 3 analysed as {17,} (its copies read the same input in two ways)']];
+        // Optional copies past the cutoff are still analysed as a loop.
+        yield 'a range past the cutoff' => ['pattern' => '/(?:a{1,17})+b/', 'complexity' => RedosComplexity::Exponential, 'abstractions' => ['{1,17} at offset 3 analysed as {1,}']];
+    }
+
+    /**
      * A cutoff of zero abstracts every brace bound; ^a{0,}b{2,}$ stays
      * linear (one way to read any input).
      */

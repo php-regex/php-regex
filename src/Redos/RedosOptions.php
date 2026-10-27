@@ -26,7 +26,7 @@ final class RedosOptions
     /**
      * @param int $maxStates           the states the pattern's automata may hold
      * @param int $maxSteps            the states created and product pairs visited the analysis may take
-     * @param int $boundedRepeatCutoff the largest maximum of a bounded repeat unrolled; past it, {m,n} is analysed as {m,}
+     * @param int $boundedRepeatCutoff the largest maximum of a bounded repeat unrolled; past it, {m,n} is analysed as {m,}, an exact count {n} kept
      *
      * @throws InvalidRegexOptionException when a state or step cap is below 1, or the cutoff below 0
      */
