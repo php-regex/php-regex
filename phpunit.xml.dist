@@ -40,6 +40,10 @@
         <!-- The directory the class scans are kept in is set for the
              whole process: each test leaves it unset for the next. -->
         <bootstrap class="PHPRegex\Tests\Support\ClassSetStoreReset"/>
+        <!-- The PCRE limits, the JIT setting and the library's ini setter
+             are set for the whole process: a test that leaves one changed
+             fails the run, named, and the next test finds them as they were. -->
+        <bootstrap class="PHPRegex\Tests\Support\PcreSettingsGuard"/>
     </extensions>
     <testsuites>
         <testsuite name="PHPRegex Test Suite">
