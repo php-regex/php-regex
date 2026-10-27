@@ -74,7 +74,7 @@ final class ClassMemberCaseAndDuplicateTest extends TestCase
     {
         $this->assertTrue(self::sameBytes($pattern, $without), 'Oracle: the element adds no byte.');
 
-        $this->assertNotNull($this->violation($pattern, self::DUPLICATE));
+        $this->assertInstanceOf(RuleViolation::class, $this->violation($pattern, self::DUPLICATE));
     }
 
     /**
