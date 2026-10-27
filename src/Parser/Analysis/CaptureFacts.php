@@ -592,7 +592,8 @@ final class CaptureFacts
      */
     private function character(int $codePoint, bool $caseless): ?array
     {
-        if ($caseless && $this->foldsCodePoint($codePoint)) {
+        // No code point (-1): a "\N{name}" whose name reads as no character.
+        if ($codePoint < 0 || ($caseless && $this->foldsCodePoint($codePoint))) {
             return null;
         }
 

@@ -52,7 +52,9 @@ final class StructuralFingerprint
             return self::canonicalSequence($node, $unicode);
         }
 
-        if (($node instanceof CharLiteralNode && ($unicode || $node->codePoint < 256)) || $node instanceof ControlCharNode) {
+        // A character of no code point (-1), a "\N{name}" whose name reads as
+        // no character, is kept as written below.
+        if (($node instanceof CharLiteralNode && $node->codePoint >= 0 && ($unicode || $node->codePoint < 256)) || $node instanceof ControlCharNode) {
             return ['literal', false, $unicode ? mb_chr($node->codePoint, 'UTF-8') : \chr($node->codePoint)];
         }
 

@@ -300,7 +300,8 @@ final class HirTranslator
 
     private function character(int $codePoint, NodeInterface $node, int $flags): Hir
     {
-        if ($codePoint > $this->alphabetEnd()) {
+        // No code point (-1): a "\N{name}" whose name reads as no character.
+        if ($codePoint < 0 || $codePoint > $this->alphabetEnd()) {
             return $this->opaque($node, Properties::unknown());
         }
 
