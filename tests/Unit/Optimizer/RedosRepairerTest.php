@@ -69,6 +69,37 @@ final class RedosRepairerTest extends TestCase
     }
 
     /**
+     * A rewrite the automata cannot judge is still put to the engine: one
+     * it tells apart from the pattern on a subject is no repair. On PHP
+     * 8.4.27 (PCRE2 10.49), /(x++x+)+y/ refuses "xxy", which /(x+x+)+y/
+     * matches: the possessive keeps every x from the second run.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideRewritesTheEngineTellsApart')]
+    public function test_a_rewrite_the_engine_tells_apart_is_no_repair(string $pattern, string $refuted, array $subjects): void
+    {
+        $repairs = (new RedosRepairer())->repair($pattern);
+
+        $this->assertNotContains($refuted, array_map(static fn (RedosRepair $repair): string => $repair->pattern, $repairs));
+        foreach ($repairs as $repair) {
+            foreach ($subjects as $subject) {
+                $this->assertSame(preg_match($pattern, $subject), preg_match($repair->pattern, $subject), \sprintf('%s is offered for %s, which it reads otherwise on %s.', $repair->pattern, $pattern, json_encode($subject)));
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, refuted: string, subjects: list<string>}>
+     */
+    public static function provideRewritesTheEngineTellsApart(): iterable
+    {
+        yield 'a possessive run before another' => ['pattern' => '/(x+x+)+y/', 'refuted' => '/(x++x+)+y/', 'subjects' => ['xxy', 'xxxy', 'xxxxy']];
+        yield 'a possessive run before the same letter' => ['pattern' => '/^(a*a)+$/', 'refuted' => '/^(a*+a)+$/', 'subjects' => ['a', 'aa', 'aaa']];
+    }
+
+    /**
      * Every repair is proven linear, so the result carries no complexity
      * of its own: it would always say linear. Certified means the same
      * subjects.

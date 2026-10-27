@@ -48,6 +48,11 @@ final class RedosRepairer
 {
     private const FLATTENABLE = [GroupType::NonCapturing, GroupType::Capturing, GroupType::Named];
 
+    /**
+     * The subjects of each kind the engine is asked about.
+     */
+    private const SUBJECTS = 64;
+
     public function __construct(
         private readonly ?RegexParser $parser = null,
         private readonly ?RedosAnalyzer $analyzer = null,
@@ -88,10 +93,13 @@ final class RedosRepairer
                 continue;
             }
 
-            // A rewrite proven to match other subjects is no repair.
+            // A rewrite proven to match other subjects is no repair, nor one
+            // the engine tells apart where the automata cannot judge: they
+            // do not read a possessive, which may keep what the pattern
+            // gives back ("/(x++x+)+y/" refuses "xxy").
             $sameSubjects = $this->sameSubjects($regex, $candidate, $parser);
-            if (false === $sameSubjects) {
-                continue; // a guard: flattening keeps the language, a possessive the solver reads is inert
+            if (false === $sameSubjects || (null === $sameSubjects && $this->engineTellsApart($regex, $candidate, $parser))) {
+                continue;
             }
 
             $repairs[] = new RedosRepair($candidate, $sameSubjects, $this->sameMatches($regex, $candidate, $parser));
@@ -205,6 +213,35 @@ final class RedosRepairer
         } catch (ComplexityException) {
             return null;
         }
+    }
+
+    /**
+     * Whether the engine answers otherwise for the rewrite on a subject the
+     * automata spell for the pattern: the shortest strings it matches, then
+     * the shortest it rejects, SUBJECTS of each.
+     */
+    private function engineTellsApart(string $pattern, string $candidate, RegexParser $parser): bool
+    {
+        try {
+            $language = ($this->solver ?? new LanguageSolver($parser))->language($pattern, new SolverOptions(matchMode: MatchMode::Partial));
+        } catch (ComplexityException) {
+            return false;
+        }
+
+        foreach ([$language->strings(), $language->nonMembers()] as $subjects) {
+            $read = 0;
+            foreach ($subjects as $subject) {
+                if (@preg_match($pattern, $subject) !== @preg_match($candidate, $subject)) {
+                    return true;
+                }
+
+                if (++$read >= self::SUBJECTS) {
+                    break;
+                }
+            }
+        }
+
+        return false;
     }
 
     private function sameMatches(string $pattern, string $candidate, RegexParser $parser): ?bool

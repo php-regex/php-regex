@@ -240,15 +240,6 @@ two parsers read differently.
 The literal-fragment builder, the repairer and the confirmed mode first:
 they answer wrong, not just incomplete.
 
-- `RedosRepairer::repair()` ships rewrites that change the language, and
-  the class's own docblock example reads `repair(...)[0]`:
-  `/(x+x+)+y/` has no certified repair, so `[0]` is `/(x++x+)+y/`
-  (not certified), which rejects `"xxy"` the original matches. The
-  `sameSubjects` guard only drops `false` — a solver `null` (cannot judge)
-  reaches the list — and its comment ("a possessive the solver reads is
-  inert") is what the divergence disproves. A certified repair can also
-  change `$matches`: `/^((a)*)*$/` → `/^((a)*)$/` keeps `$1=''` where the
-  engine had `'aaaa'` (`RedosRepairer.php:92-97`).
 - Confirmed-mode lint drops genuinely catastrophic every-character loops:
   for `/([\d\D]+)+!/` the model proves exponential, but the published
   witness is `"\"" x n` — no rejecting suffix holding the `!` — and PCRE2's
