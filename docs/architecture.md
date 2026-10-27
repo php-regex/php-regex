@@ -39,7 +39,7 @@ The lexer output is a `TokenStream`, which is a linear sequence of `Token` objec
 
 ### Lexer Contexts and Tunnel Modes
 
-The lexer maintains explicit state flags:
+The lexer keeps explicit state flags in `PHPRegex\Parser\Lexing\LexerState`, which it hands to the readers of each mode in `src/Parser/Lexing/`: `Tunnels` for quoted runs and comments, `ClassState` for classes, `GroupOpeners` for the bodies the token regex cannot read. The flags include:
 
 - `inCharClass` switches to the character-class token set until a closing `]`.
 - `inQuoteMode` treats everything as literal until `\E`.
