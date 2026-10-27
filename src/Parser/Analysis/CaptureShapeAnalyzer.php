@@ -57,7 +57,7 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '14';
+    public const ANALYSIS_VERSION = '15';
 
     private const MAX_CASES = 16;
 
@@ -85,6 +85,12 @@ final class CaptureShapeAnalyzer
     private const POSITIVE_LOOKAROUNDS = [GroupType::LookaheadPositive, GroupType::LookbehindPositive];
 
     /**
+     * The groups an (*ACCEPT) ends, not the match, past the negative
+     * lookarounds, which keep nothing.
+     */
+    private const ASSERTIONS = [GroupType::LookaheadPositive, GroupType::LookbehindPositive, GroupType::ScanSubstring];
+
+    /**
      * What a pattern splits on, in the order the analyzer tries them: the
      * first kind reached exactly once, within MAX_CASES, is the split.
      */
@@ -107,7 +113,7 @@ final class CaptureShapeAnalyzer
     private int $next = 1;
 
     /**
-     * @var array<int<1, max>, list<array{name: ?string, never: bool, after_accept: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool, decimalInt: bool, lowercase: bool, uppercase: bool, arms: list<Facts>}>>
+     * @var array<int<1, max>, list<array{name: ?string, never: bool, after_accept: bool, open_at_accept: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool, decimalInt: bool, lowercase: bool, uppercase: bool, arms: list<Facts>}>>
      */
     private array $occurrences = [];
 
@@ -116,7 +122,28 @@ final class CaptureShapeAnalyzer
      */
     private array $marks = [];
 
+    /**
+     * An (*ACCEPT) the match runs may end it: the whole match is cut short.
+     */
     private bool $accepts = false;
+
+    /**
+     * How many (*ACCEPT) the walk met that may end the match: a group
+     * walked while the count rose holds what it read before the cut.
+     */
+    private int $acceptsMet = 0;
+
+    /**
+     * An (*ACCEPT) before this point may have ended the match, or the
+     * assertion the walk stands in: what follows may not run.
+     */
+    private bool $cut = false;
+
+    /**
+     * Depth of the assertions the walk stands in: an (*ACCEPT) there ends
+     * the assertion, not the match.
+     */
+    private int $assertionDepth = 0;
 
     private bool $keeps = false;
 
@@ -738,6 +765,9 @@ final class CaptureShapeAnalyzer
         $this->occurrences = [];
         $this->marks = [];
         $this->accepts = false;
+        $this->acceptsMet = 0;
+        $this->cut = false;
+        $this->assertionDepth = 0;
         $this->keeps = false;
         $this->discardedDepth = 0;
     }
@@ -995,8 +1025,8 @@ final class CaptureShapeAnalyzer
     }
 
     /**
-     * @param int<1, max>                                                                                                                                                                                                              $number
-     * @param list<array{name: ?string, never: bool, after_accept: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool, decimalInt: bool, lowercase: bool, uppercase: bool, arms: list<Facts>}> $occurrences
+     * @param int<1, max>                                                                                                                                                                                                                                    $number
+     * @param list<array{name: ?string, never: bool, after_accept: bool, open_at_accept: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool, decimalInt: bool, lowercase: bool, uppercase: bool, arms: list<Facts>}> $occurrences
      */
     private function group(int $number, array $occurrences, bool $guaranteed): CaptureGroupShape
     {
@@ -1040,7 +1070,7 @@ final class CaptureShapeAnalyzer
             $values = \count($values) > CaptureFacts::MAX_VALUES ? null : $values;
         }
 
-        if ($this->accepts) {
+        if (\in_array(true, array_column($occurrences, 'open_at_accept'), true)) {
             // A group (*ACCEPT) leaves open holds what it read so far.
             return new CaptureGroupShape($number, $name, $participation, 0, null, null);
         }
@@ -1102,7 +1132,7 @@ final class CaptureShapeAnalyzer
         $runs = 0 === $this->discardedDepth || $this->hasCalls;
 
         if ($runs && $node instanceof PcreVerbNode) {
-            $this->readVerb($node);
+            $this->readVerb($node, $never);
         }
 
         if ($runs && $node instanceof KeepNode) {
@@ -1187,9 +1217,15 @@ final class CaptureShapeAnalyzer
                 // each way the group is set: each branch of what it reads, or the group as a whole
                 $read += ['arms' => $this->facts->arms($node->child, true) ?: [$read]];
             }
-            $this->occurrences[$number][] = ['name' => $node->name, 'never' => $never, 'after_accept' => $this->accepts] + $read;
+            $occurrence = \count($this->occurrences[$number] ?? []);
+            $this->occurrences[$number][$occurrence] = ['name' => $node->name, 'never' => $never, 'after_accept' => $this->cut, 'open_at_accept' => false] + $read;
 
-            return [$number => true] + $this->walk($node->child, $never);
+            $met = $this->acceptsMet;
+            $guaranteed = [$number => true] + $this->walk($node->child, $never);
+            // an (*ACCEPT) inside that may end the match leaves the group open
+            $this->occurrences[$number][$occurrence]['open_at_accept'] = $this->acceptsMet > $met;
+
+            return $guaranteed;
         }
 
         if (\in_array($node->type, self::NEGATIVE_LOOKAROUNDS, true)) {
@@ -1199,7 +1235,7 @@ final class CaptureShapeAnalyzer
             return [];
         }
 
-        $guaranteed = $this->walk($node->child, $never);
+        $guaranteed = \in_array($node->type, self::ASSERTIONS, true) ? $this->walkAssertion($node->child, $never) : $this->walk($node->child, $never);
 
         return \in_array($node->type, self::TRANSPARENT_GROUPS, true) ? $guaranteed : [];
     }
@@ -1216,7 +1252,7 @@ final class CaptureShapeAnalyzer
         foreach ($this->groups->groupsReturnedBy($node) as ['number' => $number, 'group' => $group]) {
             $read = $this->facts->of($group->child, true);
             $read += ['arms' => $this->facts->arms($group->child, true) ?: [$read]];
-            $this->occurrences[$number][] = ['name' => $group->name, 'never' => $never, 'after_accept' => $this->accepts] + $read;
+            $this->occurrences[$number][] = ['name' => $group->name, 'never' => $never, 'after_accept' => $this->cut, 'open_at_accept' => false] + $read;
         }
 
         return [];
@@ -1268,19 +1304,36 @@ final class CaptureShapeAnalyzer
         }
 
         if (null === $holds) {
-            $this->walk($assertion->child, $never);
+            $this->walkAssertion($assertion->child, $never);
 
             return [];
         }
 
         if ($holds !== \in_array($assertion->type, self::POSITIVE_LOOKAROUNDS, true)) {
             // Its body did not match: PCRE discards what it captured.
-            $this->walk($assertion->child, true);
+            $this->walkAssertion($assertion->child, true);
 
             return [];
         }
 
-        return $this->walk($assertion->child, $never);
+        return $this->walkAssertion($assertion->child, $never);
+    }
+
+    /**
+     * Walks the body of an assertion: an (*ACCEPT) there ends the
+     * assertion, and leaves unset only the groups after it inside.
+     *
+     * @return array<int, true>
+     */
+    private function walkAssertion(NodeInterface $body, bool $never): array
+    {
+        $cut = $this->cut;
+        $this->assertionDepth++;
+        $guaranteed = $this->walk($body, $never);
+        $this->assertionDepth--;
+        $this->cut = $cut;
+
+        return $guaranteed;
     }
 
     /**
@@ -1295,13 +1348,23 @@ final class CaptureShapeAnalyzer
         return $assertion instanceof GroupNode && \in_array($assertion->type, [...self::POSITIVE_LOOKAROUNDS, ...self::NEGATIVE_LOOKAROUNDS], true) ? $assertion : null;
     }
 
-    private function readVerb(PcreVerbNode $node): void
+    /**
+     * Reads a verb the walk meets. An (*ACCEPT) in a part no match runs
+     * there, (DEFINE), {0}, a branch the case leaves out, a negative
+     * assertion, ends nothing the match sees, even when a call runs it: it
+     * then ends the call. One in a positive assertion ends the assertion.
+     */
+    private function readVerb(PcreVerbNode $node, bool $never): void
     {
         [$verb, $name] = array_pad(explode(':', $node->verb, 2), 2, null);
         $verb = '' === $verb ? 'MARK' : $verb;
 
-        if ('ACCEPT' === $verb) {
-            $this->accepts = true;
+        if ('ACCEPT' === $verb && !$never) {
+            $this->cut = true;
+            if (0 === $this->assertionDepth) {
+                $this->accepts = true;
+                $this->acceptsMet++;
+            }
         }
 
         if (null !== $name && '' !== $name && \in_array($verb, self::MARK_VERBS, true) && !\in_array($name, $this->marks, true)) {

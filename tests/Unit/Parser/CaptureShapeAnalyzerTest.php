@@ -196,6 +196,31 @@ final class CaptureShapeAnalyzerTest extends TestCase
         }
     }
 
+    /**
+     * An (*ACCEPT) ends the match only where the match runs it: one in a
+     * lookaround ends the assertion, one in a group run by a call ends the
+     * call, one in a (DEFINE), under {0} or in a branch a case leaves out
+     * never ends it. A group it leaves open holds what it read so far, and
+     * only the groups after it may be left unset.
+     *
+     * @param non-empty-list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideAcceptReadings')]
+    public function test_an_accept_is_read_where_it_ends_the_match(string $pattern, array $subjects, string $expected): void
+    {
+        $shape = $this->analyze($pattern);
+
+        $this->assertSame($expected, $shape->matchShape());
+        foreach ($subjects as $subject) {
+            foreach (self::FLAG_SETS as $flags) {
+                $matches = [];
+                $this->assertSame(1, preg_match($pattern, $subject, $matches, $flags));
+                $this->assertMatchesFollow($shape, $matches, $flags, false, \sprintf('%s on "%s" with flags %d', $pattern, $subject, $flags));
+            }
+        }
+    }
+
     #[Test]
     public function test_names_and_numbers_are_both_known(): void
     {
@@ -1364,6 +1389,41 @@ final class CaptureShapeAnalyzerTest extends TestCase
     /**
      * @return iterable<string, array{pattern: string, group: int, min: int, max: int|null}>
      */
+    /**
+     * Oracle (PHP 8.1 to 8.4 and PCRE2 10.39 to 10.49 alike):
+     *   /(a)|b(*ACCEPT)(c)/ on 'a' -> ["a","a"], on 'b' -> ["b"]
+     *   /(?(DEFINE)(?<t>a(*ACCEPT)bb))x((?&t)c)/ on 'xac' -> {"0":"xac","t":"","1":"","2":"ac"}: the call ends, the match goes on
+     *   /(?=(a)(*ACCEPT)b)a/ on 'a' -> ["a","a"]: the assertion ends
+     *   /(?=a(*ACCEPT)(b))a(c)/ on 'ac' -> ["ac","","c"]
+     *   /(?:(a)|(b(*ACCEPT)c))(?2)d/ on 'abd' -> ["abd","a"], on 'bcbd' -> ["b","","b"]
+     *   /(?!a(*ACCEPT))(b)/ on 'b' and 'ab' -> ["b","b"]
+     *   /(?:a(*ACCEPT)){0}(b)/ on 'b' -> ["b","b"]
+     *   /(a(?:b(*ACCEPT))?)(c)/ on 'ac' -> ["ac","a","c"], on 'abc' -> ["ab","ab"]
+     *   /(?=x(*ACCEPT)y)(x)/ on 'x' -> ["x","x"]; /((?=x(*ACCEPT)y)x)z/ on 'xz' -> ["xz","x"]
+     *   /(a)(*ACCEPT)(b)/ on 'a' -> ["a","a"]
+     *   /(?=(a(*ACCEPT)b))a/ and /(?(?=(a(*ACCEPT)b))a|c)/ on 'a' -> ["a","a"]: the group holds what it read before the cut
+     *   /(?(?!(a(*ACCEPT)b))c|a)/ on 'a' -> ["a","a"], on 'c' -> ["c"]: the negative assertion fails, and keeps its group
+     *
+     * @return iterable<string, array{pattern: string, subjects: non-empty-list<string>, expected: string}>
+     */
+    public static function provideAcceptReadings(): iterable
+    {
+        yield 'a branch a group never reaches' => ['pattern' => '/(a)|b(*ACCEPT)(c)/', 'subjects' => ['a', 'b'], 'expected' => "array{0: 'a', 1: 'a'}|array{0: string, 1?: '', 2?: 'c'}"];
+        yield 'a call it ends' => ['pattern' => '/(?(DEFINE)(?<t>a(*ACCEPT)bb))x((?&t)c)/', 'subjects' => ['xac'], 'expected' => "array{0: lowercase-string&non-falsy-string, t: '', 1: '', 2: lowercase-string&non-falsy-string}"];
+        yield 'a lookahead it ends' => ['pattern' => '/(?=(a)(*ACCEPT)b)a/', 'subjects' => ['a'], 'expected' => "array{0: 'a', 1: 'a'}"];
+        yield 'a group after it in a lookahead' => ['pattern' => '/(?=a(*ACCEPT)(b))a(c)/', 'subjects' => ['ac'], 'expected' => "array{0: 'ac', 1: ''|'b', 2: 'c'}"];
+        yield 'a branch a case leaves out, which a call runs' => ['pattern' => '/(?:(a)|(b(*ACCEPT)c))(?2)d/', 'subjects' => ['abd', 'bcbd'], 'expected' => "array{0: lowercase-string&non-falsy-string, 1: 'a'}|array{0: string, 1: '', 2: string}"];
+        yield 'a negative lookahead' => ['pattern' => '/(?!a(*ACCEPT))(b)/', 'subjects' => ['b', 'ab'], 'expected' => "array{0: 'b', 1: 'b'}"];
+        yield 'a repeat that never runs' => ['pattern' => '/(?:a(*ACCEPT)){0}(b)/', 'subjects' => ['b'], 'expected' => "array{0: lowercase-string, 1: 'b'}"];
+        yield 'a group it leaves open, and one after it' => ['pattern' => '/(a(?:b(*ACCEPT))?)(c)/', 'subjects' => ['ac', 'abc'], 'expected' => "array{0: string, 1: string, 2?: 'c'}"];
+        yield 'a lookahead before the group' => ['pattern' => '/(?=x(*ACCEPT)y)(x)/', 'subjects' => ['x'], 'expected' => "array{0: 'x', 1: 'x'}"];
+        yield 'a lookahead inside the group' => ['pattern' => '/((?=x(*ACCEPT)y)x)z/', 'subjects' => ['xz'], 'expected' => "array{0: 'xz', 1: 'x'}"];
+        yield 'a group before the cut' => ['pattern' => '/(a)(*ACCEPT)(b)/', 'subjects' => ['a'], 'expected' => "array{0: string, 1: 'a', 2?: 'b'}"];
+        yield 'a group it leaves open in a lookahead' => ['pattern' => '/(?=(a(*ACCEPT)b))a/', 'subjects' => ['a'], 'expected' => 'array{0: \'a\', 1: lowercase-string&non-falsy-string}'];
+        yield 'a group it leaves open in a condition' => ['pattern' => '/(?(?=(a(*ACCEPT)b))a|c)/', 'subjects' => ['a'], 'expected' => "array{0: 'a', 1: lowercase-string&non-falsy-string}|array{0: 'c'}"];
+        yield 'a group it leaves open in a negative condition' => ['pattern' => '/(?(?!(a(*ACCEPT)b))c|a)/', 'subjects' => ['a', 'c'], 'expected' => "array{0: 'c'}|array{0: 'a', 1: lowercase-string&non-falsy-string}"];
+    }
+
     /**
      * Oracle (PHP 8.4.27, PCRE2 10.49), $matches[0] on each subject:
      *   /a\Kb?/ on 'a' -> '', on 'ab' -> 'b'

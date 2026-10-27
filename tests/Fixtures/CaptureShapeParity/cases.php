@@ -337,6 +337,17 @@ return [
     ['source' => 'parity: accept', 'pattern' => '/(a(?:b(*ACCEPT)c)?)d/', 'subjects' => ['ab', 'ad']],
     ['source' => 'parity: accept', 'pattern' => '/(?=(a)(*ACCEPT)b)a/', 'subjects' => ['a']],
     ['source' => 'parity: accept', 'pattern' => '/(x(*ACCEPT)y)?z(?1)/', 'subjects' => ['zx', 'xzx']],
+    ['source' => 'parity: accept', 'pattern' => '/(a)|b(*ACCEPT)(c)/', 'subjects' => ['a', 'b', 'bc']],
+    ['source' => 'parity: accept', 'pattern' => '/(?=a(*ACCEPT)(b))a(c)/', 'subjects' => ['ac']],
+    ['source' => 'parity: accept', 'pattern' => '/(?:(a)|(b(*ACCEPT)c))(?2)d/', 'subjects' => ['abd', 'bcbd']],
+    ['source' => 'parity: accept', 'pattern' => '/(?!a(*ACCEPT))(b)/', 'subjects' => ['b', 'ab']],
+    ['source' => 'parity: accept', 'pattern' => '/(?:a(*ACCEPT)){0}(b)/', 'subjects' => ['b']],
+    ['source' => 'parity: accept', 'pattern' => '/(a(?:b(*ACCEPT))?)(c)/', 'subjects' => ['ac', 'abc']],
+    ['source' => 'parity: accept', 'pattern' => '/(?=x(*ACCEPT)y)(x)/', 'subjects' => ['x']],
+    ['source' => 'parity: accept', 'pattern' => '/((?=x(*ACCEPT)y)x)z/', 'subjects' => ['xz']],
+    ['source' => 'parity: accept', 'pattern' => '/(?=(a(*ACCEPT)b))a/', 'subjects' => ['a']],
+    ['source' => 'parity: accept', 'pattern' => '/(?(?=(a(*ACCEPT)b))a|c)/', 'subjects' => ['a']],
+    ['source' => 'parity: accept', 'pattern' => '/(?(?!(a(*ACCEPT)b))c|a)/', 'subjects' => ['a', 'c']],
 
     // Recursion and subroutine calls: the groups a call sets are restored after it.
     ['source' => 'parity: recursion', 'pattern' => '/\((?:[^()]|(?R))*\)/', 'subjects' => ['()', '(a(b))']],
