@@ -116,6 +116,20 @@ final class ParserAccessor
     }
 
     /**
+     * Calls a private method of the reader of calls the parser holds, made
+     * on the reading state installed with the tokens.
+     *
+     * @param array<mixed> $args
+     */
+    public function callSubroutineMethod(string $methodName, array $args = []): mixed
+    {
+        $subroutines = $this->reflection->getMethod('subroutines')->invoke($this->parser);
+        \assert(\is_object($subroutines));
+
+        return (new \ReflectionMethod($subroutines, $methodName))->invoke($subroutines, ...$args);
+    }
+
+    /**
      * Calls a private method of the reading state installed with the tokens.
      *
      * @param array<mixed> $args
@@ -208,7 +222,7 @@ final class ParserAccessor
         $pattern = $this->reflection->getProperty('pattern')->getValue($this->parser);
 
         $this->reflection->getProperty('state')->setValue($this->parser, new ParseState($stream, \is_string($pattern) ? $pattern : '', $target, false, false));
-        foreach (['classes', 'conditions', 'extendedClasses', 'quantifiers', 'references', 'verbs'] as $reader) {
+        foreach (['classes', 'conditions', 'extendedClasses', 'quantifiers', 'references', 'verbs', 'subroutines'] as $reader) {
             $this->reflection->getProperty($reader)->setValue($this->parser, null);
         }
     }

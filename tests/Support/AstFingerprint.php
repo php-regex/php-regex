@@ -109,6 +109,7 @@ final class AstFingerprint
         'src/Parser/Syntax/ReferenceParser.php',
         'src/Parser/Syntax/RepeatCount.php',
         'src/Parser/Syntax/StartOptions.php',
+        'src/Parser/Syntax/SubroutineParser.php',
         'src/Parser/Syntax/VerbParser.php',
         'src/Parser/Syntax/VersionCondition.php',
         'src/Parser/Text/Ascii.php',

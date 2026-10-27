@@ -47,7 +47,7 @@ final class ParserSubroutineFallbackTest extends TestCase
         $this->expectException(ParserException::class);
         $this->expectExceptionMessageIsOrContains('Expected subroutine name');
 
-        $accessor->callPrivateMethod('parseSubroutineName');
+        $accessor->callSubroutineMethod('parseSubroutineName');
     }
 
     /**
@@ -70,6 +70,6 @@ final class ParserSubroutineFallbackTest extends TestCase
         $this->expectException(ParserException::class);
         $this->expectExceptionMessageIsOrContains('Expected subroutine name');
 
-        $accessor->callPrivateMethod('parseSubroutineName');
+        $accessor->callSubroutineMethod('parseSubroutineName');
     }
 }

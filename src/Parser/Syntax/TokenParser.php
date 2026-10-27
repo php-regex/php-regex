@@ -34,7 +34,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
-use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
@@ -135,6 +134,12 @@ final class TokenParser
      * first one.
      */
     private ?VerbParser $verbs = null;
+
+    /**
+     * The reader of the calls a "(?" opens in the text this parser reads,
+     * made on the first group that might be one.
+     */
+    private ?SubroutineParser $subroutines = null;
 
     /**
      * The reader of the classes of the text this parser reads, made on the
@@ -302,6 +307,7 @@ final class TokenParser
         $this->quantifiers = null;
         $this->references = null;
         $this->verbs = null;
+        $this->subroutines = null;
         $this->recursionDepth = $this->depthBefore;
         $this->tokensReadWhole = 0;
         $this->recursionTests = [];
@@ -802,14 +808,8 @@ final class TokenParser
         }
 
         // 6. Check for Subroutines
-        $subroutineModifier = $this->parseSubroutineModifier($startPosition);
-        if (null !== $subroutineModifier) {
-            return $subroutineModifier;
-        }
-
-        $numericSubroutineModifier = $this->parseNumericSubroutineModifier($startPosition);
-        if (null !== $numericSubroutineModifier) {
-            return $numericSubroutineModifier;
+        if (SubroutineParser::mayOpenCall($this->stream) && null !== $call = $this->subroutines()->parseCall($startPosition)) {
+            return $call;
         }
 
         // 7. Check for simple non-capturing, lookaheads, atomic, branch reset
@@ -888,11 +888,7 @@ final class TokenParser
         }
 
         if ($this->stream->matchLiteral('>')) { // (?P>name) subroutine
-            $name = $this->parseSubroutineName();
-            $returned = $this->readReturnedGroups() ?? [];
-            $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close subroutine call', $this->callLeftOpenCode());
-
-            return new SubroutineNode($name, 'P>', $startPos, $endToken->position + 1, $returned);
+            return $this->subroutines()->parsePythonSubroutine($startPos);
         }
 
         if ($this->stream->matchLiteral('=')) {
@@ -961,128 +957,6 @@ final class TokenParser
         // "<" is the name of a group.
         return $this->matchLookaround($startPos, self::LOOKBEHINDS)
             ?? $this->parseNamedGroup($startPos, true);
-    }
-
-    /**
-     * Parses numeric subroutine calls like (?1), (?-1), (?0).
-     */
-    private function parseNumericSubroutine(int $startPos): ?SubroutineNode
-    {
-        $tokensConsumed = 0;
-        $num = '';
-
-        if ($this->stream->matchLiteral('-')) {
-            $num = '-';
-            $tokensConsumed++;
-        } elseif ($this->stream->check(TokenType::Quantifier) && '+' === $this->stream->current()->value) {
-            // "+" after "(?" is lexed as a quantifier token; here it is the
-            // sign of a relative subroutine call like (?+1).
-            $this->stream->advance();
-            $num = '+';
-            $tokensConsumed++;
-        }
-
-        if ($this->state->isLiteralDigitToken()) {
-            $num .= $this->stream->current()->value;
-            $this->stream->advance();
-            $tokensConsumed++;
-
-            // Consume additional digits
-            while ($this->stream->check(TokenType::Literal) && Ascii::isDigit($this->stream->current()->value)) {
-                $num .= $this->stream->current()->value;
-                $this->stream->advance();
-                $tokensConsumed++;
-            }
-
-            $returned = $this->readReturnedGroups();
-            if (null !== $returned || $this->stream->check(TokenType::GroupClose)) {
-                $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
-
-                return new SubroutineNode($num, '', $startPos, $endToken->position + 1, $returned ?? []);
-            }
-
-            // Not a valid subroutine, rewind all consumed tokens
-            $this->stream->rewind($tokensConsumed);
-        } elseif ('-' === $num || '+' === $num) {
-            // Only consumed the sign, rewind it
-            $this->stream->rewind(1);
-        }
-
-        return null;
-    }
-
-    /**
-     * "(?1(2,<name>))": the groups a call returns, read from PCRE2 10.47 when
-     * a "(" follows the reference. PCRE reads the list from the text, and
-     * refuses what it cannot take as it reads it: an item that is no number
-     * or name, group zero, a relative zero, a group before the first, or a
-     * number past 65535. Null when no list follows.
-     *
-     * @return list<string>|null
-     */
-    private function readReturnedGroups(): ?array
-    {
-        // Whatever the lexer made of the "(" and what follows it, as "(?:".
-        $open = $this->stream->current()->position;
-        if (!$this->supports(PcreFeature::CallsReturnCaptureGroups) || $this->stream->isAtEnd() || '(' !== ($this->pattern[$open] ?? '')) {
-            return null;
-        }
-
-        [$groups, $at] = (new GroupListReader($this->state))->readGroupList($open + 1);
-
-        while (!$this->stream->isAtEnd() && $this->stream->current()->position < $at) {
-            $this->stream->advance();
-        }
-
-        return $groups;
-    }
-
-    /**
-     * The code of a call by name the pattern ends in: before PCRE2 10.47 the
-     * name wants a ")" right after it, from 10.47 the call does.
-     */
-    private function callLeftOpenCode(): ErrorCode
-    {
-        return $this->supports(PcreFeature::CallsReturnCaptureGroups) ? ErrorCode::GroupUnclosed : ErrorCode::GroupNameUnterminated;
-    }
-
-    /**
-     * Parses a subroutine group modifier like (?&name).
-     */
-    private function parseSubroutineModifier(int $startPosition): ?SubroutineNode
-    {
-        if (!$this->stream->matchLiteral('&')) {
-            return null;
-        }
-
-        $name = $this->parseSubroutineName();
-        $returned = $this->readReturnedGroups() ?? [];
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close subroutine call', $this->callLeftOpenCode());
-
-        return new SubroutineNode($name, '&', $startPosition, $endToken->position + 1, $returned);
-    }
-
-    /**
-     * Parses a numeric or R subroutine group modifier like (?R), (?1), (?-1).
-     */
-    private function parseNumericSubroutineModifier(int $startPosition): ?SubroutineNode
-    {
-        if ($this->stream->matchLiteral('R')) {
-            $returned = $this->readReturnedGroups();
-            if (null !== $returned || $this->stream->check(TokenType::GroupClose)) {
-                $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
-
-                return new SubroutineNode('R', '', $startPosition, $endToken->position + 1, $returned ?? []);
-            }
-            $this->stream->rewind(1);
-        }
-
-        $subroutine = $this->parseNumericSubroutine($startPosition);
-        if (null !== $subroutine) {
-            return $subroutine;
-        }
-
-        return null;
     }
 
     /**
@@ -1282,6 +1156,11 @@ final class TokenParser
         return $this->references ??= new ReferenceParser($this->state, $this->groupNames);
     }
 
+    private function subroutines(): SubroutineParser
+    {
+        return $this->subroutines ??= new SubroutineParser($this->state, $this->groupNames);
+    }
+
     /**
      * The reader of verbs, which calls this parser back for the alternatives
      * after a verb and for each body it reads apart.
@@ -1344,55 +1223,6 @@ final class TokenParser
     private function supports(PcreFeature $feature): bool
     {
         return $this->target->supports($feature);
-    }
-
-    /**
-     * Reads the name of "(?&name)" or "(?P>name)" as PCRE2's read_name()
-     * does: a digit first is refused, then the characters a name holds are
-     * read, the name measured, an empty one refused, and, up to PCRE2 10.46,
-     * the ")" that must close it looked for right after it. From 10.47 the
-     * name is read alone: the caller looks for the groups it returns and the
-     * ")".
-     */
-    private function parseSubroutineName(): string
-    {
-        $nameStart = $this->stream->current()->position;
-        $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
-
-        if ($this->groupNames->startsWithDigit($nameStart)) {
-            throw $this->parserException(
-                \sprintf('Invalid subroutine name at position %d: a group name must not start with a digit.', $nameEnd),
-                ErrorCode::GroupNameInvalid,
-                $nameEnd,
-            );
-        }
-
-        $tooLong = $this->groupNames->tooLongAt($nameStart, $nameEnd);
-        if (null !== $tooLong) {
-            throw $this->groupNames->tooLongError($nameStart, $nameEnd, $tooLong);
-        }
-
-        if ($nameEnd === $nameStart) {
-            throw $this->parserException(
-                \sprintf('Expected subroutine name at position %d.', $nameStart),
-                ErrorCode::GroupNameExpected,
-                $nameStart,
-            );
-        }
-
-        if (!$this->supports(PcreFeature::CallsReturnCaptureGroups) && ')' !== ($this->pattern[$nameEnd] ?? '')) {
-            throw $this->parserException(
-                \sprintf('Missing ")" to close subroutine call: the name ends at position %d.', $nameEnd),
-                ErrorCode::GroupNameUnterminated,
-                $nameEnd,
-            );
-        }
-
-        while (!$this->stream->isAtEnd() && $this->stream->current()->position < $nameEnd) {
-            $this->stream->advance();
-        }
-
-        return substr($this->pattern, $nameStart, $nameEnd - $nameStart);
     }
 
     /**
