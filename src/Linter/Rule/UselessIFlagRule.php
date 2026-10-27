@@ -19,6 +19,7 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PosixClassNode;
@@ -165,11 +166,13 @@ final class UselessIFlagRule extends AbstractLintRule
 
     private function rangeHasLetters(RangeNode $node): bool
     {
-        $start = CodePoints::fromNode($node->start, $this->unicodeMode);
-        $end = CodePoints::fromNode($node->end, $this->unicodeMode);
+        $start = $this->endpoint($node->start);
+        $end = $this->endpoint($node->end);
 
+        // An endpoint not read leaves the range unknown: it may hold
+        // letters, so the flag is not called useless on its account.
         if (null === $start || null === $end) {
-            return false;
+            return true;
         }
 
         $min = min($start, $end);
@@ -184,6 +187,14 @@ final class UselessIFlagRule extends AbstractLintRule
         }
 
         return $this->codePointHasCase($start) || $this->codePointHasCase($end);
+    }
+
+    /**
+     * The code point of a range endpoint: "\cA" is \x01, as PCRE reads it.
+     */
+    private function endpoint(NodeInterface $node): ?int
+    {
+        return $node instanceof ControlCharNode ? $node->codePoint : CodePoints::fromNode($node, $this->unicodeMode);
     }
 
     private function rangeHasAsciiLetters(int $min, int $max): bool
