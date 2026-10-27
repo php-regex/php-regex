@@ -25,8 +25,6 @@ use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CalloutNode;
-use PHPRegex\Parser\Node\CharLiteralNode;
-use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
@@ -36,8 +34,6 @@ use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
-use PHPRegex\Parser\Node\QuantifierNode;
-use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -140,6 +136,12 @@ final class TokenParser
      * the first quantifier.
      */
     private ?QuantifierParser $quantifiers = null;
+
+    /**
+     * The reader of the references and escapes of the text this parser
+     * reads, made on the first one.
+     */
+    private ?ReferenceParser $references = null;
 
     /**
      * The reader of the classes of the text this parser reads, made on the
@@ -305,6 +307,7 @@ final class TokenParser
         $this->conditions = null;
         $this->extendedClasses = null;
         $this->quantifiers = null;
+        $this->references = null;
         $this->recursionDepth = $this->depthBefore;
         $this->tokensReadWhole = 0;
         $this->recursionTests = [];
@@ -638,7 +641,10 @@ final class TokenParser
 
     private function parseSimpleAtom(int $startPosition): ?NodeInterface
     {
-        $this->guardNamedReferenceEscape();
+        $token = $this->stream->current();
+        if (TokenType::LiteralEscaped === $token->type && 'k' === $token->value) {
+            $this->references()->guardNamedReferenceEscape($token);
+        }
 
         if (null !== $atom = $this->matchAtom($startPosition)) {
             // Before PCRE2 10.37 the digits after a "{" read as text are read
@@ -662,7 +668,7 @@ final class TokenParser
         }
 
         if ($this->stream->match(TokenType::GReference)) {
-            return $this->parseGReference($startPosition);
+            return $this->references()->parseGReference($startPosition);
         }
 
         if ($this->stream->match(TokenType::Keep)) {
@@ -670,77 +676,6 @@ final class TokenParser
         }
 
         return null;
-    }
-
-    /**
-     * "\k" names a group, and the lexer leaves it a plain escaped letter when
-     * no well-formed name follows. PCRE refuses every such shape, and says
-     * where it stopped reading: on the opener's absence, where a name should
-     * start, past a leading digit, or where the closer should be.
-     *
-     * @throws ParserException
-     */
-    private function guardNamedReferenceEscape(): void
-    {
-        $token = $this->stream->current();
-        if (TokenType::LiteralEscaped !== $token->type || 'k' !== $token->value || $this->state->inQuoteMode || $this->readsBadEscapeAt($token->position)) {
-            return;
-        }
-
-        $opener = $this->pattern[$token->position + 2] ?? '';
-        $closer = ['<' => '>', '{' => '}', "'" => "'"][$opener] ?? null;
-
-        if (null === $closer) {
-            throw $this->parserException(
-                \sprintf('\k is not followed by a braced, angle-bracketed or quoted name at position %d.', $token->position + 2),
-                ErrorCode::BackrefInvalidSyntax,
-                $token->position + 2,
-            );
-        }
-
-        $nameStart = $token->position + 3;
-        // Inside braces PCRE skips the spaces before the name as well.
-        if ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes)) {
-            $nameStart += strspn($this->pattern, " \t", $nameStart);
-        }
-        $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
-
-        if (ErrorCode::GroupNameInvalid === $this->groupNames->nameFault($nameStart, $nameEnd)) {
-            throw $this->parserException(
-                \sprintf('Group name after \k%s must not start with a digit at position %d.', $opener, $nameEnd),
-                ErrorCode::GroupNameInvalid,
-                $nameEnd,
-            );
-        }
-
-        // PCRE measures the name before it looks for what closes it.
-        $tooLong = $this->groupNames->tooLongAt($nameStart, $nameEnd);
-        if (null !== $tooLong) {
-            throw $this->groupNames->tooLongError($nameStart, $nameEnd, $tooLong);
-        }
-
-        if ($nameEnd === $nameStart) {
-            throw $this->parserException(
-                \sprintf('Group name expected after \k%s at position %d.', $opener, $nameStart),
-                ErrorCode::GroupNameExpected,
-                $nameStart,
-            );
-        }
-
-        // Inside braces PCRE skips the spaces after the name, then wants
-        // the "}": it stops on the first character that is neither.
-        $closeAt = $nameEnd;
-        if ('}' === $closer && $this->supports(PcreFeature::PaddedBracedEscapes)) {
-            $closeAt += strspn($this->pattern, " \t", $nameEnd);
-        }
-
-        if ($closer !== ($this->pattern[$closeAt] ?? '')) {
-            throw $this->parserException(
-                \sprintf('Missing "%s" to close the group name after \k%s at position %d.', $closer, $opener, $closeAt),
-                ErrorCode::GroupNameUnterminated,
-                $closeAt,
-            );
-        }
     }
 
     /**
@@ -762,24 +697,10 @@ final class TokenParser
 
     private function atomFromToken(Token $token, TokenType $type, int $startPosition): NodeInterface
     {
-        if (TokenType::Backref === $type) {
-            if ($this->readsBadEscapeAt($token->position)) {
-                return $this->badEscapeLiteral($token, $startPosition);
-            }
-
-            $octal = $this->digitsFromUnreadReference($token, $startPosition)
-                ?? $this->octalEscapeFromReference($token, $startPosition);
-            if (null !== $octal) {
-                return $octal;
-            }
-
-            $this->guardReferenceNameLength($token->value, $token->position);
-        }
-
         return match ($type) {
             TokenType::Anchor => new AnchorNode($token->value, $startPosition, $token->end()),
             TokenType::Assertion => new AssertionNode($token->value, $startPosition, $token->end()),
-            default => new BackrefNode(self::withoutBracePadding($token->value), $startPosition, $token->end()),
+            default => $this->references()->backReference($token, $startPosition),
         };
     }
 
@@ -849,327 +770,6 @@ final class TokenParser
     private function parseCallout(): CalloutNode
     {
         return Callout::read($this->stream->previous(), $this->pattern, $this->target);
-    }
-
-    /**
-     * parses \g references (backreferences and subroutines)
-     */
-    private function parseGReference(int $startPosition): NodeInterface
-    {
-        $token = $this->stream->previous();
-        if ($this->readsBadEscapeAt($token->position)) {
-            return $this->badEscapeLiteral($token, $startPosition);
-        }
-
-        $endPosition = $startPosition + \strlen($token->value);
-        $value = self::withoutBracePadding($token->value);
-        $this->guardReferenceNameLength($token->value, $token->position);
-
-        // \g{N} or \gN (numeric, incl. relative) -> Backreference; \g'N',
-        // like \g<N>, calls the group instead. Braces hold one sign at most,
-        // then digits only: "\g{1-}" and "\g{--1}" are refused below.
-        if (1 === LibraryPcre::match('/^\\\\g(?:\{[+-]?\d++\}|[0-9+-]++)$/', $value)) {
-            return new BackrefNode($value, $startPosition, $endPosition);
-        }
-
-        // PCRE reads the number after "\g{", "\g<" or "\g'" before it looks
-        // for what closes it, and refuses one it cannot read right after
-        // the "g", on every release.
-        $numberError = $this->gReferenceNumberError($token->position);
-        if (null !== $numberError) {
-            throw $this->parserException(\sprintf('Invalid \\g reference %s at position %d: %s.', $value, $token->position + 2, $numberError[1]), $numberError[0], $token->position + 2);
-        }
-
-        // \g{name} is a back reference, like \k{name}; it is recorded that
-        // way, and the compiler gives back the spelling the pattern used.
-        if (1 === LibraryPcre::match('/^\\\\g\{([\p{L}\p{Nd}_]++)\}$/u', $value, $m)) {
-            return new BackrefNode('\\k{'.$m[1].'}', $startPosition, $endPosition);
-        }
-
-        // "\g<5fg>": PCRE reads a number after "\g<" or "\g'", and wants the
-        // closing character right after it; before PCRE2 10.47, it refuses
-        // the "\g" itself.
-        if (1 === LibraryPcre::match('/^\\\\g[<\'][+-]?\d/', $value) && 1 !== LibraryPcre::match('/^\\\\g(?:<[+-]?\d++>|\'[+-]?\d++\')$/', $value)) {
-            $position = $this->gReferenceErrorOffset($token->position);
-
-            throw $this->parserException(
-                \sprintf('Invalid subroutine call %s at position %d: the group number is not followed by what closes it.', $value, $position),
-                $this->supports(PcreFeature::GReferenceNumberReadBeforeClosing) ? ErrorCode::SubroutineInvalidSyntax : ErrorCode::BackrefInvalidSyntax,
-                $position,
-            );
-        }
-
-        // \g<name> and \g'name' (non-numeric) call the group -> Subroutine;
-        // a sign before a name is no name.
-        if (1 === LibraryPcre::match('/^\\\\g<([+-]?\d++|[\p{L}\p{Nd}_]++)>$/u', $value, $m)) {
-            return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
-        }
-
-        if (1 === LibraryPcre::match('/^\\\\g\'([+-]?\d++|[\p{L}\p{Nd}_]++)\'$/u', $value, $m)) {
-            return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
-        }
-
-        $position = $this->gReferenceErrorOffset($token->position);
-        $code = $this->gReferenceErrorCode($token->position, $position);
-
-        throw $this->parserException(
-            \sprintf('Invalid \\g reference syntax: %s at position %d%s', $value, $position, match ($code) {
-                ErrorCode::GroupNameExpected => ': a group name or number is expected.',
-                ErrorCode::GroupNameUnterminated => ': nothing closes the group name there.',
-                default => '.',
-            }),
-            $code,
-            $position,
-        );
-    }
-
-    /**
-     * The error PCRE's read_number() gives the number after the "\g{",
-     * "\g<" or "\g'" whose backslash stands at $start, and its reason: a
-     * number past 65535, a forward one counted from the groups opened before
-     * it included; a relative zero; a backward one past the groups opened.
-     * Null when it reads the number, or none stands there. Only "\g{" takes
-     * spaces and tabs before it, from PCRE2 10.43.
-     *
-     * @return array{ErrorCode, string}|null
-     */
-    private function gReferenceNumberError(int $start): ?array
-    {
-        $opener = $this->pattern[$start + 2] ?? '';
-        if (!\in_array($opener, ['{', '<', "'"], true)) {
-            return null;
-        }
-
-        $at = $start + 3;
-        if ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes)) {
-            $at += strspn($this->pattern, " \t", $at);
-        }
-
-        if (1 !== LibraryPcre::match('/\G([+-]?)(\d++)/', $this->pattern, $number, 0, $at)) {
-            return null;
-        }
-
-        [, $sign, $digits] = $number;
-        $value = (int) $digits;
-        $call = '{' !== $opener;
-
-        return match (true) {
-            PcreNumber::exceeds($digits) || ('+' === $sign && $value + $this->state->captureCount > PcreNumber::MAX) => [ErrorCode::GroupNumberTooBig, 'the group number is too big: PCRE takes at most 65535'],
-            '' !== $sign && 0 === $value => [$call ? ErrorCode::SubroutineRelativeZero : ErrorCode::BackrefZero, 'a relative number may not be zero'],
-            '-' === $sign && $value > $this->state->captureCount => [$call ? ErrorCode::SubroutineRelativeMissing : ErrorCode::BackrefRelative, \sprintf('-%d counts back past the %d groups opened before it', $value, $this->state->captureCount)],
-            default => null,
-        };
-    }
-
-    /**
-     * What PCRE reports for a "\g" it stops reading at $position: after a
-     * "{", "<" or quote, a number not closed is a syntax error in it, and
-     * otherwise PCRE reads a name, which is either missing or not closed.
-     *
-     * @param int $start the offset of the backslash
-     */
-    private function gReferenceErrorCode(int $start, int $position): ErrorCode
-    {
-        $opener = $this->pattern[$start + 2] ?? '';
-        if (!\in_array($opener, ['{', '<', "'"], true)) {
-            return ErrorCode::BackrefInvalidSyntax;
-        }
-
-        // Only "\g{" takes spaces and tabs before a name or number, from
-        // PCRE2 10.43.
-        $nameStart = $start + 3 + ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes) ? strspn($this->pattern, " \t", $start + 3) : 0);
-
-        if (1 === LibraryPcre::match('/\G[+-]?\d/', $this->pattern, $matches, 0, $nameStart)) {
-            return ErrorCode::BackrefInvalidSyntax;
-        }
-
-        // PCRE measures the name before it looks for what closes it.
-        if (!$this->groupNames->startsWithDigit($nameStart)
-            && $position === $this->groupNames->tooLongAt($nameStart, $this->groupNames->invalidNameOffset($nameStart))) {
-            return ErrorCode::GroupNameTooLong;
-        }
-
-        return $this->groupNames->nameFault($nameStart, $position);
-    }
-
-    /**
-     * PCRE reads the name of "\k<name>", "\g{name}" and the like before it
-     * looks the group up, and stops where a name past the limit ends.
-     *
-     * @param int $start the offset of the backslash
-     */
-    private function guardReferenceNameLength(string $reference, int $start): void
-    {
-        if (1 !== LibraryPcre::match('/^\\\\[gk]([<{\'])/', $reference, $matches)) {
-            return;
-        }
-
-        // Only braces take spaces and tabs before the name, from PCRE2 10.43;
-        // the name ends where the characters a name holds end.
-        $nameStart = $start + 3;
-        if ('{' === $matches[1] && $this->supports(PcreFeature::PaddedBracedEscapes)) {
-            $nameStart += strspn($this->pattern, " \t", $nameStart);
-        }
-
-        if ($this->groupNames->startsWithDigit($nameStart)) {
-            return;
-        }
-
-        $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
-        $tooLong = $this->groupNames->tooLongAt($nameStart, $nameEnd);
-        if (null !== $tooLong) {
-            throw $this->groupNames->tooLongError($nameStart, $nameEnd, $tooLong);
-        }
-    }
-
-    /**
-     * "\g{ 1 }" and "\k{ name }" refer to what "\g{1}" and "\k{name}" do:
-     * PCRE2 10.43 lets spaces and tabs follow the "{" and precede the "}".
-     * Whether the target PCRE2 takes them is the validator's to say.
-     */
-    private static function withoutBracePadding(string $reference): string
-    {
-        return LibraryPcre::replace('/^(\\\\[gk]\{)[ \t]*+(.*?)[ \t]*+\}$/', '$1$2}', $reference) ?? $reference;
-    }
-
-    /**
-     * Where PCRE stops reading a "\g" it cannot make sense of: right after
-     * the "\g" when nothing it knows follows, after a number that nothing
-     * closes, or where the characters of a name end.
-     *
-     * @param int $start the offset of the backslash
-     */
-    private function gReferenceErrorOffset(int $start): int
-    {
-        $position = $start + 2;
-        $closing = ['<' => '>', "'" => "'", '{' => '}'][$this->pattern[$position] ?? ''] ?? null;
-
-        if (null === $closing) {
-            return $position;
-        }
-
-        // Only "\g{...}" takes spaces around what it holds, from PCRE2 10.43.
-        $blanks = '}' === $closing && $this->supports(PcreFeature::PaddedBracedEscapes) ? " \t" : '';
-        $position++;
-        $position += strspn($this->pattern, $blanks, $position);
-
-        if (1 === LibraryPcre::match('/\G[+-]?\d++/', $this->pattern, $matches, 0, $position)) {
-            // Before PCRE2 10.47, a number nothing closes fails "\g" itself,
-            // or, before 10.43, the space after "{" that pads it.
-            if (!$this->supports(PcreFeature::GReferenceNumberReadBeforeClosing)) {
-                $padded = str_contains(" \t", $this->pattern[$start + 3] ?? 'x');
-
-                return $start + ($padded && !$this->supports(PcreFeature::PaddedBracedEscapes) ? 3 : 2);
-            }
-
-            $position += \strlen($matches[0]);
-        } elseif ($this->groupNames->startsWithDigit($position)) {
-            // A digit first is refused there, before any padding.
-            return $this->groupNames->invalidNameOffset($position);
-        } else {
-            $nameStart = $position;
-            $position = $this->groupNames->invalidNameOffset($position);
-            $tooLong = $this->groupNames->tooLongAt($nameStart, $position);
-            if (null !== $tooLong) {
-                return $tooLong;
-            }
-        }
-
-        return $position + strspn($this->pattern, $blanks, $position);
-    }
-
-    /**
-     * Whether PHP 7.3 and 7.4 read the escape whose backslash stands at
-     * $position, outside a class, as the character after the backslash,
-     * knowing the groups opened so far.
-     */
-    private function readsBadEscapeAt(int $position): bool
-    {
-        return $this->state->badEscapeIsLiteral && !$this->state->inQuoteMode
-            && BadEscape::at($this->pattern, $position, false, $this->unicodeMode, $this->target, $this->state->captureCount);
-    }
-
-    /**
-     * An escape read as the character after its backslash: "\g{-1}" with
-     * no group open is "g" then the text "{-1}", "\400" without UTF is "4"
-     * then "00". What follows the character is plain text in either, but
-     * for the "+" of "\g{+n}", "\g<+n>", "\g'+n'" or "\g+n", which repeats
-     * the character before it: "g{+65535}" is "g", "{" once or more, then
-     * the text "65535}".
-     */
-    private function badEscapeLiteral(Token $token, int $startPosition): SequenceNode
-    {
-        $characterEnd = $startPosition + 2;
-        $end = $token->end();
-        $character = new LiteralNode($this->pattern[$startPosition + 1], $startPosition, $characterEnd);
-        $parts = [$character];
-        $textStart = $characterEnd;
-        $plusAt = '+' === ($this->pattern[$characterEnd] ?? '') ? $characterEnd : $characterEnd + 1;
-        if ('g' === $character->value && '+' === ($this->pattern[$plusAt] ?? '') && $plusAt < $end) {
-            $parts = $plusAt === $characterEnd
-                ? [new QuantifierNode($character, '+', QuantifierType::Greedy, $startPosition, $plusAt + 1)]
-                : [$character, new QuantifierNode(new LiteralNode($this->pattern[$characterEnd], $characterEnd, $plusAt), '+', QuantifierType::Greedy, $characterEnd, $plusAt + 1)];
-            $textStart = $plusAt + 1;
-        }
-
-        $parts[] = new LiteralNode(substr($this->pattern, $textStart, $end - $textStart), $textStart, $end);
-        $this->state->splitEscape = new SequenceNode($parts, $startPosition, $end);
-
-        return $this->state->splitEscape;
-    }
-
-    /**
-     * Before PCRE2 10.45 a number past 214748363 is read as no reference:
-     * "\8" or "\9" and eight digits or more is then the digit, and the
-     * digits after it text.
-     */
-    private function digitsFromUnreadReference(Token $token, int $startPosition): ?NodeInterface
-    {
-        if ($this->supports(PcreFeature::HugeBackreferenceNumberIsReference) || 1 !== LibraryPcre::match('/^\\\\([89]\d{8,})$/', $token->value, $matches)) {
-            return null;
-        }
-
-        $digitEnd = $startPosition + 2;
-        $this->state->splitEscape = new SequenceNode(
-            [new LiteralNode($matches[1][0], $startPosition, $digitEnd), new LiteralNode(substr($matches[1], 1), $digitEnd, $token->end())],
-            $startPosition,
-            $token->end(),
-        );
-
-        return $this->state->splitEscape;
-    }
-
-    /**
-     * "\NN" of 10 or more that starts with 1 to 7, past the groups opened so
-     * far, is no reference: PCRE reads an octal escape of up to three octal
-     * digits, and the digits left as text, "\1000" being "@" then "0".
-     */
-    private function octalEscapeFromReference(Token $token, int $startPosition): ?NodeInterface
-    {
-        if (1 !== LibraryPcre::match('/^\\\\([1-7]\d++)$/', $token->value, $matches)
-            || (\strlen($matches[1]) < 6 && (int) $matches[1] <= $this->state->captureCount)
-            || 1 !== LibraryPcre::match('/^[0-7]{1,3}/', $matches[1], $octal)) {
-            return null;
-        }
-
-        $representation = '\\'.$octal[0];
-        $escapeEnd = $startPosition + \strlen($representation);
-        $escape = new CharLiteralNode(
-            $representation,
-            CodePointReader::fromLiteral($representation, CharLiteralType::OctalLegacy),
-            CharLiteralType::OctalLegacy,
-            $startPosition,
-            $escapeEnd,
-        );
-
-        $text = substr($matches[1], \strlen($octal[0]));
-        if ('' === $text) {
-            return $escape;
-        }
-
-        $this->state->splitEscape = new SequenceNode([$escape, new LiteralNode($text, $escapeEnd, $token->end())], $startPosition, $token->end());
-
-        return $this->state->splitEscape;
     }
 
     /**
@@ -1889,6 +1489,11 @@ final class TokenParser
     private function quantifiers(): QuantifierParser
     {
         return $this->quantifiers ??= new QuantifierParser($this->state);
+    }
+
+    private function references(): ReferenceParser
+    {
+        return $this->references ??= new ReferenceParser($this->state, $this->groupNames);
     }
 
     private function classes(): ClassParser

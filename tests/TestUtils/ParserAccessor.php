@@ -208,7 +208,7 @@ final class ParserAccessor
         $pattern = $this->reflection->getProperty('pattern')->getValue($this->parser);
 
         $this->reflection->getProperty('state')->setValue($this->parser, new ParseState($stream, \is_string($pattern) ? $pattern : '', $target, false, false));
-        foreach (['classes', 'conditions', 'extendedClasses', 'quantifiers'] as $reader) {
+        foreach (['classes', 'conditions', 'extendedClasses', 'quantifiers', 'references'] as $reader) {
             $this->reflection->getProperty($reader)->setValue($this->parser, null);
         }
     }
