@@ -196,6 +196,13 @@ tasks:
     cmds:
       - cmd: phar/build
 
+  twin:
+    desc: Generate the PHP 7.4 twin of src/Parser under build/php74
+    deps:
+      - install
+    cmds:
+      - cmd: bash build/generate.sh
+
   lint:
     deps:
       - install
