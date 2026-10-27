@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Security;
 
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
+use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
@@ -76,6 +77,36 @@ final class SecurityAccessControlAnalyzerTest extends TestCase
 
         $this->assertSame(1, $report->stats['shadowed']);
         $this->assertSame([], $report->skippedRules);
+    }
+
+    /**
+     * A rule whose every request an earlier rule of the same roles takes
+     * first adds nothing: it is suggested for removal, located as the
+     * formatter writes it, or as file and line when the formatter gives
+     * nothing.
+     */
+    #[Test]
+    public function test_a_rule_an_earlier_rule_of_the_same_roles_covers_is_suggested_for_removal(): void
+    {
+        // Oracle: Symfony matches the path with preg_match('{'.$path.'}'): the first rule takes /admin/users.
+        $this->assertSame(1, preg_match('{^/admin}', '/admin/users'));
+
+        $rule = static fn (int $line, string $path): array => [
+            'file' => 'security.yaml', 'line' => $line, 'path' => $path, 'host' => null, 'roles' => ['ROLE_ADMIN'],
+            'methods' => [], 'ips' => [], 'allowIf' => null, 'requestMatcher' => null, 'requiresChannel' => null,
+        ];
+        $report = (new SecurityAccessControlAnalyzer(Regex::create(['cache' => null])))->analyze([$rule(10, '^/admin'), $rule(12, '^/admin/users')]);
+
+        $this->assertSame(1, $report->stats['redundant']);
+        $builder = new SecurityAccessSuggestionBuilder();
+        $this->assertSame([
+            'Reorder access_control: move rule #2 (security.yaml:12) before #1.',
+            'Remove redundant rule #2 (security.yaml:12); it does not add new access constraints.',
+        ], $builder->collect($report->conflicts, static fn (string $file, int $line): string => ''));
+        $this->assertSame([
+            'Reorder access_control: move rule #2 (security.yaml line 12) before #1.',
+            'Remove redundant rule #2 (security.yaml line 12); it does not add new access constraints.',
+        ], $builder->collect($report->conflicts, static fn (string $file, int $line): string => $file.' line '.$line));
     }
 
     #[Test]

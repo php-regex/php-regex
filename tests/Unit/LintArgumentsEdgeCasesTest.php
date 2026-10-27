@@ -34,6 +34,39 @@ final class LintArgumentsEdgeCasesTest extends TestCase
         $this->assertSame(-1, $arguments->jobs);
     }
 
+    /**
+     * A default of the wrong shape is read as the default it stands for.
+     */
+    #[Test]
+    public function test_from_defaults_reads_a_value_of_the_wrong_shape_as_the_default(): void
+    {
+        $arguments = LintArguments::fromDefaults([
+            'verbosity' => 'loud',
+            'checkLint' => 'yes',
+            'lintRules' => 'regex.lint.group.empty',
+            'ide' => 7,
+            'redosMode' => '',
+            'optimizations' => 'digits',
+        ]);
+
+        $this->assertSame('normal', $arguments->verbosity);
+        $this->assertTrue($arguments->checkLint);
+        $this->assertSame([], $arguments->lintRules);
+        $this->assertSame('', $arguments->ide);
+        $this->assertSame('theoretical', $arguments->redosMode);
+        $this->assertSame([], $arguments->optimizations);
+    }
+
+    #[Test]
+    public function test_from_defaults_drops_an_optimization_without_a_name(): void
+    {
+        $arguments = LintArguments::fromDefaults([
+            'optimizations' => [true, 'digits' => false],
+        ]);
+
+        $this->assertSame(['digits' => false], $arguments->optimizations);
+    }
+
     #[Test]
     public function test_from_defaults_reads_a_quantifier_count_written_as_digits(): void
     {

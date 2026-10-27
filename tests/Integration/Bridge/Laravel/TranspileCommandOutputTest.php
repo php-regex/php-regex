@@ -28,6 +28,32 @@ final class TranspileCommandOutputTest extends LaravelTestCase
     use ResetsShellVerbosity;
 
     #[Test]
+    public function test_console_lists_the_warnings_of_a_partial_translation(): void
+    {
+        // Oracle: "\77" is the octal escape of "?".
+        $this->assertSame(1, preg_match('/a\77/', 'a?'));
+
+        $status = Artisan::call('regex:transpile', ['pattern' => '/a\77/', '--target' => 'javascript']);
+        $output = Artisan::output();
+
+        $this->assertSame(0, $status);
+        $this->assertStringContainsString("Warnings:\n  ⚠ Converted octal escape to hex/Unicode escape for JavaScript.\n", $output);
+        $this->assertStringContainsString(' PARTIAL  Pattern transpiled with limitations.', $output);
+        $this->assertStringNotContainsString('COMPATIBLE', $output);
+    }
+
+    #[Test]
+    public function test_console_calls_a_translation_without_warnings_compatible(): void
+    {
+        $status = Artisan::call('regex:transpile', ['pattern' => '/a+b/', '--target' => 'javascript']);
+        $output = Artisan::output();
+
+        $this->assertSame(0, $status);
+        $this->assertStringContainsString(' COMPATIBLE  Pattern transpiled successfully.', $output);
+        $this->assertStringNotContainsString('Warnings:', $output);
+    }
+
+    #[Test]
     public function test_console_reports_a_construct_the_target_lacks(): void
     {
         $status = Artisan::call('regex:transpile', ['pattern' => '/a++b/', '--target' => 'javascript']);

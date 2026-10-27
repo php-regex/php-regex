@@ -121,6 +121,8 @@ final class ExitCodeContractTest extends TestCase
         yield 'compare with an unknown option' => [['compare', '/a/', '/b/', '--bogus']];
         yield 'compare with an unknown --method' => [['compare', '/a/', '/b/', '--method=bogus']];
         yield 'compare with an unknown --minimizer' => [['compare', '/a/', '/b/', '--minimizer=bogus']];
+        yield 'compare with an unknown --determinizer' => [['compare', '/a/', '/b/', '--determinizer=bogus']];
+        yield 'compare with a third pattern' => [['compare', '/a/', '/b/', '/c/']];
         yield 'compare with an invalid --php-version' => [['--php-version=abc', 'compare', '/a/', '/b/']];
         yield 'lint with an unknown option' => [['lint', '--bogus']];
         yield 'lint with an unknown --format' => [['lint', '--format=xml']];

@@ -26,6 +26,20 @@ use PHPUnit\Framework\Attributes\Test;
 final class RoutesCommandVerdictTest extends LaravelTestCase
 {
     #[Test]
+    public function test_routes_without_a_constraint_are_said_to_hold_none(): void
+    {
+        Route::get('/plain', static fn (): string => '')->name('plain');
+        // An empty constraint is no pattern: the route counts as holding none.
+        Route::get('/x/{v}', static fn (): string => '')->where('v', '')->name('empty');
+
+        $this->assertSame(0, Artisan::call('regex:routes', ['--show-constraints' => true]));
+        $output = Artisan::output();
+
+        $this->assertStringContainsString('No routes with regex constraints found.', $output);
+        $this->assertStringNotContainsString('Routes with Constraints:', $output);
+    }
+
+    #[Test]
     public function test_show_constraints_without_validate_gives_no_verdict(): void
     {
         Route::get('/x/{v}', static fn (): string => '')->where('v', '(unclosed')->name('broken');
