@@ -461,6 +461,9 @@ loads, in any YAML shape (block or flow lists, anchors and aliases,
 `when@<env>` blocks), with its `%parameters%` and `%env()%` values resolved.
 Each finding names the file and the line its value is written on, or
 `security configuration` when no `security.*` file under `config/` writes it.
+A rule with no path, host, `request_matcher` or `allow_if`, such as
+`{ roles: ROLE_USER }`, is found by its roles, `ips`, `methods` or
+`requires_channel`, on the line that opens its entry.
 `--config=<file>` analyzes that YAML file instead, read with `symfony/yaml`
 (`composer require symfony/yaml`), its `%parameters%` taken from its own
 `parameters` and then from the application's.

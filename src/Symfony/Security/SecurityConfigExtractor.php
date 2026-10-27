@@ -302,12 +302,24 @@ final class SecurityConfigExtractor
      */
     private function accessRule(array $rule, array $sources, array &$taken, \Closure $resolve): array
     {
-        [$file, $line] = self::locate($sources, $taken, [
+        $matchers = [
             ...self::valueMatchers($rule['path'], 'path'),
             ...self::valueMatchers($rule['host'], 'host'),
             ...self::valueMatchers($rule['requestMatcher'], 'request_matcher'),
             ...self::valueMatchers($rule['allowIf'], 'allow_if'),
-        ]);
+        ];
+        if ([] === $matchers) {
+            // A rule with none of these, "{ roles: ROLE_USER }", is found by
+            // what else it writes.
+            $matchers = self::entryMatchers([
+                'roles' => $rule['roles'],
+                'ips' => $rule['ips'],
+                'methods' => $rule['methods'],
+                'requires_channel' => null === $rule['requiresChannel'] ? [] : [$rule['requiresChannel']],
+            ]);
+        }
+
+        [$file, $line] = self::locate($sources, $taken, $matchers);
 
         return [
             'file' => $file,
@@ -467,6 +479,34 @@ final class SecurityConfigExtractor
             static fn (string $line): bool => $writes($line) && 1 === LibraryPcre::match($keyed, str_replace(['"', "'"], '', $line)),
             $writes,
         ];
+    }
+
+    /**
+     * Lines that write these values under their keys, first those that
+     * open an entry ("- roles:", "{ roles:", "['roles' =>",
+     * "accessControl()->roles("), so that the roles line of an earlier
+     * block entry is not taken for a rule that writes the same role, then
+     * any.
+     *
+     * @param array<string, list<string>> $values the values written, by key
+     *
+     * @return list<\Closure(string): bool>
+     */
+    private static function entryMatchers(array $values): array
+    {
+        $keyed = [];
+        foreach ($values as $key => $written) {
+            foreach ($written as $value) {
+                $keyed = [...$keyed, ...\array_slice(self::valueMatchers($value, $key), 0, 1)];
+            }
+        }
+
+        $opening = [];
+        foreach ($keyed as $writes) {
+            $opening[] = static fn (string $line): bool => 1 === LibraryPcre::match('~^\s*[-[{]|accessControl\(~', $line) && $writes($line);
+        }
+
+        return [...$opening, ...$keyed];
     }
 
     /**

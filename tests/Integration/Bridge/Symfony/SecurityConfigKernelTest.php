@@ -418,6 +418,42 @@ final class SecurityConfigKernelTest extends TestCase
         $this->assertStringContainsString('config/packages/security.yaml:5', $display);
     }
 
+    /**
+     * A rule with no path applies to every path: it shadows the rule after
+     * it, and the command names the line of each, the PHP file's too.
+     */
+    #[Test]
+    public function test_the_security_command_names_the_line_of_a_rule_without_a_path(): void
+    {
+        $kernel = new SecurityConfigKernel($this->makeProject([
+            'config/packages/security.php' => <<<'PHP'
+                <?php
+
+                use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+
+                return static function (ContainerConfigurator $container): void {
+                    $container->extension('security', [
+                        'firewalls' => ['main' => ['pattern' => '^/']],
+                        'access_control' => [
+                            ['roles' => 'ROLE_ADMIN'],
+                            ['path' => '^/admin', 'roles' => 'ROLE_ADMIN'],
+                        ],
+                    ]);
+                };
+                PHP,
+        ]));
+
+        $tester = new CommandTester(self::securityCommand($kernel));
+        $status = $tester->execute([]);
+        $display = $tester->getDisplay();
+
+        $this->assertSame(Command::FAILURE, $status, $display);
+        $this->assertStringContainsString('1 shadowed rules detected.', $display);
+        $this->assertStringContainsString('#1 config/packages/security.php:9', $display);
+        $this->assertStringContainsString('#2 config/packages/security.php:10', $display);
+        $this->assertStringNotContainsString('security configuration  ', $display);
+    }
+
     #[Test]
     public function test_the_security_command_names_no_line_for_an_entry_no_security_file_writes(): void
     {

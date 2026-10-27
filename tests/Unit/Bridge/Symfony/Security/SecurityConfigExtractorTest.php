@@ -276,6 +276,56 @@ final class SecurityConfigExtractorTest extends TestCase
         ];
     }
 
+    /**
+     * A rule with no path, host, request matcher or allow_if is located at
+     * the line of its entry, read from the roles, addresses, methods or
+     * channel it writes, never at a line an earlier rule writes.
+     *
+     * @param list<int> $lines
+     */
+    #[Test]
+    #[DataProvider('provideRulesWithoutAPath')]
+    public function test_a_rule_without_a_path_is_located_at_its_line(string $yaml, array $lines): void
+    {
+        $path = $this->makeProject(['security.yaml' => $yaml]).'/security.yaml';
+
+        $result = (new SecurityConfigExtractor())->extract($path, 'prod');
+
+        $this->assertSame($lines, array_column($result['accessControl'], 'line'));
+        $this->assertSame([$path], array_values(array_unique(array_column($result['accessControl'], 'file'))));
+    }
+
+    /**
+     * @return iterable<string, array{yaml: string, lines: list<int>}>
+     */
+    public static function provideRulesWithoutAPath(): iterable
+    {
+        yield 'a flow entry with roles only' => [
+            'yaml' => "security:\n    access_control:\n        - { path: ^/admin, roles: ROLE_ADMIN }\n        - { roles: ROLE_USER }\n",
+            'lines' => [3, 4],
+        ];
+        yield 'a block entry after a block entry writing the same role' => [
+            'yaml' => "security:\n    access_control:\n        - path: ^/admin\n          roles: ROLE_ADMIN\n        - roles: ROLE_ADMIN\n          methods: [POST]\n",
+            'lines' => [3, 5],
+        ];
+        yield 'a block entry opening on its methods' => [
+            'yaml' => "security:\n    access_control:\n        - path: ^/admin\n          roles: ROLE_ADMIN\n        - methods: [POST]\n          roles: ROLE_ADMIN\n",
+            'lines' => [3, 5],
+        ];
+        yield 'an entry with addresses and a channel' => [
+            'yaml' => "security:\n    access_control:\n        - { path: ^/admin, roles: PUBLIC_ACCESS }\n        - { ips: [127.0.0.1, ::1], roles: PUBLIC_ACCESS }\n        - { requires_channel: https }\n",
+            'lines' => [3, 4, 5],
+        ];
+        yield 'a flow sequence over several lines' => [
+            'yaml' => "security:\n    access_control: [\n        { path: ^/admin, roles: ROLE_ADMIN },\n        { roles: ROLE_ADMIN },\n    ]\n",
+            'lines' => [3, 4],
+        ];
+        yield 'a flow sequence on one line' => [
+            'yaml' => "security:\n    access_control: [{ path: ^/admin, roles: ROLE_ADMIN }, { roles: ROLE_USER }]\n",
+            'lines' => [2, 2],
+        ];
+    }
+
     #[Test]
     public function test_a_file_parameter_may_come_from_the_kernel(): void
     {
