@@ -17,6 +17,7 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Generator\Exception\SampleGenerationException;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\LexerException;
@@ -66,6 +67,7 @@ final class InternalMembersTest extends TestCase
             ComplexityException::class => ['__construct'],
             TranspileException::class => ['__construct'],
             SampleGenerationException::class => ['__construct'],
+            PatternOccurrence::class => ['__construct'],
         ];
 
         foreach ($members as $class => $methods) {

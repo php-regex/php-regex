@@ -113,7 +113,7 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
     /**
      * @param array<string> $files
      *
-     * @return array<PatternOccurrence>
+     * @return list<PatternOccurrence>
      */
     private function analyzeFilesWithPhpStan(array $files): array
     {
@@ -705,8 +705,10 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
     }
 
     /**
-     * @param array<PatternOccurrence> $occurrences
+     * @param list<PatternOccurrence>  $occurrences
      * @param array<PatternOccurrence> $items
+     *
+     * @param-out list<PatternOccurrence> $occurrences
      */
     private function appendOccurrences(array &$occurrences, array $items): void
     {

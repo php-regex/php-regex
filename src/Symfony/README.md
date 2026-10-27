@@ -56,7 +56,7 @@ Every key is optional and lives under `php_regex` in `config/packages/php_regex.
 | `php_version`, `pcre_version` | `null` | PHP version and PCRE2 release `regex:lint` judges for (`"8.2"`, `"10.42"`) |
 | `locale` | `null` | `LC_CTYPE` locale `regex:lint` judges under (`"tr_TR.UTF-8"`); `null` for the one of the PHP running the command. The `php_regex.regex` service judges under the running PHP's |
 | `cache.pool`, `cache.directory`, `cache.prefix` | `null`, `'%kernel.cache_dir%/php_regex'`, `'regex_'` | Cache for parsed ASTs: a PSR-6 pool, else this directory |
-| `extractor_service` | `null` | Service id of a custom pattern extractor |
+| `extractor_service` | `null` | Service id of your own pattern extractor, an `ExtractorInterface` whose `extract()` returns `PatternOccurrence::found()` occurrences; it replaces the built-in extractors, and the `@regex-ignore` markers of the files it reads still apply ([guide](https://php-regex.com/guides/symfony/#configuration)) |
 | `extraction.interop`, `extraction.functions` | every preset, `[]` | The libraries whose calls `regex:lint` reads patterns from (a list for exactly those, `[]` for the native calls only), and your own helpers carrying a pattern, as `extraction` of `regex.json`; unused with `extractor_service` |
 | `redos.enabled`, `redos.threshold`, `redos.ignored_patterns` | `false`, `'high'`, `[]` | ReDoS analysis on or off, minimum severity reported, patterns skipped |
 | `analysis.complexity`, `analysis.warning_threshold` | `false`, `50` | `regex:lint` reports the patterns whose complexity score reaches the threshold, as `regex lint` does under `checks.complexity` |

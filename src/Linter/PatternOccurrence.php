@@ -38,10 +38,15 @@ use PHPRegex\Linter\Extraction\TargetMarker;
  * silences: an analysis given it alone leaves it out. The lint, given the
  * markers of the file, analyses it and drops its issues itself.
  *
- * @internal
+ * An extractor of your own builds its occurrences with found(), and reads
+ * $pattern, $file, $line, $column and $source; the other members are the
+ * library's.
  */
 final class PatternOccurrence
 {
+    /**
+     * @internal the library builds its occurrences; an extractor of your own calls found()
+     */
     public function __construct(
         public readonly string $pattern,
         public readonly string $file,
@@ -66,7 +71,23 @@ final class PatternOccurrence
     ) {}
 
     /**
+     * A pattern an extractor found: the pattern as the call gives it,
+     * delimiters and modifiers included, the file and the line it stands
+     * on, the column of the literal that holds it (its opening quote,
+     * counted in bytes from 1) when the extractor knows it, and the call
+     * that holds it, "preg_match()" for instance ("php" when null). The
+     * run reads the inline markers of the file itself: a "@regex-ignore"
+     * on the line applies as it does to the patterns the library finds.
+     */
+    public static function found(string $pattern, string $file, int $line, ?int $column = null, ?string $source = null): self
+    {
+        return new self($pattern, $file, $line, $source ?? 'php', column: $column);
+    }
+
+    /**
      * A PHP file the run read, and its inline markers.
+     *
+     * @internal
      *
      * @param list<IgnoreMarker> $ignores
      * @param list<TargetMarker> $targets
@@ -79,6 +100,8 @@ final class PatternOccurrence
     /**
      * The same occurrence, its line silenced whole by a marker naming no
      * issue.
+     *
+     * @internal
      */
     public function ignoredWhole(): self
     {
@@ -88,6 +111,8 @@ final class PatternOccurrence
     /**
      * The same occurrence, judged for the versions a guard or a marker
      * keeps.
+     *
+     * @internal
      */
     public function guardedBy(?TargetConstraint $guard): self
     {
@@ -97,6 +122,8 @@ final class PatternOccurrence
     /**
      * The same occurrence, analysed whatever a marker says: the lint drops
      * its issues itself.
+     *
+     * @internal
      */
     public function analysed(): self
     {
@@ -105,6 +132,8 @@ final class PatternOccurrence
 
     /**
      * A file the extractor could not read, and why.
+     *
+     * @internal
      */
     public static function unread(string $file, string $reason): self
     {
@@ -113,6 +142,8 @@ final class PatternOccurrence
 
     /**
      * A file the tokenizer read because the PHP parser could not, and why.
+     *
+     * @internal
      */
     public static function parserFallback(string $file, string $reason): self
     {

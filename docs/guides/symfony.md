@@ -144,6 +144,51 @@ with `Malformed pattern function "x#a", ignored.`
 One name written without a list, `interop: nette-utils`, is a list of that
 name.
 
+`extractor_service` names a service of yours implementing
+`PHPRegex\Linter\Extraction\ExtractorInterface`. `regex:lint` then reads
+patterns with it alone: the built-in extractors do not run, so the native
+`preg_*` calls are read only if yours reads them, and `extraction` is unused.
+`extract()` is handed the PHP files under the paths and returns a list of
+`PatternOccurrence`, each built with `PatternOccurrence::found()`: the pattern
+with its delimiters and modifiers, the file, the line, the column of the
+literal that holds it (its opening quote, counted in bytes from 1) when your
+extractor knows it, and the call that holds it, as the report names it:
+
+```php
+namespace App\Regex;
+
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\PatternOccurrence;
+
+final class RuleExtractor implements ExtractorInterface
+{
+    public function extract(array $files): array
+    {
+        $occurrences = [];
+        foreach ($files as $file) {
+            foreach (file($file) ?: [] as $index => $line) {
+                if (1 === preg_match("~Rule::matches\\('([^']*)'~", $line, $match, \PREG_OFFSET_CAPTURE)) {
+                    $occurrences[] = PatternOccurrence::found($match[1][0], $file, $index + 1, $match[1][1], 'Rule::matches()');
+                }
+            }
+        }
+
+        return $occurrences;
+    }
+}
+```
+
+```yaml
+# config/packages/php_regex.yaml
+php_regex:
+    extractor_service: App\Regex\RuleExtractor
+```
+
+An occurrence your extractor builds carries no inline marker of its own:
+`regex:lint` reads the markers of the file it names, so a `@regex-ignore` on
+its line silences it as it silences a pattern the built-in extractors find,
+and a marker that silences nothing is reported the same way.
+
 `regex:lint` reads the `Regex` constraints of the validator mapping files
 FrameworkBundle hands the validator: `config/validator/*.yaml` and `*.xml`,
 the files and directories of `framework.validation.mapping.paths`, and the

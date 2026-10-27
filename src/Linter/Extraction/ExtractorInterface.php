@@ -16,9 +16,9 @@ namespace PHPRegex\Linter\Extraction;
 use PHPRegex\Linter\PatternOccurrence;
 
 /**
- * Interface for regex pattern extraction implementations.
- *
- * @internal
+ * Reads the patterns of PHP files: the built-in extractors read the native
+ * calls and the configured functions, one of your own reads the calls it
+ * knows. Build each occurrence with PatternOccurrence::found().
  */
 interface ExtractorInterface
 {
@@ -27,7 +27,7 @@ interface ExtractorInterface
      *
      * @param array<string> $files List of PHP file paths to analyze
      *
-     * @return array<PatternOccurrence>
+     * @return list<PatternOccurrence>
      */
     public function extract(array $files): array;
 }

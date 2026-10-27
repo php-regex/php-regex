@@ -148,7 +148,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     /**
      * @param array<string> $files
      *
-     * @return array<PatternOccurrence>
+     * @return list<PatternOccurrence>
      */
     private function extractFiles(array $files): array
     {
@@ -876,8 +876,10 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     }
 
     /**
-     * @param array<PatternOccurrence> $occurrences
+     * @param list<PatternOccurrence>  $occurrences
      * @param array<PatternOccurrence> $items
+     *
+     * @param-out list<PatternOccurrence> $occurrences
      */
     private function appendOccurrences(array &$occurrences, array $items): void
     {

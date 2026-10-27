@@ -497,7 +497,7 @@ final class PatternFunctionPrescanTest extends TestCase
             {
                 $this->calls[] = array_values($files);
 
-                return array_map(static fn (string $file): PatternOccurrence => new PatternOccurrence('/custom/', $file, 1, 'custom'), $files);
+                return array_values(array_map(static fn (string $file): PatternOccurrence => PatternOccurrence::found('/custom/', $file, 1, source: 'custom'), $files));
             }
         };
 
