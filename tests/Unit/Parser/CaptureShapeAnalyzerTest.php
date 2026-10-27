@@ -159,6 +159,43 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $this->assertNull($exact->subject->maxLength);
     }
 
+    /**
+     * After "\K" the whole match holds what the engine writes there: the
+     * text from the last "\K" run to the end, or the whole span when no
+     * "\K" ran. Backtracking past a "\K" takes its reset back.
+     *
+     * @param non-empty-list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideKeptWholes')]
+    public function test_the_whole_match_after_keep_holds_the_text_from_the_last_reset(string $pattern, array $subjects, string $expected): void
+    {
+        $shape = $this->analyze($pattern);
+
+        $this->assertSame($expected, $shape->matchShape());
+        foreach ($subjects as $subject) {
+            $matches = [];
+            $this->assertSame(1, preg_match($pattern, $subject, $matches));
+            $this->assertTrue(null === $shape->whole->values || \in_array($matches[0], $shape->whole->values, true), \sprintf('%s on %s writes %s, which the whole does not hold.', $pattern, json_encode($subject), json_encode($matches[0])));
+        }
+    }
+
+    /**
+     * A "\K" in a lookaround may start the match after its end, or before
+     * the text the match read: preg_match('/(?=a\K)a/', 'a') writes [""]
+     * (PHP 8.4.27, PCRE2 10.49), and PHP 8.5 refuses the pattern. The whole
+     * keeps its presence alone, read for a PHP 8.4 target.
+     */
+    #[Test]
+    public function test_a_reset_in_a_lookaround_leaves_the_whole_unknown(): void
+    {
+        $parser = RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']);
+
+        foreach (['/(?=a\K)a/', '/(?(?=a\K)a|b)/', '/(?:(?=a\K)|b)a/', '/(?:(?=a\K)b)?a/'] as $pattern) {
+            $this->assertSame('array{0: string}', (new CaptureShapeAnalyzer())->analyze($parser->parse($pattern))->matchShape(), $pattern);
+        }
+    }
+
     #[Test]
     public function test_names_and_numbers_are_both_known(): void
     {
@@ -1214,7 +1251,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'branch reset joins 32 values: the limit' => ['pattern' => '/(?|(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p)|(q|r|s|t|u|v|w|x|y|z|0|1|2|3|4|5))/', 'group' => 1, 'values' => str_split('abcdefghijklmnopqrstuvwxyz012345')];
         yield 'branch reset joins 33 values: past the limit' => ['pattern' => '/(?|(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p)|(q|r|s|t|u|v|w|x|y|z|0|1|2|3|4|5|6))/', 'group' => 1, 'values' => null];
         yield 'whole match' => ['pattern' => '/a(b|c)/', 'group' => 0, 'values' => ['ab', 'ac']];
-        yield 'keep resets the whole match' => ['pattern' => '/a\K(b)/', 'group' => 0, 'values' => null];
+        // preg_match('/a\K(b)/', 'ab') -> ["b","b"] (PHP 8.4.27, PCRE2 10.49): the whole holds what follows the reset
+        yield 'keep resets the whole match' => ['pattern' => '/a\K(b)/', 'group' => 0, 'values' => ['b']];
         yield 'too many' => ['pattern' => '/((?:a|b|c|d)(?:a|b|c|d)(?:a|b|c|d))/', 'group' => 1, 'values' => null];
         // The engine tries the branches left to right at each position and
         // takes the leftmost position: a zero-width branch read first wins
@@ -1326,6 +1364,43 @@ final class CaptureShapeAnalyzerTest extends TestCase
     /**
      * @return iterable<string, array{pattern: string, group: int, min: int, max: int|null}>
      */
+    /**
+     * Oracle (PHP 8.4.27, PCRE2 10.49), $matches[0] on each subject:
+     *   /a\Kb?/ on 'a' -> '', on 'ab' -> 'b'
+     *   /(?:a\K)?b/ on 'b' and on 'ab' -> 'b'
+     *   /a\K(?:b|c\Kd)/ on 'ab' -> 'b', on 'acd' -> 'd'
+     *   /a(?:\K|b)c/ on 'ac' -> 'c', on 'abc' -> 'abc'
+     *   /(?:a\Kb|a)c/ on 'abc' -> 'bc', on 'ac' -> 'ac': the failed branch takes its reset back
+     *   /x(?:a\K|b){2}/ on 'xaa' -> '', 'xab' -> 'b', 'xba' -> '', 'xbb' -> 'xbb'
+     *   /(?:a\K)+(b)/ on 'ab' and 'aab' -> 'b'
+     *   /(a)\K(?1)/ on 'aa' -> 'a': the group it calls holds no "\K"
+     *   /(b\K)(?1)c/ on 'bbc' -> 'c': a "\K" a call runs resets the match too, which is read as unknown
+     *   /(?(?=a)a\K|b)c/ on 'ac' -> 'c', on 'bc' -> 'bc'
+     *   /(?(DEFINE)(a\K))x\Kb/ on 'xb' -> 'b'; /(?:a\K){0}b/ on 'b' -> 'b'; /(*sr:a\K)b/ on 'ab' -> 'b'
+     *   /a\Kb(?R)?/ on 'abab' -> 'b': the recursion runs the reset again, read as unknown
+     *   /(?(R)a|b)\Kc/ on 'bc' -> 'c': a recursion test calls nothing
+     *
+     * @return iterable<string, array{pattern: string, subjects: non-empty-list<string>, expected: string}>
+     */
+    public static function provideKeptWholes(): iterable
+    {
+        yield 'a reset before an optional character' => ['pattern' => '/a\Kb?/', 'subjects' => ['a', 'ab'], 'expected' => "array{0: ''|'b'}"];
+        yield 'an optional reset' => ['pattern' => '/(?:a\K)?b/', 'subjects' => ['b', 'ab'], 'expected' => "array{0: 'b'}"];
+        yield 'a later reset in one branch' => ['pattern' => '/a\K(?:b|c\Kd)/', 'subjects' => ['ab', 'acd'], 'expected' => "array{0: 'b'|'d'}"];
+        yield 'a reset in one branch only' => ['pattern' => '/a(?:\K|b)c/', 'subjects' => ['ac', 'abc'], 'expected' => "array{0: 'c'|'abc'}"];
+        yield 'a branch that fails past its reset' => ['pattern' => '/(?:a\Kb|a)c/', 'subjects' => ['abc', 'ac'], 'expected' => "array{0: 'bc'|'ac'}"];
+        yield 'a reset in a repeat' => ['pattern' => '/x(?:a\K|b){2}/', 'subjects' => ['xaa', 'xab', 'xba', 'xbb'], 'expected' => "array{0: ''|'b'|'xbb'}"];
+        yield 'a reset each iteration runs' => ['pattern' => '/(?:a\K)+(b)/', 'subjects' => ['ab', 'aab'], 'expected' => "array{0: 'b', 1: 'b'}"];
+        yield 'a call past the reset' => ['pattern' => '/(a)\K(?1)/', 'subjects' => ['aa'], 'expected' => "array{0: 'a', 1: 'a'}"];
+        yield 'a reset a call runs' => ['pattern' => '/(b\K)(?1)c/', 'subjects' => ['bbc'], 'expected' => "array{0: string, 1: 'b'}"];
+        yield 'a reset in a conditional branch' => ['pattern' => '/(?(?=a)a\K|b)c/', 'subjects' => ['ac', 'bc'], 'expected' => "array{0: 'c'|'bc'}"];
+        yield 'a reset in a (DEFINE) no call runs' => ['pattern' => '/(?(DEFINE)(a\K))x\Kb/', 'subjects' => ['xb'], 'expected' => "array{0: 'b'}"];
+        yield 'a reset repeated no time' => ['pattern' => '/(?:a\K){0}b/', 'subjects' => ['b'], 'expected' => "array{0: 'b'}"];
+        yield 'a reset in a script run' => ['pattern' => '/(*sr:a\K)b/', 'subjects' => ['ab'], 'expected' => "array{0: 'b'}"];
+        yield 'a reset the recursion runs again' => ['pattern' => '/a\Kb(?R)?/', 'subjects' => ['ab', 'abab'], 'expected' => 'array{0: string}'];
+        yield 'a reset past a recursion test' => ['pattern' => '/(?(R)a|b)\Kc/', 'subjects' => ['bc'], 'expected' => "array{0: 'c'}"];
+    }
+
     public static function provideLengths(): iterable
     {
         yield 'fixed' => ['pattern' => '/(\d{4})/', 'group' => 1, 'min' => 4, 'max' => 4];
@@ -1337,8 +1412,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'accept leaves the group open before any text' => ['pattern' => '/((*ACCEPT)a)/', 'group' => 1, 'min' => 0, 'max' => null];
         // preg_match('/(a(*ACCEPT)b)c/', 'abc') -> ["a","a"]
         yield 'accept leaves the group open after some text' => ['pattern' => '/(a(*ACCEPT)b)c/', 'group' => 1, 'min' => 0, 'max' => null];
-        // preg_match('/a\Kb?/', 'a') -> [""]: \K leaves the whole match empty, so its minimum is exactly 0
-        yield 'keep cuts the whole match short' => ['pattern' => '/a\Kb?/', 'group' => 0, 'min' => 0, 'max' => null];
+        // preg_match('/a\Kb?/', 'a') -> [""]: \K leaves the whole match empty, so its minimum is exactly 0;
+        // on 'ab' -> ["b"]: the whole holds what follows the reset, one character at most
+        yield 'keep cuts the whole match short' => ['pattern' => '/a\Kb?/', 'group' => 0, 'min' => 0, 'max' => 1];
         // A call reads as long as the body of the group it calls, wherever it stands
         // (PHP 8.4.27, PCRE2 10.49): preg_match('/(?<t>ab)x((?&t)c)/', 'abxabc') sets
         // group 2 to 'abc'; preg_match('/(?<t>a{1,3})x((?&t)c)/', 'axaaac') to 'aaac';
@@ -1450,6 +1526,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield '/(?<y>\d{4})-(?<m>\d\d)?/' => ['pattern' => '/(?<y>\d{4})-(?<m>\d\d)?/', 'subjects' => ['2026-10', '2026-']];
         yield '/(x)?(?(1)(a)|(b))/' => ['pattern' => '/(x)?(?(1)(a)|(b))/', 'subjects' => ['xa', 'b']];
         yield '/a\K(b)/' => ['pattern' => '/a\K(b)/', 'subjects' => ['ab']];
+        foreach (self::provideKeptWholes() as $row) {
+            yield $row['pattern'] => ['pattern' => $row['pattern'], 'subjects' => $row['subjects']];
+        }
         yield '/(*MARK:m)(a)|(b)/' => ['pattern' => '/(*MARK:m)(a)|(b)/', 'subjects' => ['a', 'b']];
         yield '/(é)+/' => ['pattern' => '/(é)+/', 'subjects' => ['éé']];
         yield '/(\x41|\n)/' => ['pattern' => '/(\x41|\n)/', 'subjects' => ['A', "\n"]];
@@ -2056,6 +2135,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
     public static function provideCaseShapes(): iterable
     {
         yield 'two branches' => ['pattern' => '/(a)|(b)/', 'flags' => 0, 'expected' => "array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}"];
+        // preg_match('/(?:(a)\K(b))?./', 'abc') -> ["bc","a","b"]; on 'ac' -> ["a"] (PHP 8.4.27, PCRE2 10.49):
+        // the case where the group runs reads the whole from its reset
+        yield 'a reset in the case an optional group runs' => ['pattern' => '/(?:(a)\K(b))?./', 'flags' => 0, 'expected' => "array{0: non-falsy-string, 1: 'a', 2: 'b'}|array{0: non-empty-string}"];
         yield 'through a capturing group' => ['pattern' => '/Price: (£|(\d)|x)/i', 'flags' => 0, 'expected' => "array{0: non-falsy-string, 1: '£'|numeric-string|non-falsy-string}|array{0: non-falsy-string, 1: '£'|numeric-string|non-falsy-string, 2: numeric-string}"];
         yield 'two branches, as null' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: 'a', 2: null}|array{0: 'b', 1: null, 2: 'b'}"];
         yield 'two branches, offsets' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'a', int<0, max>}, 1: array{'a', int<0, max>}}|array{0: array{'b', int<0, max>}, 1: array{'', int<-1, max>}, 2: array{'b', int<0, max>}}"];

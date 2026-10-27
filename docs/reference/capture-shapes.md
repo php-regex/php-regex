@@ -577,8 +577,13 @@ cannot tell, the answer widens rather than guesses:
   holds `'a'`, `'aa'` or `'aaa'`, up to 32 strings. Where caseless matching holds, a
   letter that may fold leaves them unknown: under `/i`, from `(?i)` to the end of its
   group, or inside `(?i:...)`. In `/(?i:a)(b)/` group 1 still holds `'b'`.
-- `\K` and `(*ACCEPT)` cut a match short: the whole match then keeps only its presence,
-  and `(*ACCEPT)` makes every group `MayBeUnset` with unknown values.
+- After `\K` the whole match holds the text from the last `\K` run to the end, and the
+  whole span where no `\K` ran: `/a\K(?:b|c\Kd)/` writes `'b'` or `'d'`, `/a(?:\K|b)c/`
+  writes `'c'` or `'abc'`. Backtracking past a `\K` takes its reset back:
+  `preg_match('/(?:a\Kb|a)c/', 'ac', $m)` writes `'ac'`. A `\K` in a lookaround, in a
+  condition or in a group a call runs leaves the whole match its presence alone.
+- `(*ACCEPT)` cuts a match short: the whole match then keeps only its presence, and every
+  group is `MayBeUnset` with unknown values.
 - A subroutine call reads what the group it calls reads, with the options of that
   group: in `/(?<t>a)&((?&t))/` group 2 holds `'a'`. Its length is the length of that
   group, wherever the call stands: in `/(?<t>\w\w)x((?&t)c)/` group 2 is three

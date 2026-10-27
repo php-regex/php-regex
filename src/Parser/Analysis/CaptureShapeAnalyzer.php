@@ -57,7 +57,7 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '13';
+    public const ANALYSIS_VERSION = '14';
 
     private const MAX_CASES = 16;
 
@@ -243,7 +243,14 @@ final class CaptureShapeAnalyzer
         // start of the match, not what the pattern read from the subject
         $subject = $this->accepts ? null : $this->subject($wholePattern, $whole, $arms);
 
-        // \K and (*ACCEPT) cut the whole match short: only its presence is known.
+        // \K starts the whole match at the last reset run; (*ACCEPT) cuts it
+        // short, and so does a \K the analysis cannot place: only its
+        // presence is known then.
+        $kept = $this->keeps && !$this->accepts ? $this->keptWhole($wholePattern) : null;
+        if (null !== $kept) {
+            return new CaptureShape(self::record(0, null, Participation::Always, $this->facts->of($kept, true), $this->facts->arms($kept, true)), $groups, $this->marks, subject: $subject);
+        }
+
         if ($this->keeps || $this->accepts) {
             return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, 0, null, null), $groups, $this->marks, subject: $subject);
         }
@@ -313,6 +320,195 @@ final class CaptureShapeAnalyzer
         $max = null === $facts['max'] || $facts['max'] > \PHP_INT_MAX - $longest ? null : $facts['max'] + $longest;
 
         return ['values' => $values, 'max' => $max, 'digitsOnly' => false, 'decimalInt' => false] + $facts;
+    }
+
+    /**
+     * What $matches[0] holds for a pattern holding \K: the text from the
+     * last \K run to the end, on the paths that run one, and the whole span
+     * on those that run none. Backtracking past a \K takes its reset back:
+     * preg_match('/(?:a\Kb|a)c/', 'ac') writes "ac". Null where a \K sits
+     * out of reach of the reading: in a lookaround, in a condition, or in a
+     * group a call runs.
+     */
+    private function keptWhole(NodeInterface $pattern): ?NodeInterface
+    {
+        $read = $this->kept($pattern);
+
+        return null === $read ? null : self::union(array_values(array_filter($read)), $pattern);
+    }
+
+    /**
+     * How the node reads where \K moves the start of the match: the text
+     * from the last \K it runs to its end, on the paths that run one (null
+     * when none does), and what it reads on the paths that run none (null
+     * when every path runs one). Null where a \K sits out of reach.
+     *
+     * @return array{0: NodeInterface|null, 1: NodeInterface|null}|null
+     */
+    private function kept(NodeInterface $node): ?array
+    {
+        if (!$this->mayKeep($node)) {
+            return [null, $node];
+        }
+
+        return match (true) {
+            $node instanceof KeepNode => [self::nothing($node), null],
+            $node instanceof SequenceNode => $this->keptSequence($node),
+            $node instanceof AlternationNode => $this->keptBranches($node->alternatives, $node),
+            $node instanceof GroupNode => \in_array($node->type, self::ANCHOR_GROUPS, true) ? $this->kept($node->child) : null,
+            $node instanceof QuantifierNode => $this->keptRepeat($node),
+            $node instanceof ConditionalNode => $node->condition instanceof SubroutineNode || !$this->mayKeep($node->condition) ? $this->keptBranches([$node->yes, $node->no], $node) : null,
+            $node instanceof ScriptRunNode && null !== $node->content => $this->kept($node->content),
+            default => null,
+        };
+    }
+
+    /**
+     * The last child that runs a \K starts the match; every child after it
+     * runs none.
+     *
+     * @return array{0: NodeInterface|null, 1: NodeInterface|null}|null
+     */
+    private function keptSequence(SequenceNode $node): ?array
+    {
+        $reads = [];
+        foreach ($node->children as $child) {
+            $read = $this->kept($child);
+            if (null === $read) {
+                return null;
+            }
+            $reads[] = $read;
+        }
+
+        $tails = [];
+        // what the children after the one at hand read without a \K
+        $after = [];
+        for ($index = \count($reads) - 1; $index >= 0; $index--) {
+            [$tail, $passing] = $reads[$index];
+            if (null !== $tail) {
+                array_unshift($tails, new SequenceNode([$tail, ...$after], $node->startPosition, $node->endPosition));
+            }
+
+            // a child that always runs a \K hides every earlier one
+            if (null === $passing) {
+                return [self::union($tails, $node), null];
+            }
+            array_unshift($after, $passing);
+        }
+
+        return [self::union($tails, $node), new SequenceNode($after, $node->startPosition, $node->endPosition)];
+    }
+
+    /**
+     * @param list<NodeInterface> $branches
+     *
+     * @return array{0: NodeInterface|null, 1: NodeInterface|null}|null
+     */
+    private function keptBranches(array $branches, NodeInterface $node): ?array
+    {
+        $tails = [];
+        $passing = [];
+        foreach ($branches as $branch) {
+            $read = $this->kept($branch);
+            if (null === $read) {
+                return null;
+            }
+
+            [$tails[], $passing[]] = $read;
+        }
+
+        return [self::union(array_values(array_filter($tails)), $node), self::union(array_values(array_filter($passing)), $node)];
+    }
+
+    /**
+     * The last iteration that runs a \K starts the match; every later one
+     * runs none. A repeat that never runs reads nothing.
+     *
+     * @return array{0: NodeInterface|null, 1: NodeInterface|null}|null
+     */
+    private function keptRepeat(QuantifierNode $node): ?array
+    {
+        $min = $node->bounds->min ?? 1;
+        $max = null === $node->bounds ? 1 : $node->bounds->max;
+        if (0 === $max) {
+            return [null, self::nothing($node)];
+        }
+
+        $read = $this->kept($node->node);
+        if (null === $read) {
+            return null;
+        }
+
+        [$tail, $passing] = $read;
+        $start = $node->getStartPosition();
+        $end = $node->getEndPosition();
+
+        if (null !== $tail && null !== $passing && 1 !== $max) {
+            $tail = new SequenceNode([$tail, new QuantifierNode($passing, null === $max ? '*' : '{0,'.($max - 1).'}', $node->type, $start, $end)], $start, $end);
+        }
+
+        $passing = match (true) {
+            null !== $passing => new QuantifierNode($passing, $node->quantifier, $node->type, $start, $end),
+            0 === $min => self::nothing($node),
+            default => null,
+        };
+
+        return [$tail, $passing];
+    }
+
+    /**
+     * Whether the node may run a \K: one it holds, or one in a group a call
+     * it holds runs. A call of the whole pattern may; (DEFINE) runs nothing
+     * by itself, and a recursion test calls nothing.
+     *
+     * @param array<int, true> $called the groups already followed
+     */
+    private function mayKeep(NodeInterface $node, array &$called = []): bool
+    {
+        if ($node instanceof KeepNode) {
+            return true;
+        }
+
+        if ($node instanceof DefineNode) {
+            return false;
+        }
+
+        if ($node instanceof SubroutineNode) {
+            $groups = $this->groups->groupsCalledBy($node);
+            foreach ($groups as $group) {
+                if (!isset($called[$id = spl_object_id($group)])) {
+                    $called[$id] = true;
+                    if ($this->mayKeep($group->child, $called)) {
+                        return true;
+                    }
+                }
+            }
+
+            return [] === $groups;
+        }
+
+        $children = $node instanceof ConditionalNode && $node->condition instanceof SubroutineNode ? [$node->yes, $node->no] : $node->getChildren();
+        foreach ($children as $child) {
+            if ($this->mayKeep($child, $called)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The node that reads what any of the nodes reads, null for none.
+     *
+     * @param list<NodeInterface> $nodes
+     */
+    private static function union(array $nodes, NodeInterface $at): ?NodeInterface
+    {
+        return match (\count($nodes)) {
+            0 => null,
+            1 => $nodes[0],
+            default => new AlternationNode($nodes, $at->getStartPosition(), $at->getEndPosition()),
+        };
     }
 
     /**
