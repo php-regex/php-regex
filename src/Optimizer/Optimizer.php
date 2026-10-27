@@ -125,7 +125,8 @@ final class Optimizer
         // pattern matches, never whether PCRE compiles it, and prove
         // "(?<=abc|abde)" factorized for a release that refuses a
         // lookbehind branch of two lengths.
-        if (!$this->parser->validate($optimizedPattern)->isValid && $this->parser->validate($regex)->isValid) {
+        // Nor is one of a pattern PCRE refuses: it has no matches to keep.
+        if (!$this->parser->validate($regex)->isValid || !$this->parser->validate($optimizedPattern)->isValid) {
             return new OptimizationResult($regex, $regex, []);
         }
 

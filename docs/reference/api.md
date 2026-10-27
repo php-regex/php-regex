@@ -451,7 +451,8 @@ var_dump($confirmed->replayed);                               // bool(true)
 ### captureShape(string $regex): CaptureShape
 
 Reads what a successful `preg_match()` writes into `$matches`, from the pattern alone. The pattern is parsed through
-the facade's cache, and an invalid one throws what `parse()` throws. `$groups` is keyed by group number;
+the facade's cache and validated at the facade's target, as `info()` does: a pattern the engine refuses has no
+matches to describe, and throws what `parse()` throws or a `SemanticErrorException` carrying the validation error. `$groups` is keyed by group number;
 `matchShape()` writes the array as a PHPStan type and takes `PREG_OFFSET_CAPTURE` and `PREG_UNMATCHED_AS_NULL`;
 `matchAllShape()` writes what `preg_match_all()` fills, under `PREG_PATTERN_ORDER` or `PREG_SET_ORDER`, with the same flags.
 A `(?(VERSION>=10.45)...)` condition is read for the facade's target, its `pcre_version`.
@@ -526,7 +527,9 @@ by `$parser->withTarget()`. See
 
 ### optimize(string $regex, ?OptimizerOptions $options = null): OptimizationResult
 
-Applies safe optimizations to the pattern. The options are an `OptimizerOptions` value, its arguments named;
+Applies safe optimizations to the pattern. A pattern the engine refuses throws, as `info()` does: it has no matches a
+rewrite could keep (`/(?:\d){65536}/` is refused, so is the `\d{65536}` it would become). `Optimizer`, called directly,
+returns it unchanged instead. The options are an `OptimizerOptions` value, its arguments named;
 null reads the defaults. Options read from a configuration, keyed in snake_case as `Regex::create()`'s are,
 become one through `OptimizerOptions::fromArray()`, which throws `InvalidRegexOptionException` on an unknown
 key or a value of the wrong type (`fromCamelCaseArray()` reads the camelCase keys of `regex.json`).
@@ -681,7 +684,7 @@ match consumes: every match starts with one of `literalSet->prefixes` and ends w
 an empty list says nothing about that end. Lookarounds add nothing, `(*ACCEPT)` drops the suffixes, and a set too large
 to keep is dropped rather than cut.
 
-`patterns` are those literals quoted for a `/` delimiter, never anchored: a subject the pattern matches holds one of
+A pattern the engine refuses throws, as `info()` does. `patterns` are those literals quoted for a `/` delimiter, never anchored: a subject the pattern matches holds one of
 them, wherever the match sits in it, so they can reject a subject before `preg_match()` runs, never accept one. An
 empty literal, held by every subject, is left out, and a pattern with no other literal is `low` confidence.
 

@@ -33,13 +33,16 @@ use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Analysis\PatternInfo;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Cache\CacheInterface;
+use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
@@ -313,6 +316,9 @@ final class Regex
      */
     public function optimize(string $regex, ?OptimizerOptions $options = null): OptimizationResult
     {
+        $this->parse($regex);
+        $this->refuseWhatTheEngineRefuses($regex);
+
         return (new Optimizer($this->parser))->optimize($regex, $options);
     }
 
@@ -407,6 +413,7 @@ final class Regex
     public function literals(string $regex): LiteralExtractionResult
     {
         $ast = $this->parse($regex);
+        $this->refuseWhatTheEngineRefuses($regex);
 
         $literalSet = $ast->accept(new LiteralExtractor());
 
@@ -426,7 +433,10 @@ final class Regex
      */
     public function captureShape(string $regex): CaptureShape
     {
-        return (new CaptureShapeAnalyzer($this->target()))->analyze($this->parse($regex));
+        $ast = $this->parse($regex);
+        $this->refuseWhatTheEngineRefuses($regex);
+
+        return (new CaptureShapeAnalyzer($this->target()))->analyze($ast);
     }
 
     /**
@@ -537,6 +547,23 @@ final class Regex
         }
 
         return $error->getMessage();
+    }
+
+    /**
+     * A pattern the engine refuses has no matches to describe: the methods
+     * that state what a pattern matches refuse it, as info() does, with
+     * what validate() says.
+     *
+     * @throws SemanticErrorException when the target refuses the pattern
+     */
+    private function refuseWhatTheEngineRefuses(string $regex): void
+    {
+        $validation = $this->parser->validate($regex);
+        if ($validation->isValid) {
+            return;
+        }
+
+        throw new SemanticErrorException((string) $validation->error, $validation->errorCode ?? ErrorCode::InternalUnexpectedState, $validation->offset, DelimitedPattern::fromDelimited($regex, $this->parser->target())->pattern, hint: $validation->hint);
     }
 
     /**

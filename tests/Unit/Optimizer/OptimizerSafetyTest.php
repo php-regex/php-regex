@@ -228,7 +228,7 @@ final class OptimizerSafetyTest extends TestCase
         ];
 
         yield 'conditional wrapped in the quantified group' => [
-            'input' => '/(?:(?(1)(?s:a)|b))+\n/',
+            'input' => '/(x)?(?:(?(1)(?s:a)|b))+\n/',
             'options' => ['possessive' => true],
         ];
 
@@ -243,7 +243,7 @@ final class OptimizerSafetyTest extends TestCase
         ];
 
         yield 'scoped group inside a conditional in the suffix' => [
-            'input' => '/\n+(?(1)(?s:.)|b)/',
+            'input' => '/(x)?\n+(?(1)(?s:.)|b)/',
             'options' => ['possessive' => true],
         ];
 

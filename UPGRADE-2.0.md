@@ -1148,6 +1148,22 @@ proven linear for every repair.
 `Medium` or `Low` where 1.x gave the strings `'high'`, `'medium'` and
 `'low'`. Compare with the case, or read `->value` for the string.
 
+#### `Regex::literals()` gives unanchored search patterns
+
+`LiteralExtractionResult::$patterns` holds each literal quoted for a `/`
+delimiter: a subject the pattern matches holds one of them. 1.x wrote `^`
+before a prefix and `$` after a suffix, which rejected subjects the pattern
+matches (`^user\-` refuses `"id=user-1234"`, which `/user-\d{4}/` matches).
+The empty literal is left out, and a pattern with no other literal is
+`Low` confidence.
+
+#### Facts about the matches refuse a pattern the engine refuses
+
+`Regex::literals()` and `optimize()` throw what `validate()` refuses, as
+`info()` and the new `captureShape()` do, where 1.x described or rewrote a
+pattern PCRE refuses to compile (`/\k<x>/`). `explain()`, `format()` and
+`highlight()` render the text of any pattern that parses.
+
 #### Every offset counts from the pattern body
 
 `ValidationResult::$offset` and `RegexException::$position` count from the

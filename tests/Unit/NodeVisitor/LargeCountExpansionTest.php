@@ -64,7 +64,9 @@ final class LargeCountExpansionTest extends TestCase
             $joined = $joined->concat($child);
         }
 
-        $set = Regex::create(['cache' => null])->literals('/(?:'.$item.'){'.$count.'}/')->literalSet;
+        // The extractor itself: the facade refuses a count PCRE compiles to
+        // more than 64 KiB, as validate() does.
+        $set = RegexParser::create(['cache' => null])->parse('/(?:'.$item.'){'.$count.'}/')->accept(new LiteralExtractor());
 
         $this->assertSame([$joined->prefixes, $joined->suffixes, $joined->complete], [$set->prefixes, $set->suffixes, $set->complete], \sprintf('(?:%s){%d}', $item, $count));
     }
@@ -88,13 +90,14 @@ final class LargeCountExpansionTest extends TestCase
     #[DataProvider('provideLargeCounts')]
     public function test_the_literals_of_a_large_count_are_found_within_budget(string $regex): void
     {
+        $tree = RegexParser::create(['cache' => null])->parse($regex);
         $start = CpuClock::seconds();
-        $result = Regex::create(['cache' => null])->literals($regex);
+        $set = $tree->accept(new LiteralExtractor());
         $time = CpuClock::seconds() - $start;
 
         $budget = false !== getenv('CI') && '' !== getenv('CI') ? self::SHARED_RUNNER_BUDGET : self::BUDGET;
         $this->assertLessThan($budget, $time, \sprintf('%s: %.3f s.', $regex, $time));
-        $this->assertFalse($result->literalSet->complete, $regex);
+        $this->assertFalse($set->complete, $regex);
     }
 
     /**

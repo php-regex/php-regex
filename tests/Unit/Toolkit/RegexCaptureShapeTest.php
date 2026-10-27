@@ -81,8 +81,9 @@ final class RegexCaptureShapeTest extends TestCase
 
         $shape = Regex::create(['cache' => $cache])->captureShape('/(a)?b/');
 
-        // The tree the cache served, not a fresh parse of the pattern.
-        $this->assertSame(1, $cache->loads);
+        // The tree the cache served, not a fresh parse of the pattern: once
+        // to read the shape, once to validate the pattern first.
+        $this->assertSame(2, $cache->loads);
         $this->assertSame("array{0: 'xy', 1: 'x', 2: 'y'}", $shape->matchShape());
     }
 

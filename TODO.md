@@ -240,12 +240,6 @@ two parsers read differently.
 The literal-fragment builder, the repairer and the confirmed mode first:
 they answer wrong, not just incomplete.
 
-- The every-flag strictness of the analysis methods disagrees: `info()`
-  throws `SemanticErrorException` for `/\k<x>/` (the engine answers
-  "Internal error"), while `captureShape()` describes a full match shape
-  (`array{0: string}`), and `literals()`, `optimize()`, `explain()` answer
-  too, for a pattern that can never run. One policy for engine-refused
-  patterns across the five (`Regex.php:427-443`).
 - The delimiter tables are ASCII where PHP reads the locale: under this
   machine's default `LC_CTYPE` (a UTF-8 locale), `"\xFF\xFF"` is judged
   VALID — PHP refuses it, "Delimiter must not be alphanumeric, backslash,
@@ -283,10 +277,6 @@ they answer wrong, not just incomplete.
   a factorized group is never revisited, so `^(get|set)` waits for the
   next pass to become `[gs]et`. The second run reports "Removed a group
   that changes nothing" for its own output (`Rewriter.php:352, 228-243`).
-- `optimize()` also ships an optimization of a pattern PCRE2 refuses to
-  compile: `/(?:\d){65536}/` → `/\d{65536}/`, both compile errors; the
-  safety net at `Optimizer.php:128` only guards "optimized invalid AND
-  original valid".
 - `--redos-threshold` has no effect on `analyze` in theoretical mode: the
   payload and console output are byte-identical with and without it, a
   medium finding stays with `--redos-threshold=critical`; only `lint`

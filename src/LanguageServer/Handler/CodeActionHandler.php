@@ -22,6 +22,7 @@ use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\FormatResult;
 use PHPRegex\Parser\Printer\PatternFormatter;
@@ -284,8 +285,9 @@ final class CodeActionHandler
                     ],
                 ];
             }
-        } catch (LexerException|LimitException|ParserException) {
-            // Pattern can't be parsed, skip optimization
+        } catch (LexerException|LimitException|ParserException|SemanticErrorException) {
+            // A pattern that does not parse, or one PCRE refuses, has no
+            // rewrite to offer.
         }
 
         return $actions;
