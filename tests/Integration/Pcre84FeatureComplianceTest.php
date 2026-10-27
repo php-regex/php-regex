@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration;
 
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,6 +23,8 @@ use PHPUnit\Framework\TestCase;
 
 final class Pcre84FeatureComplianceTest extends TestCase
 {
+    use PcreGates;
+
     private Regex $regex;
 
     private Validator $validator;
@@ -141,6 +144,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
     #[DataProvider('provideUnicodeProperties')]
     public function test_extended_unicode_properties_are_validated(string $pattern): void
     {
+        $this->requiresCompile($pattern);
         $this->expectNotToPerformAssertions();
 
         $ast = $this->regex->parse($pattern);

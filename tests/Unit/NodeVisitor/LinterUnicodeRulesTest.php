@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -23,6 +24,8 @@ use PHPUnit\Framework\TestCase;
 
 final class LinterUnicodeRulesTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     public function test_shorthand_without_u_flag_warning(): void
     {
@@ -186,6 +189,7 @@ final class LinterUnicodeRulesTest extends TestCase
     #[DataProvider('providePropertySpellings')]
     public function test_property_message_keeps_the_spelling_of_the_pattern(string $pattern, string $spelling, int $matchesA): void
     {
+        $this->requiresCompile($pattern);
         $this->assertSame($matchesA, preg_match($pattern, 'A'), 'Oracle: '.$pattern);
 
         $issues = array_values(array_filter(

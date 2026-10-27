@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Transpiler;
 
 use PHPRegex\PHPUnit\RegexAssertions;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
@@ -23,6 +24,8 @@ use PHPUnit\Framework\TestCase;
 
 final class JavaScriptTranspilerTest extends TestCase
 {
+    use PcreGates;
+
     use PhpUnitForwardCompat;
     use RegexAssertions;
 
@@ -135,6 +138,9 @@ final class JavaScriptTranspilerTest extends TestCase
     #[DataProvider('provideProperties')]
     public function test_transpiles_a_property_to_its_javascript_name(string $pattern, string $literal, array $subjects): void
     {
+        // The names as PCRE2 10.40 reads them: loose, and a bare script for
+        // its extensions, where 10.39 reads the script itself.
+        $this->requiresPcre2('10.40', $pattern);
         foreach ($subjects as $subject => $matches) {
             $this->assertSame($matches, preg_match($pattern, (string) $subject), \sprintf('Oracle: %s on %s.', $pattern, $subject));
         }

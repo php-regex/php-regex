@@ -18,6 +18,7 @@ use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,6 +26,8 @@ use PHPUnit\Framework\TestCase;
 
 final class AdvancedFeaturesComplianceTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideRecursionSeeds')]
     public function test_sample_generator_handles_recursion(int $seed, string $expectedSample): void
@@ -183,6 +186,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
     #[DataProvider('providePcre84Features')]
     public function test_pcre_84_features_implemented(string $pattern, string $description): void
     {
+        $this->requiresCompile($pattern, $description);
         $regex = Regex::create();
 
         // Should parse without exception

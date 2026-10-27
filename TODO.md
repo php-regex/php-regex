@@ -225,17 +225,9 @@ two parsers read differently.
   JIT setting or the ini setter changed: the Laravel lint failure one random
   order in three exposed in a container (seed 1792566553) did not reproduce
   in this pass; the guard names the culprit the next time it does.
-- The suite only runs on the PCRE2 the official images bundle from 10.40:
-  no CI job runs PHP 8.1's bundled 10.39 (the 8.1 jobs link 10.42). On
-  `php:8.1-cli`, four rows hold a 10.40 reading without saying so, each a
-  gate to add (the library refuses what the engine refuses there):
-  `Pcre84FeatureComplianceTest` ("script property", `\p{Script=Greek}`),
-  `AdvancedFeaturesComplianceTest` ("unicode_extended_property",
-  `\p{Alpha}`), `LinterUnicodeRulesTest` ("braced with spaces", whose
-  oracle `/\p{ L }/` 10.39 refuses) and `JavaScriptTranspilerTest` ("a
-  script negated with a caret": `\P{^Latin}` is the script before 10.40,
-  the script extensions after, so `Script=Latin` is right on 10.39). Then
-  a bundled 10.39 cell in the Engines workflow keeps them held.
+- No CI job runs PHP 8.1's bundled PCRE2 10.39 (the 8.1 jobs link 10.42):
+  run the whole suite on `php:8.1-cli` once, then add that cell to the
+  Engines workflow so the rows held to 10.40 readings stay gated.
 - A local check of the twin without containers runs only the PHP side:
   every Homebrew PHP (7.3, 7.4, 8.2, 8.3, 8.4) links the same PCRE2 10.49,
   so the release differences stay with the twin workflow. `build/verify/
