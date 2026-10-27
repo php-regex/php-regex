@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -81,6 +82,36 @@ final class PropertyNameReleaseTest extends TestCase
         unset($since);
 
         $this->assertSame(false !== @preg_match($pattern, ''), RegexParser::create(['cache' => null])->validate($pattern)->isValid, $pattern);
+    }
+
+    /**
+     * A name the running engine is too old for says the release it needs,
+     * as it does for another engine: the escape is asked about as written,
+     * the spaces before a "^" included (refused before 10.45 on the
+     * official images 10.40, 10.42 and 10.44, read on 10.49).
+     */
+    #[Test]
+    #[DataProvider('provideCaretsAfterSpaces')]
+    public function test_the_running_engine_says_the_release_a_caret_after_spaces_needs(string $pattern): void
+    {
+        $result = RegexParser::create(['cache' => null])->validate($pattern);
+
+        if (PcreTarget::runtime()->pcreAtLeast('10.45')) {
+            $this->assertTrue($result->isValid, (string) $result->error);
+
+            return;
+        }
+
+        $this->assertStringContainsString('It needs PCRE2 10.45', (string) $result->error, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideCaretsAfterSpaces(): iterable
+    {
+        yield 'a category' => ['pattern' => '/\\p{ ^Lu}/'];
+        yield 'a script, negated twice' => ['pattern' => '/\\P{ ^ greek}/u'];
     }
 
     /**

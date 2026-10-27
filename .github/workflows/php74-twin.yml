@@ -61,12 +61,18 @@ jobs:
       - name: List the patterns the twin is compared on
         run: php build/verify/patterns.php > patterns.json
 
+      # The jobs below check out without git, from the archive, which
+      # leaves build/ out: the code that checks the twin travels here.
       - uses: actions/upload-artifact@v7
         with:
           name: twin
           path: |
             build/php74/
             build/smoke/vendor/
+            build/smoke/composer.json
+            build/verify/
+            build/tests/
+            build/phpunit.xml.dist
             patterns.json
           include-hidden-files: true
           if-no-files-found: error

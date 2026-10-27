@@ -498,8 +498,11 @@ final class EscapeChecks
 
         // A name a later release added, the running engine that old: said
         // as for another engine, before what the name holds.
+        // The engine is asked about the escape as written: the node's name
+        // drops the spaces before a "^", which the engine may read apart.
         $needs = PropertyNames::firstReleaseKnowing($name, $braced);
-        if (null !== $needs && !$this->target->pcreAtLeast($needs) && !$this->compilesProperty($key)) {
+        $written = null === $this->source ? $key : substr($this->source, $node->startPosition + 1, $node->getEndPosition() - $node->startPosition - 1);
+        if (null !== $needs && !$this->target->pcreAtLeast($needs) && !$this->compilesProperty($written)) {
             $this->raise(
                 \sprintf('Invalid or unsupported Unicode property: \\%s. It needs PCRE2 %s, and the target is PCRE2 %s.', $key, $needs, $this->target->pcreVersion),
                 $node->getEndPosition(),
