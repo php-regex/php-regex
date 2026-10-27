@@ -55,9 +55,14 @@ final class RewriteState
     public bool $inlineFlags = false;
 
     /**
-     * The character sets of the nodes, read under the flags of the pattern.
+     * The flags of the pattern visited.
      */
-    public CharSetAnalyzer $charSetAnalyzer;
+    private string $flags = '';
+
+    /**
+     * The character sets of the nodes, built once a rewrite asks for them.
+     */
+    private ?CharSetAnalyzer $charSets = null;
 
     /**
      * The kinds of rewrite made, in the order first made.
@@ -68,11 +73,6 @@ final class RewriteState
 
     private ?PatternPrinter $printer = null;
 
-    public function __construct()
-    {
-        $this->charSetAnalyzer = new CharSetAnalyzer();
-    }
-
     /**
      * Reads the modes of a pattern about to be rewritten, and forgets the
      * rewrites made on the one before.
@@ -81,12 +81,22 @@ final class RewriteState
      */
     public function start(RegexNode $node, bool $inlineFlags): void
     {
+        $this->flags = $node->flags;
         $this->unicodeMode = str_contains($node->flags, 'u');
         $this->unicodeProperties = UnicodeProperties::on($node);
-        $this->charSetAnalyzer = new CharSetAnalyzer($node->flags);
+        $this->charSets = null;
         $this->lazyByDefault = str_contains($node->flags, 'U');
         $this->inlineFlags = $inlineFlags;
         $this->changes = [];
+    }
+
+    /**
+     * The character sets of the nodes, read under the outer flags of the
+     * pattern visited.
+     */
+    public function charSets(): CharSetAnalyzer
+    {
+        return $this->charSets ??= new CharSetAnalyzer($this->flags);
     }
 
     /**

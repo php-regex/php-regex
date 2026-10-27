@@ -103,9 +103,11 @@ final class PossessiveRewrites
                     continue;
                 }
 
+                $charSets = $this->state->charSets();
+
                 try {
-                    $currentLastChars = $this->state->charSetAnalyzer->lastChars($current->node);
-                    $suffixFirstChars = $this->state->charSetAnalyzer->firstChars($suffixNode);
+                    $currentLastChars = $charSets->lastChars($current->node);
+                    $suffixFirstChars = $charSets->firstChars($suffixNode);
                     if (!$currentLastChars->intersects($suffixFirstChars)) {
                         $children[$i] = new QuantifierNode(
                             $current->node,
