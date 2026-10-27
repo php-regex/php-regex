@@ -240,10 +240,6 @@ two parsers read differently.
 The literal-fragment builder, the repairer and the confirmed mode first:
 they answer wrong, not just incomplete.
 
-- `redosIgnoredPatterns` matches the body only, flags dropped: listing
-  `/(a+)+b/` also skips `/(a+)+b/i` and `/(a+)+b/su`, whose analysis the
-  flags change. The README documents delimiter-insensitivity alone
-  (`RedosAnalyzer.php:320-344`).
 - `regex redos`'s auto input omits the pattern's required literal:
   `/(a+)+b/` benchmarks `"aaa…a!"` — no `b` anywhere — so the required-
   code-unit scan answers in one step and the report reads `vuln: no,

@@ -51,7 +51,8 @@ Configuration
 -------------
 
 `new RedosAnalyzer()` takes named arguments: `ignoredPatterns` (`array<string>`,
-patterns skipped by value, with or without their delimiters), `threshold`
+patterns skipped by their body, whatever their delimiters and modifiers:
+listing `/(a+)+b/` skips `/(a+)+b/i` too), `threshold`
 (`RedosSeverity::High`, the lowest severity that triggers a confirmation run)
 and `options` (a `RedosOptions`).
 
