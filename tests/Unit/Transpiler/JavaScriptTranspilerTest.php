@@ -296,4 +296,43 @@ final class JavaScriptTranspilerTest extends TestCase
 
         Regex::create(['cache' => null])->transpile('/\N{UNKNOWN NAME}/u', 'javascript');
     }
+
+    /**
+     * "\N{U+hhhh}" is the character itself, which each target writes as a
+     * code point escape, and says so.
+     */
+    #[Test]
+    #[DataProvider('provideCodePointSpellings')]
+    public function test_converts_a_named_code_point_and_warns(string $target, string $literal): void
+    {
+        // Oracle: under u, \N{U+2022} is the bullet.
+        $this->assertSame(1, preg_match('/^\N{U+2022}$/u', "\u{2022}"));
+
+        $result = Regex::create(['cache' => null])->transpile('/\N{U+2022}/u', $target);
+
+        $this->assertSame($literal, $result->literal);
+        $this->assertSame(['Converted Unicode named character to code point escape.'], $result->warnings);
+    }
+
+    /**
+     * @return iterable<string, array{target: string, literal: string}>
+     */
+    public static function provideCodePointSpellings(): iterable
+    {
+        yield 'JavaScript' => ['target' => 'javascript', 'literal' => '/\u2022/u'];
+        yield 'Python' => ['target' => 'python', 'literal' => "r'\\u2022'"];
+    }
+
+    #[Test]
+    public function test_adds_the_unicode_flag_a_property_escape_needs_and_warns(): void
+    {
+        // Oracle: without u, \pL is a letter as well (matched byte by byte).
+        $this->assertSame(1, preg_match('/\pL/', 'a'));
+
+        $result = Regex::create(['cache' => null])->transpile('/\pL/', 'javascript');
+
+        $this->assertSame('/\p{L}/u', $result->literal);
+        $this->assertSame('u', $result->flags);
+        $this->assertSame(['Added /u for Unicode property escapes.'], $result->warnings);
+    }
 }

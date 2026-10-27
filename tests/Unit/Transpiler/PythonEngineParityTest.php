@@ -115,6 +115,12 @@ final class PythonEngineParityTest extends TestCase
         yield 'an inline comment' => ['pattern' => '/a(?#c)b/', 'python' => 'ab', 'flags' => 'a', 'subject' => 'ab', 'spans' => [[0, 2]]];
         yield 'horizontal space' => ['pattern' => '/\h/', 'python' => '[\x09\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000]', 'flags' => 'a', 'subject' => "\t", 'spans' => [[0, 1]]];
         yield 'a group that may be unset' => ['pattern' => '/(a)|b\1/', 'python' => '(a)|b\1', 'flags' => 'a', 'subject' => 'b', 'spans' => null];
+        yield 'the start of the subject' => ['pattern' => '/\Afoo/', 'python' => '\Afoo', 'flags' => 'a', 'subject' => 'foo', 'spans' => [[0, 3]]];
+        yield 'control characters in a literal' => ['pattern' => "/a\t\r\fb/", 'python' => 'a\t\r\fb', 'flags' => 'a', 'subject' => "a\t\r\fb", 'spans' => [[0, 5]]];
+        // Under u "\S" leaves out more than Python's: the class keeps its other members beside it.
+        yield 'a non-space beside a member under u' => ['pattern' => '/[\Sa]/u', 'python' => '(?:[a]|[^\t-\r \x85\xA0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000])', 'flags' => '', 'subject' => ' b', 'spans' => [[1, 2]]];
+        yield 'no non-space among spaces under u' => ['pattern' => '/[\Sa]/u', 'python' => '(?:[a]|[^\t-\r \x85\xA0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000])', 'flags' => '', 'subject' => "\u{2028} \u{85}", 'spans' => null];
+        yield 'a named character under u' => ['pattern' => '/\N{U+2022}/u', 'python' => '\u2022', 'flags' => '', 'subject' => "\u{2022}", 'spans' => [[0, 3]]];
     }
 
     /**

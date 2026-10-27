@@ -63,6 +63,12 @@ final class HtmlPatternTargetTest extends TestCase
         yield 'brackets in a class' => ['pattern' => '/^[\w\[\]]+$/', 'attribute' => '^[\w\[\]]+$', 'verdicts' => ['a[b]' => true, 'a(b)' => false]];
         yield 'an opening bracket alone in a class' => ['pattern' => '/^[^[]+$/', 'attribute' => '^[^\[]+$', 'verdicts' => ['ab' => true, 'a[b' => false]];
         yield 'a script' => ['pattern' => '/^\p{Han}+$/u', 'attribute' => '^\p{Script_Extensions=Han}+$', 'verdicts' => ['中、' => true, '中a' => false]];
+        // Checked with node under v: the escaped braces take "a{2}" and leave "aa", as preg_match() does.
+        yield 'a quoted count' => ['pattern' => '/^a\Q{2}\E$/', 'attribute' => '^a\{2\}$', 'verdicts' => ['a{2}' => true, 'aa' => false]];
+        // Under v "\01" is a syntax error; "\1" names the group.
+        yield 'a backreference with a leading zero' => ['pattern' => '/^(a)\g{01}$/', 'attribute' => '^(a)\1$', 'verdicts' => ['aa' => true, 'a' => false]];
+        // Under v a bare "[" in a class opens a nested class: "[[-\~x]" is a syntax error there.
+        yield 'a range from an opening bracket' => ['pattern' => '/^[[-~x]$/', 'attribute' => '^[\[-\~x]$', 'verdicts' => ['[' => true, 'a' => true, '5' => false]];
         yield 'a property' => ['pattern' => '/^\p{L}+$/u', 'attribute' => '^\p{L}+$', 'verdicts' => ['été' => true, 'é1' => false]];
         // The dot leaves out "\n" alone, which no value holds; the v flag's leaves out U+2028 and U+2029 too.
         yield 'the dot' => ['pattern' => '/^a.b$/u', 'attribute' => '^a[^\n]b$', 'verdicts' => ["a\u{2028}b" => true, 'ab' => false]];

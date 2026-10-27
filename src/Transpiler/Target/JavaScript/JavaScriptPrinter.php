@@ -628,10 +628,6 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
     private function escapeString(string $value): string
     {
-        if (!$this->inCharClass && LibraryPcre::match('/^\\{\\d+(?:,\\d*)?\\}$/', $value)) {
-            return $value;
-        }
-
         $meta = $this->inCharClass ? ($this->unicodeSets ? self::CLASS_SET_META : self::CHAR_CLASS_META) : self::META_CHARACTERS;
         $needsEscape = false;
 
@@ -688,7 +684,8 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
         if ($node instanceof RangeNode) {
             $start = $node->start;
-            $startCompiled = $start instanceof LiteralNode && '[' === $start->value
+            // Under the v flag the bracket is escaped as anywhere in a class.
+            $startCompiled = $start instanceof LiteralNode && '[' === $start->value && !$this->unicodeSets
                 ? '['
                 : $start->accept($this);
 
@@ -735,7 +732,8 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             );
         }
 
-        if (LibraryPcre::match('/^\\\\g\\{?([0-9]+)\\}?$/', $ref, $matches)) {
+        // "\g{01}" names group 1, where JavaScript reads "\01" as an octal escape.
+        if (LibraryPcre::match('/^\\\\g\\{?0*+([0-9]+)\\}?$/', $ref, $matches)) {
             return '\\'.$matches[1];
         }
 

@@ -120,6 +120,20 @@ final class JavaScriptEngineParityTest extends TestCase
         yield 'a quoted run with a character without case under i' => ['pattern' => '/\Qa中\E/i', 'literal' => '/a中/i', 'subject' => 'A中', 'spans' => [[0, 4]]];
         yield 'a backreference before a digit' => ['pattern' => '/(a)\1 2/x', 'literal' => '/(a)(?:\1)2/', 'subject' => 'aa2', 'spans' => [[0, 3], [0, 1]]];
         yield 'a backreference to a group always set' => ['pattern' => '/(a)(?:b|c)\1/', 'literal' => '/(a)(?:b|c)\1/', 'subject' => 'aca', 'spans' => [[0, 3], [0, 1]]];
+        // JavaScript reads "\01" as the octal escape of U+0001, "a\x01" matching where PCRE wants "aa".
+        yield 'a braced backreference with a leading zero' => ['pattern' => '/(a)\g{01}/', 'literal' => '/(a)\1/', 'subject' => 'aa', 'spans' => [[0, 2], [0, 1]]];
+        yield 'a bare backreference with a leading zero' => ['pattern' => '/(a)\g01/', 'literal' => '/(a)\1/', 'subject' => 'aa', 'spans' => [[0, 2], [0, 1]]];
+        yield 'a backreference with a leading zero before a digit' => ['pattern' => '/(a)\g{01}0/', 'literal' => '/(a)(?:\1)0/', 'subject' => 'aa0', 'spans' => [[0, 3], [0, 1]]];
+        // Quoted, the braces are text: unescaped, "a{2}" is JavaScript's count, and "{2}" alone a syntax error.
+        yield 'a quoted count after an atom' => ['pattern' => '/a\Q{2}\E/', 'literal' => '/a\{2\}/', 'subject' => 'a{2}', 'spans' => [[0, 4]]];
+        yield 'a quoted count with no bound above' => ['pattern' => '/a\Q{2,}\E/', 'literal' => '/a\{2,\}/', 'subject' => 'a{2,}', 'spans' => [[0, 5]]];
+        yield 'a quoted count alone' => ['pattern' => '/\Q{2}\E/', 'literal' => '/\{2\}/', 'subject' => '{2}', 'spans' => [[0, 3]]];
+        // Control characters written as they are in the pattern; a backspace is "\b" in a class alone.
+        yield 'control characters in a literal' => ['pattern' => "/a\x08\r\f\x1Bb/", 'literal' => '/a\x08\r\f\x1Bb/', 'subject' => "a\x08\r\f\x1Bb", 'spans' => [[0, 6]]];
+        yield 'a backspace in a class' => ['pattern' => "/[\x08]/", 'literal' => '/[\b]/', 'subject' => "\x08", 'spans' => [[0, 1]]];
+        yield 'a range from an opening bracket' => ['pattern' => '/[[-~x]/', 'literal' => '/[[-~x]/', 'subject' => '[', 'spans' => [[0, 1]]];
+        yield 'a range from a letter beside a letter' => ['pattern' => '/[b-dx]/', 'literal' => '/[b-dx]/', 'subject' => 'ac', 'spans' => [[1, 2]]];
+        yield 'an opening bracket before an escape in a class' => ['pattern' => '/[[\d]/', 'literal' => '/[[\d]/', 'subject' => '5', 'spans' => [[0, 1]]];
         yield 'a group set by each repetition' => ['pattern' => '/(?:(a)b)+/', 'literal' => '/(?:(a)b)+/', 'subject' => 'abab', 'spans' => [[0, 4], [2, 3]]];
         // Where a repetition may match empty, PCRE takes one empty repetition
         // and stops, JavaScript takes none: the two agree where the empty one

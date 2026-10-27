@@ -72,6 +72,10 @@ final class CompletionHandlerTest extends TestCase
         // starts at the opening quote, one character before the pattern.
         yield 'right after the closing delimiter' => ['pattern' => '/abc/', 'typed' => 5, 'offered' => ['i', 'm'], 'notOffered' => ['\\d'], 'labelShape' => '/^[a-zA-Z]$/'];
         yield 'right after a property name begins' => ['pattern' => '/\\p{Gr/', 'typed' => 6, 'offered' => ['\\p{Script=Greek}'], 'notOffered' => ['\\d'], 'labelShape' => '/^\\\\[pP]\\{[^}]++\\}$/'];
+        // A backslash typed last offers the escapes of a character type alone: no anchor, no group.
+        yield 'right after a backslash' => ['pattern' => '/a\\d/', 'typed' => 3, 'offered' => ['\\d', '\\w', '\\X'], 'notOffered' => ['\\A', '(?:...)', '\\p{L}'], 'labelShape' => '/^\\\\[a-zA-Z]$/'];
+        // "(?" typed last offers the groups alone.
+        yield 'right after a group opener' => ['pattern' => '/(?:a)/', 'typed' => 3, 'offered' => ['(?:...)', '(?<name>...)', '(?|...)'], 'notOffered' => ['\\d', '+'], 'labelShape' => '/^\\(.*\\)$/'];
     }
 
     /**

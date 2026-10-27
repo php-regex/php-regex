@@ -364,6 +364,12 @@ final class CompiledLengthTest extends TestCase
     {
         // "\p{Any}" is a property up to 10.32; "\P{Any}" a negated property
         // up to 10.44, a class of none from 10.45.
+        // An empty script run compiles to its opcode alone, an atomic one
+        // inside an atomic group (pcre2test 10.49).
+        yield 'empty script run, 10.49' => ['pattern' => '/(*sr:)/', 'release' => '10.49', 'length' => 13];
+        yield 'empty script run spelled out, 10.49' => ['pattern' => '/(*script_run:)/', 'release' => '10.49', 'length' => 13];
+        yield 'empty atomic script run between letters, 10.49' => ['pattern' => '/a(*asr:)b/', 'release' => '10.49', 'length' => 23];
+        yield 'empty atomic script run spelled out, 10.49' => ['pattern' => '/(*atomic_script_run:)/', 'release' => '10.49', 'length' => 19];
         yield 'property of any character, 10.32' => ['pattern' => '/\\p{Any}/', 'release' => '10.32', 'length' => 10];
         yield 'property of any character, 10.33' => ['pattern' => '/\\p{Any}/', 'release' => '10.33', 'length' => 8];
         yield 'counted property of any character, 10.32' => ['pattern' => '/\\p{Any}{2}/', 'release' => '10.32', 'length' => 13];
@@ -614,6 +620,46 @@ final class CompiledLengthTest extends TestCase
     {
         $this->assertSame(65536, self::lengthOf('/.'.str_repeat('a', 32763).'b{0}/'));
         $this->assertNull(self::lengthOf('/'.str_repeat('a', 32764).'b{0}/'));
+    }
+
+    /**
+     * A pattern PCRE2 refuses before it measures what is refused has no
+     * length: the tree is measured as parsed, the validator not run.
+     */
+    #[Test]
+    #[DataProvider('providePatternsRefusedBeforeAnyMeasure')]
+    public function test_a_pattern_refused_before_any_measure_has_no_length(string $pattern): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), 'Oracle: '.$pattern);
+
+        $this->assertNull(self::lengthOf($pattern), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function providePatternsRefusedBeforeAnyMeasure(): iterable
+    {
+        yield 'line break in a class' => ['pattern' => '/[\\Ra]/'];
+        yield 'unknown POSIX name in a class' => ['pattern' => '/[[:foo:]a]/'];
+        yield 'character past the last one in a class' => ['pattern' => '/[\\x{110000}a]/u'];
+        yield 'unknown verb in a branch' => ['pattern' => '/(?:(*FOO)|b)/'];
+        yield 'lookbehind of no bound' => ['pattern' => '/(?<=a*)/'];
+    }
+
+    /**
+     * A group of branches, one holding an item of no known ceiling, that
+     * takes the pattern past the limit where it ends: not inside a branch
+     * (pcre2test 10.49 and preg_match() on 10.49: offset 26, the end of
+     * the pattern).
+     */
+    #[Test]
+    public function test_a_group_of_branches_of_no_known_ceiling_passing_the_limit_where_it_ends(): void
+    {
+        $pattern = '/(?:(?:a){8189}abc(?a)\\d|d)/u';
+        $regex = RegexParser::create(['cache' => null, 'runtime_pcre_validation' => false])->parse($pattern);
+
+        $this->assertFalse((new CompiledLength(static fn (): int => 0, (string) $regex->source, true, true, $regex->flags, new PcreTarget(80400, '10.49')))->passedInsideABranch($regex->pattern));
     }
 
     #[Test]
