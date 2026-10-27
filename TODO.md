@@ -154,6 +154,21 @@ the tag:
 
 ## Analysis engines: the last pass before 2.0.0
 
+- A property PCRE2 10.40 taught the engine is refused for a later target
+  when the running engine is older: on PHP 8.1 (10.39), validating for PHP
+  8.4 (10.44) refuses `\p{greek}`, `\p{Script=Greek}`, `\p{ L }` and
+  `\p{Alphabetic}`, which 8.4 compiles. Whether a name exists is asked of
+  the running engine, and the tables of names added later do not hold the
+  loose names, the `Script=` forms, the binary properties and the bidi
+  classes of 10.40.
+- The Unicode a name or a word character is read with is the running
+  engine's, whatever the target: on PCRE2 10.35 (Unicode 13), `\k<aࡰ>`
+  (U+0870) is refused and `\p{Toto}` unknown, for an 8.4 target too.
+- `CaptureShapeAnalyzer::analyze()` and `PatternInfoAnalyzer::analyze()`
+  throw a TypeError when a length passes PHP_INT_MAX:
+  `/(?:(?:(?:(?:a{65535}){65535}){65535}){65535}){65535}/` parses, and its
+  minimum length is a float. PCRE refuses the pattern as too large, and
+  `validate()` with it.
 - Before PCRE2 10.45 the engine misses a match past a lookahead:
   `/(?=x)a?x/` does not match `"x"` on 10.42 and 10.44, JIT or not, and
   `(*NO_START_OPT)` brings the match back; 10.45 fixed the first and last
@@ -286,26 +301,29 @@ the branch reads them with PHPRegex instead. It pins the php74 twin at
 pattern with the engine, and `poc/` replays the patterns the two parsers
 read differently.
 
-1. Once `2.0.0` is tagged and the php74 twin reaches Packagist, replace
+1. Publish the twin from the `twin` artifact of a green twin workflow run
+   rather than from a local build, so the tree published is the tree
+   verified.
+2. Once `2.0.0` is tagged and the php74 twin reaches Packagist, replace
    the `2.x-dev#<hash>` pin with the exact version (the precedent is
    `ondrejmirtes/phplrt-runtime`, pinned to an exact release).
-2. Rebuild the phar from the pull request on its last twin pin and run it
+3. Rebuild the phar from the pull request on its last twin pin and run it
    on `php:7.4-cli` and `php:8.4-cli` (the downgrade rewrites neither `?->`
    nor first-class callables, so neither may appear in the branch).
-3. The 8.6 entry reads 10.44 and php-src master carries 10.44 today, so
+4. The 8.6 entry reads 10.44 and php-src master carries 10.44 today, so
    the map stands corroborated; the one gesture left is re-reading
    master after the 8.6 GA (2026-11-19) in case a release-cut downgrade
    like 8.5's happens.
-4. Split the single commit into stacked pull requests once the
+5. Split the single commit into stacked pull requests once the
    maintainer asks for it.
-5. The capture shape splits on one node: two optional groups holding
+6. The capture shape splits on one node: two optional groups holding
    groups, `/(?:(a)(b))?(?:(c)(d))?/`, or an alternation beside an
    optional group, stay merged for all but one. A product of the
    splits, within the 16-case budget, would keep each.
-6. Any `(*ACCEPT)` in a pattern makes every group read unbounded from
+7. Any `(*ACCEPT)` in a pattern makes every group read unbounded from
    zero with unknown values, even when the verb only ends a call or
    sits in a branch the group never reaches. Sound, and loose.
-7. On the next twin pin, `RegexGroupParser` reads `$node->bounds`, which
+8. On the next twin pin, `RegexGroupParser` reads `$node->bounds`, which
    2.x now computes once on the node, instead of
    `QuantifierBounds::parse($node->quantifier)`.
 
