@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Cli;
 
 use PHPRegex\Cli\GlobalOptionsParser;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class GlobalOptionsParserTest extends TestCase
 {
+    #[Test]
     public function test_parse_sets_options_and_preserves_args(): void
     {
         $parser = new GlobalOptionsParser();
@@ -44,6 +46,7 @@ final class GlobalOptionsParserTest extends TestCase
         $this->assertSame(['parse', '/a+/'], $result->args);
     }
 
+    #[Test]
     public function test_parse_supports_inline_php_version_flag(): void
     {
         $parser = new GlobalOptionsParser();
@@ -54,6 +57,7 @@ final class GlobalOptionsParserTest extends TestCase
         $this->assertSame(['highlight', '/abc/'], $result->args);
     }
 
+    #[Test]
     public function test_parse_reports_missing_php_version_value(): void
     {
         $parser = new GlobalOptionsParser();
@@ -63,6 +67,7 @@ final class GlobalOptionsParserTest extends TestCase
         $this->assertSame('Missing value for --php-version.', $result->options->error);
     }
 
+    #[Test]
     public function test_parse_handles_help_and_ansi_flags(): void
     {
         $parser = new GlobalOptionsParser();

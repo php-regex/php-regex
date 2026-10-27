@@ -21,12 +21,14 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ValidatorLogicTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_octal_invalid_digits(): void
     {
         $validator = new Validator();
@@ -39,6 +41,7 @@ final class ValidatorLogicTest extends TestCase
         $node->accept($validator);
     }
 
+    #[Test]
     public function test_quantifier_bounds_logic(): void
     {
         $this->expectNotToPerformAssertions();
@@ -52,6 +55,7 @@ final class ValidatorLogicTest extends TestCase
         $node->accept($validator); // Should not throw
     }
 
+    #[Test]
     public function test_quantifier_bounds_fallback(): void
     {
         $this->expectNotToPerformAssertions();

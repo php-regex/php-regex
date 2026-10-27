@@ -36,6 +36,7 @@ use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class VisitorReturnTypesTest extends TestCase
@@ -80,6 +81,7 @@ final class VisitorReturnTypesTest extends TestCase
         yield ['/[[:alpha:][:digit:][:xdigit:][:punct:][:graph:][:print:][:cntrl:]]/'];
     }
 
+    #[Test]
     #[DataProvider('provideRareConstructs')]
     public function test_visitors_handle_construct(string $regex): void
     {
@@ -114,6 +116,7 @@ final class VisitorReturnTypesTest extends TestCase
         $this->assertNotEmpty($html);
     }
 
+    #[Test]
     public function test_all_visitors_can_be_instantiated(): void
     {
         // Instantiate all visitor classes to cover class coverage

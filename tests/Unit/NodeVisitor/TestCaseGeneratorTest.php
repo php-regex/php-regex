@@ -17,6 +17,7 @@ use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreError;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TestCaseGeneratorTest extends TestCase
@@ -28,6 +29,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->visitor = new TestCaseGenerator();
     }
 
+    #[Test]
     public function test_literal(): void
     {
         $ast = Regex::create()->parse('/abc/');
@@ -37,6 +39,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_quantifier(): void
     {
         $ast = Regex::create()->parse('/a+/');
@@ -47,6 +50,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertContains('', $cases['non_matching']); // Too few
     }
 
+    #[Test]
     public function test_alternation(): void
     {
         $ast = Regex::create()->parse('/(a|b)/');
@@ -56,6 +60,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_char_class(): void
     {
         $ast = Regex::create()->parse('/[abc]/');
@@ -65,6 +70,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertContains('!', $cases['non_matching']);
     }
 
+    #[Test]
     public function test_dot(): void
     {
         $ast = Regex::create()->parse('/./');
@@ -74,6 +80,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertContains("\n", $cases['non_matching']);
     }
 
+    #[Test]
     public function test_char_type_digit(): void
     {
         $ast = Regex::create()->parse('/\d/');
@@ -83,6 +90,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_char_type_non_digit(): void
     {
         $ast = Regex::create()->parse('/\D/');
@@ -92,6 +100,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_char_type_whitespace(): void
     {
         $ast = Regex::create()->parse('/\s/');
@@ -101,6 +110,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_char_type_word(): void
     {
         $ast = Regex::create()->parse('/\w/');
@@ -110,6 +120,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_anchor_start(): void
     {
         $ast = Regex::create()->parse('/^a/');
@@ -119,6 +130,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_anchor_end(): void
     {
         $ast = Regex::create()->parse('/a$/');
@@ -128,6 +140,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_assertion_lookahead(): void
     {
         $ast = Regex::create()->parse('/a(?=b)/');
@@ -137,6 +150,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_range(): void
     {
         $ast = Regex::create()->parse('/[a-z]/');
@@ -146,6 +160,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_backreference(): void
     {
         $ast = Regex::create()->parse('/(a)\1/');
@@ -155,6 +170,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_unicode(): void
     {
         $ast = Regex::create()->parse('/\x{0041}/');
@@ -164,6 +180,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_unicode_property(): void
     {
         $ast = Regex::create()->parse('/\p{L}/');
@@ -173,6 +190,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_posix_class(): void
     {
         $ast = Regex::create()->parse('/[[:alpha:]]/');
@@ -182,6 +200,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_comment(): void
     {
         $ast = Regex::create()->parse('/(?#comment)a/');
@@ -191,6 +210,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_conditional(): void
     {
         // PCRE refuses the pattern: no string is a case for it.
@@ -202,6 +222,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertSame([], $cases['non_matching']);
     }
 
+    #[Test]
     public function test_subroutine(): void
     {
         // PCRE refuses the pattern: no string is a case for it.
@@ -213,6 +234,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertSame([], $cases['non_matching']);
     }
 
+    #[Test]
     public function test_pcre_verb(): void
     {
         // PCRE refuses the pattern: no string is a case for it.
@@ -224,6 +246,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertSame([], $cases['non_matching']);
     }
 
+    #[Test]
     public function test_define(): void
     {
         $ast = Regex::create()->parse('/(?(DEFINE)...)/');
@@ -234,6 +257,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertSame([], $cases['non_matching']);
     }
 
+    #[Test]
     public function test_limit_match(): void
     {
         $ast = Regex::create()->parse('/(*LIMIT_MATCH=100)a/');
@@ -243,6 +267,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_callout(): void
     {
         $ast = Regex::create()->parse('/(?C)a/');
@@ -252,6 +277,7 @@ final class TestCaseGeneratorTest extends TestCase
         $this->assertNotEmpty($cases['non_matching']);
     }
 
+    #[Test]
     public function test_keep(): void
     {
         $ast = Regex::create()->parse('/\Ka/');

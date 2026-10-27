@@ -26,10 +26,12 @@ use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ExhaustiveVisitorTest extends TestCase
 {
+    #[Test]
     public function test_compiler_special_literals(): void
     {
         $compiler = new PatternPrinter();
@@ -43,6 +45,7 @@ final class ExhaustiveVisitorTest extends TestCase
         $this->assertSame('\.', $node->accept($compiler));
     }
 
+    #[Test]
     public function test_compiler_unicode_properties(): void
     {
         $compiler = new PatternPrinter();
@@ -60,6 +63,7 @@ final class ExhaustiveVisitorTest extends TestCase
         $this->assertSame('\p{^L}', $node->accept($compiler));
     }
 
+    #[Test]
     public function test_compiler_subroutines_syntax(): void
     {
         $compiler = new PatternPrinter();
@@ -81,6 +85,7 @@ final class ExhaustiveVisitorTest extends TestCase
         $this->assertSame('(?1)', $node->accept($compiler));
     }
 
+    #[Test]
     public function test_compiler_conditionals(): void
     {
         $compiler = new PatternPrinter();
@@ -99,6 +104,7 @@ final class ExhaustiveVisitorTest extends TestCase
         $this->assertSame('(?(cond)yes)', $node->accept($compiler));
     }
 
+    #[Test]
     public function test_explain_all_char_types_and_assertions(): void
     {
         $explainer = new TextExplainer();
@@ -129,6 +135,7 @@ final class ExhaustiveVisitorTest extends TestCase
         $this->assertStringContainsString('\?', $node->accept($explainer));
     }
 
+    #[Test]
     public function test_explain_group_types(): void
     {
         $explainer = new TextExplainer();
@@ -146,6 +153,7 @@ final class ExhaustiveVisitorTest extends TestCase
         $this->assertStringContainsString('Atomic', $node->accept($explainer));
     }
 
+    #[Test]
     public function test_explain_quantifiers(): void
     {
         $explainer = new TextExplainer();

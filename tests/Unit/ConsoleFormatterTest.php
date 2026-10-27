@@ -20,10 +20,12 @@ use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ConsoleFormatterTest extends TestCase
 {
+    #[Test]
     public function test_console_formatter_outputs_pattern_context(): void
     {
         $config = new OutputConfiguration(
@@ -52,6 +54,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('/a+/', $output);
     }
 
+    #[Test]
     public function test_console_formatter_outputs_quiet_summary(): void
     {
         $config = OutputConfiguration::quiet();
@@ -67,6 +70,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('PASS: No issues found', $output);
     }
 
+    #[Test]
     public function test_console_formatter_footer_includes_repo_link(): void
     {
         $formatter = new ConsoleFormatter();
@@ -111,6 +115,7 @@ final class ConsoleFormatterTest extends TestCase
      * @param array<int, string>    $letters
      * @param array<string, string> $modified
      */
+    #[Test]
     #[DataProvider('provideOmissionRuns')]
     public function test_multiline_tip_diff_shows_every_line(array $letters, array $modified): void
     {

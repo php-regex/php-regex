@@ -18,6 +18,7 @@ use PHPRegex\Redos\Hotspot;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -27,6 +28,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosHintsTest extends TestCase
 {
+    #[Test]
     public function test_a_hint_with_nothing_specific_advises_possessive_quantifiers(): void
     {
         $hint = RedosHints::forAnalysis(new RedosAnalysis(RedosSeverity::High, 10), '/abc/');
@@ -38,6 +40,7 @@ final class RedosHintsTest extends TestCase
         $this->assertStringEndsWith('Test with adversarial inputs like repeated strings followed by a non-matching character.', $hint);
     }
 
+    #[Test]
     public function test_a_hint_carries_the_recommendations_and_the_fixes_the_pattern_suggests(): void
     {
         $hint = RedosHints::forAnalysis(new RedosAnalysis(RedosSeverity::High, 10, 'a+)+', ['Keep it linear'], null), '/(a+)+.*+/');
@@ -49,6 +52,7 @@ final class RedosHintsTest extends TestCase
         $this->assertStringNotContainsString('Use possessive quantifiers (*+ instead of *', $hint);
     }
 
+    #[Test]
     public function test_a_hint_names_the_offsets_of_the_hotspot(): void
     {
         $analysis = new RedosAnalysis(RedosSeverity::High, 10, hotspots: [new Hotspot(3, 7, RedosSeverity::High, 'abc')]);
@@ -67,6 +71,7 @@ final class RedosHintsTest extends TestCase
         yield 'a word repeated in a repeated group' => ['pattern' => '/x/', 'vulnerablePart' => '(ab+)+', 'expected' => 'replace (ab+)+ with atomic group (?>ab+) or possessive ab++.'];
     }
 
+    #[Test]
     #[DataProvider('provideSuggestedFixes')]
     public function test_a_hint_suggests_the_fix_the_pattern_calls_for(string $pattern, ?string $vulnerablePart, string $expected): void
     {

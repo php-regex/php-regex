@@ -41,6 +41,7 @@ final class QuantifierNodeTest extends TestCase
         yield 'missing_min_php84' => [$node, '{,3}', QuantifierType::Greedy];
     }
 
+    #[Test]
     #[DataProvider('data_provider_quantifiers')]
     public function test_constructor_and_getters(LiteralNode $quantifiedNode, string $quantifier, QuantifierType $type): void
     {
@@ -57,6 +58,7 @@ final class QuantifierNodeTest extends TestCase
         $this->assertSame($end, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_quantifier(): void
     {
         $quantifiedNode = new LiteralNode('a', 0, 1);

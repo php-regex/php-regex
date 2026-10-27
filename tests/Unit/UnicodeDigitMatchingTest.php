@@ -13,10 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class UnicodeDigitMatchingTest extends TestCase
 {
+    #[Test]
     public function test_unicode_digit_matching(): void
     {
         // \d with u flag matches Arabic-Indic digits

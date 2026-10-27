@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Node;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LiteralNodeTest extends TestCase
@@ -33,6 +34,7 @@ final class LiteralNodeTest extends TestCase
         yield 'long_string' => ['http', 0, 4];
     }
 
+    #[Test]
     #[DataProvider('data_provider_literals')]
     public function test_constructor_and_getters(string $value, int $start, int $end): void
     {
@@ -43,6 +45,7 @@ final class LiteralNodeTest extends TestCase
         $this->assertSame($end, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_literal(): void
     {
         $node = new LiteralNode('x', 0, 1);

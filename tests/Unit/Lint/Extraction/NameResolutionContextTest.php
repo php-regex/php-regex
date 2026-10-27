@@ -19,6 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 final class NameResolutionContextTest extends TestCase
 {
+    #[Test]
     public function test_an_unimported_class_belongs_to_the_current_namespace(): void
     {
         $context = new NameResolutionContext();
@@ -28,6 +29,7 @@ final class NameResolutionContextTest extends TestCase
         $this->assertSame('App\\Service\\Nested\\Preg', $context->resolveClass('Nested\\Preg'));
     }
 
+    #[Test]
     public function test_an_imported_class_resolves_to_its_target(): void
     {
         $context = new NameResolutionContext();
@@ -40,6 +42,7 @@ final class NameResolutionContextTest extends TestCase
         $this->assertSame('Composer\\Pcre\\Regex', $context->resolveClass('Rx'));
     }
 
+    #[Test]
     public function test_a_fully_qualified_name_ignores_imports(): void
     {
         $context = new NameResolutionContext();
@@ -49,6 +52,7 @@ final class NameResolutionContextTest extends TestCase
         $this->assertSame('Other\\Preg', $context->resolveClass('\\Other\\Preg'));
     }
 
+    #[Test]
     public function test_a_relative_name_is_qualified_with_the_namespace(): void
     {
         $context = new NameResolutionContext();
@@ -57,6 +61,7 @@ final class NameResolutionContextTest extends TestCase
         $this->assertSame('App\\Service\\Preg', $context->resolveClass('namespace\\Preg'));
     }
 
+    #[Test]
     public function test_entering_a_namespace_drops_the_previous_imports(): void
     {
         $context = new NameResolutionContext();
@@ -66,6 +71,7 @@ final class NameResolutionContextTest extends TestCase
         $this->assertSame('App\\Other\\Preg', $context->resolveClass('Preg'));
     }
 
+    #[Test]
     public function test_an_unqualified_function_keeps_its_global_name(): void
     {
         $context = new NameResolutionContext();
@@ -75,6 +81,7 @@ final class NameResolutionContextTest extends TestCase
         $this->assertSame('preg_match', $context->resolveFunction('preg_match'));
     }
 
+    #[Test]
     public function test_an_unqualified_function_is_first_looked_up_in_the_namespace(): void
     {
         $context = new NameResolutionContext();
@@ -87,11 +94,13 @@ final class NameResolutionContextTest extends TestCase
         $this->assertNull($context->namespacedFunction('Sub\\grep'));
     }
 
+    #[Test]
     public function test_an_unqualified_function_of_the_global_namespace_has_no_namespaced_name(): void
     {
         $this->assertNull((new NameResolutionContext())->namespacedFunction('grep'));
     }
 
+    #[Test]
     public function test_an_imported_function_resolves_to_its_target(): void
     {
         $context = new NameResolutionContext();
@@ -102,6 +111,7 @@ final class NameResolutionContextTest extends TestCase
         $this->assertSame('Safe\\preg_split', $context->resolveFunction('\\Safe\\preg_split'));
     }
 
+    #[Test]
     public function test_a_qualified_function_uses_the_class_import_rules(): void
     {
         $context = new NameResolutionContext();

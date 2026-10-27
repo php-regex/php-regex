@@ -17,6 +17,7 @@ use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -56,6 +57,7 @@ final class CharacterClassRangeBugTest extends TestCase
     /**
      * Test that the optimizer does not create ranges when intermediate characters are missing.
      */
+    #[Test]
     #[DataProvider('nonConsecutiveCharactersProvider')]
     public function test_optimizer_does_not_create_invalid_ranges(string $input, string $expectedPattern): void
     {
@@ -76,6 +78,7 @@ final class CharacterClassRangeBugTest extends TestCase
     /**
      * Test that the optimizer correctly creates ranges when ALL intermediate characters are present.
      */
+    #[Test]
     #[DataProvider('consecutiveCharactersProvider')]
     public function test_optimizer_creates_valid_ranges(string $input, string $expectedPattern): void
     {

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 use PHPRegex\Redos\InputGenerator;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RedosInputGeneratorTest extends TestCase
@@ -27,6 +28,7 @@ final class RedosInputGeneratorTest extends TestCase
         $this->generator = new InputGenerator();
     }
 
+    #[Test]
     public function test_generate_with_critical_severity(): void
     {
         $ast = Regex::create()->parse('/a+/');
@@ -35,6 +37,7 @@ final class RedosInputGeneratorTest extends TestCase
         $this->assertStringEndsWith('!', $input);
     }
 
+    #[Test]
     public function test_generate_with_high_severity(): void
     {
         $ast = Regex::create()->parse('/b+/');
@@ -43,6 +46,7 @@ final class RedosInputGeneratorTest extends TestCase
         $this->assertStringEndsWith('!', $input);
     }
 
+    #[Test]
     public function test_generate_with_medium_severity(): void
     {
         $ast = Regex::create()->parse('/c+/');
@@ -51,6 +55,7 @@ final class RedosInputGeneratorTest extends TestCase
         $this->assertStringEndsWith('!', $input);
     }
 
+    #[Test]
     public function test_generate_with_low_severity(): void
     {
         $ast = Regex::create()->parse('/d+/');
@@ -59,6 +64,7 @@ final class RedosInputGeneratorTest extends TestCase
         $this->assertStringEndsWith('!', $input);
     }
 
+    #[Test]
     public function test_generate_with_safe_severity(): void
     {
         $ast = Regex::create()->parse('/e+/');
@@ -67,6 +73,7 @@ final class RedosInputGeneratorTest extends TestCase
         $this->assertStringEndsWith('!', $input);
     }
 
+    #[Test]
     public function test_generate_without_severity(): void
     {
         $ast = Regex::create()->parse('/f+/');
@@ -75,6 +82,7 @@ final class RedosInputGeneratorTest extends TestCase
         $this->assertStringEndsWith('!', $input);
     }
 
+    #[Test]
     public function test_generate_with_case_insensitive_flag(): void
     {
         $ast = Regex::create()->parse('/a+/i');
@@ -82,6 +90,7 @@ final class RedosInputGeneratorTest extends TestCase
         $this->assertMatchesRegularExpression('/^[aA]+$/', substr($input, 0, -1));
     }
 
+    #[Test]
     public function test_generate_with_complex_node(): void
     {
         $ast = Regex::create()->parse('/[abc]+/');
@@ -89,6 +98,7 @@ final class RedosInputGeneratorTest extends TestCase
         $this->assertGreaterThan(20, \strlen($input));
     }
 
+    #[Test]
     public function test_generate_uses_printable_char_from_set(): void
     {
         $ast = Regex::create()->parse('/[A-Z]+/');
@@ -97,6 +107,7 @@ final class RedosInputGeneratorTest extends TestCase
         $this->assertMatchesRegularExpression('/^[A-Z]$/', $firstChar);
     }
 
+    #[Test]
     public function test_generate_with_set_that_only_has_non_printable(): void
     {
         $ast = Regex::create()->parse('/[\x00-\x1F]+/');

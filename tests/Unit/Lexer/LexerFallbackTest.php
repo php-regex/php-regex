@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lexer;
 
 use PHPRegex\Parser\Lexer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LexerFallbackTest extends TestCase
@@ -21,6 +22,7 @@ final class LexerFallbackTest extends TestCase
     /**
      * Covers the case where consumeQuoteMode reaches the end of the string without finding \E.
      */
+    #[Test]
     public function test_lex_quote_mode_unterminated(): void
     {
         $tokens = (new Lexer())->tokenize('\Qstart')->getTokens(); // No \E
@@ -35,6 +37,7 @@ final class LexerFallbackTest extends TestCase
      * Covers the case where consumeCommentMode reaches the end of the string without finding ).
      * (Note: this throws an exception later in tokenize(), but we want to test the internal call).
      */
+    #[Test]
     public function test_lex_comment_mode_unterminated_internal(): void
     {
         try {

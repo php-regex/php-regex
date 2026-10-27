@@ -18,6 +18,7 @@ use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Lexing\TokenValue;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -31,6 +32,7 @@ final class LexerSweepTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_lexer_unicode_prop_normalization(): void
     {
         $tokens = (new Lexer())->tokenize('/\p{L}/')->getTokens();
@@ -45,6 +47,7 @@ final class LexerSweepTest extends TestCase
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_escaped_literals(): void
     {
         // Test all escaped literals
@@ -55,6 +58,7 @@ final class LexerSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_lexer_quote_mode_without_end(): void
     {
         // Quote mode without \E
@@ -62,6 +66,7 @@ final class LexerSweepTest extends TestCase
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_quote_mode_with_end(): void
     {
         // Quote mode with \E
@@ -69,6 +74,7 @@ final class LexerSweepTest extends TestCase
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_backref_variations(): void
     {
         // Test \g{-1}
@@ -80,30 +86,35 @@ final class LexerSweepTest extends TestCase
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_octal_legacy(): void
     {
         $tokens = (new Lexer())->tokenize('/\01/')->getTokens();
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_posix_class(): void
     {
         $tokens = (new Lexer())->tokenize('/[[:alpha:]]/')->getTokens();
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_quote_mode_with_empty_literal(): void
     {
         $tokens = (new Lexer())->tokenize('\Q\E')->getTokens();
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_quote_mode_ending_at_string_end(): void
     {
         $tokens = (new Lexer())->tokenize('\Qtest')->getTokens();
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_extract_token_value_escape_sequences(): void
     {
         // These are tested indirectly through parsing
@@ -111,6 +122,7 @@ final class LexerSweepTest extends TestCase
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_normalize_unicode_prop_variations(): void
     {
         // Test \p{L}, \P{L}, \p{^L}, \P{^L} variations
@@ -118,54 +130,63 @@ final class LexerSweepTest extends TestCase
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_all_escape_sequences_in_char_class(): void
     {
         $tokens = (new Lexer())->tokenize('[\\t\\n\\r\\f\\v\\e\\d\\s\\w]')->getTokens();
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_unicode_props_in_char_class(): void
     {
         $tokens = (new Lexer())->tokenize('[\\p{L}\\P{L}]')->getTokens();
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_posix_in_char_class(): void
     {
         $tokens = (new Lexer())->tokenize('[[:alpha:][:digit:]]')->getTokens();
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_backref_variations_2(): void
     {
         $tokens = (new Lexer())->tokenize('\\1\\k<name>\\k{name}')->getTokens();
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_g_reference_all_forms(): void
     {
         $tokens = (new Lexer())->tokenize('\\g1\\g{1}\\g<name>\\g-1\\g+1')->getTokens();
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_pcre_verbs(): void
     {
         $tokens = (new Lexer())->tokenize('(*ACCEPT)(*FAIL)(*MARK:name)')->getTokens();
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_quote_mode_with_backslash(): void
     {
         $tokens = (new Lexer())->tokenize('\\Q\\\\E')->getTokens();
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_quote_mode_with_metacharacters(): void
     {
         $tokens = (new Lexer())->tokenize('\\Q.*+?^$[](){}|\\E')->getTokens();
         $this->assertNotEmpty($tokens);
     }
 
+    #[Test]
     public function test_lexer_trailing_backslash(): void
     {
         $this->expectException(LexerException::class);
@@ -174,6 +195,7 @@ final class LexerSweepTest extends TestCase
         (new Lexer())->tokenize('abc\\');
     }
 
+    #[Test]
     public function test_lexer_unclosed_character_class(): void
     {
         $this->expectException(LexerException::class);
@@ -182,6 +204,7 @@ final class LexerSweepTest extends TestCase
         (new Lexer())->tokenize('[abc');
     }
 
+    #[Test]
     public function test_lexer_unclosed_comment(): void
     {
         $this->expectException(LexerException::class);
@@ -190,6 +213,7 @@ final class LexerSweepTest extends TestCase
         (new Lexer())->tokenize('(?#comment without closing');
     }
 
+    #[Test]
     public function test_lexer_comment_at_end_of_string(): void
     {
         // Test comment mode that reaches end of string
@@ -206,6 +230,7 @@ final class LexerSweepTest extends TestCase
      * Simulates a T_LITERAL_ESCAPED token that is not in the known list (\t, \n, etc.)
      * to force the 'default => substr($matchedValue, 1)'.
      */
+    #[Test]
     public function test_lexer_extract_token_value_default_escape(): void
     {
 
@@ -219,6 +244,7 @@ final class LexerSweepTest extends TestCase
      * Tests the global "default" fallback of extractTokenValue.
      * Forces a token type that has no specific logic.
      */
+    #[Test]
     public function test_lexer_extract_token_value_global_default(): void
     {
 
@@ -231,6 +257,7 @@ final class LexerSweepTest extends TestCase
     /**
      * Tests the fallback of normalizeUnicodeProp when captures are missing.
      */
+    #[Test]
     public function test_lexer_normalize_unicode_missing_captures(): void
     {
 

@@ -25,12 +25,14 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class VisitorFallbackTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_sample_generator_backref_not_found(): void
     {
         // Access a backreference that hasn't been captured yet
@@ -43,6 +45,7 @@ final class VisitorFallbackTest extends TestCase
         $this->assertSame('', $ast->accept($generator));
     }
 
+    #[Test]
     public function test_sample_generator_bad_unicode_node(): void
     {
         // Inject a CharLiteralNode with a bad value
@@ -53,6 +56,7 @@ final class VisitorFallbackTest extends TestCase
         $this->assertSame('?', $node->accept($generator));
     }
 
+    #[Test]
     public function test_sample_generator_bad_octal_node(): void
     {
         // Inject CharLiteralNode with bad value
@@ -63,6 +67,7 @@ final class VisitorFallbackTest extends TestCase
         $this->assertSame('?', $node->accept($generator));
     }
 
+    #[Test]
     public function test_validator_bad_backref_syntax(): void
     {
         // Inject BackrefNode with value that fails internal validator regex
@@ -76,6 +81,7 @@ final class VisitorFallbackTest extends TestCase
         $node->accept($validator);
     }
 
+    #[Test]
     public function test_optimizer_char_class_parts_change(): void
     {
         // The Rewriter::visitCharClass has logic: if ($optimizedPart !== $part) { $hasChanged = true; }

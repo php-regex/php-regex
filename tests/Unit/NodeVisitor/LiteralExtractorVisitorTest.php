@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 use PHPRegex\Parser\Analysis\LiteralExtractor;
 use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LiteralExtractorVisitorTest extends TestCase
@@ -30,6 +31,7 @@ final class LiteralExtractorVisitorTest extends TestCase
         $this->visitor = new LiteralExtractor();
     }
 
+    #[Test]
     public function test_simple_literal(): void
     {
         $set = $this->extract('/hello/');
@@ -39,6 +41,7 @@ final class LiteralExtractorVisitorTest extends TestCase
         $this->assertSame(['hello'], $set->suffixes);
     }
 
+    #[Test]
     public function test_sequence_concat(): void
     {
         $set = $this->extract('/abc/'); // Sequence(Literal(a), Literal(b), Literal(c))
@@ -47,6 +50,7 @@ final class LiteralExtractorVisitorTest extends TestCase
         $this->assertSame(['abc'], $set->prefixes);
     }
 
+    #[Test]
     public function test_alternation(): void
     {
         $set = $this->extract('/(foo|bar)/');
@@ -56,6 +60,7 @@ final class LiteralExtractorVisitorTest extends TestCase
         $this->assertSame(['foo', 'bar'], $set->suffixes);
     }
 
+    #[Test]
     public function test_prefix_suffix_logic(): void
     {
         $set = $this->extract('/root(a|b)tail/');
@@ -68,6 +73,7 @@ final class LiteralExtractorVisitorTest extends TestCase
         $this->assertSame(['rootatail', 'rootbtail'], $set->suffixes);
     }
 
+    #[Test]
     public function test_quantifier_fixed(): void
     {
         $set = $this->extract('/a{3}/');
@@ -75,6 +81,7 @@ final class LiteralExtractorVisitorTest extends TestCase
         $this->assertTrue($set->complete);
     }
 
+    #[Test]
     public function test_quantifier_plus(): void
     {
         $set = $this->extract('/a+/');
@@ -84,6 +91,7 @@ final class LiteralExtractorVisitorTest extends TestCase
         $this->assertEmpty($set->suffixes);
     }
 
+    #[Test]
     public function test_quantifier_star(): void
     {
         $set = $this->extract('/a*/');
@@ -91,12 +99,14 @@ final class LiteralExtractorVisitorTest extends TestCase
         $this->assertFalse($set->complete);
     }
 
+    #[Test]
     public function test_anchor_does_not_break_prefix(): void
     {
         $set = $this->extract('/^root/');
         $this->assertSame(['root'], $set->prefixes);
     }
 
+    #[Test]
     public function test_dot_breaks_chain(): void
     {
         $set = $this->extract('/pre.fix/');
@@ -107,6 +117,7 @@ final class LiteralExtractorVisitorTest extends TestCase
         $this->assertFalse($set->complete);
     }
 
+    #[Test]
     public function test_case_insensitive(): void
     {
         $set = $this->extract('/ab/i');
@@ -116,6 +127,7 @@ final class LiteralExtractorVisitorTest extends TestCase
         $this->assertContains('AB', $set->prefixes);
     }
 
+    #[Test]
     public function test_optimization_usage(): void
     {
         $pattern = '/user_(\d+)/';

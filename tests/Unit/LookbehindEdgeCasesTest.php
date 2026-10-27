@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LookbehindEdgeCasesTest extends TestCase
@@ -26,6 +27,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     public function test_a_lookbehind_inside_a_called_group_calling_it_back_is_unbounded(): void
     {
         // The outer lookbehind measures group 1, whose lookbehind calls
@@ -41,6 +43,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_a_missing_group_met_while_measuring_leaves_later_references_counted_as_written(): void
     {
         // PCRE reads the whole pattern before it measures the lookbehind:
@@ -52,6 +55,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertSame(14, $result->offset);
     }
 
+    #[Test]
     public function test_fixed_length_literal_lookbehind(): void
     {
         $result = $this->regexService->validate('/(?<=foo)bar/');
@@ -59,6 +63,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid, 'Fixed-length lookbehind should be valid');
     }
 
+    #[Test]
     public function test_fixed_length_digit_lookbehind(): void
     {
         $result = $this->regexService->validate('/(?<=\d{3})test/');
@@ -66,6 +71,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_fixed_length_escaped_chars_lookbehind(): void
     {
         $result = $this->regexService->validate('/(?<=\(\d{2}\))/');
@@ -73,6 +79,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_fixed_length_char_class_lookbehind(): void
     {
         $result = $this->regexService->validate('/(?<=[a-z]{5})/');
@@ -80,6 +87,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_fixed_length_char_sequence_lookbehind(): void
     {
         $result = $this->regexService->validate('/(?<=\w\d)/');
@@ -87,6 +95,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_fixed_length_with_escape_lookbehind(): void
     {
         $result = $this->regexService->validate('/(?<=test\.)pattern/');
@@ -94,6 +103,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_fixed_length_backslash_lookbehind(): void
     {
         $result = $this->regexService->validate('/(?<=\\\\)/');
@@ -101,6 +111,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_fixed_length_single_char_class_lookbehind(): void
     {
         $result = $this->regexService->validate('/(?<=[A-Z])/');
@@ -108,6 +119,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_variable_length_star_quantifier_is_valid(): void
     {
         $result = $this->regexService->validate('/(?<=a*)b/');
@@ -115,6 +127,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_variable_length_plus_quantifier_is_valid(): void
     {
         $result = $this->regexService->validate('/(?<=a+)b/');
@@ -122,6 +135,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_variable_length_optional_quantifier_is_valid(): void
     {
         // Variable-length lookbehinds arrived in PCRE2 10.43, which PHP bundles from 8.4.
@@ -130,6 +144,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid, 'Variable-length optional quantifier should be valid in PCRE2');
     }
 
+    #[Test]
     public function test_variable_length_unbounded_range_is_valid(): void
     {
         $result = $this->regexService->validate('/(?<=a{1,})b/');
@@ -137,6 +152,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_variable_length_char_class_star_is_valid(): void
     {
         $result = $this->regexService->validate('/(?<=[a-z]*)test/');
@@ -144,6 +160,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_variable_length_digit_plus_is_valid(): void
     {
         $result = $this->regexService->validate('/(?<=\d+)end/');
@@ -151,6 +168,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_variable_length_alternation_is_valid(): void
     {
         // Variable-length lookbehinds arrived in PCRE2 10.43, which PHP bundles from 8.4.
@@ -159,6 +177,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid, 'Alternation with different lengths should be valid in PCRE2');
     }
 
+    #[Test]
     public function test_variable_length_group_star_is_valid(): void
     {
         $result = $this->regexService->validate('/(?<=(test)*)/');
@@ -166,6 +185,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_mixed_fixed_and_variable_length_is_valid(): void
     {
         $result = $this->regexService->validate('/(?<=\d{3}a+)/');
@@ -173,6 +193,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_literal_repeat_plus_variable_is_valid(): void
     {
         $result = $this->regexService->validate('/(?<=[a]{3}b*)/');
@@ -180,6 +201,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_optional_group_is_valid(): void
     {
         // Variable-length lookbehinds arrived in PCRE2 10.43, which PHP bundles from 8.4.
@@ -188,6 +210,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid, 'Optional group should be valid in PCRE2');
     }
 
+    #[Test]
     public function test_variable_range_bound_is_valid(): void
     {
         // Variable-length lookbehinds arrived in PCRE2 10.43, which PHP bundles from 8.4.
@@ -196,6 +219,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid, 'Variable range bound should be valid in PCRE2');
     }
 
+    #[Test]
     public function test_negative_variable_lookbehind_is_valid(): void
     {
         $result = $this->regexService->validate('/(?<!a+)/');
@@ -203,6 +227,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_fixed_length_exactly_three_chars(): void
     {
         $result = $this->regexService->validate('/(?<=abc)/');
@@ -210,6 +235,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_fixed_length_multiple_digits(): void
     {
         $result = $this->regexService->validate('/(?<=\d\d\d)/');
@@ -217,6 +243,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_fixed_range_lookbehind(): void
     {
         $result = $this->regexService->validate('/(?<=[a-z]{3,3})/');
@@ -224,6 +251,7 @@ final class LookbehindEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_complex_fixed_pattern(): void
     {
         $result = $this->regexService->validate('/(?<=test\d{2})/');

@@ -17,6 +17,7 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ParserEdgeCaseTest extends TestCase
@@ -30,6 +31,7 @@ final class ParserEdgeCaseTest extends TestCase
         $this->regex = Regex::create();
     }
 
+    #[Test]
     public function test_quantifier_on_empty_sequence(): void
     {
         // Case: /(?:)+/ -> Empty group (empty sequence) quantified.
@@ -39,6 +41,7 @@ final class ParserEdgeCaseTest extends TestCase
         $this->assertInstanceOf(QuantifierNode::class, $ast->pattern);
     }
 
+    #[Test]
     public function test_subroutine_empty_name(): void
     {
         // Case: (?&) -> subroutine call without name
@@ -47,6 +50,7 @@ final class ParserEdgeCaseTest extends TestCase
         $this->regex->parse('/(?&)/');
     }
 
+    #[Test]
     public function test_named_group_empty_name_angle_brackets(): void
     {
         // Case: (?<>) -> Empty named group
@@ -55,6 +59,7 @@ final class ParserEdgeCaseTest extends TestCase
         $this->regex->parse('/(?<>)/');
     }
 
+    #[Test]
     public function test_unclosed_group_in_subroutine_name(): void
     {
         // Case: (?&name -> no closing parenthesis, but end of string

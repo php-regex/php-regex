@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Cli;
 
 use PHPRegex\Cli\GlobalOptionsParser;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class GlobalOptionsParserTest extends TestCase
 {
+    #[Test]
     public function test_parse_collects_global_options_and_args(): void
     {
         $parser = new GlobalOptionsParser();
@@ -33,6 +35,7 @@ final class GlobalOptionsParserTest extends TestCase
         $this->assertSame(['lint', 'src'], $parsed->args);
     }
 
+    #[Test]
     public function test_parse_reports_missing_php_version(): void
     {
         $parser = new GlobalOptionsParser();
@@ -42,6 +45,7 @@ final class GlobalOptionsParserTest extends TestCase
         $this->assertSame('Missing value for --php-version.', $parsed->options->error);
     }
 
+    #[Test]
     public function test_parse_supports_inline_php_version(): void
     {
         $parser = new GlobalOptionsParser();
@@ -53,6 +57,7 @@ final class GlobalOptionsParserTest extends TestCase
         $this->assertTrue($parsed->options->help);
     }
 
+    #[Test]
     public function test_parse_collects_the_pcre_version(): void
     {
         $parser = new GlobalOptionsParser();
@@ -63,6 +68,7 @@ final class GlobalOptionsParserTest extends TestCase
         $this->assertSame('Missing value for --pcre-version.', $parser->parse(['--pcre-version'])->options->error);
     }
 
+    #[Test]
     public function test_parse_collects_the_locale(): void
     {
         $parser = new GlobalOptionsParser();
@@ -74,6 +80,7 @@ final class GlobalOptionsParserTest extends TestCase
         $this->assertSame('Missing value for --locale.', $parser->parse(['--locale'])->options->error);
     }
 
+    #[Test]
     public function test_parse_collects_the_cache_directory(): void
     {
         $parser = new GlobalOptionsParser();
@@ -85,6 +92,7 @@ final class GlobalOptionsParserTest extends TestCase
         $this->assertSame('Missing value for --cache-dir.', $parser->parse(['--cache-dir'])->options->error);
     }
 
+    #[Test]
     public function test_parse_disables_visuals(): void
     {
         $parser = new GlobalOptionsParser();

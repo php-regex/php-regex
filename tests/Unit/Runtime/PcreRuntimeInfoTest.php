@@ -20,6 +20,7 @@ use PHPUnit\Framework\TestCase;
 
 final class PcreRuntimeInfoTest extends TestCase
 {
+    #[Test]
     public function test_from_ini_reflects_current_runtime(): void
     {
         $info = PcreRuntimeInfo::fromIni();
@@ -53,6 +54,7 @@ final class PcreRuntimeInfoTest extends TestCase
         $this->assertSame(50, $info->recursionLimit);
     }
 
+    #[Test]
     public function test_json_serialization_shape(): void
     {
         $info = new PcreRuntimeInfo('10.42', '1', 1000000, 100000);
@@ -65,6 +67,7 @@ final class PcreRuntimeInfoTest extends TestCase
         ], $info->jsonSerialize());
     }
 
+    #[Test]
     public function test_nullable_ini_values_are_preserved(): void
     {
         $info = new PcreRuntimeInfo('unknown', null, null, null);

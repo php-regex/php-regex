@@ -37,6 +37,7 @@ final class JsonFormatterTest extends TestCase
         $this->formatter = new JsonFormatter();
     }
 
+    #[Test]
     public function test_format_empty_report(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -49,6 +50,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertSame([], $decoded['results']);
     }
 
+    #[Test]
     public function test_format_counts_the_parser_fallbacks(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'parserFallbacks' => 2]);
@@ -60,6 +62,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertSame(2, $decoded['stats']['parser_fallbacks'] ?? null);
     }
 
+    #[Test]
     public function test_format_counts_the_patterns_not_analyzed(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 3, 'optimizations' => 0, 'notAnalyzed' => 2]);
@@ -134,6 +137,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertSame([0], array_keys($result['optimizations']));
     }
 
+    #[Test]
     public function test_format_leads_with_the_target_when_given(): void
     {
         $target = ['php' => '8.2', 'pcre' => '10.40', 'source' => 'composer.json require.php'];
@@ -151,6 +155,7 @@ final class JsonFormatterTest extends TestCase
      * ran the judgement: the PCRE2 that compiled them and the PHP whose
      * mbstring tables fold their case under "iu".
      */
+    #[Test]
     public function test_format_names_the_php_and_the_pcre_that_ran_the_lint(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -162,6 +167,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertSame(['php' => \PHP_VERSION, 'pcre' => explode(' ', \PCRE_VERSION)[0]], $decoded['host']);
     }
 
+    #[Test]
     public function test_format_has_no_target_by_default(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -172,6 +178,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertArrayNotHasKey('target', $decoded);
     }
 
+    #[Test]
     public function test_format_with_results(): void
     {
         $result1 = [
@@ -247,6 +254,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertSame(5, $optimizations[0]['savings']);
     }
 
+    #[Test]
     public function test_format_with_invalid_result(): void
     {
         $results = [
@@ -266,6 +274,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertSame('valid.php', $decoded['results'][0]['file']);
     }
 
+    #[Test]
     public function test_format_skips_non_array_results(): void
     {
         $results = [
@@ -273,7 +282,6 @@ final class JsonFormatterTest extends TestCase
             'invalid',
         ];
 
-        /** @phpstan-ignore-next-line intentionally mixing invalid results for coverage */
         $report = new LintReport($results, ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
@@ -285,6 +293,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertSame('valid.php', $decoded['results'][0]['file']);
     }
 
+    #[Test]
     public function test_format_escapes_invalid_utf8(): void
     {
         $results = [
@@ -309,6 +318,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertSame('/x\xFE\x80y/is', $entry['pattern']);
     }
 
+    #[Test]
     public function test_format_error(): void
     {
         $message = 'Test error message';
@@ -322,6 +332,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertIsString($decoded['stage']);
     }
 
+    #[Test]
     public function test_format_error_with_special_chars(): void
     {
         $message = "Error with quotes \" and slashes / and newlines\n";
@@ -334,6 +345,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertSame($message, $decoded['error']);
     }
 
+    #[Test]
     public function test_format_uses_pretty_print(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -344,6 +356,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertStringContainsString('  ', $output);
     }
 
+    #[Test]
     public function test_format_uses_unescaped_slashes(): void
     {
         $result = [

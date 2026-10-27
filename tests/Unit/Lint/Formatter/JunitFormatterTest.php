@@ -17,6 +17,7 @@ use PHPRegex\Linter\Formatter\JunitFormatter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Tests\Support\LintIssueFixtures;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class JunitFormatterTest extends TestCase
@@ -28,6 +29,7 @@ final class JunitFormatterTest extends TestCase
         $this->formatter = new JunitFormatter();
     }
 
+    #[Test]
     public function test_format_empty_report(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -39,6 +41,7 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('</testsuite>', $output);
     }
 
+    #[Test]
     public function test_format_with_critical_problem(): void
     {
         $problem = LintIssueFixtures::redos(LintSeverity::Critical, 'Critical security issue', 'regex.redos');
@@ -66,6 +69,7 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('Suggestion: '.htmlspecialchars(LintIssueFixtures::redosAdvice(), \ENT_XML1 | \ENT_QUOTES), $output);
     }
 
+    #[Test]
     public function test_format_with_error_problem(): void
     {
         $problem = LintIssueFixtures::invalid('Syntax error');
@@ -87,6 +91,7 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('<failure message="Syntax error">', $output);
     }
 
+    #[Test]
     public function test_format_with_warning_problem(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Warning, 'Lint warning', 'regex.lint');
@@ -108,6 +113,7 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('<system-out>Lint warning</system-out>', $output);
     }
 
+    #[Test]
     public function test_format_with_info_problem(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Info, 'Info message');
@@ -128,6 +134,7 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('<system-out>Info message</system-out>', $output);
     }
 
+    #[Test]
     public function test_format_with_multiple_problems(): void
     {
         $problems = [
@@ -157,6 +164,7 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('<system-out>Warning 1</system-out>', $output);
     }
 
+    #[Test]
     public function test_format_normalizes_file_paths(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
@@ -176,6 +184,7 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('classname="C:/Windows/test.php:1"', $output);
     }
 
+    #[Test]
     public function test_format_normalizes_line_numbers(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
@@ -195,6 +204,7 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('classname="test.php:1"', $output);
     }
 
+    #[Test]
     public function test_format_calculates_column_positions(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
@@ -217,6 +227,7 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('Test', $output);
     }
 
+    #[Test]
     public function test_format_escapes_xml(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Message with <tags> & "quotes"');
@@ -236,6 +247,7 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('Message with &lt;tags&gt; &amp; &quot;quotes&quot;', $output);
     }
 
+    #[Test]
     public function test_format_problem_title_with_code(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test message', 'regex.lint.test');
@@ -255,6 +267,7 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('name="Lint (regex.lint.test)"', $output);
     }
 
+    #[Test]
     public function test_format_problem_title_without_code(): void
     {
         $problem = LintIssueFixtures::redos(LintSeverity::Error, 'Test message', null);
@@ -274,6 +287,7 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('name="Security"', $output);
     }
 
+    #[Test]
     public function test_format_error(): void
     {
         $message = 'Test error message with <tags> & "quotes"';

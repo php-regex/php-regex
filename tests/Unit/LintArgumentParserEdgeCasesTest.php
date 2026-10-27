@@ -16,10 +16,12 @@ namespace PHPRegex\Tests\Unit;
 use PHPRegex\Cli\Command\LintArgumentParser;
 use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintArgumentParserEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_verbose_flag_sets_verbosity(): void
     {
         $parser = new LintArgumentParser();
@@ -29,6 +31,7 @@ final class LintArgumentParserEdgeCasesTest extends TestCase
         $this->assertSame(OutputConfiguration::VERBOSITY_VERBOSE, $result->arguments->verbosity);
     }
 
+    #[Test]
     public function test_jobs_must_be_positive(): void
     {
         $parser = new LintArgumentParser();

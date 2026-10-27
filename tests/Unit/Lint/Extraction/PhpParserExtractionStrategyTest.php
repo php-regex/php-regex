@@ -32,24 +32,28 @@ final class PhpParserExtractionStrategyTest extends TestCase
         $this->strategy = new PhpParserExtractionStrategy();
     }
 
+    #[Test]
     #[DoesNotPerformAssertions]
     public function test_construct(): void
     {
         new PhpParserExtractionStrategy();
     }
 
+    #[Test]
     public function test_extract_with_empty_array(): void
     {
         $result = $this->strategy->extract([]);
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_with_nonexistent_file(): void
     {
         $result = $this->strategy->extract(['/nonexistent/file.php']);
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_with_empty_file(): void
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/empty.php';
@@ -58,6 +62,7 @@ final class PhpParserExtractionStrategyTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_with_preg_match(): void
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/phpstan_preg_match.php';
@@ -84,6 +89,7 @@ final class PhpParserExtractionStrategyTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_extract_with_multiple_preg_functions(): void
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/phpstan_multiple_preg.php';
@@ -101,6 +107,7 @@ final class PhpParserExtractionStrategyTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_extract_with_concatenated_strings(): void
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/phpstan_concatenated.php';
@@ -115,6 +122,7 @@ final class PhpParserExtractionStrategyTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_extract_ignores_empty_patterns(): void
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/phpstan_empty_pattern.php';
@@ -123,6 +131,7 @@ final class PhpParserExtractionStrategyTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_ignores_null_patterns(): void
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/phpstan_null_pattern.php';
@@ -131,6 +140,7 @@ final class PhpParserExtractionStrategyTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_with_non_preg_function(): void
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/phpstan_non_preg.php';
@@ -139,6 +149,7 @@ final class PhpParserExtractionStrategyTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_with_complex_concatenation(): void
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/phpstan_complex_concat.php';
@@ -148,6 +159,7 @@ final class PhpParserExtractionStrategyTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_with_malformed_php(): void
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/phpstan_malformed.php';
@@ -168,6 +180,7 @@ final class PhpParserExtractionStrategyTest extends TestCase
         $this->assertNotNull($result[0]->parserFallback);
     }
 
+    #[Test]
     public function test_extract_with_multiple_files(): void
     {
         $file1 = __DIR__.'/../../../Fixtures/Extractor/phpstan_test1.php';
@@ -185,6 +198,7 @@ final class PhpParserExtractionStrategyTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_extract_with_preg_replace_callback(): void
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/phpstan_preg_replace_callback.php';
@@ -200,6 +214,7 @@ final class PhpParserExtractionStrategyTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_extract_with_preg_replace_callback_array(): void
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/phpstan_preg_replace_callback_array.php';

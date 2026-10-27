@@ -17,12 +17,14 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ParserErrorTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_throws_on_too_short_regex(): void
     {
         $this->expectException(ParserException::class);
@@ -32,6 +34,7 @@ final class ParserErrorTest extends TestCase
         $regex->parse('/a');
     }
 
+    #[Test]
     public function test_throws_on_missing_closing_delimiter_non_standard(): void
     {
         $this->expectException(ParserException::class);
@@ -41,6 +44,7 @@ final class ParserErrorTest extends TestCase
         $regex->parse('#foo');
     }
 
+    #[Test]
     public function test_throws_on_missing_closing_delimiter_brace(): void
     {
         $this->expectException(ParserException::class);
@@ -50,6 +54,7 @@ final class ParserErrorTest extends TestCase
         $regex->parse('{foo');
     }
 
+    #[Test]
     public function test_throws_on_unknown_flag(): void
     {
         $this->expectException(ParserException::class);
@@ -59,6 +64,7 @@ final class ParserErrorTest extends TestCase
         $regex->parse('/abc/z');
     }
 
+    #[Test]
     public function test_throws_on_escaped_delimiter_as_last_char(): void
     {
         $this->expectException(ParserException::class);
@@ -69,6 +75,7 @@ final class ParserErrorTest extends TestCase
         $regex->parse('/foo\/');
     }
 
+    #[Test]
     public function test_throws_on_quantifying_anchor(): void
     {
         $this->expectException(ParserException::class);
@@ -80,6 +87,7 @@ final class ParserErrorTest extends TestCase
         $regex->parse('/^*a/');
     }
 
+    #[Test]
     public function test_throws_on_quantifying_assertion(): void
     {
         $this->expectException(ParserException::class);
@@ -91,6 +99,7 @@ final class ParserErrorTest extends TestCase
         $regex->parse('/\A+a/');
     }
 
+    #[Test]
     public function test_throws_on_quantifying_keep_node(): void
     {
         $this->expectException(ParserException::class);
@@ -102,6 +111,7 @@ final class ParserErrorTest extends TestCase
         $regex->parse('/a\K?/');
     }
 
+    #[Test]
     public function test_throws_on_incomplete_python_group(): void
     {
         $this->expectException(ParserException::class);
@@ -113,6 +123,7 @@ final class ParserErrorTest extends TestCase
         $regex->parse('/(?P)/');
     }
 
+    #[Test]
     public function test_throws_on_python_backref_without_name(): void
     {
         $this->expectException(ParserException::class);
@@ -122,6 +133,7 @@ final class ParserErrorTest extends TestCase
         $regex->parse('/(?P=)/');
     }
 
+    #[Test]
     public function test_throws_on_invalid_token_in_group_name(): void
     {
         $this->expectException(ParserException::class);

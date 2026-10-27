@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
 use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class OutputConfigurationTest extends TestCase
 {
+    #[Test]
     public function test_construct_with_defaults(): void
     {
         $config = new OutputConfiguration();
@@ -34,11 +36,13 @@ final class OutputConfigurationTest extends TestCase
      * Results are ordered by file and line where they are collected: no
      * formatter sorts them again, so no setting asks one to.
      */
+    #[Test]
     public function test_no_setting_orders_the_results_by_severity(): void
     {
         $this->assertFalse(property_exists(OutputConfiguration::class, 'sortBySeverity'));
     }
 
+    #[Test]
     public function test_construct_with_custom_values(): void
     {
         $config = new OutputConfiguration(
@@ -58,6 +62,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertFalse($config->groupByFile);
     }
 
+    #[Test]
     public function test_quiet_factory_method(): void
     {
         $config = OutputConfiguration::quiet();
@@ -70,6 +75,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->groupByFile);
     }
 
+    #[Test]
     public function test_verbose_verbosity_keeps_every_other_default(): void
     {
         $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_VERBOSE);
@@ -82,6 +88,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->groupByFile);
     }
 
+    #[Test]
     public function test_debug_verbosity_keeps_every_other_default(): void
     {
         $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_DEBUG);
@@ -94,6 +101,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->groupByFile);
     }
 
+    #[Test]
     public function test_should_show_hints_with_normal_verbosity_and_hints_enabled(): void
     {
         $config = new OutputConfiguration(
@@ -104,6 +112,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->shouldShowHints());
     }
 
+    #[Test]
     public function test_should_show_hints_with_verbose_verbosity_and_hints_enabled(): void
     {
         $config = new OutputConfiguration(
@@ -114,6 +123,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->shouldShowHints());
     }
 
+    #[Test]
     public function test_should_show_hints_with_debug_verbosity_and_hints_enabled(): void
     {
         $config = new OutputConfiguration(
@@ -124,6 +134,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->shouldShowHints());
     }
 
+    #[Test]
     public function test_should_show_hints_with_quiet_verbosity(): void
     {
         $config = new OutputConfiguration(
@@ -134,6 +145,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertFalse($config->shouldShowHints());
     }
 
+    #[Test]
     public function test_should_show_hints_with_hints_disabled(): void
     {
         $config = new OutputConfiguration(
@@ -144,6 +156,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertFalse($config->shouldShowHints());
     }
 
+    #[Test]
     public function test_should_show_detailed_redos_with_verbose_verbosity(): void
     {
         $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_VERBOSE);
@@ -151,6 +164,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->shouldShowDetailedReDoS());
     }
 
+    #[Test]
     public function test_should_show_detailed_redos_with_debug_verbosity(): void
     {
         $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_DEBUG);
@@ -158,6 +172,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->shouldShowDetailedReDoS());
     }
 
+    #[Test]
     public function test_should_show_detailed_redos_with_normal_verbosity(): void
     {
         $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_NORMAL);
@@ -165,6 +180,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertFalse($config->shouldShowDetailedReDoS());
     }
 
+    #[Test]
     public function test_should_show_detailed_redos_with_quiet_verbosity(): void
     {
         $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_QUIET);
@@ -172,6 +188,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertFalse($config->shouldShowDetailedReDoS());
     }
 
+    #[Test]
     public function test_should_show_optimizations_with_normal_verbosity_and_optimizations_enabled(): void
     {
         $config = new OutputConfiguration(
@@ -182,6 +199,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->shouldShowOptimizations());
     }
 
+    #[Test]
     public function test_should_show_optimizations_with_verbose_verbosity_and_optimizations_enabled(): void
     {
         $config = new OutputConfiguration(
@@ -192,6 +210,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->shouldShowOptimizations());
     }
 
+    #[Test]
     public function test_should_show_optimizations_with_debug_verbosity_and_optimizations_enabled(): void
     {
         $config = new OutputConfiguration(
@@ -202,6 +221,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->shouldShowOptimizations());
     }
 
+    #[Test]
     public function test_should_show_optimizations_with_quiet_verbosity(): void
     {
         $config = new OutputConfiguration(
@@ -212,6 +232,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertFalse($config->shouldShowOptimizations());
     }
 
+    #[Test]
     public function test_should_show_optimizations_with_optimizations_disabled(): void
     {
         $config = new OutputConfiguration(
@@ -222,6 +243,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertFalse($config->shouldShowOptimizations());
     }
 
+    #[Test]
     public function test_should_show_progress_with_normal_verbosity_and_progress_enabled(): void
     {
         $config = new OutputConfiguration(
@@ -232,6 +254,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->shouldShowProgress());
     }
 
+    #[Test]
     public function test_should_show_progress_with_verbose_verbosity_and_progress_enabled(): void
     {
         $config = new OutputConfiguration(
@@ -242,6 +265,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->shouldShowProgress());
     }
 
+    #[Test]
     public function test_should_show_progress_with_debug_verbosity_and_progress_enabled(): void
     {
         $config = new OutputConfiguration(
@@ -252,6 +276,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->shouldShowProgress());
     }
 
+    #[Test]
     public function test_should_show_progress_with_quiet_verbosity(): void
     {
         $config = new OutputConfiguration(
@@ -262,6 +287,7 @@ final class OutputConfigurationTest extends TestCase
         $this->assertFalse($config->shouldShowProgress());
     }
 
+    #[Test]
     public function test_should_show_progress_with_progress_disabled(): void
     {
         $config = new OutputConfiguration(

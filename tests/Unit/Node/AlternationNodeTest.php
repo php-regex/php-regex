@@ -17,10 +17,12 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AlternationNodeTest extends TestCase
 {
+    #[Test]
     public function test_constructor_and_getters(): void
     {
         $alt1 = new LiteralNode('a', 1, 2);
@@ -34,6 +36,7 @@ final class AlternationNodeTest extends TestCase
         $this->assertSame(4, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_alternation(): void
     {
         $alt1 = $this->createStub(NodeInterface::class);

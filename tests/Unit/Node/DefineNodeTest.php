@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class DefineNodeTest extends TestCase
@@ -52,6 +53,7 @@ final class DefineNodeTest extends TestCase
         ];
     }
 
+    #[Test]
     #[DataProvider('data_provider_define_patterns')]
     public function test_parse_define_creates_define_node(string $pattern, string $expectedFirstGroupName): void
     {
@@ -69,6 +71,7 @@ final class DefineNodeTest extends TestCase
         $this->assertSame($expectedFirstGroupName, $firstNamedGroup->name);
     }
 
+    #[Test]
     public function test_constructor_and_getters(): void
     {
         $content = new LiteralNode('test', 10, 14);
@@ -79,6 +82,7 @@ final class DefineNodeTest extends TestCase
         $this->assertSame(20, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_define(): void
     {
         $content = new LiteralNode('x', 10, 11);
@@ -93,6 +97,7 @@ final class DefineNodeTest extends TestCase
         $this->assertSame('visited', $node->accept($visitor));
     }
 
+    #[Test]
     public function test_define_node_positions(): void
     {
         $regex = Regex::create();
@@ -106,6 +111,7 @@ final class DefineNodeTest extends TestCase
         $this->assertGreaterThan($defineNode->getStartPosition(), $defineNode->getEndPosition());
     }
 
+    #[Test]
     public function test_define_content_is_accessible(): void
     {
         $regex = Regex::create();

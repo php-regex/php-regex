@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PatternLinterCorpusBugsTest extends TestCase
@@ -28,6 +29,7 @@ final class PatternLinterCorpusBugsTest extends TestCase
      * @param array<int, string> $expectedIssueIds
      * @param array<int, string> $unexpectedIssueIds
      */
+    #[Test]
     #[DataProvider('provideCorpusBugCases')]
     public function test_corpus_bug_patterns_are_handled_correctly(
         string $pattern,
@@ -96,6 +98,7 @@ final class PatternLinterCorpusBugsTest extends TestCase
      * Test that suspicious ASCII range A-z is properly detected.
      * The range A-z includes [\ \ ] ^ _ ` between Z and a in ASCII order.
      */
+    #[Test]
     public function test_suspicious_a_z_range_is_detected(): void
     {
         $pattern = '/^[a-zA-z0-9_]+$/';
@@ -117,6 +120,7 @@ final class PatternLinterCorpusBugsTest extends TestCase
     /**
      * Test that proper A-Za-z range does NOT trigger suspicious range warning.
      */
+    #[Test]
     public function test_proper_a_za_z_range_is_not_flagged(): void
     {
         $pattern = '/^[A-Za-z0-9_]+$/';

@@ -16,12 +16,14 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @extends RuleTestCase<RegexPatternRule>
  */
 final class RegexPatternRuleOptimizationTest extends RuleTestCase
 {
+    #[Test]
     public function test_rule(): void
     {
         $this->analyse([__DIR__.'/Fixtures/MyClass.php'], [

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -32,6 +33,7 @@ final class SymfonyIntegrationTest extends TestCase
         $this->regex = Regex::create();
     }
 
+    #[Test]
     public function test_validate_regex_pattern_for_symfony_constraint(): void
     {
         // Simulates a Symfony constraint validator checking a regex pattern
@@ -51,6 +53,7 @@ final class SymfonyIntegrationTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_symfony_validator_error_messages(): void
     {
         // Test that validation errors provide user-friendly messages
@@ -63,6 +66,7 @@ final class SymfonyIntegrationTest extends TestCase
         $this->assertNotEmpty($result->error);
     }
 
+    #[Test]
     public function test_pattern_complexity_for_performance_constraint(): void
     {
         // Symfony applications may want to limit regex complexity
@@ -82,6 +86,7 @@ final class SymfonyIntegrationTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_generate_sample_for_form_placeholder(): void
     {
         // Symfony forms can use generated samples as placeholders
@@ -92,6 +97,7 @@ final class SymfonyIntegrationTest extends TestCase
         $this->assertMatchesRegularExpression('/^\d{3}-\d{3}-\d{4}$/', $sample);
     }
 
+    #[Test]
     public function test_explain_pattern_for_form_help_text(): void
     {
         // Symfony forms can use pattern explanations as help text
@@ -104,6 +110,7 @@ final class SymfonyIntegrationTest extends TestCase
         $this->assertStringContainsString('Regex', $explanation);
     }
 
+    #[Test]
     public function test_validation_for_multiple_form_fields(): void
     {
         // Simulates validating multiple form fields with different patterns
@@ -134,6 +141,7 @@ final class SymfonyIntegrationTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_route_parameter_constraint_validation(): void
     {
         // Symfony routes can use regex constraints for parameters
@@ -152,6 +160,7 @@ final class SymfonyIntegrationTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_route_constraint_sample_generation(): void
     {
         // Generate valid sample values for route constraints
@@ -172,6 +181,7 @@ final class SymfonyIntegrationTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_regex_service_instantiation(): void
     {
         // Test that Regex can be instantiated as a Symfony service
@@ -182,6 +192,7 @@ final class SymfonyIntegrationTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     #[DoesNotPerformAssertions]
     public function test_regex_service_with_options(): void
     {
@@ -189,6 +200,7 @@ final class SymfonyIntegrationTest extends TestCase
         Regex::create(['max_pattern_length' => 500]);
     }
 
+    #[Test]
     public function test_stateless_service_behavior(): void
     {
         // Verify the service is stateless and thread-safe
@@ -205,6 +217,7 @@ final class SymfonyIntegrationTest extends TestCase
         $this->assertTrue($result2->isValid);
     }
 
+    #[Test]
     public function test_redos_detection_for_user_input(): void
     {
         // Critical for Symfony apps accepting user-provided patterns
@@ -225,6 +238,7 @@ final class SymfonyIntegrationTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_detailed_redos_analysis_for_security_review(): void
     {
         // Symfony security teams can use detailed ReDoS analysis
@@ -237,6 +251,7 @@ final class SymfonyIntegrationTest extends TestCase
         $this->assertGreaterThanOrEqual(7, $analysis->score); // High risk
     }
 
+    #[Test]
     public function test_literal_extraction_for_database_optimization(): void
     {
         // Symfony apps can optimize database queries using literal extraction
@@ -250,6 +265,7 @@ final class SymfonyIntegrationTest extends TestCase
         // WHERE log_message LIKE 'ERROR:%' before running regex
     }
 
+    #[Test]
     public function test_pattern_validation_for_console_command(): void
     {
         // Symfony console commands can validate regex inputs
@@ -274,6 +290,7 @@ final class SymfonyIntegrationTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_pattern_explanation_for_console_output(): void
     {
         // Console commands can display pattern explanations
@@ -285,6 +302,7 @@ final class SymfonyIntegrationTest extends TestCase
         $this->assertStringContainsString('domain', $explanation);
     }
 
+    #[Test]
     public function test_pattern_ast_serialization_for_cache(): void
     {
         // Symfony cache can store parsed AST for performance
@@ -299,6 +317,7 @@ final class SymfonyIntegrationTest extends TestCase
         $this->assertEquals($ast, $unserialized);
     }
 
+    #[Test]
     public function test_validation_result_caching(): void
     {
         // Validation results can be cached to avoid repeated checks
@@ -313,6 +332,7 @@ final class SymfonyIntegrationTest extends TestCase
         $this->assertTrue($result2->isValid);
     }
 
+    #[Test]
     public function test_unicode_pattern_validation(): void
     {
         // Symfony apps often need Unicode support
@@ -332,6 +352,7 @@ final class SymfonyIntegrationTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_unicode_sample_generation(): void
     {
         // Generate samples for Unicode patterns
@@ -342,6 +363,7 @@ final class SymfonyIntegrationTest extends TestCase
         $this->assertMatchesRegularExpression($pattern, $sample);
     }
 
+    #[Test]
     public function test_error_messages_suitable_for_symfony_profiler(): void
     {
         // Error messages should be clear for Symfony debug toolbar
@@ -359,6 +381,7 @@ final class SymfonyIntegrationTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_ast_dump_for_debugging(): void
     {
         // Developers can dump AST for debugging in Symfony profiler
@@ -370,6 +393,7 @@ final class SymfonyIntegrationTest extends TestCase
         $this->assertStringContainsString('Regex', $dump);
     }
 
+    #[Test]
     #[DoesNotPerformAssertions]
     public function test_comprehensive_symfony_integration(): void
     {

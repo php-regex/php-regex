@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PHPRegex\Linter\Extraction\MemoryBudget;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MemoryBudgetTest extends TestCase
@@ -31,6 +32,7 @@ final class MemoryBudgetTest extends TestCase
         ini_set('memory_limit', $this->memoryLimit);
     }
 
+    #[Test]
     public function test_an_unlimited_process_analyses_everything(): void
     {
         ini_set('memory_limit', '-1');
@@ -38,6 +40,7 @@ final class MemoryBudgetTest extends TestCase
         $this->assertTrue(MemoryBudget::allows(str_repeat('a', 4096), MemoryBudget::TOKENIZE_FACTOR));
     }
 
+    #[Test]
     public function test_a_small_file_fits(): void
     {
         $this->limitHeadroomTo(32 * 1024 * 1024);
@@ -45,6 +48,7 @@ final class MemoryBudgetTest extends TestCase
         $this->assertTrue(MemoryBudget::allows('<?php preg_match("/a/", $s);', MemoryBudget::TOKENIZE_FACTOR));
     }
 
+    #[Test]
     public function test_a_file_that_would_exhaust_the_limit_is_refused(): void
     {
         $this->limitHeadroomTo(32 * 1024 * 1024);
@@ -53,6 +57,7 @@ final class MemoryBudgetTest extends TestCase
         $this->assertFalse(MemoryBudget::allows(str_repeat('a', 1024 * 1024), MemoryBudget::TOKENIZE_FACTOR));
     }
 
+    #[Test]
     public function test_building_an_ast_is_budgeted_higher_than_tokenizing(): void
     {
         $this->assertGreaterThan(MemoryBudget::TOKENIZE_FACTOR, MemoryBudget::PARSE_FACTOR);
@@ -66,6 +71,7 @@ final class MemoryBudgetTest extends TestCase
         $this->assertFalse(MemoryBudget::allows($content, MemoryBudget::PARSE_FACTOR));
     }
 
+    #[Test]
     public function test_the_limit_is_read_in_every_shorthand(): void
     {
         $content = str_repeat('a', 1024 * 1024);

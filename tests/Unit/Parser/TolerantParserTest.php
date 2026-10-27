@@ -19,6 +19,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\TolerantParseResult;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TolerantParserTest extends TestCase
@@ -30,6 +31,7 @@ final class TolerantParserTest extends TestCase
         $this->regex = Regex::create();
     }
 
+    #[Test]
     public function test_returns_partial_ast_and_errors(): void
     {
         $result = $this->regex->parseTolerant('/(a+/');
@@ -41,6 +43,7 @@ final class TolerantParserTest extends TestCase
         $this->assertSame('(a+', $result->ast->pattern->children[0]->value);
     }
 
+    #[Test]
     public function test_successful_parse_has_no_errors(): void
     {
         $result = $this->regex->parseTolerant('/abc/');
@@ -52,6 +55,7 @@ final class TolerantParserTest extends TestCase
      * The errors are the library's: a list of the exceptions a strict parse
      * throws, each with its error code and offset.
      */
+    #[Test]
     public function test_the_errors_are_a_list_of_regex_exceptions(): void
     {
         $result = $this->regex->parseTolerant('/(a+/');

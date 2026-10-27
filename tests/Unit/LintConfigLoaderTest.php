@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Linter\Config\LintConfigLoader;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintConfigLoaderTest extends TestCase
 {
+    #[Test]
     public function test_config_loader_reads_repo_defaults(): void
     {
         $loader = new LintConfigLoader();

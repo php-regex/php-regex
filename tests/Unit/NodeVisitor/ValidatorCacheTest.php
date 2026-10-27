@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ValidatorCacheTest extends TestCase
 {
+    #[Test]
     public function test_unicode_property_cache_hit(): void
     {
         $this->expectNotToPerformAssertions();

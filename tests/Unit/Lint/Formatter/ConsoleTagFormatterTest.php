@@ -269,12 +269,12 @@ final class ConsoleTagFormatterTest extends TestCase
         }
     }
 
-    #[Test]
     /**
      * The linter reads, reports and formats with no console: only its
      * Console namespace, which runs the bridges' regex:lint on a Symfony
      * console, needs symfony/console, which the package suggests.
      */
+    #[Test]
     public function test_the_linter_depends_on_symfony_console_only_in_its_console_namespace(): void
     {
         $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(

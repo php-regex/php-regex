@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\Node;
 
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class DotNodeTest extends TestCase
 {
+    #[Test]
     public function test_constructor_and_getters(): void
     {
         $node = new DotNode(5, 6);
@@ -27,6 +29,7 @@ final class DotNodeTest extends TestCase
         $this->assertSame(6, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_dot(): void
     {
         $node = new DotNode(0, 1);

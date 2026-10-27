@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Cli;
 
 use PHPRegex\Cli\Command\HelpCommand;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class HelpCommandEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_resolve_invocation_defaults_to_regex(): void
     {
         $command = new HelpCommand();

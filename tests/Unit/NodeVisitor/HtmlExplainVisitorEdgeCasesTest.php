@@ -18,6 +18,7 @@ use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class HtmlExplainVisitorEdgeCasesTest extends TestCase
@@ -32,6 +33,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $this->visitor = new HtmlExplainer();
     }
 
+    #[Test]
     public function test_visit_conditional_with_else_branch(): void
     {
         $regex = '/(?(?<=a)b|c)/'; // Conditional with alternation in YES branch (parser treats b|c as one branch)
@@ -45,6 +47,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $this->assertStringContainsString('<strong>ELSE:</strong>', $output);
     }
 
+    #[Test]
     public function test_visit_group_types_and_named_group_escaping(): void
     {
         $regex = '/(?<tag>a)(?i:b)(?<!c)(?>d)/';
@@ -61,6 +64,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $this->assertStringContainsString('<strong>Atomic group (no backtracking):</strong>', $output);
     }
 
+    #[Test]
     public function test_visit_complex_char_class_parts(): void
     {
         $regex = '/[\d\P{L}\o{77}[[:alnum:]]]/';
@@ -74,6 +78,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $this->assertStringContainsString('POSIX Class: [[:alnum:]]', $output);
     }
 
+    #[Test]
     public function test_visit_complex_literal_types(): void
     {
         $regex = "/\t\r\n /"; // Tab, CR, NL, Space
@@ -86,6 +91,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $this->assertStringContainsString('<strong>&#039; &#039; (space)</strong>', $output);
     }
 
+    #[Test]
     public function test_visit_complex_quantified_group(): void
     {
         // A complex sequence that will trigger the multi-line quantifier formatting
@@ -98,6 +104,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $this->assertStringContainsString('<ul><li><strong>EITHER:</strong>', $output);
     }
 
+    #[Test]
     public function test_visit_simple_quantified_literal(): void
     {
         // A simple literal that should trigger the single-line quantifier formatting
@@ -109,6 +116,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $this->assertStringContainsString('<li><span title="&#039;a&#039; (exactly 2 times)"><strong>&#039;a&#039;</strong></span> (exactly 2 times)</li>', $output);
     }
 
+    #[Test]
     public function test_visit_range_with_non_literal_bounds(): void
     {
         $range = new RangeNode(new CharTypeNode('d', 0, 0), new LiteralNode('z', 0, 0), 0, 0);
@@ -118,6 +126,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $this->assertStringContainsString('Character Type', $output);
     }
 
+    #[Test]
     public function test_visit_range_with_non_literal_end(): void
     {
         $range = new RangeNode(new LiteralNode('a', 0, 0), new CharTypeNode('w', 0, 0), 0, 0);
@@ -127,6 +136,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $this->assertStringContainsString('Character Type', $output);
     }
 
+    #[Test]
     public function test_question_quantifier_explains_once_or_not_at_all(): void
     {
         $regex = '/a?/';
@@ -141,6 +151,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
      * callout argument, is shown as the replacement character: the rest of
      * the text stays. A literal byte, quoted or not, is spelled "\xHH".
      */
+    #[Test]
     public function test_a_byte_of_invalid_utf8_keeps_the_text_around_it(): void
     {
         $callout = $this->regex->parse("/(?C\"a\xE9b\")x/")->accept($this->visitor);
@@ -154,6 +165,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
      * A class and a condition describe their parts as text, escaped once:
      * a quote shows as a quote, not as the entity that escapes it.
      */
+    #[Test]
     public function test_a_class_and_a_condition_escape_their_parts_once(): void
     {
         $class = (string) $this->regex->parse('/[a-f<]/')->accept($this->visitor);

@@ -20,6 +20,7 @@ use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -33,6 +34,7 @@ final class LexerBranchesTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_escaped_tab_character(): void
     {
         $tokens = (new Lexer())->tokenize('\t')->getTokens();
@@ -42,6 +44,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame("\t", $tokens[0]->value);
     }
 
+    #[Test]
     public function test_escaped_newline_character(): void
     {
         $tokens = (new Lexer())->tokenize('\n')->getTokens();
@@ -51,6 +54,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame("\n", $tokens[0]->value);
     }
 
+    #[Test]
     public function test_escaped_carriage_return_character(): void
     {
         $tokens = (new Lexer())->tokenize('\r')->getTokens();
@@ -60,6 +64,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame("\r", $tokens[0]->value);
     }
 
+    #[Test]
     public function test_escaped_form_feed_character(): void
     {
         $tokens = (new Lexer())->tokenize('\f')->getTokens();
@@ -69,6 +74,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame("\f", $tokens[0]->value);
     }
 
+    #[Test]
     public function test_escaped_vertical_tab_character(): void
     {
         // Note: \v is T_CHAR_TYPE in PCRE regex context (vertical whitespace)
@@ -79,6 +85,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('v', $tokens[0]->value);
     }
 
+    #[Test]
     public function test_escaped_escape_character(): void
     {
         $tokens = (new Lexer())->tokenize('\e')->getTokens();
@@ -88,6 +95,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame("\e", $tokens[0]->value);
     }
 
+    #[Test]
     public function test_multiple_escape_sequences(): void
     {
         // Note: \v is T_CHAR_TYPE, not T_LITERAL_ESCAPED in regex context
@@ -101,6 +109,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame("\e", $tokens[4]->value);
     }
 
+    #[Test]
     public function test_escape_sequences_in_pattern(): void
     {
         $tokens = (new Lexer())->tokenize('abc\tdef\nghi')->getTokens();
@@ -116,6 +125,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame("\n", $tokens[7]->value);
     }
 
+    #[Test]
     public function test_unicode_prop_lowercase_p_simple(): void
     {
         $tokens = (new Lexer())->tokenize('\p{L}')->getTokens();
@@ -125,6 +135,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('{L}', $tokens[0]->value);
     }
 
+    #[Test]
     public function test_unicode_prop_uppercase_p_simple(): void
     {
         $tokens = (new Lexer())->tokenize('\P{L}')->getTokens();
@@ -134,6 +145,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('{^L}', $tokens[0]->value); // Negated
     }
 
+    #[Test]
     public function test_unicode_prop_lowercase_p_with_negation(): void
     {
         $tokens = (new Lexer())->tokenize('\p{^L}')->getTokens();
@@ -143,6 +155,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('{^L}', $tokens[0]->value);
     }
 
+    #[Test]
     public function test_unicode_prop_uppercase_p_with_double_negation(): void
     {
         // \P{^L} should result in 'L' (double negation cancels out)
@@ -153,6 +166,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('{L}', $tokens[0]->value); // Double negation removed
     }
 
+    #[Test]
     public function test_unicode_prop_short_form_lowercase(): void
     {
         // \pL (short form)
@@ -163,6 +177,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('L', $tokens[0]->value);
     }
 
+    #[Test]
     public function test_unicode_prop_short_form_uppercase(): void
     {
         // \PL (short form, negated)
@@ -173,6 +188,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('^L', $tokens[0]->value);
     }
 
+    #[Test]
     public function test_unicode_prop_various_properties(): void
     {
         $patterns = [
@@ -193,6 +209,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_pcre_verb_extraction(): void
     {
         $patterns = [
@@ -213,6 +230,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_assertion_extraction(): void
     {
         $patterns = [
@@ -232,6 +250,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_char_type_extraction(): void
     {
         $patterns = [
@@ -260,6 +279,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_keep_extraction(): void
     {
         $tokens = (new Lexer())->tokenize('\K')->getTokens();
@@ -268,6 +288,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('K', $tokens[0]->value);
     }
 
+    #[Test]
     public function test_backref_with_number_extraction(): void
     {
         $patterns = [
@@ -286,6 +307,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_backref_with_named_groups(): void
     {
         $patterns = [
@@ -301,6 +323,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_octal_legacy_extraction(): void
     {
         $patterns = [
@@ -319,6 +342,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_posix_class_extraction(): void
     {
         $patterns = [
@@ -347,6 +371,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_quote_mode_with_multiple_segments(): void
     {
         $tokens = (new Lexer())->tokenize('a\Q*+?\Eb\Q[]\Ec')->getTokens();
@@ -361,6 +386,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertContains('c', $values);
     }
 
+    #[Test]
     public function test_quote_mode_at_start(): void
     {
         $tokens = (new Lexer())->tokenize('\Q*+?\Eabc')->getTokens();
@@ -373,6 +399,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame(TokenType::QuoteModeEnd, $tokens[2]->type);
     }
 
+    #[Test]
     public function test_quote_mode_at_end(): void
     {
         $tokens = (new Lexer())->tokenize('abc\Q*+?')->getTokens();
@@ -386,6 +413,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame(TokenType::Literal, $lastToken->type);
     }
 
+    #[Test]
     public function test_quote_mode_with_special_chars(): void
     {
         $tokens = (new Lexer())->tokenize('\Q()[]{}^$|.?*+\E')->getTokens();
@@ -398,6 +426,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame(TokenType::QuoteModeEnd, $tokens[2]->type);
     }
 
+    #[Test]
     public function test_quote_mode_with_backslashes(): void
     {
         $tokens = (new Lexer())->tokenize('\Q\d\s\w\E')->getTokens();
@@ -410,6 +439,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame(TokenType::QuoteModeEnd, $tokens[2]->type);
     }
 
+    #[Test]
     public function test_nested_quote_mode_markers(): void
     {
         // \Q starts quote mode, captures '\Q' as literal, first \E ends quote mode
@@ -425,6 +455,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame(TokenType::QuoteModeEnd, $tokens[3]->type);
     }
 
+    #[Test]
     public function test_g_reference_variations(): void
     {
         $patterns = [
@@ -442,6 +473,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_octal_with_braces(): void
     {
         $tokens = (new Lexer())->tokenize('\o{123}')->getTokens();
@@ -450,6 +482,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('\o{123}', $tokens[0]->value);
     }
 
+    #[Test]
     public function test_unicode_hex_variations(): void
     {
         $testCases = [
@@ -467,6 +500,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_combined_escape_sequences_and_unicode(): void
     {
         $tokens = (new Lexer())->tokenize('\t\n\p{L}\P{Nd}\r')->getTokens();
@@ -479,6 +513,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame("\r", $tokens[4]->value);
     }
 
+    #[Test]
     public function test_escape_sequences_inside_character_class(): void
     {
         $tokens = (new Lexer())->tokenize('[\t\n\r\f\e]')->getTokens();
@@ -496,6 +531,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertContains("\e", $values);
     }
 
+    #[Test]
     public function test_all_escape_literal_types(): void
     {
         // Test other escaped characters that fall into the default case
@@ -525,6 +561,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_unicode_property_with_underscores_and_digits(): void
     {
         // Test property names with underscores and digits
@@ -544,6 +581,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_quote_mode_with_newlines_and_special_chars(): void
     {
         $tokens = (new Lexer())->tokenize("\Q\n\t\r\E")->getTokens();
@@ -556,6 +594,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame(TokenType::QuoteModeEnd, $tokens[2]->type);
     }
 
+    #[Test]
     public function test_backref_edge_cases(): void
     {
         // Test various backreference formats
@@ -572,6 +611,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_g_reference_edge_cases(): void
     {
         // Test g-reference with various formats
@@ -591,6 +631,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_comment_token(): void
     {
         $tokens = (new Lexer())->tokenize('(?#comment here)')->getTokens();
@@ -599,6 +640,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame(TokenType::CommentOpen, $tokens[0]->type);
     }
 
+    #[Test]
     public function test_group_modifier_open(): void
     {
         $tokens = (new Lexer())->tokenize('(?i)')->getTokens();
@@ -606,6 +648,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame(TokenType::GroupModifierOpen, $tokens[0]->type);
     }
 
+    #[Test]
     public function test_complex_pattern_with_all_token_types(): void
     {
         // Complex pattern using many different token types
@@ -619,6 +662,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertContains(TokenType::GroupModifierOpen, $types);
     }
 
+    #[Test]
     public function test_octal_legacy_all_variants(): void
     {
         // Test all octal legacy variants
@@ -635,6 +679,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_quote_mode_empty_before_end(): void
     {
         // Test when consumeQuoteMode returns null (empty content at \E)
@@ -648,6 +693,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertContains('c', $values);
     }
 
+    #[Test]
     public function test_pcre_verbs_with_arguments(): void
     {
         $patterns = [
@@ -665,6 +711,7 @@ final class LexerBranchesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_callout_extraction(): void
     {
         $tokens = (new Lexer())->tokenize('(?C some content )')->getTokens();
@@ -673,6 +720,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame(' some content ', $tokens[0]->value);
     }
 
+    #[Test]
     public function test_unicode_named_extraction(): void
     {
         $tokens = (new Lexer())->tokenize('\N{LATIN CAPITAL LETTER A}')->getTokens();
@@ -681,6 +729,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('LATIN CAPITAL LETTER A', $tokens[0]->value);
     }
 
+    #[Test]
     public function test_control_char_extraction(): void
     {
         $tokens = (new Lexer())->tokenize('\cA')->getTokens();
@@ -689,6 +738,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('A', $tokens[0]->value);
     }
 
+    #[Test]
     public function test_char_class_ampersands_are_literals(): void
     {
         // PHP has no class intersection: "[a&&b]" matches "&".
@@ -701,6 +751,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame(TokenType::Literal, $ampersands[1]->type);
     }
 
+    #[Test]
     public function test_char_class_double_hyphen_is_two_range_tokens(): void
     {
         // PHP has no class subtraction: "[a--b]" is a range from "a" down to
@@ -714,6 +765,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame(TokenType::Range, $hyphens[1]->type);
     }
 
+    #[Test]
     public function test_nested_char_class_tokens(): void
     {
         $tokens = (new Lexer())->tokenize('[a[b]c]')->getTokens();
@@ -738,6 +790,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertTrue($hasLiteralOpen);
     }
 
+    #[Test]
     public function test_unicode_prop_empty_after_negation(): void
     {
         $tokens = (new Lexer())->tokenize('\p{^}')->getTokens();
@@ -746,6 +799,7 @@ final class LexerBranchesTest extends TestCase
         $this->assertSame('', $tokens[0]->value);
     }
 
+    #[Test]
     public function test_unclosed_character_class_throws(): void
     {
         $this->expectException(LexerException::class);
@@ -761,6 +815,7 @@ final class LexerBranchesTest extends TestCase
      * (pcre2test 10.49, the pattern given in hex: "\ at end of pattern" at
      * 1, 2 and 3).
      */
+    #[Test]
     #[DataProvider('provideBodiesEndingInABackslash')]
     public function test_a_body_ending_in_a_lone_backslash_is_refused_with_its_own_code(string $body, int $position): void
     {

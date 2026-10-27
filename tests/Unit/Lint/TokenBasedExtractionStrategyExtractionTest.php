@@ -19,10 +19,12 @@ use PHPRegex\Linter\Extraction\PhpTokens;
 use PHPRegex\Linter\Extraction\StringExpressionReader;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TokenBasedExtractionStrategyExtractionTest extends TestCase
 {
+    #[Test]
     public function test_match_function_call_matches_namespaced_drop_in(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -38,6 +40,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame('preg_match', $result[0]->label);
     }
 
+    #[Test]
     public function test_match_function_call_rejects_unknown_namespaced_function(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -51,6 +54,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertNull($result);
     }
 
+    #[Test]
     public function test_match_function_call_rejects_method_call(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -66,6 +70,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertNull($result);
     }
 
+    #[Test]
     public function test_match_static_method_call_edge_cases(): void
     {
         $strategy = new TokenBasedExtractionStrategy(['Foo::bar']);
@@ -113,6 +118,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame('Foo::bar', $result[0]->label);
     }
 
+    #[Test]
     public function test_extract_from_call_collects_target_argument(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -143,6 +149,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame('preg_replace()', $occurrences[0]->source);
     }
 
+    #[Test]
     public function test_extract_from_call_tracks_brace_depth(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -171,6 +178,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame([], $occurrences);
     }
 
+    #[Test]
     public function test_extract_from_call_handles_incomplete_arguments(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -200,6 +208,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame('/a/', $occurrences[0]->pattern);
     }
 
+    #[Test]
     public function test_extract_from_call_returns_empty_when_never_collecting(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -226,6 +235,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame([], $occurrences);
     }
 
+    #[Test]
     public function test_extract_from_call_returns_empty_when_target_missing(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -252,6 +262,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame([], $occurrences);
     }
 
+    #[Test]
     public function test_extract_from_argument_tokens_returns_empty_for_invalid_tokens(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -277,6 +288,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame([], $occurrences);
     }
 
+    #[Test]
     public function test_extract_from_argument_tokens_skips_empty_pattern(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -302,6 +314,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame([], $occurrences);
     }
 
+    #[Test]
     public function test_extract_from_array_literal_collects_patterns(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -341,6 +354,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame('/bar/', $occurrences[1]->pattern);
     }
 
+    #[Test]
     public function test_extract_from_array_literal_returns_empty_when_no_array_start(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -366,6 +380,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame([], $occurrences);
     }
 
+    #[Test]
     public function test_extract_from_array_literal_handles_nested_arrays(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -399,6 +414,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame([], $occurrences);
     }
 
+    #[Test]
     public function test_extract_from_array_literal_handles_parenthesized_keys(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -433,6 +449,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame('/foo/', $occurrences[0]->pattern);
     }
 
+    #[Test]
     public function test_parse_regex_expression_preserves_flags(): void
     {
         $tokens = [
@@ -450,6 +467,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame('/foo/i', $result['pattern']);
     }
 
+    #[Test]
     public function test_parse_constant_string_expression_handles_concatenation(): void
     {
         $tokens = [
@@ -469,6 +487,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame('foobar', $result['pattern']);
     }
 
+    #[Test]
     public function test_parse_constant_string_expression_skips_parentheses(): void
     {
         $tokens = [
@@ -488,6 +507,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertSame('foo', $result['pattern']);
     }
 
+    #[Test]
     public function test_parse_constant_string_expression_returns_null_for_invalid_sequence(): void
     {
         $tokens = [
@@ -504,6 +524,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $this->assertNull($result);
     }
 
+    #[Test]
     public function test_decode_string_token_edge_cases(): void
     {
         $this->assertSame('', PhpTokens::stringValue(''));

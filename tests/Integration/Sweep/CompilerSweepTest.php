@@ -17,6 +17,7 @@ use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -28,6 +29,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class CompilerSweepTest extends TestCase
 {
+    #[Test]
     public function test_compiler_visitor_script_run(): void
     {
         $visitor = new PatternPrinter();
@@ -36,6 +38,7 @@ final class CompilerSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_compiler_visitor_limit_match(): void
     {
         $visitor = new PatternPrinter();
@@ -44,6 +47,7 @@ final class CompilerSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_compiler_visitor_version_condition(): void
     {
         $visitor = new PatternPrinter();

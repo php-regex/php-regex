@@ -42,6 +42,7 @@ final class ValidatorEdgeCaseTest extends TestCase
         $this->validator = new Validator();
     }
 
+    #[Test]
     public function test_invalid_quantifier_range(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -49,6 +50,7 @@ final class ValidatorEdgeCaseTest extends TestCase
         $this->validate('/a{5,2}/');
     }
 
+    #[Test]
     #[DoesNotPerformAssertions]
     public function test_allows_octal_zero_escape(): void
     {
@@ -56,6 +58,7 @@ final class ValidatorEdgeCaseTest extends TestCase
         $this->validate('/\0/');
     }
 
+    #[Test]
     public function test_invalid_backreference_out_of_bounds(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -63,6 +66,7 @@ final class ValidatorEdgeCaseTest extends TestCase
         $this->validate('/\5/'); // Group 5 doesn't exist
     }
 
+    #[Test]
     public function test_invalid_relative_backref(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -70,6 +74,7 @@ final class ValidatorEdgeCaseTest extends TestCase
         $this->validate('/(a)\g{-5}/');
     }
 
+    #[Test]
     public function test_invalid_named_backref(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -77,6 +82,7 @@ final class ValidatorEdgeCaseTest extends TestCase
         $this->validate('/(a)\k<foo>/');
     }
 
+    #[Test]
     public function test_variable_quantifier_in_lookbehind(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -84,6 +90,7 @@ final class ValidatorEdgeCaseTest extends TestCase
         $this->validate('/(?<=a*)/');
     }
 
+    #[Test]
     public function test_keep_in_lookbehind(): void
     {
         // PHP 8.4 compiles it: php-src sets PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK
@@ -91,6 +98,7 @@ final class ValidatorEdgeCaseTest extends TestCase
         $this->assertTrue(Regex::create(['php_version' => '8.4'])->validate('/(?<=a\K)/')->isValid);
     }
 
+    #[Test]
     public function test_invalid_posix_class(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -98,6 +106,7 @@ final class ValidatorEdgeCaseTest extends TestCase
         $this->validate('/[[:fake:]]/');
     }
 
+    #[Test]
     public function test_posix_negation_of_word_is_valid(): void
     {
         $this->validate('/[[:^word:]]/');
@@ -105,6 +114,7 @@ final class ValidatorEdgeCaseTest extends TestCase
         $this->assertNotFalse(@preg_match('/[[:^word:]]/', ''));
     }
 
+    #[Test]
     public function test_invalid_conditional_condition(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -113,6 +123,7 @@ final class ValidatorEdgeCaseTest extends TestCase
         $this->validate('/(?(a)b)/');
     }
 
+    #[Test]
     public function test_invalid_unicode_codepoint(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -120,6 +131,7 @@ final class ValidatorEdgeCaseTest extends TestCase
         $this->validate('/\u{110000}/u');
     }
 
+    #[Test]
     public function test_invalid_unicode_property(): void
     {
         $this->expectException(SemanticErrorException::class);

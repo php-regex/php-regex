@@ -27,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 
 final class HelpCommandTest extends TestCase
 {
+    #[Test]
     public function test_help_uses_invocation_in_usage_and_examples(): void
     {
         $originalArgv = $_SERVER['argv'] ?? null;
@@ -206,6 +207,7 @@ final class HelpCommandTest extends TestCase
         yield 'format' => ['command' => 'format'];
     }
 
+    #[Test]
     public function test_render_command_help_returns_zero_for_valid_command(): void
     {
         $command = new HelpCommand();
@@ -224,6 +226,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('Usage:', $text);
     }
 
+    #[Test]
     public function test_render_command_help_returns_two_for_invalid_command(): void
     {
         $command = new HelpCommand();
@@ -256,6 +259,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('Unknown command: anlyze. Did you mean "analyze"?', OutputFactory::errors($output));
     }
 
+    #[Test]
     public function test_render_command_help_includes_options(): void
     {
         $command = new HelpCommand();
@@ -274,6 +278,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('--redos-mode', $text);
     }
 
+    #[Test]
     public function test_render_command_help_includes_notes(): void
     {
         $command = new HelpCommand();
@@ -289,6 +294,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('Provides detailed ReDoS analysis including attack vectors and complexity heatmaps.', $text);
     }
 
+    #[Test]
     public function test_render_command_help_includes_examples(): void
     {
         $command = new HelpCommand();
@@ -305,6 +311,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('Explain a simple pattern', $text);
     }
 
+    #[Test]
     public function test_render_command_help_for_diagram(): void
     {
         $command = new HelpCommand();
@@ -324,6 +331,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('Basic diagram', $text);
     }
 
+    #[Test]
     public function test_render_command_help_for_highlight(): void
     {
         $command = new HelpCommand();
@@ -344,6 +352,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('HTML highlighting', $text);
     }
 
+    #[Test]
     public function test_render_command_help_for_validate(): void
     {
         $command = new HelpCommand();
@@ -364,6 +373,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('Validate for PHP 8.0', $text);
     }
 
+    #[Test]
     public function test_render_command_help_for_lint(): void
     {
         $command = new HelpCommand();
@@ -384,6 +394,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('--format <format>', $text);
     }
 
+    #[Test]
     public function test_render_command_help_for_self_update(): void
     {
         $command = new HelpCommand();
@@ -403,6 +414,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('Examples:', $text);
     }
 
+    #[Test]
     public function test_render_command_help_for_help(): void
     {
         $command = new HelpCommand();
@@ -422,6 +434,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('Show lint command help', $text);
     }
 
+    #[Test]
     public function test_get_command_data_returns_data_for_parse(): void
     {
         $command = new HelpCommand();
@@ -588,6 +601,7 @@ final class HelpCommandTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_get_command_data_returns_data_for_lint(): void
     {
         $command = new HelpCommand();
@@ -608,6 +622,7 @@ final class HelpCommandTest extends TestCase
         $this->assertCount(4, $data['notes']);
     }
 
+    #[Test]
     public function test_get_command_data_returns_null_for_invalid_command(): void
     {
         $command = new HelpCommand();
@@ -620,6 +635,7 @@ final class HelpCommandTest extends TestCase
         $this->assertNull($data);
     }
 
+    #[Test]
     public function test_get_command_data_returns_one_option_for_help(): void
     {
         $command = new HelpCommand();
@@ -635,6 +651,7 @@ final class HelpCommandTest extends TestCase
         $this->assertCount(1, $data['options']);
     }
 
+    #[Test]
     public function test_get_command_data_returns_empty_options_for_self_update(): void
     {
         $command = new HelpCommand();
@@ -649,6 +666,7 @@ final class HelpCommandTest extends TestCase
         $this->assertEmpty($data['options']);
     }
 
+    #[Test]
     public function test_format_command_usage_for_lint(): void
     {
         $command = new HelpCommand();
@@ -666,6 +684,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('<path>', (string) $usage);
     }
 
+    #[Test]
     public function test_format_command_usage_for_parse_analyze_and_commands_with_pattern(): void
     {
         $command = new HelpCommand();
@@ -683,6 +702,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('<pattern>', (string) $usage);
     }
 
+    #[Test]
     public function test_format_command_usage_for_help(): void
     {
         $command = new HelpCommand();
@@ -700,6 +720,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringNotContainsString('<pattern>', (string) $usage);
     }
 
+    #[Test]
     public function test_format_option_with_ansi_enabled(): void
     {
         $command = new HelpCommand();
@@ -714,6 +735,7 @@ final class HelpCommandTest extends TestCase
         $this->assertIsString($formatted);
     }
 
+    #[Test]
     public function test_format_option_with_ansi_disabled(): void
     {
         $command = new HelpCommand();
@@ -728,6 +750,7 @@ final class HelpCommandTest extends TestCase
         $this->assertSame('--format <format>', $formatted);
     }
 
+    #[Test]
     public function test_format_option_with_placeholder(): void
     {
         $command = new HelpCommand();
@@ -744,6 +767,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('<ver>', (string) $formatted);
     }
 
+    #[Test]
     public function test_format_option_without_placeholder(): void
     {
         $command = new HelpCommand();
@@ -759,6 +783,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('--no-ansi', (string) $formatted);
     }
 
+    #[Test]
     public function test_format_option_with_multiple_parts(): void
     {
         $command = new HelpCommand();
@@ -775,6 +800,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('--verbose', (string) $formatted);
     }
 
+    #[Test]
     public function test_format_example_command_formats_command_and_tokens(): void
     {
         $command = new HelpCommand();
@@ -792,6 +818,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString("'/a+/'", (string) $formatted);
     }
 
+    #[Test]
     public function test_format_example_token_colors_first_token_as_command(): void
     {
         $command = new HelpCommand();
@@ -806,6 +833,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('regex', (string) $formatted);
     }
 
+    #[Test]
     public function test_format_example_token_colors_option_tokens(): void
     {
         $command = new HelpCommand();
@@ -820,6 +848,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('--format=json', (string) $formatted);
     }
 
+    #[Test]
     public function test_format_example_token_colors_pattern_tokens(): void
     {
         $command = new HelpCommand();
@@ -834,6 +863,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString("'/a+/'", (string) $formatted);
     }
 
+    #[Test]
     public function test_format_example_token_colors_subcommands(): void
     {
         $command = new HelpCommand();
@@ -848,6 +878,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('analyze', (string) $formatted);
     }
 
+    #[Test]
     public function test_is_placeholder_detects_placeholders(): void
     {
         $command = new HelpCommand();
@@ -860,6 +891,7 @@ final class HelpCommandTest extends TestCase
         $this->assertTrue($method->invoke($command, '<ver>'));
     }
 
+    #[Test]
     public function test_is_placeholder_returns_false_for_non_placeholders(): void
     {
         $command = new HelpCommand();
@@ -872,6 +904,7 @@ final class HelpCommandTest extends TestCase
         $this->assertFalse($method->invoke($command, 'format'));
     }
 
+    #[Test]
     public function test_is_pattern_token_detects_quoted_patterns(): void
     {
         $command = new HelpCommand();
@@ -885,6 +918,7 @@ final class HelpCommandTest extends TestCase
         $this->assertTrue($method->invoke($command, '/a+/'));
     }
 
+    #[Test]
     public function test_is_pattern_token_detects_unquoted_patterns(): void
     {
         $command = new HelpCommand();
@@ -899,6 +933,7 @@ final class HelpCommandTest extends TestCase
         $this->assertFalse($method->invoke($command, '/not-closed'));
     }
 
+    #[Test]
     public function test_resolve_invocation_returns_argv_when_available(): void
     {
         $originalArgv = $_SERVER['argv'] ?? null;
@@ -922,6 +957,7 @@ final class HelpCommandTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_resolve_invocation_returns_default_when_argv_missing(): void
     {
         $originalArgv = $_SERVER['argv'] ?? null;
@@ -946,6 +982,7 @@ final class HelpCommandTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_resolve_invocation_returns_default_when_argv_empty(): void
     {
         $originalArgv = $_SERVER['argv'] ?? null;

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RedosEdgeCasesTest extends TestCase
@@ -26,6 +27,7 @@ final class RedosEdgeCasesTest extends TestCase
         $this->regex = Regex::create();
     }
 
+    #[Test]
     public function test_safe_pattern_single_quantifier(): void
     {
         $analysis = $this->regex->redos('/a+b/');
@@ -34,6 +36,7 @@ final class RedosEdgeCasesTest extends TestCase
         $this->assertNotSame(RedosSeverity::High, $analysis->severity);
     }
 
+    #[Test]
     public function test_safe_pattern_character_class_with_literal(): void
     {
         $analysis = $this->regex->redos('/[a-z]+test/');
@@ -42,6 +45,7 @@ final class RedosEdgeCasesTest extends TestCase
         $this->assertNotSame(RedosSeverity::High, $analysis->severity);
     }
 
+    #[Test]
     public function test_safe_pattern_simple_alternation(): void
     {
         $analysis = $this->regex->redos('/(a|b)+c/');
@@ -50,6 +54,7 @@ final class RedosEdgeCasesTest extends TestCase
         $this->assertNotSame(RedosSeverity::High, $analysis->severity);
     }
 
+    #[Test]
     public function test_safe_pattern_non_capturing_alternation(): void
     {
         $analysis = $this->regex->redos('/(?:foo|bar)*baz/');
@@ -58,6 +63,7 @@ final class RedosEdgeCasesTest extends TestCase
         $this->assertNotSame(RedosSeverity::High, $analysis->severity);
     }
 
+    #[Test]
     public function test_safe_pattern_word_chars(): void
     {
         $analysis = $this->regex->redos('/\w+@\w+/');
@@ -66,6 +72,7 @@ final class RedosEdgeCasesTest extends TestCase
         $this->assertNotSame(RedosSeverity::High, $analysis->severity);
     }
 
+    #[Test]
     public function test_safe_pattern_bounded_nested_quantifiers(): void
     {
         $analysis = $this->regex->redos('/(a{1,5})+/');
@@ -73,6 +80,7 @@ final class RedosEdgeCasesTest extends TestCase
         $this->assertNotSame(RedosSeverity::Critical, $analysis->severity);
     }
 
+    #[Test]
     public function test_safe_pattern_anchored_quantifier(): void
     {
         $analysis = $this->regex->redos('/^[a-z]*$/');
@@ -81,6 +89,7 @@ final class RedosEdgeCasesTest extends TestCase
         $this->assertNotSame(RedosSeverity::High, $analysis->severity);
     }
 
+    #[Test]
     public function test_dangerous_pattern_nested_plus_quantifiers(): void
     {
         $analysis = $this->regex->redos('/(a+)+b/');
@@ -89,6 +98,7 @@ final class RedosEdgeCasesTest extends TestCase
             'Nested quantifiers (a+)+ should be flagged as dangerous');
     }
 
+    #[Test]
     public function test_dangerous_pattern_nested_star_quantifiers(): void
     {
         $analysis = $this->regex->redos('/(a*)*b/');
@@ -97,6 +107,7 @@ final class RedosEdgeCasesTest extends TestCase
             'Nested quantifiers (a*)* should be flagged as dangerous');
     }
 
+    #[Test]
     public function test_dangerous_pattern_overlapping_alternation(): void
     {
         // Unanchored, (a|a)* accepts after the first run and never backtracks; before the end,
@@ -107,6 +118,7 @@ final class RedosEdgeCasesTest extends TestCase
             'Overlapping alternation (a|a)*$ should be flagged as dangerous');
     }
 
+    #[Test]
     public function test_dangerous_pattern_overlapping_alternation_patterns(): void
     {
         // (?:a|ab)*c reads every input one way and never fails on the engine; with "b" as its
@@ -117,6 +129,7 @@ final class RedosEdgeCasesTest extends TestCase
             'Overlapping alternation (?:a|ab|b)* should be flagged');
     }
 
+    #[Test]
     public function test_dangerous_pattern_nested_non_capturing(): void
     {
         $analysis = $this->regex->redos('/(?:a+)+b/');
@@ -125,6 +138,7 @@ final class RedosEdgeCasesTest extends TestCase
             'Nested quantifiers (?:a+)+ should be flagged as dangerous');
     }
 
+    #[Test]
     public function test_edge_case_with_anchors(): void
     {
         $withoutAnchors = $this->regex->redos('/(a+)+b/');
@@ -134,6 +148,7 @@ final class RedosEdgeCasesTest extends TestCase
         $this->assertContains($withAnchors->severity, [RedosSeverity::High, RedosSeverity::Critical]);
     }
 
+    #[Test]
     public function test_edge_case_bounded_nested_quantifiers(): void
     {
         // A bounded inner repeat is still ambiguous: a…a!b makes preg_match() fail at n=22
@@ -143,6 +158,7 @@ final class RedosEdgeCasesTest extends TestCase
         $this->assertSame(RedosSeverity::Critical, $analysis->severity);
     }
 
+    #[Test]
     public function test_edge_case_triple_nesting(): void
     {
         $analysis = $this->regex->redos('/(?:(?:a+)+)+b/');
@@ -151,6 +167,7 @@ final class RedosEdgeCasesTest extends TestCase
             'Triple nested quantifiers should be flagged as dangerous');
     }
 
+    #[Test]
     public function test_dangerous_pattern_alternative_quantifiers_nested(): void
     {
         // Unanchored it accepts after the first run; before the end, a…a! fails at n=18 (PCRE2 10.49).
@@ -160,6 +177,7 @@ final class RedosEdgeCasesTest extends TestCase
             'Alternation with quantifiers nested should be flagged');
     }
 
+    #[Test]
     public function test_dangerous_pattern_double_nested_quantifiers(): void
     {
         $analysis = $this->regex->redos('/(x+x+)+y/');
@@ -168,6 +186,7 @@ final class RedosEdgeCasesTest extends TestCase
             'Double nested quantifiers should be flagged');
     }
 
+    #[Test]
     public function test_backreference_loop_inside_quantifier_is_critical(): void
     {
         $analysis = $this->regex->redos('/((a+)\\1)+/');
@@ -175,6 +194,7 @@ final class RedosEdgeCasesTest extends TestCase
         $this->assertSame(RedosSeverity::Critical, $analysis->severity);
     }
 
+    #[Test]
     public function test_unknown_severity_on_analysis_failure(): void
     {
         $analysis = $this->regex->redos('/[a-+/');
@@ -184,6 +204,7 @@ final class RedosEdgeCasesTest extends TestCase
         $this->assertNotNull($analysis->error);
     }
 
+    #[Test]
     public function test_threshold_allows_contextual_pass_fail(): void
     {
         // (a+)+ alone matches a…a! at once (linear); before the end it fails at n=19 (PCRE2 10.49).

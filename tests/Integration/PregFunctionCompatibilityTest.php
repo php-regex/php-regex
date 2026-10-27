@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration;
 
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -33,6 +34,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->compiler = new PatternPrinter();
     }
 
+    #[Test]
     public function test_preg_match_simple_literal(): void
     {
         $pattern = '/hello/';
@@ -46,6 +48,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame($originalMatches, $compiledMatches);
     }
 
+    #[Test]
     public function test_preg_match_with_flags(): void
     {
         $pattern = '/HELLO/i';
@@ -59,6 +62,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame($originalMatches, $compiledMatches);
     }
 
+    #[Test]
     public function test_preg_match_with_offset(): void
     {
         $pattern = '/\d+/';
@@ -72,6 +76,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame($originalMatches, $compiledMatches);
     }
 
+    #[Test]
     public function test_preg_match_capturing_groups(): void
     {
         $pattern = '/(\w+)@(\w+)\.(\w+)/';
@@ -86,6 +91,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertCount(4, $compiledMatches); // Full match + 3 groups
     }
 
+    #[Test]
     public function test_preg_match_named_groups(): void
     {
         $pattern = '/(?<user>\w+)@(?<domain>\w+\.\w+)/';
@@ -103,6 +109,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame($originalMatches['domain'], $compiledMatches['domain']);
     }
 
+    #[Test]
     public function test_preg_match_no_match(): void
     {
         $pattern = '/xyz/';
@@ -116,6 +123,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame($originalResult, $compiledResult);
     }
 
+    #[Test]
     public function test_preg_match_all_basic(): void
     {
         $pattern = '/\d+/';
@@ -130,6 +138,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame(3, $compiledCount);
     }
 
+    #[Test]
     public function test_preg_match_all_with_pattern_order(): void
     {
         $pattern = '/(\w+)=(\d+)/';
@@ -142,6 +151,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame($originalMatches, $compiledMatches);
     }
 
+    #[Test]
     public function test_preg_match_all_with_set_order(): void
     {
         $pattern = '/(\w+)=(\d+)/';
@@ -154,6 +164,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame($originalMatches, $compiledMatches);
     }
 
+    #[Test]
     public function test_preg_match_all_with_offset_capture(): void
     {
         $pattern = '/\w+/';
@@ -169,6 +180,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertCount(2, $compiledMatches[0][0]); // [match, offset]
     }
 
+    #[Test]
     public function test_preg_match_all_no_matches(): void
     {
         $pattern = '/xyz/';
@@ -182,6 +194,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame($originalCount, $compiledCount);
     }
 
+    #[Test]
     public function test_preg_replace_basic(): void
     {
         $pattern = '/\d+/';
@@ -196,6 +209,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame('abcXXXdefXXX', $compiledResult);
     }
 
+    #[Test]
     public function test_preg_replace_with_backreferences(): void
     {
         $pattern = '/(\w+)@(\w+)/';
@@ -210,6 +224,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame('example@user', $compiledResult);
     }
 
+    #[Test]
     public function test_preg_replace_multiple_occurrences(): void
     {
         $pattern = '/foo/';
@@ -224,6 +239,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame('qux bar qux baz qux', $compiledResult);
     }
 
+    #[Test]
     public function test_preg_replace_with_limit(): void
     {
         $pattern = '/\d/';
@@ -238,6 +254,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame('XaXb3c4d', $compiledResult);
     }
 
+    #[Test]
     public function test_preg_replace_no_match(): void
     {
         $pattern = '/xyz/';
@@ -252,6 +269,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame($subject, $compiledResult);
     }
 
+    #[Test]
     public function test_preg_replace_callback_basic(): void
     {
         $pattern = '/\d+/';
@@ -265,6 +283,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame('abc[123]def[456]', $compiledResult);
     }
 
+    #[Test]
     public function test_preg_replace_callback_with_groups(): void
     {
         $pattern = '/(\w+)=(\d+)/';
@@ -278,6 +297,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame('foo:246 bar:912', $compiledResult);
     }
 
+    #[Test]
     public function test_preg_replace_callback_with_named_captures(): void
     {
         $pattern = '/(?<name>\w+)@(?<domain>\w+)/';
@@ -291,6 +311,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame('USER@EXAMPLE', $compiledResult);
     }
 
+    #[Test]
     public function test_preg_replace_callback_uppercase_conversion(): void
     {
         $pattern = '/\b\w+\b/';
@@ -304,6 +325,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame('HELLO WORLD', $compiledResult);
     }
 
+    #[Test]
     public function test_preg_split_basic(): void
     {
         $pattern = '/\s+/';
@@ -317,6 +339,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame(['foo', 'bar', 'baz'], $compiledResult);
     }
 
+    #[Test]
     public function test_preg_split_with_limit(): void
     {
         $pattern = '/,/';
@@ -330,6 +353,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame(['a', 'b', 'c,d,e'], $compiledResult);
     }
 
+    #[Test]
     public function test_preg_split_with_delim_capture(): void
     {
         $pattern = '/([,;])/';
@@ -345,6 +369,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertContains(';', $compiledResult);
     }
 
+    #[Test]
     public function test_preg_split_no_empty(): void
     {
         $pattern = '/\s+/';
@@ -358,6 +383,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame(['foo', 'bar'], $compiledResult);
     }
 
+    #[Test]
     public function test_preg_split_offset_capture(): void
     {
         $pattern = '/,/';
@@ -375,6 +401,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertCount(2, $firstItem);
     }
 
+    #[Test]
     public function test_preg_grep_basic(): void
     {
         $pattern = '/^\d+$/';
@@ -388,6 +415,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame([1 => '123', 3 => '456'], $compiledResult);
     }
 
+    #[Test]
     public function test_preg_grep_inverted(): void
     {
         $pattern = '/^\d+$/';
@@ -401,6 +429,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame([0 => 'abc', 2 => 'def', 4 => 'ghi'], $compiledResult);
     }
 
+    #[Test]
     public function test_preg_grep_with_anchors(): void
     {
         $pattern = '/^test/';
@@ -413,6 +442,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame($originalResult, $compiledResult);
     }
 
+    #[Test]
     public function test_preg_grep_case_insensitive(): void
     {
         $pattern = '/TEST/i';
@@ -427,6 +457,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertCount(3, $compiledResult);
     }
 
+    #[Test]
     public function test_preg_grep_empty_array(): void
     {
         $pattern = '/test/';
@@ -440,6 +471,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame([], $compiledResult);
     }
 
+    #[Test]
     public function test_preg_quote_special_characters(): void
     {
         $string = 'a.b*c?d+e(f)g[h]i{j}k^l$m|n\\o';
@@ -450,6 +482,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertMatchesRegularExpression($pattern, $string);
     }
 
+    #[Test]
     public function test_preg_quote_with_delimiter(): void
     {
         $string = 'test/path';
@@ -461,6 +494,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertMatchesRegularExpression($pattern, $string);
     }
 
+    #[Test]
     public function test_preg_quote_without_delimiter(): void
     {
         $string = 'test.path';
@@ -470,6 +504,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertStringNotContainsString('\/', $quoted);
     }
 
+    #[Test]
     public function test_preg_quote_preserves_literals(): void
     {
         $string = 'hello world';
@@ -479,6 +514,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertSame($string, $quoted);
     }
 
+    #[Test]
     public function test_preg_quote_integration_with_parse(): void
     {
         // Demonstrate using preg_quote with the parser
@@ -496,6 +532,7 @@ final class PregFunctionCompatibilityTest extends TestCase
         $this->assertDoesNotMatchRegularExpression($compiled, 'userXnameXtag@exampleXcom');
     }
 
+    #[Test]
     public function test_all_preg_functions_preserve_behavior(): void
     {
         $pattern = '/\b\w{3,}\b/';

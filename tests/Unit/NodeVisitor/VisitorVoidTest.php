@@ -20,6 +20,7 @@ use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Validation\Validator;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class VisitorVoidTest extends TestCase
@@ -28,6 +29,7 @@ final class VisitorVoidTest extends TestCase
      * Couvre les méthodes vides du Validator (visitLiteral, visitDot, etc.)
      * qui sont techniquement du code exécuté même si elles ne font rien.
      */
+    #[Test]
     #[DoesNotPerformAssertions]
     public function test_validator_visits_simple_nodes(): void
     {

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Support\PhpUnitCompat;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\PhpUnitCompat\PolyfilledMethods;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Runner\Version;
 
@@ -37,6 +38,7 @@ final class PolyfilledMethodsTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_the_aggregate_uses_every_feature_trait_and_nothing_else(): void
     {
         $used = (new \ReflectionClass(PhpUnitForwardCompat::class))->getTraitNames();
@@ -52,6 +54,7 @@ final class PolyfilledMethodsTest extends TestCase
      * @param non-empty-string $method
      * @param non-empty-string $since
      */
+    #[Test]
     #[DataProvider('provideFeatures')]
     public function test_the_running_phpunit_has_the_method_exactly_from_the_listed_release(string $trait, string $method, string $since): void
     {
@@ -69,6 +72,7 @@ final class PolyfilledMethodsTest extends TestCase
      * @param non-empty-string $method
      * @param non-empty-string $since
      */
+    #[Test]
     #[DataProvider('provideFeatures')]
     public function test_the_trait_is_the_implementation_the_running_phpunit_calls_for(string $trait, string $method, string $since): void
     {
@@ -90,6 +94,7 @@ final class PolyfilledMethodsTest extends TestCase
      * @param non-empty-string $method
      * @param non-empty-string $since
      */
+    #[Test]
     #[DataProvider('provideFeatures')]
     public function test_the_newest_phpunit_the_suite_runs_on_has_the_method(string $trait, string $method, string $since): void
     {
@@ -107,6 +112,7 @@ final class PolyfilledMethodsTest extends TestCase
      * TestCase standing in only once a class asks for it: the traits load
      * there all the same, as the implementations built on the older API.
      */
+    #[Test]
     public function test_every_feature_trait_loads_where_no_phpunit_is_installed(): void
     {
         $this->assertSame([0, self::polyfills()], self::loadWithoutPhpUnit(''));
@@ -118,6 +124,7 @@ final class PolyfilledMethodsTest extends TestCase
      * nothing in it ran. Such a lookup of an implementation, before the
      * feature trait loads it, leaves the trait to load all the same.
      */
+    #[Test]
     public function test_every_feature_trait_loads_after_a_lookup_that_ran_none_of_its_file(): void
     {
         $files = [];
@@ -153,6 +160,7 @@ final class PolyfilledMethodsTest extends TestCase
      * @param non-empty-string $method
      * @param non-empty-string $since
      */
+    #[Test]
     #[DataProvider('provideFeatures')]
     public function test_each_expectation_of_the_probe_passes_or_fails_as_its_name_says(string $trait, string $method, string $since): void
     {

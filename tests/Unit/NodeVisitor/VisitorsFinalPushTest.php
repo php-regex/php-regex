@@ -19,6 +19,7 @@ use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class VisitorsFinalPushTest extends TestCase
@@ -28,6 +29,7 @@ final class VisitorsFinalPushTest extends TestCase
      * Normally, the children of a character class don't change.
      * We use a Mock to force a change.
      */
+    #[Test]
     public function test_optimizer_detects_change_in_char_class_parts(): void
     {
         $optimizer = new Rewriter();
@@ -55,6 +57,7 @@ final class VisitorsFinalPushTest extends TestCase
      * Teste le fallback "default" du SampleGenerator pour un CharType inconnu.
      * (Impossible via le parser car il valide les types, donc on injecte manuellement).
      */
+    #[Test]
     public function test_sample_generator_unknown_char_type(): void
     {
         $generator = new SampleGenerator();

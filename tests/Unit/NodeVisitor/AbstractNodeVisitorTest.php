@@ -43,6 +43,7 @@ use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -67,6 +68,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->visitor = new TestNodeVisitor();
     }
 
+    #[Test]
     public function test_visit_regex(): void
     {
         $node = new RegexNode(new SequenceNode([], 0, 0), '', '/', 0, 0);
@@ -74,6 +76,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_alternation(): void
     {
         $node = new AlternationNode([], 0, 0);
@@ -81,6 +84,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_sequence(): void
     {
         $node = new SequenceNode([], 0, 0);
@@ -88,6 +92,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_group(): void
     {
         $node = new GroupNode(new SequenceNode([], 0, 0), GroupType::Capturing, null, null, 0, 0);
@@ -95,6 +100,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_quantifier(): void
     {
         $node = new QuantifierNode(new LiteralNode('a', 0, 0), '*', QuantifierType::Greedy, 0, 0);
@@ -102,6 +108,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_literal(): void
     {
         $node = new LiteralNode('a', 0, 0);
@@ -109,6 +116,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_char_literal(): void
     {
         $node = new CharLiteralNode('a', 97, CharLiteralType::Unicode, 0, 0);
@@ -116,6 +124,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_char_type(): void
     {
         $node = new CharTypeNode('d', 0, 0);
@@ -123,6 +132,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_dot(): void
     {
         $node = new DotNode(0, 0);
@@ -130,6 +140,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_anchor(): void
     {
         $node = new AnchorNode('^', 0, 0);
@@ -137,6 +148,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_assertion(): void
     {
         $node = new AssertionNode('b', 0, 0);
@@ -144,6 +156,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_keep(): void
     {
         $node = new KeepNode(0, 0);
@@ -151,6 +164,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_char_class(): void
     {
         $node = new CharClassNode(new LiteralNode('a', 0, 0), false, 0, 0);
@@ -158,6 +172,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_range(): void
     {
         $node = new RangeNode(new LiteralNode('a', 0, 0), new LiteralNode('z', 0, 0), 0, 0);
@@ -165,6 +180,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_backref(): void
     {
         $node = new BackrefNode('1', 0, 0);
@@ -172,6 +188,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_control_char(): void
     {
         $node = new ControlCharNode('M', 13, 0, 0);
@@ -179,6 +196,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_script_run(): void
     {
         $node = new ScriptRunNode('Latin', 0, 0);
@@ -186,6 +204,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_version_condition(): void
     {
         $node = new VersionConditionNode('>=', '10.0', 0, 0);
@@ -193,6 +212,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_posix_class(): void
     {
         $node = new PosixClassNode('alnum', 0, 0);
@@ -200,6 +220,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_comment(): void
     {
         $node = new CommentNode('test', 0, 0);
@@ -207,6 +228,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_conditional(): void
     {
         $node = new ConditionalNode(new LiteralNode('1', 0, 0), new SequenceNode([], 0, 0), new SequenceNode([], 0, 0), 0, 0);
@@ -214,6 +236,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_subroutine(): void
     {
         $node = new SubroutineNode('1', '', 0, 0);
@@ -221,6 +244,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_pcre_verb(): void
     {
         $node = new PcreVerbNode('FAIL', 0, 0);
@@ -228,6 +252,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_define(): void
     {
         $node = new DefineNode(new SequenceNode([], 0, 0), 0, 0);
@@ -235,6 +260,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_limit_match(): void
     {
         $node = new LimitMatchNode(1, 0, 0);
@@ -242,6 +268,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_visit_callout(): void
     {
         $node = new CalloutNode(1, false, 0, 0);
@@ -249,6 +276,7 @@ final class AbstractNodeVisitorTest extends TestCase
         $this->assertSame('default', $result);
     }
 
+    #[Test]
     public function test_default_return(): void
     {
         // Test the protected defaultReturn method through reflection

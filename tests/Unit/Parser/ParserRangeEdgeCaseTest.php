@@ -18,10 +18,12 @@ use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ParserRangeEdgeCaseTest extends TestCase
 {
+    #[Test]
     public function test_parse_chained_hyphen_a_z_0_9(): void
     {
         $regex = Regex::create()->parse('/[a-z-0-9]/');
@@ -51,6 +53,7 @@ final class ParserRangeEdgeCaseTest extends TestCase
         $this->assertEquals('9', $parts[2]->end->value);
     }
 
+    #[Test]
     public function test_parse_trailing_hyphen_a_z(): void
     {
         $regex = Regex::create()->parse('/[a-z-]/');
@@ -74,6 +77,7 @@ final class ParserRangeEdgeCaseTest extends TestCase
         $this->assertSame('-', $parts[1]->value);
     }
 
+    #[Test]
     public function test_parse_leading_hyphen_a_z(): void
     {
         $regex = Regex::create()->parse('/[-a-z]/');

@@ -22,6 +22,7 @@ use PHPUnit\Framework\TestCase;
 
 final class LintArgumentParserTest extends TestCase
 {
+    #[Test]
     public function test_parse_collects_flags_and_paths(): void
     {
         $parser = new LintArgumentParser();
@@ -68,6 +69,7 @@ final class LintArgumentParserTest extends TestCase
         $this->assertSame([], $result->arguments->patternFunctions);
     }
 
+    #[Test]
     public function test_parse_reads_interop_presets(): void
     {
         $parser = new LintArgumentParser();
@@ -83,6 +85,7 @@ final class LintArgumentParserTest extends TestCase
         $this->assertSame(['spatie-regex'], $result->arguments?->interop);
     }
 
+    #[Test]
     public function test_parse_disables_interop(): void
     {
         $parser = new LintArgumentParser();
@@ -144,6 +147,7 @@ final class LintArgumentParserTest extends TestCase
         $this->assertSame(['webmozart-assert'], $parser->parse(['src'], ['interop' => ['webmozart-assert']])->arguments?->interop);
     }
 
+    #[Test]
     public function test_parse_reports_missing_interop_value(): void
     {
         $parser = new LintArgumentParser();
@@ -153,6 +157,7 @@ final class LintArgumentParserTest extends TestCase
         $this->assertSame('Missing value for --interop.', $result->error);
     }
 
+    #[Test]
     public function test_parse_collects_repeated_pattern_functions(): void
     {
         $parser = new LintArgumentParser();
@@ -167,6 +172,7 @@ final class LintArgumentParserTest extends TestCase
         $this->assertSame(['App\\Str::matches#1', 'regex_check'], $result->arguments?->patternFunctions);
     }
 
+    #[Test]
     public function test_parse_reports_missing_pattern_function_value(): void
     {
         $parser = new LintArgumentParser();
@@ -176,6 +182,7 @@ final class LintArgumentParserTest extends TestCase
         $this->assertSame('Missing value for --pattern-function.', $result->error);
     }
 
+    #[Test]
     public function test_parse_supports_help_flag(): void
     {
         $parser = new LintArgumentParser();
@@ -186,6 +193,7 @@ final class LintArgumentParserTest extends TestCase
         $this->assertNotInstanceOf(LintArguments::class, $result->arguments);
     }
 
+    #[Test]
     public function test_parse_reports_missing_format_value(): void
     {
         $parser = new LintArgumentParser();
@@ -195,6 +203,7 @@ final class LintArgumentParserTest extends TestCase
         $this->assertSame('Missing value for --format.', $result->error);
     }
 
+    #[Test]
     public function test_parse_reports_unknown_option(): void
     {
         $parser = new LintArgumentParser();
@@ -261,6 +270,7 @@ final class LintArgumentParserTest extends TestCase
         yield 'neither option' => ['args' => ['src', 'lib'], 'baseline' => null, 'generateBaseline' => null];
     }
 
+    #[Test]
     public function test_parse_tells_paths_given_from_configured_ones(): void
     {
         $parser = new LintArgumentParser();

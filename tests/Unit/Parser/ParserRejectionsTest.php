@@ -53,6 +53,7 @@ final class ParserRejectionsTest extends TestCase
     /**
      * Test Python-style backref.
      */
+    #[Test]
     public function test_python_backref_not_supported(): void
     {
         $ast = $this->regexService->parse('/(?P<name>test)(?P=name)/');
@@ -62,6 +63,7 @@ final class ParserRejectionsTest extends TestCase
         $this->assertSame('\k<name>', $backref->ref);
     }
 
+    #[Test]
     public function test_pcre_verb_script_run_shortcut(): void
     {
         $ast = $this->regexService->parse('/(*sr:payload)/');
@@ -69,6 +71,7 @@ final class ParserRejectionsTest extends TestCase
         $this->assertTrue($this->containsNode($ast->pattern, ScriptRunNode::class));
     }
 
+    #[Test]
     public function test_python_group_name_rejects_non_literal_token(): void
     {
         $this->expectException(ParserException::class);
@@ -81,6 +84,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/(?P<foo\\d>test)/');
     }
 
+    #[Test]
     public function test_conditional_version_with_invalid_number_resets_state(): void
     {
         $this->expectException(ParserException::class);
@@ -88,6 +92,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/(?(VERSION>=1.a)yes|no)/');
     }
 
+    #[Test]
     public function test_conditional_recursion_with_minus_rewinds(): void
     {
         $this->expectException(ParserException::class);
@@ -95,6 +100,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/(?(R-)yes|no)/');
     }
 
+    #[Test]
     public function test_conditional_bare_name_rewinds_when_not_closed(): void
     {
         $this->expectException(ParserException::class);
@@ -102,6 +108,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/(?(foo+)yes|no)/');
     }
 
+    #[Test]
     public function test_numeric_subroutine_rewinds_on_invalid_suffix(): void
     {
         $this->expectException(ParserException::class);
@@ -109,6 +116,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/(?1a)/');
     }
 
+    #[Test]
     public function test_invalid_group_modifier_syntax(): void
     {
         // Couvre le "Invalid group modifier syntax" à la fin de parseGroupModifier
@@ -117,6 +125,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/(??)/'); // Syntaxe invalide (??)
     }
 
+    #[Test]
     public function test_invalid_syntax_after_p(): void
     {
         // Couvre "Invalid syntax after (?P"
@@ -125,6 +134,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/(?Px)/'); // P suivi de x n'est pas valide
     }
 
+    #[Test]
     public function test_quantifier_without_target(): void
     {
         // Couvre "Quantifier without target" au début de parseQuantifiedAtom
@@ -133,6 +143,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/+/'); // + sans rien avant
     }
 
+    #[Test]
     public function test_quantifier_on_anchor(): void
     {
         // Couvre l'interdiction de quantifier une ancre
@@ -140,6 +151,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/^* /');
     }
 
+    #[Test]
     public function test_missing_closing_delimiter(): void
     {
         // Couvre "No closing delimiter found"
@@ -147,6 +159,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/abc');
     }
 
+    #[Test]
     public function test_unknown_flag(): void
     {
         // Couvre "Unknown regex flag"
@@ -154,6 +167,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/abc/Z');
     }
 
+    #[Test]
     public function test_invalid_conditional_condition(): void
     {
         // Couvre le dernier else de parseConditionalCondition
@@ -163,6 +177,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/(?(?~a)b)/');
     }
 
+    #[Test]
     public function test_empty_character_class_creates_empty_literal(): void
     {
         $this->expectException(LexerException::class);
@@ -170,6 +185,7 @@ final class ParserRejectionsTest extends TestCase
         $this->regexService->parse('/[]/');
     }
 
+    #[Test]
     public function test_conditional_condition_parses_lookaround_literal_question(): void
     {
         $parser = new TokenParser();

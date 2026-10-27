@@ -28,6 +28,7 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class ExtractorsTest extends LaravelTestCase
 {
+    #[Test]
     public function test_route_extractor_extracts_where_constraints(): void
     {
         // Define routes with constraints
@@ -63,6 +64,7 @@ final class ExtractorsTest extends LaravelTestCase
         $this->assertContains('[a-z0-9-]+', $extractedPatterns);
     }
 
+    #[Test]
     public function test_route_extractor_normalizes_patterns(): void
     {
         Route::get('/test/{id}', static fn () => 'test')
@@ -95,6 +97,7 @@ final class ExtractorsTest extends LaravelTestCase
         $this->assertSame('{^(?P<id>[0-9]+)$}sDu', $testPattern->pattern);
     }
 
+    #[Test]
     public function test_route_extractor_includes_context_info(): void
     {
         Route::get('/api/items/{id}', static fn () => 'test')
@@ -126,6 +129,7 @@ final class ExtractorsTest extends LaravelTestCase
         $this->assertStringContainsString(':id', $apiPattern->source);
     }
 
+    #[Test]
     public function test_validation_extractor_extracts_regex_rules(): void
     {
         // Create a temporary PHP file with validation regex
@@ -175,6 +179,7 @@ final class ExtractorsTest extends LaravelTestCase
         rmdir($tempDir);
     }
 
+    #[Test]
     public function test_validation_extractor_handles_quotes_inside_pattern(): void
     {
         $tempDir = sys_get_temp_dir().'/regex_quote_test_'.uniqid();
@@ -212,6 +217,7 @@ final class ExtractorsTest extends LaravelTestCase
         rmdir($tempDir);
     }
 
+    #[Test]
     public function test_validation_extractor_handles_not_regex_rules(): void
     {
         $tempDir = sys_get_temp_dir().'/regex_not_test_'.uniqid();
@@ -241,6 +247,7 @@ final class ExtractorsTest extends LaravelTestCase
         rmdir($tempDir);
     }
 
+    #[Test]
     public function test_validation_extractor_includes_line_numbers(): void
     {
         $tempDir = sys_get_temp_dir().'/regex_line_test_'.uniqid();
@@ -271,6 +278,7 @@ final class ExtractorsTest extends LaravelTestCase
         rmdir($tempDir);
     }
 
+    #[Test]
     public function test_validation_extractor_respects_exclude_paths(): void
     {
         $tempDir = sys_get_temp_dir().'/regex_exclude_test_'.uniqid();

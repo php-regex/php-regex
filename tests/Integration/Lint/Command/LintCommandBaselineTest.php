@@ -23,6 +23,7 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintCommandBaselineTest extends TestCase
@@ -39,6 +40,7 @@ final class LintCommandBaselineTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_generate_baseline_creates_file_with_relative_paths(): void
     {
         $dir = $this->makeTempDir();
@@ -78,6 +80,7 @@ final class LintCommandBaselineTest extends TestCase
         $this->assertStringContainsString('test.php', (string) $issue['file']);
     }
 
+    #[Test]
     public function test_baseline_filters_out_known_issues(): void
     {
         $dir = $this->makeTempDir();
@@ -109,6 +112,7 @@ final class LintCommandBaselineTest extends TestCase
      * longer read: the run refuses it as a usage error, before any issue is
      * filtered, and the message says to generate the baseline again.
      */
+    #[Test]
     public function test_a_1x_list_baseline_is_refused_before_its_issues_filter(): void
     {
         $dir = $this->makeTempDir();
@@ -147,6 +151,7 @@ final class LintCommandBaselineTest extends TestCase
     /**
      * An empty 1.x baseline, a bare list, is refused like any non-baseline.
      */
+    #[Test]
     public function test_an_empty_1x_list_baseline_is_refused(): void
     {
         $dir = $this->makeTempDir();
@@ -188,10 +193,12 @@ final class LintCommandBaselineTest extends TestCase
         return new Input('lint', $args, new GlobalOptions(false, false, false, true, null, null), $regexOptions);
     }
 
+    /**
+     * @param callable(): int $callable
+     */
     private function captureOutput(callable $callable, int &$exitCode): string
     {
         ob_start();
-        // @phpstan-ignore-next-line
         $exitCode = $callable();
         $output = ob_get_clean();
 

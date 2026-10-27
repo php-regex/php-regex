@@ -18,6 +18,7 @@ use PHPRegex\Symfony\Extractor\RoutePatternSource;
 use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
 use PHPRegex\Tests\Support\SymfonyExtractorFunctionOverrides;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Config\Resource\ResourceInterface;
@@ -39,18 +40,21 @@ final class RoutePatternSourceTest extends TestCase
         SymfonyExtractorFunctionOverrides::reset();
     }
 
+    #[Test]
     public function test_get_name(): void
     {
         $source = new RoutePatternSource($this->normalizer);
         $this->assertSame('routes', $source->getName());
     }
 
+    #[Test]
     public function test_is_supported_returns_false_when_no_router(): void
     {
         $source = new RoutePatternSource($this->normalizer);
         $this->assertFalse($source->isSupported());
     }
 
+    #[Test]
     public function test_is_supported_returns_true_when_router_present(): void
     {
         $router = $this->createStub(RouterInterface::class);
@@ -58,6 +62,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertTrue($source->isSupported());
     }
 
+    #[Test]
     public function test_extract_returns_empty_array_when_no_router(): void
     {
         $source = new RoutePatternSource($this->normalizer);
@@ -68,6 +73,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_with_empty_route_collection(): void
     {
         $router = $this->createStub(RouterInterface::class);
@@ -82,6 +88,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_with_route_having_requirements(): void
     {
         $router = $this->createStub(RouterInterface::class);
@@ -106,6 +113,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertStringContainsString('Route "test_route"', (string) $result[0]->location);
     }
 
+    #[Test]
     public function test_extract_skips_non_scalar_requirements(): void
     {
         $router = $this->createStub(RouterInterface::class);
@@ -126,6 +134,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_with_route_having_controller(): void
     {
         $router = $this->createStub(RouterInterface::class);
@@ -147,6 +156,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertStringContainsString('controller: App\\Controller\\TestController::index', (string) $result[0]->location);
     }
 
+    #[Test]
     public function test_extract_with_multiple_requirements(): void
     {
         $router = $this->createStub(RouterInterface::class);
@@ -172,6 +182,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertContains('{^(?P<slug>[a-z-]+)$}sD', $patterns);
     }
 
+    #[Test]
     public function test_extract_ignores_empty_requirements(): void
     {
         $router = $this->createStub(RouterInterface::class);
@@ -195,6 +206,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertSame('{^(?P<id>\d+)$}sD', $result[0]->pattern);
     }
 
+    #[Test]
     public function test_extract_with_yaml_resources(): void
     {
         $tempYaml = tempnam(sys_get_temp_dir(), 'routes');
@@ -228,6 +240,7 @@ final class RoutePatternSourceTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_extract_with_multiple_yaml_files(): void
     {
         $tempYaml1 = tempnam(sys_get_temp_dir(), 'routes1');
@@ -264,6 +277,7 @@ final class RoutePatternSourceTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_extract_ignores_non_yaml_resources(): void
     {
         $tempPhp = tempnam(sys_get_temp_dir(), 'routes');
@@ -304,6 +318,7 @@ final class RoutePatternSourceTest extends TestCase
      * The route compiler adds u to the route's pattern under its utf8
      * option: the requirement is read in UTF-8 mode there.
      */
+    #[Test]
     public function test_extract_reads_a_requirement_under_u_with_the_utf8_option(): void
     {
         $router = $this->createStub(RouterInterface::class);
@@ -321,6 +336,7 @@ final class RoutePatternSourceTest extends TestCase
      * The route compiler matches the host case-insensitively: a parameter
      * of the host, and not of the path, is read under i.
      */
+    #[Test]
     public function test_extract_reads_a_host_requirement_under_i(): void
     {
         $router = $this->createStub(RouterInterface::class);
@@ -333,6 +349,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertSame(['{^(?P<sub>[a-z]+)$}sDi', '{^(?P<id>\d+)$}sD'], array_map(static fn ($occurrence): string => $occurrence->pattern, $result));
     }
 
+    #[Test]
     public function test_extract_reads_a_requirement_starting_with_a_slash_as_a_fragment(): void
     {
         $router = $this->createStub(RouterInterface::class);
@@ -354,6 +371,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertSame('{^(?P<id>/\d+/)$}sD', $result[0]->pattern);
     }
 
+    #[Test]
     public function test_extract_with_anchor_patterns(): void
     {
         $router = $this->createStub(RouterInterface::class);
@@ -379,6 +397,7 @@ final class RoutePatternSourceTest extends TestCase
      * route reads it as held: a doubled anchor keeps its second copy, and
      * spaces around it stay where they are.
      */
+    #[Test]
     #[DataProvider('provideHeldRequirements')]
     public function test_extract_reads_a_requirement_as_the_route_holds_it(string $requirement): void
     {
@@ -411,6 +430,7 @@ final class RoutePatternSourceTest extends TestCase
         yield 'escaped trailing space' => ['requirement' => 'a\ '];
     }
 
+    #[Test]
     public function test_extract_with_yaml_route_definitions(): void
     {
         $tempYaml = tempnam(sys_get_temp_dir(), 'routes').'.yaml';
@@ -449,6 +469,7 @@ final class RoutePatternSourceTest extends TestCase
      * A requirement written in block YAML is read from the router and found
      * again in the file: it is one pattern, reported at its own line.
      */
+    #[Test]
     public function test_extract_reports_a_block_yaml_requirement_once_at_its_line(): void
     {
         $tempYaml = tempnam(sys_get_temp_dir(), 'routes').'.yaml';
@@ -479,6 +500,7 @@ final class RoutePatternSourceTest extends TestCase
     /**
      * Only found in the file, a requirement is still read there, at its line.
      */
+    #[Test]
     public function test_extract_reads_a_requirement_found_only_in_yaml_at_its_line(): void
     {
         $tempYaml = tempnam(sys_get_temp_dir(), 'routes').'.yaml';
@@ -505,6 +527,7 @@ final class RoutePatternSourceTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_collect_yaml_resources_skips_non_file_resource_and_empty_path(): void
     {
         $collection = new RouteCollection();
@@ -532,6 +555,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertSame([], $method->invoke($source, $collection));
     }
 
+    #[Test]
     public function test_extract_yaml_metadata_returns_empty_when_file_missing(): void
     {
         SymfonyExtractorFunctionOverrides::queueFileResult(false);
@@ -544,6 +568,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_yaml_metadata_handles_when_blocks_and_requirements(): void
     {
         $tempYaml = tempnam(sys_get_temp_dir(), 'routes').'.yaml';
@@ -563,6 +588,7 @@ final class RoutePatternSourceTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_extract_key_from_line_supports_quoted_keys(): void
     {
         $source = new RoutePatternSource($this->normalizer);
@@ -572,6 +598,7 @@ final class RoutePatternSourceTest extends TestCase
         $this->assertSame('double', $method->invoke($source, '  "double": value'));
     }
 
+    #[Test]
     public function test_extract_skips_yaml_requirement_when_line_mismatch(): void
     {
         $router = $this->createStub(RouterInterface::class);
@@ -609,6 +636,7 @@ final class RoutePatternSourceTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_extract_skips_yaml_requirements_when_route_missing(): void
     {
         $tempYaml = tempnam(sys_get_temp_dir(), 'routes').'.yaml';
@@ -635,6 +663,7 @@ final class RoutePatternSourceTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_extract_with_yaml_complex_route_definitions(): void
     {
         $tempYaml = tempnam(sys_get_temp_dir(), 'routes').'.yaml';
@@ -668,6 +697,7 @@ final class RoutePatternSourceTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_extract_skips_when_symfony_not_available(): void
     {
         if (class_exists(Route::class)) {

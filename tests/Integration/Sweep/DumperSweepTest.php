@@ -18,6 +18,7 @@ use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -36,6 +37,7 @@ final class DumperSweepTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     public function test_dumper_visitor_script_run(): void
     {
         $visitor = new NodeDumper();
@@ -44,6 +46,7 @@ final class DumperSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_dumper_visitor_limit_match(): void
     {
         $visitor = new NodeDumper();
@@ -52,6 +55,7 @@ final class DumperSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_dumper_visitor_version_condition(): void
     {
         $visitor = new NodeDumper();
@@ -60,6 +64,7 @@ final class DumperSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_dumper_group_types(): void
     {
         $dumper = new NodeDumper();
@@ -80,6 +85,7 @@ final class DumperSweepTest extends TestCase
         $this->assertStringContainsString('Group', $result);
     }
 
+    #[Test]
     public function test_dumper_assertion_types(): void
     {
         $dumper = new NodeDumper();

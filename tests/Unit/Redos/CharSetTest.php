@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CharSetTest extends TestCase
 {
+    #[Test]
     public function test_factory_methods_and_flags(): void
     {
         $empty = ByteCharSet::empty();
@@ -32,6 +34,7 @@ final class CharSetTest extends TestCase
         $this->assertFalse($full->isEmpty());
     }
 
+    #[Test]
     public function test_intersect_keeps_what_both_sets_hold(): void
     {
         // Ranges that touch on one character share it.
@@ -49,6 +52,7 @@ final class CharSetTest extends TestCase
         $this->assertTrue(ByteCharSet::fromRange(0, 5)->intersect(ByteCharSet::unknown())->isUnknown());
     }
 
+    #[Test]
     public function test_union_merges_ranges_and_handles_unknown(): void
     {
         $rangeA = ByteCharSet::fromRange(0, 2);
@@ -62,6 +66,7 @@ final class CharSetTest extends TestCase
         $this->assertTrue($unknown->isUnknown());
     }
 
+    #[Test]
     public function test_complement_and_intersects(): void
     {
         $digits = ByteCharSet::fromRange(\ord('0'), \ord('9'));
@@ -71,6 +76,7 @@ final class CharSetTest extends TestCase
         $this->assertFalse($complement->intersects($digits));
     }
 
+    #[Test]
     public function test_sample_char_with_empty_set(): void
     {
         $empty = ByteCharSet::empty();
@@ -79,6 +85,7 @@ final class CharSetTest extends TestCase
         $this->assertNull($char);
     }
 
+    #[Test]
     public function test_sample_char_with_unknown_set(): void
     {
         $unknown = ByteCharSet::unknown();
@@ -87,6 +94,7 @@ final class CharSetTest extends TestCase
         $this->assertNull($char);
     }
 
+    #[Test]
     public function test_sample_char_with_single_char(): void
     {
         $set = ByteCharSet::fromChar('a');
@@ -95,6 +103,7 @@ final class CharSetTest extends TestCase
         $this->assertSame('a', $char);
     }
 
+    #[Test]
     public function test_sample_char_with_range(): void
     {
         $set = ByteCharSet::fromRange(0, 10);
@@ -103,6 +112,7 @@ final class CharSetTest extends TestCase
         $this->assertSame(\chr(0), $char);
     }
 
+    #[Test]
     public function test_sample_char_with_merged_ranges(): void
     {
         $rangeA = ByteCharSet::fromRange(0, 5);
@@ -113,18 +123,21 @@ final class CharSetTest extends TestCase
         $this->assertSame(\chr(0), $char);
     }
 
+    #[Test]
     public function test_from_char_with_empty_string(): void
     {
         $set = ByteCharSet::fromChar('');
         $this->assertTrue($set->isEmpty());
     }
 
+    #[Test]
     public function test_from_char_with_single_byte(): void
     {
         $set = ByteCharSet::fromChar('a');
         $this->assertFalse($set->isEmpty());
     }
 
+    #[Test]
     public function test_union_handles_adjacent_ranges(): void
     {
         $rangeA = ByteCharSet::fromRange(0, 2);
@@ -135,6 +148,7 @@ final class CharSetTest extends TestCase
         $this->assertTrue($merged->intersects(ByteCharSet::fromRange(4, 4)));
     }
 
+    #[Test]
     public function test_union_overlapping_ranges(): void
     {
         $rangeA = ByteCharSet::fromRange(0, 5);
@@ -144,6 +158,7 @@ final class CharSetTest extends TestCase
         $this->assertTrue($merged->intersects(ByteCharSet::fromRange(4, 4)));
     }
 
+    #[Test]
     public function test_intersects_with_overlapping_ranges(): void
     {
         $rangeA = ByteCharSet::fromRange(0, 5);
@@ -153,6 +168,7 @@ final class CharSetTest extends TestCase
         $this->assertTrue($rangeB->intersects($rangeA));
     }
 
+    #[Test]
     public function test_intersects_with_non_overlapping_ranges(): void
     {
         $rangeA = ByteCharSet::fromRange(0, 5);
@@ -162,6 +178,7 @@ final class CharSetTest extends TestCase
         $this->assertFalse($rangeB->intersects($rangeA));
     }
 
+    #[Test]
     public function test_complement_of_empty_set_is_full(): void
     {
         $empty = ByteCharSet::empty();
@@ -170,6 +187,7 @@ final class CharSetTest extends TestCase
         $this->assertTrue($full->intersects(ByteCharSet::fromChar('a')));
     }
 
+    #[Test]
     public function test_complement_of_unknown_is_unknown(): void
     {
         $unknown = ByteCharSet::unknown();
@@ -178,6 +196,7 @@ final class CharSetTest extends TestCase
         $this->assertTrue($complement->isUnknown());
     }
 
+    #[Test]
     public function test_complement_with_multiple_ranges(): void
     {
         $set = ByteCharSet::fromRange(10, 20);
@@ -187,6 +206,7 @@ final class CharSetTest extends TestCase
         $this->assertFalse($complement->intersects(ByteCharSet::fromChar(\chr(15))));
     }
 
+    #[Test]
     public function test_from_range_clips_to_ascii_max(): void
     {
         $set = ByteCharSet::fromRange(0, 200);
@@ -194,6 +214,7 @@ final class CharSetTest extends TestCase
         $this->assertTrue($set->intersects(ByteCharSet::fromChar(\chr(127))));
     }
 
+    #[Test]
     public function test_from_range_with_negative_start(): void
     {
         $set = ByteCharSet::fromRange(-10, 10);
@@ -201,6 +222,7 @@ final class CharSetTest extends TestCase
         $this->assertTrue($set->intersects(ByteCharSet::fromChar(\chr(0))));
     }
 
+    #[Test]
     public function test_from_range_non_ascii_returns_unknown(): void
     {
         // Range starting above ASCII max should return unknown

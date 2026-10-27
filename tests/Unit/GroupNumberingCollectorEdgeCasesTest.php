@@ -19,6 +19,7 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class GroupNumberingCollectorEdgeCasesTest extends TestCase
@@ -26,6 +27,7 @@ final class GroupNumberingCollectorEdgeCasesTest extends TestCase
     /**
      * "(?|(a))": one branch, so the groups after it count on from its own.
      */
+    #[Test]
     public function test_collect_branch_reset_handles_non_alternation_child(): void
     {
         $reset = new GroupNode(new GroupNode(new LiteralNode('a', 3, 4), GroupType::Capturing, null, null, 2, 5), GroupType::BranchReset, null, null, 0, 6);

@@ -17,10 +17,12 @@ use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AnalysisServiceClassTest extends TestCase
 {
+    #[Test]
     public function test_regex_analysis_service_exposes_its_parser(): void
     {
         $regex = Regex::create();
@@ -29,6 +31,7 @@ final class AnalysisServiceClassTest extends TestCase
         $this->assertSame($regex->parser(), $service->getParser());
     }
 
+    #[Test]
     public function test_regex_analysis_service_lints_patterns_without_issues(): void
     {
         $regex = Regex::create();

@@ -19,6 +19,7 @@ use PHPRegex\Linter\Extraction\StringExpressionReader;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
@@ -28,6 +29,7 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
         LintFunctionOverrides::reset();
     }
 
+    #[Test]
     public function test_read_identifier_token_reads_reserved_words_used_as_method_names(): void
     {
         // Preg::match() tokenizes "match" as T_MATCH, not T_STRING.
@@ -36,6 +38,7 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
         $this->assertSame('list', PhpTokens::identifier([\T_LIST, 'list', 1]));
     }
 
+    #[Test]
     public function test_read_identifier_token_rejects_non_identifiers(): void
     {
         $this->assertNull(PhpTokens::identifier('('));
@@ -43,11 +46,13 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
         $this->assertNull(PhpTokens::identifier([\T_LNUMBER, '1', 1]));
     }
 
+    #[Test]
     public function test_read_name_token_returns_null_for_string_token(): void
     {
         $this->assertNull(PhpTokens::name('foo'));
     }
 
+    #[Test]
     public function test_read_name_token_handles_name_variants(): void
     {
         if (\defined('T_NAME_FULLY_QUALIFIED')) {
@@ -59,11 +64,13 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_is_double_arrow_token_accepts_string(): void
     {
         $this->assertTrue(PhpTokens::isDoubleArrow('=>'));
     }
 
+    #[Test]
     public function test_next_and_previous_significant_token_index_return_null(): void
     {
         $tokens = [
@@ -75,11 +82,13 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
         $this->assertNull(PhpTokens::previousSignificant($tokens, \count($tokens) - 1));
     }
 
+    #[Test]
     public function test_closing_token_for_brace(): void
     {
         $this->assertSame('}', (new \ReflectionMethod(ArrayLiteralPatterns::class, 'closingTokenFor'))->invoke(null, '{'));
     }
 
+    #[Test]
     public function test_strip_outer_parentheses_branches(): void
     {
         $this->assertSame([[], []], StringExpressionReader::stripParentheses([], []));
@@ -96,6 +105,7 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
         $this->assertSame([$tokens, array_keys($tokens)], StringExpressionReader::stripParentheses($tokens, array_keys($tokens)));
     }
 
+    #[Test]
     public function test_find_array_start_index_variants(): void
     {
         $tokens = ['[', [\T_CONSTANT_ENCAPSED_STRING, "'/a/'", 1], ']'];
@@ -118,6 +128,7 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
         $this->assertNull(ArrayLiteralPatterns::startIndex($tokens));
     }
 
+    #[Test]
     public function test_the_source_reaches_the_tokenizer_byte_for_byte(): void
     {
         $occurrences = $this->extractSource("<?php\npreg_match('/caf\xE9\0/', \$s);\n");
@@ -128,6 +139,7 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
         $this->assertSame(2, $occurrences[0]->line);
     }
 
+    #[Test]
     public function test_the_source_is_read_whatever_the_encoding_checks_answer(): void
     {
         LintFunctionOverrides::$mbCheckEncodingResult = false;

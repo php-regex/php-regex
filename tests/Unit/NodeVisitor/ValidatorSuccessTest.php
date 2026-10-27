@@ -19,6 +19,7 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ValidatorSuccessTest extends TestCase
@@ -30,6 +31,7 @@ final class ValidatorSuccessTest extends TestCase
         $this->validator = new Validator();
     }
 
+    #[Test]
     public function test_valid_backreferences_pass(): void
     {
         $this->expectNotToPerformAssertions();
@@ -38,6 +40,7 @@ final class ValidatorSuccessTest extends TestCase
         $regex->accept($this->validator);
     }
 
+    #[Test]
     public function test_valid_unicode_and_octal_pass(): void
     {
         $this->expectNotToPerformAssertions();
@@ -56,6 +59,7 @@ final class ValidatorSuccessTest extends TestCase
         (new UnicodePropNode('L', false, 0, 0))->accept($this->validator);
     }
 
+    #[Test]
     public function test_valid_subroutines_pass(): void
     {
         $this->expectNotToPerformAssertions();

@@ -20,6 +20,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LengthRangeCalculatorTest extends TestCase
@@ -31,6 +32,7 @@ final class LengthRangeCalculatorTest extends TestCase
         $this->visitor = new LengthRangeCalculator();
     }
 
+    #[Test]
     #[DataProvider('lengthRangeProvider')]
     public function test_length_range(string $regex, int $expectedMin, ?int $expectedMax): void
     {
@@ -74,6 +76,7 @@ final class LengthRangeCalculatorTest extends TestCase
         yield ['/\p{L}/', 1, 1]; // visitUnicodeProp - unicode property
     }
 
+    #[Test]
     public function test_conditional_pattern(): void
     {
         // visitConditional - conditional pattern
@@ -83,6 +86,7 @@ final class LengthRangeCalculatorTest extends TestCase
         $this->assertSame(2, $max);
     }
 
+    #[Test]
     public function test_subroutine_pattern(): void
     {
         // visitSubroutine - subroutine call (unknown length)
@@ -92,6 +96,7 @@ final class LengthRangeCalculatorTest extends TestCase
         $this->assertNull($max);
     }
 
+    #[Test]
     public function test_subroutine_follows_the_body_a_resolver_gives(): void
     {
         // preg_match('/(ab)x(?1)c/', 'abxabc') matches six characters (PHP 8.4.27, PCRE2 10.49).
@@ -109,6 +114,7 @@ final class LengthRangeCalculatorTest extends TestCase
         $this->assertSame(['1'], $calls);
     }
 
+    #[Test]
     public function test_subroutine_stays_unbounded_where_the_resolver_gives_no_body(): void
     {
         $ast = Regex::create()->parse('/(a(?1)?b)x(?1)/');
@@ -117,6 +123,7 @@ final class LengthRangeCalculatorTest extends TestCase
         $this->assertSame([3, null], $ast->accept($visitor));
     }
 
+    #[Test]
     public function test_pcre_verb_pattern(): void
     {
         // visitPcreVerb - PCRE verb (zero-width)
@@ -126,6 +133,7 @@ final class LengthRangeCalculatorTest extends TestCase
         $this->assertSame(2, $max);
     }
 
+    #[Test]
     public function test_define_pattern(): void
     {
         // visitDefine - define block (zero-width)
@@ -135,6 +143,7 @@ final class LengthRangeCalculatorTest extends TestCase
         $this->assertNull($max);
     }
 
+    #[Test]
     public function test_limit_match_pattern(): void
     {
         // visitLimitMatch - limit match (zero-width)
@@ -144,6 +153,7 @@ final class LengthRangeCalculatorTest extends TestCase
         $this->assertSame(1, $max);
     }
 
+    #[Test]
     public function test_callout_pattern(): void
     {
         // visitCallout - callout (zero-width)
@@ -153,6 +163,7 @@ final class LengthRangeCalculatorTest extends TestCase
         $this->assertSame(2, $max);
     }
 
+    #[Test]
     public function test_keep_pattern(): void
     {
         // visitKeep - keep marker (zero-width)

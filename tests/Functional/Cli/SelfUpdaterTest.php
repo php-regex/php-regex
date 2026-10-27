@@ -20,6 +20,7 @@ use PHPRegex\Cli\SelfUpdate\SelfUpdater;
 use PHPRegex\Tests\Support\LocalReleaseDownloader;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\SelfUpdateFunctionOverrides;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SelfUpdaterTest extends TestCase
@@ -31,6 +32,7 @@ final class SelfUpdaterTest extends TestCase
         SelfUpdateFunctionOverrides::reset();
     }
 
+    #[Test]
     public function test_run_throws_when_not_running_from_phar(): void
     {
         $updater = new SelfUpdater();
@@ -42,6 +44,7 @@ final class SelfUpdaterTest extends TestCase
         $updater->run($output);
     }
 
+    #[Test]
     public function test_parse_checksum_accepts_valid_input_and_rejects_invalid(): void
     {
         $updater = new SelfUpdater();
@@ -55,6 +58,7 @@ final class SelfUpdaterTest extends TestCase
         $method->invoke($updater, 'invalid');
     }
 
+    #[Test]
     public function test_download_and_fetch_remote_string_from_local_file(): void
     {
         $updater = new SelfUpdater();
@@ -88,6 +92,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_validate_downloaded_phar_rejects_invalid_file(): void
     {
         $updater = new SelfUpdater();
@@ -108,6 +113,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_validate_downloaded_phar_accepts_valid_phar(): void
     {
         if (\ini_get('phar.readonly')) {
@@ -136,6 +142,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_download_file_with_invalid_url_throws_and_tries_exec(): void
     {
         $downloader = new HttpDownloader();
@@ -156,6 +163,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_run_updates_phar_successfully(): void
     {
         if (\ini_get('phar.readonly')) {
@@ -213,6 +221,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_run_throws_on_checksum_mismatch(): void
     {
         if (\ini_get('phar.readonly')) {
@@ -267,6 +276,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_run_throws_on_invalid_downloaded_phar(): void
     {
         if (\ini_get('phar.readonly')) {
@@ -325,6 +335,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_run_throws_when_phar_path_does_not_exist(): void
     {
         $nonExistentPath = sys_get_temp_dir().'/non-existent-phar.phar';
@@ -338,6 +349,7 @@ final class SelfUpdaterTest extends TestCase
         $updater->run($output);
     }
 
+    #[Test]
     public function test_run_throws_when_phar_path_is_not_writable(): void
     {
         if (\ini_get('phar.readonly')) {
@@ -372,6 +384,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_get_update_url_returns_expected_url(): void
     {
         $pharPath = $this->copyTemplatePhar();
@@ -392,6 +405,7 @@ final class SelfUpdaterTest extends TestCase
         $this->assertSame('https://github.com/php-regex/php-regex/releases/latest/download/regex.phar', $downloader->requested[1] ?? null);
     }
 
+    #[Test]
     public function test_get_checksum_url_returns_expected_url(): void
     {
         $pharPath = $this->copyTemplatePhar();
@@ -407,6 +421,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_run_downloads_the_checksum_then_the_phar_of_the_latest_release(): void
     {
         $pharPath = $this->copyTemplatePhar();
@@ -423,6 +438,7 @@ final class SelfUpdaterTest extends TestCase
         $this->assertSame([SelfUpdater::CHECKSUM_URL, SelfUpdater::UPDATE_URL], $downloader->requested);
     }
 
+    #[Test]
     public function test_run_throws_when_phar_not_writable_via_override(): void
     {
         $pharPath = $this->copyTemplatePhar();
@@ -441,6 +457,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_run_throws_when_tempnam_fails(): void
     {
         $pharPath = $this->copyTemplatePhar();
@@ -463,6 +480,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_run_throws_when_hash_file_fails(): void
     {
         $pharPath = $this->copyTemplatePhar();
@@ -483,6 +501,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_run_throws_when_checksum_mismatch_without_phar_writes(): void
     {
         $pharPath = $this->copyTemplatePhar();
@@ -501,6 +520,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_run_throws_when_copy_fails_after_rename_failure(): void
     {
         $pharPath = $this->copyTemplatePhar();
@@ -522,6 +542,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_run_uses_copy_when_rename_fails(): void
     {
         $pharPath = $this->copyTemplatePhar();
@@ -542,6 +563,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_download_file_throws_when_write_handle_fails(): void
     {
         $downloader = new HttpDownloader();
@@ -572,6 +594,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_download_file_throws_when_downloaded_file_empty(): void
     {
         $downloader = new HttpDownloader();
@@ -601,6 +624,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_download_file_exec_fallback_uses_curl_when_successful(): void
     {
         $downloader = new HttpDownloader();
@@ -624,6 +648,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_download_file_exec_fallback_curl_empty_file_throws(): void
     {
         $downloader = new HttpDownloader();
@@ -648,6 +673,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_download_file_exec_fallback_uses_wget_when_successful(): void
     {
         $downloader = new HttpDownloader();
@@ -672,6 +698,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_download_file_exec_fallback_wget_empty_file_throws(): void
     {
         $downloader = new HttpDownloader();
@@ -697,6 +724,7 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_fetch_remote_string_throws_when_tempnam_fails(): void
     {
         $updater = new SelfUpdater();
@@ -709,6 +737,7 @@ final class SelfUpdaterTest extends TestCase
         $method->invoke($updater, 'file://'.__FILE__);
     }
 
+    #[Test]
     public function test_fetch_remote_string_throws_when_file_get_contents_fails(): void
     {
         $updater = new SelfUpdater();

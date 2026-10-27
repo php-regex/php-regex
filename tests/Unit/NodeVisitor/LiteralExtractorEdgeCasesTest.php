@@ -28,10 +28,12 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LiteralExtractorEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_case_insensitive_char_class_expands_literals(): void
     {
         $regex = Regex::create();
@@ -44,6 +46,7 @@ final class LiteralExtractorEdgeCasesTest extends TestCase
         $this->assertContains('A', $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_assertion_returns_empty_literal_set(): void
     {
         $visitor = new LiteralExtractor();
@@ -52,6 +55,7 @@ final class LiteralExtractorEdgeCasesTest extends TestCase
         $this->assertSame([''], $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_range_returns_empty_literal_set(): void
     {
         $visitor = new LiteralExtractor();
@@ -60,6 +64,7 @@ final class LiteralExtractorEdgeCasesTest extends TestCase
         $this->assertTrue($visitor->visitRange($range)->isVoid());
     }
 
+    #[Test]
     public function test_visit_char_literal_returns_empty_literal_set(): void
     {
         $visitor = new LiteralExtractor();
@@ -68,6 +73,7 @@ final class LiteralExtractorEdgeCasesTest extends TestCase
         $this->assertTrue($visitor->visitCharLiteral($literal)->isVoid());
     }
 
+    #[Test]
     public function test_visit_posix_class_returns_empty_literal_set(): void
     {
         $visitor = new LiteralExtractor();
@@ -76,6 +82,7 @@ final class LiteralExtractorEdgeCasesTest extends TestCase
         $this->assertTrue($visitor->visitPosixClass($posix)->isVoid());
     }
 
+    #[Test]
     public function test_visit_sequence_caps_large_literal_sets(): void
     {
         $visitor = new LiteralExtractor();
@@ -112,6 +119,7 @@ final class LiteralExtractorEdgeCasesTest extends TestCase
         $this->assertSame([''], $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_quantifier_caps_large_literal_sets(): void
     {
         $visitor = new LiteralExtractor();
@@ -148,6 +156,7 @@ final class LiteralExtractorEdgeCasesTest extends TestCase
         $this->assertSame([], $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_alternation_exits_on_large_literal_sets(): void
     {
         $visitor = new LiteralExtractor();

@@ -18,6 +18,7 @@ use PHPRegex\Parser\Node\CalloutNode;
 use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -29,6 +30,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class HighlighterSweepTest extends TestCase
 {
+    #[Test]
     public function test_highlighter_limit_match(): void
     {
         $visitor = new class extends AbstractHighlighter {
@@ -47,6 +49,7 @@ final class HighlighterSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_highlighter_callout(): void
     {
         $visitor = new class extends AbstractHighlighter {
@@ -65,6 +68,7 @@ final class HighlighterSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_highlighter_script_run(): void
     {
         $visitor = new class extends AbstractHighlighter {
@@ -83,6 +87,7 @@ final class HighlighterSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_highlighter_version_condition(): void
     {
         $visitor = new class extends AbstractHighlighter {

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Advice;
 use PHPRegex\Linter\Advice\ValidationTips;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -24,6 +25,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class ValidationTipsTest extends TestCase
 {
+    #[Test]
     public function test_pattern_specific_tips(): void
     {
         $tip = ValidationTips::forError('No closing delimiter', '#foo', self::validation('No closing delimiter'));
@@ -63,6 +65,7 @@ final class ValidationTipsTest extends TestCase
         yield 'bounded lookbehind' => ['message' => 'Lookbehind is unbounded', 'pattern' => '/(?<=\\w{2})foo/', 'offset' => \strlen('/(?<=\\w{2})foo/'), 'expected' => 'Variable-length lookbehinds are not allowed'];
     }
 
+    #[Test]
     #[DataProvider('provideGenericFallbacks')]
     public function test_pattern_specific_advice_falls_back_to_the_tip_of_the_error(string $message, string $pattern, int $offset, string $expected): void
     {
@@ -87,6 +90,7 @@ final class ValidationTipsTest extends TestCase
      * quantifier". The tip gives the whole pattern back with the bounds
      * swapped, written as numbers.
      */
+    #[Test]
     #[DataProvider('provideQuantifierRangeTips')]
     public function test_quantifier_range_tip_spells_the_swapped_pattern(string $pattern, string $expected): void
     {
@@ -108,6 +112,7 @@ final class ValidationTipsTest extends TestCase
         ];
     }
 
+    #[Test]
     #[DataProvider('provideBackreferenceTips')]
     public function test_backreference_tip_names_the_missing_group(string $pattern, string $expected): void
     {
@@ -126,6 +131,7 @@ final class ValidationTipsTest extends TestCase
         yield 'conditional' => ['message' => 'Invalid conditional construct', 'expected' => 'Conditionals need a valid condition'];
     }
 
+    #[Test]
     #[DataProvider('provideGenericTips')]
     public function test_generic_tips_cover_other_messages(string $message, string $expected): void
     {
@@ -135,6 +141,7 @@ final class ValidationTipsTest extends TestCase
         $this->assertStringContainsString($expected, (string) $tip);
     }
 
+    #[Test]
     public function test_delimiter_tip_names_a_delimiter_inside_the_pattern(): void
     {
         $this->assertSame(
@@ -143,6 +150,7 @@ final class ValidationTipsTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_an_error_without_advice_gets_no_tip(): void
     {
         $this->assertNull(ValidationTips::forError('Completely unrelated', '/a/', self::validation('Completely unrelated')));

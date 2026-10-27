@@ -19,12 +19,14 @@ use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ValidatorTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_throws_on_invalid_quantifier_range(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -32,6 +34,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/foo{3,1}/');
     }
 
+    #[Test]
     public function test_throws_on_invalid_flags(): void
     {
         $this->expectException(ParserException::class);
@@ -39,6 +42,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/foo/imz');
     }
 
+    #[Test]
     public function test_throws_on_invalid_unicode_property(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -46,6 +50,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/\p{Invalid}/');
     }
 
+    #[Test]
     public function test_throws_on_invalid_unicode_property_with_suggestion(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -54,6 +59,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/\p{Letter}/');
     }
 
+    #[Test]
     public function test_throws_on_invalid_unicode_named_character(): void
     {
         // PCRE2 supports no "\N{name}", a known name or not: preg_match()
@@ -63,6 +69,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/\N{INVALID}/');
     }
 
+    #[Test]
     public function test_throws_on_invalid_range(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -70,6 +77,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/[z-a]/');
     }
 
+    #[Test]
     public function test_chartype_at_end_of_range_is_rejected(): void
     {
         // PCRE compile-errors on a character type as a range endpoint.
@@ -77,6 +85,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/[a-\d]/');
     }
 
+    #[Test]
     public function test_throws_on_invalid_backref(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -84,6 +93,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/\2/'); // No group 2
     }
 
+    #[Test]
     public function test_multi_digit_backref_without_octal_fallback_is_rejected(): void
     {
         // "81" starts with a non-octal digit: neither a group nor an octal escape.
@@ -92,6 +102,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/\81/');
     }
 
+    #[Test]
     public function test_throws_on_invalid_unicode_prop(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -99,6 +110,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/\p{invalid}/');
     }
 
+    #[Test]
     public function test_throws_on_invalid_numeric_subroutine(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -106,6 +118,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/(?1)/'); // No group 1
     }
 
+    #[Test]
     public function test_throws_on_invalid_named_subroutine(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -113,6 +126,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/(?&name)/'); // No group "name"
     }
 
+    #[Test]
     public function test_throws_on_duplicate_group_name(): void
     {
         $this->expectException(ParserException::class);
@@ -121,6 +135,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/(?<name>a)(?<name>b)/');
     }
 
+    #[Test]
     public function test_allows_variable_length_quantifier_in_lookbehind(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -134,6 +149,7 @@ final class ValidatorTest extends TestCase
      * lookarounds before 10.38: preg_match returns 0, without a warning, for
      * each of these. PHP 8.5 dropped the option.
      */
+    #[Test]
     #[DataProvider('provideKeepInsideLookarounds')]
     public function test_accepts_keep_inside_lookarounds(string $pattern): void
     {
@@ -152,6 +168,7 @@ final class ValidatorTest extends TestCase
         yield 'lookahead inside a lookbehind' => ['pattern' => '/(?<=a(?=b\K))/'];
     }
 
+    #[Test]
     public function test_throws_on_backref_to_non_existent_named_group(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -159,6 +176,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/a\k<name>/');
     }
 
+    #[Test]
     public function test_chartype_at_start_of_range_is_rejected(): void
     {
         // PCRE compile-errors on a character type as a range endpoint.
@@ -166,6 +184,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/[\d-z]/');
     }
 
+    #[Test]
     public function test_throws_on_relative_backref_out_of_bounds(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -173,6 +192,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/(a)\g{-2}/');
     }
 
+    #[Test]
     public function test_throws_on_conditional_invalid_condition_type(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -181,6 +201,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/(?(a)b|c)/');
     }
 
+    #[Test]
     public function test_throws_on_invalid_pcre_verb(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -188,6 +209,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/(*INVALID)/');
     }
 
+    #[Test]
     public function test_throws_on_invalid_unicode_codepoint(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -196,6 +218,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/\u{110000}/u');
     }
 
+    #[Test]
     public function test_throws_on_invalid_octal_codepoint(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -204,6 +227,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/\o{77777777}/u');
     }
 
+    #[Test]
     public function test_throws_on_invalid_octal_legacy_codepoint(): void
     {
         $this->expectException(SemanticErrorException::class);
@@ -211,6 +235,7 @@ final class ValidatorTest extends TestCase
         $this->validate('/\999/');
     }
 
+    #[Test]
     #[DataProvider('providePosixClasses')]
     public function test_negated_posix_classes_match_pcre(string $class): void
     {

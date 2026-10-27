@@ -16,10 +16,12 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LinterPortedRulesTest extends TestCase
 {
+    #[Test]
     #[DataProvider('provideUselessRangePatterns')]
     public function test_useless_range_rule(string $pattern, bool $shouldWarn): void
     {
@@ -32,6 +34,7 @@ final class LinterPortedRulesTest extends TestCase
         }
     }
 
+    #[Test]
     #[DataProvider('provideDuplicateCharClassPatterns')]
     public function test_duplicate_char_class_rule(string $pattern, bool $shouldWarn): void
     {
@@ -44,6 +47,7 @@ final class LinterPortedRulesTest extends TestCase
         }
     }
 
+    #[Test]
     #[DataProvider('provideZeroQuantifierPatterns')]
     public function test_zero_quantifier_rule(string $pattern, bool $shouldWarn): void
     {
@@ -56,6 +60,7 @@ final class LinterPortedRulesTest extends TestCase
         }
     }
 
+    #[Test]
     #[DataProvider('provideUselessQuantifierPatterns')]
     public function test_useless_quantifier_rule(string $pattern, bool $shouldWarn): void
     {

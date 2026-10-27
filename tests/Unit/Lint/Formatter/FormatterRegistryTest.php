@@ -18,6 +18,7 @@ use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class FormatterRegistryTest extends TestCase
@@ -31,6 +32,7 @@ final class FormatterRegistryTest extends TestCase
         $this->registry = new FormatterRegistry();
     }
 
+    #[Test]
     public function test_construct_registers_default_formatters(): void
     {
         $names = $this->registry->getNames();
@@ -43,12 +45,14 @@ final class FormatterRegistryTest extends TestCase
         $this->assertCount(5, $names);
     }
 
+    #[Test]
     #[DoesNotPerformAssertions]
     public function test_get_returns_registered_formatter(): void
     {
         $this->registry->get('console');
     }
 
+    #[Test]
     public function test_get_throws_exception_for_unknown_formatter(): void
     {
         $this->expectException(LintException::class);
@@ -57,6 +61,7 @@ final class FormatterRegistryTest extends TestCase
         $this->registry->get('unknown');
     }
 
+    #[Test]
     public function test_has_returns_true_for_registered_formatter(): void
     {
         $this->assertTrue($this->registry->has('console'));
@@ -66,6 +71,7 @@ final class FormatterRegistryTest extends TestCase
         $this->assertTrue($this->registry->has('junit'));
     }
 
+    #[Test]
     public function test_has_returns_false_for_unknown_formatter(): void
     {
         $this->assertFalse($this->registry->has('unknown'));
@@ -73,6 +79,7 @@ final class FormatterRegistryTest extends TestCase
         $this->assertFalse($this->registry->has('html'));
     }
 
+    #[Test]
     public function test_register_adds_new_formatter(): void
     {
         $mockFormatter = $this->createStub(OutputFormatterInterface::class);
@@ -84,6 +91,7 @@ final class FormatterRegistryTest extends TestCase
         $this->assertContains('custom', $this->registry->getNames());
     }
 
+    #[Test]
     public function test_register_overwrites_existing_formatter(): void
     {
         $originalFormatter = $this->registry->get('console');
@@ -95,6 +103,7 @@ final class FormatterRegistryTest extends TestCase
         $this->assertSame($mockFormatter, $this->registry->get('console'));
     }
 
+    #[Test]
     public function test_get_names_returns_all_registered_names(): void
     {
         $names = $this->registry->getNames();
@@ -112,6 +121,7 @@ final class FormatterRegistryTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_get_names_after_register_includes_new_formatter(): void
     {
         $mockFormatter = $this->createStub(OutputFormatterInterface::class);
@@ -123,6 +133,7 @@ final class FormatterRegistryTest extends TestCase
         $this->assertCount(6, $names);
     }
 
+    #[Test]
     public function test_register_with_empty_name(): void
     {
         $mockFormatter = $this->createStub(OutputFormatterInterface::class);
@@ -134,6 +145,7 @@ final class FormatterRegistryTest extends TestCase
         $this->assertContains('', $this->registry->getNames());
     }
 
+    #[Test]
     public function test_register_with_special_characters_in_name(): void
     {
         $mockFormatter = $this->createStub(OutputFormatterInterface::class);
@@ -145,6 +157,7 @@ final class FormatterRegistryTest extends TestCase
         $this->assertContains('formatter-with-dashes', $this->registry->getNames());
     }
 
+    #[Test]
     public function test_get_exception_message_lists_all_formatters(): void
     {
         // Register a few more formatters
@@ -167,6 +180,7 @@ final class FormatterRegistryTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_multiple_registrations_work(): void
     {
         $formatter1 = $this->createStub(OutputFormatterInterface::class);

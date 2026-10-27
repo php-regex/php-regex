@@ -26,10 +26,12 @@ use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class GroupNumberingCollectorTest extends TestCase
 {
+    #[Test]
     public function test_collect_basic_capturing_groups(): void
     {
         $literal = new LiteralNode('test', 0, 4);
@@ -45,6 +47,7 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertEmpty($result->namedGroups);
     }
 
+    #[Test]
     public function test_collect_named_groups(): void
     {
         $literal = new LiteralNode('test', 0, 4);
@@ -61,6 +64,7 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertSame([1], $result->namedGroups['name']);
     }
 
+    #[Test]
     public function test_collect_multiple_capturing_groups(): void
     {
         $literal1 = new LiteralNode('a', 0, 1);
@@ -78,6 +82,7 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertEmpty($result->namedGroups);
     }
 
+    #[Test]
     public function test_collect_branch_reset_groups(): void
     {
         $literal1 = new LiteralNode('a', 0, 1);
@@ -98,6 +103,7 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertEmpty($result->namedGroups);
     }
 
+    #[Test]
     public function test_collect_with_alternation(): void
     {
         $literal1 = new LiteralNode('a', 0, 1);
@@ -117,6 +123,7 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertEmpty($result->namedGroups);
     }
 
+    #[Test]
     public function test_collect_with_quantifier(): void
     {
         $literal = new LiteralNode('a', 0, 1);
@@ -133,6 +140,7 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertEmpty($result->namedGroups);
     }
 
+    #[Test]
     public function test_collect_with_conditional(): void
     {
         $condition = new LiteralNode('x', 0, 1);
@@ -152,6 +160,7 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertEmpty($result->namedGroups);
     }
 
+    #[Test]
     public function test_collect_with_define(): void
     {
         $content = new LiteralNode('test', 0, 4);
@@ -167,6 +176,7 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertEmpty($result->namedGroups);
     }
 
+    #[Test]
     public function test_collect_with_character_class(): void
     {
         $literal = new LiteralNode('a', 0, 1);
@@ -182,6 +192,7 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertEmpty($result->namedGroups);
     }
 
+    #[Test]
     public function test_collect_with_range(): void
     {
         $start = new LiteralNode('a', 0, 1);
@@ -198,6 +209,7 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertEmpty($result->namedGroups);
     }
 
+    #[Test]
     public function test_collect_handles_branch_reset_define_and_char_classes(): void
     {
         $literalA = new LiteralNode('a', 0, 1);
@@ -235,6 +247,7 @@ final class GroupNumberingCollectorTest extends TestCase
         $this->assertContains(1, $result->namedGroups['foo']);
     }
 
+    #[Test]
     public function test_collect_duplicate_named_groups(): void
     {
         $literal1 = new LiteralNode('a', 0, 1);

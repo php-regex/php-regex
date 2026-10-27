@@ -34,12 +34,14 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SampleGeneratorEdgeCasesTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_range_fallbacks_for_non_literal_nodes(): void
     {
         $generator = new SampleGenerator();
@@ -50,6 +52,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertNotSame('', $result);
     }
 
+    #[Test]
     public function test_range_ord_fallback_returns_start_value(): void
     {
         $generator = new SampleGenerator();
@@ -60,6 +63,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertSame('z', $result);
     }
 
+    #[Test]
     public function test_backref_returns_captured_values(): void
     {
         $generator = new SampleGenerator();
@@ -74,6 +78,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertSame('named', $named);
     }
 
+    #[Test]
     public function test_range_with_empty_start_returns_single_character(): void
     {
         $generator = new SampleGenerator();
@@ -84,6 +89,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertSame(1, \strlen($result));
     }
 
+    #[Test]
     public function test_control_char_handles_out_of_range_and_valid_values(): void
     {
         $generator = new SampleGenerator();
@@ -92,6 +98,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertSame('A', (new ControlCharNode('A', 0x41, 0, 0))->accept($generator));
     }
 
+    #[Test]
     public function test_char_literal_out_of_range_returns_question(): void
     {
         $generator = new SampleGenerator();
@@ -100,6 +107,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertSame('?', $result);
     }
 
+    #[Test]
     public function test_subroutine_recursion_depth_returns_empty(): void
     {
         $generator = new SampleGenerator();
@@ -113,6 +121,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertSame('', $result);
     }
 
+    #[Test]
     public function test_subroutine_unresolved_reference_throws(): void
     {
         $generator = new SampleGenerator();
@@ -124,6 +133,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         (new SubroutineNode('99', '99', 0, 0))->accept($generator);
     }
 
+    #[Test]
     public function test_define_limit_match_and_callout_return_empty(): void
     {
         $generator = new SampleGenerator();
@@ -134,6 +144,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertSame('', (new PcreVerbNode('FAIL', 0, 0))->accept($generator));
     }
 
+    #[Test]
     public function test_parse_quantifier_range_adjusts_when_max_less_than_min(): void
     {
         $generator = new SampleGenerator();
@@ -143,6 +154,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertSame([5, 5], $range);
     }
 
+    #[Test]
     public function test_random_int_falls_back_on_exception(): void
     {
         $generator = new SampleGenerator();
@@ -154,6 +166,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertSame(5, $value);
     }
 
+    #[Test]
     public function test_apply_lookaround_hints_skips_empty_prefix_suffix(): void
     {
         $generator = new SampleGenerator();
@@ -165,6 +178,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertSame('prevaluesuf', $result);
     }
 
+    #[Test]
     public function test_is_condition_satisfied_branches(): void
     {
         $generator = new SampleGenerator();
@@ -195,6 +209,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertIsBool($fallback);
     }
 
+    #[Test]
     public function test_a_version_condition_is_judged_as_each_release_reads_it(): void
     {
         // pcre2test: before 10.47 a one-digit minor counts tens ("10.5" is
@@ -213,6 +228,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertFalse($holds('>=', '11', 10, 49));
     }
 
+    #[Test]
     public function test_has_capture_for_reference_branches(): void
     {
         $generator = new SampleGenerator();
@@ -223,6 +239,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertFalse($this->invokePrivate($generator, 'hasCaptureForReference', ['missing']));
     }
 
+    #[Test]
     public function test_collect_groups_handles_define(): void
     {
         $generator = new SampleGenerator();
@@ -235,6 +252,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->assertNotEmpty($map);
     }
 
+    #[Test]
     public function test_resolve_subroutine_target_reference_cases(): void
     {
         $generator = new SampleGenerator();

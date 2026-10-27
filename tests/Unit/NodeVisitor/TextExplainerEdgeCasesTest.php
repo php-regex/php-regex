@@ -20,10 +20,12 @@ use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TextExplainerEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_inline_flags_group_is_explained(): void
     {
         $visitor = new TextExplainer();
@@ -32,6 +34,7 @@ final class TextExplainerEdgeCasesTest extends TestCase
         $this->assertStringContainsString("Inline flags 'im'", $group->accept($visitor));
     }
 
+    #[Test]
     public function test_control_char_is_explained(): void
     {
         $visitor = new TextExplainer();
@@ -40,6 +43,7 @@ final class TextExplainerEdgeCasesTest extends TestCase
         $this->assertSame('Control Character: the character 0x01', $control->accept($visitor));
     }
 
+    #[Test]
     public function test_unicode_named_character_extracts_name(): void
     {
         $visitor = new TextExplainer();
@@ -48,6 +52,7 @@ final class TextExplainerEdgeCasesTest extends TestCase
         $this->assertStringContainsString('LATIN SMALL LETTER A', $node->accept($visitor));
     }
 
+    #[Test]
     public function test_unicode_named_character_falls_back_to_representation(): void
     {
         $visitor = new TextExplainer();

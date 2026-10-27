@@ -16,10 +16,12 @@ namespace PHPRegex\Tests\Unit\Redos;
 use PHPRegex\Redos\Heatmap;
 use PHPRegex\Redos\Hotspot;
 use PHPRegex\Redos\RedosSeverity;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RedosHeatmapTest extends TestCase
 {
+    #[Test]
     public function test_highlight_returns_green_body_for_empty_hotspots(): void
     {
         $heatmap = new Heatmap();
@@ -29,6 +31,7 @@ final class RedosHeatmapTest extends TestCase
         $this->assertStringContainsString('abc', $output);
     }
 
+    #[Test]
     public function test_highlight_skips_invalid_and_empty_hotspots(): void
     {
         $heatmap = new Heatmap();
@@ -41,6 +44,7 @@ final class RedosHeatmapTest extends TestCase
         $this->assertStringContainsString('abc', $output);
     }
 
+    #[Test]
     public function test_highlight_returns_empty_body_when_hotspots_present(): void
     {
         $heatmap = new Heatmap();
@@ -53,6 +57,7 @@ final class RedosHeatmapTest extends TestCase
         $this->assertSame('', $output);
     }
 
+    #[Test]
     public function test_highlight_uses_red_for_high_severity(): void
     {
         $heatmap = new Heatmap();
@@ -65,6 +70,7 @@ final class RedosHeatmapTest extends TestCase
         $this->assertStringContainsString("\033[31m", $output);
     }
 
+    #[Test]
     public function test_color_for_level_default(): void
     {
         $heatmap = new Heatmap();

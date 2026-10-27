@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\Node;
 
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class KeepNodeTest extends TestCase
 {
+    #[Test]
     public function test_constructor_and_getters(): void
     {
         $node = new KeepNode(10, 12); // \K est de longueur 2
@@ -27,6 +29,7 @@ final class KeepNodeTest extends TestCase
         $this->assertSame(12, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_keep(): void
     {
         $node = new KeepNode(0, 2);

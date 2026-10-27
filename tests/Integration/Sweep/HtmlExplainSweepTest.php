@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -45,6 +46,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     public function test_html_highlighter_dot(): void
     {
         $visitor = new HtmlHighlighter();
@@ -53,6 +55,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_highlighter_limit_match(): void
     {
         $visitor = new HtmlHighlighter();
@@ -61,6 +64,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_highlighter_callout(): void
     {
         $visitor = new HtmlHighlighter();
@@ -69,6 +73,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_highlighter_script_run(): void
     {
         $visitor = new HtmlHighlighter();
@@ -77,6 +82,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_highlighter_version_condition(): void
     {
         $visitor = new HtmlHighlighter();
@@ -85,6 +91,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_visitor_limit_match(): void
     {
         $visitor = new HtmlExplainer();
@@ -93,6 +100,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_visitor_complex_quantifier_multiline(): void
     {
         // Test quantifier with complex child to hit multiline quantifier explanation
@@ -102,6 +110,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('one or more times', $result);
     }
 
+    #[Test]
     public function test_html_explain_visitor_dot_node(): void
     {
         $ast = $this->regex->parse('/./');
@@ -109,6 +118,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('Wildcard', $result);
     }
 
+    #[Test]
     public function test_html_explain_visitor_keep_node(): void
     {
         $ast = $this->regex->parse('/\K/');
@@ -116,6 +126,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('the match reported starts here', $result);
     }
 
+    #[Test]
     public function test_html_explain_visitor_octal_legacy_node(): void
     {
         $ast = $this->regex->parse('/\01/');
@@ -123,6 +134,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('Character with octal value', $result);
     }
 
+    #[Test]
     public function test_html_explain_visitor_special_literals(): void
     {
         // Test explainLiteral with special characters and HTML escaping
@@ -134,6 +146,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('&gt;', $result); // HTML entity for >
     }
 
+    #[Test]
     public function test_html_explain_visitor_lazy_quantifier(): void
     {
         $ast = $this->regex->parse('/a+?/');
@@ -141,6 +154,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('as few as possible', $result);
     }
 
+    #[Test]
     public function test_html_explain_visitor_possessive_quantifier(): void
     {
         $ast = $this->regex->parse('/a++/');
@@ -148,6 +162,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('do not backtrack', $result);
     }
 
+    #[Test]
     public function test_html_explain_visitor_conditional_with_alternation(): void
     {
         $ast = $this->regex->parse('/(?(?=a)yes|no)/');
@@ -156,6 +171,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertIsString($result);
     }
 
+    #[Test]
     public function test_html_explain_visitor_subroutine(): void
     {
         $ast = $this->regex->parse('/(?R)/');
@@ -163,6 +179,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('entire pattern', $result);
     }
 
+    #[Test]
     public function test_html_explain_all_node_types(): void
     {
         $patterns = [
@@ -198,6 +215,7 @@ final class HtmlExplainSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_html_explain_range_with_special_chars(): void
     {
         $ast = $this->regexService->parse('/[<>&]/');
@@ -207,6 +225,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('&amp;', $result);
     }
 
+    #[Test]
     public function test_html_explain_quantifier_types(): void
     {
         $ast = $this->regexService->parse('/a*?/');
@@ -218,6 +237,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('do not backtrack', $result);
     }
 
+    #[Test]
     public function test_html_explain_conditional_variations(): void
     {
         $ast = $this->regexService->parse('/(a)(?(1)b|c)/');
@@ -225,6 +245,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertIsString($result);
     }
 
+    #[Test]
     public function test_html_explain_subroutine(): void
     {
         $ast = $this->regexService->parse('/(?<name>a)(?&name)/');
@@ -232,6 +253,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertIsString($result);
     }
 
+    #[Test]
     public function test_html_explain_group_with_name(): void
     {
         $ast = $this->regexService->parse('/(?<name>test)/');
@@ -239,6 +261,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('name', $result);
     }
 
+    #[Test]
     public function test_html_explain_atomic_group(): void
     {
         $ast = $this->regexService->parse('/(?>test)/');
@@ -246,6 +269,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('Atomic', $result);
     }
 
+    #[Test]
     public function test_html_explain_assertions_all(): void
     {
         $patterns = [
@@ -262,6 +286,7 @@ final class HtmlExplainSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_html_explain_backref_named(): void
     {
         $ast = $this->regexService->parse('/(?<name>a)\k<name>/');
@@ -269,6 +294,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertStringContainsString('name', $result);
     }
 
+    #[Test]
     public function test_html_explain_unicode_prop_variations(): void
     {
         $patterns = [
@@ -284,6 +310,7 @@ final class HtmlExplainSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_html_explain_visitor_with_pcre_verb(): void
     {
         // Test HtmlExplainVisitor with PCRE verb
@@ -295,6 +322,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_visitor_with_keep(): void
     {
         // Test HtmlExplainVisitor with \K (keep)
@@ -306,6 +334,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_visitor_with_subroutine(): void
     {
         // Test HtmlExplainVisitor with subroutine

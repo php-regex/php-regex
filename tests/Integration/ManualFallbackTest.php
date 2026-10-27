@@ -20,6 +20,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ManualFallbackTest extends TestCase
@@ -28,6 +29,7 @@ final class ManualFallbackTest extends TestCase
      * Tests the SampleGenerator fallback for an unknown character type.
      * Impossible via the parser because it rejects unknown types.
      */
+    #[Test]
     public function test_sample_generator_unknown_char_type(): void
     {
         // We inject a node with an invalid type 'z'
@@ -42,6 +44,7 @@ final class ManualFallbackTest extends TestCase
      * Tests the Compiler fallback for an unknown subroutine syntax.
      * The parser normalizes the syntaxes, so we inject a manual node.
      */
+    #[Test]
     public function test_compiler_subroutine_default_syntax(): void
     {
         // Syntaxe vide '' déclenche le default dans visitSubroutine
@@ -56,6 +59,7 @@ final class ManualFallbackTest extends TestCase
      * Tests the fallback of the private parseQuantifierRange method in SampleGeneratorVisitor
      * via Reflection, for an unknown quantifier.
      */
+    #[Test]
     public function test_sample_generator_parse_quantifier_fallback(): void
     {
         $generator = new SampleGenerator();

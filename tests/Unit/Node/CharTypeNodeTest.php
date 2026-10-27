@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Node;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CharTypeNodeTest extends TestCase
@@ -31,6 +32,7 @@ final class CharTypeNodeTest extends TestCase
         yield 'single_byte' => ['C', 18, 20];
     }
 
+    #[Test]
     #[DataProvider('data_provider_char_types')]
     public function test_constructor_and_getters(string $value, int $start, int $end): void
     {
@@ -42,6 +44,7 @@ final class CharTypeNodeTest extends TestCase
         $this->assertSame($end, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_char_type(): void
     {
         $node = new CharTypeNode('d', 0, 2);

@@ -17,6 +17,7 @@ use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class OctalLegacyNodeTest extends TestCase
@@ -31,6 +32,7 @@ final class OctalLegacyNodeTest extends TestCase
         yield 'three_digits' => ['777', 0o777, 0, 4];
     }
 
+    #[Test]
     #[DataProvider('data_provider_octal_legacy')]
     public function test_constructor_and_getters(string $original, int $codePoint, int $start, int $end): void
     {
@@ -43,6 +45,7 @@ final class OctalLegacyNodeTest extends TestCase
         $this->assertSame($end, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_char_literal(): void
     {
         $node = new CharLiteralNode('77', 0o77, CharLiteralType::OctalLegacy, 0, 3);

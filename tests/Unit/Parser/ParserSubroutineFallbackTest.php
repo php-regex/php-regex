@@ -18,6 +18,7 @@ use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\ParserAccessor;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ParserSubroutineFallbackTest extends TestCase
@@ -29,6 +30,7 @@ final class ParserSubroutineFallbackTest extends TestCase
      * E.g. (?&...) with a T_GROUP_OPEN token '(' instead of a literal: no
      * name is read.
      */
+    #[Test]
     public function test_parse_subroutine_name_unexpected_token_type(): void
     {
         $parser = new TokenParser();
@@ -52,6 +54,7 @@ final class ParserSubroutineFallbackTest extends TestCase
      * Tests the case where parseSubroutineName is called but finds no valid name before closure.
      * E.g. (?&) -> empty name.
      */
+    #[Test]
     public function test_parse_subroutine_name_empty(): void
     {
         $parser = new TokenParser();

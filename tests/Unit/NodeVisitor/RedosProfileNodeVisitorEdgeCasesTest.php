@@ -42,10 +42,12 @@ use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Redos\RedosSeverity;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_get_result_includes_message_without_suggested_rewrite(): void
     {
         $visitor = new RedosProfiler();
@@ -63,6 +65,7 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $this->assertSame(['Test risk'], $result['recommendations']);
     }
 
+    #[Test]
     public function test_get_result_includes_hint_for_suggested_rewrite(): void
     {
         $visitor = new RedosProfiler();
@@ -80,6 +83,7 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $this->assertSame(['Test risk with suggestion Suggested (verify behavior): Use possessive quantifiers'], $result['recommendations']);
     }
 
+    #[Test]
     public function test_large_bounded_quantifier_adds_low_risk(): void
     {
         $visitor = new RedosProfiler();
@@ -90,6 +94,7 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $this->assertSame(RedosSeverity::Low, $severity);
     }
 
+    #[Test]
     public function test_star_height_critical_when_child_returns_high(): void
     {
         $visitor = new RedosProfiler();
@@ -125,6 +130,7 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $this->assertSame(RedosSeverity::Critical, $severity);
     }
 
+    #[Test]
     public function test_safe_nodes_return_safe_severity(): void
     {
         $visitor = new RedosProfiler();
@@ -144,6 +150,7 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_conditional_and_define_delegate_to_children(): void
     {
         $visitor = new RedosProfiler();
@@ -154,6 +161,7 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $this->assertSame(RedosSeverity::Safe, $define->accept($visitor));
     }
 
+    #[Test]
     public function test_overlapping_alternatives_handles_unknown_sets(): void
     {
         $visitor = new RedosProfiler();
@@ -164,6 +172,7 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $this->assertIsBool($result);
     }
 
+    #[Test]
     public function test_overlapping_alternatives_does_not_assume_overlap_for_unknown_sets(): void
     {
         $visitor = new RedosProfiler();
@@ -179,6 +188,7 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $this->assertFalse($result, 'Unknown sets should not cause assumed overlap');
     }
 
+    #[Test]
     public function test_prefix_signature_recurses_through_group(): void
     {
         $visitor = new RedosProfiler();
@@ -193,6 +203,7 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
      * A script run matches what its body matches: nothing only when the body
      * can, and nothing at all when it has none.
      */
+    #[Test]
     public function test_a_script_run_matches_nothing_only_when_its_body_can(): void
     {
         $visitor = new RedosProfiler();
@@ -206,6 +217,7 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
      * A DEFINE block is analysed on its own, outside the loops around it,
      * with the nesting of its own loops counted from none.
      */
+    #[Test]
     public function test_the_loops_of_a_define_block_nest_from_none(): void
     {
         $analyzer = new RedosAnalyzer();
@@ -236,6 +248,7 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
      * on "a" x n . "!" takes 0.68, 1.38, 2.82, 5.56 ms from n = 16,000;
      * /^(?:(?=a+)a)+$/ 1.07, 4.15, 16.2, 73.8 ms from n = 2,000.
      */
+    #[Test]
     public function test_a_lookaround_runs_on_its_own(): void
     {
         $profile = static function (string $pattern): array {
@@ -295,6 +308,7 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $this->assertContains('critical a+: Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).', $findings);
     }
 
+    #[Test]
     public function test_capture_length_and_quantifier_bounds_helpers(): void
     {
         $visitor = new RedosProfiler();

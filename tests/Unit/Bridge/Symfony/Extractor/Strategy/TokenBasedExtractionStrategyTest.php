@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Extractor\Strategy;
 
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TokenBasedExtractionStrategyTest extends TestCase
 {
+    #[Test]
     public function test_extracts_simple_preg_match(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -33,6 +35,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $this->assertSame('preg_match()', $result[0]->source);
     }
 
+    #[Test]
     public function test_extracts_multiple_preg_functions(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -47,6 +50,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $this->assertSame('/\s+/', $result[2]->pattern);
     }
 
+    #[Test]
     public function test_extracts_concatenated_constant_pattern(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -59,6 +63,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $this->assertSame('/testsuffix', $result[0]->pattern);
     }
 
+    #[Test]
     public function test_skips_non_constant_patterns(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -70,6 +75,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $this->assertEmpty($result);
     }
 
+    #[Test]
     public function test_respects_exclude_paths(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -84,6 +90,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $this->assertSame('/test/', $result[0]->pattern);
     }
 
+    #[Test]
     public function test_handles_array_syntax_in_callback_array(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -97,6 +104,7 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $this->assertSame('/pattern2/', $result[1]->pattern);
     }
 
+    #[Test]
     public function test_skips_unknown_functions(): void
     {
         $strategy = new TokenBasedExtractionStrategy();

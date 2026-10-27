@@ -27,6 +27,7 @@ use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\PatternExtractor;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintCommandComponentsTest extends TestCase
@@ -35,6 +36,7 @@ final class LintCommandComponentsTest extends TestCase
      * Every key regex.json may hold gives its default, a single path read
      * as a list of one; nothing else is set.
      */
+    #[Test]
     public function test_defaults_builder_reads_every_key_of_the_file(): void
     {
         $defaults = (new LintDefaultsBuilder())->build([
@@ -78,6 +80,7 @@ final class LintCommandComponentsTest extends TestCase
         ], $defaults);
     }
 
+    #[Test]
     public function test_defaults_builder_extracts_known_keys(): void
     {
         $builder = new LintDefaultsBuilder();
@@ -104,6 +107,7 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertFalse($defaults['checkOptimizations'] ?? null);
     }
 
+    #[Test]
     public function test_argument_parser_handles_options_and_paths(): void
     {
         $parser = new LintArgumentParser();
@@ -135,6 +139,7 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertSame(2, $arguments->jobs);
     }
 
+    #[Test]
     public function test_argument_parser_reports_errors_for_invalid_options(): void
     {
         $parser = new LintArgumentParser();
@@ -161,6 +166,7 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertSame('Unknown option: --unknown', $result->error);
     }
 
+    #[Test]
     public function test_argument_parser_supports_help_flag(): void
     {
         $parser = new LintArgumentParser();
@@ -171,6 +177,7 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertNotInstanceOf(LintArguments::class, $result->arguments);
     }
 
+    #[Test]
     public function test_argument_parser_handles_debug_option(): void
     {
         $parser = new LintArgumentParser();
@@ -183,6 +190,7 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertSame(OutputConfiguration::VERBOSITY_DEBUG, $arguments->verbosity);
     }
 
+    #[Test]
     public function test_argument_parser_handles_format_option_with_space(): void
     {
         $parser = new LintArgumentParser();
@@ -195,6 +203,7 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertSame('json', $arguments->format);
     }
 
+    #[Test]
     public function test_argument_parser_handles_jobs_short_option(): void
     {
         $parser = new LintArgumentParser();
@@ -207,6 +216,7 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertSame(3, $arguments->jobs);
     }
 
+    #[Test]
     public function test_config_loader_merges_files_and_normalizes_values(): void
     {
         $cwd = getcwd();
@@ -247,6 +257,7 @@ final class LintCommandComponentsTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_config_loader_reports_invalid_json(): void
     {
         $cwd = getcwd();
@@ -278,6 +289,7 @@ final class LintCommandComponentsTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_output_renderer_renders_summary_and_banner(): void
     {
         $renderer = new LintOutputRenderer();
@@ -312,6 +324,7 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertStringContainsString('Configuration : regex.json, /elsewhere/regex.dist.json', $banner);
     }
 
+    #[Test]
     public function test_output_renderer_colors_the_target_versions_but_not_the_source(): void
     {
         $renderer = new LintOutputRenderer();
@@ -328,6 +341,7 @@ final class LintCommandComponentsTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_extractor_factory_falls_back_without_php_parser(): void
     {
         if (class_exists(ParserFactory::class, false)) {
@@ -362,6 +376,7 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertInstanceOf(TokenBasedExtractionStrategy::class, $strategy);
     }
 
+    #[Test]
     public function test_extractor_factory_prefers_phpstan_when_available(): void
     {
         $factory = new LintExtractorFactory();
@@ -373,6 +388,7 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertInstanceOf(PhpParserExtractionStrategy::class, $strategy);
     }
 
+    #[Test]
     public function test_token_based_extraction_strategy_extracts_from_file(): void
     {
         $strategy = new TokenBasedExtractionStrategy();

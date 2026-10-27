@@ -26,12 +26,14 @@ use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AdvancedPcreFeaturesTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     #[DataProvider('provideCalloutPatterns')]
     public function test_it_parses_and_compiles_callouts_correctly(string $pattern, ?string $expectedIdentifier): void
     {
@@ -69,6 +71,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
     /**
      * Rows that once sat in provideCalloutPatterns(), on a pattern PHP refuses.
      */
+    #[Test]
     #[DataProvider('provideCalloutPatternsPhpRefuses')]
     public function test_it_refuses_callouts_php_refuses(string $pattern): void
     {
@@ -82,6 +85,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         yield 'named callout' => ['/(?Cfoo)abc/'];
     }
 
+    #[Test]
     public function test_it_validates_callout_arguments(): void
     {
         $regexService = Regex::create();
@@ -102,6 +106,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $ast->accept($validator);
     }
 
+    #[Test]
     public function test_it_accepts_an_empty_string_callout_identifier(): void
     {
         // preg_match() compiles (?C""), (?C'') and (?C{}) on PCRE2 10.40 and 10.48.
@@ -110,6 +115,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_it_explains_callouts_correctly(): void
     {
         $regexService = Regex::create();
@@ -124,6 +130,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $this->assertStringContainsString('Callout: passes control to user function with argument "my_func"', $explanation);
     }
 
+    #[Test]
     public function test_it_html_explains_callouts_correctly(): void
     {
         $regexService = Regex::create();
@@ -140,6 +147,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $this->assertStringContainsString('title="Callout: passes control to user function with argument &quot;my_func&quot;"', $explanation);
     }
 
+    #[Test]
     public function test_it_explains_callouts_without_argument(): void
     {
         $regexService = Regex::create();
@@ -155,6 +163,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $this->assertStringContainsString('title="Callout: passes control to user function with no argument"', $html);
     }
 
+    #[Test]
     public function test_it_optimizes_callouts_correctly(): void
     {
         $regexService = Regex::create();
@@ -166,6 +175,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $this->assertSame('/(?C1)abc/', $optimizedAst->accept($compiler));
     }
 
+    #[Test]
     public function test_it_generates_sample_for_callouts_correctly(): void
     {
         $regexService = Regex::create();
@@ -176,6 +186,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $this->assertSame('ab', $sample);
     }
 
+    #[Test]
     public function test_it_calculates_complexity_score_for_callouts(): void
     {
         $regexService = Regex::create();
@@ -186,6 +197,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $this->assertSame(7, $score);
     }
 
+    #[Test]
     public function test_it_allows_duplicate_group_names_with_j_flag(): void
     {
         $pattern = '/(?J)(?<name>a)|(?<name>b)/';
@@ -199,6 +211,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $this->assertSame($pattern, $ast->accept($compiler));
     }
 
+    #[Test]
     public function test_it_throws_exception_for_duplicate_group_names_without_j_flag(): void
     {
         $this->expectException(ParserException::class);
@@ -214,6 +227,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $ast->accept($validator);
     }
 
+    #[Test]
     public function test_it_handles_inline_j_flag_for_duplicate_group_names(): void
     {
         $pattern = '/(?-J)(?J)(?<name>a)|(?<name>b)/'; // Disable J, then enable J
@@ -227,6 +241,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $this->assertSame($pattern, $ast->accept($compiler));
     }
 
+    #[Test]
     public function test_it_respects_j_flag_scope_in_inline_modifiers(): void
     {
         $this->expectException(ParserException::class);
@@ -243,6 +258,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $ast->accept($validator);
     }
 
+    #[Test]
     public function test_extended_mode_ignores_whitespace_and_comments(): void
     {
         $regexService = Regex::create();
@@ -271,6 +287,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $this->assertSame("/a#comment\nb/x", $recompiled);
     }
 
+    #[Test]
     public function test_inline_modifier_validation_throws_on_unknown_flags(): void
     {
         $regexService = Regex::create();

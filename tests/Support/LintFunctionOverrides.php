@@ -223,13 +223,13 @@ final class LintFunctionOverrides
             return self::$pcntlWaitpidResult;
         }
 
-        $status ??= 0;
+        $waitStatus = $status ?? 0;
+        $usage = \is_array($rusage) ? $rusage : [];
+        $result = pcntl_waitpid($pid, $waitStatus, $options, $usage);
+        $status = \is_int($waitStatus) ? $waitStatus : null;
+        $rusage = \is_array($usage) ? $usage : [];
 
-        $rusage = \is_array($rusage) ? $rusage : [];
-
-        /* @var array<int|string, mixed> $rusage */
-        // @phpstan-ignore-next-line paramOut.type
-        return pcntl_waitpid($pid, $status, $options, $rusage);
+        return $result;
     }
 
     /**

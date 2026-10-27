@@ -19,10 +19,12 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SubroutineParserTest extends TestCase
 {
+    #[Test]
     public function test_parse_recursion(): void
     {
         $regex = Regex::create();
@@ -33,6 +35,7 @@ final class SubroutineParserTest extends TestCase
         $this->assertSame('', $ast->pattern->syntax);
     }
 
+    #[Test]
     public function test_parse_numeric_subroutine(): void
     {
         $regex = Regex::create();
@@ -42,6 +45,7 @@ final class SubroutineParserTest extends TestCase
         $this->assertSame('1', $ast->pattern->reference);
     }
 
+    #[Test]
     public function test_parse_relative_numeric_subroutine(): void
     {
         $regex = Regex::create();
@@ -51,6 +55,7 @@ final class SubroutineParserTest extends TestCase
         $this->assertSame('-1', $ast->pattern->reference);
     }
 
+    #[Test]
     public function test_parse_named_subroutine(): void
     {
         $regex = Regex::create();
@@ -61,6 +66,7 @@ final class SubroutineParserTest extends TestCase
         $this->assertSame('&', $ast->pattern->syntax);
     }
 
+    #[Test]
     public function test_parse_p_named_subroutine(): void
     {
         $regex = Regex::create();
@@ -78,6 +84,7 @@ final class SubroutineParserTest extends TestCase
      * terminator?)", error 142, up to 10.46; "missing closing parenthesis",
      * error 114, from 10.47; at the same offset).
      */
+    #[Test]
     #[DataProvider('provideCallsLeftOpen')]
     public function test_throws_on_incomplete_subroutine(string $pattern, string $release, ErrorCode $code, string $message, int $offset): void
     {

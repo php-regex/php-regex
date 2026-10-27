@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Explain\Highlighter\HtmlHighlighter;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ConsoleHighlighterEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_console_highlighter_wrap_with_empty_content(): void
     {
         $visitor = new ConsoleHighlighter();
@@ -30,6 +32,7 @@ final class ConsoleHighlighterEdgeCasesTest extends TestCase
         $this->assertSame('', $result);
     }
 
+    #[Test]
     public function test_console_highlighter_wrap_with_unknown_type(): void
     {
         $visitor = new ConsoleHighlighter();
@@ -41,6 +44,7 @@ final class ConsoleHighlighterEdgeCasesTest extends TestCase
         $this->assertSame('test', $result);
     }
 
+    #[Test]
     public function test_html_highlighter_wrap_with_empty_content(): void
     {
         $visitor = new HtmlHighlighter();

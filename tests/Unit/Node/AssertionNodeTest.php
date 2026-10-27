@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Node;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AssertionNodeTest extends TestCase
@@ -34,6 +35,7 @@ final class AssertionNodeTest extends TestCase
         yield 'non_grapheme_boundary' => ['B{g}', 1, 5];
     }
 
+    #[Test]
     #[DataProvider('data_provider_assertions')]
     public function test_constructor_and_getters(string $value, int $start, int $end): void
     {
@@ -44,6 +46,7 @@ final class AssertionNodeTest extends TestCase
         $this->assertSame($end, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_assertion(): void
     {
         $node = new AssertionNode('b', 0, 2);

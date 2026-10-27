@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\Analysis\MetricsCollector;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MetricsCollectorTest extends TestCase
 {
+    #[Test]
     public function test_it_collects_counts_and_depth(): void
     {
         $ast = Regex::create()->parse('/(a|b)c/');
@@ -30,6 +32,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThanOrEqual(4, $metrics['maxDepth']);
     }
 
+    #[Test]
     public function test_it_counts_each_tree_afresh_when_reused(): void
     {
         $ast = Regex::create()->parse('/foo|bar/');
@@ -42,6 +45,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertSame($first, $second);
     }
 
+    #[Test]
     public function test_it_counts_a_second_tree_alone_when_reused(): void
     {
         $collector = new MetricsCollector();
@@ -53,6 +57,7 @@ final class MetricsCollectorTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_it_counts_a_subtree_afresh_when_reused(): void
     {
         $ast = Regex::create()->parse('/foo|bar/');
@@ -65,6 +70,7 @@ final class MetricsCollectorTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_it_counts_quantifier_nodes(): void
     {
         $ast = Regex::create()->parse('/a+/');
@@ -74,6 +80,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['QuantifierNode']);
     }
 
+    #[Test]
     public function test_it_counts_char_type_nodes(): void
     {
         $ast = Regex::create()->parse('/\d+/');
@@ -83,6 +90,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['CharTypeNode']);
     }
 
+    #[Test]
     public function test_it_counts_dot_nodes(): void
     {
         $ast = Regex::create()->parse('/./');
@@ -92,6 +100,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['DotNode']);
     }
 
+    #[Test]
     public function test_it_counts_anchor_nodes(): void
     {
         $ast = Regex::create()->parse('/^a$/');
@@ -101,6 +110,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['AnchorNode']);
     }
 
+    #[Test]
     public function test_it_counts_assertion_nodes(): void
     {
         $ast = Regex::create()->parse('/\b/');
@@ -110,6 +120,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['AssertionNode']);
     }
 
+    #[Test]
     public function test_it_counts_keep_nodes(): void
     {
         $ast = Regex::create()->parse('/a\K/');
@@ -119,6 +130,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['KeepNode']);
     }
 
+    #[Test]
     public function test_it_counts_char_class_nodes(): void
     {
         $ast = Regex::create()->parse('/[abc]/');
@@ -128,6 +140,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['CharClassNode']);
     }
 
+    #[Test]
     public function test_it_counts_range_nodes(): void
     {
         $ast = Regex::create()->parse('/[a-z]/');
@@ -137,6 +150,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['RangeNode']);
     }
 
+    #[Test]
     public function test_it_counts_backreference_nodes(): void
     {
         $ast = Regex::create()->parse('/(a)\1/');
@@ -146,6 +160,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['BackrefNode']);
     }
 
+    #[Test]
     public function test_it_counts_unicode_nodes(): void
     {
         $ast = Regex::create()->parse('/\x{0041}/');
@@ -155,6 +170,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['CharLiteralNode']);
     }
 
+    #[Test]
     public function test_it_counts_unicode_prop_nodes(): void
     {
         $ast = Regex::create()->parse('/\p{L}/');
@@ -164,6 +180,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['UnicodePropNode']);
     }
 
+    #[Test]
     public function test_it_counts_posix_class_nodes(): void
     {
         $ast = Regex::create()->parse('/[[:alpha:]]/');
@@ -173,6 +190,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['PosixClassNode']);
     }
 
+    #[Test]
     public function test_it_counts_comment_nodes(): void
     {
         $ast = Regex::create()->parse('/(?#comment)a/');
@@ -182,6 +200,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['CommentNode']);
     }
 
+    #[Test]
     public function test_it_counts_conditional_nodes(): void
     {
         $ast = Regex::create()->parse('/(?(condition)yes|no)/');
@@ -191,6 +210,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['ConditionalNode']);
     }
 
+    #[Test]
     public function test_it_counts_subroutine_nodes(): void
     {
         $ast = Regex::create()->parse('/(?1)/');
@@ -200,6 +220,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['SubroutineNode']);
     }
 
+    #[Test]
     public function test_it_counts_pcre_verb_nodes(): void
     {
         $ast = Regex::create()->parse('/(*VERB)a/');
@@ -209,6 +230,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['PcreVerbNode']);
     }
 
+    #[Test]
     public function test_it_counts_define_nodes(): void
     {
         $ast = Regex::create()->parse('/(?(DEFINE)...)/');
@@ -218,6 +240,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['DefineNode']);
     }
 
+    #[Test]
     public function test_it_counts_limit_match_nodes(): void
     {
         $ast = Regex::create()->parse('/(*LIMIT_MATCH=100)a/');
@@ -227,6 +250,7 @@ final class MetricsCollectorTest extends TestCase
         $this->assertGreaterThan(0, $metrics['counts']['LimitMatchNode']);
     }
 
+    #[Test]
     public function test_it_counts_callout_nodes(): void
     {
         $ast = Regex::create()->parse('/(?C)a/');

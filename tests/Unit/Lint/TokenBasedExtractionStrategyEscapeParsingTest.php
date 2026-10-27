@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TokenBasedExtractionStrategyEscapeParsingTest extends TestCase
 {
+    #[Test]
     public function test_extracts_pattern_with_hex_escape(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -30,6 +32,7 @@ final class TokenBasedExtractionStrategyEscapeParsingTest extends TestCase
         $this->assertNotEmpty($result[0]->pattern);
     }
 
+    #[Test]
     public function test_extracts_pattern_with_hex_escape_braced(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -42,6 +45,7 @@ final class TokenBasedExtractionStrategyEscapeParsingTest extends TestCase
         $this->assertNotEmpty($result[0]->pattern);
     }
 
+    #[Test]
     public function test_extracts_pattern_with_unicode_escape(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -54,6 +58,7 @@ final class TokenBasedExtractionStrategyEscapeParsingTest extends TestCase
         $this->assertNotEmpty($result[0]->pattern);
     }
 
+    #[Test]
     public function test_extracts_pattern_with_octal_escape(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -66,6 +71,7 @@ final class TokenBasedExtractionStrategyEscapeParsingTest extends TestCase
         $this->assertNotEmpty($result[0]->pattern);
     }
 
+    #[Test]
     public function test_extracts_pattern_with_brace_delimiter_and_flags(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -78,6 +84,7 @@ final class TokenBasedExtractionStrategyEscapeParsingTest extends TestCase
         $this->assertSame('{test}iu', $result[0]->pattern);
     }
 
+    #[Test]
     public function test_extracts_pattern_with_tilde_delimiter(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -90,6 +97,7 @@ final class TokenBasedExtractionStrategyEscapeParsingTest extends TestCase
         $this->assertSame('~test~', $result[0]->pattern);
     }
 
+    #[Test]
     public function test_extracts_pattern_with_hash_delimiter(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -102,6 +110,7 @@ final class TokenBasedExtractionStrategyEscapeParsingTest extends TestCase
         $this->assertSame('#test#', $result[0]->pattern);
     }
 
+    #[Test]
     public function test_extracts_pattern_with_percent_delimiter(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -114,6 +123,7 @@ final class TokenBasedExtractionStrategyEscapeParsingTest extends TestCase
         $this->assertSame('%test%', $result[0]->pattern);
     }
 
+    #[Test]
     public function test_handles_empty_file(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -125,6 +135,7 @@ final class TokenBasedExtractionStrategyEscapeParsingTest extends TestCase
         $this->assertEmpty($result);
     }
 
+    #[Test]
     public function test_handles_file_with_only_whitespace(): void
     {
         $strategy = new TokenBasedExtractionStrategy();
@@ -136,6 +147,7 @@ final class TokenBasedExtractionStrategyEscapeParsingTest extends TestCase
         $this->assertEmpty($result);
     }
 
+    #[Test]
     public function test_handles_file_with_comments_only(): void
     {
         $strategy = new TokenBasedExtractionStrategy();

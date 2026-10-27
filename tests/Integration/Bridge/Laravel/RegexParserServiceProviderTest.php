@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Parser\Node\RegexNode;
@@ -38,6 +39,7 @@ use Illuminate\Support\Facades\Artisan;
  */
 final class RegexParserServiceProviderTest extends LaravelTestCase
 {
+    #[Test]
     public function test_regex_service_is_registered(): void
     {
         $this->assertTrue($this->application()->bound(Regex::class));
@@ -48,6 +50,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertInstanceOf(Regex::class, $regex);
     }
 
+    #[Test]
     public function test_regex_service_parses_patterns(): void
     {
         /** @var \PHPRegex\Toolkit\Regex $regex */
@@ -57,6 +60,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertInstanceOf(RegexNode::class, $ast);
     }
 
+    #[Test]
     public function test_facade_works(): void
     {
         $ast = \PHPRegex\Laravel\Facades\Regex::parse('/[a-z]+/');
@@ -69,6 +73,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertFalse($validation->isValid);
     }
 
+    #[Test]
     public function test_cache_service_is_registered(): void
     {
         $this->assertTrue($this->application()->bound('php-regex.cache'));
@@ -78,6 +83,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertInstanceOf(CacheInterface::class, $cache);
     }
 
+    #[Test]
     public function test_filesystem_cache_works(): void
     {
         /** @var string $cacheDir */
@@ -98,6 +104,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $cache->clear();
     }
 
+    #[Test]
     public function test_analysis_service_is_registered(): void
     {
         $this->assertTrue($this->application()->bound('php-regex.analysis'));
@@ -107,6 +114,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertInstanceOf(AnalysisService::class, $analysis);
     }
 
+    #[Test]
     public function test_lint_service_is_registered(): void
     {
         $this->assertTrue($this->application()->bound('php-regex.lint'));
@@ -116,6 +124,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertInstanceOf(LintService::class, $lint);
     }
 
+    #[Test]
     public function test_formatter_registry_is_registered(): void
     {
         $this->assertTrue($this->application()->bound('php-regex.formatter-registry'));
@@ -125,6 +134,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertInstanceOf(FormatterRegistry::class, $registry);
     }
 
+    #[Test]
     public function test_pattern_sources_are_registered(): void
     {
         $this->assertTrue($this->application()->bound('php-regex.pattern-sources'));
@@ -134,6 +144,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertInstanceOf(PatternSourceCollection::class, $sources);
     }
 
+    #[Test]
     public function test_route_extractor_is_registered(): void
     {
         $this->assertTrue($this->application()->bound(RoutePatternSource::class));
@@ -145,6 +156,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertTrue($extractor->isSupported());
     }
 
+    #[Test]
     public function test_validation_extractor_is_registered(): void
     {
         $this->assertTrue($this->application()->bound(ValidationRulePatternSource::class));
@@ -156,6 +168,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertTrue($extractor->isSupported());
     }
 
+    #[Test]
     public function test_artisan_commands_are_registered(): void
     {
         $commands = Artisan::all();
@@ -173,6 +186,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertInstanceOf(TranspileCommand::class, $commands['regex:transpile']);
     }
 
+    #[Test]
     public function test_config_is_published(): void
     {
         $config = self::configOf($this->application())->get('php-regex');
@@ -192,6 +206,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
     /**
      * A Laravel cache store is a PSR-16 cache: parsed trees go to it.
      */
+    #[Test]
     public function test_a_laravel_cache_store_holds_the_trees(): void
     {
         self::configOf($this->application())->set('php-regex.cache.store', 'array');
@@ -207,6 +222,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertEquals($tree, $cache->load($cache->generateKey(RegexParser::cacheSeed('/a{2,3}/', $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH))));
     }
 
+    #[Test]
     public function test_config_values_are_applied(): void
     {
         self::configOf($this->application())->set('php-regex.max_pattern_length', 5000);
@@ -226,6 +242,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertInstanceOf(RegexNode::class, $ast);
     }
 
+    #[Test]
     public function test_service_provider_provides_list(): void
     {
         $provider = new PHPRegexServiceProvider($this->application());

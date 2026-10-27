@@ -20,6 +20,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -61,6 +62,7 @@ final class CharTypeRangeBugTest extends TestCase
         yield 'char type range with valid range after' => ['/[\w-_a-z]/'];
     }
 
+    #[Test]
     #[DataProvider('charTypeRangeProvider')]
     public function test_chartype_range_endpoint_is_rejected(string $pattern): void
     {
@@ -72,6 +74,7 @@ final class CharTypeRangeBugTest extends TestCase
     /**
      * Test that valid ranges still work correctly.
      */
+    #[Test]
     public function test_valid_literal_ranges_still_work(): void
     {
         $ast = $this->regex->parse('/[a-z]/');
@@ -84,6 +87,7 @@ final class CharTypeRangeBugTest extends TestCase
     /**
      * Test that hyphen at end of character class is still literal.
      */
+    #[Test]
     public function test_trailing_hyphen_is_literal(): void
     {
         $ast = $this->regex->parse('/[abc-]/');
@@ -102,6 +106,7 @@ final class CharTypeRangeBugTest extends TestCase
     /**
      * Test that hyphen at start of character class is still literal.
      */
+    #[Test]
     public function test_leading_hyphen_is_literal(): void
     {
         $ast = $this->regex->parse('/[-abc]/');
@@ -120,6 +125,7 @@ final class CharTypeRangeBugTest extends TestCase
      * Test that a hyphen after a char type is literal when no range can form
      * (end of class), matching PCRE: /[\d-]/ compiles.
      */
+    #[Test]
     public function test_chartype_then_trailing_hyphen_is_literal(): void
     {
         $ast = $this->regex->parse('/[\d-]/');

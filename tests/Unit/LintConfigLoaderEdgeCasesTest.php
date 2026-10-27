@@ -18,6 +18,7 @@ use PHPRegex\Linter\Config\LintConfigResult;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Tests\Support\TemporaryProject;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintConfigLoaderEdgeCasesTest extends TestCase
@@ -29,6 +30,7 @@ final class LintConfigLoaderEdgeCasesTest extends TestCase
         LintFunctionOverrides::reset();
     }
 
+    #[Test]
     public function test_load_handles_missing_cwd(): void
     {
         $loader = new LintConfigLoader();
@@ -40,6 +42,7 @@ final class LintConfigLoaderEdgeCasesTest extends TestCase
         $this->assertSame([], $result->files);
     }
 
+    #[Test]
     public function test_load_rejects_invalid_values(): void
     {
         $paths = $this->loadJson('{"paths": 1}');
@@ -67,6 +70,7 @@ final class LintConfigLoaderEdgeCasesTest extends TestCase
         $this->assertNotNull($checkEntry->error);
     }
 
+    #[Test]
     public function test_load_reads_string_list_variants(): void
     {
         $single = $this->loadJson('{"paths": "src"}');

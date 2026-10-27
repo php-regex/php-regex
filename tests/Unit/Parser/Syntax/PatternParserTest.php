@@ -18,12 +18,14 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PatternParserTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_extracts_flags_including_modifier_r_when_supported(): void
     {
         [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80400));
@@ -33,6 +35,7 @@ final class PatternParserTest extends TestCase
         $this->assertSame('/', $delimiter);
     }
 
+    #[Test]
     public function test_rejects_modifier_r_when_target_php_is_older(): void
     {
         $this->expectException(ParserException::class);
@@ -41,6 +44,7 @@ final class PatternParserTest extends TestCase
         PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80300));
     }
 
+    #[Test]
     public function test_rejects_modifier_e_with_improved_message(): void
     {
         $this->expectException(ParserException::class);
@@ -54,6 +58,7 @@ final class PatternParserTest extends TestCase
      * whatever it sits in: a class, a comment or a \Q...\E run. Every row is
      * refused by preg_match() ("Unknown modifier ...") on PCRE2 10.40 and 10.48.
      */
+    #[Test]
     #[DataProvider('provideDelimiterInsideAConstruct')]
     public function test_pattern_ends_at_the_first_unescaped_delimiter(string $regex): void
     {
@@ -81,6 +86,7 @@ final class PatternParserTest extends TestCase
      * pattern early, at its offset from the start of the body, instead of
      * listing "flags".
      */
+    #[Test]
     #[DataProvider('provideDelimiterEndingThePatternEarly')]
     public function test_names_the_delimiter_that_ends_the_pattern_early(string $regex, int $position): void
     {
@@ -104,6 +110,7 @@ final class PatternParserTest extends TestCase
         yield 'after leading whitespace' => ['regex' => '  /[/]/', 'position' => 1];
     }
 
+    #[Test]
     public function test_unknown_flag_letters_keep_the_flag_message(): void
     {
         $this->expectException(ParserException::class);
@@ -112,6 +119,7 @@ final class PatternParserTest extends TestCase
         PatternParser::extractPatternAndFlags('/abc/q');
     }
 
+    #[Test]
     public function test_escaped_delimiter_does_not_end_the_pattern(): void
     {
         // preg_match('/[\/]/', '/') === 1 and preg_match('/a\/b/', 'a/b') === 1.
@@ -120,12 +128,14 @@ final class PatternParserTest extends TestCase
         $this->assertSame(['a\\\\', '', '/'], PatternParser::extractPatternAndFlags('/a\\\\/'));
     }
 
+    #[Test]
     public function test_throws_for_missing_closing_delimiter(): void
     {
         $this->expectException(ParserException::class);
         PatternParser::extractPatternAndFlags('/abc');
     }
 
+    #[Test]
     public function test_supports_modifier_e_for_old_php_versions(): void
     {
         // Test that modifier 'e' is allowed when targeting PHP < 7.0
@@ -139,6 +149,7 @@ final class PatternParserTest extends TestCase
         $this->assertSame(['a', 'ie', '/'], PatternParser::extractPatternAndFlags('/a/ie', PcreTarget::bundledWith(50600)));
     }
 
+    #[Test]
     public function test_supports_modifier_r_runtime_detection(): void
     {
         // This test triggers the runtime detection code in supportsModifierR
@@ -154,6 +165,7 @@ final class PatternParserTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_supports_modifier_e_runtime_detection(): void
     {
         // This test triggers the runtime detection code in supportsModifierE
@@ -165,6 +177,7 @@ final class PatternParserTest extends TestCase
         PatternParser::extractPatternAndFlags('/a/e');
     }
 
+    #[Test]
     public function test_supports_modifier_r_runtime_detection_with_null_version(): void
     {
         // This test specifically targets the runtime detection code path
@@ -182,6 +195,7 @@ final class PatternParserTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_supports_modifier_e_runtime_detection_with_null_version(): void
     {
         // This test specifically targets the runtime detection code path
@@ -194,6 +208,7 @@ final class PatternParserTest extends TestCase
         PatternParser::extractPatternAndFlags('/a/e');
     }
 
+    #[Test]
     public function test_supports_modifier_r_caching_behavior(): void
     {
         if (self::runtimeSupportsModifierR()) {
@@ -211,6 +226,7 @@ final class PatternParserTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_supports_modifier_r_with_specific_versions(): void
     {
         $this->assertSame(['a', 'r', '/'], PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80400)));
@@ -222,6 +238,7 @@ final class PatternParserTest extends TestCase
         PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80300));
     }
 
+    #[Test]
     public function test_supports_modifier_e_with_specific_versions(): void
     {
         $this->assertSame(['a', 'e', '/'], PatternParser::extractPatternAndFlags('/a/e', PcreTarget::bundledWith(50600)));
@@ -232,6 +249,7 @@ final class PatternParserTest extends TestCase
         PatternParser::extractPatternAndFlags('/a/e', PcreTarget::bundledWith(70000));
     }
 
+    #[Test]
     public function test_without_a_target_the_running_php_decides_on_r(): void
     {
         // "r" arrived in PHP 8.4, built against PCRE2 10.43 or later: the
@@ -244,6 +262,7 @@ final class PatternParserTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_r_needs_php_8_4_linking_pcre2_10_43(): void
     {
         $this->assertSame(['a', 'r', '/'], PatternParser::extractPatternAndFlags('/a/r', new PcreTarget(80400, '10.43')));
@@ -255,6 +274,7 @@ final class PatternParserTest extends TestCase
         PatternParser::extractPatternAndFlags('/a/r', new PcreTarget(80400, '10.42'));
     }
 
+    #[Test]
     public function test_n_needs_php_8_2(): void
     {
         $this->assertSame(['(a)', 'n', '/'], PatternParser::extractPatternAndFlags('/(a)/n', PcreTarget::bundledWith(80200)));
@@ -266,6 +286,7 @@ final class PatternParserTest extends TestCase
         PatternParser::extractPatternAndFlags('/(a)/n', PcreTarget::bundledWith(80100));
     }
 
+    #[Test]
     public function test_without_a_target_e_is_refused(): void
     {
         // "e" left in PHP 7.0.

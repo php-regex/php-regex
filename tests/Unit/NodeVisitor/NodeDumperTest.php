@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class NodeDumperTest extends TestCase
 {
+    #[Test]
     public function test_dump_simple(): void
     {
         $regex = Regex::create();
@@ -29,6 +31,7 @@ final class NodeDumperTest extends TestCase
         $this->assertStringContainsString('Alternation', $dump);
     }
 
+    #[Test]
     public function test_dump_complex_alternation_and_sequence_indentation(): void
     {
         // /a|b/
@@ -51,6 +54,7 @@ final class NodeDumperTest extends TestCase
         $this->assertStringContainsString(trim($expected), trim($dump));
     }
 
+    #[Test]
     public function test_dump_complex_nodes(): void
     {
         // Test all node types that were likely missed: Conditional, Subroutine, Octal, Posix, PcreVerb
@@ -70,6 +74,7 @@ final class NodeDumperTest extends TestCase
         $this->assertStringContainsString('Yes: Literal(\'b\')', $dump);
     }
 
+    #[Test]
     public function test_dump_all_remaining_node_types(): void
     {
         // Test all remaining node types to achieve 100% coverage

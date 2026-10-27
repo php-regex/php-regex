@@ -31,6 +31,7 @@ use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\RequiresFunction;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AnalysisServiceTest extends TestCase
@@ -58,6 +59,7 @@ final class AnalysisServiceTest extends TestCase
         LintFunctionOverrides::reset();
     }
 
+    #[Test]
     public function test_redos_issues_returns_empty_array_for_no_patterns(): void
     {
         $result = self::redosIssuesOf($this->analysis, []);
@@ -65,6 +67,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_redos_issues_returns_empty_array_for_invalid_pattern(): void
     {
         $patterns = [
@@ -76,6 +79,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_redos_issues_detects_vulnerable_pattern(): void
     {
         $patterns = [
@@ -91,6 +95,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertInstanceOf(RedosAnalysis::class, $result[0]->analysis);
     }
 
+    #[Test]
     public function test_redos_issues_filters_by_threshold(): void
     {
         $patterns = [
@@ -102,6 +107,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_suggest_optimizations_returns_empty_array_for_no_patterns(): void
     {
         $result = $this->analysis->suggestOptimizations([], 0);
@@ -109,6 +115,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_suggest_optimizations_returns_empty_array_for_invalid_pattern(): void
     {
         $patterns = [
@@ -120,6 +127,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_suggest_optimizations_skips_a_pattern_that_parses_but_pcre_rejects(): void
     {
         // PCRE refuses a reference to a group the pattern does not have
@@ -134,6 +142,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_suggest_optimizations_filters_by_min_savings(): void
     {
         $patterns = [
@@ -145,6 +154,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_suggest_optimizations_continues_on_parse_error(): void
     {
         $patterns = [
@@ -158,6 +168,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertGreaterThanOrEqual(1, \count($result));
     }
 
+    #[Test]
     public function test_redos_issues_continues_on_parse_error(): void
     {
         $patterns = [
@@ -170,6 +181,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertGreaterThanOrEqual(0, \count($result));
     }
 
+    #[Test]
     public function test_redos_issues_of_an_empty_pattern(): void
     {
         $patterns = [new PatternOccurrence('', 'test.php', 1, 'preg_match')];
@@ -178,6 +190,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_highlight_body_handles_empty_pattern(): void
     {
         $result = $this->analysis->highlightBody('', 'i', '/');
@@ -185,6 +198,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertIsString($result);
     }
 
+    #[Test]
     public function test_suggest_optimizations_filters_by_savings_with_zero(): void
     {
         $patterns = [
@@ -196,6 +210,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_lint_can_run_in_parallel(): void
     {
         if (!\function_exists('pcntl_fork')) {
@@ -220,6 +235,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([2], $parallelProgress->workerCounts());
     }
 
+    #[Test]
     public function test_scan_delegates_to_extractor(): void
     {
         $paths = ['src'];
@@ -231,6 +247,7 @@ final class AnalysisServiceTest extends TestCase
         // Since extractor is default, it should return some patterns
     }
 
+    #[Test]
     public function test_highlight_returns_highlighted_string(): void
     {
         $pattern = '/foo/';
@@ -240,6 +257,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_highlight_body_with_flags(): void
     {
         $result = $this->analysis->highlightBody('foo', 'i', '#');
@@ -247,6 +265,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertIsString($result);
     }
 
+    #[Test]
     public function test_lint_with_sequential_processing(): void
     {
         $patterns = [
@@ -258,6 +277,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertIsArray($result);
     }
 
+    #[Test]
     public function test_lint_reports_progress_for_ignored_patterns(): void
     {
         $patterns = [
@@ -270,6 +290,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame(1, $progress->advancedTotal());
     }
 
+    #[Test]
     public function test_lint_progress_for_invalid_pattern(): void
     {
         $patterns = [
@@ -283,6 +304,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame(1, $progress->advancedTotal());
     }
 
+    #[Test]
     public function test_redos_issues_skips_ignored_patterns(): void
     {
         $patterns = [
@@ -294,6 +316,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_suggest_optimizations_skips_ignored_patterns(): void
     {
         $patterns = [
@@ -305,6 +328,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_suggest_optimizations_with_extended_mode(): void
     {
         $patterns = [
@@ -317,6 +341,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame('/a/x', $result[0]['optimization']->optimized);
     }
 
+    #[Test]
     public function test_suggest_optimizations_extended_mode_keeps_the_written_layout(): void
     {
         $pattern = "/\n\tfoo{1}\t# one\n\t(?:a|b)  # two\n/x";
@@ -331,6 +356,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame("/\n\tfoo\t# one\n\t[ab]  # two\n/x", $result[0]['optimization']->optimized);
     }
 
+    #[Test]
     public function test_suggest_optimizations_extended_mode_falls_back_to_the_pretty_layout(): void
     {
         // A tree without the text it was read from has no layout to keep:
@@ -366,6 +392,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $analysis->suggestOptimizations($occurrences, 0), 'Longer than the pattern as written, it saves nothing.');
     }
 
+    #[Test]
     public function test_suggest_optimizations_skips_when_optimizer_throws(): void
     {
         $cache = new class implements CacheInterface {
@@ -399,6 +426,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_redos_issues_can_run_in_parallel(): void
     {
         if (!\function_exists('pcntl_fork')) {
@@ -420,6 +448,7 @@ final class AnalysisServiceTest extends TestCase
      * On workers, the optimizations are the serial ones, and every pattern
      * advances the progress once: the ignored and the invalid ones too.
      */
+    #[Test]
     #[RequiresFunction('pcntl_fork')]
     public function test_suggest_optimizations_can_run_in_parallel(): void
     {
@@ -446,6 +475,7 @@ final class AnalysisServiceTest extends TestCase
     /**
      * No pattern: nothing found, nothing advanced, no worker started.
      */
+    #[Test]
     public function test_lint_with_no_patterns_on_workers_gives_nothing_and_advances_nothing(): void
     {
         $lintProgress = new RecordingLintProgress();
@@ -464,6 +494,7 @@ final class AnalysisServiceTest extends TestCase
      * One pattern is not worth a worker: it is analysed in the parent,
      * whatever the number of jobs.
      */
+    #[Test]
     public function test_lint_with_one_pattern_on_workers_stays_in_the_parent(): void
     {
         $patterns = [new PatternOccurrence('/a{1}/', 'a.php', 1, 'preg_match')];
@@ -482,6 +513,7 @@ final class AnalysisServiceTest extends TestCase
      * When no worker can be forked, the lint runs in the parent: the same
      * issues, every pattern advanced.
      */
+    #[Test]
     #[RequiresFunction('pcntl_fork')]
     public function test_lint_falls_back_to_serial_with_full_progress_when_no_worker_can_be_forked(): void
     {
@@ -504,6 +536,7 @@ final class AnalysisServiceTest extends TestCase
      * When no worker can be forked, the optimizations are looked for in the
      * parent: the same ones, every pattern advanced.
      */
+    #[Test]
     #[RequiresFunction('pcntl_fork')]
     public function test_suggest_optimizations_falls_back_to_serial_with_full_progress_when_no_worker_can_be_forked(): void
     {
@@ -528,6 +561,7 @@ final class AnalysisServiceTest extends TestCase
      * is left. The throw comes from the source read for the
      * invisible-character rule, through a stream wrapper.
      */
+    #[Test]
     #[RequiresFunction('pcntl_fork')]
     public function test_lint_on_workers_reports_a_failing_worker_with_its_file(): void
     {
@@ -573,6 +607,7 @@ final class AnalysisServiceTest extends TestCase
      * The issues the workers find come back in the serial order, every
      * pattern advanced once, the workers started announced once.
      */
+    #[Test]
     #[RequiresFunction('pcntl_fork')]
     public function test_lint_on_workers_gives_the_serial_issues_in_order_and_progress(): void
     {
@@ -602,6 +637,7 @@ final class AnalysisServiceTest extends TestCase
      * A ReDoS analysis found on a worker comes back whole: its culprit
      * node, its severity, its findings, no incomplete class.
      */
+    #[Test]
     #[RequiresFunction('pcntl_fork')]
     public function test_lint_on_workers_round_trips_a_redos_analysis_with_its_culprit_node(): void
     {
@@ -626,6 +662,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertInstanceOf(NodeInterface::class, $redos[0]->analysis?->culpritNode);
     }
 
+    #[Test]
     public function test_skip_risk_analysis_helpers(): void
     {
         $occurrence = new PatternOccurrence('/foo|bar/', 'test.php', 1, 'preg_match');
@@ -640,12 +677,14 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame('a$b', $this->invokePrivate('unanchored', 'a$b'));
     }
 
+    #[Test]
     public function test_uses_extended_mode_handles_invalid_input(): void
     {
         $this->assertFalse($this->invokePrivate('usesExtendedMode', ''));
         $this->assertFalse($this->invokePrivate('usesExtendedMode', '/'));
     }
 
+    #[Test]
     public function test_worker_results_may_carry_a_class_from_a_subdirectory(): void
     {
         $allowed = $this->invokePrivate('allowedWorkerClasses');

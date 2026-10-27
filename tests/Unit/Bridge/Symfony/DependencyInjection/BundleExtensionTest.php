@@ -21,6 +21,7 @@ use PHPRegex\Symfony\PHPRegexBundle;
 use PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator;
 use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Tests\Support\DependencyInjectionFunctionOverrides;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
@@ -32,6 +33,7 @@ final class BundleExtensionTest extends TestCase
         DependencyInjectionFunctionOverrides::reset();
     }
 
+    #[Test]
     public function test_load_sets_parameters_and_services(): void
     {
         $container = BundleContainer::builder();
@@ -88,6 +90,7 @@ final class BundleExtensionTest extends TestCase
      * target or its runtime validation: the target is the project's, and
      * only the running PHP can validate at run time.
      */
+    #[Test]
     public function test_the_lint_command_takes_the_settings_patterns_are_read_with(): void
     {
         $container = BundleContainer::builder();
@@ -103,6 +106,7 @@ final class BundleExtensionTest extends TestCase
      * regex:explain is a console command of the bundle, built with its
      * Regex service, as the Laravel command is.
      */
+    #[Test]
     public function test_load_registers_the_explain_command(): void
     {
         $container = BundleContainer::builder();
@@ -121,6 +125,7 @@ final class BundleExtensionTest extends TestCase
      * The ValidRegex constraint is judged with the bundle's Regex service,
      * found by the validator under the validator's class name.
      */
+    #[Test]
     public function test_load_registers_the_valid_regex_validator(): void
     {
         $container = BundleContainer::builder();
@@ -134,6 +139,7 @@ final class BundleExtensionTest extends TestCase
         $this->assertSame('php_regex.regex', (string) $regex);
     }
 
+    #[Test]
     public function test_load_sets_custom_extractor_alias(): void
     {
         $container = BundleContainer::builder();
@@ -148,6 +154,7 @@ final class BundleExtensionTest extends TestCase
         $this->assertFalse($container->hasAlias(ExtractorInterface::class));
     }
 
+    #[Test]
     public function test_build_cache_definition_uses_pool(): void
     {
         $extension = new PHPRegexBundle();
@@ -169,6 +176,7 @@ final class BundleExtensionTest extends TestCase
         $this->assertSame('cache.pool', $argument->__toString());
     }
 
+    #[Test]
     public function test_create_extractor_definition_falls_back_when_php_parser_missing(): void
     {
         DependencyInjectionFunctionOverrides::$classExistsResult = false;

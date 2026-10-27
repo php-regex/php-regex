@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Packages;
 
 use PHPRegex\Tests\Tools\PHPStan\NoNewMixedRule;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -43,6 +44,7 @@ final class MixedTypeBaselineTest extends TestCase
         'Symfony' => 20,
     ];
 
+    #[Test]
     public function test_each_package_declares_the_mixed_types_it_is_counted_for(): void
     {
         $counts = [];
@@ -62,6 +64,7 @@ final class MixedTypeBaselineTest extends TestCase
      * the published PHPStan extension carries neither the rule nor its
      * parameter.
      */
+    #[Test]
     public function test_the_repository_analysis_holds_src_to_the_baseline(): void
     {
         $root = \dirname(self::BASELINE);
@@ -72,6 +75,7 @@ final class MixedTypeBaselineTest extends TestCase
         $this->assertStringNotContainsString('noNewMixed', (string) file_get_contents($root.'/src/PHPStan/extension.neon'));
     }
 
+    #[Test]
     public function test_each_entry_gives_a_reason_of_the_vocabulary_and_a_count(): void
     {
         foreach (self::baseline() as $file => $symbols) {
@@ -85,6 +89,7 @@ final class MixedTypeBaselineTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_the_reasons_are_the_written_vocabulary(): void
     {
         $this->assertSame([

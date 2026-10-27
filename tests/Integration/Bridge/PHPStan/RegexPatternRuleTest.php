@@ -24,6 +24,7 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexPatternRuleTest extends RuleTestCase
 {
+    #[Test]
     public function test_rule(): void
     {
         $this->analyse([__DIR__.'/Fixtures/MyClass.php'], [
@@ -71,6 +72,7 @@ final class RegexPatternRuleTest extends RuleTestCase
         ]);
     }
 
+    #[Test]
     public function test_preg_replace_callback_array(): void
     {
         $this->analyse([__DIR__.'/Fixtures/PregReplaceCallbackArray.php'], [
@@ -102,6 +104,7 @@ final class RegexPatternRuleTest extends RuleTestCase
         ]);
     }
 
+    #[Test]
     public function test_useless_flag_linter(): void
     {
         $this->analyse([__DIR__.'/Fixtures/UselessFlagFixture.php'], [
@@ -113,6 +116,7 @@ final class RegexPatternRuleTest extends RuleTestCase
         ]);
     }
 
+    #[Test]
     public function test_redos_with_links(): void
     {
         $this->analyse([__DIR__.'/Fixtures/RedosFixture.php'], [

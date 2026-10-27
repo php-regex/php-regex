@@ -64,6 +64,7 @@ final class RegexTest extends TestCase
     /**
      * @param class-string<NodeInterface> $expectedPatternClass
      */
+    #[Test]
     #[DataProvider('provideValidRegexForParsing')]
     public function test_parse_method_with_valid_regex(
         string $pattern,
@@ -81,6 +82,7 @@ final class RegexTest extends TestCase
         $this->assertInstanceOf($expectedPatternClass, $ast->pattern);
     }
 
+    #[Test]
     public function test_parse_tolerant_returns_result_with_errors(): void
     {
         $result = $this->regexService->parseTolerant('/(?:a|b|/');
@@ -91,6 +93,7 @@ final class RegexTest extends TestCase
         $this->assertSame([], $ok->errors);
     }
 
+    #[Test]
     public function test_explain_and_highlight_accept_their_format_enum(): void
     {
         $text = $this->regexService->explain('/a+/', ExplainFormat::Text);
@@ -103,6 +106,7 @@ final class RegexTest extends TestCase
         $this->assertStringContainsString('<', $this->regexService->highlight('/a+/', HighlightFormat::Html));
     }
 
+    #[Test]
     #[DataProvider('provideRegexForOptimization')]
     public function test_optimize_method(string $pattern, string $expectedOptimizedPattern): void
     {
@@ -110,18 +114,21 @@ final class RegexTest extends TestCase
         $this->assertSame($expectedOptimizedPattern, $optimized);
     }
 
+    #[Test]
     public function test_optimize_method_with_options(): void
     {
         $optimized = $this->regexService->optimize('/a+/', new OptimizerOptions(digits: false));
         $this->assertSame('/a+/', $optimized->optimized);
     }
 
+    #[Test]
     public function test_optimize_method_with_automata_verification(): void
     {
         $optimized = $this->regexService->optimize('/[0-9]+/', new OptimizerOptions(verifyWithAutomata: true));
         $this->assertSame('/\\d+/', $optimized->optimized);
     }
 
+    #[Test]
     #[DataProvider('provideRegexForExplanation')]
     public function test_explain_method(string $pattern, string $expectedExplanation): void
     {
@@ -129,18 +136,21 @@ final class RegexTest extends TestCase
         $this->assertStringContainsString($expectedExplanation, $explanation);
     }
 
+    #[Test]
     public function test_explain_method_html_format(): void
     {
         $explanation = $this->regexService->explain('/a/', 'html');
         $this->assertStringContainsString('<div', $explanation);
     }
 
+    #[Test]
     public function test_explain_method_invalid_format(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->regexService->explain('/a/', 'invalid');
     }
 
+    #[Test]
     #[DataProvider('provideInvalidRegexForParsing')]
     public function test_parse_method_with_invalid_regex_parsing(string $pattern, string $exceptionMessage): void
     {
@@ -151,6 +161,7 @@ final class RegexTest extends TestCase
         $this->regexService->parse($pattern);
     }
 
+    #[Test]
     #[DataProvider('provideInvalidRegexForLexing')]
     public function test_parse_method_with_invalid_regex_lexing(string $pattern, string $exceptionMessage): void
     {
@@ -159,6 +170,7 @@ final class RegexTest extends TestCase
         $this->regexService->parse($pattern);
     }
 
+    #[Test]
     public function test_parse_pattern_wraps_delimiters_and_flags(): void
     {
         $fromFull = $this->regexService->parse('/foo/i');
@@ -167,6 +179,7 @@ final class RegexTest extends TestCase
         $this->assertEquals($fromFull, $fromPattern);
     }
 
+    #[Test]
     public function test_parse_pattern_rejects_invalid_delimiter(): void
     {
         $this->expectException(ParserException::class);
@@ -212,6 +225,7 @@ final class RegexTest extends TestCase
         yield 'unclosed character class' => ['/[a/', 'Unclosed character class "]" at end of input.'];
     }
 
+    #[Test]
     public function test_analyze_method(): void
     {
         $report = $this->regexService->analyze('/a+/');
@@ -219,6 +233,7 @@ final class RegexTest extends TestCase
         $this->assertIsArray($report->errors);
     }
 
+    #[Test]
     public function test_analyze_method_with_invalid_regex(): void
     {
         $report = $this->regexService->analyze('/a(/');
@@ -226,6 +241,7 @@ final class RegexTest extends TestCase
         $this->assertNotEmpty($report->errors);
     }
 
+    #[Test]
     public function test_analyze_method_parsing_failure(): void
     {
         // Create Regex with low recursion limit to trigger parsing exception
@@ -240,6 +256,7 @@ final class RegexTest extends TestCase
         $this->assertStringContainsString('Recursion limit', $report->errors[0]);
     }
 
+    #[Test]
     public function test_parse_throws_recursion_limit_even_when_pattern_is_cached(): void
     {
         $nestedRegex = str_repeat('(', 5).'a'.str_repeat(')', 5);
@@ -256,6 +273,7 @@ final class RegexTest extends TestCase
         Regex::create(['max_recursion_depth' => 3])->parse($nestedRegex);
     }
 
+    #[Test]
     public function test_check_runtime_compilation_default_error_message(): void
     {
         $regex = Regex::create();
@@ -272,6 +290,7 @@ final class RegexTest extends TestCase
         $this->assertStringContainsString('PCRE runtime error', (string) $result->error);
     }
 
+    #[Test]
     public function test_check_runtime_compilation_uses_default_for_empty_message(): void
     {
         $regex = Regex::create();
@@ -288,6 +307,7 @@ final class RegexTest extends TestCase
         $this->assertStringStartsWith('PCRE runtime error: ', (string) $result->error);
     }
 
+    #[Test]
     public function test_validate_method_with_valid_regex(): void
     {
         $result = $this->regexService->validate('/a+/');
@@ -295,6 +315,7 @@ final class RegexTest extends TestCase
         $this->assertNull($result->error);
     }
 
+    #[Test]
     public function test_validate_method_with_invalid_regex(): void
     {
         $result = $this->regexService->validate('/a(/');
@@ -302,6 +323,7 @@ final class RegexTest extends TestCase
         $this->assertStringContainsString('Expected )', (string) $result->error);
     }
 
+    #[Test]
     public function test_redos_method(): void
     {
         $analysis = $this->regexService->redos('/a+/');
@@ -339,6 +361,7 @@ final class RegexTest extends TestCase
         yield 'literals around a class' => ['pattern' => '/x[0-9]y/', 'literals' => ['x', 'y'], 'patterns' => ['^x', 'y$'], 'confidence' => 'medium'];
     }
 
+    #[Test]
     public function test_generate_method(): void
     {
         $sample = $this->regexService->generate('/a+/');
@@ -346,6 +369,7 @@ final class RegexTest extends TestCase
         $this->assertMatchesRegularExpression('/a+/', $sample);
     }
 
+    #[Test]
     public function test_highlight_method(): void
     {
         $highlighted = $this->regexService->highlight('/a+/');
@@ -353,12 +377,14 @@ final class RegexTest extends TestCase
         $this->assertStringContainsString('a', $highlighted);
     }
 
+    #[Test]
     public function test_highlight_html_branch(): void
     {
         $highlighted = $this->regexService->highlight('/a+/', 'html');
         $this->assertStringContainsString('<span', $highlighted);
     }
 
+    #[Test]
     public function test_tokenize_extracts_pattern_and_flags(): void
     {
         $tokens = Regex::create()->tokenize('/ab/i');
@@ -374,6 +400,7 @@ final class RegexTest extends TestCase
      * together they cover the pattern body, the end-of-pattern token last.
      * How many characters one token covers is not promised.
      */
+    #[Test]
     #[DataProvider('provideTokenizedPatterns')]
     public function test_tokenize_covers_the_pattern_body_in_order(string $regex, string $body): void
     {
@@ -407,6 +434,7 @@ final class RegexTest extends TestCase
         yield 'multibyte characters' => ['regex' => '/é\x{41}/u', 'body' => 'é\x{41}'];
     }
 
+    #[Test]
     public function test_build_visual_snippet_truncates_and_marks_caret(): void
     {
         // The parser draws the snippet of a runtime compile error with the
@@ -422,11 +450,13 @@ final class RegexTest extends TestCase
         $this->assertStringContainsString('...', $snippetString);
     }
 
+    #[Test]
     public function test_build_visual_snippet_returns_empty_for_nulls(): void
     {
         $this->assertSame('', Snippet::render(null, null));
     }
 
+    #[Test]
     public function test_build_search_patterns_and_confidence_levels(): void
     {
         $regex = Regex::create();
@@ -449,6 +479,7 @@ final class RegexTest extends TestCase
         $buildSearch->invoke($regex, ['not-a-literal-set']);
     }
 
+    #[Test]
     public function test_explain_writes_html_and_refuses_an_invalid_format(): void
     {
         $this->assertSame($this->regexService->parse('/a+/')->accept(new HtmlExplainer()), $this->regexService->explain('/a+/', 'html'));
@@ -461,6 +492,7 @@ final class RegexTest extends TestCase
      * Oracle: PCRE2 refuses "(?1)" with no group 1, "reference to
      * non-existent subpattern at offset 3"; the parser alone reads it.
      */
+    #[Test]
     public function test_runtime_error_message_is_the_engine_s(): void
     {
         $ref = new \ReflectionClass($this->regexService->parser());
@@ -476,6 +508,7 @@ final class RegexTest extends TestCase
      * The offset is counted in the body as written, not in the body the
      * engine ran; none when the engine names none.
      */
+    #[Test]
     public function test_runtime_error_offset_is_counted_in_the_body_as_written(): void
     {
         $ref = new \ReflectionClass($this->regexService->parser());
@@ -490,6 +523,7 @@ final class RegexTest extends TestCase
         $this->assertNull($modifier->offset);
     }
 
+    #[Test]
     public function test_build_visual_snippet_edge_cases(): void
     {
         $this->assertSame('', Snippet::render('pattern', -1));
@@ -500,6 +534,7 @@ final class RegexTest extends TestCase
         $this->assertSame('', Snippet::render(null, 5));
     }
 
+    #[Test]
     public function test_extract_unique_literals(): void
     {
         $ref = new \ReflectionClass($this->regexService);
@@ -514,6 +549,7 @@ final class RegexTest extends TestCase
         $method->invoke($this->regexService, 'not-a-literal-set');
     }
 
+    #[Test]
     public function test_determine_confidence_level(): void
     {
         $ref = new \ReflectionClass($this->regexService);
@@ -567,6 +603,7 @@ final class RegexTest extends TestCase
         $this->assertSame($ast, $cache->written[$key]);
     }
 
+    #[Test]
     public function test_validate_resource_limits(): void
     {
         $regex = Regex::create(['max_pattern_length' => 5]);
@@ -577,6 +614,7 @@ final class RegexTest extends TestCase
         $method->invoke($regex->parser(), 'long pattern here');
     }
 
+    #[Test]
     public function test_build_validation_failure(): void
     {
         $ref = new \ReflectionClass($this->regexService->parser());
@@ -591,6 +629,7 @@ final class RegexTest extends TestCase
         $this->assertSame(ErrorCode::TokenUnexpected, $result->errorCode);
     }
 
+    #[Test]
     public function test_safe_extract_pattern_handles_parser_exception(): void
     {
         $regex = Regex::create();
@@ -602,12 +641,14 @@ final class RegexTest extends TestCase
         $this->assertSame(['invalid', '', '/', \strlen('invalid')], $result);
     }
 
+    #[Test]
     public function test_parse_with_tolerant_mode(): void
     {
         $result = $this->regexService->parseTolerant('/a(/');
         $this->assertTrue($result->hasErrors());
     }
 
+    #[Test]
     public function test_caching_functionality(): void
     {
         $cacheDir = sys_get_temp_dir().'/regex_cache_test_'.uniqid();
@@ -635,6 +676,7 @@ final class RegexTest extends TestCase
         rmdir($cacheDir);
     }
 
+    #[Test]
     public function test_get_cache_returns_cache_instance(): void
     {
         $cache = new NullCache();
@@ -643,6 +685,7 @@ final class RegexTest extends TestCase
         $this->assertSame($cache, $regex->getCache());
     }
 
+    #[Test]
     public function test_get_cache_stats_with_null_cache(): void
     {
         $cache = new NullCache();
@@ -653,6 +696,7 @@ final class RegexTest extends TestCase
         $this->assertSame(['hits' => 0, 'misses' => 0], $stats);
     }
 
+    #[Test]
     public function test_get_cache_stats_returns_zero_when_cache_not_removable(): void
     {
         $cache = new class implements CacheInterface {
@@ -676,6 +720,7 @@ final class RegexTest extends TestCase
         $this->assertSame(['hits' => 0, 'misses' => 0], $stats);
     }
 
+    #[Test]
     public function test_get_cache_stats_returns_actual_stats_for_removable_cache(): void
     {
         $cache = new FilesystemCache('/tmp/test-cache-'.uniqid());
@@ -696,6 +741,7 @@ final class RegexTest extends TestCase
         $cache->clear();
     }
 
+    #[Test]
     public function test_load_from_cache_returns_null_for_null_cache(): void
     {
         $cache = new NullCache();
@@ -709,6 +755,7 @@ final class RegexTest extends TestCase
         $this->assertSame([null, null], $result);
     }
 
+    #[Test]
     public function test_store_in_cache_returns_early_for_null_cache_key(): void
     {
         $cache = new NullCache();
@@ -726,6 +773,7 @@ final class RegexTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
+    #[Test]
     public function test_do_parse_returns_cached_ast_when_available(): void
     {
         $cacheDir = '/tmp/test-cache-'.uniqid();
@@ -762,6 +810,7 @@ final class RegexTest extends TestCase
         rmdir($cacheDir);
     }
 
+    #[Test]
     public function test_do_parse_returns_cached_ast_without_parsing(): void
     {
         $cachedAst = $this->regexService->parse('/cached/');
@@ -795,6 +844,7 @@ final class RegexTest extends TestCase
         $this->assertSame($cachedAst, $result);
     }
 
+    #[Test]
     public function test_runtime_pcre_validation_error(): void
     {
         $regex = Regex::create(['runtime_pcre_validation' => true]);

@@ -30,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 
 final class ApplicationTest extends TestCase
 {
+    #[Test]
     public function test_register_adds_aliases(): void
     {
         $output = OutputFactory::create();
@@ -48,6 +49,7 @@ final class ApplicationTest extends TestCase
         $this->assertSame('check', $command->lastInput->command);
     }
 
+    #[Test]
     public function test_run_with_help_option_invokes_help_command(): void
     {
         $output = OutputFactory::create();
@@ -61,6 +63,7 @@ final class ApplicationTest extends TestCase
         $this->assertSame(1, $help->runs);
     }
 
+    #[Test]
     public function test_run_with_missing_command_shows_help(): void
     {
         $output = OutputFactory::create();
@@ -74,6 +77,7 @@ final class ApplicationTest extends TestCase
         $this->assertSame(1, $help->runs);
     }
 
+    #[Test]
     public function test_run_with_unknown_command_outputs_error_and_help(): void
     {
         $output = OutputFactory::create();
@@ -88,6 +92,7 @@ final class ApplicationTest extends TestCase
         $this->assertStringContainsString('Unknown command', $buffer);
     }
 
+    #[Test]
     public function test_run_with_a_mistyped_command_suggests_the_nearest(): void
     {
         $output = OutputFactory::create();
@@ -103,6 +108,7 @@ final class ApplicationTest extends TestCase
         $this->assertStringContainsString('Unknown command: anlyze. Did you mean "analyze"?', $buffer);
     }
 
+    #[Test]
     public function test_run_with_pattern_uses_highlight_command(): void
     {
         $output = OutputFactory::create();
@@ -120,6 +126,7 @@ final class ApplicationTest extends TestCase
         $this->assertSame('/a+/', $highlight->lastInput->args[0]);
     }
 
+    #[Test]
     public function test_run_reports_global_option_errors(): void
     {
         $output = OutputFactory::create();
@@ -323,6 +330,7 @@ final class ApplicationTest extends TestCase
         $this->assertNull(Application::reportFatalError());
     }
 
+    #[Test]
     public function test_resolve_ansi_honors_forced_value_and_fallback(): void
     {
         $output = OutputFactory::create();
@@ -338,6 +346,7 @@ final class ApplicationTest extends TestCase
         $this->assertIsBool($fallback);
     }
 
+    #[Test]
     public function test_run_with_empty_command_name_shows_help(): void
     {
         $output = OutputFactory::create();
@@ -351,6 +360,7 @@ final class ApplicationTest extends TestCase
         $this->assertSame(1, $help->runs);
     }
 
+    #[Test]
     public function test_run_with_php_version_option_sets_regex_options(): void
     {
         $output = OutputFactory::create();
@@ -368,6 +378,7 @@ final class ApplicationTest extends TestCase
         $this->assertSame(['php_version' => '8.1'], $command->lastInput->regexOptions);
     }
 
+    #[Test]
     public function test_run_with_pcre_version_option_sets_regex_options(): void
     {
         $output = OutputFactory::create();
@@ -384,6 +395,7 @@ final class ApplicationTest extends TestCase
         $this->assertSame(['php_version' => '8.4', 'pcre_version' => '10.42'], $command->lastInput->regexOptions);
     }
 
+    #[Test]
     public function test_run_with_locale_option_sets_regex_options(): void
     {
         $output = OutputFactory::create();

@@ -257,6 +257,7 @@ final class LintServiceTest extends TestCase
      *
      * @param list<int> $positions
      */
+    #[Test]
     #[DataProvider('provideIssuesSharingAMessage')]
     public function test_analyze_keeps_each_issue_of_a_pattern_that_shares_its_message(string $pattern, string $issueId, array $positions): void
     {

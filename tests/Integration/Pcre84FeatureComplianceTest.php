@@ -17,6 +17,7 @@ use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class Pcre84FeatureComplianceTest extends TestCase
@@ -31,6 +32,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
         $this->validator = new Validator();
     }
 
+    #[Test]
     #[DataProvider('provideOpenLowerQuantifiers')]
     public function test_open_lower_quantifiers_are_parsed_and_validated(string $pattern): void
     {
@@ -47,6 +49,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
         yield '{n,} with spaces' => ['/c{ 2 , }/'];
     }
 
+    #[Test]
     #[DataProvider('provideNewlineConventionVerbs')]
     public function test_newline_convention_verbs_are_supported(string $pattern): void
     {
@@ -63,6 +66,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
         yield 'CRLF' => ['/(*CRLF)baz/'];
     }
 
+    #[Test]
     #[DataProvider('provideControlVerbs')]
     public function test_control_verbs_are_supported(string $pattern): void
     {
@@ -80,6 +84,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
         yield 'THEN' => ['/(*THEN)D/'];
     }
 
+    #[Test]
     #[DataProvider('provideEncodingVerbs')]
     public function test_encoding_verbs_are_supported(string $pattern): void
     {
@@ -95,6 +100,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
         yield 'UCP' => ['/(*UCP)\\w+/'];
     }
 
+    #[Test]
     #[DataProvider('provideMatchControlVerbs')]
     public function test_match_control_verbs_are_supported(string $pattern): void
     {
@@ -110,6 +116,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
         yield 'NOTEMPTY_ATSTART' => ['/(*NOTEMPTY_ATSTART)^foo/'];
     }
 
+    #[Test]
     public function test_backslash_r_is_treated_as_char_type_not_backreference(): void
     {
         $ast = $this->regex->parse('/\R/');
@@ -120,6 +127,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
         $this->assertStringNotContainsString('Backref', $dump);
     }
 
+    #[Test]
     public function test_possessive_quantifier_after_char_class_is_supported(): void
     {
         $ast = $this->regex->parse('/[ab]++c/');
@@ -129,6 +137,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
         $this->assertStringContainsString('type: possessive', $dump);
     }
 
+    #[Test]
     #[DataProvider('provideUnicodeProperties')]
     public function test_extended_unicode_properties_are_validated(string $pattern): void
     {
@@ -144,6 +153,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
         yield 'script property' => ['/\\p{Script=Greek}+$/'];
     }
 
+    #[Test]
     #[DataProvider('provideCallouts')]
     public function test_callout_syntax_is_parsed(string $pattern): void
     {
@@ -164,6 +174,7 @@ final class Pcre84FeatureComplianceTest extends TestCase
     /**
      * Rows that once sat in provideCallouts(), on a pattern PHP refuses.
      */
+    #[Test]
     #[DataProvider('provideCalloutsPhpRefuses')]
     public function test_callout_php_refuses_is_reported_invalid(string $pattern): void
     {

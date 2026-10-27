@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 use PHPRegex\Explain\HtmlExplainer;
 use PHPRegex\Explain\TextExplainer;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ExplainVisitorTest extends TestCase
@@ -27,6 +28,7 @@ final class ExplainVisitorTest extends TestCase
         $this->regex = Regex::create();
     }
 
+    #[Test]
     public function test_text_explain(): void
     {
         $regex = Regex::create();
@@ -41,6 +43,7 @@ final class ExplainVisitorTest extends TestCase
         $this->assertStringContainsString('OR', $output);
     }
 
+    #[Test]
     public function test_html_explain_escaping(): void
     {
         $regex = Regex::create();
@@ -56,6 +59,7 @@ final class ExplainVisitorTest extends TestCase
         $this->assertStringContainsString('&gt;', $output);
     }
 
+    #[Test]
     public function test_quantifier_formatting_simple_vs_complex(): void
     {
         // Simple: a* -> single line
@@ -75,6 +79,7 @@ final class ExplainVisitorTest extends TestCase
         $this->assertStringContainsString('<li><strong>Quantified group (zero or more times):', $html); // Wrapped
     }
 
+    #[Test]
     public function test_conditional_no_else_branch(): void
     {
         // (?(1)a) -> No else branch
@@ -86,6 +91,7 @@ final class ExplainVisitorTest extends TestCase
         $this->assertStringNotContainsString('ELSE:', $html);
     }
 
+    #[Test]
     public function test_subroutine_references(): void
     {
         // (?0), (?R), (?1)
@@ -96,6 +102,7 @@ final class ExplainVisitorTest extends TestCase
         $this->assertStringContainsString('recurses to group 1', $text);
     }
 
+    #[Test]
     public function test_all_char_types_explanation(): void
     {
         // \d \D \s \S \w \W \v \V \h \H \R

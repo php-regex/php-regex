@@ -22,10 +22,12 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TestCaseGeneratorEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_visit_assertion_returns_empty_cases(): void
     {
         $visitor = new TestCaseGenerator();
@@ -35,6 +37,7 @@ final class TestCaseGeneratorEdgeCasesTest extends TestCase
         $this->assertSame([''], $cases['non_matching']);
     }
 
+    #[Test]
     public function test_visit_char_class_empty_parts_returns_non_matching(): void
     {
         $visitor = new TestCaseGenerator();
@@ -47,6 +50,7 @@ final class TestCaseGeneratorEdgeCasesTest extends TestCase
         $this->assertSame(['a'], $cases['non_matching']);
     }
 
+    #[Test]
     public function test_visit_range_with_non_literal_bounds_returns_defaults(): void
     {
         $visitor = new TestCaseGenerator();
@@ -58,6 +62,7 @@ final class TestCaseGeneratorEdgeCasesTest extends TestCase
         $this->assertSame(['!'], $cases['non_matching']);
     }
 
+    #[Test]
     public function test_quantifier_with_max_adds_non_matching_sample(): void
     {
         $visitor = new TestCaseGenerator();
@@ -68,6 +73,7 @@ final class TestCaseGeneratorEdgeCasesTest extends TestCase
         $this->assertContains('aaa', $cases['non_matching']);
     }
 
+    #[Test]
     public function test_parse_quantifier_range_variants(): void
     {
         $visitor = new TestCaseGenerator();
@@ -81,6 +87,7 @@ final class TestCaseGeneratorEdgeCasesTest extends TestCase
         $this->assertSame([2, 2], $method->invoke($visitor, new QuantifierNode(new LiteralNode('a', 0, 1), '{2}', QuantifierType::Greedy, 0, 1)));
     }
 
+    #[Test]
     public function test_generate_for_char_type_variants(): void
     {
         $visitor = new TestCaseGenerator();

@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\Analysis\GroupNumbering;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class GroupNumberingTest extends TestCase
 {
+    #[Test]
     public function test_construct(): void
     {
         $groupNumbering = new GroupNumbering(2, [1, 2], ['name' => [1]]);
@@ -26,6 +28,7 @@ final class GroupNumberingTest extends TestCase
         $this->assertSame(['name' => [1]], $groupNumbering->namedGroups);
     }
 
+    #[Test]
     public function test_has_named_group(): void
     {
         $groupNumbering = new GroupNumbering(1, [1], ['name' => [1]]);
@@ -33,6 +36,7 @@ final class GroupNumberingTest extends TestCase
         $this->assertFalse($groupNumbering->hasNamedGroup('nonexistent'));
     }
 
+    #[Test]
     public function test_get_named_group_numbers(): void
     {
         $groupNumbering = new GroupNumbering(1, [1], ['name' => [1]]);
@@ -40,6 +44,7 @@ final class GroupNumberingTest extends TestCase
         $this->assertSame([], $groupNumbering->getNamedGroupNumbers('nonexistent'));
     }
 
+    #[Test]
     public function test_get_capture_count(): void
     {
         $groupNumbering = new GroupNumbering(2, [1, 2], []);

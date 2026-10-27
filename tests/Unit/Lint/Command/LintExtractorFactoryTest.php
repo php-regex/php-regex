@@ -19,6 +19,7 @@ use PHPRegex\Linter\Extraction\PatternFunction;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintExtractorFactoryTest extends TestCase
@@ -28,6 +29,7 @@ final class LintExtractorFactoryTest extends TestCase
         LintFunctionOverrides::reset();
     }
 
+    #[Test]
     public function test_create_falls_back_to_token_extractor_when_php_parser_missing(): void
     {
         LintFunctionOverrides::queueClassExists(false);
@@ -43,6 +45,7 @@ final class LintExtractorFactoryTest extends TestCase
         $this->assertInstanceOf(TokenBasedExtractionStrategy::class, $inner);
     }
 
+    #[Test]
     public function test_create_builds_the_registry_from_the_arguments(): void
     {
         $factory = new LintExtractorFactory();
@@ -60,6 +63,7 @@ final class LintExtractorFactoryTest extends TestCase
         $this->assertNull($registry->lookupMethod('Composer\\Pcre\\Preg', 'match'));
     }
 
+    #[Test]
     public function test_create_without_arguments_keeps_the_default_presets(): void
     {
         $factory = new LintExtractorFactory();

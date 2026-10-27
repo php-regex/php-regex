@@ -17,6 +17,7 @@ use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -40,6 +41,7 @@ final class OptimizerTest extends TestCase
         $this->compiler = new PatternPrinter();
     }
 
+    #[Test]
     #[DataProvider('optimizationProvider')]
     public function test_optimizations(string $pattern, string $expected): void
     {

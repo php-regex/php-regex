@@ -23,10 +23,12 @@ use PhpParser\Parser;
 use PHPRegex\Linter\Extraction\PatternFunction;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PhpParserExtractionStrategyEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_analyze_file_returns_empty_when_parser_missing(): void
     {
         $strategy = $this->newStrategyWithParser(null);
@@ -35,6 +37,7 @@ final class PhpParserExtractionStrategyEdgeCasesTest extends TestCase
         $this->assertSame([], $method->invoke($strategy, __FILE__));
     }
 
+    #[Test]
     public function test_analyze_file_returns_empty_for_non_array_ast(): void
     {
         $parser = new class implements Parser {
@@ -56,6 +59,7 @@ final class PhpParserExtractionStrategyEdgeCasesTest extends TestCase
         $this->assertSame([], $method->invoke($strategy, $file));
     }
 
+    #[Test]
     public function test_extract_from_func_call_handles_invalid_nodes(): void
     {
         $strategy = new PhpParserExtractionStrategy();
@@ -71,6 +75,7 @@ final class PhpParserExtractionStrategyEdgeCasesTest extends TestCase
         $this->assertSame([], $method->invoke($strategy, $funcCall, __FILE__, ''));
     }
 
+    #[Test]
     public function test_concat_extraction_handles_empty_and_nested_values(): void
     {
         $strategy = new PhpParserExtractionStrategy();

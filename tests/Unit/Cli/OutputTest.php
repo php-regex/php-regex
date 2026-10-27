@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Cli;
 
 use PHPRegex\Cli\Output;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class OutputTest extends TestCase
 {
+    #[Test]
     public function test_color_respects_ansi_setting(): void
     {
         $output = new Output(false, false);
@@ -29,6 +31,7 @@ final class OutputTest extends TestCase
         $this->assertSame(Output::RED.'text'.Output::RESET, $output->color('text', Output::RED));
     }
 
+    #[Test]
     public function test_badge_pads_plain_text_without_ansi(): void
     {
         $output = new Output(false, false);
@@ -37,6 +40,7 @@ final class OutputTest extends TestCase
         $this->assertSame('OK  ', $output->badge('OK', Output::WHITE, Output::BG_GREEN));
     }
 
+    #[Test]
     public function test_write_error_goes_to_the_error_stream_even_when_quiet(): void
     {
         $stream = fopen('php://memory', 'w+');
@@ -58,6 +62,7 @@ final class OutputTest extends TestCase
      * line says where the run stands every 30 seconds, so a long step does
      * not look stuck, and nothing else is written.
      */
+    #[Test]
     public function test_without_ansi_the_progress_writes_a_line_every_thirty_seconds(): void
     {
         $stream = fopen('php://memory', 'w+');
@@ -92,6 +97,7 @@ final class OutputTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_without_ansi_and_quiet_the_progress_writes_nothing(): void
     {
         $stream = fopen('php://memory', 'w+');
@@ -110,6 +116,7 @@ final class OutputTest extends TestCase
         $this->assertSame('', stream_get_contents($stream));
     }
 
+    #[Test]
     public function test_without_ansi_an_abandoned_progress_writes_no_more_lines(): void
     {
         $stream = fopen('php://memory', 'w+');

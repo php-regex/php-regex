@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Visitor;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\PosixClassNode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SampleGeneratorExhaustiveTest extends TestCase
@@ -27,6 +28,7 @@ final class SampleGeneratorExhaustiveTest extends TestCase
         $this->generator = new SampleGenerator();
     }
 
+    #[Test]
     public function test_generate_all_char_types(): void
     {
         // h, H, v, V, R, w, W, s, S, d, D
@@ -38,6 +40,7 @@ final class SampleGeneratorExhaustiveTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_generate_all_posix_classes(): void
     {
         $classes = [

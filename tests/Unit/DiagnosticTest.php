@@ -16,10 +16,12 @@ namespace PHPRegex\Tests\Unit;
 use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\LintSeverity;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class DiagnosticTest extends TestCase
 {
+    #[Test]
     public function test_construct_with_minimal_parameters(): void
     {
         $problem = new Diagnostic(
@@ -36,6 +38,7 @@ final class DiagnosticTest extends TestCase
         $this->assertNull($problem->suggestion);
     }
 
+    #[Test]
     public function test_construct_with_all_parameters(): void
     {
         $problem = new Diagnostic(
@@ -55,6 +58,7 @@ final class DiagnosticTest extends TestCase
         $this->assertSame('Use atomic groups', $problem->suggestion);
     }
 
+    #[Test]
     public function test_construct_with_empty_strings(): void
     {
         $problem = new Diagnostic(
@@ -71,6 +75,7 @@ final class DiagnosticTest extends TestCase
         $this->assertSame('', $problem->suggestion);
     }
 
+    #[Test]
     public function test_construct_with_multiline_message(): void
     {
         $message = "Line 1\nLine 2\nLine 3";

@@ -29,39 +29,46 @@ final class PatternPrinterTest extends TestCase
 {
     use PcreGates;
 
+    #[Test]
     public function test_compile_simple(): void
     {
         $this->assertSame('/foo/', $this->compile('/foo/'));
     }
 
+    #[Test]
     public function test_compile_group_and_alternation(): void
     {
         $this->assertSame('/(foo|bar)?/', $this->compile('/(foo|bar)?/'));
     }
 
+    #[Test]
     public function test_compile_precedence(): void
     {
         $this->assertSame('/ab*c/', $this->compile('/ab*c/'));
     }
 
+    #[Test]
     public function test_compile_escaped(): void
     {
         // The compiler must re-escape special characters
         $this->assertSame('/a\*c/', $this->compile('/a\*c/'));
     }
 
+    #[Test]
     public function test_compile_new_nodes_and_flags(): void
     {
         $regex = '/^.\d\S(foo|bar)+$/imsU';
         $this->assertSame($regex, $this->compile($regex));
     }
 
+    #[Test]
     public function test_compile_quantified_sequence(): void
     {
         // This test ensures a *capturing* group remains a *capturing* group
         $this->assertSame('/(abc)+/', $this->compile('/(abc)+/'));
     }
 
+    #[Test]
     public function test_compile_char_class(): void
     {
         // Handles negation, ranges, char types, and literals (like '-')
@@ -78,6 +85,7 @@ final class PatternPrinterTest extends TestCase
         $this->assertSame($regex, $this->compile($regex));
     }
 
+    #[Test]
     public function test_compile_posix_class_not_double_wrapped(): void
     {
         // The surrounding character class already provides the brackets.
@@ -89,82 +97,96 @@ final class PatternPrinterTest extends TestCase
     }
 
     // Add new tests for new features
+    #[Test]
     public function test_compile_new_features(): void
     {
         $regex = '#(?<name>foo)+?|(?!=bar)#i';
         $this->assertSame($regex, $this->compile($regex));
     }
 
+    #[Test]
     public function test_compile_assertion(): void
     {
         $regex = '/\Afoo\b/';
         $this->assertSame($regex, $this->compile($regex));
     }
 
+    #[Test]
     public function test_compile_unicode_prop(): void
     {
         $regex = '/\pL\p{^L}\pL/';
         $this->assertSame($regex, $this->compile($regex));
     }
 
+    #[Test]
     public function test_compile_octal(): void
     {
         $regex = '/\o{777}/';
         $this->assertSame($regex, $this->compile($regex));
     }
 
+    #[Test]
     public function test_compile_octal_legacy(): void
     {
         $regex = '/\077/';
         $this->assertSame($regex, $this->compile($regex));
     }
 
+    #[Test]
     public function test_compile_named_backref(): void
     {
         $regex = '/\k<name>/';
         $this->assertSame($regex, $this->compile($regex));
     }
 
+    #[Test]
     public function test_compile_comment(): void
     {
         $regex = '/(?#test)/';
         $this->assertSame($regex, $this->compile($regex));
     }
 
+    #[Test]
     public function test_compile_conditional(): void
     {
         $regex = '/(?(1)a|b)/';
         $this->assertSame($regex, $this->compile($regex));
     }
 
+    #[Test]
     public function test_compile_inline_flags(): void
     {
         $regex = '/(?i:foo)/';
         $this->assertSame($regex, $this->compile($regex));
     }
 
+    #[Test]
     public function test_compile_escapes_paired_delimiter_closing(): void
     {
         $this->assertSame('<\>>', $this->compile('<\>>'));
         $this->assertSame('<a\>b>', $this->compile('<a\>b>'));
     }
 
+    #[Test]
     public function test_compile_extended_comment_allows_closing_paren_in_comment(): void
     {
         $pattern = "~(a# comment )\nb)~x";
         $this->assertSame($pattern, $this->compile($pattern));
     }
 
+    #[Test]
     public function test_compile_quote_mode_preserves_space_in_extended_mode(): void
     {
         $this->assertSame('/\\ /x', $this->compile('/\Q \E/x'));
     }
 
+    #[Test]
     public function test_compile_quote_mode_preserves_hash_in_extended_mode(): void
     {
         $this->assertSame('/\\#/x', $this->compile('/\Q#\E/x'));
     }
 
+    #[Test]
     public function test_reset_state_clears_compiler_flags(): void
     {
         $visitor = new PatternPrinter();
@@ -180,6 +202,7 @@ final class PatternPrinterTest extends TestCase
         $this->assertSame('a b', $literal->accept($visitor));
     }
 
+    #[Test]
     public function test_compile_subroutines(): void
     {
         $this->assertSame('/(?R)/', $this->compile('/(?R)/'));
@@ -189,12 +212,14 @@ final class PatternPrinterTest extends TestCase
         $this->assertSame('/(?P>name)/', $this->compile('/(?P>name)/'));
     }
 
+    #[Test]
     public function test_compiler_escapes_control_characters(): void
     {
         // Test that control characters are properly escaped in output
         $this->assertSame('/[\t\n\r\x07]/', $this->compile('/[\t\n\r\x07]/'));
     }
 
+    #[Test]
     public function test_optimizer_preserves_escaped_pipe(): void
     {
         // Test that escaped pipe is preserved outside char class
@@ -204,6 +229,7 @@ final class PatternPrinterTest extends TestCase
         $this->assertSame('/[|]/', $this->compile('/[|]/'));
     }
 
+    #[Test]
     public function test_compile_pretty_mode(): void
     {
         $pattern = "/\n# comment\nfoo|bar/x";
@@ -496,6 +522,7 @@ final class PatternPrinterTest extends TestCase
         $this->assertSame('/\x41b/x', (new RegexNode($sequence, 'x', '/', 0, 5))->accept(new PatternPrinter(pretty: true)));
     }
 
+    #[Test]
     public function test_compile_escaped_literal_metacharacters(): void
     {
         // Test that escaped metacharacters used as literals are preserved

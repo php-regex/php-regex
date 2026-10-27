@@ -18,6 +18,7 @@ use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -42,6 +43,7 @@ final class ExplainSweepTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     public function test_explain_visitor_range_special_chars(): void
     {
         $regex = Regex::create();
@@ -53,6 +55,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_explain_visitor_quantifier_variations(): void
     {
         $regex = Regex::create();
@@ -75,6 +78,7 @@ final class ExplainSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_explain_visitor_literal_special_chars(): void
     {
         $regex = Regex::create();
@@ -86,6 +90,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_explain_visitor_script_run(): void
     {
         $visitor = new TextExplainer();
@@ -94,6 +99,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_explain_visitor_limit_match(): void
     {
         $visitor = new TextExplainer();
@@ -102,6 +108,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_explain_visitor_version_condition(): void
     {
         $visitor = new TextExplainer();
@@ -110,6 +117,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_explain_visitor_complex_quantifier_multiline_child(): void
     {
         // Test quantifier with complex child (multiline output) to hit lines 149-159
@@ -119,6 +127,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('End quantified group', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_dot_node(): void
     {
         $ast = $this->regex->parse('/./');
@@ -126,6 +135,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('Wildcard', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_keep_node(): void
     {
         $ast = $this->regex->parse('/\K/');
@@ -133,6 +143,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('Assertion: the match reported starts here', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_comment_node(): void
     {
         $ast = $this->regex->parse('/(?#test comment)/');
@@ -140,6 +151,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('Comment', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_octal_legacy_node(): void
     {
         $ast = $this->regex->parse('/\01/');
@@ -147,6 +159,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('Character with octal value', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_special_literals(): void
     {
         // Test explainLiteral helper with special characters
@@ -158,6 +171,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('carriage return', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_lazy_quantifier(): void
     {
         // Test explainQuantifierValue with lazy quantifier
@@ -166,6 +180,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('as few as possible', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_possessive_quantifier(): void
     {
         // Test explainQuantifierValue with possessive quantifier
@@ -174,6 +189,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('do not backtrack', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_conditional_with_alternation(): void
     {
         // Test visitConditional with alternation (ELSE branch)
@@ -183,6 +199,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertIsString($result);
     }
 
+    #[Test]
     public function test_explain_visitor_conditional_single_branch(): void
     {
         // Test visitConditional with single branch
@@ -192,6 +209,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertIsString($result);
     }
 
+    #[Test]
     public function test_explain_visitor_subroutine_r(): void
     {
         // Test visitSubroutine with R (entire pattern reference)
@@ -200,6 +218,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('entire pattern', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_subroutine_0(): void
     {
         // Test visitSubroutine with 0 (entire pattern reference)
@@ -208,6 +227,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('entire pattern', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_all_node_types(): void
     {
         // Test all visit methods
@@ -244,6 +264,7 @@ final class ExplainSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_explain_visitor_quantifier_variations_2(): void
     {
         $ast = $this->regexService->parse('/a{3}/');
@@ -259,6 +280,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('at least 3 but not more than 5 times', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_range_with_escape_sequences(): void
     {
         $ast = $this->regexService->parse('/[\\t-\\n]/');
@@ -266,6 +288,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertIsString($result);
     }
 
+    #[Test]
     public function test_explain_visitor_unicode_prop_negated(): void
     {
         $ast = $this->regexService->parse('/\P{L}/');
@@ -273,6 +296,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertIsString($result);
     }
 
+    #[Test]
     public function test_explain_visitor_conditional_with_different_conditions(): void
     {
         $ast = $this->regexService->parse('/(a)(?(1)b|c)/');
@@ -280,6 +304,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertIsString($result);
     }
 
+    #[Test]
     public function test_explain_visitor_group_types(): void
     {
         $patterns = [
@@ -301,6 +326,7 @@ final class ExplainSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_explain_visitor_quantifier_lazy(): void
     {
         $ast = $this->regexService->parse('/a+?/');
@@ -308,6 +334,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('as few as possible', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_quantifier_possessive(): void
     {
         $ast = $this->regexService->parse('/a++/');
@@ -315,6 +342,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('and do not backtrack', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_anchors(): void
     {
         $ast = $this->regexService->parse('/^test$/');
@@ -323,6 +351,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('end of the subject, or just before a newline', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_assertions(): void
     {
         $patterns = [
@@ -336,6 +365,7 @@ final class ExplainSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_explain_visitor_subroutine(): void
     {
         $ast = $this->regexService->parse('/(?<test>a)(?&test)/');
@@ -343,6 +373,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertStringContainsString('Subroutine Call', $result);
     }
 
+    #[Test]
     public function test_explain_visitor_with_unicode_prop_negated(): void
     {
         // Test ExplainVisitor with negated unicode property
@@ -354,6 +385,7 @@ final class ExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_explain_visitor_with_octal_legacy(): void
     {
         // Test ExplainVisitor with octal legacy

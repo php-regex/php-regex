@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Toolkit\Regex;
 
@@ -23,6 +24,7 @@ use PHPRegex\Toolkit\Regex;
  */
 final class OldConfigFileTest extends LaravelTestCase
 {
+    #[Test]
     public function test_an_old_config_file_is_silently_ignored(): void
     {
         self::configOf($this->application())->set('regex-parser', ['max_pattern_length' => 10]);
@@ -33,6 +35,7 @@ final class OldConfigFileTest extends LaravelTestCase
         $this->assertSame(Regex::DEFAULT_MAX_PATTERN_LENGTH, self::configOf($this->application())->get('php-regex.max_pattern_length'));
     }
 
+    #[Test]
     public function test_no_old_config_file_reports_nothing(): void
     {
         $deprecations = $this->deprecationsWhile(fn () => (new PHPRegexServiceProvider($this->application()))->register());

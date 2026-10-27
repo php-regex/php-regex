@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ComplexityScoreVisitorTest extends TestCase
@@ -35,6 +36,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         $this->visitor = new ComplexityScorer();
     }
 
+    #[Test]
     public function test_simple_regex_score(): void
     {
         // abc = 1 (seq) + 1 + 1 + 1 = 4 (or close, depends on your exact base logic)
@@ -42,6 +44,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         $this->assertLessThan(10, $score);
     }
 
+    #[Test]
     public function test_high_complexity_score(): void
     {
         // Classic ReDoS: (a+)+
@@ -51,6 +54,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         $this->assertGreaterThan(20, $score, 'Nested quantifiers should yield a high complexity score');
     }
 
+    #[Test]
     public function test_lookarounds_increase_score(): void
     {
         $simple = $this->getScore('/foo/');
@@ -69,6 +73,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         yield 'fixed_range_bounded_lazy' => ['/a{1,2}?/', 'at least 1 but not more than 2 times (as few as possible)'];
     }
 
+    #[Test]
     #[DataProvider('data_provider_quantifier_explanations')]
     public function test_quantifier_explanations(string $pattern, string $expectedQuantifierText): void
     {
@@ -79,6 +84,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         $this->assertStringContainsString($expectedQuantifierText, $output);
     }
 
+    #[Test]
     public function test_group_types_explanations(): void
     {
         $regex = Regex::create();
@@ -97,6 +103,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_literal_special_character_explanations(): void
     {
         $regex = Regex::create();
@@ -109,6 +116,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         $this->assertStringContainsString('Character with hexadecimal value 0x01', $regex->parse('/\\x01/')->accept($visitor));
     }
 
+    #[Test]
     public function test_score_nested_unbounded_quantifiers_redo_penalty(): void
     {
         // Classic ReDoS: (a*)*. Score should be exponentially high.
@@ -123,6 +131,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         $this->assertGreaterThan($score, $tripleScore);
     }
 
+    #[Test]
     public function test_score_complex_constructs(): void
     {
         // Conditional (COMPLEX_CONSTRUCT_SCORE * 2) + children
@@ -138,6 +147,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         $this->assertSame(5, $pcreVerbScore, 'PcreVerb must be complex (5).');
     }
 
+    #[Test]
     public function test_score_version_define_and_limit_match_nodes(): void
     {
         $visitor = new ComplexityScorer();
@@ -157,6 +167,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         $this->assertSame($complexScore, $limitMatch->accept($visitor));
     }
 
+    #[Test]
     public function test_score_complex_group_lookbehinds(): void
     {
         // Negative lookbehind (?<!a) is COMPLEX_CONSTRUCT_SCORE
@@ -165,6 +176,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         $this->assertLessThan(10, $score);
     }
 
+    #[Test]
     public function test_nested_quantifiers_exponential_score(): void
     {
         // Hits the logic: if ($this->quantifierDepth > 0) { $score *= ... }
@@ -177,6 +189,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         $this->assertGreaterThan(30, $score);
     }
 
+    #[Test]
     public function test_complex_constructs_scores(): void
     {
         // Conditionals
@@ -192,6 +205,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         $this->assertGreaterThanOrEqual(5, $this->getScore('/\1/'));
     }
 
+    #[Test]
     public function test_lookarounds_score(): void
     {
         // Hits logic in visitGroup checking for LOOKAHEAD/LOOKBEHIND types
@@ -201,6 +215,7 @@ final class ComplexityScoreVisitorTest extends TestCase
         $this->assertGreaterThan($scoreNormal, $scoreLookahead);
     }
 
+    #[Test]
     public function test_char_class_score(): void
     {
         // Score is sum of parts

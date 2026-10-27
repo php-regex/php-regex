@@ -17,6 +17,7 @@ use PHPRegex\Parser\Analysis\LiteralExtractor;
 use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LiteralExtractorTest extends TestCase
@@ -31,6 +32,7 @@ final class LiteralExtractorTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     public function test_visit_regex_case_sensitive(): void
     {
         $ast = $this->regexService->parse('/abc/');
@@ -40,6 +42,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertContains('abc', $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_regex_case_insensitive(): void
     {
         $ast = $this->regexService->parse('/abc/i');
@@ -50,6 +53,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertContains('ABC', $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_alternation_common_literals(): void
     {
         $ast = $this->regexService->parse('/foo|bar/');
@@ -59,6 +63,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertNotEmpty($result->prefixes);
     }
 
+    #[Test]
     public function test_visit_alternation_with_common_prefix(): void
     {
         $ast = $this->regexService->parse('/pre|pre/');
@@ -68,6 +73,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertContains('pre', $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_sequence_concatenation(): void
     {
         $ast = $this->regexService->parse('/abc/');
@@ -76,6 +82,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertContains('abc', $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_sequence_empty(): void
     {
         $sequence = new SequenceNode([], 0, 0);
@@ -84,6 +91,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertEquals(LiteralSet::fromString(''), $result);
     }
 
+    #[Test]
     public function test_visit_group_without_flags(): void
     {
         $ast = $this->regexService->parse('/(abc)/');
@@ -92,6 +100,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertContains('abc', $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_group_with_inline_i_flag(): void
     {
         $ast = $this->regexService->parse('/(?i:abc)/');
@@ -101,6 +110,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertContains('ABC', $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_group_with_inline_minus_i_flag(): void
     {
         $ast = $this->regexService->parse('/(?-i:abc)/i');
@@ -110,6 +120,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertNotContains('ABC', $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_quantifier_exact_repeat(): void
     {
         $ast = $this->regexService->parse('/a{3}/');
@@ -118,6 +129,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertContains('aaa', $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_quantifier_exact_zero(): void
     {
         $ast = $this->regexService->parse('/a{0}/');
@@ -126,6 +138,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertEquals(LiteralSet::fromString(''), $result);
     }
 
+    #[Test]
     public function test_visit_quantifier_plus(): void
     {
         $ast = $this->regexService->parse('/a+/');
@@ -136,6 +149,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertFalse($result->complete);
     }
 
+    #[Test]
     public function test_visit_quantifier_star(): void
     {
         $ast = $this->regexService->parse('/a*/');
@@ -144,6 +158,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertEquals(LiteralSet::empty(), $result);
     }
 
+    #[Test]
     public function test_visit_quantifier_question(): void
     {
         $ast = $this->regexService->parse('/a?/');
@@ -152,6 +167,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertEquals(LiteralSet::empty(), $result);
     }
 
+    #[Test]
     public function test_visit_char_class_simple_literal(): void
     {
         $ast = $this->regexService->parse('/[a]/');
@@ -160,6 +176,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertContains('a', $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_char_class_multiple_literals(): void
     {
         $ast = $this->regexService->parse('/[ab]/');
@@ -169,6 +186,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertContains('b', $result->prefixes);
     }
 
+    #[Test]
     public function test_visit_char_class_negated(): void
     {
         $ast = $this->regexService->parse('/[^a]/');
@@ -177,6 +195,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertEquals(LiteralSet::empty(), $result);
     }
 
+    #[Test]
     public function test_visit_char_class_with_range(): void
     {
         $ast = $this->regexService->parse('/[a-z]/');
@@ -185,6 +204,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertEquals(LiteralSet::empty(), $result);
     }
 
+    #[Test]
     public function test_expand_case_insensitive_short(): void
     {
         $ref = new \ReflectionClass($this->visitor);
@@ -197,6 +217,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertContains('A', $result->prefixes);
     }
 
+    #[Test]
     public function test_expand_case_insensitive_too_long(): void
     {
         $ref = new \ReflectionClass($this->visitor);
@@ -207,6 +228,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertEquals(LiteralSet::empty(), $result);
     }
 
+    #[Test]
     public function test_expand_case_insensitive_too_many_permutations(): void
     {
         $ref = new \ReflectionClass($this->visitor);
@@ -218,6 +240,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertEquals(LiteralSet::empty(), $result);
     }
 
+    #[Test]
     public function test_visit_assertion_via_regex(): void
     {
         $ast = $this->regexService->parse('/(?=a)b/');
@@ -226,6 +249,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertInstanceOf(LiteralSet::class, $result);
     }
 
+    #[Test]
     public function test_visit_keep_via_regex(): void
     {
         $ast = $this->regexService->parse('/a\\Kb/');
@@ -234,6 +258,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertInstanceOf(LiteralSet::class, $result);
     }
 
+    #[Test]
     public function test_visit_range_via_regex(): void
     {
         $ast = $this->regexService->parse('/[a-z]/');
@@ -242,6 +267,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertInstanceOf(LiteralSet::class, $result);
     }
 
+    #[Test]
     public function test_visit_backref_via_regex(): void
     {
         $ast = $this->regexService->parse('/(a)\\1/');
@@ -250,6 +276,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertInstanceOf(LiteralSet::class, $result);
     }
 
+    #[Test]
     public function test_visit_unicode_prop_via_regex(): void
     {
         $ast = $this->regexService->parse('/\\p{L}/');
@@ -258,6 +285,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertInstanceOf(LiteralSet::class, $result);
     }
 
+    #[Test]
     public function test_visit_posix_class_via_regex(): void
     {
         $ast = $this->regexService->parse('/[[:alpha:]]/');
@@ -266,6 +294,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertInstanceOf(LiteralSet::class, $result);
     }
 
+    #[Test]
     public function test_visit_comment_via_regex(): void
     {
         $ast = $this->regexService->parse('/(?#comment)abc/');
@@ -274,6 +303,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertInstanceOf(LiteralSet::class, $result);
     }
 
+    #[Test]
     public function test_visit_conditional_via_regex(): void
     {
         $ast = $this->regexService->parse('/(?(1)a|b)/');
@@ -282,6 +312,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertInstanceOf(LiteralSet::class, $result);
     }
 
+    #[Test]
     public function test_visit_subroutine_via_regex(): void
     {
         $ast = $this->regexService->parse('/(?<name>a)(?&name)/');
@@ -290,6 +321,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertInstanceOf(LiteralSet::class, $result);
     }
 
+    #[Test]
     public function test_visit_pcre_verb_via_regex(): void
     {
         $ast = $this->regexService->parse('/(*FAIL)abc/');
@@ -298,6 +330,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertInstanceOf(LiteralSet::class, $result);
     }
 
+    #[Test]
     public function test_visit_define_via_regex(): void
     {
         $ast = $this->regexService->parse('/(?(DEFINE)(?<name>a))b/');
@@ -306,6 +339,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertInstanceOf(LiteralSet::class, $result);
     }
 
+    #[Test]
     public function test_visit_limit_match_via_regex(): void
     {
         $ast = $this->regexService->parse('/(*LIMIT_MATCH=1)abc/');
@@ -314,6 +348,7 @@ final class LiteralExtractorTest extends TestCase
         $this->assertInstanceOf(LiteralSet::class, $result);
     }
 
+    #[Test]
     public function test_visit_callout_via_regex(): void
     {
         $ast = $this->regexService->parse('/(?C1)abc/');

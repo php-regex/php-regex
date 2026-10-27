@@ -55,6 +55,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         ],
     ];
 
+    #[Test]
     public function test_process_node_returns_empty_for_unknown_function(): void
     {
         $rule = new RegexPatternRule();
@@ -67,6 +68,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertSame([], $errors);
     }
 
+    #[Test]
     public function test_process_node_returns_empty_for_non_name_function(): void
     {
         $rule = new RegexPatternRule();
@@ -78,6 +80,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertSame([], $rule->processNode($node, $scope));
     }
 
+    #[Test]
     public function test_process_node_returns_empty_when_pattern_arg_missing(): void
     {
         $rule = new RegexPatternRule();
@@ -89,6 +92,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertSame([], $rule->processNode($node, $scope));
     }
 
+    #[Test]
     public function test_process_node_ignores_non_array_callback_patterns(): void
     {
         $rule = new RegexPatternRule();
@@ -102,6 +106,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertSame([], $rule->processNode($node, $scope));
     }
 
+    #[Test]
     public function test_process_node_skips_non_string_callback_keys(): void
     {
         $rule = new RegexPatternRule();
@@ -119,6 +124,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertSame([], $rule->processNode($node, $scope));
     }
 
+    #[Test]
     public function test_process_node_continues_after_non_string_callback_keys(): void
     {
         $rule = new RegexPatternRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
@@ -231,6 +237,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertSame([], $this->errorsFor($rule, '/(?aD)x/', 7));
     }
 
+    #[Test]
     public function test_default_report_redos_is_disabled(): void
     {
         $rule = new RegexPatternRule();
@@ -264,6 +271,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertSame(['regex.lint.flag.useless.s'], $this->identifiersOf($this->errorsFor($rule, '/no_dot/s', 5)));
     }
 
+    #[Test]
     public function test_default_suggest_optimizations_is_disabled(): void
     {
         $rule = new RegexPatternRule();
@@ -282,6 +290,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertFalse($hasOptimization);
     }
 
+    #[Test]
     public function test_checks_config_enables_redos_and_optimizations(): void
     {
         $rule = new RegexPatternRule(
@@ -332,6 +341,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
      * "\w" follows the locale without "u": the word class is not offered
      * as one, and only a reordering would be left to suggest.
      */
+    #[Test]
     public function test_default_optimization_config_keeps_the_word_class(): void
     {
         $rule = new RegexPatternRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
@@ -342,6 +352,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertNotContains('regex.optimization', $identifiers);
     }
 
+    #[Test]
     public function test_default_optimization_config_avoids_cross_category_ranges(): void
     {
         $rule = new RegexPatternRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
@@ -360,6 +371,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertFalse($hasOptimization);
     }
 
+    #[Test]
     public function test_report_redos_flag_skips_redos_issues(): void
     {
         $rule = new RegexPatternRule(config: ['checks' => ['lint' => ['enabled' => true], 'redos' => ['enabled' => false]]]);
@@ -371,6 +383,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_redos_low_severity_is_reported_under_regex_redos(): void
     {
         $rule = new RegexPatternRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
@@ -386,6 +399,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_unsafe_optimizations_are_skipped(): void
     {
         $rule = new RegexPatternRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
@@ -395,21 +409,25 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertNotContains('regex.optimization', $identifiers);
     }
 
+    #[Test]
     public function test_is_optimization_safe_rejects_empty_optimized_pattern(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/abc/', ''));
     }
 
+    #[Test]
     public function test_is_optimization_safe_rejects_short_pattern(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/a/', '/a/'));
     }
 
+    #[Test]
     public function test_is_optimization_safe_rejects_delimiter_only(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/a/', '/'));
     }
 
+    #[Test]
     public function test_default_optimization_config_enables_digits_optimization(): void
     {
         $rule = new RegexPatternRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
@@ -420,26 +438,31 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertContains('regex.optimization', $identifiers);
     }
 
+    #[Test]
     public function test_is_optimization_format_safe_rejects_empty_delimiter(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/abc/', ''));
     }
 
+    #[Test]
     public function test_is_optimization_format_safe_rejects_delimiter_at_start_only(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/abc/', '/'));
     }
 
+    #[Test]
     public function test_is_optimization_format_safe_rejects_empty_pattern_part(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/abc/', '//'));
     }
 
+    #[Test]
     public function test_is_optimization_format_safe_rejects_short_pattern(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/ab/', '/a/'));
     }
 
+    #[Test]
     public function test_redos_critical_severity_is_reported_under_regex_redos(): void
     {
         $rule = new RegexPatternRule(config: ['checks' => ['redos' => ['enabled' => true, 'threshold' => 'low']]]);
@@ -456,6 +479,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_suggest_optimizations_uses_limit_parameter(): void
     {
         $rule = new RegexPatternRule(config: ['checks' => ['optimizations' => ['enabled' => true]]]);
@@ -467,6 +491,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertContains('regex.optimization', $identifiers);
     }
 
+    #[Test]
     public function test_display_pattern_cuts_at_the_length_limit(): void
     {
         // Test exactly at length limit
@@ -482,6 +507,7 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         $this->assertSame(str_repeat('a', 50).'...', $result);
     }
 
+    #[Test]
     public function test_format_source_concatenates_correctly(): void
     {
         $rule = new RegexPatternRule();

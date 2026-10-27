@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LengthRangeCalculatorTest extends TestCase
 {
+    #[Test]
     public function test_length_range_visitor_reports_quantifier_bounds(): void
     {
         $regex = Regex::create();

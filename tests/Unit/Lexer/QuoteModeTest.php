@@ -129,6 +129,7 @@ final class QuoteModeTest extends TestCase
         yield 'three-byte character up to a later code point' => ['pattern' => "/[\\Q\u{20ac}\\E-\\x{20ad}]/u", 'offset' => null];
     }
 
+    #[Test]
     public function test_quote_mode_with_end_delimiter(): void
     {
         // \Q ... \E
@@ -144,6 +145,7 @@ final class QuoteModeTest extends TestCase
         $this->assertSame('\E', $tokens[2]->value);
     }
 
+    #[Test]
     public function test_quote_mode_until_end_of_string(): void
     {
         // \Q ... (no \E)
@@ -157,6 +159,7 @@ final class QuoteModeTest extends TestCase
         $this->assertSame('*+?', $tokens[1]->value);
     }
 
+    #[Test]
     public function test_empty_quote_mode(): void
     {
         // \Q\E

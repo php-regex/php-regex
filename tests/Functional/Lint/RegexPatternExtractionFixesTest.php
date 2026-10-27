@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Lint;
 
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -31,6 +32,7 @@ final class RegexPatternExtractionFixesTest extends TestCase
     /**
      * Test that simple regex with flags is extracted correctly.
      */
+    #[Test]
     public function test_extract_simple_regex_with_m_flag(): void
     {
         $fixtureFile = __DIR__.'/../../Fixtures/Lint/regex_fixes_simple_m_flag.php';
@@ -44,6 +46,7 @@ final class RegexPatternExtractionFixesTest extends TestCase
     /**
      * Test that regex with multiple flags is extracted correctly.
      */
+    #[Test]
     public function test_extract_regex_with_multiple_flags(): void
     {
         $fixtureFile = __DIR__.'/../../Fixtures/Lint/regex_fixes_multiple_flags.php';
@@ -57,6 +60,7 @@ final class RegexPatternExtractionFixesTest extends TestCase
     /**
      * Test that regex without flags works normally.
      */
+    #[Test]
     public function test_extract_regex_without_flags(): void
     {
         $fixtureFile = __DIR__.'/../../Fixtures/Lint/regex_fixes_no_flags.php';
@@ -70,6 +74,7 @@ final class RegexPatternExtractionFixesTest extends TestCase
     /**
      * Test case from the real-world issue.
      */
+    #[Test]
     public function test_real_world_case(): void
     {
         $fixtureFile = __DIR__.'/../../Fixtures/Lint/regex_fixes_real_world.php';

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Sweep;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -40,6 +41,7 @@ final class ValidatorSweepTest extends TestCase
         $this->validatorVisitor = new Validator();
     }
 
+    #[Test]
     public function test_validator_visitor_dot_node(): void
     {
         $this->expectNotToPerformAssertions();
@@ -47,6 +49,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_visitor_keep_node(): void
     {
         $this->expectNotToPerformAssertions();
@@ -54,6 +57,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_visitor_comment_node(): void
     {
         $this->expectNotToPerformAssertions();
@@ -61,6 +65,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_visitor_pcre_verb_node(): void
     {
         $this->expectNotToPerformAssertions();
@@ -68,6 +73,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_visitor_octal_legacy_node(): void
     {
         $this->expectNotToPerformAssertions();
@@ -75,6 +81,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_visitor_octal_node(): void
     {
         $this->expectNotToPerformAssertions();
@@ -82,6 +89,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_visitor_quantifier_bounds(): void
     {
         $this->expectNotToPerformAssertions();
@@ -105,6 +113,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_visitor_unicode_prop(): void
     {
         $this->expectNotToPerformAssertions();
@@ -112,6 +121,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_visitor_conditional(): void
     {
         $this->expectNotToPerformAssertions();
@@ -119,6 +129,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_visitor_subroutine(): void
     {
         $this->expectNotToPerformAssertions();
@@ -126,6 +137,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_visitor_assertion_nodes(): void
     {
         $this->expectNotToPerformAssertions();
@@ -133,6 +145,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_quantifier_edge_cases(): void
     {
         $this->expectNotToPerformAssertions();
@@ -144,6 +157,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_char_class_ranges(): void
     {
         $this->expectNotToPerformAssertions();
@@ -151,6 +165,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_backref_variations(): void
     {
         $this->expectNotToPerformAssertions();
@@ -161,6 +176,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_unicode_variations(): void
     {
         $ast = $this->regexService->parse('/\x41/');
@@ -172,6 +188,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_conditional_variations(): void
     {
         $this->expectNotToPerformAssertions();
@@ -180,6 +197,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_unicode_variations_all(): void
     {
         $this->expectNotToPerformAssertions();
@@ -200,6 +218,7 @@ final class ValidatorSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_validator_octal_variations(): void
     {
         $this->expectNotToPerformAssertions();
@@ -217,6 +236,7 @@ final class ValidatorSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_validator_posix_class_negated(): void
     {
         $this->expectNotToPerformAssertions();
@@ -224,6 +244,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_subroutine(): void
     {
         $this->expectNotToPerformAssertions();
@@ -231,6 +252,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_atomic_group(): void
     {
         $this->expectNotToPerformAssertions();
@@ -238,6 +260,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($this->validatorVisitor);
     }
 
+    #[Test]
     public function test_validator_range_validation(): void
     {
         // Valid ranges
@@ -251,6 +274,7 @@ final class ValidatorSweepTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_validator_with_invalid_backref(): void
     {
         // Test Validator with invalid backreference
@@ -262,6 +286,7 @@ final class ValidatorSweepTest extends TestCase
         $ast->accept($visitor);
     }
 
+    #[Test]
     public function test_validator_with_invalid_subroutine(): void
     {
         // Test Validator with invalid subroutine

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
+use PHPUnit\Framework\Attributes\Test;
 use Illuminate\Contracts\Console\Kernel;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 
@@ -22,6 +23,7 @@ use PHPRegex\Laravel\PHPRegexServiceProvider;
  */
 final class CommandSurfaceParityTest extends LaravelTestCase
 {
+    #[Test]
     public function test_compare_looks_for_an_intersection_by_default(): void
     {
         $this->command('regex:compare', ['pattern1' => '/[a-z]+/', 'pattern2' => '/[0-9]+/'])
@@ -34,6 +36,7 @@ final class CommandSurfaceParityTest extends LaravelTestCase
             ->expectsOutputToContain('Example:');
     }
 
+    #[Test]
     public function test_compare_checks_a_subset(): void
     {
         $this->command('regex:compare', ['pattern1' => '/edit/', 'pattern2' => '/[a-z]+/', '--method' => 'subset'])
@@ -46,6 +49,7 @@ final class CommandSurfaceParityTest extends LaravelTestCase
             ->expectsOutputToContain('Counterexample:');
     }
 
+    #[Test]
     public function test_compare_checks_an_equivalence(): void
     {
         $this->command('regex:compare', ['pattern1' => '/[0-9]+/', 'pattern2' => '/\d+/', '--method' => 'equivalence'])
@@ -53,6 +57,7 @@ final class CommandSurfaceParityTest extends LaravelTestCase
             ->expectsOutputToContain('EQUIVALENT');
     }
 
+    #[Test]
     public function test_compare_refuses_an_unknown_method(): void
     {
         $this->command('regex:compare', ['pattern1' => '/a/', 'pattern2' => '/b/', '--method' => 'union'])
@@ -60,6 +65,7 @@ final class CommandSurfaceParityTest extends LaravelTestCase
             ->expectsOutputToContain("Invalid method 'union'. Supported: intersection, subset, equivalence");
     }
 
+    #[Test]
     public function test_compare_reports_each_method_in_json(): void
     {
         $intersection = $this->compareJson(['pattern1' => '/[a-z]+/', 'pattern2' => '/edit/']);
@@ -80,6 +86,7 @@ final class CommandSurfaceParityTest extends LaravelTestCase
         $this->assertNull($equivalence['counterexample']);
     }
 
+    #[Test]
     public function test_the_short_options_are_those_of_the_cli_and_symfony(): void
     {
         $this->assertSame('j', $this->registeredCommand('regex:lint')->getDefinition()->getOption('jobs')->getShortcut());
@@ -88,6 +95,7 @@ final class CommandSurfaceParityTest extends LaravelTestCase
         $this->assertSame('intersection', $this->registeredCommand('regex:compare')->getDefinition()->getOption('method')->getDefault());
     }
 
+    #[Test]
     public function test_transpile_takes_its_target_after_t(): void
     {
         $this->command('regex:transpile', ['pattern' => '/^[a-z]+$/', '-t' => 'python'])
@@ -99,6 +107,7 @@ final class CommandSurfaceParityTest extends LaravelTestCase
      * A pattern the optimizer shortens prints its suggestion beside the
      * explanation.
      */
+    #[Test]
     public function test_explain_prints_the_optimization_suggestion(): void
     {
         $this->command('regex:explain', ['pattern' => '/[0-9]+/'])

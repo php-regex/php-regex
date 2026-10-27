@@ -18,10 +18,12 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LengthRangeCalculatorEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_alternation_with_infinite_branch_returns_null_max(): void
     {
         $visitor = new LengthRangeCalculator();

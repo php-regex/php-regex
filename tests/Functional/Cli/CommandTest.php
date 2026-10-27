@@ -32,10 +32,12 @@ use PHPRegex\Cli\SelfUpdate\SelfUpdater;
 use PHPRegex\Tests\Support\LocalReleaseDownloader;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CommandTest extends TestCase
 {
+    #[Test]
     public function test_analyze_command_reports_missing_pattern(): void
     {
         $command = new AnalyzeCommand();
@@ -48,6 +50,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Missing pattern', $buffer);
     }
 
+    #[Test]
     public function test_analyze_command_handles_pattern(): void
     {
         $command = new AnalyzeCommand();
@@ -60,6 +63,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Severity', $buffer);
     }
 
+    #[Test]
     public function test_analyze_command_outputs_json(): void
     {
         $command = new AnalyzeCommand();
@@ -87,6 +91,7 @@ final class CommandTest extends TestCase
         $this->assertIsString($payload['explain']);
     }
 
+    #[Test]
     public function test_analyze_command_json_carries_the_error_code_as_a_string(): void
     {
         $command = new AnalyzeCommand();
@@ -100,6 +105,7 @@ final class CommandTest extends TestCase
         $this->assertSame('regex.lookbehind.unbounded', $validation['error_code']);
     }
 
+    #[Test]
     public function test_analyze_command_handles_invalid_regex_options(): void
     {
         $command = new AnalyzeCommand();
@@ -120,6 +126,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Invalid option:', $buffer);
     }
 
+    #[Test]
     public function test_analyze_command_reports_invalid_pattern(): void
     {
         $command = new AnalyzeCommand();
@@ -132,6 +139,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Analyze failed:', $buffer);
     }
 
+    #[Test]
     public function test_analyze_command_reports_validation_error(): void
     {
         $command = new AnalyzeCommand();
@@ -146,6 +154,7 @@ final class CommandTest extends TestCase
         // This covers the if (!$validation->isValid && $validation->error) branch
     }
 
+    #[Test]
     public function test_redos_command_reads_the_pattern_for_the_target(): void
     {
         $command = new RedosCommand();
@@ -165,6 +174,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Safe:', $buffer);
     }
 
+    #[Test]
     public function test_banners_name_the_target_asked_for(): void
     {
         $options = new GlobalOptions(false, false, false, true, '8.4', null, '10.42');
@@ -182,6 +192,7 @@ final class CommandTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_debug_command_reports_missing_pattern(): void
     {
         $command = new DebugCommand();
@@ -194,6 +205,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Missing pattern', $buffer);
     }
 
+    #[Test]
     public function test_debug_command_reports_missing_input_value(): void
     {
         $command = new DebugCommand();
@@ -206,6 +218,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Missing value for --input', $buffer);
     }
 
+    #[Test]
     public function test_debug_command_outputs_json(): void
     {
         $command = new DebugCommand();
@@ -230,6 +243,7 @@ final class CommandTest extends TestCase
         $this->assertArrayHasKey('source', $input);
     }
 
+    #[Test]
     public function test_debug_command_runs_with_input(): void
     {
         $command = new DebugCommand();
@@ -241,6 +255,7 @@ final class CommandTest extends TestCase
         $this->assertSame(0, $exitCode);
     }
 
+    #[Test]
     public function test_debug_command_reports_invalid_pattern(): void
     {
         $command = new DebugCommand();
@@ -253,6 +268,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Debug failed:', $buffer);
     }
 
+    #[Test]
     public function test_debug_command_outputs_with_ansi(): void
     {
         $command = new DebugCommand();
@@ -266,6 +282,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('debug', $buffer);
     }
 
+    #[Test]
     public function test_debug_command_generates_auto_input_when_none_provided(): void
     {
         $command = new DebugCommand();
@@ -279,6 +296,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('(auto)', $buffer);
     }
 
+    #[Test]
     public function test_debug_command_handles_input_option_with_value(): void
     {
         $command = new DebugCommand();
@@ -291,6 +309,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Input:      "testinput"', $buffer);
     }
 
+    #[Test]
     public function test_debug_command_handles_invalid_regex_options(): void
     {
         $command = new DebugCommand();
@@ -311,6 +330,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Invalid option:', $buffer);
     }
 
+    #[Test]
     public function test_debug_command_handles_php_version_option(): void
     {
         $command = new DebugCommand();
@@ -331,6 +351,7 @@ final class CommandTest extends TestCase
         // Should process without error
     }
 
+    #[Test]
     public function test_debug_command_handles_simple_pattern(): void
     {
         $command = new DebugCommand();
@@ -344,6 +365,7 @@ final class CommandTest extends TestCase
         $this->assertMatchesRegularExpression('/^Command\s*: debug$/m', $buffer);
     }
 
+    #[Test]
     public function test_diagram_command_reports_missing_pattern(): void
     {
         $command = new DiagramCommand();
@@ -356,6 +378,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Missing pattern', $buffer);
     }
 
+    #[Test]
     public function test_diagram_command_rejects_unsupported_format(): void
     {
         $command = new DiagramCommand();
@@ -368,6 +391,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Unsupported format', $buffer);
     }
 
+    #[Test]
     public function test_diagram_command_renders_diagram(): void
     {
         $command = new DiagramCommand();
@@ -379,6 +403,7 @@ final class CommandTest extends TestCase
         $this->assertSame(0, $exitCode);
     }
 
+    #[Test]
     public function test_diagram_command_renders_svg_to_stdout(): void
     {
         $command = new DiagramCommand();
@@ -392,6 +417,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('</svg>', $buffer);
     }
 
+    #[Test]
     public function test_diagram_command_renders_svg_diagram(): void
     {
         $command = new DiagramCommand();
@@ -411,6 +437,7 @@ final class CommandTest extends TestCase
         @unlink($tempFile);
     }
 
+    #[Test]
     public function test_diagram_command_reports_invalid_pattern(): void
     {
         $command = new DiagramCommand();
@@ -423,6 +450,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Diagram failed:', $buffer);
     }
 
+    #[Test]
     public function test_diagram_command_supports_format_option_with_separate_value(): void
     {
         $command = new DiagramCommand();
@@ -435,6 +463,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('a', $buffer); // Should contain diagram output
     }
 
+    #[Test]
     public function test_diagram_command_handles_invalid_regex_options(): void
     {
         $command = new DiagramCommand();
@@ -455,6 +484,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Invalid option:', $buffer);
     }
 
+    #[Test]
     public function test_highlight_command_reports_missing_pattern(): void
     {
         $command = new HighlightCommand();
@@ -467,6 +497,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Missing pattern', $buffer);
     }
 
+    #[Test]
     public function test_highlight_command_outputs_highlight(): void
     {
         $command = new HighlightCommand();
@@ -480,6 +511,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Highlighting pattern', $buffer);
     }
 
+    #[Test]
     public function test_highlight_command_supports_html_format(): void
     {
         $command = new HighlightCommand();
@@ -491,6 +523,7 @@ final class CommandTest extends TestCase
         $this->assertSame(0, $exitCode);
     }
 
+    #[Test]
     public function test_highlight_command_reports_invalid_pattern(): void
     {
         $command = new HighlightCommand();
@@ -503,6 +536,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('FAIL Error:', $buffer);
     }
 
+    #[Test]
     public function test_highlight_command_supports_format_option_with_separate_value(): void
     {
         $command = new HighlightCommand();
@@ -515,6 +549,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('/a+/', $buffer);
     }
 
+    #[Test]
     public function test_explain_command_refuses_the_former_text_format(): void
     {
         $command = new ExplainCommand();
@@ -527,6 +562,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString("Unsupported format 'text'. Use --format=console or --format=html.", $buffer);
     }
 
+    #[Test]
     public function test_highlight_command_reports_invalid_format(): void
     {
         $command = new HighlightCommand();
@@ -539,6 +575,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString("Unsupported format 'invalid'. Use --format=auto, --format=console or --format=html.", $buffer);
     }
 
+    #[Test]
     public function test_highlight_command_handles_invalid_regex_options(): void
     {
         $command = new HighlightCommand();
@@ -559,6 +596,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Invalid option:', $buffer);
     }
 
+    #[Test]
     public function test_parse_command_reports_missing_pattern(): void
     {
         $command = new ParseCommand();
@@ -571,6 +609,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Missing pattern', $buffer);
     }
 
+    #[Test]
     public function test_parse_command_outputs_compiled_and_validation(): void
     {
         $command = new ParseCommand();
@@ -582,6 +621,7 @@ final class CommandTest extends TestCase
         $this->assertSame(0, $exitCode);
     }
 
+    #[Test]
     public function test_parse_command_reports_invalid_pattern(): void
     {
         $command = new ParseCommand();
@@ -594,6 +634,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Parse failed:', $buffer);
     }
 
+    #[Test]
     public function test_parse_command_handles_invalid_regex_options(): void
     {
         $command = new ParseCommand();
@@ -614,6 +655,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Invalid option:', $buffer);
     }
 
+    #[Test]
     public function test_validate_command_reports_missing_pattern(): void
     {
         $command = new ValidateCommand();
@@ -626,6 +668,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Missing pattern', $buffer);
     }
 
+    #[Test]
     public function test_validate_command_reports_invalid_pattern(): void
     {
         $command = new ValidateCommand();
@@ -641,6 +684,7 @@ final class CommandTest extends TestCase
     /**
      * Under the caret, the fix: "{1,2}" compiles where "{2,1}" does not.
      */
+    #[Test]
     public function test_validate_command_prints_the_fix_under_the_caret(): void
     {
         $mistake = self::reversedCounts();
@@ -673,6 +717,7 @@ final class CommandTest extends TestCase
     /**
      * @param list<string> $arguments
      */
+    #[Test]
     #[DataProvider('provideCommandsReportingAValidationError')]
     public function test_command_prints_the_message_and_the_caret_snippet(string $command, array $arguments): void
     {
@@ -693,6 +738,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString("\n        ^\n", $buffer);
     }
 
+    #[Test]
     public function test_validate_command_accepts_valid_pattern(): void
     {
         $command = new ValidateCommand();
@@ -705,6 +751,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('OK', $buffer);
     }
 
+    #[Test]
     public function test_validate_command_handles_invalid_regex_options(): void
     {
         $command = new ValidateCommand();
@@ -725,6 +772,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Invalid option:', $buffer);
     }
 
+    #[Test]
     public function test_help_command_outputs_sections_with_and_without_ansi(): void
     {
         $command = new HelpCommand();
@@ -745,6 +793,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Usage', $ansiBuffer);
     }
 
+    #[Test]
     public function test_version_command_outputs_version(): void
     {
         $command = new VersionCommand();
@@ -758,6 +807,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('github.com/php-regex/php-regex', $buffer);
     }
 
+    #[Test]
     public function test_self_update_command_help_and_error_paths(): void
     {
         $updater = new SelfUpdater();
@@ -777,6 +827,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('Self-update failed', $errorBuffer);
     }
 
+    #[Test]
     public function test_self_update_command_get_name_returns_correct_value(): void
     {
         $command = new SelfUpdateCommand(new SelfUpdater());
@@ -784,6 +835,7 @@ final class CommandTest extends TestCase
         $this->assertSame('self-update', $command->getName());
     }
 
+    #[Test]
     public function test_self_update_command_get_aliases_returns_correct_value(): void
     {
         $command = new SelfUpdateCommand(new SelfUpdater());
@@ -791,6 +843,7 @@ final class CommandTest extends TestCase
         $this->assertSame(['selfupdate'], $command->getAliases());
     }
 
+    #[Test]
     public function test_self_update_command_get_description_returns_correct_value(): void
     {
         $command = new SelfUpdateCommand(new SelfUpdater());
@@ -798,6 +851,7 @@ final class CommandTest extends TestCase
         $this->assertSame('Update the CLI phar to the latest release', $command->getDescription());
     }
 
+    #[Test]
     public function test_self_update_command_run_returns_zero_on_success(): void
     {
         // The installed phar is replaced by itself, served as the latest release.
@@ -822,6 +876,7 @@ final class CommandTest extends TestCase
         $this->assertStringContainsString('PHPRegex updated successfully.', $buffer);
     }
 
+    #[Test]
     public function test_version_command_get_name_returns_correct_value(): void
     {
         $command = new VersionCommand();
@@ -829,6 +884,7 @@ final class CommandTest extends TestCase
         $this->assertSame('version', $command->getName());
     }
 
+    #[Test]
     public function test_version_command_get_aliases_returns_correct_value(): void
     {
         $command = new VersionCommand();
@@ -836,6 +892,7 @@ final class CommandTest extends TestCase
         $this->assertSame(['--version', '-v'], $command->getAliases());
     }
 
+    #[Test]
     public function test_version_command_get_description_returns_correct_value(): void
     {
         $command = new VersionCommand();
@@ -843,6 +900,7 @@ final class CommandTest extends TestCase
         $this->assertSame('Display version information', $command->getDescription());
     }
 
+    #[Test]
     public function test_help_command_get_name_returns_correct_value(): void
     {
         $command = new HelpCommand();
@@ -850,6 +908,7 @@ final class CommandTest extends TestCase
         $this->assertSame('help', $command->getName());
     }
 
+    #[Test]
     public function test_help_command_get_aliases_returns_correct_value(): void
     {
         $command = new HelpCommand();
@@ -857,6 +916,7 @@ final class CommandTest extends TestCase
         $this->assertSame(['--help', '-h'], $command->getAliases());
     }
 
+    #[Test]
     public function test_help_command_get_description_returns_correct_value(): void
     {
         $command = new HelpCommand();
@@ -864,6 +924,7 @@ final class CommandTest extends TestCase
         $this->assertSame('Display this help message', $command->getDescription());
     }
 
+    #[Test]
     public function test_analyze_command_get_name_returns_correct_value(): void
     {
         $command = new AnalyzeCommand();
@@ -871,6 +932,7 @@ final class CommandTest extends TestCase
         $this->assertSame('analyze', $command->getName());
     }
 
+    #[Test]
     public function test_analyze_command_get_aliases_returns_correct_value(): void
     {
         $command = new AnalyzeCommand();
@@ -878,6 +940,7 @@ final class CommandTest extends TestCase
         $this->assertSame(['analyse'], $command->getAliases());
     }
 
+    #[Test]
     public function test_analyze_command_get_description_returns_correct_value(): void
     {
         $command = new AnalyzeCommand();
@@ -885,6 +948,7 @@ final class CommandTest extends TestCase
         $this->assertSame('Parse, validate, and analyze ReDoS risk', $command->getDescription());
     }
 
+    #[Test]
     public function test_debug_command_get_name_returns_correct_value(): void
     {
         $command = new DebugCommand();
@@ -892,6 +956,7 @@ final class CommandTest extends TestCase
         $this->assertSame('debug', $command->getName());
     }
 
+    #[Test]
     public function test_debug_command_get_aliases_returns_correct_value(): void
     {
         $command = new DebugCommand();
@@ -899,6 +964,7 @@ final class CommandTest extends TestCase
         $this->assertSame([], $command->getAliases());
     }
 
+    #[Test]
     public function test_debug_command_get_description_returns_correct_value(): void
     {
         $command = new DebugCommand();
@@ -906,6 +972,7 @@ final class CommandTest extends TestCase
         $this->assertSame('Deep ReDoS analysis with heatmap output', $command->getDescription());
     }
 
+    #[Test]
     public function test_diagram_command_get_name_returns_correct_value(): void
     {
         $command = new DiagramCommand();
@@ -913,6 +980,7 @@ final class CommandTest extends TestCase
         $this->assertSame('diagram', $command->getName());
     }
 
+    #[Test]
     public function test_diagram_command_get_aliases_returns_correct_value(): void
     {
         $command = new DiagramCommand();
@@ -920,6 +988,7 @@ final class CommandTest extends TestCase
         $this->assertSame([], $command->getAliases());
     }
 
+    #[Test]
     public function test_diagram_command_get_description_returns_correct_value(): void
     {
         $command = new DiagramCommand();
@@ -927,6 +996,7 @@ final class CommandTest extends TestCase
         $this->assertSame('Render a diagram of the AST (text or SVG)', $command->getDescription());
     }
 
+    #[Test]
     public function test_highlight_command_get_name_returns_correct_value(): void
     {
         $command = new HighlightCommand();
@@ -934,6 +1004,7 @@ final class CommandTest extends TestCase
         $this->assertSame('highlight', $command->getName());
     }
 
+    #[Test]
     public function test_highlight_command_get_aliases_returns_correct_value(): void
     {
         $command = new HighlightCommand();
@@ -941,6 +1012,7 @@ final class CommandTest extends TestCase
         $this->assertSame([], $command->getAliases());
     }
 
+    #[Test]
     public function test_highlight_command_get_description_returns_correct_value(): void
     {
         $command = new HighlightCommand();
@@ -948,6 +1020,7 @@ final class CommandTest extends TestCase
         $this->assertSame('Highlight a regex for display', $command->getDescription());
     }
 
+    #[Test]
     public function test_parse_command_get_name_returns_correct_value(): void
     {
         $command = new ParseCommand();
@@ -955,6 +1028,7 @@ final class CommandTest extends TestCase
         $this->assertSame('parse', $command->getName());
     }
 
+    #[Test]
     public function test_parse_command_get_aliases_returns_correct_value(): void
     {
         $command = new ParseCommand();
@@ -962,6 +1036,7 @@ final class CommandTest extends TestCase
         $this->assertSame([], $command->getAliases());
     }
 
+    #[Test]
     public function test_parse_command_get_description_returns_correct_value(): void
     {
         $command = new ParseCommand();
@@ -969,6 +1044,7 @@ final class CommandTest extends TestCase
         $this->assertSame('Parse and recompile a regex pattern', $command->getDescription());
     }
 
+    #[Test]
     public function test_validate_command_get_name_returns_correct_value(): void
     {
         $command = new ValidateCommand();
@@ -976,6 +1052,7 @@ final class CommandTest extends TestCase
         $this->assertSame('validate', $command->getName());
     }
 
+    #[Test]
     public function test_validate_command_get_aliases_returns_correct_value(): void
     {
         $command = new ValidateCommand();
@@ -983,6 +1060,7 @@ final class CommandTest extends TestCase
         $this->assertSame([], $command->getAliases());
     }
 
+    #[Test]
     public function test_validate_command_get_description_returns_correct_value(): void
     {
         $command = new ValidateCommand();

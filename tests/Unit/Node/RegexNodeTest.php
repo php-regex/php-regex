@@ -18,6 +18,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RegexNodeTest extends TestCase
@@ -35,6 +36,7 @@ final class RegexNodeTest extends TestCase
         yield 'tilde_delimiter' => ['~', 'A'];
     }
 
+    #[Test]
     #[DataProvider('data_provider_regex_properties')]
     public function test_constructor_and_getters(string $delimiter, string $flags): void
     {
@@ -51,6 +53,7 @@ final class RegexNodeTest extends TestCase
         $this->assertSame($end, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_regex(): void
     {
         $pattern = $this->createStub(NodeInterface::class);

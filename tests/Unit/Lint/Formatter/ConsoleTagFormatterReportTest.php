@@ -24,6 +24,7 @@ use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
@@ -40,6 +41,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_format_empty_report(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -56,6 +58,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('No issues found', $output);
     }
 
+    #[Test]
     public function test_format_error(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -71,6 +74,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertSame($result, $output);
     }
 
+    #[Test]
     public function test_format_with_error_issues(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -98,6 +102,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('Invalid regex pattern', $output);
     }
 
+    #[Test]
     public function test_format_with_warning_issues(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -125,6 +130,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('Consider simplifying', $output);
     }
 
+    #[Test]
     public function test_format_with_info_issues(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -150,6 +156,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('FAIL', $output);
     }
 
+    #[Test]
     public function test_format_with_optimizations(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -185,6 +192,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('<bg=cyan;fg=black;options=bold> TIP </>', $output);
     }
 
+    #[Test]
     public function test_format_with_issue_suggested_pattern_tip(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -214,6 +222,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringNotContainsString('+ /(?\>(a+))+/', $output);
     }
 
+    #[Test]
     public function test_format_with_location(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -240,6 +249,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('in function call', $output);
     }
 
+    #[Test]
     public function test_format_with_multiple_files(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -278,6 +288,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('Warning in file2', $output);
     }
 
+    #[Test]
     public function test_format_with_multiline_message(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -303,6 +314,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('INFO', $output);
     }
 
+    #[Test]
     public function test_format_with_no_pattern(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -330,6 +342,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('in function call', $output);
     }
 
+    #[Test]
     public function test_format_with_decorated_false(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -357,6 +370,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('FAIL', $output);
     }
 
+    #[Test]
     public function test_format_summary_with_errors(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -373,6 +387,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('1 warnings, 3 optimizations', $output);
     }
 
+    #[Test]
     public function test_format_summary_with_warnings_only(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -389,6 +404,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('1 optimizations available', $output);
     }
 
+    #[Test]
     public function test_format_summary_with_optimizations_only(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -405,6 +421,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('3 optimizations available', $output);
     }
 
+    #[Test]
     public function test_display_pattern_context_shows_line_when_pattern_missing(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -426,6 +443,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('./src/File.php:12', (string) $output);
     }
 
+    #[Test]
     public function test_safely_highlight_pattern_skips_highlight_when_backslash_present(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -439,6 +457,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('\\d', (string) $output);
     }
 
+    #[Test]
     public function test_display_optimizations_skips_invalid_entries(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -458,6 +477,7 @@ final class ConsoleTagFormatterReportTest extends TestCase
         $this->assertStringContainsString('<fg=green>+ ', (string) $output);
     }
 
+    #[Test]
     public function test_display_single_issue_handles_multiline_messages(): void
     {
         $badge = '<bg=gray;fg=white;options=bold> INFO </>';

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Node;
 
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -27,12 +28,14 @@ final class AcceptReturnTypeContractTest extends TestCase
     /**
      * @param class-string<NodeInterface> $class
      */
+    #[Test]
     #[DataProvider('provideNodeClasses')]
     public function test_accept_has_no_native_return_type(string $class): void
     {
         $this->assertNull((new \ReflectionMethod($class, 'accept'))->getReturnType(), $class);
     }
 
+    #[Test]
     public function test_every_node_declaring_accept_is_checked(): void
     {
         $this->assertCount(29, [...self::provideNodeClasses()]);

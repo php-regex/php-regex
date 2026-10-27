@@ -20,10 +20,12 @@ use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AdvancedFeaturesComplianceTest extends TestCase
 {
+    #[Test]
     #[DataProvider('provideRecursionSeeds')]
     public function test_sample_generator_handles_recursion(int $seed, string $expectedSample): void
     {
@@ -41,6 +43,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'triple depth' => [1, 'aaazzz'];
     }
 
+    #[Test]
     #[DataProvider('provideControlVerbPatterns')]
     public function test_redos_analyzer_respects_commit(string $pattern, RedosSeverity $expected): void
     {
@@ -59,6 +62,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'skip' => ['/(a+(*SKIP))+/', RedosSeverity::Safe];
     }
 
+    #[Test]
     #[DataProvider('provideRecursiveConditionPatterns')]
     public function test_recursive_condition_validation(string $pattern): void
     {
@@ -76,6 +80,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'root recursion check' => ['/(?(R)a|b)/'];
     }
 
+    #[Test]
     #[DataProvider('provideQuantifierPatterns')]
     public function test_php84_quantifier_missing_min_syntax(string $pattern, string $expectedCompiled): void
     {
@@ -97,6 +102,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'no_spaces' => ['/a{2,3}/', '/a{2,3}/'];
     }
 
+    #[Test]
     #[DataProvider('provideNewlineVerbPatterns')]
     public function test_newline_verbs(string $pattern): void
     {
@@ -114,6 +120,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'crlf_newline' => ['/(*CRLF)a/'];
     }
 
+    #[Test]
     #[DataProvider('provideEncodingVerbPatterns')]
     public function test_encoding_verbs(string $pattern): void
     {
@@ -130,6 +137,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'ucp' => ['/(*UCP)a/'];
     }
 
+    #[Test]
     #[DataProvider('provideMatchControlVerbPatterns')]
     public function test_match_control_verbs(string $pattern): void
     {
@@ -146,6 +154,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'notempty_atstart' => ['/(*NOTEMPTY_ATSTART)^a+/'];
     }
 
+    #[Test]
     #[DataProvider('provideUnicodePropertyPatterns')]
     public function test_unicode_properties(string $pattern, string $expected): void
     {
@@ -170,6 +179,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'short_form_negated' => ['/\PL/', '/\PL/'];
     }
 
+    #[Test]
     #[DataProvider('providePcre84Features')]
     public function test_pcre_84_features_implemented(string $pattern, string $description): void
     {
@@ -245,6 +255,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'complex_quantifiers_and_verbs' => ['/(?C1)a{,3}(*MARK:pos)b{ 2 , 5 }(*PRUNE)/', 'complex combination of features'];
     }
 
+    #[Test]
     #[DataProvider('providePcre84InvalidPatterns')]
     public function test_pcre_84_invalid_patterns(string $pattern, string $description): void
     {
@@ -254,6 +265,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         $this->assertFalse($result->isValid, "Pattern should be invalid: {$description}");
     }
 
+    #[Test]
     #[DataProvider('provideComprehensivePcre84Patterns')]
     public function test_comprehensive_pcre84_parsing(string $pattern, string $description): void
     {

@@ -19,12 +19,14 @@ use PHPRegex\Parser\Lexer;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LexerUtf8Test extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_lexer_tokenizes_invalid_utf8_in_byte_mode(): void
     {
         // Invalid UTF-8 sequence (0xC3 without a following byte): PCRE
@@ -37,6 +39,7 @@ final class LexerUtf8Test extends TestCase
         $this->assertCount(5, $tokens); // a, b, c, \xC3, EOF
     }
 
+    #[Test]
     public function test_lexer_throws_on_invalid_utf8_with_u_flag(): void
     {
         $this->expectException(LexerException::class);
@@ -59,6 +62,7 @@ final class LexerUtf8Test extends TestCase
      * The first byte that starts no UTF-8 character is where PCRE stops,
      * "UTF-8 error: illegal byte (0xfe or 0xff) at offset N".
      */
+    #[Test]
     #[DataProvider('provideInvalidUtf8InUtfMode')]
     public function test_lexer_reports_the_first_invalid_utf8_byte_in_utf_mode(string $pattern, string $flags, int $offset): void
     {
@@ -89,6 +93,7 @@ final class LexerUtf8Test extends TestCase
      * the offset where it stopped, past the whole character in UTF mode
      * and past its first byte otherwise.
      */
+    #[Test]
     #[DataProvider('provideControlEscapesBeforeAMultibyteCharacter')]
     public function test_validate_reports_a_control_escape_where_pcre_does(string $pattern): void
     {

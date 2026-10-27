@@ -19,6 +19,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Routing\RequestContext;
@@ -27,6 +28,7 @@ use Symfony\Component\Routing\RouterInterface;
 
 final class PHPRegexBundleTest extends TestCase
 {
+    #[Test]
     public function test_regex_service_registered_with_filesystem_cache(): void
     {
         $cacheDir = sys_get_temp_dir().'/php_regex_'.uniqid();
@@ -50,6 +52,7 @@ final class PHPRegexBundleTest extends TestCase
         $cache->clear();
     }
 
+    #[Test]
     public function test_command_is_registered_as_console_service(): void
     {
         $container = $this->createContainer([]);

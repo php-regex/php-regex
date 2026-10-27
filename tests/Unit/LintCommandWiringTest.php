@@ -20,10 +20,12 @@ use PHPRegex\Cli\Command\LintOutputRenderer;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintCommandWiringTest extends TestCase
 {
+    #[Test]
     public function test_lint_command_class_instantiation(): void
     {
         $helpCommand = new HelpCommand();

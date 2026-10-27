@@ -16,12 +16,14 @@ namespace PHPRegex\Tests\Unit\Parser;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ParserSpecificsTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_subroutine_name_unexpected_token(): void
     {
         // (?&name!) -> '!' is not allowed in subroutine name: the name ends
@@ -34,6 +36,7 @@ final class ParserSpecificsTest extends TestCase
         $regex->parse('/(?&name!)/');
     }
 
+    #[Test]
     public function test_quantifier_on_start_of_pattern(): void
     {
         // A quantifier at the very start of the pattern (after delimiter)

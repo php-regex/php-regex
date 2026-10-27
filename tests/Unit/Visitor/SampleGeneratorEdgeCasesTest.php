@@ -17,6 +17,7 @@ use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SampleGeneratorEdgeCasesTest extends TestCase
@@ -25,6 +26,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
      * Tests the private getRandomChar method with an empty array (impossible via the public API).
      * Covers the fallback "return '?';".
      */
+    #[Test]
     public function test_get_random_char_with_empty_array(): void
     {
         $generator = new SampleGenerator();
@@ -40,6 +42,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
      * We can't easily force mt_rand to fail, but we can pass invalid bounds
      * to the private parseQuantifierRange method to see how it reacts.
      */
+    #[Test]
     public function test_parse_quantifier_range_fallback(): void
     {
         $generator = new SampleGenerator();

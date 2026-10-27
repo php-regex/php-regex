@@ -17,6 +17,7 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LexerCommentTest extends TestCase
@@ -26,6 +27,7 @@ final class LexerCommentTest extends TestCase
     /**
      * Tests an empty comment (?#)
      */
+    #[Test]
     public function test_lexer_empty_comment(): void
     {
         $tokens = (new Lexer())->tokenize('/(?#)/')->getTokens();
@@ -41,6 +43,7 @@ final class LexerCommentTest extends TestCase
      * Covers: "if ($this->inCommentMode) { throw ... }" in tokenize()
      * and the end-of-string logic in consumeCommentMode().
      */
+    #[Test]
     public function test_lexer_unclosed_comment_at_eof(): void
     {
         $this->expectException(LexerException::class);
@@ -52,6 +55,7 @@ final class LexerCommentTest extends TestCase
     /**
      * Tests the content of a comment.
      */
+    #[Test]
     public function test_lexer_comment_content(): void
     {
         $tokens = (new Lexer())->tokenize('/(?# hello world )/')->getTokens();

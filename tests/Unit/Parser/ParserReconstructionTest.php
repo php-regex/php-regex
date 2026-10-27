@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ParserReconstructionTest extends TestCase
@@ -31,6 +32,7 @@ final class ParserReconstructionTest extends TestCase
      * pour les stocker dans le nœud CommentNode.
      * Cela couvre tout le switch de Parser::reconstructTokenValue.
      */
+    #[Test]
     public function test_parser_reconstructs_all_token_types_in_comment(): void
     {
         // On met tout ce qui ressemble à des tokens spéciaux DANS un commentaire.

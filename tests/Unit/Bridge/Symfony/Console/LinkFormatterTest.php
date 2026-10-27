@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Bridge\Symfony\Console;
 
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LinkFormatterTest extends TestCase
@@ -49,6 +50,7 @@ final class LinkFormatterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_it_returns_plain_label_when_ide_missing(): void
     {
         $formatter = new LinkFormatter(null, new RelativePathHelper('/app'));
@@ -58,6 +60,7 @@ final class LinkFormatterTest extends TestCase
         $this->assertSame('  10', $result);
     }
 
+    #[Test]
     public function test_it_formats_href_when_terminal_supports_links(): void
     {
         $formatter = new LinkFormatter('vscode://file/%f:%l', new RelativePathHelper('/app'));
@@ -67,6 +70,7 @@ final class LinkFormatterTest extends TestCase
         $this->assertSame('<href=vscode://file//app/src/File.php:10>  10</>', $result);
     }
 
+    #[Test]
     public function test_it_falls_back_to_plain_path_when_terminal_is_unsupported(): void
     {
         putenv('TERMINAL_EMULATOR=JetBrains-JediTerm');
@@ -78,6 +82,7 @@ final class LinkFormatterTest extends TestCase
         $this->assertSame('src/File.php:10', $result);
     }
 
+    #[Test]
     public function test_it_supports_editor_aliases(): void
     {
         $formatter = new LinkFormatter('phpstorm', new RelativePathHelper('/app'));
@@ -87,6 +92,7 @@ final class LinkFormatterTest extends TestCase
         $this->assertSame('<href=phpstorm://open?file=/app/index.php&line=5>   5</>', $result);
     }
 
+    #[Test]
     public function test_it_resolves_relative_paths_using_base_path(): void
     {
         $formatter = new LinkFormatter('vscode://file/%f:%l', new RelativePathHelper('/app'));
@@ -96,6 +102,7 @@ final class LinkFormatterTest extends TestCase
         $this->assertSame('<href=vscode://file//app/src/File.php:10>  10</>', $result);
     }
 
+    #[Test]
     public function test_relative_path_helper_handles_base_path(): void
     {
         $helper = new RelativePathHelper('/var/www/project');
@@ -104,6 +111,7 @@ final class LinkFormatterTest extends TestCase
         $this->assertSame('/tmp/Example.php', $helper->getRelativePath('/tmp/Example.php'));
     }
 
+    #[Test]
     public function test_format_returns_label_when_line_missing(): void
     {
         $formatter = new LinkFormatter('vscode://file/%f:%l', new RelativePathHelper('/app'));
@@ -111,6 +119,7 @@ final class LinkFormatterTest extends TestCase
         $this->assertSame('label', $formatter->format('/app/src/File.php', null, 'label'));
     }
 
+    #[Test]
     public function test_format_uses_fallback_label_when_links_unsupported(): void
     {
         putenv('KONSOLE_VERSION=201100');
@@ -120,6 +129,7 @@ final class LinkFormatterTest extends TestCase
         $this->assertSame('fallback', $formatter->format('/app/src/File.php', 10, 'label', 1, 'fallback'));
     }
 
+    #[Test]
     public function test_format_disables_links_when_idea_directory_detected(): void
     {
         $_SERVER['IDEA_INITIAL_DIRECTORY'] = '/app';
@@ -129,6 +139,7 @@ final class LinkFormatterTest extends TestCase
         $this->assertSame('src/File.php:10', $formatter->format('/app/src/File.php', 10, 'label'));
     }
 
+    #[Test]
     public function test_format_returns_label_when_path_is_not_resolvable(): void
     {
         $formatter = new LinkFormatter('vscode://file/%f:%l', new RelativePathHelper('/app'));
@@ -138,6 +149,7 @@ final class LinkFormatterTest extends TestCase
         $this->assertSame('label', $result);
     }
 
+    #[Test]
     public function test_resolve_file_path_returns_normalized_when_base_empty(): void
     {
         $formatter = new LinkFormatter('vscode://file/%f:%l', new RelativePathHelper(''));
@@ -147,6 +159,7 @@ final class LinkFormatterTest extends TestCase
         $this->assertSame('<href=vscode://file/src/File.php:5>label</>', $result);
     }
 
+    #[Test]
     public function test_path_helpers_cover_edge_cases(): void
     {
         $formatter = new LinkFormatter('vscode://file/%f:%l', new RelativePathHelper('/app'));
@@ -157,6 +170,7 @@ final class LinkFormatterTest extends TestCase
         $this->assertFalse($this->invokePrivate($formatter, 'isAbsolutePath', ['']));
     }
 
+    #[Test]
     public function test_relative_path_helper_returns_normalized_when_base_empty(): void
     {
         $helper = new RelativePathHelper('');

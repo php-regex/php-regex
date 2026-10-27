@@ -33,10 +33,12 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TextExplainerTest extends TestCase
 {
+    #[Test]
     public function test_visit_octal_legacy_node(): void
     {
         $node = new CharLiteralNode('077', 0o77, CharLiteralType::OctalLegacy, 0, 3);
@@ -45,6 +47,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame('Character with octal value 077', $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_alternation_node(): void
     {
         $node = new AlternationNode([
@@ -56,6 +59,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame("EITHER\n  'a'\nOR\n  'b'", $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_sequence_node(): void
     {
         $node = new SequenceNode([
@@ -67,6 +71,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame("'a'\n'b'", $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_group_node(): void
     {
         $node = new GroupNode(
@@ -82,6 +87,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame("Capturing group\n  'a'\nEnd group", $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_quantifier_node(): void
     {
         $node = new QuantifierNode(
@@ -96,6 +102,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame("'a' (zero or more times)", $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_char_class_node(): void
     {
         $node = new CharClassNode(
@@ -109,6 +116,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame("Character Class: any character in [ 'a' ]", $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_range_node(): void
     {
         $node = new RangeNode(
@@ -122,6 +130,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame("Range: from 'a' to 'z'", $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_backref_node(): void
     {
         $node = new BackrefNode('1', 0, 2);
@@ -130,6 +139,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame('Backreference: whatever the capturing group "1" matched', $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_unicode_node(): void
     {
         $node = new CharLiteralNode('\x{2603}', 0x2603, CharLiteralType::Unicode, 0, 7);
@@ -138,6 +148,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame('Character with hexadecimal value 0x2603', $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_unicode_prop_node(): void
     {
         $node = new UnicodePropNode('L', false, 0, 2);
@@ -146,6 +157,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame('Unicode Property: any character matching "L"', $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_posix_class_node(): void
     {
         $node = new PosixClassNode('alpha', 0, 8);
@@ -154,6 +166,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame('POSIX Class: [[:alpha:]]', $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_comment_node(): void
     {
         $node = new CommentNode('test', 0, 7);
@@ -162,6 +175,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame("Comment: 'test'", $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_conditional_node(): void
     {
         $node = new ConditionalNode(
@@ -176,6 +190,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame("IF (the capturing group \"1\" has matched) THEN\n  'a'\nELSE\n  'b'", $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_subroutine_node(): void
     {
         $node = new SubroutineNode('R', '', 0, 3);
@@ -184,6 +199,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame('Subroutine Call: recurses to the entire pattern', $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_pcre_verb_node(): void
     {
         $node = new PcreVerbNode('FAIL', 0, 7);
@@ -192,6 +208,7 @@ final class TextExplainerTest extends TestCase
         $this->assertSame('PCRE Verb: (*FAIL)', $node->accept($visitor));
     }
 
+    #[Test]
     public function test_visit_define_node(): void
     {
         $node = new DefineNode(

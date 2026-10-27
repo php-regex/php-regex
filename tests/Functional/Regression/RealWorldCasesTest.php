@@ -17,10 +17,12 @@ use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RealWorldCasesTest extends TestCase
 {
+    #[Test]
     #[DataProvider('provideRealWorldRegex')]
     public function test_real_world_cases(string $pattern, string $expectedIssueMessage): void
     {
@@ -118,6 +120,7 @@ final class RealWorldCasesTest extends TestCase
         yield '/(p?)+$/' => ['pattern' => '/(p?)+$/'];
     }
 
+    #[Test]
     #[DataProvider('provideAnchoredOptionalInnerLoops')]
     public function test_anchored_optional_inner_loops_stay_reported(string $pattern): void
     {
@@ -140,6 +143,7 @@ final class RealWorldCasesTest extends TestCase
      * match and the engine never backtracks into it: (a+)+ on a{28}b takes
      * 6 steps (PCRE2 10.49, JIT off, (*NO_START_OPT)).
      */
+    #[Test]
     #[DataProvider('provideTrailingNestedQuantifiers')]
     public function test_trailing_nested_quantifiers_are_not_reported(string $pattern): void
     {

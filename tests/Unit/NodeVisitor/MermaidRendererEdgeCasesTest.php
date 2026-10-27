@@ -18,10 +18,12 @@ use PHPRegex\Parser\Node\CalloutNode;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MermaidRendererEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_limit_match_verb_is_rendered(): void
     {
         $visitor = new MermaidRenderer();
@@ -32,6 +34,7 @@ final class MermaidRendererEdgeCasesTest extends TestCase
         $this->assertStringContainsString('LimitMatch: 12', $diagram);
     }
 
+    #[Test]
     public function test_callout_string_identifier_labels_are_rendered(): void
     {
         $visitor = new MermaidRenderer();
@@ -42,6 +45,7 @@ final class MermaidRendererEdgeCasesTest extends TestCase
         $this->assertStringContainsString('Callout: (?C&quot;named&quot;)', $diagram);
     }
 
+    #[Test]
     public function test_callout_default_identifier_labels_are_rendered(): void
     {
         $visitor = new MermaidRenderer();
@@ -56,6 +60,7 @@ final class MermaidRendererEdgeCasesTest extends TestCase
      * A byte of invalid UTF-8 in a pattern without /u is shown as the
      * replacement character: the label keeps the rest of the literal.
      */
+    #[Test]
     public function test_a_byte_of_invalid_utf8_keeps_its_label(): void
     {
         $diagram = Regex::create()->parse("/a\xE9b/")->accept(new MermaidRenderer());

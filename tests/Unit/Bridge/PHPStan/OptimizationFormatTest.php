@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Bridge\PHPStan;
 
 use PHPRegex\PHPStan\OptimizationFormat;
 use PHPRegex\PHPStan\RegexPatternRule;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -28,6 +29,7 @@ final class OptimizationFormatTest extends TestCase
      * The check is the rule's own: its public surface is the constructor
      * and what PHPStan calls.
      */
+    #[Test]
     public function test_the_rule_offers_no_public_hook_for_the_check(): void
     {
         $public = array_map(
@@ -39,6 +41,7 @@ final class OptimizationFormatTest extends TestCase
         $this->assertSame(['__construct', 'getNodeType', 'processNode'], $public);
     }
 
+    #[Test]
     public function test_rejects_effectively_empty_patterns(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/abc/', '##'));
@@ -46,49 +49,58 @@ final class OptimizationFormatTest extends TestCase
         $this->assertFalse(OptimizationFormat::isSafe('#test#', '##'));
     }
 
+    #[Test]
     public function test_rejects_missing_closing_delimiter(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/abc/', '/abc'));
     }
 
+    #[Test]
     public function test_rejects_broken_anchors(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/abc$/', '$/'));
         $this->assertFalse(OptimizationFormat::isSafe('/^abc/', '/^/'));
     }
 
+    #[Test]
     public function test_rejects_patterns_removing_newlines(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/\r?\n/', '/\r?/'));
         $this->assertFalse(OptimizationFormat::isSafe('/-- (.+)\n/', '/-- (.+) /'));
     }
 
+    #[Test]
     public function test_rejects_drastic_length_reduction(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/abcd/', '/a/'));
         $this->assertFalse(OptimizationFormat::isSafe('#longpattern#', '#x#'));
     }
 
+    #[Test]
     public function test_accepts_patterns_with_trailing_newline_escape(): void
     {
         $this->assertTrue(OptimizationFormat::isSafe('/A\\n/', '/A\\n/'));
     }
 
+    #[Test]
     public function test_accepts_patterns_with_leading_newline_escape(): void
     {
         $this->assertTrue(OptimizationFormat::isSafe('/\\nA/', '/\\nA/'));
     }
 
+    #[Test]
     public function test_rejects_optimizations_removing_leading_newline_escape(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/\\nAB/', '/AB/'));
     }
 
+    #[Test]
     public function test_ignores_newline_escape_outside_the_pattern(): void
     {
         $this->assertTrue(OptimizationFormat::isSafe('/ab/\\n', '/ab/'));
     }
 
+    #[Test]
     public function test_accepts_valid_optimizations(): void
     {
         $this->assertTrue(OptimizationFormat::isSafe('/[0-9]+/', '/\d+/'));
@@ -96,6 +108,7 @@ final class OptimizationFormatTest extends TestCase
         $this->assertTrue(OptimizationFormat::isSafe('/a+/', '/a+/')); // Not shorter
     }
 
+    #[Test]
     public function test_accepts_short_patterns_if_original_is_short(): void
     {
         $this->assertFalse(OptimizationFormat::isSafe('/ab/', '/a/'));
@@ -104,6 +117,7 @@ final class OptimizationFormatTest extends TestCase
     /**
      * Test that optimization safety checks are format-based, not semantic.
      */
+    #[Test]
     public function test_optimization_safety_is_format_based(): void
     {
         // This should pass format checks even if semantically unsafe (length preserved, no newlines removed)

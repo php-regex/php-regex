@@ -18,10 +18,12 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ModernizerEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_char_class_multiple_literals_builds_alternation(): void
     {
         $visitor = new Modernizer();
@@ -37,6 +39,7 @@ final class ModernizerEdgeCasesTest extends TestCase
         $this->assertInstanceOf(AlternationNode::class, $modernized->expression);
     }
 
+    #[Test]
     public function test_literal_unescape_respects_custom_delimiter(): void
     {
         $visitor = new Modernizer();

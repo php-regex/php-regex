@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Tests the safeguard in RegexPatternRule that prevents suggesting invalid optimizations.
@@ -24,6 +25,7 @@ use PHPStan\Testing\RuleTestCase;
  */
 final class RegexPatternRuleSafeguardTest extends RuleTestCase
 {
+    #[Test]
     public function test_no_optimization_suggested_for_invalid_optimized_patterns(): void
     {
         $this->analyse([__DIR__.'/Fixtures/SafeguardFixture.php'], [

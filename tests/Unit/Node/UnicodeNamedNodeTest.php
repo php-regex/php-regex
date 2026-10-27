@@ -17,6 +17,7 @@ use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class UnicodeNamedNodeTest extends TestCase
@@ -30,6 +31,7 @@ final class UnicodeNamedNodeTest extends TestCase
         yield 'snowman' => ['\\N{SNOWMAN}', 9731, 0, 12];
     }
 
+    #[Test]
     #[DataProvider('data_provider_unicode_named')]
     public function test_constructor_and_getters(string $original, int $codePoint, int $start, int $end): void
     {
@@ -42,6 +44,7 @@ final class UnicodeNamedNodeTest extends TestCase
         $this->assertSame($end, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_char_literal(): void
     {
         $node = new CharLiteralNode('\\N{LATIN CAPITAL LETTER A}', 65, CharLiteralType::UnicodeNamed, 0, 25);

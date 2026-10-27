@@ -109,6 +109,7 @@ final class SourceDeprecationListenerTest extends TestCase
 
             final class OwnSourceTest extends \PHPUnit\Framework\TestCase
             {
+                #[Test]
                 public function test_own_source_deprecation(): void
                 {
                     Legacy::gone();
@@ -126,6 +127,7 @@ final class SourceDeprecationListenerTest extends TestCase
 
             final class VendorDeprecationTest extends \PHPUnit\Framework\TestCase
             {
+                #[Test]
                 public function test_vendor_deprecation(): void
                 {
                     Dep::gone();
@@ -143,6 +145,7 @@ final class SourceDeprecationListenerTest extends TestCase
 
             final class EngineDeprecationTest extends \PHPUnit\Framework\TestCase
             {
+                #[Test]
                 public function test_engine_deprecation(): void
                 {
                     Legacy::engineGone();

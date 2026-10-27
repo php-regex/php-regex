@@ -17,6 +17,7 @@ use PHPRegex\Optimizer\Modernizer;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ModernizerTest extends TestCase
@@ -28,6 +29,7 @@ final class ModernizerTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     public function test_modernizes_digit_range(): void
     {
         $original = '/[0-9]+/';
@@ -37,6 +39,7 @@ final class ModernizerTest extends TestCase
         $this->assertMatchesOriginalBehavior($original, $modernized);
     }
 
+    #[Test]
     public function test_removes_unnecessary_escaping(): void
     {
         $original = '/\@name\:/';
@@ -46,6 +49,7 @@ final class ModernizerTest extends TestCase
         $this->assertMatchesOriginalBehavior($original, $modernized);
     }
 
+    #[Test]
     public function test_modernizes_backref(): void
     {
         $original = '/(a)\1/';
@@ -59,6 +63,7 @@ final class ModernizerTest extends TestCase
      * Every PCRE2 from 10.32 to 10.49 matches "\N" and "\g{N}" alike: caseless,
      * forward, in a lookbehind, past nine groups, in a branch-reset group.
      */
+    #[Test]
     #[DataProvider('provideNumericBackrefs')]
     public function test_numeric_backref_becomes_braced_reference(string $pattern, string $expected, string $subject): void
     {
@@ -86,6 +91,7 @@ final class ModernizerTest extends TestCase
      * "(?(\g{1})b)" is no condition: PCRE2 refuses it. The reference of a
      * condition keeps the spelling it was written with.
      */
+    #[Test]
     #[DataProvider('provideConditionReferences')]
     public function test_condition_reference_is_left_as_written(string $pattern): void
     {
@@ -106,6 +112,7 @@ final class ModernizerTest extends TestCase
         yield 'recursion' => ['pattern' => '/(a(?(R1)b|c))/'];
     }
 
+    #[Test]
     public function test_complex_modernization(): void
     {
         $original = '/^[0-9]+\-[a-z]+\@(?:gmail)\.com$/';
@@ -119,6 +126,7 @@ final class ModernizerTest extends TestCase
     /**
      * Under "/u" or "(*UCP)", "\d" matches every decimal digit, as U+0663.
      */
+    #[Test]
     #[DataProvider('provideUnicodeDigitClasses')]
     public function test_digit_range_stays_a_class_under_unicode_properties(string $pattern): void
     {
@@ -143,6 +151,7 @@ final class ModernizerTest extends TestCase
      * to 10.49, and nothing else below 256 under the C locale; under "/u" or
      * "(*UCP)" it also matches U+0085, U+00A0, U+2028 and U+3000.
      */
+    #[Test]
     #[DataProvider('provideWhitespaceClasses')]
     public function test_whitespace_class_becomes_shorthand_only_when_it_matches_alike(string $pattern, bool $shorthand): void
     {

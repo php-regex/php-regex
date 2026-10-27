@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Explain\MermaidRenderer;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class MermaidRendererTest extends TestCase
 {
+    #[Test]
     public function test_simple_literal(): void
     {
         $ast = Regex::create()->parse('/abc/');
@@ -28,6 +30,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Literal:', $mermaid);
     }
 
+    #[Test]
     public function test_alternation(): void
     {
         $ast = Regex::create()->parse('/(a|b)/');
@@ -36,6 +39,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Alternation', $mermaid);
     }
 
+    #[Test]
     public function test_sequence(): void
     {
         $ast = Regex::create()->parse('/ab+c/');
@@ -44,6 +48,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Sequence', $mermaid);
     }
 
+    #[Test]
     public function test_group(): void
     {
         $ast = Regex::create()->parse('/(abc)/');
@@ -52,6 +57,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Group:', $mermaid);
     }
 
+    #[Test]
     public function test_named_group(): void
     {
         $ast = Regex::create()->parse('/(?P<name>abc)/');
@@ -60,6 +66,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('name)', $mermaid);
     }
 
+    #[Test]
     public function test_quantifier(): void
     {
         $ast = Regex::create()->parse('/a+/');
@@ -68,6 +75,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Quantifier:', $mermaid);
     }
 
+    #[Test]
     public function test_quantifier_range(): void
     {
         $ast = Regex::create()->parse('/a{2,5}/');
@@ -77,6 +85,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('{2,5}', $mermaid);
     }
 
+    #[Test]
     public function test_dot(): void
     {
         $ast = Regex::create()->parse('/./');
@@ -85,6 +94,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Dot: any char', $mermaid);
     }
 
+    #[Test]
     public function test_anchor_start(): void
     {
         $ast = Regex::create()->parse('/^a/');
@@ -93,6 +103,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Anchor: ^', $mermaid);
     }
 
+    #[Test]
     public function test_anchor_end(): void
     {
         $ast = Regex::create()->parse('/a$/');
@@ -101,6 +112,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Anchor: $', $mermaid);
     }
 
+    #[Test]
     public function test_assertion_word_boundary(): void
     {
         $ast = Regex::create()->parse('/\b/');
@@ -109,6 +121,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Assertion:', $mermaid);
     }
 
+    #[Test]
     public function test_keep(): void
     {
         $ast = Regex::create()->parse('/a\K/');
@@ -117,6 +130,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Keep: \\K', $mermaid);
     }
 
+    #[Test]
     public function test_char_class(): void
     {
         $ast = Regex::create()->parse('/[abc]/');
@@ -125,6 +139,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('CharClass', $mermaid);
     }
 
+    #[Test]
     public function test_negated_char_class(): void
     {
         $ast = Regex::create()->parse('/[^abc]/');
@@ -133,6 +148,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('CharClass [NOT]', $mermaid);
     }
 
+    #[Test]
     public function test_range(): void
     {
         $ast = Regex::create()->parse('/[a-z]/');
@@ -141,6 +157,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Range', $mermaid);
     }
 
+    #[Test]
     public function test_backreference(): void
     {
         $ast = Regex::create()->parse('/(a)\1/');
@@ -149,6 +166,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Backref:', $mermaid);
     }
 
+    #[Test]
     public function test_unicode(): void
     {
         $ast = Regex::create()->parse('/\x{0041}/');
@@ -157,6 +175,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Unicode:', $mermaid);
     }
 
+    #[Test]
     public function test_unicode_property(): void
     {
         $ast = Regex::create()->parse('/\p{L}/');
@@ -165,6 +184,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('UnicodeProp:', $mermaid);
     }
 
+    #[Test]
     public function test_posix_class(): void
     {
         $ast = Regex::create()->parse('/[[:alpha:]]/');
@@ -173,6 +193,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('PosixClass:', $mermaid);
     }
 
+    #[Test]
     public function test_comment(): void
     {
         $ast = Regex::create()->parse('/(?#comment)a/');
@@ -181,6 +202,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Comment:', $mermaid);
     }
 
+    #[Test]
     public function test_conditional(): void
     {
         $ast = Regex::create()->parse('/(?(condition)yes|no)/');
@@ -189,6 +211,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Conditional', $mermaid);
     }
 
+    #[Test]
     public function test_subroutine(): void
     {
         $ast = Regex::create()->parse('/(?1)/');
@@ -197,6 +220,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Subroutine:', $mermaid);
     }
 
+    #[Test]
     public function test_pcre_verb(): void
     {
         $ast = Regex::create()->parse('/(*FAIL)a/');
@@ -205,6 +229,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('PcreVerb:', $mermaid);
     }
 
+    #[Test]
     public function test_define(): void
     {
         $ast = Regex::create()->parse('/(?(DEFINE)...)/');
@@ -213,6 +238,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('DEFINE Block', $mermaid);
     }
 
+    #[Test]
     public function test_limit_match(): void
     {
         $ast = Regex::create()->parse('/(*LIMIT_MATCH=100)a/');
@@ -221,6 +247,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('LimitMatch:', $mermaid);
     }
 
+    #[Test]
     public function test_callout(): void
     {
         $ast = Regex::create()->parse('/(?C)a/');
@@ -229,6 +256,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Callout:', $mermaid);
     }
 
+    #[Test]
     public function test_callout_with_identifier(): void
     {
         $ast = Regex::create()->parse('/(?C0)a/');
@@ -237,6 +265,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('Callout:', $mermaid);
     }
 
+    #[Test]
     public function test_regex_with_flags(): void
     {
         $ast = Regex::create()->parse('/abc/i');
@@ -246,6 +275,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('i', $mermaid);
     }
 
+    #[Test]
     public function test_escaping_special_chars(): void
     {
         $ast = Regex::create()->parse('/<test>/');
@@ -254,6 +284,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('&lt;', $mermaid);
     }
 
+    #[Test]
     public function test_empty_literal(): void
     {
         $ast = Regex::create()->parse('/(?:)/');
@@ -262,6 +293,7 @@ final class MermaidRendererTest extends TestCase
         $this->assertStringContainsString('(empty)', $mermaid);
     }
 
+    #[Test]
     public function test_graph_structure(): void
     {
         $ast = Regex::create()->parse('/(a|b)c/');

@@ -18,6 +18,7 @@ use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class DeepDiveBugFixTest extends TestCase
@@ -29,6 +30,7 @@ final class DeepDiveBugFixTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     public function test_quote_mode_in_char_class(): void
     {
         // [\Q-\E] should be parsed as a character class containing a literal hyphen
@@ -40,6 +42,7 @@ final class DeepDiveBugFixTest extends TestCase
         $this->assertSame('-', $charClass->expression->value);
     }
 
+    #[Test]
     public function test_compiler_escapes_multi_char_literals(): void
     {
         // \Q[a-z]\E should be parsed as a literal string "[a-z]"
@@ -67,6 +70,7 @@ final class DeepDiveBugFixTest extends TestCase
         $this->assertMatchesRegularExpression($compiled2, '[a-z]', "Compiled regex '$compiled2' should match literal '[a-z]'");
     }
 
+    #[Test]
     public function test_trailing_backslash_check(): void
     {
         // /\\/ is valid (matches literal backslash)

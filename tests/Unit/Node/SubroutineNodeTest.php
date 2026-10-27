@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Node;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SubroutineNodeTest extends TestCase
@@ -34,6 +35,7 @@ final class SubroutineNodeTest extends TestCase
         yield 'named_g_ref' => ['name', 'g'];
     }
 
+    #[Test]
     #[DataProvider('data_provider_subroutines')]
     public function test_constructor_and_getters(string $ref, string $syntax): void
     {
@@ -45,6 +47,7 @@ final class SubroutineNodeTest extends TestCase
         $this->assertSame(5, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_subroutine(): void
     {
         $node = new SubroutineNode('R', '', 0, 3);

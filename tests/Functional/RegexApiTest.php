@@ -21,12 +21,14 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RegexApiTest extends TestCase
 {
     use PcreGates;
 
+    #[Test]
     public function test_create_and_parse(): void
     {
         $regex = Regex::create();
@@ -36,6 +38,7 @@ final class RegexApiTest extends TestCase
         $this->assertSame(3, $ast->endPosition);
     }
 
+    #[Test]
     public function test_validate(): void
     {
         $regex = Regex::create();
@@ -48,6 +51,7 @@ final class RegexApiTest extends TestCase
         $this->assertNotNull($invalid->error);
     }
 
+    #[Test]
     public function test_runtime_validation_disabled_by_default(): void
     {
         $this->requiresPcre2('10.45', self::tooLargeForTheEngine());
@@ -62,6 +66,7 @@ final class RegexApiTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_runtime_validation_can_be_enabled(): void
     {
         $this->requiresPcre2('10.45', self::tooLargeForTheEngine());
@@ -78,6 +83,7 @@ final class RegexApiTest extends TestCase
         $this->assertContains($result->offset, [0, \strlen(self::tooLargeForTheEngine()) - 3]);
     }
 
+    #[Test]
     public function test_optimize(): void
     {
         $regex = Regex::create();
@@ -88,6 +94,7 @@ final class RegexApiTest extends TestCase
         $this->assertSame('/\d/', $optimized->optimized);
     }
 
+    #[Test]
     public function test_generate(): void
     {
         $regex = Regex::create();
@@ -95,6 +102,7 @@ final class RegexApiTest extends TestCase
         $this->assertMatchesRegularExpression('/\d{3}/', $sample);
     }
 
+    #[Test]
     public function test_parse_uses_cache_on_second_call(): void
     {
         $cacheDir = sys_get_temp_dir().'/regex-parser-cache-'.uniqid('', true);
@@ -157,6 +165,7 @@ final class RegexApiTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_parse_ignores_leading_whitespace(): void
     {
         $regex = Regex::create();
@@ -174,6 +183,7 @@ final class RegexApiTest extends TestCase
         $this->assertEquals($ast, $astTrimmed);
     }
 
+    #[Test]
     public function test_parse_pattern_constructs_full_regex(): void
     {
         $regex = Regex::create();

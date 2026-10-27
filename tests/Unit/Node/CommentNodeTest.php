@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\Node;
 
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CommentNodeTest extends TestCase
 {
+    #[Test]
     public function test_constructor_and_getters(): void
     {
         $comment_text = 'This is a test comment';
@@ -29,6 +31,7 @@ final class CommentNodeTest extends TestCase
         $this->assertSame(30, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_comment(): void
     {
         $node = new CommentNode('test', 0, 10);

@@ -41,12 +41,14 @@ use PHPRegex\Parser\Validation\ReferenceChecks;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ValidatorEdgeCasesTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_clear_caches_resets_static_state(): void
     {
         $unicodePropCache = (new \ReflectionClass(EscapeChecks::class))->getProperty('unicodePropCache');
@@ -61,6 +63,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $this->assertSame([], $quantifierBoundsCache->getValue());
     }
 
+    #[Test]
     public function test_invalid_assertion_raises_error(): void
     {
         $validator = new Validator();
@@ -72,6 +75,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $node->accept($validator);
     }
 
+    #[Test]
     public function test_range_invalid_start_length(): void
     {
         $validator = new Validator();
@@ -83,6 +87,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $range->accept($validator);
     }
 
+    #[Test]
     public function test_range_invalid_end_length(): void
     {
         $validator = new Validator();
@@ -94,6 +99,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $range->accept($validator);
     }
 
+    #[Test]
     public function test_backref_zero_variants_are_rejected(): void
     {
         $validator = new Validator();
@@ -103,6 +109,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         (new BackrefNode('\\0', 0, 0))->accept($validator);
     }
 
+    #[Test]
     public function test_backref_zero_without_slash_is_rejected(): void
     {
         $validator = new Validator();
@@ -112,6 +119,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         (new BackrefNode('0', 0, 0))->accept($validator);
     }
 
+    #[Test]
     public function test_backref_missing_named_group_is_rejected(): void
     {
         $validator = new Validator();
@@ -121,6 +129,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         (new BackrefNode('\\k<missing>', 0, 0))->accept($validator);
     }
 
+    #[Test]
     public function test_backref_bare_name_missing_group_is_rejected(): void
     {
         $validator = new Validator();
@@ -130,6 +139,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         (new BackrefNode('missing', 0, 0))->accept($validator);
     }
 
+    #[Test]
     public function test_backref_missing_group_is_rejected(): void
     {
         $validator = new Validator();
@@ -139,6 +149,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         (new BackrefNode('\\g{2}', 0, 0))->accept($validator);
     }
 
+    #[Test]
     public function test_backref_relative_zero_is_rejected(): void
     {
         $references = self::references(new GroupNumbering(0, [], []));
@@ -150,6 +161,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $method->invoke($references, 0, 0, ErrorCode::BackrefRelative, 'Backreference');
     }
 
+    #[Test]
     public function test_valid_backref_returns_cleanly(): void
     {
         $regex = Regex::create();
@@ -158,6 +170,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_control_char_out_of_range_is_rejected(): void
     {
         $validator = new Validator();
@@ -169,6 +182,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $node->accept($validator);
     }
 
+    #[Test]
     public function test_invalid_conditional_is_rejected(): void
     {
         $validator = new Validator();
@@ -186,6 +200,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $node->accept($validator);
     }
 
+    #[Test]
     public function test_conditional_accepts_lookaround_condition(): void
     {
         $validator = new Validator();
@@ -202,6 +217,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
+    #[Test]
     public function test_conditional_accepts_define_condition(): void
     {
         $validator = new Validator();
@@ -218,6 +234,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $node->accept($validator);
     }
 
+    #[Test]
     public function test_conditional_subroutine_branch_hits_reference_check(): void
     {
         $validator = new Validator();
@@ -233,6 +250,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $node->accept($validator);
     }
 
+    #[Test]
     public function test_conditional_subroutine_accepts_numeric_reference(): void
     {
         $validator = new Validator();
@@ -248,6 +266,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $node->accept($validator);
     }
 
+    #[Test]
     public function test_subroutine_reference_variants_hit_branches(): void
     {
         $validator = new Validator();
@@ -258,12 +277,14 @@ final class ValidatorEdgeCasesTest extends TestCase
         (new SubroutineNode('R1', 'R1', 0, 0))->accept($validator);
     }
 
+    #[Test]
     public function test_subroutine_absolute_recursion_reference_returns(): void
     {
         self::references(new GroupNumbering(1, [1], []))->subroutine(new SubroutineNode('R1', 'R1', 0, 0));
         $this->expectNotToPerformAssertions();
     }
 
+    #[Test]
     public function test_subroutine_relative_reference_hits_branch(): void
     {
         $validator = new Validator();
@@ -272,6 +293,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         (new SubroutineNode('R-1', 'R-1', 0, 0))->accept($validator);
     }
 
+    #[Test]
     public function test_subroutine_zero_reference_returns(): void
     {
         $validator = new Validator();
@@ -279,6 +301,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
+    #[Test]
     public function test_subroutine_negative_zero_reference_returns(): void
     {
         // preg_match() on PCRE2 10.48: "a relative value of zero is not allowed at offset 5" for "x(?-0)y".
@@ -288,6 +311,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         (new SubroutineNode('-0', '-0', 0, 0))->accept($validator);
     }
 
+    #[Test]
     public function test_define_and_limit_match_nodes_are_noops(): void
     {
         $validator = new Validator();
@@ -299,6 +323,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
+    #[Test]
     public function test_octal_legacy_out_of_range_is_rejected(): void
     {
         $validator = new Validator();
@@ -310,6 +335,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $node->accept($validator);
     }
 
+    #[Test]
     public function test_quantifier_bounds_cache_eviction_runs(): void
     {
         $quantifierCache = (new \ReflectionClass(QuantifierCounts::class))->getProperty('quantifierBoundsCache');
@@ -322,6 +348,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $this->assertSame([2, 3], QuantifierCounts::of('{2,3}'));
     }
 
+    #[Test]
     public function test_find_unbounded_lookbehind_node_traverses_branches(): void
     {
         $lookbehinds = new LookbehindChecks(GroupIndex::empty(), PcreTarget::runtime(), static function (): void {}, null, 255, false);
@@ -352,6 +379,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $this->assertInstanceOf(BackrefNode::class, $method->invoke($lookbehinds, $range));
     }
 
+    #[Test]
     public function test_unbounded_lookbehind_with_backref_has_generic_hint(): void
     {
         $regex = Regex::create();
@@ -366,6 +394,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $this->assertStringContainsString('bounded maximum length', (string) $result->error);
     }
 
+    #[Test]
     public function test_lookbehind_limit_exceeded(): void
     {
         // The limit only bounds a variable-length lookbehind, so the one

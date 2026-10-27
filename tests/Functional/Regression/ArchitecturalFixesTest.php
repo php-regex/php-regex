@@ -20,10 +20,12 @@ use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ArchitecturalFixesTest extends TestCase
 {
+    #[Test]
     #[DataProvider('provideUnicodeEscapeOffsets')]
     public function test_lexer_unicode_escape_offsets(
         string $pattern,
@@ -55,6 +57,7 @@ final class ArchitecturalFixesTest extends TestCase
         yield 'escape-after-literal' => ['a\\x41b', 1, 4, '\\x41'];
     }
 
+    #[Test]
     #[DataProvider('provideUtf8CompilationCases')]
     public function test_compiler_utf8_round_trip(string $pattern, string $expected): void
     {
@@ -71,6 +74,7 @@ final class ArchitecturalFixesTest extends TestCase
         yield 'unicode-escape' => ['/\\x{00E9}/u', '/\\x{00E9}/u'];
     }
 
+    #[Test]
     #[DataProvider('provideCliPatternTokens')]
     public function test_cli_pattern_detection(string $token, bool $expected): void
     {

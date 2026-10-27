@@ -16,10 +16,12 @@ namespace PHPRegex\Tests\Unit;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RegexFacadeEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_regex_class_instantiation(): void
     {
         $regex = Regex::create();
@@ -30,6 +32,7 @@ final class RegexFacadeEdgeCasesTest extends TestCase
         $this->assertSame('/', $ast->delimiter);
     }
 
+    #[Test]
     public function test_regex_can_be_created_with_options(): void
     {
         $regex = Regex::create([
@@ -47,6 +50,7 @@ final class RegexFacadeEdgeCasesTest extends TestCase
         $this->assertStringContainsString('maximum length', (string) $validation->error);
     }
 
+    #[Test]
     public function test_regex_basic_functionality(): void
     {
         $regex = Regex::create();
@@ -65,6 +69,7 @@ final class RegexFacadeEdgeCasesTest extends TestCase
         $this->assertNotEmpty($explanation);
     }
 
+    #[Test]
     #[DoesNotPerformAssertions]
     public function test_regex_can_clear_caches(): void
     {

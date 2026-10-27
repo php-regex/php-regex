@@ -17,10 +17,12 @@ use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RangeNodeTest extends TestCase
 {
+    #[Test]
     public function test_constructor_with_literals(): void
     {
         $start = new LiteralNode('a', 1, 2);
@@ -34,6 +36,7 @@ final class RangeNodeTest extends TestCase
         $this->assertSame(5, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_constructor_with_char_types(): void
     {
         // A range between CharTypeNode is semantically invalid but syntactically possible in the AST before validation.
@@ -45,6 +48,7 @@ final class RangeNodeTest extends TestCase
         $this->assertSame($end, $node->end);
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_range(): void
     {
         $start = new LiteralNode('a', 0, 1);

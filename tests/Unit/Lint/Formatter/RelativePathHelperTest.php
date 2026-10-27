@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Formatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -46,6 +47,7 @@ final class RelativePathHelperTest extends TestCase
         yield 'a stream URL' => ['base' => '/base', 'path' => 'phar:///base/a.phar/file.php', 'expected' => 'phar:///base/a.phar/file.php'];
     }
 
+    #[Test]
     #[DataProvider('providePaths')]
     public function test_a_file_is_named_from_the_base_when_it_is_under_it(string $base, string $path, string $expected): void
     {
@@ -69,6 +71,7 @@ final class RelativePathHelperTest extends TestCase
         yield 'a drive letter alone' => ['base' => '/base', 'path' => 'C:', 'expected' => '/base/C:'];
     }
 
+    #[Test]
     #[DataProvider('provideAbsolutePaths')]
     public function test_a_relative_path_is_read_from_the_base(string $base, string $path, string $expected): void
     {
@@ -79,6 +82,7 @@ final class RelativePathHelperTest extends TestCase
      * A base named through a symbolic link, as $PWD may name the working
      * directory, holds the files of the directory it points to.
      */
+    #[Test]
     public function test_a_file_reached_through_a_link_is_named_from_the_base(): void
     {
         $directory = $this->makeProject(['src/a.php' => "<?php\n"]);
@@ -92,6 +96,7 @@ final class RelativePathHelperTest extends TestCase
     /**
      * Without a base, the working directory is the base.
      */
+    #[Test]
     public function test_the_working_directory_is_the_base_by_default(): void
     {
         $cwd = (string) getcwd();

@@ -20,6 +20,7 @@ use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\LexerAccessor;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -30,6 +31,7 @@ final class LexerEdgeCasesTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_match_at_position_with_invalid_regex_throws(): void
     {
         $lexer = new Lexer();
@@ -57,6 +59,7 @@ final class LexerEdgeCasesTest extends TestCase
      * Every character starts a token but a backslash that ends the pattern:
      * a token regex that matches nothing elsewhere is the library's fault.
      */
+    #[Test]
     public function test_match_at_position_matching_nothing_is_an_internal_failure(): void
     {
         $lexer = new Lexer();
@@ -71,6 +74,7 @@ final class LexerEdgeCasesTest extends TestCase
         $ref->getMethod('matchAtPosition')->invoke($lexer, '/b/A');
     }
 
+    #[Test]
     public function test_create_token_without_matching_map_throws(): void
     {
         $lexer = new Lexer();
@@ -86,6 +90,7 @@ final class LexerEdgeCasesTest extends TestCase
         $method->invoke($lexer, ['T_UNKNOWN'], [], 'a', 0, []);
     }
 
+    #[Test]
     public function test_lexer_tokenizes_literals_and_eof(): void
     {
         $lexer = new Lexer();
@@ -104,6 +109,7 @@ final class LexerEdgeCasesTest extends TestCase
      * This case is normally unreachable as the main Regex filters tokens,
      * but for 100% coverage we must force it via Reflection.
      */
+    #[Test]
     public function test_extract_token_value_fallback(): void
     {
 
@@ -133,6 +139,7 @@ final class LexerEdgeCasesTest extends TestCase
      * Tests Unicode normalization with malformed data
      * to reach the `??` fallbacks.
      */
+    #[Test]
     public function test_normalize_unicode_prop_fallbacks(): void
     {
 
@@ -144,6 +151,7 @@ final class LexerEdgeCasesTest extends TestCase
     /**
      * Tests that a PCRE failure while reading a quoted run is reported.
      */
+    #[Test]
     public function test_consume_quote_mode_reports_a_pcre_failure(): void
     {
         $lexer = new Lexer();
@@ -165,6 +173,7 @@ final class LexerEdgeCasesTest extends TestCase
         $accessor->callPrivateMethod('consumeQuoteMode');
     }
 
+    #[Test]
     public function test_consume_quote_mode_reaches_eof_without_closing(): void
     {
         $lexer = new Lexer();
@@ -183,6 +192,7 @@ final class LexerEdgeCasesTest extends TestCase
         $this->assertTrue($accessor->getInQuoteMode());
     }
 
+    #[Test]
     public function test_consume_quote_mode_returns_literal_and_exits_on_end_marker(): void
     {
         $lexer = new Lexer();
@@ -206,6 +216,7 @@ final class LexerEdgeCasesTest extends TestCase
         $this->assertFalse($accessor->getInQuoteMode());
     }
 
+    #[Test]
     public function test_consume_comment_mode_reports_a_pcre_failure(): void
     {
         $lexer = new Lexer();
@@ -225,6 +236,7 @@ final class LexerEdgeCasesTest extends TestCase
         $accessor->callPrivateMethod('consumeCommentMode');
     }
 
+    #[Test]
     public function test_consume_comment_mode_unclosed_reaches_eof(): void
     {
         $lexer = new Lexer();
@@ -243,6 +255,7 @@ final class LexerEdgeCasesTest extends TestCase
         $this->assertTrue($this->getPrivateBool($lexer, 'inCommentMode'));
     }
 
+    #[Test]
     public function test_consume_comment_mode_returns_literal_and_closing_token(): void
     {
         $lexer = new Lexer();
@@ -266,6 +279,7 @@ final class LexerEdgeCasesTest extends TestCase
         $this->assertFalse($this->getPrivateBool($lexer, 'inCommentMode'));
     }
 
+    #[Test]
     public function test_extract_token_value_handles_bell_escape(): void
     {
 
@@ -274,6 +288,7 @@ final class LexerEdgeCasesTest extends TestCase
         $this->assertSame("\x07", $value);
     }
 
+    #[Test]
     public function test_extract_token_value_falls_back_to_default(): void
     {
 

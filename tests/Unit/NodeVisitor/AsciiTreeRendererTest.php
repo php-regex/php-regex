@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Explain\AsciiTreeRenderer;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AsciiTreeRendererTest extends TestCase
 {
+    #[Test]
     public function test_diagram_renders_basic_tree(): void
     {
         $ast = Regex::create()->parse('/^a+$/');
@@ -36,6 +38,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertSame($expected, $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_flags(): void
     {
         $ast = Regex::create()->parse('/^a+$/im');
@@ -45,6 +48,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Anchor (^)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_alternation(): void
     {
         $ast = Regex::create()->parse('/a|b|c/');
@@ -54,6 +58,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Literal', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_named_group(): void
     {
         $ast = Regex::create()->parse('/(?<name>abc)/');
@@ -62,6 +67,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Group (named) name="name"', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_inline_flags_group(): void
     {
         $ast = Regex::create()->parse('/(?im:abc)/');
@@ -70,6 +76,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Group (inline flags) flags="im"', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_lookahead(): void
     {
         $ast = Regex::create()->parse('/a(?=b)/');
@@ -78,6 +85,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Group (positive lookahead)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_negative_lookahead(): void
     {
         $ast = Regex::create()->parse('/a(?!b)/');
@@ -86,6 +94,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Group (negative lookahead)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_lookbehind(): void
     {
         $ast = Regex::create()->parse('/(?<=a)b/');
@@ -94,6 +103,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Group (positive lookbehind)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_negative_lookbehind(): void
     {
         $ast = Regex::create()->parse('/(?<!a)b/');
@@ -102,6 +112,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Group (negative lookbehind)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_atomic_group(): void
     {
         $ast = Regex::create()->parse('/(?>abc)/');
@@ -110,6 +121,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Group (atomic)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_branch_reset(): void
     {
         $ast = Regex::create()->parse('/(?|a|b)/');
@@ -118,6 +130,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Group (branch reset)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_char_class(): void
     {
         $ast = Regex::create()->parse('/[abc]/');
@@ -126,6 +139,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('CharClass', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_negated_char_class(): void
     {
         $ast = Regex::create()->parse('/[^abc]/');
@@ -134,6 +148,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('CharClass (negated)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_range(): void
     {
         $ast = Regex::create()->parse('/[a-z]/');
@@ -142,6 +157,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Range', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_backref(): void
     {
         $ast = Regex::create()->parse('/(a)\1/');
@@ -150,6 +166,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Backref (\\1)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_reads_ampersands_as_class_members(): void
     {
         // PHP has no class intersection: "[a&&[b-z]" is one class holding
@@ -162,6 +179,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString("Literal ('[')", $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_control_char(): void
     {
         $ast = Regex::create()->parse('/\\cM/');
@@ -170,6 +188,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('ControlChar (\\cM)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_script_run(): void
     {
         $ast = Regex::create()->parse('/(*script_run:abc)/');
@@ -178,6 +197,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('ScriptRun (abc)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_version_condition(): void
     {
         $ast = Regex::create()->parse('/(?(VERSION>=1.0)a|b)/');
@@ -186,6 +206,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('VersionCondition (>= 1.0)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_unicode_prop(): void
     {
         $ast = Regex::create()->parse('/\\p{Letter}/');
@@ -194,6 +215,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('UnicodeProperty (\\p{Letter})', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_posix_class(): void
     {
         $ast = Regex::create()->parse('/[[:alpha:]]/');
@@ -202,6 +224,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('PosixClass ([:alpha:])', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_comment(): void
     {
         $ast = Regex::create()->parse('/(?#comment)a/');
@@ -210,6 +233,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Comment', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_conditional(): void
     {
         $ast = Regex::create()->parse('/(?(a)x|y)/');
@@ -218,6 +242,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Conditional', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_subroutine(): void
     {
         $ast = Regex::create()->parse('/(a)(?1)/');
@@ -226,6 +251,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Subroutine (1)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_pcre_verb(): void
     {
         $ast = Regex::create()->parse('/(*PRUNE)a/');
@@ -234,6 +260,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('PCREVerb (*PRUNE)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_define(): void
     {
         $ast = Regex::create()->parse('/(?(DEFINE)(?P<name>abc))/');
@@ -242,6 +269,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Define', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_limit_match(): void
     {
         $ast = Regex::create()->parse('/(*LIMIT_MATCH=100)/');
@@ -250,6 +278,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('LimitMatch (*LIMIT_MATCH=100)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_callout_no_identifier(): void
     {
         $ast = Regex::create()->parse('/(?C)/');
@@ -258,6 +287,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Callout (?C)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_callout_string_identifier(): void
     {
         $ast = Regex::create()->parse('/(?C"test")/');
@@ -266,6 +296,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Callout (?C="test")', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_callout_numeric_identifier(): void
     {
         $ast = Regex::create()->parse('/(?C123)/');
@@ -274,6 +305,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Callout (?C123)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_keep(): void
     {
         $ast = Regex::create()->parse('/a\\Kb/');
@@ -282,6 +314,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Keep (\\K)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_assertion(): void
     {
         $ast = Regex::create()->parse('/\\bword\\b/');
@@ -290,6 +323,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Assertion (\\b)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_unicode_escape(): void
     {
         $ast = Regex::create()->parse('/\\x{20AC}/');
@@ -298,6 +332,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('CharLiteral (\\x{20AC})', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_dot(): void
     {
         $ast = Regex::create()->parse('/a.b/');
@@ -306,6 +341,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Dot (.)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_quantifiers(): void
     {
         $ast = Regex::create()->parse('/a* b+ c? d{3} e{2,5} f{2,}/');
@@ -319,6 +355,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Quantifier ({2,}, greedy)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_lazy_quantifiers(): void
     {
         $ast = Regex::create()->parse('/a*? b+?/');
@@ -328,6 +365,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Quantifier (+, lazy)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_with_possessive_quantifiers(): void
     {
         $ast = Regex::create()->parse('/a*+ b++/');
@@ -337,6 +375,7 @@ final class AsciiTreeRendererTest extends TestCase
         $this->assertStringContainsString('Quantifier (+, possessive)', $diagram);
     }
 
+    #[Test]
     public function test_diagram_complex_nested_structure(): void
     {
         $ast = Regex::create()->parse('/^(?:a|(?:b|c))+$/');

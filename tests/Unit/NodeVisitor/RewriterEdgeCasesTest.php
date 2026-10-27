@@ -44,10 +44,12 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RewriterEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_sequence_flattens_nested_sequences(): void
     {
         $optimizer = new Rewriter();
@@ -60,6 +62,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame('ab', $result->value);
     }
 
+    #[Test]
     public function test_sequence_with_empty_literal_returns_empty_literal(): void
     {
         $optimizer = new Rewriter();
@@ -71,6 +74,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame('', $result->value);
     }
 
+    #[Test]
     public function test_sequence_flattens_nested_sequences_with_non_literal_children(): void
     {
         $optimizer = new Rewriter();
@@ -86,6 +90,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame('ab', $result->children[1]->value);
     }
 
+    #[Test]
     public function test_conditional_rebuilds_when_child_optimized(): void
     {
         $optimizer = new Rewriter();
@@ -98,6 +103,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertNotSame($node, $result);
     }
 
+    #[Test]
     public function test_define_and_limit_match_are_visited(): void
     {
         $optimizer = new Rewriter();
@@ -116,6 +122,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($limit, $limit->accept($optimizer));
     }
 
+    #[Test]
     public function test_normalize_char_class_parts_reverses_ranges_and_updates_scalar(): void
     {
         $optimizer = new Rewriter();
@@ -133,6 +140,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertNotEmpty($normalized);
     }
 
+    #[Test]
     public function test_visit_alternation_deduplicates_after_change(): void
     {
         $optimizer = new Rewriter();
@@ -148,6 +156,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertCount(2, $result->alternatives);
     }
 
+    #[Test]
     public function test_factorize_alternation_returns_prefix_only_when_suffixes_empty(): void
     {
         $optimizer = new Rewriter();
@@ -159,6 +168,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertCount(1, $result);
     }
 
+    #[Test]
     public function test_factorize_suffix_all_suffix_only(): void
     {
         $optimizer = new Rewriter();
@@ -170,6 +180,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertCount(1, $result);
     }
 
+    #[Test]
     public function test_factorize_suffix_single_prefix_branch(): void
     {
         $optimizer = new Rewriter();
@@ -181,6 +192,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertCount(1, $result);
     }
 
+    #[Test]
     public function test_shared_start_of_strings_sharing_nothing_is_empty(): void
     {
         $optimizer = new Rewriter();
@@ -190,6 +202,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame('', $result);
     }
 
+    #[Test]
     public function test_merge_char_classes_and_char_types_merges_alternations(): void
     {
         $optimizer = new Rewriter();
@@ -208,6 +221,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $result);
     }
 
+    #[Test]
     public function test_visit_regex_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -219,6 +233,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertInstanceOf(RegexNode::class, $result);
     }
 
+    #[Test]
     public function test_visit_group_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -231,6 +246,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertInstanceOf(LiteralNode::class, $result);
     }
 
+    #[Test]
     public function test_visit_quantifier_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -242,6 +258,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertInstanceOf(QuantifierNode::class, $result);
     }
 
+    #[Test]
     public function test_visit_char_class_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -253,6 +270,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $result);
     }
 
+    #[Test]
     public function test_visit_range_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -265,6 +283,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($range, $result);
     }
 
+    #[Test]
     public function test_visit_dot_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -275,6 +294,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($dot, $result);
     }
 
+    #[Test]
     public function test_visit_anchor_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -285,6 +305,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($anchor, $result);
     }
 
+    #[Test]
     public function test_visit_assertion_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -295,6 +316,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($assertion, $result);
     }
 
+    #[Test]
     public function test_visit_keep_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -305,6 +327,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($keep, $result);
     }
 
+    #[Test]
     public function test_visit_backref_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -315,6 +338,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($backref, $result);
     }
 
+    #[Test]
     public function test_visit_unicode_prop_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -325,6 +349,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($unicodeProp, $result);
     }
 
+    #[Test]
     public function test_visit_char_literal_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -335,6 +360,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($charLiteral, $result);
     }
 
+    #[Test]
     public function test_visit_posix_class_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -345,6 +371,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($posixClass, $result);
     }
 
+    #[Test]
     public function test_visit_comment_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -355,6 +382,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($comment, $result);
     }
 
+    #[Test]
     public function test_visit_subroutine_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -365,6 +393,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($subroutine, $result);
     }
 
+    #[Test]
     public function test_visit_pcre_verb_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -375,6 +404,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($pcreVerb, $result);
     }
 
+    #[Test]
     public function test_visit_callout_is_covered(): void
     {
         $optimizer = new Rewriter();
@@ -385,6 +415,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($callout, $result);
     }
 
+    #[Test]
     public function test_nullable_status_covers_all_branches(): void
     {
         $optimizer = new Rewriter();
@@ -444,6 +475,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertTrue($result);
     }
 
+    #[Test]
     public function test_quantifier_allows_zero_covers_all_cases(): void
     {
         $optimizer = new Rewriter();
@@ -461,6 +493,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertFalse($this->invokePrivate($optimizer, 'quantifierAllowsZero', [new QuantifierNode(new LiteralNode('a', 0, 1), '{1,5}', QuantifierType::Greedy, 0, 1)]));
     }
 
+    #[Test]
     public function test_char_from_code_point_covers_edge_cases(): void
     {
         $optimizer = new Rewriter();
@@ -478,6 +511,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame('', $result);
     }
 
+    #[Test]
     public function test_factorize_alternation_with_literal_nodes(): void
     {
         $optimizer = new Rewriter();
@@ -495,6 +529,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertCount(1, $result);
     }
 
+    #[Test]
     public function test_factorize_alternation_no_common_prefix(): void
     {
         $optimizer = new Rewriter();
@@ -509,6 +544,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($alts, $result);
     }
 
+    #[Test]
     public function test_factorize_suffix_with_literal_nodes(): void
     {
         $optimizer = new Rewriter();
@@ -525,6 +561,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertCount(1, $result);
     }
 
+    #[Test]
     public function test_shared_end_keeps_whole_characters(): void
     {
         $optimizer = new Rewriter();
@@ -537,6 +574,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame('', $this->invokePrivate($optimizer, 'sharedEnd', [['é', 'ɩ']]));
     }
 
+    #[Test]
     public function test_shared_start_covers_edge_cases(): void
     {
         $optimizer = new Rewriter();
@@ -554,6 +592,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame('', $this->invokePrivate($optimizer, 'sharedStart', [['é', 'è']]));
     }
 
+    #[Test]
     public function test_pattern_contains_dots_covers_all_cases(): void
     {
         $optimizer = new Rewriter();
@@ -595,6 +634,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertFalse($result);
     }
 
+    #[Test]
     public function test_pattern_contains_multiline_anchors_covers_all_cases(): void
     {
         $optimizer = new Rewriter();
@@ -640,6 +680,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertFalse($result);
     }
 
+    #[Test]
     public function test_is_possessify_candidate_covers_all_cases(): void
     {
         $optimizer = new Rewriter();
@@ -675,6 +716,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertFalse($result);
     }
 
+    #[Test]
     public function test_can_match_empty_covers_all_cases(): void
     {
         $optimizer = new Rewriter();
@@ -699,6 +741,7 @@ final class RewriterEdgeCasesTest extends TestCase
      * "\w" reads the locale's tables without "u" and Unicode properties
      * with it: the full word class stays a class, written in order.
      */
+    #[Test]
     public function test_the_full_word_class_is_never_written_as_a_shorthand(): void
     {
         $regex = Regex::create();
@@ -711,6 +754,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame('/[^0-9A-Z_a-z]/', $result->accept($printer));
     }
 
+    #[Test]
     public function test_parse_quantifier_count_covers_all_cases(): void
     {
         $optimizer = new Rewriter();
@@ -732,6 +776,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertNull($result);
     }
 
+    #[Test]
     public function test_is_capture_sensitive_covers_all_cases(): void
     {
         $optimizer = new Rewriter();
@@ -772,6 +817,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertFalse($result);
     }
 
+    #[Test]
     public function test_create_quantified_node_covers_all_cases(): void
     {
         $optimizer = new Rewriter();
@@ -787,6 +833,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame($node, $result);
     }
 
+    #[Test]
     public function test_normalize_quantifier_covers_all_cases(): void
     {
         $optimizer = new Rewriter();
@@ -823,6 +870,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame('', $result->value);
     }
 
+    #[Test]
     public function test_can_alternation_be_char_class_covers_all_cases(): void
     {
         $optimizer = new Rewriter();
@@ -852,6 +900,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertTrue($result);
     }
 
+    #[Test]
     public function test_deduplicate_alternation_covers_case(): void
     {
         $optimizer = new Rewriter();
@@ -867,6 +916,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertCount(2, $result);
     }
 
+    #[Test]
     public function test_compact_sequence_covers_cases(): void
     {
         $optimizer = new Rewriter();
@@ -889,6 +939,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertInstanceOf(QuantifierNode::class, $result[0]);
     }
 
+    #[Test]
     public function test_are_nodes_equal_covers_cases(): void
     {
         $optimizer = new Rewriter();
@@ -910,6 +961,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertFalse($result);
     }
 
+    #[Test]
     public function test_remove_useless_flags_covers_cases(): void
     {
         $optimizer = new Rewriter();
@@ -929,6 +981,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertSame('si', $result);
     }
 
+    #[Test]
     public function test_merge_adjacent_char_classes_covers_cases(): void
     {
         $optimizer = new Rewriter();
@@ -950,6 +1003,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $result[0]);
     }
 
+    #[Test]
     public function test_can_convert_char_type_to_char_class_covers_cases(): void
     {
         $optimizer = new Rewriter();
@@ -973,6 +1027,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertFalse($result);
     }
 
+    #[Test]
     public function test_should_build_range_covers_cases(): void
     {
         $optimizer = new Rewriter();
@@ -990,6 +1045,7 @@ final class RewriterEdgeCasesTest extends TestCase
         $this->assertFalse($result);
     }
 
+    #[Test]
     public function test_get_char_category_covers_cases(): void
     {
         $optimizer = new Rewriter();

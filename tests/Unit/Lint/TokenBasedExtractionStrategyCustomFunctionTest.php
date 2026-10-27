@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TokenBasedExtractionStrategyCustomFunctionTest extends TestCase
 {
+    #[Test]
     public function test_extracts_pattern_from_custom_function(): void
     {
         $strategy = new TokenBasedExtractionStrategy(['myCustomRegex']);
@@ -31,6 +33,7 @@ final class TokenBasedExtractionStrategyCustomFunctionTest extends TestCase
         $this->assertSame('myCustomRegex()', $result[0]->source);
     }
 
+    #[Test]
     public function test_extracts_pattern_from_case_insensitive_custom_function(): void
     {
         $strategy = new TokenBasedExtractionStrategy(['MyCustomRegex']);
@@ -45,6 +48,7 @@ final class TokenBasedExtractionStrategyCustomFunctionTest extends TestCase
         $this->assertSame('MyCustomRegex()', $result[0]->source);
     }
 
+    #[Test]
     public function test_extracts_pattern_from_static_method(): void
     {
         $strategy = new TokenBasedExtractionStrategy(['MyClass::validate']);
@@ -58,6 +62,7 @@ final class TokenBasedExtractionStrategyCustomFunctionTest extends TestCase
         $this->assertSame('MyClass::validate()', $result[0]->source);
     }
 
+    #[Test]
     public function test_extracts_pattern_from_case_insensitive_static_method(): void
     {
         $strategy = new TokenBasedExtractionStrategy(['MyClass::Validate']);
@@ -71,6 +76,7 @@ final class TokenBasedExtractionStrategyCustomFunctionTest extends TestCase
         $this->assertSame('MyClass::Validate()', $result[0]->source);
     }
 
+    #[Test]
     public function test_handles_multiple_custom_functions(): void
     {
         $strategy = new TokenBasedExtractionStrategy(['customRegex1', 'customRegex2', 'MyClass::check']);
@@ -85,6 +91,7 @@ final class TokenBasedExtractionStrategyCustomFunctionTest extends TestCase
         $this->assertSame('/pattern3/', $result[2]->pattern);
     }
 
+    #[Test]
     public function test_ignores_empty_custom_function_name(): void
     {
         $strategy = new TokenBasedExtractionStrategy(['', 'myCustomRegex']);
@@ -97,6 +104,7 @@ final class TokenBasedExtractionStrategyCustomFunctionTest extends TestCase
         $this->assertSame('/test/', $result[0]->pattern);
     }
 
+    #[Test]
     public function test_ignores_non_string_custom_function_names(): void
     {
         $strategy = new TokenBasedExtractionStrategy(['myCustomRegex']);
@@ -109,6 +117,7 @@ final class TokenBasedExtractionStrategyCustomFunctionTest extends TestCase
         $this->assertSame('/test/', $result[0]->pattern);
     }
 
+    #[Test]
     public function test_ignores_namespaced_function_call_not_in_custom_list(): void
     {
         $strategy = new TokenBasedExtractionStrategy(['myFunction']);
@@ -120,6 +129,7 @@ final class TokenBasedExtractionStrategyCustomFunctionTest extends TestCase
         $this->assertEmpty($result);
     }
 
+    #[Test]
     public function test_ignores_method_call_not_in_custom_list(): void
     {
         $strategy = new TokenBasedExtractionStrategy(['MyFunction']);
@@ -131,6 +141,7 @@ final class TokenBasedExtractionStrategyCustomFunctionTest extends TestCase
         $this->assertEmpty($result);
     }
 
+    #[Test]
     public function test_ignores_nullsafe_method_call(): void
     {
         $strategy = new TokenBasedExtractionStrategy(['MyFunction']);

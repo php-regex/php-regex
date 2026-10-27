@@ -17,12 +17,14 @@ use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ValidatorTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_validator_visitor_rejects_invalid_quantifier_range(): void
     {
         $regex = Regex::create();

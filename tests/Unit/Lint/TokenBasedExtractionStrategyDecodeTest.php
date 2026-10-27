@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\Extraction\PhpTokens;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TokenBasedExtractionStrategyDecodeTest extends TestCase
 {
+    #[Test]
     public function test_decode_double_quoted_string_handles_control_escapes(): void
     {
         $decoded = PhpTokens::stringValue('"\\r\\t\\v\\e\\f\\\\\\""');
@@ -25,6 +27,7 @@ final class TokenBasedExtractionStrategyDecodeTest extends TestCase
         $this->assertSame("\r\t\v\e\f\\\"", $decoded);
     }
 
+    #[Test]
     public function test_decode_double_quoted_string_handles_octal_escape(): void
     {
         $decoded = PhpTokens::stringValue('"\\101"');
@@ -32,6 +35,7 @@ final class TokenBasedExtractionStrategyDecodeTest extends TestCase
         $this->assertSame('A', $decoded);
     }
 
+    #[Test]
     public function test_decode_double_quoted_string_handles_multiple_octal_cases(): void
     {
         $decoded = PhpTokens::stringValue('"\\2\\3\\4\\5\\6\\7"');
@@ -40,6 +44,7 @@ final class TokenBasedExtractionStrategyDecodeTest extends TestCase
         $this->assertSame('020304050607', bin2hex((string) $decoded));
     }
 
+    #[Test]
     public function test_decode_double_quoted_string_handles_unknown_escape(): void
     {
         $decoded = PhpTokens::stringValue('"\\q"');
@@ -47,6 +52,7 @@ final class TokenBasedExtractionStrategyDecodeTest extends TestCase
         $this->assertSame('\\q', $decoded);
     }
 
+    #[Test]
     public function test_decode_double_quoted_string_handles_trailing_backslash(): void
     {
         $decoded = PhpTokens::stringValue('"\\"');
@@ -54,6 +60,7 @@ final class TokenBasedExtractionStrategyDecodeTest extends TestCase
         $this->assertSame('\\', $decoded);
     }
 
+    #[Test]
     public function test_parse_hex_escape_edge_cases(): void
     {
         $this->assertSame('\\x', PhpTokens::stringValue('"\\x"'));
@@ -61,6 +68,7 @@ final class TokenBasedExtractionStrategyDecodeTest extends TestCase
         $this->assertSame('\\xg', PhpTokens::stringValue('"\\xg"'));
     }
 
+    #[Test]
     public function test_parse_unicode_escape_edge_cases(): void
     {
         $this->assertSame('\\u', PhpTokens::stringValue('"\\u"'));
@@ -68,11 +76,13 @@ final class TokenBasedExtractionStrategyDecodeTest extends TestCase
         $this->assertSame('\\u{ZZ}', PhpTokens::stringValue('"\\u{ZZ}"'));
     }
 
+    #[Test]
     public function test_parse_octal_escape_no_digits(): void
     {
         $this->assertSame('\\9', PhpTokens::stringValue('"\\9"'));
     }
 
+    #[Test]
     public function test_codepoint_to_utf8_branches(): void
     {
         $this->assertSame("\x7f", PhpTokens::stringValue('"\\u{7F}"'));

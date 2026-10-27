@@ -22,6 +22,7 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ParserOptionsTest extends TestCase
@@ -29,12 +30,14 @@ final class ParserOptionsTest extends TestCase
     use InstalledLocales;
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_create_with_unknown_option_throws(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
         Regex::fromOptions(ParserOptions::fromArray(['unknown_option' => true]));
     }
 
+    #[Test]
     public function test_create_with_valid_options(): void
     {
         $regex = Regex::create([
@@ -53,6 +56,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertSame(80300, $regex->target()->phpVersionId);
     }
 
+    #[Test]
     public function test_from_array_with_empty_array(): void
     {
         $options = ParserOptions::fromArray([]);
@@ -64,6 +68,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertSame(\PHP_VERSION_ID, $options->target->phpVersionId);
     }
 
+    #[Test]
     public function test_from_array_with_null_cache_disables_cache(): void
     {
         $options = ParserOptions::fromArray(['cache' => null]);
@@ -71,6 +76,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertInstanceOf(NullCache::class, $options->cache);
     }
 
+    #[Test]
     public function test_from_array_parses_php_version_string(): void
     {
         $options = ParserOptions::fromArray(['php_version' => '8.1']);
@@ -78,6 +84,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertSame(80100, $options->target->phpVersionId);
     }
 
+    #[Test]
     public function test_from_array_parses_php_version_id(): void
     {
         $options = ParserOptions::fromArray(['php_version' => 80401]);
@@ -85,6 +92,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertSame(80401, $options->target->phpVersionId);
     }
 
+    #[Test]
     public function test_from_array_invalid_php_version(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -92,6 +100,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['php_version' => 'invalid']);
     }
 
+    #[Test]
     public function test_from_array_invalid_php_version_int_zero(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -99,6 +108,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['php_version' => 0]);
     }
 
+    #[Test]
     public function test_from_array_invalid_php_version_empty_string(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -106,6 +116,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['php_version' => '   ']);
     }
 
+    #[Test]
     public function test_from_array_invalid_php_version_leading_form_feed(): void
     {
         // PHP 8.6 trim() also strips \f: a form feed stays an invalid
@@ -115,6 +126,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['php_version' => "\f8.2"]);
     }
 
+    #[Test]
     public function test_from_array_invalid_php_version_form_feed_before_runtime(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -122,6 +134,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['php_version' => "\fruntime"]);
     }
 
+    #[Test]
     public function test_from_array_invalid_php_version_digits_low(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -129,6 +142,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['php_version' => '8000']);
     }
 
+    #[Test]
     public function test_from_array_parses_php_version_digits(): void
     {
         $options = ParserOptions::fromArray(['php_version' => '80100']);
@@ -136,6 +150,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertSame(80100, $options->target->phpVersionId);
     }
 
+    #[Test]
     public function test_from_array_parses_php_version_patch(): void
     {
         $options = ParserOptions::fromArray(['php_version' => '8.1.2']);
@@ -143,6 +158,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertSame(80102, $options->target->phpVersionId);
     }
 
+    #[Test]
     public function test_a_php_version_alone_gets_the_pcre2_it_bundles(): void
     {
         $options = ParserOptions::fromArray(['php_version' => '8.3']);
@@ -150,6 +166,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertSame('10.42', $options->target->pcreVersion);
     }
 
+    #[Test]
     public function test_the_running_php_named_as_a_target_still_gets_its_bundled_pcre2(): void
     {
         $options = ParserOptions::fromArray(['php_version' => \PHP_VERSION_ID]);
@@ -157,6 +174,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertEquals(PcreTarget::bundledWith(\PHP_VERSION_ID), $options->target);
     }
 
+    #[Test]
     public function test_a_pcre_version_alone_keeps_the_running_php(): void
     {
         $options = ParserOptions::fromArray(['pcre_version' => '10.42']);
@@ -165,6 +183,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertSame('10.42', $options->target->pcreVersion);
     }
 
+    #[Test]
     public function test_a_php_and_a_pcre_version_name_the_target(): void
     {
         $options = ParserOptions::fromArray(['php_version' => '8.4', 'pcre_version' => '10.42']);
@@ -173,12 +192,14 @@ final class ParserOptionsTest extends TestCase
         $this->assertSame('10.42', $options->target->pcreVersion);
     }
 
+    #[Test]
     public function test_no_version_targets_the_running_engine(): void
     {
         $this->assertEquals(PcreTarget::runtime(), ParserOptions::fromArray(['cache' => null])->target);
         $this->assertEquals(PcreTarget::runtime(), ParserOptions::fromArray([])->target);
     }
 
+    #[Test]
     public function test_the_pcre_version_must_name_a_release(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -186,6 +207,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['pcre_version' => 10.42]);
     }
 
+    #[Test]
     public function test_runtime_validation_needs_the_running_engine_as_target(): void
     {
         $this->assertTrue(ParserOptions::fromArray(['runtime_pcre_validation' => true])->runtimePcreValidation);
@@ -198,6 +220,7 @@ final class ParserOptionsTest extends TestCase
     /**
      * The message names the major and the minor of the PHP judged.
      */
+    #[Test]
     public function test_runtime_validation_names_the_php_it_does_not_judge(): void
     {
         foreach (['8.0.7' => 'PHP 8.0, PCRE2 10.100', 89991 => 'PHP 8.99, PCRE2 10.100'] as $phpVersion => $named) {
@@ -210,6 +233,7 @@ final class ParserOptionsTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_from_array_invalid_max_pattern_length(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -217,6 +241,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['max_pattern_length' => 0]);
     }
 
+    #[Test]
     public function test_from_array_invalid_max_pattern_length_type(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -224,6 +249,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['max_pattern_length' => 'invalid']);
     }
 
+    #[Test]
     public function test_from_array_invalid_max_lookbehind_length(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -231,6 +257,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['max_lookbehind_length' => -1]);
     }
 
+    #[Test]
     public function test_from_array_invalid_max_lookbehind_length_type(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -238,6 +265,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['max_lookbehind_length' => 'invalid']);
     }
 
+    #[Test]
     public function test_from_array_invalid_runtime_pcre_validation(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -245,6 +273,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['runtime_pcre_validation' => 'invalid']);
     }
 
+    #[Test]
     public function test_from_array_invalid_max_recursion_depth(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -252,6 +281,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['max_recursion_depth' => 0]);
     }
 
+    #[Test]
     public function test_from_array_invalid_max_recursion_depth_type(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -259,6 +289,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['max_recursion_depth' => 'invalid']);
     }
 
+    #[Test]
     public function test_from_array_invalid_cache(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -266,6 +297,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['cache' => 123]);
     }
 
+    #[Test]
     public function test_from_array_empty_cache_path(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -273,12 +305,14 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['cache' => '']);
     }
 
+    #[Test]
     public function test_from_array_valid_cache_path(): void
     {
         $options = ParserOptions::fromArray(['cache' => '/tmp']);
         $this->assertInstanceOf(FilesystemCache::class, $options->cache);
     }
 
+    #[Test]
     public function test_from_array_invalid_redos_ignored_patterns(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -286,6 +320,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['redos_ignored_patterns' => 'invalid']);
     }
 
+    #[Test]
     public function test_from_array_invalid_redos_ignored_patterns_elements(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -293,12 +328,14 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['redos_ignored_patterns' => [123]]);
     }
 
+    #[Test]
     public function test_from_array_redos_ignored_patterns_deduplicates(): void
     {
         $options = ParserOptions::fromArray(['redos_ignored_patterns' => ['/a/', '/a/', '/b/']]);
         $this->assertSame(['/a/', '/b/'], $options->redosIgnoredPatterns);
     }
 
+    #[Test]
     public function test_from_array_invalid_php_version_type(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -306,6 +343,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['php_version' => []]);
     }
 
+    #[Test]
     public function test_php_version_runtime_names_the_running_engine(): void
     {
         // As PHPStan's phpVersion: the running PHP, with the PCRE2 it links.
@@ -314,6 +352,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertSame('10.42', ParserOptions::fromArray(['php_version' => 'runtime', 'pcre_version' => '10.42'])->target->pcreVersion);
     }
 
+    #[Test]
     public function test_the_locale_is_part_of_the_target(): void
     {
         $this->assertSame('C', ParserOptions::fromArray(['locale' => 'C'])->target->locale);
@@ -325,6 +364,7 @@ final class ParserOptionsTest extends TestCase
         $this->assertSame('C', Regex::create(['locale' => 'C'])->target()->locale);
     }
 
+    #[Test]
     public function test_the_locale_must_be_a_name(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -332,6 +372,7 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['locale' => 1]);
     }
 
+    #[Test]
     public function test_a_locale_the_machine_cannot_set_is_refused(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -343,6 +384,7 @@ final class ParserOptionsTest extends TestCase
      * PHP compiles under the runtime's locale: it judges a target of
      * another locale no more than one of another release.
      */
+    #[Test]
     public function test_runtime_validation_needs_the_runtimes_locale(): void
     {
         $this->requiresLocale('tr_TR.ISO8859-9', 'Runtime validation under another locale');

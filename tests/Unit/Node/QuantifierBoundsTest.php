@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Node;
 
 use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class QuantifierBoundsTest extends TestCase
@@ -44,6 +45,7 @@ final class QuantifierBoundsTest extends TestCase
         yield 'not a quantifier' => ['abc', null, null];
     }
 
+    #[Test]
     #[DataProvider('provide_quantifiers')]
     public function test_parse(string $quantifier, ?int $min, ?int $max): void
     {
@@ -60,6 +62,7 @@ final class QuantifierBoundsTest extends TestCase
         $this->assertSame($max, $bounds->max);
     }
 
+    #[Test]
     public function test_is_unbounded(): void
     {
         $this->assertTrue(QuantifierBounds::parse('*')?->isUnbounded());

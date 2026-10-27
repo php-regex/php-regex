@@ -18,12 +18,14 @@ use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LinterRulesTest extends TestCase
 {
     use PcreGates;
 
+    #[Test]
     public function test_nested_quantifier_warning(): void
     {
         // The "$" makes the loop matter: (a+)+$ on a{20}b takes 2 621 440
@@ -32,6 +34,7 @@ final class LinterRulesTest extends TestCase
         $this->assertContains('regex.lint.quantifier.nested', $issues);
     }
 
+    #[Test]
     public function test_nested_quantifier_warning_skips_possessive_quantifiers(): void
     {
         $issues = $this->lint('/(?:a*+)+/');
@@ -41,6 +44,7 @@ final class LinterRulesTest extends TestCase
         $this->assertNotContains('regex.lint.quantifier.nested', $issues);
     }
 
+    #[Test]
     #[DataProvider('provideNestedQuantifierPatterns')]
     public function test_nested_quantifier_warning_respects_separators(string $pattern, bool $shouldWarn): void
     {
@@ -50,12 +54,14 @@ final class LinterRulesTest extends TestCase
         $this->assertSame($shouldWarn, $hasWarning);
     }
 
+    #[Test]
     public function test_dotstar_in_unbounded_quantifier_warning(): void
     {
         $issues = $this->lint('/(?:.*)+/');
         $this->assertContains('regex.lint.dotstar.nested', $issues);
     }
 
+    #[Test]
     public function test_redundant_non_capturing_group_warning(): void
     {
         $issues = $this->lint('/(?:a)/');
@@ -67,6 +73,7 @@ final class LinterRulesTest extends TestCase
      * another escape: "(a)\1(?:)0" is not "(a)\10", "\01(?:)2" is not the
      * newline "\012". The group is not redundant there.
      */
+    #[Test]
     #[DataProvider('provideGroupsKeepingAnEscapeFromADigit')]
     public function test_redundant_group_warning_skips_a_group_that_keeps_an_escape_from_a_digit(string $pattern, string $withoutGroup, string $subject): void
     {
@@ -89,6 +96,7 @@ final class LinterRulesTest extends TestCase
         yield 'group around the hex digit after a short hex escape' => ['pattern' => '/^\\xa(?:b)$/', 'withoutGroup' => '/^\\xab$/', 'subject' => "\nb"];
     }
 
+    #[Test]
     public function test_redundant_group_warning_still_reports_a_group_beside_an_escape_it_does_not_extend(): void
     {
         // "(a)\1b" reads as "(a)\1(?:b)": the letter extends no escape.
@@ -96,12 +104,14 @@ final class LinterRulesTest extends TestCase
         $this->assertContains('regex.lint.group.redundant', $this->lint('/(a)\\1(?:b)/'));
     }
 
+    #[Test]
     public function test_alternation_duplicate_warning(): void
     {
         $issues = $this->lint('/(a|a)/');
         $this->assertContains('regex.lint.alternation.duplicateDisjunction', $issues);
     }
 
+    #[Test]
     public function test_alternation_overlap_warning(): void
     {
         // Overlapping alternation must be inside an unbounded quantifier to trigger warning
@@ -134,6 +144,7 @@ final class LinterRulesTest extends TestCase
         ];
     }
 
+    #[Test]
     #[DataProvider('provideOverlapMessages')]
     public function test_alternation_overlap_message_spells_the_branch_text(string $pattern, string $first, string $second, string $message): void
     {
@@ -146,24 +157,28 @@ final class LinterRulesTest extends TestCase
         $this->assertContains($message, $this->lintMessages($pattern));
     }
 
+    #[Test]
     public function test_alternation_duplicate_with_lookarounds(): void
     {
         $issues = $this->lint('/(?=foo)|(?=foo)/');
         $this->assertContains('regex.lint.alternation.duplicateDisjunction', $issues);
     }
 
+    #[Test]
     public function test_redundant_char_class_warning(): void
     {
         $issues = $this->lint('/[a-zA-Za-z]/');
         $this->assertContains('regex.lint.charclass.redundant', $issues);
     }
 
+    #[Test]
     public function test_suspicious_char_class_range_warning(): void
     {
         $issues = $this->lint('/[A-z]/');
         $this->assertContains('regex.lint.charclass.suspiciousRange', $issues);
     }
 
+    #[Test]
     public function test_suspicious_char_class_range_message_uses_ascii_order(): void
     {
         $regex = Regex::create()->parse('/[A-z]/');
@@ -182,18 +197,21 @@ final class LinterRulesTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_suspicious_char_class_pipe_warning(): void
     {
         $issues = $this->lint('/[error|failure]/');
         $this->assertContains('regex.lint.charclass.suspiciousPipe', $issues);
     }
 
+    #[Test]
     public function test_suspicious_char_class_pipe_ignores_small_sets(): void
     {
         $issues = $this->lint('/[a|b]/');
         $this->assertNotContains('regex.lint.charclass.suspiciousPipe', $issues);
     }
 
+    #[Test]
     public function test_inline_flag_redundant_warning(): void
     {
         $issues = $this->lint('/(?i:foo)/i');
@@ -204,6 +222,7 @@ final class LinterRulesTest extends TestCase
      * (?^ turns i, m, n, r, s and x off, and leaves U and J on:
      * preg_match('/(?^)a+/U', 'aaa') matches "a".
      */
+    #[Test]
     public function test_a_caret_keeps_u_and_j_on(): void
     {
         $this->assertContains('regex.lint.flag.redundant', $this->lint('/(?^U)a+/U'));
@@ -212,12 +231,14 @@ final class LinterRulesTest extends TestCase
         $this->assertNotContains('regex.lint.flag.redundant', $this->lint('/(?^i)a/i'));
     }
 
+    #[Test]
     public function test_inline_flag_override_warning(): void
     {
         $issues = $this->lint('/(?-i:foo)/i');
         $this->assertContains('regex.lint.flag.override', $issues);
     }
 
+    #[Test]
     public function test_inline_flag_override_respects_preceding_inline_flag(): void
     {
         $issues = $this->lint('/(?i)(?-i:foo)/');
@@ -225,6 +246,7 @@ final class LinterRulesTest extends TestCase
         $this->assertNotContains('regex.lint.flag.redundant', $issues);
     }
 
+    #[Test]
     public function test_inline_flag_redundant_message_names_the_global_modifier(): void
     {
         $messages = $this->lintMessages('/(?i:foo)/i');
@@ -232,6 +254,7 @@ final class LinterRulesTest extends TestCase
         $this->assertContains("Inline flag 'i' is redundant; it is already set globally.", $messages);
     }
 
+    #[Test]
     public function test_inline_flag_redundant_message_names_the_preceding_inline_group(): void
     {
         $messages = $this->lintMessages('/(?U)a(?U)b/');
@@ -239,6 +262,7 @@ final class LinterRulesTest extends TestCase
         $this->assertContains("Inline flag 'U' is redundant; it is already set by an earlier inline flag group.", $messages);
     }
 
+    #[Test]
     public function test_inline_flag_redundant_ignores_case_of_global_modifier(): void
     {
         $issues = $this->lint('/(?U)a/u');
@@ -246,6 +270,7 @@ final class LinterRulesTest extends TestCase
         $this->assertNotContains('regex.lint.flag.redundant', $issues);
     }
 
+    #[Test]
     public function test_suspicious_unicode_escape_warning(): void
     {
         $issues = $this->lint('/\\x{110000}/');
@@ -260,6 +285,7 @@ final class LinterRulesTest extends TestCase
      *
      * @param list<string> $expected
      */
+    #[Test]
     #[DataProvider('provideUnicodeNamedEscapes')]
     public function test_suspicious_escape_looks_up_the_unicode_character_name(string $pattern, array $expected): void
     {
@@ -294,6 +320,7 @@ final class LinterRulesTest extends TestCase
     /**
      * \N{U+hh} spells a code point, not a name: PCRE2 reads it under /u.
      */
+    #[Test]
     public function test_a_code_point_spelled_with_n_is_not_a_suspicious_escape(): void
     {
         $this->assertSame(1, preg_match('/^\\N{U+41}$/u', 'A'), 'Oracle: \N{U+41} is "A" under /u.');
@@ -310,6 +337,7 @@ final class LinterRulesTest extends TestCase
         $this->assertSame([], $messages);
     }
 
+    #[Test]
     public function test_useless_flag_s_warning(): void
     {
         $issues = $this->lint('/no_dot/s');
@@ -376,6 +404,7 @@ final class LinterRulesTest extends TestCase
         yield 'overlapping branches in an anchored loop' => ['pattern' => '/(?:[a-m]|[a-z])+$/', 'ruleId' => $overlap, 'reported' => true, 'subject' => str_repeat('a', 20).'!'];
     }
 
+    #[Test]
     #[DataProvider('provideRedosHeuristicVerdicts')]
     public function test_redos_heuristic_verdict_agrees_with_the_engine(string $pattern, string $ruleId, bool $reported, string $subject): void
     {
@@ -404,6 +433,7 @@ final class LinterRulesTest extends TestCase
         yield 'one to five iterations' => ['pattern' => '/(a+){1,5}$/', 'reported' => true];
     }
 
+    #[Test]
     #[DataProvider('provideBoundedOuterQuantifiers')]
     public function test_bounded_outer_quantifier_is_reported_only_beyond_two(string $pattern, bool $reported): void
     {
@@ -423,6 +453,7 @@ final class LinterRulesTest extends TestCase
      * Corpus (isU): the lookbehind inside the loop holds the only
      * alternation; nothing overlaps.
      */
+    #[Test]
     public function test_lookbehind_alternation_in_a_corpus_pattern_is_not_an_overlap(): void
     {
         $pattern = <<<'REGEX'
@@ -459,6 +490,7 @@ final class LinterRulesTest extends TestCase
     /**
      * @param list<string> $units
      */
+    #[Test]
     #[DataProvider('provideBoundedCorpusShapes')]
     public function test_bounded_corpus_shape_is_reported_on_purpose(string $pattern, array $units): void
     {

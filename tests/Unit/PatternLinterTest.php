@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PatternLinterTest extends TestCase
 {
+    #[Test]
     public function test_linter_visitor_reports_no_issues_for_literal(): void
     {
         $regex = Regex::create();
@@ -30,6 +32,7 @@ final class PatternLinterTest extends TestCase
         $this->assertSame([], $visitor->getIssues());
     }
 
+    #[Test]
     public function test_the_classes_of_an_extended_class_are_linted(): void
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.45']);
@@ -43,6 +46,7 @@ final class PatternLinterTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_anchor_end_allows_optional_suffix(): void
     {
         $regex = Regex::create();
@@ -55,6 +59,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains('regex.lint.anchor.impossible.end', $issueIds);
     }
 
+    #[Test]
     public function test_anchor_end_reports_required_suffix(): void
     {
         $regex = Regex::create();

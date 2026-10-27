@@ -23,10 +23,12 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintServiceEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_filter_issues_respects_validation_toggle(): void
     {
         $service = $this->makeService();
@@ -49,6 +51,7 @@ final class LintServiceEdgeCasesTest extends TestCase
         $this->assertSame([], $filtered);
     }
 
+    #[Test]
     public function test_severity_mapping_and_snippet_stripping(): void
     {
         // A verdict not confirmed is a warning, whatever its severity.

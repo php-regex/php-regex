@@ -22,10 +22,12 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class VisitorManualInjectionTest extends TestCase
 {
+    #[Test]
     public function test_optimizer_handles_empty_alternation(): void
     {
         // Cas impossible via parser : AlternationNode vide
@@ -37,6 +39,7 @@ final class VisitorManualInjectionTest extends TestCase
         $this->assertSame($node, $result); // ou assertion selon ta logique
     }
 
+    #[Test]
     public function test_compiler_handles_literal_bracket_outside_char_class(): void
     {
         // The parser handles ']' as a literal if there's no open '[',
@@ -47,6 +50,7 @@ final class VisitorManualInjectionTest extends TestCase
         $this->assertSame(']', $node->accept($compiler));
     }
 
+    #[Test]
     public function test_sample_generator_fallback_on_empty_char_class(): void
     {
         // An empty class [] is normally a parsing error,
@@ -58,6 +62,7 @@ final class VisitorManualInjectionTest extends TestCase
         $node->accept($generator);
     }
 
+    #[Test]
     public function test_compiler_quantifier_on_alternation_adds_non_capturing_group(): void
     {
         // (a|b)* -> the compiler must add (?:...) around a|b

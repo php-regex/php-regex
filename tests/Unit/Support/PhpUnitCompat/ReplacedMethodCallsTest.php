@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Support\PhpUnitCompat;
 
 use PHPRegex\Tests\Support\PhpUnitCompat\PolyfilledMethods;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -24,6 +25,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class ReplacedMethodCallsTest extends TestCase
 {
+    #[Test]
     public function test_no_test_calls_a_method_the_layer_replaces(): void
     {
         $replaced = [];
@@ -55,6 +57,7 @@ final class ReplacedMethodCallsTest extends TestCase
     /**
      * @param array<int, string> $expected
      */
+    #[Test]
     #[DataProvider('provideCode')]
     public function test_the_scan_finds_the_method_calls_only(string $code, array $expected): void
     {

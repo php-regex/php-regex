@@ -27,6 +27,7 @@ use PHPRegex\Tests\Support\StringListAssertions;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresFunction;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
@@ -51,6 +52,7 @@ final class PatternExtractorTest extends TestCase
         LintFunctionOverrides::reset();
     }
 
+    #[Test]
     public function test_extract_with_empty_paths(): void
     {
         $this->extractor->method('extract')->willReturn([]);
@@ -60,6 +62,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_with_default_exclude_paths(): void
     {
         $this->extractor->method('extract')->willReturn([]);
@@ -69,6 +72,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_extract_with_custom_exclude_paths(): void
     {
         $this->extractor->method('extract')->willReturn([]);
@@ -83,6 +87,7 @@ final class PatternExtractorTest extends TestCase
      * extracted under a step whose total is the number found. An extractor
      * that is not told about pattern functions has no declarations step.
      */
+    #[Test]
     public function test_extract_progress_reports_the_files_step_then_the_patterns_step(): void
     {
         $file1 = $this->createTempPhpFile();
@@ -113,6 +118,7 @@ final class PatternExtractorTest extends TestCase
      * every file found, in batches or not, and the patterns step extracts
      * that many.
      */
+    #[Test]
     public function test_extract_progress_extracts_as_many_files_as_the_files_step_found(): void
     {
         $this->extractor->method('extract')->willReturn([]);
@@ -133,6 +139,7 @@ final class PatternExtractorTest extends TestCase
      * With no file found, the files step is started and finished, and
      * nothing else: there is nothing to extract.
      */
+    #[Test]
     public function test_extract_with_no_files_reports_only_the_files_step(): void
     {
         $this->extractor->method('extract')->willReturn([]);
@@ -146,6 +153,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertSame(0, $progress->advancedTotal());
     }
 
+    #[Test]
     public function test_extract_with_workers_greater_than_one(): void
     {
         $occurrence = new PatternOccurrence('/test/', 'file.php', 1, 'source');
@@ -166,6 +174,7 @@ final class PatternExtractorTest extends TestCase
      * When no worker can be forked, the extraction runs in the parent: the
      * same occurrences, the same steps, every file advanced.
      */
+    #[Test]
     #[RequiresFunction('pcntl_fork')]
     public function test_extract_falls_back_to_serial_with_full_progress_when_no_worker_can_be_forked(): void
     {
@@ -193,6 +202,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertSame([LintProgress::STEP_FILES, LintProgress::STEP_PATTERNS], $fallbackProgress->finishedSteps());
     }
 
+    #[Test]
     public function test_extract_marks_inline_ignored_patterns(): void
     {
         $file = $this->createTempPhpFile('ignored_pattern.php');
@@ -215,6 +225,7 @@ final class PatternExtractorTest extends TestCase
      * the serial order, the steps are the serial ones with the same sums,
      * and the workers started are announced once.
      */
+    #[Test]
     #[RequiresFunction('pcntl_fork')]
     public function test_extract_on_workers_gives_the_serial_occurrences_and_progress(): void
     {
@@ -244,6 +255,7 @@ final class PatternExtractorTest extends TestCase
      * it threw, and the file it was reading, its UTF-8 name kept; no
      * payload file is left.
      */
+    #[Test]
     #[DataProvider('provideWorkerFailures')]
     #[RequiresFunction('pcntl_fork')]
     public function test_extract_on_workers_reports_a_failing_worker_with_its_file(\Throwable $failure, string $expected): void
@@ -296,6 +308,7 @@ final class PatternExtractorTest extends TestCase
      *
      * @param \Closure(): ExtractorInterface $strategy
      */
+    #[Test]
     #[DataProvider('provideStrategies')]
     #[RequiresFunction('pcntl_fork')]
     public function test_extract_inline_ignores_are_the_same_in_serial_and_on_workers(\Closure $strategy): void
@@ -346,6 +359,7 @@ final class PatternExtractorTest extends TestCase
         yield 'php-parser' => ['strategy' => static fn (): PhpParserExtractionStrategy => new PhpParserExtractionStrategy()];
     }
 
+    #[Test]
     public function test_is_template_file_identifies_blade(): void
     {
         $reflection = new \ReflectionClass($this->patternExtractor);
@@ -354,6 +368,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertTrue($method->invoke($this->patternExtractor, 'view.blade.php'));
     }
 
+    #[Test]
     public function test_is_template_file_identifies_twig(): void
     {
         $reflection = new \ReflectionClass($this->patternExtractor);
@@ -362,6 +377,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertTrue($method->invoke($this->patternExtractor, 'template.twig.php'));
     }
 
+    #[Test]
     public function test_is_template_file_identifies_tpl(): void
     {
         $reflection = new \ReflectionClass($this->patternExtractor);
@@ -370,6 +386,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertTrue($method->invoke($this->patternExtractor, 'file.tpl.php'));
     }
 
+    #[Test]
     public function test_is_template_file_identifies_regular_php(): void
     {
         $reflection = new \ReflectionClass($this->patternExtractor);
@@ -378,6 +395,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertFalse($method->invoke($this->patternExtractor, 'regular.php'));
     }
 
+    #[Test]
     public function test_collect_php_files_skips_templates_and_excluded_dirs(): void
     {
         $reflection = new \ReflectionClass($this->patternExtractor);
@@ -431,6 +449,7 @@ final class PatternExtractorTest extends TestCase
      *
      * @param list<string> $expected relative to the temporary root
      */
+    #[Test]
     #[DataProvider('provideExcludeBases')]
     public function test_excludes_are_read_from_the_base_they_are_given(?string $base, array $expected): void
     {

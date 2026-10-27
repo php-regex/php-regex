@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -31,6 +32,7 @@ class ReverseCompilerTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     #[DataProvider('providePatterns')]
     public function test_round_trip_compilation(string $originalPattern): void
     {

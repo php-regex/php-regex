@@ -18,6 +18,7 @@ use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -42,6 +43,7 @@ final class GraphCommandFormatTest extends TestCase
     /**
      * @param non-empty-string $expected
      */
+    #[Test]
     #[DataProvider('provideFormats')]
     public function test_the_format_is_read_in_any_case(string $format, string $expected): void
     {
@@ -51,6 +53,7 @@ final class GraphCommandFormatTest extends TestCase
         $this->assertStringStartsWith($expected, $written);
     }
 
+    #[Test]
     public function test_an_unknown_format_is_refused_with_every_format_named(): void
     {
         [$exitCode, $written] = $this->graph(['/ab/', '--format=svg']);

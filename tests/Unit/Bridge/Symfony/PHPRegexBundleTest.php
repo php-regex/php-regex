@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony;
 
 use PHPRegex\Symfony\PHPRegexBundle;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PHPRegexBundleTest extends TestCase
 {
+    #[Test]
     public function test_get_path_returns_bundle_directory(): void
     {
         $bundle = new PHPRegexBundle();

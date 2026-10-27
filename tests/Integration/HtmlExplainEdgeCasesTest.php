@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration;
 
 use PHPRegex\Explain\HtmlExplainer;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -32,6 +33,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->visitor = new HtmlExplainer();
     }
 
+    #[Test]
     public function test_html_explain_unicode_prop(): void
     {
         $ast = $this->regexService->parse('/\p{L}/');
@@ -40,6 +42,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertStringContainsString('Unicode', $result);
     }
 
+    #[Test]
     public function test_html_explain_negated_unicode_prop(): void
     {
         $ast = $this->regexService->parse('/\P{L}/');
@@ -47,6 +50,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_octal(): void
     {
         $ast = $this->regexService->parse('/\o{101}/');
@@ -54,6 +58,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_octal_legacy(): void
     {
         $ast = $this->regexService->parse('/\07/');
@@ -61,6 +66,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_unicode(): void
     {
         $ast = $this->regexService->parse('/\u{41}/');
@@ -68,6 +74,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_backref(): void
     {
         $ast = $this->regexService->parse('/(abc)\1/');
@@ -76,6 +83,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertStringContainsStringIgnoringCase('backreference', $result);
     }
 
+    #[Test]
     public function test_html_explain_range(): void
     {
         $ast = $this->regexService->parse('/[a-z]/');
@@ -83,6 +91,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_char_class(): void
     {
         $ast = $this->regexService->parse('/[abc]/');
@@ -90,6 +99,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_keep(): void
     {
         $ast = $this->regexService->parse('/abc\Kdef/');
@@ -97,6 +107,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_assertion(): void
     {
         $ast = $this->regexService->parse('/(?=abc)/');
@@ -104,6 +115,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_anchor(): void
     {
         $ast = $this->regexService->parse('/^abc$/');
@@ -111,6 +123,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_dot(): void
     {
         $ast = $this->regexService->parse('/./');
@@ -118,6 +131,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_char_type(): void
     {
         $ast = $this->regexService->parse('/\d/');
@@ -125,6 +139,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_literal(): void
     {
         $ast = $this->regexService->parse('/abc/');
@@ -132,6 +147,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_quantifier_greedy(): void
     {
         $ast = $this->regexService->parse('/a+/');
@@ -139,6 +155,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_quantifier_lazy(): void
     {
         $ast = $this->regexService->parse('/a+?/');
@@ -146,6 +163,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_quantifier_exact(): void
     {
         $ast = $this->regexService->parse('/a{3}/');
@@ -153,6 +171,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_quantifier_range(): void
     {
         $ast = $this->regexService->parse('/a{2,5}/');
@@ -160,6 +179,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_quantifier_at_least(): void
     {
         $ast = $this->regexService->parse('/a{2,}/');
@@ -167,6 +187,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_group(): void
     {
         $ast = $this->regexService->parse('/(abc)/');
@@ -174,6 +195,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_sequence(): void
     {
         $ast = $this->regexService->parse('/abc/');
@@ -181,6 +203,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_alternation(): void
     {
         $ast = $this->regexService->parse('/abc|def/');
@@ -188,6 +211,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_posix_class(): void
     {
         $ast = $this->regexService->parse('/[[:alnum:]]/');
@@ -195,6 +219,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_comment(): void
     {
         $ast = $this->regexService->parse('/(?#comment)/');
@@ -202,6 +227,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_conditional(): void
     {
         $ast = $this->regexService->parse('/(?(?=a)b|c)/');
@@ -209,6 +235,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_subroutine(): void
     {
         $ast = $this->regexService->parse('/(?<name>abc)(?&name)/');
@@ -216,6 +243,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_pcre_verb(): void
     {
         $ast = $this->regexService->parse('/(*FAIL)/');
@@ -223,6 +251,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_complex_pattern(): void
     {
         $ast = $this->regexService->parse('/^(?:[a-z]+|\d{2,5})*$/i');
@@ -231,6 +260,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertStringContainsString('<', $result);
     }
 
+    #[Test]
     public function test_html_explain_with_special_chars(): void
     {
         $ast = $this->regexService->parse('/[<>&"\']/');
@@ -238,6 +268,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_html_explain_non_printable(): void
     {
         // Caractère ASCII 1 (Start of Heading), non imprimable et non mappé spécifiquement

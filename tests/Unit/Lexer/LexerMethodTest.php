@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lexer;
 
 use PHPRegex\Parser\Lexing\TokenValue;
 use PHPRegex\Parser\Token\TokenType;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LexerMethodTest extends TestCase
@@ -24,6 +25,7 @@ final class LexerMethodTest extends TestCase
      * This case is normally unreachable as the main Regex filters tokens,
      * but for 100% coverage we must force it via Reflection.
      */
+    #[Test]
     public function test_extract_token_value_unknown_type(): void
     {
 
@@ -41,6 +43,7 @@ final class LexerMethodTest extends TestCase
     /**
      * Tests the fallback of T_BACKREF if the 'v_backref_num' key is missing from the matches array.
      */
+    #[Test]
     public function test_extract_token_value_backref_fallback(): void
     {
 
@@ -56,6 +59,7 @@ final class LexerMethodTest extends TestCase
     /**
      * Tests the fallback of normalizeUnicodeProp if the capture keys are missing.
      */
+    #[Test]
     public function test_normalize_unicode_prop_fallback(): void
     {
 

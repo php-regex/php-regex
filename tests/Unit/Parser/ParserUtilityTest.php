@@ -29,6 +29,7 @@ use PHPRegex\Tests\TestUtils\ParserAccessor;
 use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -48,6 +49,7 @@ final class ParserUtilityTest extends TestCase
         $this->accessor = new ParserAccessor($parser);
     }
 
+    #[Test]
     public function test_extract_pattern_handles_escaped_delimiter_in_flags(): void
     {
         // Regex: /abc\/def/i
@@ -59,6 +61,7 @@ final class ParserUtilityTest extends TestCase
         $this->assertSame('abc\/def', $pattern);
     }
 
+    #[Test]
     public function test_extract_pattern_handles_alternating_delimiters(): void
     {
         // Regex: (abc)i
@@ -80,6 +83,7 @@ final class ParserUtilityTest extends TestCase
         yield 'space separated multiple flags' => ['/a/ i u', 'iu'];
     }
 
+    #[Test]
     #[DataProvider('provideWhitespaceSeparatedFlags')]
     public function test_extract_pattern_accepts_whitespace_in_flags(string $regex, string $expectedFlags): void
     {
@@ -90,6 +94,7 @@ final class ParserUtilityTest extends TestCase
         $this->assertSame($expectedFlags, $flags);
     }
 
+    #[Test]
     public function test_extract_pattern_throws_on_malformed_flags(): void
     {
         $this->expectException(ParserException::class);
@@ -98,6 +103,7 @@ final class ParserUtilityTest extends TestCase
         PatternParser::extractPatternAndFlags('/abc/i!');
     }
 
+    #[Test]
     public function test_extract_pattern_handles_r_modifier_based_on_runtime(): void
     {
         if (self::supportsModifierR()) {
@@ -116,6 +122,7 @@ final class ParserUtilityTest extends TestCase
         PatternParser::extractPatternAndFlags('/a/r');
     }
 
+    #[Test]
     public function test_extract_pattern_handles_leading_whitespace_with_paired_delimiter(): void
     {
         // Edge case: Leading whitespace + paired delimiter
@@ -126,6 +133,7 @@ final class ParserUtilityTest extends TestCase
         $this->assertSame('foo', $pattern);
     }
 
+    #[Test]
     public function test_extract_pattern_handles_escaped_delimiter_near_end(): void
     {
         // Edge case: Escaped delimiter near the end: "/a\/b/i" should parse pattern "a\/b"
@@ -136,6 +144,7 @@ final class ParserUtilityTest extends TestCase
         $this->assertSame('a\\/b', $pattern);
     }
 
+    #[Test]
     public function test_extract_pattern_simple(): void
     {
         [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags('/foo/');
@@ -145,6 +154,7 @@ final class ParserUtilityTest extends TestCase
         $this->assertSame('foo', $pattern);
     }
 
+    #[Test]
     public function test_extract_pattern_handles_lots_of_backslashes_before_delimiter(): void
     {
         // An even run of backslashes does not escape the delimiter after it:
@@ -156,6 +166,7 @@ final class ParserUtilityTest extends TestCase
         $this->assertSame('foo\\\\', $pattern);
     }
 
+    #[Test]
     public function test_extract_pattern_handles_very_long_patterns(): void
     {
         // Edge case: Very long patterns near max_pattern_length
@@ -168,6 +179,7 @@ final class ParserUtilityTest extends TestCase
         $this->assertSame($longPattern, $pattern);
     }
 
+    #[Test]
     public function test_throws_on_quantifier_without_target(): void
     {
         // Le parser appelle parseQuantifiedAtom. Si le premier atom est absent,
@@ -187,6 +199,7 @@ final class ParserUtilityTest extends TestCase
         $this->accessor->callPrivateMethod('parseQuantifiedAtom');
     }
 
+    #[Test]
     public function test_parse_atom_throws_on_unexpected_token(): void
     {
         // Simuler un jeton de fermeture de groupe inattendu dans un contexte atomique
@@ -203,6 +216,7 @@ final class ParserUtilityTest extends TestCase
         $this->accessor->callPrivateMethod('parseAtom');
     }
 
+    #[Test]
     public function test_parse_group_modifier_inline_flags_no_colon_valid(): void
     {
         // Regex: /?(im)/. Le parser consomme '('. Puis il consomme '?' (dans parseGroupModifier).
@@ -226,6 +240,7 @@ final class ParserUtilityTest extends TestCase
         $this->assertSame('', $node->child->value, 'Child should be an empty node.');
     }
 
+    #[Test]
     public function test_parse_group_modifier_throws_on_invalid_python_syntax(): void
     {
         // Simulate (?P[invalid]) - parseGroupModifier is called after consuming (?
@@ -249,6 +264,7 @@ final class ParserUtilityTest extends TestCase
         $this->accessor->callPrivateMethod('parseGroupModifier');
     }
 
+    #[Test]
     public function test_parse_conditional_lookaround(): void
     {
         // "(?(?=a)b)": the "?" after "(?(" opens the lookahead that is the
@@ -262,6 +278,7 @@ final class ParserUtilityTest extends TestCase
         $this->assertSame(GroupType::LookaheadPositive, $condition->type);
     }
 
+    #[Test]
     public function test_parse_conditional_assertion(): void
     {
         // Simuler (?(DEFINE)...)
@@ -285,6 +302,7 @@ final class ParserUtilityTest extends TestCase
         $this->assertSame('DEFINE', $condition->value);
     }
 
+    #[Test]
     public function test_parse_conditional_invalid_atom_throws(): void
     {
         // Simulate (?(.)...) where T_DOT is not a valid condition (should be Backref or Group)
@@ -305,6 +323,7 @@ final class ParserUtilityTest extends TestCase
      * PHP skips the leading bytes C's isspace() accepts (space, \t, \n, \v,
      * \f, \r) before it reads the delimiter.
      */
+    #[Test]
     #[DataProvider('provideLeadingWhitespace')]
     public function test_leading_form_feed_and_vertical_tab_are_skipped_like_php(string $regex): void
     {
@@ -333,6 +352,7 @@ final class ParserUtilityTest extends TestCase
      * PHP refuses NUL as a delimiter; it is not whitespace and is never
      * skipped, so a NUL byte before a valid delimiter is the delimiter.
      */
+    #[Test]
     #[DataProvider('provideNulDelimiter')]
     public function test_a_nul_delimiter_is_refused_like_php(string $regex): void
     {
@@ -365,6 +385,7 @@ final class ParserUtilityTest extends TestCase
         yield 'lone NUL' => ['regex' => "\0"];
     }
 
+    #[Test]
     public function test_invalid_delimiter_message_names_nul_not_whitespace(): void
     {
         $this->requiresPhp('8.2', 'A NUL delimiter', 'refuses a NUL byte in a pattern before it reads the delimiter');
@@ -389,6 +410,7 @@ final class ParserUtilityTest extends TestCase
      * Whitespace alone is an empty pattern and whitespace before a lone
      * delimiter leaves it unclosed, as PHP says.
      */
+    #[Test]
     public function test_leading_form_feed_before_nothing_or_a_lone_delimiter(): void
     {
         foreach (["\x0C" => ErrorCode::PatternEmpty, "\x0C/" => ErrorCode::DelimiterUnclosed] as $regex => $code) {
@@ -403,6 +425,7 @@ final class ParserUtilityTest extends TestCase
      * After the closing delimiter PHP 8.2-8.4 skip a space, "\n" and "\r"
      * only: a tab, "\v" or "\f" there is an unknown modifier.
      */
+    #[Test]
     #[DataProvider('provideWhitespaceAfterTheDelimiter')]
     public function test_whitespace_after_the_closing_delimiter_is_read_like_php(string $regex, bool $accepted): void
     {

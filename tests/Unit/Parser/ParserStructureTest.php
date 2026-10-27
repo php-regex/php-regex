@@ -17,6 +17,7 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ParserStructureTest extends TestCase
@@ -26,6 +27,7 @@ final class ParserStructureTest extends TestCase
     /**
      * Teste la limite de longueur du pattern.
      */
+    #[Test]
     public function test_parse_exceeds_max_length(): void
     {
         // On configure une limite très basse pour le test
@@ -40,6 +42,7 @@ final class ParserStructureTest extends TestCase
     /**
      * Teste une regex trop courte (sans délimiteurs).
      */
+    #[Test]
     public function test_parse_too_short(): void
     {
         $regex = Regex::create();
@@ -53,6 +56,7 @@ final class ParserStructureTest extends TestCase
     /**
      * Teste l'absence de délimiteur de fermeture valide.
      */
+    #[Test]
     public function test_parse_no_closing_delimiter(): void
     {
         $regex = Regex::create();
@@ -66,6 +70,7 @@ final class ParserStructureTest extends TestCase
     /**
      * Teste le cas subtil où le délimiteur final est échappé.
      */
+    #[Test]
     public function test_parse_escaped_closing_delimiter_at_end(): void
     {
         $regex = Regex::create();
@@ -80,6 +85,7 @@ final class ParserStructureTest extends TestCase
     /**
      * Teste l'utilisation de flags inconnus.
      */
+    #[Test]
     public function test_parse_unknown_flags(): void
     {
         $regex = Regex::create();

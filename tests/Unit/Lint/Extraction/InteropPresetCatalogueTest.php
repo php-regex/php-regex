@@ -150,6 +150,7 @@ final class InteropPresetCatalogueTest extends TestCase
 
             final class EveryLibraryTest extends \PHPUnit\Framework\TestCase
             {
+                #[Test]
                 public function test_it(string $s): void
                 {
                     Preg::match('/composer/', $s);

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Node;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PosixClassNodeTest extends TestCase
@@ -31,6 +32,7 @@ final class PosixClassNodeTest extends TestCase
         yield 'negated_alpha' => ['^alpha', 1, 12];
     }
 
+    #[Test]
     #[DataProvider('data_provider_posix_classes')]
     public function test_constructor_and_getters(string $class, int $start, int $end): void
     {
@@ -41,6 +43,7 @@ final class PosixClassNodeTest extends TestCase
         $this->assertSame($end, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_posix_class(): void
     {
         $node = new PosixClassNode('digit', 0, 10);

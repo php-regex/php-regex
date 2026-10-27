@@ -16,10 +16,12 @@ namespace PHPRegex\Tests\Unit\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CharClassCanonicalizationToggleTest extends TestCase
 {
+    #[Test]
     #[DataProvider('provideCanonicalizationCases')]
     public function test_canonicalization_toggle(string $pattern, string $expectedCanonical, string $expectedPreserved): void
     {

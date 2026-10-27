@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class OptimizeFlagOnlyChangesTest extends TestCase
 {
+    #[Test]
     #[DataProvider('provideFlagOnlyOptimizations')]
     public function test_flag_only_optimizations_preserve_pattern_body(string $pattern, string $expectedOptimized): void
     {

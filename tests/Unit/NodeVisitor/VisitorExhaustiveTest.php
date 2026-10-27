@@ -46,10 +46,12 @@ use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Validation\Validator;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class VisitorExhaustiveTest extends TestCase
 {
+    #[Test]
     #[DoesNotPerformAssertions]
     public function test_all_visitors_visit_all_nodes(): void
     {

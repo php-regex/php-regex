@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Linter\Config\LintArguments;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintArgumentsEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_from_defaults_normalizes_min_savings_and_jobs(): void
     {
         $arguments = LintArguments::fromDefaults([
@@ -32,6 +34,7 @@ final class LintArgumentsEdgeCasesTest extends TestCase
         $this->assertSame(-1, $arguments->jobs);
     }
 
+    #[Test]
     public function test_from_defaults_reads_a_quantifier_count_written_as_digits(): void
     {
         $arguments = LintArguments::fromDefaults([
@@ -41,6 +44,7 @@ final class LintArgumentsEdgeCasesTest extends TestCase
         $this->assertSame(['minQuantifierCount' => 5, 'digits' => true], $arguments->optimizations);
     }
 
+    #[Test]
     public function test_from_defaults_drops_a_quantifier_count_that_is_no_number(): void
     {
         // "\xB2" is a superscript two in Latin-1: no digit, whatever the locale.
@@ -85,6 +89,7 @@ final class LintArgumentsEdgeCasesTest extends TestCase
      * @param \Closure(LintArguments): LintArguments $copy
      * @param array<string, mixed>                   $changes
      */
+    #[Test]
     #[DataProvider('provideChanges')]
     public function test_a_copy_changes_what_it_names_and_keeps_the_rest(\Closure $copy, array $changes): void
     {

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -31,6 +32,7 @@ final class PhpPcreComplianceValidator extends TestCase
      * @param array<int|string, mixed>|null $expectedResult
      * @param array<int, string>            $functions
      */
+    #[Test]
     #[DataProvider('providePhpPcreTestCases')]
     public function test_php_pcre_compliance(
         string $pattern,
@@ -149,8 +151,7 @@ final class PhpPcreComplianceValidator extends TestCase
         string $category,
     ): void {
         $matches = [];
-        /** @phpstan-ignore argument.type */
-        $result = @preg_match($pattern, $subject, $matches, $flags, $offset);
+        $result = @preg_match($pattern, $subject, $matches, self::pregMatchFlags($flags), $offset);
 
         $this->assertNotFalse(
             $result,
@@ -209,6 +210,20 @@ final class PhpPcreComplianceValidator extends TestCase
                 ),
             );
         }
+    }
+
+    /**
+     * The flags preg_match() takes; any other value fails the test, as
+     * preg_match() refuses it.
+     *
+     * @return 0|256|512|768
+     */
+    private static function pregMatchFlags(int $flags): int
+    {
+        return match ($flags) {
+            0, \PREG_OFFSET_CAPTURE, \PREG_UNMATCHED_AS_NULL, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL => $flags,
+            default => throw new \InvalidArgumentException(\sprintf('preg_match() takes no flags %d.', $flags)),
+        };
     }
 
     /**

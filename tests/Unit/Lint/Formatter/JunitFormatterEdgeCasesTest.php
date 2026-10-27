@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
 use PHPRegex\Linter\Formatter\JunitFormatter;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class JunitFormatterEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_flatten_problems_of_a_result_without_issue_or_optimization_is_empty(): void
     {
         $formatter = new JunitFormatter();

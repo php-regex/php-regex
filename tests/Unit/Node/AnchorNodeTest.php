@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\Node;
 
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AnchorNodeTest extends TestCase
 {
+    #[Test]
     public function test_constructor_and_getters(): void
     {
         $node = new AnchorNode('^', 5, 6);
@@ -28,6 +30,7 @@ final class AnchorNodeTest extends TestCase
         $this->assertSame(6, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_anchor_end_of_string(): void
     {
         $node = new AnchorNode('$', 10, 11);
@@ -37,6 +40,7 @@ final class AnchorNodeTest extends TestCase
         $this->assertSame(11, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_anchor(): void
     {
         $node = new AnchorNode('^', 0, 1);

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration;
 use PhpParser\Node\Expr\CallLike;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -33,6 +34,7 @@ final class SymfonyCompatibilityTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     public function test_variable_length_lookbehind_is_valid(): void
     {
         // Variable-length lookbehinds arrived in PCRE2 10.43, which PHP bundles from 8.4.
@@ -44,6 +46,7 @@ final class SymfonyCompatibilityTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_variable_length_negative_lookbehind_is_valid(): void
     {
         // Negative lookbehind with variable length
@@ -52,6 +55,7 @@ final class SymfonyCompatibilityTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_alternation_with_different_lengths_in_lookbehind_is_valid(): void
     {
         // Alternation with different branch lengths in lookbehind
@@ -63,6 +67,7 @@ final class SymfonyCompatibilityTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_star_quantifier_in_lookbehind_is_valid(): void
     {
         // Star quantifier (zero or more) in lookbehind
@@ -71,6 +76,7 @@ final class SymfonyCompatibilityTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_plus_quantifier_in_lookbehind_is_valid(): void
     {
         // Plus quantifier (one or more) in lookbehind
@@ -79,6 +85,7 @@ final class SymfonyCompatibilityTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_optional_quantifier_in_lookbehind_is_valid(): void
     {
         // Optional quantifier in lookbehind
@@ -90,6 +97,7 @@ final class SymfonyCompatibilityTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_script_run_verb_is_valid(): void
     {
         // (*script_run:...) is a modern PCRE verb for Unicode script validation
@@ -101,6 +109,7 @@ final class SymfonyCompatibilityTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_atomic_script_run_verb_is_valid(): void
     {
         // (*atomic_script_run:...) is an atomic version of script_run
@@ -112,6 +121,7 @@ final class SymfonyCompatibilityTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_existing_pcre_verbs_still_valid(): void
     {
         // Verify existing PCRE verbs still work
@@ -135,6 +145,7 @@ final class SymfonyCompatibilityTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_phpstan_rule_validates_complete_patterns(): void
     {
         $rule = new RegexPatternRule(config: []);
@@ -143,6 +154,7 @@ final class SymfonyCompatibilityTest extends TestCase
         $this->assertSame(CallLike::class, $rule->getNodeType());
     }
 
+    #[Test]
     public function test_complex_symfony_routing_pattern(): void
     {
         // Pattern similar to those found in Symfony routing
@@ -155,6 +167,7 @@ final class SymfonyCompatibilityTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_symfony_validator_email_pattern(): void
     {
         // Pattern similar to Symfony's email validation
@@ -167,6 +180,7 @@ final class SymfonyCompatibilityTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_lookbehind_with_unicode_property(): void
     {
         // Combined lookbehind with Unicode property (common in i18n apps)
@@ -176,6 +190,7 @@ final class SymfonyCompatibilityTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_nested_lookbehind_with_variable_length(): void
     {
         // Nested groups with variable-length content in lookbehind
@@ -185,6 +200,7 @@ final class SymfonyCompatibilityTest extends TestCase
         $this->assertFalse($result->isValid, 'Unbounded lookbehind should be rejected.');
     }
 
+    #[Test]
     public function test_lookbehind_at_pattern_start(): void
     {
         // Lookbehind at the very start of pattern
@@ -197,6 +213,7 @@ final class SymfonyCompatibilityTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_multiple_lookbehinds_with_different_lengths(): void
     {
         // Multiple lookbehinds in the same pattern

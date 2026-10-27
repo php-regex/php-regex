@@ -51,6 +51,7 @@ final class LintExtractionPresetsTest extends TestCase
 
         final class EveryLibraryTest extends \PHPUnit\Framework\TestCase
         {
+            #[Test]
             public function test_it(string $s, \Iterator $it): void
             {
                 preg_match('/(native/', $s);

@@ -17,10 +17,12 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SequenceNodeTest extends TestCase
 {
+    #[Test]
     public function test_constructor_and_getters(): void
     {
         $child1 = new LiteralNode('a', 1, 2);
@@ -34,6 +36,7 @@ final class SequenceNodeTest extends TestCase
         $this->assertSame(3, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_empty_sequence(): void
     {
         $node = new SequenceNode([], 5, 5);
@@ -43,6 +46,7 @@ final class SequenceNodeTest extends TestCase
         $this->assertSame(5, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_sequence(): void
     {
         $child = $this->createStub(NodeInterface::class);

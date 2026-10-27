@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Lint;
 
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -28,6 +29,7 @@ final class SimpleRegexExtractionTest extends TestCase
         $this->strategy = new TokenBasedExtractionStrategy();
     }
 
+    #[Test]
     public function test_extract_regex_with_flags(): void
     {
         $fixtureFile = __DIR__.'/../../Fixtures/Lint/simple_regex_with_flags.php';
@@ -40,6 +42,7 @@ final class SimpleRegexExtractionTest extends TestCase
         $this->assertStringContainsString('/m', $results[0]->pattern);
     }
 
+    #[Test]
     public function test_extract_simple_regex(): void
     {
         $fixtureFile = __DIR__.'/../../Fixtures/Lint/simple_regex_simple.php';
@@ -52,6 +55,7 @@ final class SimpleRegexExtractionTest extends TestCase
         $this->assertSame('/pattern/', $results[0]->pattern);
     }
 
+    #[Test]
     public function test_extract_includes_column_and_offset(): void
     {
         $fixtureFile = __DIR__.'/../../Fixtures/Lint/tokenbased_column_offset.php';

@@ -25,6 +25,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RewriterTest extends TestCase
@@ -39,6 +40,7 @@ final class RewriterTest extends TestCase
         $this->optimizer = new Rewriter();
     }
 
+    #[Test]
     public function test_merge_adjacent_literals(): void
     {
         $regex = Regex::create();
@@ -52,6 +54,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('abc', $newAst->pattern->value);
     }
 
+    #[Test]
     public function test_flatten_alternations(): void
     {
         // We use long strings ("beta", "gamma") to prevent
@@ -80,6 +83,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('beta', $newAst->alternatives[1]->value);
     }
 
+    #[Test]
     public function test_alternation_to_char_class_optimization(): void
     {
         $regex = Regex::create();
@@ -94,6 +98,7 @@ final class RewriterTest extends TestCase
         $this->assertCount(3, $newAst->pattern->expression->alternatives);
     }
 
+    #[Test]
     public function test_digit_optimization(): void
     {
         // Logic: [0-9] -> \d
@@ -105,6 +110,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('d', $optimized->pattern->value);
     }
 
+    #[Test]
     public function test_remove_useless_non_capturing_group(): void
     {
         $regex = Regex::create();
@@ -118,6 +124,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('abc', $newAst->pattern->value);
     }
 
+    #[Test]
     public function test_quantifier_optimization(): void
     {
         $regex = Regex::create();
@@ -131,6 +138,7 @@ final class RewriterTest extends TestCase
         $this->assertInstanceOf(LiteralNode::class, $newAst->pattern->node);
     }
 
+    #[Test]
     public function test_optimization_does_not_break_semantics_with_hyphen(): void
     {
         $regex = Regex::create();
@@ -144,6 +152,7 @@ final class RewriterTest extends TestCase
         $this->assertCount(3, $newAst->pattern->alternatives);
     }
 
+    #[Test]
     public function test_merge_adjacent_literals_and_sequences(): void
     {
         // Pattern: /a(b)(c)(d(e)f)/
@@ -176,6 +185,7 @@ final class RewriterTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_remove_empty_literal_from_sequence(): void
     {
         // Sequence containing an empty node (which could come from an empty group)
@@ -196,6 +206,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('xy', $optimizedAst->pattern->value, 'Empty literal should be removed and remaining merged.');
     }
 
+    #[Test]
     public function test_alternation_to_char_class_with_hyphen_as_literal(): void
     {
         // a|-|z should NOT become [a-z] because the '-' is a literal, not part of a range.
@@ -211,6 +222,7 @@ final class RewriterTest extends TestCase
         $this->assertCount(3, $newAst->pattern->alternatives);
     }
 
+    #[Test]
     public function test_char_class_deduplicates_literals_and_merges_ranges(): void
     {
         $ast = $this->regex->parse('/[aabbccdd]/');
@@ -228,6 +240,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('d', $range->end->value);
     }
 
+    #[Test]
     public function test_char_class_merges_touching_ranges_and_literals(): void
     {
         $ast = $this->regex->parse('/[a-cd-fh]/');
@@ -254,6 +267,7 @@ final class RewriterTest extends TestCase
 
     // ... (tests existants: test_merge_adjacent_literals, test_flatten_alternations, test_alternation_to_char_class_optimization, test_digit_optimization, test_remove_useless_non_capturing_group, test_quantifier_optimization, test_optimization_does_not_break_semantics_with_hyphen)
 
+    #[Test]
     public function test_return_original_node_if_no_change_in_regex_node(): void
     {
         $pattern = new LiteralNode('a', 0, 1);
@@ -270,6 +284,7 @@ final class RewriterTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_char_class_word_optimization_unicode_flag_present(): void
     {
         // [a-zA-Z0-9_] -> \w, but NOT if the 'u' flag is present
@@ -289,6 +304,7 @@ final class RewriterTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_full_word_class_is_kept_without_u(): void
     {
         // [a-zA-Z0-9_] is not \w without u: a Latin-1 locale gives \w "\xE9"
@@ -303,6 +319,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/[0-9A-Z_a-z]/', $newAst->accept(PatternPrinter::asWritten()));
     }
 
+    #[Test]
     public function test_does_not_optimize_word_if_flag_u_present(): void
     {
         // [a-zA-Z0-9_] -> NOT \w if /u is present (semantics change in PCRE)
@@ -316,6 +333,7 @@ final class RewriterTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $newAst->pattern);
     }
 
+    #[Test]
     public function test_merges_nested_sequences(): void
     {
         // Sequence(Sequence(a, b), c) -> Sequence(a, b, c) -> Literal(abc)
@@ -336,6 +354,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('abc', $result->value);
     }
 
+    #[Test]
     public function test_alternation_single_char_optimization(): void
     {
         // a|b|c -> [abc]
@@ -349,6 +368,7 @@ final class RewriterTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $newAst->pattern);
     }
 
+    #[Test]
     public function test_alternation_optimization_skips_meta_chars(): void
     {
         // a|^|c -> Should NOT become [a^c] because ^ is meta in char class start
@@ -369,6 +389,7 @@ final class RewriterTest extends TestCase
         $this->assertNotInstanceOf(CharClassNode::class, $newAst->pattern);
     }
 
+    #[Test]
     public function test_optimize_non_capturing_group_with_char_class(): void
     {
         // Logic: (?:[abc]) -> [abc]
@@ -380,6 +401,7 @@ final class RewriterTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $optimized->pattern);
     }
 
+    #[Test]
     public function test_full_word_class_stays_a_class(): void
     {
         // Logic: [a-zA-Z0-9_] stays a class, "\w" following the locale
@@ -391,6 +413,7 @@ final class RewriterTest extends TestCase
         $this->assertFalse($optimized->pattern->isNegated);
     }
 
+    #[Test]
     public function test_full_word_class_optimization_missing_underscore(): void
     {
         // Logic: [a-zA-Z0-9] (missing _) -> Should NOT optimize to \w
@@ -401,6 +424,7 @@ final class RewriterTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $optimized->pattern);
     }
 
+    #[Test]
     public function test_full_word_class_optimization_missing_range(): void
     {
         // Logic: [a-z0-9_] (missing A-Z) -> Should NOT optimize to \w
@@ -411,6 +435,7 @@ final class RewriterTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $optimized->pattern);
     }
 
+    #[Test]
     public function test_digit_optimization_fails_on_wrong_range(): void
     {
         // Logic: [1-9] -> NOT \d
@@ -421,6 +446,7 @@ final class RewriterTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $optimized->pattern);
     }
 
+    #[Test]
     public function test_digit_optimization_unicode_flag(): void
     {
         // [0-9] with u flag should NOT optimize to \d, remain as CharClass
@@ -431,6 +457,7 @@ final class RewriterTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $optimized->pattern);
     }
 
+    #[Test]
     public function test_digit_optimization_unicode_flag_complex(): void
     {
         // [0-9]+ with u flag should remain as is, not optimize [0-9] to \d
@@ -443,6 +470,7 @@ final class RewriterTest extends TestCase
         $this->assertInstanceOf(CharClassNode::class, $optimized->pattern->node);
     }
 
+    #[Test]
     public function test_alternation_flattening(): void
     {
         // Logic: (a|b)|c -> a|b|c
@@ -464,6 +492,7 @@ final class RewriterTest extends TestCase
         $this->assertCount(2, $optimized->pattern->alternatives);
     }
 
+    #[Test]
     #[DataProvider('optimizationProvider')]
     public function test_optimizations_with_safety_checks(string $input, string $expected): void
     {
@@ -501,6 +530,7 @@ final class RewriterTest extends TestCase
         yield 'Nested Sequence' => ['/(?:(?:abc))?/', '/(?:(?:abc))?/'];
     }
 
+    #[Test]
     public function test_optimizations_can_be_disabled(): void
     {
         $regex = Regex::create();
@@ -533,6 +563,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/[0-9A-Z_a-z]/', $resultWordEnabled, 'The word class stays a class');
     }
 
+    #[Test]
     public function test_strict_ranges_option(): void
     {
         $regex = Regex::create();
@@ -555,6 +586,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/[0-:]/', $resultLoose, 'Loose ranges should merge digits and symbols');
     }
 
+    #[Test]
     public function test_optimizer_does_not_fill_gaps(): void
     {
         $regex = Regex::create();
@@ -580,6 +612,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/[ABD]/', $result3, 'Non-contiguous characters should not be merged into ranges');
     }
 
+    #[Test]
     public function test_optimizer_handles_short_hex_escapes(): void
     {
         $regex = Regex::create();
@@ -599,6 +632,7 @@ final class RewriterTest extends TestCase
         $this->assertStringNotContainsString('9ADx', $result, 'Should not contain the literal string 9ADx');
     }
 
+    #[Test]
     public function test_optimizer_handles_alternation_with_empty_branch(): void
     {
         $regex = Regex::create();
@@ -621,6 +655,7 @@ final class RewriterTest extends TestCase
         $this->assertDoesNotMatchRegularExpression($testRegex, '++123'); // multiple plus
     }
 
+    #[Test]
     public function test_basic_adjacent_char_class_merging(): void
     {
         // Test that [a-z]|[0-9] becomes [a-z0-9] when digit optimization is disabled
@@ -635,6 +670,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/[a-z0-9]/', $result);
     }
 
+    #[Test]
     public function test_no_merging_with_negated_classes(): void
     {
         // Test that [a-z]|[^0-9] does not merge, even if [^0-9] becomes \D
@@ -649,6 +685,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/[a-z]|\D/', $result);
     }
 
+    #[Test]
     #[DataProvider('digitOptimizationProvider')]
     public function test_digit_optimization_with_flags(string $pattern, ?string $expectedCharType, string $description): void
     {
@@ -688,6 +725,7 @@ final class RewriterTest extends TestCase
         yield 'quantified with u flag - should not optimize' => ['/[0-9]+/u', null, '[0-9]+ with u flag should remain as CharClass'];
     }
 
+    #[Test]
     public function test_negated_word_class_stays_a_class(): void
     {
         // "\W" reads the locale's tables without "u".
@@ -702,6 +740,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/[^0-9A-Z_a-z]+/', $result);
     }
 
+    #[Test]
     public function test_negated_word_class_not_optimized_in_unicode_mode(): void
     {
         $regex = Regex::create();
@@ -715,6 +754,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/[^0-9A-Z_a-z]+/u', $result);
     }
 
+    #[Test]
     public function test_negated_digit_class_not_optimized_in_unicode_mode(): void
     {
         $regex = Regex::create();
@@ -728,6 +768,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/[^0-9]+/u', $result);
     }
 
+    #[Test]
     public function test_multiline_flag_removed_when_unused(): void
     {
         $regex = Regex::create();
@@ -741,6 +782,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/abc/', $result);
     }
 
+    #[Test]
     public function test_multiline_flag_preserved_when_anchors_present(): void
     {
         $regex = Regex::create();
@@ -754,6 +796,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/^abc$/m', $result);
     }
 
+    #[Test]
     public function test_possessive_skips_nullable_subpattern(): void
     {
         $optimizer = new Rewriter(possessive: true);
@@ -768,6 +811,7 @@ final class RewriterTest extends TestCase
         $this->assertStringNotContainsString('++', $optimizedPattern);
     }
 
+    #[Test]
     public function test_possessive_skips_capture_sensitive_group(): void
     {
         $optimizer = new Rewriter(possessive: true);
@@ -782,6 +826,7 @@ final class RewriterTest extends TestCase
         $this->assertStringNotContainsString('++', $optimizedPattern);
     }
 
+    #[Test]
     public function test_possessive_applies_to_star_and_range(): void
     {
         $optimizer = new Rewriter(possessive: true);
@@ -799,6 +844,7 @@ final class RewriterTest extends TestCase
         $this->assertStringContainsString('a{2,}+', $optimizedPattern);
     }
 
+    #[Test]
     public function test_suffix_factoring(): void
     {
         $regex = Regex::create();
@@ -812,6 +858,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/abcde|xyzde/', $result, 'Should not factor common suffix "de" by default');
     }
 
+    #[Test]
     public function test_suffix_factoring_no_common_suffix(): void
     {
         $regex = Regex::create();
@@ -825,6 +872,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/abc|def/', $result, 'Should not factor when no common suffix');
     }
 
+    #[Test]
     public function test_suffix_factoring_single_char_suffix(): void
     {
         $regex = Regex::create();
@@ -838,6 +886,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/alpha|beta|gamma|delta/', $result, 'Should not factor single character suffix');
     }
 
+    #[Test]
     public function test_char_type_n_h_v_preserved_in_optimization(): void
     {
         // Test that \N, \H, \V are preserved correctly during optimization
@@ -864,6 +913,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/\V+/', $result, '\V should be preserved');
     }
 
+    #[Test]
     public function test_backspace_in_char_class_preserved(): void
     {
         // Test that [\b] (backspace) is preserved correctly during optimization
@@ -878,6 +928,7 @@ final class RewriterTest extends TestCase
         $this->assertSame('/[\b]/', $result, '[\b] (backspace) should be preserved');
     }
 
+    #[Test]
     public function test_char_type_n_and_backspace_in_alternation(): void
     {
         // Test that \N|[\b] pattern is not corrupted during optimization
@@ -899,6 +950,7 @@ final class RewriterTest extends TestCase
      * Original issue: ~^a\.b(c(\d+)(\d+)(\s+))?d~ should not become ~^a\.b(c(\d+){2}(\s+))?d~
      * because the two (\d+) groups capture independently.
      */
+    #[Test]
     public function test_optimizer_does_not_merge_adjacent_capturing_groups(): void
     {
         $regex = Regex::create();
@@ -916,6 +968,7 @@ final class RewriterTest extends TestCase
     /**
      * Test that optimizer does not merge named capturing groups.
      */
+    #[Test]
     public function test_optimizer_does_not_merge_named_capturing_groups(): void
     {
         $regex = Regex::create();
@@ -931,6 +984,7 @@ final class RewriterTest extends TestCase
     /**
      * Test that optimizer does not merge branch reset groups.
      */
+    #[Test]
     public function test_optimizer_does_not_merge_branch_reset_groups(): void
     {
         $regex = Regex::create();
@@ -948,6 +1002,7 @@ final class RewriterTest extends TestCase
      * Test auto-possessify checks disjointness against suffix, not just next node.
      * Original issue: ( ?\d{4}){1,} ?\d{1,4} should not possessify if suffix can match digits.
      */
+    #[Test]
     public function test_possessive_checks_suffix_disjointness(): void
     {
         $optimizer = new Rewriter(possessive: true);
@@ -966,6 +1021,7 @@ final class RewriterTest extends TestCase
     /**
      * Test auto-possessify can still work when suffix is disjoint.
      */
+    #[Test]
     public function test_possessive_works_when_safe(): void
     {
         $optimizer = new Rewriter(possessive: true);

@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\Lint\Command;
 
 use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintArgumentsTest extends TestCase
 {
+    #[Test]
     public function test_from_defaults_normalizes_types_and_bounds(): void
     {
         $arguments = LintArguments::fromDefaults([
@@ -46,6 +48,7 @@ final class LintArgumentsTest extends TestCase
         $this->assertSame(-1, $arguments->jobs);
     }
 
+    #[Test]
     public function test_from_defaults_converts_numeric_strings(): void
     {
         $arguments = LintArguments::fromDefaults([

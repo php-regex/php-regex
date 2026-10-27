@@ -15,11 +15,13 @@ namespace PHPRegex\Tests\Unit\Bridge\Symfony;
 
 use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Processor;
 
 final class ConfigurationTest extends TestCase
 {
+    #[Test]
     public function test_default_configuration(): void
     {
         $processor = new Processor();
@@ -80,6 +82,7 @@ final class ConfigurationTest extends TestCase
         $this->assertSame(4, $config['optimizations']['min_quantifier_count']);
     }
 
+    #[Test]
     public function test_custom_configuration(): void
     {
         $processor = new Processor();

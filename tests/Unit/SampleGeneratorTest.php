@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SampleGeneratorTest extends TestCase
 {
+    #[Test]
     public function test_sample_generator_produces_matching_text(): void
     {
         $regex = Regex::create();

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Sweep;
 
 use PHPRegex\Explain\MermaidRenderer;
 use PHPRegex\Parser\Node\LimitMatchNode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -26,6 +27,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class MermaidSweepTest extends TestCase
 {
+    #[Test]
     public function test_mermaid_visitor_limit_match(): void
     {
         $visitor = new MermaidRenderer();

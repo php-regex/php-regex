@@ -23,6 +23,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SampleGeneratorVisitorTest extends TestCase
@@ -40,16 +41,19 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->generator->setSeed(42); // Deterministic
     }
 
+    #[Test]
     public function test_generate_simple(): void
     {
         $this->assertSampleMatches('/abc/');
     }
 
+    #[Test]
     public function test_generate_alternation(): void
     {
         $this->assertSampleMatches('/a|b|c/');
     }
 
+    #[Test]
     public function test_generate_quantifiers(): void
     {
         $this->assertSampleMatches('/a{2,5}/');
@@ -57,6 +61,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertSampleMatches('/c+/');
     }
 
+    #[Test]
     public function test_generate_char_classes(): void
     {
         $this->assertSampleMatches('/[a-z]/');
@@ -64,6 +69,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertSampleMatches('/[a-zA-Z0-9]/');
     }
 
+    #[Test]
     public function test_generate_ranges_of_multibyte_characters(): void
     {
         // A range between two UTF-8 characters gives one of them, not a byte.
@@ -74,6 +80,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertSampleMatches('/^[\\xe0-\\xef]$/');
     }
 
+    #[Test]
     #[DataProvider('provideEngineChecked')]
     public function test_generate_gives_a_sample_the_engine_matches(string $pattern): void
     {
@@ -140,6 +147,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         yield 'lookahead closing a group' => ['/^(?:a(?=bc))bcd$/'];
     }
 
+    #[Test]
     public function test_a_range_across_the_surrogates_gives_no_surrogate(): void
     {
         $ast = $this->regex->parse('/[\\x{D7FF}-\\x{E000}]/u');
@@ -152,6 +160,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_the_first_and_last_surrogates_are_avoided(): void
     {
         // Seed 748 draws U+D800 from the range, seed 1635 U+DFFF: both give
@@ -164,6 +173,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_a_range_between_characters_utf8_cannot_hold_gives_nothing(): void
     {
         // Built by hand: PCRE refuses such ends.
@@ -174,6 +184,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertSame('?', (new RegexNode($beyond, 'u', '/', 0, 23))->accept(new SampleGenerator()));
     }
 
+    #[Test]
     public function test_a_lookahead_the_text_misses_is_laid_over_it(): void
     {
         $ast = $this->regex->parse('/^(?=ab)\\d\\d/');
@@ -182,6 +193,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertStringStartsWith('ab', $ast->accept($generator));
     }
 
+    #[Test]
     #[DataProvider('provideRangesAtTheEdges')]
     public function test_a_range_gives_more_than_its_first_character(string $pattern): void
     {
@@ -212,6 +224,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         yield 'odd bytes' => ['/[\\x41-\\x43]/'];
     }
 
+    #[Test]
     #[DataProvider('provideLaidOut')]
     public function test_a_lookaround_is_laid_over_the_text_only_where_it_misses(string $pattern, string $sample): void
     {
@@ -242,6 +255,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         yield 'mark named ACCEPT' => ['/(*MARK:ACCEPT)ab/', 'ab'];
     }
 
+    #[Test]
     public function test_a_lookaround_with_branches_is_judged_whole(): void
     {
         $generator = new SampleGenerator();
@@ -255,6 +269,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_groups_are_numbered_through_script_runs_and_shared_names(): void
     {
         $generator = new SampleGenerator();
@@ -271,6 +286,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_a_scan_of_a_group_inside_its_own_body_is_fitted_once(): void
     {
         // In the branch reset, group 1 is "(.)", inside the scan's body.
@@ -289,6 +305,7 @@ final class SampleGeneratorVisitorTest extends TestCase
     /**
      * Each draw of the visitor alone gives a sample the engine matches.
      */
+    #[Test]
     #[DataProvider('provideDrawnAlone')]
     public function test_every_draw_matches(string $pattern): void
     {
@@ -324,6 +341,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         yield 'version equal to 8' => ['/^(?(VERSION=8)yes|no)$/'];
     }
 
+    #[Test]
     public function test_a_one_digit_minor_is_read_as_the_running_pcre2_reads_it(): void
     {
         // Before PCRE2 10.47, "10.5" is 10.50; from 10.47, 10.5.
@@ -334,6 +352,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertSame('yes', $this->regex->parse('/(?(VERSION>=10.05)yes|no)/')->accept(new SampleGenerator()));
     }
 
+    #[Test]
     public function test_the_running_version_is_at_least_and_equal_to_itself(): void
     {
         [$major, $minor] = array_map(intval(...), explode('.', explode(' ', \PCRE_VERSION)[0]));
@@ -344,16 +363,19 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertSame('no', $this->regex->parse(\sprintf('/(?(VERSION=%d.%d)yes|no)/', $major, $minor + 1))->accept($generator));
     }
 
+    #[Test]
     public function test_a_name_that_captured_nothing_yet_gives_nothing(): void
     {
         $this->assertSame('a', $this->regex->parse('/\\k<n>(?<n>a)/')->accept(new SampleGenerator()));
     }
 
+    #[Test]
     public function test_generate_special_types(): void
     {
         $this->assertSampleMatches('/\d\s\w/');
     }
 
+    #[Test]
     public function test_generate_groups_and_backrefs(): void
     {
         // Complex test: backreference. The generator must remember what it generated.
@@ -366,6 +388,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertContains($sample, ['aa', 'bb']);
     }
 
+    #[Test]
     public function test_seeding(): void
     {
         $regex = Regex::create();
@@ -381,6 +404,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertSame($sample1, $sample2, 'Seeding should produce deterministic results');
     }
 
+    #[Test]
     public function test_generate_all_char_types(): void
     {
         // Test char types that are typically complex to mock
@@ -388,6 +412,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertSampleMatches($regex);
     }
 
+    #[Test]
     public function test_generate_unicode_and_octal_escapes(): void
     {
         // \xNN, \u{NNNN}, \o{NNN}, \0NN
@@ -403,6 +428,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertSame(1, preg_match($regex, $sample));
     }
 
+    #[Test]
     public function test_generate_complex_backrefs(): void
     {
         // Named backref (\k<name>)
@@ -428,6 +454,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertTrue($validSampleFound, 'Should be able to generate valid sample "aa" for optional group with backref');
     }
 
+    #[Test]
     public function test_generate_conditional_always_chooses_a_branch(): void
     {
         // Conditional with lookahead condition randomly chooses yes/no branch.
@@ -442,6 +469,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertContains($output, ['Y', 'N', ''], "Expected 'Y', 'N', or '', got: ".var_export($output, true));
     }
 
+    #[Test]
     public function test_generate_negated_char_class_safe_char(): void
     {
         // The sample must actually match the negated class.
@@ -449,6 +477,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertMatchesRegularExpression('/^[^a]$/', $sample);
     }
 
+    #[Test]
     public function test_generate_throws_on_subroutine(): void
     {
         $this->expectException(SampleGenerationException::class);
@@ -456,6 +485,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->generateSample('/(?R)/');
     }
 
+    #[Test]
     public function test_generate_throws_on_empty_char_class(): void
     {
         // Empty character class /[]/ is actually a lexer error (unclosed class with ] as literal)
@@ -480,6 +510,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         yield ['/[[:punct:]]/'];
     }
 
+    #[Test]
     #[DataProvider('providePosixClasses')]
     public function test_generate_posix_classes(string $regex): void
     {
@@ -489,6 +520,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertMatchesRegularExpression($regex, $sample);
     }
 
+    #[Test]
     public function test_generate_all_whitespace_types(): void
     {
         // \h \H \v \V
@@ -498,6 +530,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertSame(4, \strlen($sample));
     }
 
+    #[Test]
     public function test_reset_seed(): void
     {
         $regex = '/[a-z]/';
@@ -515,6 +548,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertIsString($val2);
     }
 
+    #[Test]
     public function test_generate_negated_char_class_fallback(): void
     {
         $regex = Regex::create();
@@ -525,6 +559,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertMatchesRegularExpression('/^[^abc]$/', $result);
     }
 
+    #[Test]
     public function test_generate_negated_char_class_excluding_default_placeholder(): void
     {
         // Regression: the generator used to return the constant '!' for any
@@ -534,6 +569,7 @@ final class SampleGeneratorVisitorTest extends TestCase
         $this->assertMatchesRegularExpression('/^[^!"#]$/', $sample);
     }
 
+    #[Test]
     public function test_generate_fallback_char_types(): void
     {
         // Test less common types to ensure we go through all 'case' statements in the switch

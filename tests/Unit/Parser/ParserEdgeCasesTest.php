@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ParserEdgeCasesTest extends TestCase
@@ -29,6 +30,7 @@ final class ParserEdgeCasesTest extends TestCase
         $this->regex = Regex::create();
     }
 
+    #[Test]
     public function test_quantifier_on_anchor_throws(): void
     {
         // ^+ est invalide
@@ -37,6 +39,7 @@ final class ParserEdgeCasesTest extends TestCase
         $this->regex->parse('/^+/');
     }
 
+    #[Test]
     public function test_quantifier_on_verb_throws(): void
     {
         // (*FAIL)+ est invalide
@@ -45,6 +48,7 @@ final class ParserEdgeCasesTest extends TestCase
         $this->regex->parse('/(*FAIL)+/');
     }
 
+    #[Test]
     public function test_conditional_invalid_condition(): void
     {
         // (?(?~)...) -> ?~ n'est pas une condition valide (ni lookaround, ni assertion)
@@ -53,6 +57,7 @@ final class ParserEdgeCasesTest extends TestCase
         $this->regex->parse('/(?(?~a)b)/');
     }
 
+    #[Test]
     public function test_group_modifier_invalid_syntax(): void
     {
         // (??) est invalide
@@ -61,6 +66,7 @@ final class ParserEdgeCasesTest extends TestCase
         $this->regex->parse('/(??)/');
     }
 
+    #[Test]
     public function test_unclosed_group_in_subroutine(): void
     {
         $this->expectException(ParserException::class);

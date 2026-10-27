@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Functional\Lint;
 
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Parser\Syntax\PatternParser;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -35,6 +36,7 @@ final class TokenBasedExtractionStrategyFlagsTest extends TestCase
     /**
      * Test various regex patterns with flags.
      */
+    #[Test]
     public function test_extract_regex_patterns_with_flags(): void
     {
         $patterns = [
@@ -107,6 +109,7 @@ final class TokenBasedExtractionStrategyFlagsTest extends TestCase
     /**
      * Test that pen emoji is not displayed for non-clickable patterns.
      */
+    #[Test]
     public function test_pen_emoji_not_displayed_for_non_clickable_patterns(): void
     {
         // Simple pattern without any special clickability
@@ -128,6 +131,7 @@ final class TokenBasedExtractionStrategyFlagsTest extends TestCase
     /**
      * Test that flags are preserved in various edge cases.
      */
+    #[Test]
     public function test_edge_cases_with_flags(): void
     {
         $edgeCases = [

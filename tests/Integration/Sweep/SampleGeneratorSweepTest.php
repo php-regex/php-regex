@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Sweep;
 
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -39,6 +40,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->sampleVisitor = new SampleGenerator();
     }
 
+    #[Test]
     public function test_sample_generator_with_seed(): void
     {
         $generator = new SampleGenerator();
@@ -50,6 +52,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_sample_generator_reset_seed(): void
     {
         $generator = new SampleGenerator();
@@ -62,6 +65,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_sample_generator_unicode_prop(): void
     {
         $generator = new SampleGenerator();
@@ -73,6 +77,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    #[Test]
     public function test_sample_generator_backref_named(): void
     {
         $generator = new SampleGenerator();
@@ -83,6 +88,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertStringContainsString('abc', $result);
     }
 
+    #[Test]
     public function test_sample_generator_group_non_capturing(): void
     {
         $generator = new SampleGenerator();
@@ -93,6 +99,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertStringContainsString('abc', $result);
     }
 
+    #[Test]
     public function test_sample_generator_dot_node(): void
     {
         $ast = $this->regex->parse('/./');
@@ -100,6 +107,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($sample);
     }
 
+    #[Test]
     public function test_sample_generator_keep_node(): void
     {
         $ast = $this->regex->parse('/\K/');
@@ -107,6 +115,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_anchor_nodes(): void
     {
         $ast = $this->regex->parse('/^$/');
@@ -114,6 +123,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_assertion_nodes(): void
     {
         $ast = $this->regex->parse('/\b\B/');
@@ -121,6 +131,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_comment_node(): void
     {
         $ast = $this->regex->parse('/(?#comment)/');
@@ -128,6 +139,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_pcre_verb_node(): void
     {
         $ast = $this->regex->parse('/(*FAIL)/');
@@ -135,6 +147,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_unicode_without_hex_pattern(): void
     {
         // Test unicode node that doesn't match hex patterns (fallback case)
@@ -143,6 +156,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($sample);
     }
 
+    #[Test]
     public function test_sample_generator_posix_class_unknown(): void
     {
         // Test posix class with unknown class to hit default case
@@ -160,6 +174,7 @@ final class SampleGeneratorSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_sample_generator_quantifier_ranges(): void
     {
         // Test parseQuantifierRange with different quantifier types
@@ -176,6 +191,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_char_types(): void
     {
         // Test generateForCharType with different char types
@@ -184,6 +200,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_conditional_yes_and_no_paths(): void
     {
         // Test conditional to hit both yes and no paths (run multiple times due to randomness)
@@ -194,6 +211,7 @@ final class SampleGeneratorSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_sample_generator_unicode_prop_various(): void
     {
         // Test visitUnicodeProp with properties that don't contain L, N, or P
@@ -202,6 +220,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_unicode_prop_without_l_n_p(): void
     {
         // Test unicode properties that don't contain L, N, or P to hit the fallback
@@ -222,6 +241,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($sample);
     }
 
+    #[Test]
     public function test_sample_generator_unicode_prop_with_l(): void
     {
         $ast = $this->regexService->parse('/\p{L}/'); // Letter
@@ -230,6 +250,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertMatchesRegularExpression('/^\p{L}$/', $sample);
     }
 
+    #[Test]
     public function test_sample_generator_unicode_prop_with_n(): void
     {
         $ast = $this->regexService->parse('/\p{N}/'); // Number
@@ -239,6 +260,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertMatchesRegularExpression('/^\p{N}$/', $sample);
     }
 
+    #[Test]
     public function test_sample_generator_unicode_prop_with_p(): void
     {
         $ast = $this->regexService->parse('/\p{P}/'); // Punctuation
@@ -247,6 +269,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertMatchesRegularExpression('/^\p{P}$/', $sample);
     }
 
+    #[Test]
     public function test_sample_generator_conditional_no_path(): void
     {
         // Test conditional with NO path - need to generate multiple samples to hit both paths
@@ -258,6 +281,7 @@ final class SampleGeneratorSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_sample_generator_set_seed(): void
     {
         $this->sampleVisitor->setSeed(12345);
@@ -271,6 +295,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertSame($sample1, $sample2);
     }
 
+    #[Test]
     public function test_sample_generator_reset_seed_2(): void
     {
         $this->sampleVisitor->setSeed(12345);
@@ -284,6 +309,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample2);
     }
 
+    #[Test]
     public function test_sample_generator_empty_alternation(): void
     {
         // Edge case: alternation with empty alternatives
@@ -292,6 +318,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_backref_not_set(): void
     {
         // Backref to group that hasn't captured yet
@@ -300,6 +327,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_named_backref(): void
     {
         $ast = $this->regexService->parse('/(?P<name>a)\k<name>/');
@@ -307,6 +335,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($sample);
     }
 
+    #[Test]
     public function test_sample_generator_group_with_name(): void
     {
         $ast = $this->regexService->parse('/(?<letter>[a-z])(?<digit>\d)/');
@@ -314,6 +343,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($sample);
     }
 
+    #[Test]
     public function test_sample_generator_unicode_hex(): void
     {
         $ast = $this->regexService->parse('/\x41\x42/');
@@ -321,6 +351,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($sample);
     }
 
+    #[Test]
     public function test_sample_generator_unicode_braces(): void
     {
         $ast = $this->regexService->parse('/\u{41}\u{42}/');
@@ -328,6 +359,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($sample);
     }
 
+    #[Test]
     public function test_sample_generator_octal_braces(): void
     {
         $ast = $this->regexService->parse('/\o{101}/');
@@ -335,6 +367,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($sample);
     }
 
+    #[Test]
     public function test_sample_generator_octal_legacy_variations(): void
     {
         $ast = $this->regexService->parse('/\01\02\07/');
@@ -342,6 +375,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($sample);
     }
 
+    #[Test]
     public function test_sample_generator_posix_classes_all(): void
     {
         $classes = [
@@ -358,6 +392,7 @@ final class SampleGeneratorSweepTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_sample_generator_quantifier_exact(): void
     {
         $ast = $this->regexService->parse('/a{5}/');
@@ -365,6 +400,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertSame(5, \strlen($sample));
     }
 
+    #[Test]
     public function test_sample_generator_quantifier_range(): void
     {
         $ast = $this->regexService->parse('/a{2,4}/');
@@ -373,6 +409,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertLessThanOrEqual(4, \strlen($sample));
     }
 
+    #[Test]
     public function test_sample_generator_quantifier_open_range(): void
     {
         $ast = $this->regexService->parse('/a{2,}/');
@@ -380,6 +417,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertGreaterThanOrEqual(2, \strlen($sample));
     }
 
+    #[Test]
     public function test_sample_generator_non_capturing_group(): void
     {
         $ast = $this->regexService->parse('/(?:abc)+/');
@@ -387,6 +425,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($sample);
     }
 
+    #[Test]
     public function test_sample_generator_atomic_group(): void
     {
         $ast = $this->regexService->parse('/(?>abc)/');
@@ -394,6 +433,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($sample);
     }
 
+    #[Test]
     public function test_sample_generator_edge_cases(): void
     {
         // Alternation
@@ -409,6 +449,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertNotEmpty($sample);
     }
 
+    #[Test]
     public function test_sample_generator_with_conditional(): void
     {
         // Test SampleGeneratorVisitor with conditional
@@ -420,6 +461,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_with_pcre_verb(): void
     {
         // Test SampleGeneratorVisitor with PCRE verb
@@ -431,6 +473,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_with_keep(): void
     {
         // Test SampleGeneratorVisitor with \K
@@ -442,6 +485,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_with_octal_legacy(): void
     {
         // Test SampleGeneratorVisitor with octal legacy
@@ -453,6 +497,7 @@ final class SampleGeneratorSweepTest extends TestCase
         $this->assertIsString($sample);
     }
 
+    #[Test]
     public function test_sample_generator_with_unicode(): void
     {
         // Test SampleGeneratorVisitor with unicode sequences
@@ -468,6 +513,7 @@ final class SampleGeneratorSweepTest extends TestCase
      * Tests the "empty" fallback of getRandomChar in SampleGeneratorVisitor.
      * This case is impossible via the public API as the visitor never passes an empty array.
      */
+    #[Test]
     public function test_sample_generator_get_random_char_empty(): void
     {
         $visitor = new SampleGenerator();

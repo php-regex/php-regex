@@ -29,6 +29,7 @@ final class PatternSourceCollectionTest extends TestCase
 {
     use TemporaryProject;
 
+    #[Test]
     public function test_collect_with_empty_sources(): void
     {
         $collection = new PatternSourceCollection([]);
@@ -37,6 +38,7 @@ final class PatternSourceCollectionTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_collect_filters_disabled_sources(): void
     {
         $source = $this->createStub(PatternSourceInterface::class);
@@ -51,6 +53,7 @@ final class PatternSourceCollectionTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_collect_filters_unsupported_sources(): void
     {
         $source = $this->createStub(PatternSourceInterface::class);
@@ -64,6 +67,7 @@ final class PatternSourceCollectionTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_collect_aggregates_patterns(): void
     {
         $source1 = $this->createStub(PatternSourceInterface::class);

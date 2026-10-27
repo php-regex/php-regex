@@ -34,6 +34,7 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class FacadeTest extends LaravelTestCase
 {
+    #[Test]
     public function test_parse_returns_regex_node(): void
     {
         $ast = Regex::parse('/^[a-z]+$/');
@@ -41,6 +42,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertInstanceOf(RegexNode::class, $ast);
     }
 
+    #[Test]
     public function test_parse_with_tolerant_mode_returns_tolerant_result(): void
     {
         $result = Regex::parseTolerant('/^[a-z]+$/');
@@ -49,6 +51,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertEmpty($result->errors);
     }
 
+    #[Test]
     public function test_parse_tolerant_mode_with_invalid_pattern(): void
     {
         $result = Regex::parseTolerant('/^(unclosed/');
@@ -57,6 +60,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertNotEmpty($result->errors);
     }
 
+    #[Test]
     public function test_validate_returns_validation_result(): void
     {
         $result = Regex::validate('/^[a-z]+$/');
@@ -65,6 +69,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertTrue($result->isValid);
     }
 
+    #[Test]
     public function test_validate_detects_invalid_patterns(): void
     {
         $result = Regex::validate('/^(unclosed/');
@@ -74,6 +79,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertNotNull($result->error);
     }
 
+    #[Test]
     public function test_analyze_returns_analysis_report(): void
     {
         $report = Regex::analyze('/^[a-z]+$/');
@@ -82,6 +88,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertTrue($report->isValid);
     }
 
+    #[Test]
     public function test_redos_returns_redos_analysis(): void
     {
         $analysis = Regex::redos('/^(a+)+$/');
@@ -89,6 +96,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertInstanceOf(RedosAnalysis::class, $analysis);
     }
 
+    #[Test]
     public function test_redos_detects_vulnerable_patterns(): void
     {
         $analysis = Regex::redos('/^(a+)+$/');
@@ -100,6 +108,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertNotSame(RedosSeverity::Safe, $analysis->severity);
     }
 
+    #[Test]
     public function test_optimize_returns_optimization_result(): void
     {
         $result = Regex::optimize('/[0-9]+/');
@@ -107,6 +116,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertInstanceOf(OptimizationResult::class, $result);
     }
 
+    #[Test]
     public function test_optimize_suggests_improvements(): void
     {
         $result = Regex::optimize('/[0-9]+/');
@@ -127,6 +137,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertSame(['Wrote [0-9] as \\d.'], $result->changes);
     }
 
+    #[Test]
     public function test_transpile_returns_transpile_result(): void
     {
         $result = Regex::transpile('/^[a-z]+$/', 'javascript');
@@ -135,6 +146,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertNotEmpty($result->pattern);
     }
 
+    #[Test]
     public function test_explain_returns_string(): void
     {
         $explanation = Regex::explain('/^[a-z]+$/');
@@ -143,6 +155,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertNotEmpty($explanation);
     }
 
+    #[Test]
     public function test_explain_html_format(): void
     {
         $explanation = Regex::explain('/^[a-z]+$/', format: 'html');
@@ -160,6 +173,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertStringContainsString('<div class="regex-explain">', $explanation);
     }
 
+    #[Test]
     public function test_highlight_returns_string(): void
     {
         $highlighted = Regex::highlight('/^[a-z]+$/');
@@ -168,6 +182,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertNotEmpty($highlighted);
     }
 
+    #[Test]
     public function test_highlight_html_format(): void
     {
         $highlighted = Regex::highlight('/^[a-z]+$/', format: 'html');
@@ -185,6 +200,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertStringContainsString('<span class="regex-token', $highlighted);
     }
 
+    #[Test]
     public function test_literals_returns_literal_extraction_result(): void
     {
         $result = Regex::literals('/^hello world$/');
@@ -192,6 +208,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertInstanceOf(LiteralExtractionResult::class, $result);
     }
 
+    #[Test]
     public function test_generate_returns_sample_string(): void
     {
         $sample = Regex::generate('/^[a-z]{3}$/');
@@ -201,6 +218,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertMatchesRegularExpression('/^[a-z]{3}$/', $sample);
     }
 
+    #[Test]
     public function test_parse_pattern_with_separate_components(): void
     {
         $ast = Regex::parsePattern('[a-z]+', 'i', '/');

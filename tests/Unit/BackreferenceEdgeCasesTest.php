@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class BackreferenceEdgeCasesTest extends TestCase
@@ -27,6 +28,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     public function test_basic_backreference(): void
     {
         $pattern = '/(a)\1/';
@@ -38,6 +40,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertDoesNotMatchRegularExpression($pattern, 'ab');
     }
 
+    #[Test]
     public function test_double_digit_backreference(): void
     {
         $pattern = '/(\d\d)\1/';
@@ -49,6 +52,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertDoesNotMatchRegularExpression($pattern, '1234');
     }
 
+    #[Test]
     public function test_backreference_with_quantifier(): void
     {
         $pattern = '/([a-z])\1{2}/';
@@ -60,6 +64,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertDoesNotMatchRegularExpression($pattern, 'abc');
     }
 
+    #[Test]
     public function test_backreference_to_alternation(): void
     {
         $pattern = '/(foo|bar)\1/';
@@ -72,6 +77,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertDoesNotMatchRegularExpression($pattern, 'foobar');
     }
 
+    #[Test]
     public function test_multiple_different_backreferences(): void
     {
         $pattern = '/(a)(b)\1\2/';
@@ -83,6 +89,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertDoesNotMatchRegularExpression($pattern, 'abba');
     }
 
+    #[Test]
     public function test_backreferences_reverse_order(): void
     {
         $pattern = '/(a)(b)(c)\3\2\1/';
@@ -93,6 +100,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertMatchesRegularExpression($pattern, 'abccba');
     }
 
+    #[Test]
     public function test_mixed_order_backreferences(): void
     {
         $pattern = '/(a)(b)\2(c)\1/';
@@ -103,6 +111,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertMatchesRegularExpression($pattern, 'abbca');
     }
 
+    #[Test]
     public function test_backreference_to_nested_quantifier(): void
     {
         $pattern = '/((?:a+)+)\1/';
@@ -111,6 +120,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertSame($pattern, $compiled);
     }
 
+    #[Test]
     public function test_backreference_inside_quantifier(): void
     {
         $pattern = '/(?:(a)\1)+/';
@@ -121,6 +131,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertMatchesRegularExpression($pattern, 'aaaa');
     }
 
+    #[Test]
     public function test_nested_groups_with_multiple_backreferences(): void
     {
         $pattern = '/((a))\1\2/';
@@ -131,6 +142,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertMatchesRegularExpression($pattern, 'aaaa');
     }
 
+    #[Test]
     public function test_complex_backreference_pattern(): void
     {
         $pattern = '/(test)(\w+)\2\1/';
@@ -139,6 +151,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertSame($pattern, $compiled);
     }
 
+    #[Test]
     public function test_backreference_any_char(): void
     {
         $pattern = '/(.)\\1/';
@@ -150,6 +163,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertMatchesRegularExpression($pattern, '##');
     }
 
+    #[Test]
     public function test_backreference_with_char_class_and_quantifier(): void
     {
         $pattern = '/([a-z]+)\1/';
@@ -161,6 +175,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertDoesNotMatchRegularExpression($pattern, 'testword');
     }
 
+    #[Test]
     public function test_backreference_to_word(): void
     {
         $pattern = '/(test)\1/';
@@ -172,6 +187,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertDoesNotMatchRegularExpression($pattern, 'testing');
     }
 
+    #[Test]
     public function test_alternation_with_backreferences(): void
     {
         $pattern = '/(a|b)(a|b)\1\2/';
@@ -180,6 +196,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertSame($pattern, $compiled);
     }
 
+    #[Test]
     public function test_complex_mixed_backreferences(): void
     {
         $pattern = '/(a)(b)\2(c)\1/';
@@ -191,6 +208,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertDoesNotMatchRegularExpression($pattern, 'abcba');
     }
 
+    #[Test]
     public function test_two_digit_backreference(): void
     {
         $pattern = '/(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10/';
@@ -199,6 +217,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertSame($pattern, $compiled);
     }
 
+    #[Test]
     public function test_r_char_type_is_not_backreference(): void
     {
         $pattern = '/\R/';
@@ -211,6 +230,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertStringNotContainsString('Backref', $dump);
     }
 
+    #[Test]
     public function test_backreference_with_alternation_in_group(): void
     {
         $pattern = '/(a|b|c)\1/';
@@ -219,6 +239,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertSame($pattern, $compiled);
     }
 
+    #[Test]
     public function test_multiple_consecutive_backreferences(): void
     {
         $pattern = '/(x)(y)(z)\1\2\3/';
@@ -229,6 +250,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertMatchesRegularExpression($pattern, 'xyzxyz');
     }
 
+    #[Test]
     public function test_backreference_with_digit_class(): void
     {
         $pattern = '/(\d+)\1/';
@@ -239,6 +261,7 @@ final class BackreferenceEdgeCasesTest extends TestCase
         $this->assertMatchesRegularExpression($pattern, '123123');
     }
 
+    #[Test]
     public function test_backreference_in_complex_pattern(): void
     {
         $pattern = '/^(a+)b\1$/';

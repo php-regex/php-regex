@@ -33,6 +33,7 @@ final class LintCommandTest extends TestCase
      */
     private $errorStream;
 
+    #[Test]
     public function test_lint_command_reports_invalid_config(): void
     {
         $cwd = getcwd();
@@ -67,6 +68,7 @@ final class LintCommandTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_lint_command_invokes_help(): void
     {
         $command = $this->makeLintCommand();
@@ -79,6 +81,7 @@ final class LintCommandTest extends TestCase
         $this->assertStringContainsString('Usage', $buffer);
     }
 
+    #[Test]
     public function test_lint_command_rejects_unknown_format(): void
     {
         $command = $this->makeLintCommand();
@@ -91,6 +94,7 @@ final class LintCommandTest extends TestCase
         $this->assertStringContainsString('Unknown format', $buffer);
     }
 
+    #[Test]
     public function test_lint_command_handles_empty_patterns(): void
     {
         $command = $this->makeLintCommand();
@@ -109,6 +113,7 @@ final class LintCommandTest extends TestCase
         $this->assertStringContainsString('No regex patterns found', $buffer);
     }
 
+    #[Test]
     public function test_lint_command_outputs_json_report(): void
     {
         $command = $this->makeLintCommand();

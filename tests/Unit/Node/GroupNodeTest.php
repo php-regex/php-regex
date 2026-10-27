@@ -19,6 +19,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class GroupNodeTest extends TestCase
@@ -40,6 +41,7 @@ final class GroupNodeTest extends TestCase
         yield 'inline_flags_complex' => [GroupType::InlineFlags, null, 'imsx'];
     }
 
+    #[Test]
     #[DataProvider('data_provider_group_types')]
     public function test_constructor_and_getters(GroupType $type, ?string $name, ?string $flags): void
     {
@@ -54,6 +56,7 @@ final class GroupNodeTest extends TestCase
         $this->assertSame(5, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_group_without_name_does_not_set_flags(): void
     {
         // T_GROUP_CAPTURING ne devrait pas avoir de flags, mais la structure le permet.
@@ -64,6 +67,7 @@ final class GroupNodeTest extends TestCase
         $this->assertSame('i', $node->flags);
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_group(): void
     {
         $child = $this->createStub(NodeInterface::class);

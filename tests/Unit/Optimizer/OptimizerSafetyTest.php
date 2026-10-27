@@ -28,6 +28,7 @@ final class OptimizerSafetyTest extends TestCase
     /**
      * @param array{digits?: bool, word?: bool, ranges?: bool, possessive?: bool, factorize?: bool} $options
      */
+    #[Test]
     #[DataProvider('provideOptimizationCases')]
     public function test_optimization_does_not_change_semantics(string $input, string $expected, array $options): void
     {

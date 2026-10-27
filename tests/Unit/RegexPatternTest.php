@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\DelimitedPattern;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RegexPatternTest extends TestCase
 {
+    #[Test]
     public function test_construct(): void
     {
         $pattern = new DelimitedPattern('foo', 'i', '#');
@@ -26,6 +28,7 @@ final class RegexPatternTest extends TestCase
         $this->assertSame('#', $pattern->delimiter);
     }
 
+    #[Test]
     public function test_to_string(): void
     {
         $pattern = new DelimitedPattern('foo', 'i', '#');
@@ -33,6 +36,7 @@ final class RegexPatternTest extends TestCase
         $this->assertSame('#foo#i', (string) $pattern);
     }
 
+    #[Test]
     public function test_from_raw(): void
     {
         $pattern = new DelimitedPattern('foo', 'i', '#');
@@ -41,6 +45,7 @@ final class RegexPatternTest extends TestCase
         $this->assertSame('#', $pattern->delimiter);
     }
 
+    #[Test]
     public function test_from_delimited(): void
     {
         $pattern = DelimitedPattern::fromDelimited('/foo/i');
@@ -49,6 +54,7 @@ final class RegexPatternTest extends TestCase
         $this->assertSame('/', $pattern->delimiter);
     }
 
+    #[Test]
     public function test_from_delimited_with_hash(): void
     {
         $pattern = DelimitedPattern::fromDelimited('#bar#m');
@@ -57,6 +63,7 @@ final class RegexPatternTest extends TestCase
         $this->assertSame('#', $pattern->delimiter);
     }
 
+    #[Test]
     public function test_from_delimited_no_flags(): void
     {
         $pattern = DelimitedPattern::fromDelimited('/baz/');
@@ -65,6 +72,7 @@ final class RegexPatternTest extends TestCase
         $this->assertSame('/', $pattern->delimiter);
     }
 
+    #[Test]
     public function test_from_delimited_with_paired_delimiter_round_trip(): void
     {
         $pattern = DelimitedPattern::fromDelimited('(foo)i');

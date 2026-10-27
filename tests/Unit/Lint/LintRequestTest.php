@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\LintRequest;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintRequestTest extends TestCase
 {
+    #[Test]
     public function test_is_source_enabled_returns_true_when_source_not_disabled(): void
     {
         $request = new LintRequest(['.'], [], 0, [], true, true, true);
@@ -25,6 +27,7 @@ final class LintRequestTest extends TestCase
         $this->assertTrue($request->isSourceEnabled('any_source'));
     }
 
+    #[Test]
     public function test_is_source_enabled_returns_true_for_specific_source_when_not_in_disabled_list(): void
     {
         $request = new LintRequest(['.'], [], 0, ['other_source'], true, true, true);
@@ -32,6 +35,7 @@ final class LintRequestTest extends TestCase
         $this->assertTrue($request->isSourceEnabled('my_source'));
     }
 
+    #[Test]
     public function test_is_source_enabled_returns_false_when_source_disabled(): void
     {
         $request = new LintRequest(['.'], [], 0, ['my_source'], true, true, true);
@@ -39,6 +43,7 @@ final class LintRequestTest extends TestCase
         $this->assertFalse($request->isSourceEnabled('my_source'));
     }
 
+    #[Test]
     public function test_is_source_enabled_is_case_sensitive(): void
     {
         $request = new LintRequest(['.'], [], 0, ['My_Source'], true, true, true);
@@ -47,6 +52,7 @@ final class LintRequestTest extends TestCase
         $this->assertTrue($request->isSourceEnabled('my_source'));
     }
 
+    #[Test]
     public function test_get_disabled_sources_returns_empty_array_by_default(): void
     {
         $request = new LintRequest(['.'], [], 0);
@@ -54,6 +60,7 @@ final class LintRequestTest extends TestCase
         $this->assertSame([], $request->getDisabledSources());
     }
 
+    #[Test]
     public function test_get_disabled_sources_returns_configured_sources(): void
     {
         $sources = ['source1', 'source2'];

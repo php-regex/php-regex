@@ -26,6 +26,7 @@ final class LexerTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_tokenize_simple_literal(): void
     {
         $tokens = (new Lexer())->tokenize('foo')->getTokens();
@@ -41,6 +42,7 @@ final class LexerTest extends TestCase
         $this->assertSame(TokenType::Eof, $tokens[3]->type);
     }
 
+    #[Test]
     public function test_tokenize_multibyte_literal(): void
     {
         $tokens = (new Lexer())->tokenize('fôô')->getTokens();
@@ -55,6 +57,7 @@ final class LexerTest extends TestCase
         $this->assertSame('ô', $tokens[2]->value);
     }
 
+    #[Test]
     public function test_tokenize_group_and_quantifier(): void
     {
         $tokens = (new Lexer())->tokenize('(bar)?')->getTokens();
@@ -76,6 +79,7 @@ final class LexerTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_tokenize_alternation(): void
     {
         $tokens = (new Lexer())->tokenize('foo|bar')->getTokens();
@@ -84,6 +88,7 @@ final class LexerTest extends TestCase
         $this->assertSame(TokenType::Alternation, $tokens[3]->type);
     }
 
+    #[Test]
     public function test_tokenize_custom_quantifier(): void
     {
         $tokens = (new Lexer())->tokenize('a{2,4}')->getTokens();
@@ -95,6 +100,7 @@ final class LexerTest extends TestCase
         $this->assertSame('{2,4}', $tokens[1]->value);
     }
 
+    #[Test]
     public function test_tokenize_invalid_quantifier_as_literal(): void
     {
         $tokens = (new Lexer())->tokenize('a{b}')->getTokens();
@@ -108,6 +114,7 @@ final class LexerTest extends TestCase
         $this->assertSame('}', $tokens[3]->value);
     }
 
+    #[Test]
     public function test_tokenize_escaped_meta_char(): void
     {
         $tokens = (new Lexer())->tokenize('\\(a\\*\\)')->getTokens();
@@ -130,6 +137,7 @@ final class LexerTest extends TestCase
         $this->assertSame(TokenType::Eof, $tokens[4]->type);
     }
 
+    #[Test]
     public function test_tokenize_char_types_and_dot(): void
     {
         $tokens = (new Lexer())->tokenize('.\d\s\w\D\S\W')->getTokens();
@@ -154,6 +162,7 @@ final class LexerTest extends TestCase
         $this->assertSame('W', $tokens[6]->value);
     }
 
+    #[Test]
     public function test_tokenize_anchors(): void
     {
         $tokens = (new Lexer())->tokenize('^foo$')->getTokens();
@@ -166,6 +175,7 @@ final class LexerTest extends TestCase
         $this->assertSame('$', $tokens[4]->value);
     }
 
+    #[Test]
     public function test_tokenize_assertions(): void
     {
         $tokens = (new Lexer())->tokenize('\\Afoo\\z\\b\\G\\B')->getTokens();
@@ -183,6 +193,7 @@ final class LexerTest extends TestCase
         $this->assertSame('B', $tokens[7]->value);
     }
 
+    #[Test]
     public function test_tokenize_unicode_prop(): void
     {
         $tokens = (new Lexer())->tokenize('\\p{L}\\P{^L}\\pL')->getTokens();
@@ -195,6 +206,7 @@ final class LexerTest extends TestCase
         $this->assertSame('L', $tokens[2]->value); // \pL
     }
 
+    #[Test]
     public function test_tokenize_octal(): void
     {
         $tokens = (new Lexer())->tokenize('\\o{777}')->getTokens();
@@ -206,6 +218,7 @@ final class LexerTest extends TestCase
     /**
      * @param array<string> $expectedOctals
      */
+    #[Test]
     #[DataProvider('provide_legacy_octal_sequences')]
     public function test_tokenize_legacy_octal_sequences(string $pattern, array $expectedOctals, bool $expectRange): void
     {
@@ -239,6 +252,7 @@ final class LexerTest extends TestCase
         yield 'range_preserves_three_digit' => ['[\\177-\\377]', ['177', '377'], true];
     }
 
+    #[Test]
     public function test_throws_on_trailing_backslash(): void
     {
         $this->expectException(LexerException::class);
@@ -289,6 +303,7 @@ final class LexerTest extends TestCase
      * This test validates that the internal pattern constants of the Lexer
      * are properly defined and can be compiled into valid PCRE patterns.
      */
+    #[Test]
     public function test_validate_pattern_constants(): void
     {
         // Use reflection to access private constants
@@ -311,6 +326,7 @@ final class LexerTest extends TestCase
         $this->assertNotEmpty($consts['PATTERNS_INSIDE']);
     }
 
+    #[Test]
     public function test_tokenize_inside_char_class_range_negation_literals(): void
     {
         // Tests context-sensitive tokens: ^ (negation), - (range), and ] (literal)
@@ -326,6 +342,7 @@ final class LexerTest extends TestCase
         $this->assertSame(TokenType::Literal, $tokens[7]->type); // Trailing ] (literal because of position logic)
     }
 
+    #[Test]
     public function test_tokenize_char_class_literal_at_start(): void
     {
         // [^]a] - literal ']' at start
@@ -335,6 +352,7 @@ final class LexerTest extends TestCase
         $this->assertSame(TokenType::Literal, $tokens[2]->type); // ']' as literal
     }
 
+    #[Test]
     public function test_tokenize_posix_class(): void
     {
         $tokens = (new Lexer())->tokenize('[[:alnum:]]')->getTokens();
@@ -348,6 +366,7 @@ final class LexerTest extends TestCase
      * is negated. Oracle: PCRE2 compiles "/[[:^digit:]x]/" and
      * "/[a[:upper:]-]/".
      */
+    #[Test]
     #[DataProvider('providePosixClassValues')]
     public function test_tokenize_posix_class_value_is_its_name(string $pattern, int $index, string $expected): void
     {
@@ -366,6 +385,7 @@ final class LexerTest extends TestCase
         yield 'a class after a literal' => ['pattern' => '[a[:upper:]-]', 'index' => 2, 'expected' => 'upper'];
     }
 
+    #[Test]
     public function test_tokenize_unclosed_char_class_error_with_end_of_input(): void
     {
         $this->expectException(LexerException::class);
@@ -373,6 +393,7 @@ final class LexerTest extends TestCase
         (new Lexer())->tokenize('[a');
     }
 
+    #[Test]
     public function test_tokenize_quote_mode(): void
     {
         $tokens = (new Lexer())->tokenize('\Q*+.\Efoo')->getTokens();
@@ -388,6 +409,7 @@ final class LexerTest extends TestCase
         $this->assertSame('f', $tokens[3]->value);
     }
 
+    #[Test]
     public function test_tokenize_char_type_n_h_v(): void
     {
         // Test \N (any char except newline), \H (not horizontal whitespace), \V (not vertical whitespace)
@@ -405,6 +427,7 @@ final class LexerTest extends TestCase
         $this->assertSame(TokenType::Eof, $tokens[3]->type);
     }
 
+    #[Test]
     public function test_tokenize_char_type_n_h_v_inside_char_class(): void
     {
         // Test \N, \H, \V inside character classes
@@ -424,6 +447,7 @@ final class LexerTest extends TestCase
         $this->assertSame(TokenType::CharClassClose, $tokens[4]->type);
     }
 
+    #[Test]
     public function test_tokenize_backslash_b_inside_char_class_is_backspace(): void
     {
         // Inside character class, \b means backspace (0x08), not word boundary
@@ -438,6 +462,7 @@ final class LexerTest extends TestCase
         $this->assertSame(TokenType::CharClassClose, $tokens[2]->type);
     }
 
+    #[Test]
     public function test_tokenize_backslash_b_outside_char_class_is_assertion(): void
     {
         // Outside character class, \b is word boundary assertion
@@ -456,6 +481,7 @@ final class LexerTest extends TestCase
         $this->assertSame('b', $tokens[5]->value);
     }
 
+    #[Test]
     public function test_tokenize_backslash_b_mixed_context(): void
     {
         // Test \b in both contexts: outside (assertion) and inside char class (backspace)

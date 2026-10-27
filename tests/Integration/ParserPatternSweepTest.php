@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration;
 
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ParserPatternSweepTest extends TestCase
 {
+    #[Test]
     public function test_parse_various_patterns(): void
     {
         $this->expectNotToPerformAssertions();

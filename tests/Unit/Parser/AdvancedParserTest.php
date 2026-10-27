@@ -19,10 +19,12 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AdvancedParserTest extends TestCase
 {
+    #[Test]
     public function test_parse_named_group(): void
     {
         $regex = Regex::create();
@@ -33,6 +35,7 @@ final class AdvancedParserTest extends TestCase
         $this->assertSame('name', $ast->pattern->name);
     }
 
+    #[Test]
     public function test_parse_lazy_quantifier(): void
     {
         $regex = Regex::create();
@@ -43,6 +46,7 @@ final class AdvancedParserTest extends TestCase
         $this->assertSame(QuantifierType::Lazy, $ast->pattern->type);
     }
 
+    #[Test]
     public function test_parse_possessive_quantifier(): void
     {
         $regex = Regex::create();
@@ -53,6 +57,7 @@ final class AdvancedParserTest extends TestCase
         $this->assertSame(QuantifierType::Possessive, $ast->pattern->type);
     }
 
+    #[Test]
     public function test_parse_lookahead(): void
     {
         $regex = Regex::create();
@@ -66,6 +71,7 @@ final class AdvancedParserTest extends TestCase
         $this->assertSame(GroupType::LookaheadPositive, $group->type);
     }
 
+    #[Test]
     public function test_parse_alternative_delimiter(): void
     {
         $regex = Regex::create();
@@ -75,6 +81,7 @@ final class AdvancedParserTest extends TestCase
         $this->assertSame('imsU', $ast->flags);
     }
 
+    #[Test]
     public function test_parse_brace_delimiter(): void
     {
         $regex = Regex::create();

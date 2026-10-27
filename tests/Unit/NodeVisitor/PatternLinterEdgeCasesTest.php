@@ -48,10 +48,12 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PatternLinterEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_octal_escape_out_of_range_adds_issue(): void
     {
         $linter = new PatternLinter();
@@ -64,6 +66,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertStringContainsString('Suspicious octal escape', $warnings[0]);
     }
 
+    #[Test]
     public function test_octal_escape_past_377_is_a_code_point_in_utf_mode(): void
     {
         // "\666" is U+01B6 with "u"; without it PHP refuses it.
@@ -78,6 +81,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertCount(1, $octalWarnings('/\\666/'));
     }
 
+    #[Test]
     public function test_count_capturing_groups_handles_conditionals(): void
     {
         $linter = new PatternLinter();
@@ -95,6 +99,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertSame([], $linter->getIssues());
     }
 
+    #[Test]
     public function test_is_consuming_recognizes_node_types(): void
     {
         $this->assertTrue(NodePredicates::isConsuming(new CharClassNode(new LiteralNode('a', 0, 0), false, 0, 0)));
@@ -129,6 +134,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertFalse(NodePredicates::isConsuming($nonConsumingSeq));
     }
 
+    #[Test]
     public function test_char_class_part_has_letters_for_literal(): void
     {
         $rule = new UselessIFlagRule();
@@ -137,6 +143,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertTrue($this->invokePrivate($rule, 'charClassPartHasLetters', [new LiteralNode('A', 0, 0)]));
     }
 
+    #[Test]
     public function test_lint_alternation_skips_empty_literals(): void
     {
         $alternation = new AlternationNode([
@@ -149,6 +156,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertIsArray($issues);
     }
 
+    #[Test]
     public function test_lint_redundant_char_class_handles_ranges_and_literals(): void
     {
         $parts = [
@@ -166,6 +174,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertNotEmpty($issues);
     }
 
+    #[Test]
     public function test_collect_char_class_parts_sequence(): void
     {
         $sequence = new SequenceNode([new LiteralNode('a', 0, 0)], 0, 0);
@@ -176,6 +185,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertCount(1, $parts);
     }
 
+    #[Test]
     public function test_lint_inline_flags_branches(): void
     {
         $rule = new InlineFlagsRule();
@@ -191,6 +201,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertNotEmpty($rule->check($unsetFlag, $context));
     }
 
+    #[Test]
     public function test_is_redundant_group_recurses_through_sequence(): void
     {
         $linter = new RedundantGroupRule();
@@ -201,6 +212,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertTrue($result);
     }
 
+    #[Test]
     public function test_find_nested_quantifier_handles_conditional_define_and_atomic_group(): void
     {
         $rule = new NestedQuantifierRule();
@@ -216,6 +228,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertSame($quant, $this->invokePrivate($rule, 'findNestedQuantifier', [$define]));
     }
 
+    #[Test]
     public function test_find_sequence_for_nested_quantifier_returns_null_for_non_sequence(): void
     {
         $rule = new NestedQuantifierRule();
@@ -226,6 +239,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertNull($result);
     }
 
+    #[Test]
     public function test_unwrap_transparent_node_unwraps_group_and_sequence(): void
     {
         $inner = new LiteralNode('a', 0, 0);
@@ -235,11 +249,13 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertSame($inner, NodePredicates::unwrapTransparentNode($sequence));
     }
 
+    #[Test]
     public function test_is_transparent_group_false_for_lookaround(): void
     {
         $this->assertFalse(NodePredicates::isTransparentGroup(GroupType::LookaheadNegative));
     }
 
+    #[Test]
     public function test_is_exclusive_separator_returns_false_for_optional_or_unknown(): void
     {
         $rule = new NestedQuantifierRule();
@@ -254,6 +270,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertFalse($this->invokePrivate($rule, 'isExclusiveSeparator', [$unknownSeparator, $innerBoundary, $context, true]));
     }
 
+    #[Test]
     public function test_is_optional_node_branches(): void
     {
         $quant = new QuantifierNode(new LiteralNode('a', 0, 0), '*', QuantifierType::Greedy, 0, 0);
@@ -278,6 +295,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertTrue(NodePredicates::isOptionalNode($anchor));
     }
 
+    #[Test]
     public function test_is_optional_node_returns_false_for_non_optional_sequence(): void
     {
         $sequence = new SequenceNode([new LiteralNode('a', 0, 0), new LiteralNode('', 0, 0)], 0, 0);
@@ -285,6 +303,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertFalse(NodePredicates::isOptionalNode($sequence));
     }
 
+    #[Test]
     public function test_is_optional_node_returns_false_for_non_optional_alternation(): void
     {
         $alternation = new AlternationNode([new LiteralNode('a', 0, 0), new LiteralNode('b', 0, 0)], 0, 0);
@@ -292,6 +311,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertFalse(NodePredicates::isOptionalNode($alternation));
     }
 
+    #[Test]
     public function test_is_safely_separated_nested_quantifier_returns_false_for_unknown_boundary(): void
     {
         $rule = new NestedQuantifierRule();
@@ -306,6 +326,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertFalse($result);
     }
 
+    #[Test]
     public function test_is_safely_separated_nested_quantifier_checks_next_neighbor(): void
     {
         $rule = new NestedQuantifierRule();
@@ -319,6 +340,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertIsBool($result);
     }
 
+    #[Test]
     public function test_find_sequence_for_nested_quantifier_returns_null_when_not_found(): void
     {
         $rule = new NestedQuantifierRule();
@@ -330,6 +352,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $this->assertNull($result);
     }
 
+    #[Test]
     public function test_contains_dot_star_branches(): void
     {
         $rule = new NestedDotStarRule();

@@ -18,6 +18,7 @@ use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class GeneratorEdgeCaseTest extends TestCase
@@ -26,6 +27,7 @@ final class GeneratorEdgeCaseTest extends TestCase
      * Tests the default case for an unknown character type.
      * The parser blocks this normally, so we inject the node manually.
      */
+    #[Test]
     public function test_generate_unknown_char_type(): void
     {
         $generator = new SampleGenerator();
@@ -42,6 +44,7 @@ final class GeneratorEdgeCaseTest extends TestCase
      * Tests parseQuantifierRange with a string that matches nothing.
      * (Defensive code via Reflection)
      */
+    #[Test]
     public function test_parse_quantifier_range_fallback(): void
     {
         $generator = new SampleGenerator();

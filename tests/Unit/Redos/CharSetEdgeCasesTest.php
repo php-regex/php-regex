@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CharSetEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_union_returns_empty_for_two_empty_sets(): void
     {
         $result = ByteCharSet::empty()->union(ByteCharSet::empty());
@@ -25,6 +27,7 @@ final class CharSetEdgeCasesTest extends TestCase
         $this->assertTrue($result->isEmpty());
     }
 
+    #[Test]
     public function test_sample_char_returns_null_when_range_is_missing(): void
     {
         $ref = new \ReflectionClass(ByteCharSet::class);

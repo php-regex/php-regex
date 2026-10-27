@@ -18,10 +18,12 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RegexEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_a_failing_cache_does_not_fail_the_analysis(): void
     {
         $cache = new class implements CacheInterface {
@@ -54,6 +56,7 @@ final class RegexEdgeCasesTest extends TestCase
         $this->assertSame([], $report->errors);
     }
 
+    #[Test]
     public function test_cache_seed_includes_the_target(): void
     {
         $regex = Regex::create(['php_version' => 80000]);
@@ -66,6 +69,7 @@ final class RegexEdgeCasesTest extends TestCase
         $this->assertStringContainsString('#target=php8.0/pcre10.35', (string) $seed);
     }
 
+    #[Test]
     public function test_store_in_cache_swallows_write_errors(): void
     {
         $cache = new class implements CacheInterface {
@@ -95,6 +99,7 @@ final class RegexEdgeCasesTest extends TestCase
         $this->assertNull($result);
     }
 
+    #[Test]
     public function test_build_fallback_ast_uses_full_pattern_when_no_error_position(): void
     {
         $regex = Regex::create();

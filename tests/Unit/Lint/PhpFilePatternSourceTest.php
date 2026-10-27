@@ -18,6 +18,7 @@ use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
 use PHPRegex\Tests\Support\RecordingLintProgress;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PhpFilePatternSourceTest extends TestCase
@@ -29,18 +30,21 @@ final class PhpFilePatternSourceTest extends TestCase
         $this->extractor = new PatternExtractor($this->createStub(ExtractorInterface::class));
     }
 
+    #[Test]
     public function test_get_name(): void
     {
         $source = new PhpFilePatternSource($this->extractor);
         $this->assertSame('php', $source->getName());
     }
 
+    #[Test]
     public function test_is_supported(): void
     {
         $source = new PhpFilePatternSource($this->extractor);
         $this->assertTrue($source->isSupported());
     }
 
+    #[Test]
     public function test_extract_delegates_to_extractor(): void
     {
         $context = new PatternSourceContext(
@@ -54,6 +58,7 @@ final class PhpFilePatternSourceTest extends TestCase
         $this->assertIsArray($result);
     }
 
+    #[Test]
     public function test_extract_with_progress_callback(): void
     {
         $progress = new RecordingLintProgress();
@@ -71,6 +76,7 @@ final class PhpFilePatternSourceTest extends TestCase
         $this->assertIsArray($result);
     }
 
+    #[Test]
     public function test_extract_with_empty_paths(): void
     {
         $context = new PatternSourceContext([], []);
@@ -81,6 +87,7 @@ final class PhpFilePatternSourceTest extends TestCase
         $this->assertIsArray($result);
     }
 
+    #[Test]
     public function test_extract_with_disabled_sources(): void
     {
         $context = new PatternSourceContext(

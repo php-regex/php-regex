@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Api;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RoundTripTest extends TestCase
@@ -46,6 +47,7 @@ final class RoundTripTest extends TestCase
         yield ['/(a)(?(1)b|c)/'];
     }
 
+    #[Test]
     #[DataProvider('providePatterns')]
     public function test_parse_and_compile_is_idempotent(string $pattern, ?string $expected = null): void
     {

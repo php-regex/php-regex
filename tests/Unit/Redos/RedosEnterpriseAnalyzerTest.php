@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RedosEnterpriseAnalyzerTest extends TestCase
@@ -27,6 +28,7 @@ final class RedosEnterpriseAnalyzerTest extends TestCase
         $this->analyzer = new RedosAnalyzer();
     }
 
+    #[Test]
     #[DataProvider('provideSafePatterns')]
     public function test_safe_patterns_are_safe(string $pattern): void
     {
@@ -35,6 +37,7 @@ final class RedosEnterpriseAnalyzerTest extends TestCase
         $this->assertTrue($analysis->isSafe(), "Expected safe/low severity for pattern: {$pattern}");
     }
 
+    #[Test]
     #[DataProvider('provideMediumPatterns')]
     public function test_medium_patterns_exceed_medium_threshold(string $pattern): void
     {
@@ -44,6 +47,7 @@ final class RedosEnterpriseAnalyzerTest extends TestCase
         $this->assertFalse($analysis->exceedsThreshold(RedosSeverity::High), "Expected below HIGH for pattern: {$pattern}");
     }
 
+    #[Test]
     #[DataProvider('provideHighPatterns')]
     public function test_high_patterns_exceed_high_threshold(string $pattern): void
     {
@@ -52,6 +56,7 @@ final class RedosEnterpriseAnalyzerTest extends TestCase
         $this->assertTrue($analysis->exceedsThreshold(RedosSeverity::High), "Expected HIGH+ severity for pattern: {$pattern}");
     }
 
+    #[Test]
     public function test_empty_match_quantifier_is_reported(): void
     {
         // (a?)+ never fails on the engine; (a*)* before the end fails on a…a! at n=18.
@@ -61,6 +66,7 @@ final class RedosEnterpriseAnalyzerTest extends TestCase
         $this->assertTrue($this->containsRecommendation($analysis->recommendations, 'match empty'));
     }
 
+    #[Test]
     #[DataProvider('provideAdjacentQuantifierPatterns')]
     public function test_adjacent_quantifiers_are_reported(string $pattern): void
     {
@@ -70,6 +76,7 @@ final class RedosEnterpriseAnalyzerTest extends TestCase
         $this->assertTrue($this->containsRecommendation($analysis->recommendations, 'Adjacent quantified tokens'));
     }
 
+    #[Test]
     #[DataProvider('provideDisjointAdjacentPatterns')]
     public function test_adjacent_quantifiers_disjoint_are_not_reported(string $pattern): void
     {

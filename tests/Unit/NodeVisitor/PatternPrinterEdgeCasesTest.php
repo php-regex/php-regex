@@ -24,10 +24,12 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PatternPrinterEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_pretty_group_prefixes_are_rendered(): void
     {
         $visitor = new PatternPrinter(true);
@@ -52,6 +54,7 @@ final class PatternPrinterEdgeCasesTest extends TestCase
         $this->assertStringContainsString('(?im:', $inlineFlags->accept($visitor));
     }
 
+    #[Test]
     public function test_char_literal_control_escapes_use_f_and_e(): void
     {
         $visitor = new PatternPrinter();
@@ -63,6 +66,7 @@ final class PatternPrinterEdgeCasesTest extends TestCase
         $this->assertSame('\\e', $escape->accept($visitor));
     }
 
+    #[Test]
     public function test_literal_control_characters_escape_string(): void
     {
         $visitor = new PatternPrinter();
@@ -74,6 +78,7 @@ final class PatternPrinterEdgeCasesTest extends TestCase
         $this->assertSame('\\e', $escape->accept($visitor));
     }
 
+    #[Test]
     public function test_collapse_extended_comments_in_extended_mode(): void
     {
         $visitor = new PatternPrinter(false, true);
@@ -82,6 +87,7 @@ final class PatternPrinterEdgeCasesTest extends TestCase
         $this->assertSame('/(?#...)/x', $regex->accept($visitor));
     }
 
+    #[Test]
     public function test_pretty_inline_comment_multiline_stays_a_comment_group(): void
     {
         $visitor = new PatternPrinter(true);
@@ -94,6 +100,7 @@ final class PatternPrinterEdgeCasesTest extends TestCase
         $this->assertStringContainsString("line2\n)", $compiled);
     }
 
+    #[Test]
     public function test_pretty_inline_comment_starting_with_a_hash_stays_a_comment_group(): void
     {
         $visitor = new PatternPrinter(true);
@@ -103,6 +110,7 @@ final class PatternPrinterEdgeCasesTest extends TestCase
         $this->assertSame('/(?## note)/x', $regex->accept($visitor));
     }
 
+    #[Test]
     public function test_pretty_define_block_includes_newlines(): void
     {
         // A block only breaks under x, past the width.
@@ -115,6 +123,7 @@ final class PatternPrinterEdgeCasesTest extends TestCase
         $this->assertStringContainsString("\n", $compiled);
     }
 
+    #[Test]
     public function test_pretty_conditional_without_else_branch(): void
     {
         $visitor = new PatternPrinter(true);
@@ -132,6 +141,7 @@ final class PatternPrinterEdgeCasesTest extends TestCase
         $this->assertStringNotContainsString('|', $compiled);
     }
 
+    #[Test]
     public function test_pretty_conditional_with_else_branch(): void
     {
         $visitor = new PatternPrinter(true);

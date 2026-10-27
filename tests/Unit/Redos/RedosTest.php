@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosSeverity;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RedosTest extends TestCase
@@ -22,6 +23,7 @@ final class RedosTest extends TestCase
     /**
      * Test ReDoS analysis reduces severity for recursion with possessives.
      */
+    #[Test]
     public function test_redos_recursion_with_possessives_reduced_severity(): void
     {
         $analyzer = new RedosAnalyzer();
@@ -32,6 +34,7 @@ final class RedosTest extends TestCase
         $this->assertSame(RedosSeverity::Medium, $result->severity);
     }
 
+    #[Test]
     public function test_redos_symfony_route_requirement_is_not_high(): void
     {
         $analyzer = new RedosAnalyzer();
@@ -48,6 +51,7 @@ final class RedosTest extends TestCase
     /**
      * Test ReDoS analysis on standard patterns.
      */
+    #[Test]
     public function test_redos_nested_quantifiers_critical(): void
     {
         $analyzer = new RedosAnalyzer();

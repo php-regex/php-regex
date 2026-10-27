@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Formatter;
 use PHPRegex\Linter\Formatter\AbstractOutputFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\LintReport;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -30,6 +31,7 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->formatter = new TestableAbstractOutputFormatter();
     }
 
+    #[Test]
     public function test_construct_with_custom_config(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -39,6 +41,7 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->assertFalse($formatter->getConfig()->ansi);
     }
 
+    #[Test]
     public function test_format_error_returns_message(): void
     {
         $message = 'Test error message';
@@ -48,6 +51,7 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->assertSame($message, $result);
     }
 
+    #[Test]
     public function test_format_hint_when_hints_disabled(): void
     {
         $config = new OutputConfiguration(showHints: false);
@@ -58,6 +62,7 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->assertSame('', $result);
     }
 
+    #[Test]
     public function test_format_hint_with_normal_verbosity(): void
     {
         $config = new OutputConfiguration(
@@ -71,6 +76,7 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->assertSame('Test hint', $result);
     }
 
+    #[Test]
     public function test_format_hint_with_verbose_verbosity(): void
     {
         $config = new OutputConfiguration(
@@ -84,6 +90,7 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->assertSame('Test hint', $result);
     }
 
+    #[Test]
     public function test_format_hint_truncates_long_hints_in_normal_mode(): void
     {
         $config = new OutputConfiguration(
@@ -100,6 +107,7 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->assertSame(200, \strlen($result));
     }
 
+    #[Test]
     public function test_format_hint_does_not_truncate_in_verbose_mode(): void
     {
         $config = new OutputConfiguration(
@@ -116,6 +124,7 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->assertSame(210, \strlen($result));
     }
 
+    #[Test]
     public function test_group_results_when_group_by_file_disabled(): void
     {
         $config = new OutputConfiguration(groupByFile: false);
@@ -129,6 +138,7 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    #[Test]
     public function test_group_results_when_group_by_file_enabled(): void
     {
         $config = new OutputConfiguration(groupByFile: true);

@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\LintReport;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class JsonFormatterTest extends TestCase
 {
+    #[Test]
     public function test_json_formatter_outputs_report_payload(): void
     {
         $formatter = new JsonFormatter();
@@ -43,6 +45,7 @@ final class JsonFormatterTest extends TestCase
         $this->assertArrayNotHasKey('problems', $decoded['results'][0]);
     }
 
+    #[Test]
     public function test_json_formatter_formats_errors_as_json(): void
     {
         $formatter = new JsonFormatter();

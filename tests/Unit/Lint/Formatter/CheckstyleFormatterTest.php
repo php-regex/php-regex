@@ -29,6 +29,7 @@ final class CheckstyleFormatterTest extends TestCase
         $this->formatter = new CheckstyleFormatter();
     }
 
+    #[Test]
     public function test_format_empty_report(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -41,6 +42,7 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringNotContainsString('<file', $output);
     }
 
+    #[Test]
     public function test_format_with_single_problem(): void
     {
         $problem = LintIssueFixtures::invalid('Invalid > pattern');
@@ -72,6 +74,7 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringContainsString('Suggestion: '.LintIssueFixtures::INVALID_HINT, $output);
     }
 
+    #[Test]
     public function test_format_with_multiple_problems(): void
     {
         $problem1 = LintIssueFixtures::finding(LintSeverity::Warning, 'Nested quantifier', 'regex.lint.quantifier.nested');
@@ -108,6 +111,7 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringNotContainsString('php-regex.regex.', $output);
     }
 
+    #[Test]
     public function test_format_with_different_severities(): void
     {
         $problems = [
@@ -138,6 +142,7 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringContainsString('Critical message', $output);
     }
 
+    #[Test]
     public function test_format_normalizes_file_paths(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
@@ -157,6 +162,7 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringContainsString('<file name="C:/Windows/test.php">', $output);
     }
 
+    #[Test]
     public function test_format_normalizes_line_numbers(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
@@ -180,6 +186,7 @@ final class CheckstyleFormatterTest extends TestCase
      * The column attribute is optional in Checkstyle: a column the report
      * does not know is left out, never invented.
      */
+    #[Test]
     public function test_format_normalizes_column_positions(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
@@ -200,6 +207,7 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringNotContainsString('column=', $output);
     }
 
+    #[Test]
     public function test_format_writes_the_column_of_the_pattern_in_the_file(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
@@ -220,6 +228,7 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringContainsString('<error line="4" column="17" severity="error"', $output);
     }
 
+    #[Test]
     public function test_format_escapes_xml(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Message with <tags> & "quotes"');
@@ -239,6 +248,7 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringContainsString('Message with &lt;tags&gt; &amp; &quot;quotes&quot;', $output);
     }
 
+    #[Test]
     public function test_format_error(): void
     {
         $message = 'Test error message with <tags> & "quotes"';
@@ -252,6 +262,7 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringContainsString('</checkstyle>', $output);
     }
 
+    #[Test]
     public function test_format_with_minimal_problem(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Info, 'Simple message');

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\Analysis\LiteralSet;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LiteralSetTest extends TestCase
@@ -21,6 +22,7 @@ final class LiteralSetTest extends TestCase
     private const TEST_MAX_SET_SIZE = 100;
     private const TEST_MAX_STRING_LENGTH = 1000;
 
+    #[Test]
     public function test_empty(): void
     {
         $set = LiteralSet::empty();
@@ -31,6 +33,7 @@ final class LiteralSetTest extends TestCase
         $this->assertFalse($set->complete);
     }
 
+    #[Test]
     public function test_from_string_with_short_literal(): void
     {
         $set = LiteralSet::fromString('abc');
@@ -41,6 +44,7 @@ final class LiteralSetTest extends TestCase
         $this->assertTrue($set->complete);
     }
 
+    #[Test]
     public function test_from_string_with_empty_literal(): void
     {
         $set = LiteralSet::fromString('');
@@ -51,6 +55,7 @@ final class LiteralSetTest extends TestCase
         $this->assertTrue($set->complete);
     }
 
+    #[Test]
     public function test_from_string_with_too_long_literal_returns_empty(): void
     {
         $longLiteral = str_repeat('a', self::TEST_MAX_STRING_LENGTH + 1);
@@ -61,6 +66,7 @@ final class LiteralSetTest extends TestCase
         $this->assertSame([], $set->suffixes);
     }
 
+    #[Test]
     public function test_construct_with_arrays_exceeding_max_set_size(): void
     {
         $largePrefixes = array_map(strval(...), range(1, self::TEST_MAX_SET_SIZE + 10));
@@ -75,6 +81,7 @@ final class LiteralSetTest extends TestCase
         $this->assertFalse($set->complete);
     }
 
+    #[Test]
     public function test_unite_with_identical_sets_returns_same_instance(): void
     {
         $prefixes = ['a', 'b'];
@@ -86,6 +93,7 @@ final class LiteralSetTest extends TestCase
         $this->assertSame($set, $result);
     }
 
+    #[Test]
     public function test_unite_with_different_sets_merges_prefixes_and_suffixes(): void
     {
         $set1 = new LiteralSet(['a'], ['x']);
@@ -97,6 +105,7 @@ final class LiteralSetTest extends TestCase
         $this->assertFalse($result->complete);
     }
 
+    #[Test]
     public function test_concat_generates_cross_product(): void
     {
         $set1 = new LiteralSet(['a', 'b'], ['ab', 'cd'], true);
@@ -109,6 +118,7 @@ final class LiteralSetTest extends TestCase
         $this->assertTrue($result->complete);
     }
 
+    #[Test]
     public function test_concat_with_incomplete_set_keeps_incomplete(): void
     {
         $set1 = new LiteralSet(['a'], [], false);
@@ -120,6 +130,7 @@ final class LiteralSetTest extends TestCase
         $this->assertFalse($result->complete);
     }
 
+    #[Test]
     public function test_cross_product_with_very_long_strings_skips_combinations(): void
     {
         $set1 = new LiteralSet(['a'], [], true);
@@ -134,6 +145,7 @@ final class LiteralSetTest extends TestCase
         $this->assertFalse($result->complete);
     }
 
+    #[Test]
     public function test_cross_product_stops_at_max_set_size(): void
     {
         $set1 = new LiteralSet(array_map(strval(...), range('a', 'z')), [], true);
@@ -145,6 +157,7 @@ final class LiteralSetTest extends TestCase
         $this->assertCount(26, $result->prefixes);
     }
 
+    #[Test]
     public function test_unite_limits_size_and_deduplicates(): void
     {
         $set1 = new LiteralSet(array_map(strval(...), range(0, 99)), [], true);
@@ -158,6 +171,7 @@ final class LiteralSetTest extends TestCase
         $this->assertTrue($result->isVoid());
     }
 
+    #[Test]
     public function test_get_longest_prefix(): void
     {
         $set = new LiteralSet(['a', 'ab', 'abc'], []);
@@ -165,6 +179,7 @@ final class LiteralSetTest extends TestCase
         $this->assertSame('abc', $set->getLongestPrefix());
     }
 
+    #[Test]
     public function test_get_longest_prefix_with_empty_returns_null(): void
     {
         $set = new LiteralSet([], []);
@@ -172,6 +187,7 @@ final class LiteralSetTest extends TestCase
         $this->assertNull($set->getLongestPrefix());
     }
 
+    #[Test]
     public function test_get_longest_suffix(): void
     {
         $set = new LiteralSet([], ['x', 'xy', 'xyz']);
@@ -179,6 +195,7 @@ final class LiteralSetTest extends TestCase
         $this->assertSame('xyz', $set->getLongestSuffix());
     }
 
+    #[Test]
     public function test_get_longest_suffix_with_empty_returns_null(): void
     {
         $set = new LiteralSet([], []);

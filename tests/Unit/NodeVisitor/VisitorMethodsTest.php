@@ -34,10 +34,12 @@ use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Validation\Validator;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class VisitorMethodsTest extends TestCase
 {
+    #[Test]
     public function test_optimizer_leaf_nodes_return_same_instance(): void
     {
         $optimizer = new Rewriter();
@@ -66,6 +68,7 @@ final class VisitorMethodsTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_sample_generator_ignored_nodes_return_empty_string(): void
     {
         $generator = new SampleGenerator();
@@ -84,6 +87,7 @@ final class VisitorMethodsTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_complexity_score_leaf_nodes(): void
     {
         $scorer = new ComplexityScorer();
@@ -115,6 +119,7 @@ final class VisitorMethodsTest extends TestCase
         $this->assertSame(5, (new PcreVerbNode('FAIL', 0, 0))->accept($scorer));
     }
 
+    #[Test]
     public function test_validator_leaf_nodes_valid(): void
     {
         $this->expectNotToPerformAssertions();
@@ -139,6 +144,7 @@ final class VisitorMethodsTest extends TestCase
      * This test forces the call of each visit*() method for each visitor
      * with simple leaf nodes.
      */
+    #[Test]
     public function test_all_visitors_handle_all_leaf_nodes(): void
     {
         $nodes = [
@@ -203,6 +209,7 @@ final class VisitorMethodsTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_sample_generator_throws_on_subroutine(): void
     {
         $visitor = new SampleGenerator();

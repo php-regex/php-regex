@@ -25,6 +25,7 @@ use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\ParserAccessor;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -38,6 +39,7 @@ final class ParserBranchesTest extends TestCase
      * Test Parser.parseCallout() invalid argument path
      * This triggers the else clause that throws for invalid callout arguments
      */
+    #[Test]
     public function test_parser_parse_callout_invalid_argument(): void
     {
         $parser = new TokenParser();
@@ -64,6 +66,7 @@ final class ParserBranchesTest extends TestCase
      * Test ParseState::charLiteral() unsupported type path
      * This triggers the default case that throws InvalidArgumentException
      */
+    #[Test]
     public function test_parser_create_char_literal_unsupported_type(): void
     {
         $parser = new TokenParser();
@@ -83,6 +86,7 @@ final class ParserBranchesTest extends TestCase
      * Test Parser.guardRecursionDepth() by exceeding recursion limit
      * This triggers the recursion limit exception
      */
+    #[Test]
     public function test_parser_guard_recursion_depth(): void
     {
         // Create a deeply nested regex that exceeds the limit
@@ -100,6 +104,7 @@ final class ParserBranchesTest extends TestCase
      * Test ClassParser::readPart() unexpected token path
      * This triggers the else clause that throws for invalid tokens in character class
      */
+    #[Test]
     public function test_parser_parse_char_class_part_unexpected_token(): void
     {
         $parser = new TokenParser();
@@ -129,6 +134,7 @@ final class ParserBranchesTest extends TestCase
      * Test ClassParser::readPart() range with T_UNICODE_PROP end
      * This triggers the Unicode property handling in character class range end
      */
+    #[Test]
     public function test_parser_parse_char_class_part_range_unicode_prop(): void
     {
         $parser = new TokenParser();
@@ -153,6 +159,7 @@ final class ParserBranchesTest extends TestCase
      * Test ClassParser::readPart() range with T_POSIX_CLASS end
      * This triggers the POSIX class handling in character class range end
      */
+    #[Test]
     public function test_parser_parse_char_class_part_range_posix_class(): void
     {
         $parser = new TokenParser();
@@ -177,6 +184,7 @@ final class ParserBranchesTest extends TestCase
      * Test ClassParser::readPart() range with unexpected token end
      * This triggers the else clause that throws for invalid tokens in character class range
      */
+    #[Test]
     public function test_parser_parse_char_class_part_range_unexpected_token(): void
     {
         $parser = new TokenParser();
@@ -203,6 +211,7 @@ final class ParserBranchesTest extends TestCase
      * Test Parser.parseGroupModifier() rewind 'R' path
      * This triggers the stream rewind when (?R is not followed by )
      */
+    #[Test]
     public function test_parser_parse_group_modifier_rewind_r(): void
     {
         $parser = new TokenParser();
@@ -236,6 +245,7 @@ final class ParserBranchesTest extends TestCase
      * Test Parser.parsePcreVerbInGroup() verb name collection break
      * This triggers the break in verb name collection when encountering non-literal token
      */
+    #[Test]
     public function test_parser_parse_pcre_verb_in_group_verb_break(): void
     {
         $parser = new TokenParser();
@@ -272,6 +282,7 @@ final class ParserBranchesTest extends TestCase
      * Test Parser.parsePcreVerbInGroup() argument collection break
      * This triggers the break in argument collection when encountering non-literal token
      */
+    #[Test]
     public function test_parser_parse_pcre_verb_in_group_arg_break(): void
     {
         $parser = new TokenParser();
@@ -313,6 +324,7 @@ final class ParserBranchesTest extends TestCase
      * Test Parser.parsePcreVerbInGroup() reading a verb, its argument and
      * what follows it
      */
+    #[Test]
     public function test_parser_parse_pcre_verb_in_group_reads_the_verb_and_its_argument(): void
     {
         $parser = new TokenParser();
@@ -344,6 +356,7 @@ final class ParserBranchesTest extends TestCase
     /**
      * Test Parser.parsePcreVerbInGroup() reading a verb with no argument
      */
+    #[Test]
     public function test_parser_parse_pcre_verb_in_group_reads_a_verb_without_argument(): void
     {
         $parser = new TokenParser();

@@ -24,6 +24,7 @@ use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RedosAnalyzerTest extends TestCase
@@ -35,6 +36,7 @@ final class RedosAnalyzerTest extends TestCase
         $this->analyzer = new RedosAnalyzer();
     }
 
+    #[Test]
     #[DataProvider('patternProvider')]
     public function test_severity_analysis(string $pattern, RedosSeverity $expectedSeverity): void
     {
@@ -70,6 +72,7 @@ final class RedosAnalyzerTest extends TestCase
         yield ['/(\\d++\\. )*\\d++$/', RedosSeverity::Safe];
     }
 
+    #[Test]
     public function test_analysis_details(): void
     {
         // Anchored at the end, so that a rejected continuation makes the nesting
@@ -81,6 +84,7 @@ final class RedosAnalyzerTest extends TestCase
         $this->assertNotEmpty($analysis->recommendations);
     }
 
+    #[Test]
     public function test_confirmed_mode_adds_confirmation_and_upgrades_confidence(): void
     {
         $runner = new class implements ConfirmationRunnerInterface {
@@ -119,6 +123,7 @@ final class RedosAnalyzerTest extends TestCase
         $this->assertSame(RedosConfidence::High, $analysis->confidence);
     }
 
+    #[Test]
     public function test_hotspots_capture_culprit_span(): void
     {
         $analysis = $this->analyzer->analyze('/(a+)+b/');
@@ -139,6 +144,7 @@ final class RedosAnalyzerTest extends TestCase
         $this->assertTrue($matched, 'Expected a hotspot covering the inner quantifier span.');
     }
 
+    #[Test]
     public function test_analyze_returns_safe_for_ignored_pattern(): void
     {
         $analyzer = new RedosAnalyzer(null, ['/foo/']);
@@ -148,6 +154,7 @@ final class RedosAnalyzerTest extends TestCase
         $this->assertSame(0, $analysis->score);
     }
 
+    #[Test]
     public function test_normalize_pattern_falls_back_on_parse_error(): void
     {
         $analyzer = new RedosAnalyzer(null, ['invalid[']);
@@ -156,6 +163,7 @@ final class RedosAnalyzerTest extends TestCase
         $this->assertSame(RedosSeverity::Safe, $analysis->severity);
     }
 
+    #[Test]
     public function test_symfony_slug_pattern_is_treated_as_safe(): void
     {
         $analysis = $this->analyzer->analyze('/[a-z0-9]+(?:-[a-z0-9]+)*/');

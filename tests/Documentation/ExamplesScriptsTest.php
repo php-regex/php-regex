@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Documentation;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ExamplesScriptsTest extends TestCase
@@ -66,6 +67,7 @@ final class ExamplesScriptsTest extends TestCase
         }
     }
 
+    #[Test]
     #[DataProvider('provideScripts')]
     public function test_example_script_runs_clean(string $script): void
     {
@@ -75,6 +77,7 @@ final class ExamplesScriptsTest extends TestCase
         $this->assertNotSame('', $output);
     }
 
+    #[Test]
     #[DataProvider('provideScripts')]
     public function test_example_script_is_indexed_in_the_demo_readme(string $script): void
     {

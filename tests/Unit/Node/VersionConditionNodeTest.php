@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\Node;
 
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class VersionConditionNodeTest extends TestCase
 {
+    #[Test]
     public function test_constructor_and_getters(): void
     {
         $node = new VersionConditionNode('>=', '10.0', 5, 20);
@@ -29,6 +31,7 @@ final class VersionConditionNodeTest extends TestCase
         $this->assertSame(20, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_version_condition_with_equals(): void
     {
         $node = new VersionConditionNode('==', '10.33', 10, 25);
@@ -39,6 +42,7 @@ final class VersionConditionNodeTest extends TestCase
         $this->assertSame(25, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_version_condition_with_less_than(): void
     {
         $node = new VersionConditionNode('<', '8.0', 15, 30);
@@ -49,6 +53,7 @@ final class VersionConditionNodeTest extends TestCase
         $this->assertSame(30, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_version_condition_with_not_equal(): void
     {
         $node = new VersionConditionNode('!=', '10.42', 20, 35);
@@ -59,6 +64,7 @@ final class VersionConditionNodeTest extends TestCase
         $this->assertSame(35, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_version_condition(): void
     {
         $node = new VersionConditionNode('>=', '10.30', 0, 15);

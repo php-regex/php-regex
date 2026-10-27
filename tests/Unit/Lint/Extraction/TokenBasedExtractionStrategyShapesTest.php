@@ -165,6 +165,7 @@ final class TokenBasedExtractionStrategyShapesTest extends TestCase
         yield 'SELF:: in upper case' => ['expected' => [['pattern' => '/upper-self/', 'at' => "'/upper-self/'"]], 'code' => <<<'PHP_WRAP'
             final class MatcherTest extends \PHPUnit\Framework\TestCase
             {
+                #[Test]
                 public function test_it(): void
                 {
                     SELF::assertMatchesRegularExpression('/upper-self/', 'x');

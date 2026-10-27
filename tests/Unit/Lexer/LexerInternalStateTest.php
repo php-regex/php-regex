@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lexer;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Tests\TestUtils\LexerAccessor;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LexerInternalStateTest extends TestCase
@@ -24,6 +25,7 @@ final class LexerInternalStateTest extends TestCase
      * Covers the end of consumeCommentMode when the closing parenthesis is missing.
      * Normally tokenize() throws an exception afterwards, but we want to cover the internal "return null".
      */
+    #[Test]
     public function test_lex_comment_mode_unterminated_returns_null(): void
     {
         $lexer = new Lexer();
@@ -50,6 +52,7 @@ final class LexerInternalStateTest extends TestCase
     /**
      * Covers the end of consumeQuoteMode when \E is missing.
      */
+    #[Test]
     public function test_lex_quote_mode_unterminated_returns_null(): void
     {
         $lexer = new Lexer();

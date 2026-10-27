@@ -25,6 +25,7 @@ use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ConsoleFormatterTest extends TestCase
@@ -36,6 +37,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->formatter = new ConsoleFormatter();
     }
 
+    #[Test]
     public function test_format_empty_report(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -45,6 +47,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertSame('', $output);
     }
 
+    #[Test]
     public function test_format_quiet_verbosity(): void
     {
         $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_QUIET);
@@ -57,6 +60,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('FAIL: 1 invalid patterns, 2 warnings, 3 optimizations.', $output);
     }
 
+    #[Test]
     public function test_format_quiet_no_errors(): void
     {
         $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_QUIET);
@@ -69,6 +73,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('WARN: 2 warnings found, 3 optimizations available.', $output);
     }
 
+    #[Test]
     public function test_format_quiet_no_issues(): void
     {
         $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_QUIET);
@@ -81,6 +86,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('PASS: No issues found, 3 optimizations available.', $output);
     }
 
+    #[Test]
     public function test_get_summary(): void
     {
         $stats = ['errors' => 1, 'warnings' => 2, 'optimizations' => 3];
@@ -91,6 +97,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('1 invalid patterns', $output);
     }
 
+    #[Test]
     public function test_get_summary_warnings_only(): void
     {
         $stats = ['errors' => 0, 'warnings' => 2, 'optimizations' => 3];
@@ -101,6 +108,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('2 warnings found', $output);
     }
 
+    #[Test]
     public function test_get_summary_no_issues(): void
     {
         $stats = ['errors' => 0, 'warnings' => 0, 'optimizations' => 3];
@@ -111,6 +119,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('No issues found', $output);
     }
 
+    #[Test]
     public function test_format_footer(): void
     {
         $output = $this->formatter->formatFooter();
@@ -119,6 +128,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('github.com/php-regex/php-regex', $output);
     }
 
+    #[Test]
     public function test_format_with_error_issue(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -144,6 +154,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('Invalid regex pattern', $output);
     }
 
+    #[Test]
     public function test_format_with_warning_issue(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -168,6 +179,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('Consider simplifying', $output);
     }
 
+    #[Test]
     public function test_format_with_line_only_context(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -194,6 +206,7 @@ final class ConsoleFormatterTest extends TestCase
      * in a file name is spelled "\xHH", so that a name cannot draw a line
      * of a report of its own.
      */
+    #[Test]
     #[DataProviderExternal(ConsoleTagFormatterTest::class, 'provideFileFields')]
     public function test_format_shows_the_file_field_on_one_line(string $file, int $line, string $expected): void
     {
@@ -216,6 +229,7 @@ final class ConsoleFormatterTest extends TestCase
      * The location field is one line too; a message keeps its line
      * breaks, which lay it out.
      */
+    #[Test]
     public function test_format_shows_the_location_on_one_line_and_keeps_the_line_breaks_of_a_message(): void
     {
         $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: false));
@@ -236,6 +250,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringNotContainsString('first\x0A', $output);
     }
 
+    #[Test]
     public function test_format_skips_invalid_optimization_entries(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -249,6 +264,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringNotContainsString('- /', (string) $output);
     }
 
+    #[Test]
     public function test_format_with_optimization(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -280,6 +296,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('+ /a++/', $output);
     }
 
+    #[Test]
     public function test_format_writes_the_tip_badge_black_on_cyan_as_warn_is_black_on_yellow(): void
     {
         $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: true));
@@ -298,6 +315,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString("\033[46m\033[30m\033[1m TIP ", $output);
     }
 
+    #[Test]
     public function test_format_with_issue_suggested_pattern_tip(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -324,6 +342,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringNotContainsString('+ /(?>(a+))+/', $output);
     }
 
+    #[Test]
     public function test_format_with_multiline_optimization_diff(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -356,6 +375,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('-', $output);
     }
 
+    #[Test]
     public function test_format_without_ansi(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -380,6 +400,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('FAIL', $output);
     }
 
+    #[Test]
     public function test_format_with_location(): void
     {
         $result = [
@@ -400,6 +421,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('↳ in function preg_match', $output);
     }
 
+    #[Test]
     public function test_format_extended_optimization(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -434,6 +456,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('+ /(?x)[a-z]++/', $output);
     }
 
+    #[Test]
     public function test_format_multiline_diff_with_changes(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -468,6 +491,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('foo', $output);
     }
 
+    #[Test]
     public function test_format_multiline_diff_lays_out_the_tabs_x_skips(): void
     {
         $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: false));
@@ -492,6 +516,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringNotContainsString("\t", $output);
     }
 
+    #[Test]
     public function test_format_multiline_diff_with_ellipsis(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -525,6 +550,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('TIP', $output);
     }
 
+    #[Test]
     public function test_format_with_file_only_context(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -544,6 +570,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('only.php', $output);
     }
 
+    #[Test]
     public function test_format_with_pattern_unavailable_label(): void
     {
         $result = [
@@ -560,6 +587,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('pattern unavailable', $output);
     }
 
+    #[Test]
     public function test_format_multiline_diff_when_no_changes(): void
     {
         $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: false));
@@ -571,6 +599,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('foo', (string) $output);
     }
 
+    #[Test]
     public function test_diff_lines_handles_insert_when_old_empty(): void
     {
         $ops = LineDiff::lines([], ['added']);
@@ -582,6 +611,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertSame('insert', $first['type']);
     }
 
+    #[Test]
     public function test_format_diff_change_block_handles_mismatched_counts(): void
     {
         $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: false));
@@ -607,6 +637,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('new-2', (string) $output);
     }
 
+    #[Test]
     public function test_is_extended_mode_pattern_handles_empty_and_invalid(): void
     {
         $formatter = new ConsoleFormatter();
@@ -615,6 +646,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertFalse($this->invokePrivate($formatter, 'isExtendedModePattern', '/'));
     }
 
+    #[Test]
     public function test_format_pattern_for_display_falls_back_on_invalid_pattern(): void
     {
         $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: true));
@@ -625,6 +657,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertSame('abc', $output);
     }
 
+    #[Test]
     public function test_format_pattern_for_display_falls_back_when_highlighter_fails(): void
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -636,6 +669,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('[', (string) $output);
     }
 
+    #[Test]
     public function test_highlight_pattern_body_preserving_text_branches(): void
     {
         $highlighter = new TextPreservingHighlighter(new AnsiMarkup(true));
@@ -661,6 +695,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('\\', $output);
     }
 
+    #[Test]
     public function test_split_pattern_with_flags_handles_pairs_and_invalid(): void
     {
         $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: false));
@@ -684,6 +719,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertSame('>', $parts['closingDelimiter']);
     }
 
+    #[Test]
     public function test_format_multiline_diff_includes_ellipsis_for_distant_changes(): void
     {
         $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: false));
@@ -702,6 +738,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringNotContainsString('omitted', (string) $output);
     }
 
+    #[Test]
     public function test_extract_pattern_from_optimizations(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -732,6 +769,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('/original/', $output);
     }
 
+    #[Test]
     public function test_multiline_message_strips_line_prefix(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -755,6 +793,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('another issue', $output);
     }
 
+    #[Test]
     public function test_format_with_ansi_highlighting(): void
     {
         $config = new OutputConfiguration(ansi: true);
@@ -781,6 +820,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('[a-z]', (string) $stripped);
     }
 
+    #[Test]
     public function test_format_info_issue(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -803,6 +843,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('INFO', $output);
     }
 
+    #[Test]
     public function test_format_pattern_with_paired_delimiters(): void
     {
         $config = new OutputConfiguration(ansi: true);
@@ -825,6 +866,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('test', $output);
     }
 
+    #[Test]
     public function test_format_pattern_with_invalid_delimiter(): void
     {
         $config = new OutputConfiguration(ansi: true);
@@ -847,6 +889,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('invalid pattern without delimiters', $output);
     }
 
+    #[Test]
     public function test_format_diff_with_identical_patterns(): void
     {
         $config = new OutputConfiguration(ansi: false);
@@ -880,6 +923,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('TIP', $output);
     }
 
+    #[Test]
     public function test_format_multiline_diff_returns_empty_when_no_ops(): void
     {
         $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: false));
@@ -890,6 +934,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertSame('', $output);
     }
 
+    #[Test]
     public function test_format_pattern_for_display_falls_back_when_highlighter_missing(): void
     {
         $formatter = new ConsoleFormatter(null, new OutputConfiguration(ansi: true));
@@ -900,6 +945,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('foo', (string) $output);
     }
 
+    #[Test]
     public function test_format_pattern_for_display_preserves_comment_text_when_highlight_changes(): void
     {
         $analysis = new AnalysisService(RegexParser::create());

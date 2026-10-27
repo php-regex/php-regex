@@ -41,6 +41,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ModernizerTest extends TestCase
@@ -52,6 +53,7 @@ final class ModernizerTest extends TestCase
         $this->visitor = new Modernizer();
     }
 
+    #[Test]
     public function test_modernizes_digit_range_to_char_type(): void
     {
         $range = new RangeNode(new LiteralNode('0', 0, 1), new LiteralNode('9', 2, 3), 0, 3);
@@ -63,6 +65,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame('d', $result->value);
     }
 
+    #[Test]
     public function test_removes_unnecessary_escaping(): void
     {
         $literal = new LiteralNode('\\@', 0, 2);
@@ -74,6 +77,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame('@', $result->value);
     }
 
+    #[Test]
     public function test_modernizes_numeric_backref(): void
     {
         $backref = new BackrefNode('1', 0, 2);
@@ -85,6 +89,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame('\g{1}', $result->ref);
     }
 
+    #[Test]
     public function test_preserves_named_backref(): void
     {
         $backref = new BackrefNode('name', 0, 6);
@@ -94,6 +99,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($backref, $result);
     }
 
+    #[Test]
     public function test_preserves_alternation(): void
     {
         $alternation = new AlternationNode(
@@ -106,6 +112,7 @@ final class ModernizerTest extends TestCase
         $this->assertInstanceOf(AlternationNode::class, $result);
     }
 
+    #[Test]
     public function test_preserves_sequence(): void
     {
         $sequence = new SequenceNode(
@@ -118,6 +125,7 @@ final class ModernizerTest extends TestCase
         $this->assertInstanceOf(SequenceNode::class, $result);
     }
 
+    #[Test]
     public function test_preserves_quantifier(): void
     {
         $quantifier = new QuantifierNode(
@@ -133,6 +141,7 @@ final class ModernizerTest extends TestCase
         $this->assertInstanceOf(QuantifierNode::class, $result);
     }
 
+    #[Test]
     public function test_preserves_anchor(): void
     {
         $anchor = new AnchorNode('^', 0, 1);
@@ -141,6 +150,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($anchor, $result);
     }
 
+    #[Test]
     public function test_preserves_assertion(): void
     {
         $assertion = new AssertionNode('b', 0, 2);
@@ -149,6 +159,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($assertion, $result);
     }
 
+    #[Test]
     public function test_preserves_dot(): void
     {
         $dot = new DotNode(0, 1);
@@ -157,6 +168,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($dot, $result);
     }
 
+    #[Test]
     public function test_preserves_char_type(): void
     {
         $charType = new CharTypeNode('w', 0, 2);
@@ -165,6 +177,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($charType, $result);
     }
 
+    #[Test]
     public function test_preserves_range(): void
     {
         $range = new RangeNode(
@@ -177,6 +190,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($range, $result);
     }
 
+    #[Test]
     public function test_preserves_unicode_prop(): void
     {
         $unicodeProp = new UnicodePropNode('L', false, 0, 5);
@@ -185,6 +199,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($unicodeProp, $result);
     }
 
+    #[Test]
     public function test_preserves_char_literal(): void
     {
         $charLiteral = new CharLiteralNode('a', 65, CharLiteralType::Unicode, 0, 1);
@@ -193,6 +208,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($charLiteral, $result);
     }
 
+    #[Test]
     public function test_preserves_posix_class(): void
     {
         $posixClass = new PosixClassNode('alpha', 0, 9);
@@ -201,6 +217,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($posixClass, $result);
     }
 
+    #[Test]
     public function test_preserves_comment(): void
     {
         $comment = new CommentNode('test comment', 0, 13);
@@ -209,6 +226,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($comment, $result);
     }
 
+    #[Test]
     public function test_preserves_conditional(): void
     {
         $conditional = new ConditionalNode(
@@ -222,6 +240,7 @@ final class ModernizerTest extends TestCase
         $this->assertInstanceOf(ConditionalNode::class, $result);
     }
 
+    #[Test]
     public function test_preserves_subroutine(): void
     {
         $subroutine = new SubroutineNode('1', 'R', 0, 4);
@@ -230,6 +249,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($subroutine, $result);
     }
 
+    #[Test]
     public function test_preserves_pcre_verb(): void
     {
         $pcreVerb = new PcreVerbNode('FAIL', 0, 6);
@@ -238,6 +258,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($pcreVerb, $result);
     }
 
+    #[Test]
     public function test_preserves_define(): void
     {
         $define = new DefineNode(
@@ -249,6 +270,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($define, $result);
     }
 
+    #[Test]
     public function test_preserves_limit_match(): void
     {
         $limitMatch = new LimitMatchNode(1000, 0, 17);
@@ -257,6 +279,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($limitMatch, $result);
     }
 
+    #[Test]
     public function test_preserves_callout(): void
     {
         $callout = new CalloutNode(null, false, 0, 3);
@@ -265,6 +288,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($callout, $result);
     }
 
+    #[Test]
     public function test_preserves_script_run(): void
     {
         $scriptRun = new ScriptRunNode('Latin', 0, 20);
@@ -273,6 +297,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($scriptRun, $result);
     }
 
+    #[Test]
     public function test_preserves_version_condition(): void
     {
         $versionCondition = new VersionConditionNode('>=', '10.0', 0, 15);
@@ -281,6 +306,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($versionCondition, $result);
     }
 
+    #[Test]
     public function test_preserves_keep(): void
     {
         $keep = new KeepNode(0, 2);
@@ -289,6 +315,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($keep, $result);
     }
 
+    #[Test]
     public function test_preserves_control_char(): void
     {
         $controlChar = new ControlCharNode('n', 10, 0, 3);
@@ -297,6 +324,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame($controlChar, $result);
     }
 
+    #[Test]
     public function test_modernizes_whitespace_char_class(): void
     {
         $whitespaceClass = new CharClassNode(
@@ -322,6 +350,7 @@ final class ModernizerTest extends TestCase
         $this->assertSame('s', $result->value);
     }
 
+    #[Test]
     public function test_keeps_whitespace_class_without_the_space(): void
     {
         $controls = new CharClassNode(
@@ -345,6 +374,7 @@ final class ModernizerTest extends TestCase
         $this->assertFalse($result->isNegated);
     }
 
+    #[Test]
     public function test_keeps_class_whose_range_runs_past_a_byte(): void
     {
         $wide = new CharClassNode(

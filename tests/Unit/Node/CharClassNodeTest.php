@@ -19,10 +19,12 @@ use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CharClassNodeTest extends TestCase
 {
+    #[Test]
     public function test_constructor_and_getters_positive(): void
     {
         $part1 = new LiteralNode('a', 2, 3);
@@ -39,6 +41,7 @@ final class CharClassNodeTest extends TestCase
         $this->assertSame(7, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_constructor_and_getters_negated(): void
     {
         $part1 = new LiteralNode('a', 3, 4);
@@ -50,6 +53,7 @@ final class CharClassNodeTest extends TestCase
         $this->assertCount(1, $node->expression->alternatives);
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_char_class(): void
     {
         $part1 = $this->createStub(NodeInterface::class);

@@ -29,6 +29,7 @@ use PHPUnit\Framework\TestCase;
 
 final class CharSetAnalyzerTest extends TestCase
 {
+    #[Test]
     public function test_empty_literal_returns_empty_charset(): void
     {
         $analyzer = new CharSetAnalyzer();
@@ -37,6 +38,7 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertTrue($set->isEmpty());
     }
 
+    #[Test]
     public function test_unicode_mode_char_types_return_unknown(): void
     {
         $analyzer = new CharSetAnalyzer('u');
@@ -90,6 +92,7 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertSame($newline, $set->intersects(ByteCharSet::fromChar("\n")));
     }
 
+    #[Test]
     public function test_char_type_digit_range_is_supported_without_unicode_flag(): void
     {
         $analyzer = new CharSetAnalyzer();
@@ -99,6 +102,7 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertTrue($set->intersects($set));
     }
 
+    #[Test]
     public function test_char_type_word_complement_is_supported_without_unicode_flag(): void
     {
         $analyzer = new CharSetAnalyzer();
@@ -107,6 +111,7 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertFalse($set->isUnknown());
     }
 
+    #[Test]
     public function test_char_type_digit_complement_is_supported_without_unicode_flag(): void
     {
         $analyzer = new CharSetAnalyzer();
@@ -115,6 +120,7 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertFalse($set->isUnknown());
     }
 
+    #[Test]
     public function test_range_with_empty_literal_returns_unknown(): void
     {
         $analyzer = new CharSetAnalyzer();
@@ -125,6 +131,7 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertTrue($set->isUnknown());
     }
 
+    #[Test]
     public function test_an_unreadable_quantifier_is_not_optional(): void
     {
         $quantified = new SequenceNode([
@@ -135,6 +142,7 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertFalse((new CharSetAnalyzer())->firstChars($quantified)->intersects(ByteCharSet::fromChar('y')));
     }
 
+    #[Test]
     public function test_is_optional_node_sequence_returns_true_when_all_optional(): void
     {
         $analyzer = new CharSetAnalyzer();

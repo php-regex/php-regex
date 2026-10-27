@@ -20,6 +20,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PcreFeatureCompletenessTest extends TestCase
@@ -31,6 +32,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     public function test_atomic_groups(): void
     {
         $patterns = [
@@ -59,6 +61,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_possessive_quantifiers(): void
     {
         $patterns = [
@@ -87,6 +90,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_conditional_patterns(): void
     {
         $patterns = [
@@ -111,6 +115,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_conditional_patterns_advanced_features(): void
     {
         $advancedPatterns = [
@@ -128,6 +133,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_named_groups(): void
     {
         $patterns = [
@@ -156,6 +162,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_unicode_properties(): void
     {
         $patterns = [
@@ -183,6 +190,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_subroutines_and_recursion(): void
     {
         $patterns = [
@@ -208,6 +216,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_comments(): void
     {
         $patterns = [
@@ -235,6 +244,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_assertions(): void
     {
         $patterns = [
@@ -270,6 +280,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_extended_mode(): void
     {
         $patterns = [
@@ -297,6 +308,7 @@ final class PcreFeatureCompletenessTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_pcre_verbs(): void
     {
         $patterns = [

@@ -23,6 +23,7 @@ use Symfony\Component\Validator\Constraints\Regex;
 
 final class PatternFunctionRegistryTest extends TestCase
 {
+    #[Test]
     public function test_native_functions_are_matched_case_insensitively(): void
     {
         $registry = PatternFunctionRegistry::native();
@@ -32,6 +33,7 @@ final class PatternFunctionRegistryTest extends TestCase
         $this->assertNull($registry->lookupFunction('str_replace'));
     }
 
+    #[Test]
     public function test_preg_replace_callback_array_reads_its_array_keys(): void
     {
         $registry = PatternFunctionRegistry::native();
@@ -40,6 +42,7 @@ final class PatternFunctionRegistryTest extends TestCase
         $this->assertFalse($registry->lookupFunction('preg_replace')?->keysArePatterns);
     }
 
+    #[Test]
     public function test_a_namespaced_copy_of_a_native_function_is_matched(): void
     {
         $registry = PatternFunctionRegistry::native();
@@ -48,6 +51,7 @@ final class PatternFunctionRegistryTest extends TestCase
         $this->assertSame('preg_match', $registry->lookupFunction('\\Safe\\preg_match')?->label);
     }
 
+    #[Test]
     public function test_a_namespaced_copy_of_a_declared_helper_is_not_matched(): void
     {
         $registry = PatternFunctionRegistry::native()->withCustomFunctions(['myHelper']);
@@ -67,6 +71,7 @@ final class PatternFunctionRegistryTest extends TestCase
         $this->assertSame(1, $registry->lookupMethod('Nette\\Utils\\Strings', 'match')?->argumentIndex);
     }
 
+    #[Test]
     public function test_nette_puts_the_pattern_in_the_second_argument(): void
     {
         $registry = PatternFunctionRegistry::create([InteropPresets::NETTE_UTILS]);
@@ -75,6 +80,7 @@ final class PatternFunctionRegistryTest extends TestCase
         $this->assertTrue($registry->lookupMethod('Nette\\Utils\\Strings', 'replace')?->keysArePatterns);
     }
 
+    #[Test]
     public function test_unknown_presets_are_ignored(): void
     {
         $registry = PatternFunctionRegistry::create(['not-a-preset']);
@@ -83,6 +89,7 @@ final class PatternFunctionRegistryTest extends TestCase
         $this->assertNull($registry->lookupMethod('Composer\\Pcre\\Preg', 'match'));
     }
 
+    #[Test]
     public function test_custom_specs_declare_the_pattern_position(): void
     {
         $registry = PatternFunctionRegistry::native()->withCustomFunctions([
@@ -104,6 +111,7 @@ final class PatternFunctionRegistryTest extends TestCase
         $this->assertSame('regex_check', $registry->lookupFunction('regex_check')?->label);
     }
 
+    #[Test]
     public function test_malformed_specs_are_ignored(): void
     {
         $registry = PatternFunctionRegistry::native()->withCustomFunctions(['', '   ', 'Foo::bar#x', 'Foo::', '::bar']);
@@ -148,6 +156,7 @@ final class PatternFunctionRegistryTest extends TestCase
      * to Composer\Pcre or Spatie\Regex only in a file that spells the
      * namespace, which every preset matched on its class now asks for.
      */
+    #[Test]
     public function test_content_matching_skips_files_without_a_candidate_call(): void
     {
         $registry = PatternFunctionRegistry::defaults();
@@ -176,6 +185,7 @@ final class PatternFunctionRegistryTest extends TestCase
         yield 'no import' => ['content' => '<?php Preg::match("/a/", $s);', 'opened' => false];
     }
 
+    #[Test]
     #[DataProvider('provideComposerPcreFiles')]
     public function test_composer_pcre_opens_a_file_that_spells_its_namespace(string $content, bool $opened): void
     {
@@ -184,6 +194,7 @@ final class PatternFunctionRegistryTest extends TestCase
         $this->assertSame($opened, $registry->matchesContent($content));
     }
 
+    #[Test]
     public function test_declared_helpers_widen_the_content_check(): void
     {
         $registry = PatternFunctionRegistry::native()->withCustomFunctions(['App\\Support\\Str::matches']);
@@ -207,6 +218,7 @@ final class PatternFunctionRegistryTest extends TestCase
         yield 'illuminate/support, group use split inside the namespace' => ['preset' => 'illuminate-support', 'content' => '<?php use Illuminate\{Support\Str as S}; S::match("/a/", $s);'];
     }
 
+    #[Test]
     #[DataProvider('provideAliasedPresetImports')]
     public function test_an_aliased_import_of_a_preset_class_opens_the_file(string $preset, string $content): void
     {
@@ -226,6 +238,7 @@ final class PatternFunctionRegistryTest extends TestCase
         yield 'global class' => ['spec' => 'Text::m', 'content' => '<?php use Text as X; X::m("/a/");'];
     }
 
+    #[Test]
     #[DataProvider('provideAliasedDeclaredClassImports')]
     public function test_an_aliased_import_of_a_declared_class_opens_the_file(string $spec, string $content): void
     {
@@ -235,6 +248,7 @@ final class PatternFunctionRegistryTest extends TestCase
         $this->assertFalse($registry->matchesContent('<?php use App\Support\Helpers as H; H::run($s);'));
     }
 
+    #[Test]
     public function test_presets_contribute_the_alias_of_their_classes(): void
     {
         $this->assertSame(['preg::', 'regex::', 'preg as', 'regex as'], InteropPresets::needles(InteropPresets::COMPOSER_PCRE));
@@ -283,6 +297,7 @@ final class PatternFunctionRegistryTest extends TestCase
         $this->assertSame($registry->lookupAttribute(Regex::class), $registry->lookupAttribute('\\'.Regex::class));
     }
 
+    #[Test]
     public function test_the_namespace_of_a_class_does_not_open_the_file(): void
     {
         $laravel = PatternFunctionRegistry::native()->withPresets(['illuminate-support']);
@@ -292,6 +307,7 @@ final class PatternFunctionRegistryTest extends TestCase
         $this->assertFalse($declared->matchesContent('<?php namespace App\Http; final class X {}'));
     }
 
+    #[Test]
     public function test_the_custom_global_functions_leave_out_natives_namespaced_functions_and_methods(): void
     {
         $this->assertSame([], PatternFunctionRegistry::native()->customGlobalFunctions());

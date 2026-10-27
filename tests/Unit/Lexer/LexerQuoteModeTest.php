@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lexer;
 
 use PHPRegex\Parser\Lexer;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LexerQuoteModeTest extends TestCase
@@ -21,6 +22,7 @@ final class LexerQuoteModeTest extends TestCase
     /**
      * Tests \Q in the middle without \E at the end.
      */
+    #[Test]
     public function test_quote_mode_mid_string_unterminated(): void
     {
         $tokens = (new Lexer())->tokenize('a\Qbc')->getTokens();
@@ -36,6 +38,7 @@ final class LexerQuoteModeTest extends TestCase
      * Tests \Q...\E where ... is empty.
      * This can return null in consumeQuoteMode and must be handled.
      */
+    #[Test]
     public function test_quote_mode_empty_content(): void
     {
         $tokens = (new Lexer())->tokenize('a\Q\Eb')->getTokens();

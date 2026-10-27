@@ -18,10 +18,12 @@ use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PatternLinterTest extends TestCase
 {
+    #[Test]
     public function test_useless_i_flag_on_digits(): void
     {
         $regex = Regex::create()->parse('/^\d+$/i');
@@ -32,6 +34,7 @@ final class PatternLinterTest extends TestCase
         $this->assertContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
 
+    #[Test]
     public function test_i_flag_not_useless_on_letters(): void
     {
         $regex = Regex::create()->parse('/[a-z]/i');
@@ -44,6 +47,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
 
+    #[Test]
     public function test_i_flag_not_useless_with_backreference(): void
     {
         $regex = Regex::create()->parse('/^<(\\w+)>.*<\\/\\1>$/i');
@@ -54,6 +58,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
 
+    #[Test]
     public function test_i_flag_not_useless_with_named_backreference(): void
     {
         $regex = Regex::create()->parse('/^<(?<tag>\\w+)>.*<\\/\\k<tag>>$/i');
@@ -64,6 +69,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
 
+    #[Test]
     public function test_i_flag_not_useless_on_unicode_escape(): void
     {
         $regex = Regex::create()->parse('/\\x41/i');
@@ -74,6 +80,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
 
+    #[Test]
     public function test_i_flag_not_useless_on_char_class_unicode_escape(): void
     {
         $regex = Regex::create()->parse('/[\\x41]/i');
@@ -84,6 +91,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
 
+    #[Test]
     public function test_i_flag_not_useless_on_unicode_property(): void
     {
         $regex = Regex::create()->parse('/\\p{Lu}/iu');
@@ -94,6 +102,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
 
+    #[Test]
     public function test_useless_s_flag_no_dots(): void
     {
         $regex = Regex::create()->parse('/^\d+$/s');
@@ -104,6 +113,7 @@ final class PatternLinterTest extends TestCase
         $this->assertContains("Flag 's' is useless: the pattern contains no unescaped dot outside a character class.", $warnings);
     }
 
+    #[Test]
     public function test_s_flag_not_useless_with_dots(): void
     {
         $regex = Regex::create()->parse('/.+/s');
@@ -145,6 +155,7 @@ final class PatternLinterTest extends TestCase
         ];
     }
 
+    #[Test]
     #[DataProvider('provideUselessFlagMessages')]
     public function test_useless_flag_message_names_the_missing_construct(string $pattern, string $ruleId, string $message): void
     {
@@ -158,6 +169,7 @@ final class PatternLinterTest extends TestCase
         $this->assertStringNotContainsString("\n", $issue->message);
     }
 
+    #[Test]
     public function test_useless_flag_verdicts_match_the_engine(): void
     {
         // \A and \z ignore m; \. ignores s.
@@ -167,6 +179,7 @@ final class PatternLinterTest extends TestCase
         $this->assertSame(0, preg_match('/a\.b/s', "a\nb"));
     }
 
+    #[Test]
     public function test_useless_m_flag_no_anchors(): void
     {
         $regex = Regex::create()->parse('/\\d+/m');
@@ -187,6 +200,7 @@ final class PatternLinterTest extends TestCase
         $this->assertContains("Flag 'm' is useless: the pattern contains no ^ or $ anchor.", $warnings);
     }
 
+    #[Test]
     public function test_m_flag_not_useless_with_anchors(): void
     {
         $regex = Regex::create()->parse('/^test$/m');
@@ -199,6 +213,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains('regex.lint.flag.useless.m', array_map(static fn (RuleViolation $issue): string => $issue->id, $linter->getIssues()));
     }
 
+    #[Test]
     public function test_start_anchor_conflict(): void
     {
         $regex = Regex::create()->parse('/foo^bar/');
@@ -209,6 +224,7 @@ final class PatternLinterTest extends TestCase
         $this->assertContains("Start anchor '^' appears after consuming characters, making it impossible to match.", $warnings);
     }
 
+    #[Test]
     public function test_end_anchor_conflict(): void
     {
         $regex = Regex::create()->parse('/$foo/');
@@ -219,6 +235,7 @@ final class PatternLinterTest extends TestCase
         $this->assertContains("End anchor '$' appears before consuming characters, making it impossible to match.", $warnings);
     }
 
+    #[Test]
     public function test_start_anchor_assertion_conflict(): void
     {
         $regex = Regex::create()->parse('/foo\\Abar/');
@@ -229,6 +246,7 @@ final class PatternLinterTest extends TestCase
         $this->assertContains('regex.lint.anchor.impossible.start', $issueIds);
     }
 
+    #[Test]
     public function test_end_anchor_assertion_conflict(): void
     {
         $regex = Regex::create()->parse('/foo\\zbar/');
@@ -239,6 +257,7 @@ final class PatternLinterTest extends TestCase
         $this->assertContains('regex.lint.anchor.impossible.end', $issueIds);
     }
 
+    #[Test]
     public function test_no_anchor_conflict_at_boundaries(): void
     {
         $regex = Regex::create()->parse('/^foo$/');
@@ -250,6 +269,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains("End anchor '$' appears before consuming characters", $warnings);
     }
 
+    #[Test]
     public function test_start_anchor_multiline_valid(): void
     {
         $regex = Regex::create()->parse('/^header\n^body/m');
@@ -260,6 +280,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains("Start anchor '^' appears after consuming characters", $warnings);
     }
 
+    #[Test]
     public function test_start_anchor_false_positive(): void
     {
         $regex = Regex::create()->parse('/foo^bar/');
@@ -270,6 +291,7 @@ final class PatternLinterTest extends TestCase
         $this->assertContains("Start anchor '^' appears after consuming characters, making it impossible to match.", $warnings);
     }
 
+    #[Test]
     public function test_start_anchor_no_multiline_flag(): void
     {
         $regex = Regex::create()->parse('/foo\\n^bar/');
@@ -280,6 +302,7 @@ final class PatternLinterTest extends TestCase
         $this->assertContains("Start anchor '^' appears after consuming characters, making it impossible to match.", $warnings);
     }
 
+    #[Test]
     public function test_escaped_dollar_does_not_trigger_anchor_conflict(): void
     {
         $regex = Regex::create()->parse('/foo\\$bar/');
@@ -291,6 +314,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains("Start anchor '^' appears after consuming characters, making it impossible to match.", $warnings);
     }
 
+    #[Test]
     #[DataProvider('provideAnchorConflictCases')]
     public function test_anchor_conflict_detection(string $pattern, bool $expectStart, bool $expectEnd): void
     {
@@ -341,6 +365,7 @@ final class PatternLinterTest extends TestCase
         ];
     }
 
+    #[Test]
     #[DataProvider('provideRedundantCharClassHints')]
     public function test_redundant_char_class_hints(string $pattern, string $expectedHint): void
     {
@@ -382,6 +407,7 @@ final class PatternLinterTest extends TestCase
         ];
     }
 
+    #[Test]
     public function test_partial_range_overlap_is_not_called_redundant_range(): void
     {
         // Oracle: dropping either range changes what the class matches.
@@ -398,6 +424,7 @@ final class PatternLinterTest extends TestCase
         $this->assertStringNotContainsString("range 'k'-'z' (overlaps 'a'-'m')", (string) $issue->hint);
     }
 
+    #[Test]
     public function test_adjacent_ranges_are_not_redundant(): void
     {
         $linter = new PatternLinter();
@@ -406,6 +433,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNull($this->findIssueById($linter->getIssues(), 'regex.lint.charclass.redundant'));
     }
 
+    #[Test]
     #[DataProvider('provideInlineFlagRedundantHints')]
     public function test_inline_flag_redundant_hints(string $pattern, string $expectedHint): void
     {
@@ -434,6 +462,7 @@ final class PatternLinterTest extends TestCase
         ];
     }
 
+    #[Test]
     public function test_char_class_group_tokens_are_literal(): void
     {
         $regex = Regex::create()->parse('/[?:()]+/');
@@ -448,6 +477,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains("End anchor '$' appears before consuming characters", $warnings);
     }
 
+    #[Test]
     public function test_backref_to_nonexistent_group(): void
     {
         $regex = Regex::create()->parse('/\\2/');
@@ -458,6 +488,7 @@ final class PatternLinterTest extends TestCase
         $this->assertContains('Backreference \\2 refers to a non-existent capturing group.', $warnings);
     }
 
+    #[Test]
     public function test_backref_to_valid_group(): void
     {
         $regex = Regex::create()->parse('/(a)\\1/');
@@ -468,6 +499,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains('Backreference \\1 refers to a non-existent capturing group.', $warnings);
     }
 
+    #[Test]
     public function test_g_backref_to_nonexistent_group(): void
     {
         $regex = Regex::create()->parse('/\\g{2}/');
@@ -478,6 +510,7 @@ final class PatternLinterTest extends TestCase
         $this->assertContains('Backreference \\2 refers to a non-existent capturing group.', $warnings);
     }
 
+    #[Test]
     public function test_g_backref_relative_reference_is_not_flagged(): void
     {
         $regex = Regex::create()->parse('/(a)\\g{-1}/');
@@ -488,6 +521,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains('Backreference \\1 refers to a non-existent capturing group.', $warnings);
     }
 
+    #[Test]
     public function test_named_backref_to_nonexistent_group(): void
     {
         $regex = Regex::create()->parse('/\\k<foo>/');
@@ -498,6 +532,7 @@ final class PatternLinterTest extends TestCase
         $this->assertContains('Backreference \\k<foo> refers to a non-existent named group.', $warnings);
     }
 
+    #[Test]
     public function test_named_backref_to_valid_group(): void
     {
         $regex = Regex::create()->parse('/(?<foo>a)\\k<foo>/');
@@ -508,6 +543,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains('Backreference \\k<foo> refers to a non-existent named group.', $warnings);
     }
 
+    #[Test]
     public function test_semantic_overlap_in_alternation_inside_quantifier(): void
     {
         // Overlapping alternations should only be flagged when inside an unbounded quantifier
@@ -519,6 +555,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotEmpty(array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'A charset overlap is reported.');
     }
 
+    #[Test]
     public function test_no_semantic_overlap_when_not_inside_quantifier(): void
     {
         // Without a quantifier, overlapping alternations don't cause ReDoS
@@ -530,6 +567,7 @@ final class PatternLinterTest extends TestCase
         $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
+    #[Test]
     public function test_no_semantic_overlap_in_alternation(): void
     {
         $regex = Regex::create()->parse('/[a-c]|[d-e]/');
@@ -540,6 +578,7 @@ final class PatternLinterTest extends TestCase
         $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
+    #[Test]
     public function test_no_overlap_warning_without_alternation(): void
     {
         $regex = Regex::create()->parse('/[0-9]/');
@@ -550,6 +589,7 @@ final class PatternLinterTest extends TestCase
         $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
+    #[Test]
     public function test_semantic_overlap_with_char_types_inside_quantifier(): void
     {
         // Overlapping alternations should only be flagged when inside an unbounded quantifier
@@ -561,6 +601,7 @@ final class PatternLinterTest extends TestCase
         $this->assertNotEmpty(array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'A charset overlap is reported.');
     }
 
+    #[Test]
     public function test_no_overlap_for_line_ending_pattern(): void
     {
         // The canonical line-ending pattern should NOT be flagged as it's safe
@@ -572,6 +613,7 @@ final class PatternLinterTest extends TestCase
         $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
+    #[Test]
     public function test_no_overlap_for_isbn_prefix_pattern(): void
     {
         // Fixed-length literal alternations should NOT be flagged
@@ -583,6 +625,7 @@ final class PatternLinterTest extends TestCase
         $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
+    #[Test]
     public function test_overlap_inside_possessive_quantifier_not_flagged(): void
     {
         // Possessive quantifiers don't backtrack, so overlaps are safe
@@ -594,6 +637,7 @@ final class PatternLinterTest extends TestCase
         $this->assertSame([], array_filter($warnings, static fn (string $w): bool => str_contains($w, 'have overlapping character sets')), 'No charset overlap is reported.');
     }
 
+    #[Test]
     public function test_overlap_inside_atomic_group_not_flagged(): void
     {
         // Atomic groups don't backtrack, so overlaps are safe
@@ -609,6 +653,7 @@ final class PatternLinterTest extends TestCase
     // Backreference-as-octal inside character class
     // ---------------------------------------------------------------
 
+    #[Test]
     #[DataProvider('provideBackrefAsOctalInCharClassCases')]
     public function test_backref_as_octal_in_char_class(string $pattern, bool $expectWarning): void
     {
@@ -646,6 +691,7 @@ final class PatternLinterTest extends TestCase
     // Literal metacharacter inside character class
     // ---------------------------------------------------------------
 
+    #[Test]
     #[DataProvider('provideLiteralMetacharInCharClassCases')]
     public function test_literal_metachar_in_char_class(string $pattern, bool $expectWarning): void
     {
@@ -683,6 +729,7 @@ final class PatternLinterTest extends TestCase
         yield 'star with \w shorthand' => ['pattern' => '/[\w*]/', 'expectWarning' => true];
     }
 
+    #[Test]
     public function test_escaped_and_bare_metachar_in_class_match_the_same_byte(): void
     {
         // Oracle: the escape changes nothing for the engine, only the intent.
@@ -696,6 +743,7 @@ final class PatternLinterTest extends TestCase
     // (.|\n) anti-pattern detection
     // ---------------------------------------------------------------
 
+    #[Test]
     #[DataProvider('provideDotNewlineAntiPatternCases')]
     public function test_dot_newline_anti_pattern(string $pattern, bool $expectWarning, ?string $hintFragment = null): void
     {
@@ -731,6 +779,7 @@ final class PatternLinterTest extends TestCase
     // Quantified capturing group
     // ---------------------------------------------------------------
 
+    #[Test]
     #[DataProvider('provideQuantifiedCapturingGroupCases')]
     public function test_quantified_capturing_group(string $pattern, bool $expectWarning, ?LintSeverity $expectedSeverity = null): void
     {

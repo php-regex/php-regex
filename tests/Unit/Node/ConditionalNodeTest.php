@@ -18,10 +18,12 @@ use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ConditionalNodeTest extends TestCase
 {
+    #[Test]
     public function test_constructor_and_getters(): void
     {
         $condition = new BackrefNode('1', 2, 3);
@@ -37,6 +39,7 @@ final class ConditionalNodeTest extends TestCase
         $this->assertSame(10, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_constructor_with_empty_no_branch(): void
     {
         $condition = new BackrefNode('1', 2, 3);
@@ -48,6 +51,7 @@ final class ConditionalNodeTest extends TestCase
         $this->assertSame('', $node->no->value);
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_conditional(): void
     {
         $condition = $this->createStub(NodeInterface::class);

@@ -20,10 +20,12 @@ use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\LiteralNode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ManualNodeInjectionTest extends TestCase
 {
+    #[Test]
     public function test_sample_generator_fallbacks(): void
     {
         $generator = new SampleGenerator();
@@ -47,6 +49,7 @@ final class ManualNodeInjectionTest extends TestCase
         $this->assertSame('', $node->accept($generator));
     }
 
+    #[Test]
     public function test_optimizer_alternation_logic(): void
     {
         $optimizer = new Rewriter();

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Node;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class BackrefNodeTest extends TestCase
@@ -30,6 +31,7 @@ final class BackrefNodeTest extends TestCase
         yield 'named_k_brace_ref' => ['k{name}', 1, 9];
     }
 
+    #[Test]
     #[DataProvider('data_provider_backrefs')]
     public function test_constructor_and_getters(string $ref, int $start, int $end): void
     {
@@ -40,6 +42,7 @@ final class BackrefNodeTest extends TestCase
         $this->assertSame($end, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_backref(): void
     {
         $node = new BackrefNode('1', 0, 2);

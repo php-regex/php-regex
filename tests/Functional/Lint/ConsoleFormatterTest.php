@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Functional\Lint;
 
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
 use PHPRegex\Linter\Formatter\LineDiff;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ConsoleFormatterTest extends TestCase
 {
+    #[Test]
     public function test_split_lines_normalizes_line_endings(): void
     {
         $formatter = new ConsoleFormatter();
@@ -29,6 +31,7 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertSame(['one', 'two', 'three', 'four', ''], $result);
     }
 
+    #[Test]
     public function test_diff_lines_marks_inserts_and_deletes(): void
     {
         $ops = LineDiff::lines(['a', 'b'], ['a', 'c']);

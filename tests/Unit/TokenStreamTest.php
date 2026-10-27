@@ -17,12 +17,14 @@ use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TokenStreamTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_iteration_and_positions(): void
     {
         $tokens = [
@@ -45,6 +47,7 @@ final class TokenStreamTest extends TestCase
         $this->assertSame(2, $peek->position);
     }
 
+    #[Test]
     public function test_peek_and_rewind(): void
     {
         $tokens = [
@@ -67,6 +70,7 @@ final class TokenStreamTest extends TestCase
         $this->assertSame('x', $stream->current()->value);
     }
 
+    #[Test]
     public function test_rewind_throws_on_invalid_count(): void
     {
         $tokens = [
@@ -82,6 +86,7 @@ final class TokenStreamTest extends TestCase
         $stream->rewind(2);
     }
 
+    #[Test]
     public function test_advance_stops_on_the_end_of_the_pattern(): void
     {
         $tokens = [
@@ -97,6 +102,7 @@ final class TokenStreamTest extends TestCase
         $this->assertSame(TokenType::Eof, $stream->current()->type);
     }
 
+    #[Test]
     public function test_set_position_forward_and_backward(): void
     {
         $tokens = [
@@ -114,6 +120,7 @@ final class TokenStreamTest extends TestCase
         $this->assertSame('b', $stream->current()->value);
     }
 
+    #[Test]
     public function test_peek_out_of_bounds_returns_eof(): void
     {
         $tokens = [
@@ -132,6 +139,7 @@ final class TokenStreamTest extends TestCase
         $this->assertSame(TokenType::Eof, $peekBack->type);
     }
 
+    #[Test]
     public function test_peek_past_a_list_no_end_token_closes_stands_at_its_end(): void
     {
         $stream = new TokenStream([new Token(TokenType::Literal, 'ab', 0, 2)], 'ab');
@@ -144,6 +152,7 @@ final class TokenStreamTest extends TestCase
         $this->assertSame(0, (new TokenStream([], ''))->peek()->position);
     }
 
+    #[Test]
     public function test_getters_expose_pattern_and_tokens(): void
     {
         $tokens = [
@@ -157,6 +166,7 @@ final class TokenStreamTest extends TestCase
         $this->assertFalse($stream->isAtEnd());
     }
 
+    #[Test]
     public function test_set_position_throws_on_out_of_bounds(): void
     {
         $tokens = [
@@ -170,6 +180,7 @@ final class TokenStreamTest extends TestCase
         $stream->setPosition(-1);
     }
 
+    #[Test]
     public function test_set_position_throws_on_too_high(): void
     {
         $tokens = [
@@ -183,6 +194,7 @@ final class TokenStreamTest extends TestCase
         $stream->setPosition(3);
     }
 
+    #[Test]
     public function test_is_at_end(): void
     {
         $tokens = [
@@ -200,6 +212,7 @@ final class TokenStreamTest extends TestCase
         $this->assertTrue($stream->isAtEnd());
     }
 
+    #[Test]
     public function test_rewind_zero_does_nothing(): void
     {
         $tokens = [
@@ -214,6 +227,7 @@ final class TokenStreamTest extends TestCase
         $this->assertSame(1, $stream->getPosition());
     }
 
+    #[Test]
     public function test_current_throws_when_exhausted(): void
     {
         $tokens = [

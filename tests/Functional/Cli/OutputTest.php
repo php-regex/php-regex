@@ -21,6 +21,7 @@ use PHPUnit\Framework\TestCase;
 
 final class OutputTest extends TestCase
 {
+    #[Test]
     public function test_color_helpers_respect_ansi_flag(): void
     {
         $output = new Output(true, false);
@@ -42,6 +43,7 @@ final class OutputTest extends TestCase
         $this->assertSame('DIM', $output->dim('DIM'));
     }
 
+    #[Test]
     public function test_badge_formats_output_based_on_ansi(): void
     {
         $output = new Output(false, false);
@@ -53,6 +55,7 @@ final class OutputTest extends TestCase
         $this->assertStringContainsString('PASS', $output->badge('PASS', Output::WHITE, Output::BG_GREEN));
     }
 
+    #[Test]
     public function test_write_respects_quiet_mode(): void
     {
         $output = new Output(false, true);
@@ -116,6 +119,7 @@ final class OutputTest extends TestCase
      * The progress is drawn on stderr: stdout keeps the report alone, so a
      * report redirected to a file holds no progress frame.
      */
+    #[Test]
     public function test_progress_outputs_when_ansi_enabled(): void
     {
         [$output, $errors] = $this->outputWithErrorStream(true, false);
@@ -277,6 +281,7 @@ final class OutputTest extends TestCase
         yield 'quiet without ansi' => ['ansi' => false, 'quiet' => true, 'total' => 5];
     }
 
+    #[Test]
     public function test_format_elapsed_handles_hours_and_minutes(): void
     {
         $output = new Output(false, false);
@@ -286,6 +291,7 @@ final class OutputTest extends TestCase
         $this->assertSame('00:05', $method->invoke($output, 5));
     }
 
+    #[Test]
     public function test_is_quiet_returns_quiet_flag(): void
     {
         $output = new Output(false, true);
@@ -295,6 +301,7 @@ final class OutputTest extends TestCase
         $this->assertFalse($output->isQuiet());
     }
 
+    #[Test]
     public function test_progress_start_sets_progress_active_to_false_when_total_is_zero_or_negative(): void
     {
         $output = new Output(true, false);
@@ -306,6 +313,7 @@ final class OutputTest extends TestCase
         $this->assertFalse($this->getProgressActive($output));
     }
 
+    #[Test]
     public function test_progress_start_sets_progress_active_to_false_when_quiet(): void
     {
         $output = new Output(true, true);

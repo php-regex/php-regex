@@ -882,3 +882,9 @@ parameters:
 			identifier: function.impossibleType
 			count: 1
 			path: tests/Unit/ValidationResultTest.php
+
+		-
+			rawMessage: 'Parameter #1 $results of class PHPRegex\Linter\LintReport constructor expects array<array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<PHPRegex\Linter\LintIssue>, ...}>, array{array{file: ''valid.php'', line: 1, pattern: ''/test/'', issues: array{}, optimizations: array{}}, ''invalid''} given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Lint/Formatter/JsonFormatterTest.php

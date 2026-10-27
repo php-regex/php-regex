@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\Node;
 
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ScriptRunNodeTest extends TestCase
 {
+    #[Test]
     public function test_constructor_and_getters(): void
     {
         $node = new ScriptRunNode('Latin', 10, 30);
@@ -28,6 +30,7 @@ final class ScriptRunNodeTest extends TestCase
         $this->assertSame(30, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_script_run_with_arabic(): void
     {
         $node = new ScriptRunNode('Arabic', 5, 25);
@@ -37,6 +40,7 @@ final class ScriptRunNodeTest extends TestCase
         $this->assertSame(25, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_script_run_with_devanagari(): void
     {
         $node = new ScriptRunNode('Devanagari', 15, 40);
@@ -46,6 +50,7 @@ final class ScriptRunNodeTest extends TestCase
         $this->assertSame(40, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_script_run(): void
     {
         $node = new ScriptRunNode('Cyrillic', 0, 15);

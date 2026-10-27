@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -301,6 +302,7 @@ final class BehavioralComplianceTest extends TestCase
     /**
      * @param array<int|string, bool> $testCases
      */
+    #[Test]
     #[DataProvider('providePatternsWithBehavior')]
     public function test_pattern_behavior_matches_pcre(string $pattern, array $testCases): void
     {
@@ -348,6 +350,7 @@ final class BehavioralComplianceTest extends TestCase
     /**
      * Test that captured groups match identically.
      */
+    #[Test]
     public function test_captured_groups_match_pcre(): void
     {
         $pattern = '/(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/';
@@ -367,6 +370,7 @@ final class BehavioralComplianceTest extends TestCase
     /**
      * Test that substitutions work identically.
      */
+    #[Test]
     public function test_substitutions_match_pcre(): void
     {
         $pattern = '/(\w+)\s+(\w+)/';

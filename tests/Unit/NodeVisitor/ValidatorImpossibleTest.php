@@ -18,12 +18,14 @@ use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ValidatorImpossibleTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_unicode_out_of_bounds_manual(): void
     {
         $validator = new Validator();
@@ -37,6 +39,7 @@ final class ValidatorImpossibleTest extends TestCase
         $node->accept($validator);
     }
 
+    #[Test]
     public function test_octal_out_of_bounds_manual(): void
     {
         $validator = new Validator();
@@ -49,6 +52,7 @@ final class ValidatorImpossibleTest extends TestCase
         $node->accept($validator);
     }
 
+    #[Test]
     public function test_octal_invalid_format_manual(): void
     {
         $validator = new Validator();

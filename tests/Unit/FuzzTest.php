@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class FuzzTest extends TestCase
@@ -29,6 +30,7 @@ class FuzzTest extends TestCase
     /**
      * Property-based fuzzing test for AST round-trip.
      */
+    #[Test]
     public function test_ast_round_trip(): void
     {
         $patterns = [

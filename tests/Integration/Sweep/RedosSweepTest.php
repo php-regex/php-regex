@@ -19,6 +19,7 @@ use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\AnalysisReport;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -30,6 +31,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosSweepTest extends TestCase
 {
+    #[Test]
     public function test_analysis_report_optimizations(): void
     {
         $optimizations = new OptimizationResult('/a+b/', '/a+b/', []);
@@ -50,6 +52,7 @@ final class RedosSweepTest extends TestCase
         $this->assertSame('<span>Test</span>', $report->highlighted);
     }
 
+    #[Test]
     public function test_redos_analysis_exposes_the_vulnerable_part(): void
     {
         $analysis = new RedosAnalysis(
@@ -64,6 +67,7 @@ final class RedosSweepTest extends TestCase
         $this->assertSame('(a+)+', $analysis->vulnerablePart);
     }
 
+    #[Test]
     public function test_redos_analysis_with_findings(): void
     {
         $findings = [
@@ -87,6 +91,7 @@ final class RedosSweepTest extends TestCase
         $this->assertSame('nested quantifiers', $analysis->findings[0]->message);
     }
 
+    #[Test]
     public function test_redos_analysis_with_suggested_rewrite(): void
     {
         $analysis = new RedosAnalysis(

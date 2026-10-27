@@ -21,6 +21,7 @@ use PHPUnit\Framework\TestCase;
 
 final class LintConfigLoaderTest extends TestCase
 {
+    #[Test]
     public function test_load_reads_and_normalizes_config(): void
     {
         $cwd = getcwd();
@@ -51,6 +52,7 @@ final class LintConfigLoaderTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_load_returns_error_on_non_object_json(): void
     {
         $cwd = getcwd();
@@ -77,6 +79,7 @@ final class LintConfigLoaderTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_load_returns_error_on_numeric_keys(): void
     {
         $cwd = getcwd();
@@ -103,6 +106,7 @@ final class LintConfigLoaderTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_load_normalizes_optimizations_config(): void
     {
         $cwd = getcwd();
@@ -136,6 +140,7 @@ final class LintConfigLoaderTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_load_normalizes_extraction_config(): void
     {
         $cwd = getcwd();
@@ -229,6 +234,7 @@ final class LintConfigLoaderTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_load_normalizes_checks_config(): void
     {
         $cwd = getcwd();

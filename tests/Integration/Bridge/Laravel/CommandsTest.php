@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Laravel\Facades\Regex;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Route;
  */
 final class CommandsTest extends LaravelTestCase
 {
+    #[Test]
     public function test_explain_command_explains_pattern(): void
     {
         $this->command('regex:explain', ['pattern' => '/^[a-z]+$/'])
@@ -31,6 +33,7 @@ final class CommandsTest extends LaravelTestCase
             ->expectsOutputToContain('Explanation:');
     }
 
+    #[Test]
     public function test_explain_command_takes_the_console_and_html_formats(): void
     {
         $this->command('regex:explain', ['pattern' => '/^[a-z]+$/', '--format' => 'console'])
@@ -44,6 +47,7 @@ final class CommandsTest extends LaravelTestCase
             ->expectsOutputToContain("Invalid format 'text'. Supported formats: console, html");
     }
 
+    #[Test]
     public function test_explain_command_fails_on_invalid_pattern(): void
     {
         $this->command('regex:explain', ['pattern' => '/^(unclosed/'])
@@ -51,6 +55,7 @@ final class CommandsTest extends LaravelTestCase
             ->expectsOutputToContain('Invalid regex pattern');
     }
 
+    #[Test]
     public function test_compare_command_detects_equivalent_patterns(): void
     {
         $this->command('regex:compare', [
@@ -62,6 +67,7 @@ final class CommandsTest extends LaravelTestCase
             ->expectsOutputToContain('EQUIVALENT');
     }
 
+    #[Test]
     public function test_compare_command_detects_non_equivalent_patterns(): void
     {
         $this->command('regex:compare', [
@@ -73,6 +79,7 @@ final class CommandsTest extends LaravelTestCase
             ->expectsOutputToContain('NOT EQUIVALENT');
     }
 
+    #[Test]
     public function test_compare_command_shows_counterexample(): void
     {
         $this->command('regex:compare', [
@@ -88,6 +95,7 @@ final class CommandsTest extends LaravelTestCase
      * The example is spelled as the CLI spells it: quoted, a tab written
      * as \t, the empty string named.
      */
+    #[Test]
     public function test_compare_command_quotes_and_escapes_the_example(): void
     {
         $this->command('regex:compare', [
@@ -107,6 +115,7 @@ final class CommandsTest extends LaravelTestCase
             ->expectsOutputToContain('"" (empty string)');
     }
 
+    #[Test]
     public function test_compare_command_json_output(): void
     {
         $this->command('regex:compare', [
@@ -119,6 +128,7 @@ final class CommandsTest extends LaravelTestCase
             ->expectsOutputToContain('"equivalent": true');
     }
 
+    #[Test]
     public function test_compare_command_fails_on_invalid_pattern(): void
     {
         $this->command('regex:compare', [
@@ -129,6 +139,7 @@ final class CommandsTest extends LaravelTestCase
             ->expectsOutputToContain('Invalid first pattern');
     }
 
+    #[Test]
     public function test_transpile_command_transpiles_to_javascript(): void
     {
         $this->command('regex:transpile', [
@@ -140,6 +151,7 @@ final class CommandsTest extends LaravelTestCase
             ->expectsOutputToContain('Target (Javascript)');
     }
 
+    #[Test]
     public function test_transpile_command_json_output(): void
     {
         $this->command('regex:transpile', [
@@ -151,6 +163,7 @@ final class CommandsTest extends LaravelTestCase
             ->expectsOutputToContain('"target": "python"');
     }
 
+    #[Test]
     public function test_transpile_command_fails_on_invalid_target(): void
     {
         $this->command('regex:transpile', [
@@ -161,6 +174,7 @@ final class CommandsTest extends LaravelTestCase
             ->expectsOutputToContain('Invalid target');
     }
 
+    #[Test]
     public function test_routes_command_shows_routes_with_constraints(): void
     {
         // Define a route with a constraint
@@ -172,6 +186,7 @@ final class CommandsTest extends LaravelTestCase
             ->assertSuccessful();
     }
 
+    #[Test]
     public function test_routes_command_validates_constraints(): void
     {
         // Define a route with a valid constraint
@@ -183,6 +198,7 @@ final class CommandsTest extends LaravelTestCase
             ->assertSuccessful();
     }
 
+    #[Test]
     public function test_routes_command_json_output(): void
     {
         Route::get('/test/{id}', static fn () => 'test')
@@ -194,6 +210,7 @@ final class CommandsTest extends LaravelTestCase
             ->expectsOutputToContain('"routes"');
     }
 
+    #[Test]
     public function test_lint_command_runs_without_errors(): void
     {
         // Create a temporary directory with a PHP file containing regex
@@ -216,6 +233,7 @@ final class CommandsTest extends LaravelTestCase
         rmdir($tempDir);
     }
 
+    #[Test]
     public function test_lint_command_detects_invalid_patterns(): void
     {
         $tempDir = sys_get_temp_dir().'/regex_lint_test_'.uniqid();
@@ -237,6 +255,7 @@ final class CommandsTest extends LaravelTestCase
         rmdir($tempDir);
     }
 
+    #[Test]
     public function test_lint_command_supports_exclude_option(): void
     {
         $tempDir = sys_get_temp_dir().'/regex_lint_test_'.uniqid();

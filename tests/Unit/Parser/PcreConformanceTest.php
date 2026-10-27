@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -66,6 +67,7 @@ final class PcreConformanceTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_script_run_content_is_analyzed(): void
     {
         $analysis = Regex::create()->redos('/(*sr:(a+)+b)/');
@@ -73,6 +75,7 @@ final class PcreConformanceTest extends TestCase
         $this->assertSame('critical', $analysis->severity->value);
     }
 
+    #[Test]
     #[DataProvider('provide_patterns')]
     public function test_validation_agrees_with_pcre(string $pattern): void
     {

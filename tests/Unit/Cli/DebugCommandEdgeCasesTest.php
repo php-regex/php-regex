@@ -19,10 +19,12 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class DebugCommandEdgeCasesTest extends TestCase
 {
+    #[Test]
     public function test_debug_command_renders_unknown_severity_details(): void
     {
         $command = new DebugCommand();
@@ -49,6 +51,7 @@ final class DebugCommandEdgeCasesTest extends TestCase
      * otherwise; a medium one is yellow either way. "(a+)+$" fails on
      * a…a! from 19 pumps (PCRE2 10.49, JIT off).
      */
+    #[Test]
     #[DataProvider('provideFindingColours')]
     public function test_debug_command_colours_each_finding_by_the_verdict(string $mode, string $critical): void
     {
@@ -77,6 +80,7 @@ final class DebugCommandEdgeCasesTest extends TestCase
      * The banner names the command as it is typed, as every other command's
      * banner does.
      */
+    #[Test]
     public function test_debug_banner_names_the_command_in_lower_case(): void
     {
         $output = OutputFactory::create();
@@ -93,6 +97,7 @@ final class DebugCommandEdgeCasesTest extends TestCase
      * A pattern that does not parse is reported by its message, as the
      * other commands report it, without the class of the exception.
      */
+    #[Test]
     public function test_debug_reports_a_pattern_that_does_not_parse_by_its_message(): void
     {
         $output = OutputFactory::create();
@@ -126,6 +131,7 @@ final class DebugCommandEdgeCasesTest extends TestCase
      *
      * @param list<string> $args
      */
+    #[Test]
     #[DataProvider('provideOptionErrors')]
     public function test_debug_refuses_an_option_without_a_value_it_takes(array $args, string $error): void
     {

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lexer;
 
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LexerStateTest extends TestCase
@@ -25,6 +26,7 @@ final class LexerStateTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     public function test_parser_reuses_lexer_and_resets(): void
     {
         $this->expectNotToPerformAssertions();

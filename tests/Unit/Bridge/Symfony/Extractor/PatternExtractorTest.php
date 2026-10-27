@@ -17,10 +17,12 @@ use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternExtractor;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PatternExtractorTest extends TestCase
 {
+    #[Test]
     public function test_delegates_to_injected_extractor(): void
     {
         $mockExtractor = $this->createStub(ExtractorInterface::class);
@@ -33,6 +35,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertSame(['pattern1', 'pattern2'], $result);
     }
 
+    #[Test]
     public function test_uses_default_exclude_paths_when_not_provided(): void
     {
         $mockExtractor = $this->createStub(ExtractorInterface::class);
@@ -45,6 +48,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_uses_custom_exclude_paths_when_provided(): void
     {
         $mockExtractor = $this->createStub(ExtractorInterface::class);
@@ -57,6 +61,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    #[Test]
     public function test_works_with_phpstan_extractor(): void
     {
         $phpstanExtractor = new PhpParserExtractionStrategy();
@@ -68,6 +73,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertIsArray($result);
     }
 
+    #[Test]
     public function test_works_with_token_based_extractor(): void
     {
         $tokenExtractor = new TokenBasedExtractionStrategy();
@@ -79,6 +85,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertIsArray($result);
     }
 
+    #[Test]
     public function test_collects_and_filters_php_files_with_default_excludes(): void
     {
         // Use a real extractor to test actual file discovery behavior
@@ -97,6 +104,7 @@ final class PatternExtractorTest extends TestCase
         $this->assertStringContainsString('test.php', $result[0]->file);
     }
 
+    #[Test]
     public function test_collects_and_filters_php_files_with_custom_excludes(): void
     {
         // Use a real extractor to test actual file discovery behavior

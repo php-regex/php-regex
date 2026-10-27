@@ -18,12 +18,14 @@ use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\LexerAccessor;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LexerErrorTest extends TestCase
 {
     use PhpUnitForwardCompat;
 
+    #[Test]
     public function test_reset_tokenizes_invalid_utf8_in_byte_mode(): void
     {
         $lexer = new Lexer();
@@ -36,6 +38,7 @@ final class LexerErrorTest extends TestCase
         $this->assertCount(2, $tokens); // \xFF, EOF
     }
 
+    #[Test]
     public function test_tokenize_throws_on_unclosed_char_class(): void
     {
         $this->expectException(LexerException::class);
@@ -44,6 +47,7 @@ final class LexerErrorTest extends TestCase
         (new Lexer())->tokenize('[a-z');
     }
 
+    #[Test]
     public function test_lex_quote_mode_emits_literal_and_exits(): void
     {
         $lexer = new Lexer();
@@ -69,6 +73,7 @@ final class LexerErrorTest extends TestCase
         $this->assertFalse($accessor->getInQuoteMode()); // Exit quote mode
     }
 
+    #[Test]
     public function test_lex_quote_mode_handles_trailing_text_without_e(): void
     {
         $lexer = new Lexer();

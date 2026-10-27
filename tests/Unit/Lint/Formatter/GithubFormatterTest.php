@@ -30,6 +30,7 @@ final class GithubFormatterTest extends TestCase
         $this->formatter = new GithubFormatter();
     }
 
+    #[Test]
     public function test_format_empty_report(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -39,6 +40,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertSame('', $output);
     }
 
+    #[Test]
     public function test_format_with_error_problem(): void
     {
         $problem = LintIssueFixtures::invalid('Invalid regex pattern');
@@ -66,6 +68,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('Suggestion: '.LintIssueFixtures::INVALID_HINT, $output);
     }
 
+    #[Test]
     public function test_format_with_warning_problem(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Warning, 'Nested quantifier detected', 'regex.lint.quantifier.nested');
@@ -87,6 +90,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('Nested quantifier detected', $output);
     }
 
+    #[Test]
     public function test_format_with_info_problem(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Info, 'Info message');
@@ -107,6 +111,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('Info message', $output);
     }
 
+    #[Test]
     public function test_format_with_critical_problem(): void
     {
         $problem = LintIssueFixtures::redos(LintSeverity::Critical, 'Critical security issue', 'regex.redos');
@@ -130,6 +135,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('Suggestion: '.LintIssueFixtures::redosAdvice(), $output);
     }
 
+    #[Test]
     public function test_format_with_multiple_problems(): void
     {
         $problem1 = LintIssueFixtures::invalid('Error 1');
@@ -183,6 +189,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringNotContainsString('col=', $output);
     }
 
+    #[Test]
     public function test_format_with_empty_file(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
@@ -205,6 +212,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringNotContainsString('col=', $output);
     }
 
+    #[Test]
     public function test_format_problem_title_with_code(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test message', 'regex.lint.test');
@@ -224,6 +232,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('title=Lint (regex.lint.test)', $output);
     }
 
+    #[Test]
     public function test_format_problem_title_without_code(): void
     {
         $problem = LintIssueFixtures::redos(LintSeverity::Error, 'Test message', null);
@@ -243,6 +252,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('title=Security', $output);
     }
 
+    #[Test]
     public function test_format_escapes_properties(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test message');
@@ -300,6 +310,7 @@ final class GithubFormatterTest extends TestCase
         ];
     }
 
+    #[Test]
     public function test_format_escapes_data(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, "Message with\nnewlines and\r\ncrlf");
@@ -319,6 +330,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('Message with%0Anewlines and%0D%0Acrlf', $output);
     }
 
+    #[Test]
     public function test_format_escapes_title(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test message', 'code with % and \n');
@@ -338,6 +350,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('title=Lint (code with %25 and \n)', $output);
     }
 
+    #[Test]
     public function test_format_escapes_percent_in_data(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Warning, 'Matches 100% of the inputs', null, '50%0A');
@@ -357,6 +370,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('::warning file=test.php,line=1,col=3,title=Lint::Matches 100%25 of the inputs%0ASuggestion: 50%250A', $output);
     }
 
+    #[Test]
     public function test_format_error(): void
     {
         $message = 'Test error message';
@@ -366,6 +380,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertSame('::error::Test error message', $output);
     }
 
+    #[Test]
     public function test_format_with_minimal_problem(): void
     {
         $problem = LintIssueFixtures::finding(LintSeverity::Info, 'Simple message');
@@ -385,6 +400,7 @@ final class GithubFormatterTest extends TestCase
         $this->assertStringContainsString('::notice file=test.php,line=1,title=Lint::Simple message', $output);
     }
 
+    #[Test]
     public function test_format_with_location_and_snippet(): void
     {
         $problem = LintIssueFixtures::invalid('Warning message', LintSeverity::Warning);

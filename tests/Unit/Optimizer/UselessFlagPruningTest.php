@@ -31,6 +31,7 @@ use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -43,6 +44,7 @@ final class UselessFlagPruningTest extends TestCase
     /**
      * @param non-empty-string $pattern
      */
+    #[Test]
     #[DataProvider('provideDotInsideDefine')]
     public function test_optimize_keeps_s_when_the_dot_is_inside_define(string $pattern, string $subject): void
     {
@@ -68,6 +70,7 @@ final class UselessFlagPruningTest extends TestCase
     /**
      * @param non-empty-string $pattern
      */
+    #[Test]
     #[DataProvider('provideDotInsideScriptRun')]
     public function test_optimize_keeps_s_when_the_dot_is_inside_a_script_run(string $pattern, string $subject): void
     {
@@ -94,6 +97,7 @@ final class UselessFlagPruningTest extends TestCase
     /**
      * @param non-empty-string $pattern
      */
+    #[Test]
     #[DataProvider('provideAnchorInsideScriptRun')]
     public function test_optimize_keeps_m_when_the_anchor_is_inside_a_script_run(string $pattern, string $subject): void
     {
@@ -119,6 +123,7 @@ final class UselessFlagPruningTest extends TestCase
     /**
      * @param non-empty-string $pattern
      */
+    #[Test]
     #[DataProvider('provideUselessFlags')]
     public function test_optimize_still_prunes_a_flag_nothing_reads(string $pattern, string $expected): void
     {
@@ -141,6 +146,7 @@ final class UselessFlagPruningTest extends TestCase
      * parser never fills with a dot or an anchor today: a future node type
      * that holds children must be walked through getChildren().
      */
+    #[Test]
     #[DataProvider('provideContainers')]
     public function test_flag_helpers_reach_every_node_with_children(\Closure $wrap): void
     {

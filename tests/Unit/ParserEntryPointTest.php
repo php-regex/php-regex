@@ -18,10 +18,12 @@ use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Syntax\TokenParser;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ParserEntryPointTest extends TestCase
 {
+    #[Test]
     public function test_parser_can_parse_simple_pattern(): void
     {
         $parser = new TokenParser();
@@ -35,6 +37,7 @@ final class ParserEntryPointTest extends TestCase
         $this->assertSame(4, $ast->getEndPosition());
     }
 
+    #[Test]
     public function test_parser_can_parse_with_flags(): void
     {
         $parser = new TokenParser();
@@ -48,6 +51,7 @@ final class ParserEntryPointTest extends TestCase
         $this->assertSame(4, $ast->getEndPosition());
     }
 
+    #[Test]
     public function test_a_parser_read_twice_forgets_the_names_of_the_first_pattern(): void
     {
         // pcre2test 10.49: "(?(R2)a|c)()()" tests a recursion into group 2;
@@ -63,6 +67,7 @@ final class ParserEntryPointTest extends TestCase
         $this->assertInstanceOf(SubroutineNode::class, $conditional->condition);
     }
 
+    #[Test]
     public function test_parser_with_custom_recursion_depth(): void
     {
         $parser = new TokenParser(100);

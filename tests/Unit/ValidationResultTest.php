@@ -17,10 +17,12 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ValidationResultTest extends TestCase
 {
+    #[Test]
     public function test_construct_with_minimal_parameters(): void
     {
         $result = new ValidationResult(true);
@@ -35,6 +37,7 @@ final class ValidationResultTest extends TestCase
         $this->assertNull($result->errorCode);
     }
 
+    #[Test]
     public function test_construct_with_all_parameters(): void
     {
         $result = new ValidationResult(
@@ -63,6 +66,7 @@ final class ValidationResultTest extends TestCase
      * a caller reading them gets a fatal error, not a deprecated mirror.
      * The other accessors stay: they carry names the properties do not.
      */
+    #[Test]
     public function test_the_is_valid_and_error_message_accessors_are_gone(): void
     {
         $this->assertFalse(
@@ -75,6 +79,7 @@ final class ValidationResultTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_accessors_mirror_properties(): void
     {
         $result = new ValidationResult(false, 'error', 123);
@@ -86,6 +91,7 @@ final class ValidationResultTest extends TestCase
         $this->assertSame(123, $result->complexityScore);
     }
 
+    #[Test]
     public function test_get_error_category(): void
     {
         $result = new ValidationResult(
@@ -97,6 +103,7 @@ final class ValidationResultTest extends TestCase
         $this->assertSame(ValidationErrorCategory::Semantic, $result->category);
     }
 
+    #[Test]
     public function test_get_error_offset(): void
     {
         $result = new ValidationResult(
@@ -108,6 +115,7 @@ final class ValidationResultTest extends TestCase
         $this->assertSame(25, $result->offset);
     }
 
+    #[Test]
     public function test_get_caret_snippet(): void
     {
         $result = new ValidationResult(
@@ -119,6 +127,7 @@ final class ValidationResultTest extends TestCase
         $this->assertSame('error at this position', $result->caretSnippet);
     }
 
+    #[Test]
     public function test_get_hint(): void
     {
         $result = new ValidationResult(
@@ -130,6 +139,7 @@ final class ValidationResultTest extends TestCase
         $this->assertSame('Consider using atomic groups', $result->hint);
     }
 
+    #[Test]
     public function test_get_error_code(): void
     {
         $result = new ValidationResult(
@@ -141,6 +151,7 @@ final class ValidationResultTest extends TestCase
         $this->assertSame(ErrorCode::GroupUnclosed, $result->errorCode);
     }
 
+    #[Test]
     public function test_null_values(): void
     {
         $result = new ValidationResult(true);
@@ -153,6 +164,7 @@ final class ValidationResultTest extends TestCase
         $this->assertNull($result->errorCode);
     }
 
+    #[Test]
     public function test_valid_result(): void
     {
         $result = new ValidationResult(
@@ -167,6 +179,7 @@ final class ValidationResultTest extends TestCase
         $this->assertNull($result->error);
     }
 
+    #[Test]
     public function test_all_error_categories(): void
     {
         $categories = [
@@ -186,6 +199,7 @@ final class ValidationResultTest extends TestCase
         }
     }
 
+    #[Test]
     public function test_zero_complexity_score(): void
     {
         $result = new ValidationResult(true, null, 0);
@@ -194,6 +208,7 @@ final class ValidationResultTest extends TestCase
         $this->assertSame(0, $result->complexityScore);
     }
 
+    #[Test]
     public function test_negative_offset(): void
     {
         $result = new ValidationResult(
@@ -205,6 +220,7 @@ final class ValidationResultTest extends TestCase
         $this->assertSame(-1, $result->offset);
     }
 
+    #[Test]
     public function test_empty_strings(): void
     {
         $result = new ValidationResult(
@@ -226,6 +242,7 @@ final class ValidationResultTest extends TestCase
      * The message, the line of the pattern with its caret, then the hint:
      * the block every surface prints, written once.
      */
+    #[Test]
     public function test_render_writes_the_message_the_caret_and_the_hint(): void
     {
         $result = RegexParser::create()->validate('/a{2,1}/');
@@ -239,6 +256,7 @@ final class ValidationResultTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_render_writes_nothing_for_a_valid_pattern(): void
     {
         $this->assertSame('', RegexParser::create()->validate('/a+/')->render());
@@ -247,6 +265,7 @@ final class ValidationResultTest extends TestCase
     /**
      * Each part the result does not carry is left out, with its line.
      */
+    #[Test]
     public function test_render_leaves_out_what_the_result_does_not_carry(): void
     {
         $this->assertSame('Bare message.', (new ValidationResult(false, 'Bare message.'))->render());
@@ -258,6 +277,7 @@ final class ValidationResultTest extends TestCase
      * A limit of the library reads as one too: the message says what was
      * exceeded, the hint which option to raise.
      */
+    #[Test]
     public function test_render_a_limit_names_the_option_to_raise(): void
     {
         $result = RegexParser::create(['max_pattern_length' => 5])->validate('/abcdefghij/');

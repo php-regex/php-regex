@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lexer;
 
 use PHPRegex\Parser\Lexing\TokenValue;
 use PHPRegex\Parser\Token\TokenType;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -27,6 +28,7 @@ final class LexerInternalsTest extends TestCase
      * Tests the "?? ''" fallback in POSIX class extraction.
      * Normally, the regex guarantees v_posix is set, but we test PHP robustness.
      */
+    #[Test]
     public function test_extract_posix_fallback(): void
     {
 
@@ -44,6 +46,7 @@ final class LexerInternalsTest extends TestCase
     /**
      * Tests the "?? ''" fallback in normalizeUnicodeProp.
      */
+    #[Test]
     public function test_normalize_unicode_fallback(): void
     {
 
@@ -57,6 +60,7 @@ final class LexerInternalsTest extends TestCase
      * Tests the `default` case of the T_LITERAL_ESCAPED switch with a weird character.
      * Normal tests cover \t, \n etc. We want to test the `substr($val, 1)` fallback.
      */
+    #[Test]
     public function test_extract_literal_escaped_default(): void
     {
 
@@ -75,6 +79,7 @@ final class LexerInternalsTest extends TestCase
     /**
      * Tests the backreference fallback if v_backref_num is missing.
      */
+    #[Test]
     public function test_extract_backref_fallback(): void
     {
 
@@ -89,6 +94,7 @@ final class LexerInternalsTest extends TestCase
         $this->assertSame('\1', $result);
     }
 
+    #[Test]
     public function test_extract_token_value_default_case(): void
     {
 

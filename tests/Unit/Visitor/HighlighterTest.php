@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Visitor;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Explain\Highlighter\HtmlHighlighter;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class HighlighterTest extends TestCase
@@ -27,6 +28,7 @@ final class HighlighterTest extends TestCase
         $this->regexService = Regex::create();
     }
 
+    #[Test]
     public function test_highlight_cli_contains_ansi_codes(): void
     {
         $highlighted = $this->highlight('/a+/', 'cli');
@@ -36,6 +38,7 @@ final class HighlighterTest extends TestCase
         $this->assertStringContainsString("\033[0m", $highlighted); // Reset
     }
 
+    #[Test]
     public function test_highlight_html_contains_span_tags(): void
     {
         $highlighted = $this->highlight('/a+/', 'html');
@@ -47,6 +50,7 @@ final class HighlighterTest extends TestCase
         $this->assertStringContainsString('regex-quantifier', $highlighted);
     }
 
+    #[Test]
     public function test_highlight_html_escapes_special_chars(): void
     {
         $highlighted = $this->highlight('/<script>/', 'html');
@@ -61,6 +65,7 @@ final class HighlighterTest extends TestCase
      * replacement character, never dropped with the token it stands in,
      * and quotes are written as entities.
      */
+    #[Test]
     public function test_highlight_html_keeps_a_byte_of_invalid_utf8(): void
     {
         $highlighted = $this->highlight("/a\xE9b\"'/", 'html');
@@ -75,6 +80,7 @@ final class HighlighterTest extends TestCase
         );
     }
 
+    #[Test]
     public function test_highlight_cli_complex_pattern(): void
     {
         $highlighted = $this->highlight('/^[0-9]+(\w+)$/', 'cli');
@@ -84,6 +90,7 @@ final class HighlighterTest extends TestCase
         $this->assertStringContainsString("\033[38;2;78;201;176m", $highlighted); // Escapes
     }
 
+    #[Test]
     public function test_highlight_html_complex_pattern(): void
     {
         $highlighted = $this->highlight('/^[0-9]+(\w+)$/', 'html');
@@ -94,6 +101,7 @@ final class HighlighterTest extends TestCase
         $this->assertStringContainsString('regex-anchor', $highlighted);
     }
 
+    #[Test]
     public function test_highlight_with_unicode_and_special_chars(): void
     {
         // Test Unicode, control chars, assertions, backrefs, anchors, etc.
@@ -107,6 +115,7 @@ final class HighlighterTest extends TestCase
         $this->assertStringContainsString('regex-type', $highlightedHtml);
     }
 
+    #[Test]
     public function test_highlight_with_character_classes(): void
     {
         // Test char classes, ranges, POSIX classes, Unicode props
@@ -119,6 +128,7 @@ final class HighlighterTest extends TestCase
         $this->assertStringContainsString('regex-meta', $highlightedHtml); // [ and ]
     }
 
+    #[Test]
     public function test_highlight_with_quantifiers_and_modifiers(): void
     {
         // Test different quantifier types
@@ -131,6 +141,7 @@ final class HighlighterTest extends TestCase
         $this->assertStringContainsString('regex-quantifier', $highlightedHtml);
     }
 
+    #[Test]
     public function test_highlight_with_groups_and_conditionals(): void
     {
         // Test groups, conditionals, subroutines
@@ -142,6 +153,7 @@ final class HighlighterTest extends TestCase
         $this->assertNotEmpty($highlightedHtml);
     }
 
+    #[Test]
     public function test_highlight_with_pcre_verbs_and_special(): void
     {
         // Test PCRE verbs, comments, defines, etc.
@@ -156,6 +168,7 @@ final class HighlighterTest extends TestCase
         $this->assertStringContainsString('regex-comment', $highlightedHtml);
     }
 
+    #[Test]
     public function test_highlight_with_class_operations(): void
     {
         // PHP has no class operations: "&&" is two members and "!--" a range.

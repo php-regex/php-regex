@@ -17,6 +17,7 @@ use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class VisitorSyntheticNodesTest extends TestCase
@@ -25,6 +26,7 @@ final class VisitorSyntheticNodesTest extends TestCase
      * Teste la compilation avec un délimiteur inhabituel '('.
      * Couvre la logique de mapping des délimiteurs dans PatternPrinter::visitRegex.
      */
+    #[Test]
     public function test_compiler_paren_delimiter(): void
     {
         $pattern = new LiteralNode('abc', 0, 3);
@@ -42,6 +44,7 @@ final class VisitorSyntheticNodesTest extends TestCase
      * Teste l'optimiseur sur un RegexNode qui ne nécessite aucun changement.
      * Vérifie que l'instance retournée est la même (optimisation de mémoire).
      */
+    #[Test]
     public function test_optimizer_no_change_returns_same_instance(): void
     {
         // Un littéral simple ne change pas

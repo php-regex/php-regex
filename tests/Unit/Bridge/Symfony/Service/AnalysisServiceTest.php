@@ -20,10 +20,12 @@ use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AnalysisServiceTest extends TestCase
 {
+    #[Test]
     public function test_reports_invalid_pattern(): void
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
@@ -35,6 +37,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame('error', $issues[0]->severity->level());
     }
 
+    #[Test]
     public function test_warns_on_complexity_threshold(): void
     {
         $service = $this->createService(warningThreshold: 0, redosThreshold: 'critical');
@@ -48,6 +51,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame('regex.lint.complexity', $issues[0]->issueId);
     }
 
+    #[Test]
     public function test_trivial_alternation_skips_risk_checks(): void
     {
         $service = $this->createService(warningThreshold: 0, redosThreshold: 'critical');
@@ -58,6 +62,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $issues);
     }
 
+    #[Test]
     public function test_ignored_patterns_skip_risk_checks(): void
     {
         $service = $this->createService(
@@ -78,6 +83,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $issues);
     }
 
+    #[Test]
     public function test_reports_redos_risk(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
@@ -94,6 +100,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame('warning', $redosIssues[0]->severity->level());
     }
 
+    #[Test]
     public function test_scan_method(): void
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
@@ -103,6 +110,7 @@ final class AnalysisServiceTest extends TestCase
         // We can't predict exact results since it depends on test files, but ensure it's an array
     }
 
+    #[Test]
     public function test_redos_issues_carry_their_place_and_analysis(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
@@ -118,6 +126,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertInstanceOf(RedosAnalysis::class, $issues[0]->analysis);
     }
 
+    #[Test]
     public function test_suggest_optimizations_method(): void
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
@@ -130,6 +139,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertIsArray($optimizations);
     }
 
+    #[Test]
     public function test_highlight_method(): void
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
@@ -140,6 +150,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertNotEmpty($highlighted);
     }
 
+    #[Test]
     public function test_highlight_body_method(): void
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
@@ -150,6 +161,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertNotEmpty($highlighted);
     }
 
+    #[Test]
     public function test_lint_with_linter_warnings(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
@@ -164,6 +176,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertNotEmpty($warnings);
     }
 
+    #[Test]
     public function test_lint_with_complex_pattern_above_threshold(): void
     {
         $service = $this->createService(warningThreshold: 0, redosThreshold: 'critical');
@@ -177,6 +190,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertNotEmpty($complexityIssues);
     }
 
+    #[Test]
     public function test_lint_with_redos_pattern(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
@@ -189,6 +203,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertInstanceOf(RedosAnalysis::class, $redosIssues[array_key_first($redosIssues)]->analysis);
     }
 
+    #[Test]
     public function test_suggest_optimizations_with_min_savings(): void
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
@@ -202,6 +217,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertIsArray($optimizations);
     }
 
+    #[Test]
     public function test_suggest_optimizations_with_extended_mode(): void
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
@@ -214,6 +230,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertIsArray($optimizations);
     }
 
+    #[Test]
     public function test_validation_error_tips_delimiter_fix(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
@@ -230,6 +247,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertStringContainsString('delimiter', $tip);
     }
 
+    #[Test]
     public function test_validation_error_tips_character_class_fix(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
@@ -243,6 +261,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertNotNull($errorIssue->tip);
     }
 
+    #[Test]
     public function test_validation_error_tips_quantifier_range_fix(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
@@ -256,6 +275,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertNotNull($errorIssue->tip);
     }
 
+    #[Test]
     public function test_validation_error_tips_backreference_fix(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
@@ -269,6 +289,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertNotNull($errorIssue->tip);
     }
 
+    #[Test]
     public function test_validation_error_tips_lookbehind_fix(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
@@ -282,6 +303,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertNotNull($errorIssue->tip);
     }
 
+    #[Test]
     public function test_redos_hints_with_nested_quantifiers(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
@@ -297,6 +319,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertStringContainsString('atomic groups', (string) $hint);
     }
 
+    #[Test]
     public function test_redos_hints_with_dot_star(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
@@ -310,6 +333,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertNotNull($redosIssues[array_key_first($redosIssues)]->hint);
     }
 
+    #[Test]
     public function test_trivially_safe_patterns_skip_analysis(): void
     {
         $service = $this->createService(warningThreshold: 0, redosThreshold: 'low');
@@ -324,6 +348,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertEmpty($redosIssues);
     }
 
+    #[Test]
     public function test_extended_mode_detection(): void
     {
         $service = $this->createService(warningThreshold: 10, redosThreshold: 'high');
@@ -337,6 +362,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertIsArray($optimizations);
     }
 
+    #[Test]
     public function test_ignore_patterns_with_redos(): void
     {
         $service = $this->createService(

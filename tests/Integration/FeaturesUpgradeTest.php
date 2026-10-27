@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration;
 
 use PHPRegex\Explain\MermaidRenderer;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -36,6 +37,7 @@ final class FeaturesUpgradeTest extends TestCase
     /**
      * Test MermaidVisitor generates valid Mermaid syntax.
      */
+    #[Test]
     public function test_mermaid_visitor_generates_valid_syntax(): void
     {
         $mermaidOutput = $this->visualize('/abc/');
@@ -53,6 +55,7 @@ final class FeaturesUpgradeTest extends TestCase
     /**
      * Test MermaidVisitor output for simple pattern.
      */
+    #[Test]
     public function test_mermaid_visitor_simple_pattern(): void
     {
         $mermaidOutput = $this->visualize('/test/');
@@ -65,6 +68,7 @@ final class FeaturesUpgradeTest extends TestCase
     /**
      * Test MermaidVisitor with complex pattern (group + quantifier).
      */
+    #[Test]
     public function test_mermaid_visitor_complex_pattern(): void
     {
         $mermaidOutput = $this->visualize('/(abc)+/');
@@ -77,6 +81,7 @@ final class FeaturesUpgradeTest extends TestCase
     /**
      * Test MermaidRenderer integrates with parser.
      */
+    #[Test]
     public function test_regex_visualize_integration(): void
     {
         $visualization = $this->visualize('/[a-z]+/');
@@ -89,6 +94,7 @@ final class FeaturesUpgradeTest extends TestCase
     /**
      * Test MermaidRenderer with multiple alternatives.
      */
+    #[Test]
     public function test_regex_visualize_alternation(): void
     {
         $visualization = $this->visualize('/(cat|dog|bird)/');
@@ -100,6 +106,7 @@ final class FeaturesUpgradeTest extends TestCase
     /**
      * Test MermaidVisitor handles all node types.
      */
+    #[Test]
     public function test_mermaid_visitor_comprehensive_node_types(): void
     {
         // Complex pattern with multiple node types

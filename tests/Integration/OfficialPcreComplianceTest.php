@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -25,6 +26,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class OfficialPcreComplianceTest extends TestCase
 {
+    #[Test]
     #[DataProvider('providePcrePatterns')]
     public function test_pattern_compliance(string $pattern): void
     {

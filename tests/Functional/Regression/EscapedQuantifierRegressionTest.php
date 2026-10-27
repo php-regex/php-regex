@@ -15,28 +15,33 @@ namespace PHPRegex\Tests\Functional\Regression;
 
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class EscapedQuantifierRegressionTest extends TestCase
 {
+    #[Test]
     public function test_escaped_literal_plus(): void
     {
         // Test that escaped + is preserved
         $this->assertSame('#^application/(?:\w+\+)+json$#i', $this->compile('#^application/(?:\w+\+)+json$#i'));
     }
 
+    #[Test]
     public function test_escaped_literal_star(): void
     {
         // Test that escaped * is preserved
         $this->assertSame('/1 \* 1 = 1/', $this->compile('/1 \* 1 = 1/'));
     }
 
+    #[Test]
     public function test_escaped_literal_dot(): void
     {
         // Test that escaped . is preserved
         $this->assertSame('/file\.txt/', $this->compile('/file\.txt/'));
     }
 
+    #[Test]
     public function test_escaped_literal_question(): void
     {
         // Test that escaped ? is preserved

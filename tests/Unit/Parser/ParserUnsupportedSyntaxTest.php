@@ -18,6 +18,7 @@ use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ParserUnsupportedSyntaxTest extends TestCase
@@ -27,6 +28,7 @@ final class ParserUnsupportedSyntaxTest extends TestCase
     /**
      * Teste la syntaxe de backreference nommée (?P=name).
      */
+    #[Test]
     public function test_python_named_backref_syntax(): void
     {
         $regex = Regex::create();
@@ -42,6 +44,7 @@ final class ParserUnsupportedSyntaxTest extends TestCase
      * Teste une syntaxe invalide après (?P.
      * Couvre le throw final du bloc (?P...).
      */
+    #[Test]
     public function test_invalid_p_group_syntax(): void
     {
         $regex = Regex::create();
@@ -56,6 +59,7 @@ final class ParserUnsupportedSyntaxTest extends TestCase
      * Teste une conditionnelle avec un lookaround invalide (ex: (? (?~...) )
      * Couvre les "else { throw ... }" dans la détection des lookarounds conditionnels.
      */
+    #[Test]
     public function test_conditional_invalid_lookaround_char(): void
     {
         $regex = Regex::create();
@@ -70,6 +74,7 @@ final class ParserUnsupportedSyntaxTest extends TestCase
     /**
      * Teste un conditionnel (?<...) qui n'est ni un lookbehind ni une named ref valide.
      */
+    #[Test]
     public function test_conditional_invalid_lookbehind_syntax(): void
     {
         $regex = Regex::create();

@@ -157,6 +157,7 @@ final class PhpUnitPresetTest extends TestCase
 
             final class ThingTest extends TestCase
             {
+                #[Test]
                 public function test_thing(object $helper): void
                 {
                     $helper->assertMatchesRegularExpression('/on-a-variable/', 'x');
@@ -182,6 +183,7 @@ final class PhpUnitPresetTest extends TestCase
 
             final class ThingTest extends TestCase
             {
+                #[Test]
                 public function test_thing(): void
                 {
                     $this->assertMatchesRegularExpression('/off/', 'x');
@@ -208,6 +210,7 @@ final class PhpUnitPresetTest extends TestCase
             {
                 private const SLUG = '/resolved-in-test/';
 
+                #[Test]
                 public function test_thing(): void
                 {
                     $this->assertMatchesRegularExpression(self::SLUG, 'x');

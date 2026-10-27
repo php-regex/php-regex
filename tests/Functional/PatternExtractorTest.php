@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional;
 
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -34,6 +35,7 @@ final class PatternExtractorTest extends TestCase
     /**
      * Test that SQL queries are NOT detected as regex patterns.
      */
+    #[Test]
     public function test_sql_queries_are_not_detected(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/sql_query.php';
@@ -46,6 +48,7 @@ final class PatternExtractorTest extends TestCase
     /**
      * Test that HTML fragments are NOT detected as regex patterns.
      */
+    #[Test]
     public function test_html_fragments_are_not_detected(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/html_fragment.php';
@@ -58,6 +61,7 @@ final class PatternExtractorTest extends TestCase
     /**
      * Test that CSS hex colors are NOT detected as regex patterns.
      */
+    #[Test]
     public function test_css_hex_colors_are_not_detected(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/css_color.php';
@@ -70,6 +74,7 @@ final class PatternExtractorTest extends TestCase
     /**
      * Test that simple text strings are NOT detected as regex patterns.
      */
+    #[Test]
     public function test_simple_text_is_not_detected(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/simple_text.php';
@@ -82,6 +87,7 @@ final class PatternExtractorTest extends TestCase
     /**
      * Test that concatenated patterns are NOT detected (cannot be validated statically).
      */
+    #[Test]
     public function test_concatenated_patterns_are_not_detected(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/concatenated_pattern.php';
@@ -94,6 +100,7 @@ final class PatternExtractorTest extends TestCase
     /**
      * Test that preg_match with a valid pattern IS detected.
      */
+    #[Test]
     public function test_preg_match_is_detected(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/valid_preg_match.php';
@@ -108,6 +115,7 @@ final class PatternExtractorTest extends TestCase
     /**
      * Test that preg_replace with valid patterns IS detected.
      */
+    #[Test]
     public function test_preg_replace_is_detected(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/valid_preg_replace.php';
@@ -122,6 +130,7 @@ final class PatternExtractorTest extends TestCase
     /**
      * Test that custom functions can be configured for detection.
      */
+    #[Test]
     public function test_custom_functions_are_detected(): void
     {
         $extractor = new TokenBasedExtractionStrategy(['customRegexCheck']);
@@ -138,6 +147,7 @@ final class PatternExtractorTest extends TestCase
     /**
      * Test that custom static methods can be configured for detection.
      */
+    #[Test]
     public function test_custom_static_methods_are_detected(): void
     {
         $extractor = new TokenBasedExtractionStrategy(['MyClass::customRegexCheck']);
@@ -154,6 +164,7 @@ final class PatternExtractorTest extends TestCase
     /**
      * Test that multiple preg functions in one file are all detected.
      */
+    #[Test]
     public function test_multiple_preg_functions_are_detected(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/multiple_preg_functions.php';
@@ -169,6 +180,7 @@ final class PatternExtractorTest extends TestCase
     /**
      * Test mixed file with both regex and non-regex strings.
      */
+    #[Test]
     public function test_mixed_file_only_detects_regex(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/mixed_content.php';
@@ -185,6 +197,7 @@ final class PatternExtractorTest extends TestCase
      * patterns with non-slash delimiters (e.g., Symfony's JSON content-type
      * check using "{...}i").
      */
+    #[Test]
     public function test_escaped_plus_quantifier_is_preserved(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/escaped_quantifier.php';
@@ -199,6 +212,7 @@ final class PatternExtractorTest extends TestCase
      * Test that preg_quote arguments are NOT detected as regex patterns.
      * preg_quote takes a raw string, not a regex pattern.
      */
+    #[Test]
     public function test_preg_quote_is_ignored(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/preg_quote_call.php';
@@ -211,6 +225,7 @@ final class PatternExtractorTest extends TestCase
     /**
      * Test that strings passed to preg_* are extracted even if invalid.
      */
+    #[Test]
     public function test_invalid_delimiters_are_extracted(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/invalid_delimiter.php';
@@ -228,6 +243,7 @@ final class PatternExtractorTest extends TestCase
      * A NUL byte in a comment is valid PHP: the file is read as PHP reads
      * it, and the pattern after the NUL is found where it stands.
      */
+    #[Test]
     public function test_a_nul_byte_in_a_comment_hides_no_pattern(): void
     {
         $fixtureFile = __DIR__.'/../Fixtures/Functional/nul_byte_in_comment.php';

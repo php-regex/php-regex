@@ -15,10 +15,12 @@ namespace PHPRegex\Tests\Unit\Node;
 
 use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LimitMatchNodeTest extends TestCase
 {
+    #[Test]
     public function test_constructor_and_getters(): void
     {
         $node = new LimitMatchNode(1000, 5, 20);
@@ -28,6 +30,7 @@ final class LimitMatchNodeTest extends TestCase
         $this->assertSame(20, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_limit_match_with_different_values(): void
     {
         $node = new LimitMatchNode(100, 10, 30);
@@ -37,6 +40,7 @@ final class LimitMatchNodeTest extends TestCase
         $this->assertSame(30, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_limit_match_with_zero(): void
     {
         $node = new LimitMatchNode(0, 0, 15);
@@ -46,6 +50,7 @@ final class LimitMatchNodeTest extends TestCase
         $this->assertSame(15, $node->getEndPosition());
     }
 
+    #[Test]
     public function test_accept_visitor_calls_visit_limit_match(): void
     {
         $node = new LimitMatchNode(500, 0, 10);
