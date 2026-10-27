@@ -21,6 +21,7 @@ use PHPRegex\Parser\Analysis\GroupNumberingCollector;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Analysis\RequiredLiteralAnalyzer;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Transpiler\Transpiler;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -53,12 +54,27 @@ final class ParameterNamesTest extends TestCase
 
     /**
      * The dialects a transpiler knows are the library's: its constructor
-     * takes the parser alone.
+     * takes the parser alone, and builds the default one when none is given.
      */
     #[Test]
     public function test_the_transpiler_takes_the_parser_alone(): void
     {
-        $this->assertSame(1, (new \ReflectionMethod(Transpiler::class, '__construct'))->getNumberOfParameters());
+        $parameters = (new \ReflectionMethod(Transpiler::class, '__construct'))->getParameters();
+
+        $this->assertCount(1, $parameters);
+        $this->assertSame('?'.RegexParser::class, (string) $parameters[0]->getType());
+        $this->assertTrue($parameters[0]->isDefaultValueAvailable());
+        $this->assertNull($parameters[0]->getDefaultValue());
+    }
+
+    #[Test]
+    public function test_the_transpiler_without_a_parser_reads_as_the_default_one(): void
+    {
+        $this->assertEquals(
+            (new Transpiler(RegexParser::create()))->transpile('/(?P<word>\\w+)\\k{word}/i', 'javascript'),
+            (new Transpiler())->transpile('/(?P<word>\\w+)\\k{word}/i', 'javascript'),
+        );
+        $this->assertSame('/(?<word>\\w+)\\k<word>/i', (new Transpiler())->transpile('/(?P<word>\\w+)\\k{word}/i', 'javascript')->literal);
     }
 
     /**

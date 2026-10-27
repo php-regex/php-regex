@@ -25,10 +25,16 @@ use PHPRegex\Transpiler\Target\TargetRegistry;
  */
 final class Transpiler
 {
+    private readonly RegexParser $parser;
+
     private readonly TargetRegistry $targets;
 
-    public function __construct(private readonly RegexParser $parser)
+    /**
+     * @param RegexParser|null $parser Reads every pattern; null builds RegexParser::create()
+     */
+    public function __construct(?RegexParser $parser = null)
     {
+        $this->parser = $parser ?? RegexParser::create();
         $this->targets = new TargetRegistry();
     }
 

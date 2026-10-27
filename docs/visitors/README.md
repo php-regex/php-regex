@@ -221,12 +221,11 @@ changing behavior. It is internal: call `Regex::optimize()` (or
 
 ```php
 use PHPRegex\Optimizer\Optimizer;
-use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 
 echo Regex::create()->optimize('/(?:foo)/')->optimized;  // '/foo/'
 
-$optimizer = new Optimizer(RegexParser::create());
+$optimizer = new Optimizer();
 echo $optimizer->optimize('/a{0,1}/')->optimized;  // '/a?/'
 ```
 

@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
  * The check of a rewrite builds no DFA a cache could keep: the match solver
  * builds a priority automaton per pattern, and the proof of a changed part
  * an automaton of that part alone. The optimizer takes its parser and
- * nothing else.
+ * nothing else, and builds the default one when none is given.
  */
 final class OptimizerConstructorTest extends TestCase
 {
@@ -33,7 +33,19 @@ final class OptimizerConstructorTest extends TestCase
         $parameters = (new \ReflectionMethod(Optimizer::class, '__construct'))->getParameters();
 
         $this->assertCount(1, $parameters);
-        $this->assertSame(RegexParser::class, (string) $parameters[0]->getType());
+        $this->assertSame('?'.RegexParser::class, (string) $parameters[0]->getType());
+        $this->assertTrue($parameters[0]->isDefaultValueAvailable());
+        $this->assertNull($parameters[0]->getDefaultValue());
+    }
+
+    #[Test]
+    public function test_the_optimizer_without_a_parser_reads_as_the_default_one(): void
+    {
+        $this->assertEquals(
+            (new Optimizer(RegexParser::create()))->optimize('/[0-9]+/'),
+            (new Optimizer())->optimize('/[0-9]+/'),
+        );
+        $this->assertSame('/\\d+/', (new Optimizer())->optimize('/[0-9]+/')->optimized);
     }
 
     /**

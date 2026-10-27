@@ -43,11 +43,17 @@ use PHPRegex\Parser\TraversalAction;
  */
 final class Optimizer
 {
+    private readonly RegexParser $parser;
+
     private readonly RewriteCheck $check;
 
-    public function __construct(private readonly RegexParser $parser)
+    /**
+     * @param RegexParser|null $parser Reads every pattern and judges every rewrite; null builds RegexParser::create()
+     */
+    public function __construct(?RegexParser $parser = null)
     {
-        $this->check = new RewriteCheck(new LanguageSolver($parser));
+        $this->parser = $parser ?? RegexParser::create();
+        $this->check = new RewriteCheck(new LanguageSolver($this->parser));
     }
 
     /**

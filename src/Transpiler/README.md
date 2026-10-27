@@ -55,10 +55,9 @@ Usage
 A PCRE pattern with a named group and a backreference, for a JavaScript codebase:
 
 ```php
-use PHPRegex\Parser\RegexParser;
 use PHPRegex\Transpiler\Transpiler;
 
-$transpiler = new Transpiler(RegexParser::create());
+$transpiler = new Transpiler();
 $result = $transpiler->transpile('/(?P<word>\w+)\k{word}/i', 'javascript');
 
 echo $result->literal;  // /(?<word>\w+)\k<word>/i
@@ -66,6 +65,10 @@ echo $result->literal;  // /(?<word>\w+)\k<word>/i
 // "$" also matches before a newline that ends the subject; JavaScript's does not.
 echo $transpiler->transpile('/^\d+$/', 'javascript')->literal; // /^\d+(?=\n?$)/
 ```
+
+Without a parser the transpiler reads with `RegexParser::create()`; pass the
+one your code reads with, as `new Transpiler($parser)`, to read the pattern for
+its target and limits.
 
 For Python, the literal is a raw string carrying the flags inline, and the constructor is a `re.compile()` call.
 Without `u` PCRE reads `\w`, `\d`, `\s`, `\b` and case in ASCII, so the pattern gains `re.ASCII`:

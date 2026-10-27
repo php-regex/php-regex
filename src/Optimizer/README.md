@@ -108,9 +108,8 @@ Usage
 
 ```php
 use PHPRegex\Optimizer\Optimizer;
-use PHPRegex\Parser\RegexParser;
 
-$optimizer = new Optimizer(RegexParser::create());
+$optimizer = new Optimizer();
 
 $result = $optimizer->optimize('/[0-9][0-9][0-9][0-9]/');
 
@@ -140,7 +139,9 @@ echo $optimizer->optimize('/abc|abd/', $options)->optimized;  // '/ab(?:c|d)/'
 The instance keeps the solver its automata checks ask: keep one instance for
 a batch of patterns rather than building one per call. The check of a
 rewrite builds no DFA to keep between calls, so the constructor takes the
-parser alone.
+parser alone, and that one is optional: without it the optimizer reads with
+`RegexParser::create()`. Pass the parser your code already reads with, as
+`new Optimizer($parser)`, to optimize for its target, cache and limits.
 
 To take the rewrite unproven, faster:
 
