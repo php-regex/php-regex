@@ -1060,7 +1060,46 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
 
     private function measureTextWidth(string $text): int
     {
-        return (int) (\strlen($text) * self::CHAR_WIDTH);
+        return self::columns($text) * self::CHAR_WIDTH;
+    }
+
+    /**
+     * The columns a monospace font gives a text: one a character of a UTF-8
+     * text, two a full-width one; one a byte of a text that is no UTF-8.
+     */
+    private static function columns(string $text): int
+    {
+        return mb_check_encoding($text, 'UTF-8') ? mb_strwidth($text, 'UTF-8') : \strlen($text);
+    }
+
+    /**
+     * A text cut into pieces of $columns columns at most, between two of its
+     * characters, or between two bytes of a text that is no UTF-8.
+     *
+     * @param positive-int $columns
+     *
+     * @return list<string>
+     */
+    private static function cut(string $text, int $columns): array
+    {
+        if (!mb_check_encoding($text, 'UTF-8')) {
+            return Bytes::split($text, $columns);
+        }
+
+        $pieces = [];
+        $piece = '';
+        foreach (mb_str_split($text, 1, 'UTF-8') as $character) {
+            if ('' !== $piece && self::columns($piece.$character) > $columns) {
+                $pieces[] = $piece;
+                $piece = '';
+            }
+            $piece .= $character;
+        }
+
+        // A text is never empty here: a label too long for one line.
+        $pieces[] = $piece;
+
+        return $pieces;
     }
 
     /**
@@ -1095,12 +1134,12 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
             return ['(empty)'];
         }
 
-        if (\strlen($label) <= self::MAX_LABEL_CHARS) {
+        if (self::columns($label) <= self::MAX_LABEL_CHARS) {
             return [$label];
         }
 
         if ($preserveWhitespace) {
-            return Bytes::split($label, self::MAX_LABEL_CHARS);
+            return self::cut($label, self::MAX_LABEL_CHARS);
         }
 
         $label = trim($label, " \t\n\r\0\x0B");
@@ -1114,7 +1153,7 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
 
         foreach ($words[0] ?? [] as $word) {
             $candidate = '' === $current ? $word : $current.' '.$word;
-            if (\strlen($candidate) <= self::MAX_LABEL_CHARS) {
+            if (self::columns($candidate) <= self::MAX_LABEL_CHARS) {
                 $current = $candidate;
 
                 continue;
@@ -1125,13 +1164,13 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
                 $current = '';
             }
 
-            if (\strlen($word) <= self::MAX_LABEL_CHARS) {
+            if (self::columns($word) <= self::MAX_LABEL_CHARS) {
                 $current = $word;
 
                 continue;
             }
 
-            $chunks = Bytes::split($word, self::MAX_LABEL_CHARS);
+            $chunks = self::cut($word, self::MAX_LABEL_CHARS);
             $lastIndex = \count($chunks) - 1;
             foreach ($chunks as $index => $chunk) {
                 if ($index === $lastIndex) {
