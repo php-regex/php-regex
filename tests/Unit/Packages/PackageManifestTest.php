@@ -117,7 +117,9 @@ final class PackageManifestTest extends TestCase
             'Transpiler\Target\TargetRegistry',
         ],
         'Explain' => ['Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Printer\DisplayEscaper', 'Parser\Engine\LibraryPcre'],
-        'Generator' => ['Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre', 'Parser\Cache\StaticCaches'],
+        // The generator draws a property as the running engine spells what
+        // the target means.
+        'Generator' => ['Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre', 'Parser\Cache\StaticCaches', 'Parser\Hir\ClassSetProvider'],
         // The library's own regexes run under the PCRE floor in every
         // package that runs one: the floor helper is the one shared
         // internal they all use for it.
@@ -182,6 +184,10 @@ final class PackageManifestTest extends TestCase
             // The verb the engine puts in front of the pattern, which the
             // witness replays swap for their own run of verbs.
             'Parser\Engine\NoJit',
+            // The tables of the target's locale, which a witness is asked
+            // under and which give a byte its other case, and the options a
+            // pattern opens with, "(*UCP)" among them.
+            'Parser\Engine\CharacterTables', 'Parser\Syntax\StartOptions',
         ],
         'Symfony' => [
             'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Console\ConsoleLintRequest',
