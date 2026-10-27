@@ -111,6 +111,8 @@ final class BacktrackProver
         /** @var array<int, list<int>|null> $reach */
         $reach = [];
         $best = null;
+        /** @var list<list<int>> $lookaroundPumps */
+        $lookaroundPumps = [];
         // A lookaround runs within the attempt that meets it: the bounds of
         // the searches add up, a ceiling for their product.
         $bound = 0;
@@ -150,6 +152,10 @@ final class BacktrackProver
                 continue;
             }
 
+            if (null !== $pnfa->parent && RedosComplexity::Polynomial === $verdict['complexity']) {
+                $lookaroundPumps[] = $verdict['pump'];
+            }
+
             $verdict['prefix'] = [...$reach[$index], ...$verdict['prefix']];
             if (null === $best || self::better($verdict, $best)) {
                 $best = $verdict;
@@ -178,6 +184,10 @@ final class BacktrackProver
 
         if ($best['approximated']) {
             throw ModelLimitException::approximated();
+        }
+
+        if (RedosComplexity::Polynomial === $best['complexity']) {
+            $best = $this->throughFailingLookaheads($regex, $searches, $target, $best, $lookaroundPumps);
         }
 
         $others = [];
@@ -310,6 +320,193 @@ final class BacktrackProver
         if (null !== $offset) {
             throw ModelLimitException::rereadLookaround($offset);
         }
+    }
+
+    /**
+     * A polynomial verdict raised by the work of the negative lookaheads a
+     * loop reads again. Each search alone misses that product: a body read
+     * at each step of a loop costs its own degree at each. Where the body
+     * fails, the engine reads all of it, then goes on past the lookahead,
+     * which holds: exactly the search built with its lookarounds in place,
+     * each body a branch tried first that ends nowhere. So the polynomial
+     * that search proves stands for the engine on a witness every body
+     * fails on from each position before its suffix (bodyFailsOn()): one of
+     * its rejecting suffixes is published, the first such. Its pump must be
+     * the pump of a lookahead's own polynomial, so that the body costs its
+     * degree on that witness, and not only on another word the chain reads.
+     * A positive lookahead or a lookbehind is read otherwise in place, and
+     * the verdict is then left as it is; so it is when that search runs out
+     * of budget, proves no higher degree, or finds no such witness.
+     *
+     * @param list<Pnfa>      $searches
+     * @param Verdict         $best
+     * @param list<list<int>> $lookaroundPumps the pumps of the lookarounds' own polynomials
+     *
+     * @return Verdict
+     */
+    private function throughFailingLookaheads(RegexNode $regex, array $searches, ?PcreTarget $target, array $best, array $lookaroundPumps): array
+    {
+        $loops = false;
+        $bodies = [];
+        foreach ($searches as $pnfa) {
+            if (null === $pnfa->parent) {
+                continue;
+            }
+
+            if ($pnfa->lookbehind || !$pnfa->negative) {
+                return $best;
+            }
+
+            $bodies[] = $pnfa;
+            $loops = $loops || [] !== array_diff($pnfa->loops, array_keys($pnfa->abstractedLoops));
+        }
+
+        if (!$loops) {
+            return $best;
+        }
+
+        $budget = new Budget($this->maxSteps, $this->maxStates);
+
+        try {
+            $inPlace = (new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff, $target, true))->build()[0];
+            $contexts = $inPlace->looksBehindStart
+                ? [ItemAutomaton::CONTEXT_START, ItemAutomaton::CONTEXT_WORD, ItemAutomaton::CONTEXT_NEWLINE, ItemAutomaton::CONTEXT_OTHER]
+                : [ItemAutomaton::CONTEXT_START];
+            $verdict = (new AmbiguityFinder(new ItemAutomaton($inPlace, $budget, $contexts), $budget))->find(self::requiredLiterals($regex->pattern, $inPlace->unicode));
+            if (null === $verdict || RedosComplexity::Polynomial !== $verdict['complexity'] || $verdict['approximated'] || null !== $verdict['unwitnessed']
+                || ($verdict['degree'] ?? 0) <= ($best['degree'] ?? 0) || !\in_array($verdict['pump'], $lookaroundPumps, true)) {
+                return $best;
+            }
+
+            foreach ([$verdict['published'], $verdict['suffix'], ...$verdict['alternatives']] as $suffix) {
+                $fails = true;
+                foreach ($bodies as $body) {
+                    $fails = $fails && self::bodyFailsOn($body, $verdict['prefix'], $verdict['pump'], $suffix, $budget);
+                }
+
+                if ($fails) {
+                    $verdict['published'] = $suffix;
+
+                    return $verdict;
+                }
+            }
+        } catch (ModelLimitException) {
+            return $best;
+        }
+
+        return $best;
+    }
+
+    /**
+     * Whether the body of a lookahead matches from no position of the
+     * prefix and the pumps, whatever the number of pumps, the suffix after
+     * them. Every path of the body is followed at once, one started at each
+     * position; a check the model does not decide (an anchor, a boundary, a
+     * lookaround in the body) is taken to hold, so that a match is found
+     * wherever the engine could find one. The paths alive where a pump
+     * starts are the same set again after a few pumps: once one comes
+     * back, every number of pumps has been read.
+     *
+     * @param list<int> $prefix
+     * @param list<int> $pump
+     * @param list<int> $suffix
+     *
+     * @throws ModelLimitException
+     */
+    private static function bodyFailsOn(Pnfa $body, array $prefix, array $pump, array $suffix, Budget $budget): bool
+    {
+        $alive = [];
+        foreach ($prefix as $character) {
+            $alive = self::readBody($body, [...$alive, $body->start], $character, $budget);
+            if (null === $alive) {
+                return false;
+            }
+        }
+
+        $seen = [];
+        while (!isset($seen[$key = implode(',', $alive)])) {
+            $seen[$key] = true;
+            $after = $alive;
+            foreach ($suffix as $character) {
+                $after = null === $after ? null : self::readBody($body, $after, $character, $budget);
+            }
+
+            if (null === $after || null === self::readBody($body, $after, null, $budget)) {
+                return false;
+            }
+
+            foreach ($pump as $character) {
+                $alive = self::readBody($body, [...$alive, $body->start], $character, $budget);
+                if (null === $alive) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The states the paths of the body stand at after reading the
+     * character, from those they stand at before it, sorted; null once one
+     * of them succeeds before it. The end of the subject is read as null.
+     *
+     * @param list<int> $states
+     *
+     * @throws ModelLimitException
+     *
+     * @return list<int>|null
+     */
+    private static function readBody(Pnfa $body, array $states, ?int $character, Budget $budget): ?array
+    {
+        $seen = [];
+        $after = [];
+        while ([] !== $states) {
+            $state = array_pop($states);
+            if (isset($seen[$state])) {
+                continue;
+            }
+
+            $seen[$state] = true;
+            $budget->step();
+            switch ($body->kinds[$state]) {
+                case Pnfa::FINAL:
+                    return null;
+
+                case Pnfa::EPSILON:
+                    array_push($states, ...$body->targets[$state]);
+
+                    break;
+
+                case Pnfa::LEAVE:
+                    $states[] = $body->next[$state];
+                    $states[] = $body->exits[$state];
+
+                    break;
+
+                case Pnfa::CHAR:
+                    if (null !== $character && $body->sets[$state]->contains($character)) {
+                        $after[$body->next[$state]] = true;
+                    }
+
+                    break;
+
+                case Pnfa::PEEK:
+                    if (null === $character ? $body->ends[$state] : $body->sets[$state]->contains($character)) {
+                        $states[] = $body->next[$state];
+                    }
+
+                    break;
+
+                default:
+                    $states[] = $body->next[$state];
+            }
+        }
+
+        $after = array_keys($after);
+        sort($after);
+
+        return $after;
     }
 
     /**
