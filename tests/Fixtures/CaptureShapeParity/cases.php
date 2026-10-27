@@ -596,4 +596,9 @@ return [
     ['source' => 'parity: options through a folded conditional', 'pattern' => '/(?(R&n)a(?i)|b)(?<n>c)/', 'subjects' => ['Bc']],
     ['source' => 'parity: options through a folded conditional', 'pattern' => '/^(?(R)a(?m)|b$)/', 'subjects' => ["b\nzz"]],
     ['source' => 'parity: options through a folded conditional', 'pattern' => '/^(?(1)(a)(?m)|b$)/', 'subjects' => ["b\nzz"]],
+
+    // The groups of a substring scan are numbered where they stand (PCRE2 10.45):
+    // an engine that does not compile the pattern skips the row.
+    ['source' => 'parity: substring scan', 'pattern' => '/(a)(*scs:(1)(a))(b)/', 'subjects' => ['ab']],
+    ['source' => 'parity: substring scan', 'pattern' => '/(a)(*scs:(1)(a))(?(2)(b)|c)/', 'subjects' => ['ab']],
 ];

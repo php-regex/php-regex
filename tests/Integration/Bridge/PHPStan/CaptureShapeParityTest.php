@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
+use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Unit\Parser\CaptureShapeAnalyzerTest;
@@ -57,7 +59,7 @@ final class CaptureShapeParityTest extends PHPStanTestCase
     {
         $this->requiresCompile($pattern, $source);
 
-        $shape = (new CaptureShapeAnalyzer())->analyze(self::parityParser()->parse($pattern));
+        $shape = self::shapeOf($pattern);
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
 
         $failures = [];
@@ -110,7 +112,7 @@ final class CaptureShapeParityTest extends PHPStanTestCase
     {
         $this->requiresCompile($pattern, $source);
 
-        $shape = (new CaptureShapeAnalyzer())->analyze(self::parityParser()->parse($pattern));
+        $shape = self::shapeOf($pattern);
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
         $replayed = EngineMatches::matchAllSubjects($pattern, $subjects);
 
@@ -167,7 +169,7 @@ final class CaptureShapeParityTest extends PHPStanTestCase
     {
         $this->requiresCompile($pattern, $source);
 
-        $shape = (new CaptureShapeAnalyzer())->analyze(self::parityParser()->parse($pattern));
+        $shape = self::shapeOf($pattern);
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
         $replayed = array_values(array_unique([implode('', $subjects), ...$subjects]));
 
@@ -268,7 +270,7 @@ final class CaptureShapeParityTest extends PHPStanTestCase
     #[DataProvider('provideCorpus')]
     public function test_parity_corpus_shape_is_the_type_phpstan_prints(string $source, string $pattern, array $subjects): void
     {
-        $shape = (new CaptureShapeAnalyzer())->analyze(self::parityParser()->parse($pattern));
+        $shape = self::shapeOf($pattern);
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
 
         $differences = [];
@@ -296,11 +298,13 @@ final class CaptureShapeParityTest extends PHPStanTestCase
     }
 
     /**
-     * A fixed target, as the digests are read with one: the shapes this
-     * parity holds must not change with the PCRE2 running the tests.
+     * The shape the running engine is held to: the pattern parsed, and its
+     * version conditions read, for the PHP and the PCRE2 that run the
+     * subjects. A row of syntax newer than the running engine compiles
+     * nowhere here and is skipped. The digests keep a fixed target.
      */
-    private static function parityParser(): RegexParser
+    private static function shapeOf(string $pattern): CaptureShape
     {
-        return RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']);
+        return (new CaptureShapeAnalyzer(PcreTarget::runtime()))->analyze(RegexParser::create()->parse($pattern));
     }
 }

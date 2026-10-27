@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Psalm\MatchesType;
 use PHPRegex\Tests\Integration\Bridge\PHPStan\EngineMatches;
@@ -106,7 +107,7 @@ final class MatchesTypeTest extends TestCase
     {
         $this->requiresCompile($pattern, $source);
 
-        $shape = self::shape($pattern);
+        $shape = self::runningShape($pattern);
 
         $failures = [];
         foreach (EngineMatches::FLAG_SETS as $flags => $flagNames) {
@@ -131,7 +132,7 @@ final class MatchesTypeTest extends TestCase
     {
         $this->requiresCompile($pattern, $source);
 
-        $shape = self::shape($pattern);
+        $shape = self::runningShape($pattern);
 
         $failures = [];
         foreach (EngineMatches::MATCH_ALL_FLAG_SETS as $flags => $flagNames) {
@@ -160,7 +161,7 @@ final class MatchesTypeTest extends TestCase
     {
         $this->requiresCompile($pattern, $source);
 
-        $shape = self::shape($pattern);
+        $shape = self::runningShape($pattern);
 
         $found = [];
         foreach (EngineMatches::FLAG_SETS as $flags => $flagNames) {
@@ -364,6 +365,18 @@ final class MatchesTypeTest extends TestCase
         // A fixed target, as the digests are read with one: the types this
         // parity holds must not change with the PCRE2 running the tests.
         return (new CaptureShapeAnalyzer())->analyze(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44'])->parse($pattern));
+    }
+
+    /**
+     * The shape the running engine is held to: the pattern parsed, and its
+     * version conditions read, for the PHP and the PCRE2 that run the
+     * subjects.
+     */
+    private static function runningShape(string $pattern): CaptureShape
+    {
+        PsalmTypes::codebase();
+
+        return (new CaptureShapeAnalyzer(PcreTarget::runtime()))->analyze(RegexParser::create()->parse($pattern));
     }
 
     private function assertExactly(string $expected, Union $built): void
