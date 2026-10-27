@@ -39,7 +39,6 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreTarget;
-use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Redos\Exception\ModelLimitException;
 
 /**
@@ -214,8 +213,10 @@ final class PnfaBuilder
     private readonly bool $scriptsAlone;
 
     /**
-     * The options the pattern opens with, as written: every set is read
-     * under them.
+     * The "(*UCP)" the pattern opens with, as written, every set read under
+     * it; empty when it opens with no verb, or with another one beside it,
+     * which is then outside the model: no probe is ever written under
+     * "(*UTF)" without u, which would read bytes that are not UTF-8.
      */
     private readonly string $startOptions;
 
@@ -242,7 +243,7 @@ final class PnfaBuilder
         $this->unicode = str_contains($regex->flags, 'u');
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
         $this->source = $regex->source ?? '';
-        $this->startOptions = StartOptions::of($this->source);
+        $this->startOptions = self::leadingUcp($regex);
         $this->collectAbstractions($regex->pattern);
     }
 
@@ -255,12 +256,6 @@ final class PnfaBuilder
      */
     public function build(): array
     {
-        // Checked before any set is asked for: an engine reading the probe
-        // under "(*UTF)" without u would read bytes that are not UTF-8.
-        if ([] !== array_diff(StartOptions::items($this->source), ['UCP'])) {
-            throw ModelLimitException::outOfModel('A start option other than (*UCP)');
-        }
-
         $flags = 0;
         foreach ([['i', self::CASELESS], ['s', self::DOT_ALL], ['m', self::MULTILINE], ['x', self::EXTENDED], ['U', self::UNGREEDY], ['r', self::RESTRICT]] as [$letter, $bit]) {
             if (str_contains($this->regex->flags, $letter)) {
@@ -305,6 +300,29 @@ final class PnfaBuilder
     public function hasApproximatedSets(): bool
     {
         return null !== $this->anyCharacter;
+    }
+
+    /**
+     * The verbs the pattern opens with, one after the other from its first
+     * byte, as written, when each is "(*UCP)"; empty otherwise.
+     */
+    private static function leadingUcp(RegexNode $regex): string
+    {
+        $pattern = $regex->pattern;
+        $end = 0;
+        foreach ($pattern instanceof SequenceNode ? $pattern->children : [$pattern] as $child) {
+            if (!$child instanceof PcreVerbNode || $child->getStartPosition() !== $end) {
+                break;
+            }
+
+            if ('UCP' !== $child->verb) {
+                return '';
+            }
+
+            $end = $child->getEndPosition();
+        }
+
+        return substr($regex->source ?? '', 0, $end);
     }
 
     private function node(NodeInterface $node, int $next, int $flags, Pnfa $pnfa, int $search): int

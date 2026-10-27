@@ -69,6 +69,8 @@ final class RedosStartUcpTest extends TestCase
     {
         // Engine: 64 -> 1 024 steps; É is a word character under UCP.
         yield 'word class and E acute overlap' => ['pattern' => '/(*UCP)(?:\w|\xC9)+$/', 'unit' => "\xC9", 'suffix' => '!', 'exponential' => true];
+        // Engine: the same, the option written twice.
+        yield 'the option written twice' => ['pattern' => '/(*UCP)(*UCP)(?:\w|\xC9)+$/', 'unit' => "\xC9", 'suffix' => '!', 'exponential' => true];
         // Engine: 64 -> 1 024; é and É fold under UCP, not without it.
         yield 'caseless E acute folds' => ['pattern' => '/(*UCP)^(?:\xE9|\xC9)+$/i', 'unit' => "\xC9", 'suffix' => '!', 'exponential' => true];
         // Engine: ª is a letter, so a word character, under UCP.
@@ -121,6 +123,8 @@ final class RedosStartUcpTest extends TestCase
         yield 'a newline convention before it' => ['pattern' => '/(*ANY)(*UCP)a+$/'];
         yield 'UTF before it' => ['pattern' => '/(*UTF)(*UCP)\w+$/'];
         yield 'a match limit after it' => ['pattern' => '/(*UCP)(*LIMIT_MATCH=1000)a+$/'];
+        yield 'a match limit before it' => ['pattern' => '/(*LIMIT_MATCH=1000)(*UCP)a+$/'];
+        yield 'no JIT before it' => ['pattern' => '/(*NO_JIT)(*UCP)a+$/'];
         yield 'a commit after it' => ['pattern' => '/(*UCP)a(*COMMIT)a+$/'];
         yield 'a skip after it' => ['pattern' => '/(*UCP)a+(*SKIP)b/'];
         yield 'a fail after it' => ['pattern' => '/(*UCP)a+(*FAIL)|b/'];
