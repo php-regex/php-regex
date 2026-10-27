@@ -49,7 +49,6 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
-use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -61,6 +60,19 @@ use PHPRegex\Parser\Text\Ascii;
  */
 final class RedosProfiler extends AbstractNodeVisitor
 {
+    /**
+     * The options PCRE2 reads in the opening run of a pattern, its limits
+     * aside: each lets the attempt through where it stands.
+     */
+    private const OPENING_OPTIONS = [
+        'UTF' => true, 'UTF8' => true, 'UCP' => true,
+        'CR' => true, 'LF' => true, 'CRLF' => true, 'ANYCRLF' => true, 'ANY' => true, 'NUL' => true,
+        'BSR_ANYCRLF' => true, 'BSR_UNICODE' => true,
+        'NOTEMPTY' => true, 'NOTEMPTY_ATSTART' => true,
+        'NO_AUTO_POSSESS' => true, 'NO_DOTSTAR_ANCHOR' => true, 'NO_JIT' => true, 'NO_START_OPT' => true,
+        'CASELESS_RESTRICT' => true, 'TURKISH_CASING' => true,
+    ];
+
     private int $unboundedQuantifierDepth = 0;
 
     /**
@@ -1352,6 +1364,6 @@ final class RedosProfiler extends AbstractNodeVisitor
             || $node instanceof CommentNode
             || $node instanceof DefineNode
             || $node instanceof KeepNode
-            || ($node instanceof PcreVerbNode && isset(StartOptions::NAMES[$node->verb]));
+            || ($node instanceof PcreVerbNode && isset(self::OPENING_OPTIONS[$node->verb]));
     }
 }
