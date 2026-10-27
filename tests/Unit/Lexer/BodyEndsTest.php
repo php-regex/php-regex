@@ -86,6 +86,22 @@ final class BodyEndsTest extends TestCase
     }
 
     /**
+     * A backslash that ends the text read starts no item, in the body or in
+     * one of its classes: the body never closes there. PHP cannot hand PCRE
+     * such a pattern, the backslash escaping the delimiter, but a part of a
+     * pattern the parser tokenizes may end so.
+     */
+    #[Test]
+    public function test_a_backslash_ending_the_text_leaves_the_body_unclosed(): void
+    {
+        $this->assertFalse(@preg_match(self::delimited('(*pla:(?#)\\'), ''));
+        $this->assertStringContainsString('No ending delimiter', error_get_last()['message'] ?? '');
+
+        $this->assertNull((new BodyEnds())->assertionEnd(self::text('(*pla:(?#)\\'), 0, '(*pla:', false, false));
+        $this->assertNull((new BodyEnds())->assertionEnd(self::text('(*pla:[)\\'), 0, '(*pla:', false, false));
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, pcreMessage: string}>
      */
     public static function provideUnclosedBodies(): iterable
@@ -124,6 +140,11 @@ final class BodyEndsTest extends TestCase
         $this->assertSame(9, BodyEnds::extendedClassEnd(self::text('(?[[]a]])'), 0));
         $this->assertSame(6, BodyEnds::extendedClassEnd(self::text('(?[a+b'), 0));
         $this->assertSame(6, BodyEnds::extendedClassEnd(self::text('(?[(a))'), 0));
+    }
+
+    private static function delimited(string $pattern): string
+    {
+        return '/'.$pattern.'/';
     }
 
     private static function text(string $pattern): PatternText
