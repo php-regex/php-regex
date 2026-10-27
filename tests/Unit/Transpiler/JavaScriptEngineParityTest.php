@@ -121,6 +121,18 @@ final class JavaScriptEngineParityTest extends TestCase
         yield 'a backreference before a digit' => ['pattern' => '/(a)\1 2/x', 'literal' => '/(a)(?:\1)2/', 'subject' => 'aa2', 'spans' => [[0, 3], [0, 1]]];
         yield 'a backreference to a group always set' => ['pattern' => '/(a)(?:b|c)\1/', 'literal' => '/(a)(?:b|c)\1/', 'subject' => 'aca', 'spans' => [[0, 3], [0, 1]]];
         yield 'a group set by each repetition' => ['pattern' => '/(?:(a)b)+/', 'literal' => '/(?:(a)b)+/', 'subject' => 'abab', 'spans' => [[0, 4], [2, 3]]];
+        // Where a repetition may match empty, PCRE takes one empty repetition
+        // and stops, JavaScript takes none: the two agree where the empty one
+        // is tried last and sets no group.
+        yield 'a repeated reference to a group that cannot match empty' => ['pattern' => '/(a)(\1)*b/', 'literal' => '/(a)(\1)*b/', 'subject' => 'aaab', 'spans' => [[0, 4], [0, 1], [2, 3]]];
+        yield 'a counted reference to a group that cannot match empty' => ['pattern' => '/\A(abc|def)=(\1){2,3}\Z/', 'literal' => '/^(abc|def)=(\1){2,3}(?=\n?$)/', 'subject' => "def=defdefdef\n", 'spans' => [[0, 13], [0, 3], [10, 13]]];
+        yield 'an optional group whose empty match sets no group' => ['pattern' => '/(?:(a)|b?)?c/', 'literal' => '/(?:(a)|b?)?c/', 'subject' => 'c', 'spans' => [[0, 1], null]];
+        yield 'an optional group whose empty match sets no group, counted' => ['pattern' => '/(?:(a)|b?){0,1}c/', 'literal' => '/(?:(a)|b?){0,1}c/', 'subject' => 'bc', 'spans' => [[0, 2], null]];
+        yield 'a lazy repetition in an alternative that cannot match empty' => ['pattern' => '/(?:x*?y|z?)*w/', 'literal' => '/(?:x*?y|z?)*w/', 'subject' => 'xyzw', 'spans' => [[0, 4]]];
+        yield 'a lazy repetition in a lookahead' => ['pattern' => '/(?:(?=.*?b)a|c?)*b/', 'literal' => '/(?:(?=[^\n]*?b)a|c?)*b/', 'subject' => 'acab', 'spans' => [[0, 4]]];
+        yield 'alternatives that all match empty' => ['pattern' => '/a(?:||)?b/', 'literal' => '/a(?:||)?b/', 'subject' => 'ab', 'spans' => [[0, 2]]];
+        yield 'an empty alternative before a lookahead' => ['pattern' => '/(?:a?|(?=b))*b/', 'literal' => '/(?:a?|(?=b))*b/', 'subject' => 'aab', 'spans' => [[0, 3]]];
+        yield 'a lookahead before an optional item' => ['pattern' => '/(?:(?:a|(?=b))c?)*/', 'literal' => '/(?:(?:a|(?=b))c?)*/', 'subject' => 'bc', 'spans' => [[0, 0]]];
     }
 
     /**
@@ -197,6 +209,22 @@ final class JavaScriptEngineParityTest extends TestCase
         yield 'a group in a repetition whose body may match empty' => [
             'pattern' => '/((?:a?)+)*/', 'message' => 'A capturing group in a repetition that may match empty cannot be carried into JavaScript',
             'subject' => 'b', 'spans' => [[0, 0], [0, 0]], 'javaScript' => 'leaves the group unset',
+        ];
+        yield 'an optional group that may match empty' => [
+            'pattern' => '/(a?)?c/', 'message' => 'A capturing group in a repetition that may match empty cannot be carried into JavaScript',
+            'subject' => 'c', 'spans' => [[0, 1], [0, 0]], 'javaScript' => 'leaves the group unset: the empty repetition is refused',
+        ];
+        yield 'a repeated reference to a group that may match empty' => [
+            'pattern' => '/(a?)(\1)*b/', 'message' => 'A capturing group in a repetition that may match empty cannot be carried into JavaScript',
+            'subject' => 'b', 'spans' => [[0, 1], [0, 0], [0, 0]], 'javaScript' => 'leaves group 2 unset: the empty repetition is refused',
+        ];
+        yield 'an empty alternative after an optional item' => [
+            'pattern' => '/(?:c?(?:|a))*/', 'message' => 'A repetition that may match empty before it tries a longer match cannot be carried into JavaScript',
+            'subject' => 'a', 'spans' => [[0, 0]], 'javaScript' => 'matches "a"',
+        ];
+        yield 'a lazy repetition nested in a greedy one' => [
+            'pattern' => '/(?:(?:a*)*?)*/', 'message' => 'A repetition that may match empty before it tries a longer match cannot be carried into JavaScript',
+            'subject' => 'aa', 'spans' => [[0, 0]], 'javaScript' => 'matches "aa"',
         ];
         yield 'a named group alone in a lookahead that may be left out' => [
             'pattern' => '/(?=(?<n>a))?a/', 'message' => 'A capturing group in an assertion that may be left out cannot be carried into this target',

@@ -15,10 +15,13 @@ namespace PHPRegex\Transpiler\Target\JavaScript;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
@@ -45,7 +48,9 @@ use PHPRegex\Parser\Node\UnicodePropNode;
  *   minimum, where PCRE takes one and stops: "(a?)+" on "a" captures the
  *   empty string in PCRE, "a" in JavaScript, and "(?:a|(?=b)|.)*" matches
  *   "" in "b" in PCRE, where JavaScript backtracks into the repetition for
- *   the dot.
+ *   the dot. The two agree where the empty repetition sets no group and
+ *   is tried after every longer one: PCRE then goes on from where
+ *   JavaScript does, in the same state, once more.
  *
  * Each case is refused; a pattern that holds none prints as it reads.
  *
@@ -57,6 +62,16 @@ final class CaptureSemantics
      * @var array<int, int> each capturing group's number, keyed by the node's object id
      */
     private array $numbers = [];
+
+    /**
+     * @var array<int, GroupNode> each capturing group by its number
+     */
+    private array $groups = [];
+
+    /**
+     * @var array<int, true> the groups whose emptiness is being read, so a reference inside its own group ends the reading
+     */
+    private array $reading = [];
 
     /**
      * @var array<string, int>
@@ -92,6 +107,7 @@ final class CaptureSemantics
     {
         if ($node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type)) {
             $this->numbers[spl_object_id($node)] = $number = \count($this->numbers) + 1;
+            $this->groups[$number] = $node;
             if (null !== $node->name) {
                 // Two groups share a name only under (?J), which is refused.
                 $this->names[$node->name] = $number;
@@ -186,11 +202,11 @@ final class CaptureSemantics
 
         $held = $this->capturesIn($node->node);
         $optional = null === $bounds->max || $bounds->max > $bounds->min;
-        if ([] !== $held && $optional && self::matchesEmpty($node->node)) {
+        if ([] !== $held && $optional && $this->setsGroupWhenEmpty($node->node)) {
             $this->diverge('A capturing group in a repetition that may match empty cannot be carried into JavaScript: PCRE takes an empty repetition and the groups it sets, JavaScript never does.', $node);
         }
 
-        if ($optional && self::matchesEmpty($node->node) && $this->prefersEmpty($node->node)) {
+        if ($optional && $this->matchesEmpty($node->node) && $this->prefersEmpty($node->node)) {
             $this->diverge('A repetition that may match empty before it tries a longer match cannot be carried into JavaScript: PCRE takes the empty repetition and stops, JavaScript backtracks into it for a longer one.', $node);
         }
 
@@ -202,10 +218,12 @@ final class CaptureSemantics
     }
 
     /**
-     * Whether the node may prefer an empty match over a longer one where
-     * it stands: a lazy repetition that may be left out, or an alternative
-     * that may match empty ahead of another. /U makes every greedy
-     * repetition lazy.
+     * Whether the node may try an empty match before a longer one where it
+     * stands: a lazy repetition that may be left out, an alternative that
+     * may match empty ahead of one that may not, or an item of a sequence
+     * that does either while every other item may match empty. /U makes
+     * every greedy repetition lazy. An assertion matches empty whatever it
+     * holds, and is tried once.
      */
     private function prefersEmpty(NodeInterface $node): bool
     {
@@ -216,15 +234,92 @@ final class CaptureSemantics
         }
 
         if ($node instanceof AlternationNode) {
-            foreach (\array_slice($node->alternatives, 0, -1) as $alternative) {
-                if (self::matchesEmpty($alternative)) {
+            $consumingAfter = false;
+            foreach (array_reverse($node->alternatives) as $alternative) {
+                if ($this->prefersEmpty($alternative) || ($consumingAfter && $this->matchesEmpty($alternative))) {
+                    return true;
+                }
+
+                $consumingAfter = $consumingAfter || self::consumes($alternative);
+            }
+
+            return false;
+        }
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $index => $child) {
+                if ($this->prefersEmpty($child) && $this->allMatchEmpty($node->children, $index)) {
                     return true;
                 }
             }
+
+            return false;
+        }
+
+        if ($node instanceof GroupNode && self::isLookaround($node)) {
+            return false;
         }
 
         foreach ($node->getChildren() as $child) {
             if ($this->prefersEmpty($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether every item of the sequence but the one at $except may match empty.
+     *
+     * @param list<NodeInterface> $children
+     */
+    private function allMatchEmpty(array $children, int $except): bool
+    {
+        foreach ($children as $index => $child) {
+            if ($index !== $except && !$this->matchesEmpty($child)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether the node may match empty with a capturing group set: a group
+     * that may match empty, or one in a lookahead or a lookbehind that
+     * holds. A negative assertion sets none.
+     */
+    private function setsGroupWhenEmpty(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode) {
+            if (GroupType::LookaheadNegative === $node->type || GroupType::LookbehindNegative === $node->type) {
+                return false;
+            }
+
+            if (isset($this->numbers[spl_object_id($node)]) && $this->matchesEmpty($node->child)) {
+                return true;
+            }
+
+            return self::isLookaround($node) ? [] !== $this->capturesIn($node->child) : $this->setsGroupWhenEmpty($node->child);
+        }
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $index => $child) {
+                if ($this->setsGroupWhenEmpty($child) && $this->allMatchEmpty($node->children, $index)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if ($node instanceof QuantifierNode && 0 === $node->bounds?->max) {
+            return false;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if ($this->setsGroupWhenEmpty($child)) {
                 return true;
             }
         }
@@ -260,20 +355,63 @@ final class CaptureSemantics
 
     /**
      * Whether the node may match the empty string; anything not read as a
-     * character, an assertion or a reference among them, is taken to.
+     * character, an assertion among them, is taken to. A reference matches
+     * what its group matched, and PCRE fails one to a group not set: it
+     * may match empty where its group may. One inside its own group, which
+     * JavaScript reads as empty, is refused on its own.
      */
-    private static function matchesEmpty(NodeInterface $node): bool
+    private function matchesEmpty(NodeInterface $node): bool
     {
         return match (true) {
             $node instanceof LiteralNode => '' === $node->value,
-            $node instanceof SequenceNode => [] === array_filter($node->children, static fn (NodeInterface $child): bool => !self::matchesEmpty($child)),
-            $node instanceof AlternationNode => [] !== array_filter($node->alternatives, self::matchesEmpty(...)),
-            $node instanceof QuantifierNode => self::mayBeLeftOut($node) || self::matchesEmpty($node->node),
-            $node instanceof GroupNode => \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true) || self::matchesEmpty($node->child),
+            $node instanceof SequenceNode => $this->allMatchEmpty($node->children, -1),
+            $node instanceof AlternationNode => [] !== array_filter($node->alternatives, $this->matchesEmpty(...)),
+            $node instanceof QuantifierNode => self::mayBeLeftOut($node) || $this->matchesEmpty($node->node),
+            $node instanceof GroupNode => self::isLookaround($node) || $this->matchesEmpty($node->child),
+            $node instanceof BackrefNode => $this->referenceMatchesEmpty($node),
             $node instanceof CharClassNode, $node instanceof CharTypeNode, $node instanceof DotNode, $node instanceof CharLiteralNode,
             $node instanceof UnicodePropNode, $node instanceof ControlCharNode => false,
             default => true,
         };
+    }
+
+    private function referenceMatchesEmpty(BackrefNode $node): bool
+    {
+        $number = $this->referenced($node->ref);
+        $group = null === $number ? null : $this->groups[$number] ?? null;
+        if (null === $number || null === $group || isset($this->reading[$number])) {
+            return true;
+        }
+
+        $this->reading[$number] = true;
+
+        try {
+            return $this->matchesEmpty($group->child);
+        } finally {
+            unset($this->reading[$number]);
+        }
+    }
+
+    /**
+     * Whether the node may match a character: anything not read as an
+     * assertion or the empty string is taken to.
+     */
+    private static function consumes(NodeInterface $node): bool
+    {
+        return match (true) {
+            $node instanceof LiteralNode => '' !== $node->value,
+            $node instanceof SequenceNode => [] !== array_filter($node->children, self::consumes(...)),
+            $node instanceof AlternationNode => [] !== array_filter($node->alternatives, self::consumes(...)),
+            $node instanceof QuantifierNode => 0 !== $node->bounds?->max && self::consumes($node->node),
+            $node instanceof GroupNode => !self::isLookaround($node) && self::consumes($node->child),
+            $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof CommentNode => false,
+            default => true,
+        };
+    }
+
+    private static function isLookaround(GroupNode $node): bool
+    {
+        return \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true);
     }
 
     /**

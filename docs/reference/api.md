@@ -628,8 +628,10 @@ Notes:
   otherwise and has no way to write: in Python a backreference inside a lookbehind or under `/iu`, `\w` or `\b`
   under `u`, and an atomic group or a possessive quantifier unless `pythonVersion` is 3.11 or later; in JavaScript a
   backreference to a group that may not have matched (it matches the empty string there), a capturing group a
-  repetition may leave unset or take empty, a repetition that may match empty before a longer match, and `\p{Lu}`,
-  `\p{Ll}` or `\p{Lt}` under `/i`.
+  repetition may leave unset, a repetition whose empty match sets a group or may be tried before a longer match, and
+  `\p{Lu}`, `\p{Ll}` or `\p{Lt}` under `/i`. PCRE takes one empty repetition and stops where JavaScript takes none:
+  the two agree, and the pattern is written, where the empty repetition sets no group and comes after every longer
+  one (`/(?:(a)|b?)?c/`, `/(a)(\1)*b/`, `/(?:x*?y|z?)*w/`).
 - What a target reads otherwise is written as PCRE reads it: `$` is `(?=\n?$)` in JavaScript, as it also matches before
   a newline that ends the subject, `$` under `/D` and `\z` are `$`, `\Z` is `(?=\n?$)`, and `^` and `$` under `/m` see
   `\n` alone end a line (`(?:^|(?<=\n)(?!$))` and `(?=\n|$)`); in Python `\z` is `\Z` and `\Z` is `(?=\n?\Z)`. The dot,
