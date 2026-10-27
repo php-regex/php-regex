@@ -898,7 +898,7 @@ Reading and judging a pattern moved from the `Regex` facade into
 
   - `new RedosAnalyzer(?RegexParser $parser, ...)`
   - `new LanguageSolver(?RegexParser $parser, ...)`, which replaces `RegexSolver` and `RegexLanguageSolver` (see below)
-  - `new Transpiler(RegexParser $parser, ...)`
+  - `new Transpiler(?RegexParser $parser = null, ...)` and `new Optimizer(?RegexParser $parser = null)`, null building `RegexParser::create()`
   - `new AnalysisService(RegexParser $parser, ...)`, whose `getRegex()` is now `getParser()`
 
 Pass `$regex->parser()` where you passed a `Regex`, or build one with
@@ -1044,10 +1044,12 @@ The CLI's JSON output still carries the string value.
 
 #### Optimizer options are typed, and keyed in snake_case
 
-`Regex::optimize()` and `Optimizer::optimize()` take an `OptimizerOptions` value
-or an array keyed in snake_case, as `Regex::create()` is. An unknown key or a
-value of the wrong type throws `InvalidRegexOptionException`; 1.x ignored the
-one and cast the other.
+`Regex::optimize()` and `Optimizer::optimize()` take an `OptimizerOptions`
+value, its arguments named, or null for the defaults; the array 1.x took is
+gone. A configuration array becomes one through `OptimizerOptions::fromArray()`,
+keyed in snake_case as `Regex::create()` is: an unknown key or a value of the
+wrong type throws `InvalidRegexOptionException`, where 1.x ignored the one and
+cast the other. The keys `fromArray()` reads:
 
 | 1.x key | 2.0 key |
 |---|---|
@@ -1072,7 +1074,7 @@ the program runs under the C locale. `[0-9]` no longer becomes `\d` under
 returns a rewrite only once the automata prove it writes the same `$matches`,
 and the pattern as written when they disprove it or cannot prove it within
 their budget. It costs time, about two and a half times as long on average.
-Pass `['verify_with_automata' => false]`, or `new OptimizerOptions(verifyWithAutomata: false)`,
+Pass `new OptimizerOptions(verifyWithAutomata: false)`
 to take the rewriter's output unproven, as 1.x did.
 
 #### `ValidationResult::$error` is the message alone
@@ -1114,11 +1116,13 @@ hand (PHPStan reports each remaining call).
 the map: one naming a rule the linter does not run throws
 `UnknownLintRuleException`, which names the nearest rule, where a typo turned
 nothing off. Each key is a rule id without `regex.lint.` or in full.
+`new PatternLinter($rules, $target)` asks its rules' questions for that
+`PcreTarget`; `Regex::lint($regex)` runs the rules for the facade's target.
 
 #### `Regex::highlight()` refuses an unknown format
 
-`highlight()` takes `console` or `html` (or the matching `OutputFormat`
-case) and throws `InvalidRegexOptionException` on anything else, `text`
+`highlight()` takes `console` or `html` (or a `HighlightFormat` case;
+`explain()` takes `text`, `html` or an `ExplainFormat` case) and throws `InvalidRegexOptionException` on anything else, `text`
 included; 1.x wrote console output for every format but `html`.
 
 #### `PatternPrinter(pretty: true)` lays out like the formatter

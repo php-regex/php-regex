@@ -63,7 +63,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - `clearCaches()` replaces `clearValidatorCaches()` on `Regex` and `RegexParser`, and empties every process-wide cache of the library. See [clearCaches()](UPGRADE-2.0.md#clearcaches-replaces-clearvalidatorcaches).
 - `SequenceNode::$children` and `AlternationNode::$alternatives` are lists: the constructors renumber the array they are given. See [Sequences and alternations](UPGRADE-2.0.md#sequences-and-alternations-hold-lists).
 - `CalloutNode::accept()` and `DefineNode::accept()` drop their native `mixed` return type; the `$phpVersionRange` of the PHPStan rules is typed `int|array|null`. See [accept()](UPGRADE-2.0.md#accept-has-no-native-return-type-on-any-node).
-- `Regex::highlight()` refuses a format other than `console` and `html`, `OutputFormat::Text` included. See [Regex::highlight()](UPGRADE-2.0.md#regexhighlight-refuses-an-unknown-format).
+- `Regex::highlight()` refuses a format other than `console` and `html`, `text` included. See [Regex::highlight()](UPGRADE-2.0.md#regexhighlight-refuses-an-unknown-format).
 - `RailroadSvgRenderer` is a `string` visitor; its layout and `Svg*` type aliases are internal. See [Names](UPGRADE-2.0.md#names).
 - `Regex::optimize()` and `Optimizer::optimize()` take an `OptimizerOptions` or an array keyed in snake_case; an unknown key throws, `autoPossessify` is `possessive`, `allowAlternationFactorization` is `factorize`. See [Optimizer options](UPGRADE-2.0.md#optimizer-options-are-typed-and-keyed-in-snake_case).
 - The array options of `optimize()` are the closed shape `OptimizerOptionsArray`, so PHPStan reports a misspelt key or a wrong value where the array is written. See [Optimizer options](UPGRADE-2.0.md#optimizer-options-are-typed-and-keyed-in-snake_case).
@@ -111,6 +111,8 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - Symfony's `regex:compare` no longer answers to `debug:compare`. See [Symfony](UPGRADE-2.0.md#symfony-debugcompare-is-gone).
 - Symfony's `regex:routes` no longer takes `--check-conflicts`, which changed nothing. See [Symfony](UPGRADE-2.0.md#symfony-regexroutes---check-conflicts-is-gone).
 - The language server judges for the workspace's target (`initializationOptions`, `regex.json`, `composer.json`, the running PHP). See [The language server](UPGRADE-2.0.md#the-language-server-judges-for-the-workspaces-target).
+- `Regex::optimize()` and `Optimizer::optimize()` take `?OptimizerOptions $options = null`; the array form is gone: read a configuration array once with `OptimizerOptions::fromArray()`. See [Optimizer options](UPGRADE-2.0.md#optimizer-options-are-typed-and-keyed-in-snake_case).
+- `explain()` takes `string|ExplainFormat` (`Text`, `Html`) and `highlight()` `string|HighlightFormat` (`Console`, `Html`), so a format the method does not write cannot be named; `'text'`, `'html'` and `'console'` stay accepted.
 
 ### Security
 
@@ -120,6 +122,8 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 ### Added
 
 #### Parser and toolkit
+- `new Optimizer()` and `new Transpiler()` without a parser read with `RegexParser::create()`.
+- `new CompatibilityChecker($parser)` and `RangeDiff::between($from, $to, $parser)` judge every target with that parser's locale, recursion depth and limits.
 
 - `RegexParser`, the class that reads and judges a pattern (`parse()`, `parseTolerant()`, `validate()`, `tokenize()`, the cache, the target); `Regex::parser()` gives the facade's one, `Regex::parseTolerant()` replaces the `$tolerant` flag.
 - `pcre_version`, `locale` and `php_version: "runtime"` (also `--pcre-version`, `--locale`, `--php-version=runtime`); `PcreTarget`, `Regex::target()`, `withTarget()`, `PcreTarget::bundledWith()`, `judgedWith()` and `phpVersionBoundaries()`.
@@ -139,6 +143,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - Deprecations are raised as Symfony's `trigger_deprecation()` does; nothing is deprecated in 2.0.0.
 
 #### Lint and CLI
+- `Regex::lint()` runs the lint rules for the facade's target, and nothing else: no validation, ReDoS, optimization, ignores or baseline; an invalid pattern throws what `parse()` throws. `new PatternLinter($rules, $target)` takes the target second.
 
 - Lint rules for the regex defects SonarPHP reports, mapped in [SonarPHP Regex Rules](docs/reference/sonar.md): on by default at `warning`, `regex.lint.quantifier.emptyRepeat`, `regex.lint.anchor.alternationPrecedence`, `regex.lint.quantifier.possessiveImpossible`, `regex.lint.anchor.impossible.boundary`, `regex.lint.lookaround.impossible` and `regex.lint.group.empty`; off by default, `regex.lint.charclass.single` (style), `regex.lint.literal.multipleSpaces` (style) and `regex.lint.quantifier.lazyToClass` (perf).
 - More lint rules, on by default: `regex.lint.compat.meaningChanges`, `regex.lint.group.alwaysEmptyCapture`, `regex.lint.literal.invisible`, `regex.lint.flag.useless.D`, `regex.lint.flag.useless.x`, `regex.lint.quantifier.lazyEnd`, `regex.lint.quantifier.assertion`, `regex.lint.unicode.multibyteInClassWithoutU` and `regex.lint.unicode.quantifiedMultibyteWithoutU` (errors), `regex.lint.unicode.propertyWithoutU` and `regex.lint.unicode.bracedHexWithoutU` (errors), and checks for a backreference read as octal in a class, quantifier characters in a class, `(.|\n)` and a quantified capturing group.
@@ -219,6 +224,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 
 Most fixes of 2.0 bring a verdict in line with what PCRE2 and PHP do. The package changelogs list the fixes of the CLI, the lint, the bridges, the language server, the ReDoS analysis and the transpiler.
 
+- `Regex::compatibility()` judged every point under the runtime's locale and default limits, whatever the facade was created with, and `Regex::analyze()` linted for the running PHP and PCRE2 instead of the facade's target.
 - Validation follows the targeted PCRE2 release: variable-length lookbehinds, `{,n}` and padded counts (10.43), `\K` in a lookaround (refused from PHP 8.5), spaces in `\x{ 41 }` and braced references, the `r` and `n` modifiers, ASCII options `(?aD)`, `(*CASELESS_RESTRICT)`, `\k` in a class, script and property names per Unicode release, group names of 33 to 128 characters.
 - Patterns PHP refuses are refused: unknown escapes (`\i`), `\p` with no property, `\N{name}`, surrogates and code points past U+10FFFF, `\c` before a control character, `(?u)`, a quantifier on a start-of-pattern setting, quoted or escaped group names, a malformed `\k`, `(**...)`, mixed-case `(*PLA:...)`, a `(*MARK)` name past 255, NUL bytes before PHP 8.2, invalid UTF-8 under `(*UTF)`, conditions that are no assertion, number, version or name.
 - Patterns PHP compiles are accepted: `\K` in a lookbehind, `[[:^word:]]`, `(?i-i)`, version conditions, `(?(R)...)` naming a group `R`, `(?(R0)...)`, `[a&&b]` and `[a--b]` as members, `\N{U+0041}` in a class, relative calls `\g<-1>`, bounded calls in a lookbehind, a verb wrapping nested groups (`(*atomic:((a)))`).
