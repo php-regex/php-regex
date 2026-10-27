@@ -24,6 +24,7 @@ use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
@@ -35,14 +36,17 @@ use PHPRegex\Parser\Token\TokenType;
  * Where the parser stands in the pattern, and what every part that reads
  * the pattern shares.
  *
- * TokenParser reads the pattern; ClassParser reads a character class and
- * ConditionParser the condition of a conditional for it. The three walk the
- * same tokens over the same text, for the same target, in the same UTF and
- * bad-escape modes. A "\Q...\E" quote is the one thing they change as they
- * read: one opened inside a class can close after it, so whether the tokens
- * are quoted is kept here, where each part reads and sets it. The reading
- * steps they all take, an atom, a comment, the quotes PCRE skips, are here
- * too, so each part holds only the grammar it reads.
+ * TokenParser reads the pattern; ClassParser reads a character class,
+ * ConditionParser the condition of a conditional, and a reader of each
+ * other family of constructs, quantifiers, references, groups, calls and
+ * verbs, its own for it. They walk the same tokens over the same text, for
+ * the same target, in the same UTF and bad-escape modes. What they change as
+ * they read is kept here, where each part reads and sets it: whether the
+ * tokens are quoted, since a "\Q...\E" opened inside a class can close after
+ * it; the options of "x", "xx" and "n" a group sets; the groups numbered so
+ * far. The reading steps they all take, an atom, a comment, the quotes and
+ * the whitespace PCRE skips, are here too, so each part holds only the
+ * grammar it reads.
  *
  * @internal
  */
@@ -68,6 +72,37 @@ final class ParseState
      * Whether the tokens read now stand between "\Q" and "\E".
      */
     public bool $inQuoteMode = false;
+
+    /**
+     * Whether "x" is in force: whitespace and "#" comments between items
+     * are skipped.
+     */
+    public bool $extendedMode = false;
+
+    /**
+     * Whether "(?xx)" is in force, under which the lexer skips the spaces and
+     * tabs that open a class: the body of an alphabetic assertion is read
+     * apart in the mode around it.
+     */
+    public bool $extendedMoreMode = false;
+
+    /**
+     * Whether "n" (NO_AUTO_CAPTURE) is in force: a plain "(...)" group then
+     * captures nothing and takes no number; named groups still capture.
+     */
+    public bool $noAutoCapture = false;
+
+    /**
+     * The number the last capturing group was given, counted the way PCRE
+     * counts them, branch resets included: a name is tied to a number.
+     */
+    public int $captureCount = 0;
+
+    /**
+     * An octal escape and the digits left as text after it, as the atom just
+     * read: a quantifier after it repeats only the last digit.
+     */
+    public ?SequenceNode $splitEscape = null;
 
     /**
      * @param bool $unicodeMode        whether the pattern is read as UTF-8:
@@ -174,6 +209,42 @@ final class ParseState
 
             return;
         }
+    }
+
+    /**
+     * Skip extended-mode (/x) whitespace only. A line comment is left to the
+     * sequence, which keeps it as a node: "a # c\n +" is "a+" to PCRE, and
+     * the quantifier after the comment goes on the item before it.
+     */
+    public function skipExtendedWhitespace(): int
+    {
+        if (!$this->extendedMode || $this->inQuoteMode) {
+            return 0;
+        }
+
+        $skipped = 0;
+        while (!$this->stream->isAtEnd() && TokenType::Literal === $this->stream->current()->type && $this->isExtendedWhitespace($this->stream->current()->value)) {
+            $this->stream->advance();
+            $skipped++;
+        }
+
+        return $skipped;
+    }
+
+    /**
+     * Whether "x" skips the character: PCRE skips Pattern_White_Space, which
+     * in UTF mode also holds U+0085, U+200E, U+200F, U+2028 and U+2029, and
+     * without it the byte 0x85.
+     */
+    public function isExtendedWhitespace(string $character): bool
+    {
+        if (Ascii::isSpace($character)) {
+            return true;
+        }
+
+        return $this->unicodeMode
+            ? \in_array($character, ["\u{85}", "\u{200e}", "\u{200f}", "\u{2028}", "\u{2029}"], true)
+            : "\x85" === $character;
     }
 
     /**

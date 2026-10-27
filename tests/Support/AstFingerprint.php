@@ -104,6 +104,7 @@ final class AstFingerprint
         'src/Parser/Syntax/PosixItem.php',
         'src/Parser/Syntax/PropertyNameTables.php',
         'src/Parser/Syntax/PropertyNames.php',
+        'src/Parser/Syntax/QuantifierParser.php',
         'src/Parser/Syntax/RepeatCount.php',
         'src/Parser/Syntax/StartOptions.php',
         'src/Parser/Syntax/VersionCondition.php',

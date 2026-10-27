@@ -125,29 +125,21 @@ final class TokenParser
 
     private string $flags = '';
 
-    private bool $extendedMode = false;
-
     /**
-     * Whether "(?xx)" is in force, under which the lexer skips the spaces and
-     * tabs that open a class: the body of an alphabetic assertion is read
-     * apart in the mode around it.
-     */
-    private bool $extendedMoreMode = false;
-
-    /**
-     * Whether "n" (NO_AUTO_CAPTURE) is in force: a plain "(...)" group then
-     * captures nothing and takes no number; named groups still capture.
-     */
-    private bool $noAutoCapture = false;
-
-    /**
-     * The reading state this parser shares with the readers of a class and
-     * of a condition: the stream, the pattern, the target, the UTF and
-     * bad-escape modes, and whether the tokens are quoted. The stream,
-     * pattern, target and UTF mode are also kept on this parser, the same
-     * values, which every step reads.
+     * The reading state this parser shares with the readers of each family
+     * of constructs: the stream, the pattern, the target, the UTF and
+     * bad-escape modes, whether the tokens are quoted, the options in force
+     * and the groups numbered so far. The stream, pattern, target and UTF
+     * mode are also kept on this parser, the same values, which every step
+     * reads.
      */
     private ParseState $state;
+
+    /**
+     * The reader of the quantifiers of the text this parser reads, made on
+     * the first quantifier.
+     */
+    private ?QuantifierParser $quantifiers = null;
 
     /**
      * The reader of the classes of the text this parser reads, made on the
@@ -174,21 +166,9 @@ final class TokenParser
 
     private int $recursionDepth = 0;
 
-    /**
-     * The number the last capturing group was given, counted the way PCRE
-     * counts them, branch resets included: a name is tied to a number.
-     */
-    private int $captureCount = 0;
-
     private readonly int $maxRecursionDepth;
 
     private readonly PcreTarget $target;
-
-    /**
-     * An octal escape and the digits left as text after it, as the atom just
-     * read: a quantifier after it repeats only the last digit.
-     */
-    private ?SequenceNode $splitEscape = null;
 
     /**
      * The groups opened before the text this parser reads: a body read apart,
@@ -311,21 +291,21 @@ final class TokenParser
             $this->groupNames->allowDuplicates($this->namesAround->duplicatesAllowed());
         }
 
-        $this->extendedMode = str_contains($flags, 'x');
-        $this->extendedMoreMode = $this->extendedMoreBefore;
-        $this->noAutoCapture = str_contains($flags, 'n');
         // Without "X", PHP 7.3 and 7.4 compile with
         // PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL: an escape PCRE2 refuses as it
         // reads it is the character after the backslash. The lexer reads
         // those it can; a reference counted back past the groups opened so
         // far, or an octal escape past a byte, is known here.
         $this->state = new ParseState($stream, $this->pattern, $this->target, $this->unicodeMode, PhpVersionGates::badEscapeIsLiteral($this->target->phpVersionId, $flags));
+        $this->state->extendedMode = str_contains($flags, 'x');
+        $this->state->extendedMoreMode = $this->extendedMoreBefore;
+        $this->state->noAutoCapture = str_contains($flags, 'n');
+        $this->state->captureCount = $this->capturesBefore;
         $this->classes = null;
         $this->conditions = null;
         $this->extendedClasses = null;
+        $this->quantifiers = null;
         $this->recursionDepth = $this->depthBefore;
-        $this->captureCount = $this->capturesBefore;
-        $this->splitEscape = null;
         $this->tokensReadWhole = 0;
         $this->recursionTests = [];
         $this->namesReadApart = [];
@@ -352,17 +332,17 @@ final class TokenParser
      */
     private function parseScopedAlternation(): NodeInterface
     {
-        $extendedMode = $this->extendedMode;
-        $extendedMoreMode = $this->extendedMoreMode;
-        $noAutoCapture = $this->noAutoCapture;
+        $extendedMode = $this->state->extendedMode;
+        $extendedMoreMode = $this->state->extendedMoreMode;
+        $noAutoCapture = $this->state->noAutoCapture;
         $duplicateNames = $this->groupNames->duplicatesAllowed();
 
         try {
             return $this->parseAlternation();
         } finally {
-            $this->extendedMode = $extendedMode;
-            $this->extendedMoreMode = $extendedMoreMode;
-            $this->noAutoCapture = $noAutoCapture;
+            $this->state->extendedMode = $extendedMode;
+            $this->state->extendedMoreMode = $extendedMoreMode;
+            $this->state->noAutoCapture = $noAutoCapture;
             $this->groupNames->allowDuplicates($duplicateNames);
         }
     }
@@ -418,7 +398,7 @@ final class TokenParser
                 continue;
             }
 
-            if (TokenType::Quantifier !== $type || !$this->quantifyPreviousItem($nodes)) {
+            if (TokenType::Quantifier !== $type || !$this->quantifiers()->quantifyPreviousItem($nodes)) {
                 $nodes[] = $this->parseQuantifiedAtom();
             }
 
@@ -448,7 +428,7 @@ final class TokenParser
      */
     private function consumeExtendedModeContent(array &$nodes): bool
     {
-        if (!$this->extendedMode || $this->state->inQuoteMode) {
+        if (!$this->state->extendedMode || $this->state->inQuoteMode) {
             return false;
         }
 
@@ -460,7 +440,7 @@ final class TokenParser
             }
 
             // Skip pure whitespace silently; comments will be explicit nodes.
-            if ($this->isExtendedWhitespace($token->value)) {
+            if ($this->state->isExtendedWhitespace($token->value)) {
                 $this->stream->advance();
                 $skipped = true;
 
@@ -520,7 +500,7 @@ final class TokenParser
      */
     private function skipExtendedModeContent(): int
     {
-        if (!$this->extendedMode || $this->state->inQuoteMode) {
+        if (!$this->state->extendedMode || $this->state->inQuoteMode) {
             return 0;
         }
 
@@ -531,7 +511,7 @@ final class TokenParser
                 break;
             }
 
-            if ($this->isExtendedWhitespace($token->value)) {
+            if ($this->state->isExtendedWhitespace($token->value)) {
                 $this->stream->advance();
                 $skipped++;
 
@@ -559,165 +539,6 @@ final class TokenParser
         return $skipped;
     }
 
-    /**
-     * Skip extended-mode (/x) whitespace only. A line comment is left to the
-     * sequence, which keeps it as a node: "a # c\n +" is "a+" to PCRE, and
-     * the quantifier after the comment goes on the item before it.
-     */
-    private function skipExtendedWhitespace(): int
-    {
-        if (!$this->extendedMode || $this->state->inQuoteMode) {
-            return 0;
-        }
-
-        $skipped = 0;
-        while (!$this->stream->isAtEnd() && TokenType::Literal === $this->stream->current()->type && $this->isExtendedWhitespace($this->stream->current()->value)) {
-            $this->stream->advance();
-            $skipped++;
-        }
-
-        return $skipped;
-    }
-
-    /**
-     * A quantifier the sequence meets on its own was not taken by the atom
-     * before it: PCRE skipped something on the way, a comment, a "\E", an
-     * empty "\Q\E" or /x whitespace. It repeats the last item before them
-     * all: "a(?#c)*" and "a\E*" are "a*", and "a*\E+" is "a*+". The
-     * quantifier goes on the item itself, which every consumer of the tree
-     * expects to find right under it, and the comments follow it. With no
-     * item before it, the atom parser reports the quantifier.
-     *
-     * @param array<NodeInterface> $nodes
-     */
-    private function quantifyPreviousItem(array &$nodes): bool
-    {
-        if (!$this->stream->check(TokenType::Quantifier)) {
-            return false;
-        }
-
-        $comments = [];
-        $index = \count($nodes) - 1;
-        while ($index >= 0 && $nodes[$index] instanceof CommentNode) {
-            array_unshift($comments, $nodes[$index]);
-            $index--;
-        }
-
-        if ($index < 0) {
-            return false;
-        }
-
-        $token = $this->stream->current();
-        $this->stream->advance();
-
-        $target = $nodes[$index];
-        array_splice($nodes, $index);
-
-        $last = $target instanceof SequenceNode ? $target->children[array_key_last($target->children)] ?? null : null;
-        if ($target instanceof QuantifierNode) {
-            $nodes[] = $this->modifyRepeatedQuantifier($target, $token);
-        } elseif ($target instanceof SequenceNode && $last instanceof QuantifierNode) {
-            // "é+" without /u, or "\1000*": the text before the character the
-            // quantifier took, then that one repeated, which a quantifier
-            // after it finds.
-            $modified = $this->modifyRepeatedQuantifier($last, $token);
-            $nodes[] = new SequenceNode([...\array_slice($target->children, 0, -1), $modified], $target->getStartPosition(), $modified->getEndPosition());
-        } elseif ($target instanceof SequenceNode && null !== $last) {
-            // "\1000(?#c)+": the octal "\100" then "0", and only the "0"
-            // repeats, as it does written right after it.
-            $this->assertQuantifierCanApply($last, $token);
-            $quantified = $this->quantify($last, $token);
-            $nodes[] = new SequenceNode([...\array_slice($target->children, 0, -1), $quantified], $target->getStartPosition(), $quantified->getEndPosition());
-        } else {
-            // "\Qab\E*" is "ab*": only the last quoted character repeats.
-            [$prefix, $target] = $this->splitRepeatedCharacter($target);
-            if (null !== $prefix) {
-                $nodes[] = $prefix;
-            }
-
-            $this->assertQuantifierCanApply($target, $token);
-            $nodes[] = $this->quantify($target, $token);
-        }
-
-        array_push($nodes, ...$comments);
-
-        return true;
-    }
-
-    /**
-     * Splits off the text a quantifier does not repeat: the quantifier takes
-     * the last character, so "\Qab\E*" repeats "b" and, without /u, "é+"
-     * repeats the last byte of "é".
-     *
-     * @return array{0: ?LiteralNode, 1: NodeInterface}
-     */
-    private function splitRepeatedCharacter(NodeInterface $node): array
-    {
-        if (!$node instanceof LiteralNode || '' === $prefix = $this->withoutLastCharacter($node->value)) {
-            return [null, $node];
-        }
-
-        $split = $node->getStartPosition() + \strlen($prefix);
-
-        return [
-            new LiteralNode($prefix, $node->getStartPosition(), $split, $node->isRaw),
-            new LiteralNode(substr($node->value, \strlen($prefix)), $split, $node->getEndPosition(), $node->isRaw),
-        ];
-    }
-
-    /**
-     * The text up to its last character: a code point in UTF-8 mode, a byte
-     * otherwise, as PCRE counts them.
-     */
-    private function withoutLastCharacter(string $text): string
-    {
-        if ($this->unicodeMode && 1 === LibraryPcre::match('/.\z/su', $text, $matches)) {
-            return substr($text, 0, -\strlen($matches[0]));
-        }
-
-        return substr($text, 0, -1);
-    }
-
-    /**
-     * After a quantified item, a lone "+" or "?" past what PCRE skips makes a
-     * greedy quantifier possessive or lazy, as it would written right after
-     * it. Anything else is a second quantifier on the same item.
-     */
-    private function modifyRepeatedQuantifier(QuantifierNode $target, Token $token): QuantifierNode
-    {
-        $modifier = $token->value[0];
-
-        if (QuantifierType::Greedy !== $target->type || !\in_array($modifier, ['+', '?'], true)) {
-            $this->guardQuantifierCount($token);
-            $position = RepeatCount::nothingToRepeatOffset($token, $this->target);
-
-            throw $this->parserException(
-                \sprintf('Quantifier without target at position %d.', $position),
-                ErrorCode::QuantifierNothingToRepeat,
-                $position,
-            );
-        }
-
-        // "a*(?#c)++": the first "+" is the modifier, the second repeats nothing.
-        if (\strlen($token->value) > 1) {
-            $position = $this->target->faultOffset($token->position + \strlen($token->value));
-
-            throw $this->parserException(
-                \sprintf('Quantifier without target at position %d.', $position),
-                ErrorCode::QuantifierNothingToRepeat,
-                $position,
-            );
-        }
-
-        return new QuantifierNode(
-            $target->node,
-            $target->quantifier,
-            '+' === $modifier ? QuantifierType::Possessive : QuantifierType::Lazy,
-            $target->getStartPosition(),
-            $token->position + 1,
-        );
-    }
-
     private function parseQuantifiedAtom(): NodeInterface
     {
         $node = $this->parseAtom();
@@ -725,11 +546,11 @@ final class TokenParser
         $this->tokensReadWhole = $this->stream->getPosition();
 
         // "\1000*": the octal escape, then the text "0" the quantifier repeats.
-        if (null !== $this->splitEscape && $node === $this->splitEscape) {
-            $this->splitEscape = null;
+        if (null !== $this->state->splitEscape && $node === $this->state->splitEscape) {
+            $this->state->splitEscape = null;
             $children = $node->children;
             $text = array_pop($children) ?? $node;
-            $last = $this->parseQuantifiedText($text);
+            $last = $this->quantifiers()->parseQuantifiedText($text);
             // One sequence: a second quantifier finds the repeated character
             // last in it, as it does after "\Qab\E*".
             $tail = $last instanceof SequenceNode ? $last->children : [$last];
@@ -742,16 +563,10 @@ final class TokenParser
             return $node;
         }
 
-        $skipped = $this->skipExtendedWhitespace();
+        $skipped = $this->state->skipExtendedWhitespace();
 
         if ($this->stream->match(TokenType::Quantifier)) {
-            $token = $this->stream->previous();
-
-            [$prefix, $node] = $this->splitRepeatedCharacter($node);
-            $this->assertQuantifierCanApply($node, $token);
-            $quantified = $this->quantify($node, $token);
-
-            return null === $prefix ? $quantified : new SequenceNode([$prefix, $quantified], $prefix->getStartPosition(), $quantified->getEndPosition());
+            return $this->quantifiers()->repeat($node, $this->stream->previous());
         }
 
         if ($skipped > 0) {
@@ -759,133 +574,6 @@ final class TokenParser
         }
 
         return $node;
-    }
-
-    /**
-     * Digits left as text after an octal escape: a quantifier after them
-     * repeats the last one.
-     */
-    private function parseQuantifiedText(NodeInterface $text): NodeInterface
-    {
-        if (!$text instanceof LiteralNode || !$this->stream->check(TokenType::Quantifier)) {
-            return $text;
-        }
-
-        $token = $this->stream->current();
-        $this->stream->advance();
-        $lastStart = $text->endPosition - 1;
-        $last = $this->quantify(new LiteralNode(substr($text->value, -1), $lastStart, $text->endPosition), $token);
-        if (1 === \strlen($text->value)) {
-            return $last;
-        }
-
-        $head = new LiteralNode(substr($text->value, 0, -1), $text->startPosition, $lastStart);
-
-        return new SequenceNode([$head, $last], $text->startPosition, $last->getEndPosition());
-    }
-
-    private function quantify(NodeInterface $node, Token $token): QuantifierNode
-    {
-        [$quantifier, $type] = $this->parseQuantifierValue($token->value);
-
-        $startPosition = $node->getStartPosition();
-        $endPosition = $token->position + \strlen($token->value);
-
-        // In extended (/x) mode, whitespace may separate a quantifier from
-        // its lazy/possessive modifier: "a* +" means "a*+" to PCRE. A line
-        // comment there is kept by the sequence, which then applies the
-        // modifier after it to this quantifier.
-        if (QuantifierType::Greedy === $type && $this->extendedMode && !$this->state->inQuoteMode) {
-            $skippedModifier = $this->skipExtendedWhitespace();
-            if ($this->stream->check(TokenType::Quantifier) && \in_array($this->stream->current()->value, ['+', '?'], true)) {
-                $modifier = $this->stream->current()->value;
-                $type = '+' === $modifier ? QuantifierType::Possessive : QuantifierType::Lazy;
-                $endPosition = $this->stream->current()->position + 1;
-                $this->stream->advance();
-            } elseif ($skippedModifier > 0) {
-                $this->stream->rewind($skippedModifier);
-            }
-        }
-
-        return new QuantifierNode($node, $quantifier, $type, $startPosition, $endPosition);
-    }
-
-    /**
-     * @return array{0: string, 1: QuantifierType}
-     */
-    private function parseQuantifierValue(string $value): array
-    {
-        $lastChar = substr($value, -1);
-        $baseValue = substr($value, 0, -1);
-
-        if ('?' === $lastChar && \strlen($value) > 1) {
-            return [$baseValue, QuantifierType::Lazy];
-        }
-
-        if ('+' === $lastChar && \strlen($value) > 1) {
-            return [$baseValue, QuantifierType::Possessive];
-        }
-
-        return [$value, QuantifierType::Greedy];
-    }
-
-    private function assertQuantifierCanApply(NodeInterface $node, Token $token): void
-    {
-        $position = RepeatCount::nothingToRepeatOffset($token, $this->target);
-
-        // A callout matches nothing, and PCRE does not let it be repeated.
-        if ($node instanceof CalloutNode) {
-            $this->guardQuantifierCount($token);
-
-            throw $this->parserException(
-                \sprintf('Quantifier does not follow a repeatable item at position %d: a callout cannot be repeated.', $position),
-                ErrorCode::QuantifierNothingToRepeat,
-                $position,
-            );
-        }
-
-        if ($this->isEmptyNode($node)) {
-            $this->guardQuantifierCount($token);
-
-            throw $this->parserException(
-                \sprintf('Quantifier without target at position %d.', $position),
-                ErrorCode::QuantifierNothingToRepeat,
-                $position,
-            );
-        }
-
-        // From PCRE2 10.34 PCRE lets "(*ACCEPT)" be repeated, "(*ACCEPT)??"
-        // included: it wraps it in a group. No other verb takes a
-        // quantifier. An alphabetic name PCRE does not know, as "(*scs:"
-        // before PCRE2 10.45, is refused where it ends, before its
-        // quantifier is read: the validator reports it.
-        $isAccept = $node instanceof PcreVerbNode && 1 === LibraryPcre::match('/^ACCEPT(?::|$)/', $node->verb);
-        $isUnknownName = $node instanceof PcreVerbNode && 1 === LibraryPcre::match('/^[a-z]/', $node->verb);
-
-        if (!($isAccept && $this->supports(PcreFeature::QuantifiedAccept)) && !$isUnknownName && $this->isAssertionNode($node)) {
-            $this->guardQuantifierCount($token);
-            $nodeName = $this->getAssertionNodeName($node);
-
-            throw $this->parserException(
-                \sprintf('Quantifier "%s" cannot be applied to assertion or verb "%s" at position %d%s.',
-                    $token->value, $nodeName, $position, $isAccept ? ': PCRE2 10.34 lets "(*ACCEPT)" be repeated; write "(?:(*ACCEPT))'.$token->value.'", which every release reads' : ''),
-                ErrorCode::QuantifierNothingToRepeat,
-                $position,
-            );
-        }
-    }
-
-    private function getAssertionNodeName(NodeInterface $node): string
-    {
-        $backslash = '\\';
-
-        return match (true) {
-            $node instanceof AnchorNode => $node->value,
-            $node instanceof AssertionNode => $backslash.$node->value,
-            $node instanceof PcreVerbNode => '(*'.$node->verb.')',
-            $node instanceof LimitMatchNode => '(*LIMIT_MATCH='.$node->limit.')',
-            default => $backslash.'K',
-        };
     }
 
     private function parseAtom(): NodeInterface
@@ -935,43 +623,7 @@ final class TokenParser
         }
 
         if (TokenType::Quantifier === $token->type) {
-            $position = $this->stream->current()->position;
-
-            $this->guardQuantifierCount($this->stream->current());
-
-            // "(*MARK:a" with no ")" is a verb PCRE reads to the end.
-            $unclosedVerb = $this->startsUnclosedVerb($position);
-            if ($unclosedVerb && '*' === $this->pattern[$position + 1]) {
-                throw PcreVerb::doubleStarError($this->pattern, $position + 1);
-            }
-
-            if ($unclosedVerb) {
-                $nameError = PcreVerb::unclosedNameError($this->pattern, $position - 1, $this->target);
-                if (null !== $nameError) {
-                    throw $nameError;
-                }
-            }
-
-            $namePosition = $position + 1;
-            $position = $unclosedVerb
-                ? PcreVerb::unclosedOffset($this->pattern, $position - 1, $this->target, $this->unicodeMode)
-                : RepeatCount::nothingToRepeatOffset($this->stream->current(), $this->target);
-
-            // A name that starts with a lowercase letter is an alphabetic
-            // assertion PCRE does not know, wherever it ends before PCRE2
-            // 10.47, and from 10.47 unless the pattern ends with it.
-            if ($unclosedVerb && 1 === LibraryPcre::match('/\G[a-z]/', $this->pattern, $letter, 0, $namePosition)
-                && (!$this->supports(PcreFeature::AlphaNameAtPatternEndIsUnclosed) || 1 !== LibraryPcre::match('/\G\w++\z/', $this->pattern, $name, 0, $namePosition))) {
-                throw $this->parserException(
-                    \sprintf('Unknown alphabetic assertion "(*%s" at position %d.', substr($this->pattern, $namePosition, $position - $namePosition), $position),
-                    ErrorCode::VerbInvalid,
-                    $position,
-                );
-            }
-
-            throw $unclosedVerb
-                ? $this->parserException(\sprintf('Missing ")" to close the verb at position %d.', $position), ErrorCode::VerbUnclosed, $position)
-                : $this->parserException(\sprintf('Quantifier without target at position %d.', $position), ErrorCode::QuantifierNothingToRepeat, $position);
+            $this->quantifiers()->refuseQuantifierWithoutTarget();
         }
 
         $val = $this->stream->current()->value;
@@ -984,42 +636,21 @@ final class TokenParser
         );
     }
 
-    /**
-     * Before PCRE2 10.37, the digits after a "{" read as text are still read
-     * as a count, before anything checks that a "}" closes it, and one past
-     * 65535 is refused there: "a{65536", "a{65536 }". PCRE2 reads the "{"
-     * where the pattern reads an item, so a name or a condition it stands
-     * in is refused first.
-     *
-     * @throws ParserException
-     */
-    private function guardOpenCountBeforeTen37(Token $token): void
-    {
-        if (TokenType::Literal !== $token->type || $this->state->inQuoteMode || '{' !== ($this->pattern[$token->position] ?? '')
-            || $this->supports(PcreFeature::LargeOpenCountIsText)) {
-            return;
-        }
-
-        $overflow = RepeatCount::overflowBeforeTen37($this->pattern, $token->position);
-        if (null !== $overflow) {
-            throw $this->parserException(
-                \sprintf('Number too big in "{" at position %d: PCRE2 before 10.37 reads the digits after it as a count, at most 65535.', $overflow),
-                ErrorCode::QuantifierTooBig,
-                $overflow,
-            );
-        }
-    }
-
     private function parseSimpleAtom(int $startPosition): ?NodeInterface
     {
         $this->guardNamedReferenceEscape();
 
         if (null !== $atom = $this->matchAtom($startPosition)) {
-            $this->guardOpenCountBeforeTen37($this->stream->previous());
+            // Before PCRE2 10.37 the digits after a "{" read as text are read
+            // as a count too.
+            $previous = $this->stream->previous();
+            if (TokenType::Literal === $previous->type && '{' === ($this->pattern[$previous->position] ?? '')) {
+                $this->quantifiers()->guardOpenCountBeforeTen37($previous);
+            }
 
             // Without UTF mode "x" skips a 0x85 byte inside a character too.
-            if ($atom instanceof LiteralNode && $this->extendedMode && !$this->unicodeMode && !$this->state->inQuoteMode
-                && TokenType::Literal === $this->stream->previous()->type && \strlen($atom->value) > 1 && str_contains($atom->value, "\x85")) {
+            if ($atom instanceof LiteralNode && $this->state->extendedMode && !$this->unicodeMode && !$this->state->inQuoteMode
+                && TokenType::Literal === $previous->type && \strlen($atom->value) > 1 && str_contains($atom->value, "\x85")) {
                 return new LiteralNode(str_replace("\x85", '', $atom->value), $atom->getStartPosition(), $atom->getEndPosition(), $atom->isRaw);
             }
 
@@ -1159,9 +790,9 @@ final class TokenParser
     {
         // Under "n" a plain group groups and nothing more, as "(?:...)"
         // does; the compiler gives back the "(" it was written with.
-        $captures = !$this->noAutoCapture;
+        $captures = !$this->state->noAutoCapture;
         if ($captures) {
-            $this->captureCount++;
+            $this->state->captureCount++;
         }
 
         $expr = $this->parseScopedAlternation();
@@ -1323,9 +954,9 @@ final class TokenParser
         $call = '{' !== $opener;
 
         return match (true) {
-            PcreNumber::exceeds($digits) || ('+' === $sign && $value + $this->captureCount > PcreNumber::MAX) => [ErrorCode::GroupNumberTooBig, 'the group number is too big: PCRE takes at most 65535'],
+            PcreNumber::exceeds($digits) || ('+' === $sign && $value + $this->state->captureCount > PcreNumber::MAX) => [ErrorCode::GroupNumberTooBig, 'the group number is too big: PCRE takes at most 65535'],
             '' !== $sign && 0 === $value => [$call ? ErrorCode::SubroutineRelativeZero : ErrorCode::BackrefZero, 'a relative number may not be zero'],
-            '-' === $sign && $value > $this->captureCount => [$call ? ErrorCode::SubroutineRelativeMissing : ErrorCode::BackrefRelative, \sprintf('-%d counts back past the %d groups opened before it', $value, $this->captureCount)],
+            '-' === $sign && $value > $this->state->captureCount => [$call ? ErrorCode::SubroutineRelativeMissing : ErrorCode::BackrefRelative, \sprintf('-%d counts back past the %d groups opened before it', $value, $this->state->captureCount)],
             default => null,
         };
     }
@@ -1455,7 +1086,7 @@ final class TokenParser
     private function readsBadEscapeAt(int $position): bool
     {
         return $this->state->badEscapeIsLiteral && !$this->state->inQuoteMode
-            && BadEscape::at($this->pattern, $position, false, $this->unicodeMode, $this->target, $this->captureCount);
+            && BadEscape::at($this->pattern, $position, false, $this->unicodeMode, $this->target, $this->state->captureCount);
     }
 
     /**
@@ -1482,9 +1113,9 @@ final class TokenParser
         }
 
         $parts[] = new LiteralNode(substr($this->pattern, $textStart, $end - $textStart), $textStart, $end);
-        $this->splitEscape = new SequenceNode($parts, $startPosition, $end);
+        $this->state->splitEscape = new SequenceNode($parts, $startPosition, $end);
 
-        return $this->splitEscape;
+        return $this->state->splitEscape;
     }
 
     /**
@@ -1499,13 +1130,13 @@ final class TokenParser
         }
 
         $digitEnd = $startPosition + 2;
-        $this->splitEscape = new SequenceNode(
+        $this->state->splitEscape = new SequenceNode(
             [new LiteralNode($matches[1][0], $startPosition, $digitEnd), new LiteralNode(substr($matches[1], 1), $digitEnd, $token->end())],
             $startPosition,
             $token->end(),
         );
 
-        return $this->splitEscape;
+        return $this->state->splitEscape;
     }
 
     /**
@@ -1516,7 +1147,7 @@ final class TokenParser
     private function octalEscapeFromReference(Token $token, int $startPosition): ?NodeInterface
     {
         if (1 !== LibraryPcre::match('/^\\\\([1-7]\d++)$/', $token->value, $matches)
-            || (\strlen($matches[1]) < 6 && (int) $matches[1] <= $this->captureCount)
+            || (\strlen($matches[1]) < 6 && (int) $matches[1] <= $this->state->captureCount)
             || 1 !== LibraryPcre::match('/^[0-7]{1,3}/', $matches[1], $octal)) {
             return null;
         }
@@ -1536,9 +1167,9 @@ final class TokenParser
             return $escape;
         }
 
-        $this->splitEscape = new SequenceNode([$escape, new LiteralNode($text, $escapeEnd, $token->end())], $startPosition, $token->end());
+        $this->state->splitEscape = new SequenceNode([$escape, new LiteralNode($text, $escapeEnd, $token->end())], $startPosition, $token->end());
 
-        return $this->splitEscape;
+        return $this->state->splitEscape;
     }
 
     /**
@@ -1610,7 +1241,7 @@ final class TokenParser
         }
 
         if (null !== $isConditionalWithModifier) {
-            return $this->conditions()->conditional($startPosition, $isConditionalWithModifier, $this->captureCount);
+            return $this->conditions()->conditional($startPosition, $isConditionalWithModifier, $this->state->captureCount);
         }
 
         // 6. Check for Subroutines
@@ -1687,14 +1318,14 @@ final class TokenParser
         // An inline "(?n)" or "(?x)" before the payload still holds inside
         // it, and a "(?-x)" still turns "x" off there.
         // An inline "(?-n)" turns "n" off there as well.
-        $flags = str_replace(['x', 'n'], '', $this->flags).($this->extendedMode ? 'x' : '').($this->noAutoCapture ? 'n' : '');
+        $flags = str_replace(['x', 'n'], '', $this->flags).($this->state->extendedMode ? 'x' : '').($this->state->noAutoCapture ? 'n' : '');
 
         // The payload is read for the same target as the pattern around it,
         // its tokens moved to where they stand in the whole pattern.
         $this->partLexer ??= new Lexer($this->target);
 
         try {
-            $stream = $this->partLexer->tokenizePart($this->pattern, $absoluteOffset, \strlen($payload), $flags, $this->extendedMoreMode);
+            $stream = $this->partLexer->tokenizePart($this->pattern, $absoluteOffset, \strlen($payload), $flags, $this->state->extendedMoreMode);
         } catch (LexerException $error) {
             // The lexer around it only found where the body ends: an escape
             // it refuses in the body, as "\x{}", is met here, where the body
@@ -1708,9 +1339,9 @@ final class TokenParser
         }
 
         $inner = new TokenParser($this->maxRecursionDepth, $this->target);
-        $inner->capturesBefore = $this->captureCount;
+        $inner->capturesBefore = $this->state->captureCount;
         $inner->depthBefore = $this->recursionDepth;
-        $inner->extendedMoreBefore = $this->extendedMoreMode;
+        $inner->extendedMoreBefore = $this->state->extendedMoreMode;
         $inner->namesAround = $this->groupNames;
         $inner->partLexer = $this->partLexer;
         $inner->patternNames = $this->patternNames;
@@ -1722,7 +1353,7 @@ final class TokenParser
         // The groups it holds take numbers in the enclosing pattern: the
         // body's parser counted on from those opened before it, and shared
         // the names. A "(?J)" set in the body holds there only.
-        $this->captureCount = $inner->captureCount;
+        $this->state->captureCount = $inner->state->captureCount;
 
         return $pattern->pattern;
     }
@@ -1987,7 +1618,7 @@ final class TokenParser
                     0 === (int) $digits => '' === $sign
                         ? ['names no group', ErrorCode::GroupListMissingGroup]
                         : ['is a relative zero', ErrorCode::GroupListRelativeZero],
-                    '-' === $sign && (int) $digits > $this->captureCount => ['names no group', ErrorCode::GroupListMissingGroup],
+                    '-' === $sign && (int) $digits > $this->state->captureCount => ['names no group', ErrorCode::GroupListMissingGroup],
                     default => [null, null],
                 };
                 if (null !== $refused && null !== $code) {
@@ -2102,11 +1733,11 @@ final class TokenParser
      */
     private function parseBranchReset(int $startPosition): GroupNode
     {
-        $extendedMode = $this->extendedMode;
-        $extendedMoreMode = $this->extendedMoreMode;
-        $noAutoCapture = $this->noAutoCapture;
+        $extendedMode = $this->state->extendedMode;
+        $extendedMoreMode = $this->state->extendedMoreMode;
+        $noAutoCapture = $this->state->noAutoCapture;
         $duplicateNames = $this->groupNames->duplicatesAllowed();
-        $base = $this->captureCount;
+        $base = $this->state->captureCount;
         $highest = $base;
 
         $this->guardRecursionDepth($this->stream->current()->position);
@@ -2117,19 +1748,19 @@ final class TokenParser
             $branches = [];
 
             do {
-                $this->captureCount = $base;
+                $this->state->captureCount = $base;
                 $branches[] = $this->parseSequence();
-                $highest = max($highest, $this->captureCount);
+                $highest = max($highest, $this->state->captureCount);
             } while ($this->stream->match(TokenType::Alternation));
         } finally {
             $this->recursionDepth--;
-            $this->extendedMode = $extendedMode;
-            $this->extendedMoreMode = $extendedMoreMode;
-            $this->noAutoCapture = $noAutoCapture;
+            $this->state->extendedMode = $extendedMode;
+            $this->state->extendedMoreMode = $extendedMoreMode;
+            $this->state->noAutoCapture = $noAutoCapture;
             $this->groupNames->allowDuplicates($duplicateNames);
         }
 
-        $this->captureCount = $highest;
+        $this->state->captureCount = $highest;
 
         $expr = 1 === \count($branches)
             ? $branches[0]
@@ -2175,9 +1806,9 @@ final class TokenParser
             throw $this->unreadableGroupError($startPosition);
         }
 
-        $wasExtended = $this->extendedMode;
-        $wasExtendedMore = $this->extendedMoreMode;
-        $wasNoAutoCapture = $this->noAutoCapture;
+        $wasExtended = $this->state->extendedMode;
+        $wasExtendedMore = $this->state->extendedMoreMode;
+        $wasNoAutoCapture = $this->state->noAutoCapture;
         $wasAllowingDuplicates = $this->groupNames->duplicatesAllowed();
 
         if ($modifiers?->turnsOn('J')) {
@@ -2187,9 +1818,9 @@ final class TokenParser
             $this->groupNames->allowDuplicates(false);
         }
 
-        $this->extendedMode = $modifiers?->inForce('x', $this->extendedMode) ?? $this->extendedMode;
-        $this->extendedMoreMode = $modifiers?->extendedMoreInForce($this->extendedMoreMode) ?? $this->extendedMoreMode;
-        $this->noAutoCapture = $modifiers?->inForce('n', $this->noAutoCapture) ?? $this->noAutoCapture;
+        $this->state->extendedMode = $modifiers?->inForce('x', $this->state->extendedMode) ?? $this->state->extendedMode;
+        $this->state->extendedMoreMode = $modifiers?->extendedMoreInForce($this->state->extendedMoreMode) ?? $this->state->extendedMoreMode;
+        $this->state->noAutoCapture = $modifiers?->inForce('n', $this->state->noAutoCapture) ?? $this->state->noAutoCapture;
 
         // "(?iz)": the letters are read as far as PCRE knows them.
         if (!$this->stream->check(TokenType::GroupClose) && !$this->stream->checkLiteral(':')) {
@@ -2200,9 +1831,9 @@ final class TokenParser
         if ($this->stream->matchLiteral(':')) {
             $expr = $this->parseScopedAlternation();
             // "(?x:...)" only covers its own group; "(?x)" keeps going.
-            $this->extendedMode = $wasExtended;
-            $this->extendedMoreMode = $wasExtendedMore;
-            $this->noAutoCapture = $wasNoAutoCapture;
+            $this->state->extendedMode = $wasExtended;
+            $this->state->extendedMoreMode = $wasExtendedMore;
+            $this->state->noAutoCapture = $wasNoAutoCapture;
             $this->groupNames->allowDuplicates($wasAllowingDuplicates);
         }
 
@@ -2255,6 +1886,11 @@ final class TokenParser
         );
     }
 
+    private function quantifiers(): QuantifierParser
+    {
+        return $this->quantifiers ??= new QuantifierParser($this->state);
+    }
+
     private function classes(): ClassParser
     {
         return $this->classes ??= new ClassParser($this->state);
@@ -2273,7 +1909,7 @@ final class TokenParser
             function (array $tokens, bool $counted): NodeInterface {
                 $parser = new self($this->maxRecursionDepth, $this->target);
                 if ($counted) {
-                    $parser->capturesBefore = $this->captureCount;
+                    $parser->capturesBefore = $this->state->captureCount;
                 }
 
                 return $parser->parse(new TokenStream($tokens, $this->pattern), $this->flags, '/', \strlen($this->pattern))->pattern;
@@ -2308,55 +1944,6 @@ final class TokenParser
     private function supports(PcreFeature $feature): bool
     {
         return $this->target->supports($feature);
-    }
-
-    /**
-     * Whether "x" skips the character: PCRE skips Pattern_White_Space, which
-     * in UTF mode also holds U+0085, U+200E, U+200F, U+2028 and U+2029, and
-     * without it the byte 0x85.
-     */
-    private function isExtendedWhitespace(string $character): bool
-    {
-        if (Ascii::isSpace($character)) {
-            return true;
-        }
-
-        return $this->unicodeMode
-            ? \in_array($character, ["\u{85}", "\u{200e}", "\u{200f}", "\u{2028}", "\u{2029}"], true)
-            : "\x85" === $character;
-    }
-
-    /**
-     * Checks if a node represents an empty value (empty literal or empty sequence/group).
-     */
-    private function isEmptyNode(NodeInterface $node): bool
-    {
-        return ($node instanceof LiteralNode && '' === $node->value)
-            || ($node instanceof GroupNode && $this->isOptionSetting($node))
-            || ($node instanceof SequenceNode && empty($node->children));
-    }
-
-    /**
-     * "(?i)" changes options and matches nothing, so it cannot be repeated.
-     * Any other group can, even an empty one: "(){3}" and "(?i:)*" are
-     * valid PCRE.
-     */
-    private function isOptionSetting(GroupNode $node): bool
-    {
-        return GroupType::InlineFlags === $node->type
-            && ')' === ($this->pattern[$node->getStartPosition() + 2 + \strlen((string) $node->flags)] ?? ')');
-    }
-
-    /**
-     * Checks if a node is an assertion type that cannot have quantifiers.
-     */
-    private function isAssertionNode(NodeInterface $node): bool
-    {
-        return $node instanceof AnchorNode
-            || $node instanceof AssertionNode
-            || $node instanceof PcreVerbNode
-            || $node instanceof LimitMatchNode
-            || $node instanceof KeepNode;
     }
 
     /**
@@ -2462,12 +2049,12 @@ final class TokenParser
             [$number, $sign, $digits] = $matches;
             $end = $position + \strlen($number);
             $tooBig = RepeatCount::tooBigOffset($digits, $position + \strlen($sign), $this->target)
-                ?? ('+' === $sign && (int) $digits + $this->captureCount > PcreNumber::MAX ? $end : null);
+                ?? ('+' === $sign && (int) $digits + $this->state->captureCount > PcreNumber::MAX ? $end : null);
 
             return match (true) {
                 null !== $tooBig => [$tooBig, ErrorCode::GroupNumberTooBig, 'Group number '.$number.' is too big at position %d: PCRE takes at most 65535.'],
                 '' !== $sign && 0 === (int) $digits => [$end, ErrorCode::SubroutineRelativeZero, 'Subroutine call relative reference cannot be zero, at position %d.'],
-                '-' === $sign && (int) $digits > $this->captureCount => [$end, ErrorCode::SubroutineRelativeMissing, 'Subroutine call relative reference '.$number.' points before the first group, at position %d.'],
+                '-' === $sign && (int) $digits > $this->state->captureCount => [$end, ErrorCode::SubroutineRelativeMissing, 'Subroutine call relative reference '.$number.' points before the first group, at position %d.'],
                 default => [$end, ErrorCode::GroupUnclosed, 'Missing ")" to close the subroutine call at position %d.'],
             };
         }
@@ -2523,40 +2110,6 @@ final class TokenParser
         }
 
         return $position < $length ? [$start, ...$syntax] : [$length, ...$unclosed];
-    }
-
-    /**
-     * PCRE reads the numbers of a braced count before it asks whether the
-     * item before it can repeat: "{2,1}" is out of order and "{65536}" too
-     * big wherever they stand.
-     *
-     * @throws ParserException
-     */
-    private function guardQuantifierCount(Token $token): void
-    {
-        $countError = RepeatCount::faultOffset($token, $this->target);
-        if (null !== $countError) {
-            throw $this->parserException(
-                \sprintf('Invalid quantifier "%s" at position %d: its numbers are out of order or past 65535.', $token->value, $countError),
-                RepeatCount::faultCode($token->value),
-                $countError,
-            );
-        }
-    }
-
-    /**
-     * Whether the "*" at $position follows the "(" that opens the group it
-     * is in, as in "(*MARK:a" the lexer read as no verb for want of ")". A
-     * "(*" that ends the pattern names no verb: its "*" repeats nothing.
-     */
-    private function startsUnclosedVerb(int $position): bool
-    {
-        $previous = $this->stream->previous();
-
-        return '*' === ($this->pattern[$position] ?? '')
-            && $position + 1 < \strlen($this->pattern)
-            && TokenType::GroupOpen === $previous->type
-            && $previous->end() === $position;
     }
 
     /**
@@ -2632,7 +2185,7 @@ final class TokenParser
      */
     private function parseNamedGroup(int $startPosition, bool $expectAngle, bool $pythonSyntax = false): GroupNode
     {
-        $name = $this->groupNames->read(true, ++$this->captureCount, !$expectAngle);
+        $name = $this->groupNames->read(true, ++$this->state->captureCount, !$expectAngle);
 
         if ($expectAngle) {
             $this->stream->consumeLiteral('>', 'Expected > after group name', ErrorCode::GroupNameUnterminated);
