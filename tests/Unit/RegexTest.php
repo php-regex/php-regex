@@ -41,7 +41,8 @@ use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\PhpErrorOffset;
-use PHPRegex\Toolkit\OutputFormat;
+use PHPRegex\Toolkit\ExplainFormat;
+use PHPRegex\Toolkit\HighlightFormat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -90,16 +91,16 @@ final class RegexTest extends TestCase
         $this->assertSame([], $ok->errors);
     }
 
-    public function test_explain_and_highlight_accept_output_format_enum(): void
+    public function test_explain_and_highlight_accept_their_format_enum(): void
     {
-        $text = $this->regexService->explain('/a+/', OutputFormat::Text);
-        $html = $this->regexService->explain('/a+/', OutputFormat::Html);
+        $text = $this->regexService->explain('/a+/', ExplainFormat::Text);
+        $html = $this->regexService->explain('/a+/', ExplainFormat::Html);
         $this->assertStringContainsString('one or more', $text);
         $this->assertStringContainsString('<', $html);
 
-        $console = $this->regexService->highlight('/a+/', OutputFormat::Console);
+        $console = $this->regexService->highlight('/a+/', HighlightFormat::Console);
         $this->assertNotSame('', $console);
-        $this->assertStringContainsString('<', $this->regexService->highlight('/a+/', OutputFormat::Html));
+        $this->assertStringContainsString('<', $this->regexService->highlight('/a+/', HighlightFormat::Html));
     }
 
     #[DataProvider('provideRegexForOptimization')]
@@ -448,16 +449,12 @@ final class RegexTest extends TestCase
         $buildSearch->invoke($regex, ['not-a-literal-set']);
     }
 
-    public function test_create_explanation_visitor_html_and_invalid(): void
+    public function test_explain_writes_html_and_refuses_an_invalid_format(): void
     {
-        $ref = new \ReflectionClass($this->regexService);
-        $method = $ref->getMethod('createExplanationVisitor');
-
-        $htmlVisitor = $method->invoke($this->regexService, 'html');
-        $this->assertInstanceOf(HtmlExplainer::class, $htmlVisitor);
+        $this->assertSame($this->regexService->parse('/a+/')->accept(new HtmlExplainer()), $this->regexService->explain('/a+/', 'html'));
 
         $this->expectException(\InvalidArgumentException::class);
-        $method->invoke($this->regexService, 'invalid');
+        $this->regexService->explain('/a+/', 'invalid');
     }
 
     /**

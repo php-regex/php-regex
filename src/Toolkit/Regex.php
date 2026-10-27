@@ -354,36 +354,44 @@ final class Regex
     /**
      * Generate a human-readable explanation of the regular expression.
      *
-     * @param string              $regex  The regular expression to explain
-     * @param string|OutputFormat $format Output format (OutputFormat::Text or OutputFormat::Html)
+     * @param string               $regex  The regular expression to explain
+     * @param string|ExplainFormat $format ExplainFormat::Text or ExplainFormat::Html, or its value, "text" or "html"
+     *
+     * @throws InvalidRegexOptionException when the format is a string other than text or html
      *
      * @return string Formatted explanation
      */
-    public function explain(string $regex, string|OutputFormat $format = OutputFormat::Text): string
+    public function explain(string $regex, string|ExplainFormat $format = ExplainFormat::Text): string
     {
-        $format = \is_string($format) ? $format : $format->value;
-        $explanationVisitor = $this->createExplanationVisitor($format);
+        if (\is_string($format)) {
+            $format = ExplainFormat::tryFrom($format) ?? throw new InvalidRegexOptionException(\sprintf('Invalid format for explain(): %s; expected text or html.', $format));
+        }
 
-        $ast = $this->parse($regex);
+        $explanationVisitor = match ($format) {
+            ExplainFormat::Text => new TextExplainer(),
+            ExplainFormat::Html => new HtmlExplainer(),
+        };
 
-        return $ast->accept($explanationVisitor);
+        return $this->parse($regex)->accept($explanationVisitor);
     }
 
     /**
      * Highlight a regex for console or HTML output.
      *
-     * @param string              $regex  The regular expression to highlight
-     * @param string|OutputFormat $format Output format (OutputFormat::Console or OutputFormat::Html)
+     * @param string                 $regex  The regular expression to highlight
+     * @param string|HighlightFormat $format HighlightFormat::Console or HighlightFormat::Html, or its value, "console" or "html"
      *
-     * @throws InvalidRegexOptionException when the format is neither console nor html
+     * @throws InvalidRegexOptionException when the format is a string other than console or html
      */
-    public function highlight(string $regex, string|OutputFormat $format = OutputFormat::Console): string
+    public function highlight(string $regex, string|HighlightFormat $format = HighlightFormat::Console): string
     {
-        $format = \is_string($format) ? $format : $format->value;
+        if (\is_string($format)) {
+            $format = HighlightFormat::tryFrom($format) ?? throw new InvalidRegexOptionException(\sprintf('Invalid format for highlight(): %s; expected console or html.', $format));
+        }
+
         $visitor = match ($format) {
-            'console' => new ConsoleHighlighter(),
-            'html' => new HtmlHighlighter(),
-            default => throw new InvalidRegexOptionException(\sprintf('Invalid format for highlight(): %s; expected console or html.', $format)),
+            HighlightFormat::Console => new ConsoleHighlighter(),
+            HighlightFormat::Html => new HtmlHighlighter(),
         };
 
         return $this->parse($regex)->accept($visitor);
@@ -601,21 +609,5 @@ final class Regex
         }
 
         return $literalSet->complete ? LiteralConfidence::High : LiteralConfidence::Medium;
-    }
-
-    /**
-     * Create appropriate explanation visitor based on format.
-     *
-     * @param string $format The desired output format
-     *
-     * @return TextExplainer|HtmlExplainer The explanation visitor
-     */
-    private function createExplanationVisitor(string $format): TextExplainer|HtmlExplainer
-    {
-        return match ($format) {
-            'text' => new TextExplainer(),
-            'html' => new HtmlExplainer(),
-            default => throw new InvalidRegexOptionException(\sprintf('Invalid format for explain(): %s; expected text or html.', $format)),
-        };
     }
 }

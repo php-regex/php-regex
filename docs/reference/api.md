@@ -708,13 +708,14 @@ echo $sample;  // e.g., "Word12"
 
 ---
 
-### explain(string $regex, string|OutputFormat $format = OutputFormat::Text): string
+### explain(string $regex, string|ExplainFormat $format = ExplainFormat::Text): string
 
-Generates a human-readable explanation of the pattern. The format is one of the `PHPRegex\Toolkit\OutputFormat` cases — `Text` or `Html` — or the matching string (`'text'`, `'html'`).
+Generates a human-readable explanation of the pattern. The format is one of the `PHPRegex\Toolkit\ExplainFormat` cases — `Text` or `Html` — or the matching string (`'text'`, `'html'`); any other string throws
+`InvalidRegexOptionException`.
 
 ```php
+use PHPRegex\Toolkit\ExplainFormat;
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Toolkit\OutputFormat;
 
 // Plain text explanation (the default)
 $text = Regex::create()->explain('/\d{3}-\d{4}/');
@@ -727,7 +728,7 @@ Regex matches
 */
 
 // HTML explanation for docs/UIs
-$html = Regex::create()->explain('/\d{3}-\d{4}/', OutputFormat::Html);
+$html = Regex::create()->explain('/\d{3}-\d{4}/', ExplainFormat::Html);
 echo $html;
 /*
 <div class="regex-explain">
@@ -741,17 +742,19 @@ echo $html;
 
 ---
 
-### highlight(string $regex, string|OutputFormat $format = OutputFormat::Console): string
+### highlight(string $regex, string|HighlightFormat $format = HighlightFormat::Console): string
 
 Generates syntax-highlighted output, one span per token in the HTML format.
-The format is `console` or `html`; any other value throws
-`InvalidRegexOptionException`.
+The format is one of the `PHPRegex\Toolkit\HighlightFormat` cases — `Console` or `Html` — or the matching
+string (`'console'`, `'html'`); any other string throws `InvalidRegexOptionException`. Each method has its
+own enum, so a format the method does not write cannot be named.
 
 ```php
+use PHPRegex\Toolkit\HighlightFormat;
 use PHPRegex\Toolkit\Regex;
 
 // ANSI colors for console (the default)
-$highlighted = Regex::create()->highlight('/\d+/', 'console');
+$highlighted = Regex::create()->highlight('/\d+/', HighlightFormat::Console);
 echo $highlighted;  // "\033[38;2;78;201;176m\\d\033[0m\033[38;2;215;186;125m+\033[0m"
 
 // HTML for web

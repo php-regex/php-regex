@@ -10,9 +10,8 @@ registerArgumentsSet(
 
 registerArgumentsSet(
     'highlight_formats',
-    'cli',
-    'html',
-    'auto'
+    'console',
+    'html'
 );
 
 expectedArguments(

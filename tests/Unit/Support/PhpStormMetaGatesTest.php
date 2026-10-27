@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Support;
 
+use PHPRegex\Toolkit\ExplainFormat;
+use PHPRegex\Toolkit\HighlightFormat;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -94,9 +96,15 @@ final class PhpStormMetaGatesTest extends TestCase
     {
         $formats = $this->argumentsSet('highlight_formats');
 
-        $this->assertStringContainsString("'cli'", $formats);
-        $this->assertStringContainsString("'auto'", $formats);
-        $this->assertStringNotContainsString("'console'", $formats);
+        $this->assertSame(self::values(HighlightFormat::cases()), self::quoted($formats));
+        $this->assertStringNotContainsString("'cli'", $formats);
+        $this->assertStringNotContainsString("'auto'", $formats);
+    }
+
+    #[Test]
+    public function test_the_explanation_formats_the_ide_suggests_are_the_ones_the_toolkit_answers(): void
+    {
+        $this->assertSame(self::values(ExplainFormat::cases()), self::quoted($this->argumentsSet('explanation_formats')));
     }
 
     #[Test]
@@ -106,6 +114,26 @@ final class PhpStormMetaGatesTest extends TestCase
 
         $this->assertStringContainsString('RedosSeverity::Safe', $thresholds);
         $this->assertStringNotContainsString('RedosSeverity::SAFE', $thresholds);
+    }
+
+    /**
+     * @param list<\BackedEnum> $cases
+     *
+     * @return list<int|string>
+     */
+    private static function values(array $cases): array
+    {
+        return array_map(static fn (\BackedEnum $case): int|string => $case->value, $cases);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function quoted(string $set): array
+    {
+        \preg_match_all("/'([^']*)'/", $set, $matches);
+
+        return $matches[1];
     }
 
     /**

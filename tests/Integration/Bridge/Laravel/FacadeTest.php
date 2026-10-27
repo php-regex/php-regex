@@ -24,7 +24,8 @@ use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\AnalysisReport;
-use PHPRegex\Toolkit\OutputFormat;
+use PHPRegex\Toolkit\ExplainFormat;
+use PHPRegex\Toolkit\HighlightFormat;
 use PHPRegex\Transpiler\TranspileResult;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -151,9 +152,9 @@ final class FacadeTest extends LaravelTestCase
     }
 
     #[Test]
-    public function test_explain_accepts_the_output_format_enum(): void
+    public function test_explain_accepts_the_explain_format_enum(): void
     {
-        $explanation = Regex::explain('/^[a-z]+$/', OutputFormat::Html);
+        $explanation = Regex::explain('/^[a-z]+$/', ExplainFormat::Html);
 
         $this->assertIsString($explanation);
         $this->assertStringContainsString('<div class="regex-explain">', $explanation);
@@ -176,9 +177,9 @@ final class FacadeTest extends LaravelTestCase
     }
 
     #[Test]
-    public function test_highlight_accepts_the_output_format_enum(): void
+    public function test_highlight_accepts_the_highlight_format_enum(): void
     {
-        $highlighted = Regex::highlight('/^[a-z]+$/', OutputFormat::Html);
+        $highlighted = Regex::highlight('/^[a-z]+$/', HighlightFormat::Html);
 
         $this->assertIsString($highlighted);
         $this->assertStringContainsString('<span class="regex-token', $highlighted);

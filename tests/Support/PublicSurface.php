@@ -75,7 +75,7 @@ final class PublicSurface
             'RedosComplexity', 'RedosProof', 'RedosWitness', 'RedosOptions', 'RedosSearchCost',
         ],
         'Symfony' => ['PHPRegexBundle', 'Validator/Constraints/ValidRegex', 'Validator/Constraints/ValidRegexValidator'],
-        'Toolkit' => ['Regex', 'AnalysisReport', 'OutputFormat'],
+        'Toolkit' => ['Regex', 'AnalysisReport', 'ExplainFormat', 'HighlightFormat'],
         'Transpiler' => ['Transpiler', 'TranspileOptions', 'TranspileResult', 'Exception/TranspileException'],
     ];
 

@@ -35,7 +35,8 @@ use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\AnalysisReport;
-use PHPRegex\Toolkit\OutputFormat;
+use PHPRegex\Toolkit\ExplainFormat;
+use PHPRegex\Toolkit\HighlightFormat;
 use PHPRegex\Toolkit\Regex as ToolkitRegex;
 use PHPRegex\Transpiler\TranspileOptions;
 use PHPRegex\Transpiler\TranspileResult;
@@ -59,8 +60,8 @@ use PHPRegex\Transpiler\TranspileResult;
  * @method static FormatResult                  format(string $regex, int $width = 80)
  * @method static FormatResult                  compact(string $regex)
  * @method static TranspileResult               transpile(string $regex, string $target, ?TranspileOptions $options = null)
- * @method static string                        explain(string $regex, string|OutputFormat $format = OutputFormat::Text)
- * @method static string                        highlight(string $regex, string|OutputFormat $format = OutputFormat::Console)
+ * @method static string                        explain(string $regex, string|ExplainFormat $format = ExplainFormat::Text)
+ * @method static string                        highlight(string $regex, string|HighlightFormat $format = HighlightFormat::Console)
  * @method static LiteralExtractionResult       literals(string $regex)
  * @method static CaptureShape                  captureShape(string $regex)
  * @method static PatternInfo                   info(string $regex)

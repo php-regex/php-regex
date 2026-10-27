@@ -14,11 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Toolkit;
 
 /**
- * Output formats accepted by Regex::explain() and Regex::highlight().
+ * The formats Regex::explain() writes: plain text, or HTML.
  */
-enum OutputFormat: string
+enum ExplainFormat: string
 {
     case Text = 'text';
     case Html = 'html';
-    case Console = 'console';
 }

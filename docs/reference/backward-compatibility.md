@@ -89,7 +89,7 @@ In short, the public surface is:
 | `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosSearchCost`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface` |
 | `regex-transpiler` | `Transpiler`, `TranspileOptions`, `TranspileResult`, `Exception\TranspileException` |
 | `regex-linter` | `PatternLinter`, `LintSeverity`, `Exception\LintException`, `Rule\RuleViolation`, `Exception\UnknownLintRuleException`, `Exception\UnsupportedTargetException`, `Extraction\ExtractorInterface`, `PatternOccurrence` |
-| `regex-toolkit` | `Regex`, `AnalysisReport`, `OutputFormat` |
+| `regex-toolkit` | `Regex`, `AnalysisReport`, `ExplainFormat`, `HighlightFormat` |
 | `regex-phpstan` | `RegexPatternRule`, `RegexPatternArgumentRule` |
 | `regex-phpunit` | `RegexAssertions`, `Constraint\MatchesPattern`, `Constraint\DoesNotMatchPattern`, `Constraint\CompilesPattern`, `Constraint\IsLinearPattern` |
 | `regex-psalm` | `Plugin` |
