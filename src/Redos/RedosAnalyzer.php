@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Analysis\LiteralExtractor;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\RegexParser;
@@ -36,6 +37,12 @@ final class RedosAnalyzer
      * model changes.
      */
     public const ANALYSIS_VERSION = '1';
+
+    /**
+     * The literals a match ends with that the replay weaves into its
+     * witnesses, at most.
+     */
+    private const MAX_WOVEN_LITERALS = 4;
 
     /**
      * What the heuristics report where a proof settles the verdict: nothing.
@@ -226,10 +233,29 @@ final class RedosAnalyzer
             }
         }
 
+        // PCRE2 looks for the code unit every match requires before it tries
+        // an unanchored pattern, on subjects of up to 5,000,000 code units: a
+        // witness without it is rejected at once. Each literal a match ends
+        // with, woven in ahead of the attack, makes a candidate of a second
+        // replay, run when the first reproduced nothing.
+        $woven = [];
+        foreach (self::endingLiterals($this->parser ?? RegexParser::create(), $regex) as $literal) {
+            foreach ($candidates as $candidate) {
+                if (!str_contains($candidate->build(1), $literal)) {
+                    $woven[] = new RedosWitness($literal.$candidate->prefix, $candidate->pump, $candidate->suffix, $candidate->unicode);
+                }
+            }
+        }
+
         if (null === $this->confirmationRunner) {
             // One budget of work for every candidate; the call without
             // $matches when the witness needs PHP's retry of an empty match.
             [$confirmation, $reproduced] = (new WitnessReplayer())->replay($regex, $candidates, $options ?? new ConfirmationOptions(), $proof->withoutMatches);
+            if (null === $reproduced && [] !== $woven) {
+                [$wovenConfirmation, $reproduced] = (new WitnessReplayer())->replay($regex, $woven, $options ?? new ConfirmationOptions(), $proof->withoutMatches);
+                $confirmation = null === $reproduced ? $confirmation : $wovenConfirmation;
+            }
+
             if (null !== $reproduced) {
                 return $analysis->withConfirmation($confirmation, self::provenConfidence($proof, true), $reproduced, true);
             }
@@ -238,7 +264,7 @@ final class RedosAnalyzer
         }
 
         $first = null;
-        foreach ($candidates as $candidate) {
+        foreach ([...$candidates, ...$woven] as $candidate) {
             $confirmation = $this->confirmationRunner->confirm($regex, $analysis->withConfirmation(null, $analysis->confidence, $candidate, null), $options);
             $first ??= $confirmation;
             if (self::reproduced($confirmation)) {
@@ -247,6 +273,23 @@ final class RedosAnalyzer
         }
 
         return $analysis->withConfirmation($first, self::provenConfidence($proof, false), $witness, $first->wasSkipped() ? null : false);
+    }
+
+    /**
+     * The literals a match of the pattern ends with, a few of them; none
+     * when the pattern does not parse or a match may end anywhere.
+     *
+     * @return list<string>
+     */
+    private static function endingLiterals(RegexParser $parser, string $regex): array
+    {
+        try {
+            $suffixes = $parser->parse($regex)->accept(new LiteralExtractor())->suffixes;
+        } catch (ExceptionInterface) {
+            return [];
+        }
+
+        return \array_slice(array_values(array_unique(array_filter($suffixes, static fn (string $suffix): bool => '' !== $suffix))), 0, self::MAX_WOVEN_LITERALS);
     }
 
     /**

@@ -81,6 +81,28 @@ final class RedosRequiredUnitCapReplayTest extends TestCase
     }
 
     /**
+     * An unanchored pattern is looked for its required code unit up to
+     * 5,000,000 code units: a witness without it is never backtracked on.
+     * The replay weaves in the literal every match ends with, ahead of the
+     * attack (PHP 8.4.27 / PCRE2 10.49, interpreter: '"' x 64 answers in
+     * 0.01 ms, "!" . "a" x 20 runs into the backtrack limit).
+     */
+    #[Test]
+    public function test_confirmed_replay_weaves_in_the_literal_every_match_ends_with(): void
+    {
+        $pattern = '/([\\d\\D]+)+!/';
+        $this->assertSame(0, @preg_match(PcreInterpreter::pattern($pattern), str_repeat('"', 64)));
+        $this->assertFalse(@preg_match(PcreInterpreter::pattern($pattern), '!'.str_repeat('a', 20)));
+
+        $analysis = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed);
+
+        $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
+        $this->assertTrue($analysis->replayed);
+        $this->assertInstanceOf(RedosWitness::class, $analysis->witness);
+        $this->assertStringContainsString('!', $analysis->witness->build(1));
+    }
+
+    /**
      * A replay that runs out of work before the cap stops there: no sample
      * past it, the verdict not reproduced.
      */

@@ -240,16 +240,6 @@ two parsers read differently.
 The literal-fragment builder, the repairer and the confirmed mode first:
 they answer wrong, not just incomplete.
 
-- Confirmed-mode lint drops genuinely catastrophic every-character loops:
-  for `/([\d\D]+)+!/` the model proves exponential, but the published
-  witness is `"\"" x n` — no rejecting suffix holding the `!` — and PCRE2's
-  required-code-unit start-up rejects each witness subject in one step, so
-  the replay says `replayed: false` and the verdict is dropped. Theoretical
-  lint reports the CRITICAL warning, confirmed lint reports nothing
-  (`BacktrackProver.php:200-216`, the drop in `RedosVerdict.php:70-77`).
-  The witness has to weave the required literal in, as `SearchCostProver`'s
-  breakers already do — or the verdict must stand when no reproducing
-  witness was even constructible.
 - The `{n}` cutoff of the backtracking model reads an exact count as
   unbounded: `/(?:a{17})+b/` is judged critical/exponential/proven with
   `"{17} at offset 3 analysed as {17,}"`, while the engine answers it in
