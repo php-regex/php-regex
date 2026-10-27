@@ -46,6 +46,21 @@ final class AstFingerprintSourcesTest extends TestCase
     ];
 
     /**
+     * Classes of the validation directory that judge a pattern on each call
+     * and store nothing: the matrix of targets, the range of versions, the
+     * verdicts they give, and what validate() returns.
+     */
+    private const NOT_READING_A_PATTERN = [
+        'CompatibilityChecker',
+        'PatternCompatibility',
+        'RangeDiff',
+        'RangeVerdict',
+        'TargetVerdict',
+        'ValidationErrorCategory',
+        'ValidationResult',
+    ];
+
+    /**
      * Library code a fingerprinted file imports without it deciding what a
      * tree or an automaton holds, by prefix of the class name.
      */
@@ -187,6 +202,43 @@ final class AstFingerprintSourcesTest extends TestCase
         // Fingerprinted already: kept as guards.
         yield 'tree to NFA' => ['directory' => 'src/Automata/Transform'];
         yield 'HIR' => ['directory' => 'src/Parser/Hir'];
+    }
+
+    /**
+     * Every file of the lexer, the token parser and the validator is
+     * fingerprinted, a file split out of one of them included: a file left
+     * out could change a tree while the cache version stays, and the cache
+     * would serve the tree an older build stored.
+     */
+    #[Test]
+    #[DataProvider('provideTreeBuildingDirectories')]
+    public function test_every_file_of_the_code_that_reads_a_pattern_is_fingerprinted(string $directory): void
+    {
+        $root = AstFingerprint::root();
+        $this->assertDirectoryExists($root.'/'.$directory);
+
+        $files = [];
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root.'/'.$directory, \FilesystemIterator::SKIP_DOTS)) as $file) {
+            if ($file instanceof \SplFileInfo && 'php' === $file->getExtension() && !\in_array($file->getBasename('.php'), self::NOT_READING_A_PATTERN, true)) {
+                $files[] = $file->getPathname();
+            }
+        }
+        sort($files);
+        $this->assertNotSame([], $files);
+
+        $missing = array_values(array_diff($files, AstFingerprint::files()));
+
+        $this->assertSame([], array_map(static fn (string $file): string => substr($file, \strlen($root) + 1), $missing), 'Add these files to AstFingerprint::SOURCES and run "task cache-version".');
+    }
+
+    /**
+     * @return iterable<string, array{directory: string}>
+     */
+    public static function provideTreeBuildingDirectories(): iterable
+    {
+        yield 'lexer' => ['directory' => 'src/Parser/Lexing'];
+        yield 'token parser' => ['directory' => 'src/Parser/Syntax'];
+        yield 'validator' => ['directory' => 'src/Parser/Validation'];
     }
 
     #[Test]

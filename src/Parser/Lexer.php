@@ -16,6 +16,7 @@ namespace PHPRegex\Parser;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Lexing\TokenValue;
 use PHPRegex\Parser\Syntax\BadEscape;
 use PHPRegex\Parser\Syntax\CodePointReader;
 use PHPRegex\Parser\Syntax\ExtendedClassReader;
@@ -188,31 +189,9 @@ final class Lexer
         'T_LITERAL' => '[^\\\\]',
     ];
 
-    // Token value extraction offsets
-    private const OFFSET_VERB_START = 2; // After (* or (?
-    private const OFFSET_VERB_END = -1;
-    private const OFFSET_CALLOUT_START = 3; // After (?C
-    private const OFFSET_CALLOUT_END = -1;
-    private const OFFSET_BACKSLASH = 1; // After backslash
-    private const OFFSET_UNICODE_NAMED_START = 3; // After \N{
-    private const OFFSET_UNICODE_NAMED_END = -1;
-    private const OFFSET_CONTROL_CHAR = 2; // After \c
-
-    // Escape sequences
-    private const ESCAPE_BACKSPACE = "\x08";
-    private const ESCAPE_TAB = "\t";
-    private const ESCAPE_NEWLINE = "\n";
-    private const ESCAPE_CARRIAGE_RETURN = "\r";
-    private const ESCAPE_FORM_FEED = "\f";
-    private const ESCAPE_ESCAPE = "\x1B";
-    private const ESCAPE_BELL = "\x07";
-
     // Pattern literals
     private const PATTERN_QUOTE_END = '\E';
     private const PATTERN_COMMENT_CLOSE = ')';
-    private const PATTERN_UNICODE_PROP_BRACE_START = 1; // After {
-    private const PATTERN_UNICODE_PROP_BRACE_END = -1; // Before }
-    private const PATTERN_UNICODE_PROP_NEGATION_START = 1; // After ^
 
     /**
      * Modifier letters accepted inside "(?...)": what the parser takes, plus
@@ -1582,7 +1561,7 @@ final class Lexer
                 }
             }
 
-            $value = $this->extractTokenValue($type, $matchedValue, $matches);
+            $value = TokenValue::of($type, $matchedValue, $matches, $this->inCharClass);
 
             // The value may be a rewrite of what was matched — a stripped
             // backslash, a normalized property name — so the token carries the
@@ -1607,7 +1586,7 @@ final class Lexer
         }
 
         if (TokenType::PcreVerb === $type && !$this->inCharClass) {
-            $this->refuseVerbName(substr($matchedValue, self::OFFSET_VERB_START, self::OFFSET_VERB_END), $startPos, $currentTokens);
+            $this->refuseVerbName(TokenValue::verb($matchedValue), $startPos, $currentTokens);
         }
 
         // Before PCRE2 10.37 a backslash and its digits are one number, refused
@@ -2024,90 +2003,6 @@ final class Lexer
         $this->position = $this->length;
 
         return null;
-    }
-
-    /**
-     * Extracts value from an escaped literal token.
-     * Handles special escape sequences and context-sensitive escapes like \b.
-     */
-    private function extractEscapedLiteralValue(string $matchedValue): string
-    {
-        $char = substr($matchedValue, self::OFFSET_BACKSLASH);
-
-        // Inside character classes, \b means backspace (0x08), not word boundary
-        if ($this->inCharClass && 'b' === $char) {
-            return self::ESCAPE_BACKSPACE;
-        }
-
-        return match ($char) {
-            't' => self::ESCAPE_TAB,
-            'n' => self::ESCAPE_NEWLINE,
-            'r' => self::ESCAPE_CARRIAGE_RETURN,
-            'f' => self::ESCAPE_FORM_FEED,
-            'e' => self::ESCAPE_ESCAPE,
-            'a' => self::ESCAPE_BELL,
-            default => $char,
-        };
-    }
-
-    /**
-     * @param array<int|string, string|null> $matches
-     */
-    private function extractTokenValue(TokenType $type, string $matchedValue, array $matches): string
-    {
-        return match ($type) {
-            TokenType::LiteralEscaped => $this->extractEscapedLiteralValue($matchedValue),
-            TokenType::PcreVerb => substr($matchedValue, self::OFFSET_VERB_START, self::OFFSET_VERB_END),
-            TokenType::Callout => substr($matchedValue, self::OFFSET_CALLOUT_START, self::OFFSET_CALLOUT_END),
-            TokenType::Assertion, TokenType::CharType, TokenType::Keep => substr($matchedValue, self::OFFSET_BACKSLASH),
-            TokenType::Backref => $matchedValue,
-            TokenType::OctalLegacy => substr($matchedValue, self::OFFSET_BACKSLASH),
-            TokenType::PosixClass => \is_string($matches['v_posix'] ?? null) ? $matches['v_posix'] : '',
-            TokenType::Unicode => $this->parseUnicodeEscape($matchedValue),
-            TokenType::UnicodeProp => $this->normalizeUnicodeProp($matchedValue),
-            TokenType::UnicodeNamed => substr($matchedValue, self::OFFSET_UNICODE_NAMED_START, self::OFFSET_UNICODE_NAMED_END),
-            TokenType::ControlChar => substr($matchedValue, self::OFFSET_CONTROL_CHAR),
-            default => $matchedValue,
-        };
-    }
-
-    /**
-     * Parses a Unicode escape sequence.
-     *
-     * Preserve the original escape lexeme so token offsets stay byte-accurate and
-     * round-tripping remains stable.
-     */
-    private function parseUnicodeEscape(string $escape): string
-    {
-        return $escape;
-    }
-
-    private function normalizeUnicodeProp(string $matchedValue): string
-    {
-        $isNegated = str_starts_with($matchedValue, '\\P');
-        $prop = substr($matchedValue, self::OFFSET_VERB_START); // Strip "\p" or "\P"
-
-        $hasBraces = str_starts_with($prop, '{') && str_ends_with($prop, '}');
-
-        if ($hasBraces) {
-            $prop = substr($prop, self::PATTERN_UNICODE_PROP_BRACE_START, self::PATTERN_UNICODE_PROP_BRACE_END);
-        }
-
-        // PCRE2 skips the spaces before the "^": "\P{ ^L}" is "\p{L}".
-        $isPropNegated = str_starts_with(ltrim($prop, " \t\n\v\f\r"), '^');
-        if ($isPropNegated) {
-            $prop = substr(ltrim($prop, " \t\n\v\f\r"), self::PATTERN_UNICODE_PROP_NEGATION_START);
-        }
-
-        if ('' === $prop) {
-            return '';
-        }
-
-        $negated = $isNegated !== $isPropNegated;
-
-        $normalized = $negated ? '^'.$prop : $prop;
-
-        return $hasBraces ? '{'.$normalized.'}' : $normalized;
     }
 
     /**

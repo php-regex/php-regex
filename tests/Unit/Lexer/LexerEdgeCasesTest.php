@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lexer;
 
 use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Lexing\TokenValue;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
@@ -105,26 +106,25 @@ final class LexerEdgeCasesTest extends TestCase
      */
     public function test_extract_token_value_fallback(): void
     {
-        $lexer = new Lexer();
-        $lexer->tokenize('');
-        $accessor = new LexerAccessor($lexer);
 
         // Force a token that has no specific extraction logic
         // (e.g. T_LITERAL goes to the default)
-        $val = $accessor->callPrivateMethod('extractTokenValue', [
+        $val = TokenValue::of(
             TokenType::Literal,
             'X',
-            []
-        ]);
+            [],
+            false,
+        );
         $this->assertSame('X', $val);
 
         // Test empty array fallback (null coalescing) in Lexer
         // Case: T_POSIX_CLASS without 'v_posix' key in matches
-        $val = $accessor->callPrivateMethod('extractTokenValue', [
+        $val = TokenValue::of(
             TokenType::PosixClass,
             '[[:alnum:]]',
-            [] // Empty array to simulate partial match
-        ]);
+            [], // Empty array to simulate partial match
+            false,
+        );
         // The code does ($matches['v_posix'] ?? '') -> ''
         $this->assertSame('', $val);
     }
@@ -135,14 +135,9 @@ final class LexerEdgeCasesTest extends TestCase
      */
     public function test_normalize_unicode_prop_fallbacks(): void
     {
-        $lexer = new Lexer();
-        $lexer->tokenize('');
-        $accessor = new LexerAccessor($lexer);
 
         // Case where property is empty
-        $val = $accessor->callPrivateMethod('normalizeUnicodeProp', [
-            '\p{}',
-        ]);
+        $val = TokenValue::unicodeProperty('\p{}');
         $this->assertSame('', $val);
     }
 
@@ -273,20 +268,16 @@ final class LexerEdgeCasesTest extends TestCase
 
     public function test_extract_token_value_handles_bell_escape(): void
     {
-        $lexer = new Lexer();
-        $accessor = new LexerAccessor($lexer);
 
-        $value = $accessor->callPrivateMethod('extractTokenValue', [TokenType::LiteralEscaped, '\\a', []]);
+        $value = TokenValue::of(TokenType::LiteralEscaped, '\\a', [], false);
 
         $this->assertSame("\x07", $value);
     }
 
     public function test_extract_token_value_falls_back_to_default(): void
     {
-        $lexer = new Lexer();
-        $accessor = new LexerAccessor($lexer);
 
-        $value = $accessor->callPrivateMethod('extractTokenValue', [TokenType::Literal, 'X', []]);
+        $value = TokenValue::of(TokenType::Literal, 'X', [], false);
 
         $this->assertSame('X', $value);
     }

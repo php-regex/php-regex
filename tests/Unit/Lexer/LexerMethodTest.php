@@ -13,9 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lexer;
 
-use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Lexing\TokenValue;
 use PHPRegex\Parser\Token\TokenType;
-use PHPRegex\Tests\TestUtils\LexerAccessor;
 use PHPUnit\Framework\TestCase;
 
 final class LexerMethodTest extends TestCase
@@ -27,17 +26,15 @@ final class LexerMethodTest extends TestCase
      */
     public function test_extract_token_value_unknown_type(): void
     {
-        $lexer = new Lexer();
-        $lexer->tokenize('');
-        $accessor = new LexerAccessor($lexer);
 
         // Force a token that has no specific extraction logic
         // (e.g. T_LITERAL goes to the default)
-        $val = $accessor->callPrivateMethod('extractTokenValue', [
+        $val = TokenValue::of(
             TokenType::Literal, // Cas default
             'TEST_VALUE',
-            []
-        ]);
+            [],
+            false,
+        );
         $this->assertSame('TEST_VALUE', $val);
     }
 
@@ -46,15 +43,13 @@ final class LexerMethodTest extends TestCase
      */
     public function test_extract_token_value_backref_fallback(): void
     {
-        $lexer = new Lexer();
-        $lexer->tokenize('');
-        $accessor = new LexerAccessor($lexer);
 
-        $val = $accessor->callPrivateMethod('extractTokenValue', [
+        $val = TokenValue::of(
             TokenType::Backref,
             '\99',
-            []         // Empty array -> force the ?? null
-        ]);
+            [], // Empty array -> force the ?? null
+            false,
+        );
         $this->assertSame('\99', $val);
     }
 
@@ -63,13 +58,8 @@ final class LexerMethodTest extends TestCase
      */
     public function test_normalize_unicode_prop_fallback(): void
     {
-        $lexer = new Lexer();
-        $lexer->tokenize('');
-        $accessor = new LexerAccessor($lexer);
 
-        $val = $accessor->callPrivateMethod('normalizeUnicodeProp', [
-            '\p{}',
-        ]);
+        $val = TokenValue::unicodeProperty('\p{}');
         $this->assertSame('', $val); // Returns the empty property
     }
 }

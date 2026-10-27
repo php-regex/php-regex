@@ -35,6 +35,7 @@ final class AstFingerprint
      */
     private const SOURCES = [
         'src/Parser/Lexer.php',
+        'src/Parser/Lexing/*.php',
         'src/Parser/Syntax/TokenParser.php',
         'src/Parser/Token/Token.php',
         'src/Parser/Token/TokenStream.php',

@@ -13,9 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lexer;
 
-use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Lexing\TokenValue;
 use PHPRegex\Parser\Token\TokenType;
-use PHPRegex\Tests\TestUtils\LexerAccessor;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -30,14 +29,14 @@ final class LexerInternalsTest extends TestCase
      */
     public function test_extract_posix_fallback(): void
     {
-        $accessor = new LexerAccessor(new Lexer());
 
         // Simulates an incomplete match to force the `?? ''`
-        $result = $accessor->callPrivateMethod('extractTokenValue', [
+        $result = TokenValue::of(
             TokenType::PosixClass,
             '[[:alnum:]]',
-            [] // No 'v_posix' key
-        ]);
+            [], // No 'v_posix' key
+            false,
+        );
 
         $this->assertSame('', $result);
     }
@@ -47,12 +46,9 @@ final class LexerInternalsTest extends TestCase
      */
     public function test_normalize_unicode_fallback(): void
     {
-        $accessor = new LexerAccessor(new Lexer());
 
         // Empty property to force the fallback path
-        $result = $accessor->callPrivateMethod('normalizeUnicodeProp', [
-            '\p{}',
-        ]);
+        $result = TokenValue::unicodeProperty('\p{}');
 
         $this->assertSame('', $result);
     }
@@ -63,15 +59,15 @@ final class LexerInternalsTest extends TestCase
      */
     public function test_extract_literal_escaped_default(): void
     {
-        $accessor = new LexerAccessor(new Lexer());
 
         // Tests an escaped character that is not special (e.g. \@)
         // This forces the `default => substr(...)`
-        $result = $accessor->callPrivateMethod('extractTokenValue', [
+        $result = TokenValue::of(
             TokenType::LiteralEscaped,
             '\@',
-            []
-        ]);
+            [],
+            false,
+        );
 
         $this->assertSame('@', $result);
     }
@@ -81,36 +77,37 @@ final class LexerInternalsTest extends TestCase
      */
     public function test_extract_backref_fallback(): void
     {
-        $accessor = new LexerAccessor(new Lexer());
 
         // Forces the `??` for the backref number
-        $result = $accessor->callPrivateMethod('extractTokenValue', [
+        $result = TokenValue::of(
             TokenType::Backref,
             '\1',
-            [] // No 'v_backref_num' key
-        ]);
+            [], // No 'v_backref_num' key
+            false,
+        );
 
         $this->assertSame('\1', $result);
     }
 
     public function test_extract_token_value_default_case(): void
     {
-        $accessor = new LexerAccessor(new Lexer());
 
         // Case where type is T_LITERAL (the global switch default)
-        $val = $accessor->callPrivateMethod('extractTokenValue', [
+        $val = TokenValue::of(
             TokenType::Literal,
             'X',
-            []
-        ]);
+            [],
+            false,
+        );
         $this->assertSame('X', $val);
 
         // Case where type is T_LITERAL_ESCAPED but char is not special (the internal match default)
-        $val = $accessor->callPrivateMethod('extractTokenValue', [
+        $val = TokenValue::of(
             TokenType::LiteralEscaped,
             '\@', // @ is not t, n, r, etc.
-            []
-        ]);
+            [],
+            false,
+        );
         // The code performs substr($val, 1) -> "@"
         $this->assertSame('@', $val);
     }

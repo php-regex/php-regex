@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Sweep;
 
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Lexing\TokenValue;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\TestCase;
@@ -207,13 +208,9 @@ final class LexerSweepTest extends TestCase
      */
     public function test_lexer_extract_token_value_default_escape(): void
     {
-        $lexer = new Lexer();
-        $lexer->tokenize('');
-        $reflection = new \ReflectionClass($lexer);
-        $method = $reflection->getMethod('extractTokenValue');
 
         // Simulates an unknown escaped character, e.g. '\@' -> '@'
-        $result = $method->invoke($lexer, TokenType::LiteralEscaped, '\@', []);
+        $result = TokenValue::of(TokenType::LiteralEscaped, '\@', [], false);
 
         $this->assertSame('@', $result);
     }
@@ -224,13 +221,9 @@ final class LexerSweepTest extends TestCase
      */
     public function test_lexer_extract_token_value_global_default(): void
     {
-        $lexer = new Lexer();
-        $lexer->tokenize('');
-        $reflection = new \ReflectionClass($lexer);
-        $method = $reflection->getMethod('extractTokenValue');
 
         // T_LITERAL falls into the default
-        $result = $method->invoke($lexer, TokenType::Literal, 'A', []);
+        $result = TokenValue::of(TokenType::Literal, 'A', [], false);
 
         $this->assertSame('A', $result);
     }
@@ -240,13 +233,9 @@ final class LexerSweepTest extends TestCase
      */
     public function test_lexer_normalize_unicode_missing_captures(): void
     {
-        $lexer = new Lexer();
-        $lexer->tokenize('');
-        $reflection = new \ReflectionClass($lexer);
-        $method = $reflection->getMethod('normalizeUnicodeProp');
 
         // Empty property to hit the fallback path
-        $result = $method->invoke($lexer, '\p{}');
+        $result = TokenValue::unicodeProperty('\p{}');
 
         $this->assertSame('', $result);
     }
