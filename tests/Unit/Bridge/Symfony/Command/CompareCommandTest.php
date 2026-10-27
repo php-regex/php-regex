@@ -132,6 +132,25 @@ final class CompareCommandTest extends TestCase
         $this->assertStringNotContainsString('Pattern 1 only', $display);
     }
 
+    /**
+     * Two patterns that match the same strings are each a subset of the
+     * other, and neither a strict one.
+     */
+    #[Test]
+    public function test_a_subset_of_the_same_strings_is_called_equivalent(): void
+    {
+        foreach (['foo', 'bar', 'fo', 'foobar', ''] as $subject) {
+            $this->assertSame(preg_match('/^(?:foo|bar)$/', $subject), preg_match('/^(?:bar|foo)$/', $subject), 'Oracle: "'.$subject.'"');
+        }
+
+        $tester = new CommandTester(new CompareCommand(Regex::create()));
+
+        $this->assertSame(Command::SUCCESS, $tester->execute(['pattern1' => '/foo|bar/', 'pattern2' => '/bar|foo/', '--method' => 'subset']));
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('Patterns are equivalent: a subset, not a strict one.', $display);
+        $this->assertStringNotContainsString('strict subset', $display);
+    }
+
     private static function whole(string $pattern): string
     {
         $end = (int) strrpos($pattern, $pattern[0]);

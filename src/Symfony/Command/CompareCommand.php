@@ -177,7 +177,10 @@ final class CompareCommand extends Command
         $result = $solver->subsetOf($pattern1, $pattern2, $options);
 
         if ($result->isSubset) {
-            $io->success('Pattern 1 is a strict subset of Pattern 2.');
+            // A subset the other way too: the same strings, not a strict one.
+            $io->success($solver->subsetOf($pattern2, $pattern1, $options)->isSubset
+                ? 'Patterns are equivalent: a subset, not a strict one.'
+                : 'Pattern 1 is a strict subset of Pattern 2.');
 
             return Command::SUCCESS;
         }

@@ -242,9 +242,12 @@ final class CompareCommand extends Command
 
         return [
             'passed' => $result->isSubset,
-            'verdict' => $result->isSubset
-                ? '<bg=green;fg=white;options=bold> SUBSET </> Pattern 1 is a strict subset of Pattern 2.'
-                : '<bg=red;fg=white;options=bold> NOT A SUBSET </> Pattern 1 allows strings that Pattern 2 forbids.',
+            'verdict' => match (true) {
+                !$result->isSubset => '<bg=red;fg=white;options=bold> NOT A SUBSET </> Pattern 1 allows strings that Pattern 2 forbids.',
+                // A subset the other way too: the same strings, not a strict one.
+                $solver->subsetOf($pattern2, $pattern1, $options)->isSubset => '<bg=green;fg=white;options=bold> EQUIVALENT </> The patterns match the same strings: a subset, not a strict one.',
+                default => '<bg=green;fg=white;options=bold> SUBSET </> Pattern 1 is a strict subset of Pattern 2.',
+            },
             'example' => null === $result->counterExample ? null : ['Counterexample', $result->counterExample],
             'json' => ['subset' => $result->isSubset, 'counterexample' => $result->counterExample],
         ];

@@ -149,7 +149,11 @@ final class CompareCommand extends AbstractCommand
         $result = $solver->subsetOf($parsed['pattern1'], $parsed['pattern2'], $options);
 
         if ($result->isSubset) {
-            $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('Pattern 1 is a strict subset of Pattern 2.')."\n");
+            // A subset the other way too: the same strings, not a strict one.
+            $verdict = $solver->subsetOf($parsed['pattern2'], $parsed['pattern1'], $options)->isSubset
+                ? 'Patterns are equivalent: a subset, not a strict one.'
+                : 'Pattern 1 is a strict subset of Pattern 2.';
+            $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success($verdict)."\n");
 
             return self::SUCCESS;
         }

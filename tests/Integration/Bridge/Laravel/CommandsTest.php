@@ -116,6 +116,23 @@ final class CommandsTest extends LaravelTestCase
     }
 
     #[Test]
+    public function test_compare_command_calls_a_subset_of_the_same_strings_equivalent(): void
+    {
+        foreach (['0', '42', 'a', ''] as $subject) {
+            $this->assertSame(preg_match('/^(?:[0-9]+)$/', $subject), preg_match('/^(?:\d+)$/', $subject), 'Oracle: "'.$subject.'"');
+        }
+
+        $this->command('regex:compare', [
+            'pattern1' => '/[0-9]+/',
+            'pattern2' => '/\d+/',
+            '--method' => 'subset',
+        ])
+            ->assertSuccessful()
+            ->expectsOutputToContain('EQUIVALENT  The patterns match the same strings: a subset, not a strict one.')
+            ->doesntExpectOutputToContain('strict subset');
+    }
+
+    #[Test]
     public function test_compare_command_json_output(): void
     {
         $this->command('regex:compare', [

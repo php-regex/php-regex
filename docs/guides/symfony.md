@@ -404,6 +404,10 @@ and options:
 | `regex:explain` | `<pattern>` | `--format=console\|html`, `--highlight` |
 | `regex:transpile` | `<pattern>` | `-t`/`--target=js` (`javascript`, `html`, `html-pattern`, `python`, `py`), `--format=console\|json` |
 
+`regex:compare --method=subset` calls the first pattern a strict subset of
+the second only when the second matches more strings; when the subset holds
+both ways, it says the patterns are equivalent.
+
 `regex:lint`, `regex:explain` and `regex:transpile` take the options of the
 Laravel package's command of the same name, under the same names and short
 forms; `regex:compare` takes them but `--format`, which the Laravel command

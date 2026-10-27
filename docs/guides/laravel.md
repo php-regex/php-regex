@@ -275,7 +275,9 @@ cannot be used (see [the CLI guide](cli.md#exit-codes)).
 `regex:compare`, with the same default: `intersection` (do the two patterns
 share a string?), `subset` (is every string of the first one a string of
 the second?) and `equivalence` (do they match the same strings?). A failed
-check prints the string that proves it. `--format=json` writes the verdict
+check prints the string that proves it. A `subset` check that holds both
+ways says the patterns are equivalent, never that the first is a strict
+subset of the second. `--format=json` writes the verdict
 under a key named for the method: `disjoint` and `example`, `subset` and
 `counterexample`, or `equivalent`, `counterexample`, `left_only_example` and
 `right_only_example`; the keys of the other methods are there too, `null`.
