@@ -101,6 +101,14 @@ vendor/bin/regex analyze '/(\w*a\w+)+\b/'
   Model: ambiguity without witness at offset 1
 ```
 
+A proven degree is one its witness reaches: the loops of the chain read the
+word the witness pumps. In `/^[!a]*.*a*b$/` the three loops read `a`, so the
+witness is `"a" x n . "\nb"`, cubic (2.7, 13.3 and 149 ms on 250, 500 and
+1,000 `a` without the JIT), where `"!" x n . "\nb"` would be quadratic. In
+`/^[!]*[!a]*a*b$/` the first link reads `!` alone and the second `a` alone:
+no pump drives the three loops, so degree 3 has no witness and the
+heuristics decide, though `"!" x n . "a" x n . "\nb"` is cubic.
+
 The limits of the guarantee, each one deliberate:
 
 - **One match attempt.** `preg_match()` retries an unanchored pattern at every start position, and `preg_match_all()`, `preg_replace()` and `preg_split()` look for every match. Those retries can multiply the cost of an attempt by the length of the subject: a degree-k per-attempt verdict costs up to n^(k+1) steps over an unanchored search (`/a*a*$/`, quadratic per attempt, takes 12, 87 and 659 ms on 500, 1,000 and 2,000 `a` and a `b` without the JIT, eight times as long each time the length doubles). When one attempt is proven linear, the analysis looks for the run that makes the search quadratic: see [The cost of an unanchored search](#the-cost-of-an-unanchored-search). A pattern that matches inside the run is not reported there: `/a*b|a/` is `safe (proven)`, and the `preg_match_all()` figure above is that multiplication. The second search `preg_match()` runs without `$matches` after an empty match is covered: for a pattern that can match empty, the analysis also models an attempt where an empty match at its start does not count, which is why `/a*|(b+)+$/` is exponential.

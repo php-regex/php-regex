@@ -838,7 +838,7 @@ final class AmbiguityFinder
         $bestDegree = 0;
         $unwitnessed = null;
         foreach ($links as $targets) {
-            foreach ($targets as $to => [$state, $labels, $crosses, $real, $lookaround]) {
+            foreach ($targets as $to => [$state, $labels, $crosses, $real, $lookaround, $end]) {
                 $degree = 2 + $this->longestChain($to, $links, $longest);
                 $inexact = $crosses || !$real;
                 // An exact pump wins a tie with an approximated one.
@@ -846,11 +846,30 @@ final class AmbiguityFinder
                     continue;
                 }
 
-                $witness = $lookaround ? null : $this->witness($state, $this->pumps($labels));
+                // The links of the chain may read different words: a pump
+                // shows the degree of the chain its own word drives, and
+                // the pumps are tried from the highest.
+                $witness = null;
+                $witnessed = 0;
+                foreach ($lookaround ? [] : $this->pumpsByDegree($this->pumps($labels), $end, $degree) as $pumpDegree => $pumps) {
+                    if (null !== $best && ($pumpDegree < $bestDegree || ($pumpDegree === $bestDegree && ($inexact || !$best['approximated'])))) {
+                        break;
+                    }
+
+                    $witness = $this->witness($state, $pumps);
+                    if (null !== $witness) {
+                        $witnessed = $pumpDegree;
+
+                        break;
+                    }
+                }
+
                 if (null !== $witness) {
-                    $best = $this->verdict(RedosComplexity::Polynomial, $degree, $witness, $inexact);
-                    $bestDegree = $degree;
-                } elseif (null === $unwitnessed || $degree > $unwitnessed[0]) {
+                    $best = $this->verdict(RedosComplexity::Polynomial, $witnessed, $witness, $inexact);
+                    $bestDegree = $witnessed;
+                }
+
+                if ($witnessed < $degree && (null === $unwitnessed || $degree > $unwitnessed[0])) {
                     $unwitnessed = [$degree, $state];
                 }
             }
@@ -942,6 +961,102 @@ final class AmbiguityFinder
         }
 
         return $longest[$component] = $best;
+    }
+
+    /**
+     * The pumps of a link by the degree the chain on each one's word
+     * reaches, the highest first, none above the degree of the chain of
+     * components: the link's two states, then each further state the word
+     * leads to and loops on.
+     *
+     * @param list<list<int>> $pumps
+     *
+     * @return array<int, list<list<int>>>
+     */
+    private function pumpsByDegree(array $pumps, int $end, int $degree): array
+    {
+        $byDegree = [];
+        foreach ($pumps as $pump) {
+            $chains = [];
+            $byDegree[min($degree, 2 + $this->chainOn($pump, $end, $chains))][] = $pump;
+        }
+
+        krsort($byDegree);
+
+        return $byDegree;
+    }
+
+    /**
+     * How many states a chain on the pump's word reaches after the state:
+     * a state of another cyclic component the word, read once or more from
+     * the state, leads to, which loops on the word and whose continuations
+     * do not all succeed, then the states after it.
+     *
+     * @param list<int>       $pump   classes
+     * @param array<int, int> $chains the chain from each state met, for the pump
+     */
+    private function chainOn(array $pump, int $state, array &$chains): int
+    {
+        if (isset($chains[$state])) {
+            return $chains[$state];
+        }
+
+        $chains[$state] = 0;
+        $component = $this->component[$state] ?? null;
+        $reached = [];
+        $current = [$state => true];
+        // The states the word read again and again leads to, until they
+        // repeat.
+        $seen = [];
+        while ([] !== $current && !isset($seen[$key = self::key($current)])) {
+            $seen[$key] = true;
+            $current = $this->read($current, $pump);
+            $reached += $current;
+        }
+
+        $best = 0;
+        foreach ($reached as $next => $_) {
+            $nextComponent = $this->component[$next] ?? null;
+            if (null === $nextComponent || $nextComponent === $component || $this->disproved($next) || !isset($this->read([$next => true], $pump)[$next])) {
+                continue;
+            }
+
+            $best = max($best, 1 + $this->chainOn($pump, $next, $chains));
+        }
+
+        return $chains[$state] = $best;
+    }
+
+    /**
+     * The reading items the word leads to from the items, on any path.
+     *
+     * @param array<int, true> $items
+     * @param list<int>        $word  classes
+     *
+     * @return array<int, true>
+     */
+    private function read(array $items, array $word): array
+    {
+        $automaton = $this->automaton;
+        foreach ($word as $class) {
+            $next = [];
+            foreach ($items as $item => $_) {
+                $this->budget->step();
+                if ($automaton->isFinal($item) || !ItemAutomaton::has($automaton->masks[$item], $class)) {
+                    continue;
+                }
+
+                foreach ($automaton->successors[$item] as $successor) {
+                    $next[$successor] = true;
+                }
+            }
+
+            $items = $next;
+        }
+
+        ksort($items);
+
+        return $items;
     }
 
     /**
