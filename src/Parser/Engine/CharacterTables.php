@@ -200,9 +200,49 @@ final class CharacterTables
     }
 
     /**
+     * Runs the read with the engine compiling under the locale's tables:
+     * LC_CTYPE set to the locale for the time of the read, then set back as
+     * the tables are read. Where the locale is the current one, the read
+     * runs as it is.
+     *
+     * @param \Closure(): void $read
+     *
+     * @throws InvalidRegexOptionException when the machine cannot set the locale
+     */
+    public static function under(string $locale, \Closure $read): void
+    {
+        if ($locale === self::current()) {
+            $read();
+
+            return;
+        }
+
+        self::withLocale($locale, static function () use ($read): void {
+            $read();
+        });
+    }
+
+    /**
      * @throws InvalidRegexOptionException when the machine cannot set the locale
      */
     private static function read(string $locale): self
+    {
+        $tables = self::builtIn();
+        self::withLocale($locale, static function (string $set) use (&$tables): void {
+            if (self::BUILT_IN !== $set) {
+                $tables = self::probe($set, self::readsOneByteACharacter());
+            }
+        });
+
+        return $tables;
+    }
+
+    /**
+     * @param \Closure(string): void $read given the name the C library gives the locale
+     *
+     * @throws InvalidRegexOptionException when the machine cannot set the locale
+     */
+    private static function withLocale(string $locale, \Closure $read): void
     {
         $refused = new InvalidRegexOptionException(\sprintf('"locale" names "%s", which this machine cannot set: install it, or name one that "locale -a" lists.', $locale));
         // "0" asks setlocale() for the current locale, and "" for the one
@@ -220,7 +260,7 @@ final class CharacterTables
                 throw $refused;
             }
 
-            return self::BUILT_IN === $set ? self::builtIn() : self::probe($set, self::readsOneByteACharacter());
+            $read($set);
         } finally {
             self::restore($previous, $before);
         }

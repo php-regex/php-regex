@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Hir;
 
 use PHPRegex\Parser\Cache\StaticCaches;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\NoJit;
 use PHPRegex\Parser\Exception\InternalFailureException;
@@ -216,30 +217,46 @@ final class ClassSetProvider
      * being kept: the next query scans again. A refusal to compile the
      * probe, or an atom that leaves no delimiter free, is kept.
      *
-     * @param string $atom        one character's worth of pattern: a class, an escape, a dot
-     * @param string $modifiers   the options in force at the atom, as above
-     * @param string $startVerbs  the options the pattern opens with, such as "(*UCP)"
-     *                            or "(*CR)": they change what a class or a dot matches
-     * @param bool   $unicodeFlag whether the pattern's own /u flag is set: this PHP
-     *                            passes PCRE2_UCP with it, so the probe carries the flag
-     *                            only when the pattern does — a lone "(*UTF)" reads
-     *                            UTF-8 without the Unicode properties
+     * @param string  $atom        one character's worth of pattern: a class, an escape, a dot
+     * @param string  $modifiers   the options in force at the atom, as above
+     * @param string  $startVerbs  the options the pattern opens with, such as "(*UCP)"
+     *                             or "(*CR)": they change what a class or a dot matches
+     * @param bool    $unicodeFlag whether the pattern's own /u flag is set: this PHP
+     *                             passes PCRE2_UCP with it, so the probe carries the flag
+     *                             only when the pattern does — a lone "(*UTF)" reads
+     *                             UTF-8 without the Unicode properties
+     * @param ?string $locale      the LC_CTYPE locale the pattern runs under, whose
+     *                             character tables decide the types, the POSIX classes
+     *                             and the other case of a character below 256 without
+     *                             /u; the one PHP compiles under now when null
      */
-    public static function query(string $atom, bool $unicode, string $modifiers, string $startVerbs = '', bool $unicodeFlag = true): ?CharSet
+    public static function query(string $atom, bool $unicode, string $modifiers, string $startVerbs = '', bool $unicodeFlag = true, ?string $locale = null): ?CharSet
     {
         StaticCaches::register(self::class, self::clear(...));
 
         $atom = self::spelledOnce($atom);
         $modifiers = self::bearingOn($atom, $modifiers);
         $global = $unicodeFlag && $unicode ? 'u' : '';
-        $key = $startVerbs.$global.'|'.$modifiers.':'.$atom;
+        // Under /u the Unicode properties decide; otherwise the tables of
+        // the locale, read by a scan under it.
+        $tables = '' !== $global ? CharacterTables::BUILT_IN : $locale ?? CharacterTables::current();
+        $key = $startVerbs.$global.'|'.$modifiers.':'.$atom.(CharacterTables::BUILT_IN === $tables ? '' : '|'.$tables);
         if (!isset(self::$sets[$key])) {
             // A scan of the 256 bytes costs less than reading the atom: only
             // the Unicode scans, over every code point, are worth saving.
-            $set = ($unicode && $unicodeFlag ? self::caselessAscii($atom, $modifiers) : null)
-                ?? ($unicode ? self::derived($atom, $modifiers, $startVerbs, $unicodeFlag) : null)
-                ?? ($unicode ? self::composed($atom, $modifiers, $startVerbs, $unicodeFlag) : null)
-                ?? self::scanned($atom, $unicode, $modifiers, $global, $startVerbs, $key);
+            $set = null;
+            $read = static function () use (&$set, $atom, $unicode, $modifiers, $startVerbs, $unicodeFlag, $global, $key): void {
+                $set = ($unicode && $unicodeFlag ? self::caselessAscii($atom, $modifiers) : null)
+                    ?? ($unicode ? self::derived($atom, $modifiers, $startVerbs, $unicodeFlag) : null)
+                    ?? ($unicode ? self::composed($atom, $modifiers, $startVerbs, $unicodeFlag) : null)
+                    ?? self::scanned($atom, $unicode, $modifiers, $global, $startVerbs, $key);
+            };
+            if ('' !== $global) {
+                $read();
+            } else {
+                CharacterTables::under($tables, $read);
+            }
+
             if (null === $set) {
                 return null;
             }

@@ -130,13 +130,20 @@ final class HirTranslator
     private readonly bool $scriptsAlone;
 
     /**
-     * @param PcreTarget|null $target the PHP and PCRE2 the pattern is read
-     *                                for; the running engine's reading when
-     *                                null
+     * The locale whose character tables the sets without /u are read
+     * under, the target's; the one PHP compiles under when null.
+     */
+    private readonly ?string $locale;
+
+    /**
+     * @param PcreTarget|null $target the PHP, PCRE2 and locale the pattern is
+     *                                read for; the running engine's reading
+     *                                when null
      */
     public function __construct(?PcreTarget $target = null)
     {
         $this->scriptsAlone = ClassSetProvider::readsScriptsAlone($target);
+        $this->locale = $target?->locale;
     }
 
     public function translate(RegexNode $regex): Hir
@@ -379,7 +386,7 @@ final class HirTranslator
             $atom = ClassSetProvider::scriptsAlone($atom);
         }
 
-        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startVerbs, $this->unicodeFlag);
+        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startVerbs, $this->unicodeFlag, $this->locale);
         if (null === $set) {
             // PCRE refused the atom on its own, or gave up scanning it under
             // its limits: one character, of a set unknown.

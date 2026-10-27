@@ -233,6 +233,12 @@ the releases on the other side of 10.43 than the running one. A
 locale the machine cannot set is refused with an
 `InvalidRegexOptionException` that names it.
 
+The automata the lint rules ask read a class without `u` for the same
+tables: each set is asked of the engine with `LC_CTYPE` set to the target's
+locale for the time of the scan. Under `fr_FR.ISO8859-1`, `\w` holds `\xE9`,
+so `/(?=\w)\xE9/` is no impossible lookahead there, as `preg_match()` matches
+`"\xE9"` under that locale and not under `C`, where the rule reports it.
+
 The command line takes `--locale`, `regex.json` takes `locale`, and every
 bridge has a `locale` setting beside its PHP and PCRE2 ones. The runtime
 services of the Symfony bundle and the Laravel package judge under the locale
