@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Packages;
 
 use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Generator\Exception\SampleGenerationException;
@@ -59,7 +60,11 @@ final class InternalMembersTest extends TestCase
             PatternPrinter::class => ['forFormatting', 'forCompacting', 'refusal', 'resetState', 'flags', 'setFlags', 'scope', 'restoreScope', 'countCapture', 'groupOpening', 'conditionText', 'quotedRunPieces', 'separator', 'opensConstruct', 'escapeString'],
             LiteralSet::class => ['__construct', 'empty', 'fromString', 'concat', 'unite'],
             Dfa::class => ['__construct'],
-            DfaState::class => ['__construct'],
+            DfaState::class => ['__construct', 'packedRanges', 'byteTransitions'],
+            // The checks the optimizer and the linter ask of a rewrite, and
+            // the key the solver stores a DFA under: the packages that ask
+            // them may not reach an internal class of the solver's package.
+            LanguageSolver::class => ['matchEquivalentIn', 'runsOfEveryCall', 'readAlike', 'rewritesAlikeInPlace', 'dfaCacheKey'],
             RegexException::class => ['__construct'],
             ParserException::class => ['__construct', 'withContext'],
             LexerException::class => ['__construct', 'withContext'],

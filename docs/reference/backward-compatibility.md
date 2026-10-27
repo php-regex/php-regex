@@ -116,6 +116,12 @@ In `regex-automata`, `Determinization\DeterminizationAlgorithm` and
 and its target; how a state holds its moves is not covered. The promise
 covers `TrivialMatchClassifier::matchedLiteral()` with `classify()`: a minor
 release may prove more patterns than the one before, and its CHANGELOG says so.
+`LanguageSolver::matchEquivalentIn()`, `runsOfEveryCall()`, `readAlike()`,
+`rewritesAlikeInPlace()` and `dfaCacheKey()`, and `DfaState::packedRanges()`
+and `byteTransitions()`, are `@internal`: the checks the optimizer and the
+linter ask of a rewrite, the key a DFA is stored under, and the moves the
+minimizers read. They stay on the public classes because the packages that
+ask them may use no internal class of `regex-automata`.
 
 In `regex-redos`, the promise covers `RedosAnalyzer::ANALYSIS_VERSION`,
 `RedosAnalysis::isProvenSafe()` and `headline()`, `RedosSeverity::rank()`, and
