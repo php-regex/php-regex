@@ -66,6 +66,7 @@ use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Syntax\VersionCondition;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
+use PHPRegex\Parser\Text\Utf8;
 
 /**
  * The semantic checks of a parsed pattern: what PCRE2 refuses in a tree the
@@ -955,7 +956,7 @@ final class Validator extends AbstractNodeVisitor
             // character after it, whole in UTF mode, an alphabetic assertion,
             // whose name starts with a lowercase letter, followed by no colon.
             $nameEnd = $node->startPosition + 2 + (1 === LibraryPcre::match('/^\w*+/', $verbName, $name) ? \strlen($name[0]) : 0);
-            $width = $this->unicodeMode && 1 === LibraryPcre::match('/\G./su', (string) $this->source, $character, 0, $nameEnd) ? \strlen($character[0]) : 1;
+            $width = $this->unicodeMode ? Utf8::width((string) $this->source, $nameEnd) : 1;
             $this->raiseSemanticError(
                 \sprintf('Invalid or unsupported PCRE verb: "%s".', $verbName),
                 match (true) {

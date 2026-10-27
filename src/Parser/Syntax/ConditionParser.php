@@ -31,6 +31,7 @@ use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Utf8;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;
@@ -433,7 +434,7 @@ final class ConditionParser
         }
 
         // Past the whole character in UTF mode.
-        $width = $this->state->unicodeMode && 1 === LibraryPcre::match('/\G./su', $this->pattern, $character, 0, $nameEnd) ? \strlen($character[0]) : 1;
+        $width = $this->state->unicodeMode ? Utf8::width($this->pattern, $nameEnd) : 1;
         $position = $nameEnd >= \strlen($this->pattern) ? $nameEnd : $this->target->faultOffset($nameEnd + $width, $width);
 
         return $this->state->error(\sprintf('Unknown alphabetic assertion "(*%s" at position %d: a ":" is expected after the name.', $name[0], $position), ErrorCode::VerbInvalid, $position);

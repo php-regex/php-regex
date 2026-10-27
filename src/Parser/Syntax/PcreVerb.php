@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Utf8;
 
 /**
  * What "(*...)" holds.
@@ -406,7 +407,7 @@ final class PcreVerb
             return $nameEnd;
         }
 
-        return $nameEnd + ($utf && 1 === LibraryPcre::match('/\G./su', $pattern, $character, 0, $nameEnd) ? \strlen($character[0]) : 1);
+        return $nameEnd + ($utf ? Utf8::width($pattern, $nameEnd) : 1);
     }
 
     /**

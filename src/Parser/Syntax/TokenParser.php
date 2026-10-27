@@ -47,6 +47,7 @@ use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Utf8;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;
@@ -1826,7 +1827,7 @@ final class TokenParser
 
         // PCRE reports it past the character it could not read from PCRE2
         // 10.47, all its bytes in UTF mode; on it before.
-        $length = $this->unicodeMode && 1 === LibraryPcre::match('/\G./su', $this->pattern, $character, 0, $pPos + 1) ? \strlen($character[0]) : 1;
+        $length = $this->unicodeMode ? Utf8::width($this->pattern, $pPos + 1) : 1;
         $position = $this->target->faultOffset($pPos + 1 + $length, $length);
 
         throw $this->parserException(

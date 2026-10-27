@@ -25,6 +25,7 @@ use PHPRegex\Parser\Node\ClassSetOperator;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Text\Utf8;
 
 /**
  * Reads the expression of a Perl extended class "(?[...])", PCRE2 10.45,
@@ -441,11 +442,7 @@ final class ExtendedClassReader
      */
     private function pastCharacter(int $at): int
     {
-        if (!$this->utf || 1 !== LibraryPcre::match('/\G./su', $this->pattern, $character, 0, $at)) {
-            return $at + 1;
-        }
-
-        return $at + \strlen($character[0]);
+        return $at + ($this->utf ? Utf8::width($this->pattern, $at) : 1);
     }
 
     /**

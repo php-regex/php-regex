@@ -17,6 +17,7 @@ use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Utf8;
 
 /**
  * The condition "(?(VERSION>=10.4)yes|no)" asks about.
@@ -158,7 +159,7 @@ final class VersionCondition
      */
     private static function faultAt(string $pattern, int $position, PcreTarget $target, bool $utf): int
     {
-        $width = $utf && 1 === LibraryPcre::match('/\G./su', $pattern, $matches, 0, $position) ? \strlen($matches[0]) : 1;
+        $width = $utf ? Utf8::width($pattern, $position) : 1;
 
         return $target->faultOffset($position + $width, $width);
     }
