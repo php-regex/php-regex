@@ -715,6 +715,11 @@ echo $sample;  // e.g., "Word12"
 Generates a human-readable explanation of the pattern. The format is one of the `PHPRegex\Toolkit\ExplainFormat` cases — `Text` or `Html` — or the matching string (`'text'`, `'html'`); any other string throws
 `InvalidRegexOptionException`.
 
+The pattern is explained for the target of the instance (`php_version`, `pcre_version`, `locale`): `\w` under
+`u` with the non-spacing marks and connector punctuation only for PCRE2 10.43 and later, `\w` and `\s` without
+`u` with the letters and spaces of a locale other than C, and a `(?(VERSION>=10.5)` condition with the number as
+that release reads it and whether it holds.
+
 ```php
 use PHPRegex\Toolkit\ExplainFormat;
 use PHPRegex\Toolkit\Regex;

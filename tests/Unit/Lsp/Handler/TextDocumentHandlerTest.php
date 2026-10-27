@@ -96,6 +96,42 @@ final class TextDocumentHandlerTest extends TestCase
     }
 
     /**
+     * The hover explains a pattern for the target the server judges it for:
+     * "\w" under u takes a non-spacing mark from PCRE2 10.43 (php:8.3-cli,
+     * PCRE2 10.42: "/^\w$/u" does not match "\u{301}"; php:8.4-cli, 10.44,
+     * does).
+     */
+    #[Test]
+    public function test_hovering_a_pattern_explains_it_for_the_target_of_the_server(): void
+    {
+        foreach (['10.42' => 'or an underscore', '10.44' => 'a non-spacing mark (\p{Mn})'] as $release => $reading) {
+            $stream = fopen('php://memory', 'w+');
+            $this->assertIsResource($stream);
+            $handler = new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => $release]));
+            $this->documents->open('file:///a.php', "<?php\npreg_match('/\\w/u', \$s);\n");
+
+            $handler->hover(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/hover',
+                id: 1,
+                params: ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => 13]],
+            ));
+
+            rewind($stream);
+            $written = (string) stream_get_contents($stream);
+            $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
+            $this->assertIsArray($payload);
+            $result = $payload['result'] ?? null;
+            $this->assertIsArray($result);
+            $contents = $result['contents'] ?? null;
+            $this->assertIsArray($contents);
+            $this->assertIsString($contents['value'] ?? null);
+            $this->assertStringContainsString($reading, (string) $contents['value'], $release);
+            $this->assertStringNotContainsString('from PCRE2 10.43', (string) $contents['value'], $release);
+        }
+    }
+
+    /**
      * Hovering a pattern past a limit says it was not analyzed, not that it
      * holds an error.
      */

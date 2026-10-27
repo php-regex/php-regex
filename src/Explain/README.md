@@ -65,6 +65,22 @@ echo $ast->accept(new TextExplainer());
 //   Character Type: A digit: [0-9] (zero or more times)
 ```
 
+A few readings moved across PCRE2 releases and locales: `\w` under `u` takes non-spacing marks from PCRE2 10.43,
+`\w` and `\s` without `u` follow the tables of the LC_CTYPE locale, and `(?(VERSION>=10.5)` reads its minor as
+two digits up to 10.46. Give the explainer the target the pattern is judged for, and each is explained as that
+engine reads it; without one, the explanation names the release or the locale the reading depends on.
+`Regex::explain()` passes the target of its instance.
+
+```php
+use PHPRegex\Parser\PcreTarget;
+
+$ast = RegexParser::create()->parse('/\w+/u');
+
+echo $ast->accept(new TextExplainer(new PcreTarget(80300, '10.42')));
+// Regex matches (with flags: u)
+//   Character Type: A word character: a Unicode letter (\p{L}) or number (\p{N}), or an underscore (one or more times)
+```
+
 Print the AST itself as a tree:
 
 ```php

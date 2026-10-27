@@ -368,8 +368,8 @@ final class Regex
         }
 
         $explanationVisitor = match ($format) {
-            ExplainFormat::Text => new TextExplainer(),
-            ExplainFormat::Html => new HtmlExplainer(),
+            ExplainFormat::Text => new TextExplainer($this->parser->target()),
+            ExplainFormat::Html => new HtmlExplainer($this->parser->target()),
         };
 
         return $this->parse($regex)->accept($explanationVisitor);

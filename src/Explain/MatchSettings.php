@@ -57,9 +57,10 @@ final class MatchSettings
          */
         public readonly bool $ucp = false,
         /**
-         * The types an ASCII option of PCRE2 10.43 keeps to ASCII under
-         * Unicode properties: "D" for "\d", "S" for "\s", "W" for "\w";
-         * "(?a)" sets the three.
+         * The types an ASCII option of PCRE2 10.43 keeps off the Unicode
+         * tables under Unicode properties, to the character tables of the
+         * locale: "D" for "\d", "S" for "\s", "W" for "\w"; "(?a)" sets the
+         * three.
          */
         public readonly string $asciiTypes = '',
         /**

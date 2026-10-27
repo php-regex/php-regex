@@ -227,11 +227,12 @@ trait WritesExplanations
     }
 
     /**
-     * The explanation of a node and of what it holds, in this format.
+     * The explanation of a node and of what it holds, in this format, for
+     * the target the class was given.
      */
     private function write(NodeInterface $node): string
     {
-        return $this->render($node->accept(new ExplanationBuilder()));
+        return $this->render($node->accept(new ExplanationBuilder($this->target)));
     }
 
     /**

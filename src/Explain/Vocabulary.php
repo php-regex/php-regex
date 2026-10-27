@@ -22,6 +22,8 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
@@ -85,6 +87,27 @@ final class Vocabulary
     ];
 
     /**
+     * What "\w" matches under Unicode properties for a PCRE2 release known:
+     * a non-spacing mark and a connector punctuation from 10.43 only.
+     */
+    private const UNICODE_WORD_BEFORE_10_43 = 'A word character: a Unicode letter (\\p{L}) or number (\\p{N}), or an underscore';
+
+    private const UNICODE_WORD_FROM_10_43 = 'A word character: a Unicode letter (\\p{L}) or number (\\p{N}), an underscore, a non-spacing mark (\\p{Mn}) or connector punctuation (\\p{Pc})';
+
+    /**
+     * What "\s" and "\w" match without Unicode properties by PCRE2's own
+     * tables, those of the C locale, and what another locale adds to them:
+     * the C library may class a byte past ASCII as a space or a letter, as
+     * macOS does "\xA0" under fr_FR.UTF-8 and "\xE9" under fr_FR.ISO8859-1.
+     * "\d" takes the ASCII digits alone under every locale: isdigit() holds
+     * for no other byte.
+     */
+    private const TABLE_CHAR_TYPES = [
+        's' => ['A whitespace character: [ \\t\\n\\x0B\\f\\r]', 'the whitespace characters'],
+        'w' => ['A word character: [a-zA-Z_0-9]', 'the letters'],
+    ];
+
+    /**
      * The types that read one byte without UTF, where they match no
      * character past 0xFF.
      */
@@ -100,11 +123,24 @@ final class Vocabulary
      * otherwise, "\h", "\v" and "\R" past 0xFF under UTF only, "\R" by what
      * a linebreak is, "\N" by what a newline is; null for a type the table
      * does not hold.
+     *
+     * @param PcreTarget|null $target the engine the pattern is judged for, whose
+     *                                release and locale tables say what "\w"
+     *                                and the others match; without it, the
+     *                                description names what they depend on
      */
-    public static function charType(string $type, MatchSettings $settings): ?string
+    public static function charType(string $type, MatchSettings $settings, ?PcreTarget $target = null): ?string
     {
         if (isset(self::UNICODE_CHAR_TYPES[$type]) && $settings->unicodeType($type)) {
+            if ('w' === $type && null !== $target) {
+                return $target->pcreAtLeast('10.43') ? self::UNICODE_WORD_FROM_10_43 : self::UNICODE_WORD_BEFORE_10_43;
+            }
+
             return self::UNICODE_CHAR_TYPES[$type];
+        }
+
+        if (null !== $target && isset(self::TABLE_CHAR_TYPES[$type])) {
+            return self::tableType($type, $target->locale);
         }
 
         if ('N' === $type) {
@@ -120,6 +156,39 @@ final class Vocabulary
         }
 
         return self::CHAR_TYPES[$type] ?? null;
+    }
+
+    /**
+     * The test "(?(VERSION>=10.4)" makes and, for a target, whether its
+     * release passes it, as that release reads the number: up to 10.46 a
+     * minor of one digit is tens, "10.4" is 10.40; from 10.47 the minor is
+     * read whole, "10.4" is 10.04. PCRE2 refuses any comparison but ">="
+     * and "=", and any number but a major and a minor: no reading then.
+     */
+    public static function versionCondition(string $operator, string $version, ?PcreTarget $target = null): string
+    {
+        $condition = \sprintf('PCRE2 %s %s', $operator, $version);
+        $parts = explode('.', $version);
+        if (null === $target || !\in_array($operator, ['>=', '='], true) || \count($parts) > 2) {
+            return $condition;
+        }
+
+        $major = (int) $parts[0];
+        $minor = $parts[1] ?? '0';
+        $minor = 1 === \strlen($minor) && !$target->supports(PcreFeature::VersionConditionWholeNumbers) ? (int) $minor * 10 : (int) $minor;
+        [$targetMajor, $targetMinor] = array_map(intval(...), explode('.', $target->pcreVersion));
+        $holds = '=' === $operator
+            ? $targetMajor === $major && $targetMinor === $minor
+            : $targetMajor > $major || ($targetMajor === $major && $targetMinor >= $minor);
+        $read = \sprintf('%d.%02d', $major, $minor);
+
+        return \sprintf(
+            '%s%s, which %s for PCRE2 %s',
+            $condition,
+            $read === $version ? '' : ', read as '.$read,
+            $holds ? 'holds' : 'does not hold',
+            $target->pcreVersion,
+        );
     }
 
     /**
@@ -321,6 +390,17 @@ final class Vocabulary
             '+' => \sprintf('the capturing group %s ahead of here', substr($reference, 1)),
             default => \sprintf('the capturing group "%s"', $reference),
         };
+    }
+
+    /**
+     * What "\s" or "\w" matches by the tables of a locale: PCRE2's own under
+     * "C", and with what the locale adds to them under any other.
+     */
+    private static function tableType(string $type, string $locale): string
+    {
+        [$sentence, $added] = self::TABLE_CHAR_TYPES[$type];
+
+        return 'C' === $locale ? $sentence : \sprintf('%s, and %s of the %s locale', $sentence, $added, $locale);
     }
 
     /**

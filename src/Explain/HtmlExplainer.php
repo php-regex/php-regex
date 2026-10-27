@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Explain;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * Generates an HTML explanation of the regex: nested lists, each construct
@@ -25,6 +26,16 @@ use PHPRegex\Parser\AbstractNodeVisitor;
 final class HtmlExplainer extends AbstractNodeVisitor
 {
     use WritesExplanations;
+
+    /**
+     * @param PcreTarget|null $target the PHP, PCRE2 release and locale the
+     *                                pattern is judged for: what moved across
+     *                                releases or locales, such as "\w", is
+     *                                explained as that engine reads it; without
+     *                                one, the explanation names the release or
+     *                                the locale the reading depends on
+     */
+    public function __construct(private readonly ?PcreTarget $target = null) {}
 
     private function render(Explanation $explanation): string
     {

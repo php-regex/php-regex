@@ -48,6 +48,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Text\Ascii;
 
@@ -73,7 +74,13 @@ final class ExplanationBuilder extends AbstractNodeVisitor
      */
     private int $groupDepth = 0;
 
-    public function __construct()
+    /**
+     * @param PcreTarget|null $target the engine the pattern is judged for: what
+     *                                moved across releases or locales is worded
+     *                                as it reads it; without one, the wording
+     *                                names what the reading depends on
+     */
+    public function __construct(private readonly ?PcreTarget $target = null)
     {
         $this->settings = new MatchSettings();
     }
@@ -149,7 +156,7 @@ final class ExplanationBuilder extends AbstractNodeVisitor
     #[\Override]
     public function visitCharType(CharTypeNode $node): Explanation
     {
-        $meaning = Vocabulary::charType($node->value, $this->settings) ?? 'unknown (\\'.$node->value.')';
+        $meaning = Vocabulary::charType($node->value, $this->settings, $this->target) ?? 'unknown (\\'.$node->value.')';
 
         return Explanation::leaf($meaning, 'Character Type', '\\'.$node->value);
     }
@@ -243,7 +250,7 @@ final class ExplanationBuilder extends AbstractNodeVisitor
     #[\Override]
     public function visitVersionCondition(VersionConditionNode $node): Explanation
     {
-        return Explanation::leaf(\sprintf('PCRE2 %s %s', $node->operator, $node->version), 'Version Condition');
+        return Explanation::leaf(Vocabulary::versionCondition($node->operator, $node->version, $this->target), 'Version Condition');
     }
 
     #[\Override]

@@ -529,6 +529,30 @@ Regex matches
 */
 ```
 
+Both explainers take an optional `PcreTarget`, the PHP version, PCRE2 release and locale the pattern is judged
+for. With it, what moved across releases or locales is explained as that engine reads it: `\w` under `u` with
+or without the non-spacing marks PCRE2 10.43 added, `\w` and `\s` without `u` by the tables of its locale, a
+`(?(VERSION>=10.5)` condition with the number as that release reads it and whether it holds. Without it, the
+explanation names the release or the locale the reading depends on. `Regex::explain()` passes its own target.
+
+```php
+use PHPRegex\Parser\PcreTarget;
+
+$ast = Regex::create()->parse('/(?(VERSION>=10.5)new|old)/');
+echo $ast->accept(new TextExplainer(new PcreTarget(80400, '10.44')));
+/*
+Regex matches
+  IF (Version Condition: PCRE2 >= 10.5, read as 10.50, which does not hold for PCRE2 10.44) THEN
+    'n'
+    'e'
+    'w'
+  ELSE
+    'o'
+    'l'
+    'd'
+*/
+```
+
 ---
 
 ### HtmlExplainer

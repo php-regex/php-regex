@@ -257,7 +257,7 @@ final class TextDocumentHandler
 
         try {
             $ast = $this->regex->parse($occurrence->pattern);
-            $explainer = new TextExplainer();
+            $explainer = new TextExplainer($this->regex->target());
             $explanation = $ast->accept($explainer);
 
             $markdown = "**Regex Pattern**\n\n```\n{$occurrence->pattern}\n```\n\n**Explanation**\n\n{$explanation}";
