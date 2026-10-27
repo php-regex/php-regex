@@ -473,16 +473,16 @@ final class RegexTest extends TestCase
 
         $literalSet = new LiteralSet(['foo'], ['bar'], false);
 
+        // The search patterns are the literals quoted, never anchored.
         /** @var array<string> $patterns */
-        $patterns = $buildSearch->invoke($regex, $literalSet);
-        $this->assertContains('^foo', $patterns);
-        $this->assertContains('bar$', $patterns);
+        $patterns = $buildSearch->invoke($regex, ['foo', 'b.r']);
+        $this->assertSame(['foo', 'b\\.r'], $patterns);
         $this->assertSame(LiteralConfidence::Medium, $determine->invoke($regex, $literalSet));
 
-        // The parameter is typed natively: anything but a LiteralSet is
+        // The parameter is typed natively: anything but a list of literals is
         // refused by the engine, not quietly read as empty.
         $this->expectException(\TypeError::class);
-        $buildSearch->invoke($regex, ['not-a-literal-set']);
+        $buildSearch->invoke($regex, $literalSet);
     }
 
     #[Test]

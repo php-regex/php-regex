@@ -222,6 +222,8 @@ final class RedosRepairer
      */
     private function engineTellsApart(string $pattern, string $candidate, RegexParser $parser): bool
     {
+        $engine = new PcreEngine();
+
         try {
             $language = ($this->solver ?? new LanguageSolver($parser))->language($pattern, new SolverOptions(matchMode: MatchMode::Partial));
         } catch (ComplexityException) {
@@ -231,7 +233,7 @@ final class RedosRepairer
         foreach ([$language->strings(), $language->nonMembers()] as $subjects) {
             $read = 0;
             foreach ($subjects as $subject) {
-                if (@preg_match($pattern, $subject) !== @preg_match($candidate, $subject)) {
+                if ($engine->match($pattern, $subject)->matched !== $engine->match($candidate, $subject)->matched) {
                     return true;
                 }
 
