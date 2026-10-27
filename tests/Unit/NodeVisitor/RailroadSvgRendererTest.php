@@ -302,7 +302,9 @@ final class RailroadSvgRendererTest extends TestCase
         /** @var string $svg */
         $svg = $ast->accept(new RailroadSvgRenderer());
 
-        $this->assertStringContainsString('CharLiteral (\\x41)', $svg);
+        // A box holds the escape as written, not the node's class.
+        $this->assertStringContainsString('>\\x41</text>', $svg);
+        $this->assertStringNotContainsString('CharLiteral', $svg);
     }
 
     #[Test]
@@ -536,7 +538,9 @@ final class RailroadSvgRendererTest extends TestCase
         /** @var string $svg */
         $svg = $ast->accept(new RailroadSvgRenderer());
 
-        $this->assertStringContainsString('Literal (&apos;(empty)&apos;)', $svg);
+        // A box holds the text it matches, none here, not the node's class.
+        $this->assertStringContainsString('>(empty)</text>', $svg);
+        $this->assertStringNotContainsString('Literal', $svg);
     }
 
     #[Test]

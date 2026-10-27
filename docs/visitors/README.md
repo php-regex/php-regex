@@ -681,6 +681,10 @@ Regex
 
 **Purpose:** Renders a railroad-style SVG diagram suitable for graphical output.
 
+A box holds the text it matches, wherever the literal stands: `/(a|bc)+d/` draws the boxes `a`, `bc` and `d`, and
+a character written as an escape keeps its spelling, `\x41`. A label too long for a box is wrapped between two
+characters, a full-width one counting as two columns.
+
 ```php
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Explain\RailroadSvgRenderer;

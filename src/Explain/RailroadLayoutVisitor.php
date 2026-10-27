@@ -219,26 +219,28 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
     }
 
     /**
+     * A literal that stands alone, a branch, the body of a group or what a
+     * quantifier repeats: its text, as in a run of a sequence; an empty
+     * one is labelled "(empty)".
+     *
      * @return SvgLayout
      */
     #[\Override]
     public function visitLiteral(LiteralNode $node): array
     {
-        $value = DisplayEscaper::escapeText($node->value);
-        if ('' === $value) {
-            $value = '(empty)';
-        }
-
-        return $this->createNodeLayout("Literal ('".$value."')", $this->literalClass(), true);
+        return $this->createNodeLayout(self::spellRun(null, $node->value), $this->literalClass(), true);
     }
 
     /**
+     * A character written as an escape that stands alone: as written, as in
+     * a run of a sequence.
+     *
      * @return SvgLayout
      */
     #[\Override]
     public function visitCharLiteral(CharLiteralNode $node): array
     {
-        return $this->createNodeLayout('CharLiteral ('.$node->originalRepresentation.')', $this->literalClass(), true);
+        return $this->createNodeLayout(self::spellRun($node, ''), $this->literalClass(), true);
     }
 
     /**
