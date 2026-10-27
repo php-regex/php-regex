@@ -128,6 +128,11 @@ final class ClassSetProvider
     private const NEGATED_TYPES = ['\\D', '\\S', '\\W', '\\H', '\\V'];
 
     /**
+     * Turns the start-up study off in a probe (see probe()).
+     */
+    private const NO_START_OPT = '(*NO_START_OPT)';
+
+    /**
      * The key the general categories are kept under between processes.
      */
     private const CATEGORIES_KEY = 'general categories';
@@ -515,8 +520,9 @@ final class ClassSetProvider
      */
     private static function partition(array $names): array|false|null
     {
-        // Captures, no backreference: the JIT may run it (see probe()).
-        $pattern = '/'.(self::$jit ? '' : NoJit::VERB).'(?:('.implode(')|(', array_map(static fn (string $name): string => '\\p{'.$name.'}++', $names)).'))/u';
+        // Captures, no backreference: the JIT may run it (see probe()), and
+        // no start-up study.
+        $pattern = '/'.(self::$jit ? '' : NoJit::VERB).self::NO_START_OPT.'(?:('.implode(')|(', array_map(static fn (string $name): string => '\\p{'.$name.'}++', $names)).'))/u';
         $subject = self::unicodeSubject();
         $ranges = array_fill_keys($names, []);
         foreach (self::blocks(true, \strlen($subject)) as [$blockStart, $blockLength]) {
@@ -854,7 +860,14 @@ final class ClassSetProvider
      * pairs, and every known one needs a capture and a backreference, which
      * a probe without a parenthesis cannot hold. A byte probe runs without
      * it: compiling it costs more than reading 256 bytes. No delimiter here
-     * is one the verb holds.
+     * is one the verbs hold.
+     *
+     * The probe reads which characters the atom holds, not where a search
+     * would find one: "(*NO_START_OPT)" turns off the start-up study, whose
+     * set of first code units can leave members out. Under a Latin-1 locale
+     * "(*UTF)" without u, PCRE2 10.49 reads "é" as a word character, yet
+     * '/(*UTF)\w/' does not find it in "é": the study leaves out its lead
+     * byte.
      *
      * @return non-empty-string
      */
@@ -862,7 +875,7 @@ final class ClassSetProvider
     {
         $jit = self::$jit && $unicode && !str_contains($atom, '(');
 
-        return $delimiter.($jit ? '' : NoJit::VERB).$startVerbs.'(?'.$modifiers.':'.$atom.')++'.$delimiter.$global;
+        return $delimiter.($jit ? '' : NoJit::VERB).self::NO_START_OPT.$startVerbs.'(?'.$modifiers.':'.$atom.')++'.$delimiter.$global;
     }
 
     /**

@@ -252,6 +252,12 @@ rule reports it; and `/^(?:\w|\xE9)+$/`, `safe (proven)` under `C`, is
 exponential there, as PHP exhausts the backtrack limit on 30 `"\xE9"` and a
 `"!"` under that locale.
 
+A set is the characters the class matches, each alone, not those a search
+for it finds: `/(*UTF)\w/` finds no `é` in `"é"` under `fr_FR.ISO8859-1`, as
+PCRE2's start-up study leaves out its first byte, while `/(*UTF)^\w$/` and
+`/(*UTF)[\w]/` match it. The library reads `é` as a word character there, so
+`/(*UTF)^\w$/` and `/(*UTF)^\x{e9}$/` share a match.
+
 The command line takes `--locale`, `regex.json` takes `locale`, and every
 bridge has a `locale` setting beside its PHP and PCRE2 ones. The runtime
 services of the Symfony bundle and the Laravel package judge under the locale
