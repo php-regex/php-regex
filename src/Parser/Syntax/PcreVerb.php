@@ -350,7 +350,7 @@ final class PcreVerb
      * PCRE stops after the "="; after digits, from PCRE2 10.45 on the first
      * other character, and before on the one after it.
      */
-    public static function limitValueErrorOffset(string $pattern, int $start, bool $pcre1045): ?int
+    public static function limitValueErrorOffset(string $pattern, int $start, PcreTarget $target): ?int
     {
         if (1 !== LibraryPcre::match('/\G\(\*LIMIT_(?:MATCH|HEAP|DEPTH|RECURSION)=/', $pattern, $matches, 0, $start)) {
             return null;
@@ -362,7 +362,11 @@ final class PcreVerb
             return $at;
         }
 
-        return ')' === ($pattern[$at + $digits] ?? '') ? null : $at + $digits + ($pcre1045 ? 0 : 1);
+        if (')' === ($pattern[$at + $digits] ?? '')) {
+            return null;
+        }
+
+        return $at + $digits + ($target->supports(PcreFeature::LimitValueErrorOnFaultingCharacter) ? 0 : 1);
     }
 
     /**
@@ -375,11 +379,7 @@ final class PcreVerb
         // A limit is only read in the run of settings that opens the
         // pattern; elsewhere it is a verb PCRE does not know.
         LibraryPcre::match('/\A(?:\(\*[A-Z_]++(?:=\d*+)?\))*+/', $pattern, $settings);
-        $limit = $start > \strlen($settings[0] ?? '') ? null : self::limitValueErrorOffset(
-            $pattern,
-            $start,
-            $target->supports(PcreFeature::LimitValueErrorOnFaultingCharacter),
-        );
+        $limit = $start > \strlen($settings[0] ?? '') ? null : self::limitValueErrorOffset($pattern, $start, $target);
         if (null !== $limit) {
             return $limit;
         }

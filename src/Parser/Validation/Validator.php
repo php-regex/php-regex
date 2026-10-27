@@ -988,7 +988,7 @@ final class Validator extends AbstractNodeVisitor
         if (isset(self::LIMIT_VERBS[$verbName]) && 1 !== LibraryPcre::match('/\A[A-Z_]++=\d++\z/', $node->verb)) {
             $this->raiseSemanticError(
                 \sprintf('(*%s) needs a number: (*%s=10).', $verbName, $verbName),
-                PcreVerb::limitValueErrorOffset((string) $this->source, $node->startPosition, $this->supports(PcreFeature::LimitValueErrorOnFaultingCharacter)) ?? $closing,
+                PcreVerb::limitValueErrorOffset((string) $this->source, $node->startPosition, $this->target) ?? $closing,
                 ErrorCode::VerbInvalid,
             );
         }
