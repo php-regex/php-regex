@@ -191,9 +191,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
     /**
      * The overlap read from the characters PCRE gives the first atom of
-     * each branch, for sets the byte sets cannot hold (above ASCII). A
-     * branch whose first character is not one atom, or that may start
-     * with what follows it, is not judged.
+     * each branch, for sets the byte sets cannot hold (above ASCII), as the
+     * target reads them: its properties, and without u the tables of its
+     * locale. A branch whose first character is not one atom, or that may
+     * start with what follows it, is not judged.
      */
     private function checkWithClassSetProvider(AlternationNode $node, LintContext $context): ?RuleViolation
     {
@@ -204,12 +205,13 @@ final class OverlappingAlternationRule extends AbstractLintRule
         $sets = [];
         foreach ($node->alternatives as $index => $alternative) {
             $atom = self::firstAtom($alternative, $context->pattern->unicodeMode);
+            $atom = null === $atom ? null : ClassSetProvider::spelledFor($atom, $context->target);
             $modifiers = self::probeModifiers($flagsAt[$index] ?? $context->activeFlags());
             if (null === $atom || null === $modifiers) {
                 return null;
             }
 
-            $set = ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag);
+            $set = ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
             if (null === $set) {
                 return null;
             }

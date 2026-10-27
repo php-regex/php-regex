@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\PatternParser;
@@ -135,7 +136,7 @@ final class RedosAnalyzer
             // replayed in confirmed mode when its severity, that of a proven
             // quadratic attempt, reaches the threshold.
             $searchCost = RedosComplexity::Linear === $proof?->complexity
-                ? (new SearchCostProver())->find($regex, $ast, $outcome, RedosMode::Confirmed === $mode && RedosSeverity::Medium->rank() >= $threshold->rank())
+                ? (new SearchCostProver())->find($regex, $ast, $outcome, RedosMode::Confirmed === $mode && RedosSeverity::Medium->rank() >= $threshold->rank(), $parser->target())
                 : null;
 
             $analysis = new RedosAnalysis(
@@ -166,22 +167,38 @@ final class RedosAnalyzer
                 return $analysis;
             }
 
-            if (null !== $proof) {
-                return $this->replay($regex, $analysis, $proof, $confirmOptions);
-            }
+            // The witness runs as the pattern runs: under the tables of the
+            // target's locale.
+            $confirmed = $analysis;
+            CharacterTables::under($parser->target()->locale, function () use ($regex, $analysis, $proof, $confirmOptions, &$confirmed): void {
+                $confirmed = $this->confirmed($regex, $analysis, $proof, $confirmOptions);
+            });
 
-            $runner = $this->confirmationRunner ?? new ConfirmationRunner();
-            $confirmation = $runner->confirm($regex, $analysis, $confirmOptions);
-
-            return $analysis->withConfirmation(
-                $confirmation,
-                $confirmation->confirmed ? RedosConfidence::High : $analysis->confidence,
-                $analysis->witness,
-                null,
-            );
+            return $confirmed;
         } catch (ExceptionInterface $e) {
             return RedosAnalysis::failed($mode, $e::class.': '.$e->getMessage(), 'Analysis incomplete: '.$e->getMessage());
         }
+    }
+
+    /**
+     * The analysis with the confirmation of its witness: the proven one
+     * replayed, or the heuristic one confirmed by the runner.
+     */
+    private function confirmed(string $regex, RedosAnalysis $analysis, ?ProofResult $proof, ?ConfirmationOptions $confirmOptions): RedosAnalysis
+    {
+        if (null !== $proof) {
+            return $this->replay($regex, $analysis, $proof, $confirmOptions);
+        }
+
+        $runner = $this->confirmationRunner ?? new ConfirmationRunner();
+        $confirmation = $runner->confirm($regex, $analysis, $confirmOptions);
+
+        return $analysis->withConfirmation(
+            $confirmation,
+            $confirmation->confirmed ? RedosConfidence::High : $analysis->confidence,
+            $analysis->witness,
+            null,
+        );
     }
 
     /**

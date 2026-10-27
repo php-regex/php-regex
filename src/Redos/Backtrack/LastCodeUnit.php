@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Backtrack;
 
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Hir\Utf8;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -39,6 +40,8 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Bytes;
 
 /**
@@ -57,11 +60,13 @@ use PHPRegex\Parser\Text\Bytes;
  *
  * Under u a code unit is a byte: a character of several gives its last
  * byte, and none when caseless. Under i a letter with more than one other
- * case under u (k, s, and their kind) is a property, and gives none; the
- * others keep the caseless flag, compared as written, which PCRE2 keeps in
- * the end only for a character with another case. A class of one
- * character is that character, and so is a class of a letter and its only
- * other case, caseless, as first written.
+ * case under u or "(*UCP)" (k, s, and their kind) is a property, and gives
+ * none; the others keep the caseless flag, compared as written, which PCRE2
+ * keeps in the end only for a character with another case. Without u the
+ * other case of a byte is the one the tables of the target's locale give
+ * it, or under "(*UCP)" Unicode's. A class of one character is that
+ * character, and so is a class of a letter and its only other case,
+ * caseless, as first written.
  *
  * Pinned against pcre2test 10.49. PCRE2 drops the last code unit when the
  * start-up study finds the same one first: kept here, the witness then
@@ -123,15 +128,30 @@ final class LastCodeUnit
 
     private bool $accepts = false;
 
-    private function __construct(private readonly bool $unicode, private readonly string $source) {}
+    /**
+     * @param bool                 $ucp    whether the pattern opens with "(*UCP)" without u: the
+     *                                     other case of a byte past ASCII is then Unicode's
+     * @param CharacterTables|null $tables the tables of the target's locale, which give the other
+     *                                     case of a byte without u nor "(*UCP)"
+     */
+    private function __construct(
+        private readonly bool $unicode,
+        private readonly string $source,
+        private readonly bool $ucp,
+        private readonly ?CharacterTables $tables,
+        private readonly PcreTarget $target,
+    ) {}
 
     /**
      * A character that holds the code unit PCRE2 requires last, the one the
      * code unit was read from; null when it requires none.
+     *
+     * @param PcreTarget|null $target the PCRE2 and the locale the pattern is read for;
+     *                                the running engine's when null
      */
-    public static function of(RegexNode $regex): ?int
+    public static function of(RegexNode $regex, ?PcreTarget $target = null): ?int
     {
-        return self::read($regex)[0] ?? null;
+        return self::read($regex, $target)[0] ?? null;
     }
 
     /**
@@ -139,11 +159,38 @@ final class LastCodeUnit
      * either case: read caseless, and a character with another case, as
      * PCRE2 keeps the flag only then.
      *
+     * @param PcreTarget|null $target the PCRE2 and the locale the pattern is read for;
+     *                                the running engine's when null
+     *
      * @return array{int, bool}|null
      */
-    public static function read(RegexNode $regex): ?array
+    public static function read(RegexNode $regex, ?PcreTarget $target = null): ?array
     {
-        $reader = new self($regex->isUnicode(), $regex->source ?? '');
+        $required = self::required($regex, $target);
+
+        return null === $required ? null : [$required[0], null !== $required[1]];
+    }
+
+    /**
+     * The character of of(), and the other case PCRE2 also takes for its
+     * code unit when it looks for either; null for the second when it looks
+     * for the one. Without u the other case of a byte is the one the tables
+     * of the target's locale give it, and Unicode's under "(*UCP)": "\xE9"
+     * has "\xC9" under fr_FR.ISO8859-1 and under "(*UCP)", none under C, and
+     * "\xFF" has U+0178 under "(*UCP)", past any byte the subject holds.
+     *
+     * @param PcreTarget|null $target the PCRE2 and the locale the pattern is read for;
+     *                                the running engine's when null
+     *
+     * @return array{int, ?int}|null
+     */
+    public static function required(RegexNode $regex, ?PcreTarget $target = null): ?array
+    {
+        $target ??= PcreTarget::runtime();
+        $unicode = $regex->isUnicode();
+        $source = $regex->source ?? '';
+        $ucp = !$unicode && str_contains(StartOptions::of($source), '(*UCP)');
+        $reader = new self($unicode, $source, $ucp, $unicode || $ucp ? null : CharacterTables::forLocale($target->locale), $target);
         $options = 0;
         foreach (['i' => self::CASELESS, 'm' => self::MULTILINE, 'r' => self::RESTRICT] as $letter => $bit) {
             if (str_contains($regex->flags, $letter)) {
@@ -156,7 +203,9 @@ final class LastCodeUnit
             return null;
         }
 
-        return [$required[2], 0 !== ($required[0] & self::CASELESS) && $reader->otherCase($required[2]) !== $required[2]];
+        $other = 0 !== ($required[0] & self::CASELESS) ? $reader->otherCase($required[2]) : $required[2];
+
+        return [$required[2], $other === $required[2] ? null : $other];
     }
 
     /**
@@ -561,33 +610,60 @@ final class LastCodeUnit
     private function hasCaseSet(int $codePoint, int $options, bool $anyMode = false): bool
     {
         if ($codePoint < 0x80) {
-            return ($anyMode || $this->unicode) && 0 === ($options & self::RESTRICT) && \in_array($codePoint | 0x20, self::ASCII_CASE_SETS, true);
+            return ($anyMode || $this->unicode || $this->ucp) && 0 === ($options & self::RESTRICT) && \in_array($codePoint | 0x20, self::ASCII_CASE_SETS, true);
         }
 
-        if (!$this->unicode) {
+        if (!$this->unicode && !$this->ucp) {
             return false;
         }
 
-        $set = ClassSetProvider::query(\sprintf('\\x{%X}', $codePoint), true, 0 !== ($options & self::RESTRICT) ? 'ir' : 'i');
-        $size = 0;
-        foreach ($set->ranges ?? [] as [$from, $to]) {
-            $size += $to - $from + 1;
-        }
-
-        return $size > 2;
+        return \count(self::caseSet($codePoint, $options)) > 2;
     }
 
     /**
-     * The other case PCRE2 pairs a character with: an ASCII letter's, or
-     * under u the simple case mapping's; the character itself when it has
+     * The characters Unicode case folding gives the character, itself
+     * included, as the running engine reads them caseless under u; the
+     * character alone when it does not answer.
+     *
+     * @return list<int>
+     */
+    private static function caseSet(int $codePoint, int $options): array
+    {
+        $set = ClassSetProvider::query(\sprintf('\\x{%X}', $codePoint), true, 0 !== ($options & self::RESTRICT) ? 'ir' : 'i');
+        $characters = [];
+        foreach ($set->ranges ?? [] as [$from, $to]) {
+            $characters = [...$characters, ...range($from, $to)];
+            if (\count($characters) > 2) {
+                break;
+            }
+        }
+
+        return [] === $characters ? [$codePoint] : $characters;
+    }
+
+    /**
+     * The other case PCRE2 pairs a character with: an ASCII letter's, under
+     * u the simple case mapping's, under "(*UCP)" without u the one other
+     * character Unicode folds a byte past ASCII with, and otherwise the one
+     * the tables of the locale give a byte; the character itself when it has
      * none.
      */
     private function otherCase(int $codePoint): int
     {
+        if (null !== $this->tables && $codePoint <= 0xFF) {
+            return $this->tables->otherCase($codePoint, $this->target);
+        }
+
         if ($codePoint < 0x80) {
             $lower = $codePoint | 0x20;
 
             return $lower >= 0x61 && $lower <= 0x7A ? $codePoint ^ 0x20 : $codePoint;
+        }
+
+        if ($this->ucp) {
+            $others = array_values(array_diff(self::caseSet($codePoint, 0), [$codePoint]));
+
+            return 1 === \count($others) ? $others[0] : $codePoint;
         }
 
         if (!$this->unicode) {

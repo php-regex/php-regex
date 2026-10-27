@@ -258,6 +258,18 @@ PCRE2's start-up study leaves out its first byte, while `/(*UTF)^\w$/` and
 `/(*UTF)[\w]/` match it. The library reads `é` as a word character there, so
 `/(*UTF)^\w$/` and `/(*UTF)^\x{e9}$/` share a match.
 
+What the engine is asked about a witness is asked under the target's locale
+too, whatever the locale of the analysing process: the replay of a ReDoS
+witness in confirmed mode, the attempt a lookaround leaves undecided, and the
+replay of a search cost. So `/^(?:\xE9|\xC9)+$/i` replays under
+`fr_FR.ISO8859-1`, where `\xC9` is the capital of `\xE9`, and
+`/^(?=[[:alpha:]])(?:\w|\xE9)+$/` is proven exponential there. The overlap of
+two branches, `regex.lint.overlap.charset`, reads them under its tables:
+`(?:\w|\xE9)+` overlaps there and not under `C`. The last code unit PCRE2
+requires before an attempt has the other case the tables give it, or under
+`(*UCP)` the one Unicode gives it: `/a+\xe9/i` looks for `\xE9` or `\xC9`
+there, for `\xE9` alone under `C`.
+
 The command line takes `--locale`, `regex.json` takes `locale`, and every
 bridge has a `locale` setting beside its PHP and PCRE2 ones. The runtime
 services of the Symfony bundle and the Laravel package judge under the locale

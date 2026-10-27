@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Backtrack;
 
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\Utf8;
@@ -34,6 +35,7 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Redos\Exception\ModelLimitException;
@@ -120,17 +122,21 @@ final class SearchCostProver
      * A library failure inside the search proof says nothing of one
      * attempt: it gives no witness, and the per-attempt verdict the caller
      * holds stands. Any other error is a bug, and surfaces.
+     *
+     * @param PcreTarget|null $target the PCRE2 and the locale the pattern is read for, the
+     *                                code unit it requires and the replay under the tables
+     *                                of that locale; the running engine's when null
      */
-    public function find(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay): ?RedosSearchCost
+    public function find(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, ?PcreTarget $target = null): ?RedosSearchCost
     {
         try {
-            return $this->seek($pattern, $regex, $proof, $replay);
+            return $this->seek($pattern, $regex, $proof, $replay, $target ?? PcreTarget::runtime());
         } catch (ExceptionInterface) {
             return null;
         }
     }
 
-    private function seek(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay): ?RedosSearchCost
+    private function seek(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, PcreTarget $target): ?RedosSearchCost
     {
         $search = $proof->search;
         if (null === $search || str_contains($regex->flags, 'A')) {
@@ -161,7 +167,7 @@ final class SearchCostProver
         self::jumps($regex->pattern, $sets, $unicode, $caseless, $jumps);
 
         try {
-            $found = $this->witness($automaton, $budget, LastCodeUnit::read($regex), $lineStart, $jumps, $pnfa->readsFinalNewline);
+            $found = $this->witness($automaton, $budget, LastCodeUnit::required($regex, $target), $lineStart, $jumps, $pnfa->readsFinalNewline);
         } catch (ModelLimitException) {
             return null;
         }
@@ -179,11 +185,22 @@ final class SearchCostProver
             return $exact ? new RedosSearchCost(2, $prefix, $run, $breakers[0], $unicode) : null;
         }
 
+        // Replayed under the tables of the target's locale, as the pattern
+        // runs there.
         $pinnable = !self::holds($regex->pattern, static fn (NodeInterface $node): bool => $node instanceof AssertionNode && 'G' === $node->value);
-        foreach ($pinnable ? $breakers : [] as $breaker) {
-            if ($this->replayer->replays($pattern, $prefix, $run, $breaker)) {
-                return new RedosSearchCost(2, $prefix, $run, $breaker, $unicode, true);
+        $replayed = null;
+        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $pattern, $prefix, $run, &$replayed): void {
+            foreach ($pinnable ? $breakers : [] as $breaker) {
+                if ($this->replayer->replays($pattern, $prefix, $run, $breaker)) {
+                    $replayed = $breaker;
+
+                    return;
+                }
             }
+        });
+
+        if (null !== $replayed) {
+            return new RedosSearchCost(2, $prefix, $run, $replayed, $unicode, true);
         }
 
         return $exact ? new RedosSearchCost(2, $prefix, $run, $breakers[0], $unicode, false) : null;
@@ -191,17 +208,17 @@ final class SearchCostProver
 
     /**
      * Whether the run holds the code unit PCRE2 requires: the character
-     * itself, or its other case when PCRE2 looks for either, which it does
-     * only for an ASCII letter. A character that only shares a class with
-     * it, as ";" with "!" under ".", or "A" with a case-sensitive "a" after
-     * "[aA]", is not it.
+     * itself, or its other case when PCRE2 looks for either, as the tables
+     * of the target's locale, or Unicode under u or "(*UCP)", give it. A
+     * character that only shares a class with it, as ";" with "!" under
+     * ".", or "A" with a case-sensitive "a" after "[aA]", is not it.
      *
      * @param list<int> $run
      */
-    private static function holdsCodeUnit(array $run, int $required, bool $caseless): bool
+    private static function holdsCodeUnit(array $run, int $required, ?int $otherCase): bool
     {
         foreach ($run as $character) {
-            if ($character === $required || ($caseless && $character === ($required ^ 0x20))) {
+            if ($character === $required || $character === $otherCase) {
                 return true;
             }
         }
@@ -553,7 +570,8 @@ final class SearchCostProver
      * succeeds on, after the shortest prefix that keeps the first attempt
      * from succeeding, with the breakers found after it, in characters.
      *
-     * @param array{int, bool}|null $required     the code unit PCRE2 requires, as a character, and whether caseless
+     * @param array{int, ?int}|null $required     the code unit PCRE2 requires, as a character, and its other case
+     *                                            when PCRE2 looks for either
      * @param array<int, true>      $jumps        where the repeats that jump to the end read
      * @param bool                  $finalNewline whether "$" or "\Z" may hold before a final newline
      *

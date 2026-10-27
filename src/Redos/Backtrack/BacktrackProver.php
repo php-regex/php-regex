@@ -15,6 +15,7 @@ namespace PHPRegex\Redos\Backtrack;
 
 use PHPRegex\Parser\Analysis\LiteralExtractor;
 use PHPRegex\Parser\Analysis\LiteralSet;
+use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Hir\Utf8;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\ControlCharNode;
@@ -142,7 +143,7 @@ final class BacktrackProver
             $bound = null === $bound ? null : $this->boundOf($automaton, $bound);
             $literals = self::requiredLiterals(null === $pnfa->parent ? $regex->pattern : $pnfa->body, $pnfa->unicode);
             $verdict = null === $pnfa->parent && null !== $pattern && [] !== $pnfa->marks
-                ? self::throughLookarounds($pattern, $searches, $index, $automaton, $contexts, $budget, $literals)
+                ? self::throughLookarounds($pattern, $searches, $index, $automaton, $contexts, $budget, $literals, $target?->locale)
                 : (new AmbiguityFinder($automaton, $budget))->find($literals);
             if (null === $pnfa->parent) {
                 $search = [$automaton, $budget];
@@ -222,15 +223,16 @@ final class BacktrackProver
      * @param list<Pnfa>      $searches
      * @param list<int>       $contexts
      * @param list<list<int>> $literals
+     * @param string|null     $locale   the locale of the target, whose tables the engine is asked under
      *
      * @throws ModelLimitException
      *
      * @return Verdict|null
      */
-    private static function throughLookarounds(string $pattern, array $searches, int $index, ItemAutomaton $automaton, array $contexts, Budget $budget, array $literals): ?array
+    private static function throughLookarounds(string $pattern, array $searches, int $index, ItemAutomaton $automaton, array $contexts, Budget $budget, array $literals, ?string $locale): ?array
     {
         $pnfa = $automaton->pnfa;
-        $check = new WitnessCheck($pattern);
+        $check = new WitnessCheck($pattern, new PcreEngine(), $locale);
         $leads = [];
         $ahead = [];
         $atStart = [];
