@@ -1,15 +1,5 @@
 # TODO
 
-## (*UCP) in the ReDoS prover
-
-`/(*UCP)(?:\w|\xC9)+$/` exhausts the backtrack limit, yet the verdict is a
-medium heuristic: a start verb is out of the prover's model, which the
-verb rows of `RedosSoundnessFuzzTest` hold (`(*UCP)a+` and `(*UCP)\w+/i`
-included). Treating every verb as zero-width proved `(*SKIP)`, `(*COMMIT)`,
-`(*FAIL)`, `(*CR)` and `(*ANY)` patterns, and was reverted. Bringing
-`(*UCP)` alone into the model means passing the start options to every
-class-set query and moving the fuzz rows that name it.
-
 ## Composer manifests: the pre-tag review
 
 The manifests are ready; what remains is on the release side:
@@ -25,6 +15,7 @@ The manifests are ready; what remains is on the release side:
 - Post-tag: submit `regex.schema.json` to schemastore.org (`fileMatch`:
   `regex.json`, `regex.dist.json`) for zero-config editor support — it
   needs a stable public URL, so it waits for the tag.
+
 
 ## Release 2.0.0
 
@@ -78,6 +69,7 @@ The code is ready; what is left is the maintainer's, in this order.
    2.0 `regex.phar`, which `self-update` and `releases/latest` serve.
 6. `bin/bump --next 2.0.1`.
 
+
 ## Phar provenance: the GitHub side
 
 `.github/workflows/phar.yml` builds, attests and attaches the phar on a
@@ -86,6 +78,7 @@ allowed, allow `actions/attest-build-provenance` and `shivammathur/setup-php`.
 After the 2.0.0 tag, check that the release went from draft to published
 with both assets, and that `gh attestation verify regex.phar --repo
 php-regex/php-regex` passes on the downloaded phar.
+
 
 ## PHP 8.6 closeout and the experimental 8.7 cell
 
@@ -111,7 +104,7 @@ Left, dated:
    a late PCRE2 bump would reopen the engine maps. If it moves, re-run the
    engine-scoped corpus rows before anything else.
 
----
+
 
 ## Symfony Flex recipe
 
@@ -119,115 +112,6 @@ Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
 `PHPRegexBundle`, so `composer require php-regex/regex-symfony` registers
 nothing (the guide says so). By hand: open a recipe PR on
 symfony/recipes-contrib once 2.0.0 is on Packagist.
-
-## Exact size for the items still counted at their floor
-
-"Known differences" in `docs/concepts/pcre.md` lists the items whose
-compiled length the size verdict counts at its least, so a pattern near the
-64 KiB limit PCRE2 refuses may be reported valid (never the reverse). Count
-each exactly, checked with the first-pass length of pcre2test 10.32 to 10.49:
-
-- a counted extended class that would match every character but for what a
-  property it holds matches below 256 (`(?[ [^a] | !\D ]){2}` under `u`):
-  the characters below 256 of each property, per release.
-
-The DEFINE quirk of PCRE2 10.32 to 10.34 stays documented, not planned: it
-would mean replaying their internal form of the pattern (10.35 fixed it).
-
-## Architecture: after the tag
-
-The public signatures are settled for 2.0.0. Internal, so these may follow
-the tag:
-
-- The Psalm and PHPStan bridges without the whole linter: the target
-  resolution and the PHP-source helpers they import need a home below
-  `regex-linter`, a new split package or a lower one. Removing a `require`
-  is never a break.
-- The target settings (PHP, PCRE2, locale) entering through one class:
-  `ParserOptions` and the linter's `ProjectTarget` resolve them apart.
-- `TokenParser` (2,665 lines) split by family of constructs, the
-  `Rewriter` split, and the semantic facts (nullability, length ranges,
-  flag scope) read from one layer instead of five copies.
-- `Rewriter::MAX_COUNT` repeats the 65535 limit of `PcreNumber`. Reading it
-  from there needs `PcreNumber` public: it is internal to the parser
-  package, and the optimizer may not use another package's internals.
-
-## Analysis engines: the last pass before 2.0.0
-
-- A property PCRE2 10.40 taught the engine is refused for a later target
-  when the running engine is older: on PHP 8.1 (10.39), validating for PHP
-  8.4 (10.44) refuses `\p{greek}`, `\p{Script=Greek}`, `\p{ L }` and
-  `\p{Alphabetic}`, which 8.4 compiles. Whether a name exists is asked of
-  the running engine, and the tables of names added later do not hold the
-  loose names, the `Script=` forms, the binary properties and the bidi
-  classes of 10.40.
-- The Unicode a name or a word character is read with is the running
-  engine's, whatever the target: on PCRE2 10.35 (Unicode 13), `\k<aࡰ>`
-  (U+0870) is refused and `\p{Toto}` unknown, for an 8.4 target too.
-- `CaptureShapeAnalyzer::analyze()` and `PatternInfoAnalyzer::analyze()`
-  throw a TypeError when a length passes PHP_INT_MAX:
-  `/(?:(?:(?:(?:a{65535}){65535}){65535}){65535}){65535}/` parses, and its
-  minimum length is a float. PCRE refuses the pattern as too large, and
-  `validate()` with it.
-- Before PCRE2 10.45 the engine misses a match past a lookahead:
-  `/(?=x)a?x/` does not match `"x"` on 10.42 and 10.44, JIT or not, and
-  `(*NO_START_OPT)` brings the match back; 10.45 fixed the first and last
-  code unit read with lookaheads (#444). The library reads what the
-  pattern means: `generate()` gives `"x"` for a 10.44 target, which PHP 8.4
-  to 8.6, bundling 10.44, do not match. Whether a target before 10.45 is
-  judged by that defect is a call to make.
-- The character-set analysis gives an unknown set for a script run.
-- A proven polynomial degree does not add what a lookahead in a loop reads
-  again: `/^(?:(?!a*a*b)a)*$/` is proven of degree 2 (its upper bound says
-  3) and takes cubic time, 1.0, 8.6 and 122 ms on 200, 400 and 800 `a` and
-  a `!`. The witness of the body's own ambiguity holds: the class is right,
-  the degree short. A lookahead that reads a run but stops at once,
-  `(?=a+?)`, or that holds where the loop could go on, `(?!a+)` before
-  `a`, loses its linear proof: telling when a body stops would keep it.
-- `lookaround.impossible` reports `/(?=\w)\xE9/` under a Latin-1 locale
-  target, where the engine matches `"\xE9"`: the solver's `\w` without `u`
-  does not follow the target's character tables.
-- The railroad layout and the solver's internal methods on its public class.
-
-## Transpiler: after the oracle
-
-The transpiled output now matches `preg_match()` in node and python on
-the whole corpus. Left: atomic groups and possessive quantifiers for
-Python 3.11+ (refused today, since emitting them sets a minimum Python
-version), and the empty-repetition rules for JavaScript, which refuse some
-patterns that would behave the same.
-
-## Explainers: after the fix
-
-The explanations follow the flags, UCP, the newline and the linebreak
-conventions, and UTF for `\h`, `\v` and `\R`, now. Left: the explainers
-not knowing the target release or locale (`\w` says "from PCRE2 10.43"
-instead of choosing).
-
-## The 8.1 builds that lose a shutdown after exhaustion
-
-On the 8.1 build the CI runners use (a setup-php compile), a child that
-dies of memory exhaustion prints no envelope and writes no trace from its
-shutdown handler, while the exit code still arrives: `regex:lint --json`
-would report its internal error through the exit code alone. The official
-8.1 build prints both, as every later PHP does. The test skips on the
-losing builds with a message naming them. To close: reproduce with the
-setup-php 8.1 build (or ask them how their memory manager differs), then
-make the shutdown of that build print — the reserve and the
-past-the-buffers write the official builds need are already in.
-
-## Test suite: a state leak an order can expose
-
-Running the whole suite in a container, one random order in three makes
-two Laravel lint tests fail: a test that ran before them leaves the
-library reading patterns under a limit it cannot meet, and the lint
-report says "Failed to collect patterns" where the tests expect their
-file. The class alone passes, every order on the runner CI uses has
-passed so far, and seeds 424242 and 777 are clean. Find the leaking
-test: pin `pcre.backtrack_limit` or the ini-setter hook and not restore
-it (see `LibraryPcre::useIniSetter` and the resets in
-`tests/Unit/Hir/ClassSetProviderCacheTest`), reproduce with
-`--random-order-seed=1792566553`, and give it a `finally`.
 
 ## The articles section: what is left
 
@@ -244,133 +128,100 @@ it (see `LibraryPcre::useIniSetter` and the resets in
   entry in the sitemap navigation-coverage check, with the blog-index
   justification.
 
-## Test coverage: the measured gaps to 100%
-
-Measured 2026-10-22 under pcov on the full suite (45,908 tests, 8 skips):
-97.61% of statements (43,260 of 44,319), 1,059 uncovered. Every gap was
-classified line by line: ~630 are reachable by tests written in this
-checkout, ~150 run only in child processes or other environments pcov
-cannot attribute, and the rest are guards or provably dead code.
-
-Decisions the maintainer owns, each worth points on its own:
-
-1. Dead code, each region proven unreachable by probe or invariant —
-   delete rather than test:
-   `RangeChecks:163,183` and `CompiledLength:963`, which now throw where
-   they returned: the statements stay, so narrowing the endpoint types
-   would be what removes them.
-2. A policy call: hand-built-AST tests are the only route to ~50 guard
-   statements (printer raw literals, HIR empty shapes, transpiler
-   fallthrough arms). The suite already hand-builds nodes in places;
-   decide whether that style is welcome at scale.
-
-The test-writing plan, by wave (natural-input tests, existing harnesses;
-numbers are uncovered statements):
-
-1. Symfony: the two analyzers (67), the routing conflict pair (67, the
-   forced rows ride the `CompiledAsRoute` double already in the tests),
-   the two commands (31) — 165 statements, +0.4 pt.
-2. LSP code actions (29 — the test helper pins `context.diagnostics` to
-   `[]`, which is why the quickfix family never ran), Explain (25: the
-   `(?i:x)` and `(*MARK:…)` families alone are 16), the three lint rules
-   (37), SampleGenerator (8), Redos (18).
-3. Transpilers (42), the transpile CLI render (12: one console run
-   covers Warnings and Notes), the validation quartet (42, through
-   simulated `pcre_version` targets and direct `CompiledLength::of`).
-4. `ForkedWorkerPool` through a reflection test on `serve()` (29 — the
-   16 child-side statements stay invisible to pcov by construction),
-   parser core (19).
-5. The long tail (~200): one dispatch meta-test for the lint rules (~25
-   at once), the LSP completion contexts (`\`, `(?`), the transpiler
-   flag notes and the Laravel "PARTIAL" render, CLI render branches,
-   Laravel and Symfony bridge rows, automata and parser-internal edges.
-
-Commit each wave when green; mutation-test the new rows. Ceiling: every
-writable test lands ~99.0%; the deletions above take it to ~99.3%;
-blessing hand-built AST tests, ~99.5%. A literal 100% is not reachable
-by tests on this setup — the statements that run only in forked workers
-and child processes are the floor.
-
 ## PHPRegex in phpstan-src: what the proof of concept still owes
 
 The fork `php-regex/phpstan-src` carries the proof of concept as pull
 request #1, a research branch: one commit on `2.3.x`, where PHPStan now
 reads patterns with a parser generated by phplrt (phpstan-src#6851), and
-the branch reads them with PHPRegex instead. It pins the php74 twin at
-`6c1dcd8`; the whole suite is green, a test there matches every fixture
-pattern with the engine, and `poc/` replays the patterns the two parsers
-read differently.
+the branch reads them with PHPRegex instead. `poc/` replays the patterns the
+two parsers read differently.
 
-1. Publish the twin from the `twin` artifact of a green twin workflow run
-   rather than from a local build, so the tree published is the tree
-   verified.
-2. Once `2.0.0` is tagged and the php74 twin reaches Packagist, replace
-   the `2.x-dev#<hash>` pin with the exact version (the precedent is
+1. Publish the twin again, from the `twin` artifact of a green twin
+   workflow run, and re-pin the pull request on it: the pinned `6c1dcd8`
+   throws a TypeError on PHP 7.4 for a branch reset of one branch
+   (`/(?|(a))/`, `array_intersect_key()` with one array), which the
+   generator now rewrites; the new pin also brings the capture shapes of
+   this pass (`\K`, conditionals, `(*ACCEPT)`, the product of the splits).
+2. On that pin, `RegexGroupParser` reads `$node->bounds` instead of
+   `QuantifierBounds::parse($node->quantifier)`, and may pass its target to
+   `new CaptureShapeAnalyzer($target)` so `(?(VERSION…)` conditions fold.
+3. Once `2.0.0` is tagged and the twin reaches Packagist, replace the
+   `2.x-dev#<hash>` pin with the exact version (the precedent is
    `ondrejmirtes/phplrt-runtime`, pinned to an exact release).
-3. Rebuild the phar from the pull request on its last twin pin and run it
-   on `php:7.4-cli` and `php:8.4-cli` (the downgrade rewrites neither `?->`
-   nor first-class callables, so neither may appear in the branch).
-4. The 8.6 entry reads 10.44 and php-src master carries 10.44 today, so
-   the map stands corroborated; the one gesture left is re-reading
-   master after the 8.6 GA (2026-11-19) in case a release-cut downgrade
-   like 8.5's happens.
-5. Split the single commit into stacked pull requests once the
-   maintainer asks for it.
-6. The capture shape splits on one node: two optional groups holding
-   groups, `/(?:(a)(b))?(?:(c)(d))?/`, or an alternation beside an
-   optional group, stay merged for all but one. A product of the
-   splits, within the 16-case budget, would keep each.
-7. Any `(*ACCEPT)` in a pattern makes every group read unbounded from
-   zero with unknown values, even when the verb only ends a call or
-   sits in a branch the group never reaches. Sound, and loose.
-8. On the next twin pin, `RegexGroupParser` reads `$node->bounds`, which
-   2.x now computes once on the node, instead of
-   `QuantifierBounds::parse($node->quantifier)`.
+4. Rebuild the phar from the pull request on its last twin pin and run it
+   on `php:7.4-cli` and `php:8.4-cli`.
+5. Re-read php-src master after the 8.6 GA (2026-11-19) in case a
+   release-cut PCRE2 downgrade like 8.5's happens.
+6. Split the single commit into stacked pull requests once the maintainer
+   asks for it.
 
-## The PHPStan gold rush: what the analysis already knows and does not say
+## Decisions the maintainer owns
 
-Mined 2026-10-24, four probes over the phpstan-src fork. Each item
-names what is missing, never new analysis — the facts are computed.
+- The Psalm and PHPStan bridges without the whole linter: the target
+  resolution and the PHP-source helpers they import need a home below
+  `regex-linter`, a new split package or a lower one. Removing a `require`
+  is never a break.
+- `RepeatRewrites::MAX_COUNT` (the optimizer) repeats the 65535 limit of
+  `PcreNumber`: reading it from there needs `PcreNumber` public.
+- Before PCRE2 10.45 the engine misses a match past a lookahead:
+  `/(?=x)a?x/` does not match `"x"` on 10.42 and 10.44, JIT or not; 10.45
+  fixed the first and last code unit read with lookaheads (#444).
+  `generate()` gives `"x"` for a 10.44 target. Whether a target before 10.45
+  is judged by that defect is a call to make.
+- Coverage (98.92% of statements, 2026-10-27): dead regions proven
+  unreachable (`RangeChecks:163,183`, `CompiledLength:963,1642`) — delete
+  rather than test; and whether tests may hand-build trees to reach the ~50
+  guards only such trees reach (printer raw literals, HIR and transpiler
+  empty shapes, railroad and highlighter guards).
+- Four tests use `/(?:a[\x{100}-\x{10FFFF}\pL]{0}){1900}/u` as a pattern only
+  the engine refuses (`ValidationMemoTest`, `RegexApiTest` ×2,
+  `RegexGenerateTest`). Counting a class of every character past 255 plus a
+  property exactly — the last item of "Known differences" in
+  `docs/concepts/pcre.md` but the DEFINE quirk — makes the library refuse it
+  too: the counting is ready (0 differences from pcre2test 10.45–10.49 over
+  210,000 cases), the fixture needs another pattern, and on 10.45+ there may
+  be none.
+- `ConfirmationRunner` (public) runs under the process locale when called
+  directly; `RedosAnalyzer` runs it under the target's. Whether its
+  constructor takes a locale.
 
-1. Eleven `\K` wishes in the nsrt fixtures: the group slots are exact,
-   the whole-match slot ignores `\K` — the kept suffix the engine writes
-   is the whole a match reads after the reset.
-2. Conditionals on an always-set group keep the dead arm:
-   `/(a)(?(1)b|(c))/` types `2?: 'c'` where the engine never writes 2 —
-   the participation fact exists; the conditional does not read it. Same
-   family: `(?(*ACCEPT)` groups after the cut, a backreference widening
-   its group, `(?(R)` with no recursion anywhere, and `(?(VERSION>=…)`
-   never folding against the judged engine.
-3. The package's `TargetScope` lets the running engine stand in for
-   the analysed PHP without the fork's minor-sharing rule, never
-   states the pin is honoured in both directions, and does not read
-   `config.platform.lib-pcre` — the policy the fork settled, said in
-   one voice.
+## Left by the 2026-10-27 pass, each reproduced
 
-## The third pass over the preg_ family
-
-Mined 2026-10-24, second gold rush. The bare-false preg_split bug is
-fixed; this is the rest, engine-verified:
-
-1. preg_filter on an array subject erases its keys (array<int, string>
-   for every subject) while the engine preserves them — map the subject
-   like the replace extension maps its own, or route preg_filter
-   through ReplaceFunctions (subject at position 2, replace at 1).
-2. The replace trio (preg_replace, _callback, _callback_array) marks
-   every array-subject key optional — the engine keeps them all; only
-   preg_filter filters. makeAllArrayKeysOptional belongs to filter
-   alone.
-3. preg_grep has no return-type extension at all: the subject mapped,
-   keys kept, |false.
-4. preg_replace_callback with an ARRAY of literal patterns leaves its
-   callback unshaped — one Type-based entry on the matcher (matchExpr
-   takes an Expr; the union across the array's constant strings is
-   what matchPatternType already does) feeds the closure extension.
-5. preg_match_all base return type carries null the engine never
-   returns; the $matches out-type fallback string[] stands exactly
-   where the shapes fail to reach.
-6. The false branches: preg_match_all overwrites $matches with array{}
-   where the engine leaves the populated empty columns under
-   PREG_PATTERN_ORDER; the elseif subject narrowing composes, nothing
-   to fix; the quoting rule and the pattern rule keep two drifting
-   hand-written lists of the preg_ functions that take patterns.
+- `Regex::transpile()` does not validate first: `/\N{U+41}/` (refused by the
+  engine without `u`) transpiles to `/\x41/`, and `\p{^}` reaches the
+  printer. The CLI validates; the library does not.
+- The transpilers refuse a reference to a group with a non-ASCII name,
+  `(?<é>a)\k<é>` under `u`, which PCRE2 10.49, node and Python all accept.
+  The `transpile` commands (CLI, Symfony, Laravel) pass no options: no
+  `--python-version`. JavaScript still refuses empty repetitions that
+  agree only through what follows them (`/(?:a|(?=b)|.)*\z/`), through
+  alternatives that never apply at one position, or through a body that
+  only matches empty (`/^(){3,5}/`).
+- A too-large pattern decided by the "branches may end past the limit"
+  fallback is reported at the end where PCRE2 reports offset 0:
+  `/(?:(?a)\d|b)(?:c){8200}/u` (`(?a)\d` under UCP has no known ceiling).
+- Nullability is computed in four copies (`PossessiveRewrites`,
+  `RedosProfiler`, `PnfaBuilder`, `LengthRangeCalculator`) that disagree on
+  ~1,160 of 175,625 nodes of the repository's patterns (`DEFINE`,
+  `(*ACCEPT)` sequences, class-set operations, script runs): one source,
+  checked against the engine, then every copy reading it.
+- The rewriter misses `\w` for `[a-zA-Z0-9_b-y]` under C.
+- The ReDoS heuristics' rule on a repeated body that can match empty fires
+  on `/((?(1)|b))+/`, which PCRE2 reads in constant steps. A lookahead body
+  that stops at once, `(?=a+?)`, or holds where the loop could go on,
+  `(?!a+)` before `a`, keeps the polynomial proof from the linear one: the
+  model has no cut scoped to a body.
+- The Unicode version of categories and scripts is the running engine's: a
+  10.39 engine reads 10.44's properties with Unicode 14 (documented). PCRE2
+  10.40–10.44 drop name characters with the C library's `isspace()`, so a
+  non-C `LC_CTYPE` may accept a property name the tables refuse.
+- A validator built without the pattern skips the listed-group check of
+  `(*scs:(2)a)` (internal callers only).
+- On the 8.1 build the CI runners use (a setup-php compile), a child that
+  dies of memory exhaustion prints no envelope from its shutdown handler;
+  the official 8.1 build does. Reproduce with that build, then make it
+  print (the reserve and the past-the-buffers write are already in).
+- The suite fails a run naming any test that leaves the PCRE limits, the
+  JIT setting or the ini setter changed: the Laravel lint failure one random
+  order in three exposed in a container (seed 1792566553) did not reproduce
+  in this pass; the guard names the culprit the next time it does.
