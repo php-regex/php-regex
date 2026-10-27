@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Optimizer;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
-use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -49,7 +48,6 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
-use PHPRegex\Parser\Printer\PatternPrinter;
 
 /**
  * Transforms the AST to apply optimizations, returning a new, simplified AST.
@@ -80,31 +78,10 @@ final class Rewriter extends AbstractNodeVisitor
     public const UNUSED_FLAG = 'Removed a flag nothing in the pattern reads.';
     public const RESPELLED = 'Wrote a character without a backslash it does not need.';
 
-    private const CHAR_CLASS_META = [']' => true, '\\' => true, '^' => true, '-' => true];
-
     /**
      * The largest count PCRE takes in a quantifier.
      */
     private const MAX_COUNT = 65535;
-
-    /**
-     * The kinds of rewrite made, in the order first made.
-     *
-     * @var array<string, true>
-     */
-    private array $changes = [];
-
-    private string $flags = '';
-
-    private CharSetAnalyzer $charSetAnalyzer;
-
-    private bool $unicodeMode = false;
-
-    /**
-     * Whether "\d", "\s" and "\w" read Unicode properties: "/u", or
-     * "(*UCP)".
-     */
-    private bool $unicodeProperties = false;
 
     private bool $isInsideQuantifier = false;
 
@@ -117,31 +94,23 @@ final class Rewriter extends AbstractNodeVisitor
     private bool $possessify = false;
 
     /**
-     * Whether "U" makes a plain quantifier lazy and "??" greedy.
-     */
-    private bool $lazyByDefault = false;
-
-    /**
-     * Whether an inline flag stands anywhere in the pattern visited.
-     */
-    private bool $inlineFlags = false;
-
-    private ?PatternPrinter $compiler = null;
-
-    /**
      * The repeats whose group was dropped, "(?:a)+" written "a+".
      *
      * @var \WeakMap<QuantifierNode, true>
      */
     private \WeakMap $ungroupedRepeats;
 
+    private readonly RewriteState $state;
+
+    private readonly ClassRewrites $classRewrites;
+
     private readonly FlagRewrites $flagRewrites;
 
     public function __construct(
-        private readonly bool $optimizeDigits = true,
-        private readonly bool $optimizeWord = true,
-        private readonly bool $ranges = true,
-        private readonly bool $canonicalizeCharClasses = true,
+        bool $optimizeDigits = true,
+        bool $optimizeWord = true,
+        bool $ranges = true,
+        bool $canonicalizeCharClasses = true,
         /**
          * Whether to automatically convert greedy quantifiers to possessive
          * when followed by a disjoint character set. This is safe in most cases
@@ -159,15 +128,16 @@ final class Rewriter extends AbstractNodeVisitor
          * OptimizerOptions checks.
          */
         private readonly int $minQuantifierCount = 4,
-        /**
+        /*
          * The LC_CTYPE locale the pattern runs under, when it is known:
          * "\w" stands for "[a-zA-Z0-9_]" under "C" and "POSIX" only, and
          * null, the locale unknown, writes no "\w".
          */
-        private readonly ?string $locale = null,
+        ?string $locale = null,
     ) {
-        $this->charSetAnalyzer = new CharSetAnalyzer();
         $this->ungroupedRepeats = new \WeakMap();
+        $this->state = new RewriteState();
+        $this->classRewrites = new ClassRewrites($this->state, $optimizeDigits, $optimizeWord, $ranges, $canonicalizeCharClasses, $locale);
         $this->flagRewrites = new FlagRewrites();
         // Read again from the flags of each pattern visited whole.
         $this->possessify = $possessive;
@@ -176,20 +146,14 @@ final class Rewriter extends AbstractNodeVisitor
     #[\Override]
     public function visitRegex(RegexNode $node): NodeInterface
     {
-        $this->flags = $node->flags;
-        $this->unicodeMode = str_contains($this->flags, 'u');
-        $this->unicodeProperties = UnicodeProperties::on($node);
-        $this->charSetAnalyzer = new CharSetAnalyzer($this->flags);
-        $this->lazyByDefault = str_contains($this->flags, 'U');
-        $this->inlineFlags = $this->flagRewrites->containsInlineFlags($node->pattern);
-        $this->possessify = $this->possessive && !$this->lazyByDefault && !$this->inlineFlags;
-        $this->changes = [];
+        $this->state->start($node, $this->flagRewrites->containsInlineFlags($node->pattern));
+        $this->possessify = $this->possessive && !$this->state->lazyByDefault && !$this->state->inlineFlags;
         $optimizedPattern = $node->pattern->accept($this);
 
         // Remove useless flags
         $optimizedFlags = $this->flagRewrites->removeUselessFlags($node->flags, $optimizedPattern);
         if ($optimizedFlags !== $node->flags) {
-            $this->changed(self::UNUSED_FLAG);
+            $this->state->changed(self::UNUSED_FLAG);
         }
 
         if ($optimizedPattern === $node->pattern && $optimizedFlags === $node->flags) {
@@ -207,7 +171,7 @@ final class Rewriter extends AbstractNodeVisitor
      */
     public function changes(): array
     {
-        return array_keys($this->changes);
+        return $this->state->changes();
     }
 
     #[\Override]
@@ -232,22 +196,22 @@ final class Rewriter extends AbstractNodeVisitor
         }
 
         // Try to merge adjacent character class nodes
-        $mergedAlts = $this->mergeAdjacentCharClasses($optimizedAlts);
+        $mergedAlts = $this->classRewrites->mergeAdjacentCharClasses($optimizedAlts);
         if ($mergedAlts !== $optimizedAlts) {
-            $this->changed(self::MERGED_CLASSES);
+            $this->state->changed(self::MERGED_CLASSES);
             $hasChanged = true;
             $optimizedAlts = $mergedAlts;
         }
 
         $deduplicatedAlts = $this->deduplicateAlternation($optimizedAlts);
         if (\count($deduplicatedAlts) !== \count($optimizedAlts)) {
-            $this->changed(self::DUPLICATE_ALTERNATIVE);
+            $this->state->changed(self::DUPLICATE_ALTERNATIVE);
             $hasChanged = true;
             $optimizedAlts = $deduplicatedAlts;
         }
 
-        if ($this->canAlternationBeCharClass($optimizedAlts)) {
-            $this->changed(self::ALTERNATION_TO_CLASS);
+        if ($this->classRewrites->canAlternationBeCharClass($optimizedAlts)) {
+            $this->state->changed(self::ALTERNATION_TO_CLASS);
             $expression = new AlternationNode($optimizedAlts, $node->startPosition, $node->endPosition);
 
             return new CharClassNode($expression, false, $node->startPosition, $node->endPosition);
@@ -261,14 +225,14 @@ final class Rewriter extends AbstractNodeVisitor
             $factoredAlts = $this->factorizeAlternation($optimizedAlts);
 
             if ($factoredAlts !== $optimizedAlts) {
-                $this->changed(self::FACTORED_PREFIX);
+                $this->state->changed(self::FACTORED_PREFIX);
                 $optimizedAlts = $factoredAlts;
             }
 
             $suffixFactoredAlts = $this->factorizeSuffix($optimizedAlts);
 
             if ($suffixFactoredAlts !== $optimizedAlts) {
-                $this->changed(self::FACTORED_SUFFIX);
+                $this->state->changed(self::FACTORED_SUFFIX);
 
                 return new AlternationNode($suffixFactoredAlts, $node->startPosition, $node->endPosition);
             }
@@ -311,7 +275,7 @@ final class Rewriter extends AbstractNodeVisitor
         /** @var array<NodeInterface> $optimizedChildren */
         $optimizedChildren = $this->compactSequence($optimizedChildren);
         if (\count($optimizedChildren) !== $originalCount) {
-            $this->changed(self::RUN_COUNTED);
+            $this->state->changed(self::RUN_COUNTED);
             $hasChanged = true;
         }
 
@@ -346,7 +310,7 @@ final class Rewriter extends AbstractNodeVisitor
                 if ($count >= $this->minQuantifierCount) {
                     $baseNode = new LiteralNode($char, $child->startPosition, $child->endPosition);
                     $optimizedChildren[$i] = new QuantifierNode($baseNode, '{'.$count.'}', QuantifierType::Greedy, $child->startPosition, $child->endPosition);
-                    $this->changed(self::RUN_COUNTED);
+                    $this->state->changed(self::RUN_COUNTED);
                     $hasChanged = true;
                 }
             }
@@ -372,8 +336,8 @@ final class Rewriter extends AbstractNodeVisitor
                     }
 
                     try {
-                        $currentLastChars = $this->charSetAnalyzer->lastChars($current->node);
-                        $suffixFirstChars = $this->charSetAnalyzer->firstChars($suffixNode);
+                        $currentLastChars = $this->state->charSetAnalyzer->lastChars($current->node);
+                        $suffixFirstChars = $this->state->charSetAnalyzer->firstChars($suffixNode);
                         if (!$currentLastChars->intersects($suffixFirstChars)) {
                             $optimizedChildren[$i] = new QuantifierNode(
                                 $current->node,
@@ -382,7 +346,7 @@ final class Rewriter extends AbstractNodeVisitor
                                 $current->startPosition,
                                 $current->endPosition,
                             );
-                            $this->changed(self::POSSESSIVE);
+                            $this->state->changed(self::POSSESSIVE);
                             $hasChanged = true;
                         }
                     } catch (\Throwable) {
@@ -438,7 +402,7 @@ final class Rewriter extends AbstractNodeVisitor
                 || $optimizedChild instanceof UnicodePropNode
             )
         ) {
-            $this->changed(self::GROUP_REMOVED);
+            $this->state->changed(self::GROUP_REMOVED);
 
             return $optimizedChild;
         }
@@ -483,28 +447,9 @@ final class Rewriter extends AbstractNodeVisitor
     {
         $parts = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
 
-        // "\d" is the ten ASCII digits under every locale, as C's isdigit()
-        // is; with Unicode properties it matches every decimal digit, as
-        // U+0663. "\w" stands for "[a-zA-Z0-9_]" only under a locale known
-        // to be C or POSIX: with Unicode properties it matches every
-        // letter, and without them PHP builds its table from LC_CTYPE once
-        // a program calls setlocale(), where a Latin-1 locale makes it take
-        // "\xE9".
-        if ($this->optimizeDigits && !$this->unicodeProperties && 1 === \count($parts)) {
-            $part = $parts[0];
-            if ($part instanceof RangeNode && $part->start instanceof LiteralNode && $part->end instanceof LiteralNode) {
-                if ('0' === $part->start->value && '9' === $part->end->value) {
-                    $this->changed(self::DIGITS);
-
-                    return new CharTypeNode($node->isNegated ? 'D' : 'd', $node->startPosition, $node->endPosition);
-                }
-            }
-        }
-
-        if ($this->optimizeWord && !$this->unicodeProperties && \in_array($this->locale, ['C', 'POSIX'], true) && $this->isFullWordClass($parts)) {
-            $this->changed(self::WORD);
-
-            return new CharTypeNode($node->isNegated ? 'W' : 'w', $node->startPosition, $node->endPosition);
+        $shorthand = $this->classRewrites->shorthand($node, $parts);
+        if (null !== $shorthand) {
+            return $shorthand;
         }
 
         $optimizedParts = [];
@@ -517,16 +462,8 @@ final class Rewriter extends AbstractNodeVisitor
             }
         }
 
-        if ($this->canonicalizeCharClasses) {
-            [$normalizedParts, $normalizedChanged] = $this->normalizeCharClassParts($optimizedParts);
-            // Ranges are taken apart and built again: only members that
-            // read otherwise were rewritten.
-            if ($normalizedChanged && $this->partsToString($normalizedParts) !== $this->partsToString($optimizedParts)) {
-                $this->changed(self::CLASS_MEMBERS);
-            }
-            $optimizedParts = $normalizedParts;
-            $hasChanged = $hasChanged || $normalizedChanged;
-        }
+        [$optimizedParts, $normalizedChanged] = $this->classRewrites->canonicalized($optimizedParts);
+        $hasChanged = $hasChanged || $normalizedChanged;
 
         if ($hasChanged) {
             if (1 === \count($optimizedParts)) {
@@ -736,14 +673,6 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * Records a kind of rewrite made.
-     */
-    private function changed(string $change): void
-    {
-        $this->changes[$change] = true;
-    }
-
-    /**
      * Whether the node matches exactly one character, so that a quantifier
      * written right after it repeats the same thing it repeated on the group.
      */
@@ -751,7 +680,7 @@ final class Rewriter extends AbstractNodeVisitor
     {
         return match (true) {
             // Without /u a character is a byte: "é" is two.
-            $node instanceof LiteralNode => 1 === ($this->unicodeMode ? mb_strlen($node->value, 'UTF-8') : \strlen($node->value)),
+            $node instanceof LiteralNode => 1 === ($this->state->unicodeMode ? mb_strlen($node->value, 'UTF-8') : \strlen($node->value)),
             $node instanceof CharLiteralNode, $node instanceof CharTypeNode, $node instanceof DotNode,
             $node instanceof CharClassNode, $node instanceof UnicodePropNode => true,
             default => false,
@@ -796,7 +725,7 @@ final class Rewriter extends AbstractNodeVisitor
         return match (true) {
             $node instanceof LiteralNode => '' !== trim($node->value, "\x00..\x7F"),
             $node instanceof CharLiteralNode, $node instanceof ControlCharNode => $node->codePoint > 0x7F,
-            $node instanceof CharTypeNode => $this->unicodeProperties || !\in_array($node->value, ['d', 'w', 's'], true),
+            $node instanceof CharTypeNode => $this->state->unicodeProperties || !\in_array($node->value, ['d', 'w', 's'], true),
             $node instanceof DotNode, $node instanceof UnicodePropNode, $node instanceof PosixClassNode => true,
             $node instanceof CharClassNode && $node->isNegated => true,
             $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof CommentNode, $node instanceof KeepNode => false,
@@ -967,284 +896,6 @@ final class Rewriter extends AbstractNodeVisitor
     private function quantifierAllowsZero(QuantifierNode $node): bool
     {
         return 0 === $node->bounds?->min;
-    }
-
-    /**
-     * @param array<NodeInterface> $alternatives
-     *
-     * @phpstan-assert-if-true array<Node\LiteralNode> $alternatives
-     */
-    private function canAlternationBeCharClass(array $alternatives): bool
-    {
-        if (empty($alternatives)) {
-            return false;
-        }
-
-        foreach ($alternatives as $alt) {
-            if (!$alt instanceof LiteralNode) {
-                return false;
-            }
-            if (1 !== \strlen($alt->value)) {  // Also excludes empty strings
-                return false;
-            }
-            if (isset(self::CHAR_CLASS_META[$alt->value])) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Whether the parts are exactly "a-z", "A-Z", "0-9" and "_", in any
-     * order.
-     *
-     * @param array<NodeInterface> $parts
-     */
-    private function isFullWordClass(array $parts): bool
-    {
-        $partsFound = ['a-z' => false, 'A-Z' => false, '0-9' => false, '_' => false];
-        foreach ($parts as $part) {
-            if ($part instanceof RangeNode && $part->start instanceof LiteralNode && $part->end instanceof LiteralNode) {
-                $range = $part->start->value.'-'.$part->end->value;
-                if (!isset($partsFound[$range])) {
-                    return false;
-                }
-                $partsFound[$range] = true;
-            } elseif ($part instanceof LiteralNode && '_' === $part->value) {
-                $partsFound['_'] = true;
-            } else {
-                return false;
-            }
-        }
-
-        return !\in_array(false, $partsFound, true);
-    }
-
-    /**
-     * Classify a character by its ASCII category for range merging.
-     *
-     * @param int $ord the ASCII ordinal of the character
-     *
-     * @return int category: 0=other, 1=digits, 2=uppercase, 3=lowercase
-     */
-    private function getCharCategory(int $ord): int
-    {
-        if ($ord >= 48 && $ord <= 57) { // 0-9
-            return 1;
-        }
-        if ($ord >= 65 && $ord <= 90) { // A-Z
-            return 2;
-        }
-        if ($ord >= 97 && $ord <= 122) { // a-z
-            return 3;
-        }
-
-        return 0; // other
-    }
-
-    /**
-     * @param array<NodeInterface> $parts
-     *
-     * @return array{0: array<NodeInterface>, 1: bool}
-     */
-    private function normalizeCharClassParts(array $parts): array
-    {
-        /** @var array<int, array{start: int, end: int, fromRange: bool}> $scalarChars */
-        $scalarChars = [];
-        $otherParts = [];
-        $changed = false;
-
-        foreach ($parts as $part) {
-            // Only an ASCII byte is the same character in both modes: a lone
-            // byte above 0x7F (byte mode) is no code point, and stays as written.
-            if ($part instanceof LiteralNode && 1 === \strlen($part->value) && \ord($part->value) < 0x80) {
-                $ord = \ord($part->value);
-                if (isset($scalarChars[$ord])) {
-                    $scalarChars[$ord]['start'] = min($scalarChars[$ord]['start'], $part->startPosition);
-                    $scalarChars[$ord]['end'] = max($scalarChars[$ord]['end'], $part->endPosition);
-                    $changed = true;
-                } else {
-                    $scalarChars[$ord] = ['start' => $part->startPosition, 'end' => $part->endPosition, 'fromRange' => false];
-                }
-
-                continue;
-            }
-
-            if ($part instanceof RangeNode
-                && $part->start instanceof LiteralNode
-                && $part->end instanceof LiteralNode
-                && 1 === \strlen($part->start->value)
-                && 1 === \strlen($part->end->value)
-                && \ord($part->start->value) < 0x80
-                && \ord($part->end->value) < 0x80
-            ) {
-                $startOrd = \ord($part->start->value);
-                $endOrd = \ord($part->end->value);
-                if ($startOrd > $endOrd) {
-                    [$startOrd, $endOrd] = [$endOrd, $startOrd];
-                }
-                for ($ord = $startOrd; $ord <= $endOrd; $ord++) {
-                    if (isset($scalarChars[$ord])) {
-                        $scalarChars[$ord]['start'] = min($scalarChars[$ord]['start'], $part->startPosition);
-                        $scalarChars[$ord]['end'] = max($scalarChars[$ord]['end'], $part->endPosition);
-                        $scalarChars[$ord]['fromRange'] = true;
-                    } else {
-                        $scalarChars[$ord] = [
-                            'start' => $part->startPosition,
-                            'end' => $part->endPosition,
-                            'fromRange' => true,
-                        ];
-                    }
-                }
-                $changed = true;
-
-                continue;
-            }
-
-            $otherParts[] = $part;
-        }
-
-        if (empty($scalarChars)) {
-            return [$parts, $changed];
-        }
-
-        ksort($scalarChars);
-
-        $normalized = [];
-        $hasRange = false;
-        $rangeStart = 0;
-        $rangeEnd = 0;
-        $rangeStartPos = 0;
-        $rangeEndPos = 0;
-        $rangeHasExplicit = false;
-        $rangeCategory = 0;
-
-        foreach ($scalarChars as $ord => $pos) {
-            $ord = (int) $ord;
-            $posStart = (int) $pos['start'];
-            $posEnd = (int) $pos['end'];
-            $fromRange = (bool) $pos['fromRange'];
-
-            if (!$hasRange) {
-                $rangeStart = $ord;
-                $rangeEnd = $ord;
-                $rangeStartPos = $posStart;
-                $rangeEndPos = $posEnd;
-                $rangeHasExplicit = $fromRange;
-                $rangeCategory = $this->getCharCategory($ord);
-                $hasRange = true;
-
-                continue;
-            }
-
-            $category = $this->getCharCategory($ord);
-            $canMerge = $ord === $rangeEnd + 1;
-            if ($canMerge && $this->ranges && $category !== $rangeCategory) {
-                $canMerge = false;
-            }
-
-            if ($canMerge) {
-                $rangeEnd = $ord;
-                $rangeEndPos = max($rangeEndPos, $posEnd);
-                $rangeHasExplicit = $rangeHasExplicit || $fromRange;
-                $rangeCategory = $category;
-
-                continue;
-            }
-
-            $normalized = array_merge(
-                $normalized,
-                $this->buildRangeOrLiteral(
-                    $rangeStart,
-                    $rangeEnd,
-                    $rangeStartPos,
-                    $rangeEndPos,
-                    $this->shouldBuildRange($rangeStart, $rangeEnd, $rangeHasExplicit),
-                ),
-            );
-            $rangeStart = $ord;
-            $rangeEnd = $ord;
-            $rangeStartPos = $posStart;
-            $rangeEndPos = $posEnd;
-            $rangeHasExplicit = $fromRange;
-            $rangeCategory = $category;
-        }
-
-        $normalized = array_merge(
-            $normalized,
-            $this->buildRangeOrLiteral(
-                $rangeStart,
-                $rangeEnd,
-                $rangeStartPos,
-                $rangeEndPos,
-                $this->shouldBuildRange($rangeStart, $rangeEnd, $rangeHasExplicit),
-            ),
-        );
-
-        $finalParts = array_merge($normalized, $otherParts);
-
-        return [$finalParts, $changed || \count($finalParts) !== \count($parts)];
-    }
-
-    /**
-     * @return array<NodeInterface>
-     */
-    private function buildRangeOrLiteral(int $startOrd, int $endOrd, int $startPos, int $endPos, bool $allowRange = true): array
-    {
-        $startLiteral = new LiteralNode($this->charFromCodePoint($startOrd), $startPos, $startPos + 1);
-
-        if ($startOrd === $endOrd) {
-            return [$startLiteral];
-        }
-
-        if (!$allowRange) {
-            return $this->buildLiteralSequence($startOrd, $endOrd, $startPos);
-        }
-
-        // Only create a range if it covers 3 or more characters to save space
-        $coverage = $endOrd - $startOrd + 1;
-        if ($coverage < 3) {
-            // For 2 characters, return them as separate literals
-            $endLiteral = new LiteralNode($this->charFromCodePoint($endOrd), $endPos, $endPos + 1);
-
-            return [$startLiteral, $endLiteral];
-        }
-
-        $endLiteral = new LiteralNode($this->charFromCodePoint($endOrd), $endPos, $endPos + 1);
-
-        return [new RangeNode($startLiteral, $endLiteral, $startPos, $endPos)];
-    }
-
-    /**
-     * @return array<NodeInterface>
-     */
-    private function buildLiteralSequence(int $startOrd, int $endOrd, int $startPos): array
-    {
-        $literals = [];
-        $pos = $startPos;
-        for ($ord = $startOrd; $ord <= $endOrd; $ord++) {
-            $literals[] = new LiteralNode($this->charFromCodePoint($ord), $pos, $pos + 1);
-            $pos++;
-        }
-
-        return $literals;
-    }
-
-    private function shouldBuildRange(int $startOrd, int $endOrd, bool $hasExplicitRange): bool
-    {
-        if ($hasExplicitRange) {
-            return true;
-        }
-
-        return 45 !== $startOrd && 45 !== $endOrd;
-    }
-
-    private function charFromCodePoint(int $codePoint): string
-    {
-        $char = mb_chr($codePoint);
-
-        return false !== $char ? $char : '';
     }
 
     /**
@@ -1440,7 +1091,7 @@ final class Rewriter extends AbstractNodeVisitor
             return false;
         }
 
-        return $this->nodeToString($a) === $this->nodeToString($b);
+        return $this->state->spelling($a) === $this->state->spelling($b);
     }
 
     private function createQuantifiedNode(NodeInterface $node, int $count): NodeInterface
@@ -1464,14 +1115,14 @@ final class Rewriter extends AbstractNodeVisitor
 
         $short = ['{0,}' => '*', '{1,}' => '+', '{0,1}' => '?'][$quantifier] ?? null;
         if (null !== $short) {
-            $this->changed(self::SHORT_QUANTIFIER);
+            $this->state->changed(self::SHORT_QUANTIFIER);
 
             return new QuantifierNode($node->node, $short, $node->type, $node->startPosition, $node->endPosition);
         }
 
         // "X{1}+" is possessive, as an atomic group is: it never gives back.
         if (('{1}' === $quantifier || '{1,1}' === $quantifier) && QuantifierType::Possessive !== $node->type) {
-            $this->changed(self::COUNT_OF_ONE);
+            $this->state->changed(self::COUNT_OF_ONE);
 
             return $node->node;
         }
@@ -1481,7 +1132,7 @@ final class Rewriter extends AbstractNodeVisitor
         // PCRE2 where a match may start: "(?:x|(?=a)){0}\w" never matches
         // "\tb", where "\w" does.
         if (('{0}' === $quantifier || '{0,0}' === $quantifier) && !$this->isCaptureSensitive($node->node) && !self::holdsAssertion($node->node)) {
-            $this->changed(self::REPEAT_OF_ZERO);
+            $this->state->changed(self::REPEAT_OF_ZERO);
 
             return new LiteralNode('', $node->startPosition, $node->endPosition);
         }
@@ -1500,7 +1151,7 @@ final class Rewriter extends AbstractNodeVisitor
         $unique = [];
 
         foreach ($alts as $alt) {
-            $key = $this->nodeToString($alt);
+            $key = $this->state->spelling($alt);
             if (!isset($seen[$key])) {
                 $seen[$key] = true;
                 $unique[] = $alt;
@@ -1605,12 +1256,12 @@ final class Rewriter extends AbstractNodeVisitor
         $emptyBranch = self::emptyBranchQuantifier($rests);
         // An inline flag may turn "U" on or off around the group, which
         // swaps what "?" and "??" mean: the alternation stays as written.
-        if (false === $emptyBranch || (null !== $emptyBranch && $this->inlineFlags)) {
+        if (false === $emptyBranch || (null !== $emptyBranch && $this->state->inlineFlags)) {
             return null;
         }
 
         // Under "U" the spellings swap: "?" is lazy, "??" greedy.
-        if (null !== $emptyBranch && $this->lazyByDefault) {
+        if (null !== $emptyBranch && $this->state->lazyByDefault) {
             $emptyBranch = QuantifierType::Greedy === $emptyBranch ? QuantifierType::Lazy : QuantifierType::Greedy;
         }
 
@@ -1725,154 +1376,5 @@ final class Rewriter extends AbstractNodeVisitor
             \count($branches) - 1 => QuantifierType::Greedy,
             default => false,
         };
-    }
-
-    /**
-     * @param array<NodeInterface> $parts
-     */
-    private function partsToString(array $parts): string
-    {
-        return implode('', array_map($this->nodeToString(...), $parts));
-    }
-
-    private function nodeToString(NodeInterface $node): string
-    {
-        $this->compiler ??= PatternPrinter::asWritten();
-        $this->compiler->resetState();
-
-        return $node->accept($this->compiler);
-    }
-
-    /**
-     * Merges adjacent character class nodes in an alternation.
-     * For example: [a-z]|[0-9] becomes [a-z0-9]
-     *
-     * @param array<NodeInterface> $alternatives
-     *
-     * @return array<NodeInterface>
-     */
-    private function mergeAdjacentCharClasses(array $alternatives): array
-    {
-        if (\count($alternatives) < 2) {
-            return $alternatives;
-        }
-
-        $merged = [];
-        $i = 0;
-
-        while ($i < \count($alternatives)) {
-            $current = $alternatives[$i];
-
-            // Check if current is a character class or a char type that can be converted
-            $isCharClass = $current instanceof CharClassNode && !$current->isNegated;
-            $isCharType = $current instanceof CharTypeNode && $this->canConvertCharTypeToCharClass($current);
-
-            if (!$isCharClass && !$isCharType) {
-                $merged[] = $current;
-                $i++;
-
-                continue;
-            }
-
-            // Look ahead to find adjacent character classes or char types
-            $nodesToMerge = [$current];
-            $j = $i + 1;
-
-            while ($j < \count($alternatives)) {
-                $next = $alternatives[$j];
-                $isNextCharClass = $next instanceof CharClassNode && !$next->isNegated;
-                $isNextCharType = $next instanceof CharTypeNode && $this->canConvertCharTypeToCharClass($next);
-
-                if ($isNextCharClass || $isNextCharType) {
-                    $nodesToMerge[] = $next;
-                    $j++;
-                } else {
-                    break;
-                }
-            }
-
-            // If we found multiple adjacent character classes/char types, merge them
-            if (\count($nodesToMerge) > 1) {
-                $merged[] = $this->mergeCharClassesAndCharTypes($nodesToMerge);
-                $i = $j;
-            } else {
-                $merged[] = $current;
-                $i++;
-            }
-        }
-
-        return $merged;
-    }
-
-    /**
-     * Checks if a CharTypeNode can be converted to a CharClassNode.
-     */
-    private function canConvertCharTypeToCharClass(CharTypeNode $node): bool
-    {
-        // For now, only handle \d (digits) which can be converted to [0-9]
-        if ('d' !== $node->value) {
-            return false;
-        }
-
-        if ($this->unicodeProperties) {
-            return false;
-        }
-
-        return $this->optimizeDigits;
-    }
-
-    /**
-     * Converts a CharTypeNode to an equivalent CharClassNode.
-     */
-    private function convertCharTypeToCharClass(CharTypeNode $node): CharClassNode
-    {
-        $startPos = $node->startPosition;
-        $endPos = $node->endPosition;
-
-        return match ($node->value) {
-            'd' => new CharClassNode(
-                new RangeNode(
-                    new LiteralNode('0', $startPos, $startPos + 1),
-                    new LiteralNode('9', $startPos + 1, $startPos + 2),
-                    $startPos,
-                    $startPos + 2,
-                ),
-                false,
-                $startPos,
-                $endPos,
-            ),
-            default => throw new \LogicException("Unsupported char type: {$node->value}"),
-        };
-    }
-
-    /**
-     * Merges character classes and char types into a single character class.
-     *
-     * @param array<NodeInterface> $nodes
-     */
-    private function mergeCharClassesAndCharTypes(array $nodes): CharClassNode
-    {
-        $allParts = [];
-        $startPos = $nodes[0]->getStartPosition();
-        $endPos = $nodes[\count($nodes) - 1]->getEndPosition();
-
-        foreach ($nodes as $node) {
-            if ($node instanceof CharClassNode) {
-                if ($node->expression instanceof AlternationNode) {
-                    $allParts = array_merge($allParts, $node->expression->alternatives);
-                } else {
-                    $allParts[] = $node->expression;
-                }
-            } elseif ($node instanceof CharTypeNode) {
-                // Convert char type to equivalent char class parts
-                $charClass = $this->convertCharTypeToCharClass($node);
-                $allParts[] = $charClass->expression;
-            }
-        }
-
-        // Create a new alternation with all parts
-        $mergedExpression = new AlternationNode($allParts, $startPos, $endPos);
-
-        return new CharClassNode($mergedExpression, false, $startPos, $endPos);
     }
 }

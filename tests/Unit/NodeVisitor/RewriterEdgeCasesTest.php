@@ -125,7 +125,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_normalize_char_class_parts_reverses_ranges_and_updates_scalar(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'classRewrites');
         $parts = [
             new LiteralNode('b', 0, 1),
             new RangeNode(new LiteralNode('d', 1, 2), new LiteralNode('a', 2, 3), 1, 3),
@@ -205,7 +205,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_merge_char_classes_and_char_types_merges_alternations(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'classRewrites');
         $class = new CharClassNode(
             new AlternationNode([new LiteralNode('a', 0, 1), new LiteralNode('b', 1, 2)], 0, 2),
             false,
@@ -496,7 +496,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_char_from_code_point_covers_edge_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'classRewrites');
 
         // Test regular ASCII character
         $result = $this->invokePrivate($optimizer, 'charFromCodePoint', [65]); // 'A'
@@ -873,7 +873,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_can_alternation_be_char_class_covers_all_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'classRewrites');
 
         // Test empty alternation
         $result = $this->invokePrivate($optimizer, 'canAlternationBeCharClass', [[]]);
@@ -984,7 +984,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_merge_adjacent_char_classes_covers_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'classRewrites');
 
         // Test merging adjacent char classes
         $class1 = new CharClassNode(
@@ -1006,7 +1006,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_can_convert_char_type_to_char_class_covers_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'classRewrites');
 
         // Test \d in non-unicode mode (should be true)
         $digitType = new CharTypeNode('d', 0, 2);
@@ -1018,7 +1018,7 @@ final class RewriterEdgeCasesTest extends TestCase
         // Set unicode mode
         $regex = new RegexNode(new LiteralNode('test', 0, 4), 'u', '/', 0, 4);
         $regex->accept($optimizerUnicode); // This sets unicode mode
-        $result = $this->invokePrivate($optimizerUnicode, 'canConvertCharTypeToCharClass', [$digitType]);
+        $result = $this->invokePrivate($this->part($optimizerUnicode, 'classRewrites'), 'canConvertCharTypeToCharClass', [$digitType]);
         $this->assertFalse($result);
 
         // Test \w (should be false)
@@ -1030,7 +1030,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_should_build_range_covers_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'classRewrites');
 
         // Test with explicit range (should be true)
         $result = $this->invokePrivate($optimizer, 'shouldBuildRange', [97, 122, true]); // a-z
@@ -1048,7 +1048,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_get_char_category_covers_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'classRewrites');
 
         // Test digits
         $result = $this->invokePrivate($optimizer, 'getCharCategory', [48]); // '0'
