@@ -30,12 +30,9 @@ use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
-use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\RegexNode;
-use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\ParserOptions;
@@ -77,9 +74,6 @@ final class TokenParser
 {
     private const INLINE_FLAG_LETTERS = InlineFlags::LETTERS;
 
-    // Token length constants for calculating positions
-    private const PCRE_VERB_WRAPPER_LENGTH = 3; // (*...)
-
     /**
      * The two lookaheads, by the character that introduces them.
      */
@@ -95,13 +89,6 @@ final class TokenParser
         '=' => GroupType::LookbehindPositive,
         '!' => GroupType::LookbehindNegative,
     ];
-
-    /**
-     * The marker a lookaround carries in its flags when it is non-atomic,
-     * "(?*...)" or "(*napla:...)": PCRE may backtrack into it. It is the
-     * character that spells it in the short form.
-     */
-    private const NON_ATOMIC_FLAG = '*';
 
     /**
      * Token types that are atoms outside a class only: inside one the lexer
@@ -142,6 +129,12 @@ final class TokenParser
      * reads, made on the first one.
      */
     private ?ReferenceParser $references = null;
+
+    /**
+     * The reader of the verbs of the text this parser reads, made on the
+     * first one.
+     */
+    private ?VerbParser $verbs = null;
 
     /**
      * The reader of the classes of the text this parser reads, made on the
@@ -308,6 +301,7 @@ final class TokenParser
         $this->extendedClasses = null;
         $this->quantifiers = null;
         $this->references = null;
+        $this->verbs = null;
         $this->recursionDepth = $this->depthBefore;
         $this->tokensReadWhole = 0;
         $this->recursionTests = [];
@@ -616,7 +610,7 @@ final class TokenParser
             case TokenType::PcreVerb:
                 $this->stream->advance();
 
-                return $this->verbNode($token, $startPosition);
+                return $this->verbs()->verbNode($token, $startPosition);
             case TokenType::Quantifier:
                 break;
             default:
@@ -728,43 +722,6 @@ final class TokenParser
     }
 
     /**
-     * The node of a verb token: a verb, or the group an alphabetic assertion
-     * or a script run stands for, its body read from its text. A body read
-     * in place by the lexer, one that never closes or any body when every
-     * one is read in place, has the opener alone for its token, with no ")"
-     * in its text, "(*pla:" or "(?*": the tokens after it are its body, up
-     * to its ")", or to the ")" PCRE misses at the end.
-     */
-    private function verbNode(Token $token, int $startPosition): NodeInterface
-    {
-        // "(**)" reads as "(?*)" does, a token whose value starts with "*":
-        // the text tells them apart.
-        if ('**' === substr($this->pattern, $token->position + 1, 2)) {
-            throw PcreVerb::doubleStarError($this->pattern, $token->position + 2);
-        }
-
-        if ($token->end() - $token->position !== \strlen($token->value) + 2) {
-            return $this->createPcreVerbNode($token->value, $startPosition, $startPosition + \strlen($token->value) + self::PCRE_VERB_WRAPPER_LENGTH);
-        }
-
-        $read = PcreVerb::read($token->value);
-        // "(*scs:(1)" that no ")" closes: PCRE reads its list of groups
-        // before the body, refusing a group it names that it cannot be.
-        if (null !== $read->scanSubstring) {
-            $this->readGroupList($token->position + 3 + \strlen($read->scanSubstring) + 1);
-        }
-
-        $body = $this->parseScopedAlternation();
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
-
-        // Reached only from the tokens of Lexer::tokenizeInPlace(), which
-        // reads a closed body in place too: "(*pla:(a))b". Lexer::tokenize()
-        // keeps a closed body in the opener's token, so there no ")" closes
-        // a body read here.
-        return $this->createGroupNode($body, $read->assertion ?? GroupType::NonCapturing, $startPosition, $endToken, null, $read->nonAtomic ? self::NON_ATOMIC_FLAG : null);
-    }
-
-    /**
      * parses callouts like (?C), (?C1), (?C"name"), (?C"string"), and (?Cname)
      */
     private function parseCallout(): CalloutNode
@@ -789,7 +746,7 @@ final class TokenParser
 
         // 2. Check for PCRE verbs: (*...)
         if ($this->stream->matchLiteral('*')) {
-            return $this->parsePcreVerbInGroup($startPosition);
+            return $this->verbs()->parsePcreVerbInGroup($startPosition);
         }
 
         // 2.0 "(?(?C1)(?=a)yes|no)": a callout may run before the assertion
@@ -866,45 +823,6 @@ final class TokenParser
     }
 
     /**
-     * Parses PCRE verbs in group context: (?(*VERB)...)
-     */
-    private function parsePcreVerbInGroup(int $startPosition): NodeInterface
-    {
-        $verbStartPosition = $this->stream->current()->position;
-
-        $verb = $this->state->consumeWhile(static fn (string $c): bool => ':' !== $c);
-
-        // A verb may carry an argument, as "(*MARK:name)" does.
-        $argument = $this->stream->matchLiteral(':')
-            ? $this->state->consumeWhile(static fn (): bool => true)
-            : '';
-
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close PCRE verb', ErrorCode::VerbUnclosed);
-        $endPosition = $endToken->position + 1;
-
-        // Parse the rest of the pattern after the verb group
-        if (!$this->stream->isAtEnd()) {
-            $expr = $this->parseScopedAlternation();
-        } else {
-            $expr = $this->createEmptyLiteralNodeAt($endPosition);
-        }
-
-        // Create a group node containing the verb and the following expression
-        $verbNode = $this->createPcreVerbNode(
-            '' !== $argument ? $verb.':'.$argument : $verb,
-            $verbStartPosition,
-            $endPosition,
-        );
-
-        // Create a sequence with the verb and the expression
-        return new SequenceNode(
-            [$verbNode, $expr],
-            $startPosition,
-            $expr->getEndPosition(),
-        );
-    }
-
-    /**
      * Parses a raw sub-pattern string (e.g. the payload of an alphabetic
      * assertion verb) into an AST. Node positions are those of the enclosing
      * pattern: the payload is read from $absoluteOffset on.
@@ -956,73 +874,6 @@ final class TokenParser
         $this->state->captureCount = $inner->state->captureCount;
 
         return $pattern->pattern;
-    }
-
-    /**
-     * "(*scs:(1,<name>)body)": the list of groups, then the body, read apart
-     * like the body of any alphabetic assertion.
-     */
-    private function createScanSubstringNode(string $name, int $startPosition, int $endPosition): GroupNode
-    {
-        $listOpen = $startPosition + 2 + \strlen($name) + 1;
-        if ('(' !== ($this->pattern[$listOpen] ?? '')) {
-            throw $this->groupListError([$listOpen, ErrorCode::ScanSubstringMissingList, \sprintf('Missing "(" to open the groups of (*%s: at position %d.', $name, $listOpen)]);
-        }
-
-        [$groups, $bodyStart] = $this->readGroupList($listOpen + 1);
-        $body = substr($this->pattern, $bodyStart, $endPosition - 1 - $bodyStart);
-
-        return new GroupNode(
-            $this->parseSubPattern($body, $bodyStart),
-            GroupType::ScanSubstring,
-            // The spelling, "scs" or "scan_substring".
-            $name,
-            null,
-            $startPosition,
-            $endPosition,
-            false,
-            $groups,
-        );
-    }
-
-    private function createPcreVerbNode(string $verb, int $startPosition, int $endPosition): NodeInterface
-    {
-        $read = PcreVerb::read($verb);
-
-        if (null !== $read->scanSubstring && $this->supports(PcreFeature::ScanSubstring)) {
-            return $this->createScanSubstringNode($read->scanSubstring, $startPosition, $endPosition);
-        }
-
-        if (null !== $read->assertion) {
-            // "(*pla:...)" and its friends are the alphabetic spelling of a
-            // lookaround, so they parse into the group they stand for.
-            return new GroupNode(
-                $this->parseSubPattern((string) $read->payload, $startPosition + 2 + $read->payloadOffset),
-                $read->assertion,
-                null,
-                $read->nonAtomic ? self::NON_ATOMIC_FLAG : null,
-                $startPosition,
-                $endPosition,
-            );
-        }
-
-        if (null !== $read->matchLimit) {
-            return new LimitMatchNode($read->matchLimit, $startPosition, $endPosition);
-        }
-
-        if ($read->isScriptRun()) {
-            $payload = (string) $read->payload;
-
-            return new ScriptRunNode(
-                $payload,
-                $startPosition,
-                $endPosition,
-                $this->parseSubPattern($payload, $startPosition + 2 + $read->payloadOffset),
-                $read->atomicScriptRun,
-            );
-        }
-
-        return new PcreVerbNode($read->name, $startPosition, $endPosition);
     }
 
     /**
@@ -1103,7 +954,7 @@ final class TokenParser
             $expr = $this->parseScopedAlternation();
             $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
 
-            return $this->createGroupNode($expr, GroupType::LookbehindPositive, $startPos, $endToken, null, self::NON_ATOMIC_FLAG);
+            return $this->createGroupNode($expr, GroupType::LookbehindPositive, $startPos, $endToken, null, VerbParser::NON_ATOMIC_FLAG);
         }
 
         // "(?<=...)" and "(?<!...)" are lookbehinds; anything else after the
@@ -1177,78 +1028,13 @@ final class TokenParser
             return null;
         }
 
-        [$groups, $at] = $this->readGroupList($open + 1);
+        [$groups, $at] = (new GroupListReader($this->state))->readGroupList($open + 1);
 
         while (!$this->stream->isAtEnd() && $this->stream->current()->position < $at) {
             $this->stream->advance();
         }
 
         return $groups;
-    }
-
-    /**
-     * A list of groups, "2,-1,<name>,'name'", from $at to its ")": the groups
-     * a call returns or a substring scan matches. PCRE reads it from the
-     * text, and refuses what it cannot take as it reads it: an item that is
-     * no number or name, group zero, a relative zero, a group before the
-     * first, or a number past 65535.
-     *
-     * @return array{0: list<string>, 1: int} the items as written, and the
-     *                                        offset past the ")"
-     */
-    private function readGroupList(int $at): array
-    {
-        // What stops PCRE reading the list, if anything; the numbers it has
-        // read before are judged first.
-        $fault = PcreVerb::groupListFault($this->pattern, $at - 1, $this->target, $this->unicodeMode);
-
-        $groups = [];
-        while (true) {
-            if (1 !== LibraryPcre::match('/\G(?:([+-]?)(\d++)|<[^>]*+>|\'[^\']*+\')/', $this->pattern, $matches, 0, $at)) {
-                // The reader stops on such an item too: the fallback is for the type.
-                throw $this->groupListError($fault ?? [$at, ErrorCode::GroupListItemExpected, \sprintf('Expected a capture group number or name at position %d.', $at)]);
-            }
-
-            $itemEnd = $at + \strlen($matches[0]);
-            $sign = $matches[1] ?? '';
-            $digits = $matches[2] ?? '';
-            if ('' !== $digits) {
-                [$refused, $code] = match (true) {
-                    PcreNumber::exceeds($digits) => ['is too big', ErrorCode::GroupNumberTooBig],
-                    0 === (int) $digits => '' === $sign
-                        ? ['names no group', ErrorCode::GroupListMissingGroup]
-                        : ['is a relative zero', ErrorCode::GroupListRelativeZero],
-                    '-' === $sign && (int) $digits > $this->state->captureCount => ['names no group', ErrorCode::GroupListMissingGroup],
-                    default => [null, null],
-                };
-                if (null !== $refused && null !== $code) {
-                    throw $this->parserException(\sprintf('Group "%s" listed at position %d %s.', $matches[0], $itemEnd, $refused), $code, $itemEnd);
-                }
-            }
-
-            // A name PCRE refuses, or no "," or ")" after the item.
-            if (null !== $fault && $fault[0] <= $itemEnd) {
-                throw $this->groupListError($fault);
-            }
-
-            $groups[] = $matches[0];
-            $at = $itemEnd + 1;
-            if (')' === ($this->pattern[$itemEnd] ?? '')) {
-                return [$groups, $at];
-            }
-        }
-    }
-
-    /**
-     * @param array{0: int, 1: ErrorCode, 2: string} $fault
-     */
-    private function groupListError(array $fault): ParserException
-    {
-        if (!$this->supports(PcreFeature::GroupListErrors)) {
-            $fault = PcreVerb::groupListFaultBefore1047($fault, \strlen($this->pattern));
-        }
-
-        return $this->parserException($fault[2], $fault[1], $fault[0]);
     }
 
     /**
@@ -1496,6 +1282,15 @@ final class TokenParser
         return $this->references ??= new ReferenceParser($this->state, $this->groupNames);
     }
 
+    /**
+     * The reader of verbs, which calls this parser back for the alternatives
+     * after a verb and for each body it reads apart.
+     */
+    private function verbs(): VerbParser
+    {
+        return $this->verbs ??= new VerbParser($this->state, $this->parseScopedAlternation(...), $this->parseSubPattern(...));
+    }
+
     private function classes(): ClassParser
     {
         return $this->classes ??= new ClassParser($this->state);
@@ -1538,7 +1333,7 @@ final class TokenParser
             $this->patternNames,
             $this->parseScopedAlternation(...),
             fn (int $start, bool $behind): ?GroupNode => $this->matchLookaround($start, $behind ? self::LOOKBEHINDS : self::LOOKAHEADS),
-            $this->verbNode(...),
+            fn (Token $token, int $startPosition): NodeInterface => $this->verbs()->verbNode($token, $startPosition),
             $this->skipExtendedModeContent(...),
             function (string $name): void {
                 $this->recursionTests[] = $name;
