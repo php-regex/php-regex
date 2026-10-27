@@ -17,6 +17,7 @@ use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
+use PHPRegex\Redos\RedosWitness;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -55,7 +56,7 @@ final class RedosLookaheadDegreeTest extends TestCase
 
         // The witness is one the bodies fail on everywhere.
         $witness = $analysis->witness;
-        $this->assertNotNull($witness, $message);
+        $this->assertInstanceOf(RedosWitness::class, $witness, $message);
         $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern).'A', $witness->build(20)), $message);
     }
 
