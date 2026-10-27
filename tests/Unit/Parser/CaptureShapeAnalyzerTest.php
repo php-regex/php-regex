@@ -2263,6 +2263,11 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'two branches' => ['pattern' => '/(a)|(b)/', 'flags' => 0, 'expected' => "array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}"];
         // preg_match('/(?:(a)\K(b))?./', 'abc') -> ["bc","a","b"]; on 'ac' -> ["a"] (PHP 8.4.27, PCRE2 10.49):
         // the case where the group runs reads the whole from its reset
+        // preg_match() on 'abcd' -> ["abcd","a","b","c","d"], 'ab' -> ["ab","a","b"], 'cd' -> ["cd","","","c","d"],
+        // '' -> [""] (PHP 8.4.27, PCRE2 10.49): each optional group runs or not, the other one either way
+        yield 'two optional groups holding groups' => ['pattern' => '/(?:(a)(b))?(?:(c)(d))?/', 'flags' => 0, 'expected' => "array{0: 'abcd', 1: 'a', 2: 'b', 3: 'c', 4: 'd'}|array{0: 'ab', 1: 'a', 2: 'b'}|array{0: 'cd', 1: '', 2: '', 3: 'c', 4: 'd'}|array{0: ''}"];
+        yield 'an alternation beside an optional group' => ['pattern' => '/(?:(a)|(b))(?:(c)(d))?/', 'flags' => 0, 'expected' => "array{0: 'acd', 1: 'a', 2: '', 3: 'c', 4: 'd'}|array{0: 'a', 1: 'a'}|array{0: 'bcd', 1: '', 2: 'b', 3: 'c', 4: 'd'}|array{0: 'b', 1: '', 2: 'b'}"];
+        yield 'two alternations' => ['pattern' => '/(?:(a)|(b))(?:(c)|(d))/', 'flags' => 0, 'expected' => "array{0: 'ac', 1: 'a', 2: '', 3: 'c'}|array{0: 'ad', 1: 'a', 2: '', 3: '', 4: 'd'}|array{0: 'bc', 1: '', 2: 'b', 3: 'c'}|array{0: 'bd', 1: '', 2: 'b', 3: '', 4: 'd'}"];
         yield 'a reset in the case an optional group runs' => ['pattern' => '/(?:(a)\K(b))?./', 'flags' => 0, 'expected' => "array{0: non-falsy-string, 1: 'a', 2: 'b'}|array{0: non-empty-string}"];
         yield 'through a capturing group' => ['pattern' => '/Price: (£|(\d)|x)/i', 'flags' => 0, 'expected' => "array{0: non-falsy-string, 1: '£'|numeric-string|non-falsy-string}|array{0: non-falsy-string, 1: '£'|numeric-string|non-falsy-string, 2: numeric-string}"];
         yield 'two branches, as null' => ['pattern' => '/(a)|(b)/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: 'a', 2: null}|array{0: 'b', 1: null, 2: 'b'}"];
@@ -2329,13 +2334,18 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'an optional group holding groups, {0,1}' => ['pattern' => '/(?:(a)(b)){0,1}c/', 'count' => 2];
         yield 'an optional group holding groups, inside a non-capturing group' => ['pattern' => '/(?:x(?:(a)(b))?)/', 'count' => 2];
         yield 'an optional group holding a branch reset in a capturing group' => ['pattern' => '/((?|(a)|(b))(c))?/', 'count' => 2];
-        yield 'an alternation wins over an optional group' => ['pattern' => '/(?:(a)|(b))(?:(c)(d))?/', 'count' => 2];
+        // Each node a match runs once splits, and the cases multiply, within the budget.
+        yield 'an alternation beside an optional group' => ['pattern' => '/(?:(a)|(b))(?:(c)(d))?/', 'count' => 4];
         yield 'a condition holding groups' => ['pattern' => '/(?(?=(a))a|(c))/', 'count' => 2];
         yield 'a condition on a group number' => ['pattern' => '/(x)?(?(1)(a)|(b))/', 'count' => 2];
         yield 'a condition whose only group is in the assertion' => ['pattern' => '/(?(?=(a))a|b)/', 'count' => 2];
         yield 'an optional condition: one more case' => ['pattern' => '/(?:(?(?=(a))a|(c)))?/', 'count' => 3];
-        yield 'an alternation wins over a condition' => ['pattern' => '/(?(?=(a))a|(c))(?:(d)|(e)|(f))/', 'count' => 3];
-        yield 'two alternations leave the split to an optional group' => ['pattern' => '/(?:(a)|(b))(?:(c)|(d))(?:(e)(f))?/', 'count' => 2];
+        yield 'a condition beside an alternation' => ['pattern' => '/(?(?=(a))a|(c))(?:(d)|(e)|(f))/', 'count' => 6];
+        yield 'two alternations and an optional group' => ['pattern' => '/(?:(a)|(b))(?:(c)|(d))(?:(e)(f))?/', 'count' => 8];
+        yield 'two alternations with groups' => ['pattern' => '/(?:(a)|(b))(?:(c)|(d))/', 'count' => 4];
+        yield 'two optional groups holding groups' => ['pattern' => '/(?:(a)(b))?(?:(c)(d))?/', 'count' => 4];
+        // 4 * 4 = 16 cases fit; a third alternation would make 32: it stays merged
+        yield 'a product past the budget keeps the splits that fit' => ['pattern' => '/(?:(a)|(b)|(c)|(d))(?:(e)|(f)|(g)|(h))(?:(i)|(j))/', 'count' => 16];
         yield 'an alternation past the limit leaves the split to an optional group' => ['pattern' => '/(?:'.substr(self::branches(17, ''), 1, -1).')(?:(x)(y))?/', 'count' => 2];
     }
 
@@ -2346,7 +2356,6 @@ final class CaptureShapeAnalyzerTest extends TestCase
     {
         yield 'seventeen branches: past the limit' => ['pattern' => self::branches(17, '')];
         yield 'sixteen optional branches: seventeen cases' => ['pattern' => self::branches(16, '?')];
-        yield 'a second alternation with groups' => ['pattern' => '/(?:(a)|(b))(?:(c)|(d))/'];
         yield 'branch reset at the root' => ['pattern' => '/(?|(a)|(b))/'];
         // preg_match('/(?|(a)|(b))(?:(c)|(d))/', 'bd') -> ["bd","b","","d"] (PHP 8.4.26, PCRE2 10.49)
         yield 'a branch reset with groups before the alternation' => ['pattern' => '/(?|(a)|(b))(?:(c)|(d))/'];
@@ -2364,7 +2373,6 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'no alternation' => ['pattern' => '/(a)/'];
         yield 'an optional group holding one group' => ['pattern' => '/(?:x(a))?/'];
         yield 'an optional capturing group alone' => ['pattern' => '/(a)?(b)/'];
-        yield 'two optional groups holding groups' => ['pattern' => '/(?:(a)(b))?(?:(c)(d))?/'];
         yield 'an optional group holding groups, repeated' => ['pattern' => '/(?:(a)(b)){0,2}/'];
         yield 'a condition without groups' => ['pattern' => '/(a)(?(1)b|c)/'];
         yield 'a condition under a repeat' => ['pattern' => '/(?:(?(?=(a))a|(c)))+/'];
@@ -2439,6 +2447,15 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'cases: /(?:(?(?=(a))a|(c)))?/' => ['pattern' => '/(?:(?(?=(a))a|(c)))?/', 'subjects' => ['', 'a', 'c']];
         yield 'cases: /(?(?=(a))a|(c))(?:(d)|(e)|(f))/' => ['pattern' => '/(?(?=(a))a|(c))(?:(d)|(e)|(f))/', 'subjects' => ['ad', 'ce', 'cf']];
         yield 'cases: /(?:(a)|(b))(?:(c)|(d))(?:(e)(f))?/' => ['pattern' => '/(?:(a)|(b))(?:(c)|(d))(?:(e)(f))?/', 'subjects' => ['ac', 'bdef']];
+        yield 'cases: /(?:(a)(b))?(?:(c)(d))?/' => ['pattern' => '/(?:(a)(b))?(?:(c)(d))?/', 'subjects' => ['', 'ab', 'cd', 'abcd']];
+        yield 'cases: /(?:(a)|(b))(?:(c)(d))?/' => ['pattern' => '/(?:(a)|(b))(?:(c)(d))?/', 'subjects' => ['a', 'b', 'acd', 'bcd']];
+        yield 'cases: /(?:(a)|(b))(?:(c)|(d))/' => ['pattern' => '/(?:(a)|(b))(?:(c)|(d))/', 'subjects' => ['ac', 'ad', 'bc', 'bd']];
+        yield 'cases: /(?:(a)|(b)|(c)|(d))(?:(e)|(f)|(g)|(h))(?:(i)|(j))/' => ['pattern' => '/(?:(a)|(b)|(c)|(d))(?:(e)|(f)|(g)|(h))(?:(i)|(j))/', 'subjects' => ['aei', 'dhj', 'bgi', 'cfj']];
+        // preg_match('/(?:a(*ACCEPT)|(b))(?:(c)|(d))/', 'a') -> ["a"]: the cut ends the match before the second split;
+        // preg_match('/(?:(a)\K|(b))(?:(c)(d))?/', 'acd') -> ["cd","a","","c","d"] (PHP 8.4.27, PCRE2 10.49)
+        yield 'cases: /(?:a(*ACCEPT)|(b))(?:(c)|(d))/' => ['pattern' => '/(?:a(*ACCEPT)|(b))(?:(c)|(d))/', 'subjects' => ['a', 'bc', 'bd']];
+        yield 'cases: /(?:(a)\K|(b))(?:(c)(d))?/' => ['pattern' => '/(?:(a)\K|(b))(?:(c)(d))?/', 'subjects' => ['a', 'b', 'acd', 'bcd']];
+        yield 'cases: /(?(?=a)(a)|(b))(?:(c)|(d))?/' => ['pattern' => '/(?(?=a)(a)|(b))(?:(c)|(d))?/', 'subjects' => ['a', 'b', 'ac', 'bd']];
         // A skipped group's mark and \K are backtracked: preg_match('/(?:(a)(*MARK:m)(b))?./', 'ac') -> ["a"], and so with \K (PHP 8.4.27, PCRE2 10.49).
         yield 'cases: /(?J)(?<n>a)?(?:(?<n>b)(c))?/' => ['pattern' => '/(?J)(?<n>a)?(?:(?<n>b)(c))?/', 'subjects' => ['', 'a', 'bc', 'abc']];
         yield 'cases: /(?:(a)(*MARK:m)(b))?./' => ['pattern' => '/(?:(a)(*MARK:m)(b))?./', 'subjects' => ['ac', 'abc']];

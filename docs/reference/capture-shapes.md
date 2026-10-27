@@ -364,7 +364,7 @@ Merged, the same matches read
 
 ### When the pattern splits
 
-The analyzer splits on one alternation: the one holding a capturing group that the root
+The analyzer splits on an alternation holding a capturing group that the root
 reaches through sequences and through groups that do not repeat (`(?:...)`, atomic
 `(?>...)`, option groups such as `(?i:...)`, and capturing groups, set in every case).
 Each alternative gives one case. `/(a)|(b)/`, `/^(?:(\d+)|([a-z]+))$/`,
@@ -377,8 +377,8 @@ case of the digit only.
 - An alternation inside an alternative is not on the path, and stays merged within its
   case: `/(a)|b(?:(c)|(d))/` gives two cases, the second keeping `c` and `d` merged.
 
-Without such an alternation, the analyzer splits on one conditional group holding a
-capturing group, reached the same way: one case for its yes branch, one for its no
+It splits the same way on a conditional group holding a capturing group, reached the
+same way: one case for its yes branch, one for its no
 branch. The condition runs in both. An assertion keeps what it captured where its body
 matched: a positive one in the yes case, a negative one in the no case, as
 `preg_match('/(?(?!(a))x|a)/', 'a', $m)` writes `['a', 'a']`. So group 1 below is
@@ -416,8 +416,9 @@ $shape->matchShape();
 `(?(VERSION>=10.0)...)` keeps both arms: the analyzer is not told which PCRE2 release
 the pattern runs on.
 
-Without either, the analyzer splits on one optional group (`?`, `??`, `?+`, `{0,1}`)
-holding two capturing groups or more, itself included, reached the same way: one case
+And it splits on an optional group (`?`, `??`, `?+`, `{0,1}`) holding two capturing
+groups or more, itself included, reached the same way, that holds no alternation or
+conditional group the analyzer splits on: one case
 where it runs and sets its groups together, one where it is skipped and sets none.
 Checking that the outer group is set then tells that the groups it holds are set too:
 
@@ -436,17 +437,35 @@ Merged, the same matches read
 where `isset($m[3])` says nothing of `$m[5]`. An optional group holding one capturing
 group, `/(a)?/` or `/(?:x(a))?/`, says as much merged, and is not split.
 
+Each node the root reaches this way splits, and the cases multiply: one case per way of
+taking a branch of each. `/(?:(a)(b))?(?:(c)(d))?/` gives four cases, one per pair of
+groups run or skipped, `/(?:(a)|(b))(?:(c)(d))?/` four, and
+`/(?:(a)|(b))(?:(c)|(d))(?:(e)(f))?/` eight:
+
+```php
+$shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse('/(?:(a)(b))?(?:(c)(d))?/'));
+
+$shape->matchShape();
+// array{0: 'abcd', 1: 'a', 2: 'b', 3: 'c', 4: 'd'}|array{0: 'ab', 1: 'a', 2: 'b'}
+// |array{0: 'cd', 1: '', 2: '', 3: 'c', 4: 'd'}|array{0: ''}
+```
+
+The cases stay within 16. The alternations count first, then the conditional groups,
+then the optional groups, each in pattern order, and a node whose cases would take the
+product past 16 stays merged within each case: in
+`/(?:(a)|(b)|(c)|(d))(?:(e)|(f)|(g)|(h))(?:(i)|(j))/` the first two alternations give 16
+cases, and the third stays merged.
+
 Nothing is split when:
 
 - the alternation, the conditional group or the optional group sits under another
   quantifier (`*`, `+`, `{2}`), inside a capturing group, or inside a lookaround;
-- every kind the root reaches, it reaches twice or more, as in
-  `/(?:(a)|(b))(?:(c)|(d))/` or `/(?:(a)(b))?(?:(c)(d))?/`. A kind reached twice gives
-  way to the next one: `/(?:(a)|(b))(?:(c)|(d))(?:(e)(f))?/` splits on its optional group;
+- two alternations or conditional groups share one `?`, as in
+  `/(?:(?:(a)|(b))(?:(c)|(d)))?/`: neither splits;
 - the root reaches a branch reset `(?|...)` holding capturing groups: its alternatives
   share their numbers;
 - the split would give more than 16 cases. Sixteen alternatives split; seventeen do not,
-  nor sixteen under `?`, and the analyzer moves on to the next kind.
+  nor sixteen under `?`, and the analyzer moves on to the next node.
 
 Each case reads the pattern as PCRE does, options included. An inline option set in one
 alternative stays in force in the following ones. In `/a(?i)b|(c)/` the `(?i)` makes the
