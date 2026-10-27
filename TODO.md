@@ -1,15 +1,5 @@
 # TODO
 
-## Suite reds older than the 2026-10-24 series
-
-- `CaptureShapeParityTest` fails on `/^|\d{1,2}$/` (php-src bug78853,
-  subject `"7"`), before and after the scan-whole change: under
-  `PREG_SET_ORDER`, and for the callback of `preg_replace_callback()`, the
-  shape still types group 0 as `''` where the engine writes `"7"` from the
-  second match on.
-- ~~`MonorepoArchiveTest`: fixed by adding `build/` to `.gitattributes`
-  `export-ignore`.~~
-
 ## (*UCP) in the ReDoS prover
 
 `/(*UCP)(?:\w|\xC9)+$/` exhausts the backtrack limit, yet the verdict is a
@@ -97,31 +87,6 @@ After the 2.0.0 tag, check that the release went from draft to published
 with both assets, and that `gh attestation verify regex.phar --repo
 php-regex/php-regex` passes on the downloaded phar.
 
-## Upstream PHPStan fixes: push the branches and open the PRs
-
-Six branches are ready in the local `../phpstan-src` checkout (fork
-`php-regex/phpstan-src`), one commit each on `2.3.x` (62ed20078), not pushed:
-one grammar fix in `resources/RegexGrammar.pp` and one nsrt regression test
-each, the official PCRE2 and PHP manual references in the commit message. To
-do, for each: `git push origin <branch>`, then open the PR against
-`phpstan/phpstan-src:2.3.x`.
-
-1. `regex-grammar-backreference`: *Parse back references in regex patterns*.
-2. `regex-grammar-short-escapes`: *Parse \x with fewer than two hexadecimal
-   digits and short \0 escapes in regex patterns*.
-3. `regex-grammar-single-letter-property`: *Parse single-letter Unicode
-   properties like \pL in regex patterns*.
-4. `regex-lookaround-zero-width`: *Do not count regex lookarounds as matched
-   characters*.
-5. `regex-grammar-octal-brace-escape`: *Parse \o{...} octal escapes in regex
-   patterns* (`/(\o{141})/` typed its group as `'o'` repeated 141 times; it
-   matches `'a'`).
-6. `regex-grammar-subroutine-call`: *Parse subroutine calls like \g<1> in
-   regex patterns* (`/(a)(\g<1>)/` typed group 2 as `'g<1>'`).
-
-Branches 2, 3 and 5 touch adjacent grammar lines: rebase each later one once
-the earlier is merged. Branch 6 merges cleanly with all the others.
-
 ## PHP 8.6 closeout and the experimental 8.7 cell
 
 The closeout is built: the analysis range reaches 8.6, both engine matrices
@@ -171,9 +136,7 @@ would mean replaying their internal form of the pattern (10.35 fixed it).
 
 ## Architecture and contributor path: the last pass before 2.0.0
 
-- The transpiler output is never run in its target engine: add a
-  differential test against node and python.
-- Then, once the branches above are merged: `new Optimizer()` and
+- `new Optimizer()` and
   `new Transpiler()` without a parser, `Optimizer::optimize()` without
   arrays, `SampleGenerator` without its seed setters, `Regex::lint()`;
   the Psalm and PHPStan bridges without
@@ -181,23 +144,19 @@ would mean replaying their internal form of the pattern (10.35 fixed it).
   out of `regex-linter`); one placement and naming rule for exceptions; the
   test conventions (`#[Test]` everywhere, the four inline ignores moved to
   the config); release notes for 2.0.0 instead of the 805-line section.
-- Internal, so it may follow the tag: split `Validator` (4,757 lines) by
-  concern and `TokenParser` (4,583) by family of constructs.
+- Internal, so it may follow the tag: split `Validator` (1,830 lines) by
+  concern and `TokenParser` (2,665) by family of constructs.
 
 ## Parser and integrations: the last pass before 2.0.0
 
-Parser structure: the extended-class parsing still in `TokenParser`
-(`parseExtendedClass`, `parseOperandAt`) apart; the error-offset rule read
-through `PcreTarget::faultOffset()` in `Validator`, `Lexer` and
-`FirstErrorLocator` too, and the booleans `TokenParser` hands to
-`GroupNameReader`, `ExtendedClassReader`, `PcreVerb` and
-`VersionCondition` replaced by the target; the last messages without a
-final period (`TokenStream::consume`, `GroupNameReader`, the unknown flag);
+Parser structure: the error-offset rule read through
+`PcreTarget::faultOffset()` in `VersionCondition` too, and
+`PcreVerb::limitValueErrorOffset()` taking the target instead of a boolean;
 then `Validator` split by concern; `QuantifierNode` carrying its bounds instead
-of 47 re-parses; the error-offset rule, the 65535 limit and the UTF-8 width
-written once; the exception types and the snippet renderer unified; the
-public renames (node properties, error codes, getters, `PcreFeature`) to
-settle before the tag.
+of 53 re-parses; the 65535 limit and the UTF-8 width written once; the
+`SemanticErrorException` constructor aligned with its siblings; the public
+renames (node properties, error codes, getters, `PcreFeature`) to settle
+before the tag.
 
 Integrations:
 
@@ -206,8 +165,6 @@ Integrations:
   the public surface (`tests/Support/PublicSurface.php` and
   `docs/reference/backward-compatibility.md`), and with it the
   `PatternOccurrence` an implementer must build, still internal.
-- PHPStan: a repo-only rule ships in the public extension;
-  `PatternChecker` split.
 - CLI: `OutputFormat` split per method in the facade; the language
   server's error stream still written through a static.
 - The target settings (PHP, PCRE2, locale) enter through one class, and
@@ -340,16 +297,16 @@ The fork `php-regex/phpstan-src` carries the proof of concept as pull
 request #1, a research branch: one commit on `2.3.x`, where PHPStan now
 reads patterns with a parser generated by phplrt (phpstan-src#6851), and
 the branch reads them with PHPRegex instead. It pins the php74 twin at
-`03ac9a3`; all fixtures green, and a test there matches every fixture
-pattern with the engine.
+`6c1dcd8`; the whole suite is green, a test there matches every fixture
+pattern with the engine, and `poc/` replays the patterns the two parsers
+read differently.
 
 1. Once `2.0.0` is tagged and the php74 twin reaches Packagist, replace
    the `2.x-dev#<hash>` pin with the exact version (the precedent is
    `ondrejmirtes/phplrt-runtime`, pinned to an exact release).
 2. Rebuild the phar from the pull request on its last twin pin and run it
-   on `php:7.4-cli` and `php:8.4-cli`. The phar of f97d3ef48 stopped on
-   7.4 on a nullsafe operator the downgrade does not rewrite (fixed
-   since); with it rewritten, 7.4 and 8.4 print the same types.
+   on `php:7.4-cli` and `php:8.4-cli` (the downgrade rewrites neither `?->`
+   nor first-class callables, so neither may appear in the branch).
 3. The 8.6 entry reads 10.44 and php-src master carries 10.44 today, so
    the map stands corroborated; the one gesture left is re-reading
    master after the 8.6 GA (2026-11-19) in case a release-cut downgrade
@@ -369,29 +326,17 @@ pattern with the engine.
 Mined 2026-10-24, four probes over the phpstan-src fork. Each item
 names what is missing, never new analysis — the facts are computed.
 
-1. phpstan#12997: `preg_replace()` keeps `non-empty-string` on the
-   return while a lazy backreference in the replacement (`'$1'` against
-   `(.*?)`) can expand to the empty string — the group shape the reader
-   already holds, folded into `ReplaceFunctionsDynamicReturnTypeExtension`,
-   drops the accessory.
-2. phpstan#11438: `preg_replace_callback_array()` gives its callbacks no
-   `$matches` shape — the array-of-callables first argument never reaches
-   the closure extension; feeding each constant key to the matcher the
-   way `preg_replace_callback()` does is the wiring.
-3. Eleven `\K` wishes in the nsrt fixtures: the group slots are exact,
+1. Eleven `\K` wishes in the nsrt fixtures: the group slots are exact,
    the whole-match slot ignores `\K` — the kept suffix the engine writes
    is the whole a match reads after the reset.
-4. Conditionals on an always-set group keep the dead arm:
-   `/(a)(?(1)b|(c))/` types `'c'|''` where the engine never fills 2 —
+2. Conditionals on an always-set group keep the dead arm:
+   `/(a)(?(1)b|(c))/` types `2?: 'c'` where the engine never writes 2 —
    the participation fact exists; the conditional does not read it. Same
    family: `(?(*ACCEPT)` groups after the cut, a backreference widening
    its group, `(?(R)` with no recursion anywhere, and `(?(VERSION>=…)`
    never folding against the judged engine.
-5. Tagged-union decorrelation (bug11604 and friends): a top-level
-   alternation splits shapes the engine writes atomically — the
-   optional-group split phpstan#11602 needs, again.
-6. The package'"'"'s `TargetScope` lets the running engine stand in for
-   the analysed PHP without the fork'"'"'s minor-sharing rule, never
+3. The package's `TargetScope` lets the running engine stand in for
+   the analysed PHP without the fork's minor-sharing rule, never
    states the pin is honoured in both directions, and does not read
    `config.platform.lib-pcre` — the policy the fork settled, said in
    one voice.
@@ -413,40 +358,13 @@ fixed; this is the rest, engine-verified:
    keys kept, |false.
 4. preg_replace_callback with an ARRAY of literal patterns leaves its
    callback unshaped — one Type-based entry on the matcher (matchExpr
-   takes an Expr; the union across the array'"'"'s constant strings is
+   takes an Expr; the union across the array's constant strings is
    what matchPatternType already does) feeds the closure extension.
 5. preg_match_all base return type carries null the engine never
    returns; the $matches out-type fallback string[] stands exactly
    where the shapes fail to reach.
-6. Upstream issues granted by the shapes, for the pull request body:
-   #11589 (J duplicate named groups), #12397 ($matches a list),
-   #11291 (branch-reset tuple), #14809 (nested optionals),
-   #11311 (PREG_UNMATCHED_AS_NULL trailing groups), #14302
-   (variable-length lookbehind judged for the analysed engine);
-   near-misses with a seam: #11479, #11744, #12126.
-7. The false branches: preg_match_all overwrites $matches with array{}
+6. The false branches: preg_match_all overwrites $matches with array{}
    where the engine leaves the populated empty columns under
    PREG_PATTERN_ORDER; the elseif subject narrowing composes, nothing
    to fix; the quoting rule and the pattern rule keep two drifting
    hand-written lists of the preg_ functions that take patterns.
-
-## The engine-gated test rows: the CI's red line
-
-Engines and Coverage stay red on one shared cause: several hundred test
-rows across ~14 classes read the validator, the lexer and the inline
-options against PCRE2 10.40-10.44 (the images the workflows pin) while
-their expectations were verified against 10.49 — by row count:
-ForkedWorkerPool (PHP-version rows, not PCRE), QuantifiedMultibyteLiteral,
-ValidatorEdgeCase, RedosInlineOptions, SolverInlineOptions,
-CompiledLengthLocale, AlphaAssertionBody, PatternPrinterRoundTrip,
-CaptureShapeParity, PatternTooLargeLocale, MatchesType (Psalm bridge),
-InlineOptionLetters, PropertyNegationSpacing, QuoteMode,
-UnicodePropertyRelease. Each row needs the release gate the PcreGates
-trait already writes (requiresPcre2 / requiresPcre2For, one call per
-row, engine-verified) or an expectation per release — the migration the
-pcre-gates spec that waits for GO planned. The default-engine Tests and
-Static analysis workflows are green; only the multi-engine matrices are
-red. The rows are sound on one engine and wrong on
-the other; each needs the release gate named (the PcreGates trait, one
-call per row) or an expectation per release. The pcre-gates spec that
-waits for GO planned the same migration for the ~60 lint sites.
