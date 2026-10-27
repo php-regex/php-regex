@@ -160,7 +160,7 @@ final class RangeChecks
             return $node->codePoint >= 0 ? $node->codePoint : null;
         }
 
-        throw InternalFailureException::unexpectedState('A range endpoint is neither a literal, a character escape nor a control character.');
+        throw InternalFailureException::unexpectedState('A range endpoint is neither a literal, a character escape nor a control character.'); // Unreachable: endpoints() refuses any other node first.
     }
 
     private function describe(RangeNode $node): string
@@ -180,7 +180,7 @@ final class RangeChecks
             $node instanceof LiteralNode => $node->value,
             $node instanceof CharLiteralNode => $node->originalRepresentation,
             $node instanceof ControlCharNode => '\c'.$node->char,
-            default => throw InternalFailureException::unexpectedState('A range endpoint is neither a literal, a character escape nor a control character.'),
+            default => throw InternalFailureException::unexpectedState('A range endpoint is neither a literal, a character escape nor a control character.'), // Unreachable: endpoints() refuses any other node first.
         };
     }
 

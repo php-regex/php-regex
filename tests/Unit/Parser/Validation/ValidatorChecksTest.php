@@ -14,7 +14,20 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser\Validation;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\SemanticErrorException;
+use PHPRegex\Parser\Node\CalloutNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharLiteralType;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\ControlCharNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -53,6 +66,59 @@ final class ValidatorChecksTest extends TestCase
     public function test_the_check_follows_the_release_judged(string $pattern, string $php, string $pcre, array $error): void
     {
         $this->assertSame($error, $this->firstError($pattern, $php, $pcre), $pattern.' on PCRE2 '.$pcre);
+    }
+
+    /**
+     * A tree built by hand, which no parser read: without a source the
+     * checks read the nodes alone, and an endpoint or a number the parser
+     * never builds is still judged.
+     *
+     * @param array{0: ErrorCode, 1: int, 2: string}|null $error
+     */
+    #[Test]
+    #[DataProvider('provideTreesBuiltByHand')]
+    public function test_a_tree_built_by_hand_is_judged_from_its_nodes(NodeInterface $node, ?array $error): void
+    {
+        $found = null;
+
+        try {
+            $node->accept(new Validator(target: new PcreTarget(80400, '10.49')));
+        } catch (SemanticErrorException $e) {
+            $found = [$e->errorCode, $e->position, $e->getMessage()];
+        }
+
+        $this->assertSame($error, $found);
+    }
+
+    /**
+     * @return iterable<string, array{node: NodeInterface, error: array{0: ErrorCode, 1: int, 2: string}|null}>
+     */
+    public static function provideTreesBuiltByHand(): iterable
+    {
+        yield 'range from a character type' => [
+            'node' => new RangeNode(new CharTypeNode('d', 1, 3), new LiteralNode('a', 4, 5), 1, 5),
+            'error' => [ErrorCode::RangeInvalidBounds, 1, 'Invalid range: ranges must be between literal characters or single escape sequences. Found '.CharTypeNode::class.' and '.LiteralNode::class.'.'],
+        ];
+        yield 'range from an empty literal' => [
+            'node' => new RangeNode(new LiteralNode('', 1, 1), new LiteralNode('a', 2, 3), 1, 3),
+            'error' => null,
+        ];
+        yield 'reversed range between an escape and a control character' => [
+            'node' => new RangeNode(new CharLiteralNode('\x{7a}', 0x7A, CharLiteralType::Unicode, 1, 7), new ControlCharNode('A', 1, 8, 11), 1, 11),
+            'error' => [ErrorCode::RangeReversed, 11, 'Invalid range "\x{7a}-\cA": start character comes after end character.'],
+        ];
+        yield 'callout numbered past 255' => [
+            'node' => new CalloutNode(300, false, 0, 6),
+            'error' => [ErrorCode::CalloutOutOfRange, 6, 'Callout identifier must be between 0 and 255, got 300.'],
+        ];
+        yield 'callout whose source writes another number' => [
+            'node' => new RegexNode(new CalloutNode(300, false, 0, 5), '', '/', 0, 5, '(?C1)'),
+            'error' => [ErrorCode::CalloutOutOfRange, 4, 'Callout identifier must be between 0 and 255, got 300.'],
+        ];
+        yield 'version of three parts' => [
+            'node' => new VersionConditionNode('=', '10.4.5', 3, 17),
+            'error' => [ErrorCode::ConditionalVersionSyntax, 8, 'Invalid version "10.4.5" in a version condition: PCRE takes a major number and an optional ".minor".'],
+        ];
     }
 
     /**
@@ -156,6 +222,7 @@ final class ValidatorChecksTest extends TestCase
         yield 'POSIX class outside a class' => ['pattern' => '/[:alpha:]/', 'php' => '8.4', 'pcre' => '10.43', 'error' => [ErrorCode::PosixOutsideClass, 0, 'POSIX named classes are supported only within a class.']];
         yield 'reversed range' => ['pattern' => '/[z-a]/', 'php' => '8.4', 'pcre' => '10.43', 'error' => [ErrorCode::RangeReversed, 3, 'Invalid range "z-a": start character comes after end character.']];
         // Before PCRE2 10.47, on the name the condition tests.
+        yield 'named conditional of three branches' => ['pattern' => '/(?<n>x)(?(<n>)a|b|c)/', 'php' => '8.4', 'pcre' => '10.45', 'error' => [ErrorCode::ConditionalTooManyBranches, 11, 'A conditional group holds more than two branches.']];
         yield 'named recursion conditional of three branches' => ['pattern' => '/(?(R&n)a|b|c)(?<n>x)/', 'php' => '8.4', 'pcre' => '10.45', 'error' => [ErrorCode::ConditionalTooManyBranches, 5, 'A conditional group holds more than two branches.']];
         // Before PCRE2 10.45, up to the digit that takes a count over 65535.
         yield 'count of six digits' => ['pattern' => '/a{999999}/', 'php' => '8.4', 'pcre' => '10.43', 'error' => [ErrorCode::QuantifierTooBig, 7, 'Number too big in "{999999}" quantifier: PCRE allows at most 65535 repetitions.']];
