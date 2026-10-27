@@ -244,7 +244,7 @@ one.
 | `RegexParser\Exception\ResourceLimitException` | `PHPRegex\Parser\Exception\ResourceLimitException` |
 | `RegexParser\Exception\SemanticErrorException` | `PHPRegex\Parser\Exception\SemanticErrorException` |
 | `RegexParser\Exception\SyntaxErrorException` | `PHPRegex\Parser\Exception\SyntaxErrorException` |
-| `RegexParser\Exception\TranspileException` | `PHPRegex\Transpiler\TranspileException` |
+| `RegexParser\Exception\TranspileException` | `PHPRegex\Transpiler\Exception\TranspileException` |
 | `RegexParser\Exception\VisualContextTrait` | `PHPRegex\Parser\Exception\VisualContextTrait` |
 | `RegexParser\GroupNumbering` | `PHPRegex\Parser\Analysis\GroupNumbering` |
 | `RegexParser\GroupNumberingCollector` | `PHPRegex\Parser\Analysis\GroupNumberingCollector` |
@@ -697,7 +697,7 @@ needs them.
 
 `Regex::generate()` used to return its last attempt when no sample matched,
 as for `a(*FAIL)`: a string the pattern does not match. It now throws
-`PHPRegex\Generator\SampleGenerationException`. Catch it where a pattern
+`PHPRegex\Generator\Exception\SampleGenerationException`. Catch it where a pattern
 may match nothing.
 
 #### `php_version` alone always means the PCRE2 that PHP bundles
@@ -1702,11 +1702,20 @@ which no caller should catch on purpose.
 | what went wrong | before | 2.0 |
 |---|---|---|
 | `Regex::explain()` with an unknown format | `\InvalidArgumentException` | `InvalidRegexOptionException` |
-| `FormatterRegistry::get()` with an unknown name | `\InvalidArgumentException` | `PHPRegex\Linter\LintException` |
-| a lint worker that failed, a JSON report that cannot be encoded | `\RuntimeException` | `PHPRegex\Linter\LintException` |
-| `GraphGenerator::generate()` with an unknown format, a self-update that cannot go on | `\InvalidArgumentException`, `\RuntimeException` | `PHPRegex\Cli\CliException` |
+| `FormatterRegistry::get()` with an unknown name | `\InvalidArgumentException` | `PHPRegex\Linter\Exception\LintException` |
+| a lint worker that failed, a JSON report that cannot be encoded | `\RuntimeException` | `PHPRegex\Linter\Exception\LintException` |
+| `GraphGenerator::generate()` with an unknown format, a self-update that cannot go on | `\InvalidArgumentException`, `\RuntimeException` | `PHPRegex\Cli\Exception\CliException` |
 | the sample generator on a call it cannot follow, as `(?R)`, or an empty class built by hand | `\LogicException`, `\RuntimeException` | `SampleGenerationException` |
 | `Regex::generate()` on a pattern that parses but the library judges invalid, as `/(?1)a/` | the visitor exception, or a sample | `SampleGenerationException` (a pattern that does not parse still throws the parser's exception) |
+
+#### Every exception sits in the `Exception` namespace of its package
+
+`TranspileException`, `SampleGenerationException`, `LintException`,
+`UnknownLintRuleException` and `UnsupportedTargetException` moved under
+`PHPRegex\Transpiler\Exception`, `PHPRegex\Generator\Exception` and
+`PHPRegex\Linter\Exception`, beside the parser's and the automata's: update
+the `use` lines. The Rector `UPGRADE_2_0` set rewrites the 1.x
+`TranspileException`.
 
 #### A limit of the library is no invalid pattern
 

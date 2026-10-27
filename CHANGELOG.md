@@ -152,6 +152,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - `regex --cache-dir <dir>` keeps the running PCRE2's answers about Unicode classes between runs.
 - The JSON outputs name the target's locale and the PHP that ran the analysis, and the JSON of every command is written down in [the JSON output reference](docs/reference/json-output.md), frozen for 2.x.
 - `regex lint` names the file it is held on after 10 seconds, and writes a progress line every 30 seconds without a terminal.
+- `PHPRegex\Linter\Extraction\ExtractorInterface` is public: an application reads its own calls with it (the Symfony `extractor_service` setting), returning a list of `PatternOccurrence::found()`; the `@regex-ignore` markers of the files it reads apply to its patterns.
 
 #### Analysis
 
@@ -198,6 +199,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - The console commands name the author and ask for a GitHub star under `-v` only; `regex --help` lists the commands without every option.
 - Patterns are displayed so that they read back as the same pattern: control bytes and invalid UTF-8 as `\xHH`, non-ASCII characters kept.
 - Some messages are reworded: parse errors end with a period, `--php-version` errors name the option.
+- Every exception lives in the `Exception` namespace of its package (`PHPRegex\Transpiler\Exception\TranspileException`, `PHPRegex\Generator\Exception\SampleGenerationException`, `PHPRegex\Linter\Exception\LintException`, `UnknownLintRuleException`, `UnsupportedTargetException`); `UnsupportedTargetException` and `PHPRegex\Parser\Exception\JsonEncodingException` are public. See [Breaking Changes](UPGRADE-2.0.md#every-exception-sits-in-the-exception-namespace-of-its-package).
 
 ### Removed
 
