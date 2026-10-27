@@ -163,7 +163,7 @@ final class QuotedPattern
     private static function groups(string $pattern, RegexParser $parser): ?array
     {
         try {
-            $shape = (new CaptureShapeAnalyzer())->analyze($parser->parse($pattern));
+            $shape = (new CaptureShapeAnalyzer($parser->target()))->analyze($parser->parse($pattern));
         } catch (ExceptionInterface) {
             return null;
         }

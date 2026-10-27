@@ -414,6 +414,8 @@ names the locale:
 `runtime`, the PHP running Psalm and the PCRE2 it links. `<pcreVersion>`
 takes a PCRE2 release, for a PHP linked against another PCRE2 than the one it
 bundles. A `config.platform.lib-pcre` that names no release stops Psalm.
+A `(?(VERSION>=10.45)...)` condition in a pattern is read as the target's
+PCRE2 release reads it, keeping only the arm that release takes.
 `<locale>` takes the `LC_CTYPE` locale the patterns run under, the
 one of the PHP running Psalm by default: its character tables decide the size
 of a few classes (see

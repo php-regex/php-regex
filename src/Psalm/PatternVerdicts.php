@@ -84,7 +84,8 @@ final class PatternVerdicts
             return ['error' => null, 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false, 'fewStrings' => false]; // Only on a running PCRE2 older than the target's, as the 10.40 and 10.42 CI images.
         }
 
-        $shape = (new CaptureShapeAnalyzer())->analyze($regex);
+        // a version condition reads as the target's release reads it
+        $shape = (new CaptureShapeAnalyzer($parser->target()))->analyze($regex);
 
         return [
             'error' => null,
