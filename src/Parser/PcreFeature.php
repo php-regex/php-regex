@@ -153,6 +153,11 @@ enum PcreFeature
     case AsciiOptions;
 
     /**
+     * Under UCP "\w" matches a non-spacing mark (\p{Mn}) and a connector punctuation (\p{Pc}) too, as "\u{301}".
+     */
+    case UcpWordTakesMarksAndConnectors;
+
+    /**
      * A group name may be 128 code units long, not 32.
      */
     case LongGroupNames;
@@ -364,7 +369,8 @@ enum PcreFeature
             self::PaddedBracedEscapes,
             self::VariableLengthLookbehind,
             self::CaselessRestrictModifier,
-            self::AsciiOptions => '10.43',
+            self::AsciiOptions,
+            self::UcpWordTakesMarksAndConnectors => '10.43',
             self::LongGroupNames => '10.44',
             self::ScanSubstring,
             self::ExtendedCharClass,

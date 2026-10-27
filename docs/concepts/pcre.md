@@ -409,6 +409,7 @@ and a target has it from the release it arrived in on
 | `VariableLengthLookbehind` | 10.43 | A lookbehind branch may match a range of lengths, up to 255 characters. |
 | `CaselessRestrictModifier` | 10.43 | The "r" modifier and "(?r)": caseless matching restricted to one script. |
 | `AsciiOptions` | 10.43 | "(?a)" and its "D", "S", "W", "P", "T" variants: ASCII-only classes. |
+| `UcpWordTakesMarksAndConnectors` | 10.43 | Under UCP "\w" matches a non-spacing mark (\p{Mn}) and a connector punctuation (\p{Pc}) too, as "\u{301}". |
 | `LongGroupNames` | 10.44 | A group name may be 128 code units long, not 32. |
 | `ScanSubstring` | 10.45 | "(*scan_substring:(1)...)", or "(*scs:": a match read inside a capture. |
 | `ExtendedCharClass` | 10.45 | Perl extended character classes, "(?[ ... ])". |

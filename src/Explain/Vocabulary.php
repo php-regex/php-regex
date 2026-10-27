@@ -133,7 +133,7 @@ final class Vocabulary
     {
         if (isset(self::UNICODE_CHAR_TYPES[$type]) && $settings->unicodeType($type)) {
             if ('w' === $type && null !== $target) {
-                return $target->pcreAtLeast('10.43') ? self::UNICODE_WORD_FROM_10_43 : self::UNICODE_WORD_BEFORE_10_43;
+                return $target->supports(PcreFeature::UcpWordTakesMarksAndConnectors) ? self::UNICODE_WORD_FROM_10_43 : self::UNICODE_WORD_BEFORE_10_43;
             }
 
             return self::UNICODE_CHAR_TYPES[$type];
