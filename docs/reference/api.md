@@ -706,7 +706,13 @@ the engine gives up on, past `pcre.backtrack_limit` or `pcre.recursion_limit`
 or on an error it meets matching, is no answer either, and another is tried,
 up to eight such samples; when none is found, the exception's message says how many samples the engine
 gave up on and the error it gave, as `Backtrack limit exhausted`. A pattern
-the running PHP cannot compile gets a sample nothing checked. A pattern that
+the running PHP cannot compile gets a sample nothing checked. The sample is
+drawn and checked as the running PCRE2 spells the target's properties: for
+PHP 8.1, `\p{Hiragana}` is the script alone, and running on PHP 8.1 for PHP
+8.4, `\p{sc=Grek}` is read as `\p{Greek}`. A property the running PCRE2 has
+no name for, as the target reads it (a bare script name, which means its
+script extensions from PHP 8.2, on PHP 8.1; `\p{Sunuwar}` before PCRE2 10.45),
+gives no sample: `SampleGenerationException` is thrown. A pattern that
 does not parse throws the parser's exception (`SyntaxErrorException` for
 `/(/`); one that parses but is invalid, as `/(?1)a/`, throws
 `SampleGenerationException`.

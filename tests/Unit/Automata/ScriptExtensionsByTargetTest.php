@@ -60,4 +60,18 @@ final class ScriptExtensionsByTargetTest extends TestCase
         yield 'Common, the script of U+3001' => ['pattern' => '/^\p{Common}$/u', 'matchesBefore' => true, 'matchesAfter' => true];
         yield 'a general category, unchanged' => ['pattern' => '/^\p{Po}$/u', 'matchesBefore' => true, 'matchesAfter' => true];
     }
+
+    /**
+     * A script named by its code is the script alone on every release from
+     * 10.40, and PCRE2 10.39, which refuses the code, reads it by its name:
+     * Omega is Greek, "a" is not, on any engine that runs.
+     */
+    #[Test]
+    public function test_a_script_named_by_its_code_is_read_on_any_engine(): void
+    {
+        $solver = new LanguageSolver(RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.44']));
+
+        $this->assertTrue($solver->intersection('/^\p{sc=Grek}$/u', '/^a$/u')->isEmpty);
+        $this->assertFalse($solver->intersection('/^\p{sc=Grek}$/u', "/^\u{3A9}$/u")->isEmpty);
+    }
 }

@@ -75,6 +75,16 @@ script name as the script. Other answers the automata take from the running
 engine, such as the characters of a property, follow that engine's Unicode
 version.
 
+The characters of a property are asked of the running engine as it spells
+what the target means. Running on PHP 8.1 for a later target, `\p{sc=Grek}`,
+`\p{Script=greek}` and `\p{lu}` are read as `\p{Greek}` and `\p{Lu}`; a bare
+script name such as `\p{Greek}`, which means its script extensions there,
+`\p{scx:Grek}`, a Bidi class and a binary property have no name on 10.39, and
+neither has a name a later release added on an older engine (`\p{Sunuwar}`
+before 10.45). Such a property is a set the analyses do not know: the ReDoS
+proof reads it as any character, which never yields `safe (proven)`, the
+automata leave the question unanswered, and `generate()` gives no sample.
+
 PHP 8.1.0 bundled PCRE2 10.37, which lacks five Unicode 14 scripts 10.39 knows
 (`Cypro_Minoan`, `Old_Uyghur`, `Tangsa`, `Toto`, `Vithkuqi`): it is judged as
 10.39, and so is any older release, but for the script names it knows, so

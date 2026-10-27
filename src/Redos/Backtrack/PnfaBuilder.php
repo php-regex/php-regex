@@ -207,12 +207,6 @@ final class PnfaBuilder
     private readonly string $source;
 
     /**
-     * Whether a bare script name means the script alone, as before PCRE2
-     * 10.40, for the target while the running engine reads its extensions.
-     */
-    private readonly bool $scriptsAlone;
-
-    /**
      * The "(*UCP)" the pattern opens with, as written, every set read under
      * it; empty when it opens with no verb, or with another one beside it,
      * which is then outside the model: no probe is ever written under
@@ -227,18 +221,21 @@ final class PnfaBuilder
     private readonly ?string $locale;
 
     /**
-     * @param bool $inPlace whether the lookarounds are read in place, in the
-     *                      pattern's own search, instead of as searches of
-     *                      their own
+     * @param PcreTarget|null $target  the PHP, PCRE2 and locale the sets are
+     *                                 read for, each property spelled as the
+     *                                 running engine reads it; the running
+     *                                 engine's reading when null
+     * @param bool            $inPlace whether the lookarounds are read in place, in the
+     *                                 pattern's own search, instead of as searches of
+     *                                 their own
      */
     public function __construct(
         private readonly RegexNode $regex,
         private readonly Budget $budget,
         private readonly int $boundedRepeatCutoff,
-        ?PcreTarget $target = null,
+        private readonly ?PcreTarget $target = null,
         private readonly bool $inPlace = false,
     ) {
-        $this->scriptsAlone = ClassSetProvider::readsScriptsAlone($target);
         $this->locale = $target?->locale;
         $this->unicode = str_contains($regex->flags, 'u');
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
@@ -1067,16 +1064,15 @@ final class PnfaBuilder
     private function query(string $atom, int $flags): CharSet
     {
         $modifiers = self::modifiers($flags);
-        if ($this->scriptsAlone) {
-            $atom = ClassSetProvider::scriptsAlone($atom);
-        }
+        $written = $atom;
+        $atom = ClassSetProvider::spelledFor($atom, $this->target);
 
         // A scan of the Unicode range costs the engine tens of milliseconds:
         // each distinct atom is charged before it runs, the same whether the
         // set is cached or not, so that the verdict does not depend on what
         // ran before.
-        if (!isset($this->queried[$modifiers.':'.$atom])) {
-            $this->queried[$modifiers.':'.$atom] = true;
+        if (!isset($this->queried[$modifiers.':'.$written])) {
+            $this->queried[$modifiers.':'.$written] = true;
             $this->budget->step($this->unicode ? self::UNICODE_SCAN_STEPS : self::BYTE_SCAN_STEPS);
         }
 
@@ -1084,17 +1080,18 @@ final class PnfaBuilder
         // them already, and "(?-r)" takes it off. The start options change
         // what a class matches, "(*UCP)" without u the bytes past ASCII, and
         // so do the tables of the locale without u.
-        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startOptions, true, $this->locale);
+        $set = null === $atom ? null : ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startOptions, true, $this->locale);
         if (null !== $set) {
             return $set;
         }
 
         // PCRE refused the atom on its own, or gave up scanning it under its
-        // limits: every character stands for it.
+        // limits, or the running engine has no name for a property of it as
+        // the target reads it: every character stands for it.
         // A larger set can hide the continuation that rejects: the states
         // reading it are marked, so that only an exponential pump through
         // exact sets is proven.
-        $entry = \sprintf('%s read as any character', $atom);
+        $entry = \sprintf('%s read as any character', $written);
         if (!\in_array($entry, $this->abstractions, true)) {
             $this->abstractions[] = $entry;
         }

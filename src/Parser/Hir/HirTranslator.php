@@ -123,13 +123,6 @@ final class HirTranslator
     private array $groupNumbers = [];
 
     /**
-     * Whether a bare script name, "\p{Han}", means the script alone, as
-     * before PCRE2 10.40, while the running engine reads it as the script
-     * extensions: the sets are then asked with "sc:".
-     */
-    private readonly bool $scriptsAlone;
-
-    /**
      * The locale whose character tables the sets without /u are read
      * under, the target's; the one PHP compiles under when null.
      */
@@ -137,12 +130,12 @@ final class HirTranslator
 
     /**
      * @param PcreTarget|null $target the PHP, PCRE2 and locale the pattern is
-     *                                read for; the running engine's reading
-     *                                when null
+     *                                read for, its properties spelled as the
+     *                                running engine reads them; the running
+     *                                engine's reading when null
      */
-    public function __construct(?PcreTarget $target = null)
+    public function __construct(private readonly ?PcreTarget $target = null)
     {
-        $this->scriptsAlone = ClassSetProvider::readsScriptsAlone($target);
         $this->locale = $target?->locale;
     }
 
@@ -382,14 +375,12 @@ final class HirTranslator
             $modifiers .= 'aT';
         }
 
-        if ($this->scriptsAlone) {
-            $atom = ClassSetProvider::scriptsAlone($atom);
-        }
-
-        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startVerbs, $this->unicodeFlag, $this->locale);
+        $atom = ClassSetProvider::spelledFor($atom, $this->target);
+        $set = null === $atom ? null : ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startVerbs, $this->unicodeFlag, $this->locale);
         if (null === $set) {
             // PCRE refused the atom on its own, or gave up scanning it under
-            // its limits: one character, of a set unknown.
+            // its limits, or the running engine has no name for a property
+            // of it as the target reads it: one character, of a set unknown.
             return $this->opaque($node, new Properties(1, 1, false, null, null, null, [], [], 0, false, false));
         }
 

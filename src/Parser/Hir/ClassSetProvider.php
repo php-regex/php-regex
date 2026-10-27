@@ -174,32 +174,62 @@ final class ClassSetProvider
     }
 
     /**
-     * Whether a bare script name, "\p{Han}", means the script alone for the
-     * target, as before PCRE2 10.40, while the running engine reads it as
-     * the script extensions: the atoms are then asked with "sc:" (see
-     * scriptsAlone()).
+     * The atom, or a whole pattern, with each property spelled so that the
+     * engine, the running one when null, reads it as the target does; null
+     * when one has no such spelling, and its set is unknown. Spelled again
+     * only where the two read names otherwise, one before PCRE2 10.40 and
+     * one from it; the atom as written for a null target. An engine older
+     * than the target, reading names alike, knows the names the release
+     * tables give it, and has none for those a later release added.
+     *
+     * A target before 10.40 reads one exact spelling, and a bare script
+     * name, "\p{Han}", as the script alone, which a later engine reads as
+     * "\p{sc:Han}". A target from 10.40 reads names loosely, "sc=", "script="
+     * and the four-letter script codes: an older engine reads the script as
+     * its bare name, and a category as 10.39 spells it, but has no name for
+     * a bare script name, which means the script extensions from 10.40, nor
+     * for "scx:", a Bidi class or a binary property. A backslash escaped by
+     * another is left alone; a property spelled again in an atom holding a
+     * "\Q" may be a quoted one, and the set is unknown.
      */
-    public static function readsScriptsAlone(?PcreTarget $target): bool
+    public static function spelledFor(string $atom, ?PcreTarget $target, ?PcreTarget $engine = null): ?string
     {
-        return null !== $target
-            && !$target->supports(PcreFeature::LoosePropertyNames)
-            && PcreTarget::runtime()->supports(PcreFeature::LoosePropertyNames);
-    }
+        if (null === $target || (!str_contains($atom, '\\p') && !str_contains($atom, '\\P'))) {
+            return $atom;
+        }
 
-    /**
-     * The atom with each "\p{Script}" and "\P{^Script}" a script table
-     * lookup, "\p{sc:Script}": what a script name meant before PCRE2 10.40.
-     * A backslash escaped by another is left alone.
-     */
-    public static function scriptsAlone(string $atom): string
-    {
-        return LibraryPcre::replaceCallback(
-            '/(?<!\\\\)((?:\\\\\\\\)*+\\\\[pP]\{)(\^?)([A-Za-z_]++)\}/',
-            static fn (array $match): string => PropertyNames::isScriptBefore1040($match[3])
-                ? $match[1].$match[2].'sc:'.$match[3].'}'
-                : $match[0],
+        $engine ??= PcreTarget::runtime();
+        $loose = $target->supports(PcreFeature::LoosePropertyNames);
+        $alike = $loose === $engine->supports(PcreFeature::LoosePropertyNames);
+        // No release dropped a name: an engine as new as the target knows
+        // every name it does.
+        if ($alike && version_compare($engine->pcreVersion, $target->pcreVersion, '>=')) {
+            return $atom;
+        }
+
+        $unread = false;
+        $spelled = LibraryPcre::replaceCallback(
+            '/(?<!\\\\)((?:\\\\\\\\)*+\\\\)([pP])(\{[^}]*+\}|.)/s',
+            static function (array $match) use ($loose, $alike, $target, $engine, &$unread): string {
+                $braced = str_starts_with($match[3], '{');
+                $name = $braced ? substr($match[3], 1, -1) : $match[3];
+                $spelling = match (true) {
+                    $alike => self::knownToBoth($name, $braced, $loose, $engine) ? $match[3] : null,
+                    $loose => self::nameBefore1040($name, $braced, $target, $engine),
+                    default => self::nameFrom1040($name, $braced, $target),
+                };
+                if (null === $spelling) {
+                    $unread = true;
+
+                    return $match[0];
+                }
+
+                return $match[1].$match[2].$spelling;
+            },
             $atom,
-        ) ?? $atom;
+        );
+
+        return $unread || null === $spelled || ($spelled !== $atom && str_contains($atom, '\\Q')) ? null : $spelled;
     }
 
     /**
@@ -268,6 +298,54 @@ final class ClassSetProvider
         $set = self::$sets[$key];
 
         return false === $set ? null : $set;
+    }
+
+    /**
+     * Whether an engine older than the target, which reads names by the same
+     * rules, knows the name: the release tables say, from 10.40, the names
+     * of 10.39 and the scripts each older release added, before.
+     */
+    private static function knownToBoth(string $name, bool $braced, bool $loose, PcreTarget $engine): bool
+    {
+        if (!$loose) {
+            $bare = $braced && str_starts_with($name, '^') ? substr($name, 1) : $name;
+
+            return PropertyNames::knownBefore1040($bare, $engine);
+        }
+
+        $release = PropertyNames::firstReleaseKnowing($name, $braced);
+
+        return null !== $release && $engine->pcreAtLeast($release);
+    }
+
+    /**
+     * What follows "\p", for an engine before 10.40, of a name a target from
+     * 10.40 reads; a category of one letter as written.
+     */
+    private static function nameBefore1040(string $name, bool $braced, PcreTarget $target, PcreTarget $engine): ?string
+    {
+        if (!$braced && Ascii::isAlpha($name) && Ascii::upper($name) === $name) {
+            return $name;
+        }
+
+        $read = PropertyNames::readBefore1040($name, $braced, $target, $engine);
+
+        return null === $read ? null : '{'.($read[0] ? '^' : '').$read[1].'}';
+    }
+
+    /**
+     * What follows "\p", for an engine from 10.40, of a name a target before
+     * 10.40 reads: a script with "sc:", a category as written.
+     */
+    private static function nameFrom1040(string $name, bool $braced, PcreTarget $target): ?string
+    {
+        $caret = $braced && str_starts_with($name, '^');
+        $bare = $caret ? substr($name, 1) : $name;
+        if (!PropertyNames::knownBefore1040($bare, $target)) {
+            return null;
+        }
+
+        return !$braced ? $name : '{'.($caret ? '^' : '').(PropertyNames::isScriptBefore1040($bare) ? 'sc:' : '').$bare.'}';
     }
 
     /**

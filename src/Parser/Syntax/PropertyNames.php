@@ -91,6 +91,56 @@ final class PropertyNames
     ];
 
     /**
+     * The four-letter codes PCRE2 reads from 10.40 for the scripts PCRE2
+     * 10.39 knows, each with the name 10.39 knows the script by, where the
+     * code is not that name: PRIV(utt) of pcre2_ucptables.c gives each code
+     * the script of its name. "Qaac" and "Qaai" are the private codes of
+     * Coptic and Inherited.
+     */
+    private const SCRIPT_CODES = [
+        'adlm' => 'Adlam', 'aghb' => 'Caucasian_Albanian', 'arab' => 'Arabic', 'armi' => 'Imperial_Aramaic',
+        'armn' => 'Armenian', 'avst' => 'Avestan', 'bali' => 'Balinese', 'bamu' => 'Bamum',
+        'bass' => 'Bassa_Vah', 'batk' => 'Batak', 'beng' => 'Bengali', 'bhks' => 'Bhaiksuki',
+        'bopo' => 'Bopomofo', 'brah' => 'Brahmi', 'brai' => 'Braille', 'bugi' => 'Buginese',
+        'buhd' => 'Buhid', 'cakm' => 'Chakma', 'cans' => 'Canadian_Aboriginal', 'cari' => 'Carian',
+        'cher' => 'Cherokee', 'chrs' => 'Chorasmian', 'copt' => 'Coptic', 'cpmn' => 'Cypro_Minoan',
+        'cprt' => 'Cypriot', 'cyrl' => 'Cyrillic', 'deva' => 'Devanagari', 'diak' => 'Dives_Akuru',
+        'dogr' => 'Dogra', 'dsrt' => 'Deseret', 'dupl' => 'Duployan', 'egyp' => 'Egyptian_Hieroglyphs',
+        'elba' => 'Elbasan', 'elym' => 'Elymaic', 'ethi' => 'Ethiopic', 'geor' => 'Georgian',
+        'glag' => 'Glagolitic', 'gong' => 'Gunjala_Gondi', 'gonm' => 'Masaram_Gondi', 'goth' => 'Gothic',
+        'gran' => 'Grantha', 'grek' => 'Greek', 'gujr' => 'Gujarati', 'guru' => 'Gurmukhi',
+        'hang' => 'Hangul', 'hani' => 'Han', 'hano' => 'Hanunoo', 'hatr' => 'Hatran', 'hebr' => 'Hebrew',
+        'hira' => 'Hiragana', 'hluw' => 'Anatolian_Hieroglyphs', 'hmng' => 'Pahawh_Hmong',
+        'hmnp' => 'Nyiakeng_Puachue_Hmong', 'hung' => 'Old_Hungarian', 'ital' => 'Old_Italic',
+        'java' => 'Javanese', 'kali' => 'Kayah_Li', 'kana' => 'Katakana', 'khar' => 'Kharoshthi',
+        'khmr' => 'Khmer', 'khoj' => 'Khojki', 'kits' => 'Khitan_Small_Script', 'knda' => 'Kannada',
+        'kthi' => 'Kaithi', 'lana' => 'Tai_Tham', 'laoo' => 'Lao', 'latn' => 'Latin', 'lepc' => 'Lepcha',
+        'limb' => 'Limbu', 'lina' => 'Linear_A', 'linb' => 'Linear_B', 'lyci' => 'Lycian', 'lydi' => 'Lydian',
+        'mahj' => 'Mahajani', 'maka' => 'Makasar', 'mand' => 'Mandaic', 'mani' => 'Manichaean',
+        'marc' => 'Marchen', 'medf' => 'Medefaidrin', 'mend' => 'Mende_Kikakui', 'merc' => 'Meroitic_Cursive',
+        'mero' => 'Meroitic_Hieroglyphs', 'mlym' => 'Malayalam', 'mong' => 'Mongolian', 'mroo' => 'Mro',
+        'mtei' => 'Meetei_Mayek', 'mult' => 'Multani', 'mymr' => 'Myanmar',
+        'nand' => 'Nandinagari', 'narb' => 'Old_North_Arabian', 'nbat' => 'Nabataean', 'nkoo' => 'Nko',
+        'nshu' => 'Nushu', 'ogam' => 'Ogham', 'olck' => 'Ol_Chiki', 'orkh' => 'Old_Turkic', 'orya' => 'Oriya',
+        'osge' => 'Osage', 'osma' => 'Osmanya', 'ougr' => 'Old_Uyghur', 'palm' => 'Palmyrene',
+        'pauc' => 'Pau_Cin_Hau', 'perm' => 'Old_Permic', 'phag' => 'Phags_Pa',
+        'phli' => 'Inscriptional_Pahlavi', 'phlp' => 'Psalter_Pahlavi', 'phnx' => 'Phoenician',
+        'plrd' => 'Miao', 'prti' => 'Inscriptional_Parthian', 'qaac' => 'Coptic', 'qaai' => 'Inherited',
+        'rjng' => 'Rejang', 'rohg' => 'Hanifi_Rohingya', 'runr' => 'Runic', 'samr' => 'Samaritan',
+        'sarb' => 'Old_South_Arabian', 'saur' => 'Saurashtra', 'sgnw' => 'SignWriting', 'shaw' => 'Shavian',
+        'shrd' => 'Sharada', 'sidd' => 'Siddham', 'sind' => 'Khudawadi', 'sinh' => 'Sinhala',
+        'sogd' => 'Sogdian', 'sogo' => 'Old_Sogdian', 'sora' => 'Sora_Sompeng', 'soyo' => 'Soyombo',
+        'sund' => 'Sundanese', 'sylo' => 'Syloti_Nagri', 'syrc' => 'Syriac', 'tagb' => 'Tagbanwa',
+        'takr' => 'Takri', 'tale' => 'Tai_Le', 'talu' => 'New_Tai_Lue', 'taml' => 'Tamil', 'tang' => 'Tangut',
+        'tavt' => 'Tai_Viet', 'telu' => 'Telugu', 'tfng' => 'Tifinagh', 'tglg' => 'Tagalog',
+        'thaa' => 'Thaana', 'tibt' => 'Tibetan', 'tirh' => 'Tirhuta', 'tnsa' => 'Tangsa',
+        'ugar' => 'Ugaritic', 'vaii' => 'Vai', 'vith' => 'Vithkuqi', 'wara' => 'Warang_Citi',
+        'wcho' => 'Wancho', 'xpeo' => 'Old_Persian', 'xsux' => 'Cuneiform', 'yezi' => 'Yezidi',
+        'yiii' => 'Yi', 'zanb' => 'Zanabazar_Square', 'zinh' => 'Inherited', 'zyyy' => 'Common',
+        'zzzz' => 'Unknown',
+    ];
+
+    /**
      * What PCRE2 drops from a name from 10.40: spaces, "\t" to "\r", hyphens
      * and underscores.
      */
@@ -172,7 +222,7 @@ final class PropertyNames
 
         // The releases read, from the oldest.
         foreach (array_keys(PropertyNameTables::RELEASES) as $release) {
-            if (self::knownTo(self::lookedUp($name, $braced, $release), $release, $names)) {
+            if (self::knownTo(self::lookedUp($name, $braced, $release)[1], $release, $names)) {
                 return $release;
             }
         }
@@ -181,12 +231,79 @@ final class PropertyNames
     }
 
     /**
-     * The name a release from 10.40 looks up.
+     * How PCRE2 10.39 or older, the engine, reads what the property "\p"
+     * names means to a release from 10.40, the target, from what follows
+     * the letter: whether a "^" the target reads negates it, and the name
+     * the engine knows it by, which a "\p" before 10.40 takes as written.
+     * Null when the target does not know the name, or the engine has no
+     * name for what it means: a bare script name, which is the script
+     * extensions from 10.40, as "scx:" is, a Bidi class, a binary property,
+     * a script the engine does not know.
+     *
+     * @return array{bool, string}|null
      */
-    private static function lookedUp(string $name, bool $braced, string $release): string
+    public static function readBefore1040(string $name, bool $braced, PcreTarget $target, PcreTarget $engine): ?array
+    {
+        $release = $target->judgedWith();
+        [$negated, $read] = self::lookedUp($name, $braced, $release);
+        if (!self::knownTo($read, $release, self::namesFrom1040())) {
+            return null;
+        }
+
+        // A name the target knows: up to a ":" or "=", one of its tables.
+        $separator = strcspn($read, ':=');
+        if ($separator < \strlen($read)) {
+            $known = \in_array(substr($read, 0, $separator), ['sc', 'script'], true) ? self::scriptBefore1040(substr($read, $separator + 1), $engine) : null;
+        } else {
+            $known = 'lc' === $read ? 'L&' : self::categoryBefore1040($read);
+        }
+
+        return null === $known ? null : [$negated, $known];
+    }
+
+    /**
+     * The name the engine, before 10.40, knows a script by, from its name
+     * or its code as 10.40 looks them up; null when it knows none.
+     */
+    private static function scriptBefore1040(string $value, PcreTarget $engine): ?string
+    {
+        $script = self::SCRIPT_CODES[$value] ?? null;
+        foreach (null === $script ? self::SCRIPTS : [] as $known) {
+            if (Ascii::lower(str_replace('_', '', $known)) === $value) {
+                $script = $known;
+
+                break;
+            }
+        }
+
+        return null !== $script && self::knownBefore1040($script, $engine) ? $script : null;
+    }
+
+    /**
+     * The general category or property of PCRE's own a name as 10.40 looks
+     * it up is, as 10.39 spells it; null for any other name.
+     */
+    private static function categoryBefore1040(string $read): ?string
+    {
+        foreach (self::CATEGORIES as $known) {
+            if (Ascii::lower($known) === $read) {
+                return $known;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The name a release from 10.40 looks up, and whether a "^" it reads
+     * negates it.
+     *
+     * @return array{bool, string}
+     */
+    private static function lookedUp(string $name, bool $braced, string $release): array
     {
         if (!$braced) {
-            return Ascii::lower($name);
+            return [false, Ascii::lower($name)];
         }
 
         $caretAfterDropped = version_compare($release, PcreFeature::MalformedPropertyName->release(), '>=');
@@ -207,7 +324,7 @@ final class PropertyNames
             $read .= $char;
         }
 
-        return Ascii::lower($read);
+        return [$negated, Ascii::lower($read)];
     }
 
     /**
