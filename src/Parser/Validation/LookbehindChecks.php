@@ -112,7 +112,7 @@ final class LookbehindChecks
      */
     public function __construct(
         private readonly GroupIndex $groups,
-        private readonly PcreTarget $target,
+        PcreTarget $target,
         private readonly \Closure $checkReference,
         private readonly ?string $pattern,
         private readonly int $maxLength,

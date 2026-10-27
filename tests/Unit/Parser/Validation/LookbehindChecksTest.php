@@ -34,6 +34,16 @@ use PHPUnit\Framework\TestCase;
 final class LookbehindChecksTest extends TestCase
 {
     /**
+     * The constructor reads what the target supports once, into flags: the
+     * checks keep the flags, never the target.
+     */
+    #[Test]
+    public function test_the_checks_keep_what_the_target_supports_not_the_target(): void
+    {
+        $this->assertFalse((new \ReflectionClass(LookbehindChecks::class))->hasProperty('target'));
+    }
+
+    /**
      * The hint names the first item of no bound in the order PCRE reads
      * them: the condition of a conditional, then its first branch, then the
      * second; the start of a range before its end.
