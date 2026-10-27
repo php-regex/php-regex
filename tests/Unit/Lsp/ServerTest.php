@@ -106,24 +106,19 @@ final class ServerTest extends TestCase
         // captured here, never leaked to the real one.
         $errors = fopen('php://memory', 'r+');
         $this->assertIsResource($errors);
-        Server::writeErrorsTo($errors);
 
-        try {
-            $this->serve([
-                ['id' => 1, 'method' => 'initialize', 'params' => []],
-                ['method' => 'initialized'],
-                ['id' => 2, 'method' => 'textDocument/completion', 'params' => [
-                    'textDocument' => ['uri' => 'file:///a.php'],
-                    'position' => ['line' => 'not-a-line', 'character' => null],
-                ]],
-                ['id' => 3, 'method' => 'textDocument/codeAction', 'params' => [
-                    'textDocument' => ['uri' => 'file:///a.php'],
-                    'range' => ['start' => ['line' => 0, 'character' => 0], 'end' => ['line' => 0, 'character' => 0]],
-                ]],
-            ]);
-        } finally {
-            Server::writeErrorsTo(null);
-        }
+        $this->serve([
+            ['id' => 1, 'method' => 'initialize', 'params' => []],
+            ['method' => 'initialized'],
+            ['id' => 2, 'method' => 'textDocument/completion', 'params' => [
+                'textDocument' => ['uri' => 'file:///a.php'],
+                'position' => ['line' => 'not-a-line', 'character' => null],
+            ]],
+            ['id' => 3, 'method' => 'textDocument/codeAction', 'params' => [
+                'textDocument' => ['uri' => 'file:///a.php'],
+                'range' => ['start' => ['line' => 0, 'character' => 0], 'end' => ['line' => 0, 'character' => 0]],
+            ]],
+        ], $errors);
 
         rewind($errors);
         $lines = (string) stream_get_contents($errors);
@@ -248,18 +243,14 @@ final class ServerTest extends TestCase
         // tooling to read the run as failed.
         $errors = fopen('php://memory', 'r+');
         $this->assertIsResource($errors);
-        Server::writeErrorsTo($errors);
 
-        try {
-            $this->serveRaw(
-                self::frame(['id' => 1, 'method' => 'initialize', 'params' => []])
-                .self::body('{"jsonrpc":"2.0","id":9,"result":null}')
-                .self::body('{"jsonrpc":"2.0","id":10,"error":{"code":-32601,"message":"Method not found"}}')
-                .self::frame(['id' => 2, 'method' => 'shutdown']),
-            );
-        } finally {
-            Server::writeErrorsTo(null);
-        }
+        $this->serveRaw(
+            self::frame(['id' => 1, 'method' => 'initialize', 'params' => []])
+            .self::body('{"jsonrpc":"2.0","id":9,"result":null}')
+            .self::body('{"jsonrpc":"2.0","id":10,"error":{"code":-32601,"message":"Method not found"}}')
+            .self::frame(['id' => 2, 'method' => 'shutdown']),
+            $errors,
+        );
 
         rewind($errors);
         $lines = (string) stream_get_contents($errors);
@@ -411,18 +402,13 @@ final class ServerTest extends TestCase
         // stderr.
         $errors = fopen('php://memory', 'r+');
         $this->assertIsResource($errors);
-        Server::writeErrorsTo($errors);
 
-        try {
-            $this->serve([
-                ['id' => 1, 'method' => 'initialize', 'params' => []],
-                ['method' => 'initialized'],
-                ['method' => 'initialize', 'params' => []],
-                ['id' => 2, 'method' => 'shutdown'],
-            ]);
-        } finally {
-            Server::writeErrorsTo(null);
-        }
+        $this->serve([
+            ['id' => 1, 'method' => 'initialize', 'params' => []],
+            ['method' => 'initialized'],
+            ['method' => 'initialize', 'params' => []],
+            ['id' => 2, 'method' => 'shutdown'],
+        ], $errors);
 
         $this->assertArrayHasKey('result', $this->answerTo(2));
         $this->assertCount(1, $this->targetLogs(), 'The notification initialized the session a second time.');
@@ -440,23 +426,18 @@ final class ServerTest extends TestCase
     {
         $errors = fopen('php://memory', 'r+');
         $this->assertIsResource($errors);
-        Server::writeErrorsTo($errors);
 
-        try {
-            $this->serve([
-                ['method' => 'textDocument/didOpen', 'params' => ['textDocument' => [
-                    'uri' => 'file:///a.php',
-                    'languageId' => 'php',
-                    'version' => 1,
-                    'text' => "<?php\npreg_match('/(/', \$s);\n",
-                ]]],
-                ['id' => 1, 'method' => 'initialize', 'params' => []],
-                ['method' => 'initialized'],
-                ['id' => 2, 'method' => 'shutdown'],
-            ]);
-        } finally {
-            Server::writeErrorsTo(null);
-        }
+        $this->serve([
+            ['method' => 'textDocument/didOpen', 'params' => ['textDocument' => [
+                'uri' => 'file:///a.php',
+                'languageId' => 'php',
+                'version' => 1,
+                'text' => "<?php\npreg_match('/(/', \$s);\n",
+            ]]],
+            ['id' => 1, 'method' => 'initialize', 'params' => []],
+            ['method' => 'initialized'],
+            ['id' => 2, 'method' => 'shutdown'],
+        ], $errors);
 
         $this->assertStringNotContainsString('textDocument/publishDiagnostics', $this->written(), 'A notification before initialize was served.');
         $this->assertArrayHasKey('result', $this->answerTo(2));
@@ -577,26 +558,21 @@ final class ServerTest extends TestCase
     {
         $errors = fopen('php://memory', 'r+');
         $this->assertIsResource($errors);
-        Server::writeErrorsTo($errors);
         $input = $this->stream('');
 
-        try {
-            $server = new Server(null, $input, transport: new Transport($this->output));
-            $this->sendTo($server, $input,
-                ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
-                ['method' => 'initialized'],
-            );
+        $server = new Server(null, $input, transport: new Transport($this->output), errorStream: $errors);
+        $this->sendTo($server, $input,
+            ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+            ['method' => 'initialized'],
+        );
 
-            $registrations = $this->registrationRequests();
-            $this->assertCount(1, $registrations);
-            $id = $registrations[0]['id'];
-            $this->assertNotNull($id);
+        $registrations = $this->registrationRequests();
+        $this->assertCount(1, $registrations);
+        $id = $registrations[0]['id'];
+        $this->assertNotNull($id);
 
-            // The refusal carries the id the server chose, as a response.
-            $this->sendTo($server, $input, ['id' => $id, 'error' => ['code' => -32601, 'message' => 'Window/showMessage is not supported.']]);
-        } finally {
-            Server::writeErrorsTo(null);
-        }
+        // The refusal carries the id the server chose, as a response.
+        $this->sendTo($server, $input, ['id' => $id, 'error' => ['code' => -32601, 'message' => 'Window/showMessage is not supported.']]);
 
         $this->assertCount(1, $this->registrationRequests(), 'The registration was retried or duplicated.');
         $this->assertSame(1, substr_count($this->linesWrittenTo($errors), "\n"), 'One stderr warning was expected for the refusal.');
@@ -612,23 +588,18 @@ final class ServerTest extends TestCase
     {
         $errors = fopen('php://memory', 'r+');
         $this->assertIsResource($errors);
-        Server::writeErrorsTo($errors);
         $input = $this->stream('');
 
-        try {
-            $server = new Server(null, $input, transport: new Transport($this->output));
-            $this->sendTo($server, $input,
-                ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
-                ['method' => 'initialized'],
-            );
-            $registrations = $this->registrationRequests();
-            $this->assertCount(1, $registrations);
-            $id = $registrations[0]['id'];
-            $this->assertNotNull($id);
-            $this->sendTo($server, $input, ['id' => $id, 'error' => ['code' => -32601, 'message' => 'Not supported.']]);
-        } finally {
-            Server::writeErrorsTo(null);
-        }
+        $server = new Server(null, $input, transport: new Transport($this->output), errorStream: $errors);
+        $this->sendTo($server, $input,
+            ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+            ['method' => 'initialized'],
+        );
+        $registrations = $this->registrationRequests();
+        $this->assertCount(1, $registrations);
+        $id = $registrations[0]['id'];
+        $this->assertNotNull($id);
+        $this->sendTo($server, $input, ['id' => $id, 'error' => ['code' => -32601, 'message' => 'Not supported.']]);
 
         $lines = $this->linesWrittenTo($errors);
         fclose($errors);
@@ -646,19 +617,14 @@ final class ServerTest extends TestCase
     {
         $errors = fopen('php://memory', 'r+');
         $this->assertIsResource($errors);
-        Server::writeErrorsTo($errors);
         $input = $this->stream('');
 
-        try {
-            $server = new Server(null, $input, transport: new Transport($this->output));
-            $this->sendTo($server, $input,
-                ['id' => 1, 'method' => 'initialize', 'params' => []],
-                ['method' => 'initialized'],
-                ['result' => null],
-            );
-        } finally {
-            Server::writeErrorsTo(null);
-        }
+        $server = new Server(null, $input, transport: new Transport($this->output), errorStream: $errors);
+        $this->sendTo($server, $input,
+            ['id' => 1, 'method' => 'initialize', 'params' => []],
+            ['method' => 'initialized'],
+            ['result' => null],
+        );
 
         $lines = $this->linesWrittenTo($errors);
         fclose($errors);
@@ -693,16 +659,11 @@ final class ServerTest extends TestCase
     {
         $errors = fopen('php://memory', 'r+');
         $this->assertIsResource($errors);
-        Server::writeErrorsTo($errors);
 
-        try {
-            $this->serve([
-                ['method' => 'initialized'],
-                ['id' => 1, 'method' => 'initialize', 'params' => []],
-            ]);
-        } finally {
-            Server::writeErrorsTo(null);
-        }
+        $this->serve([
+            ['method' => 'initialized'],
+            ['id' => 1, 'method' => 'initialize', 'params' => []],
+        ], $errors);
 
         $lines = $this->linesWrittenTo($errors);
         fclose($errors);
@@ -710,6 +671,34 @@ final class ServerTest extends TestCase
         $this->assertStringContainsString('dropped', $lines);
 
         $this->assertArrayHasKey('result', $this->answerTo(1), 'The first initialize was refused as a second one.');
+    }
+
+    /**
+     * The error stream belongs to the server it is given to: two servers of
+     * one process each write their lines to their own stream, never to the
+     * other's.
+     */
+    #[Test]
+    public function test_error_stream_belongs_to_the_server_it_is_given_to(): void
+    {
+        $first = fopen('php://memory', 'r+');
+        $second = fopen('php://memory', 'r+');
+        $this->assertIsResource($first);
+        $this->assertIsResource($second);
+
+        $firstServer = new Server(null, $this->stream(''), transport: new Transport($this->output), errorStream: $first);
+        $secondInput = $this->stream('');
+        $secondServer = new Server(null, $secondInput, transport: new Transport($this->output), errorStream: $second);
+        $firstServer->run();
+        $this->sendTo($secondServer, $secondInput, ['method' => 'initialized']);
+
+        $firstLines = $this->linesWrittenTo($first);
+        $secondLines = $this->linesWrittenTo($second);
+        fclose($first);
+        fclose($second);
+        $this->assertSame('', $firstLines, 'A line of the second server reached the first one\'s stream.');
+        $this->assertSame(1, substr_count($secondLines, "\n"));
+        $this->assertStringContainsString('dropped', $secondLines);
     }
 
     /**
@@ -722,21 +711,16 @@ final class ServerTest extends TestCase
     {
         $errors = fopen('php://memory', 'r+');
         $this->assertIsResource($errors);
-        Server::writeErrorsTo($errors);
         $input = $this->stream('');
 
-        try {
-            $server = new Server(null, $input, transport: new Transport($this->output));
-            $this->sendTo($server, $input,
-                ['id' => 1, 'method' => 'initialize', 'params' => []],
-                ['method' => 'initialized'],
-                ['id' => 77, 'result' => null],
-                ['id' => 78, 'result' => null],
-                ['id' => 79, 'result' => null],
-            );
-        } finally {
-            Server::writeErrorsTo(null);
-        }
+        $server = new Server(null, $input, transport: new Transport($this->output), errorStream: $errors);
+        $this->sendTo($server, $input,
+            ['id' => 1, 'method' => 'initialize', 'params' => []],
+            ['method' => 'initialized'],
+            ['id' => 77, 'result' => null],
+            ['id' => 78, 'result' => null],
+            ['id' => 79, 'result' => null],
+        );
 
         $lines = $this->linesWrittenTo($errors);
         fclose($errors);
@@ -752,23 +736,18 @@ final class ServerTest extends TestCase
     {
         $errors = fopen('php://memory', 'r+');
         $this->assertIsResource($errors);
-        Server::writeErrorsTo($errors);
         $input = $this->stream('');
 
-        try {
-            $server = new Server(null, $input, transport: new Transport($this->output));
-            $this->sendTo($server, $input,
-                ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
-                ['method' => 'initialized'],
-            );
-            $registrations = $this->registrationRequests();
-            $this->assertCount(1, $registrations);
-            $id = $registrations[0]['id'];
-            $this->assertNotNull($id);
-            $this->sendTo($server, $input, ['id' => $id, 'result' => null]);
-        } finally {
-            Server::writeErrorsTo(null);
-        }
+        $server = new Server(null, $input, transport: new Transport($this->output), errorStream: $errors);
+        $this->sendTo($server, $input,
+            ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+            ['method' => 'initialized'],
+        );
+        $registrations = $this->registrationRequests();
+        $this->assertCount(1, $registrations);
+        $id = $registrations[0]['id'];
+        $this->assertNotNull($id);
+        $this->sendTo($server, $input, ['id' => $id, 'result' => null]);
 
         $lines = $this->linesWrittenTo($errors);
         fclose($errors);
@@ -806,9 +785,12 @@ final class ServerTest extends TestCase
         $this->assertSame([], $this->registrationRequests());
     }
 
-    private function serveRaw(string $payload): void
+    /**
+     * @param resource|null $errors the stream the error lines are written to
+     */
+    private function serveRaw(string $payload, $errors = null): void
     {
-        (new Server(null, $this->stream($payload), transport: new Transport($this->output)))->run();
+        (new Server(null, $this->stream($payload), transport: new Transport($this->output), errorStream: $errors))->run();
     }
 
     /**
@@ -912,8 +894,9 @@ final class ServerTest extends TestCase
 
     /**
      * @param array<array<string, mixed>> $messages
+     * @param resource|null               $errors   the stream the error lines are written to
      */
-    private function serve(array $messages): void
+    private function serve(array $messages, $errors = null): void
     {
         $payload = '';
         foreach ($messages as $message) {
@@ -921,7 +904,7 @@ final class ServerTest extends TestCase
             $payload .= 'Content-Length: '.\strlen($json)."\r\n\r\n".$json;
         }
 
-        (new Server(null, $this->stream($payload), transport: new Transport($this->output)))->run();
+        (new Server(null, $this->stream($payload), transport: new Transport($this->output), errorStream: $errors))->run();
     }
 
     /**

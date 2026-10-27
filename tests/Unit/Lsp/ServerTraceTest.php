@@ -48,12 +48,10 @@ final class ServerTraceTest extends TestCase
         $this->output = $output;
         $this->errors = $errors;
         $this->transport = new Transport($output);
-        Server::writeErrorsTo($this->errors);
     }
 
     protected function tearDown(): void
     {
-        Server::writeErrorsTo(null);
         fclose($this->output);
         fclose($this->errors);
     }
@@ -209,7 +207,7 @@ final class ServerTraceTest extends TestCase
         fwrite($input, $payload);
         rewind($input);
 
-        (new Server(null, $input, transport: $this->transport))->run();
+        (new Server(null, $input, transport: $this->transport, errorStream: $this->errors))->run();
     }
 
     /**

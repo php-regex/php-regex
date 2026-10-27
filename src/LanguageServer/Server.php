@@ -66,13 +66,6 @@ final class Server
      */
     private const WATCHED_FILES_REGISTRATION = 'php-regex/did-change-watched-files';
 
-    /**
-     * Stream the error lines are written to, or null for stderr.
-     *
-     * @var resource|null
-     */
-    private static $errorStream;
-
     private bool $initialized = false;
 
     /**
@@ -139,6 +132,10 @@ final class Server
      * @param Transport|null           $transport    where the messages to the
      *                                               client are written, stdout
      *                                               when null
+     * @param resource|null            $errorStream  stream the error lines are
+     *                                               written to, or null for
+     *                                               stderr, where the editor
+     *                                               collects the server log
      */
     public function __construct(
         private readonly ?Regex $givenRegex = null,
@@ -146,6 +143,7 @@ final class Server
         ?PatternDeclarations $declarations = null,
         private readonly ?MessageLimits $limits = null,
         ?Transport $transport = null,
+        private $errorStream = null,
     ) {
         $this->transport = $transport ?? new Transport();
         $this->documents = new DocumentManager(new RegexFinder(), $declarations ?? new PatternDeclarations());
@@ -183,24 +181,13 @@ final class Server
             stream_set_read_buffer($input, 0);
         }
 
-        $this->transport->observeWith($this->traceOutbound(...), self::writeErrorLine(...));
+        $this->transport->observeWith($this->traceOutbound(...), $this->writeErrorLine(...));
 
         try {
             return $this->serve($input);
         } finally {
             $this->transport->observeWith(null);
         }
-    }
-
-    /**
-     * Write the error lines somewhere else than stderr, which is what an
-     * embedding process — or a test — needs to read them back.
-     *
-     * @param resource|null $stream null restores stderr
-     */
-    public static function writeErrorsTo($stream): void
-    {
-        self::$errorStream = $stream;
     }
 
     /**
@@ -240,13 +227,13 @@ final class Server
     /**
      * Leave one line on stderr, where the editor collects the server log.
      */
-    private static function writeErrorLine(string $message): void
+    private function writeErrorLine(string $message): void
     {
         $line = "regex-lsp: {$message}\n";
 
-        if (null !== self::$errorStream) {
-            fwrite(self::$errorStream, $line);
-            fflush(self::$errorStream);
+        if (null !== $this->errorStream) {
+            fwrite($this->errorStream, $line);
+            fflush($this->errorStream);
 
             return;
         }
@@ -261,7 +248,7 @@ final class Server
     {
         $line = FrameTrace::inbound($message, $this->trace);
         if (null !== $line) {
-            self::writeErrorLine($line);
+            $this->writeErrorLine($line);
         }
     }
 
@@ -269,7 +256,7 @@ final class Server
     {
         $line = FrameTrace::outbound($json, $this->trace);
         if (null !== $line) {
-            self::writeErrorLine($line);
+            $this->writeErrorLine($line);
         }
     }
 
@@ -282,7 +269,7 @@ final class Server
         $value = $message->params['value'] ?? null;
         $level = \is_string($value) ? TraceLevel::tryFrom($value) : null;
         if (null === $level) {
-            self::writeErrorLine(\sprintf('$/setTrace value %s is not off, messages or verbose: ignored.', \is_string($value) ? '"'.$value.'"' : get_debug_type($value)));
+            $this->writeErrorLine(\sprintf('$/setTrace value %s is not off, messages or verbose: ignored.', \is_string($value) ? '"'.$value.'"' : get_debug_type($value)));
 
             return;
         }
@@ -296,7 +283,7 @@ final class Server
      */
     private function reportFailure(Message $message, \Throwable $failure): void
     {
-        self::writeErrorLine(\sprintf('%s: %s', $failure::class, $failure->getMessage()));
+        $this->writeErrorLine(\sprintf('%s: %s', $failure::class, $failure->getMessage()));
 
         if ($message->isRequest() && null !== $message->id) {
             $this->transport->error($message->id, Transport::INTERNAL_ERROR, $failure->getMessage());
@@ -349,7 +336,7 @@ final class Server
                 if (null !== $message->id) {
                     $this->transport->error($message->id, InvalidMessage::INVALID_REQUEST, 'The server is already initialized.');
                 } else {
-                    self::writeErrorLine('the "initialize" notification was dropped: the server is already initialized.');
+                    $this->writeErrorLine('the "initialize" notification was dropped: the server is already initialized.');
                 }
 
                 return;
@@ -367,7 +354,7 @@ final class Server
         // dropped like any notification before initialize.
         if ('initialized' === $method) {
             if (!$this->initialized) {
-                self::writeErrorLine('the "initialized" notification was dropped: the server is not initialized.');
+                $this->writeErrorLine('the "initialized" notification was dropped: the server is not initialized.');
 
                 return;
             }
@@ -388,7 +375,7 @@ final class Server
             }
 
             if (!str_starts_with($method, '$/')) {
-                self::writeErrorLine(\sprintf('the "%s" notification was dropped: the server is not initialized.', $method));
+                $this->writeErrorLine(\sprintf('the "%s" notification was dropped: the server is not initialized.', $method));
             }
 
             return;
@@ -506,7 +493,7 @@ final class Server
         $id = $message->id;
 
         if (null !== $this->registrationRequestId && $id === $this->registrationRequestId) {
-            self::writeErrorLine($message->isErrorResponse()
+            $this->writeErrorLine($message->isErrorResponse()
                 ? \sprintf('warning: the watched-files registration (request %d) was refused by the client: nothing is registered again, the editor sends no file events.', $this->registrationRequestId)
                 : \sprintf('the watched-files registration (request %d) was answered: nothing is registered again.', $this->registrationRequestId));
 
@@ -521,7 +508,7 @@ final class Server
 
         $this->strayResponseTraced = true;
 
-        self::writeErrorLine(null === $id
+        $this->writeErrorLine(null === $id
             ? 'a response with no id the server did not ask for was ignored.'
             : \sprintf('a response with the id %s the server did not ask for was ignored.', \is_int($id) ? (string) $id : $id));
     }
