@@ -22,6 +22,7 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Lexing\BodyEnds;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
@@ -758,9 +759,13 @@ final class AlphaAssertionBodyTest extends TestCase
         $lexer = new Lexer();
         $lexer->tokenize('(*pla:a)');
         $regexes = new \ReflectionProperty(Lexer::class, 'regexes');
-        $this->assertNotSame([], array_filter((array) $regexes->getValue($lexer), static fn (string $key): bool => str_starts_with($key, 'body'), \ARRAY_FILTER_USE_KEY));
+        $bodies = new \ReflectionProperty(Lexer::class, 'bodies');
+        $read = $bodies->getValue($lexer);
+        $this->assertInstanceOf(BodyEnds::class, $read);
+        $this->assertNotSame([], array_filter((array) (new \ReflectionProperty(BodyEnds::class, 'regexes'))->getValue($read), static fn (string $key): bool => str_starts_with($key, 'body'), \ARRAY_FILTER_USE_KEY));
 
         $this->assertSame([], $regexes->getValue(new Lexer()));
+        $this->assertNull($bodies->getValue(new Lexer()));
     }
 
     /**

@@ -20,6 +20,7 @@ use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Lexing\BodyEnds;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
@@ -277,6 +278,12 @@ final class RedosCallerPcreLimitsTest extends TestCase
                 $lexer = new Lexer();
                 $lexer->tokenize($pattern, $flags);
                 $read = (new \ReflectionProperty(Lexer::class, 'regexes'))->getValue($lexer);
+                // The regex reading the items of a body belongs to the
+                // reader of the bodies the lexer holds.
+                $bodies = (new \ReflectionProperty(Lexer::class, 'bodies'))->getValue($lexer);
+                if ($bodies instanceof BodyEnds) {
+                    $read = array_merge(\is_array($read) ? $read : [], (array) (new \ReflectionProperty(BodyEnds::class, 'regexes'))->getValue($bodies));
+                }
                 foreach (\is_array($read) ? $read : [] as $key => $regex) {
                     if (\is_string($key) && \is_string($regex)) {
                         $built[$key] = $regex;

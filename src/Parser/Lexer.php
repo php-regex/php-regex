@@ -16,13 +16,13 @@ namespace PHPRegex\Parser;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Lexing\BodyEnds;
 use PHPRegex\Parser\Lexing\ClassRanges;
 use PHPRegex\Parser\Lexing\PatternText;
 use PHPRegex\Parser\Lexing\TargetSyntax;
 use PHPRegex\Parser\Lexing\TokenValue;
 use PHPRegex\Parser\Lexing\VerbNames;
 use PHPRegex\Parser\Syntax\BadEscape;
-use PHPRegex\Parser\Syntax\ExtendedClassReader;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Parser\Syntax\PosixItem;
 use PHPRegex\Parser\Text\Ascii;
@@ -41,6 +41,14 @@ use PHPRegex\Parser\Token\TokenType;
  */
 final class Lexer
 {
+    /**
+     * A callout string, between any of the delimiters PCRE2 takes; doubling
+     * the closing one puts it in the string, ")" included: (?C"a)b""c").
+     * The body of an alphabetic assertion reads it as the lexer does.
+     */
+    public const CALLOUT_STRING = '" (?: [^"] | "" )*+ " | \' (?: [^\'] | \'\' )*+ \' | ` (?: [^`] | `` )*+ `'
+        .' | \\^ (?: [^^] | \\^\\^ )*+ \\^ | % (?: [^%] | %% )*+ % | \\# (?: [^#] | \\#\\# )*+ \\#'
+        .' | \\$ (?: [^$] | \\$\\$ )*+ \\$ | \\{ (?: [^}] | \\}\\} )*+ \\}';
     // Token priority maps for efficient matching
     /**
      * The largest number a backslash and its digits may make before PCRE2
@@ -85,55 +93,11 @@ final class Lexer
     private const UNICODE_NAMED = '\\\\ N (?!'.self::REPEAT_COUNT.') \\{ (?: [\\x20\\t]*+ U\\+ (?: [0-9a-fA-F]++ [\\x20\\t]*+ | [\\x20\\t]++ ) | [a-zA-Z0-9_ -]++ ) \\}';
 
     /*
-     * A callout string, between any of the delimiters PCRE2 takes; doubling
-     * the closing one puts it in the string, ")" included: (?C"a)b""c").
-     */
-    private const CALLOUT_STRING = '" (?: [^"] | "" )*+ " | \' (?: [^\'] | \'\' )*+ \' | ` (?: [^`] | `` )*+ `'
-        .' | \\^ (?: [^^] | \\^\\^ )*+ \\^ | % (?: [^%] | %% )*+ % | \\# (?: [^#] | \\#\\# )*+ \\#'
-        .' | \\$ (?: [^$] | \\$\\$ )*+ \\$ | \\{ (?: [^}] | \\}\\} )*+ \\}';
-
-    /*
      * The characters of a group name: letters, decimal digits and "_". In a
      * pattern read as UTF-8 that covers every script, as PCRE2 10.43+ does
      * under "u"; whether the pattern is in Unicode mode is the parser's call.
      */
     private const NAME_CHARS = '\\p{L}\\p{Nd}_';
-
-    /**
-     * Text quoted by \Q...\E, possibly up to the end of the pattern.
-     */
-    private const QUOTED_RUN = '\\\\Q (?: (?!\\\\E) [\\s\\S] )*+ (?: \\\\E | \\z )';
-
-    /**
-     * One item of a group body in which a ")" does not close the group: a
-     * quoted run, an escape ("\c" with the character it takes, whatever it
-     * is, and "\p{...}" to its "}"), a "(?#...)" comment, a callout, a verb
-     * that ends at its first ")" as "(*MARK:a(b)" does, or text without
-     * parentheses. Classes and nested groups are read by the caller. Each
-     * ends where the lexer ends the token it reads there.
-     */
-    private const GROUP_BODY_ITEM = self::QUOTED_RUN
-        .' | \\\\ [pP] \\{ [^}]++ \\} | \\\\ c [\\s\\S] | \\\\ (?!Q) [\\s\\S]'
-        .' | \\( \\? \\# [^)]*+ \\)'
-        .' | \\( \\? C (?: (?: '.self::CALLOUT_STRING.' ) (?= \\) ) | [^)]*+ ) \\)'
-        .' | \\( \\* (?! [a-z_]++ : ) [^)]*+ \\)'
-        .self::GROUP_BODY_TEXT;
-
-    /**
-     * Text without parentheses, the last item of a group body.
-     */
-    private const GROUP_BODY_TEXT = ' | [^()\\\\\\[]++';
-
-    /**
-     * The letters a POSIX class name is made of, "[:alpha:]".
-     */
-    private const POSIX_NAME_LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    /**
-     * The same text under "x", where "#" starts a comment that runs to the
-     * end of the line, which the caller reads.
-     */
-    private const GROUP_BODY_TEXT_EXTENDED = ' | [^()\\\\\\[\\#]++';
 
     // Optimized regex patterns broken into focused components
     private const PATTERNS_OUTSIDE = [
@@ -302,14 +266,10 @@ final class Lexer
     private string $wholePattern = '';
 
     /**
-     * Where the bodies opened in the whole pattern end, as far as they were
-     * read: by reading mode, then by the offset of their "(" in the whole
-     * pattern, the offset past their ")", null for a body that never
-     * closes, and the end of the text they were read in.
-     *
-     * @var array<int, array<int, array{0: int|null, 1: int}>>
+     * Where the bodies of the whole pattern end, as far as they were read:
+     * built at the first body the lexer reads ahead.
      */
-    private array $bodyEnds = [];
+    private ?BodyEnds $bodies = null;
 
     /**
      * @var list<Token>
@@ -384,7 +344,7 @@ final class Lexer
     public function tokenize(string $pattern, string $flags = '', bool $extendedMore = false): TokenStream
     {
         $this->wholePattern = $pattern;
-        $this->bodyEnds = [];
+        $this->bodies?->forget();
         $this->bodiesInPlace = false;
 
         return $this->read($pattern, $flags, $extendedMore, 0);
@@ -402,7 +362,7 @@ final class Lexer
     public function tokenizeInPlace(string $pattern, string $flags = ''): TokenStream
     {
         $this->wholePattern = $pattern;
-        $this->bodyEnds = [];
+        $this->bodies?->forget();
         $this->bodiesInPlace = true;
 
         return $this->read($pattern, $flags, false, 0);
@@ -424,7 +384,7 @@ final class Lexer
     {
         if ($pattern !== $this->wholePattern) {
             $this->wholePattern = $pattern;
-            $this->bodyEnds = [];
+            $this->bodies?->forget();
         }
 
         $this->bodiesInPlace = false;
@@ -539,32 +499,6 @@ final class Lexer
         return $this->regexes['outside'.($this->byteMode ? 1 : 0)] ??= $this->compilePattern(self::PATTERNS_OUTSIDE);
     }
 
-    /**
-     * One item of the body of an alphabetic assertion, varying with the byte
-     * mode and with "x", under which "#" starts a comment in the body too.
-     */
-    private function getRegexBodyItem(bool $extended): string
-    {
-        $key = 'body'.$this->bodyMode($extended);
-        if (!isset($this->regexes[$key])) {
-            $item = $extended
-                ? str_replace(self::GROUP_BODY_TEXT, self::GROUP_BODY_TEXT_EXTENDED, self::GROUP_BODY_ITEM)
-                : self::GROUP_BODY_ITEM;
-            $this->regexes[$key] = '/(?:'.$item.')/xsA'.($this->byteMode ? '' : 'u');
-        }
-
-        return $this->regexes[$key];
-    }
-
-    /**
-     * The reading mode of a body: the byte mode, and whether "x" and "xx"
-     * are in force where the body opens.
-     */
-    private function bodyMode(bool $extended, bool $extendedMore = false): int
-    {
-        return ($this->byteMode ? 1 : 0) + ($extended ? 2 : 0) + ($extendedMore ? 4 : 0);
-    }
-
     private function getRegexInside(): string
     {
         return $this->regexes['inside'.($this->byteMode ? 1 : 0)] ??= $this->compilePattern(self::PATTERNS_INSIDE);
@@ -642,7 +576,7 @@ final class Lexer
         }
 
         // "(?[...])", PCRE2 10.45: one token the parser reads the expression of.
-        if ($this->syntax->readsExtendedClass && !$this->inCharClass && '(?[' === substr($this->pattern, $this->position, 3)) {
+        if ('(' === $this->pattern[$this->position] && !$this->inCharClass && $this->syntax->readsExtendedClass && '(?[' === substr($this->pattern, $this->position, 3)) {
             $tokens[] = $this->consumeExtendedClass();
 
             return true;
@@ -805,7 +739,8 @@ final class Lexer
         }
 
         $inPlace = $this->readsBodyInPlace($opener, $tokens);
-        $end = $this->bodiesInPlace && $inPlace ? null : $this->alphabeticAssertionEnd($opener);
+        $end = $this->bodiesInPlace && $inPlace ? null
+            : ($this->bodies ??= new BodyEnds())->assertionEnd($this->text, $this->position, $opener, $this->extendedMode, $this->extendedMoreMode);
         $start = $this->position;
         if (null !== $end) {
             // The body is copied once, into the value of its token: the name
@@ -890,315 +825,15 @@ final class Lexer
     }
 
     /**
-     * Where the alphabetic assertion or script run opened at the cursor by
-     * $opener, "(*name:" or "(?*", ends past its ")"; null when its body
-     * never closes.
-     *
-     * The body is read as any group body is: a ")" escaped, quoted by
-     * \Q...\E, inside a class or inside a "(?#...)" comment does not close
-     * it, and its own groups nest as deep as they like. Each item is the
-     * first that matches at its place and is never read again; a "(" that
-     * opens no item opens a group, and the first character that neither
-     * starts an item nor opens or closes a group ends the body unclosed.
-     *
-     * An option setting in the body holds there as anywhere else: "x" set
-     * by "(?x)" or "(?xx)", cleared by "(?-x)" or "(?^)", holds to the end
-     * of the group it stands in, later alternatives included, and one set
-     * by "(?x:" only inside that group; a group's ")" gives back the mode
-     * its "(" was read in. Under "x" a "#" starts a comment that runs to
-     * the end of the line, a ")" in it included. Under "xx" the spaces and
-     * tabs before the first member of a class are skipped too.
-     */
-    private function alphabeticAssertionEnd(string $opener): ?int
-    {
-        // Each reading records where the groups it meets close, or that they
-        // never do, under the mode each "(" is read in: past the opener of a
-        // body, the reading from the "(" of that body goes on item for item
-        // as the reading of the body itself does, from the same mode. A body
-        // met again at the same place in the same mode is not read again:
-        // the end found holds in a text that still holds its ")" and ends no
-        // later than the text it was found in; "never closes" holds in a
-        // text that ends at the same place.
-        $extended = $this->extendedMode;
-        $extendedMore = $this->extendedMoreMode;
-        $textEnd = $this->text->offset + $this->length;
-        $known = $this->bodyEnds[$this->bodyMode($extended, $extendedMore)][$this->text->offset + $this->position] ?? null;
-        if (null !== $known && (null === $known[0] ? $known[1] === $textEnd : $known[0] <= $textEnd && $textEnd <= $known[1])) {
-            return null === $known[0] ? null : $known[0] - $this->text->offset;
-        }
-
-        $at = $this->position + \strlen($opener);
-        // Each group open: where its "(" stands, and whether "x" and "xx"
-        // held there.
-        $opened = [[$this->position, $extended, $extendedMore]];
-        // No ")" left, no body closes: the run of openers after it is not
-        // read again for each one.
-        if (!$this->text->follows(')', $at)) {
-            $this->unclosedBodies($opened);
-
-            return null;
-        }
-
-        while ($at < $this->length) {
-            if ('[' === $this->pattern[$at]) {
-                $at = $this->bodyClassEnd($at, $extendedMore);
-                if (null === $at) {
-                    $this->unclosedBodies($opened);
-
-                    return null;
-                }
-
-                continue;
-            }
-
-            // Under "x" a "#" comment runs to the newline the pattern sets.
-            if ($extended && '#' === $this->pattern[$at]) {
-                $newline = $this->text->nextNewline($at + 1);
-                $at = null === $newline ? $this->length : $newline[0] + $newline[1];
-                while ($at < $this->length && Utf8::continues($this->pattern[$at])) {
-                    $at++;
-                }
-
-                continue;
-            }
-
-            if ($this->text->opensUnclosedProperty($at)) {
-                $at += 2;
-
-                continue;
-            }
-
-            // An escape PHP 7.3 and 7.4 read as its character takes no more:
-            // "\p{L)}" is "p{L" then the ")" that closes the body.
-            if ($this->text->badEscapeIsLiteral && '\\' === $this->pattern[$at] && BadEscape::at($this->pattern, $at, false, $this->text->utf, $this->syntax->target)) {
-                $at += 2;
-
-                continue;
-            }
-
-            if (1 === LibraryPcre::match($this->getRegexBodyItem($extended), $this->pattern, $read, 0, $at)) {
-                $at += \strlen($read[0]);
-
-                continue;
-            }
-
-            $char = $this->pattern[$at];
-            // "(?[...])" is read as the lexer reads it, a "#" in it no comment.
-            if ('(' === $char && $this->syntax->readsExtendedClass && '(?[' === substr($this->pattern, $at, 3)) {
-                $at = $this->extendedClassEnd($at);
-
-                continue;
-            }
-
-            if ('(' === $char && '(?#' !== substr($this->pattern, $at, 3)) {
-                // "(?x)" changes the mode of the group it stands in, "(?x:"
-                // opens a group read in the mode it sets.
-                $setting = '?' === ($this->pattern[$at + 1] ?? '') ? $this->text->inlineFlags($at + 2) : null;
-                if (null === $setting || $setting[1]) {
-                    $opened[] = [$at, $extended, $extendedMore];
-                }
-
-                if (null !== $setting) {
-                    $extended = $setting[0]->inForce('x', $extended);
-                    $extendedMore = $setting[0]->extendedMoreInForce($extendedMore);
-                    $at = $setting[2];
-
-                    continue;
-                }
-            } elseif (')' !== $char) {
-                $this->unclosedBodies($opened);
-
-                return null;
-            } else {
-                [$open, $extended, $extendedMore] = array_pop($opened) ?? [$this->position, $extended, $extendedMore];
-                $this->bodyEnds[$this->bodyMode($extended, $extendedMore)][$this->text->offset + $open] = [$this->text->offset + $at + 1, $textEnd];
-                if ([] === $opened) {
-                    return $at + 1;
-                }
-            }
-
-            $at++;
-        }
-
-        $this->unclosedBodies($opened);
-
-        return null;
-    }
-
-    /**
-     * Record that none of the groups still open when the reading of a body
-     * stopped closes in the text read, each under the mode its "(" was read
-     * in.
-     *
-     * @param list<array{0: int, 1: bool, 2: bool}> $opened
-     */
-    private function unclosedBodies(array $opened): void
-    {
-        foreach ($opened as [$open, $extended, $extendedMore]) {
-            $this->bodyEnds[$this->bodyMode($extended, $extendedMore)][$this->text->offset + $open] = [null, $this->text->offset + $this->length];
-        }
-    }
-
-    /**
-     * Where the class opened at $open in the body of an alphabetic assertion
-     * ends, past its "]"; null when it never closes.
-     *
-     * A "]" first in the class is a member, as PCRE reads it: PCRE skips
-     * "\E", an empty "\Q\E" and one "^", in any order, before the first
-     * member, so "[]" alone never closes, and the class runs to the end of
-     * the text, and "[\E]a]" holds "]" and "a". A member is a POSIX class
-     * "[:alpha:]", a quoted run, an escape ("\c" with the character it
-     * takes, "\p{...}" to its "}"), or any character but "]" and the
-     * backslash. Under "xx" PCRE skips spaces and tabs there too, so
-     * "[ ]a]" holds "]" and "a".
-     */
-    private function bodyClassEnd(int $open, bool $extendedMore): ?int
-    {
-        $first = $open + 1;
-        $negated = false;
-        while (true) {
-            if ($extendedMore && \in_array($this->pattern[$first] ?? '', [' ', "\t"], true)) {
-                $first++;
-            } elseif ('\\E' === substr($this->pattern, $first, 2)) {
-                $first += 2;
-            } elseif ('\\Q\\E' === substr($this->pattern, $first, 4)) {
-                $first += 4;
-            } elseif (!$negated && '^' === ($this->pattern[$first] ?? '')) {
-                $negated = true;
-                $first++;
-            } else {
-                break;
-            }
-        }
-
-        $first += ']' === ($this->pattern[$first] ?? '') ? 1 : 0;
-        $end = $this->bodyClassMembersEnd($first);
-
-        return ']' === ($this->pattern[$end] ?? '') ? $end + 1 : null;
-    }
-
-    /**
-     * Where the members of a class in the body of an alphabetic assertion,
-     * read from $at, stop: at a "]" that closes the class, at a backslash
-     * that ends the text read, or at the end. Each member is the first that
-     * matches at its place.
-     *
-     * A POSIX class is "[:", an optional "^", letters and ":]", as the lexer
-     * reads it in any class; any other "[:" is a member of one character.
-     * In "[[:[:]]" the first "]" closes the class, as it does for PCRE, and
-     * so it does in "[[:!:]]" and "[[::]]", names PCRE refuses: the class
-     * ends where the lexer ends it.
-     */
-    private function bodyClassMembersEnd(int $at): int
-    {
-        while ($at < $this->length) {
-            $char = $this->pattern[$at];
-            if (']' === $char) {
-                break;
-            }
-
-            // So is a POSIX item whose name holds a backslash, "[:\d-z:]".
-            $terminator = '[' === $char ? PosixItem::terminatorPastABackslash($this->pattern, $at) : null;
-            if (null !== $terminator) {
-                $at = $terminator + 2;
-
-                continue;
-            }
-
-            if ('[' === $char && ':' === ($this->pattern[$at + 1] ?? '')) {
-                $name = $at + 2 + ('^' === ($this->pattern[$at + 2] ?? '') ? 1 : 0);
-                $letters = strspn($this->pattern, self::POSIX_NAME_LETTERS, $name);
-                if ($letters > 0 && ':]' === substr($this->pattern, $name + $letters, 2)) {
-                    $at = $name + $letters + 2;
-
-                    continue;
-                }
-            }
-
-            if ('\\' !== $char) {
-                $at++;
-
-                continue;
-            }
-
-            if ($at + 1 >= $this->length) {
-                break;
-            }
-
-            if ('Q' === $this->pattern[$at + 1]) {
-                $quoteEnd = strpos($this->pattern, '\\E', $at + 2);
-                $at = false === $quoteEnd ? $this->length : $quoteEnd + 2;
-
-                continue;
-            }
-
-            // "\p{...}" runs to its "}", a "]" in it included, as the lexer
-            // reads it in a class.
-            if (!$this->text->opensUnclosedProperty($at) && 1 === LibraryPcre::match('/\G\\\\[pP]\{[^}]++\}/', $this->pattern, $property, 0, $at)) {
-                $at += \strlen($property[0]);
-
-                continue;
-            }
-
-            // "\c" takes the character after it, a "]" too; a byte at a time
-            // is enough, no character but its first byte can be "]" or "\".
-            $at += 'c' === $this->pattern[$at + 1] && $at + 2 < $this->length ? 3 : 2;
-        }
-
-        return $at;
-    }
-
-    /**
      * "(?[" to the "]" that closes it at its own level, and the ")" after it;
      * to the end of the pattern when none does. The parser judges the text.
      */
     private function consumeExtendedClass(): Token
     {
         $start = $this->position;
-        $this->position = $this->extendedClassEnd($start);
+        $this->position = BodyEnds::extendedClassEnd($this->text, $start);
 
         return new Token(TokenType::ExtendedClass, substr($this->pattern, $start, $this->position - $start), $start);
-    }
-
-    /**
-     * Where the "(?[" at $start ends: past the "]" that closes it at its own
-     * level and the ")" after it, at a ")" at its own level, or at the end
-     * of the text.
-     */
-    private function extendedClassEnd(int $start): int
-    {
-        $at = $start + 3;
-        $depth = 0;
-        while ($at < $this->length) {
-            $char = $this->pattern[$at];
-            if ('\\' === $char) {
-                $quoteEnd = 'Q' === ($this->pattern[$at + 1] ?? '') ? strpos($this->pattern, '\\E', $at + 2) : null;
-                $at = null === $quoteEnd ? $at + ExtendedClassReader::escapeLength($this->pattern, $at, $this->text->utf) : (false === $quoteEnd ? $this->length : $quoteEnd + 2);
-
-                continue;
-            }
-
-            if ('[' === $char) {
-                $at = ExtendedClassReader::endOfClass($this->pattern, $at);
-
-                continue;
-            }
-
-            if (')' === $char && 0 === $depth) {
-                break;
-            }
-
-            if (']' === $char && 0 === $depth) {
-                $at += ')' === ($this->pattern[$at + 1] ?? '') ? 2 : 1;
-
-                break;
-            }
-
-            $depth += '(' === $char ? 1 : (')' === $char ? -1 : 0);
-            $at++;
-        }
-
-        return min($at, $this->length);
     }
 
     /**
