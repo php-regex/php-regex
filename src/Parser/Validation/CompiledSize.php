@@ -259,7 +259,7 @@ final class CompiledSize
             // A DEFINE group is brackets and a condition never true, a script
             // run brackets, inside an atomic group when atomic.
             $node instanceof DefineNode => $this->floor($node->content) + CompiledLength::BRACKETS + 1,
-            $node instanceof ScriptRunNode => null === $node->content ? 0 : $this->floor($node->content) + ($node->atomic ? 2 : 1) * CompiledLength::BRACKETS,
+            $node instanceof ScriptRunNode => null === $node->content ? 0 : $this->floor($node->content) + ($node->isAtomic ? 2 : 1) * CompiledLength::BRACKETS,
             $node instanceof DotNode, $node instanceof CharLiteralNode => 1,
             // A callout carries its number or its string; a verb its name.
             $node instanceof CalloutNode => \is_string($node->identifier) && $node->isStringIdentifier ? 11 + \strlen($node->identifier) : 6,

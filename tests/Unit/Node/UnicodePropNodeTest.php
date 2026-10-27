@@ -49,7 +49,7 @@ final class UnicodePropNodeTest extends TestCase
 
         $this->assertSame($prop, $node->prop);
         $this->assertSame($hasBraces, $node->hasBraces);
-        $this->assertSame($negatedSyntax, $node->negatedSyntax);
+        $this->assertSame($negatedSyntax, $node->isNegatedSyntax);
         $this->assertSame($start, $node->getStartPosition());
         $this->assertSame($end, $node->getEndPosition());
         $this->assertSame($printed, (new PatternPrinter())->visitRegex(new RegexNode($node, '', '/', 0, $end)));
@@ -66,7 +66,7 @@ final class UnicodePropNodeTest extends TestCase
         $this->assertSame(4, $node->getStartPosition());
         $this->assertSame(4, $node->getEndPosition());
         $this->assertFalse($node->hasBraces);
-        $this->assertFalse($node->negatedSyntax);
+        $this->assertFalse($node->isNegatedSyntax);
     }
 
     /**

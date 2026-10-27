@@ -117,7 +117,7 @@ final class SilentMeaningChange
             $item = $node->node;
 
             return null !== $bounds && 1 === $bounds->min && 1 === $bounds->max
-                && (($item instanceof GroupNode && !self::isAtomicOrLookaround($item)) || ($item instanceof ScriptRunNode && !$item->atomic) || $item instanceof SubroutineNode);
+                && (($item instanceof GroupNode && !self::isAtomicOrLookaround($item)) || ($item instanceof ScriptRunNode && !$item->isAtomic) || $item instanceof SubroutineNode);
         });
     }
 

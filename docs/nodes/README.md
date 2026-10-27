@@ -612,10 +612,11 @@ echo $posix->class;  // 'digit'
 
 **Fields:**
 
-| Field       | Type   | Description                                        |
-|-------------|--------|----------------------------------------------------|
-| `prop`      | string | The property specifier, as written (`{L}`, `L`)    |
-| `hasBraces` | bool   | True for `\p{L}`, false for `\pL`                  |
+| Field             | Type   | Description                                         |
+|-------------------|--------|-----------------------------------------------------|
+| `prop`            | string | The property specifier, as written (`{L}`, `L`)     |
+| `hasBraces`       | bool   | True for `\p{L}`, false for `\pL`                   |
+| `isNegatedSyntax` | bool   | True for `\P{L}` and `\PL`, false for `\p{^L}`      |
 
 **Common Unicode Properties:**
 
@@ -914,11 +915,11 @@ echo $limit->limit;  // 1000
 
 **Fields:**
 
-| Field     | Type                | Description                                        |
-|-----------|---------------------|----------------------------------------------------|
-| `script`  | string              | The body as written                                |
-| `content` | NodeInterface\|null | The parsed body; its positions count from its start |
-| `atomic`  | bool                | Whether the body is atomic (`(*asr:...)`)          |
+| Field      | Type                | Description                                         |
+|------------|---------------------|-----------------------------------------------------|
+| `script`   | string              | The body as written                                 |
+| `content`  | NodeInterface\|null | The parsed body; its positions count from its start |
+| `isAtomic` | bool                | Whether the body is atomic (`(*asr:...)`)           |
 
 **Example:**
 ```php
@@ -928,7 +929,7 @@ $ast = Regex::create()->parse('/(*asr:\d+)/');
 $run = $ast->pattern;
 
 echo $run->script;          // '\d+'
-var_dump($run->atomic);     // bool(true)
+var_dump($run->isAtomic);   // bool(true)
 ```
 
 ---
@@ -958,10 +959,10 @@ var_dump($keep instanceof \PHPRegex\Parser\Node\KeepNode);  // bool(true)
 
 **Fields:**
 
-| Field      | Type   | Description                                       |
-|------------|--------|---------------------------------------------------|
-| `comment`  | string | The comment text, as written                      |
-| `extended` | bool   | True for a `# ...` line under `x`, false for `(?#...)` |
+| Field        | Type   | Description                                            |
+|--------------|--------|--------------------------------------------------------|
+| `comment`    | string | The comment text, as written                           |
+| `isExtended` | bool   | True for a `# ...` line under `x`, false for `(?#...)` |
 
 **Example:**
 ```php
@@ -971,13 +972,13 @@ $ast = Regex::create()->parse('/a(?# a note)b/');
 $comment = $ast->pattern->children[1];
 
 echo $comment->comment;         // ' a note'
-var_dump($comment->extended);   // bool(false)
+var_dump($comment->isExtended); // bool(false)
 
 $ast = Regex::create()->parse('/a # trailing note/x');
 $comment = $ast->pattern->children[1];
 
 echo $comment->comment;         // '# trailing note'
-var_dump($comment->extended);   // bool(true)
+var_dump($comment->isExtended); // bool(true)
 ```
 
 ---
@@ -1085,7 +1086,7 @@ echo $ast->pattern->children[2]->endPosition;  // 3, the body's length
 | `CharClassNode`            | Character set    | `expression`, `isNegated`                 |
 | `RangeNode`                | Range in class   | `start`, `end`                            |
 | `PosixClassNode`           | `[:alpha:]` etc. | `class`                                   |
-| `UnicodePropNode`          | `\p{...}`        | `prop`, `hasBraces`                       |
+| `UnicodePropNode`          | `\p{...}`        | `prop`, `hasBraces`, `isNegatedSyntax`    |
 | `ExtendedCharClassNode`    | Extended class   | `expression`, `text`                      |
 | `ClassSetOperationNode`    | Set operation    | `operator`, `left`, `right`               |
 | `BackrefNode`              | Backreference    | `ref`                                     |
@@ -1093,11 +1094,11 @@ echo $ast->pattern->children[2]->endPosition;  // 3, the body's length
 | `VersionConditionNode`     | VERSION test     | `operator`, `version`                     |
 | `SubroutineNode`           | Group call       | `reference`, `syntax`                     |
 | `DefineNode`               | `(?DEFINE...)`   | `content`                                 |
-| `CommentNode`              | Comment          | `comment`, `extended`                     |
+| `CommentNode`              | Comment          | `comment`, `isExtended`                   |
 | `CalloutNode`              | `(?C...)`        | `identifier`, `isStringIdentifier`        |
 | `PcreVerbNode`             | `(*VERB)`        | `verb`                                    |
 | `LimitMatchNode`           | `(*LIMIT_MATCH=)`| `limit`                                   |
-| `ScriptRunNode`            | `(*sr:...)`      | `script`, `content`, `atomic`             |
+| `ScriptRunNode`            | `(*sr:...)`      | `script`, `content`, `isAtomic`           |
 
 ---
 

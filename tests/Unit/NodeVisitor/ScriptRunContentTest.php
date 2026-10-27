@@ -93,7 +93,7 @@ final class ScriptRunContentTest extends TestCase
 
         $this->assertInstanceOf(ScriptRunNode::class, $node);
         $this->assertSame('', $node->script);
-        $this->assertSame($atomic, $node->atomic);
+        $this->assertSame($atomic, $node->isAtomic);
         $this->assertNotNull($node->content);
         $this->assertSame($end, $node->getEndPosition());
     }

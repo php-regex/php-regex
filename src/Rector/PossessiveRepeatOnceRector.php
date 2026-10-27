@@ -162,7 +162,7 @@ final class PossessiveRepeatOnceRector extends AbstractRector
     private static function flips(NodeInterface $item): bool
     {
         if ($item instanceof ScriptRunNode) {
-            return !$item->atomic;
+            return !$item->isAtomic;
         }
 
         if ($item instanceof SubroutineNode) {

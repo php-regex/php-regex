@@ -83,7 +83,7 @@ final class QuantifierModifierAfterCommentTest extends TestCase
             $comment = $sequence->children[$index + 1];
             $this->assertInstanceOf(CommentNode::class, $comment);
             $this->assertSame($text, $comment->comment);
-            $this->assertTrue($comment->extended);
+            $this->assertTrue($comment->isExtended);
             $this->assertSame($start, $comment->getStartPosition());
             $this->assertSame($end, $comment->getEndPosition());
         }

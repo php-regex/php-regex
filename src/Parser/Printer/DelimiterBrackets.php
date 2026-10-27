@@ -624,7 +624,7 @@ final class DelimiterBrackets
             }
 
             $id = spl_object_id($owner);
-            if (!$owner->extended && !isset($trimmed[$id])) {
+            if (!$owner->isExtended && !isset($trimmed[$id])) {
                 $kept[$id] = strtr($owner->comment, "\r\n", '  ');
             } else {
                 $kept[$id] = ($kept[$id] ?? '').($isOpening ? $opening : $closing);

@@ -37,7 +37,7 @@ final class ScriptRunNode extends AbstractNode
          * Whether the body is atomic: "(*atomic_script_run:...)", short
          * "(*asr:...)", the same as "(*sr:(?>...))".
          */
-        public readonly bool $atomic = false,
+        public readonly bool $isAtomic = false,
     ) {
         parent::__construct($startPosition, $endPosition);
     }

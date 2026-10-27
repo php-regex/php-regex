@@ -28,7 +28,7 @@ final class UnicodePropNode extends AbstractNode
         /**
          * Whether the source used the \P negated syntax (vs \p{^...}).
          */
-        public readonly bool $negatedSyntax = false,
+        public readonly bool $isNegatedSyntax = false,
     ) {
         parent::__construct($startPosition, $endPosition ?? $startPosition);
     }

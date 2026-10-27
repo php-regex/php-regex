@@ -368,7 +368,7 @@ final class PatternLayout
             $gap = null === $previous ? '' : $this->gap($previous, $child);
             $blank = null !== $previous && substr_count($gap, "\n") + ($previous instanceof CommentNode && str_ends_with($previous->comment, "\n") ? 1 : 0) >= 2;
 
-            if ($child instanceof CommentNode && $child->extended) {
+            if ($child instanceof CommentNode && $child->isExtended) {
                 $text = $child->accept($this->printer);
                 $trailing = null !== $previous && !$previous instanceof CommentNode && !str_contains($gap, "\n");
                 if ('' !== $current) {
@@ -1041,7 +1041,7 @@ final class PatternLayout
     {
         $children = $node->children;
         $last = $children[\count($children) - 1] ?? null;
-        if (!$last instanceof CommentNode || !$last->extended || \count($children) < 2 || $last === $this->skipNode) {
+        if (!$last instanceof CommentNode || !$last->isExtended || \count($children) < 2 || $last === $this->skipNode) {
             return null;
         }
 
@@ -1113,7 +1113,7 @@ final class PatternLayout
             $first = $children[0] ?? null;
         }
 
-        if (!$first instanceof CommentNode || !$first->extended || $first === $node || null === $this->source) {
+        if (!$first instanceof CommentNode || !$first->isExtended || $first === $node || null === $this->source) {
             return null;
         }
 

@@ -232,7 +232,7 @@ final class ExplanationBuilder extends AbstractNodeVisitor
     #[\Override]
     public function visitScriptRun(ScriptRunNode $node): Explanation
     {
-        $heading = \sprintf('%s (every character from one script)', $node->atomic ? 'Atomic script run' : 'Script run');
+        $heading = \sprintf('%s (every character from one script)', $node->isAtomic ? 'Atomic script run' : 'Script run');
         if (null === $node->content) {
             return Explanation::leaf($heading);
         }

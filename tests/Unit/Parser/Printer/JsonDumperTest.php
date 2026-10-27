@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Printer;
 
+use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\ScriptRunNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Parser\Printer\JsonDumper;
 use PHPRegex\Parser\RegexParser;
@@ -302,6 +305,33 @@ final class JsonDumperTest extends TestCase
                 ['type' => 'backref', 'start' => 3, 'end' => 5, 'reference' => '\1', 'groups' => []],
             ],
         ], $tree->pattern->accept(new JsonDumper()));
+    }
+
+    /**
+     * The node flags read as $isExtended, $isAtomic and $isNegatedSyntax in
+     * PHP, the way $isNegated sits beside "negated", while the document keeps
+     * its keys and its version.
+     */
+    #[Test]
+    public function test_the_node_flags_keep_their_document_keys(): void
+    {
+        $tree = RegexParser::create(['cache' => null, 'pcre_version' => '10.49'])->parse("/(*asr:a)\\P{L} #d\n/xu");
+        $children = $tree->pattern->getChildren();
+        $this->assertCount(3, $children);
+        [$run, $property, $comment] = $children;
+        $this->assertInstanceOf(ScriptRunNode::class, $run);
+        $this->assertInstanceOf(UnicodePropNode::class, $property);
+        $this->assertInstanceOf(CommentNode::class, $comment);
+        $this->assertTrue($run->isAtomic);
+        $this->assertTrue($property->isNegatedSyntax);
+        $this->assertTrue($comment->isExtended);
+
+        $document = $tree->accept(new JsonDumper());
+        $this->assertSame(1, $document['version']);
+        $this->assertSame(JsonDumper::VERSION, $document['version']);
+        $this->assertSame([true], array_column(self::nodesOfType($document, 'script_run'), 'atomic'));
+        $this->assertSame([true], array_column(self::nodesOfType($document, 'comment'), 'extended'));
+        $this->assertSame([true], array_column(self::nodesOfType($document, 'unicode_property'), 'negated'));
     }
 
     /**

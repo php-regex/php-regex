@@ -507,7 +507,7 @@ final class RedosProfiler extends AbstractNodeVisitor
             return RedosSeverity::Safe;
         }
 
-        if (!$node->atomic) {
+        if (!$node->isAtomic) {
             return $node->content->accept($this);
         }
 

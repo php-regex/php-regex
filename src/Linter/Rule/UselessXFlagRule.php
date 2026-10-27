@@ -60,7 +60,7 @@ final class UselessXFlagRule extends AbstractLintRule
 
     public function check(NodeInterface $node, LintContext $context): array
     {
-        if ($node instanceof CommentNode && $node->extended) {
+        if ($node instanceof CommentNode && $node->isExtended) {
             $this->hasComment = true;
         }
 

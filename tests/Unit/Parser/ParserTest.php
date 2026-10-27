@@ -1008,8 +1008,8 @@ final class ParserTest extends TestCase
         $this->assertSame("# one\n", $comments[0]->comment);
         $this->assertSame("# two\n", $comments[1]->comment);
         // Both were written as "# ..." lines, not (?#...) groups.
-        $this->assertTrue($comments[0]->extended);
-        $this->assertTrue($comments[1]->extended);
+        $this->assertTrue($comments[0]->isExtended);
+        $this->assertTrue($comments[1]->isExtended);
 
         // The literal after the comments still belongs to the pattern.
         $literals = array_values(array_filter($nodes, static fn ($node) => $node instanceof LiteralNode));

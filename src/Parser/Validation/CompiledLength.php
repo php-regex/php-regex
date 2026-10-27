@@ -640,7 +640,7 @@ final class CompiledLength
 
         if ($node instanceof ScriptRunNode && null !== $node->content) {
             // An atomic script run is a script run inside an atomic group.
-            return [self::branchesOf($node->content), $node->atomic ? [2 * self::BRACKETS, 2 * self::BRACKETS] : [self::BRACKETS, self::BRACKETS], $caseless, null];
+            return [self::branchesOf($node->content), $node->isAtomic ? [2 * self::BRACKETS, 2 * self::BRACKETS] : [self::BRACKETS, self::BRACKETS], $caseless, null];
         }
 
         return null;

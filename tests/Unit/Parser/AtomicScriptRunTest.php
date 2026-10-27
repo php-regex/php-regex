@@ -95,13 +95,13 @@ final class AtomicScriptRunTest extends TestCase
         $node = Regex::create(['cache' => null])->parse('/(*asr:a+)/')->pattern;
 
         $this->assertInstanceOf(ScriptRunNode::class, $node);
-        $this->assertTrue($node->atomic);
+        $this->assertTrue($node->isAtomic);
         $this->assertSame('a+', $node->script);
         $this->assertNotNull($node->content);
 
         $plain = Regex::create(['cache' => null])->parse('/(*sr:a+)/')->pattern;
         $this->assertInstanceOf(ScriptRunNode::class, $plain);
-        $this->assertFalse($plain->atomic);
+        $this->assertFalse($plain->isAtomic);
     }
 
     #[Test]

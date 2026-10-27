@@ -885,7 +885,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     {
         // "(*sr:...)" is the same verb written short, "(*asr:...)" its
         // atomic form.
-        $spellings = $node->atomic ? ['asr', 'atomic_script_run'] : ['sr', 'script_run'];
+        $spellings = $node->isAtomic ? ['asr', 'atomic_script_run'] : ['sr', 'script_run'];
         $written = $this->writtenText($node);
         if (null !== $written && \in_array($written, ['(*'.$spellings[0].':'.$node->script.')', '(*'.$spellings[1].':'.$node->script.')'], true)) {
             return $written;
@@ -907,7 +907,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     {
         $prop = $node->hasBraces ? trim($node->prop, '{}') : $node->prop;
 
-        if ($node->negatedSyntax) {
+        if ($node->isNegatedSyntax) {
             // Undo the "^" normalization so \P{L} round-trips byte-identically.
             $inner = str_starts_with($prop, '^') ? substr($prop, 1) : '^'.$prop;
 
@@ -964,7 +964,7 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         // A "#" comment ends its line: a laid-out line writes it without the
         // line break, which the layout puts back.
-        if ($this->laysOut() && $node->extended) {
+        if ($this->laysOut() && $node->isExtended) {
             $this->layout?->noteLineComment();
 
             return null !== $this->layout && $this->layout->isActive() ? rtrim($node->comment, "\n") : $node->comment;
@@ -972,7 +972,7 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         // A comment written as "# ..." is extended-mode whatever the pattern
         // flags say: /x can also be turned on inline with "(?x)".
-        $isExtended = $node->extended || str_contains($this->flags, 'x');
+        $isExtended = $node->isExtended || str_contains($this->flags, 'x');
 
         // In normalized mode, collapse all extended (/x) comments to a
         // lightweight inline placeholder so that we preserve structure
@@ -986,7 +986,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // with their trailing newline.
         // An inline "(?##c)" keeps its parentheses: printed as "#c" it would
         // run to the end of the line and swallow what follows.
-        if ($isExtended && $node->extended) {
+        if ($isExtended && $node->isExtended) {
             return $node->comment;
         }
 

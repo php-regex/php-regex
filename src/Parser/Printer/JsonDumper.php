@@ -288,7 +288,7 @@ final class JsonDumper extends AbstractNodeVisitor
         return [
             ...$this->node('script_run', $node),
             'script' => self::text($node->script),
-            'atomic' => $node->atomic,
+            'atomic' => $node->isAtomic,
             'content' => $node->content?->accept($this),
         ];
     }
@@ -340,7 +340,7 @@ final class JsonDumper extends AbstractNodeVisitor
     #[\Override]
     public function visitComment(CommentNode $node): array
     {
-        return [...$this->node('comment', $node), 'text' => self::text($node->comment), 'extended' => $node->extended];
+        return [...$this->node('comment', $node), 'text' => self::text($node->comment), 'extended' => $node->isExtended];
     }
 
     /**
