@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli\SelfUpdate;
 
-use PHPRegex\Cli\CliException;
+use PHPRegex\Cli\Exception\CliException;
 
 /**
  * Downloads over HTTP with PHP's streams, falling back on curl, then on

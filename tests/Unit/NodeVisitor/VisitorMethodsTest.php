@@ -15,7 +15,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Explain\HtmlExplainer;
 use PHPRegex\Explain\TextExplainer;
-use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Analysis\ComplexityScorer;

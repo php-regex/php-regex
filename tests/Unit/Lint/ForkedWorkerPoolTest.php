@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint;
 
-use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
@@ -847,7 +847,7 @@ final class ForkedWorkerPoolTest extends TestCase
                     [],
                     static fn (int $item): string => 'file'.$item.'.php',
                 ));
-            } catch (PHPRegex\Linter\LintException $e) {
+            } catch (PHPRegex\Linter\Exception\LintException $e) {
                 echo substr($e->getMessage(), 0, 200);
             }
             PHP_WRAP, var_export($this->autoload(), true), var_export($directory, true));

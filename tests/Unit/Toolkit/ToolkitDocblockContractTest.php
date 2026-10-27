@@ -18,7 +18,7 @@ use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Transpiler\TranspileException;
+use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Transpiler;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;

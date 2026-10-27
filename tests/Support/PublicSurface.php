@@ -36,10 +36,10 @@ final class PublicSurface
             'TextExplainer', 'HtmlExplainer', 'AsciiTreeRenderer', 'MermaidRenderer', 'RailroadSvgRenderer',
             'Highlighter/ConsoleHighlighter', 'Highlighter/HtmlHighlighter',
         ],
-        'Generator' => ['SampleGenerator', 'TestCaseGenerator', 'SampleGenerationException'],
+        'Generator' => ['SampleGenerator', 'TestCaseGenerator', 'Exception/SampleGenerationException'],
         'LanguageServer' => [],
         'Laravel' => ['PHPRegexServiceProvider', 'Facades/Regex', 'Rules/ValidRegex'],
-        'Linter' => ['PatternLinter', 'LintSeverity', 'LintException', 'Rule/RuleViolation', 'UnknownLintRuleException'],
+        'Linter' => ['PatternLinter', 'LintSeverity', 'Exception/LintException', 'Rule/RuleViolation', 'Exception/UnknownLintRuleException', 'Exception/UnsupportedTargetException'],
         'Optimizer' => ['Optimizer', 'OptimizerOptions', 'OptimizationResult', 'Modernizer', 'RedosRepairer', 'RedosRepair'],
         'Parser' => [
             'RegexParser', 'Attribute/RegexPattern', 'ParserOptions', 'PcreTarget', 'PcreFeature', 'ErrorCode', 'DelimitedPattern',
@@ -61,7 +61,7 @@ final class PublicSurface
             'Exception/ExceptionInterface', 'Exception/RegexException', 'Exception/LexerException',
             'Exception/ParserException', 'Exception/SyntaxErrorException', 'Exception/SemanticErrorException',
             'Exception/LimitException', 'Exception/RecursionLimitException', 'Exception/ResourceLimitException',
-            'Exception/InvalidRegexOptionException', 'Exception/CacheException', 'Exception/InternalFailureException', 'Exception/FormattingException', 'Exception/VisualContextInterface',
+            'Exception/InvalidRegexOptionException', 'Exception/CacheException', 'Exception/InternalFailureException', 'Exception/FormattingException', 'Exception/JsonEncodingException', 'Exception/VisualContextInterface',
             'Node/*',
         ],
         'PHPStan' => ['RegexPatternRule', 'RegexPatternArgumentRule'],
@@ -76,7 +76,7 @@ final class PublicSurface
         ],
         'Symfony' => ['PHPRegexBundle', 'Validator/Constraints/ValidRegex', 'Validator/Constraints/ValidRegexValidator'],
         'Toolkit' => ['Regex', 'AnalysisReport', 'OutputFormat'],
-        'Transpiler' => ['Transpiler', 'TranspileOptions', 'TranspileResult', 'TranspileException'],
+        'Transpiler' => ['Transpiler', 'TranspileOptions', 'TranspileResult', 'Exception/TranspileException'],
     ];
 
     /**

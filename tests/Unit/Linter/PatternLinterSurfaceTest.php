@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Linter;
 
+use PHPRegex\Linter\Exception\UnknownLintRuleException;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPRegex\Linter\Rule\RuleCatalog;
-use PHPRegex\Linter\UnknownLintRuleException;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;

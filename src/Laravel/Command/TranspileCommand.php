@@ -21,8 +21,8 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\TargetRegistry;
-use PHPRegex\Transpiler\TranspileException;
 use PHPRegex\Transpiler\TranspileOptions;
 
 /**

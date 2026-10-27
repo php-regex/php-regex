@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Cli\Graph;
 
 use PHPRegex\Automata\Model\Nfa;
-use PHPRegex\Cli\CliException;
+use PHPRegex\Cli\Exception\CliException;
 
 /**
  * @internal

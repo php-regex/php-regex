@@ -162,7 +162,7 @@ final class UpgradeMap
         'RegexParser\\Exception\\ResourceLimitException' => 'PHPRegex\\Parser\\Exception\\ResourceLimitException',
         'RegexParser\\Exception\\SemanticErrorException' => 'PHPRegex\\Parser\\Exception\\SemanticErrorException',
         'RegexParser\\Exception\\SyntaxErrorException' => 'PHPRegex\\Parser\\Exception\\SyntaxErrorException',
-        'RegexParser\\Exception\\TranspileException' => 'PHPRegex\\Transpiler\\TranspileException',
+        'RegexParser\\Exception\\TranspileException' => 'PHPRegex\\Transpiler\\Exception\\TranspileException',
         'RegexParser\\Exception\\VisualContextTrait' => 'PHPRegex\\Parser\\Exception\\VisualContextTrait',
         'RegexParser\\GroupNumbering' => 'PHPRegex\\Parser\\Analysis\\GroupNumbering',
         'RegexParser\\GroupNumberingCollector' => 'PHPRegex\\Parser\\Analysis\\GroupNumberingCollector',

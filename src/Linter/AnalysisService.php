@@ -21,6 +21,7 @@ use PHPRegex\Linter\Advice\ValidationTips;
 use PHPRegex\Linter\Config\JudgedRange;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\TargetConstraint;
+use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;

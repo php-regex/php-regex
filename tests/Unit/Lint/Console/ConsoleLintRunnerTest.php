@@ -15,9 +15,9 @@ namespace PHPRegex\Tests\Unit\Lint\Console;
 
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Config\ProjectTarget;
-use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\Console\ConsoleLintRequest;
 use PHPRegex\Linter\Console\ConsoleLintRunner;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintService;

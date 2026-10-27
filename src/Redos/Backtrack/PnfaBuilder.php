@@ -39,6 +39,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Redos\Exception\ModelLimitException;
 
 /**
  * Builds the prioritized NFA of a pattern, Thompson style, from its AST.
@@ -229,7 +230,7 @@ final class PnfaBuilder
     /**
      * The search of the pattern first, then one per lookaround.
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      *
      * @return list<Pnfa>
      */
@@ -453,7 +454,7 @@ final class PnfaBuilder
                 // "(?*...)", "(*napla:...)" and their lookbehind forms backtrack
                 // into their body: outside the model.
                 if ('*' === $node->flags) {
-                    throw ModelLimit::outOfModel('A non-atomic lookaround');
+                    throw ModelLimitException::outOfModel('A non-atomic lookaround');
                 }
 
                 if ($this->inPlace) {
@@ -503,7 +504,7 @@ final class PnfaBuilder
                 return $this->approximated($node->getStartPosition(), $node->child, $next, $flags, $pnfa, $search);
 
             default:
-                throw ModelLimit::outOfModel('A '.$node->type->value.' group');
+                throw ModelLimitException::outOfModel('A '.$node->type->value.' group');
         }
     }
 
@@ -511,7 +512,7 @@ final class PnfaBuilder
     {
         $bounds = QuantifierBounds::parse($node->quantifier);
         if (null === $bounds) {
-            throw ModelLimit::outOfModel('The quantifier '.$node->quantifier);
+            throw ModelLimitException::outOfModel('The quantifier '.$node->quantifier);
         }
 
         $min = $bounds->min;
@@ -520,7 +521,7 @@ final class PnfaBuilder
             // The copies of a bounded repeat each may match empty: PCRE tries
             // every way to share the input among them, outside the model.
             if (self::nullable($node->node)) {
-                throw ModelLimit::outOfModel('A bounded repeat of a body that can match empty');
+                throw ModelLimitException::outOfModel('A bounded repeat of a body that can match empty');
             }
 
             // Copies that read the same input in two ways: the unbounded loop
@@ -770,7 +771,7 @@ final class PnfaBuilder
     {
         $characters = Utf8::decode($node->value, $this->unicode);
         if (null === $characters) {
-            throw ModelLimit::outOfModel('A literal that is not UTF-8');
+            throw ModelLimitException::outOfModel('A literal that is not UTF-8');
         }
 
         for ($index = \count($characters) - 1; $index >= 0; $index--) {
@@ -796,7 +797,7 @@ final class PnfaBuilder
             'z' => $pnfa->peek($none, true, $next),
             'Z' => $this->endOrFinalNewline($next, $pnfa),
             'b', 'B' => $pnfa->boundary('B' === $node->value, $this->wordSet($flags), $next),
-            default => throw ModelLimit::outOfModel('The assertion \\'.$node->value),
+            default => throw ModelLimitException::outOfModel('The assertion \\'.$node->value),
         };
     }
 
@@ -809,7 +810,7 @@ final class PnfaBuilder
     {
         $set = $this->query('\\w', $flags);
         if (null !== $this->wordSet && $this->wordSet->key() !== $set->key()) {
-            throw ModelLimit::outOfModel('Word boundaries under different ASCII options');
+            throw ModelLimitException::outOfModel('Word boundaries under different ASCII options');
         }
 
         return $this->wordSet = $set;
@@ -838,7 +839,7 @@ final class PnfaBuilder
         }
 
         if ($node instanceof CharTypeNode && \in_array($node->value, self::OUT_OF_MODEL_TYPES, true)) {
-            throw ModelLimit::outOfModel('\\'.$node->value);
+            throw ModelLimitException::outOfModel('\\'.$node->value);
         }
 
         if ($node instanceof CharClassNode) {
@@ -857,13 +858,13 @@ final class PnfaBuilder
             return $this->query($this->text($node), $flags);
         }
 
-        throw ModelLimit::outOfModel('The node '.(new \ReflectionClass($node))->getShortName());
+        throw ModelLimitException::outOfModel('The node '.(new \ReflectionClass($node))->getShortName());
     }
 
     private function characterSet(int $codePoint, int $flags): CharSet
     {
         if ($codePoint > ($this->unicode ? 0x10FFFF : 0xFF)) {
-            throw ModelLimit::outOfModel('A character beyond the alphabet');
+            throw ModelLimitException::outOfModel('A character beyond the alphabet');
         }
 
         if (0 === ($flags & self::CASELESS)) {

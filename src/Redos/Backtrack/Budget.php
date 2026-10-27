@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Backtrack;
 
+use PHPRegex\Redos\Exception\ModelLimitException;
+
 /**
  * The analysis budget, counted in steps and states, never in time: the same
  * pattern stops at the same point on every machine.
@@ -28,24 +30,24 @@ final class Budget
     public function __construct(private readonly int $maxSteps, private readonly int $maxStates) {}
 
     /**
-     * @throws ModelLimit
+     * @throws ModelLimitException
      */
     public function step(int $count = 1): void
     {
         $this->steps += $count;
         if ($this->steps > $this->maxSteps) {
-            throw ModelLimit::budget('Steps');
+            throw ModelLimitException::budget('Steps');
         }
     }
 
     /**
-     * @throws ModelLimit
+     * @throws ModelLimitException
      */
     public function state(): void
     {
         $this->states++;
         if ($this->states > $this->maxStates) {
-            throw ModelLimit::budget('States');
+            throw ModelLimitException::budget('States');
         }
 
         $this->step();

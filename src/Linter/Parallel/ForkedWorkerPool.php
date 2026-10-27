@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Parallel;
 
-use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\LintProgress;
 use PHPRegex\Parser\Engine\LibraryPcre;
 

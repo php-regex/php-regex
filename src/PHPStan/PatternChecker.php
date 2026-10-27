@@ -17,7 +17,7 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Scalar\String_;
 use PHPRegex\Linter\AnalysisService;
-use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Optimizer\OptimizationResult;

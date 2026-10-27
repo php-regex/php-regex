@@ -26,8 +26,8 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\TranspileContext;
-use PHPRegex\Transpiler\TranspileException;
 
 /**
  * What every target's compiler needs, whatever dialect it writes.

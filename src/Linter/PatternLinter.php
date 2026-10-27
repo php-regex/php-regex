@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter;
 
 use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Linter\Exception\UnknownLintRuleException;
 use PHPRegex\Linter\Rule\GroupIndex;
 use PHPRegex\Linter\Rule\LintContext;
 use PHPRegex\Linter\Rule\LintRuleInterface;

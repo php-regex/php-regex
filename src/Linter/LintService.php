@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter;
 
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Formatter\RelativePathHelper;

@@ -30,7 +30,7 @@ use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Transpiler\TranspileException;
+use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

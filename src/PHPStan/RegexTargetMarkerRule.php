@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\PHPStan;
 
 use PhpParser\Node;
-use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPStan\Analyser\Scope;
 use PHPStan\Node\FileNode;

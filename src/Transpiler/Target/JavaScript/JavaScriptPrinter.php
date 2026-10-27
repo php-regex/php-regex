@@ -49,9 +49,9 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\AbstractTargetPrinter;
 use PHPRegex\Transpiler\TranspileContext;
-use PHPRegex\Transpiler\TranspileException;
 
 /**
  * Compiles PCRE AST nodes into JavaScript-compatible regex source.

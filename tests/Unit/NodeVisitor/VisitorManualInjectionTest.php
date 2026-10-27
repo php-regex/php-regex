@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
-use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Node\AlternationNode;

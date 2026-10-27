@@ -895,6 +895,9 @@ Exception hierarchy (simplified):
   - `CacheException` (a cache directory or file that cannot be written)
   - `InternalFailureException` (the library could not finish its own work: no verdict on the pattern)
   - `LintException` (a lint formatter or worker that failed)
+  - `UnknownLintRuleException` (a rules map that names a rule the linter does not run)
+  - `UnsupportedTargetException` (a target PHP whose engine the library does not judge: PHP 7.2 and earlier ship PCRE1)
+  - `JsonEncodingException` (a value the JSON output cannot write)
   - `RegexException` (base exception with position and error code)
     - `LexerException` (tokenization failure)
     - `ParserException`
@@ -906,6 +909,15 @@ Exception hierarchy (simplified):
     - `TranspileException` (unsupported target or feature during transpile)
     - `SampleGenerationException` (no sample the pattern matches was found)
     - `ComplexityException` (a pattern outside what the automata can decide)
+
+Each class lives in the `Exception` namespace of its package:
+`PHPRegex\Parser\Exception\ExceptionInterface` and the parser's own,
+`PHPRegex\Linter\Exception\LintException`,
+`PHPRegex\Linter\Exception\UnknownLintRuleException`,
+`PHPRegex\Linter\Exception\UnsupportedTargetException`,
+`PHPRegex\Transpiler\Exception\TranspileException`,
+`PHPRegex\Generator\Exception\SampleGenerationException` and
+`PHPRegex\Automata\Exception\ComplexityException`.
 
 `SemanticErrorException` sits beside `ParserException`, not under it: a
 `catch (ParserException)` does not see it — catch `RegexException` to handle

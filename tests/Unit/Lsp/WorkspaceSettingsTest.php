@@ -16,7 +16,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 use PHPRegex\LanguageServer\Protocol\TraceLevel;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\WorkspaceSettings;
-use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;

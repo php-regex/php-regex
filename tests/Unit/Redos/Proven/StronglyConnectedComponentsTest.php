@@ -14,8 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Redos\Proven;
 
 use PHPRegex\Redos\Backtrack\Budget;
-use PHPRegex\Redos\Backtrack\ModelLimit;
 use PHPRegex\Redos\Backtrack\StronglyConnectedComponents;
+use PHPRegex\Redos\Exception\ModelLimitException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -72,7 +72,7 @@ final class StronglyConnectedComponentsTest extends TestCase
 
         $this->assertSame([[0], [1], [2]], StronglyConnectedComponents::of($graph, new Budget(5, 100))->components);
 
-        $this->expectException(ModelLimit::class);
+        $this->expectException(ModelLimitException::class);
         StronglyConnectedComponents::of($graph, new Budget(4, 100));
     }
 }

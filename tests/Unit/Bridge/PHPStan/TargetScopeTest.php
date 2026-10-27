@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\PHPStan;
 
-use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\PHPStan\TargetScope;
 use PHPStan\Php\PhpVersion;
 use PHPUnit\Framework\Attributes\DataProvider;

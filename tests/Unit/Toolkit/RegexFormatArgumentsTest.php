@@ -17,7 +17,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\OutputFormat;
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Transpiler\TranspileException;
+use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

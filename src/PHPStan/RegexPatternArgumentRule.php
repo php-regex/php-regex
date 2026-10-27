@@ -23,7 +23,7 @@ use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
-use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\PatternAttributeScanner;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;

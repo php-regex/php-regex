@@ -15,10 +15,10 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Backtrack\BacktrackProver;
-use PHPRegex\Redos\Backtrack\ModelLimit;
 use PHPRegex\Redos\Backtrack\ProofOutcome;
 use PHPRegex\Redos\Backtrack\ProofResult;
 use PHPRegex\Redos\Backtrack\SearchCostProver;
+use PHPRegex\Redos\Exception\ModelLimitException;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSearchCost;
@@ -61,7 +61,7 @@ final class ProofOutcomeTest extends TestCase
         $outcome = self::prove('/(a)\1/');
 
         $this->assertNull($outcome->result);
-        $this->assertInstanceOf(ModelLimit::class, $outcome->limit);
+        $this->assertInstanceOf(ModelLimitException::class, $outcome->limit);
         $this->assertFalse($outcome->limit->budgetExceeded);
         $this->assertNull($outcome->stepBound);
         $this->assertNull($outcome->search);
@@ -74,7 +74,7 @@ final class ProofOutcomeTest extends TestCase
         $outcome = (new BacktrackProver(5_000, 40, 16))->prove($regex);
 
         $this->assertNull($outcome->result);
-        $this->assertInstanceOf(ModelLimit::class, $outcome->limit);
+        $this->assertInstanceOf(ModelLimitException::class, $outcome->limit);
         $this->assertTrue($outcome->limit->budgetExceeded);
         $this->assertNull($outcome->stepBound);
         $this->assertSame(['{1,2000} at offset 4 analysed as {1,}'], $outcome->abstractions, 'The repeats read before the budget ran out.');
@@ -90,7 +90,7 @@ final class ProofOutcomeTest extends TestCase
         $outcome = self::prove("/(.*)'(.*)'(.*)/i");
 
         $this->assertNull($outcome->result);
-        $this->assertInstanceOf(ModelLimit::class, $outcome->limit);
+        $this->assertInstanceOf(ModelLimitException::class, $outcome->limit);
         $this->assertSame(3, $outcome->stepBound);
     }
 

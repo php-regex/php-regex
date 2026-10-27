@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Backtrack;
 
+use PHPRegex\Redos\Exception\ModelLimitException;
+
 /**
  * What one proof gives back, however it ended: the verdict it proved or the
  * limit of the model it met, never both; what the model analysed
@@ -32,7 +34,7 @@ final class ProofOutcome
      */
     private function __construct(
         public readonly ?ProofResult $result,
-        public readonly ?ModelLimit $limit,
+        public readonly ?ModelLimitException $limit,
         public readonly array $abstractions,
         public readonly ?int $stepBound,
         public readonly ?array $search,
@@ -51,7 +53,7 @@ final class ProofOutcome
      * @param list<string>                      $abstractions
      * @param array{ItemAutomaton, Budget}|null $search
      */
-    public static function limited(ModelLimit $limit, array $abstractions, ?int $stepBound, ?array $search): self
+    public static function limited(ModelLimitException $limit, array $abstractions, ?int $stepBound, ?array $search): self
     {
         return new self(null, $limit, $abstractions, $stepBound, $search);
     }

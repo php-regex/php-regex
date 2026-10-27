@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli\Command;
 
-use PHPRegex\Cli\CliException;
+use PHPRegex\Cli\Exception\CliException;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintService;

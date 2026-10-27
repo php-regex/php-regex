@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Security;
 
-use PHPRegex\Symfony\Security\SecurityConfigException;
+use PHPRegex\Symfony\Exception\SecurityConfigException;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Symfony\Security\SecurityConfigLocator;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;

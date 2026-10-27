@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint;
 
+use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternExtractor;

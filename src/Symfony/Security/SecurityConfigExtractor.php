@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony\Security;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Symfony\Exception\SecurityConfigException;
 use Symfony\Component\Config\Definition\Exception\Exception as ConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Console;
 
+use PHPRegex\Linter\Exception\LintRunFailureException;
 use PHPRegex\Linter\Formatter\ConsoleTagFormatter;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
@@ -20,7 +21,6 @@ use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
-use PHPRegex\Linter\LintRunFailure;
 use PHPRegex\Linter\LintRunner;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSetup;
@@ -62,12 +62,12 @@ final class ConsoleLintRunner
         if (!$this->formatters->has($format)) {
             $errors->writeln(\sprintf("<error>Error: Invalid format '%s'. Supported formats: %s</error>", OutputFormatter::escape($format), implode(', ', $this->formatters->getNames())));
 
-            return LintRunFailure::EXIT_INVALID;
+            return LintRunFailureException::EXIT_INVALID;
         }
 
         try {
             return $this->lint($request, $format, $output, $errors);
-        } catch (LintRunFailure $failure) {
+        } catch (LintRunFailureException $failure) {
             $this->renderFailure($format, $output, $errors, $failure);
 
             return $failure->exitCode;
@@ -75,7 +75,7 @@ final class ConsoleLintRunner
     }
 
     /**
-     * @throws LintRunFailure
+     * @throws LintRunFailureException
      */
     private function lint(ConsoleLintRequest $request, string $format, OutputInterface $output, OutputInterface $errors): int
     {
@@ -164,7 +164,7 @@ final class ConsoleLintRunner
             ConsoleWriter::footer($output);
         }
 
-        return $report->stats['errors'] > 0 ? LintRunFailure::EXIT_FAILURE : 0;
+        return $report->stats['errors'] > 0 ? LintRunFailureException::EXIT_FAILURE : 0;
     }
 
     /**
@@ -172,7 +172,7 @@ final class ConsoleLintRunner
      * the run may use when it is not given, and none can start without
      * pcntl.
      *
-     * @throws LintRunFailure
+     * @throws LintRunFailureException
      */
     private static function jobs(?string $jobs): int
     {
@@ -182,7 +182,7 @@ final class ConsoleLintRunner
 
         $count = filter_var($jobs, \FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         if (false === $count) {
-            throw new LintRunFailure('The --jobs value must be a positive integer.', JsonDocument::STAGE_USAGE, LintRunFailure::EXIT_INVALID);
+            throw new LintRunFailureException('The --jobs value must be a positive integer.', JsonDocument::STAGE_USAGE, LintRunFailureException::EXIT_INVALID);
         }
 
         return $count;
@@ -236,7 +236,7 @@ final class ConsoleLintRunner
      * the format's own error document otherwise (the JSON envelope names
      * the stage).
      */
-    private function renderFailure(string $format, OutputInterface $output, OutputInterface $errors, LintRunFailure $failure): void
+    private function renderFailure(string $format, OutputInterface $output, OutputInterface $errors, LintRunFailureException $failure): void
     {
         if (self::FORMAT_CONSOLE === $format) {
             $errors->writeln('<error>Error: '.OutputFormatter::escape($failure->getMessage()).'</error>');

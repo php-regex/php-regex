@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Formatter;
 
-use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\Exception\LintException;
 
 /**
  * Registry for managing output formatters.

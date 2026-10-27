@@ -37,6 +37,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
+use PHPRegex\Redos\Exception\ModelLimitException;
 use PHPRegex\Redos\RedosSearchCost;
 
 /**
@@ -162,7 +163,7 @@ final class SearchCostProver
 
         try {
             $found = $this->witness($automaton, $budget, LastCodeUnit::read($regex), $lineStart, $jumps, $pnfa->readsFinalNewline);
-        } catch (ModelLimit) {
+        } catch (ModelLimitException) {
             return null;
         }
 
@@ -557,7 +558,7 @@ final class SearchCostProver
      * @param array<int, true>      $jumps        where the repeats that jump to the end read
      * @param bool                  $finalNewline whether "$" or "\Z" may hold before a final newline
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      *
      * @return array{prefix: list<int>, run: list<int>, breakers: non-empty-list<list<int>>}|null
      */
@@ -621,7 +622,7 @@ final class SearchCostProver
      *
      * @param array<int, true> $jumps
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      *
      * @return list<non-empty-list<int>>
      */
@@ -720,7 +721,7 @@ final class SearchCostProver
      * @param array<int, list<int>> $graph
      * @param array<int, int>       $components
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      *
      * @return non-empty-list<string>|null
      */
@@ -897,7 +898,7 @@ final class SearchCostProver
      * @param non-empty-list<int> $word
      * @param array<int, true>    $jumps
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      */
     private function entersItself(ItemAutomaton $automaton, Budget $budget, array $current, array $word, array $jumps): bool
     {
@@ -927,7 +928,7 @@ final class SearchCostProver
      * @param array<int, true> $items
      * @param array<int, true> $jumps
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      *
      * @return array<int, true>|null
      */
@@ -964,7 +965,7 @@ final class SearchCostProver
      * @param list<int>           $prefix classes
      * @param non-empty-list<int> $word
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      *
      * @return array<int, true>|null
      */
@@ -1029,7 +1030,7 @@ final class SearchCostProver
      * @param list<int>        $missing characters
      * @param int|null         $runEnd  the run's last character, when the witness must not end with a newline
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      *
      * @return list<list<int>>
      */
@@ -1089,7 +1090,7 @@ final class SearchCostProver
      *
      * @param-out list<list<int>> $found
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      */
     private function collect(ItemAutomaton $automaton, array $after, array $path, array $missing, ?int $runEnd, bool $trailing, array &$found): void
     {
@@ -1122,7 +1123,7 @@ final class SearchCostProver
      * @param array<int, true> $after
      * @param list<int>        $breaker characters
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      */
     private function rejects(ItemAutomaton $automaton, array $after, array $breaker): bool
     {

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Transpiler\Oracle;
 
-use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 

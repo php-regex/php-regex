@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Cli;
 
-use PHPRegex\Cli\CliException;
+use PHPRegex\Cli\Exception\CliException;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\SelfUpdate\HttpDownloader;
 use PHPRegex\Cli\SelfUpdate\SelfUpdater;

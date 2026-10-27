@@ -790,11 +790,11 @@ final class ReferenceChecks
      */
     private function raiseMissingReference(string $message, int $position, ErrorCode $code, ?string $hint = null): void
     {
-        ($this->missing)(new SemanticErrorException($message, $code, $position + $this->offset, $this->pattern, null, $hint));
+        ($this->missing)(new SemanticErrorException($message, $code, $position + $this->offset, $this->pattern, hint: $hint));
     }
 
     private function raise(string $message, int $position, ErrorCode $code, ?string $hint = null): never
     {
-        throw new SemanticErrorException($message, $code, $position + $this->offset, $this->pattern, null, $hint);
+        throw new SemanticErrorException($message, $code, $position + $this->offset, $this->pattern, hint: $hint);
     }
 }

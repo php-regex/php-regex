@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
-use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternOccurrence;

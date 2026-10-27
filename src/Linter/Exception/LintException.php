@@ -11,14 +11,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Cli;
+namespace PHPRegex\Linter\Exception;
 
 use PHPRegex\Parser\Exception\ExceptionInterface;
 
 /**
- * The command line tool could not do what it was asked: a format it does not
- * write, a self-update that cannot proceed.
- *
- * @internal
+ * The linter could not do what it was asked: a formatter it does not know,
+ * a worker that failed, a report it cannot write out.
  */
-final class CliException extends \RuntimeException implements ExceptionInterface {}
+final class LintException extends \RuntimeException implements ExceptionInterface {}

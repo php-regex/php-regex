@@ -17,7 +17,7 @@ use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Explain\Highlighter\HtmlHighlighter;
 use PHPRegex\Explain\HtmlExplainer;
 use PHPRegex\Explain\TextExplainer;
-use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Optimizer\OptimizationResult;

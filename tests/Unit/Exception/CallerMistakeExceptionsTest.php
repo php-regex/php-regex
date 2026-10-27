@@ -14,13 +14,13 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Exception;
 
 use PHPRegex\Automata\Model\Nfa;
-use PHPRegex\Cli\CliException;
+use PHPRegex\Cli\Exception\CliException;
 use PHPRegex\Cli\Graph\GraphGenerator;
-use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
-use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;

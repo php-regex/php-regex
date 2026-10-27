@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli\Command;
 
-use PHPRegex\Cli\CliException;
+use PHPRegex\Cli\Exception\CliException;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\JsonRequest;
 use PHPRegex\Cli\Option\Options;
@@ -24,7 +24,8 @@ use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
 use PHPRegex\Linter\Config\ProjectTarget;
-use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Exception\LintRunFailureException;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
@@ -34,7 +35,6 @@ use PHPRegex\Linter\Formatter\OutputFormatterInterface;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
-use PHPRegex\Linter\LintRunFailure;
 use PHPRegex\Linter\LintRunner;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintStatsCounter;
@@ -272,7 +272,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 reportUnmatchedIgnores: $arguments->reportUnmatchedIgnores,
             );
             $patterns = $runner->collect($request, $progress);
-        } catch (LintRunFailure $e) {
+        } catch (LintRunFailureException $e) {
             $progress?->abandon();
 
             return $this->fail($output, $json, $e->getMessage(), $e->stage, $e->exitCode);
@@ -321,7 +321,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
 
         try {
             $report = $runner->analyze($patterns, $request, $progress);
-        } catch (LintRunFailure $e) {
+        } catch (LintRunFailureException $e) {
             $progress?->abandon();
 
             return $this->fail($output, $json, $e->getMessage(), $e->stage, $e->exitCode);
@@ -399,7 +399,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
     {
         try {
             LintRunner::checkPaths($arguments->paths, $pathsGiven ? null : 'the "paths" of the configuration');
-        } catch (LintRunFailure $e) {
+        } catch (LintRunFailureException $e) {
             return [$e->getMessage(), $e->stage];
         }
 

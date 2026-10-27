@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
+use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\Formatter\JsonFormatter;
-use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;

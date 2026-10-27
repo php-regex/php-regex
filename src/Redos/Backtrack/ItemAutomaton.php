@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Redos\Backtrack;
 
 use PHPRegex\Parser\Hir\CharSet;
+use PHPRegex\Redos\Exception\ModelLimitException;
 
 /**
  * The prioritized NFA without its epsilon moves, keeping how many distinct
@@ -220,7 +221,7 @@ final class ItemAutomaton
      * those built already. A search that looks at no character before its
      * attempt starts the same way everywhere.
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      *
      * @return list<int>
      */

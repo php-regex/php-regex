@@ -24,7 +24,7 @@ use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
 use PHPRegex\Symfony\Analyzer\ReportSection;
 use PHPRegex\Symfony\Analyzer\SecurityReport;
-use PHPRegex\Symfony\Security\SecurityConfigException;
+use PHPRegex\Symfony\Exception\SecurityConfigException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;

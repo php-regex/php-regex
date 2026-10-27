@@ -15,11 +15,11 @@ namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Config\ProjectTarget;
-use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Exception\LintRunFailureException;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
-use PHPRegex\Linter\LintRunFailure;
 use PHPRegex\Linter\LintRunner;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSetup;
@@ -292,11 +292,11 @@ final class LintRunnerTest extends TestCase
         };
     }
 
-    private function failureOf(\Closure $step): LintRunFailure
+    private function failureOf(\Closure $step): LintRunFailureException
     {
         try {
             $step();
-        } catch (LintRunFailure $failure) {
+        } catch (LintRunFailureException $failure) {
             return $failure;
         }
 

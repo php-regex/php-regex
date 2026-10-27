@@ -20,7 +20,7 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Transpiler\TranspileException;
+use PHPRegex\Transpiler\Exception\TranspileException;
 
 /**
  * Matches each pattern with preg_match() and its transpiled form with the

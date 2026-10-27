@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Redos\Backtrack;
 
 use PHPRegex\Parser\Hir\Utf8;
+use PHPRegex\Redos\Exception\ModelLimitException;
 use PHPRegex\Redos\RedosComplexity;
 
 /**
@@ -238,7 +239,7 @@ final class AmbiguityFinder
      *                                  asks to read before it
      * @param list<list<int>> $ahead    what a lookahead asks to read after it
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      *
      * @return Verdict|null
      */
@@ -396,7 +397,7 @@ final class AmbiguityFinder
      * or nested options, costs PCRE that many tries per input: out of the
      * model, whose classes speak of growth with the input.
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      */
     private function checkAcyclicAmbiguity(): void
     {
@@ -499,7 +500,7 @@ final class AmbiguityFinder
             for ($head = 0; $head < \count($queue); $head++) {
                 $current = $queue[$head];
                 if (array_sum($current) > self::MAX_ACYCLIC_AMBIGUITY) {
-                    throw ModelLimit::outOfModel(\sprintf('An acyclic stretch read in more than %d ways', self::MAX_ACYCLIC_AMBIGUITY));
+                    throw ModelLimitException::outOfModel(\sprintf('An acyclic stretch read in more than %d ways', self::MAX_ACYCLIC_AMBIGUITY));
                 }
 
                 // Every class's next vector, in one pass over the items.

@@ -17,6 +17,7 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 
 /**

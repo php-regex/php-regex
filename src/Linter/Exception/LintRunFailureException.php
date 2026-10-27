@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Linter;
+namespace PHPRegex\Linter\Exception;
 
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Json\JsonDocument;
@@ -22,7 +22,7 @@ use PHPRegex\Parser\Json\JsonDocument;
  *
  * @internal
  */
-final class LintRunFailure extends \RuntimeException implements ExceptionInterface
+final class LintRunFailureException extends \RuntimeException implements ExceptionInterface
 {
     /**
      * The run found what it was asked to report: a pattern fails, or the

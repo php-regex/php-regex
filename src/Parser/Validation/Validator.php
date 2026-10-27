@@ -680,8 +680,7 @@ final class Validator extends AbstractNodeVisitor
                 ErrorCode::ExtendedClassBesideLookbehind,
                 0,
                 $this->pattern,
-                null,
-                'Target PCRE2 10.48 or later, or write the class without an operator, as "[...]".',
+                hint: 'Target PCRE2 10.48 or later, or write the class without an operator, as "[...]".',
             );
         }
 
@@ -1680,7 +1679,7 @@ final class Validator extends AbstractNodeVisitor
      */
     private function raiseBranchCountError(string $message, int $position, ErrorCode $code, string $hint): void
     {
-        $error = new SemanticErrorException($message, $code, $position + $this->positionOffset, $this->pattern, null, $hint);
+        $error = new SemanticErrorException($message, $code, $position + $this->positionOffset, $this->pattern, hint: $hint);
 
         if (!$this->walkingPattern) {
             throw $error;
@@ -1772,7 +1771,7 @@ final class Validator extends AbstractNodeVisitor
      */
     private function raiseLateCompileError(string $message, int $position, ErrorCode $code, string $hint, int $at): void
     {
-        $error = new SemanticErrorException($message, $code, $position + $this->positionOffset, $this->pattern, null, $hint);
+        $error = new SemanticErrorException($message, $code, $position + $this->positionOffset, $this->pattern, hint: $hint);
 
         if (!$this->walkingPattern) {
             throw $error;
@@ -1823,8 +1822,7 @@ final class Validator extends AbstractNodeVisitor
             $code,
             $position + $this->positionOffset,
             $this->pattern,
-            null,
-            $hint,
+            hint: $hint,
         );
     }
 }

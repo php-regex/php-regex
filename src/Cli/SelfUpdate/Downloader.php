@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli\SelfUpdate;
 
-use PHPRegex\Cli\CliException;
+use PHPRegex\Cli\Exception\CliException;
 
 /**
  * Where self-update reads the release from.

@@ -310,7 +310,7 @@ final class FirstErrorLocator
         // it, at the start of its body, though the groups are never closed.
         $tooDeep = self::openerPastTheNestingLimit($tokens);
         if (null !== $tooDeep) {
-            return new SemanticErrorException(\sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', Validator::MAX_GROUP_NESTING), ErrorCode::GroupNestedTooDeep, $tooDeep->end(), $pattern, null, 'Flatten the pattern: drop groups that only wrap one item.');
+            return new SemanticErrorException(\sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', Validator::MAX_GROUP_NESTING), ErrorCode::GroupNestedTooDeep, $tooDeep->end(), $pattern, hint: 'Flatten the pattern: drop groups that only wrap one item.');
         }
 
         $length = \strlen($pattern);

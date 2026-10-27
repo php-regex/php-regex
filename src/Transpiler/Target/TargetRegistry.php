@@ -14,10 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Transpiler\Target;
 
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\JavaScript\HtmlPatternTarget;
 use PHPRegex\Transpiler\Target\JavaScript\JavaScriptTarget;
 use PHPRegex\Transpiler\Target\Python\PythonTarget;
-use PHPRegex\Transpiler\TranspileException;
 
 /**
  * Registry for available transpilation targets.

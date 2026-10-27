@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Config;
 
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\PcreTarget;
 
 /**

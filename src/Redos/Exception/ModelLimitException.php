@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Redos\Backtrack;
+namespace PHPRegex\Redos\Exception;
 
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Text\Ascii;
@@ -22,7 +22,7 @@ use PHPRegex\Parser\Text\Ascii;
  *
  * @internal
  */
-final class ModelLimit extends \RuntimeException implements ExceptionInterface
+final class ModelLimitException extends \RuntimeException implements ExceptionInterface
 {
     private function __construct(
         string $message,

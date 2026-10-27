@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Symfony\Security;
+namespace PHPRegex\Symfony\Exception;
 
 use PHPRegex\Parser\Exception\ExceptionInterface;
 

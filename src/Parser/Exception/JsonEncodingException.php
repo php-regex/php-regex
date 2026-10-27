@@ -16,7 +16,5 @@ namespace PHPRegex\Parser\Exception;
 /**
  * A value JsonDocument cannot write: a non-finite float, or an object with
  * no JSON mapping. A mapping missing, never a fault of the input.
- *
- * @internal
  */
 final class JsonEncodingException extends \RuntimeException implements ExceptionInterface {}

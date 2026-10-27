@@ -28,7 +28,7 @@ use PHPRegex\LanguageServer\Protocol\TraceLevel;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Linter\Config\JudgedRange;
 use PHPRegex\Linter\Config\ProjectTarget;
-use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Parser\Engine\IniFlag;
 use PHPRegex\Parser\Engine\LibraryPcre;

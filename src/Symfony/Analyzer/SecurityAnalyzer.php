@@ -14,11 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony\Analyzer;
 
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Symfony\Exception\SecurityConfigException;
 use PHPRegex\Symfony\Security\AccessRuleSummary;
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
-use PHPRegex\Symfony\Security\SecurityConfigException;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Symfony\Security\SecurityConfigLocator;
 use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;

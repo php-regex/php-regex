@@ -94,7 +94,7 @@ final class PatternInfoAnalyzer
         if (!$validation->isValid) {
             [$pattern] = PatternParser::extractPatternAndFlags($regex, $parser->target());
 
-            throw new SemanticErrorException((string) $validation->error, $validation->errorCode ?? ErrorCode::InternalUnexpectedState, $validation->offset, $pattern, null, $validation->hint);
+            throw new SemanticErrorException((string) $validation->error, $validation->errorCode ?? ErrorCode::InternalUnexpectedState, $validation->offset, $pattern, hint: $validation->hint);
         }
 
         return (new self($parser->target()))->analyze($ast);

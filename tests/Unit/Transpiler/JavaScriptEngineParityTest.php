@@ -16,7 +16,7 @@ namespace PHPRegex\Tests\Unit\Transpiler;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Transpiler\TranspileException;
+use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\TranspileOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;

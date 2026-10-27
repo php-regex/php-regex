@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Cli;
 
-use PHPRegex\Cli\CliException;
 use PHPRegex\Cli\Command\LintBaseline;
+use PHPRegex\Cli\Exception\CliException;
 use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;

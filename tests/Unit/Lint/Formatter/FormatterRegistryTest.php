@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
+use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
-use PHPRegex\Linter\LintException;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;

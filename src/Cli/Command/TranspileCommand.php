@@ -24,8 +24,8 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\TargetRegistry;
-use PHPRegex\Transpiler\TranspileException;
 use PHPRegex\Transpiler\Transpiler;
 use PHPRegex\Transpiler\TranspileResult;
 

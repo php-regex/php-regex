@@ -93,7 +93,7 @@ echo $cases['non_matching'][0]; // "00.000"
 When no sample can be built, the visitor says why:
 
 ```php
-use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\RegexParser;
 

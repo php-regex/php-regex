@@ -17,7 +17,7 @@ use PhpParser\Error;
 use PhpParser\ParserFactory;
 use PHPRegex\Linter\Config\JudgedRange;
 use PHPRegex\Linter\Config\ProjectTarget;
-use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\GuardRegions;
 use PHPRegex\Linter\Extraction\PhpParserGuards;
 use PHPRegex\Linter\Extraction\TargetMarker;

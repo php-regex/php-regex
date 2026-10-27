@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Backtrack;
 
+use PHPRegex\Redos\Exception\ModelLimitException;
+
 /**
  * The strongly connected components of a graph, by Tarjan's algorithm
  * without recursion: the components in topological order, a component
@@ -33,7 +35,7 @@ final class StronglyConnectedComponents
     /**
      * @param array<int, list<int>> $graph every node a key, its successors among the keys
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      */
     public static function of(array $graph, Budget $budget): self
     {

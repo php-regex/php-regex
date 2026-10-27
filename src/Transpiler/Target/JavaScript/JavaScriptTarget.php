@@ -15,9 +15,9 @@ namespace PHPRegex\Transpiler\Target\JavaScript;
 
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Text\Bytes;
+use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\TargetInterface;
 use PHPRegex\Transpiler\TranspileContext;
-use PHPRegex\Transpiler\TranspileException;
 
 /**
  * Transpile target for JavaScript RegExp.

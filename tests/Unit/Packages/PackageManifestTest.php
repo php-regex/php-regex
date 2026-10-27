@@ -100,7 +100,7 @@ final class PackageManifestTest extends TestCase
             'LanguageServer\Server', 'Linter\AnalysisService',
             'Linter\Config\LintArguments', 'Linter\Config\LintConfigLoader', 'Linter\Config\LintDefaultsBuilder',
             'Linter\Config\LintExtractorFactory', 'Linter\Config\ProjectTarget',
-            'Linter\Config\UnsupportedTargetException', 'Linter\Extraction\InteropPresets',
+            'Linter\Extraction\InteropPresets',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\LintIssue',
             'Linter\Formatter\ConsoleFormatter', 'Linter\Formatter\FormatterRegistry', 'Linter\Formatter\JsonFormatter',
             'Linter\Formatter\LinkFormatter', 'Linter\Formatter\OutputConfiguration',
@@ -108,7 +108,7 @@ final class PackageManifestTest extends TestCase
             'Linter\LintStatsCounter', 'Linter\Formatter\LintSummary', 'Linter\RedosVerdict',
             'Linter\Parallel\WorkerCount', 'Linter\LintProgress', 'Linter\LintReport', 'Linter\LintRequest',
             'Linter\Rule\RuleCatalog', 'Linter\Rule\RuleId',
-            'Linter\LintRunFailure', 'Linter\LintRunner',
+            'Linter\Exception\LintRunFailureException', 'Linter\LintRunner',
             'Linter\LintService', 'Linter\PatternOccurrence', 'Linter\Source\PatternSourceCollection',
             'Linter\Source\PhpFilePatternSource', 'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
             'Parser\Hir\HirTranslator', 'Parser\Text\Ascii', 'Parser\Printer\DisplayEscaper', 'Parser\Engine\IniFlag',
@@ -124,7 +124,7 @@ final class PackageManifestTest extends TestCase
         'LanguageServer' => [
             'Linter\Config\JudgedRange', 'Linter\Config\LintArguments', 'Linter\Config\LintConfigLoader',
             'Linter\Config\LintConfigResult', 'Linter\Config\LintDefaultsBuilder',
-            'Linter\Config\ProjectTarget', 'Linter\Config\TargetConstraint', 'Linter\Config\UnsupportedTargetException',
+            'Linter\Config\ProjectTarget', 'Linter\Config\TargetConstraint',
             'Linter\Extraction\IgnoreMarker', 'Linter\Extraction\InlineIgnores', 'Linter\Extraction\LiteralSpelling',
             'Linter\Extraction\MemoryBudget', 'Linter\Extraction\PatternAttributeScanner',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpStringLiteral',
@@ -151,7 +151,7 @@ final class PackageManifestTest extends TestCase
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Cache\AstSerializer',
             'Parser\Hir\ClassSetProvider',
             'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Printer\DisplayEscaper',
-            'Parser\Analysis\GroupIndex', 'Parser\Json\JsonDocument', 'Parser\Exception\JsonEncodingException',
+            'Parser\Analysis\GroupIndex', 'Parser\Json\JsonDocument',
             'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
             'Parser\Syntax\PropertyNames', 'Parser\Syntax\StartOptions', 'Parser\Cache\StaticCaches',
             'Parser\Lexer', 'Parser\NodeWalker', 'Parser\TraversalAction',
@@ -159,7 +159,7 @@ final class PackageManifestTest extends TestCase
         'Optimizer' => ['Parser\Analysis\CharSetAnalyzer', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser', 'Parser\NodeWalker', 'Parser\TraversalAction'],
         'PHPStan' => [
             'Linter\AnalysisService', 'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget',
-            'Linter\Config\TargetConstraint', 'Linter\Config\UnsupportedTargetException',
+            'Linter\Config\TargetConstraint',
             'Linter\Extraction\InteropPresets', 'Linter\Extraction\PatternFunction',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\TargetMarker',
             'Linter\Extraction\TargetMarkers', 'Linter\PatternOccurrence', 'Parser\Hir\ClassSetProvider',
@@ -169,7 +169,7 @@ final class PackageManifestTest extends TestCase
         // The plugin reads the key layout CaptureShape renders for
         // PHPStan, so both type systems say the same keys.
         'Psalm' => [
-            'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
+            'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget',
             'Linter\Extraction\GuardRegions', 'Linter\Extraction\PhpParserGuards', 'Linter\Extraction\TargetMarker',
             'Linter\Extraction\TargetMarkers', 'Parser\Hir\ClassSetProvider', 'Parser\Text\Ascii',
             'Parser\Analysis\CaptureKey', 'Linter\Extraction\PregFunctions',

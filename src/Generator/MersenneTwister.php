@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Generator;
 
+use PHPRegex\Generator\Exception\SampleGenerationException;
+
 /**
  * PHP's Mersenne Twister, held by the generator alone: a seed draws the same
  * numbers as mt_srand($seed) then mt_rand($min, $max), or as the PHP 8.2

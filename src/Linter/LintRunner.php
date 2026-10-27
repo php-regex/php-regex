@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
-use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Exception\LintException;
+use PHPRegex\Linter\Exception\LintRunFailureException;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Json\JsonDocument;
 
@@ -21,7 +23,7 @@ use PHPRegex\Parser\Json\JsonDocument;
  * The steps of a lint run every front end takes alike, `regex lint` and
  * the bridges' regex:lint: the paths checked, the target resolved, the
  * patterns collected, then analysed into a report sorted by file and line.
- * Each step that cannot go on stops the run with a LintRunFailure naming
+ * Each step that cannot go on stops the run with a LintRunFailureException naming
  * its stage and its exit code; what a front end writes of it is its own.
  *
  * @phpstan-import-type LintResult from LintReport
@@ -40,7 +42,7 @@ final class LintRunner
      * @param array<string> $paths
      * @param string|null   $setting what names the paths when they come from the configuration
      *
-     * @throws LintRunFailure
+     * @throws LintRunFailureException
      */
     public static function checkPaths(array $paths, ?string $setting = null): void
     {
@@ -50,8 +52,8 @@ final class LintRunner
             }
 
             throw null === $setting
-                ? new LintRunFailure('Path not found: '.$path, JsonDocument::STAGE_USAGE, LintRunFailure::EXIT_INVALID)
-                : new LintRunFailure(\sprintf('Path not found: %s (from %s)', $path, $setting), JsonDocument::STAGE_CONFIG, LintRunFailure::EXIT_INVALID);
+                ? new LintRunFailureException('Path not found: '.$path, JsonDocument::STAGE_USAGE, LintRunFailureException::EXIT_INVALID)
+                : new LintRunFailureException(\sprintf('Path not found: %s (from %s)', $path, $setting), JsonDocument::STAGE_CONFIG, LintRunFailureException::EXIT_INVALID);
         }
     }
 
@@ -63,23 +65,23 @@ final class LintRunner
      *
      * @param \Closure(): LintSetup $resolve
      *
-     * @throws LintRunFailure
+     * @throws LintRunFailureException
      */
     public static function resolve(\Closure $resolve, string $invalidOptionPrefix = ''): LintSetup
     {
         try {
             return $resolve();
         } catch (UnsupportedTargetException $e) {
-            throw new LintRunFailure($e->getMessage(), JsonDocument::STAGE_TARGET, LintRunFailure::EXIT_INVALID, $e);
+            throw new LintRunFailureException($e->getMessage(), JsonDocument::STAGE_TARGET, LintRunFailureException::EXIT_INVALID, $e);
         } catch (InvalidRegexOptionException $e) {
-            throw new LintRunFailure($invalidOptionPrefix.$e->getMessage(), JsonDocument::STAGE_CONFIG, LintRunFailure::EXIT_INVALID, $e);
+            throw new LintRunFailureException($invalidOptionPrefix.$e->getMessage(), JsonDocument::STAGE_CONFIG, LintRunFailureException::EXIT_INVALID, $e);
         }
     }
 
     /**
      * The patterns of every source of the lint.
      *
-     * @throws LintRunFailure
+     * @throws LintRunFailureException
      *
      * @return array<PatternOccurrence>
      */
@@ -91,7 +93,7 @@ final class LintRunner
             // A source runs the application's own code, its router and its
             // validator metadata: whatever fails there stops the run with
             // the stage named, not with a trace.
-            throw new LintRunFailure('Failed to collect patterns: '.$e->getMessage(), JsonDocument::STAGE_COLLECT, LintRunFailure::EXIT_FAILURE, $e);
+            throw new LintRunFailureException('Failed to collect patterns: '.$e->getMessage(), JsonDocument::STAGE_COLLECT, LintRunFailureException::EXIT_FAILURE, $e);
         }
     }
 
@@ -114,14 +116,14 @@ final class LintRunner
      *
      * @phpstan-param list<LintResult> $extra
      *
-     * @throws LintRunFailure when a worker fails
+     * @throws LintRunFailureException when a worker fails
      */
     public function analyze(array $patterns, LintRequest $request, ?LintProgress $progress = null, array $extra = []): LintReport
     {
         try {
             $report = $this->lint->analyze($patterns, $request, $progress);
         } catch (LintException $e) {
-            throw new LintRunFailure($e->getMessage(), JsonDocument::STAGE_ANALYZE, LintRunFailure::EXIT_FAILURE, $e);
+            throw new LintRunFailureException($e->getMessage(), JsonDocument::STAGE_ANALYZE, LintRunFailureException::EXIT_FAILURE, $e);
         }
 
         if ([] === $extra) {

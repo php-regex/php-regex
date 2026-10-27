@@ -19,7 +19,7 @@ use PHPRegex\Cli\Command\JsonCommandInterface;
 use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
-use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\JsonEncodingException;
 use PHPRegex\Parser\Json\JsonDocument;

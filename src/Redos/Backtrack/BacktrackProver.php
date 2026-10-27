@@ -27,6 +27,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Redos\Exception\ModelLimitException;
 use PHPRegex\Redos\RedosComplexity;
 
 /**
@@ -73,7 +74,7 @@ final class BacktrackProver
 
         try {
             $result = $this->attempt($regex, $pattern, $builder, $budget, $stepBound, $search, $target);
-        } catch (ModelLimit $limit) {
+        } catch (ModelLimitException $limit) {
             return ProofOutcome::limited($limit, $builder->abstractions(), $stepBound, $search);
         }
 
@@ -90,7 +91,7 @@ final class BacktrackProver
      * @param-out int|null $stepBound
      * @param-out array{ItemAutomaton, Budget}|null $search
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      */
     private function attempt(RegexNode $regex, ?string $pattern, PnfaBuilder $builder, Budget $budget, ?int &$stepBound, ?array &$search, ?PcreTarget $target): ProofResult
     {
@@ -160,13 +161,13 @@ final class BacktrackProver
         $stepBound = $bound;
 
         if (null !== $best && null !== $best['unwitnessed']) {
-            throw ModelLimit::unwitnessed($best['unwitnessed']);
+            throw ModelLimitException::unwitnessed($best['unwitnessed']);
         }
 
         // With a set read as any character, only an exponential pump through
         // exact sets is proven: a larger set can hide the rejecting suffix.
         if ($builder->hasApproximatedSets() && (null === $best || RedosComplexity::Exponential !== $best['complexity'] || $best['approximated'])) {
-            throw ModelLimit::approximated();
+            throw ModelLimitException::approximated();
         }
 
         $unicode = str_contains($regex->flags, 'u');
@@ -177,7 +178,7 @@ final class BacktrackProver
         }
 
         if ($best['approximated']) {
-            throw ModelLimit::approximated();
+            throw ModelLimitException::approximated();
         }
 
         $others = [];
@@ -213,7 +214,7 @@ final class BacktrackProver
      * @param list<int>       $contexts
      * @param list<list<int>> $literals
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      *
      * @return Verdict|null
      */
@@ -290,7 +291,7 @@ final class BacktrackProver
      *
      * @param list<Pnfa> $searches
      *
-     * @throws ModelLimit
+     * @throws ModelLimitException
      */
     private function rereadLookarounds(RegexNode $regex, array $searches, ?PcreTarget $target): void
     {
@@ -308,7 +309,7 @@ final class BacktrackProver
         $contexts = [ItemAutomaton::CONTEXT_START, ItemAutomaton::CONTEXT_WORD, ItemAutomaton::CONTEXT_NEWLINE, ItemAutomaton::CONTEXT_OTHER];
         $offset = (new AmbiguityFinder(new ItemAutomaton($inPlace, $budget, $contexts), $budget))->rereadLookaround();
         if (null !== $offset) {
-            throw ModelLimit::rereadLookaround($offset);
+            throw ModelLimitException::rereadLookaround($offset);
         }
     }
 
@@ -321,7 +322,7 @@ final class BacktrackProver
     {
         try {
             $bound = (new AmbiguityFinder($automaton, new Budget($this->maxSteps, $this->maxStates)))->stepBound();
-        } catch (ModelLimit) {
+        } catch (ModelLimitException) {
             return null;
         }
 

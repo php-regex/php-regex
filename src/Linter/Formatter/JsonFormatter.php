@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Linter\Config\ProjectTarget;
-use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;

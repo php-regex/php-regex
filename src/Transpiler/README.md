@@ -90,7 +90,7 @@ echo $transpiler->transpile('/\p{Han}+/u', 'javascript')->literal; // /\p{Script
 
 try {
     $transpiler->transpile('/a++/', 'javascript');
-} catch (\PHPRegex\Transpiler\TranspileException $e) {
+} catch (\PHPRegex\Transpiler\Exception\TranspileException $e) {
     echo $e->getMessage(); // Possessive quantifiers are not supported in JavaScript.
 }
 ```
