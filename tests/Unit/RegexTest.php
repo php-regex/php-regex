@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Explain\HtmlExplainer;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Analysis\LiteralConfidence;
 use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Cache\CacheInterface;
@@ -110,13 +111,13 @@ final class RegexTest extends TestCase
 
     public function test_optimize_method_with_options(): void
     {
-        $optimized = $this->regexService->optimize('/a+/', ['digits' => false]);
+        $optimized = $this->regexService->optimize('/a+/', new OptimizerOptions(digits: false));
         $this->assertSame('/a+/', $optimized->optimized);
     }
 
     public function test_optimize_method_with_automata_verification(): void
     {
-        $optimized = $this->regexService->optimize('/[0-9]+/', ['verify_with_automata' => true]);
+        $optimized = $this->regexService->optimize('/[0-9]+/', new OptimizerOptions(verifyWithAutomata: true));
         $this->assertSame('/\\d+/', $optimized->optimized);
     }
 

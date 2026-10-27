@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Optimizer\Optimizer;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
@@ -80,7 +81,7 @@ final class ExtendedLayoutTest extends TestCase
         $expected = "/x\n\t(?:ab(?:c|d))  # c\n/x";
         $this->assertSame(1, preg_match($expected, 'xabd'));
 
-        $result = (new Optimizer(RegexParser::create(['cache' => null])))->optimize($pattern, ['factorize' => true]);
+        $result = (new Optimizer(RegexParser::create(['cache' => null])))->optimize($pattern, new OptimizerOptions(factorize: true));
 
         $this->assertSame($expected, $result->optimized);
     }
@@ -117,7 +118,7 @@ final class ExtendedLayoutTest extends TestCase
     {
         $pattern = "/\n\t\\d+\t# digits\n/x";
 
-        $result = (new Optimizer(RegexParser::create(['cache' => null])))->optimize($pattern, ['possessive' => false]);
+        $result = (new Optimizer(RegexParser::create(['cache' => null])))->optimize($pattern, new OptimizerOptions(possessive: false));
 
         $this->assertSame($pattern, $result->optimized);
         $this->assertFalse($result->isChanged());

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
@@ -165,27 +166,65 @@ final class OptimizerOptionsTest extends TestCase
     }
 
     /**
+     * The options reach optimize() as a value: a config array is read once
+     * through fromArray(), and gives what the same options named give.
+     *
      * @param OptimizerOptionsArray $options
      */
     #[Test]
     #[DataProvider('provideOptimizations')]
-    public function test_optimize_takes_the_options_as_an_array_or_a_value(string $pattern, array $options, string $optimized): void
+    public function test_optimize_takes_the_options_as_a_value(string $pattern, array $options, OptimizerOptions $value, string $optimized): void
     {
         $regex = Regex::create(['cache' => null]);
 
-        $this->assertSame($optimized, $regex->optimize($pattern, $options)->optimized);
+        $this->assertSame($optimized, $regex->optimize($pattern, $value)->optimized);
         $this->assertSame($optimized, $regex->optimize($pattern, OptimizerOptions::fromArray($options))->optimized);
+        $this->assertSame($optimized, (new Optimizer())->optimize($pattern, $value)->optimized);
     }
 
     /**
-     * @return iterable<string, array{pattern: string, options: OptimizerOptionsArray, optimized: string}>
+     * @return iterable<string, array{pattern: string, options: OptimizerOptionsArray, value: OptimizerOptions, optimized: string}>
      */
     public static function provideOptimizations(): iterable
     {
-        yield 'defaults' => ['pattern' => '/[0-9]/', 'options' => [], 'optimized' => '/\\d/'];
-        yield 'digits off' => ['pattern' => '/[0-9]/', 'options' => ['digits' => false], 'optimized' => '/[0-9]/'];
-        yield 'possessive' => ['pattern' => '/a+b/', 'options' => ['possessive' => true], 'optimized' => '/a++b/'];
-        yield 'factorize' => ['pattern' => '/abc|abd/', 'options' => ['factorize' => true], 'optimized' => '/ab(?:c|d)/'];
+        yield 'defaults' => ['pattern' => '/[0-9]/', 'options' => [], 'value' => new OptimizerOptions(), 'optimized' => '/\\d/'];
+        yield 'digits off' => ['pattern' => '/[0-9]/', 'options' => ['digits' => false], 'value' => new OptimizerOptions(digits: false), 'optimized' => '/[0-9]/'];
+        yield 'possessive' => ['pattern' => '/a+b/', 'options' => ['possessive' => true], 'value' => new OptimizerOptions(possessive: true), 'optimized' => '/a++b/'];
+        yield 'factorize' => ['pattern' => '/abc|abd/', 'options' => ['factorize' => true], 'value' => new OptimizerOptions(factorize: true), 'optimized' => '/ab(?:c|d)/'];
+    }
+
+    #[Test]
+    public function test_optimize_without_options_reads_the_defaults(): void
+    {
+        $regex = Regex::create(['cache' => null]);
+
+        $this->assertEquals($regex->optimize('/a+b|[0-9]/', new OptimizerOptions()), $regex->optimize('/a+b|[0-9]/'));
+        $this->assertEquals($regex->optimize('/a+b|[0-9]/', new OptimizerOptions()), $regex->optimize('/a+b|[0-9]/', null));
+    }
+
+    /**
+     * One typed input: optimize() takes no array, on the optimizer as on
+     * the facade, and null reads the defaults.
+     */
+    #[Test]
+    #[DataProvider('provideOptimizeMethods')]
+    public function test_optimize_takes_no_array(string $class): void
+    {
+        $parameter = (new \ReflectionMethod($class, 'optimize'))->getParameters()[1];
+
+        $this->assertSame('options', $parameter->getName());
+        $this->assertSame('?'.OptimizerOptions::class, (string) $parameter->getType());
+        $this->assertTrue($parameter->isDefaultValueAvailable());
+        $this->assertNull($parameter->getDefaultValue());
+    }
+
+    /**
+     * @return iterable<string, array{class: class-string}>
+     */
+    public static function provideOptimizeMethods(): iterable
+    {
+        yield 'Optimizer' => ['class' => Optimizer::class];
+        yield 'Regex' => ['class' => Regex::class];
     }
 
     #[Test]
@@ -193,6 +232,6 @@ final class OptimizerOptionsTest extends TestCase
     {
         $this->expectException(InvalidRegexOptionException::class);
 
-        Regex::create(['cache' => null])->optimize('/a/', ['autoPossessify' => true]);
+        Regex::create(['cache' => null])->optimize('/a/', OptimizerOptions::fromArray(['autoPossessify' => true]));
     }
 }

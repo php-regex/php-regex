@@ -16,7 +16,6 @@ namespace PHPRegex\Optimizer;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
-use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
@@ -38,8 +37,6 @@ use PHPRegex\Parser\TraversalAction;
  * strings, read with the parser it is given; the automata can confirm the
  * two are equivalent before the rewrite is offered, and a rewrite the
  * parser refuses where it accepts the pattern is never offered.
- *
- * @phpstan-import-type OptimizerOptionsArray from OptimizerOptions
  */
 final class Optimizer
 {
@@ -59,24 +56,23 @@ final class Optimizer
     /**
      * Optimize a regular expression for better performance.
      *
-     * @param string                                 $regex   The regular expression to optimize
-     * @param OptimizerOptions|OptimizerOptionsArray $options What may be rewritten, as a value or as
-     *                                                        the array OptimizerOptions::fromArray() reads
+     * "     * @param string                $regex   The regular expression to optimize
+     * @param OptimizerOptions|null $options What may be rewritten; null reads the defaults. A config
+     *                                       array becomes one through OptimizerOptions::fromArray()
      *
-     * @throws InvalidRegexOptionException on an option it does not know or a value of the wrong type
-     * @throws LexerException              when the pattern does not lex
-     * @throws ParserException             when the pattern does not parse: directly, on a delimiter or
-     *                                     modifier the reader refuses, or as one of its leaves
-     *                                     (SyntaxErrorException, RecursionLimitException or
-     *                                     ResourceLimitException) while the tree is built
-     * @throws RegexException              when the rewrite returns a tree that is not a pattern: a
-     *                                     safety net, and the parent of the two families above
+     * @throws LexerException  when the pattern does not lex
+     * @throws ParserException when the pattern does not parse: directly, on a delimiter or
+     *                         modifier the reader refuses, or as one of its leaves
+     *                         (SyntaxErrorException, RecursionLimitException or
+     *                         ResourceLimitException) while the tree is built
+     * @throws RegexException  when the rewrite returns a tree that is not a pattern: a
+     *                         safety net, and the parent of the two families above
      *
      * @return OptimizationResult Optimization results with changes applied
      */
-    public function optimize(string $regex, OptimizerOptions|array $options = []): OptimizationResult
+    public function optimize(string $regex, ?OptimizerOptions $options = null): OptimizationResult
     {
-        $options = \is_array($options) ? OptimizerOptions::fromArray($options) : $options;
+        $options ??= new OptimizerOptions();
         $verifyWithAutomata = $options->verifyWithAutomata;
         $optimizer = new Rewriter(
             optimizeDigits: $options->digits,

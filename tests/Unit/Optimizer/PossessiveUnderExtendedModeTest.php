@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,7 +29,7 @@ final class PossessiveUnderExtendedModeTest extends TestCase
     #[DataProvider('providePatterns')]
     public function test_the_possessive_rewrite_keeps_the_matches(string $pattern): void
     {
-        $optimized = Regex::create()->optimize($pattern, ['possessive' => true])->optimized;
+        $optimized = Regex::create()->optimize($pattern, new OptimizerOptions(possessive: true))->optimized;
 
         foreach (["a\n", "ab\n", "a\r\n", "a\nb\n", "ab\r", "12a\n", "12a\rb\n"] as $subject) {
             $this->assertSame(preg_match($pattern, $subject), preg_match($optimized, $subject), $optimized.' on '.json_encode($subject));

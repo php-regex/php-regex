@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Optimizer\Optimizer;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
@@ -39,8 +40,8 @@ final class OptimizerTest extends TestCase
     {
         $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
 
-        $this->assertSame('/(a)\\d\\1/', $optimizer->optimize('/(a)[0-9]\\1/', ['verify_with_automata' => true])->optimized);
-        $this->assertSame('/\\d+/', $optimizer->optimize('/[0-9]+/', ['verify_with_automata' => true])->optimized);
+        $this->assertSame('/(a)\\d\\1/', $optimizer->optimize('/(a)[0-9]\\1/', new OptimizerOptions(verifyWithAutomata: true))->optimized);
+        $this->assertSame('/\\d+/', $optimizer->optimize('/[0-9]+/', new OptimizerOptions(verifyWithAutomata: true))->optimized);
     }
 
     /**

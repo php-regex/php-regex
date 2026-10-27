@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Optimizer\Optimizer;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
@@ -57,8 +58,8 @@ final class OptimizerConstructorTest extends TestCase
     {
         $optimizer = new Optimizer(Regex::create()->parser());
 
-        $this->assertSame('/(?:ab|a)+c/', $optimizer->optimize('/(?:ab|a)+c/', ['possessive' => true])->optimized);
-        $this->assertSame('/(?:ab|a)+c/', $optimizer->optimize('/(?:ab|a)+c/', ['possessive' => true])->optimized);
-        $this->assertSame('/a++b/', $optimizer->optimize('/a+b/', ['possessive' => true])->optimized);
+        $this->assertSame('/(?:ab|a)+c/', $optimizer->optimize('/(?:ab|a)+c/', new OptimizerOptions(possessive: true))->optimized);
+        $this->assertSame('/(?:ab|a)+c/', $optimizer->optimize('/(?:ab|a)+c/', new OptimizerOptions(possessive: true))->optimized);
+        $this->assertSame('/a++b/', $optimizer->optimize('/a+b/', new OptimizerOptions(possessive: true))->optimized);
     }
 }

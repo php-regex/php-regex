@@ -18,6 +18,7 @@ use PHPRegex\LanguageServer\Document\RegexFinder;
 use PHPRegex\LanguageServer\Handler\CodeActionHandler;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Transport;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Node\CharLiteralNode;
@@ -150,7 +151,7 @@ final class CodeActionHandlerTest extends TestCase
     #[DataProvider('provideOptimizationsToProve')]
     public function test_the_optimization_action_offers_only_a_proven_rewrite(string $pattern, ?string $offered): void
     {
-        $this->assertNotSame($pattern, Regex::create()->optimize($pattern, ['verify_with_automata' => false])->optimized, 'Unchecked, the pattern is rewritten.');
+        $this->assertNotSame($pattern, Regex::create()->optimize($pattern, new OptimizerOptions(verifyWithAutomata: false))->optimized, 'Unchecked, the pattern is rewritten.');
 
         $action = self::action($this->codeActionsOnLiteral(self::source($pattern, 0)), 'Apply regex optimization');
 

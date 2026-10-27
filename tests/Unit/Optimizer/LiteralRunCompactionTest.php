@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Optimizer\Optimizer;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -49,9 +50,9 @@ final class LiteralRunCompactionTest extends TestCase
     {
         $optimizer = new Optimizer(RegexParser::create());
 
-        $this->assertSame('/a{2}b/', $optimizer->optimize('/aab/', ['min_quantifier_count' => 2])->optimized);
-        $this->assertSame('/aab/', $optimizer->optimize('/aab/', ['min_quantifier_count' => 3])->optimized);
-        $this->assertSame('/(?:ab){2}/', $optimizer->optimize('/(?:ab)(?:ab)/', ['min_quantifier_count' => 2])->optimized);
+        $this->assertSame('/a{2}b/', $optimizer->optimize('/aab/', new OptimizerOptions(minQuantifierCount: 2))->optimized);
+        $this->assertSame('/aab/', $optimizer->optimize('/aab/', new OptimizerOptions(minQuantifierCount: 3))->optimized);
+        $this->assertSame('/(?:ab){2}/', $optimizer->optimize('/(?:ab)(?:ab)/', new OptimizerOptions(minQuantifierCount: 2))->optimized);
     }
 
     #[Test]

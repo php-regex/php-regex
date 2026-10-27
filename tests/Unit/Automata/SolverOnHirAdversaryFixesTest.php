@@ -21,6 +21,7 @@ use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Cli\Graph\MermaidDumper;
 use PHPRegex\Optimizer\Optimizer;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
@@ -177,7 +178,7 @@ final class SolverOnHirAdversaryFixesTest extends TestCase
     {
         $optimizer = new Optimizer(RegexParser::create());
 
-        $result = $optimizer->optimize('/(a+b?)a/', ['possessive' => true]);
+        $result = $optimizer->optimize('/(a+b?)a/', new OptimizerOptions(possessive: true));
 
         $this->assertSame('/(a+b?)a/', $result->optimized);
         $this->assertFalse($result->isChanged());

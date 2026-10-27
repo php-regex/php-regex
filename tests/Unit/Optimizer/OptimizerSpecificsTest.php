@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
@@ -86,7 +87,7 @@ final class OptimizerSpecificsTest extends TestCase
 
     public function test_min_quantifier_count_respects_threshold(): void
     {
-        $regex = Regex::create()->optimize('/aaaa/', ['min_quantifier_count' => 5])->optimized;
+        $regex = Regex::create()->optimize('/aaaa/', new OptimizerOptions(minQuantifierCount: 5))->optimized;
         $this->assertSame('/aaaa/', $regex);
     }
 
@@ -134,13 +135,13 @@ final class OptimizerSpecificsTest extends TestCase
 
     public function test_full_optimization_combo(): void
     {
-        $regex = Regex::create()->optimize('/a{0,}b{1,}c{0,1}d{1}\d\d/', ['possessive' => true])->optimized;
+        $regex = Regex::create()->optimize('/a{0,}b{1,}c{0,1}d{1}\d\d/', new OptimizerOptions(possessive: true))->optimized;
         $this->assertSame('/a*+b++c?d\d\d/', $regex);
     }
 
     public function test_safe_possessivization(): void
     {
-        $regex = Regex::create()->optimize('/\d+a/', ['possessive' => true])->optimized;
+        $regex = Regex::create()->optimize('/\d+a/', new OptimizerOptions(possessive: true))->optimized;
         $this->assertSame('/\d++a/', $regex);
     }
 

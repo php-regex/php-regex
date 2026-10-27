@@ -43,7 +43,6 @@ use PHPRegex\Transpiler\TranspileResult;
  * Laravel Facade for the PHPRegex library.
  *
  * @phpstan-import-type OptionsArray from ParserOptions
- * @phpstan-import-type OptimizerOptionsArray from OptimizerOptions
  *
  * @method static ToolkitRegex                  create(OptionsArray $options = [])
  * @method static ToolkitRegex                  fromOptions(ParserOptions $options)
@@ -54,7 +53,7 @@ use PHPRegex\Transpiler\TranspileResult;
  * @method static RegexNode                     parsePattern(string $pattern, string $flags = '', string $delimiter = '/')
  * @method static AnalysisReport                analyze(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null)
  * @method static RedosAnalysis                 redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null)
- * @method static OptimizationResult            optimize(string $regex, OptimizerOptions|OptimizerOptionsArray $options = [])
+ * @method static OptimizationResult            optimize(string $regex, ?OptimizerOptions $options = null)
  * @method static FormatResult                  format(string $regex, int $width = 80)
  * @method static FormatResult                  compact(string $regex)
  * @method static TranspileResult               transpile(string $regex, string $target, ?TranspileOptions $options = null)

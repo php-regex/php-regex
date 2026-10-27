@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Optimizer\Optimizer;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,7 +35,7 @@ final class AlternationFactorizationPriorityTest extends TestCase
     public function test_a_factored_alternation_writes_the_same_matches(string $pattern): void
     {
         foreach ([false, true] as $verify) {
-            $optimized = (new Optimizer(RegexParser::create()))->optimize($pattern, ['factorize' => true, 'verify_with_automata' => $verify])->optimized;
+            $optimized = (new Optimizer(RegexParser::create()))->optimize($pattern, new OptimizerOptions(factorize: true, verifyWithAutomata: $verify))->optimized;
 
             foreach (self::SUBJECTS as $subject) {
                 preg_match($pattern, $subject, $expected, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL);
@@ -49,7 +50,7 @@ final class AlternationFactorizationPriorityTest extends TestCase
     #[DataProvider('provideFactoredPatterns')]
     public function test_the_prefix_is_still_factored_out(string $pattern, string $expected): void
     {
-        $this->assertSame($expected, (new Optimizer(RegexParser::create()))->optimize($pattern, ['factorize' => true])->optimized);
+        $this->assertSame($expected, (new Optimizer(RegexParser::create()))->optimize($pattern, new OptimizerOptions(factorize: true))->optimized);
     }
 
     /**

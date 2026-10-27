@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -38,7 +39,7 @@ final class PossessiveFlagScopeTest extends TestCase
     {
         // The rewriter and the gate the possessive rewrites always pass, the
         // proof of the other rewrites left to the caller.
-        $optimized = Regex::create(['cache' => null])->optimize($pattern, ['possessive' => true, 'verify_with_automata' => false])->optimized;
+        $optimized = Regex::create(['cache' => null])->optimize($pattern, new OptimizerOptions(possessive: true, verifyWithAutomata: false))->optimized;
 
         foreach ($subjects as $subject) {
             $this->assertSame(

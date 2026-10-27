@@ -261,8 +261,8 @@ final class CodeActionHandler
 
         try {
             // Only a rewrite the automata prove is offered, as the lint
-            // checks the rewrites it suggests.
-            $result = $this->regex->optimize($occurrence->pattern, ['verify_with_automata' => true]);
+            // checks the rewrites it suggests: the defaults prove each one.
+            $result = $this->regex->optimize($occurrence->pattern);
 
             if ($result->isChanged()) {
                 $actions[] = [

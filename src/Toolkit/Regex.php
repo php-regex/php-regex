@@ -66,7 +66,6 @@ use PHPRegex\Transpiler\TranspileResult;
  * regular expressions. Supports caching and runtime PCRE validation.
  *
  * @phpstan-import-type OptionsArray from ParserOptions
- * @phpstan-import-type OptimizerOptionsArray from OptimizerOptions
  */
 final class Regex
 {
@@ -287,12 +286,13 @@ final class Regex
     /**
      * Optimize a regular expression for better performance.
      *
-     * @param string                                 $regex   The regular expression to optimize
-     * @param OptimizerOptions|OptimizerOptionsArray $options What may be rewritten, as a value or as the array OptimizerOptions::fromArray() reads
+     * @param string                $regex   The regular expression to optimize
+     * @param OptimizerOptions|null $options What may be rewritten; null reads the defaults. A config array becomes one
+     *                                       through OptimizerOptions::fromArray()
      *
      * @return OptimizationResult Optimization results with changes applied
      */
-    public function optimize(string $regex, OptimizerOptions|array $options = []): OptimizationResult
+    public function optimize(string $regex, ?OptimizerOptions $options = null): OptimizationResult
     {
         return (new Optimizer($this->parser))->optimize($regex, $options);
     }

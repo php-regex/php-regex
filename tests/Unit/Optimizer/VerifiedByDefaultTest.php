@@ -47,6 +47,6 @@ final class VerifiedByDefaultTest extends TestCase
         // lookbehind, so the rewrite is offered only when asked for.
         $unproven = '/\$(?<!ab)(?<!ab)(?<!ab)(?<!ab)/';
         $this->assertSame($unproven, $regex->optimize($unproven)->optimized);
-        $this->assertSame('/\$(?<!ab){4}/', $regex->optimize($unproven, ['verify_with_automata' => false])->optimized);
+        $this->assertSame('/\$(?<!ab){4}/', $regex->optimize($unproven, new OptimizerOptions(verifyWithAutomata: false))->optimized);
     }
 }

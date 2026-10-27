@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -24,18 +25,10 @@ final class CharClassCanonicalizationToggleTest extends TestCase
     {
         $regex = Regex::create();
 
-        $canonical = $regex->optimize($pattern, [
-            'canonicalize_char_classes' => true,
-            'digits' => false,
-            'word' => false,
-        ])->optimized;
+        $canonical = $regex->optimize($pattern, new OptimizerOptions(canonicalizeCharClasses: true, digits: false, word: false))->optimized;
         $this->assertSame($expectedCanonical, $canonical);
 
-        $preserved = $regex->optimize($pattern, [
-            'canonicalize_char_classes' => false,
-            'digits' => false,
-            'word' => false,
-        ])->optimized;
+        $preserved = $regex->optimize($pattern, new OptimizerOptions(canonicalizeCharClasses: false, digits: false, word: false))->optimized;
         $this->assertSame($expectedPreserved, $preserved);
     }
 

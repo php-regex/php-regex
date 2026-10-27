@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Optimizer\Optimizer;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\CpuClock;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -106,7 +107,7 @@ final class RewriteVerificationTest extends TestCase
         $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
 
         $this->assertSame('/^([ab])*a([ab]){14}$/', $optimizer->optimize('/^(a|b)*a(a|b){14}$/')->optimized, 'Unchecked, the rewrite is made.');
-        $this->assertSame('/^([ab])*a([ab]){14}$/', $optimizer->optimize('/^(a|b)*a(a|b){14}$/', ['verify_with_automata' => true])->optimized);
+        $this->assertSame('/^([ab])*a([ab]){14}$/', $optimizer->optimize('/^(a|b)*a(a|b){14}$/', new OptimizerOptions(verifyWithAutomata: true))->optimized);
 
         $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
         $this->assertFalse($verify->invoke($optimizer, '/^(a|b)*a(a|b){14}(?:x|xy)$/', '/^(a|b)*a(a|b){14}xy?$/'));
@@ -320,7 +321,7 @@ final class RewriteVerificationTest extends TestCase
     {
         $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
 
-        $this->assertSame($rewrite, $optimizer->optimize($original, ['verify_with_automata' => true])->optimized);
+        $this->assertSame($rewrite, $optimizer->optimize($original, new OptimizerOptions(verifyWithAutomata: true))->optimized);
     }
 
     /**
@@ -364,8 +365,8 @@ final class RewriteVerificationTest extends TestCase
 
         $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
 
-        $this->assertSame('/a+(?!b)/', $optimizer->optimize('/a+(?!b)/', ['possessive' => true])->optimized);
-        $this->assertSame('/\d++a/', $optimizer->optimize('/\d+a/', ['possessive' => true])->optimized, 'A possessive that never gives back is still made.');
+        $this->assertSame('/a+(?!b)/', $optimizer->optimize('/a+(?!b)/', new OptimizerOptions(possessive: true))->optimized);
+        $this->assertSame('/\d++a/', $optimizer->optimize('/\d+a/', new OptimizerOptions(possessive: true))->optimized, 'A possessive that never gives back is still made.');
     }
 
     /**

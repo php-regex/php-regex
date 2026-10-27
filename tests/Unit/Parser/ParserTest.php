@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
@@ -909,7 +910,7 @@ final class ParserTest extends TestCase
         // 1.x ignored an unknown option; 2.0 names it.
         foreach (['safe', 'aggressive'] as $mode) {
             try {
-                $this->regex->optimize('/a+/', ['mode' => $mode]);
+                $this->regex->optimize('/a+/', OptimizerOptions::fromArray(['mode' => $mode]));
                 $this->fail('An unknown optimizer option must be refused.');
             } catch (InvalidRegexOptionException $e) {
                 $this->assertStringStartsWith('Unknown optimizer option "mode"', $e->getMessage());

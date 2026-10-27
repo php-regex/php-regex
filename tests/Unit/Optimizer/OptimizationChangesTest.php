@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -34,7 +35,7 @@ final class OptimizationChangesTest extends TestCase
     #[DataProvider('provideRewrites')]
     public function test_each_kind_of_rewrite_is_named_once(string $pattern, array $options, string $optimized, array $changes): void
     {
-        $result = Regex::create(['cache' => null])->optimize($pattern, $options);
+        $result = Regex::create(['cache' => null])->optimize($pattern, OptimizerOptions::fromArray($options));
 
         $this->assertSame($optimized, $result->optimized);
         $this->assertSame($changes, $result->changes);

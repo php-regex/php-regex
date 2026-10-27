@@ -49,9 +49,12 @@ engine the equivalence proof runs on, are installed with it. This package is par
 Configuration
 -------------
 
-`optimize()` takes an `OptimizerOptions` value, or an array it reads. Array keys
-are the snake_case names below; `regex.json` and the PHPStan parameters spell
-the same options in camelCase (`OptimizerOptions::fromCamelCaseArray()`).
+`optimize()` takes an `OptimizerOptions` value, or null for the defaults. Its
+constructor names each option below in camelCase (`verifyWithAutomata` for
+`verify_with_automata`); a configuration array keyed in the snake_case names
+becomes one through `OptimizerOptions::fromArray()`, and `regex.json` and the
+PHPStan parameters spell the same options in camelCase
+(`OptimizerOptions::fromCamelCaseArray()`).
 
 | Option                      | Type | Default | What it does                                                                |
 |-----------------------------|------|---------|-----------------------------------------------------------------------------|
@@ -99,7 +102,7 @@ lengths, is withdrawn whatever the options say. A DEFINE group keeps its
 quantifier as written, and a run of the same item is counted up to 65535, the
 largest count PCRE takes.
 
-An unknown key or a value of the wrong type throws `InvalidRegexOptionException`. The 1.x names
+Read from an array, an unknown key or a value of the wrong type throws `InvalidRegexOptionException`. The 1.x names
 `autoPossessify` and `allowAlternationFactorization` were renamed `possessive` and `factorize`:
 the old names meet the same unknown-option error as any typo.
 
@@ -120,16 +123,16 @@ echo $result->changes[0];  // 'Wrote [0-9] as \d.'
 Each rewrite is opt-out: turn off the ones you do not want, keep the rest.
 
 ```php
-$result = $optimizer->optimize('/[abc][0-9]/', ['digits' => false]);
+use PHPRegex\Optimizer\OptimizerOptions;
+
+$result = $optimizer->optimize('/[abc][0-9]/', new OptimizerOptions(digits: false));
 
 echo $result->optimized;  // '/[a-c][0-9]/'
 ```
 
-The same options as a value object, turning on the two off-by-default rewrites:
+The two off-by-default rewrites, turned on:
 
 ```php
-use PHPRegex\Optimizer\OptimizerOptions;
-
 $options = new OptimizerOptions(possessive: true, factorize: true);
 
 echo $optimizer->optimize('/[0-9]+;/', $options)->optimized;  // '/\d++;/'
@@ -146,7 +149,7 @@ parser alone, and that one is optional: without it the optimizer reads with
 To take the rewrite unproven, faster:
 
 ```php
-$result = $optimizer->optimize('/[0-9][0-9][0-9][0-9]/', ['verify_with_automata' => false]);
+$result = $optimizer->optimize('/[0-9][0-9][0-9][0-9]/', new OptimizerOptions(verifyWithAutomata: false));
 
 echo $result->optimized;  // '/\d{4}/'
 ```
@@ -172,7 +175,7 @@ locales give `\s` the no-break space, byte `0xA0`, which the class does not hold
 Documentation
 -------------
 
-* [API reference](https://php-regex.com/reference/api/) — `optimize()` in full: both option spellings and `OptimizationResult`
+* [API reference](https://php-regex.com/reference/api/) — `optimize()` in full: its options, read from a value or a configuration array, and `OptimizationResult`
 * [Correctness contracts](https://php-regex.com/reference/correctness-contracts/) — what the optimizer guarantees, and when it declines a rewrite
 * [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — the public surface of this package and what stays stable within 2.x
 * [Feature support matrix](https://php-regex.com/reference/feature-support-matrix/) — which constructs each analyzer, the optimizer included, handles

@@ -73,7 +73,7 @@ final class ExtendedRewriteVerificationTest extends TestCase
     {
         /** @var string $pattern */
         $pattern = require \dirname(__DIR__, 2).'/Fixtures/Automata/url_validator_pattern.php';
-        $optimized = (new Optimizer(RegexParser::create(['cache' => null])))->optimize($pattern, ['verify_with_automata' => true])->optimized;
+        $optimized = (new Optimizer(RegexParser::create(['cache' => null])))->optimize($pattern, new OptimizerOptions(verifyWithAutomata: true))->optimized;
         $this->assertNotSame($pattern, $optimized, 'The optimizer proves the rewrite.');
         $this->assertStringContainsString('{0,1}', $pattern);
         $this->assertStringNotContainsString('{0,1}', $optimized);

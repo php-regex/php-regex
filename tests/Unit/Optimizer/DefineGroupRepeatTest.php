@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -37,7 +38,7 @@ final class DefineGroupRepeatTest extends TestCase
         $this->assertSame(1, preg_match($pattern, $subject), 'Oracle: PCRE compiles and matches the pattern.');
 
         foreach ([[], ['possessive' => true], ['factorize' => true]] as $options) {
-            $optimized = $regex->optimize($pattern, $options)->optimized;
+            $optimized = $regex->optimize($pattern, OptimizerOptions::fromArray($options))->optimized;
 
             $this->assertTrue($regex->validate($optimized)->isValid, $optimized);
             $this->assertSame(

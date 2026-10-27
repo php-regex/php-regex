@@ -3,18 +3,6 @@
 namespace PHPSTORM_META;
 
 registerArgumentsSet(
-    'optimize_option_keys',
-    'digits',
-    'word',
-    'ranges',
-    'canonicalize_char_classes',
-    'possessive',
-    'factorize',
-    'min_quantifier_count',
-    'verify_with_automata'
-);
-
-registerArgumentsSet(
     'explanation_formats',
     'text',
     'html'
@@ -31,12 +19,6 @@ expectedArguments(
     \PHPRegex\Toolkit\Regex::create(),
     0,
     argumentsSet('regex_option_keys')
-);
-
-expectedArguments(
-    \PHPRegex\Toolkit\Regex::optimize(),
-    1,
-    argumentsSet('optimize_option_keys')
 );
 
 expectedArguments(

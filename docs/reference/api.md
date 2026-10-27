@@ -498,31 +498,30 @@ add verdicts. `CompatibilityChecker` gives the same answer from `php-regex/regex
 
 ## Transform and Extract Methods
 
-### optimize(string $regex, OptimizerOptions|array $options = []): OptimizationResult
+### optimize(string $regex, ?OptimizerOptions $options = null): OptimizationResult
 
-Applies safe optimizations to the pattern. The options are an `OptimizerOptions` value, or an array keyed in
-snake_case as `Regex::create()`'s are, the closed shape `OptimizerOptionsArray` (imported from
-`PHPRegex\Optimizer\OptimizerOptions`): PHPStan reports a misspelt key or a value of the wrong type where the
-array is written, and at run time an unknown key or a value of the wrong type throws
-`InvalidRegexOptionException`.
+Applies safe optimizations to the pattern. The options are an `OptimizerOptions` value, its arguments named;
+null reads the defaults. Options read from a configuration, keyed in snake_case as `Regex::create()`'s are,
+become one through `OptimizerOptions::fromArray()`, which throws `InvalidRegexOptionException` on an unknown
+key or a value of the wrong type (`fromCamelCaseArray()` reads the camelCase keys of `regex.json`).
 
 ```php
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Toolkit\Regex;
 
-$result = Regex::create()->optimize('/[0-9]+/', [
-    'digits' => true,                    // [0-9] -> \d
-    'word' => true,                      // [A-Za-z0-9_] stays: \w follows the locale
-    'ranges' => true,                    // Normalize ranges
-    'canonicalize_char_classes' => true, // Normalize character class order/dedup
-    'possessive' => false,               // Add possessive quantifiers
-    'factorize' => false,                // Factor common prefixes of alternatives
-    'min_quantifier_count' => 4,         // Use {n} only when repetition >= 4
-    'verify_with_automata' => true,      // Offer only a rewrite the automata prove
-]);
+$result = Regex::create()->optimize('/[0-9]+/', new OptimizerOptions(
+    digits: true,                   // [0-9] -> \d
+    word: true,                     // [A-Za-z0-9_] stays: \w follows the locale
+    ranges: true,                   // Normalize ranges
+    canonicalizeCharClasses: true,  // Normalize character class order/dedup
+    possessive: false,              // Add possessive quantifiers
+    factorize: false,               // Factor common prefixes of alternatives
+    minQuantifierCount: 4,          // Use {n} only when repetition >= 4
+    verifyWithAutomata: true,       // Offer only a rewrite the automata prove
+));
 
-// The same, as a value:
-$result = Regex::create()->optimize('/[0-9]+/', new OptimizerOptions(possessive: false));
+// The same, read from a configuration array:
+$result = Regex::create()->optimize('/[0-9]+/', OptimizerOptions::fromArray(['possessive' => false]));
 
 echo $result->original;    // '/[0-9]+/'
 echo $result->optimized;   // '/\d+/'
@@ -1043,7 +1042,7 @@ freezes for all of 2.x: a name will not be renamed or removed within 2.x.
 |---|---|---|
 | `CacheStats` | `Parser\Cache\RemovableCacheInterface` | `{hits: int, misses: int}` |
 | `OptionsArray` | `Parser\ParserOptions` | the eight configuration keys, each optional |
-| `OptimizerOptionsArray` | `Optimizer\OptimizerOptions` | the eight optimizer options, in snake_case, each optional |
+| `OptimizerOptionsArray` | `Optimizer\OptimizerOptions` | the eight optimizer options, in snake_case, each optional, as `OptimizerOptions::fromArray()` reads them |
 | `ConfigArray` | `PHPStan\RegexPatternRule` | the `phpRegex` parameter of the PHPStan extension, every key optional |
 | `NodeFilter` | `Parser\NodeFinder` | `Closure(NodeInterface): bool` |
 | `LengthRange` | `Parser\Analysis\LengthRangeCalculator` | `{0: int, 1: int\|null}` — min and max match length |

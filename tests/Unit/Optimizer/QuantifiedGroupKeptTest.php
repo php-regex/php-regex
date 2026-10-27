@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -37,7 +38,7 @@ final class QuantifiedGroupKeptTest extends TestCase
         $regex = Regex::create(['cache' => null]);
 
         foreach ([[], ['possessive' => true, 'factorize' => true], ['min_quantifier_count' => 2]] as $options) {
-            $optimized = $regex->optimize($pattern, $options)->optimized;
+            $optimized = $regex->optimize($pattern, OptimizerOptions::fromArray($options))->optimized;
 
             foreach ($subjects as $subject) {
                 $this->assertSame(

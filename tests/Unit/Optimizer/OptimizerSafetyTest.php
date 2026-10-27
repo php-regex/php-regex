@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Optimizer\Optimizer;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,7 +31,7 @@ final class OptimizerSafetyTest extends TestCase
     #[DataProvider('provideOptimizationCases')]
     public function test_optimization_does_not_change_semantics(string $input, string $expected, array $options): void
     {
-        $optimized = Regex::create()->optimize($input, $options)->optimized;
+        $optimized = Regex::create()->optimize($input, OptimizerOptions::fromArray($options))->optimized;
 
         $this->assertSame($expected, $optimized);
     }
@@ -46,7 +47,7 @@ final class OptimizerSafetyTest extends TestCase
     #[Test]
     public function test_an_unverifiable_atomic_rewrite_is_kept_back(): void
     {
-        $options = ['possessive' => true];
+        $options = new OptimizerOptions(possessive: true);
 
         $this->assertSame(
             '/(?:ab|a)+c/',
@@ -174,7 +175,7 @@ final class OptimizerSafetyTest extends TestCase
     {
         $optimized = Regex::create(['cache' => null])->optimize(
             '/(?:(?s:.))+\n/',
-            ['possessive' => true, 'verify_with_automata' => false],
+            new OptimizerOptions(possessive: true, verifyWithAutomata: false),
         )->optimized;
 
         $this->assertSame('/(?:(?s:.))+\n/', $optimized);
@@ -194,7 +195,7 @@ final class OptimizerSafetyTest extends TestCase
     {
         $optimized = Regex::create(['cache' => null])->optimize(
             $input,
-            $options + ['verify_with_automata' => false],
+            OptimizerOptions::fromArray($options + ['verify_with_automata' => false]),
         )->optimized;
 
         $this->assertSame($expected ?? $input, $optimized);

@@ -38,7 +38,6 @@ final class PhpStormMetaGatesTest extends TestCase
      */
     private const SET_OWNERS = [
         'regex_option_keys' => self::PARSER_META_FILE,
-        'optimize_option_keys' => self::META_FILE,
         'explanation_formats' => self::META_FILE,
         'highlight_formats' => self::META_FILE,
         'redos_thresholds' => self::REDOS_META_FILE,
@@ -76,6 +75,18 @@ final class PhpStormMetaGatesTest extends TestCase
     public function test_the_option_keys_the_ide_suggests_are_the_ones_the_parser_reads(): void
     {
         $this->assertStringContainsString("'pcre_version'", $this->argumentsSet('regex_option_keys'));
+    }
+
+    /**
+     * optimize() takes its options as a value: there are no keys to suggest.
+     */
+    #[Test]
+    public function test_the_ide_suggests_no_option_keys_for_optimize(): void
+    {
+        $meta = (string) \file_get_contents(self::META_FILE);
+
+        $this->assertStringNotContainsString('optimize_option_keys', $meta);
+        $this->assertStringNotContainsString('Regex::optimize()', $meta);
     }
 
     #[Test]

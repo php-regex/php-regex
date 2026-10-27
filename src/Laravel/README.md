@@ -141,8 +141,9 @@ $request->validate([
 ```
 
 `optimize()` and `transpile()` can throw the parse and lexer exception families — on a pattern that does not
-parse or does not tokenize, on an option `optimize()` does not know (`InvalidRegexOptionException`), or on an
-unknown target or a construct the target cannot express (`TranspileException`).
+parse or does not tokenize, or on an unknown target or a construct the target cannot express
+(`TranspileException`). `optimize()` takes its options as an `OptimizerOptions` value: one read from a config
+array through `OptimizerOptions::fromArray()` throws `InvalidRegexOptionException` on a key it does not know.
 
 Artisan commands
 ----------------
