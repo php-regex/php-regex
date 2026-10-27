@@ -178,9 +178,15 @@ final class BacktrackProver
 
         $unicode = str_contains($regex->flags, 'u');
         if (null === $best) {
-            $this->rereadLookarounds($regex, $searches, $target);
+            // Each search linear, a negative lookahead read again in a loop
+            // may still cost a product, which the search read in place
+            // proves where the body fails all over its witness.
+            $best = $this->throughFailingLookaheads($regex, $searches, $target, null, $lookaroundPumps);
+            if (null === $best) {
+                $this->rereadLookarounds($regex, $searches, $target);
 
-            return new ProofResult(RedosComplexity::Linear, null, null, null, null, [], $unicode);
+                return new ProofResult(RedosComplexity::Linear, null, null, null, null, [], $unicode);
+            }
         }
 
         if ($best['approximated']) {
@@ -336,17 +342,23 @@ final class BacktrackProver
      * its rejecting suffixes is published, the first such. Its pump must be
      * the pump of a lookahead's own polynomial, so that the body costs its
      * degree on that witness, and not only on another word the chain reads.
+     * Where every search is linear, no verdict yet, a polynomial the search
+     * read in place proves links a loop outside a body to one inside it on
+     * the pump, every loop of its chain reading that word: the body reads
+     * the run the pump writes from each position the loop gives, and a
+     * polynomial on a witness it fails on stands. So /^(?:(?!a+b)a)+$/ is
+     * proven quadratic, as the engine runs it.
      * A positive lookahead or a lookbehind is read otherwise in place, and
      * the verdict is then left as it is; so it is when that search runs out
      * of budget, proves no higher degree, or finds no such witness.
      *
      * @param list<Pnfa>      $searches
-     * @param Verdict         $best
+     * @param Verdict|null    $best            the verdict of the searches, null when each is linear
      * @param list<list<int>> $lookaroundPumps the pumps of the lookarounds' own polynomials
      *
-     * @return Verdict
+     * @return ($best is null ? Verdict|null : Verdict)
      */
-    private function throughFailingLookaheads(RegexNode $regex, array $searches, ?PcreTarget $target, array $best, array $lookaroundPumps): array
+    private function throughFailingLookaheads(RegexNode $regex, array $searches, ?PcreTarget $target, ?array $best, array $lookaroundPumps): ?array
     {
         $loops = false;
         $bodies = [];
@@ -376,7 +388,7 @@ final class BacktrackProver
                 : [ItemAutomaton::CONTEXT_START];
             $verdict = (new AmbiguityFinder(new ItemAutomaton($inPlace, $budget, $contexts), $budget))->find(self::requiredLiterals($regex->pattern, $inPlace->unicode));
             if (null === $verdict || RedosComplexity::Polynomial !== $verdict['complexity'] || $verdict['approximated'] || null !== $verdict['unwitnessed']
-                || ($verdict['degree'] ?? 0) <= ($best['degree'] ?? 0) || !\in_array($verdict['pump'], $lookaroundPumps, true)) {
+                || ($verdict['degree'] ?? 0) <= (null === $best ? 1 : $best['degree'] ?? 0) || (null !== $best && !\in_array($verdict['pump'], $lookaroundPumps, true))) {
                 return $best;
             }
 

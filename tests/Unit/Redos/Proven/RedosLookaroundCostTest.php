@@ -16,7 +16,9 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
+use PHPRegex\Redos\RedosWitness;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -77,10 +79,6 @@ final class RedosLookaroundCostTest extends TestCase
         yield 'lazy body tied to the end' => ['pattern' => '/^(?:(?=a+?$)a)+$/', 'offset' => 4];
         // "a" x n . "b": 0.71, 2.71, 10.5, 42.3 ms from n = 1,000.
         yield 'positive lookahead holding .*b' => ['pattern' => '/^(?:(?=.*b)a)+$/', 'offset' => 4];
-        // "a" x n . "!": 1.07, 4.14, 17.1 ms from n = 2,000.
-        yield 'negative lookahead holding a+b' => ['pattern' => '/^(?:(?!a+b)a)+$/', 'offset' => 4];
-        // "a" x n . "\n": 3.9, 5.0 and 7.0 per doubling with the JIT.
-        yield 'tempered token whose lookahead holds .*' => ['pattern' => '/^(?:(?!.*foo).)*$/', 'offset' => 4];
         // "a" x n . "!": 3.9 and 4.1 per doubling.
         yield 'atomic group around the loop' => ['pattern' => '/^(?>(?:(?=a+)a)+)$/', 'offset' => 7];
         // "a" x n . "!": 3.9 and 5.5 per doubling.
@@ -100,6 +98,50 @@ final class RedosLookaroundCostTest extends TestCase
         yield 'beside a bounded lookahead' => ['pattern' => '/^(?:(?=a+)(?=a{1,100})a)+$/', 'offset' => 4];
         // "a" x n . "!": 87 ms at n = 1,000, 1.7 s at 2,000, 84 s at 8,000: cubic.
         yield 'lookahead in a lookahead, both in loops' => ['pattern' => '/^(?:(?=(?:(?=a+)a)+)a)+$/', 'offset' => 4];
+    }
+
+    /**
+     * A negative lookahead whose body fails all over the witness holds at
+     * each step of the loop, and its body reads the rest of the run each
+     * time: the search read with the lookahead in place, its body a branch
+     * tried first that ends nowhere, proves the product, on a witness the
+     * body fails on from each position. PCRE2 makes "a+" before "b"
+     * possessive, which reads the same characters but counts none of them:
+     * the steps are counted with "(*NO_AUTO_POSSESS)".
+     */
+    #[Test]
+    #[DataProvider('provideProvenProducts')]
+    public function test_a_failing_negative_lookahead_read_again_in_a_loop_is_proven_polynomial(string $pattern, int $degree): void
+    {
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+        $message = $pattern.' is '.$analysis->headline();
+
+        $this->assertSame(RedosProof::Proven, $analysis->proof, $message);
+        $this->assertSame(RedosComplexity::Polynomial, $analysis->complexity, $message);
+        $this->assertSame($degree, $analysis->degree, $message);
+
+        // The attempt fails on the witness, and the counter grows 2^degree
+        // times from n to 2n.
+        $witness = $analysis->witness;
+        $this->assertInstanceOf(RedosWitness::class, $witness, $message);
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern).'A', $witness->build(20)), $message);
+        $short = self::steps($pattern, $witness->build(100));
+        $long = self::steps($pattern, $witness->build(200));
+        $this->assertGreaterThan(0.85 * 2 ** $degree, $long / $short, \sprintf('%s: %d -> %d steps.', $message, $short, $long));
+        $this->assertLessThan(1.15 * 2 ** $degree, $long / $short, \sprintf('%s: %d -> %d steps.', $message, $short, $long));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, degree: int}>
+     */
+    public static function provideProvenProducts(): iterable
+    {
+        // "a" x n . "!": 1.07, 4.14, 17.1 ms from n = 2,000.
+        yield 'negative lookahead holding a+b' => ['pattern' => '/^(?:(?!a+b)a)+$/', 'degree' => 2];
+        // "a" x n . "\n": 3.9, 5.0 and 7.0 per doubling with the JIT; on the
+        // witness, "!" x n . "\n!", 0.26, 1.01, 3.99, 15.9 ms from n = 1,000
+        // with the JIT, 3.9 to 4.0 per doubling.
+        yield 'tempered token whose lookahead holds .*' => ['pattern' => '/^(?:(?!.*foo).)*$/', 'degree' => 2];
     }
 
     /**
@@ -174,5 +216,33 @@ final class RedosLookaroundCostTest extends TestCase
         yield 'password rules' => ['pattern' => '/^(?=.*\d)(?=.*[a-z]).{8,}$/'];
         yield 'negative lookahead before the loop' => ['pattern' => '/^(?!a+b)a+$/'];
         yield 'lookbehind after the loop' => ['pattern' => '/^a+(?<=a)$/'];
+    }
+
+    /**
+     * The steps the interpreter takes, its start-up study and its automatic
+     * possession off: the smallest backtrack limit under which it finishes.
+     */
+    private static function steps(string $pattern, string $subject): int
+    {
+        $limit = ini_get('pcre.backtrack_limit');
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)(*NO_AUTO_POSSESS)'.substr($pattern, 1));
+
+        try {
+            $low = 1;
+            $high = 1 << 26;
+            while ($low < $high) {
+                $middle = intdiv($low + $high, 2);
+                ini_set('pcre.backtrack_limit', (string) $middle);
+                if (false === @preg_match($unoptimized, $subject)) {
+                    $low = $middle + 1;
+                } else {
+                    $high = $middle;
+                }
+            }
+
+            return $low;
+        } finally {
+            ini_set('pcre.backtrack_limit', false === $limit ? '1000000' : $limit);
+        }
     }
 }
