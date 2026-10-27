@@ -135,6 +135,8 @@ final class Rewriter extends AbstractNodeVisitor
      */
     private \WeakMap $ungroupedRepeats;
 
+    private readonly FlagRewrites $flagRewrites;
+
     public function __construct(
         private readonly bool $optimizeDigits = true,
         private readonly bool $optimizeWord = true,
@@ -166,6 +168,7 @@ final class Rewriter extends AbstractNodeVisitor
     ) {
         $this->charSetAnalyzer = new CharSetAnalyzer();
         $this->ungroupedRepeats = new \WeakMap();
+        $this->flagRewrites = new FlagRewrites();
         // Read again from the flags of each pattern visited whole.
         $this->possessify = $possessive;
     }
@@ -178,13 +181,13 @@ final class Rewriter extends AbstractNodeVisitor
         $this->unicodeProperties = UnicodeProperties::on($node);
         $this->charSetAnalyzer = new CharSetAnalyzer($this->flags);
         $this->lazyByDefault = str_contains($this->flags, 'U');
-        $this->inlineFlags = $this->containsInlineFlags($node->pattern);
+        $this->inlineFlags = $this->flagRewrites->containsInlineFlags($node->pattern);
         $this->possessify = $this->possessive && !$this->lazyByDefault && !$this->inlineFlags;
         $this->changes = [];
         $optimizedPattern = $node->pattern->accept($this);
 
         // Remove useless flags
-        $optimizedFlags = $this->removeUselessFlags($node->flags, $optimizedPattern);
+        $optimizedFlags = $this->flagRewrites->removeUselessFlags($node->flags, $optimizedPattern);
         if ($optimizedFlags !== $node->flags) {
             $this->changed(self::UNUSED_FLAG);
         }
@@ -781,63 +784,6 @@ final class Rewriter extends AbstractNodeVisitor
     }
 
     /**
-     * Removes useless flags from the flags string.
-     */
-    private function removeUselessFlags(string $flags, NodeInterface $pattern): string
-    {
-        // Remove 's' flag if there are no dots in the pattern
-        if (str_contains($flags, 's') && !$this->patternContainsDots($pattern)) {
-            $flags = str_replace('s', '', $flags);
-        }
-
-        // Remove 'm' flag if there are no ^ or $ anchors
-        if (str_contains($flags, 'm') && !$this->patternContainsMultilineAnchors($pattern)) {
-            $flags = str_replace('m', '', $flags);
-        }
-
-        return $flags;
-    }
-
-    /**
-     * Whether a dot stands anywhere in the pattern. Every node is walked
-     * through its children, so a dot inside a DEFINE body, a script run or
-     * any other container still reads the flag.
-     */
-    private function patternContainsDots(NodeInterface $node): bool
-    {
-        if ($node instanceof DotNode) {
-            return true;
-        }
-
-        foreach ($node->getChildren() as $child) {
-            if ($this->patternContainsDots($child)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Whether a ^ or $ anchor, the two that depend on multiline mode,
-     * stands anywhere in the pattern.
-     */
-    private function patternContainsMultilineAnchors(NodeInterface $node): bool
-    {
-        if ($node instanceof AnchorNode) {
-            return '^' === $node->value || '$' === $node->value;
-        }
-
-        foreach ($node->getChildren() as $child) {
-            if ($this->patternContainsMultilineAnchors($child)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Whether the node may take a character above ASCII, which the
      * character sets, stopping at 0x7F, do not hold: a byte or a code point
      * above it, a dot, a negated class, a type but \\d, \\w and \\s without
@@ -888,28 +834,6 @@ final class Rewriter extends AbstractNodeVisitor
 
             if (!$this->canMatchEmpty($item)) {
                 return false;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Whether an inline flag stands anywhere under the node. The charset
-     * analyzer reads the outer flags only, so an inline flag can change
-     * what a node matches without the disjointness check seeing it, from
-     * where it stands to the end of its group: possessification then
-     * stays out of the whole pattern.
-     */
-    private function containsInlineFlags(NodeInterface $node): bool
-    {
-        if ($node instanceof GroupNode && null !== $node->flags) {
-            return true;
-        }
-
-        foreach ($node->getChildren() as $child) {
-            if ($this->containsInlineFlags($child)) {
-                return true;
             }
         }
 

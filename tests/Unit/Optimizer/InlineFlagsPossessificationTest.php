@@ -77,8 +77,10 @@ final class InlineFlagsPossessificationTest extends TestCase
         $this->assertNotFalse(@preg_match($pattern, ''));
 
         $rewriter = new Rewriter();
+        $flagRewrites = (new \ReflectionProperty($rewriter, 'flagRewrites'))->getValue($rewriter);
+        $this->assertIsObject($flagRewrites);
         $root = Regex::create(['cache' => null])->parse($pattern)->pattern;
 
-        $this->assertSame($flags, (new \ReflectionMethod($rewriter, 'containsInlineFlags'))->invoke($rewriter, $root));
+        $this->assertSame($flags, (new \ReflectionMethod($flagRewrites, 'containsInlineFlags'))->invoke($flagRewrites, $root));
     }
 }

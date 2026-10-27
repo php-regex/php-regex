@@ -595,7 +595,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_pattern_contains_dots_covers_all_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'flagRewrites');
 
         // Test with dot
         $dot = new DotNode(0, 1);
@@ -637,7 +637,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_pattern_contains_multiline_anchors_covers_all_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'flagRewrites');
 
         // Test with caret
         $caret = new AnchorNode('^', 0, 1);
@@ -964,7 +964,7 @@ final class RewriterEdgeCasesTest extends TestCase
     #[Test]
     public function test_remove_useless_flags_covers_cases(): void
     {
-        $optimizer = new Rewriter();
+        $optimizer = $this->part(new Rewriter(), 'flagRewrites');
 
         // Test removing 's' flag when no dots
         $pattern = new LiteralNode('abc', 0, 3);
@@ -1065,6 +1065,18 @@ final class RewriterEdgeCasesTest extends TestCase
         // Test other
         $result = $this->invokePrivate($optimizer, 'getCharCategory', [33]); // '!'
         $this->assertSame(0, $result);
+    }
+
+    /**
+     * The part of the rewriter that holds one family of rewrites, as the
+     * rewriter built it.
+     */
+    private function part(Rewriter $rewriter, string $property): object
+    {
+        $part = (new \ReflectionProperty($rewriter, $property))->getValue($rewriter);
+        $this->assertIsObject($part);
+
+        return $part;
     }
 
     /**
