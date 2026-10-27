@@ -59,7 +59,6 @@ use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\PcreNumber;
 use PHPRegex\Parser\Syntax\RepeatCount;
 use PHPRegex\Parser\Syntax\StartOptions;
-use PHPRegex\Parser\Syntax\VersionCondition;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
 
@@ -68,9 +67,9 @@ use PHPRegex\Parser\Text\Bytes;
  * parser could build, at the offset the release judged reports it.
  *
  * It walks the tree once, in the order PCRE2 reads the pattern, and keeps
- * the checks that need that walk: the nesting limit, repeat counts,
- * version conditions and callouts. PCRE2 refuses some things only once it
- * has read the whole pattern: a lookbehind it cannot
+ * the checks that need that walk: the nesting limit, repeat counts and
+ * callouts. PCRE2 refuses some things only once it has read the whole
+ * pattern: a lookbehind it cannot
  * measure, a reference to a group the pattern does not have, a "\K" in a
  * lookaround from PHP 8.5, a conditional of more than two branches. The
  * walk keeps the first error of each of those passes and raises the
@@ -81,7 +80,8 @@ use PHPRegex\Parser\Text\Bytes;
  * hands the text being read: EscapeChecks for one escape as written,
  * ReferenceChecks for what names a group, VerbChecks for a verb and the
  * settings of the opening run, ClassChecks for the brackets and quotes of
- * a class, RangeChecks for its ranges, LookbehindChecks for the measure of lookbehinds, CompiledSize
+ * a class, RangeChecks for its ranges, ConditionalChecks for the branches
+ * of a conditional and the version it compares with, LookbehindChecks for the measure of lookbehinds, CompiledSize
  * for the 64 KiB limit.
  *
  * Each walk starts from a clean state. FirstErrorLocator also asks it about
@@ -269,6 +269,11 @@ final class Validator extends AbstractNodeVisitor
     private RangeChecks $ranges;
 
     /**
+     * The checks of the conditionals of the text being read.
+     */
+    private ConditionalChecks $conditionals;
+
+    /**
      * The measure of the lookbehinds of the pattern.
      */
     private LookbehindChecks $lookbehindChecks;
@@ -290,6 +295,7 @@ final class Validator extends AbstractNodeVisitor
         $this->verbs = new VerbChecks($this->target, $pattern);
         $this->classes = new ClassChecks($this->target, $pattern);
         $this->ranges = new RangeChecks($this->target, $pattern);
+        $this->conditionals = new ConditionalChecks($this->target, $this->keepBranchCountError(...), $pattern);
         $this->lookbehindChecks = new LookbehindChecks($groups, $this->target, $this->checkMeasuredReference(...), $pattern, $maxLookbehindLength, false);
     }
 
@@ -402,7 +408,7 @@ final class Validator extends AbstractNodeVisitor
             $this->measureLookbehind($node);
         }
 
-        $text = [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes, $this->ranges];
+        $text = [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes, $this->ranges, $this->conditionals];
         if ($node->child->getStartPosition() <= $node->startPosition) {
             $this->enterPayload($node->startPosition, $node->endPosition);
             $this->readText();
@@ -437,7 +443,7 @@ final class Validator extends AbstractNodeVisitor
         try {
             $node->child->accept($this);
         } finally {
-            [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes, $this->ranges] = $text;
+            [$this->source, $this->positionOffset, $this->escapes, $this->references, $this->verbs, $this->classes, $this->ranges, $this->conditionals] = $text;
             if ($nests) {
                 $this->nestingDepth--;
             }
@@ -798,16 +804,7 @@ final class Validator extends AbstractNodeVisitor
             );
         }
 
-        // The parser keeps every branch after the first in "no"; PCRE takes
-        // two at most.
-        if ($node->no instanceof AlternationNode) {
-            $this->raiseBranchCountError(
-                'A conditional group holds more than two branches.',
-                $this->branchCountErrorOffset($node),
-                ErrorCode::ConditionalTooManyBranches,
-                'Group the extra branches: (?(1)a|(?:b|c)).',
-            );
-        }
+        $this->conditionals->branches($node);
 
         $node->yes->accept($this);
         $node->no->accept($this);
@@ -832,15 +829,7 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitDefine(DefineNode $node): void
     {
-        // PCRE reports it at the "DEFINE" word, past "(?(".
-        if ($node->content instanceof AlternationNode) {
-            $this->raiseBranchCountError(
-                'A (DEFINE) group holds more than one branch.',
-                $node->startPosition + 3,
-                ErrorCode::DefineTooManyBranches,
-                'Group the branches: (?(DEFINE)(?:a|b)).',
-            );
-        }
+        $this->conditionals->defineBranches($node);
 
         $this->enterNesting($node->content->getStartPosition());
 
@@ -857,69 +846,10 @@ final class Validator extends AbstractNodeVisitor
         $this->verbs->limitMatch($node);
     }
 
-    /**
-     * PCRE compares the version two ways and no more.
-     *
-     * The parser reads the others so that a pattern using one still produces
-     * a tree to look at; saying they will not compile is this visitor's job.
-     */
     #[\Override]
     public function visitVersionCondition(VersionConditionNode $node): void
     {
-        $versionAt = null === $this->source ? false : strpos($this->source, 'VERSION', $node->startPosition);
-        $pcreOffset = false === $versionAt ? null : VersionCondition::errorOffsetFor((string) $this->source, $versionAt, $this->target, $this->unicodeMode);
-
-        if (!\in_array($node->operator, ['=', '>='], true)) {
-            $this->raiseSemanticError(
-                \sprintf('Version condition "%s" is not supported: PCRE compares with "=" or ">=".', $node->operator),
-                $pcreOffset ?? $node->startPosition,
-                ErrorCode::ConditionalVersionOperator,
-            );
-        }
-
-        // PCRE reads a major number and at most one ".minor".
-        if (1 === LibraryPcre::match('/^\d++(?:\.\d++)?$/', $node->version, $matches)) {
-            $tooBig = false === $versionAt ? null : VersionCondition::errorOffsetFor((string) $this->source, $versionAt, $this->target, $this->unicodeMode);
-
-            // "(?(VERSION=10 )": before PCRE2 10.47, what follows the major
-            // where the ")" belongs leaves the condition open.
-            if (null !== $tooBig && false !== $versionAt && !$this->supports(PcreFeature::VersionConditionLeftOpenIsVersionError)
-                && VersionCondition::isMajorLeftOpenAt((string) $this->source, $versionAt, $tooBig)) {
-                $this->raiseSemanticError(
-                    \sprintf('Missing ")" to close the condition at position %d.', $tooBig),
-                    $tooBig,
-                    ErrorCode::ConditionalUnclosed,
-                );
-            }
-
-            if (null !== $tooBig) {
-                $this->raiseSemanticError(
-                    \sprintf('Invalid version "%s" in a version condition: the number is too big.', $node->version),
-                    $tooBig,
-                    ErrorCode::ConditionalVersionSyntax,
-                    'PCRE takes a major and a minor of at most 1000, and before PCRE2 10.47 a minor of two digits.',
-                );
-            }
-
-            return;
-        }
-
-        // The pattern matches every string, the empty prefix included: the
-        // '' branch is unreachable and only there for the type.
-        $valid = 1 === LibraryPcre::match('/^\d*+(?:\.\d*+)?/', $node->version, $matches) ? $matches[0] : '';
-        $afterNumber = '' !== $valid && !str_ends_with($valid, '.');
-        $versionStart = null === $this->source
-            ? $node->startPosition
-            : (int) strpos($this->source, $node->version, $node->startPosition);
-
-        $this->raiseSemanticError(
-            \sprintf('Invalid version "%s" in a version condition: PCRE takes a major number and an optional ".minor".', $node->version),
-            // From PCRE2 10.47, PCRE steps past a character it reads where
-            // ")" belongs; it stops on one it reads where a digit belongs.
-            // Before, it stops on a third digit of a minor.
-            $pcreOffset ?? ($afterNumber ? $this->target->faultOffset($versionStart + \strlen($valid) + 1) : $versionStart + \strlen($valid)),
-            ErrorCode::ConditionalVersionSyntax,
-        );
+        $this->conditionals->versionCondition($node);
     }
 
     #[\Override]
@@ -1015,6 +945,7 @@ final class Validator extends AbstractNodeVisitor
         $this->verbs = VerbChecks::forPattern($this->target, $this->pattern, $node->source, $this->unicodeMode);
         $this->classes = new ClassChecks($this->target, $this->pattern, $node->source);
         $this->ranges = new RangeChecks($this->target, $this->pattern, $node->source, 0, $this->unicodeMode);
+        $this->conditionals = new ConditionalChecks($this->target, $this->keepBranchCountError(...), $this->pattern, $node->source, 0, $this->unicodeMode);
         // A measure of its own: what an earlier pattern measured is gone.
         $this->lookbehindChecks = new LookbehindChecks($groups, $this->target, $this->checkMeasuredReference(...), $this->pattern, $this->maxLookbehindLength, $this->unicodeMode);
 
@@ -1192,33 +1123,7 @@ final class Validator extends AbstractNodeVisitor
         $this->verbs = $this->verbs->reading($this->source, $this->positionOffset);
         $this->classes = $this->classes->reading($this->source, $this->positionOffset);
         $this->ranges = $this->ranges->reading($this->source, $this->positionOffset);
-    }
-
-    /**
-     * Where PCRE reports a conditional that holds more than two branches:
-     * where the group opens, one character on for each character of a group
-     * number past its first, as in "(?(+1)"; before PCRE2 10.47, on the name
-     * the condition tests.
-     */
-    private function branchCountErrorOffset(ConditionalNode $node): int
-    {
-        $condition = $node->condition;
-        if ($condition instanceof BackrefNode && 1 === LibraryPcre::match('/^[+-]?\d++$/', $condition->ref)) {
-            return $node->startPosition + \strlen($condition->ref) - 1;
-        }
-
-        if ($this->supports(PcreFeature::BranchCountErrorOffTheConditionName)
-            || !($condition instanceof BackrefNode || $condition instanceof SubroutineNode)) {
-            return $node->startPosition;
-        }
-
-        // "(?(R&name)", "(?(<name>)" and "(?('name')": the name comes after
-        // what introduces it.
-        return $condition->startPosition + match (true) {
-            $condition instanceof SubroutineNode && str_starts_with($condition->reference, 'R&') => 2,
-            \in_array($this->source[$condition->startPosition] ?? '', ['<', "'"], true) => 1,
-            default => 0,
-        };
+        $this->conditionals = $this->conditionals->reading($this->source, $this->positionOffset);
     }
 
     /**
@@ -1226,10 +1131,8 @@ final class Validator extends AbstractNodeVisitor
      * than one: PCRE counts them once it has resolved the references, so on
      * a walk from the pattern root the error waits for the walk to end.
      */
-    private function raiseBranchCountError(string $message, int $position, ErrorCode $code, string $hint): void
+    private function keepBranchCountError(SemanticErrorException $error): void
     {
-        $error = new SemanticErrorException($message, $code, $position + $this->positionOffset, $this->pattern, hint: $hint);
-
         if (!$this->walkingPattern) {
             throw $error;
         }
