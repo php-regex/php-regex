@@ -41,13 +41,6 @@ use PHPRegex\Parser\Token\TokenType;
  */
 final class VerbParser
 {
-    /**
-     * The marker a lookaround carries in its flags when it is non-atomic,
-     * "(?*...)" or "(*napla:...)": PCRE may backtrack into it. It is the
-     * character that spells it in the short form.
-     */
-    public const NON_ATOMIC_FLAG = '*';
-
     // Token length constants for calculating positions
     private const PCRE_VERB_WRAPPER_LENGTH = 3; // (*...)
 
@@ -108,7 +101,7 @@ final class VerbParser
         // reads a closed body in place too: "(*pla:(a))b". Lexer::tokenize()
         // keeps a closed body in the opener's token, so there no ")" closes
         // a body read here.
-        return new GroupNode($body, $read->assertion ?? GroupType::NonCapturing, null, $read->nonAtomic ? self::NON_ATOMIC_FLAG : null, $startPosition, $endToken->position + 1);
+        return new GroupNode($body, $read->assertion ?? GroupType::NonCapturing, null, $read->nonAtomic ? GroupParser::NON_ATOMIC_FLAG : null, $startPosition, $endToken->position + 1);
     }
 
     /**
@@ -192,7 +185,7 @@ final class VerbParser
                 ($this->readApart)((string) $read->payload, $startPosition + 2 + $read->payloadOffset),
                 $read->assertion,
                 null,
-                $read->nonAtomic ? self::NON_ATOMIC_FLAG : null,
+                $read->nonAtomic ? GroupParser::NON_ATOMIC_FLAG : null,
                 $startPosition,
                 $endPosition,
             );

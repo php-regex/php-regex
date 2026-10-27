@@ -94,6 +94,7 @@ final class AstFingerprint
         'src/Parser/Syntax/ExtendedClassParser.php',
         'src/Parser/Syntax/ExtendedClassReader.php',
         'src/Parser/Syntax/GroupListReader.php',
+        'src/Parser/Syntax/GroupParser.php',
         'src/Parser/Syntax/GroupNameReader.php',
         'src/Parser/Syntax/InlineFlags.php',
         'src/Parser/Syntax/NameCharacters.php',
