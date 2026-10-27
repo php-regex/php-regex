@@ -399,20 +399,19 @@ final class RedosSoundnessRegressionTest extends TestCase
      * Engine fact (no JIT): @preg_match('/(*UCP)(?:\w|\xC9)+$/',
      * str_repeat(chr(0xC9), 15).'!') exhausts the backtrack limit.
      *
-     * A start verb is out of the prover's model, as the fuzz rows on verbs
-     * hold: the verdict is a heuristic one, and it must not call the
-     * pattern safe.
+     * (*UCP) alone at the start is in the prover's model, its sets read
+     * under it: the overlap is proven, not guessed.
      */
     #[Test]
-    public function test_ucp_word_overlap_with_latin1_byte_is_never_called_safe(): void
+    public function test_ucp_word_overlap_with_latin1_byte_is_proven_exponential(): void
     {
         $pattern = '/(*UCP)(?:\w|\xC9)+$/';
 
         $analysis = (new RedosAnalyzer())->analyze($pattern);
 
-        $this->assertSame(RedosProof::Heuristic, $analysis->proof, $pattern.' was "'.$analysis->headline().'"');
+        $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern.' was "'.$analysis->headline().'" instead of proven exponential');
+        $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $pattern);
         $this->assertNotSame(RedosSeverity::Safe, $analysis->severity, $pattern);
-        $this->assertNotSame(RedosComplexity::Linear, $analysis->complexity, $pattern);
     }
 
     #[Test]

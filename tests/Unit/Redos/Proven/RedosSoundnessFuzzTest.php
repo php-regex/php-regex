@@ -32,7 +32,8 @@ use PHPUnit\Framework\TestCase;
  * - a pattern judged "safe (proven)" never exhausts the backtrack limit on
  *   a pump attack, with or without $matches;
  * - a pattern outside the model (a backreference, recursion, a subroutine,
- *   a verb, a conditional, \R, \X, a start-of-pattern verb) never carries
+ *   a verb, a conditional, \R, \X, a start-of-pattern verb but a lone
+ *   (*UCP)) never carries
  *   a proof at all: "heuristic by design", the day the model grows is the
  *   day this net is re-pointed;
  * - a witness the confirmed replay reports as replayed fails the engine
@@ -103,6 +104,8 @@ final class RedosSoundnessFuzzTest extends TestCase
     private const IN_MODEL_PATTERNS = 80;
 
     private const FOLD_PATTERNS = 60;
+
+    private const UCP_PATTERNS = 80;
 
     /**
      * Every inline option letter PCRE2 10.43+ reads, each written set,
@@ -332,6 +335,42 @@ final class RedosSoundnessFuzzTest extends TestCase
                 ['', '!'],
                 [666, 1000],
                 2001,
+            ),
+        );
+    }
+
+    /**
+     * A lone (*UCP) at the start, the shapes the start verbs once kept out
+     * of the model among them ("(*UCP)a+", "(*UCP)\w+/i"): without /u its
+     * sets follow the Unicode properties of the bytes past ASCII, so the
+     * attack pumps the Latin-1 bytes it moves: É and é (letters, a caseless
+     * pair), ª (a letter), the no-break space (a space), ² (no decimal
+     * digit), µ (a letter), × (no word character). Engine fact the attack
+     * rests on: "/(*UCP)(?:\w|\xC9)+$/" exhausts the backtrack limit on 25
+     * É and a "!", where "/(?:\w|\xC9)+$/" does not.
+     */
+    #[Test]
+    public function test_ucp_start_option_shapes_proven_safe_survive_latin1_pump_attacks(): void
+    {
+        $this->assertFalse(@preg_match(PcreInterpreter::pattern('/(*UCP)(?:\w|\xC9)+$/'), str_repeat("\xC9", 25).'!'));
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern('/(?:\w|\xC9)+$/'), str_repeat("\xC9", 25).'!'));
+
+        $patterns = $this->ucpPatterns();
+        $analyzer = new RedosAnalyzer();
+        $proven = 0;
+        foreach ($patterns as $pattern) {
+            $proven += RedosProof::Proven === $analyzer->analyze($pattern)->proof ? 1 : 0;
+        }
+        $this->assertGreaterThan(\count($patterns) / 2, $proven, 'the (*UCP) shapes no longer carry a proof');
+
+        $this->assertNoFalseSafeVerdict(
+            $patterns,
+            static fn (string $pattern): ?string => self::attack(
+                $pattern,
+                ['', 'a'],
+                ["\xC9", "\xE9", "\xAA", "\xA0", "\xB2", "\xB5", "\xC9\xE9", "a\xC9", "\xC9 ", 'a', 'é'],
+                ['', '!', 'a', "\xD7", "\xC9", "\n"],
             ),
         );
     }
@@ -663,14 +702,16 @@ final class RedosSoundnessFuzzTest extends TestCase
 
     /**
      * Shapes kept outside the model: recursion, subroutines, the
-     * backtracking verbs, the start-of-pattern verbs, conditionals, \R and
-     * \X. None of them may ever carry a proof.
+     * backtracking verbs, the start-of-pattern verbs but a lone (*UCP),
+     * conditionals, \R and \X. None of them may ever carry a proof.
      *
      * @return list<string>
      */
     private function outOfModelPatterns(): array
     {
-        $startVerbs = ['(*UTF)', '(*UCP)', '(*CR)', '(*ANY)'];
+        // A lone (*UCP) is in the model, its shapes attacked on their own;
+        // beside another start verb it is not.
+        $startVerbs = ['(*UTF)', '(*UCP)(*CR)', '(*CR)', '(*ANY)'];
         $verbs = ['(*COMMIT)', '(*PRUNE)', '(*SKIP)', '(*FAIL)', '(*SKIP:m)'];
         $cores = ['a+', '\w+', '(a+)+', '(?:ab|a)+', '[a-z]+!', '\d+$', '(\w\w)+', 'a*b*'];
 
@@ -736,6 +777,23 @@ final class RedosSoundnessFuzzTest extends TestCase
 
             return '/'.$shell.'/'.$this->pick(['', '', 'i', 'u', 'iu']);
         });
+    }
+
+    /**
+     * A lone (*UCP), then the cores the start verbs were drawn with, or a
+     * loop over two atoms whose sets (*UCP) moves.
+     *
+     * @return list<string>
+     */
+    private function ucpPatterns(): array
+    {
+        $cores = ['a+', '\w+', '(a+)+', '(?:ab|a)+', '[a-z]+!', '\d+$', '(\w\w)+', 'a*b*'];
+        $atoms = ['\w', '\W', '\d', '\D', '\s', '\S', '[[:alpha:]]', '[[:punct:]]', '[[:^alnum:]]', '\xC9', '\xE9', '\xAA', '\xA0', '\xB2', '\xB5', 'a', '.', '\b\w'];
+        $shells = ['^(?:%s|%s)+$', '(?:%s|%s)+$', '(%s+)+!', '^%s+%s?$', '(?:%s%s?)+$', '^(?:%s|%s)*!'];
+
+        return $this->compilable(self::UCP_PATTERNS, fn (): string => '/(*UCP)'.(0 === $this->next(3)
+            ? $this->pick($cores)
+            : \sprintf($this->pick($shells), $this->pick($atoms), $this->pick($atoms))).'/'.$this->pick(['', '', 'i', 'u', 'm']));
     }
 
     /**

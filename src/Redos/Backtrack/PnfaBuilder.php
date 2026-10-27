@@ -31,6 +31,7 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
@@ -38,6 +39,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Redos\Exception\ModelLimitException;
 
 /**
@@ -62,6 +64,10 @@ use PHPRegex\Redos\Exception\ModelLimitException;
  * them. The caseless restriction r and the ASCII options are read per scope,
  * like the others, and the engine is asked for each set under the options in
  * force where its atom stands.
+ *
+ * Of the options a pattern opens with, "(*UCP)" alone is read: it reads
+ * nothing, and every set is asked of the engine under it. Any other start
+ * option, and any verb, is outside the model.
  *
  * @internal
  */
@@ -208,6 +214,12 @@ final class PnfaBuilder
     private readonly bool $scriptsAlone;
 
     /**
+     * The options the pattern opens with, as written: every set is read
+     * under them.
+     */
+    private readonly string $startOptions;
+
+    /**
      * @param bool $inPlace whether the lookarounds are read in place, in the
      *                      pattern's own search, instead of as searches of
      *                      their own
@@ -223,6 +235,7 @@ final class PnfaBuilder
         $this->unicode = str_contains($regex->flags, 'u');
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
         $this->source = $regex->source ?? '';
+        $this->startOptions = StartOptions::of($this->source);
         $this->collectAbstractions($regex->pattern);
     }
 
@@ -235,6 +248,12 @@ final class PnfaBuilder
      */
     public function build(): array
     {
+        // Checked before any set is asked for: an engine reading the probe
+        // under "(*UTF)" without u would read bytes that are not UTF-8.
+        if ([] !== array_diff(StartOptions::items($this->source), ['UCP'])) {
+            throw ModelLimitException::outOfModel('A start option other than (*UCP)');
+        }
+
         $flags = 0;
         foreach ([['i', self::CASELESS], ['s', self::DOT_ALL], ['m', self::MULTILINE], ['x', self::EXTENDED], ['U', self::UNGREEDY], ['r', self::RESTRICT]] as [$letter, $bit]) {
             if (str_contains($this->regex->flags, $letter)) {
@@ -294,8 +313,18 @@ final class PnfaBuilder
             $node instanceof LiteralNode => $this->literal($node, $next, $flags, $pnfa),
             $node instanceof AnchorNode, $node instanceof AssertionNode => $this->anchor($node, $next, $flags, $pnfa),
             $node instanceof KeepNode, $node instanceof CommentNode => $next,
+            $node instanceof PcreVerbNode && $this->isStartUcp($node) => $next,
             default => $this->char($pnfa, $this->charSet($node, $flags), $next),
         };
+    }
+
+    /**
+     * Whether the verb is "(*UCP)" among the options the pattern opens with,
+     * which it applies to every set before any character is read.
+     */
+    private function isStartUcp(PcreVerbNode $node): bool
+    {
+        return 'UCP' === $node->verb && $node->getEndPosition() <= \strlen($this->startOptions);
     }
 
     private function sequence(SequenceNode $node, int $next, int $flags, Pnfa $pnfa, int $search): int
@@ -408,7 +437,7 @@ final class PnfaBuilder
     private static function isZeroWidth(NodeInterface $node): bool
     {
         return $node instanceof AnchorNode || $node instanceof AssertionNode || $node instanceof KeepNode
-            || $node instanceof CommentNode
+            || $node instanceof CommentNode || $node instanceof PcreVerbNode
             || ($node instanceof GroupNode && !\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset], true))
             || ($node instanceof LiteralNode && '' === $node->value);
     }
@@ -1027,8 +1056,9 @@ final class PnfaBuilder
         }
 
         // The options are the whole scope: a pattern-wide /r is a bit of
-        // them already, and "(?-r)" takes it off.
-        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers);
+        // them already, and "(?-r)" takes it off. The start options change
+        // what a class matches, "(*UCP)" without u the bytes past ASCII.
+        $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startOptions);
         if (null !== $set) {
             return $set;
         }
