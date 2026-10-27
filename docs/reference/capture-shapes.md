@@ -395,6 +395,27 @@ $shape->matchShape();
 A `?` around the conditional group adds the case where it is skipped, as for an
 alternation.
 
+A condition that reads the same on every path to it keeps only the arm the engine runs,
+and is not split: the other arm sets no group and adds nothing to the whole match.
+`(?(1)...)` holds where every path sets group 1 before it, and fails where no path does:
+before the group, inside it until it closes, or after an `(*ACCEPT)` that always ends
+the match first. A back reference that matched proves its group set, since a reference
+to an unset group never matches: `preg_match('/(a)?b\1/', 'b')` returns 0, so group 1 of
+`/(a)?b\1/` is `Always`. `(?(R)...)`, `(?(R1)...)` and `(?(R&name)...)` fail where
+nothing calls a group or the pattern. A repeat that runs again, a call anywhere in the
+pattern, or a name several groups share keeps both arms:
+
+```php
+// preg_match('/(a)(?(1)b|(c))/', 'ab', $m): ['ab', 'a']; on 'ac' it returns 0
+$shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse('/(a)(?(1)b|(c))/'));
+
+$shape->matchShape();
+// array{0: 'ab', 1: 'a'}
+```
+
+`(?(VERSION>=10.0)...)` keeps both arms: the analyzer is not told which PCRE2 release
+the pattern runs on.
+
 Without either, the analyzer splits on one optional group (`?`, `??`, `?+`, `{0,1}`)
 holding two capturing groups or more, itself included, reached the same way: one case
 where it runs and sets its groups together, one where it is skipped and sets none.

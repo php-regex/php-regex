@@ -221,6 +221,29 @@ final class CaptureShapeAnalyzerTest extends TestCase
         }
     }
 
+    /**
+     * A conditional whose condition reads the same on every path to it
+     * keeps only the arm the engine runs: the other arm sets no group and
+     * adds nothing to the whole match.
+     *
+     * @param non-empty-list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideConditionalFolds')]
+    public function test_a_condition_every_path_reads_the_same_drops_the_dead_arm(string $pattern, array $subjects, string $expected): void
+    {
+        $shape = $this->analyze($pattern);
+
+        $this->assertSame($expected, $shape->matchShape());
+        foreach ($subjects as $subject) {
+            foreach (self::FLAG_SETS as $flags) {
+                $matches = [];
+                $this->assertSame(1, preg_match($pattern, $subject, $matches, $flags));
+                $this->assertMatchesFollow($shape, $matches, $flags, false, \sprintf('%s on "%s" with flags %d', $pattern, $subject, $flags));
+            }
+        }
+    }
+
     #[Test]
     public function test_names_and_numbers_are_both_known(): void
     {
@@ -1370,17 +1393,19 @@ final class CaptureShapeAnalyzerTest extends TestCase
      */
     public static function provideNewerSyntax(): iterable
     {
-        yield 'a call returns a group by number' => ['pattern' => '/(?(DEFINE)((Sat)urday))(?1(2)),\2/', 'group' => 2, 'values' => ['Sat'], 'participation' => Participation::MayBeUnset, 'subjects' => ['Saturday,Sat']];
-        yield 'a call returns a group by relative number' => ['pattern' => '/(?(DEFINE)((Sat)urday))(?-2(-1)),\2/', 'group' => 2, 'values' => ['Sat'], 'participation' => Participation::MayBeUnset, 'subjects' => ['Saturday,Sat']];
-        yield 'a call returns a group by name' => ['pattern' => '/(?(DEFINE)(?<fn>(?<ret>Sat)urday))(?&fn(<ret>)),\k<ret>/', 'group' => 2, 'values' => ['Sat'], 'participation' => Participation::MayBeUnset, 'subjects' => ['Saturday,Sat']];
+        // The back reference after the call proves the group it returns set: a reference
+        // to an unset group never matches (PHP 8.4.27, PCRE2 10.49), so every match sets it.
+        yield 'a call returns a group by number' => ['pattern' => '/(?(DEFINE)((Sat)urday))(?1(2)),\2/', 'group' => 2, 'values' => ['Sat'], 'participation' => Participation::Always, 'subjects' => ['Saturday,Sat']];
+        yield 'a call returns a group by relative number' => ['pattern' => '/(?(DEFINE)((Sat)urday))(?-2(-1)),\2/', 'group' => 2, 'values' => ['Sat'], 'participation' => Participation::Always, 'subjects' => ['Saturday,Sat']];
+        yield 'a call returns a group by name' => ['pattern' => '/(?(DEFINE)(?<fn>(?<ret>Sat)urday))(?&fn(<ret>)),\k<ret>/', 'group' => 2, 'values' => ['Sat'], 'participation' => Participation::Always, 'subjects' => ['Saturday,Sat']];
         // A name returns every group bearing it: on 'abcd!' the engine sets
         // group 2 to 'ab' and group 3 to 'cd', both named n.
         yield 'a call returns every group bearing a name' => ['pattern' => '/^(?>(?1(<n>)))!(?(DEFINE)((?<n>..)(?<n>..)))|abcde/J', 'group' => 3, 'values' => null, 'participation' => Participation::MayBeUnset, 'subjects' => ['abcd!', '1221!']];
         // A returned number is the capture of whichever branch of a branch
         // reset ran: preg_match('/(?(DEFINE)(?<w>(?|(Sat)urday|(Sun)day)))(?&w(2)),\2/', 'Saturday,Sat')
         // sets group 2 to 'Sat', by name as by number.
-        yield 'a call returns a branch reset group by number' => ['pattern' => '/(?(DEFINE)(?<w>(?|(Sat)urday|(Sun)day)))(?&w(2)),\2/', 'group' => 2, 'values' => ['Sat', 'Sun'], 'participation' => Participation::MayBeUnset, 'subjects' => ['Saturday,Sat', 'Sunday,Sun']];
-        yield 'a call returns a branch reset group by name' => ['pattern' => '/(?(DEFINE)(?<w>(?|(?<s>Sat)urday|(?<s>Sun)day)))(?&w(<s>)),\k<s>/', 'group' => 2, 'values' => ['Sat', 'Sun'], 'participation' => Participation::MayBeUnset, 'subjects' => ['Saturday,Sat', 'Sunday,Sun']];
+        yield 'a call returns a branch reset group by number' => ['pattern' => '/(?(DEFINE)(?<w>(?|(Sat)urday|(Sun)day)))(?&w(2)),\2/', 'group' => 2, 'values' => ['Sat', 'Sun'], 'participation' => Participation::Always, 'subjects' => ['Saturday,Sat', 'Sunday,Sun']];
+        yield 'a call returns a branch reset group by name' => ['pattern' => '/(?(DEFINE)(?<w>(?|(?<s>Sat)urday|(?<s>Sun)day)))(?&w(<s>)),\k<s>/', 'group' => 2, 'values' => ['Sat', 'Sun'], 'participation' => Participation::Always, 'subjects' => ['Saturday,Sat', 'Sunday,Sun']];
         yield 'a call leaves the group it runs unset' => ['pattern' => '/(?(DEFINE)((Sat)urday))(?1(2)),\2/', 'group' => 1, 'values' => null, 'participation' => Participation::Never, 'subjects' => ['Saturday,Sat']];
         yield 'a substring scan reads no character' => ['pattern' => "/(?<AA>a)(*scan_substring:(1,'AA',1,<AA>)a)b/", 'group' => 0, 'values' => ['ab'], 'participation' => Participation::Always, 'subjects' => ['ab']];
         yield 'a substring scan after an alternation' => ['pattern' => "/(?:(?'A'a)|(?<A>b))(*scs:('A')b)c/J", 'group' => 0, 'values' => ['ac', 'bc'], 'participation' => Participation::Always, 'subjects' => ['bc']];
@@ -1389,6 +1414,47 @@ final class CaptureShapeAnalyzerTest extends TestCase
     /**
      * @return iterable<string, array{pattern: string, group: int, min: int, max: int|null}>
      */
+    /**
+     * Oracle (PHP 8.1 to 8.4 and PCRE2 10.39 to 10.49 alike); no row matches
+     * the arm the analysis drops:
+     *   /(a)(?(1)b|(c))/ on 'ab' -> ["ab","a"], on 'ac' -> 0
+     *   /(a)?b\1/ on 'aba' -> ["aba","a"], on 'b' -> 0: a reference to an unset group fails
+     *   /(a)?b\1(?(1)x|(y))/ on 'abax' -> ["abax","a"], on 'by' -> 0
+     *   /(a)?(?=\1)\w(?(1)b|(c))/ on 'aab' -> ["aab","a"]
+     *   /(?:x(*ACCEPT)(a))?(?(1)b|(c))/ on 'c' -> ["c","","c"], on 'x' and on 'xab' -> ["x"]: no match sets group 1 and goes on
+     *   /(?(1)a|b)(c)/ and /(?(+1)a|b)(c)/ on 'bc' -> ["bc","c"], on 'ac' -> 0: the group comes later
+     *   /(a(?(1)b|c))/ on 'ac' -> ["ac","ac"], on 'ab' -> 0: a group is unset until it closes
+     *   /(?(R)(a)|(b))/ on 'b' -> ["b","","b"], on 'a' -> 0; /(a)?(?(R1)x|y)/ on 'y' -> ["y"]
+     *   /(?(R&n)x|(?<n>y))/ on 'y' -> {"0":"y","n":"y","1":"y"}: nothing recurses
+     *   /(?<n>a)(?(<n>)b|(c))/ and /(?<n>a)(?('n')b|(c))/ on 'ab' -> {"0":"ab","n":"a","1":"a"}
+     *   /(?|(a)|(b))(?(1)c|(d))/ on 'ac' -> ["ac","a"], on 'bc' -> ["bc","b"]
+     * Kept, where an arm may run: /(?:(?(1)b|a)(x))+/ on 'ax' -> ["ax","x"], on 'axbx' -> ["axbx","x"];
+     * /(a)?(?!\1)b(?(1)c|(d))/ on 'bd' -> ["bd","","d"], on 'abc' -> ["abc","a"];
+     * /(a)(?(1)b|(c))(?1)/ on 'aba' -> ["aba","a"], where a call may run the condition elsewhere.
+     *
+     * @return iterable<string, array{pattern: string, subjects: non-empty-list<string>, expected: string}>
+     */
+    public static function provideConditionalFolds(): iterable
+    {
+        yield 'a group set before' => ['pattern' => '/(a)(?(1)b|(c))/', 'subjects' => ['ab'], 'expected' => "array{0: 'ab', 1: 'a'}"];
+        yield 'a reference proves its group set' => ['pattern' => '/(a)?b\1/', 'subjects' => ['aba'], 'expected' => "array{0: non-falsy-string, 1: 'a'}"];
+        yield 'a reference before the condition' => ['pattern' => '/(a)?b\1(?(1)x|(y))/', 'subjects' => ['abax'], 'expected' => "array{0: non-falsy-string, 1: 'a'}"];
+        yield 'a reference in a lookahead' => ['pattern' => '/(a)?(?=\1)\w(?(1)b|(c))/', 'subjects' => ['aab'], 'expected' => "array{0: non-falsy-string, 1: 'a'}"];
+        yield 'a group after the cut' => ['pattern' => '/(?:x(*ACCEPT)(a))?(?(1)b|(c))/', 'subjects' => ['c', 'x'], 'expected' => "array{0: string, 1?: ''|'a', 2?: 'c'}"];
+        yield 'a group that comes later' => ['pattern' => '/(?(1)a|b)(c)/', 'subjects' => ['bc'], 'expected' => "array{0: 'bc', 1: 'c'}"];
+        yield 'a relative group that comes later' => ['pattern' => '/(?(+1)a|b)(c)/', 'subjects' => ['bc'], 'expected' => "array{0: 'bc', 1: 'c'}"];
+        yield 'the group that holds the condition' => ['pattern' => '/(a(?(1)b|c))/', 'subjects' => ['ac'], 'expected' => "array{0: 'ac', 1: 'ac'}"];
+        yield 'a recursion test, nothing recursing' => ['pattern' => '/(?(R)(a)|(b))/', 'subjects' => ['b'], 'expected' => "array{0: 'b', 1: '', 2: 'b'}"];
+        yield 'a numbered recursion test' => ['pattern' => '/(a)?(?(R1)x|y)/', 'subjects' => ['y'], 'expected' => "array{0: 'y'|'ay', 1?: 'a'}"];
+        yield 'a named recursion test' => ['pattern' => '/(?(R&n)x|(?<n>y))/', 'subjects' => ['y'], 'expected' => "array{0: 'y', n: 'y', 1: 'y'}"];
+        yield 'a named group set before' => ['pattern' => '/(?<n>a)(?(<n>)b|(c))/', 'subjects' => ['ab'], 'expected' => "array{0: 'ab', n: 'a', 1: 'a'}"];
+        yield 'a quoted name' => ['pattern' => "/(?<n>a)(?('n')b|(c))/", 'subjects' => ['ab'], 'expected' => "array{0: 'ab', n: 'a', 1: 'a'}"];
+        yield 'a branch reset sets its number either way' => ['pattern' => '/(?|(a)|(b))(?(1)c|(d))/', 'subjects' => ['ac', 'bc'], 'expected' => "array{0: 'ac'|'bc', 1: 'a'|'b'}"];
+        yield 'kept: a repeat sets the group for the next iteration' => ['pattern' => '/(?:(?(1)b|a)(x))+/', 'subjects' => ['ax', 'axbx'], 'expected' => "array{0: non-falsy-string, 1: 'x'}"];
+        yield 'kept: a reference in a negative lookahead' => ['pattern' => '/(a)?(?!\1)b(?(1)c|(d))/', 'subjects' => ['bd', 'abc'], 'expected' => "array{0: 'bc'|'abc', 1?: 'a'}|array{0: 'bd'|'abd', 1: ''|'a', 2: 'd'}"];
+        yield 'kept: a call in the pattern' => ['pattern' => '/(a)(?(1)b|(c))(?1)/', 'subjects' => ['aba'], 'expected' => "array{0: 'aba', 1: 'a'}|array{0: 'aca', 1: 'a', 2: 'c'}"];
+    }
+
     /**
      * Oracle (PHP 8.1 to 8.4 and PCRE2 10.39 to 10.49 alike):
      *   /(a)|b(*ACCEPT)(c)/ on 'a' -> ["a","a"], on 'b' -> ["b"]

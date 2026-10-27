@@ -16,6 +16,7 @@ namespace PHPRegex\Parser\Analysis;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\GroupNode;
@@ -57,7 +58,7 @@ final class CaptureShapeAnalyzer
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
-    public const ANALYSIS_VERSION = '15';
+    public const ANALYSIS_VERSION = '16';
 
     private const MAX_CASES = 16;
 
@@ -216,17 +217,20 @@ final class CaptureShapeAnalyzer
         $this->unicode = $ast->isUnicode();
         $this->multiline = [];
         $this->scan($ast->pattern);
-        $this->groups = GroupIndex::of($ast->pattern);
+        // a conditional that reads the same on every path keeps the arm the engine runs
+        $groups = GroupIndex::of($ast->pattern);
+        $pattern = ConditionalFolding::fold($ast->pattern, $groups);
+        $this->groups = $pattern === $ast->pattern ? $groups : GroupIndex::of($pattern);
         $this->facts = new CaptureFacts($ast->isUnicode(), $this->ucp, $this->groups);
-        $this->collectOption($ast->pattern, str_contains($ast->flags, 'i'), 'i', $this->facts->markCaseless(...));
-        $this->collectOption($ast->pattern, str_contains($ast->flags, 'm'), 'm', function (NodeInterface $node): void {
+        $this->collectOption($pattern, str_contains($ast->flags, 'i'), 'i', $this->facts->markCaseless(...));
+        $this->collectOption($pattern, str_contains($ast->flags, 'm'), 'm', function (NodeInterface $node): void {
             $this->multiline[spl_object_id($node)] = true;
         });
         $this->selection = null;
 
-        $merged = $this->shape($ast->pattern);
+        $merged = $this->shape($pattern);
 
-        $split = $this->split($ast->pattern);
+        $split = $this->split($pattern);
         if (null === $split) {
             return $merged;
         }
@@ -234,7 +238,7 @@ final class CaptureShapeAnalyzer
         $cases = [];
         foreach ([...self::branches($split['choice']), ...(null === $split['optional'] ? [] : [null])] as $branch) {
             $this->selection = ['branch' => $branch] + $split;
-            $cases[] = $this->shape($ast->pattern);
+            $cases[] = $this->shape($pattern);
         }
         $this->selection = null;
 
@@ -1151,8 +1155,29 @@ final class CaptureShapeAnalyzer
             $node instanceof ConditionalNode => $this->walkConditional($node, $never),
             $node instanceof ScriptRunNode && null !== $node->content => $this->walk($node->content, $never),
             $node instanceof SubroutineNode => $this->walkReturned($node, $never),
+            $node instanceof BackrefNode => $this->walkReference($node, $never),
             default => [],
         };
+    }
+
+    /**
+     * A back reference that matched proves its group set: a reference to
+     * an unset group never matches, preg_match('/(a)?b\1/', 'b') is 0. Not
+     * past an (*ACCEPT) that may have ended the match first, nor for a
+     * name several groups share.
+     *
+     * @return array<int, true>
+     */
+    private function walkReference(BackrefNode $node, bool $never): array
+    {
+        $numbers = [];
+        foreach ($this->groups->groupsReferencedBy($node) as $group) {
+            $numbers[$this->groups->numberOf($group) ?? 0] = true;
+        }
+
+        $number = array_key_first($numbers);
+
+        return $never || $this->cut || 1 !== \count($numbers) || null === $number || 0 === $number ? [] : [$number => true];
     }
 
     /**
