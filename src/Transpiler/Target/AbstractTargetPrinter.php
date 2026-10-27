@@ -342,7 +342,7 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         return str_starts_with($quantifier, '{,') ? '{0,'.substr($quantifier, 2) : $quantifier;
     }
 
-    private static function holdsCapture(NodeInterface $node): bool
+    protected static function holdsCapture(NodeInterface $node): bool
     {
         if ($node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type)) {
             return true;

@@ -31,7 +31,7 @@ Features
 - What a target reads otherwise is written out as PCRE reads it: `$`, which also matches before a final newline, `^` and `$` under `m`, the dot, which leaves out `\n` alone, and, under `u`, `\d`, `\w`, `\s` and `\b`, which PHP reads in Unicode
 - Flags are mapped per target: JavaScript keeps `i`, `s`, `u`, gains `u` when Unicode escapes need it, and has `/m`, `/D`, `/x` and `/U` applied while printing; Python keeps `i` and `s`, gains `re.ASCII` without `u`, has `/m`, `/D`, `/x` and `/U` applied while printing, and spells flags inline or as `re` constants; every target drops `/S`, which PHP has ignored since 7.3, with a note
 - Warnings list every rewrite to review; notes list the flags applied or dropped
-- A construct the target cannot express without matching otherwise — a possessive quantifier, an atomic group or `\w` under `u` in Python, a backreference to a group that may not have matched in JavaScript — throws a `TranspileException` carrying the position in the pattern
+- A construct the target cannot express without matching otherwise — `\w` under `u` in Python, a possessive quantifier or an atomic group in JavaScript, and in Python unless `pythonVersion` is 3.11 or later, a backreference to a group that may not have matched in JavaScript — throws a `TranspileException` carrying the position in the pattern
 - Every target is checked against its own engine: the test suite runs the transpiled patterns in Node and Python on the subjects `preg_match()` is run on, and compares the matches and the groups
 
 Installation
@@ -46,8 +46,25 @@ PHP 8.1 or newer. `php-regex/regex-parser` is pulled in automatically.
 Configuration
 -------------
 
-`transpile()` takes an optional `TranspileOptions` object: `allowLookbehind`
-(bool, default `true`) — `false` makes lookbehind throw for JavaScript targets.
+`transpile()` takes an optional `TranspileOptions` object:
+
+- `allowLookbehind` (bool, default `true`) — `false` makes lookbehind throw for JavaScript targets.
+- `pythonVersion` (string or null, default `null`) — the oldest Python the pattern runs on, as `'3.11'` or
+  `'3.11.4'`. Python's `re` takes atomic groups and possessive quantifiers from 3.11: from that version they are
+  written, before it, or with `null`, they are refused.
+
+```php
+use PHPRegex\Transpiler\Transpiler;
+use PHPRegex\Transpiler\TranspileOptions;
+
+$result = (new Transpiler())->transpile('/\d++(?>px|em)/', 'python', new TranspileOptions(pythonVersion: '3.12'));
+
+echo $result->literal; // r'(?a)\d++(?>px|em)'
+```
+
+A possessive quantifier is the atomic group around the greedy repetition to PCRE, and is written so where Python's
+own goes wrong: before 3.11.5, where a possessive repetition inside another runs past its end (`a++` is `(?>a+)` for
+`'3.11'`), and over a group, which Python 3.11 to 3.12.7 and 3.13.0 lose the capture of (`(a|b)++` is `(?>(a|b)+)`).
 
 Usage
 -----

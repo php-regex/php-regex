@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
+use PHPRegex\Transpiler\TranspileOptions;
 
 /**
  * Matches each pattern with preg_match() and its transpiled form with the
@@ -89,13 +90,15 @@ final class DifferentialRun
     private array $tableSkew = [];
 
     /**
-     * @param list<string> $patterns
+     * @param list<string>          $patterns
+     * @param TranspileOptions|null $options  what the target may write, as for transpile()
      */
     public function __construct(
         private readonly string $target,
         private readonly TargetEngine $engine,
         private readonly OracleCorpus $corpus,
         private readonly array $patterns,
+        private readonly ?TranspileOptions $options = null,
     ) {
         $this->pcre = new PcreEngine();
     }
@@ -112,7 +115,7 @@ final class DifferentialRun
             $this->checked++;
 
             try {
-                $result = $regex->transpile($pattern, $this->target);
+                $result = $regex->transpile($pattern, $this->target, $this->options);
             } catch (TranspileException) {
                 $this->refused++;
 

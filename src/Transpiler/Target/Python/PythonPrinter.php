@@ -152,7 +152,7 @@ final class PythonPrinter extends AbstractTargetPrinter
         }
 
         $this->refuseNonAtomic($node, 'Python re');
-        if (GroupType::Atomic === $node->type) {
+        if (GroupType::Atomic === $node->type && !$this->atomic()) {
             return $this->unsupported('Atomic groups are not supported in Python re.', $node);
         }
 
@@ -192,6 +192,7 @@ final class PythonPrinter extends AbstractTargetPrinter
             GroupType::LookaheadNegative => '(?!'.$child.')',
             GroupType::LookbehindPositive => '(?<='.$child.')',
             GroupType::LookbehindNegative => '(?<!'.$child.')',
+            GroupType::Atomic => '(?>'.$child.')',
             GroupType::BranchReset => $this->unsupported('Branch reset groups are not supported in Python re.', $node),
             GroupType::ScanSubstring => $this->unsupported('Substring scans are not supported in Python re.', $node),
             default => '(?:'.$child.')',
@@ -201,7 +202,8 @@ final class PythonPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): string
     {
-        if (QuantifierType::Possessive === $node->type) {
+        $possessive = QuantifierType::Possessive === $node->type;
+        if ($possessive && !$this->atomic()) {
             return $this->unsupported('Possessive quantifiers are not supported in Python standard re module.', $node);
         }
 
@@ -216,7 +218,20 @@ final class PythonPrinter extends AbstractTargetPrinter
             $nodeCompiled = '(?:'.$nodeCompiled.')';
         }
 
-        return $nodeCompiled.$this->normalizeQuantifier($node->quantifier).$this->lazySuffix($node);
+        $repeated = $nodeCompiled.$this->normalizeQuantifier($node->quantifier);
+        if (!$possessive) {
+            return $repeated.$this->lazySuffix($node);
+        }
+
+        // /U leaves a possessive quantifier alone. It is the atomic group
+        // around the greedy repetition to PCRE, and is written so where
+        // Python's own goes wrong: before 3.11.5 one inside another runs
+        // past its end, and from 3.11 to 3.12.7 and in 3.13.0 one over a
+        // group loses what an earlier repetition captured ("(?:(a)|b)*+c"
+        // on "abc" gives group 1 the span (1, 1)).
+        $version = (string) $this->context->options->pythonVersion;
+
+        return version_compare($version, '3.11.5', '>=') && !self::holdsCapture($node->node) ? $repeated.'+' : '(?>'.$repeated.')';
     }
 
     #[\Override]
@@ -476,6 +491,17 @@ final class PythonPrinter extends AbstractTargetPrinter
     public function visitCallout(CalloutNode $node): string
     {
         return $this->unsupported('Callouts are not supported in Python re.', $node);
+    }
+
+    /**
+     * Whether the Python the pattern runs on has atomic groups and
+     * possessive quantifiers, which re takes from 3.11.
+     */
+    private function atomic(): bool
+    {
+        $version = $this->context->options->pythonVersion;
+
+        return null !== $version && version_compare($version, '3.11', '>=');
     }
 
     private function escapeString(string $value): string

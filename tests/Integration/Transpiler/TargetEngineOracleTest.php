@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Transpiler;
 use PHPRegex\Tests\Integration\Transpiler\Oracle\DifferentialRun;
 use PHPRegex\Tests\Integration\Transpiler\Oracle\OracleCorpus;
 use PHPRegex\Tests\Integration\Transpiler\Oracle\TargetEngine;
+use PHPRegex\Transpiler\TranspileOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,7 +32,10 @@ use PHPUnit\Framework\TestCase;
  *
  * The engines are child processes, Node 20 or later and Python 3.11 or
  * later (TRANSPILER_ORACLE_NODE and TRANSPILER_ORACLE_PYTHON name other
- * binaries). The group runs on its own:
+ * binaries). Python is checked for any release, for 3.11 or later, where
+ * atomic groups are written and possessive quantifiers as atomic groups,
+ * and for 3.11.5 or later, where possessive quantifiers are written as
+ * they are. The group runs on its own:
  *
  *     tools/phpunit/vendor/bin/phpunit --group transpiler-oracle
  */
@@ -58,7 +62,7 @@ final class TargetEngineOracleTest extends TestCase
 
     #[Test]
     #[DataProvider('provideTargets')]
-    public function test_the_target_engine_matches_what_preg_match_matches(string $target): void
+    public function test_the_target_engine_matches_what_preg_match_matches(string $target, ?string $pythonVersion = null): void
     {
         $engine = 'python' === $target ? TargetEngine::python() : TargetEngine::node();
         if (!$engine->isAvailable()) {
@@ -67,7 +71,7 @@ final class TargetEngineOracleTest extends TestCase
 
         self::$corpus ??= new OracleCorpus(\dirname(__DIR__, 3));
         self::$patterns ??= self::$corpus->patterns(self::GENERATED);
-        $run = (new DifferentialRun($target, $engine, self::$corpus, self::$patterns))->run();
+        $run = (new DifferentialRun($target, $engine, self::$corpus, self::$patterns, new TranspileOptions(pythonVersion: $pythonVersion)))->run();
 
         $summary = \sprintf(
             '%d patterns, %d transpiled, %d refused; %d comparisons, %d differ; %d patterns unanswered by %s; %d subjects left out for a Unicode table of another version, %d for a match inside a surrogate pair.',
@@ -87,12 +91,14 @@ final class TargetEngineOracleTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{target: string}>
+     * @return iterable<string, array{target: string, pythonVersion?: string}>
      */
     public static function provideTargets(): iterable
     {
         yield 'javascript' => ['target' => 'javascript'];
         yield 'html-pattern' => ['target' => 'html-pattern'];
         yield 'python' => ['target' => 'python'];
+        yield 'python 3.11' => ['target' => 'python', 'pythonVersion' => '3.11'];
+        yield 'python 3.11.5' => ['target' => 'python', 'pythonVersion' => '3.11.5'];
     }
 }

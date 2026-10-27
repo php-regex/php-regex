@@ -625,10 +625,11 @@ echo $result->constructor; // re.compile(r'(?P<word>\w+)', re.ASCII | re.IGNOREC
 
 Notes:
 - Unsupported PCRE constructs throw `TranspileException`, and so does a construct the target engine would match
-  otherwise and has no way to write: an atomic group, a backreference inside a lookbehind or under `/iu`, and `\w` or
-  `\b` under `u` in Python; in JavaScript a backreference to a group that may not have matched (it matches the empty
-  string there), a capturing group a repetition may leave unset or take empty, a repetition that may match empty before
-  a longer match, and `\p{Lu}`, `\p{Ll}` or `\p{Lt}` under `/i`.
+  otherwise and has no way to write: in Python a backreference inside a lookbehind or under `/iu`, `\w` or `\b`
+  under `u`, and an atomic group or a possessive quantifier unless `pythonVersion` is 3.11 or later; in JavaScript a
+  backreference to a group that may not have matched (it matches the empty string there), a capturing group a
+  repetition may leave unset or take empty, a repetition that may match empty before a longer match, and `\p{Lu}`,
+  `\p{Ll}` or `\p{Lt}` under `/i`.
 - What a target reads otherwise is written as PCRE reads it: `$` is `(?=\n?$)` in JavaScript, as it also matches before
   a newline that ends the subject, `$` under `/D` and `\z` are `$`, `\Z` is `(?=\n?$)`, and `^` and `$` under `/m` see
   `\n` alone end a line (`(?:^|(?<=\n)(?!$))` and `(?=\n|$)`); in Python `\z` is `\Z` and `\Z` is `(?=\n?\Z)`. The dot,
@@ -647,10 +648,17 @@ Notes:
   for them, each with a note.
 - `/S` is dropped with a note in the JavaScript, `html-pattern` and Python targets: PHP has ignored it since 7.3.
 - `/U` and `(?U)` are carried by swapping greedy and lazy in the quantifiers they govern (`/<.+>/U` is `/<[^\n]+?>/`);
-  a possessive quantifier is refused as before. JavaScript also takes `(?s)`, `(?m)` and `(?x)`, written out, and
+  a possessive quantifier is left alone. JavaScript also takes `(?s)`, `(?m)` and `(?x)`, written out, and
   `(?i)` where it changes nothing; Python takes `(?i)` too, each atom it governs written `(?i:…)` or `(?-i:…)`.
 - `TranspileOptions` lets you disable JS lookbehind support (`allowLookbehind: false`): `^` under `/m` and `\b` or
   `\B` under `u`, which are written with a lookbehind, are then refused.
+- `TranspileOptions(pythonVersion: '3.11')` names the oldest Python the pattern runs on (`'3.11'` or `'3.11.4'`; a
+  string of another shape throws `InvalidRegexOptionException`). Python's `re` takes atomic groups and possessive
+  quantifiers from 3.11: from that version `(?>…)`, `*+`, `++`, `?+` and `{n,m}+` are written, before it, or with the
+  default `null`, they are refused. A possessive quantifier is the atomic group around the greedy repetition to PCRE,
+  and is written so where Python's own goes wrong: before 3.11.5, where a possessive repetition inside another runs
+  past its end (`/a++/` is `(?>a+)` for `'3.11'`, `a++` for `'3.11.5'`), and over a group, which Python 3.11 to 3.12.7
+  and 3.13.0 lose the capture of (`/(a|b)++/` is `(?>(a|b)+)`).
 - Available targets: `javascript` (alias: `js`), `html-pattern` (alias: `html`) and `python` (alias: `py`).
 - `html-pattern` gives the value of an HTML `pattern` attribute, which the browser matches whole under the `v` flag
   (`new RegExp("^(?:" + value + ")$", "v")`): an unanchored side is padded with `[\s\S]*`, so the attribute accepts
