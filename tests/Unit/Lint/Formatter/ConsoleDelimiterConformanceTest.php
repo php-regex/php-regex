@@ -202,6 +202,8 @@ final class ConsoleDelimiterConformanceTest extends TestCase
 
     private static function invoke(ConsoleFormatter $formatter, string $method, mixed ...$arguments): mixed
     {
-        return (new \ReflectionMethod($formatter, $method))->invoke($formatter, ...$arguments);
+        $reflection = new \ReflectionMethod($formatter, $method);
+
+        return $reflection->invoke($reflection->isStatic() ? null : $formatter, ...$arguments);
     }
 }

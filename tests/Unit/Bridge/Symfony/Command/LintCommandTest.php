@@ -148,9 +148,9 @@ final class LintCommandTest extends TestCase
 
         $method = (new \ReflectionClass($command))->getMethod('stringList');
 
-        $this->assertSame([], $method->invoke($command, null));
-        $this->assertSame([], $method->invoke($command, 'string'));
-        $this->assertSame(['a', 'b'], $method->invoke($command, ['a', '', 'b', null, 123]));
+        $this->assertSame([], $method->invoke(null, null));
+        $this->assertSame([], $method->invoke(null, 'string'));
+        $this->assertSame(['a', 'b'], $method->invoke(null, ['a', '', 'b', null, 123]));
     }
 
     /**

@@ -23,10 +23,9 @@ final class ConsoleFormatterTest extends TestCase
     #[Test]
     public function test_split_lines_normalizes_line_endings(): void
     {
-        $formatter = new ConsoleFormatter();
         $method = new \ReflectionMethod(ConsoleFormatter::class, 'splitLines');
 
-        $result = $method->invoke($formatter, "one\r\ntwo\rthree\nfour\n");
+        $result = $method->invoke(null, "one\r\ntwo\rthree\nfour\n");
 
         $this->assertSame(['one', 'two', 'three', 'four', ''], $result);
     }

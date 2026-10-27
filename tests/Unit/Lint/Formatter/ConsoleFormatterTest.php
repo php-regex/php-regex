@@ -962,6 +962,6 @@ final class ConsoleFormatterTest extends TestCase
         $ref = new \ReflectionClass($formatter);
         $refMethod = $ref->getMethod($method);
 
-        return $refMethod->invoke($formatter, ...$args);
+        return $refMethod->invoke($refMethod->isStatic() ? null : $formatter, ...$args);
     }
 }
