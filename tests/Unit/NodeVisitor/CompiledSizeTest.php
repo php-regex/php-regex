@@ -198,9 +198,21 @@ final class CompiledSizeTest extends TestCase
      */
     private static function compiles(string $pattern): bool
     {
-        error_clear_last();
-        @preg_match($pattern, '');
+        // The warning is read here, where PHPUnit's error handler cannot
+        // keep it from error_get_last().
+        $refused = false;
+        set_error_handler(static function (int $level, string $message) use (&$refused): bool {
+            $refused = $refused || str_contains($message, 'Compilation failed');
 
-        return !str_contains(error_get_last()['message'] ?? '', 'Compilation failed');
+            return true;
+        });
+
+        try {
+            preg_match($pattern, '');
+        } finally {
+            restore_error_handler();
+        }
+
+        return !$refused;
     }
 }

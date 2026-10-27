@@ -236,12 +236,6 @@ two parsers read differently.
   script negated with a caret": `\P{^Latin}` is the script before 10.40,
   the script extensions after, so `Script=Latin` is right on 10.39). Then
   a bundled 10.39 cell in the Engines workflow keeps them held.
-- `CompiledSizeTest::compiles()` reads `error_get_last()`, which PHPUnit
-  10.5's error handler leaves empty: under `tools/phpunit-81` on
-  `php:8.2-cli`, 29 rows say a pattern the engine refuses compiles. Read
-  the refusal from `preg_match()` returning false and `preg_last_error()`
-  instead, as the size verdicts agree with 10.40, 10.42 and 10.44 at the
-  limit (`/(?:\p{L}a){5958}/u` refused, 5957 compiled, on all three).
 - A local check of the twin without containers runs only the PHP side:
   every Homebrew PHP (7.3, 7.4, 8.2, 8.3, 8.4) links the same PCRE2 10.49,
   so the release differences stay with the twin workflow. `build/verify/
