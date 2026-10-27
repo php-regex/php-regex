@@ -61,7 +61,7 @@ final class QuantifiedCapturingGroupRule extends AbstractLintRule
         }
 
         // Only flag repeating quantifiers (not ?, {1}, {0,1})
-        if (!QuantifierMath::isRepeatable($node->quantifier)) {
+        if (!QuantifierMath::isRepeatable($node)) {
             return [];
         }
 

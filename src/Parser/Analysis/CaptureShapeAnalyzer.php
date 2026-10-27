@@ -23,7 +23,6 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
@@ -345,7 +344,7 @@ final class CaptureShapeAnalyzer
             $node instanceof SequenceNode => $this->firstPinned($node->children, $this->startsAtSubjectStart(...)),
             $node instanceof AlternationNode => self::every($node->alternatives, $this->startsAtSubjectStart(...)),
             $node instanceof GroupNode => \in_array($node->type, self::ANCHOR_GROUPS, true) && $this->startsAtSubjectStart($node->child),
-            $node instanceof QuantifierNode => (QuantifierBounds::parse($node->quantifier)->min ?? 0) >= 1 && $this->startsAtSubjectStart($node->node),
+            $node instanceof QuantifierNode => ($node->bounds->min ?? 0) >= 1 && $this->startsAtSubjectStart($node->node),
             $node instanceof ConditionalNode => $this->startsAtSubjectStart($node->yes) && $this->startsAtSubjectStart($node->no),
             default => false,
         };
@@ -372,7 +371,7 @@ final class CaptureShapeAnalyzer
             $node instanceof SequenceNode => $this->lastPinned(array_reverse($node->children)),
             $node instanceof AlternationNode => self::joinEnds(array_map($this->endOfSubject(...), $node->alternatives)),
             $node instanceof GroupNode => \in_array($node->type, self::ANCHOR_GROUPS, true) ? $this->endOfSubject($node->child) : null,
-            $node instanceof QuantifierNode => (QuantifierBounds::parse($node->quantifier)->min ?? 0) >= 1 ? $this->endOfSubject($node->node) : null,
+            $node instanceof QuantifierNode => ($node->bounds->min ?? 0) >= 1 ? $this->endOfSubject($node->node) : null,
             $node instanceof ConditionalNode => self::joinEnds([$this->endOfSubject($node->yes), $this->endOfSubject($node->no)]),
             default => null,
         };
@@ -726,7 +725,7 @@ final class CaptureShapeAnalyzer
 
     private static function isOptional(QuantifierNode $node): bool
     {
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
 
         return null !== $bounds && 0 === $bounds->min && 1 === $bounds->max;
     }
@@ -1029,7 +1028,7 @@ final class CaptureShapeAnalyzer
      */
     private function walkQuantifier(QuantifierNode $node, bool $never): array
     {
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         if (null !== $bounds && 0 === $bounds->max) {
             $this->walk($node->node, true);
 

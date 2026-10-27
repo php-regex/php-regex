@@ -168,7 +168,7 @@ final class EndOfLineTail
             }
 
             if ($node instanceof QuantifierNode) {
-                [$min] = QuantifierMath::parseRange($node->quantifier);
+                [$min] = QuantifierMath::parseRange($node);
 
                 return 0 === $min ? null : self::lastCharacters([$node->node], $analyzer);
             }
@@ -344,7 +344,7 @@ final class EndOfLineTail
         }
 
         if ($node instanceof QuantifierNode) {
-            [$min] = QuantifierMath::parseRange($node->quantifier);
+            [$min] = QuantifierMath::parseRange($node);
 
             return 0 === $min || $this->mayBeEmpty($node->node, $where, $dotAll);
         }
@@ -512,7 +512,7 @@ final class EndOfLineTail
         }
 
         if ($node instanceof QuantifierNode) {
-            [, $max] = QuantifierMath::parseRange($node->quantifier);
+            [, $max] = QuantifierMath::parseRange($node);
 
             return 0 !== $max && $this->edgeMayBeNewline($node->node, $dotAll, $first);
         }
@@ -620,7 +620,7 @@ final class EndOfLineTail
         }
 
         if ($node instanceof QuantifierNode) {
-            [$min, $max] = QuantifierMath::parseRange($node->quantifier);
+            [$min, $max] = QuantifierMath::parseRange($node);
 
             return 0 !== $max
                 && $this->mayBeTheNewline($node->node, $dotAll)

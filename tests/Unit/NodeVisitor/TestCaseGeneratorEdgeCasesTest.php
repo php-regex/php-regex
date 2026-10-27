@@ -73,12 +73,12 @@ final class TestCaseGeneratorEdgeCasesTest extends TestCase
         $visitor = new TestCaseGenerator();
         $method = (new \ReflectionClass($visitor))->getMethod('parseQuantifierRange');
 
-        $this->assertSame([0, null], $method->invoke($visitor, '*'));
-        $this->assertSame([1, null], $method->invoke($visitor, '+'));
-        $this->assertSame([0, 1], $method->invoke($visitor, '?'));
-        $this->assertSame([2, null], $method->invoke($visitor, '{2,}'));
-        $this->assertSame([2, 3], $method->invoke($visitor, '{2,3}'));
-        $this->assertSame([2, 2], $method->invoke($visitor, '{2}'));
+        $this->assertSame([0, null], $method->invoke($visitor, new QuantifierNode(new LiteralNode('a', 0, 1), '*', QuantifierType::Greedy, 0, 1)));
+        $this->assertSame([1, null], $method->invoke($visitor, new QuantifierNode(new LiteralNode('a', 0, 1), '+', QuantifierType::Greedy, 0, 1)));
+        $this->assertSame([0, 1], $method->invoke($visitor, new QuantifierNode(new LiteralNode('a', 0, 1), '?', QuantifierType::Greedy, 0, 1)));
+        $this->assertSame([2, null], $method->invoke($visitor, new QuantifierNode(new LiteralNode('a', 0, 1), '{2,}', QuantifierType::Greedy, 0, 1)));
+        $this->assertSame([2, 3], $method->invoke($visitor, new QuantifierNode(new LiteralNode('a', 0, 1), '{2,3}', QuantifierType::Greedy, 0, 1)));
+        $this->assertSame([2, 2], $method->invoke($visitor, new QuantifierNode(new LiteralNode('a', 0, 1), '{2}', QuantifierType::Greedy, 0, 1)));
     }
 
     public function test_generate_for_char_type_variants(): void

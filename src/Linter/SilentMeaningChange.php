@@ -21,7 +21,6 @@ use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
@@ -113,7 +112,7 @@ final class SilentMeaningChange
                 return false;
             }
 
-            $bounds = QuantifierBounds::parse($node->quantifier);
+            $bounds = $node->bounds;
             $item = $node->node;
 
             return null !== $bounds && 1 === $bounds->min && 1 === $bounds->max
@@ -162,7 +161,7 @@ final class SilentMeaningChange
                 return false;
             }
 
-            $bounds = QuantifierBounds::parse($node->quantifier);
+            $bounds = $node->bounds;
             $passes = null === $bounds ? 1 : ($bounds->max ?? $bounds->min + 1);
 
             return $passes > 1 && self::finds($node->node->child, static fn (NodeInterface $inner): bool => $inner instanceof GroupNode && null !== $groups->numberOf($inner));

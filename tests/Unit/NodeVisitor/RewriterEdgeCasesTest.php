@@ -449,16 +449,16 @@ final class RewriterEdgeCasesTest extends TestCase
         $optimizer = new Rewriter();
 
         // Test quantifiers that allow zero
-        $this->assertTrue($this->invokePrivate($optimizer, 'quantifierAllowsZero', ['*']));
-        $this->assertTrue($this->invokePrivate($optimizer, 'quantifierAllowsZero', ['?']));
-        $this->assertTrue($this->invokePrivate($optimizer, 'quantifierAllowsZero', ['{0,}']));
-        $this->assertTrue($this->invokePrivate($optimizer, 'quantifierAllowsZero', ['{0,5}']));
+        $this->assertTrue($this->invokePrivate($optimizer, 'quantifierAllowsZero', [new QuantifierNode(new LiteralNode('a', 0, 1), '*', QuantifierType::Greedy, 0, 1)]));
+        $this->assertTrue($this->invokePrivate($optimizer, 'quantifierAllowsZero', [new QuantifierNode(new LiteralNode('a', 0, 1), '?', QuantifierType::Greedy, 0, 1)]));
+        $this->assertTrue($this->invokePrivate($optimizer, 'quantifierAllowsZero', [new QuantifierNode(new LiteralNode('a', 0, 1), '{0,}', QuantifierType::Greedy, 0, 1)]));
+        $this->assertTrue($this->invokePrivate($optimizer, 'quantifierAllowsZero', [new QuantifierNode(new LiteralNode('a', 0, 1), '{0,5}', QuantifierType::Greedy, 0, 1)]));
 
         // Test quantifiers that don't allow zero
-        $this->assertFalse($this->invokePrivate($optimizer, 'quantifierAllowsZero', ['+']));
-        $this->assertFalse($this->invokePrivate($optimizer, 'quantifierAllowsZero', ['{1}']));
-        $this->assertFalse($this->invokePrivate($optimizer, 'quantifierAllowsZero', ['{2,}']));
-        $this->assertFalse($this->invokePrivate($optimizer, 'quantifierAllowsZero', ['{1,5}']));
+        $this->assertFalse($this->invokePrivate($optimizer, 'quantifierAllowsZero', [new QuantifierNode(new LiteralNode('a', 0, 1), '+', QuantifierType::Greedy, 0, 1)]));
+        $this->assertFalse($this->invokePrivate($optimizer, 'quantifierAllowsZero', [new QuantifierNode(new LiteralNode('a', 0, 1), '{1}', QuantifierType::Greedy, 0, 1)]));
+        $this->assertFalse($this->invokePrivate($optimizer, 'quantifierAllowsZero', [new QuantifierNode(new LiteralNode('a', 0, 1), '{2,}', QuantifierType::Greedy, 0, 1)]));
+        $this->assertFalse($this->invokePrivate($optimizer, 'quantifierAllowsZero', [new QuantifierNode(new LiteralNode('a', 0, 1), '{1,5}', QuantifierType::Greedy, 0, 1)]));
     }
 
     public function test_char_from_code_point_covers_edge_cases(): void
@@ -716,19 +716,19 @@ final class RewriterEdgeCasesTest extends TestCase
         $optimizer = new Rewriter();
 
         // Test exact count {3}
-        $result = $this->invokePrivate($optimizer, 'parseQuantifierCount', ['{3}']);
+        $result = $this->invokePrivate($optimizer, 'parseQuantifierCount', [new QuantifierNode(new LiteralNode('a', 0, 1), '{3}', QuantifierType::Greedy, 0, 1)]);
         $this->assertSame(3, $result);
 
         // Test range {2,5}
-        $result = $this->invokePrivate($optimizer, 'parseQuantifierCount', ['{2,5}']);
+        $result = $this->invokePrivate($optimizer, 'parseQuantifierCount', [new QuantifierNode(new LiteralNode('a', 0, 1), '{2,5}', QuantifierType::Greedy, 0, 1)]);
         $this->assertNull($result);
 
         // Test open range {2,}
-        $result = $this->invokePrivate($optimizer, 'parseQuantifierCount', ['{2,}']);
+        $result = $this->invokePrivate($optimizer, 'parseQuantifierCount', [new QuantifierNode(new LiteralNode('a', 0, 1), '{2,}', QuantifierType::Greedy, 0, 1)]);
         $this->assertNull($result);
 
         // Test invalid format
-        $result = $this->invokePrivate($optimizer, 'parseQuantifierCount', ['+']);
+        $result = $this->invokePrivate($optimizer, 'parseQuantifierCount', [new QuantifierNode(new LiteralNode('a', 0, 1), '+', QuantifierType::Greedy, 0, 1)]);
         $this->assertNull($result);
     }
 

@@ -38,7 +38,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -864,10 +863,10 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
     private function layoutQuantifier(QuantifierNode $node): array
     {
         $childLayout = $this->layoutFor($node->node);
-        $needsLoop = $this->isLoopQuantifier($node->quantifier);
-        $needsBypass = $this->isOptionalQuantifier($node->quantifier);
+        $needsLoop = $this->isLoopQuantifier($node);
+        $needsBypass = $this->isOptionalQuantifier($node);
         $topExtra = max($needsLoop ? self::LOOP_HEIGHT + 10 + self::LABEL_GAP : 0, $needsBypass ? self::BYPASS_HEIGHT + 10 + self::LABEL_GAP : 0);
-        $labelText = $this->describeQuantifier($node->quantifier);
+        $labelText = $this->describeQuantifier($node);
         $bottomExtra = '' !== $labelText ? self::LABEL_HEIGHT + self::LABEL_GAP : 0;
 
         $width = (int) $childLayout['width'] + (self::SIDE_PADDING * 2);
@@ -1352,8 +1351,9 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         return 'node literal';
     }
 
-    private function describeQuantifier(string $quantifier): string
+    private function describeQuantifier(QuantifierNode $node): string
     {
+        $quantifier = $node->quantifier;
         if ('*' === $quantifier) {
             return '0 or more times';
         }
@@ -1366,7 +1366,7 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
             return '0 or 1 time';
         }
 
-        $range = $this->parseRangeQuantifier($quantifier);
+        $range = $this->parseRangeQuantifier($node);
         if (null === $range) {
             return $quantifier;
         }
@@ -1387,13 +1387,13 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         return $min.' to '.$max.' times';
     }
 
-    private function isLoopQuantifier(string $quantifier): bool
+    private function isLoopQuantifier(QuantifierNode $node): bool
     {
-        if ('*' === $quantifier || '+' === $quantifier) {
+        if ('*' === $node->quantifier || '+' === $node->quantifier) {
             return true;
         }
 
-        $range = $this->parseRangeQuantifier($quantifier);
+        $range = $this->parseRangeQuantifier($node);
         if (null === $range) {
             return false;
         }
@@ -1403,13 +1403,13 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         return null === $max;
     }
 
-    private function isOptionalQuantifier(string $quantifier): bool
+    private function isOptionalQuantifier(QuantifierNode $node): bool
     {
-        if ('?' === $quantifier) {
+        if ('?' === $node->quantifier) {
             return true;
         }
 
-        $range = $this->parseRangeQuantifier($quantifier);
+        $range = $this->parseRangeQuantifier($node);
         if (null === $range) {
             return false;
         }
@@ -1422,13 +1422,13 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
     /**
      * @return array{0: int, 1: int|null}|null
      */
-    private function parseRangeQuantifier(string $quantifier): ?array
+    private function parseRangeQuantifier(QuantifierNode $node): ?array
     {
-        if (!str_starts_with($quantifier, '{')) {
+        if (!str_starts_with($node->quantifier, '{')) {
             return null;
         }
 
-        $bounds = QuantifierBounds::parse($quantifier);
+        $bounds = $node->bounds;
 
         return null === $bounds ? null : [$bounds->min, $bounds->max];
     }

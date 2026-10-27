@@ -31,7 +31,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -557,7 +556,7 @@ final class CaptureFacts
      */
     private function repeat(QuantifierNode $node, bool $scan = false): ?array
     {
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         $body = $this->values($node->node, $scan);
         if (null === $bounds || null === $body || null === $bounds->max) {
             return null;
@@ -722,7 +721,7 @@ final class CaptureFacts
             $node instanceof SequenceNode => $this->sequenceMayBeZero($node->children),
             $node instanceof AlternationNode => self::any($node->alternatives, $this->mayBeZero(...)),
             $node instanceof GroupNode => !self::isLookaround($node) && $this->mayBeZero($node->child),
-            $node instanceof QuantifierNode => 0 !== QuantifierBounds::parse($node->quantifier)?->max && $this->mayBeZero($node->node),
+            $node instanceof QuantifierNode => 0 !== $node->bounds?->max && $this->mayBeZero($node->node),
             self::consumesNothing($node) => false,
             default => $this->readsZero($node, false) ?? true,
         };
@@ -905,7 +904,7 @@ final class CaptureFacts
         return match (true) {
             $node instanceof AlternationNode => self::all($node->alternatives, fn (NodeInterface $branch): bool => $this->startsWithNonZero($branch, $scan)),
             $node instanceof SequenceNode => $this->sequenceStartsWithNonZero($node->children, $scan),
-            $node instanceof QuantifierNode => (QuantifierBounds::parse($node->quantifier)->min ?? 0) >= 1 && $this->startsWithNonZero($node->node, $scan),
+            $node instanceof QuantifierNode => ($node->bounds->min ?? 0) >= 1 && $this->startsWithNonZero($node->node, $scan),
             $node instanceof SubroutineNode => null !== ($body = $this->calledBody($node)) && $this->startsWithNonZero($body, $scan),
             $node instanceof CharClassNode, $node instanceof CharTypeNode => $this->lengths($node)[0] >= 1 && !$this->mayBeZero($node),
             default => false,

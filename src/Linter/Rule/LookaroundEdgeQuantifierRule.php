@@ -30,7 +30,6 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
@@ -117,7 +116,7 @@ final class LookaroundEdgeQuantifierRule extends AbstractLintRule
 
     private function checkRepeat(QuantifierNode $repeat, GroupNode $lookaround, bool $behind, LintContext $context): ?RuleViolation
     {
-        $bounds = QuantifierBounds::parse($repeat->quantifier);
+        $bounds = $repeat->bounds;
         if (null === $bounds || $bounds->min === $bounds->max) {
             return null;
         }

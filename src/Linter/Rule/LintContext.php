@@ -180,7 +180,7 @@ final class LintContext
                 return false;
             }
 
-            if ($parent instanceof QuantifierNode && QuantifierMath::isUnbounded($parent->quantifier)) {
+            if ($parent instanceof QuantifierNode && QuantifierMath::isUnbounded($parent)) {
                 return !self::isAtomicTail($parent, \array_slice($parents, $index + 1));
             }
         }
@@ -329,7 +329,7 @@ final class LintContext
                 // A possessive "X++" is an atomic group around "X+": a
                 // second iteration that fails leaves the first, unless the
                 // count needs it.
-                return QuantifierType::Possessive === $parent->type && QuantifierMath::parseRange($parent->quantifier)[0] <= 1;
+                return QuantifierType::Possessive === $parent->type && QuantifierMath::parseRange($parent)[0] <= 1;
             } elseif (!$parent instanceof AlternationNode) {
                 return false;
             }

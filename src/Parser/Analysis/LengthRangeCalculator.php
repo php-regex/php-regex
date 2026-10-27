@@ -38,7 +38,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -154,7 +153,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
         [$childMin, $childMax] = $node->node->accept($this);
 
         // Parse quantifier
-        $range = $this->parseQuantifierRange($node->quantifier);
+        $range = $this->parseQuantifierRange($node);
         $qMin = $range[0];
         $qMax = $range[1];
 
@@ -337,9 +336,9 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     /**
      * @return LengthRange
      */
-    private function parseQuantifierRange(string $q): array
+    private function parseQuantifierRange(QuantifierNode $node): array
     {
-        $bounds = QuantifierBounds::parse($q);
+        $bounds = $node->bounds;
 
         return null === $bounds ? [1, 1] : [$bounds->min, $bounds->max];
     }

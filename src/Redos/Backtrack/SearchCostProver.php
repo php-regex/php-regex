@@ -28,7 +28,6 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
@@ -295,7 +294,7 @@ final class SearchCostProver
             return [false, false];
         }
 
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         if (null !== $bounds && $bounds->min > 0) {
             return self::start($node->node, $sets, $multiline, $unicode, $caseless, $atomic);
         }
@@ -524,7 +523,7 @@ final class SearchCostProver
         $atomic = $node instanceof GroupNode && GroupType::Atomic === $node->type;
         $repeat = $atomic ? self::unwrap($node->child) : $node;
         if ($repeat instanceof QuantifierNode && ($atomic || QuantifierType::Possessive === $repeat->type)) {
-            $bounds = QuantifierBounds::parse($repeat->quantifier);
+            $bounds = $repeat->bounds;
             $offset = $repeat->node->getStartPosition();
             $set = $sets[$offset] ?? null;
             if (null !== $bounds && null === $bounds->max && null !== $set && CharSet::universe($unicode)->subtract($set)->isEmpty()

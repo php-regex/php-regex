@@ -74,7 +74,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
                 continue;
             }
 
-            if (!QuantifierMath::isVariable($left->quantifier) || !QuantifierMath::isVariable($right->quantifier)) {
+            if (!QuantifierMath::isVariable($left) || !QuantifierMath::isVariable($right)) {
                 continue;
             }
 
@@ -110,8 +110,8 @@ final class QuantifierConcatenationRule extends AbstractLintRule
 
             [$leftSet, $leftGuards] = $leftAtom;
             [$rightSet, $rightGuards] = $rightAtom;
-            [$leftMin, $leftMax] = QuantifierMath::parseRange($left->quantifier);
-            [$rightMin, $rightMax] = QuantifierMath::parseRange($right->quantifier);
+            [$leftMin, $leftMax] = QuantifierMath::parseRange($left);
+            [$rightMin, $rightMax] = QuantifierMath::parseRange($right);
 
             // The unbounded side takes over the characters the other one
             // gives up; a guard on the side that gives them up goes with

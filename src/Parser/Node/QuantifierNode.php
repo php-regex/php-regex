@@ -20,6 +20,12 @@ use PHPRegex\Parser\NodeVisitorInterface;
  */
 final class QuantifierNode extends AbstractNode
 {
+    /**
+     * The least and the most repetitions $quantifier reads as, null when it
+     * is no quantifier PCRE reads (a node built by hand may hold one).
+     */
+    public readonly ?QuantifierBounds $bounds;
+
     public function __construct(
         public readonly NodeInterface $node,
         public readonly string $quantifier,
@@ -28,6 +34,7 @@ final class QuantifierNode extends AbstractNode
         int $endPosition
     ) {
         parent::__construct($startPosition, $endPosition);
+        $this->bounds = QuantifierBounds::parse($quantifier);
     }
 
     public function accept(NodeVisitorInterface $visitor)

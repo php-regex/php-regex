@@ -31,7 +31,6 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
@@ -391,7 +390,7 @@ final class PnfaBuilder
     private static function holdsUnboundedRepeat(NodeInterface $node): bool
     {
         if ($node instanceof QuantifierNode) {
-            $bounds = QuantifierBounds::parse($node->quantifier);
+            $bounds = $node->bounds;
             if (null === $bounds || null === $bounds->max) {
                 return true;
             }
@@ -491,7 +490,7 @@ final class PnfaBuilder
                         return $this->quantifier($child, $next, $flags, $pnfa, $search, true);
                     }
 
-                    $bounds = QuantifierBounds::parse($child->quantifier);
+                    $bounds = $child->bounds;
                     for ($copy = 0; null !== $bounds && $copy < $bounds->min; $copy++) {
                         $next = $this->node($child->node, $next, $flags, $pnfa, $search);
                     }
@@ -510,7 +509,7 @@ final class PnfaBuilder
 
     private function quantifier(QuantifierNode $node, int $next, int $flags, Pnfa $pnfa, int $search, bool $atomic = false): int
     {
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         if (null === $bounds) {
             throw ModelLimitException::outOfModel('The quantifier '.$node->quantifier);
         }
@@ -696,7 +695,7 @@ final class PnfaBuilder
             $node instanceof GroupNode => \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::BranchReset, GroupType::Atomic, GroupType::InlineFlags], true)
                 ? self::nullable($node->child)
                 : true,
-            $node instanceof QuantifierNode => 0 === (QuantifierBounds::parse($node->quantifier)->min ?? 0) || self::nullable($node->node),
+            $node instanceof QuantifierNode => 0 === ($node->bounds->min ?? 0) || self::nullable($node->node),
             $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof KeepNode, $node instanceof CommentNode => true,
             $node instanceof CharLiteralNode, $node instanceof ControlCharNode, $node instanceof CharClassNode, $node instanceof CharTypeNode,
             $node instanceof DotNode, $node instanceof UnicodePropNode, $node instanceof ExtendedCharClassNode => false,
@@ -722,7 +721,7 @@ final class PnfaBuilder
     private function collectAbstractions(NodeInterface $node): void
     {
         if ($node instanceof QuantifierNode) {
-            $bounds = QuantifierBounds::parse($node->quantifier);
+            $bounds = $node->bounds;
             if (null !== $bounds && null !== $bounds->max && $bounds->max > $this->boundedRepeatCutoff) {
                 $this->abstractions[] = \sprintf(
                     '%s at offset %d analysed as {%d,}',

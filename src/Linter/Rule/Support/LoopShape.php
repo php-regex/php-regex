@@ -69,7 +69,7 @@ final class LoopShape
      */
     public static function isTrailingLoopFromOneIteration(QuantifierNode $loop, LintContext $context): bool
     {
-        [$min] = QuantifierMath::parseRange($loop->quantifier);
+        [$min] = QuantifierMath::parseRange($loop);
 
         return $min <= 1 && $context->endsThePatternForEveryCall($loop);
     }
@@ -89,7 +89,7 @@ final class LoopShape
      */
     public static function isShortRunBeforeTheEnd(QuantifierNode $loop, LintContext $context): bool
     {
-        [, $max] = QuantifierMath::parseRange($loop->quantifier);
+        [, $max] = QuantifierMath::parseRange($loop);
         $inner = self::unwrapPlainGroups($loop->node);
         if (null === $max || $max > 2 || !$inner instanceof QuantifierNode || QuantifierType::Lazy === $inner->type) {
             return false;

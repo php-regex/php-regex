@@ -18,7 +18,6 @@ use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Syntax\StartOptions;
@@ -66,7 +65,7 @@ final class UselessLazyRule extends AbstractLintRule
             return [];
         }
 
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         if (null === $bounds) {
             return [];
         }

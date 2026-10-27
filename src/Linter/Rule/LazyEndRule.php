@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 
@@ -48,7 +47,7 @@ final class LazyEndRule extends AbstractLintRule
         }
 
         $lazy = (QuantifierType::Lazy === $node->type) !== str_contains($context->activeFlags(), 'U');
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         // A subroutine call runs the quantifier again where something may
         // follow it, and there it takes more than its minimum.
         if (!$lazy || null === $bounds || $bounds->min === $bounds->max) {

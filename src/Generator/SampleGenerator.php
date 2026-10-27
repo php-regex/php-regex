@@ -46,7 +46,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -420,7 +419,7 @@ final class SampleGenerator extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): string
     {
-        [$min, $max] = $this->parseQuantifierRange($node->quantifier);
+        [$min, $max] = $this->parseQuantifierRange($node);
 
         // What takes no text, optional, need not hold: it adds nothing. It
         // stays in its sequence, where a call may name a group it holds.
@@ -954,9 +953,9 @@ final class SampleGenerator extends AbstractNodeVisitor
     /**
      * @return array{0: int, 1: int}
      */
-    private function parseQuantifierRange(string $q): array
+    private function parseQuantifierRange(QuantifierNode $node): array
     {
-        $bounds = QuantifierBounds::parse($q);
+        $bounds = $node->bounds;
         if (null === $bounds) {
             return [0, 0];
         }
@@ -1208,7 +1207,7 @@ final class SampleGenerator extends AbstractNodeVisitor
             // What takes no text, repeated, is generated once: each turn
             // stands at the same place.
             if ($child instanceof QuantifierNode && 0 === $this->lengthRange($child->node)[1]
-                && $this->parseQuantifierRange($child->quantifier)[0] > 0) {
+                && $this->parseQuantifierRange($child)[0] > 0) {
                 array_push($opened, ...$this->withPlainGroupsOpened([$child->node]));
 
                 continue;

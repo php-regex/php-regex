@@ -37,7 +37,6 @@ use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -162,7 +161,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): LiteralSet
     {
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
 
         // Case 1: Exact quantifier {n} -> repeat literals n times
         if (null !== $bounds && $bounds->min === $bounds->max) {

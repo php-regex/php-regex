@@ -37,7 +37,6 @@ use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -213,7 +212,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     public function visitQuantifier(QuantifierNode $node): array
     {
         $childCases = $node->node->accept($this);
-        $range = $this->parseQuantifierRange($node->quantifier);
+        $range = $this->parseQuantifierRange($node);
         $min = $range[0];
         $max = $range[1];
 
@@ -588,15 +587,13 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     }
 
     /**
-     * Parses a quantifier string into min and max.
-     *
-     * @param string $q the quantifier
+     * The least and the most a quantifier repeats.
      *
      * @return array{0: int, 1: int|null} min and max
      */
-    private function parseQuantifierRange(string $q): array
+    private function parseQuantifierRange(QuantifierNode $node): array
     {
-        $bounds = QuantifierBounds::parse($q);
+        $bounds = $node->bounds;
 
         return null === $bounds ? [1, 1] : [$bounds->min, $bounds->max];
     }

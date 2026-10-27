@@ -241,7 +241,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 $node = $node->child;
             } elseif ($node instanceof SequenceNode && [] !== $node->children) {
                 $node = $node->children[0];
-            } elseif ($node instanceof QuantifierNode && QuantifierMath::parseRange($node->quantifier)[0] >= 1) {
+            } elseif ($node instanceof QuantifierNode && QuantifierMath::parseRange($node)[0] >= 1) {
                 $node = $node->node;
             } else {
                 break;

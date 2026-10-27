@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 
@@ -171,6 +172,7 @@ final class PatternEquivalence
                 $value instanceof NodeInterface => self::canonical($value, $unicode),
                 \is_array($value) => array_map(static fn (mixed $item): mixed => $item instanceof NodeInterface ? self::canonical($item, $unicode) : $item, $value),
                 $value instanceof \UnitEnum => $value->name,
+                $value instanceof QuantifierBounds => [$value->min, $value->max],
                 default => $value,
             };
         }

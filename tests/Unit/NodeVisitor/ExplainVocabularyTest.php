@@ -17,6 +17,8 @@ use PHPRegex\Explain\MatchSettings;
 use PHPRegex\Explain\Vocabulary;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -161,6 +163,6 @@ final class ExplainVocabularyTest extends TestCase
     #[Test]
     public function test_quantifier_reads_a_count_it_cannot_parse_as_written(): void
     {
-        $this->assertSame('with quantifier {x}', Vocabulary::quantifier('{x}', QuantifierType::Greedy));
+        $this->assertSame('with quantifier {x}', Vocabulary::quantifier(new QuantifierNode(new LiteralNode('a', 0, 1), '{x}', QuantifierType::Greedy, 0, 4)));
     }
 }

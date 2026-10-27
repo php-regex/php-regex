@@ -25,7 +25,6 @@ use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
@@ -180,7 +179,7 @@ final class CaptureSemantics
     private function walkQuantifier(QuantifierNode $node, array $set): array
     {
         $after = $this->walk($node->node, $set);
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         if (null === $bounds) {
             return $set;
         }
@@ -238,7 +237,7 @@ final class CaptureSemantics
      */
     private static function mayBeLeftOut(QuantifierNode $node): bool
     {
-        return 0 === QuantifierBounds::parse($node->quantifier)?->min;
+        return 0 === $node->bounds?->min;
     }
 
     /**

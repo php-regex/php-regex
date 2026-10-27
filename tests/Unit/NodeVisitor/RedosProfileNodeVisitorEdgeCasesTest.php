@@ -306,10 +306,10 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $variableCapture = new SequenceNode([new GroupNode(new QuantifierNode(new LiteralNode('a', 1, 2), '+', QuantifierType::Greedy, 1, 3), GroupType::Capturing), new BackrefNode('\\1', 4, 6)], 0, 6);
         $this->assertTrue($this->invokePrivate($visitor, 'hasBackrefLoop', [$variableCapture]));
 
-        $exact = $this->invokePrivate($visitor, 'quantifierBounds', ['{3}']);
+        $exact = $this->invokePrivate($visitor, 'quantifierBounds', [new QuantifierNode(new LiteralNode('a', 0, 1), '{3}', QuantifierType::Greedy, 0, 1)]);
         $this->assertSame([3, 3], $exact);
 
-        $fallback = $this->invokePrivate($visitor, 'quantifierBounds', ['invalid']);
+        $fallback = $this->invokePrivate($visitor, 'quantifierBounds', [new QuantifierNode(new LiteralNode('a', 0, 1), 'invalid', QuantifierType::Greedy, 0, 1)]);
         $this->assertSame([0, null], $fallback);
     }
 

@@ -15,6 +15,9 @@ namespace PHPRegex\Tests\Integration;
 
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\TestCase;
@@ -60,7 +63,7 @@ final class ManualFallbackTest extends TestCase
         $method = $reflection->getMethod('parseQuantifierRange');
 
         // Call with an invalid quantifier that doesn't match any case
-        $result = $method->invoke($generator, 'INVALID');
+        $result = $method->invoke($generator, new QuantifierNode(new LiteralNode('a', 0, 1), 'INVALID', QuantifierType::Greedy, 0, 1));
 
         // The default returns [0, 0] (via @codeCoverageIgnore, but let's test it anyway)
         $this->assertSame([0, 0], $result);

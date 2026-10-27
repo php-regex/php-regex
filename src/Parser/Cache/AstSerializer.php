@@ -34,6 +34,7 @@ use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -79,6 +80,7 @@ final class AstSerializer
         PcreVerbNode::class,
         PosixClassNode::class,
         QuantifierNode::class,
+        QuantifierBounds::class,
         RangeNode::class,
         ScriptRunNode::class,
         SequenceNode::class,

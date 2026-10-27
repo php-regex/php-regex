@@ -61,11 +61,11 @@ final class NestedQuantifierRule extends AbstractLintRule
         $isAtomicQuantifier = QuantifierType::Possessive === $node->type
             || ($node->node instanceof GroupNode && GroupType::Atomic === $node->node->type);
 
-        if (!QuantifierMath::isVariable($node->quantifier)) {
+        if (!QuantifierMath::isVariable($node)) {
             return [];
         }
 
-        if ($isAtomicQuantifier || !QuantifierMath::isRepeatable($node->quantifier)) {
+        if ($isAtomicQuantifier || !QuantifierMath::isRepeatable($node)) {
             return [];
         }
 
@@ -74,7 +74,7 @@ final class NestedQuantifierRule extends AbstractLintRule
         }
 
         $nested = $this->findNestedQuantifier($node->node);
-        if (null === $nested || !QuantifierMath::isVariable($nested->quantifier)) {
+        if (null === $nested || !QuantifierMath::isVariable($nested)) {
             return [];
         }
 

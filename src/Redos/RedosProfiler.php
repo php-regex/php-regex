@@ -39,7 +39,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
@@ -200,8 +199,8 @@ final class RedosProfiler extends AbstractNodeVisitor
         // --- Standard ReDoS logic for non-atomic quantifiers ---
 
         $this->totalQuantifierDepth++;
-        [, $qMax] = $this->quantifierBounds($node->quantifier);
-        $isUnbounded = $this->isUnbounded($node->quantifier);
+        [, $qMax] = $this->quantifierBounds($node);
+        $isUnbounded = $this->isUnbounded($node);
 
         // Check if the immediate target is an atomic group (e.g., (? >...)+)
         $isTargetAtomic = $node->node instanceof GroupNode && GroupType::Atomic === $node->node->type;
@@ -253,7 +252,7 @@ final class RedosProfiler extends AbstractNodeVisitor
                 }
             }
         } else {
-            if ($this->isLargeBounded($node->quantifier)) {
+            if ($this->isLargeBounded($node)) {
                 $severity = RedosSeverity::Low;
                 $this->addVulnerability(
                     RedosSeverity::Low,
@@ -637,7 +636,7 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     private function holdsUnboundedRepeat(NodeInterface $node): bool
     {
-        if ($node instanceof QuantifierNode && $this->isUnbounded($node->quantifier)) {
+        if ($node instanceof QuantifierNode && $this->isUnbounded($node)) {
             return true;
         }
 
@@ -653,17 +652,17 @@ final class RedosProfiler extends AbstractNodeVisitor
     /**
      * Checks if a given quantifier is unbounded (e.g., `*`, `+`, `{n,}`).
      */
-    private function isUnbounded(string $quantifier): bool
+    private function isUnbounded(QuantifierNode $node): bool
     {
-        return QuantifierBounds::parse($quantifier)?->isUnbounded() ?? false;
+        return $node->bounds?->isUnbounded() ?? false;
     }
 
     /**
      * Checks if a given quantifier is bounded but allows for a very large number of repetitions.
      */
-    private function isLargeBounded(string $quantifier): bool
+    private function isLargeBounded(QuantifierNode $node): bool
     {
-        $bounds = QuantifierBounds::parse($quantifier);
+        $bounds = $node->bounds;
 
         return null !== $bounds && null !== $bounds->max && $bounds->max > 1000;
     }
@@ -964,7 +963,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         }
 
         if ($node instanceof QuantifierNode) {
-            [$min] = $this->quantifierBounds($node->quantifier);
+            [$min] = $this->quantifierBounds($node);
             if (0 === $min) {
                 return true;
             }
@@ -1027,9 +1026,9 @@ final class RedosProfiler extends AbstractNodeVisitor
     /**
      * @return array{0:int, 1:int|null}
      */
-    private function quantifierBounds(string $quantifier): array
+    private function quantifierBounds(QuantifierNode $node): array
     {
-        $bounds = QuantifierBounds::parse($quantifier);
+        $bounds = $node->bounds;
 
         return null === $bounds ? [0, null] : [$bounds->min, $bounds->max];
     }
@@ -1088,7 +1087,7 @@ final class RedosProfiler extends AbstractNodeVisitor
     private function isAtomicNullableNode(NodeInterface $node): bool
     {
         if ($node instanceof QuantifierNode) {
-            [$min] = $this->quantifierBounds($node->quantifier);
+            [$min] = $this->quantifierBounds($node);
             if (0 !== $min) {
                 return false;
             }
@@ -1146,8 +1145,8 @@ final class RedosProfiler extends AbstractNodeVisitor
                 continue;
             }
 
-            [, $leftMax] = $this->quantifierBounds($leftQuantifier->quantifier);
-            [, $rightMax] = $this->quantifierBounds($rightQuantifier->quantifier);
+            [, $leftMax] = $this->quantifierBounds($leftQuantifier);
+            [, $rightMax] = $this->quantifierBounds($rightQuantifier);
 
             if (!$this->quantifierAllowsMultiple($leftMax) || !$this->quantifierAllowsMultiple($rightMax)) {
                 continue;
@@ -1161,10 +1160,10 @@ final class RedosProfiler extends AbstractNodeVisitor
                 continue;
             }
 
-            $leftUnbounded = $this->isUnbounded($leftQuantifier->quantifier);
-            $rightUnbounded = $this->isUnbounded($rightQuantifier->quantifier);
-            $leftLarge = $this->isLargeBounded($leftQuantifier->quantifier);
-            $rightLarge = $this->isLargeBounded($rightQuantifier->quantifier);
+            $leftUnbounded = $this->isUnbounded($leftQuantifier);
+            $rightUnbounded = $this->isUnbounded($rightQuantifier);
+            $leftLarge = $this->isLargeBounded($leftQuantifier);
+            $rightLarge = $this->isLargeBounded($rightQuantifier);
 
             if (!$overlapKnown && !$leftUnbounded && !$rightUnbounded && !$leftLarge && !$rightLarge) {
                 continue;

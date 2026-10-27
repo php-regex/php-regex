@@ -15,6 +15,9 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
 use PHPUnit\Framework\TestCase;
 
 final class GeneratorEdgeCaseTest extends TestCase
@@ -46,7 +49,7 @@ final class GeneratorEdgeCaseTest extends TestCase
         $method = $reflection->getMethod('parseQuantifierRange');
 
         // Invalid value that doesn't match *, +, ? nor {n,m}
-        $result = $method->invoke($generator, 'INVALID');
+        $result = $method->invoke($generator, new QuantifierNode(new LiteralNode('a', 0, 1), 'INVALID', QuantifierType::Greedy, 0, 1));
 
         // The default returns [0, 0]
         $this->assertSame([0, 0], $result);

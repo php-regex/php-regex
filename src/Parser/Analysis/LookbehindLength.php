@@ -26,7 +26,6 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -422,7 +421,7 @@ final class LookbehindLength
 
         if ($node instanceof QuantifierNode) {
             [$childMin, $childMax] = $this->of($node->node, $expanding);
-            [$qMin, $qMax] = self::bounds($node->quantifier);
+            [$qMin, $qMax] = self::bounds($node);
 
             // The item is added to its branch before the repeat is read: a
             // repeat of variable count, or of none, comes too late.
@@ -579,7 +578,7 @@ final class LookbehindLength
 
         $count = null;
         if ($first instanceof QuantifierNode) {
-            [$qMin, $qMax] = self::bounds($first->quantifier);
+            [$qMin, $qMax] = self::bounds($first);
             $count = $qMin === $qMax ? $qMin : null;
         }
         $item = $first instanceof QuantifierNode ? $first->node : $first;
@@ -729,14 +728,14 @@ final class LookbehindLength
     }
 
     /**
-     * The repeat counts, -1 for no upper bound. QuantifierBounds reads the
-     * spaces inside the braces PCRE2 10.43 allows.
+     * The repeat counts, -1 for no upper bound. The bounds read the spaces
+     * inside the braces PCRE2 10.43 allows.
      *
      * @return array{0: int, 1: int}
      */
-    private static function bounds(string $quantifier): array
+    private static function bounds(QuantifierNode $node): array
     {
-        $bounds = QuantifierBounds::parse($quantifier);
+        $bounds = $node->bounds;
 
         return null === $bounds ? [1, 1] : [$bounds->min, $bounds->max ?? -1];
     }

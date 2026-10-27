@@ -22,7 +22,6 @@ use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\ScriptRunNode;
@@ -139,7 +138,7 @@ final class PossessiveRepeatOnceRector extends AbstractRector
     {
         $pluses = [];
         if ($node instanceof QuantifierNode && QuantifierType::Possessive === $node->type && self::flips($node->node)) {
-            $bounds = QuantifierBounds::parse($node->quantifier);
+            $bounds = $node->bounds;
             $plus = $node->getEndPosition() - 1;
             if (null !== $bounds && 1 === $bounds->min && 1 === $bounds->max && '+' === ($source[$plus] ?? '')) {
                 $pluses[] = $plus;

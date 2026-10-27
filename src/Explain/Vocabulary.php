@@ -19,7 +19,7 @@ use PHPRegex\Parser\NewlineConvention;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
+use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Printer\DisplayEscaper;
@@ -201,9 +201,10 @@ final class Vocabulary
     /**
      * How many times a quantifier repeats, and how greedily.
      */
-    public static function quantifier(string $q, QuantifierType $type): string
+    public static function quantifier(QuantifierNode $node): string
     {
-        $bounds = QuantifierBounds::parse($q);
+        $q = $node->quantifier;
+        $bounds = $node->bounds;
         $desc = match (true) {
             '*' === $q => 'zero or more times',
             '+' === $q => 'one or more times',
@@ -214,7 +215,7 @@ final class Vocabulary
             default => \sprintf('at least %d but not more than %d times', $bounds->min, $bounds->max),
         };
 
-        $desc .= match ($type) {
+        $desc .= match ($node->type) {
             QuantifierType::Lazy => ' (as few as possible)',
             QuantifierType::Possessive => ' (and do not backtrack)',
             default => '',

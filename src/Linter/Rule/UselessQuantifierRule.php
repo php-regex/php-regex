@@ -46,7 +46,7 @@ final class UselessQuantifierRule extends AbstractLintRule
             return [];
         }
 
-        [$min, $max] = QuantifierMath::parseRange($node->quantifier);
+        [$min, $max] = QuantifierMath::parseRange($node);
         if (1 !== $min || 1 !== $max) {
             return [];
         }

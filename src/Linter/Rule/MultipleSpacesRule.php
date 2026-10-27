@@ -86,7 +86,7 @@ final class MultipleSpacesRule extends AbstractLintRule
         $count = $last instanceof QuantifierNode ? \count($run) - 1 : \count($run);
         $repeat = '{'.$count.'}';
         if ($last instanceof QuantifierNode) {
-            [$lower, $upper] = QuantifierMath::parseRange($last->quantifier);
+            [$lower, $upper] = QuantifierMath::parseRange($last);
             $min = $count + $lower;
             $max = null === $upper ? null : $count + $upper;
             $repeat = match (true) {

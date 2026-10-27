@@ -134,7 +134,7 @@ final class ExplanationBuilder extends AbstractNodeVisitor
     {
         return new Explanation(
             ExplanationKind::Repetition,
-            Vocabulary::quantifier($node->quantifier, $node->type),
+            Vocabulary::quantifier($node),
             children: [$node->node->accept($this)],
             end: 'End quantified group',
         );

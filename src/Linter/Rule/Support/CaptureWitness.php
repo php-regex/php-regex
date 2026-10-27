@@ -33,7 +33,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -220,7 +219,7 @@ final class CaptureWitness
     {
         // The parser gives only quantifiers that read: one that does not
         // is read as repeating nothing.
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         [$min, $max] = null === $bounds ? [0, 0] : [$bounds->min, $bounds->max];
 
         $count = isset($this->path[spl_object_id($node)]) || $this->filling || $this->repeatAround ? max($min, 1) : $min;

@@ -23,7 +23,6 @@ use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -282,7 +281,7 @@ final class CharSetAnalyzer
      */
     private function isOptional(QuantifierNode $node): bool
     {
-        return 0 === QuantifierBounds::parse($node->quantifier)?->min;
+        return 0 === $node->bounds?->min;
     }
 
     private function isOptionalNode(NodeInterface $node, bool $fromStart): bool

@@ -38,7 +38,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -138,7 +137,7 @@ final class JsonDumper extends AbstractNodeVisitor
     {
         // Null only for a tree built by hand with a quantifier the parser
         // would not read.
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
 
         return [
             ...$this->node('quantifier', $node),

@@ -37,7 +37,6 @@ use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -125,8 +124,7 @@ final class ComplexityScorer extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): int
     {
-        $quant = $node->quantifier;
-        $isUnbounded = $this->isUnboundedQuantifier($quant);
+        $isUnbounded = $this->isUnboundedQuantifier($node);
         $score = 0;
 
         if ($isUnbounded) {
@@ -319,8 +317,9 @@ final class ComplexityScorer extends AbstractNodeVisitor
     /**
      * Cached unbounded quantifier detection.
      */
-    private function isUnboundedQuantifier(string $quant): bool
+    private function isUnboundedQuantifier(QuantifierNode $node): bool
     {
+        $quant = $node->quantifier;
         // Return cached result if available
         if (isset(self::$unboundedQuantifierCache[$quant])) {
             return self::$unboundedQuantifierCache[$quant];
@@ -329,7 +328,7 @@ final class ComplexityScorer extends AbstractNodeVisitor
         self::$unboundedQuantifierCache = StaticCaches::makeRoom(self::$unboundedQuantifierCache);
         StaticCaches::register(self::class, self::clearCaches(...));
 
-        return self::$unboundedQuantifierCache[$quant] = QuantifierBounds::parse($quant)?->isUnbounded() ?? false;
+        return self::$unboundedQuantifierCache[$quant] = $node->bounds?->isUnbounded() ?? false;
     }
 
     private static function clearCaches(): void

@@ -14,6 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Visitor;
 
 use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
 use PHPUnit\Framework\TestCase;
 
 final class SampleGeneratorEdgeCasesTest extends TestCase
@@ -44,7 +47,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $method = $reflection->getMethod('parseQuantifierRange');
 
         // Cas invalide qui ne matche aucune regex connue
-        $result = $method->invoke($generator, 'INVALID');
+        $result = $method->invoke($generator, new QuantifierNode(new LiteralNode('a', 0, 1), 'INVALID', QuantifierType::Greedy, 0, 1));
         // The code returns [0, 0] by default via the match
         $this->assertSame([0, 0], $result);
     }

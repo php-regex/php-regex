@@ -24,7 +24,6 @@ use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
@@ -201,7 +200,7 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
 
                 $text = LanguageQuestions::scoped($text.$afterText, $context->flagsAt($child, $root, $patternFlags), $spelled);
             } elseif ($parent instanceof QuantifierNode) {
-                $bounds = QuantifierBounds::parse($parent->quantifier);
+                $bounds = $parent->bounds;
                 if (null === $bounds) {
                     return null; // never taken: the parser builds no quantifier QuantifierBounds cannot read
                 }

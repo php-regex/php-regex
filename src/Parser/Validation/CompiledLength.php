@@ -40,7 +40,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
@@ -249,13 +248,6 @@ final class CompiledLength
      * @var array<string, array{0: list<int>, 1: list<array{0: int, 1: int}>, 2: list<array{0: int, 1: int}>}|null>
      */
     private array $members = [];
-
-    /**
-     * The least and the most of each quantifier read, by its text.
-     *
-     * @var array<string, array{0: int, 1: ?int}>
-     */
-    private array $bounds = [];
 
     /**
      * The groups of the pattern measured, once a reference or a lookbehind
@@ -655,7 +647,7 @@ final class CompiledLength
      */
     private function groupRepeat(QuantifierNode $node, NodeInterface $repeated): ?\Closure
     {
-        [$min, $max] = $this->boundsOf($node);
+        [$min, $max] = self::boundsOf($node);
         $possessive = QuantifierType::Possessive === $node->type;
         $atomicOnce = $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic);
         if ($repeated instanceof GroupNode) {
@@ -777,7 +769,7 @@ final class CompiledLength
      */
     private function repeatedLength(QuantifierNode $node, bool $caseless): ?int
     {
-        [$min, $max] = $this->boundsOf($node);
+        [$min, $max] = self::boundsOf($node);
         $item = $this->classOfSingleItem($node->node);
         if ($item instanceof SubroutineNode) {
             return self::repeatCall(3 + 3 * \count($item->returnedGroups), $min, $max, QuantifierType::Possessive === $node->type, $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic));
@@ -851,14 +843,11 @@ final class CompiledLength
      *
      * @return array{0: int, 1: ?int}
      */
-    private function boundsOf(QuantifierNode $node): array
+    private static function boundsOf(QuantifierNode $node): array
     {
-        if (!isset($this->bounds[$node->quantifier])) {
-            $bounds = QuantifierBounds::parse($node->quantifier);
-            $this->bounds[$node->quantifier] = null === $bounds ? [1, 1] : [$bounds->min, $bounds->max];
-        }
+        $bounds = $node->bounds;
 
-        return $this->bounds[$node->quantifier];
+        return null === $bounds ? [1, 1] : [$bounds->min, $bounds->max];
     }
 
     /**

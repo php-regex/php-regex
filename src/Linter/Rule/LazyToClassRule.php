@@ -19,7 +19,6 @@ use PHPRegex\Linter\Rule\Support\QuestionBudget;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -76,7 +75,7 @@ final class LazyToClassRule extends AbstractLintRule
 
         $flags = $context->activeFlags();
         $lazy = (QuantifierType::Lazy === $node->type) !== str_contains($flags, 'U');
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         if (!$lazy || null === $bounds || null !== $bounds->max || $bounds->min > 1) {
             return [];
         }

@@ -46,7 +46,7 @@ final class ZeroQuantifierRule extends AbstractLintRule
             return [];
         }
 
-        [$min, $max] = QuantifierMath::parseRange($node->quantifier);
+        [$min, $max] = QuantifierMath::parseRange($node);
         if (0 !== $min || 0 !== $max) {
             return [];
         }

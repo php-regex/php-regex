@@ -21,7 +21,6 @@ use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
@@ -248,7 +247,7 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     protected function repeatedAssertion(QuantifierNode $node): ?string
     {
         $assertion = $node->node;
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         if (!$assertion instanceof GroupNode || !\in_array($assertion->type, self::LOOKAROUNDS, true) || null === $bounds) {
             return null;
         }

@@ -28,6 +28,8 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
@@ -136,7 +138,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
     {
         $generator = new SampleGenerator();
 
-        $range = $this->invokePrivate($generator, 'parseQuantifierRange', ['{5,2}']);
+        $range = $this->invokePrivate($generator, 'parseQuantifierRange', [new QuantifierNode(new LiteralNode('a', 0, 1), '{5,2}', QuantifierType::Greedy, 0, 1)]);
 
         $this->assertSame([5, 5], $range);
     }

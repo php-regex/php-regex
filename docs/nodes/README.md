@@ -218,15 +218,17 @@ echo $lookahead->type === GroupType::LookaheadPositive;  // true
 
 **Fields:**
 
-| Field        | Type           | Description                                                       |
-|--------------|----------------|-------------------------------------------------------------------|
-| `node`       | NodeInterface  | The node being quantified                                         |
-| `quantifier` | string         | The quantifier token, without its greed suffix: `+`, `*`, `{2,4}` |
-| `type`       | QuantifierType | Greedy, lazy, or possessive — the greed suffix                    |
+| Field        | Type                   | Description                                                       |
+|--------------|------------------------|-------------------------------------------------------------------|
+| `node`       | NodeInterface          | The node being quantified                                         |
+| `quantifier` | string                 | The quantifier token, without its greed suffix: `+`, `*`, `{2,4}` |
+| `type`       | QuantifierType         | Greedy, lazy, or possessive — the greed suffix                    |
+| `bounds`     | QuantifierBounds\|null | The least and the most repetitions the token reads as             |
 
-The repetition bounds are not fields. `QuantifierBounds` parses them from the
-token — the same way the parser does, for `{n}`, `{n,}`, `{n,m}`, `{,m}` and
-the `*` / `+` / `?` shorthands alike.
+The node reads its `bounds` from the token when it is built, the same way
+for `{n}`, `{n,}`, `{n,m}`, `{,m}` and the `*` / `+` / `?` shorthands alike.
+They are null only on a node built by hand with a token that is no
+quantifier, as `{x}`.
 
 **Quantifier Types:**
 
@@ -239,7 +241,6 @@ the `*` / `+` / `?` shorthands alike.
 **Example:**
 ```php
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierType;
 
 $ast = Regex::create()->parse('/a{2,4}?/');  // Lazy quantifier
@@ -248,7 +249,7 @@ $quantifier = $ast->pattern;
 echo $quantifier->quantifier;  // '{2,4}' — the lazy '?' lives in the type
 echo $quantifier->type === QuantifierType::Lazy;  // true
 
-$bounds = QuantifierBounds::parse($quantifier->quantifier);
+$bounds = $quantifier->bounds;
 echo $bounds->min;   // 2
 echo $bounds->max;   // 4
 var_dump($bounds->max);  // int(4); null when unbounded, as in '{2,}'
@@ -1074,7 +1075,7 @@ echo $ast->pattern->children[2]->endPosition;  // 3, the body's length
 | `SequenceNode`             | Ordered list     | `children[]`                              |
 | `AlternationNode`          | Branches         | `alternatives[]`                          |
 | `GroupNode`                | Grouping         | `child`, `type`, `name`, `flags`          |
-| `QuantifierNode`           | Repetition       | `node`, `quantifier`, `type`              |
+| `QuantifierNode`           | Repetition       | `node`, `quantifier`, `type`, `bounds`    |
 | `LiteralNode`              | Literal char     | `value`                                   |
 | `CharLiteralNode`          | Escaped char     | `codePoint`, `type`                       |
 | `ControlCharNode`          | `\cX` escape     | `char`, `codePoint`                       |
@@ -1110,5 +1111,5 @@ Understanding nodes is essential for working with the AST directly. Key takeaway
 2. **Positions are important** — 0-based byte offsets into the pattern body, preserved for diagnostics
 3. **Literals are per character** — one `LiteralNode` per character, escaped or not
 4. **GroupNode is versatile** — handles many group types
-5. **QuantifierNode has types** — greedy, lazy, possessive; bounds come from `QuantifierBounds`
+5. **QuantifierNode has types** — greedy, lazy, possessive; its `bounds` hold the least and the most repetitions
 6. **Character classes are complex** — can contain ranges, operations, POSIX classes

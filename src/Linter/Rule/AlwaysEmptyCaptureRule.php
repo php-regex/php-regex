@@ -22,7 +22,6 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -159,7 +158,7 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
         $ungreedy = str_contains($context->activeFlags(), 'U');
         $quantifiers = array_filter($context->parents(), static fn (NodeInterface $parent): bool => $parent instanceof QuantifierNode);
         foreach ($quantifiers as $quantifier) {
-            if (0 === QuantifierBounds::parse($quantifier->quantifier)?->max) {
+            if (0 === $quantifier->bounds?->max) {
                 return true;
             }
         }

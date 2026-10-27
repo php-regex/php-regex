@@ -20,6 +20,8 @@ use PHPRegex\Parser\Node\ClassSetOperationNode;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierBounds;
+use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\AstFingerprint;
@@ -109,6 +111,32 @@ final class AstSerializerTest extends TestCase
         Regex::create(['cache' => $reader])->parse($pattern);
 
         $this->assertSame(['hits' => 1, 'misses' => 0], $reader->getStats());
+    }
+
+    /**
+     * The bounds a quantifier carries are part of the tree: a cached tree
+     * holding one is served, not dropped as a tree someone altered.
+     */
+    #[Test]
+    public function test_a_cached_quantifier_comes_back_with_its_bounds(): void
+    {
+        $pattern = '/a{2,5}b+/';
+        Regex::create(['cache' => new FilesystemCache($this->cacheDir)])->parse($pattern);
+
+        $reader = new FilesystemCache($this->cacheDir);
+        $tree = Regex::create(['cache' => $reader])->parse($pattern);
+
+        $this->assertSame(['hits' => 1, 'misses' => 0], $reader->getStats());
+        $this->assertContains(QuantifierBounds::class, AstSerializer::NODE_CLASSES);
+        $children = $tree->pattern->getChildren();
+        $this->assertCount(2, $children);
+        [$range, $plus] = $children;
+        $this->assertInstanceOf(QuantifierNode::class, $range);
+        $this->assertInstanceOf(QuantifierNode::class, $plus);
+        $this->assertInstanceOf(QuantifierBounds::class, $range->bounds);
+        $this->assertSame([2, 5], [$range->bounds->min, $range->bounds->max]);
+        $this->assertInstanceOf(QuantifierBounds::class, $plus->bounds);
+        $this->assertSame([1, null], [$plus->bounds->min, $plus->bounds->max]);
     }
 
     #[Test]

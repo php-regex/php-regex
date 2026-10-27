@@ -23,7 +23,6 @@ use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -72,7 +71,7 @@ final class EmptyRepeatRule extends AbstractLintRule
             return []; // never taken: getNodeTypes() dispatches quantifiers only
         }
 
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         if (null === $bounds || null !== $bounds->max || !self::matchesEmpty($node->node, false)) {
             return [];
         }
@@ -156,7 +155,7 @@ final class EmptyRepeatRule extends AbstractLintRule
         }
 
         if ($node instanceof QuantifierNode) {
-            return 0 === QuantifierMath::parseRange($node->quantifier)[0] || self::matchesEmpty($node->node, $outsideCaptures);
+            return 0 === QuantifierMath::parseRange($node)[0] || self::matchesEmpty($node->node, $outsideCaptures);
         }
 
         if ($node instanceof ConditionalNode) {
@@ -186,7 +185,7 @@ final class EmptyRepeatRule extends AbstractLintRule
         }
 
         // "(?:a{0})+" reads nothing at all: only a maximum of one or more is "a*".
-        [$min, $max] = QuantifierMath::parseRange($inner->quantifier);
+        [$min, $max] = QuantifierMath::parseRange($inner);
         if (QuantifierType::Greedy !== $inner->type
             || 0 !== $min
             || (null !== $max && $max < 1)

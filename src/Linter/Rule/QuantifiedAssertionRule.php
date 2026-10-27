@@ -16,7 +16,6 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 
 /**
@@ -48,7 +47,7 @@ final class QuantifiedAssertionRule extends AbstractLintRule
             return [];
         }
 
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         if (null === $bounds || 0 === $bounds->max || (1 === $bounds->min && 1 === $bounds->max)) {
             return [];
         }

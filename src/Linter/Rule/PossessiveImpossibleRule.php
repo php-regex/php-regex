@@ -20,7 +20,6 @@ use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -144,7 +143,7 @@ final class PossessiveImpossibleRule extends AbstractLintRule
             return null;
         }
 
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        $bounds = $node->bounds;
         if (null === $bounds || null !== $bounds->max) {
             return null;
         }
@@ -202,7 +201,7 @@ final class PossessiveImpossibleRule extends AbstractLintRule
             return $item;
         }
 
-        $bounds = QuantifierBounds::parse($item->quantifier);
+        $bounds = $item->bounds;
 
         return null === $bounds || $bounds->min < 1 ? null : NodePredicates::unwrapTransparentNode($item->node);
     }

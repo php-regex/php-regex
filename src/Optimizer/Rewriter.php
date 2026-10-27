@@ -40,7 +40,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
@@ -727,7 +726,7 @@ final class Rewriter extends AbstractNodeVisitor
     private function skippableAtomicGroup(?NodeInterface $node): bool
     {
         if ($node instanceof QuantifierNode) {
-            return QuantifierType::Possessive === $node->type && $node->node instanceof GroupNode && $this->quantifierAllowsZero($node->quantifier);
+            return QuantifierType::Possessive === $node->type && $node->node instanceof GroupNode && $this->quantifierAllowsZero($node);
         }
 
         return $node instanceof GroupNode && GroupType::Atomic === $node->type && $this->canMatchEmpty($node->child);
@@ -920,7 +919,7 @@ final class Rewriter extends AbstractNodeVisitor
     private function isPossessifyCandidate(QuantifierNode $node): bool
     {
         if (!\in_array($node->quantifier, ['+', '*'], true)) {
-            return QuantifierBounds::parse($node->quantifier)?->isUnbounded() ?? false;
+            return $node->bounds?->isUnbounded() ?? false;
         }
 
         return true;
@@ -983,7 +982,7 @@ final class Rewriter extends AbstractNodeVisitor
         }
 
         if ($node instanceof QuantifierNode) {
-            if ($this->quantifierAllowsZero($node->quantifier)) {
+            if ($this->quantifierAllowsZero($node)) {
                 return true;
             }
 
@@ -1041,11 +1040,9 @@ final class Rewriter extends AbstractNodeVisitor
         return null;
     }
 
-    private function quantifierAllowsZero(string $quantifier): bool
+    private function quantifierAllowsZero(QuantifierNode $node): bool
     {
-        $bounds = QuantifierBounds::parse($quantifier);
-
-        return null !== $bounds && 0 === $bounds->min;
+        return 0 === $node->bounds?->min;
     }
 
     /**
@@ -1349,7 +1346,7 @@ final class Rewriter extends AbstractNodeVisitor
 
             if ($child instanceof QuantifierNode) {
                 $baseNode = $child->node;
-                $parsedCount = $this->parseQuantifierCount($child->quantifier);
+                $parsedCount = $this->parseQuantifierCount($child);
                 // A variable quantifier is not merged, nor a possessive one,
                 // which is atomic.
                 if (null === $parsedCount || QuantifierType::Possessive === $child->type) {
@@ -1455,14 +1452,14 @@ final class Rewriter extends AbstractNodeVisitor
         return false;
     }
 
-    private function parseQuantifierCount(string $quantifier): ?int
+    private function parseQuantifierCount(QuantifierNode $node): ?int
     {
         // Only merge exact {n} counts; ranges and * + ? never merge.
-        if (!str_starts_with($quantifier, '{')) {
+        if (!str_starts_with($node->quantifier, '{')) {
             return null;
         }
 
-        $bounds = QuantifierBounds::parse($quantifier);
+        $bounds = $node->bounds;
         if (null !== $bounds && $bounds->min === $bounds->max) {
             return $bounds->min;
         }

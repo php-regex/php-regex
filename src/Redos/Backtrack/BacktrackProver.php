@@ -22,7 +22,6 @@ use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -409,7 +408,7 @@ final class BacktrackProver
         }
 
         if ($node instanceof QuantifierNode) {
-            return (QuantifierBounds::parse($node->quantifier)->min ?? 0) >= 1 ? self::mandatoryRuns($node->node, $unicode) : [];
+            return ($node->bounds->min ?? 0) >= 1 ? self::mandatoryRuns($node->node, $unicode) : [];
         }
 
         if (!$node instanceof SequenceNode) {

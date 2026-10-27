@@ -149,7 +149,7 @@ final class NodePredicates
         }
 
         if ($node instanceof QuantifierNode) {
-            [$min] = QuantifierMath::parseRange($node->quantifier);
+            [$min] = QuantifierMath::parseRange($node);
 
             return 0 === $min || self::canBeEmpty($node->node);
         }
@@ -232,7 +232,7 @@ final class NodePredicates
         }
 
         if ($node instanceof QuantifierNode) {
-            [$min] = QuantifierMath::parseRange($node->quantifier);
+            [$min] = QuantifierMath::parseRange($node);
 
             return 0 === $min;
         }
