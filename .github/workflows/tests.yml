@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [ '8.6', '8.5', '8.4', '8.3', '8.2' ]
+        php: [ '8.6', '8.5', '8.4', '8.3', '8.2', '8.1' ]
         dependency: [ prefer-lowest, prefer-stable ]
 
     steps:
@@ -49,66 +49,46 @@ jobs:
           dependencies: ${{ matrix.dependency }}
           tools: phpunit phpstan phpbench
 
-      - name: Lower Symfony in the PHPUnit Tooling
-        # The lowest Symfony the latest Laravel takes: 7.4.0, with the
-        # components Laravel does not hold at 6.4.0. The tooling's PHPUnit
-        # stays what this PHP runs; Symfony 6.4 with Laravel 10 is the PHP 8.1
-        # job's lowest row.
-        if: matrix.dependency == 'prefer-lowest'
-        run: |
-          composer update -d tools/phpunit --prefer-lowest --prefer-stable --with-all-dependencies --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }} 'symfony/*'
-
-      - name: Run Test Suite
-        # The whole tests/ tree, so that the functional, regression and
-        # documentation tests are not left to rot outside of CI.
-        run: tools/phpunit/vendor/bin/phpunit --colors=always
-
-  tests-php81:
-    # tools/phpunit resolves PHPUnit 10.5 on PHP 8.1, the only major that
-    # runs there. The lowest row runs Symfony 6.4.0, Laravel 10.37.3 (the
-    # first Laravel 10 that Testbench 8.18, the first with the attributes the
-    # tests use, takes) and PHPUnit 10.5.0. Rector is held to 2.6.3 here, the
-    # first release that resets the PHP version between test classes; the
-    # other rows keep the bridge's own floor, 2.4.
-    name: Tests (PHP 8.1, ${{ matrix.dependency }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
-    strategy:
-      fail-fast: false
-      matrix:
-        dependency: [ prefer-lowest, prefer-stable ]
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Setup PHP 8.1 and the project
-        uses: ./.github/actions/setup-php-project
-        with:
-          php-version: '8.1'
-          ini-values: phar.readonly=0
-
       - name: Lint for PHP 8.1
         # PHP 8.1 lints one file per call.
+        if: matrix.php == '8.1'
         shell: bash
         run: |
           find src -name '*.php' -print0 \
             | xargs -0 -n1 php -l | (grep -v '^No syntax errors detected' || true)
 
-      - name: Install the PHPUnit 10.5 Tooling (${{ matrix.dependency }})
-        run: composer update -d tools/phpunit --${{ matrix.dependency }} --prefer-stable --with 'rector/rector:^2.6.3' --no-interaction --no-progress
+      - name: Lower Symfony in the PHPUnit Tooling
+        # The lowest Symfony the latest Laravel takes: 7.4.0, with the
+        # components Laravel does not hold at 6.4.0. The tooling's PHPUnit
+        # stays what this PHP runs; Symfony 6.4 with Laravel 10 is the PHP 8.1
+        # row's lowest.
+        if: matrix.dependency == 'prefer-lowest' && matrix.php != '8.1'
+        run: |
+          composer update -d tools/phpunit --prefer-lowest --prefer-stable --with-all-dependencies --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }} 'symfony/*'
+
+      - name: Lower the whole PHPUnit Tooling
+        # On PHP 8.1, the floors of everything: Symfony 6.4.0, Laravel 10.37.3
+        # (the first Laravel 10 that Testbench 8.18, the first with the
+        # attributes the tests use, takes) and PHPUnit 10.5.0. Rector is held
+        # to 2.6.3, the first release that resets the PHP version between
+        # test classes; the other rows keep the bridge's own floor, 2.4.
+        if: matrix.dependency == 'prefer-lowest' && matrix.php == '8.1'
+        run: composer update -d tools/phpunit --prefer-lowest --prefer-stable --with 'rector/rector:^2.6.3' --no-interaction --no-progress
 
       - name: Configure PHPUnit 10.5
-        # The two details settings arrived in PHPUnit 11: 10.5 refuses the
-        # configuration that names them. phpunit.xml is read before the .dist.
+        # PHP 8.1 runs PHPUnit 10.5, which refuses the two details settings
+        # PHPUnit 11 brought. phpunit.xml is read before the .dist.
+        if: matrix.php == '8.1'
         run: sed -e '/displayDetailsOnAllIssues=/d' -e '/displayDetailsOnPhpunitDeprecations=/d' phpunit.xml.dist > phpunit.xml
 
       - name: Smoke test
+        # The packages end to end at the floor, loaded from the sources.
+        if: matrix.php == '8.1'
         run: php tests/Tools/php81_smoke.php --phpstan=tools/phpunit/vendor/bin/phpstan
 
       - name: Run Test Suite
+        # The whole tests/ tree, so that the functional, regression and
+        # documentation tests are not left to rot outside of CI.
         run: tools/phpunit/vendor/bin/phpunit --colors=always
 
   tests-experimental:
