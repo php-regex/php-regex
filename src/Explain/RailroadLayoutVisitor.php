@@ -366,7 +366,8 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
     #[\Override]
     public function visitControlChar(ControlCharNode $node): array
     {
-        return $this->createNodeLayout('ControlChar (\\c'.$node->char.')', 'node control');
+        // One character, shown as written, as a literal is.
+        return $this->createNodeLayout('\\c'.$node->char, 'node control');
     }
 
     /**

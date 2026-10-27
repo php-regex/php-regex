@@ -464,7 +464,10 @@ final class RailroadSvgRendererTest extends TestCase
         /** @var string $svg */
         $svg = $ast->accept(new RailroadSvgRenderer());
 
-        $this->assertStringContainsString('ControlChar (\\cA)', $svg);
+        // A control character matches one character: its box shows it as
+        // written, as a literal's does, not the name of its node.
+        $this->assertStringContainsString('>\\cA</text>', $svg);
+        $this->assertStringNotContainsString('ControlChar', $svg);
     }
 
     #[Test]
