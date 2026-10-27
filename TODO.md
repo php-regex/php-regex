@@ -240,14 +240,6 @@ two parsers read differently.
 The literal-fragment builder, the repairer and the confirmed mode first:
 they answer wrong, not just incomplete.
 
-- `SampleGenerator` (and `TestCaseGenerator` after it) gives up on negated
-  classes under `i`: the candidate probe spells the pattern without the
-  flag (`SampleGenerator.php:985` — the `u` is spelled, the `i` is not)
-  and `applyFlags` tracks `s`/`m` only, so `(?i)` never sets caseless
-  either. `generate('/[^a-z]x/i')` throws on every redraw — the candidate
-  list draws `'A'` first, which the class matches caselessly — although
-  `"0x"` matches. `/(?i)^[^a-f]+$/` and the `\b`-adjacent forms alike;
-  zero matching test cases are produced for a pattern with plenty.
 - The every-flag strictness of the analysis methods disagrees: `info()`
   throws `SemanticErrorException` for `/\k<x>/` (the engine answers
   "Internal error"), while `captureShape()` describes a full match shape

@@ -377,7 +377,7 @@ final class SampleGenerator extends AbstractNodeVisitor
             return '';
         }
 
-        $modes = [$this->dotAll, $this->dollarEndsLine];
+        $modes = [$this->caseless, $this->dotAll, $this->dollarEndsLine];
         if (GroupType::InlineFlags === $node->type) {
             $this->applyFlags($node->flags ?? '');
         }
@@ -385,7 +385,7 @@ final class SampleGenerator extends AbstractNodeVisitor
         try {
             return $this->generateGroup($node);
         } finally {
-            [$this->dotAll, $this->dollarEndsLine] = $modes;
+            [$this->caseless, $this->dotAll, $this->dollarEndsLine] = $modes;
         }
     }
 
@@ -982,7 +982,8 @@ final class SampleGenerator extends AbstractNodeVisitor
                 continue;
             }
 
-            $classPattern = $delimiter.$compiled.$delimiter.($this->unicode ? 'u' : '');
+            // The class as it reads where it stands: caseless under "i".
+            $classPattern = $delimiter.$compiled.$delimiter.($this->caseless ? 'i' : '').($this->unicode ? 'u' : '');
             foreach ($candidates as $candidate) {
                 if (true === $this->engine->match($classPattern, $candidate)->matched) {
                     return $candidate;
@@ -1298,10 +1299,12 @@ final class SampleGenerator extends AbstractNodeVisitor
     {
         [$on, $off] = explode('-', $flags, 2) + [1 => ''];
         if (str_starts_with($on, '^')) {
+            $this->caseless = false;
             $this->dotAll = false;
             $this->dollarEndsLine = false;
         }
 
+        $this->caseless = (str_contains($on, 'i') || $this->caseless) && !str_contains($off, 'i');
         $this->dotAll = (str_contains($on, 's') || $this->dotAll) && !str_contains($off, 's');
         $this->dollarEndsLine = (str_contains($on, 'm') || $this->dollarEndsLine) && !str_contains($off, 'm');
     }

@@ -134,6 +134,31 @@ final class SampleGeneratorFlagsTest extends TestCase
     }
 
     /**
+     * A negated class under "i" excludes both cases of what it lists: its
+     * sample is drawn among the characters the class matches caselessly,
+     * whichever way "i" holds there. "A" is outside [^a-z] only without "i".
+     */
+    #[Test]
+    #[DataProvider('provideCaselessNegatedClasses')]
+    public function test_a_negated_class_under_i_gets_a_sample(string $pattern): void
+    {
+        $this->assertSame(1, preg_match($pattern, Regex::create(['cache' => null])->generate($pattern)));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideCaselessNegatedClasses(): iterable
+    {
+        yield 'on the pattern' => ['pattern' => '/[^a-z]x/i'];
+        yield 'set inline' => ['pattern' => '/(?i)^[^a-f]+$/'];
+        yield 'on a group' => ['pattern' => '/(?i:[^a-z])x/'];
+        yield 'set in a group' => ['pattern' => '/^(?:(?i)[^a-z])$/'];
+        yield 'set, then unset' => ['pattern' => '/(?i)(?-i)[^a-z]x/'];
+        yield 'under u' => ['pattern' => '/^[^a-z]+$/iu'];
+    }
+
+    /**
      * @return list<string> every character the seeds draw
      */
     private function characters(string $pattern): array
