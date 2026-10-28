@@ -126,8 +126,9 @@ final class RedosAnalysisConstructionTest extends TestCase
     {
         $analysis = RedosAnalysis::failed(RedosMode::Theoretical, 'The pattern is invalid.');
 
+        // Scored as the analyzer scores an unknown severity, never as safe.
         $this->assertSame(RedosSeverity::Unknown, $analysis->severity);
-        $this->assertSame(0, $analysis->score);
+        $this->assertSame(5, $analysis->score);
         $this->assertSame(RedosConfidence::Low, $analysis->confidence);
         $this->assertSame(RedosProof::NotAnalyzed, $analysis->proof);
         $this->assertSame('The pattern is invalid.', $analysis->error);

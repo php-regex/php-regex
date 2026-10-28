@@ -104,9 +104,11 @@ final class RedosAnalysis implements \JsonSerializable
      */
     public static function failed(RedosMode $mode, string $error, ?string $recommendation = null): self
     {
+        // Scored as a medium risk, as the analyzer scores an unknown
+        // severity: a failure is never ranked with the safe patterns.
         return new self(
             RedosSeverity::Unknown,
-            0,
+            5,
             recommendations: [$recommendation ?? 'Analysis incomplete: '.$error],
             error: $error,
             confidence: RedosConfidence::Low,
@@ -152,6 +154,11 @@ final class RedosAnalysis implements \JsonSerializable
         );
     }
 
+    /**
+     * Whether the severity is safe or low. A pattern the caller asked not to
+     * analyse, ignored or with the analysis off, reads safe, as asked: its
+     * proof is NotAnalyzed, and isProvenSafe() is what proves a pattern.
+     */
     public function isSafe(): bool
     {
         return RedosSeverity::Safe === $this->severity || RedosSeverity::Low === $this->severity;

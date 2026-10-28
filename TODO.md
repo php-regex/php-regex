@@ -257,11 +257,6 @@ they answer wrong, not just incomplete.
 
 ### Smaller points, each reproduced once
 
-- `isSafe()` answers true for a pattern the analysis skipped (ignored or
-  off): the headline says "not analyzed", boolean consumers read safe
-  (`RedosAnalysis.php:155-158`). The heuristic score of `Unknown` equals
-  Medium's 5, so score triage cannot tell a failed analysis from a real
-  risk (`RedosAnalyzer.php:295-305`).
 
 ### Probed hard, nothing found
 
