@@ -53,7 +53,13 @@ composer install --working-dir build/smoke          # the twin's environment
 tools/phpstan/vendor/bin/phpstan analyse -c build/phpstan-php74.neon
 tools/phpstan/vendor/bin/phpstan analyse -c build/phpstan-verify.neon
 bash build/verify/run.sh                            # 7.4 8.0 8.1 … 8.6-rc
+bash build/verify/run.sh --local /path/to/php7.4    # no docker, one engine
 ```
+
+`--local` writes the original's readings with the `php` on `PATH` and runs
+the twin's suite on the binary given, both linked to the same PCRE2: every
+reading must then be the same, with no pattern exempted for its engine. It
+checks the PHP side, the release differences stay with the images.
 
 - **Static analysis**: the twin at level max, judged as PHP 7.4 code, the
   bar `src/Parser` passes. The three entries of `phpstan-php74.neon` are

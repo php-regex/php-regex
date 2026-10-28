@@ -192,12 +192,6 @@ two parsers read differently.
 - No CI job runs PHP 8.1's bundled PCRE2 10.39 (the 8.1 jobs link 10.42):
   run the whole suite on `php:8.1-cli` once, then add that cell to the
   Engines workflow so the rows held to 10.40 readings stay gated.
-- A local check of the twin without containers runs only the PHP side:
-  every Homebrew PHP (7.3, 7.4, 8.2, 8.3, 8.4) links the same PCRE2 10.49,
-  so the release differences stay with the twin workflow. `build/verify/
-  run.sh` takes docker images only; a mode taking a local PHP binary
-  would compare the twin on PHP 7.4 to the original on the same engine,
-  with no engine-dependent exemption.
 
 - About forty guard and marker tests (`GuardedTargetLintTest`,
   `TargetMarkerLintTest`, `PsalmPluginTargetTest` and their bridge twins)

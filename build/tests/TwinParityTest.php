@@ -14,7 +14,8 @@ use PHPUnit\Framework\TestCase;
  * is written by the original on the same PHP, and every reading must be the
  * same; on PHP 7.4 and 8.0, older than the original runs, the reference is
  * the original's on PHP 8.1, and only the patterns engine-dependent.php
- * names may differ.
+ * names may differ, unless TWIN_SAME_ENGINE says the reference was
+ * written on the PCRE2 the twin runs on.
  */
 final class TwinParityTest extends TestCase
 {
@@ -39,7 +40,8 @@ final class TwinParityTest extends TestCase
     public function test_the_twin_reads_each_pattern_as_the_original(int $start, int $end): void
     {
         $targets = Reference::patterns()['targets'];
-        $engineDependent = \PHP_VERSION_ID < 80100 ? require __DIR__.'/engine-dependent.php' : [];
+        // A reference written on the same PCRE2 holds no difference of engine.
+        $engineDependent = \PHP_VERSION_ID < 80100 && '1' !== getenv('TWIN_SAME_ENGINE') ? require __DIR__.'/engine-dependent.php' : [];
         $differences = [];
 
         for ($index = $start; $index < $end; $index++) {

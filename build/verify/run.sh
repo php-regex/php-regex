@@ -6,11 +6,38 @@
 # original does not run on), then the twin's suite runs there against them.
 #
 #   bash build/verify/run.sh [7.4 8.0 8.1 8.2 8.3 8.4 8.5 8.6-rc]
+#   bash build/verify/run.sh --local <php binary>
 #
 # Needs docker, a generated twin (build/generate.sh) and the twin's
-# environment (composer install --working-dir build/smoke).
+# environment (composer install --working-dir build/smoke). --local needs no
+# docker: the original's readings are written by the php on PATH, the
+# twin's suite runs on the binary given, and both must link the same PCRE2,
+# so that every reading is the same.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
+
+if [ "${1:-}" = "--local" ]; then
+	twin_php=${2:?"Usage: bash build/verify/run.sh --local <php binary>"}
+	pcre() { "$1" -r 'echo PCRE_VERSION;'; }
+	if [ "$(pcre php)" != "$(pcre "$twin_php")" ]; then
+		echo "php links PCRE2 $(pcre php), $twin_php $(pcre "$twin_php"): a local check needs one engine." >&2
+		exit 2
+	fi
+
+	dir=.cache/twin-verify/reference-local
+	rm -rf "$dir"
+	mkdir -p "$dir"
+	php build/verify/patterns.php > "$dir/patterns.json"
+	for i in 0 1 2 3; do
+		php -d memory_limit=2G build/verify/run-witness.php build/verify/original-autoload.php "$dir/patterns.json" "$i/4" --hash > "$dir/witnesses-$i.jsonl" &
+	done
+	wait
+	php build/verify/api.php build/verify/original-autoload.php src/Parser > "$dir/api.json"
+
+	echo "== twin on PHP $("$twin_php" -r 'echo PHP_VERSION;'), against the original on PHP $(php -r 'echo PHP_VERSION;'), PCRE2 $(pcre php)"
+	TWIN_REFERENCE="$dir" TWIN_SAME_ENGINE=1 "$twin_php" -d memory_limit=2G build/smoke/vendor/bin/phpunit -c build/phpunit.xml.dist
+	exit
+fi
 
 versions=("$@")
 if [ ${#versions[@]} -eq 0 ]; then
