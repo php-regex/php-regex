@@ -194,9 +194,6 @@ two parsers read differently.
   agree only through what follows them (`/(?:a|(?=b)|.)*\z/`), through
   alternatives that never apply at one position, or through a body that
   only matches empty (`/^(){3,5}/`).
-- A too-large pattern decided by the "branches may end past the limit"
-  fallback is reported at the end where PCRE2 reports offset 0:
-  `/(?:(?a)\d|b)(?:c){8200}/u` (`(?a)\d` under UCP has no known ceiling).
 - Nullability is computed in four copies (`PossessiveRewrites`,
   `RedosProfiler`, `PnfaBuilder`, `LengthRangeCalculator`) that disagree on
   ~1,160 of 175,625 nodes of the repository's patterns (`DEFINE`,

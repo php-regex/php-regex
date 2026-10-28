@@ -371,7 +371,10 @@ Where the library still departs from what the target's PCRE2 reports:
   not know for sure: from 10.45, a class that holds every character past
   255 and a property, whose characters below 256 may complete its map, as
   `[[:^ascii:][:^blank:][:space:]]` under `u`, alone or as an operand of
-  an extended class; up to PCRE2
+  an extended class; under `u`, a type `\d`, `\s` or `\w` in a pattern that
+  sets an ASCII option inline (`(?a)`, `(?aD)`), which may read it as ASCII
+  where it stands (`/(?:(?a)\d|b)(?:c){8200}/u` is reported at its end,
+  PCRE2 at offset 0); up to PCRE2
   10.34, a lookbehind after a DEFINE
   group that opens on a group inside a lookbehind, and on 10.34 one after
   the second DEFINE group of a pattern that opens on a group, which these
