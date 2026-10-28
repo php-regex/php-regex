@@ -13,11 +13,13 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\PHPUnit\RegexAssertions;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
+use PHPRegex\Transpiler\Transpiler;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -222,7 +224,7 @@ final class JavaScriptTranspilerTest extends TestCase
         $this->expectException(TranspileException::class);
         $this->expectExceptionMessageIsOrContains('The script Nope has no JavaScript name.');
 
-        Regex::create(['cache' => null])->transpile('/\p{sc:Nope}/u', 'javascript');
+        (new Transpiler(RegexParser::create(['cache' => null])))->transpile('/\p{sc:Nope}/u', 'javascript');
     }
 
     #[Test]
@@ -301,7 +303,8 @@ final class JavaScriptTranspilerTest extends TestCase
         // Oracle: preg_match() refuses \N{LATIN SMALL LETTER A}: "PCRE2
         // does not support \F, \L, \l, \N{name}, \U, or \u".
         try {
-            Regex::create(['cache' => null])->transpile('/\N{LATIN SMALL LETTER A}/u', 'javascript');
+            // The printer itself: the facade refuses the pattern as validate() does.
+            (new Transpiler(RegexParser::create(['cache' => null])))->transpile('/\N{LATIN SMALL LETTER A}/u', 'javascript');
             $message = '';
         } catch (TranspileException $e) {
             $message = $e->getMessage();
@@ -325,7 +328,7 @@ final class JavaScriptTranspilerTest extends TestCase
         // silently emit \xFFFFFFFFFFFFFFFF.
         $this->expectException(TranspileException::class);
 
-        Regex::create(['cache' => null])->transpile('/\N{UNKNOWN NAME}/u', 'javascript');
+        (new Transpiler(RegexParser::create(['cache' => null])))->transpile('/\N{UNKNOWN NAME}/u', 'javascript');
     }
 
     /**

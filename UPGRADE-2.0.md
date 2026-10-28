@@ -1159,8 +1159,8 @@ The empty literal is left out, and a pattern with no other literal is
 
 #### Facts about the matches refuse a pattern the engine refuses
 
-`Regex::literals()` and `optimize()` throw what `validate()` refuses, as
-`info()` and the new `captureShape()` do, where 1.x described or rewrote a
+`Regex::literals()`, `optimize()` and `transpile()` throw what `validate()`
+refuses, as `info()` and the new `captureShape()` do, where 1.x described or rewrote a
 pattern PCRE refuses to compile (`/\k<x>/`). `explain()`, `format()` and
 `highlight()` render the text of any pattern that parses.
 

@@ -13,9 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
+use PHPRegex\Transpiler\Transpiler;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -177,7 +179,8 @@ final class PythonTranspilerTest extends TestCase
         // Oracle: preg_match() refuses \N{LATIN SMALL LETTER A}: "PCRE2
         // does not support \F, \L, \l, \N{name}, \U, or \u".
         try {
-            Regex::create(['cache' => null])->transpile('/\N{LATIN SMALL LETTER A}/u', 'python');
+            // The printer itself: the facade refuses the pattern as validate() does.
+            (new Transpiler(RegexParser::create(['cache' => null])))->transpile('/\N{LATIN SMALL LETTER A}/u', 'python');
             $message = '';
         } catch (TranspileException $e) {
             $message = $e->getMessage();
@@ -201,6 +204,6 @@ final class PythonTranspilerTest extends TestCase
         // silently emit \xFFFFFFFFFFFFFFFF.
         $this->expectException(TranspileException::class);
 
-        Regex::create(['cache' => null])->transpile('/\N{UNKNOWN NAME}/u', 'python');
+        (new Transpiler(RegexParser::create(['cache' => null])))->transpile('/\N{UNKNOWN NAME}/u', 'python');
     }
 }

@@ -187,9 +187,6 @@ two parsers read differently.
 
 ## Left by the 2026-10-27 pass, each reproduced
 
-- `Regex::transpile()` does not validate first: `/\N{U+41}/` (refused by the
-  engine without `u`) transpiles to `/\x41/`, and `\p{^}` reaches the
-  printer. The CLI validates; the library does not.
 - The transpilers refuse a reference to a group with a non-ASCII name,
   `(?<é>a)\k<é>` under `u`, which PCRE2 10.49, node and Python all accept.
   The `transpile` commands (CLI, Symfony, Laravel) pass no options: no
@@ -260,12 +257,6 @@ they answer wrong, not just incomplete.
 
 ### Smaller points, each reproduced once
 
-- `verify_with_automata` is forced on by both framework lint commands and
-  accepted by `OptimizerOptions::fromArray`, but the Symfony config tree
-  defines no such node (a user setting it is refused) and the published
-  Laravel config never documents it — while `regex.schema.json` documents
-  `verifyWithAutomata` for `regex.json` (`PHPRegexBundle.php:214-259`,
-  `src/Laravel/config/php-regex.php`).
 - `isSafe()` answers true for a pattern the analysis skipped (ignored or
   off): the headline says "not analyzed", boolean consumers read safe
   (`RedosAnalysis.php:155-158`). The heuristic score of `Unknown` equals

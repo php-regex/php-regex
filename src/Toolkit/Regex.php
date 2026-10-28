@@ -352,6 +352,11 @@ final class Regex
      */
     public function transpile(string $regex, string $target, ?TranspileOptions $options = null): TranspileResult
     {
+        // A translation states what the pattern matches: a pattern the
+        // engine refuses has nothing to translate, as info() says.
+        $this->parse($regex);
+        $this->refuseWhatTheEngineRefuses($regex);
+
         $transpiler = new Transpiler($this->parser);
 
         return $transpiler->transpile($regex, $target, $options);

@@ -628,6 +628,8 @@ echo $result->constructor; // re.compile(r'(?P<word>\w+)', re.ASCII | re.IGNOREC
 ```
 
 Notes:
+- A pattern the engine refuses throws what `validate()` refuses, as `info()` does: `/\N{U+41}/` without `u` has
+  nothing to translate. `Transpiler`, called directly, reads the tree as it parses.
 - Unsupported PCRE constructs throw `TranspileException`, and so does a construct the target engine would match
   otherwise and has no way to write: in Python a backreference inside a lookbehind or under `/iu`, a lookbehind
   branch whose length varies (`(?<=a{1,3})`; a top-level alternation of fixed branches is split, `(?<=ab|c)`), `\w` or

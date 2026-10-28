@@ -57,6 +57,29 @@ final class EngineRefusedPatternTest extends TestCase
         }
     }
 
+    /**
+     * A translation states what the pattern matches too: "\N{U+41}" without
+     * u is refused by the engine (PHP 8.4.27), and was written as "\x41".
+     */
+    #[Test]
+    #[DataProvider('provideTargets')]
+    public function test_a_translation_refuses_the_pattern(string $target, string $pattern): void
+    {
+        $this->assertFalse(@preg_match($pattern, 'A'));
+        $this->expectException(SemanticErrorException::class);
+
+        Regex::create(['cache' => null])->transpile($pattern, $target);
+    }
+
+    /**
+     * @return iterable<string, array{target: string, pattern: string}>
+     */
+    public static function provideTargets(): iterable
+    {
+        yield 'JavaScript' => ['target' => 'javascript', 'pattern' => '/\N{U+41}/'];
+        yield 'Python' => ['target' => 'python', 'pattern' => '/\N{U+41}/'];
+    }
+
     #[Test]
     #[DataProvider('provideRenderings')]
     public function test_a_rendering_of_the_text_answers(string $method): void
