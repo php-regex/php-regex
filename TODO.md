@@ -266,9 +266,6 @@ they answer wrong, not just incomplete.
   Laravel config never documents it — while `regex.schema.json` documents
   `verifyWithAutomata` for `regex.json` (`PHPRegexBundle.php:214-259`,
   `src/Laravel/config/php-regex.php`).
-- `src/Toolkit/.phpstorm.meta.php` still overrides `Regex::parse(1)` with
-  a `bool $tolerant` map — the signature `354f4b1afb` removed on 1
-  October; `parse()` takes a string and always returns `RegexNode`.
 - `isSafe()` answers true for a pattern the analysis skipped (ignored or
   off): the headline says "not analyzed", boolean consumers read safe
   (`RedosAnalysis.php:155-158`). The heuristic score of `Unknown` equals

@@ -50,10 +50,3 @@ expectedArguments(
     argumentsSet('regex_delimiters')
 );
 
-override(
-    \PHPRegex\Toolkit\Regex::parse(1),
-    map([
-        true => \PHPRegex\Parser\TolerantParseResult::class,
-        false => \PHPRegex\Parser\Node\RegexNode::class,
-    ])
-);
