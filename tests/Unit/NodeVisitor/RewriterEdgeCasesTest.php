@@ -473,6 +473,12 @@ final class RewriterEdgeCasesTest extends TestCase
         $conditional = new ConditionalNode($child, $child, $emptyLiteral, 0, 3);
         $result = $this->invokePrivate($optimizer, 'nullableStatus', [$conditional]);
         $this->assertTrue($result);
+
+        // A DEFINE block reads nothing, whatever it holds: preg_match()
+        // matches "^(?:(?(DEFINE)a))\z" on "" (PHP 8.4.27, PCRE2 10.49).
+        $this->assertSame(1, preg_match('/^(?:(?(DEFINE)a))\z/', ''));
+        $define = new DefineNode(new LiteralNode('a', 0, 1), 0, 12);
+        $this->assertTrue($this->invokePrivate($optimizer, 'nullableStatus', [$define]));
     }
 
     #[Test]

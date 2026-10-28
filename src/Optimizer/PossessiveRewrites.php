@@ -344,8 +344,9 @@ final class PossessiveRewrites
             return null;
         }
 
+        // A DEFINE block reads nothing: its groups run only when called.
         if ($node instanceof DefineNode) {
-            return $this->nullableStatus($node->content);
+            return true;
         }
 
         return null;
