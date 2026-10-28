@@ -47,6 +47,7 @@ use PHPRegex\Parser\Validation\RangeVerdict;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\ConfirmationOptions;
+use PHPRegex\Redos\IgnoreList;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
@@ -67,6 +68,8 @@ final class AnalysisService
 
     private readonly RedosSeverity $redosSeverityThreshold;
 
+    private readonly IgnoreList $redosIgnoreList;
+
     private readonly RedosMode $redosMode;
 
     /**
@@ -82,7 +85,8 @@ final class AnalysisService
      *                                                     critical, in any case
      * @param array<string>          $redosIgnoredPatterns the patterns the risk analysis skips: a whole regex, its
      *                                                     body, or its body without the anchors around it, under
-     *                                                     any delimiters and modifiers
+     *                                                     any delimiters and modifiers; a regex written with
+     *                                                     modifiers skips the same body under those modifiers only
      * @param array<string, bool>    $lintRules
      * @param list<RegexParser>      $range                the parsers of the PHP versions after the floor a
      *                                                     pattern is validated at too (ProjectTarget::rangeParsers())
@@ -110,6 +114,7 @@ final class AnalysisService
         private readonly ?JudgedRange $judged = null,
     ) {
         $this->redosSeverityThreshold = RedosSeverity::fromConfig($redosThreshold);
+        $this->redosIgnoreList = new IgnoreList($redosIgnoredPatterns, $regex->target());
 
         $this->redosMode = $redosEnabled ? $redosMode : RedosMode::Off;
     }
@@ -902,8 +907,13 @@ final class AnalysisService
      */
     private function shouldSkipRiskAnalysis(PatternOccurrence $occurrence): bool
     {
-        foreach ($this->ignorableForms($occurrence) as $form) {
-            if (\in_array($form, $this->redosIgnoredPatterns, true) || self::isTriviallySafe($form)) {
+        $forms = $this->ignorableForms($occurrence);
+        if ($this->redosIgnoreList->names($occurrence->pattern, $forms)) {
+            return true;
+        }
+
+        foreach ($forms as $form) {
+            if (self::isTriviallySafe($form)) {
                 return true;
             }
         }

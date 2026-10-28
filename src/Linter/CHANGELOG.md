@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The ReDoS ignore list reads an entry as `RedosAnalyzer` does: a delimited
+   pattern without modifiers, `/(a+)+b/`, skips its body under any
+   modifiers, where it skipped that string byte for byte only; one written
+   with modifiers skips that pattern only, between any delimiters.
  * One catalogue describes every lint rule: what it reports, its default and
    the section of the docs that explains it. Every rule declares its
    identifier as a public constant (`ID`, or `ID_*` for a rule of several),

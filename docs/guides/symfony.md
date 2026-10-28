@@ -113,7 +113,10 @@ regexes the risk analysis skips, such as the requirement constants of
 Symfony routes. A fragment, `(a+)+`, is matched against the body of each
 pattern, with or without a `^` before it and a `$` after it, whatever its
 delimiters and modifiers: it skips `/(a+)+$/`, `/(a+)+$/i`, `{(a+)+$}` and
-`#(a+)+$#u` alike.
+`#(a+)+$#u` alike. A delimited pattern without modifiers, `/(a+)+$/`, is
+read by its body the same way. One written with modifiers names that pattern
+only, the same body under the same modifiers, in any order and between any
+delimiters: `/(a+)+$/i` skips `#(a+)+$#i`, not `/(a+)+$/` or `/(a+)+$/iu`.
 
 `extraction` takes the presets and the helpers `regex lint` takes under
 `extraction` in `regex.json` (see

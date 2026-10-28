@@ -168,6 +168,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - `RedosAnalysis::$searchCost` prices the retries of an unanchored search, as for `/\s+$/` on a long run of spaces.
 - `RedosRepairer` rewrites a vulnerable pattern into one proven linear, saying whether the automata prove it matches the same.
 - `Regex::analyze()` takes the `$threshold`, `$mode` and `$confirmOptions` of `Regex::redos()`.
+- A ReDoS ignore entry written with modifiers, `/(a+)+b/i`, skips that pattern only: the same body under the same modifiers, in any order and between any delimiters. A body, a fragment or a delimited entry without modifiers still skips its body under any modifiers, in the lint of the bridges as in `RedosAnalyzer`, where the lint compared a delimited entry byte for byte.
 - `LanguageSolver` reads lookarounds, word boundaries, anchors anywhere, the `m` flag and the `x`, `U`, `n`, `J`, `S`, `X` flags; its character sets come from the running PCRE2.
 - `LanguageSolver::matchEquivalent()`, `language()` and `acceptsPrefix()`. See [the solver reference](docs/reference/logic-solver.md).
 - `TrivialMatchClassifier` (with `matchedLiteral()`) and `RequiredLiteralAnalyzer` find the `preg_*` calls a string function can do or prefilter. See [Prefilters](docs/reference/prefilters.md).

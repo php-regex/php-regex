@@ -58,10 +58,7 @@ final class RedosAnalyzer
         'findings' => [],
     ];
 
-    /**
-     * @var array<string>
-     */
-    private array $ignoredPatternsNormalized = [];
+    private readonly IgnoreList $ignoreList;
 
     private readonly RedosOptions $options;
 
@@ -70,16 +67,12 @@ final class RedosAnalyzer
      */
     public function __construct(
         private readonly ?RegexParser $parser = null,
-        /**
-         * @var array<string>
-         */
-        private array $ignoredPatterns = [],
+        array $ignoredPatterns = [],
         private readonly RedosSeverity $threshold = RedosSeverity::High,
         private readonly ?ConfirmationRunnerInterface $confirmationRunner = null,
         ?RedosOptions $options = null,
     ) {
-        $this->ignoredPatterns = array_values(array_unique($this->ignoredPatterns));
-        $this->ignoredPatternsNormalized = $this->normalizeIgnoredPatterns($this->ignoredPatterns);
+        $this->ignoreList = new IgnoreList($ignoredPatterns, $this->parser?->target());
         $this->options = $options ?? new RedosOptions();
     }
 
@@ -349,15 +342,7 @@ final class RedosAnalyzer
 
     private function shouldIgnore(string $regex): bool
     {
-        if ([] === $this->ignoredPatterns) {
-            return false;
-        }
-
-        $normalized = $this->normalizePattern($regex);
-
-        return \in_array($normalized, $this->ignoredPatternsNormalized, true)
-            || \in_array($normalized, $this->ignoredPatterns, true)
-            || \in_array($regex, $this->ignoredPatterns, true);
+        return !$this->ignoreList->isEmpty() && $this->ignoreList->names($regex, [$regex, $this->normalizePattern($regex)]);
     }
 
     private function normalizePattern(string $regex): string
@@ -369,20 +354,5 @@ final class RedosAnalyzer
         } catch (\Throwable) {
             return $regex;
         }
-    }
-
-    /**
-     * @param array<string> $patterns
-     *
-     * @return array<string>
-     */
-    private function normalizeIgnoredPatterns(array $patterns): array
-    {
-        $normalized = [];
-        foreach ($patterns as $pattern) {
-            $normalized[] = $this->normalizePattern($pattern);
-        }
-
-        return array_values(array_unique($normalized));
     }
 }
