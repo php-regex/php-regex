@@ -34,7 +34,7 @@ final class ParserStructureTest extends TestCase
         $regex = Regex::create(['max_pattern_length' => 10]);
 
         $this->expectException(ResourceLimitException::class);
-        $this->expectExceptionMessageIsOrContains('Regex pattern exceeds maximum length');
+        $this->expectExceptionMessageIsOrContains('Regex pattern exceeds the maximum length');
 
         $regex->parse('/this_is_too_long/');
     }

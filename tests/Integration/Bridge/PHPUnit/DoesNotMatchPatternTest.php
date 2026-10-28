@@ -101,7 +101,7 @@ final class DoesNotMatchPatternTest extends TestCase
             $this->assertThat('b', new DoesNotMatchPattern($tooLong));
         });
 
-        $this->assertStringContainsString('exceeds maximum length', $failure);
+        $this->assertStringContainsString('exceeds the maximum length', $failure);
     }
 
     #[Test]

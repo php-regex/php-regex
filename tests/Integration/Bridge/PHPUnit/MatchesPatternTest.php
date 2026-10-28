@@ -198,7 +198,7 @@ final class MatchesPatternTest extends TestCase
             $this->assertThat('a', new MatchesPattern($tooLong));
         });
 
-        $this->assertStringContainsString('exceeds maximum length', $failure);
+        $this->assertStringContainsString('exceeds the maximum length', $failure);
     }
 
     /**

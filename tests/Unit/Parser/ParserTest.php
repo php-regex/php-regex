@@ -829,7 +829,7 @@ final class ParserTest extends TestCase
     public function test_max_pattern_length(): void
     {
         $this->expectException(ResourceLimitException::class);
-        $this->expectExceptionMessageIsOrContains('Regex pattern exceeds maximum length');
+        $this->expectExceptionMessageIsOrContains('Regex pattern exceeds the maximum length');
 
         // maxPatternLength is now enforced by the Regex class
         $regex = Regex::create(['max_pattern_length' => 5]);

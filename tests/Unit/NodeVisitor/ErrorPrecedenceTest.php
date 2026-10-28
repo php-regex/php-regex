@@ -65,7 +65,7 @@ final class ErrorPrecedenceTest extends TestCase
         $result = Regex::create(['cache' => null, 'max_pattern_length' => 10])->validate('/\\y'.str_repeat('a', 30).'/');
 
         $this->assertFalse($result->isValid);
-        $this->assertStringContainsString('exceeds maximum length', (string) $result->error);
+        $this->assertStringContainsString('exceeds the maximum length', (string) $result->error);
     }
 
     #[Test]
