@@ -693,7 +693,9 @@ final class PythonPrinter extends AbstractTargetPrinter
         if (LibraryPcre::match('/^\\\\g?\{?([1-9]\\d*)\}?$/', $ref, $matches)) {
             $number = (int) $matches[1];
             $reference = '\\'.$matches[1];
-        } elseif (LibraryPcre::match('/^\\\\k[<{\']([a-zA-Z0-9_]+)[>}\']$/', $ref, $matches)) {
+        } elseif (LibraryPcre::match('/^\\\\k(?:<([^>]++)>|\{([^}]++)\}|\'([^\']++)\')$/', $ref, $found)) {
+            // The parser has read the name: a letter of any script is one.
+            $matches = [1 => $found[1].($found[2] ?? '').($found[3] ?? '')];
             $number = $this->names[$matches[1]] ?? 0;
             $reference = '(?P='.$matches[1].')';
         } else {

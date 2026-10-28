@@ -187,9 +187,7 @@ two parsers read differently.
 
 ## Left by the 2026-10-27 pass, each reproduced
 
-- The transpilers refuse a reference to a group with a non-ASCII name,
-  `(?<é>a)\k<é>` under `u`, which PCRE2 10.49, node and Python all accept.
-  The `transpile` commands (CLI, Symfony, Laravel) pass no options: no
+- The `transpile` commands (CLI, Symfony, Laravel) pass no options: no
   `--python-version`. JavaScript still refuses empty repetitions that
   agree only through what follows them (`/(?:a|(?=b)|.)*\z/`), through
   alternatives that never apply at one position, or through a body that
