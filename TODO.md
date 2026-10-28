@@ -169,18 +169,3 @@ two parsers read differently.
   too: the counting is ready (0 differences from pcre2test 10.45–10.49 over
   210,000 cases), the fixture needs another pattern, and on 10.45+ there may
   be none.
-
-## Left by the 2026-10-27 pass, each reproduced
-
-- Nullability is computed in four copies (`PossessiveRewrites`,
-  `RedosProfiler`, `PnfaBuilder`, `LengthRangeCalculator`) that disagree on
-  ~1,160 of 175,625 nodes of the repository's patterns (`DEFINE`,
-  `(*ACCEPT)` sequences, class-set operations, script runs): one source,
-  checked against the engine, then every copy reading it.
-- On the 8.1 build the CI runners use (a setup-php compile), a child that
-  dies of memory exhaustion prints no envelope from its shutdown handler;
-  the official 8.1 build does. Reproduce with that build, then make it
-  print (the reserve and the past-the-buffers write are already in).
-- No CI job runs PHP 8.1's bundled PCRE2 10.39 (the 8.1 jobs link 10.42):
-  run the whole suite on `php:8.1-cli` once, then add that cell to the
-  Engines workflow so the rows held to 10.40 readings stay gated.
