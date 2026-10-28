@@ -115,8 +115,8 @@ final class LayoutSplicerTest extends TestCase
                 ."\t\t\t)\n\t\t\t(?:[^;]|$))\t#  b. and not followed by a semicolon\n\t\t\t# S = study, for efficiency\n\t\t\t/Sx",
             'expected' => "/\n\t\t\t&\t\t\t# 1. entity prefix\n\t\t\t(?=\t\t\t# 2. followed by:\n\t\t\t(?:\n"
                 ."\t\t\t\tfrac(?:1[24]|34)|\n"
-                ."\t\t\t\tnot(?!in(?:E|v[abc]|);)|\n"
-                ."\t\t\t\ts(?:ect|up[123])\n"
+                ."\t\t\t\tnot(?!in(?:E|v[a-c]|);)|\n"
+                ."\t\t\t\ts(?:ect|up[1-3])\n"
                 ."\t\t\t)\n\t\t\t(?:[^;]|$))\t#  b. and not followed by a semicolon\n\t\t\t# S = study, for efficiency\n\t\t\t/Sx",
             'subject' => '&sup2x',
         ];

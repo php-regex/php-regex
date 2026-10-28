@@ -51,7 +51,8 @@ final class OptimizationChangesTest extends TestCase
         yield 'digits twice' => ['pattern' => '/[0-9]-[0-9]/', 'options' => [], 'optimized' => '/\d-\d/', 'changes' => [Rewriter::DIGITS]];
         yield 'a class sorted' => ['pattern' => '/[cba]/', 'options' => [], 'optimized' => '/[a-c]/', 'changes' => [Rewriter::CLASS_MEMBERS]];
         yield 'a class already in order' => ['pattern' => '/[a-c]x[0-9]/', 'options' => [], 'optimized' => '/[a-c]x\d/', 'changes' => [Rewriter::DIGITS]];
-        yield 'an alternation of characters' => ['pattern' => '/a|b|c/', 'options' => [], 'optimized' => '/[abc]/', 'changes' => [Rewriter::ALTERNATION_TO_CLASS]];
+        // The class is then rewritten as any other, in the same pass.
+        yield 'an alternation of characters' => ['pattern' => '/a|b|c/', 'options' => [], 'optimized' => '/[a-c]/', 'changes' => [Rewriter::ALTERNATION_TO_CLASS, Rewriter::CLASS_MEMBERS]];
         yield 'adjacent classes in an alternation' => ['pattern' => '/[a-c]|[x-z]|ab/', 'options' => [], 'optimized' => '/[a-cx-z]|ab/', 'changes' => [Rewriter::MERGED_CLASSES]];
         yield 'an alternative written twice' => ['pattern' => '/ab|cd|ab/', 'options' => [], 'optimized' => '/ab|cd/', 'changes' => [Rewriter::DUPLICATE_ALTERNATIVE]];
         yield 'a prefix factored' => ['pattern' => '/abc|abd/', 'options' => ['factorize' => true], 'optimized' => '/ab(?:c|d)/', 'changes' => [Rewriter::FACTORED_PREFIX]];

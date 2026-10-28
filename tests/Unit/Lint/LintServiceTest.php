@@ -826,7 +826,7 @@ final class LintServiceTest extends TestCase
         $this->assertSame(1, preg_match('{^/(?P<p>ab|a)(?P<q>b?)$}sD', '/ab', $swapped));
         $this->assertNotSame($spliced['p'], $swapped['p']);
 
-        $this->assertSame(['{^[abc]$}D'], $this->optimized('{^(?:a|b|c)$}sD', 'php:preg_match()'), 'control');
+        $this->assertSame(['{^[a-c]$}D'], $this->optimized('{^(?:a|b|c)$}sD', 'php:preg_match()'), 'control');
         $this->assertSame([], $this->optimized('{^(?:a|b|c)$}sD', 'route:home:id'));
         $this->assertSame(['{^\d+$}sD'], $this->optimized('{^[0-9]+$}sD', 'route:home:id'));
     }

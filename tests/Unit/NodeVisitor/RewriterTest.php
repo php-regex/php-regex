@@ -93,9 +93,10 @@ final class RewriterTest extends TestCase
         $newAst = $ast->accept($optimizer);
 
         $this->assertInstanceOf(RegexNode::class, $newAst);
+        // The class is rewritten in the same pass: "[abc]" is "[a-c]".
         $this->assertInstanceOf(CharClassNode::class, $newAst->pattern);
-        $this->assertInstanceOf(AlternationNode::class, $newAst->pattern->expression);
-        $this->assertCount(3, $newAst->pattern->expression->alternatives);
+        $this->assertInstanceOf(RangeNode::class, $newAst->pattern->expression);
+        $this->assertSame('/[a-c]/', $newAst->accept(new PatternPrinter()));
     }
 
     #[Test]
@@ -519,7 +520,7 @@ final class RewriterTest extends TestCase
         // Unwrapping safe if no quantifier, but optimizer turns to char class
         yield 'Alternation No Quantifier' => ['/(?:a|b)/', '/[ab]/'];
         // Unwrapping UNSAFE if quantifier
-        yield 'Alternation With Quantifier' => ['/(?:a|b)+/', '/(?:[ab])+/'];
+        yield 'Alternation With Quantifier' => ['/(?:a|b)+/', '/[ab]+/'];
         // --- CASE 4: Atomic Nodes (Always Safe) ---
         // Single char/class can always be unwrapped, even with quantifier
         yield 'Atomic Char With Quantifier' => ['/(?:a)?/', '/a?/'];

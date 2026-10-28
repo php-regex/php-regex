@@ -118,7 +118,8 @@ final class RedosRepairerTest extends TestCase
     /**
      * The optimizer's rewrite counts as a repair only once the automata
      * prove it writes the same $matches, as the lint's suggestions are:
-     * here its class of one letter for an alternation of the same letter.
+     * here its class of one letter for an alternation of the same letter,
+     * the group around it gone in the same pass.
      */
     #[Test]
     public function test_the_optimizer_repair_is_the_verified_rewrite(): void
@@ -126,10 +127,10 @@ final class RedosRepairerTest extends TestCase
         $repairs = (new RedosRepairer())->repair('/^(?:a|a)+$/');
 
         $this->assertNotSame([], $repairs);
-        $this->assertSame('/^(?:[a])+$/', $repairs[0]->pattern);
+        $this->assertSame('/^[a]+$/', $repairs[0]->pattern);
         $this->assertTrue($repairs[0]->sameSubjects);
         $this->assertTrue($repairs[0]->sameMatches);
-        $this->assertSame('/^(?:[a])+$/', (new Optimizer(RegexParser::create()))->optimize('/^(?:a|a)+$/', new OptimizerOptions(verifyWithAutomata: true))->optimized);
+        $this->assertSame('/^[a]+$/', (new Optimizer(RegexParser::create()))->optimize('/^(?:a|a)+$/', new OptimizerOptions(verifyWithAutomata: true))->optimized);
     }
 
     #[Test]

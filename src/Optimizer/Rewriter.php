@@ -218,7 +218,9 @@ final class Rewriter extends AbstractNodeVisitor
             $this->state->changed(self::ALTERNATION_TO_CLASS);
             $expression = new AlternationNode($optimizedAlts, $node->startPosition, $node->endPosition);
 
-            return new CharClassNode($expression, false, $node->startPosition, $node->endPosition);
+            // The class is rewritten as any other is, in the same pass:
+            // "[abc]" becomes "[a-c]" now, not on the next call.
+            return (new CharClassNode($expression, false, $node->startPosition, $node->endPosition))->accept($this);
         }
 
         if (!$hasChanged) {
@@ -349,7 +351,9 @@ final class Rewriter extends AbstractNodeVisitor
         // as unwrapping changes semantics when the group has a quantifier.
         if (
             GroupType::NonCapturing === $node->type
-            && !($this->isInsideQuantifier && ($node->child instanceof SequenceNode || $node->child instanceof AlternationNode))
+            // The child as optimized decides: branches turned into one class
+            // leave a group of one character, unwrapped in this pass.
+            && !($this->isInsideQuantifier && ($optimizedChild instanceof SequenceNode || $optimizedChild instanceof AlternationNode))
             // A quantifier repeats one character only: "(?:)*", "(?:^)*" or
             // "(?:\b)+" keep their group.
             && !($this->isInsideQuantifier && !$this->repeatRewrites->isSingleCharacter($optimizedChild))

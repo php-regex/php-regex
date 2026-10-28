@@ -257,12 +257,6 @@ they answer wrong, not just incomplete.
   library's own `locale` option reads them for classes but not for the
   delimiter scan (`PatternParser.php:40,50,202-207`, `Text/Ascii.php`).
   glibc UTF-8 locales agree with the library; BSD/macOS ones do not.
-- `optimize()` is not idempotent: `(?:a|b|c)*d` becomes `(?:[abc])*d` on
-  the first pass and `[a-c]*d` on the second — inside a quantifier the
-  unwrapping guard reads the original child, not the optimized one — and
-  a factorized group is never revisited, so `^(get|set)` waits for the
-  next pass to become `[gs]et`. The second run reports "Removed a group
-  that changes nothing" for its own output (`Rewriter.php:352, 228-243`).
 - `--redos-threshold` has no effect on `analyze` in theoretical mode: the
   payload and console output are byte-identical with and without it, a
   medium finding stays with `--redos-threshold=critical`; only `lint`
