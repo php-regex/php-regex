@@ -260,10 +260,6 @@ they answer wrong, not just incomplete.
 
 ### Smaller points, each reproduced once
 
-- `Regex::transpile('/ a # c/x', 'javascript')` drops the comment with a
-  note, `/(?x) a # c/` aborts the transpile ("Inline comments are not
-  supported in JavaScript") — the parser has applied `x` in both, the
-  comment is as droppable in both (`JavaScriptPrinter.php:114, 465-477`).
 - A pattern spelling `\e` reaches the highlighters as a raw ESC byte:
   `highlight("/a\e]0;PWNEDb/", 'html')` holds one 0x1B inside the HTML
   (no contiguous OSC can form, so no terminal injection — display

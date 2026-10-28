@@ -120,7 +120,32 @@ final class JavaScriptTranspilerTest extends TestCase
 
         $this->assertSame('/ab/', $result->literal);
         $this->assertContains('Applied /x (extended mode): whitespace and comments were removed during compilation.', $result->notes);
-        $this->assertContains('Dropped /x comments during transpilation.', $result->notes);
+        $this->assertContains('Dropped comments during transpilation.', $result->notes);
+    }
+
+    /**
+     * A comment matches nothing, whatever turned it on: under an inline
+     * "(?x)" as under /x, and "(?#...)" anywhere. PCRE2 reads "a(?#c){2}"
+     * as "a{2}" (preg_match matches "aa", not "a{2}"), and so does the tree.
+     */
+    #[Test]
+    #[DataProvider('provideComments')]
+    public function test_drops_every_comment(string $pattern, string $literal): void
+    {
+        $result = Regex::create()->transpile($pattern, 'javascript');
+
+        $this->assertSame($literal, $result->literal);
+        $this->assertContains('Dropped comments during transpilation.', $result->notes);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, literal: string}>
+     */
+    public static function provideComments(): iterable
+    {
+        yield 'under an inline x' => ['pattern' => '/(?x) a # c/', 'literal' => '/a/'];
+        yield 'a parenthesized comment' => ['pattern' => '/a(?#c)b/', 'literal' => '/ab/'];
+        yield 'before a quantifier' => ['pattern' => '/a(?#c){2}/', 'literal' => '/a{2}/'];
     }
 
     /**

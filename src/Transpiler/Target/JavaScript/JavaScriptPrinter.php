@@ -464,13 +464,11 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitComment(CommentNode $node): string
     {
-        if (!str_contains($this->flags, 'x')) {
-            return $this->unsupported('Inline comments are not supported in JavaScript.', $node);
-        }
-
+        // A comment matches nothing, under /x, an inline (?x) or written
+        // "(?#...)": the tree already holds what it stood between.
         if (!$this->commentWarningEmitted) {
             $this->commentWarningEmitted = true;
-            $this->context->addNote('Dropped /x comments during transpilation.');
+            $this->context->addNote('Dropped comments during transpilation.');
         }
 
         return '';
