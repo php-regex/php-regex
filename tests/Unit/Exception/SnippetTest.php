@@ -70,7 +70,8 @@ final class SnippetTest extends TestCase
         $this->assertTrue(mb_check_encoding($line, 'UTF-8'), bin2hex($line));
         $this->assertStringStartsWith("Line 1: ...\u{E9}", $line);
         $this->assertStringEndsWith("\u{E9}...", $line);
-        $this->assertSame('(', $line[(int) strpos($caret, '^')]);
+        // The caret stands in the column the "(" is drawn in.
+        $this->assertSame(mb_strwidth(substr($line, 0, (int) strpos($line, '(')), 'UTF-8'), strpos($caret, '^'));
     }
 
     /**
@@ -98,5 +99,19 @@ final class SnippetTest extends TestCase
         $this->assertFalse($result->isValid);
         $this->assertTrue(mb_check_encoding((string) $result->caretSnippet, 'UTF-8'), bin2hex((string) $result->caretSnippet));
         $this->assertStringStartsWith("Line 1: ...\u{E9}", (string) $result->caretSnippet);
+    }
+
+    /**
+     * The caret stands under the fault as the line is shown: one column a
+     * character, two a wide one, as a terminal draws them. In "あいう[",
+     * offset 9 is the "[" past three wide characters, six columns in.
+     */
+    #[Test]
+    public function test_the_caret_counts_the_columns_the_characters_take(): void
+    {
+        $this->assertSame("Line 1: あいう[\n".str_repeat(' ', 8 + 6).'^', Snippet::render('あいう[', 9));
+        $this->assertSame("Line 1: \u{E9}t\u{E9}(\n".str_repeat(' ', 8 + 3).'^', Snippet::render("\u{E9}t\u{E9}(", 5));
+        // A line that is not UTF-8 is counted in bytes.
+        $this->assertSame("Line 1: \xE9t(\n".str_repeat(' ', 8 + 2).'^', Snippet::render("\xE9t(", 2));
     }
 }

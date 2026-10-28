@@ -167,7 +167,9 @@ final class PatternParser
                     throw self::nulByte($flagPosition, $regex);
                 }
 
-                if (str_contains((string) $invalid, 'e')) {
+                // PHP names the first modifier it refuses: the removed "e" only
+                // when it is that one.
+                if ('e' === ($flagsWithWhitespace[$faultyFlag] ?? '')) {
                     throw new ParserException('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.', ErrorCode::FlagRemovedE, $flagPosition, $regex, null, $flagPosition + 1);
                 }
 

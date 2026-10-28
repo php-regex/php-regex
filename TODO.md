@@ -257,13 +257,6 @@ they answer wrong, not just incomplete.
   library's own `locale` option reads them for classes but not for the
   delimiter scan (`PatternParser.php:40,50,202-207`, `Text/Ascii.php`).
   glibc UTF-8 locales agree with the library; BSD/macOS ones do not.
-- The error-message furniture disagrees with its own caret in two places:
-  the removed-`e` message fires whenever `e` appears among the unknown
-  flags, so `/a/ze` reports the `e` flag at the offset of `z` (PHP names
-  `z`), and `/a/(e)` names `e` at `(` (`PatternParser.php:163-170`); the
-  snippet's caret column counts bytes, so a multibyte `u` pattern puts the
-  caret past the fault it marks — `/あいう[/u`, offset 10, caret six
-  columns right of `[` (`Snippet.php:79-82`).
 - `max_pattern_length` counts the delimited string — delimiters, flags,
   skipped leading whitespace included — while the option says "pattern
   length … characters", and its limit error draws the caret from the body

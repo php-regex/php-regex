@@ -54,6 +54,35 @@ final class PatternParserTest extends TestCase
     }
 
     /**
+     * PHP names the first modifier it refuses, at its offset: the removed
+     * "e" is named only when it is that one. preg_match('/a/ze') warns
+     * "Unknown modifier 'z'", preg_match('/a/(e)') "Unknown modifier '('"
+     * (PHP 8.4.27).
+     */
+    #[Test]
+    #[DataProvider('provideModifiersBeforeAnE')]
+    public function test_the_first_modifier_php_refuses_is_named(string $pattern, string $message, int $offset): void
+    {
+        try {
+            PatternParser::extractPatternAndFlags($pattern);
+            $this->fail('No modifier was refused in '.$pattern);
+        } catch (ParserException $e) {
+            $this->assertSame($message, $e->getMessage());
+            $this->assertSame($offset, $e->position);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, message: string, offset: int}>
+     */
+    public static function provideModifiersBeforeAnE(): iterable
+    {
+        yield 'an unknown letter before the e' => ['pattern' => '/a/ze', 'message' => 'Unknown regex flag(s) found: "z", "e".', 'offset' => 2];
+        yield 'a bracket before the e' => ['pattern' => '/a/(e)', 'message' => 'Unknown regex flag(s) found: "(", "e", ")".', 'offset' => 2];
+        yield 'the e first' => ['pattern' => '/a/ez', 'message' => 'The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.', 'offset' => 2];
+    }
+
+    /**
      * PHP ends the pattern at the FIRST delimiter not escaped by a backslash,
      * whatever it sits in: a class, a comment or a \Q...\E run. Every row is
      * refused by preg_match() ("Unknown modifier ...") on PCRE2 10.40 and 10.48.

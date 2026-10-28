@@ -75,8 +75,12 @@ final class Snippet
         $excerpt = $prefixEllipsis.substr($pattern, $displayStart, $displayEnd - $displayStart).$suffixEllipsis;
 
         // A caret on the line break that ends the line before stands at the
-        // start of the line shown.
-        $caretOffset = max(0, \strlen($prefixEllipsis) + $caretIndex - $displayStart);
+        // start of the line shown. It counts the columns the characters
+        // before it take, as a terminal draws them, a wide one two; a line
+        // that is not UTF-8 is counted in bytes.
+        $before = substr($pattern, $displayStart, max(0, $caretIndex - $displayStart));
+        $width = mb_check_encoding($before, 'UTF-8') ? mb_strwidth($before, 'UTF-8') : \strlen($before);
+        $caretOffset = \strlen($prefixEllipsis) + $width;
         $lineLabel = 'Line '.$lineNumber.': ';
 
         return $lineLabel.$excerpt."\n".str_repeat(' ', \strlen($lineLabel) + $caretOffset).'^';
