@@ -122,9 +122,3 @@ workflow run. The published `c525273` is the build of 2.x at dec0cb9e52.
   some 210,000 cases); the fixture needs another pattern, and on 10.45 and
   later there may be none.
 
-
-## PHPStan research branch (php-regex/phpstan-src#1), reviewed 2026-10-28
-
-- `bug11277b` (`/^(?:(.+,?)|(x))*$/`) is the one row less tight than
-  upstream, by design (a group of a repeated alternation may be left unset
-  by a later round): say so in the description.
