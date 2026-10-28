@@ -51,6 +51,11 @@ jobs:
             composer validate --strict --no-interaction --no-check-lock "$manifest" || status=1
           done
           exit "$status"
+      # One class under one name across the seventeen packages: two files
+      # declaring the same class, between which an optimized autoloader
+      # would pick silently, fail here.
+      - name: Check no class is declared twice
+        run: composer dump-autoload --optimize --strict-ambiguous --no-interaction
 
   standalone:
     # Each package as Packagist serves it: its directory alone, required in a
