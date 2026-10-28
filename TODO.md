@@ -63,13 +63,18 @@ allow `actions/attest-build-provenance` and `shivammathur/setup-php`.
 
 ## PHP 7.4 twin
 
-Publish `php-regex/regex-parser-php74` again from the `twin` artifact of a
-green "php74 twin" workflow run. The published `6c1dcd8` throws a TypeError
-on PHP 7.4 for a branch reset of one branch (`/(?|(a))/`,
-`array_intersect_key()` with one array), which the generator now rewrites;
-the new build also carries the capture shapes of `\K`, conditionals and
-`(*ACCEPT)`. After the 2.0.0 tag, publish it once more from the tagged
-commit.
+Publish `php-regex/regex-parser-php74` again. A build from 2.x at
+dec0cb9e52 is committed as `c525273` in a clone of the twin repository
+(the validation result carries the tree, a verb carries its name and its
+argument, the lexer and the parsers are split as the source is); push it,
+or build it again from the `twin` artifact of a green "php74 twin"
+workflow run. The published `6c1dcd8` throws a TypeError on PHP 7.4 for a
+branch reset of one branch (`/(?|(a))/`, `array_intersect_key()` with one
+array), which the generator now rewrites. Once pushed, refresh the lock of
+the PHPStan research branch, whose `composer.json` already names
+`c525273`: `composer update php-regex/regex-parser-php74`, then amend and
+push the branch. After the 2.0.0 tag, publish the twin once more from the
+tagged commit.
 
 
 ## PHP 8.6 GA, 2026-11-19
