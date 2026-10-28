@@ -204,22 +204,25 @@ final class ClassRewrites
      */
     private function isFullWordClass(array $parts): bool
     {
-        $partsFound = ['a-z' => false, 'A-Z' => false, '0-9' => false, '_' => false];
+        // The bytes the members cover, whatever their spelling: a range
+        // inside another or a letter written twice changes nothing.
+        $covered = [];
         foreach ($parts as $part) {
-            if ($part instanceof RangeNode && $part->start instanceof LiteralNode && $part->end instanceof LiteralNode) {
-                $range = $part->start->value.'-'.$part->end->value;
-                if (!isset($partsFound[$range])) {
-                    return false;
+            if ($part instanceof RangeNode && $part->start instanceof LiteralNode && $part->end instanceof LiteralNode
+                && 1 === \strlen($part->start->value) && 1 === \strlen($part->end->value)) {
+                for ($byte = \ord($part->start->value); $byte <= \ord($part->end->value); $byte++) {
+                    $covered[$byte] = true;
                 }
-                $partsFound[$range] = true;
-            } elseif ($part instanceof LiteralNode && '_' === $part->value) {
-                $partsFound['_'] = true;
+            } elseif ($part instanceof LiteralNode && 1 === \strlen($part->value)) {
+                $covered[\ord($part->value)] = true;
             } else {
                 return false;
             }
         }
 
-        return !\in_array(false, $partsFound, true);
+        ksort($covered);
+
+        return array_keys($covered) === [...range(0x30, 0x39), ...range(0x41, 0x5A), 0x5F, ...range(0x61, 0x7A)];
     }
 
     /**
