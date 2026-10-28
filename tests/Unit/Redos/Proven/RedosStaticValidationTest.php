@@ -52,10 +52,24 @@ final class RedosStaticValidationTest extends TestCase
     #[DataProvider('provideEngineFacts')]
     public function test_engine_refuses_to_compile(string $pattern, string $pcreMessage): void
     {
-        $this->assertFalse(@preg_match($pattern, ''), $pattern);
-        $error = error_get_last();
-        $this->assertNotNull($error);
-        $this->assertStringContainsString($pcreMessage, $error['message']);
+        // The warning is read by a handler of this test's own: error_get_last()
+        // would hand back an older warning when a handler left by another
+        // test swallows this one.
+        $message = null;
+        set_error_handler(static function (int $severity, string $text) use (&$message): bool {
+            $message = $text;
+
+            return true;
+        });
+
+        try {
+            $this->assertFalse(preg_match($pattern, ''), $pattern);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertNotNull($message);
+        $this->assertStringContainsString($pcreMessage, (string) $message);
     }
 
     /**
