@@ -257,11 +257,6 @@ they answer wrong, not just incomplete.
   library's own `locale` option reads them for classes but not for the
   delimiter scan (`PatternParser.php:40,50,202-207`, `Text/Ascii.php`).
   glibc UTF-8 locales agree with the library; BSD/macOS ones do not.
-- `max_pattern_length` counts the delimited string — delimiters, flags,
-  skipped leading whitespace included — while the option says "pattern
-  length … characters", and its limit error draws the caret from the body
-  origin against the full string, a column left of the last character
-  allowed (`RegexParser.php:737-755`).
 - The PSR cache adapters' `clear()` clears the whole application pool, not
   the prefixed entries: through the Laravel store, `Regex::clearCaches()`
   ("Empty the library's process-wide caches") wipes every key of the store

@@ -113,7 +113,7 @@ final class ValidRegexValidatorTest extends ConstraintValidatorTestCase
 
         $this->buildViolation('This value is not a valid regular expression: {{ error }}')
             ->setParameter('{{ value }}', '"/abcdef/"')
-            ->setParameter('{{ error }}', 'Regex pattern exceeds maximum length of 5 characters.')
+            ->setParameter('{{ error }}', 'Regex pattern exceeds the maximum length of 5 bytes, delimiters and modifiers included.')
             ->setParameter('{{ hint }}', 'A limit of this library, not of PCRE: raise the "max_pattern_length" option to analyze the pattern.')
             ->setInvalidValue('/abcdef/')
             ->setCode(ValidRegex::INVALID_ERROR)

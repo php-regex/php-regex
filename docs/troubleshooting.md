@@ -20,7 +20,7 @@ This guide helps you resolve common issues when using PHPRegex.
 **Problem:**
 
 ```
-PHPRegex\Parser\Exception\ResourceLimitException: Regex pattern exceeds maximum length of 100000 characters.
+PHPRegex\Parser\Exception\ResourceLimitException: Regex pattern exceeds the maximum length of 100000 bytes, delimiters and modifiers included.
 ```
 
 **Causes:**

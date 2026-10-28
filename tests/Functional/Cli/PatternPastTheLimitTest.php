@@ -50,7 +50,7 @@ final class PatternPastTheLimitTest extends TestCase
         [$exitCode, $stdout] = $this->runRegex([$command, self::pattern()]);
 
         $this->assertSame(1, $exitCode);
-        $this->assertStringContainsString('exceeds maximum length of 100000 characters', $stdout);
+        $this->assertStringContainsString('exceeds the maximum length of 100000 bytes, delimiters and modifiers included', $stdout);
         $this->assertStringNotContainsString('"internal"', $stdout, 'The limit reached the application boundary.');
     }
 

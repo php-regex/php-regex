@@ -423,7 +423,7 @@ Line 1: (?<=a+)b
 may compile: no verdict, exit code 1):
 ```
   Status: NOT ANALYZED
-  Regex pattern exceeds maximum length of 100000 characters.
+  Regex pattern exceeds the maximum length of 100000 bytes, delimiters and modifiers included.
   A limit of this library, not of PCRE: raise the "max_pattern_length" option to analyze the pattern.
 ```
 

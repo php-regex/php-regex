@@ -68,7 +68,7 @@ final class ValidRegexRuleTest extends LaravelTestCase
         $this->application()->forgetInstance(Regex::class);
 
         $this->assertSame(
-            ['The pattern field must be a valid regular expression: Regex pattern exceeds maximum length of 5 characters.'],
+            ['The pattern field must be a valid regular expression: Regex pattern exceeds the maximum length of 5 bytes, delimiters and modifiers included.'],
             $this->errors('/abcdef/', new ValidRegex()),
         );
     }

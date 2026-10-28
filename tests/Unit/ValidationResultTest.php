@@ -284,7 +284,7 @@ final class ValidationResultTest extends TestCase
 
         $this->assertSame(ValidationErrorCategory::Limit, $result->category);
         $this->assertNotNull($result->hint);
-        $this->assertStringStartsWith("Regex pattern exceeds maximum length of 5 characters.\nLine 1: /abcdefghij/\n", $result->render());
+        $this->assertStringStartsWith("Regex pattern exceeds the maximum length of 5 bytes, delimiters and modifiers included.\nLine 1: /abcdefghij/\n", $result->render());
         $this->assertStringEndsWith("\nHint: ".$result->hint, $result->render());
     }
 }
