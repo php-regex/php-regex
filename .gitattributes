@@ -24,6 +24,8 @@
 /.phplint.yml           export-ignore
 /.php-version           export-ignore
 /.gitmessage            export-ignore
+/_typos.toml            export-ignore
+/.roave-backward-compatibility-check.xml export-ignore
 
 # Development tools and configs
 # The scripts of bin/ run the repository's tooling; the executables an
