@@ -638,7 +638,9 @@ Notes:
   repetition may leave unset, a repetition whose empty match sets a group or may be tried before a longer match, and
   `\p{Lu}`, `\p{Ll}` or `\p{Lt}` under `/i`. PCRE takes one empty repetition and stops where JavaScript takes none:
   the two agree, and the pattern is written, where the empty repetition sets no group and comes after every longer
-  one (`/(?:(a)|b?)?c/`, `/(a)(\1)*b/`, `/(?:x*?y|z?)*w/`).
+  one (`/(?:(a)|b?)?c/`, `/(a)(\1)*b/`, `/(?:x*?y|z?)*w/`). The rule reads each repetition on its own, so it also refuses
+  some patterns where the two would agree only through what follows the repetition (`/(?:a|(?=b)|.)*\z/`), or through
+  a body that only matches empty (`/^(){3,5}/`): a refusal, never a translation that matches otherwise.
 - What a target reads otherwise is written as PCRE reads it: `$` is `(?=\n?$)` in JavaScript, as it also matches before
   a newline that ends the subject, `$` under `/D` and `\z` are `$`, `\Z` is `(?=\n?$)`, and `^` and `$` under `/m` see
   `\n` alone end a line (`(?:^|(?<=\n)(?!$))` and `(?=\n|$)`); in Python `\z` is `\Z` and `\Z` is `(?=\n?\Z)`. The dot,

@@ -172,10 +172,6 @@ two parsers read differently.
 
 ## Left by the 2026-10-27 pass, each reproduced
 
-- JavaScript still refuses empty repetitions that agree only through what
-  follows them (`/(?:a|(?=b)|.)*\z/`), through
-  alternatives that never apply at one position, or through a body that
-  only matches empty (`/^(){3,5}/`).
 - Nullability is computed in four copies (`PossessiveRewrites`,
   `RedosProfiler`, `PnfaBuilder`, `LengthRangeCalculator`) that disagree on
   ~1,160 of 175,625 nodes of the repository's patterns (`DEFINE`,
