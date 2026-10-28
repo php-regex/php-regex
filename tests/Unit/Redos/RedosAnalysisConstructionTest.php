@@ -169,7 +169,7 @@ final class RedosAnalysisConstructionTest extends TestCase
 
         $analysis = (new RedosAnalyzer())->analyze('/(/', null, RedosMode::Confirmed);
 
-        $this->assertSame($exception::class.': '.$exception->getMessage(), $analysis->error);
+        $this->assertSame($exception->getMessage(), $analysis->error);
         $this->assertSame(['Analysis incomplete: '.$exception->getMessage()], $analysis->recommendations);
         $this->assertSame(RedosMode::Confirmed, $analysis->mode);
         $this->assertSame(RedosProof::NotAnalyzed, $analysis->proof);

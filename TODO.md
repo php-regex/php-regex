@@ -260,10 +260,6 @@ they answer wrong, not just incomplete.
 
 ### Smaller points, each reproduced once
 
-- `analyze()`'s `redos->error` carries the exception class prefix
-  ("PHPRegex\Parser\Exception\ParserException: No closing delimiter…")
-  while `errors[]` holds the same failure's clean message — one failure,
-  two spellings, one report.
 - `Regex::transpile('/ a # c/x', 'javascript')` drops the comment with a
   note, `/(?x) a # c/` aborts the transpile ("Inline comments are not
   supported in JavaScript") — the parser has applied `x` in both, the

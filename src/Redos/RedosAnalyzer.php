@@ -183,7 +183,7 @@ final class RedosAnalyzer
 
             return $confirmed;
         } catch (ExceptionInterface $e) {
-            return RedosAnalysis::failed($mode, $e::class.': '.$e->getMessage(), 'Analysis incomplete: '.$e->getMessage());
+            return RedosAnalysis::failed($mode, $e->getMessage(), 'Analysis incomplete: '.$e->getMessage());
         }
     }
 
