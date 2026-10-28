@@ -1,0 +1,41 @@
+name: Spelling
+
+on:
+  push:
+    branches: [ 2.x ]
+  pull_request:
+    branches: [ 2.x ]
+  schedule:
+    # Every Monday, against the week's dictionary.
+    - cron: '31 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # run nor is cancelled by one.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typos:
+    # The prose and the sources, as _typos.toml scopes them: a misspelt word
+    # in the documentation, a changelog, a package README or a comment fails
+    # here. The words the check does not know are listed in that file, each
+    # with the reason it is right.
+    name: typos
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Run typos
+        uses: crate-ci/typos@7f9d0819ca1c008ade73f4b41fa9d258d48f605b # v1.51.1
+        with:
+          config: _typos.toml

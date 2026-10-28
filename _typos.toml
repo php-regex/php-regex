@@ -1,0 +1,53 @@
+# The spelling check: the prose and the sources. The tests hold regex
+# subjects by the thousand ("ba", "abd", "tje"), the corpus and the PCRE2 test
+# data are not English, and the Unicode tables list script names.
+[files]
+extend-exclude = [
+    "tests/",
+    "corpus/",
+    "var/",
+    "build/",
+    "demo/",
+    "tools/",
+    "art/",
+    "phar/",
+    "docs/assets/",
+    "docs/_site/",
+    "docs/_data/",
+    "src/Parser/Syntax/NameCharacters.php",
+    "src/Parser/Syntax/PropertyNames.php",
+    "src/Parser/Syntax/PropertyNameTables.php",
+    "src/Parser/Validation/OtherCaseTables.php",
+    "src/Parser/Validation/PropertyByteTables.php",
+    "src/Transpiler/Target/JavaScript/ScriptNames.php",
+]
+
+[default]
+# A locale (fr_FR), a pattern modifier set ("JUiu") and the like are not words.
+extend-ignore-re = [
+    "\\b[a-z]{2}_[A-Z]{2}\\b",
+]
+
+[default.extend-words]
+# Unicode categories: Nd is Decimal_Number.
+nd = "nd"
+# Sample subjects and patterns the docs run: "ba", "fo?", "abc|abd".
+ba = "ba"
+fo = "fo"
+abd = "abd"
+# A letter PCRE does not know, in "(?iz)".
+iz = "iz"
+# The misspelt command of the CLI guide, which the help corrects.
+anlyze = "anlyze"
+# French, in the translated validator message of the Symfony guide.
+valide = "valide"
+# Both spellings are English.
+unparseable = "unparseable"
+
+[default.extend-identifiers]
+# Laravel's route property.
+wheres = "wheres"
+# "(?(VERSIONx)": a letter after the condition name.
+VERSIONx = "VERSIONx"
+# The character class of the escapes \p, \P and \N.
+pPN = "pPN"
