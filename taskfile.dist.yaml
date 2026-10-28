@@ -230,6 +230,7 @@ tasks:
       - composer install -d tools/phpunit --ignore-platform-req=php+
       - composer install -d tools/paratest --ignore-platform-req=php+
       - composer install -d tools/deptrac --ignore-platform-req=php+
+      - composer install -d tools/bc-check --ignore-platform-req=php+
 
       - task: link
     sources:

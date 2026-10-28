@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The checker installs each compared revision from the root composer.json,
+  which requires no framework: a bridge class whose parent lives in Symfony,
+  Laravel, PHPUnit, Psalm or Rector is skipped, not a break. A cache key or
+  an analysis version moves with the analysis it names and binds nobody;
+  Regex::VERSION moves with each release.
+-->
+<roave-bc-check
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="tools/bc-check/vendor/roave/backward-compatibility-check/Resources/schema.xsd">
+    <baseline>
+        <ignored-regex>#^\[BC\] SKIPPED: .* "(PHPUnit|Psalm|Symfony|Illuminate|Rector|PhpParser|PHPStan)\\[^"]*" could not be found in the located source$#</ignored-regex>
+        <ignored-regex>#^\[BC\] CHANGED: Value of constant PHPRegex\\(Toolkit\\Regex::VERSION(_ID)?|[A-Za-z\\]+::(CACHE_VERSION|ANALYSIS_VERSION)) changed from #</ignored-regex>
+    </baseline>
+</roave-bc-check>

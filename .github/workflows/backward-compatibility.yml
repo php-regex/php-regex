@@ -1,0 +1,80 @@
+name: Backward compatibility
+
+on:
+  push:
+    branches: [ 2.x ]
+  pull_request:
+    branches: [ 2.x ]
+  workflow_dispatch:
+    inputs:
+      from:
+        description: The reference the public API is compared from, as v2.1.0 or a commit; the latest 2.x tag when empty
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-api:
+    # The public API of the sources against the latest 2.x tag, or the
+    # reference a run by hand names: a class, method, parameter or constant a
+    # release promised and this checkout changes fails here. A symbol marked
+    # @internal is not compared. Until the first 2.x tag the API is being
+    # settled and nothing is promised: the job then compares nothing and
+    # passes, so that it gates from the tag on without a change here.
+    # .roave-backward-compatibility-check.xml names what the tool reports and
+    # is not a break.
+    name: Public API since the latest tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          # Every tag and every commit back to it: the tool checks out both
+          # sides of the comparison from this clone.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Find the reference
+        id: reference
+        env:
+          FROM: ${{ inputs.from }}
+        # The newest tag by version, a pre-release tag sorting before the
+        # release it precedes.
+        run: |
+          if [ -z "$FROM" ]; then
+            FROM=$(git -c versionsort.suffix=- tag --list 'v2.*' --sort=-version:refname | head -n 1)
+          fi
+          if [ -z "$FROM" ]; then
+            echo "No 2.x tag yet: the public API is compared from the first one."
+            echo "from=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! git rev-parse --verify --quiet "$FROM^{commit}" > /dev/null; then
+            echo "\"$FROM\" is not a tag or a commit of this repository." >&2
+            exit 1
+          fi
+          echo "Comparing the public API from $FROM ($(git rev-parse --short "$FROM^{commit}")) to $(git rev-parse --short HEAD)."
+          echo "from=$FROM" >> "$GITHUB_OUTPUT"
+
+      - name: Setup PHP 8.4 and the tool
+        if: steps.reference.outputs.from != ''
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          dependencies: none
+          tools: bc-check
+
+      - name: Compare the public API
+        if: steps.reference.outputs.from != ''
+        env:
+          FROM: ${{ steps.reference.outputs.from }}
+        run: |
+          tools/bc-check/vendor/bin/roave-backward-compatibility-check --from="$FROM" --to=HEAD --format=console --format=github-actions --no-interaction
