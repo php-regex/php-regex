@@ -110,6 +110,11 @@ commit.
 
 ## Open questions
 
+- Seventeen packages, two of them small: `regex-generator` holds four files
+  and `regex-toolkit` five. Merging two packages after the tag breaks the
+  `composer require` of whoever installed the one that disappears, while
+  splitting one later is additive; nobody installs them yet. Decide before
+  the tag whether each keeps its repository, its Packagist entry and its CI.
 - The Psalm and PHPStan bridges require `regex-linter` whole, for the
   target resolution and the PHP-source helpers they import. Those need a
   home below it, a new split package or a lower one; dropping the
@@ -126,20 +131,12 @@ commit.
 
 ## PHPStan research branch (php-regex/phpstan-src#1), reviewed 2026-10-28
 
-- `/(?:(?<a>x)|(?<b>y))(?:(?<a>z))?/J` on `y`: the engine writes `a => ''`
-  (group 1 is unset but not trailing, so its key is written and the name
-  takes it); the branch types the name as an optional `'z'`. In
-  `RegexArrayShapeMatcher::buildArrayType()` a group forced to the unmatched
-  value is left out of the name's union; it counts whenever its own key is
-  present.
-- `PregSplitDynamicReturnTypeExtension`: the empty pattern/subject branch
-  duplicates `genericReturnType()`; call it.
 - A lean parser package for consumers that need the tree and the capture
   shapes only: 80 of the 196 files are loaded for the shapes; Printer, Hir,
   Json, Text, Engine and Cache stay unused.
-- The branch has no CI run; `bug11277b` (`/^(?:(.+,?)|(x))*$/`) is the one
-  row less tight than upstream, by design (a group of a repeated alternation
-  may be left unset by a later round): say so in the description.
+- `bug11277b` (`/^(?:(.+,?)|(x))*$/`) is the one row less tight than
+  upstream, by design (a group of a repeated alternation may be left unset
+  by a later round): say so in the description.
 - Upstream, against its generated parser, one small fix with a regression
   test each: inline `(?i)` and `(?i:)` ignored when constants are read,
   `\Q..\E` read as a group, `\o{101}` read as 101 `o`, `(?>(a))?` not
