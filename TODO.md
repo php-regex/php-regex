@@ -296,13 +296,6 @@ they answer wrong, not just incomplete.
   (`RedosAnalysis.php:155-158`). The heuristic score of `Unknown` equals
   Medium's 5, so score triage cannot tell a failed analysis from a real
   risk (`RedosAnalyzer.php:295-305`).
-- The confirmation timeout checks a running average, so one slow
-  `preg_match` runs to completion, bounded by the pcre limits alone, never
-  by `timeoutMs` (`ConfirmationRunner.php:100-104`); for heuristic
-  verdicts its attack subject is built from the culprit's first-char set
-  only, so backref- and alternation-driven evils never confirm and vanish
-  from confirmed-mode lint while staying heuristic warnings in theoretical
-  mode (`:62-172`).
 - `--input -x` is refused in the space form (`--input=-x` works) because
   every free-text value starting with `-` reads as an option
   (`Options.php:163`); `--repeat 0` is refused where `--time-limit 0`
