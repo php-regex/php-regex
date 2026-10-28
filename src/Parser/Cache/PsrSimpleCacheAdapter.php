@@ -28,6 +28,13 @@ final class PsrSimpleCacheAdapter implements RemovableCacheInterface
     private int $misses = 0;
 
     /**
+     * The keys this adapter wrote, the ones clear() removes.
+     *
+     * @var array<string, true>
+     */
+    private array $written = [];
+
+    /**
      * @param (\Closure(string): mixed)|null $keyFactory receives the seed generateKey() gets and
      *                                                   returns the key body: a string is prefixed as is,
      *                                                   anything else is serialized and sha256-hashed
@@ -52,6 +59,7 @@ final class PsrSimpleCacheAdapter implements RemovableCacheInterface
     public function write(string $key, RegexNode $ast): void
     {
         $this->cache->set($key, AstSerializer::serialize($ast));
+        $this->written[$key] = true;
     }
 
     public function load(string $key): ?RegexNode
@@ -64,9 +72,18 @@ final class PsrSimpleCacheAdapter implements RemovableCacheInterface
         return $ast;
     }
 
+    /**
+     * Removes the trees this adapter wrote, never another entry: the cache
+     * may be the application's. A tree another process wrote stays, as
+     * valid as it was; clear a cache of the library's own to drop them too.
+     */
     public function clear(): void
     {
-        $this->cache->clear();
+        if ([] !== $this->written) {
+            $this->cache->deleteMultiple(array_keys($this->written));
+        }
+
+        $this->written = [];
     }
 
     public function getStats(): array

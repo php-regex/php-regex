@@ -59,6 +59,25 @@ final class PsrSimpleCacheAdapterTest extends TestCase
         $this->assertNull($adapter->load($otherKey));
     }
 
+    /**
+     * The cache may be the application's: clear() removes what the adapter
+     * wrote, never another entry.
+     */
+    #[Test]
+    public function test_clear_leaves_the_entries_it_did_not_write(): void
+    {
+        $cache = new InMemorySimpleCache();
+        $cache->set('session_42', 'kept');
+        $adapter = new PsrSimpleCacheAdapter($cache);
+        $key = $adapter->generateKey('/a/');
+        $adapter->write($key, $this->tree('/a/'));
+
+        $adapter->clear();
+
+        $this->assertNull($adapter->load($key));
+        $this->assertSame('kept', $cache->get('session_42'));
+    }
+
     #[Test]
     public function test_clear_without_regex_clears_all(): void
     {

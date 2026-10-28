@@ -86,6 +86,25 @@ final class PsrCacheAdapterTest extends TestCase
         $this->assertNull($cache->load($key));
     }
 
+    /**
+     * The pool may be the application's: clear() removes what the adapter
+     * wrote, never another entry of the pool.
+     */
+    #[Test]
+    public function test_clear_leaves_the_entries_it_did_not_write(): void
+    {
+        $pool = new InMemoryCachePool();
+        $pool->save($pool->getItem('session_42')->set('kept'));
+        $cache = new PsrCacheAdapter($pool);
+        $key = $cache->generateKey('/a/');
+        $cache->write($key, Regex::create(['cache' => null])->parse('/a/'));
+
+        $cache->clear();
+
+        $this->assertNull($cache->load($key));
+        $this->assertSame('kept', $pool->getItem('session_42')->get());
+    }
+
     #[Test]
     public function test_clear_empties_the_pool_whatever_the_key(): void
     {

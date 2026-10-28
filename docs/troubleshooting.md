@@ -309,6 +309,10 @@ if ($cache instanceof \PHPRegex\Parser\Cache\RemovableCacheInterface) {
 }
 ```
 
+   A PSR-6 or PSR-16 adapter removes the trees it wrote, never another entry
+   of the pool, which may be the application's: the trees another process
+   wrote stay, as valid as they were.
+
 3. Check what the cache keys depend on: the pattern with its flags, the PHP
    version and PCRE2 release judged, and the recursion limit. A pattern
    judged for another target is parsed and stored again, under its own key.

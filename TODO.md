@@ -257,13 +257,6 @@ they answer wrong, not just incomplete.
   library's own `locale` option reads them for classes but not for the
   delimiter scan (`PatternParser.php:40,50,202-207`, `Text/Ascii.php`).
   glibc UTF-8 locales agree with the library; BSD/macOS ones do not.
-- The PSR cache adapters' `clear()` clears the whole application pool, not
-  the prefixed entries: through the Laravel store, `Regex::clearCaches()`
-  ("Empty the library's process-wide caches") wipes every key of the store
-  it shares. `getCacheStats()` counts front-cache hits but drops its
-  misses, so the miss count understates the lookups
-  (`PsrCacheAdapter.php:68`, `PsrSimpleCacheAdapter.php:67`,
-  `RegexParser.php:318-327`).
 
 ### Smaller points, each reproduced once
 
