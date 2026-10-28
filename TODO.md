@@ -32,9 +32,7 @@ In this order.
    split repositories carries a fresh 2.x head and a crawled dev version.
    The split pushes are not atomic: between the first and the last webhook
    after the tag, a `^2.0` resolution fails on missing siblings.
-4. **Push 2.x** and watch its first CI run, the PHP 8.1 prefer-lowest cell
-   and the PHP 8.1 / PCRE2 10.39 cell of the Engines workflow in particular.
-5. **Release candidate first.** The release path has never run on a real
+4. **Release candidate first.** The release path has never run on a real
    release (`v1.3.0` carries no checksum). `bin/release --dry-run
    2.0.0-RC1`, then `bin/release 2.0.0-RC1` (a GitHub pre-release): it
    drafts the release and pushes the tag; the phar workflow builds the
@@ -43,13 +41,13 @@ In this order.
    publishes the draft; the split workflow tags the seventeen packages.
    Check both assets, `gh attestation verify regex.phar --repo
    php-regex/php-regex`, and the phar on PHP 8.1.
-6. **Tag 2.0.0** the same way. Then `bin/status` and Packagist show
+5. **Tag 2.0.0** the same way. Then `bin/status` and Packagist show
    `v2.0.0` for all seventeen packages (they require each other at
    `self.version`: one missing tag leaves the others uninstallable), and the
    "Latest" release carries the 2.0 `regex.phar`, which `self-update` and
    `releases/latest` serve.
-7. `bin/bump --next 2.0.1`.
-8. Submit `src/Linter/regex.schema.json` to schemastore.org (`fileMatch`:
+6. `bin/bump --next 2.0.1`.
+7. Submit `src/Linter/regex.schema.json` to schemastore.org (`fileMatch`:
    `regex.json`, `regex.dist.json`) for editor support without setup: it
    needs the stable public URL the tag gives it.
 
@@ -63,18 +61,9 @@ allow `actions/attest-build-provenance` and `shivammathur/setup-php`.
 
 ## PHP 7.4 twin
 
-Publish `php-regex/regex-parser-php74` again. A build from 2.x at
-dec0cb9e52 is committed as `c525273` in a clone of the twin repository
-(the validation result carries the tree, a verb carries its name and its
-argument, the lexer and the parsers are split as the source is); push it,
-or build it again from the `twin` artifact of a green "php74 twin"
-workflow run. The published `6c1dcd8` throws a TypeError on PHP 7.4 for a
-branch reset of one branch (`/(?|(a))/`, `array_intersect_key()` with one
-array), which the generator now rewrites. Once pushed, refresh the lock of
-the PHPStan research branch, whose `composer.json` already names
-`c525273`: `composer update php-regex/regex-parser-php74`, then amend and
-push the branch. After the 2.0.0 tag, publish the twin once more from the
-tagged commit.
+After the 2.0.0 tag, publish `php-regex/regex-parser-php74` once more from
+the tagged commit, from the `twin` artifact of a green "php74 twin"
+workflow run. The published `c525273` is the build of 2.x at dec0cb9e52.
 
 
 ## PHP 8.6 GA, 2026-11-19
@@ -136,14 +125,6 @@ tagged commit.
 
 ## PHPStan research branch (php-regex/phpstan-src#1), reviewed 2026-10-28
 
-- A lean parser package for consumers that need the tree and the capture
-  shapes only: 80 of the 196 files are loaded for the shapes; Printer, Hir,
-  Json, Text, Engine and Cache stay unused.
 - `bug11277b` (`/^(?:(.+,?)|(x))*$/`) is the one row less tight than
   upstream, by design (a group of a repeated alternation may be left unset
   by a later round): say so in the description.
-- Upstream, against its generated parser, one small fix with a regression
-  test each: inline `(?i)` and `(?i:)` ignored when constants are read,
-  `\Q..\E` read as a group, `\o{101}` read as 101 `o`, `(?>(a))?` not
-  optional, a class like `[é]` without `u` read as characters, the subject
-  of `.`, `\pL` or `\S` typed non-falsy on `0`.
