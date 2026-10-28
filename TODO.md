@@ -260,11 +260,6 @@ they answer wrong, not just incomplete.
 
 ### Smaller points, each reproduced once
 
-- The language server's `PositionConverter` counts `\n` alone as a line
-  break: a `\r`-only document puts every diagnostic on line 0, and a
-  position past the document maps to line 0, character 0 (the document
-  start) where a clamp to the end reads truer
-  (`PositionConverter.php:70-76, 82-87, 192-204`).
 - `verify_with_automata` is forced on by both framework lint commands and
   accepted by `OptimizerOptions::fromArray`, but the Symfony config tree
   defines no such node (a user setting it is refused) and the published

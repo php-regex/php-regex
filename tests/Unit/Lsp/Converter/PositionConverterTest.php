@@ -181,4 +181,34 @@ final class PositionConverterTest extends TestCase
         $this->assertSame(['line' => 0, 'character' => 4], $converter->offsetToPosition(4));
         $this->assertSame(4, $converter->positionToOffset(0, 4));
     }
+
+    /**
+     * LSP counts "\n", "\r\n" and a lone "\r" as a line break alike.
+     */
+    #[Test]
+    public function test_every_line_break_the_protocol_names_ends_a_line(): void
+    {
+        foreach (["\n", "\r\n", "\r"] as $break) {
+            $content = 'ab'.$break.'cd'.$break.'ef';
+            $converter = new PositionConverter($content);
+            $offset = (int) strpos($content, 'e');
+
+            $this->assertSame(['line' => 2, 'character' => 0], $converter->offsetToPosition($offset), json_encode($break) ?: '');
+            $this->assertSame(['line' => 2, 'character' => 0], PositionConverter::positionIn($content, $offset), json_encode($break) ?: '');
+            $this->assertSame($offset, $converter->positionToOffset(2, 0), json_encode($break) ?: '');
+        }
+
+        // "\r\n" is one break, not two.
+        $this->assertSame(['line' => 1, 'character' => 0], (new PositionConverter("a\r\nb"))->offsetToPosition(3));
+    }
+
+    /**
+     * A position past the last line stands at the end of the document, as
+     * the protocol reads a character past a line's end.
+     */
+    #[Test]
+    public function test_a_position_past_the_document_is_its_end(): void
+    {
+        $this->assertSame(5, (new PositionConverter("ab\ncd"))->positionToOffset(9, 0));
+    }
 }

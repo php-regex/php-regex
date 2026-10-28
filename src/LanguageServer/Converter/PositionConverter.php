@@ -67,11 +67,15 @@ final class PositionConverter
     public static function positionIn(string $content, int $offset): array
     {
         $before = substr($content, 0, max(0, $offset));
-        $lastBreak = strrpos($before, "\n");
-        $lineStart = false === $lastBreak ? 0 : $lastBreak + 1;
+        $lineStart = 0;
+        $line = 0;
+        foreach (self::breaksIn($before) as $end) {
+            $lineStart = $end;
+            $line++;
+        }
 
         return [
-            'line' => substr_count($before, "\n"),
+            'line' => $line,
             'character' => self::utf16Length(substr($before, $lineStart)),
         ];
     }
@@ -81,7 +85,13 @@ final class PositionConverter
      */
     public function positionToOffset(int $line, int $character): int
     {
-        $lineStart = $this->lineOffsets[$line] ?? 0;
+        // Past the last line is the end of the document, as a character past
+        // a line's end is that line's end.
+        if (!isset($this->lineOffsets[$line])) {
+            return $line < 0 ? 0 : \strlen($this->content);
+        }
+
+        $lineStart = $this->lineOffsets[$line];
 
         return $lineStart + $this->byteLengthOfUtf16Units($this->getLineContent($line), $character);
     }
@@ -192,13 +202,27 @@ final class PositionConverter
     private function buildLineOffsets(): void
     {
         $this->lineOffsets[0] = 0;
-        $line = 1;
+        foreach (self::breaksIn($this->content) as $end) {
+            $this->lineOffsets[] = $end;
+        }
+    }
 
-        $length = \strlen($this->content);
+    /**
+     * Where each line after the first starts: past "\n", "\r\n" or a lone
+     * "\r", the three line breaks the protocol names.
+     *
+     * @return \Generator<int, int>
+     */
+    private static function breaksIn(string $text): \Generator
+    {
+        $length = \strlen($text);
         for ($i = 0; $i < $length; $i++) {
-            if ("\n" === $this->content[$i]) {
-                $this->lineOffsets[$line] = $i + 1;
-                $line++;
+            if ("\n" === $text[$i]) {
+                yield $i + 1;
+            } elseif ("\r" === $text[$i]) {
+                $i += "\n" === ($text[$i + 1] ?? '') ? 1 : 0;
+
+                yield $i + 1;
             }
         }
     }
