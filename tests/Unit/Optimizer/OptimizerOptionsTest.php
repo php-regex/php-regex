@@ -92,14 +92,16 @@ final class OptimizerOptionsTest extends TestCase
         yield 'list key' => ['options' => [true], 'message' => 'Unknown optimizer option "0"'];
         yield 'string for a flag' => ['options' => ['digits' => 'yes'], 'message' => '"digits" must be a bool'];
         yield 'integer for a flag' => ['options' => ['possessive' => 1], 'message' => '"possessive" must be a bool'];
-        yield 'string count' => ['options' => ['min_quantifier_count' => '4'], 'message' => '"min_quantifier_count" must be an integer of at least 2'];
-        yield 'count below two' => ['options' => ['min_quantifier_count' => 1], 'message' => '"min_quantifier_count" must be an integer of at least 2'];
+        yield 'string count' => ['options' => ['min_quantifier_count' => '4'], 'message' => '"min_quantifier_count" must be an integer of at least 2, string given.'];
+        yield 'count below two' => ['options' => ['min_quantifier_count' => 1], 'message' => '"min_quantifier_count" must be an integer of at least 2, 1 given.'];
     }
 
     #[Test]
     public function test_constructor_refuses_a_count_below_two(): void
     {
+        // The argument as the constructor names it, not the array key.
         $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessageIsOrContains('Optimizer option "minQuantifierCount" must be an integer of at least 2, 1 given.');
 
         new OptimizerOptions(minQuantifierCount: 1);
     }

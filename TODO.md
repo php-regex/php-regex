@@ -260,8 +260,6 @@ they answer wrong, not just incomplete.
 
 ### Smaller points, each reproduced once
 
-- `new OptimizerOptions(minQuantifierCount: 1)` names the snake_case key
-  in its error message; the same constructor takes the camelCase argument.
 - The language server's `PositionConverter` counts `\n` alone as a line
   break: a `\r`-only document puts every diagnostic on line 0, and a
   position past the document maps to line 0, character 0 (the document

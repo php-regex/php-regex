@@ -79,7 +79,7 @@ final class OptimizerOptions
         public readonly bool $verifyWithAutomata = true,
     ) {
         if ($minQuantifierCount < 2) {
-            throw new InvalidRegexOptionException(\sprintf('Optimizer option "min_quantifier_count" must be an integer of at least 2, %d given.', $minQuantifierCount));
+            throw new InvalidRegexOptionException(\sprintf('Optimizer option "minQuantifierCount" must be an integer of at least 2, %d given.', $minQuantifierCount));
         }
     }
 
@@ -121,8 +121,10 @@ final class OptimizerOptions
             }
 
             if ('minQuantifierCount' === $parameter) {
+                // The key as the caller wrote it, and the value when it is
+                // an integer below 2.
                 if (!\is_int($value) || $value < 2) {
-                    throw new InvalidRegexOptionException(\sprintf('Optimizer option "%s" must be an integer of at least 2, %s given.', $key, get_debug_type($value)));
+                    throw new InvalidRegexOptionException(\sprintf('Optimizer option "%s" must be an integer of at least 2, %s given.', $key, \is_int($value) ? (string) $value : get_debug_type($value)));
                 }
                 $minQuantifierCount = $value;
 
