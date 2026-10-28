@@ -317,6 +317,12 @@ final class RedosProfiler extends AbstractNodeVisitor
                 $repeatEmptySeverity = $this->reduceSeverity($repeatEmptySeverity, RedosSeverity::Medium);
                 $repeatConfidence = RedosConfidence::Medium;
                 $repeatFalsePositiveRisk = 'Medium false-positive risk; possessive or atomic branches with recursion can reduce backtracking.';
+            } elseif (!$this->holdsUnboundedRepeat($node->node)) {
+                // PCRE2 ends a repeat whose iteration matched empty: without a
+                // loop of its own, the body splits the input one way.
+                $repeatEmptySeverity = $this->reduceSeverity($repeatEmptySeverity, RedosSeverity::Medium);
+                $repeatConfidence = RedosConfidence::Medium;
+                $repeatFalsePositiveRisk = 'Medium false-positive risk; an iteration that matches empty ends the repeat, and the body holds no loop.';
             }
 
             $severity = $this->maxSeverity($severity, $repeatEmptySeverity);

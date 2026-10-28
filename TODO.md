@@ -181,8 +181,7 @@ two parsers read differently.
   ~1,160 of 175,625 nodes of the repository's patterns (`DEFINE`,
   `(*ACCEPT)` sequences, class-set operations, script runs): one source,
   checked against the engine, then every copy reading it.
-- The ReDoS heuristics' rule on a repeated body that can match empty fires
-  on `/((?(1)|b))+/`, which PCRE2 reads in constant steps. A lookahead body
+- A lookahead body
   that stops at once, `(?=a+?)`, or holds where the loop could go on,
   `(?!a+)` before `a`, keeps the polynomial proof from the linear one: the
   model has no cut scoped to a body.
