@@ -192,10 +192,3 @@ two parsers read differently.
 - No CI job runs PHP 8.1's bundled PCRE2 10.39 (the 8.1 jobs link 10.42):
   run the whole suite on `php:8.1-cli` once, then add that cell to the
   Engines workflow so the rows held to 10.40 readings stay gated.
-- About forty guard and marker tests (`GuardedTargetLintTest`,
-  `TargetMarkerLintTest`, `PsalmPluginTargetTest` and their bridge twins)
-  skip wherever the running PHP's minor links another PCRE2 than the one it
-  bundles, this machine's PHP 8.4 on 10.49 included: their rows mix the
-  bundled releases' labels and refusals. Written through `PcreRule` version
-  by version, they would run on every engine; the bundled cells of the
-  Engines workflow run them meanwhile.

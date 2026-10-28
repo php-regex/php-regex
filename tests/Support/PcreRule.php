@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Support;
 
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 
 /**
@@ -75,12 +76,22 @@ trait PcreRule
 
     /**
      * The gate above for a row that judges every version from one minor to
-     * another, each with the release it bundles.
+     * another, each with the release it bundles: skipped under such a minor
+     * only where the running PCRE2 and the bundled one read the rows apart,
+     * on one of the features their patterns use, all from 10.43.
      */
     private function requiresBundledPcre2Within(int $from, int $through, string $subject): void
     {
-        if (\PHP_VERSION_ID >= intdiv($from, 100) * 100 && \PHP_VERSION_ID < (intdiv($through, 100) + 1) * 100) {
-            $this->requiresBundledPcre2(\PHP_VERSION_ID, $subject);
+        if (\PHP_VERSION_ID < intdiv($from, 100) * 100 || \PHP_VERSION_ID >= (intdiv($through, 100) + 1) * 100) {
+            return;
+        }
+
+        $bundled = PcreTarget::bundledWith(\PHP_VERSION_ID);
+        $runtime = PcreTarget::runtime();
+        foreach ([PcreFeature::AsciiOptions, PcreFeature::OpenAndPaddedRepeatCounts, PcreFeature::CaselessRestrictModifier, PcreFeature::VariableLengthLookbehind] as $feature) {
+            if ($bundled->supports($feature) !== $runtime->supports($feature)) {
+                $this->requiresBundledPcre2(\PHP_VERSION_ID, $subject);
+            }
         }
     }
 }
