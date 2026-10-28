@@ -222,32 +222,3 @@ two parsers read differently.
   bundled releases' labels and refusals. Written through `PcreRule` version
   by version, they would run on every engine; the bundled cells of the
   Engines workflow run them meanwhile.
-
-## Found by the 2026-10-27 audit pass, each reproduced
-
-The literal-fragment builder, the repairer and the confirmed mode first:
-they answer wrong, not just incomplete.
-
-
-### Smaller points, each reproduced once
-
-
-### Probed hard, nothing found
-
-Worth recording so the next pass does not re-walk them: the automata's
-partial-match language agreed with `preg_match` on every subject up to
-length 4 over 28 hand-built anchor patterns and 600 generated ones
-(19,200 differential checks, the 120 regular-subset refusals aside); the
-`r` modifier is gated PHP 8.4 + PCRE2 10.43 and `n` leaves zero capture
-groups exactly as the engine does; `regex.schema.json`'s rule list and
-defaults match `RuleCatalog` entry for entry; the PHPStan bridge fires on
-invalid literal patterns with no false positive on valid ones;
-`format()`/`compact()` round-trip and preserve `[ ]`, `[#]`, `\ `, `\Q…\E`
-and `(?(1)…)` layouts; the JSON-RPC framing caps and drains refused
-frames; `optimize()` itself produced no divergent rewrite over ~520
-patterns × ~95 subjects under five option configs; `CaptureShapeAnalyzer`
-matched the engine on branch reset, `(?J)`, recursion, conditionals,
-`\K`, `(*ACCEPT)` and `(*MARK)`; the transpiled JS/Python outputs matched
-PCRE2 on 40+ differential subjects including the Kelvin, ſ and İ/ı case
-folds; and the HTML explainer escapes markup injection.
-
