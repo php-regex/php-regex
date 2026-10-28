@@ -83,6 +83,16 @@ tools/phpunit/vendor/bin/phpunit
 task lint       # or: composer lint
 ```
 
+Two checks run only in CI. The spelling of the documentation and the
+sources is read by [typos](https://github.com/crate-ci/typos), scoped by
+`_typos.toml`, which also lists the words it does not know, each with the
+reason it is right; `typos` at the root of the checkout runs the same check.
+The public API is compared with the latest 2.x tag by
+`tools/bc-check/vendor/bin/roave-backward-compatibility-check --from=v2.0.0`,
+after `composer install -d tools/bc-check`; a symbol marked `@internal` is
+not compared, and `.roave-backward-compatibility-check.xml` names what the
+tool reports and is not a break.
+
 ### Running the Tests
 
 ```bash
@@ -256,8 +266,9 @@ waits until it passes. Run it on an idle machine: the times are wall-clock.
 `bin/release` releases only a HEAD that origin's branch holds, read from
 origin when it runs, and on which every workflow that runs on each push to
 2.x passed: the tests, the engines, static analysis, the packages, coverage,
-the benchmarks, the workflow checks, and the demo applications, which install
-the checkout into a Symfony and a Laravel application. `bin/status` shows how
+the benchmarks, the workflow checks, the spelling, the public API since the
+latest tag, and the demo applications, which install the checkout into a
+Symfony and a Laravel application. `bin/status` shows how
 far HEAD stands from origin's branch, and reads only.
 
 `bin/release` creates the GitHub release as a draft before it pushes the

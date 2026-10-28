@@ -96,7 +96,7 @@ fi
 
 head=$(git -C "$root" rev-parse HEAD)
 short=$(git -C "$root" rev-parse --short HEAD)
-for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml demo.yml; do
+for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml spelling.yml backward-compatibility.yml demo.yml; do
     ci=$(gh run list --commit "$head" --workflow "$workflow" --json conclusion,status --jq '.[0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null)
     case "$ci" in
         "completed success") ok "$workflow passed on $short" ;;

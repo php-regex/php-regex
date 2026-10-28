@@ -84,7 +84,7 @@ if [ "$skip_ci" -eq 0 ]; then
         # The workflows that gate a release, each run on every push to the
         # branch; the experimental and scheduled ones do not. demo.yml
         # installs HEAD itself into a Symfony and a Laravel application.
-        for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml demo.yml; do
+        for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml spelling.yml backward-compatibility.yml demo.yml; do
             conclusion=$(gh run list --commit "$head" --workflow "$workflow" --json conclusion --jq '.[0].conclusion' 2>/dev/null || echo "")
             [ "$conclusion" = "success" ] || problems+=("$workflow on $(git rev-parse --short HEAD) is \"${conclusion:-not found}\", not \"success\".")
         done
