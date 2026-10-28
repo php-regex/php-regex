@@ -52,7 +52,9 @@ trait LinearTimeAssertions
     private function assertLinearTime(\Closure $read, int $size, string $what, ?float $maxRatio = null): void
     {
         $shared = false !== getenv('CI') && '' !== getenv('CI');
-        $budget = $shared ? 4.0 : 3.0;
+        // PHP 8.1 on a shared runner reads 4,000 assertion bodies in some six
+        // seconds of CPU time; the budget is a tripwire, the ratio is the measure.
+        $budget = $shared ? 8.0 : 3.0;
         $maxRatio ??= $shared ? 11.0 : 10.0;
 
         $small = self::cpuTime($read, $size);
