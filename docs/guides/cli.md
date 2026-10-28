@@ -73,7 +73,7 @@ PHPRegex CLI provides these commands:
 | `graph`       | Generate a graph diagram (DOT/Mermaid) of the NFA (nondeterministic finite automaton) |
 | `highlight`   | Syntax highlighting (console or HTML)                    |
 | `validate`    | Validate pattern syntax                                  |
-| `transpile`   | Transpile a PCRE regex to JavaScript (`js`), an HTML `pattern` attribute (`html`) or Python (`py`) |
+| `transpile`   | Transpile a PCRE regex to JavaScript (`js`), an HTML `pattern` attribute (`html`) or Python (`py`); `--python-version=3.11` names the Python it runs on |
 | `format`      | Lay a pattern out over lines under `x`, or `--compact` it to one line |
 | `lint`        | Lint entire codebase for regex issues                    |
 | `lsp`         | Run the [language server](lsp.md) over stdio             |

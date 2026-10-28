@@ -187,8 +187,7 @@ two parsers read differently.
 
 ## Left by the 2026-10-27 pass, each reproduced
 
-- The `transpile` commands (CLI, Symfony, Laravel) pass no options: no
-  `--python-version`. JavaScript still refuses empty repetitions that
+- JavaScript still refuses empty repetitions that
   agree only through what follows them (`/(?:a|(?=b)|.)*\z/`), through
   alternatives that never apply at one position, or through a body that
   only matches empty (`/^(){3,5}/`).

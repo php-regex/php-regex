@@ -416,7 +416,7 @@ and options:
 | `regex:analyze` | | `--only=routes\|security...`, `--show-overlaps`, `-c`/`--config=<file>...`, `--skip-firewalls`, `--redos-threshold=high`, `--format=console\|json`, `--debug`, `--fail-on=shadowed,redos,critical` (also `overlap`, `any`, `none`) |
 | `regex:compare` | `<pattern1> <pattern2>` | `--method=intersection\|subset\|equivalence`, `--minimizer=hopcroft\|moore`, `--determinizer=subset-indexed\|subset` (defaults: `automata.*`) |
 | `regex:explain` | `<pattern>` | `--format=console\|html`, `--highlight` |
-| `regex:transpile` | `<pattern>` | `-t`/`--target=js` (`javascript`, `html`, `html-pattern`, `python`, `py`), `--format=console\|json` |
+| `regex:transpile` | `<pattern>` | `-t`/`--target=js` (`javascript`, `html`, `html-pattern`, `python`, `py`), `--python-version=<x.y>` (3.11 carries atomic groups), `--format=console\|json` |
 
 `regex:compare --method=subset` calls the first pattern a strict subset of
 the second only when the second matches more strings; when the subset holds

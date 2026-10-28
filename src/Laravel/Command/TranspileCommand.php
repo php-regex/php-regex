@@ -16,6 +16,7 @@ namespace PHPRegex\Laravel\Command;
 use Illuminate\Console\Command;
 use PHPRegex\Laravel\Output\ConsoleWriter;
 use PHPRegex\Linter\Console\ConsoleWriter as DocumentWriter;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
@@ -42,6 +43,7 @@ final class TranspileCommand extends Command
     protected $signature = 'regex:transpile
         {pattern : The regex pattern to transpile}
         {--t|target=javascript : Target dialect (javascript, js, html-pattern, html, python, py)}
+        {--python-version= : The Python release the pattern runs on (3.11 carries atomic groups)}
         {--format=console : Output format (console, json)}';
 
     /**
@@ -91,6 +93,20 @@ final class TranspileCommand extends Command
             return self::INVALID;
         }
 
+        // The Python release the target runs on, a usage error when it names
+        // none, as the CLI reads it.
+        try {
+            $options = new TranspileOptions(pythonVersion: '' === $this->stringOption('python-version') ? null : $this->stringOption('python-version'));
+        } catch (InvalidRegexOptionException $e) {
+            if ('json' === $format) {
+                DocumentWriter::document($this->output, JsonDocument::error($e->getMessage(), JsonDocument::STAGE_USAGE));
+            } else {
+                $this->error($e->getMessage());
+            }
+
+            return self::INVALID;
+        }
+
         // An invalid pattern stops here, with everything the validation
         // found: the transpiler would only throw its first parse error.
         $validation = $this->regex->validate($pattern);
@@ -113,8 +129,6 @@ final class TranspileCommand extends Command
         }
 
         try {
-            $options = new TranspileOptions();
-
             $result = $this->regex->transpile($pattern, $target, $options);
 
             if ('json' === $format) {

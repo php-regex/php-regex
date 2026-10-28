@@ -219,4 +219,20 @@ final class TranspileCommandOutputTest extends TestCase
 
         return [$status, $tester->getDisplay()];
     }
+
+    /**
+     * The Python release the target runs on decides what is carried: an
+     * atomic group from Python 3.11; a release that names none is a usage
+     * error, as the CLI reads it.
+     */
+    #[Test]
+    public function test_the_python_version_decides_what_is_carried(): void
+    {
+        $tester = new CommandTester(new TranspileCommand(Regex::create()));
+
+        $this->assertSame(1, $tester->execute(['pattern' => '/(?>a)b/', '--target' => 'python']));
+        $this->assertSame(0, $tester->execute(['pattern' => '/(?>a)b/', '--target' => 'python', '--python-version' => '3.11']));
+        $this->assertStringContainsString('(?>a)b', $tester->getDisplay());
+        $this->assertSame(2, $tester->execute(['pattern' => '/a/', '--target' => 'python', '--python-version' => 'three']));
+    }
 }

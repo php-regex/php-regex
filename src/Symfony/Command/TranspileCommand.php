@@ -14,12 +14,14 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony\Command;
 
 use PHPRegex\Linter\Console\ConsoleWriter;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\TargetRegistry;
+use PHPRegex\Transpiler\TranspileOptions;
 use PHPRegex\Transpiler\Transpiler;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -48,6 +50,7 @@ final class TranspileCommand extends Command
         $this
             ->addArgument('pattern', InputArgument::REQUIRED, 'The PCRE pattern to transpile.')
             ->addOption('target', 't', InputOption::VALUE_OPTIONAL, 'Target dialect ('.implode(', ', (new TargetRegistry())->listTargets()).')', 'js')
+            ->addOption('python-version', null, InputOption::VALUE_REQUIRED, 'The Python release the pattern runs on (3.11 carries atomic groups)')
             ->addOption('format', null, InputOption::VALUE_OPTIONAL, 'Output format (console, json)', 'console');
     }
 
@@ -80,6 +83,16 @@ final class TranspileCommand extends Command
             return $this->fail($output, $io, $json, $e->getMessage(), JsonDocument::STAGE_USAGE, Command::INVALID);
         }
 
+        // The Python release the target runs on, a usage error when it names
+        // none, as the CLI reads it.
+        $pythonVersion = $input->getOption('python-version');
+
+        try {
+            $options = new TranspileOptions(pythonVersion: \is_string($pythonVersion) ? $pythonVersion : null);
+        } catch (InvalidRegexOptionException $e) {
+            return $this->fail($output, $io, $json, $e->getMessage(), JsonDocument::STAGE_USAGE, Command::INVALID);
+        }
+
         // An invalid pattern stops here, with everything the validation
         // found: the transpiler would only throw its first parse error.
         $validation = $this->regex->validate($pattern);
@@ -98,7 +111,7 @@ final class TranspileCommand extends Command
 
         try {
             $transpiler = new Transpiler($this->regex->parser());
-            $result = $transpiler->transpile($pattern, $target);
+            $result = $transpiler->transpile($pattern, $target, $options);
         } catch (LexerException|ParserException|TranspileException $e) {
             // A valid pattern the target cannot express.
             return $this->fail($output, $io, $json, $e->getMessage(), JsonDocument::STAGE_PATTERN, Command::FAILURE);

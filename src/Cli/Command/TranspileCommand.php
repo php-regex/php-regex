@@ -20,12 +20,14 @@ use PHPRegex\Cli\Option\Arguments;
 use PHPRegex\Cli\Option\Option;
 use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\TargetRegistry;
+use PHPRegex\Transpiler\TranspileOptions;
 use PHPRegex\Transpiler\Transpiler;
 use PHPRegex\Transpiler\TranspileResult;
 
@@ -84,7 +86,7 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
         try {
             $transpiler = new Transpiler($regex->parser());
 
-            $result = $transpiler->transpile($args['pattern'], $args['target']);
+            $result = $transpiler->transpile($args['pattern'], $args['target'], new TranspileOptions(pythonVersion: $args['pythonVersion']));
 
             if ('json' === $args['format']) {
                 $output->writeDocument(JsonDocument::encode($result->jsonSerialize()));
@@ -117,49 +119,55 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
     {
         return new Options(Arguments::Pattern, [
             Option::value('--target', '<dialect>', 'Target dialect (js, html, python)'),
+            Option::value('--python-version', '<x.y>', 'The Python release the pattern runs on (3.11 carries atomic groups)'),
             Option::value('--format', '<format>', 'Output format (console, json)'),
             Option::flag('--json', 'Same as --format=json'),
-        ], "Usage: regex transpile <pattern> [--target=js|html|python] [--format=json]\n");
+        ], "Usage: regex transpile <pattern> [--target=js|html|python] [--python-version=<x.y>] [--format=json]\n");
     }
 
     /**
      * @param array<int, string> $args
      *
-     * @return array{pattern: string, target: string, format: string, error: ?string}
+     * @return array{pattern: string, target: string, format: string, pythonVersion: ?string, error: ?string}
      */
     private function parseArguments(array $args): array
     {
         $parsed = self::options()->parse($args);
         if (null !== $parsed->error) {
-            return ['pattern' => '', 'target' => '', 'format' => '', 'error' => $parsed->error];
+            return ['pattern' => '', 'target' => '', 'format' => '', 'pythonVersion' => null, 'error' => $parsed->error];
         }
 
         $target = 'js';
         $format = 'console';
+        $pythonVersion = null;
         foreach ($parsed->options as $option) {
             if ('--json' === $option->name) {
                 $format = 'json';
             } elseif ('--format' === $option->name) {
                 $format = Ascii::lower((string) $option->value);
+            } elseif ('--python-version' === $option->name) {
+                $pythonVersion = (string) $option->value;
             } else {
                 $target = Ascii::lower((string) $option->value);
             }
         }
 
         if (!\in_array($format, ['console', 'json'], true)) {
-            return ['pattern' => '', 'target' => '', 'format' => '', 'error' => 'Invalid value for --format. Use console or json.'];
+            return ['pattern' => '', 'target' => '', 'format' => '', 'pythonVersion' => null, 'error' => 'Invalid value for --format. Use console or json.'];
         }
 
         try {
             (new TargetRegistry())->get($target);
-        } catch (TranspileException $e) {
-            return ['pattern' => '', 'target' => '', 'format' => '', 'error' => $e->getMessage()];
+            new TranspileOptions(pythonVersion: $pythonVersion);
+        } catch (TranspileException|InvalidRegexOptionException $e) {
+            return ['pattern' => '', 'target' => '', 'format' => '', 'pythonVersion' => null, 'error' => $e->getMessage()];
         }
 
         return [
             'pattern' => $parsed->argument(),
             'target' => $target,
             'format' => $format,
+            'pythonVersion' => $pythonVersion,
             'error' => null,
         ];
     }

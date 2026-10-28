@@ -271,6 +271,7 @@ php artisan regex:lint app/ --format=json
 php artisan regex:compare '/[a-z]+/' '/edit/'
 php artisan regex:compare '/[0-9]+/' '/\d+/' --method=equivalence
 php artisan regex:transpile '/^[a-z]+$/' -t python
+php artisan regex:transpile '/(?>a)b/' -t python --python-version=3.11
 ```
 
 `regex:lint` writes its banner and its report on stdout. Its steps, their
