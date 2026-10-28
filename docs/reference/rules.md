@@ -367,7 +367,7 @@ preg_match('/[^"]*/', $input);  // For double-quoted strings
 
 **Identifier:** `regex.lint.quantifier.useless`
 
-**When it triggers:** A quantifier that matches exactly once (e.g., `{1}` or `{1,1}`).
+**When it triggers:** A quantifier that matches exactly once (e.g., `{1}` or `{1,1}`). A possessive one, `{1}+`, is an atomic group that never gives back, and is not reported: `/(a|ab){1}+ab/` does not match `"ababx"`, which `/(a|ab)ab/` does.
 
 **Example:**
 ```php
@@ -386,7 +386,7 @@ preg_match('/a/', $input);
 
 **Identifier:** `regex.lint.quantifier.zero`
 
-**When it triggers:** A quantifier with a maximum of zero (e.g., `{0}` or `{0,0}`), which makes the element disappear.
+**When it triggers:** A quantifier with a maximum of zero (e.g., `{0}` or `{0,0}`), which makes the element disappear. A repeat whose removal changes the match is left alone, as the optimizer leaves it: one holding a group, which still takes its number and may be called (`(?<d>\d){0}(?&d)+`, the way to define a subpattern), a backreference or a conditional, and one holding an assertion, which still tells PCRE2 where a match may start (`/(?:x|(?=a)){0}\w/` never matches `"\tb"`, where `/\w/` does).
 
 **Example:**
 ```php
@@ -701,8 +701,9 @@ same `$matches` on every subject, from offset 0 and, for a pattern with a start 
 with the anchor failing, as it does where `preg_match_all()` goes on (`/^.|.(c)/s` fills `$1`
 there). It stays silent on a group with nothing in it (`()` is a marker), on a group in a branch
 reset (`(?|...)`), whose number another alternative may fill, in a pattern that may match the empty string (`preg_match_all()` tries again after an
-empty match, where another path may fill the group), where `quantifier.lazyEnd` or
-`quantifier.zero` already says why the group stays empty (`/^L_(.*?)/`, `/(b){0}/`), on a group
+empty match, where another path may fill the group), where `quantifier.lazyEnd` already says
+why the group stays empty (`/^L_(.*?)/`), in a repeat of zero copies, which defines a group a call
+may reach (`/(b){0}/`), on a group
 a reference or a call reads, which the automata do not follow, and past the eighth question it
 asks them about in a pattern.
 

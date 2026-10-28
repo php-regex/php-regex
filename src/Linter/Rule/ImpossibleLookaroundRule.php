@@ -205,6 +205,12 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
                     return null; // never taken: the parser builds no quantifier QuantifierBounds cannot read
                 }
 
+                // A repeat of zero copies is never run: nothing reads what
+                // follows a lookaround it holds.
+                if (0 === $bounds->max) {
+                    return null;
+                }
+
                 if (1 !== $bounds->max) {
                     $budget -= $parent->node->getEndPosition() - $parent->node->getStartPosition();
                     if ($budget < 0) {

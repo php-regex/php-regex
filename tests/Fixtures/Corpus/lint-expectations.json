@@ -1707,12 +1707,6 @@
         ]
     },
     {
-        "pattern": "#!\\s*IE(\\s*\\d+){0}#i",
-        "issues": [
-            "regex.lint.quantifier.zero"
-        ]
-    },
-    {
         "pattern": "/^\\d+(\\.\\d+)+(-(beta|rc|pressable)\\d?)$/i",
         "issues": [
             "regex.lint.group.quantifiedCapture"

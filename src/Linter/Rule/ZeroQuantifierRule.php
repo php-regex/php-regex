@@ -14,8 +14,15 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\SubroutineNode;
 
 /**
  * Detects {0} quantifiers, which always repeat zero times.
@@ -47,7 +54,7 @@ final class ZeroQuantifierRule extends AbstractLintRule
         }
 
         [$min, $max] = QuantifierMath::parseRange($node);
-        if (0 !== $min || 0 !== $max) {
+        if (0 !== $min || 0 !== $max || self::removalChangesTheMatch($node->node)) {
             return [];
         }
 
@@ -58,5 +65,33 @@ final class ZeroQuantifierRule extends AbstractLintRule
             'Remove the quantified element or replace it with an empty pattern.',
             end: $node->getEndPosition(),
         )];
+    }
+
+    /**
+     * A repeat of zero copies still numbers the groups it holds, which a
+     * call may reach, and an assertion it holds still tells PCRE2 where a
+     * match may start: "(?:x|(?=a)){0}\w" never matches "\tb", where "\w"
+     * does. Removing it then changes the match, as the optimizer guards it.
+     */
+    private static function removalChangesTheMatch(NodeInterface $node): bool
+    {
+        if ($node instanceof AnchorNode || $node instanceof AssertionNode
+            || $node instanceof BackrefNode || $node instanceof SubroutineNode || $node instanceof ConditionalNode
+            || ($node instanceof GroupNode && \in_array($node->type, [
+                GroupType::Capturing, GroupType::Named, GroupType::BranchReset,
+                GroupType::LookaheadPositive, GroupType::LookaheadNegative,
+                GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring,
+            ], true))
+        ) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::removalChangesTheMatch($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

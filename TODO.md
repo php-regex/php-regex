@@ -235,6 +235,14 @@ two parsers read differently.
   would compare the twin on PHP 7.4 to the original on the same engine,
   with no engine-dependent exemption.
 
+- About forty guard and marker tests (`GuardedTargetLintTest`,
+  `TargetMarkerLintTest`, `PsalmPluginTargetTest` and their bridge twins)
+  skip wherever the running PHP's minor links another PCRE2 than the one it
+  bundles, this machine's PHP 8.4 on 10.49 included: their rows mix the
+  bundled releases' labels and refusals. Written through `PcreRule` version
+  by version, they would run on every engine; the bundled cells of the
+  Engines workflow run them meanwhile.
+
 ## Found by the 2026-10-27 audit pass, each reproduced
 
 The literal-fragment builder, the repairer and the confirmed mode first:
@@ -249,22 +257,6 @@ they answer wrong, not just incomplete.
   library's own `locale` option reads them for classes but not for the
   delimiter scan (`PatternParser.php:40,50,202-207`, `Text/Ascii.php`).
   glibc UTF-8 locales agree with the library; BSD/macOS ones do not.
-- Two lint rules advise rewrites the optimizer itself refuses as unsafe.
-  `ZeroQuantifierRule` tells the user `{0}` "can be removed" where
-  `RepeatRewrites::normalizeQuantifier` guards the removal — capture
-  numbering (`(x){0}(y)` loses `$2` and changes `$1`) and PCRE2's gated
-  start: `/(?:x|(?=a)){0}\w/` matches `"a"`, `/\w/` does not. On the same
-  pattern `ImpossibleLookaroundRule` fires "can never match through here"
-  while the engine matches — and it gets there by building `{0,-1}` (its
-  `max - 1` when `max` is 0), which PCRE2 reads as literal text, so the
-  automaton answers a question about `{`, `0`, `,`, `-`, `1`, `}`
-  (`ZeroQuantifierRule.php:54-60`; `ImpossibleLookaroundRule.php:215`;
-  the right guards sit in `RepeatRewrites.php:179-187`).
-- `UselessQuantifierRule` fires on a possessive `{1}+`: "Remove the {1}
-  quantifier; it does not change the match" — but `/(a|ab){1}+ab/`
-  answers 0 on `"ababx"` where the de-quantified `/(a|ab)ab/` answers 1;
-  `RepeatRewrites.php:173` excludes the possessive for exactly this
-  ("never gives back"), the rule does not (`UselessQuantifierRule.php:49-59`).
 - `optimize()` is not idempotent: `(?:a|b|c)*d` becomes `(?:[abc])*d` on
   the first pass and `[a-c]*d` on the second — inside a quantifier the
   unwrapping guard reads the original child, not the optimized one — and
@@ -302,8 +294,6 @@ they answer wrong, not just incomplete.
   ("PHPRegex\Parser\Exception\ParserException: No closing delimiter…")
   while `errors[]` holds the same failure's clean message — one failure,
   two spellings, one report.
-- The `quantifier.zero`/`lookaround.impossible` pair above fires on
-  `/(?:x|(?=a)){0}\w/` with both messages wrong for the engine.
 - `Regex::transpile('/ a # c/x', 'javascript')` drops the comment with a
   note, `/(?x) a # c/` aborts the transpile ("Inline comments are not
   supported in JavaScript") — the parser has applied `x` in both, the

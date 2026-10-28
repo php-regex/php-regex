@@ -132,6 +132,9 @@ final class ImpossibleLookaroundRuleTest extends TestCase
         yield 'caseless restrict reset by a caret' => ['pattern' => '/(?r)(?^i)(?=k)\x{212A}/u', 'subject' => "\u{212A}"];
         yield 'caseless restrict in the continuation only' => ['pattern' => '/(?=k)(?r:\x{212A})/iu', 'subject' => "\u{212A}"];
         yield 'double extended mode drops the space from the class' => ['pattern' => '/(?xx)(?![a b])\ /', 'subject' => ' '];
+        // A repeat of zero copies is never run: no continuation reads what
+        // follows it, and none is spelled "{0,-1}".
+        yield 'a lookahead in a repeat of zero copies' => ['pattern' => '/(?:x|(?=a)){0}\w/', 'subject' => 'a'];
     }
 
     /**

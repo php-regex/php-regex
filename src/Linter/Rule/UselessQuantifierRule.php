@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
 
 /**
  * Detects {1} quantifiers, which match exactly once and can be removed.
@@ -46,8 +47,9 @@ final class UselessQuantifierRule extends AbstractLintRule
             return [];
         }
 
+        // "{1}+" is possessive, an atomic group: it never gives back.
         [$min, $max] = QuantifierMath::parseRange($node);
-        if (1 !== $min || 1 !== $max) {
+        if (1 !== $min || 1 !== $max || QuantifierType::Possessive === $node->type) {
             return [];
         }
 
