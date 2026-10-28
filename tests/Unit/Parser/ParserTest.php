@@ -1050,6 +1050,33 @@ final class ParserTest extends TestCase
         $verbs = array_values(array_filter($nodes, static fn ($node) => $node instanceof PcreVerbNode));
         $this->assertCount(1, $verbs);
         $this->assertSame('MARK:foo', $verbs[0]->verb);
+        $this->assertSame('MARK', $verbs[0]->name);
+        $this->assertSame('foo', $verbs[0]->argument);
+    }
+
+    /**
+     * @return \Iterator<string, array{pattern: string, verb: string, name: string, argument: ?string}>
+     */
+    public static function provideVerbSpellings(): \Iterator
+    {
+        yield 'a mark written short keeps the long form' => ['pattern' => '/(*:foo)a/', 'verb' => 'MARK:foo', 'name' => 'MARK', 'argument' => 'foo'];
+        yield 'FAIL written short' => ['pattern' => '/a(*F)/', 'verb' => 'F', 'name' => 'FAIL', 'argument' => null];
+        yield 'a limit other than LIMIT_MATCH' => ['pattern' => '/(*LIMIT_DEPTH=5)a/', 'verb' => 'LIMIT_DEPTH=5', 'name' => 'LIMIT_DEPTH', 'argument' => '5'];
+        yield 'a named cut' => ['pattern' => '/a(*PRUNE:p)/', 'verb' => 'PRUNE:p', 'name' => 'PRUNE', 'argument' => 'p'];
+    }
+
+    #[Test]
+    #[DataProvider('provideVerbSpellings')]
+    public function test_a_verb_is_read_as_its_name_and_its_argument(string $pattern, string $verb, string $name, ?string $argument): void
+    {
+        $ast = $this->parse($pattern);
+
+        $nodes = $ast->pattern instanceof SequenceNode ? $ast->pattern->children : [$ast->pattern];
+        $verbs = array_values(array_filter($nodes, static fn ($node) => $node instanceof PcreVerbNode));
+        $this->assertCount(1, $verbs);
+        $this->assertSame($verb, $verbs[0]->verb);
+        $this->assertSame($name, $verbs[0]->name);
+        $this->assertSame($argument, $verbs[0]->argument);
     }
 
     /**

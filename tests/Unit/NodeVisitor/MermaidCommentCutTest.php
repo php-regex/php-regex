@@ -34,4 +34,13 @@ final class MermaidCommentCutTest extends TestCase
         $this->assertTrue(mb_check_encoding($diagram, 'UTF-8'), $diagram);
         $this->assertStringContainsString('Comment: '.str_repeat('x', 19).'"', $diagram);
     }
+
+    #[Test]
+    public function test_a_verb_and_a_match_limit_are_drawn_as_their_own_nodes(): void
+    {
+        $diagram = Regex::create(['cache' => null])->parse('/(*LIMIT_MATCH=10)a(*ACCEPT)/')->accept(new MermaidRenderer());
+
+        $this->assertStringContainsString('["LimitMatch: 10"]', $diagram);
+        $this->assertStringContainsString('["PcreVerb: ACCEPT"]', $diagram);
+    }
 }

@@ -952,13 +952,15 @@
     },
     "pcre_verb": {
       "type": "object",
-      "description": "A backtracking control verb or a start-of-pattern option, as written between (* and ).",
+      "description": "A backtracking control verb or a start-of-pattern option. \"verb\" is the text between (* and ) as the tree keeps it, a mark written (*:x) spelled MARK:x; \"name\" is the verb's name as PCRE2 documents it (MARK, FAIL for (*F), LIMIT_DEPTH) and \"argument\" what follows it: the name of a mark or of a cut, the value of a limit, null when the verb takes none.",
       "additionalProperties": false,
       "required": [
         "type",
         "start",
         "end",
-        "verb"
+        "verb",
+        "name",
+        "argument"
       ],
       "properties": {
         "type": {
@@ -972,6 +974,15 @@
         },
         "verb": {
           "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "argument": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },

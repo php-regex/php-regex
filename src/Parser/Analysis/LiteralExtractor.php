@@ -378,7 +378,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
     public function visitPcreVerb(PcreVerbNode $node): LiteralSet
     {
         // "(*ACCEPT)" ends the match: what follows it may not be matched.
-        if (str_starts_with($node->verb, 'ACCEPT')) {
+        if ('ACCEPT' === $node->name) {
             return new LiteralSet([''], [], false);
         }
 

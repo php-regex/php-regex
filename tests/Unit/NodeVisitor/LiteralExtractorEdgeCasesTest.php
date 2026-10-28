@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
@@ -44,6 +45,16 @@ final class LiteralExtractorEdgeCasesTest extends TestCase
 
         $this->assertContains('a', $result->prefixes);
         $this->assertContains('A', $result->prefixes);
+    }
+
+    #[Test]
+    public function test_accept_ends_the_match_so_what_follows_is_not_required(): void
+    {
+        $visitor = new LiteralExtractor();
+
+        $this->assertFalse($visitor->visitPcreVerb(new PcreVerbNode('ACCEPT', 0, 0))->complete);
+        $this->assertFalse($visitor->visitPcreVerb(new PcreVerbNode('ACCEPT:done', 0, 0))->complete);
+        $this->assertTrue($visitor->visitPcreVerb(new PcreVerbNode('COMMIT', 0, 0))->complete);
     }
 
     #[Test]

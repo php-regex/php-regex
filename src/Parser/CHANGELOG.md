@@ -34,6 +34,12 @@ CHANGELOG
  * `ValidationResult::$ast` carries the tree of a valid pattern: one
    `validate()` call gives the verdict and the tree, where a consumer that
    needed both parsed the pattern again.
+ * `PcreVerbNode::$name` and `$argument` read a verb once for every
+   consumer: the name as PCRE2 documents it (`MARK` for `(*:x)`, `FAIL` for
+   `(*F)`, `LIMIT_DEPTH` for `(*LIMIT_DEPTH=5)`) and what follows it, the
+   name of a mark or of a cut, the value of a limit, null when the verb
+   takes none. The JSON export writes both (`name`, `argument`) beside
+   `verb`.
  * `ArrayCache` drops the tree read or written longest ago, where it dropped
    the one written first.
  * `PatternInfoAnalyzer` takes an optional `PcreTarget`, the running PHP's

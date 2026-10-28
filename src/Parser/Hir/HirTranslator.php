@@ -185,7 +185,7 @@ final class HirTranslator
             // An option the pattern opens with is applied to the sets already.
             $node instanceof PcreVerbNode => $node->getEndPosition() <= \strlen($this->startVerbs)
                 ? new EmptyHir($node->getStartPosition(), $node->getEndPosition())
-                : new OpaqueHir($node, Properties::zeroWidth(false, 0, str_starts_with($node->verb, 'ACCEPT')), null, $node->getStartPosition(), $node->getEndPosition()),
+                : new OpaqueHir($node, Properties::zeroWidth(false, 0, 'ACCEPT' === $node->name), null, $node->getStartPosition(), $node->getEndPosition()),
             $node instanceof CalloutNode, $node instanceof VersionConditionNode => $this->opaque($node, Properties::zeroWidth()),
             // The engine reads a conditional left to right: an option set in
             // its yes branch holds in its no branch.

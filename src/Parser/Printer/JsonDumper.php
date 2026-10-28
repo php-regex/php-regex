@@ -376,7 +376,7 @@ final class JsonDumper extends AbstractNodeVisitor
     #[\Override]
     public function visitPcreVerb(PcreVerbNode $node): array
     {
-        return [...$this->node('pcre_verb', $node), 'verb' => self::text($node->verb)];
+        return [...$this->node('pcre_verb', $node), 'verb' => self::text($node->verb), 'name' => self::text($node->name), 'argument' => null === $node->argument ? null : self::text($node->argument)];
     }
 
     /**

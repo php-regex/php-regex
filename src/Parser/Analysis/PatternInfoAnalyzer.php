@@ -255,7 +255,7 @@ final class PatternInfoAnalyzer
             $facts['backslashC'] = true;
         } elseif ($node instanceof KeepNode) {
             $facts['keep'] = true;
-        } elseif ($node instanceof PcreVerbNode && ('SKIP' === $node->verb || str_starts_with($node->verb, 'SKIP:'))) {
+        } elseif ($node instanceof PcreVerbNode && 'SKIP' === $node->name) {
             $facts['skip'] = true;
         } elseif (self::isLookbehind($node) && !$inLookbehind) {
             // A lookbehind inside another is measured, or not, with it.

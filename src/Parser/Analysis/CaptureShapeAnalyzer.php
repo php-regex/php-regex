@@ -79,7 +79,7 @@ final class CaptureShapeAnalyzer
      */
     private const PATH_GROUPS = [GroupType::NonCapturing, GroupType::Atomic, GroupType::InlineFlags, GroupType::Capturing, GroupType::Named];
 
-    private const MARK_VERBS = ['MARK', 'PRUNE', 'THEN', 'ACCEPT', 'COMMIT', 'F', 'FAIL'];
+    private const MARK_VERBS = ['MARK', 'PRUNE', 'THEN', 'ACCEPT', 'COMMIT', 'FAIL'];
 
     private const TRANSPARENT_GROUPS = [GroupType::NonCapturing, GroupType::Atomic, GroupType::InlineFlags, GroupType::LookaheadPositive, GroupType::LookbehindPositive];
 
@@ -811,12 +811,12 @@ final class CaptureShapeAnalyzer
      */
     private function scan(NodeInterface $node): void
     {
-        if ($node instanceof PcreVerbNode && 'UCP' === $node->verb) {
+        if ($node instanceof PcreVerbNode && 'UCP' === $node->name) {
             $this->ucp = true;
         }
 
-        if ($node instanceof PcreVerbNode && \in_array($node->verb, self::NEWLINE_VERBS, true)) {
-            $this->newline = $node->verb;
+        if ($node instanceof PcreVerbNode && \in_array($node->name, self::NEWLINE_VERBS, true)) {
+            $this->newline = $node->name;
         }
 
         if ($node instanceof SubroutineNode) {
@@ -1420,8 +1420,8 @@ final class CaptureShapeAnalyzer
      */
     private function readVerb(PcreVerbNode $node, bool $never): void
     {
-        [$verb, $name] = array_pad(explode(':', $node->verb, 2), 2, null);
-        $verb = '' === $verb ? 'MARK' : $verb;
+        $verb = $node->name;
+        $name = $node->argument;
 
         if ('ACCEPT' === $verb && !$never) {
             $this->cut = true;

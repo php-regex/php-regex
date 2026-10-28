@@ -315,13 +315,7 @@ final class MermaidRenderer extends AbstractNodeVisitor
     {
         $nodeId = $this->nextNodeId();
 
-        // Special handling for LIMIT_MATCH verb
-        if (str_starts_with($node->verb, 'LIMIT_MATCH=')) {
-            $limit = substr($node->verb, 12); // Remove 'LIMIT_MATCH='
-            $this->lines[] = \sprintf('    %s["LimitMatch: %s"]', $nodeId, $this->escape($limit));
-        } else {
-            $this->lines[] = \sprintf('    %s["PcreVerb: %s"]', $nodeId, $this->escape($node->verb));
-        }
+        $this->lines[] = \sprintf('    %s["PcreVerb: %s"]', $nodeId, $this->escape($node->verb));
 
         return $nodeId;
     }

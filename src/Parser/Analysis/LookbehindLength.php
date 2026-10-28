@@ -717,7 +717,7 @@ final class LookbehindLength
      */
     private static function endsBranch(NodeInterface $node): bool
     {
-        return $node instanceof PcreVerbNode && \in_array(explode(':', $node->verb, 2)[0], ['ACCEPT', 'FAIL', 'F'], true);
+        return $node instanceof PcreVerbNode && \in_array($node->name, ['ACCEPT', 'FAIL'], true);
     }
 
     private function groupBody(NodeInterface $body): void

@@ -859,9 +859,11 @@ echo $define->content instanceof \PHPRegex\Parser\Node\SequenceNode;  // true
 
 **Fields:**
 
-| Field  | Type   | Description   |
-|--------|--------|---------------|
-| `verb` | string | The verb name |
+| Field      | Type         | Description   |
+|------------|--------------|---------------|
+| `verb`     | string       | The text between `(*` and `)` as the tree keeps it: a mark written `(*:x)` is spelled `MARK:x` |
+| `name`     | string       | The verb's name as PCRE2 documents it: `MARK` for `(*:x)`, `FAIL` for `(*F)`, `LIMIT_DEPTH` for `(*LIMIT_DEPTH=5)` |
+| `argument` | string\|null | What follows the name: the name of a mark or of a cut, the value of a limit; `null` when the verb takes none |
 
 **PCRE Verbs:**
 
@@ -882,6 +884,13 @@ $ast = Regex::create()->parse('/foo(*FAIL)bar/');
 $verb = $ast->pattern->children[3];  // after 'f', 'o', 'o'
 
 echo $verb->verb;  // 'FAIL'
+echo $verb->name;  // 'FAIL'
+var_dump($verb->argument);  // NULL
+
+$mark = Regex::create()->parse('/(*:here)foo/')->pattern->children[0];
+echo $mark->verb;      // 'MARK:here'
+echo $mark->name;      // 'MARK'
+echo $mark->argument;  // 'here'
 ```
 
 ---
@@ -1097,7 +1106,7 @@ echo $ast->pattern->children[2]->endPosition;  // 3, the body's length
 | `DefineNode`               | `(?DEFINE...)`   | `content`                                 |
 | `CommentNode`              | Comment          | `comment`, `isExtended`                   |
 | `CalloutNode`              | `(?C...)`        | `identifier`, `isStringIdentifier`        |
-| `PcreVerbNode`             | `(*VERB)`        | `verb`                                    |
+| `PcreVerbNode`             | `(*VERB)`        | `verb`, `name`, `argument`                |
 | `LimitMatchNode`           | `(*LIMIT_MATCH=)`| `limit`                                   |
 | `ScriptRunNode`            | `(*sr:...)`      | `script`, `content`, `isAtomic`           |
 

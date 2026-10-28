@@ -283,7 +283,7 @@ final class CaptureFacts
             $node instanceof CharClassNode => $this->classMembers($node),
             $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof CommentNode,
             $node instanceof KeepNode, $node instanceof DefineNode, $node instanceof CalloutNode => [''],
-            $node instanceof PcreVerbNode => str_starts_with($node->verb, 'ACCEPT') ? null : [''],
+            $node instanceof PcreVerbNode => 'ACCEPT' === $node->name ? null : [''],
             $node instanceof SubroutineNode => null === ($body = $this->calledBody($node)) ? null : $this->values($body, $scan),
             default => null,
         };
@@ -1036,7 +1036,7 @@ final class CaptureFacts
     private static function accepts(NodeInterface $node): bool
     {
         if ($node instanceof PcreVerbNode) {
-            return str_starts_with($node->verb, 'ACCEPT');
+            return 'ACCEPT' === $node->name;
         }
 
         foreach ($node->getChildren() as $child) {

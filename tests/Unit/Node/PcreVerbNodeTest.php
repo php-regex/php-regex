@@ -50,6 +50,34 @@ final class PcreVerbNodeTest extends TestCase
         $this->assertSame($end, $node->getEndPosition());
     }
 
+    /**
+     * @return \Iterator<string, array{verb: string, name: string, argument: ?string}>
+     */
+    public static function data_provider_names_and_arguments(): \Iterator
+    {
+        yield 'a verb alone' => ['verb' => 'COMMIT', 'name' => 'COMMIT', 'argument' => null];
+        yield 'a verb with a name' => ['verb' => 'ACCEPT:done', 'name' => 'ACCEPT', 'argument' => 'done'];
+        yield 'a mark' => ['verb' => 'MARK:FOO', 'name' => 'MARK', 'argument' => 'FOO'];
+        yield 'a mark written short' => ['verb' => ':FOO', 'name' => 'MARK', 'argument' => 'FOO'];
+        yield 'a mark with an empty name' => ['verb' => 'MARK:', 'name' => 'MARK', 'argument' => ''];
+        yield 'FAIL written short' => ['verb' => 'F', 'name' => 'FAIL', 'argument' => null];
+        yield 'FAIL written long' => ['verb' => 'FAIL', 'name' => 'FAIL', 'argument' => null];
+        yield 'a limit' => ['verb' => 'LIMIT_DEPTH=5', 'name' => 'LIMIT_DEPTH', 'argument' => '5'];
+        yield 'a start-of-pattern option' => ['verb' => 'UTF', 'name' => 'UTF', 'argument' => null];
+        yield 'no verb at all' => ['verb' => '', 'name' => '', 'argument' => null];
+    }
+
+    #[Test]
+    #[DataProvider('data_provider_names_and_arguments')]
+    public function test_the_name_and_the_argument_are_read_from_the_verb(string $verb, string $name, ?string $argument): void
+    {
+        $node = new PcreVerbNode($verb, 0, \strlen($verb) + 3);
+
+        $this->assertSame($verb, $node->verb);
+        $this->assertSame($name, $node->name);
+        $this->assertSame($argument, $node->argument);
+    }
+
     #[Test]
     public function test_accept_visitor_calls_visit_pcre_verb(): void
     {

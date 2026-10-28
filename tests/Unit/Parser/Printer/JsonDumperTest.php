@@ -155,13 +155,14 @@ final class JsonDumperTest extends TestCase
             ],
         ];
         yield 'comment' => ['pattern' => '/(?#c)/', 'expected' => ['type' => 'comment', 'start' => 0, 'end' => 5, 'text' => 'c', 'extended' => false]];
+        yield 'a mark written short' => ['pattern' => '/(*:x)/', 'expected' => ['type' => 'pcre_verb', 'start' => 0, 'end' => 5, 'verb' => 'MARK:x', 'name' => 'MARK', 'argument' => 'x']];
         yield 'verbs and callouts' => [
             'pattern' => '/a(*ACCEPT)(*LIMIT_MATCH=10)(?C1)(?C"s")/',
             'expected' => [
                 'type' => 'sequence', 'start' => 0, 'end' => 39,
                 'children' => [
                     ['type' => 'literal', 'start' => 0, 'end' => 1, 'value' => 'a'],
-                    ['type' => 'pcre_verb', 'start' => 1, 'end' => 10, 'verb' => 'ACCEPT'],
+                    ['type' => 'pcre_verb', 'start' => 1, 'end' => 10, 'verb' => 'ACCEPT', 'name' => 'ACCEPT', 'argument' => null],
                     ['type' => 'limit_match', 'start' => 10, 'end' => 27, 'limit' => 10],
                     ['type' => 'callout', 'start' => 27, 'end' => 32, 'identifier' => 1],
                     ['type' => 'callout', 'start' => 32, 'end' => 39, 'identifier' => 's'],

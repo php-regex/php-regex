@@ -60,7 +60,7 @@ final class AlternationPrecedenceRule extends AbstractLintRule
      * Verbs that end the match attempt when the engine backtracks into
      * them, that accept at once, or that fail.
      */
-    private const CUTTING_VERBS = ['COMMIT', 'PRUNE', 'SKIP', 'ACCEPT', 'F', 'FAIL'];
+    private const CUTTING_VERBS = ['COMMIT', 'PRUNE', 'SKIP', 'ACCEPT', 'FAIL'];
 
     public function getRuleIds(): array
     {
@@ -197,8 +197,8 @@ final class AlternationPrecedenceRule extends AbstractLintRule
     private static function marks(NodeInterface $node): array
     {
         $marks = [];
-        if ($node instanceof PcreVerbNode && str_starts_with($node->verb, 'MARK:')) {
-            $marks[substr($node->verb, 5)] = true;
+        if ($node instanceof PcreVerbNode && 'MARK' === $node->name && null !== $node->argument) {
+            $marks[$node->argument] = true;
         }
 
         foreach ($node->getChildren() as $child) {
@@ -235,7 +235,8 @@ final class AlternationPrecedenceRule extends AbstractLintRule
     private static function holdsACuttingVerb(NodeInterface $node, array $marks): bool
     {
         if ($node instanceof PcreVerbNode) {
-            [$verb, $name] = explode(':', $node->verb, 2) + [1 => ''];
+            $verb = $node->name;
+            $name = $node->argument ?? '';
             if (\in_array($verb, self::CUTTING_VERBS, true) && ('SKIP' !== $verb || '' === $name || isset($marks[$name]))) {
                 return true;
             }

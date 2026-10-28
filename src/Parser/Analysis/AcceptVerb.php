@@ -49,7 +49,7 @@ final class AcceptVerb
     public static function mayEndMatch(NodeInterface $node): bool
     {
         if ($node instanceof PcreVerbNode) {
-            return str_starts_with($node->verb, 'ACCEPT');
+            return 'ACCEPT' === $node->name;
         }
 
         $children = match (true) {

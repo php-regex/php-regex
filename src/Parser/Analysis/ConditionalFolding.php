@@ -126,7 +126,7 @@ final class ConditionalFolding
             return null;
         }
 
-        if ($node instanceof PcreVerbNode && str_starts_with($node->verb, 'ACCEPT')) {
+        if ($node instanceof PcreVerbNode && 'ACCEPT' === $node->name) {
             $this->cut($state);
 
             return null;

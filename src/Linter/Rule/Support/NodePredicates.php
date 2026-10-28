@@ -197,7 +197,7 @@ final class NodePredicates
     public static function alwaysFails(NodeInterface $node): bool
     {
         if ($node instanceof PcreVerbNode) {
-            return \in_array(explode(':', $node->verb, 2)[0], ['F', 'FAIL'], true);
+            return 'FAIL' === $node->name;
         }
 
         return $node instanceof GroupNode
@@ -213,7 +213,7 @@ final class NodePredicates
     public static function holdsAccept(NodeInterface $node): bool
     {
         if ($node instanceof PcreVerbNode) {
-            return 'ACCEPT' === explode(':', $node->verb, 2)[0];
+            return 'ACCEPT' === $node->name;
         }
 
         foreach ($node->getChildren() as $child) {
