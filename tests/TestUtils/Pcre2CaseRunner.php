@@ -44,8 +44,10 @@ final class Pcre2CaseRunner
     public function __construct()
     {
         // No cache: every case is parsed afresh, never read back from a
-        // cached AST of an earlier library build.
-        $this->regex = Regex::create(['cache' => null]);
+        // cached AST of an earlier library build. The target is the release
+        // the outputs were pinned on, under the PHP the overrides were read
+        // with, whatever engine runs the suite.
+        $this->regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49']);
     }
 
     /**
