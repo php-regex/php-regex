@@ -1,171 +1,132 @@
 # TODO
 
-## Composer manifests: the pre-tag review
-
-The manifests are ready; what remains is on the release side:
-
-- `yoeunes/regex-parser` lists a phantom `2.x-dev` in its dev channel
-  (a stale crawl from the old name): after the repoint, check the dev
-  channel lists 1.x only.
-- The seventeen split pushes are not atomic: between the first and the
-  last webhook after the tag, a `^2.0` resolution fails on missing
-  siblings. Before `bin/release`, confirm every split repo carries a
-  fresh 2.x head and a crawled dev version (`bin/status` reads both
-  Packagist channels now); after, v2.0.0 on every stable endpoint.
-- Post-tag: submit `regex.schema.json` to schemastore.org (`fileMatch`:
-  `regex.json`, `regex.dist.json`) for zero-config editor support — it
-  needs a stable public URL, so it waits for the tag.
-
-
 ## Release 2.0.0
 
-The code is ready; what is left is the maintainer's, in this order.
+In this order.
 
 1. **Repoint `yoeunes/regex-parser` on Packagist** to a repository holding
-   1.x only, before anything is tagged: it still reads the monorepo, so a
-   `v2.0.0` tag would release the 1.x package as 2.0.0 (`bin/status` reports
-   it ✗ until then; `UPGRADE-2.0.md` promises it stays on 1.x).
+   1.x only, before anything is tagged. It still reads
+   `php-regex/php-regex` and lists `2.x-dev` beside `1.x-dev`, so a `v2.0.0`
+   tag would release the 1.x package as 2.0.0 (`bin/status` reports it ✗
+   until then; `UPGRADE-2.0.md` promises it stays on 1.x). Afterwards, its
+   dev channel lists `1.x-dev` only.
 2. **The bump commit.** `bin/bump 2.0.0` sets `Regex::VERSION`,
    `Regex::VERSION_ID` and dates the CHANGELOG section. In the same commit,
    the install story moves from `2.x-dev` to the stable release:
-   - `docs/_includes/install-prerelease.html` (23 pages, the four articles
-     through its `inline=true` form): drop the two `composer config` lines
+   - `docs/_includes/install-prerelease.html`, which every install block of
+     the docs and the articles reads: drop the two `composer config` lines
      and the `:{{ site.data.product.release }}-dev` suffix, written once in
      its `install_commands` capture;
    - outside the include: `docs/index.md` (hero install block),
      `docs/packages.md`, `docs/quick-start.md`, `README.md` ("2.0 is coming"
      and "Getting started"), `docs/llms.txt`;
    - `docs/_data/product.yml`: `version_label`;
-   - the `PHPRegex 2.0.0-DEV` sample outputs in `docs/guides/cli.md`,
-     `docs/tutorial/README.md`, `docs/tutorial/08-performance-redos.md`,
-     `docs/tutorial/09-testing-debugging.md` and the articles
-     `docs/_articles/which-pcre2-ships-with-which-php.md` and
-     `docs/_articles/why-pcre2-is-a-separate-library.md`, and the
-     `"version":"2.0.0-DEV"` of the `initialize` answer in
-     `docs/guides/lsp.md`;
+   - the `2.0.0-DEV` sample outputs in `docs/guides/cli.md`, in the
+     `initialize` answer of `docs/guides/lsp.md`, and in the articles
+     `which-pcre2-ships-with-which-php.md` and
+     `why-pcre2-is-a-separate-library.md`;
    - `tests/Documentation/PackageSelectionDocumentationTest.php` and
      `tests/Documentation/ArticleInstallIncludeTest.php` pin the prerelease
      commands: they move with them.
-3. Before the tag: `php-regex/regex-phpunit` exists on GitHub (empty, with
-   the metadata of the sixteen others) and the split fills it on the next
-   push of 2.x. Then submit it on Packagist and register its webhook like the
-   sixteen others: without one, Packagist learns of the tag only through its
-   two-week crawl. If `SPLIT_TOKEN` is limited to selected repositories, add
-   `regex-phpunit` to it before that push.
-4. Push 2.x and watch the first CI run on 2.x after the push, the PHP 8.1
-   prefer-lowest cell in particular; once it passes, `bin/release --dry-run
-   2.0.0` and `bin/release 2.0.0`: it drafts the GitHub release and pushes
-   the tag; the phar workflow builds the phar, checks that its version is
-   the tag's and that `regex.phar lsp` answers `initialize`, attests it,
-   attaches it and its checksum, then publishes the draft; the split
-   workflow tags the seventeen packages.
-   That path has never run on a real release (`v1.3.0` carries no
-   checksum): tag `2.0.0-RC1` first (`bin/release 2.0.0-RC1`, a GitHub
-   pre-release), check both assets, `gh attestation verify regex.phar --repo
-   php-regex/php-regex` and the phar on PHP 8.1, then tag 2.0.0.
-5. After the tag: `bin/status` and Packagist show `v2.0.0` for all seventeen
-   packages (they require each other at `self.version`: one missing tag
-   leaves the others uninstallable), and the "Latest" release carries the
-   2.0 `regex.phar`, which `self-update` and `releases/latest` serve.
-6. `bin/bump --next 2.0.1`.
+3. **Before the tag**, check with `bin/status` that each of the seventeen
+   split repositories carries a fresh 2.x head and a crawled dev version.
+   The split pushes are not atomic: between the first and the last webhook
+   after the tag, a `^2.0` resolution fails on missing siblings.
+4. **Push 2.x** and watch its first CI run, the PHP 8.1 prefer-lowest cell
+   and the PHP 8.1 / PCRE2 10.39 cell of the Engines workflow in particular.
+5. **Release candidate first.** The release path has never run on a real
+   release (`v1.3.0` carries no checksum). `bin/release --dry-run
+   2.0.0-RC1`, then `bin/release 2.0.0-RC1` (a GitHub pre-release): it
+   drafts the release and pushes the tag; the phar workflow builds the
+   phar, checks that its version is the tag's and that `regex.phar lsp`
+   answers `initialize`, attests it, attaches it and its checksum, then
+   publishes the draft; the split workflow tags the seventeen packages.
+   Check both assets, `gh attestation verify regex.phar --repo
+   php-regex/php-regex`, and the phar on PHP 8.1.
+6. **Tag 2.0.0** the same way. Then `bin/status` and Packagist show
+   `v2.0.0` for all seventeen packages (they require each other at
+   `self.version`: one missing tag leaves the others uninstallable), and the
+   "Latest" release carries the 2.0 `regex.phar`, which `self-update` and
+   `releases/latest` serve.
+7. `bin/bump --next 2.0.1`.
+8. Submit `src/Linter/regex.schema.json` to schemastore.org (`fileMatch`:
+   `regex.json`, `regex.dist.json`) for editor support without setup: it
+   needs the stable public URL the tag gives it.
 
 
-## Phar provenance: the GitHub side
+## GitHub settings for the phar
 
 `.github/workflows/phar.yml` builds, attests and attaches the phar on a
-version tag. By hand: if Settings → Actions → General restricts the actions
-allowed, allow `actions/attest-build-provenance` and `shivammathur/setup-php`.
-After the 2.0.0 tag, check that the release went from draft to published
-with both assets, and that `gh attestation verify regex.phar --repo
-php-regex/php-regex` passes on the downloaded phar.
+version tag. If Settings → Actions → General restricts the actions allowed,
+allow `actions/attest-build-provenance` and `shivammathur/setup-php`.
 
 
-## PHP 8.6 closeout and the experimental 8.7 cell
+## PHP 7.4 twin
 
-The closeout is built: the analysis range reaches 8.6, both engine matrices
-carry 8.6, the `preg_grep()` array-to-false boundary is pinned by tests, the
-trim family keeps its pre-8.6 character set on every PHP, a scoped listener
-fails the suite only on deprecations under `src/`, and an experimental 8.7
-cell of the tests workflow watches the future without gating anything.
-Left, dated:
+Publish `php-regex/regex-parser-php74` again from the `twin` artifact of a
+green "php74 twin" workflow run. The published `6c1dcd8` throws a TypeError
+on PHP 7.4 for a branch reset of one branch (`/(?|(a))/`,
+`array_intersect_key()` with one array), which the generator now rewrites;
+the new build also carries the capture shapes of `\K`, conditionals and
+`(*ACCEPT)`. After the 2.0.0 tag, publish it once more from the tagged
+commit.
 
-1. **2026-11-19, GA day** — rename the `8.6-rc` rows of `engines-bundled`
-   and `engine-claims` (`.github/workflows/engines.yml`), and the `8.6-rc`
-   key of `EngineClaims::IMAGES` (`tests/TestUtils/EngineClaims.php`), to
-   `'8.6'`: the `-rc` docker aliases vanish that day and an unrenamed row
-   breaks CI. The
-   `startsWith(matrix.php, '8.6')` conditions already match either
-   spelling, and `engines-latest` needs no change. Re-verify the renamed
-   image still bundles 10.44, and if it ships mbstring again, try removing
-   the "Install multibyte support" step. Once the tools' dependencies admit
-   8.6, drop it from the `--ignore-platform-req=php+` cases of
-   `.github/actions/setup-php-project` and of `engines-bundled`.
-2. Until then, watch `ext/pcre/pcre2lib` on the PHP-8.6 branch and master:
-   a late PCRE2 bump would reopen the engine maps. If it moves, re-run the
-   engine-scoped corpus rows before anything else.
 
+## PHP 8.6 GA, 2026-11-19
+
+1. That day, rename the `8.6-rc` rows of `engines-bundled` and
+   `engine-claims` (`.github/workflows/engines.yml`), and the `8.6-rc` key of
+   `EngineClaims::IMAGES` (`tests/TestUtils/EngineClaims.php`), to `'8.6'`:
+   the `-rc` docker aliases vanish that day and an unrenamed row breaks CI.
+   The `startsWith(matrix.php, '8.6')` conditions already match either
+   spelling, and `engines-latest` needs no change. Check that the renamed
+   image still bundles PCRE2 10.44, and if it ships mbstring again, remove
+   the "Install multibyte support" step.
+2. Once the tools' dependencies admit 8.6, drop it from the
+   `--ignore-platform-req=php+` cases of `.github/actions/setup-php-project`
+   and of `engines-bundled`.
+3. Until then, watch `ext/pcre/pcre2lib` on the PHP-8.6 branch and on
+   master: a late PCRE2 bump, or a downgrade like 8.5's at its release cut,
+   reopens the engine maps. If it moves, re-run the engine-scoped corpus rows
+   first.
 
 
 ## Symfony Flex recipe
 
 Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
 `PHPRegexBundle`, so `composer require php-regex/regex-symfony` registers
-nothing (the guide says so). By hand: open a recipe PR on
-symfony/recipes-contrib once 2.0.0 is on Packagist.
+nothing (`docs/guides/symfony.md` says to register it by hand). Once 2.0.0
+is on Packagist, open a recipe pull request on symfony/recipes-contrib.
 
-## The articles section: what is left
 
-- The next articles, in priority order: variable-length lookbehind across
-  PHP 8.2-8.4, capture shapes of `$matches`, why `pcre.backtrack_limit`
+## Blog articles
+
+- Publish the four drafts (`catastrophic-backtracking-in-php`,
+  `re2-vs-pcre2`, `which-pcre2-ships-with-which-php`,
+  `why-pcre2-is-a-separate-library`): flip `published`, and add an
+  `## Articles` section to `docs/llms.txt` with a line for each.
+- Before the 8.6 GA, re-check the 8.6 row of the version matrix in
+  `which-pcre2-ships-with-which-php` against the PHP-8.6 branch: the article
+  promises it.
+- Next articles, in priority order: variable-length lookbehind across
+  PHP 8.2–8.4, the capture shapes of `$matches`, why `pcre.backtrack_limit`
   does not protect under the PCRE2 JIT, regex equivalence with proofs,
   named groups with branch reset, measured data from the corpus,
   transpiling to JavaScript with a proof, `preg_match()` versus
   `str_contains()` measured, Symfony route requirements audited.
-- Re-check the 8.6 row of the published version matrix against the
-  PHP-8.6 branch before GA on 19 November 2026; the article promises it.
-- Publishing the four drafts: flip `published`, add each article's line
-  under `## Articles` in `docs/llms.txt`, and give each `/blog/<slug>` its
-  entry in the sitemap navigation-coverage check, with the blog-index
-  justification.
 
-## PHPRegex in phpstan-src: what the proof of concept still owes
 
-The fork `php-regex/phpstan-src` carries the proof of concept as pull
-request #1, a research branch: one commit on `2.3.x`, where PHPStan now
-reads patterns with a parser generated by phplrt (phpstan-src#6851), and
-the branch reads them with PHPRegex instead. `poc/` replays the patterns the
-two parsers read differently.
+## Open questions
 
-1. Publish the twin again, from the `twin` artifact of a green twin
-   workflow run, and re-pin the pull request on it: the pinned `6c1dcd8`
-   throws a TypeError on PHP 7.4 for a branch reset of one branch
-   (`/(?|(a))/`, `array_intersect_key()` with one array), which the
-   generator now rewrites; the new pin also brings the capture shapes of
-   this pass (`\K`, conditionals, `(*ACCEPT)`, the product of the splits).
-2. On that pin, `RegexGroupParser` reads `$node->bounds` instead of
-   `QuantifierBounds::parse($node->quantifier)`, and may pass its target to
-   `new CaptureShapeAnalyzer($target)` so `(?(VERSION…)` conditions fold.
-3. Once `2.0.0` is tagged and the twin reaches Packagist, replace the
-   `2.x-dev#<hash>` pin with the exact version (the precedent is
-   `ondrejmirtes/phplrt-runtime`, pinned to an exact release).
-4. Rebuild the phar from the pull request on its last twin pin and run it
-   on `php:7.4-cli` and `php:8.4-cli`.
-5. Re-read php-src master after the 8.6 GA (2026-11-19) in case a
-   release-cut PCRE2 downgrade like 8.5's happens.
-6. Split the single commit into stacked pull requests once the maintainer
-   asks for it.
-
-## Decisions the maintainer owns
-
-- The Psalm and PHPStan bridges without the whole linter: the target
-  resolution and the PHP-source helpers they import need a home below
-  `regex-linter`, a new split package or a lower one. Removing a `require`
-  is never a break.
-- Four tests use `/(?:a[\x{100}-\x{10FFFF}\pL]{0}){1900}/u` as a pattern only
-  the engine refuses (`ValidationMemoTest`, `RegexApiTest` ×2,
-  `RegexGenerateTest`). Counting a class of every character past 255 plus a
-  property exactly — the last item of "Known differences" in
-  `docs/concepts/pcre.md` but the DEFINE quirk — makes the library refuse it
-  too: the counting is ready (0 differences from pcre2test 10.45–10.49 over
-  210,000 cases), the fixture needs another pattern, and on 10.45+ there may
-  be none.
+- The Psalm and PHPStan bridges require `regex-linter` whole, for the
+  target resolution and the PHP-source helpers they import. Those need a
+  home below it, a new split package or a lower one; dropping the
+  `require` afterwards is never a break.
+- Four tests (`ValidationMemoTest`, `RegexApiTest` twice,
+  `RegexGenerateTest`) use `/(?:a[\x{100}-\x{10FFFF}\pL]{0}){1900}/u` as a
+  pattern only the engine refuses. Counting a class of every character past
+  255 plus a property exactly, one of the lengths "Patterns too large to
+  compile" in `docs/concepts/pcre.md` says the library does not know for
+  sure, makes the library refuse it too. The counting is ready (no difference from pcre2test 10.45–10.49 over
+  some 210,000 cases); the fixture needs another pattern, and on 10.45 and
+  later there may be none.
