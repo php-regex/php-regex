@@ -139,11 +139,14 @@ final class ComplexityScorer extends AbstractNodeVisitor
             $score += self::BASE_SCORE;
         }
 
-        // Add the score of the quantified node
-        $score += $node->node->accept($this);
-
-        if ($isUnbounded) {
-            $this->quantifierDepth--;
+        // Add the score of the quantified node; the depth comes back whatever
+        // happens below, so a scorer reused after a failure starts afresh.
+        try {
+            $score += $node->node->accept($this);
+        } finally {
+            if ($isUnbounded) {
+                $this->quantifierDepth--;
+            }
         }
 
         return $score;

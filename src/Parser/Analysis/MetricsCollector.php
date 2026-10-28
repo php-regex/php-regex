@@ -291,11 +291,15 @@ final class MetricsCollector extends AbstractNodeVisitor
         $this->currentDepth++;
         $this->maxDepth = max($this->maxDepth, $this->currentDepth);
 
-        if (null !== $traverse) {
-            $traverse();
+        // The depth comes back whatever happens below: a collector reused
+        // after a failure counts the next tree afresh.
+        try {
+            if (null !== $traverse) {
+                $traverse();
+            }
+        } finally {
+            $this->currentDepth--;
         }
-
-        $this->currentDepth--;
 
         return $this->snapshot();
     }

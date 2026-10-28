@@ -271,11 +271,6 @@ they answer wrong, not just incomplete.
   (`RedosAnalysis.php:155-158`). The heuristic score of `Unknown` equals
   Medium's 5, so score triage cannot tell a failed analysis from a real
   risk (`RedosAnalyzer.php:295-305`).
-- `ComplexityScorer` resets `quantifierDepth` only in `visitRegex()`, so
-  an accept started on a subtree inherits the last run's depth; the same
-  shape in `MetricsCollector::record`, which resets all counters when
-  depth reaches 0 mid-traversal (`ComplexityScorer.php:78`,
-  `MetricsCollector.php:281-285`).
 - `PatternInfoAnalyzer` is not the only reader that could refuse
   `/\k<x>/`; `ParserOptions::fromArray` accepts `cache` arrays whose
   `max_entries` of 0 discards every write without a word
