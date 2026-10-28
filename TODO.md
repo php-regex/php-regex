@@ -249,12 +249,6 @@ they answer wrong, not just incomplete.
   library's own `locale` option reads them for classes but not for the
   delimiter scan (`PatternParser.php:40,50,202-207`, `Text/Ascii.php`).
   glibc UTF-8 locales agree with the library; BSD/macOS ones do not.
-- `pcre_version: '10.4'` is silently read as 10.04: `judgedWith()` answers
-  `"10.39"`, and `/\p{greek}/` is INVALID under `'10.4'`, VALID under
-  `'10.40'`. The one-digit minor is a release that never existed;
-  `pcreAtLeast()` refuses it by message ("a minor is written with two
-  digits at least") — the constructor does not (`PcreTarget.php:78-84,
-  272-290` against `:173-184`).
 - Two lint rules advise rewrites the optimizer itself refuses as unsafe.
   `ZeroQuantifierRule` tells the user `{0}` "can be removed" where
   `RepeatRewrites::normalizeQuantifier` guards the removal — capture

@@ -279,7 +279,9 @@ final class PcreTarget
         $hyphen = strpos($release, '-');
         $build = false === $hyphen ? null : substr($release, $hyphen + 1);
         $parts = explode('.', false === $hyphen ? $release : substr($release, 0, $hyphen));
-        if (2 !== \count($parts) || !Ascii::isDigit($parts[0]) || !Ascii::isDigit($parts[1])) {
+        // PCRE2 10 writes its minor with two digits: "10.4" names no
+        // release, and would read as 10.04.
+        if (2 !== \count($parts) || !Ascii::isDigit($parts[0]) || !Ascii::isDigit($parts[1]) || ('10' === ltrim($parts[0], '0') && \strlen($parts[1]) < 2)) {
             return null;
         }
         if (null !== $build && !Ascii::isAlnum($build)) {

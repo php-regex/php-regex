@@ -168,6 +168,10 @@ final class PcreTargetTest extends TestCase
         yield 'bare hyphen' => ['written' => '10.44-'];
         yield 'symbol in the suffix' => ['written' => '10.44-RC!'];
         yield 'prefixed' => ['written' => 'v10.44'];
+        // PCRE2 writes a minor with two digits: "10.4" would read as 10.04,
+        // a release that never was, and judge "\p{greek}" invalid.
+        yield 'one-digit minor' => ['written' => '10.4'];
+        yield 'one-digit minor with a date' => ['written' => '10.4 2022-04-14'];
     }
 
     #[Test]
@@ -229,9 +233,10 @@ final class PcreTargetTest extends TestCase
     {
         $this->assertSame('php8.4/pcre10.44', (new PcreTarget(80400, '10.44', 'C'))->cacheKey());
         $this->assertNotSame((new PcreTarget(80400, '10.42'))->cacheKey(), (new PcreTarget(80400, '10.44'))->cacheKey());
-        // No parse rule depends on a PHP patch release, and "10.4" is "10.04".
+        // No parse rule depends on a PHP patch release; a minor is read as
+        // its two digits ("10.4" names no release and is refused).
         $this->assertSame((new PcreTarget(80400, '10.44'))->cacheKey(), (new PcreTarget(80426, '10.44 2024-06-07'))->cacheKey());
-        $this->assertSame((new PcreTarget(80400, '10.04'))->cacheKey(), (new PcreTarget(80400, '10.4'))->cacheKey());
+        $this->assertNotSame((new PcreTarget(80400, '10.04'))->cacheKey(), (new PcreTarget(80400, '10.40'))->cacheKey());
     }
 
     #[Test]
