@@ -28,9 +28,6 @@ jobs:
     # Part of the suite asks the running engine. The official images build
     # PHP with the PCRE2 php-src bundles, so each supported PHP runs here on
     # its own engine; the "tests" job runs them all on Ubuntu's system PCRE2.
-    # PHP 8.1 and its 10.39 are left to the engine-claims job: the suite fails
-    # there where it expects 10.40 and later of the running engine, in tests
-    # that no verdict for 10.39 depends on.
     name: Tests (PHP ${{ matrix.php }}, bundled PCRE2 ${{ matrix.pcre }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -39,6 +36,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { php: '8.1', pcre: '10.39' }
           - { php: '8.2', pcre: '10.40' }
           - { php: '8.3', pcre: '10.42' }
           - { php: '8.4', pcre: '10.44' }
@@ -92,6 +90,12 @@ jobs:
           composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress ${{ startsWith(matrix.php, '8.6') && '--ignore-platform-req=php+' || '' }}
           composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress ${{ startsWith(matrix.php, '8.6') && '--ignore-platform-req=php+' || '' }}
 
+      - name: Configure PHPUnit 10.5
+        # PHP 8.1 runs PHPUnit 10.5, which refuses the two details settings
+        # PHPUnit 11 brought. phpunit.xml is read before the .dist.
+        if: matrix.php == '8.1'
+        run: sed -e '/displayDetailsOnAllIssues=/d' -e '/displayDetailsOnPhpunitDeprecations=/d' phpunit.xml.dist > phpunit.xml
+
       - name: Run Test Suite
         # As a plain user: a container job runs as root, who may write where
         # the tests check that nothing can.
@@ -102,7 +106,7 @@ jobs:
 
       - name: Prove the formatter on this engine
         # Formatted and compacted patterns must match exactly what the input
-        # matches, on every engine the library supports, the 10.40 floor
+        # matches, on every engine the library supports, the 10.39 floor
         # included. Too slow for the default suite.
         run: su tester --shell /bin/sh --command 'tools/phpunit/vendor/bin/phpunit --colors=always --group formatter-corpus'
 
