@@ -7,7 +7,7 @@ on:
     branches: [ 2.x ]
   schedule:
     # Every Monday, against the week's dictionary.
-    - cron: '31 4 * * 1'
+    - cron: '3 5 * * 1'
   workflow_dispatch:
 
 permissions:
