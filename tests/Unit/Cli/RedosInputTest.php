@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Cli;
 
 use PHPRegex\Cli\Command\RedosArguments;
 use PHPRegex\Cli\Command\RedosInput;
+use PHPRegex\Redos\RedosWitness;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -89,7 +90,7 @@ final class RedosInputTest extends TestCase
         $this->assertInstanceOf(RedosInput::class, $input);
         $this->assertSame('auto', $input->source);
         $witness = $regex->redos('/(a+)+b/')->witness;
-        $this->assertNotNull($witness);
+        $this->assertInstanceOf(RedosWitness::class, $witness);
         $this->assertSame($witness->build(32), $input->value);
         $this->assertStringContainsString('b', $input->value);
     }

@@ -208,19 +208,6 @@ final class TranspileCommandOutputTest extends TestCase
     }
 
     /**
-     * @param array<string, string|null> $input
-     *
-     * @return array{int, string}
-     */
-    private function transpile(array $input, int $verbosity = OutputInterface::VERBOSITY_NORMAL): array
-    {
-        $tester = new CommandTester(new TranspileCommand(Regex::create()));
-        $status = $tester->execute($input, ['verbosity' => $verbosity]);
-
-        return [$status, $tester->getDisplay()];
-    }
-
-    /**
      * The Python release the target runs on decides what is carried: an
      * atomic group from Python 3.11; a release that names none is a usage
      * error, as the CLI reads it.
@@ -234,5 +221,18 @@ final class TranspileCommandOutputTest extends TestCase
         $this->assertSame(0, $tester->execute(['pattern' => '/(?>a)b/', '--target' => 'python', '--python-version' => '3.11']));
         $this->assertStringContainsString('(?>a)b', $tester->getDisplay());
         $this->assertSame(2, $tester->execute(['pattern' => '/a/', '--target' => 'python', '--python-version' => 'three']));
+    }
+
+    /**
+     * @param array<string, string|null> $input
+     *
+     * @return array{int, string}
+     */
+    private function transpile(array $input, int $verbosity = OutputInterface::VERBOSITY_NORMAL): array
+    {
+        $tester = new CommandTester(new TranspileCommand(Regex::create()));
+        $status = $tester->execute($input, ['verbosity' => $verbosity]);
+
+        return [$status, $tester->getDisplay()];
     }
 }
