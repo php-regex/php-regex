@@ -34,8 +34,9 @@ trap cleanup EXIT
         if [ -e "${file}" ] || [ -L "${file}" ]; then
           printf '%s\0' "${file}"
         fi
-      done
-) | rsync -a --from0 --files-from=- "${ROOT}/" "${TMP_DIR}/"
+      done \
+    | tar --null -T - -cf -
+) | tar -xf - -C "${TMP_DIR}"
 
 if [ -f "${ROOT}/composer.lock" ]; then
   cp "${ROOT}/composer.lock" "${TMP_DIR}/composer.lock"
