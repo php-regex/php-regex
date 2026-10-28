@@ -260,10 +260,6 @@ they answer wrong, not just incomplete.
 
 ### Smaller points, each reproduced once
 
-- A pattern spelling `\e` reaches the highlighters as a raw ESC byte:
-  `highlight("/a\e]0;PWNEDb/", 'html')` holds one 0x1B inside the HTML
-  (no contiguous OSC can form, so no terminal injection — display
-  corruption only). The text explainer says `\e` (`AbstractHighlighter.php:148`).
 - `deduplicateAlternation` removes capture-bearing duplicates under
   `verifyWithAutomata: false`: `/(a)|(a)/` → `/(a)/`, `$m[2]` vanishes
   under `PREG_UNMATCHED_AS_NULL` (`AlternationRewrites.php:44-58`).

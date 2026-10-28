@@ -145,7 +145,7 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
             return '';
         }
 
-        return $this->wrap($this->escape($node->value), 'literal');
+        return $this->wrap($this->escape(self::withoutControlBytes($node->value)), 'literal');
     }
 
     #[\Override]
@@ -425,6 +425,24 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
     abstract protected function wrap(string $content, string $type): string;
 
     abstract protected function escape(string $string): string;
+
+    /**
+     * A literal spelled with an escape ("\e", "\x07") holds the byte it
+     * stands for: shown escaped, never as the control byte a terminal or a
+     * page would act on. A tab or a line break keeps its written form.
+     */
+    private static function withoutControlBytes(string $value): string
+    {
+        static $escapes = null;
+        if (null === $escapes) {
+            $escapes = [];
+            foreach ([...range(0x00, 0x08), 0x0B, 0x0C, ...range(0x0E, 0x1F), 0x7F] as $byte) {
+                $escapes[\chr($byte)] = \sprintf('\\x%02X', $byte);
+            }
+        }
+
+        return strtr($value, $escapes);
+    }
 
     /**
      * @return list<NodeInterface>
