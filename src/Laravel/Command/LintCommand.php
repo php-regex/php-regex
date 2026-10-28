@@ -234,7 +234,8 @@ final class LintCommand extends Command
     /**
      * The optimizations of config/php-regex.php, keyed in snake_case as
      * the optimizer reads them. Lint checks every rewrite with the automata
-     * unless the config says otherwise.
+     * unless verify_with_automata says otherwise, a config published before
+     * it was listed included.
      */
     private static function normalizeOptimizations(mixed $optimizations): OptimizerOptions
     {

@@ -75,6 +75,7 @@ final class BundleExtensionTest extends TestCase
             'possessive' => false,
             'factorize' => false,
             'min_quantifier_count' => 4,
+            'verify_with_automata' => true,
         ], $lint->getArgument('$defaultOptimizations'));
         $compare = $container->getDefinition('php_regex.command.compare');
         $this->assertSame('hopcroft', $compare->getArgument('$defaultMinimizer'));

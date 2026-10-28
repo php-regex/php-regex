@@ -244,6 +244,10 @@ final class PHPRegexBundle extends AbstractBundle
                             ->min(2)
                             ->info('Minimum repeated quantifier count before collapsing (e.g., aaaa -> a{4}).')
                         ->end()
+                        ->booleanNode('verify_with_automata')
+                            ->defaultTrue()
+                            ->info('Suggest only the rewrites the automata prove to match the same subjects.')
+                        ->end()
                     ->end()
                 ->end()
                 ->arrayNode('paths')
@@ -306,6 +310,7 @@ final class PHPRegexBundle extends AbstractBundle
      *         possessive: bool,
      *         factorize: bool,
      *         min_quantifier_count: int,
+     *         verify_with_automata: bool,
      *     },
      *     paths: array<int, string>,
      *     exclude: array<int, string>,
@@ -367,6 +372,7 @@ final class PHPRegexBundle extends AbstractBundle
                 'possessive' => $config['optimizations']['possessive'],
                 'factorize' => $config['optimizations']['factorize'],
                 'min_quantifier_count' => $config['optimizations']['min_quantifier_count'],
+                'verify_with_automata' => $config['optimizations']['verify_with_automata'],
             ])
             // Without an ide of its own, EditorLinkPass links to the editor
             // FrameworkBundle links to.

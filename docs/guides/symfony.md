@@ -80,6 +80,7 @@ php_regex:
         possessive: false
         factorize: false
         min_quantifier_count: 4
+        verify_with_automata: true  # suggest only the rewrites the automata prove
     paths: [src]       # read from %kernel.project_dir%
     exclude: [vendor]  # a directory of the project, wherever it lies under the paths
     report_unmatched_ignores: true  # report the @regex-ignore markers that silence nothing

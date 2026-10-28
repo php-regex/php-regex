@@ -206,6 +206,12 @@ return [
         | Minimum repeated quantifier count before collapsing (e.g., aaaa -> a{4}).
         */
         'min_quantifier_count' => 4,
+
+        /*
+        | Suggest only the rewrites the automata prove to match the same
+        | subjects.
+        */
+        'verify_with_automata' => true,
     ],
 
     /*

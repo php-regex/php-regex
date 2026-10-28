@@ -56,7 +56,8 @@ final class ConfigurationTest extends TestCase
          *         canonicalize_char_classes: bool,
          *         possessive: bool,
          *         factorize: bool,
-         *         min_quantifier_count: int
+         *         min_quantifier_count: int,
+         *         verify_with_automata: bool
          *     }
          * } $config
          */
@@ -80,6 +81,7 @@ final class ConfigurationTest extends TestCase
         $this->assertFalse($config['optimizations']['possessive']);
         $this->assertFalse($config['optimizations']['factorize']);
         $this->assertSame(4, $config['optimizations']['min_quantifier_count']);
+        $this->assertTrue($config['optimizations']['verify_with_automata']);
     }
 
     #[Test]
@@ -117,7 +119,8 @@ final class ConfigurationTest extends TestCase
          *         canonicalize_char_classes: bool,
          *         possessive: bool,
          *         factorize: bool,
-         *         min_quantifier_count: int
+         *         min_quantifier_count: int,
+         *         verify_with_automata: bool
          *     }
          * } $config
          */
@@ -145,6 +148,7 @@ final class ConfigurationTest extends TestCase
                 'possessive' => true,
                 'factorize' => true,
                 'min_quantifier_count' => 6,
+                'verify_with_automata' => false,
             ],
         ]]);
 
@@ -176,5 +180,6 @@ final class ConfigurationTest extends TestCase
         $this->assertTrue($config['optimizations']['possessive']);
         $this->assertTrue($config['optimizations']['factorize']);
         $this->assertSame(6, $config['optimizations']['min_quantifier_count']);
+        $this->assertFalse($config['optimizations']['verify_with_automata']);
     }
 }

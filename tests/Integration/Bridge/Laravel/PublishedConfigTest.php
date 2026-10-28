@@ -83,6 +83,7 @@ final class PublishedConfigTest extends LaravelTestCase
         $this->assertSame('regex_', config('php-regex.cache.prefix'));
         $this->assertTrue(config('php-regex.optimizations.word'));
         $this->assertSame(4, config('php-regex.optimizations.min_quantifier_count'));
+        $this->assertTrue(config('php-regex.optimizations.verify_with_automata'));
         $this->assertSame(Regex::DEFAULT_MAX_LOOKBEHIND_LENGTH, config('php-regex.max_lookbehind_length'));
         $this->assertNull(config('php-regex.php_version'));
     }

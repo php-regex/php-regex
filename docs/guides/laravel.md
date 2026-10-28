@@ -64,6 +64,7 @@ return [
         'possessive' => false,
         'factorize' => false,
         'min_quantifier_count' => 4,
+        'verify_with_automata' => true, // suggest only the rewrites the automata prove
     ],
     // The calls regex:lint reads patterns from, as "extraction" of regex.json.
     'extraction' => [
