@@ -333,6 +333,7 @@ var_dump($result->category);       // NULL: no error, no category
 | `hint`            | string\|null            | Fix suggestion           |
 | `complexityScore` | int                     | Pattern complexity       |
 | `category`        | ValidationErrorCategory\|null | Error category, `null` when valid |
+| `ast`             | RegexNode\|null          | The tree of a valid pattern, `null` when invalid: one call gives the verdict and the tree |
 
 `render()` gives the message, the caret snippet and the hint (`Hint: …`) as
 one block of plain text, each on its own line and left out when absent; an

@@ -134,12 +134,6 @@ commit.
   present.
 - `PregSplitDynamicReturnTypeExtension`: the empty pattern/subject branch
   duplicates `genericReturnType()`; call it.
-- The reader runs `validate()` then `parsePattern()` because `parse()`
-  accepts a pattern the target refuses (`a\x{ 41 }` for PHP 8.3) and only
-  `validate()` reports it. On the 1,644 corpus patterns: validate 471 µs,
-  parse 347 µs, capture shapes 225 µs per pattern, against 367 µs for the
-  whole upstream walk. A parse that enforces the target, or a validation
-  result that carries the tree, removes one pass. An API decision.
 - A lean parser package for consumers that need the tree and the capture
   shapes only: 80 of the 196 files are loaded for the shapes; Printer, Hir,
   Json, Text, Engine and Cache stay unused.

@@ -31,6 +31,9 @@ CHANGELOG
  * `RegexParser::validate()` keeps the results of the last 1024 patterns an
    instance validated, and `clearCaches()` empties them: a pattern validated
    again costs a lookup.
+ * `ValidationResult::$ast` carries the tree of a valid pattern: one
+   `validate()` call gives the verdict and the tree, where a consumer that
+   needed both parsed the pattern again.
  * `ArrayCache` drops the tree read or written longest ago, where it dropped
    the one written first.
  * `PatternInfoAnalyzer` takes an optional `PcreTarget`, the running PHP's

@@ -73,7 +73,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-905510178342f70447bf5260e8b5c9f6';
+    public const CACHE_VERSION = 'ast-b48ccf9d7414fb25d4a1a29672ef8cda';
 
     /**
      * ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, by the name the parser gave it first.
@@ -412,7 +412,7 @@ final class RegexParser
                 }
             }
 
-            return new ValidationResult(true, null, $complexityScore);
+            return new ValidationResult(true, null, $complexityScore, ast: $ast);
         } catch (LimitException $e) {
             // The library's own limits: the pattern is not read further,
             // and no verdict is given on it.

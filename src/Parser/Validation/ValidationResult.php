@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Validation;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Node\RegexNode;
 
 /**
  * Outcome of a regex validation check.
@@ -22,6 +23,10 @@ final class ValidationResult implements \JsonSerializable
 {
     /**
      * @internal built by RegexParser::validate() and Regex::validate()
+     *
+     * @param RegexNode|null $ast the tree of a valid pattern, so one
+     *                            validate() call gives the verdict and the
+     *                            tree; null whenever the pattern is not valid
      */
     public function __construct(
         public readonly bool $isValid,
@@ -32,6 +37,7 @@ final class ValidationResult implements \JsonSerializable
         public readonly ?string $caretSnippet = null,
         public readonly ?string $hint = null,
         public readonly ?ErrorCode $errorCode = null,
+        public readonly ?RegexNode $ast = null,
     ) {}
 
     /**

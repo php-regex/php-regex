@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
@@ -35,6 +36,55 @@ final class ValidationResultTest extends TestCase
         $this->assertNull($result->caretSnippet);
         $this->assertNull($result->hint);
         $this->assertNull($result->errorCode);
+        $this->assertNull($result->ast);
+    }
+
+    #[Test]
+    public function test_validate_hands_back_the_tree_of_a_valid_pattern(): void
+    {
+        $result = RegexParser::create()->validate('/a(b)/i');
+
+        $this->assertTrue($result->isValid);
+        $this->assertInstanceOf(RegexNode::class, $result->ast);
+        $this->assertSame('a(b)', $result->ast->source);
+        $this->assertSame('i', $result->ast->flags);
+    }
+
+    #[Test]
+    public function test_validate_hands_back_no_tree_for_a_pattern_it_refuses(): void
+    {
+        $result = RegexParser::create()->validate('/(a/');
+
+        $this->assertFalse($result->isValid);
+        $this->assertNull($result->ast);
+    }
+
+    #[Test]
+    public function test_validate_hands_back_no_tree_for_a_pattern_the_target_refuses(): void
+    {
+        // \x{ 41 } needs PCRE2 10.43, which PHP bundles from 8.4: the tree
+        // parses, the target refuses it, and the result carries no tree
+        $result = RegexParser::create(['php_version' => 80300])->validate('/a\x{ 41 }/');
+
+        $this->assertFalse($result->isValid);
+        $this->assertNull($result->ast);
+    }
+
+    #[Test]
+    public function test_validate_hands_back_no_tree_past_a_limit_of_its_own(): void
+    {
+        $result = RegexParser::create(['max_pattern_length' => 4])->validate('/abcdef/');
+
+        $this->assertTrue($result->isLimit());
+        $this->assertNull($result->ast);
+    }
+
+    #[Test]
+    public function test_json_serialization_leaves_the_tree_out(): void
+    {
+        $result = RegexParser::create()->validate('/a(b)/');
+
+        $this->assertArrayNotHasKey('ast', $result->jsonSerialize());
     }
 
     #[Test]
