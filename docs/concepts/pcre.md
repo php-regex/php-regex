@@ -391,6 +391,11 @@ Where the library still departs from what the target's PCRE2 reports:
   have, is never reached; where one of these items comes first, the library
   may find the limit passed later than PCRE2 does, and report such an error
   in its place.
+- **A property name under a locale that is not C, on PCRE2 10.40 to 10.44.**
+  These releases drop the characters of a name the C library's `isspace()`
+  calls white space, read under the running `LC_CTYPE`: a locale that calls
+  a byte past 127 a space may make them read a name the library, which
+  judges names by the tables of the release, refuses.
 - **A DEFINE group in a lookbehind, or one that opens with a group, on
   PCRE2 10.32 to 10.34** (PHP 7.3 and 7.4). These releases step over one item too many of their
   internal form of the pattern after `(?(DEFINE)`, both when they measure a

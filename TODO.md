@@ -204,10 +204,6 @@ two parsers read differently.
   that stops at once, `(?=a+?)`, or holds where the loop could go on,
   `(?!a+)` before `a`, keeps the polynomial proof from the linear one: the
   model has no cut scoped to a body.
-- The Unicode version of categories and scripts is the running engine's: a
-  10.39 engine reads 10.44's properties with Unicode 14 (documented). PCRE2
-  10.40–10.44 drop name characters with the C library's `isspace()`, so a
-  non-C `LC_CTYPE` may accept a property name the tables refuse.
 - On the 8.1 build the CI runners use (a setup-php compile), a child that
   dies of memory exhaustion prints no envelope from its shutdown handler;
   the official 8.1 build does. Reproduce with that build, then make it
