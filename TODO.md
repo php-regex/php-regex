@@ -122,3 +122,32 @@ commit.
   sure, makes the library refuse it too. The counting is ready (no difference from pcre2test 10.45–10.49 over
   some 210,000 cases); the fixture needs another pattern, and on 10.45 and
   later there may be none.
+
+
+## PHPStan research branch (php-regex/phpstan-src#1), reviewed 2026-10-28
+
+- `/(?:(?<a>x)|(?<b>y))(?:(?<a>z))?/J` on `y`: the engine writes `a => ''`
+  (group 1 is unset but not trailing, so its key is written and the name
+  takes it); the branch types the name as an optional `'z'`. In
+  `RegexArrayShapeMatcher::buildArrayType()` a group forced to the unmatched
+  value is left out of the name's union; it counts whenever its own key is
+  present.
+- `PregSplitDynamicReturnTypeExtension`: the empty pattern/subject branch
+  duplicates `genericReturnType()`; call it.
+- The reader runs `validate()` then `parsePattern()` because `parse()`
+  accepts a pattern the target refuses (`a\x{ 41 }` for PHP 8.3) and only
+  `validate()` reports it. On the 1,644 corpus patterns: validate 471 µs,
+  parse 347 µs, capture shapes 225 µs per pattern, against 367 µs for the
+  whole upstream walk. A parse that enforces the target, or a validation
+  result that carries the tree, removes one pass. An API decision.
+- A lean parser package for consumers that need the tree and the capture
+  shapes only: 80 of the 196 files are loaded for the shapes; Printer, Hir,
+  Json, Text, Engine and Cache stay unused.
+- The branch has no CI run; `bug11277b` (`/^(?:(.+,?)|(x))*$/`) is the one
+  row less tight than upstream, by design (a group of a repeated alternation
+  may be left unset by a later round): say so in the description.
+- Upstream, against its generated parser, one small fix with a regression
+  test each: inline `(?i)` and `(?i:)` ignored when constants are read,
+  `\Q..\E` read as a group, `\o{101}` read as 101 `o`, `(?>(a))?` not
+  optional, a class like `[é]` without `u` read as characters, the subject
+  of `.`, `\pL` or `\S` typed non-falsy on `0`.
