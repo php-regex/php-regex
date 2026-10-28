@@ -292,11 +292,6 @@ they answer wrong, not just incomplete.
   (`RedosAnalysis.php:155-158`). The heuristic score of `Unknown` equals
   Medium's 5, so score triage cannot tell a failed analysis from a real
   risk (`RedosAnalyzer.php:295-305`).
-- `--input -x` is refused in the space form (`--input=-x` works) because
-  every free-text value starting with `-` reads as an option
-  (`Options.php:163`); `--repeat 0` is refused where `--time-limit 0`
-  means "none" — zero has two meanings two options apart
-  (`RedosArguments.php:165-174`).
 - `ComplexityScorer` resets `quantifierDepth` only in `visitRegex()`, so
   an accept started on a subtree inherits the last run's depth; the same
   shape in `MetricsCollector::record`, which resets all counters when

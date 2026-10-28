@@ -55,13 +55,15 @@ final class RedosArguments
      */
     public static function options(): Options
     {
+        // A subject, a prefix, a suffix or a pattern is free text: one that
+        // starts with "-" is its value, after the space as after "=".
         return new Options(Arguments::Pattern, [
-            Option::value('--safe', '<pattern>', 'Safe pattern to compare against'),
-            Option::value('--input', '<string>', 'Input string to benchmark (auto-generated when omitted)'),
+            Option::value('--safe', '<pattern>', 'Safe pattern to compare against')->takingAnyValue(),
+            Option::value('--input', '<string>', 'Input string to benchmark (auto-generated when omitted)')->takingAnyValue(),
             Option::value('--input-file', '<path>', 'Read input from a file'),
             self::number('--repeat', '<n>', 'Repeat input N times'),
-            Option::value('--prefix', '<string>', 'Prefix for the input'),
-            Option::value('--suffix', '<string>', 'Suffix for the input'),
+            Option::value('--prefix', '<string>', 'Prefix for the input')->takingAnyValue(),
+            Option::value('--suffix', '<string>', 'Suffix for the input')->takingAnyValue(),
             self::number('--iterations', '<n>', 'Number of iterations'),
             self::number('--warmup', '<n>', 'Warmup iterations'),
             self::number('--jit', '<0|1>', 'Override pcre.jit'),
