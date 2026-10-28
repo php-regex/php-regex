@@ -478,7 +478,9 @@ final class BeforePcre2Ten39Test extends TestCase
      */
     public static function provideFullRefusals(): iterable
     {
-        yield 'unknown property' => ['pattern' => '/\p{Bogus}/u', 'phpVersion' => '8.0', 'release' => '10.35', 'error' => 'Invalid or unsupported Unicode property: \p{Bogus}. PCRE2 10.35 knows a property by one exact name only.'];
+        // PHP 8.0.30 (PCRE2 10.35) refuses both, and compiles "\p{Greek}".
+        yield 'unknown property' => ['pattern' => '/\p{Bogus}/u', 'phpVersion' => '8.0', 'release' => '10.35', 'error' => 'Invalid or unsupported Unicode property: \p{Bogus}.'];
+        yield 'property spelled loosely' => ['pattern' => '/\p{greek}/u', 'phpVersion' => '8.0', 'release' => '10.35', 'error' => 'Invalid or unsupported Unicode property: \p{greek}. PCRE2 10.35 knows a property by one exact name only.'];
         yield 'backslash number' => ['pattern' => '/\214748364/', 'phpVersion' => '8.0', 'release' => '10.35', 'error' => 'Number too big at position 10: PCRE2 before 10.37 reads the digits after a backslash as one number, at most 214748363.'];
         yield 'repeated accept' => ['pattern' => '/a(*ACCEPT)?b/', 'phpVersion' => '7.4', 'release' => '10.33', 'error' => 'Quantifier "?" cannot be applied to assertion or verb "(*ACCEPT)" at position 10: PCRE2 10.34 lets "(*ACCEPT)" be repeated; write "(?:(*ACCEPT))?", which every release reads.'];
         yield 'short non-atomic lookahead' => ['pattern' => '/x(?*a)a/', 'phpVersion' => '7.4', 'release' => '10.34', 'error' => 'Invalid group modifier syntax at position 3: PCRE2 10.35 added "(?*" for "(*napla:"; write "(*napla:" instead.'];

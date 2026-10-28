@@ -467,12 +467,7 @@ final class EscapeChecks
             }
         }
 
-        $prop = $node->prop;
-        $key = $node->hasBraces
-            ? 'p'.$prop
-            : ((\strlen($prop) > 1 || str_starts_with($prop, '^'))
-                ? 'p{'.$prop.'}'
-                : 'p'.$prop);
+        $key = $this->propertyKey($node);
         [$name, $braced] = $this->propertyName($node);
 
         // Another engine than the one that runs: the names of the release
@@ -523,6 +518,20 @@ final class EscapeChecks
         if (!$this->compilesProperty($key)) {
             $this->raiseUnknownProperty($node, $key);
         }
+    }
+
+    /**
+     * The property as the engine is asked about it, after the backslash.
+     */
+    private function propertyKey(UnicodePropNode $node): string
+    {
+        $prop = $node->prop;
+
+        return $node->hasBraces
+            ? 'p'.$prop
+            : ((\strlen($prop) > 1 || str_starts_with($prop, '^'))
+                ? 'p{'.$prop.'}'
+                : 'p'.$prop);
     }
 
     /**
@@ -668,6 +677,23 @@ final class EscapeChecks
 
         $unprefixed = LibraryPcre::replace('/^\s*+(?:sc|script|scx|script[\s_-]*+extensions)\s*+[:=]/i', '', $name) ?? $name;
         $spelling = PropertyNames::spellingBefore1040($unprefixed, $this->target);
+
+        // A name no release knows is refused as every release refuses it,
+        // and one a release after 10.40 added names that release.
+        $since = null === $spelling ? PropertyNames::firstReleaseKnowing(...$this->propertyName($node)) : '10.40';
+        if (null === $since) {
+            $this->raiseUnknownProperty($node, $this->propertyKey($node));
+        }
+
+        if ('10.40' !== $since) {
+            $this->raise(
+                \sprintf('Invalid or unsupported Unicode property: \\%s. It needs PCRE2 %s, and the target is PCRE2 %s.', substr($source, $node->startPosition + 1, $end - $node->startPosition - 1), $since, $this->target->pcreVersion),
+                $end,
+                ErrorCode::UnicodePropertyInvalid,
+                \sprintf('Target a PHP whose PCRE2 is %s or later, or use another property.', $since),
+            );
+        }
+
         $this->raise(
             \sprintf('Invalid or unsupported Unicode property: \\%s. PCRE2 %s knows a property by one exact name only.', substr($source, $node->startPosition + 1, $end - $node->startPosition - 1), $this->target->pcreVersion),
             $end,

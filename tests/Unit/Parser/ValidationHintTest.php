@@ -149,6 +149,46 @@ final class ValidationHintTest extends TestCase
     }
 
     /**
+     * PCRE2 10.39 looks a name up as written, and every release refuses a
+     * name none of them knows: that refusal, its near miss included, is the
+     * same as for any other release; a name a release after 10.40 added
+     * names that release. PHP 8.1.34 (PCRE2 10.39) refuses "\p{Letter}",
+     * "\p{Foo}" and "\p{Kawi}", and compiles "\p{L}".
+     */
+    #[Test]
+    #[DataProvider('provideNamesRefusedBefore1040')]
+    public function test_a_name_pcre2_10_39_refuses_gets_the_hint_every_release_gives(string $pattern, string $error, ?string $hint): void
+    {
+        $result = RegexParser::create(['cache' => null, 'pcre_version' => '10.39'])->validate($pattern);
+
+        $this->assertSame(ErrorCode::UnicodePropertyInvalid, $result->errorCode);
+        $this->assertSame($error, $result->error);
+        $this->assertSame($hint, $result->hint);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, error: string, hint: string|null}>
+     */
+    public static function provideNamesRefusedBefore1040(): iterable
+    {
+        yield 'a near miss' => [
+            'pattern' => '/\\p{Letter}/u',
+            'error' => 'Invalid or unsupported Unicode property: \\p{Letter}. Did you mean \\p{L}?',
+            'hint' => 'Did you mean \\p{L}?',
+        ];
+        yield 'a name no release knows' => [
+            'pattern' => '/\\p{Foo}/u',
+            'error' => 'Invalid or unsupported Unicode property: \\p{Foo}.',
+            'hint' => 'Use a property PCRE2 knows, such as \\p{L}, \\p{Lu}, \\p{N} or a script such as \\p{Greek}.',
+        ];
+        yield 'a script a later release added' => [
+            'pattern' => '/\\p{Kawi}/u',
+            'error' => 'Invalid or unsupported Unicode property: \\p{Kawi}. It needs PCRE2 10.43, and the target is PCRE2 10.39.',
+            'hint' => 'Target a PHP whose PCRE2 is 10.43 or later, or use another property.',
+        ];
+    }
+
+    /**
      * A near miss is data: the message keeps its "Did you mean", and the
      * hint carries it alone.
      *
