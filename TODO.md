@@ -211,8 +211,6 @@ two parsers read differently.
   10.39 engine reads 10.44's properties with Unicode 14 (documented). PCRE2
   10.40–10.44 drop name characters with the C library's `isspace()`, so a
   non-C `LC_CTYPE` may accept a property name the tables refuse.
-- A validator built without the pattern skips the listed-group check of
-  `(*scs:(2)a)` (internal callers only).
 - On the 8.1 build the CI runners use (a setup-php compile), a child that
   dies of memory exhaustion prints no envelope from its shutdown handler;
   the official 8.1 build does. Reproduce with that build, then make it

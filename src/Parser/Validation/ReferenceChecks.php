@@ -335,11 +335,9 @@ final class ReferenceChecks
      */
     public function listedGroups(NodeInterface $node, array $groups, int $from): void
     {
-        if (null === $this->source) {
-            return;
-        }
-
-        $at = (int) strpos($this->source, '(', $from) + 1;
+        // The text only places the caret: without it, the list is checked
+        // all the same, the fault reported where the list opens.
+        $at = null === $this->source ? $from : (int) strpos($this->source, '(', $from) + 1;
         foreach ($groups as $group) {
             $exists = match (true) {
                 Ascii::isDigit($group) => (int) $group <= $this->numbering->maxGroupNumber,
