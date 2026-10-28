@@ -21,7 +21,9 @@ use PHPUnit\Framework\TestCase;
 /**
  * The phar a release carries is built by the phar workflow, never on a
  * maintainer's machine: the workflow attests where it was built, and attaches
- * it under the names self-update downloads.
+ * it under the names self-update downloads. The checks the phar passes before
+ * that live in the check-phar action, which the packages workflow runs on
+ * every push as well.
  */
 final class PharWorkflowTest extends TestCase
 {
@@ -113,7 +115,8 @@ final class PharWorkflowTest extends TestCase
 
     /**
      * The tag a run by hand names is checked before it becomes a ref to
-     * check out or a release to edit.
+     * check out or a release to edit; the version it names, without its v,
+     * is what the phar is then asked to report.
      */
     #[Test]
     #[DataProvider('provideTagCases')]
@@ -125,25 +128,37 @@ final class PharWorkflowTest extends TestCase
         [$code, $output] = $this->runStep('Check the tag', ['TAG' => $tag]);
 
         $this->assertSame($accepted, 0 === $code, $output);
+        $this->assertSame($accepted ? 'version='.substr($tag, 1)."\n" : '', (string) file_get_contents($this->scratch.'/output'));
     }
 
     /**
-     * @return iterable<string, array{reported: string, tag: string, accepted: bool}>
+     * The tag workflow hands the version of its tag to the checks the action
+     * holds.
+     */
+    #[Test]
+    public function test_the_tag_workflow_checks_the_phar_against_the_version_of_its_tag(): void
+    {
+        $this->assertStringContainsString("uses: ./.github/actions/check-phar\n        with:\n          version: \${{ steps.tag.outputs.version }}", self::workflow());
+    }
+
+    /**
+     * @return iterable<string, array{reported: string, version: string, accepted: bool}>
      */
     public static function provideVersionCases(): iterable
     {
-        yield 'same' => ['reported' => 'PHPRegex 2.0.1 by Younes ENNAJI', 'tag' => 'v2.0.1', 'accepted' => true];
-        yield 'pre-release' => ['reported' => 'PHPRegex 2.1.0-RC1 by Younes ENNAJI', 'tag' => 'v2.1.0-RC1', 'accepted' => true];
-        yield 'longer patch' => ['reported' => 'PHPRegex 2.0.10 by Younes ENNAJI', 'tag' => 'v2.0.1', 'accepted' => false];
-        yield 'development' => ['reported' => 'PHPRegex 2.0.1-DEV by Younes ENNAJI', 'tag' => 'v2.0.1', 'accepted' => false];
-        yield 'another tool' => ['reported' => 'Box 2.0.1', 'tag' => 'v2.0.1', 'accepted' => false];
+        yield 'same' => ['reported' => 'PHPRegex 2.0.1 by Younes ENNAJI', 'version' => '2.0.1', 'accepted' => true];
+        yield 'pre-release' => ['reported' => 'PHPRegex 2.1.0-RC1 by Younes ENNAJI', 'version' => '2.1.0-RC1', 'accepted' => true];
+        yield 'development build' => ['reported' => 'PHPRegex 2.0.0-DEV by Younes ENNAJI', 'version' => '2.0.0-DEV', 'accepted' => true];
+        yield 'longer patch' => ['reported' => 'PHPRegex 2.0.10 by Younes ENNAJI', 'version' => '2.0.1', 'accepted' => false];
+        yield 'development' => ['reported' => 'PHPRegex 2.0.1-DEV by Younes ENNAJI', 'version' => '2.0.1', 'accepted' => false];
+        yield 'another tool' => ['reported' => 'Box 2.0.1', 'version' => '2.0.1', 'accepted' => false];
     }
 
     #[Test]
     #[DataProvider('provideVersionCases')]
-    public function test_the_phar_reports_exactly_the_tagged_version(string $reported, string $tag, bool $accepted): void
+    public function test_the_phar_reports_exactly_the_version_it_is_checked_against(string $reported, string $version, bool $accepted): void
     {
-        [$code, $output] = $this->runStep('Check the version', ['TAG' => $tag, 'FAKE_VERSION' => $reported]);
+        [$code, $output] = $this->runStep('Check the version', ['VERSION' => $version, 'FAKE_VERSION' => $reported]);
 
         $this->assertSame($accepted, 0 === $code, $output);
     }
@@ -166,7 +181,7 @@ final class PharWorkflowTest extends TestCase
     #[DataProvider('provideCommandCases')]
     public function test_the_phar_validates_a_pattern_with_its_exit_code(array $env, bool $accepted): void
     {
-        [$code, $output] = $this->runStep('Check the phar validates a pattern', ['TAG' => 'v2.0.1', ...$env]);
+        [$code, $output] = $this->runStep('Check the phar validates a pattern', ['VERSION' => '2.0.1', ...$env]);
 
         $this->assertSame($accepted, 0 === $code, $output);
     }
@@ -191,7 +206,7 @@ final class PharWorkflowTest extends TestCase
     #[DataProvider('provideLanguageServerCases')]
     public function test_the_language_server_answers_initialize(?string $answer, bool $accepted): void
     {
-        [$code, $output] = $this->runStep('Check the phar carries the language server', ['TAG' => 'v2.0.1', ...(null === $answer ? [] : ['FAKE_LSP' => $answer])]);
+        [$code, $output] = $this->runStep('Check the phar carries the language server', ['VERSION' => '2.0.1', ...(null === $answer ? [] : ['FAKE_LSP' => $answer])]);
 
         $this->assertSame($accepted, 0 === $code, $output);
     }
@@ -226,24 +241,40 @@ final class PharWorkflowTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{source: string}>
+     */
+    public static function providePharJobs(): iterable
+    {
+        yield 'the tag workflow' => ['source' => self::workflow()];
+        yield 'the packages workflow' => ['source' => self::packagesPharJob()];
+    }
+
+    /**
      * Box needs PHP 8.2 to build; the phar itself runs on the lowest PHP the
-     * packages name, and is checked there.
+     * packages name, and is checked there, by the tag workflow and by the
+     * packages workflow alike.
      */
     #[Test]
-    public function test_the_phar_is_checked_on_the_lowest_php_the_packages_support(): void
+    #[DataProvider('providePharJobs')]
+    public function test_the_phar_is_checked_on_the_lowest_php_the_packages_support(string $source): void
     {
-        $workflow = self::workflow();
         $manifest = json_decode((string) file_get_contents(\dirname(__DIR__, 3).'/composer.json'), true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($manifest);
         $this->assertIsArray($manifest['require']);
         $this->assertSame('>=8.1', $manifest['require']['php']);
 
-        $build = (int) strpos($workflow, 'run: phar/build');
-        $lowest = strpos($workflow, "php-version: '8.1'");
+        $build = strpos($source, 'run: phar/build');
+        $this->assertNotFalse($build);
+        $lowest = strpos($source, "php-version: '8.1'");
         $this->assertNotFalse($lowest);
         $this->assertGreaterThan($build, $lowest);
-        foreach (['Check the version', 'Check the phar validates a pattern', 'Check the phar carries the language server'] as $check) {
-            $this->assertGreaterThan($lowest, strpos($workflow, '- name: '.$check), $check);
+        $check = strpos($source, '- name: Check the phar');
+        $this->assertNotFalse($check);
+        $this->assertGreaterThan($lowest, $check);
+        $this->assertStringContainsString('uses: ./.github/actions/check-phar', $source);
+
+        foreach (['Check the version', 'Check the phar validates a pattern', 'Check the phar carries the language server'] as $name) {
+            $this->assertStringContainsString('- name: '.$name, self::action());
         }
     }
 
@@ -275,7 +306,8 @@ final class PharWorkflowTest extends TestCase
 
     /**
      * Runs the script of one step as GitHub runs it, in a scratch directory,
-     * with the fake php and a fake gh first on the PATH.
+     * with the fake php and a fake gh first on the PATH, and a file to hold
+     * what the step writes to GITHUB_OUTPUT.
      *
      * @param array<string, string> $env
      *
@@ -288,6 +320,7 @@ final class PharWorkflowTest extends TestCase
         mkdir($this->scratch.'/work/bin', 0o777, true);
         mkdir($this->scratch.'/temp');
         file_put_contents($this->scratch.'/work/bin/regex.phar', 'phar');
+        file_put_contents($this->scratch.'/output', '');
         file_put_contents($this->scratch.'/fake/php', self::FAKE_PHP);
         file_put_contents($this->scratch.'/fake/gh', "#!/usr/bin/env bash\ncase \"\$FAKE_DRAFT\" in missing) echo 'release not found' >&2; exit 1 ;; *) echo \"\$FAKE_DRAFT\" ;; esac\n");
         chmod($this->scratch.'/fake/php', 0o755);
@@ -299,7 +332,7 @@ final class PharWorkflowTest extends TestCase
             [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
             $this->scratch.'/work',
-            $env + ['PATH' => $this->scratch.'/fake:'.getenv('PATH'), 'REAL_PHP' => \PHP_BINARY, 'RUNNER_TEMP' => $this->scratch.'/temp', 'HOME' => (string) getenv('HOME')],
+            $env + ['PATH' => $this->scratch.'/fake:'.getenv('PATH'), 'REAL_PHP' => \PHP_BINARY, 'RUNNER_TEMP' => $this->scratch.'/temp', 'GITHUB_OUTPUT' => $this->scratch.'/output', 'HOME' => (string) getenv('HOME')],
         );
         $this->assertIsResource($process);
         $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
@@ -310,18 +343,38 @@ final class PharWorkflowTest extends TestCase
     }
 
     /**
-     * The shell script of the step with this name.
+     * The shell script of the step with this name, in the tag workflow or in
+     * the action, whatever the indentation of either.
      */
     private static function step(string $name): string
     {
-        $found = preg_match('~^      - name: '.preg_quote($name, '~').'\n(?:        (?!run:).*\n)*        run: \|\n((?:(?:          .*)?\n)+)~m', self::workflow(), $match);
-        self::assertSame(1, $found, 'No step named "'.$name.'" with a script.');
+        foreach ([self::workflow(), self::action()] as $source) {
+            if (1 === preg_match('~^( *)- name: '.preg_quote($name, '~').'\n(?:\1  (?!run:).*\n)*\1  run: \|\n((?:(?:\1    .*)?\n)+)~m', $source, $match)) {
+                return (string) preg_replace('~^ {'.(\strlen($match[1]) + 4).'}~m', '', $match[2]);
+            }
+        }
 
-        return (string) preg_replace('~^ {10}~m', '', $match[1]);
+        self::fail('No step named "'.$name.'" with a script.');
     }
 
     private static function workflow(): string
     {
         return (string) file_get_contents(\dirname(__DIR__, 3).'/.github/workflows/phar.yml');
+    }
+
+    private static function action(): string
+    {
+        return (string) file_get_contents(\dirname(__DIR__, 3).'/.github/actions/check-phar/action.yml');
+    }
+
+    /**
+     * The phar job of the packages workflow, which runs on every push.
+     */
+    private static function packagesPharJob(): string
+    {
+        $found = preg_match('~^  phar:\n((?:(?:    .*)?\n)*)~m', (string) file_get_contents(\dirname(__DIR__, 3).'/.github/workflows/packages.yml'), $match);
+        self::assertSame(1, $found, 'No phar job in packages.yml.');
+
+        return $match[1];
     }
 }
