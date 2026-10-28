@@ -47,8 +47,10 @@ final class AlternationRewrites
         $unique = [];
 
         foreach ($alts as $alt) {
+            // An alternative holding a group is a group of its own number,
+            // however it is spelled: "(a)|(a)" keeps its group 2.
             $key = $this->state->spelling($alt);
-            if (!isset($seen[$key])) {
+            if (!isset($seen[$key]) || self::holdsGroup($alt)) {
                 $seen[$key] = true;
                 $unique[] = $alt;
             }
@@ -139,6 +141,21 @@ final class AlternationRewrites
         }
 
         return [new SequenceNode([$group, new LiteralNode($suffix, $last->endPosition, $last->endPosition)], $first->startPosition, $last->endPosition)];
+    }
+
+    private static function holdsGroup(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::Named, GroupType::BranchReset], true)) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsGroup($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

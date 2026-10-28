@@ -260,9 +260,6 @@ they answer wrong, not just incomplete.
 
 ### Smaller points, each reproduced once
 
-- `deduplicateAlternation` removes capture-bearing duplicates under
-  `verifyWithAutomata: false`: `/(a)|(a)/` → `/(a)/`, `$m[2]` vanishes
-  under `PREG_UNMATCHED_AS_NULL` (`AlternationRewrites.php:44-58`).
 - `new OptimizerOptions(minQuantifierCount: 1)` names the snake_case key
   in its error message; the same constructor takes the camelCase argument.
 - The language server's `PositionConverter` counts `\n` alone as a line

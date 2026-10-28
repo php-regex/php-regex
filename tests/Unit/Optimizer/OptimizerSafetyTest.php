@@ -253,4 +253,25 @@ final class OptimizerSafetyTest extends TestCase
             'expected' => '/(?:a(?:bc)d)++e/',
         ];
     }
+
+    /**
+     * Two alternatives written alike are each a group of their own number:
+     * /(a)|(a)/ never fills group 2, but its key is there under
+     * PREG_UNMATCHED_AS_NULL, and a reference may name it. The duplicate
+     * stays, whether the automata verify the rewrite or not.
+     */
+    #[Test]
+    public function test_a_duplicate_alternative_holding_a_group_stays(): void
+    {
+        preg_match('/(a)|(a)/', 'a', $matches, \PREG_UNMATCHED_AS_NULL);
+        $this->assertSame(['a', 'a', null], $matches);
+
+        foreach ([true, false] as $verify) {
+            $result = Regex::create(['cache' => null])->optimize('/(a)|(a)/', new OptimizerOptions(verifyWithAutomata: $verify));
+            $this->assertSame('/(a)|(a)/', $result->optimized);
+        }
+
+        // Without a group the duplicate goes.
+        $this->assertSame('/[a]/', Regex::create(['cache' => null])->optimize('/a|a/', new OptimizerOptions(verifyWithAutomata: false))->optimized);
+    }
 }
