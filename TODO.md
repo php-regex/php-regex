@@ -172,8 +172,8 @@ two parsers read differently.
 
 ## Left by the 2026-10-27 pass, each reproduced
 
-- JavaScript still refuses empty repetitions that
-  agree only through what follows them (`/(?:a|(?=b)|.)*\z/`), through
+- JavaScript still refuses empty repetitions that agree only through what
+  follows them (`/(?:a|(?=b)|.)*\z/`), through
   alternatives that never apply at one position, or through a body that
   only matches empty (`/^(){3,5}/`).
 - Nullability is computed in four copies (`PossessiveRewrites`,
@@ -181,10 +181,10 @@ two parsers read differently.
   ~1,160 of 175,625 nodes of the repository's patterns (`DEFINE`,
   `(*ACCEPT)` sequences, class-set operations, script runs): one source,
   checked against the engine, then every copy reading it.
-- A lookahead body
-  that stops at once, `(?=a+?)`, or holds where the loop could go on,
-  `(?!a+)` before `a`, keeps the polynomial proof from the linear one: the
-  model has no cut scoped to a body.
+- In the ReDoS model, a lookahead body that stops at once, `(?=a+?)`, or
+  holds where the loop could go on, `(?!a+)` before `a`, keeps the
+  polynomial proof from the linear one: the model has no cut scoped to a
+  body.
 - On the 8.1 build the CI runners use (a setup-php compile), a child that
   dies of memory exhaustion prints no envelope from its shutdown handler;
   the official 8.1 build does. Reproduce with that build, then make it
@@ -192,7 +192,6 @@ two parsers read differently.
 - No CI job runs PHP 8.1's bundled PCRE2 10.39 (the 8.1 jobs link 10.42):
   run the whole suite on `php:8.1-cli` once, then add that cell to the
   Engines workflow so the rows held to 10.40 readings stay gated.
-
 - About forty guard and marker tests (`GuardedTargetLintTest`,
   `TargetMarkerLintTest`, `PsalmPluginTargetTest` and their bridge twins)
   skip wherever the running PHP's minor links another PCRE2 than the one it
