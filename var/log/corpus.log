@@ -258,7 +258,7 @@ corpus/Automattic/jetpack/projects/plugins/boost/app/lib/minify/functions-servic
     → /(Microsoft.AlphaImageLoader\s*\([^\)]*src=(?:'|")?)([^\/'"\s\)](?:(?<!http:|https:).)*)\)/isU
    TIP 
        - /(Microsoft.AlphaImageLoader\s*\([^\)]*src=(?:'|")?)([^\/'"\s\)](?:(?<!http:|https:).)*)\)/isU
-       + /(Microsoft.AlphaImageLoader\s*\([^)]*src=(?:['"])?)([^\/'"\s)](?:(?<!http:|https:).)*)\)/isU
+       + /(Microsoft.AlphaImageLoader\s*\([^)]*src=['"]?)([^\/'"\s)](?:(?<!http:|https:).)*)\)/isU
 
 corpus/Automattic/jetpack/projects/plugins/boost/app/lib/minify/functions-service-fallback.php:248:6
     → /(?P<pre_path>@import\s+(?:url\s*\()?['"\s]*)(?P<path>[^'"\s](?:https?:\/\/.+\/?)?.+?)(?P<post_path>['"\s\)]*;)/i
@@ -269,13 +269,13 @@ corpus/Automattic/jetpack/projects/plugins/boost/app/lib/minify/functions-servic
     → /(:?\s*url\s*\()\s*(?:'|")?\s*([^\/'"\s\)](?:(?<!data:|http:|https:|[\('"]#|%23).)*)['"\s]*\)/isU
    TIP 
        - /(:?\s*url\s*\()\s*(?:'|")?\s*([^\/'"\s\)](?:(?<!data:|http:|https:|[\('"]#|%23).)*)['"\s]*\)/isU
-       + /(:?\s*url\s*\()\s*(?:['"])?\s*([^\/'"\s)](?:(?<!data:|http:|https:|[('"]#|%23).)*)['"\s]*\)/isU
+       + /(:?\s*url\s*\()\s*['"]?\s*([^\/'"\s)](?:(?<!data:|http:|https:|[('"]#|%23).)*)['"\s]*\)/isU
 
 corpus/Automattic/jetpack/projects/plugins/boost/app/lib/minify/functions-service.php:269:5
     → /(Microsoft.AlphaImageLoader\s*\([^\)]*src=(?:'|")?)([^\/'"\s\)](?:(?<!http:|https:).)*)\)/isU
    TIP 
        - /(Microsoft.AlphaImageLoader\s*\([^\)]*src=(?:'|")?)([^\/'"\s\)](?:(?<!http:|https:).)*)\)/isU
-       + /(Microsoft.AlphaImageLoader\s*\([^)]*src=(?:['"])?)([^\/'"\s)](?:(?<!http:|https:).)*)\)/isU
+       + /(Microsoft.AlphaImageLoader\s*\([^)]*src=['"]?)([^\/'"\s)](?:(?<!http:|https:).)*)\)/isU
 
 corpus/Automattic/jetpack/projects/plugins/boost/app/lib/minify/functions-service.php:295:6
     → /(?P<pre_path>@import\s+(?:url\s*\()?['"\s]*)(?P<path>[^'"\s](?:https?:\/\/.+\/?)?.+?)(?P<post_path>['"\s\)]*;)/i
@@ -436,11 +436,6 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/modules/carousel/jetpack-caro
     → #(<a[^>]* href=(["']?)(\S+)\2>)\s*(<img[^>]*)(class=(["']?)[^>]*wp-image-[0-9]+[^>]*\6.*>)\s*</a>#is
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
-
-corpus/Automattic/jetpack/projects/plugins/jetpack/modules/infinite-scroll/infinity.php:1315:50
-    → #!\s*IE(\s*\d+){0}#i
-   WARN  Quantifier always repeats zero times; it can be removed.
-       ↳ Remove the quantified element or replace it with an empty pattern.
 
 corpus/Automattic/jetpack/projects/plugins/jetpack/modules/latex.php:38:11
     → % \$latex(?:=\s*|\s+) ((?: [^$]+ | (?<=(?<!\\)\\)\$ )+) (?<!\\)\$%ix
@@ -1149,10 +1144,22 @@ corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileC
        - /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
        + /^([0-9]{4})((.)([0-9]{4}))? (.+)$/
 
+corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FunctionCommentSniff.php:295:28
+    → /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+   TIP 
+       - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+       + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
+
 corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:80:28
     → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9_\[\]]+))*)( .*)?`i
    WARN  Alternation branches "array\\([^)]*\\)" and "[\\\\a-z0-9_[\\]]+" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+
+corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:313:28
+    → /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+   TIP 
+       - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+       + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
 
 corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/VariableCommentSniff.php:141:20
     → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9\[\]]+))*)( .*)?`i
@@ -3485,7 +3492,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-xmlrpc-server.php:72
        - |<title>([^<]*?)</title>|is
        + |<title>([^<]*?)</title>|i
 
-corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:2106:15
+corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:2121:15
     → #^(?:\[)?(?P<host>[0-9a-fA-F:]+)(?:\]:(?P<port>[\d]+))?#
    ↳ via $pattern
    WARN  Redundant non-capturing group "(?:\[)" at offset 1; it can be removed without changing behavior.
@@ -3493,25 +3500,25 @@ corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:2106:15
        - #^(?:\[)?(?P<host>[0-9a-fA-F:]+)(?:\]:(?P<port>[\d]+))?#
        + #^\[?(?P<host>[0-9a-fA-F:]+)(?:\]:(?P<port>[\d]+))?#
 
-corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3886:26
+corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3901:26
     → /\((?!\s*select)[^(]*?\)/is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /\((?!\s*select)[^(]*?\)/is
        + /\((?!\s*select)[^(]*?\)/i
 
-corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3893:4
+corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3908:4
     → /^\s*(?:SELECT.*?\s+FROM|INSERT(?:\s+LOW_PRIORITY|\s+DELAYED|\s+HIGH_PRIORITY)?(?:\s+IGNORE)?(?:\s+INTO)?|REPLACE(?:\s+LOW_PRIORITY|\s+DELAYED)?(?:\s+INTO)?|UPDATE(?:\s+LOW_PRIORITY)?(?:\s+IGNORE)?|DELETE(?:\s+LOW_PRIORITY|\s+QUICK|\s+IGNORE)*(?:.+?FROM)?)\s+((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)/is
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Alternation branches "\\s+LOW_PRIORITY" and "\\s+QUICK" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3918:20
+corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3933:20
     → /^\s*SHOW\s+(?:TABLE\s+STATUS|(?:FULL\s+)?TABLES)\s+(?:WHERE\s+Name\s+)?LIKE\s*("|')((?:[\\0-9a-zA-Z$_.-]|[\xC2-\xDF][\x80-\xBF])+)%?\1/is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3924:4
+corpus/WordPress/wordpress-develop/src/wp-includes/class-wpdb.php:3939:4
     → /^\s*(?:(?:EXPLAIN\s+(?:EXTENDED\s+)?)?SELECT.*?\s+FROM|DESCRIBE|DESC|EXPLAIN|HANDLER|(?:LOCK|UNLOCK)\s+TABLE(?:S)?|(?:RENAME|OPTIMIZE|BACKUP|RESTORE|CHECK|CHECKSUM|ANALYZE|REPAIR).*\s+TABLE|TRUNCATE(?:\s+TABLE)?|CREATE(?:\s+TEMPORARY)?\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?|ALTER(?:\s+IGNORE)?\s+TABLE|DROP\s+TABLE(?:\s+IF\s+EXISTS)?|CREATE(?:\s+\w+)?\s+INDEX.*\s+ON|DROP\s+INDEX.*\s+ON|LOAD\s+DATA.*INFILE.*INTO\s+TABLE|(?:GRANT|REVOKE).*ON\s+TABLE|SHOW\s+(?:.*FROM|.*TABLE))\s+\(*\s*((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)\s*\)*/is
    WARN  Redundant non-capturing group "(?:S)" at offset 108; it can be removed without changing behavior.
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -3647,16 +3654,16 @@ corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:858:3
    FAIL  Character class holds "«", which without /u is the bytes \xC2 \xAB: the class matches each byte on its own.
        ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6543:26
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6544:26
     → #/(wp-admin/?.*|wp-login\.php.*)#i
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6548:26
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6549:26
     → #/[^/]*$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6560:27
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6561:27
     → #/[^/]*$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -13073,12 +13080,6 @@ corpus/nelmio/alice/src/Parser/Chainable/YamlParser.php:31:26
 
 
 ### corpus/nette/application — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
-corpus/nette/application/src/Bridges/ApplicationLatte/UIExtension.php:124:21
-    → #\s'nonce-([\w+/]+=*)'#
-   WARN  "+" is a literal character inside a character class, not a quantifier.
-       ↳ Inside [...], "+" matches a literal "+". If you meant to quantify a shorthand like \w, use \w+ outside the class.
-
-
 
 ### corpus/nette/latte — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/nette/latte/src/Latte/Compiler/PrintContext.php:58:4
@@ -13807,7 +13808,7 @@ corpus/phan/phan/tool/validate_stubs.php:96:42
 
 
 
-### corpus/php-debugbar/php-debugbar — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+### corpus/php-debugbar/php-debugbar — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 255
 corpus/php-debugbar/php-debugbar/src/DataFormatter/QueryFormatter.php:17:29
     → /\?(?=(?:[^'\\']*'[^'\']*')*[^'\\']*$)(?:\?)/
    WARN  Redundant elements detected in character class.
@@ -13823,7 +13824,7 @@ corpus/php-debugbar/php-debugbar/src/DataFormatter/QueryFormatter.php:17:29
 
 
 
-### corpus/php-debugger/php-debugger — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+### corpus/php-debugger/php-debugger — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 255
 corpus/php-debugger/php-debugger/run-xdebug-tests.php:439:44
     → /^#.*\[(.*)\]\:\s+(.*)$/
    TIP 
@@ -13837,13 +13838,13 @@ corpus/php-debugger/php-debugger/run-xdebug-tests.php:3706:33
 
 
 
-### corpus/php-parallel-lint/PHP-Parallel-Lint — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+### corpus/php-parallel-lint/PHP-Parallel-Lint — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 255
 Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/phpDocumentor/Reflection — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 
-### corpus/phpDocumentor/ReflectionDocBlock — Target: PHP 7.4, PCRE2 10.33 (composer.json config.platform.php) — exit 0
+### corpus/phpDocumentor/ReflectionDocBlock — Target: PHP 7.4, PCRE2 10.33 (composer.json config.platform.php) — exit 255
 Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/phpDocumentor/ReflectionDocBlock/src/DocBlock/StandardTagFactory.php:230:25
     → /^@([\w\-\_\\:]+)((?:[\s\(\{])\s*([^\s].*)|$)/us
@@ -13866,7 +13867,7 @@ corpus/phpDocumentor/ReflectionDocBlock/src/DocBlock/Tags/Source.php:63:24
 
 
 
-### corpus/phpactor/phpactor — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+### corpus/phpactor/phpactor — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 255
 corpus/phpactor/phpactor/lib/CodeTransform/Adapter/TolerantParser/Refactor/TolerantExtractExpression.php:152:24
     → /(\t| )*$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -13908,7 +13909,7 @@ corpus/phpactor/phpactor/lib/Indexer/Util/PhpNameMatcher.php:15:33
 
 
 
-### corpus/phparkitect/arkitect — Target: PHP 8.0, PCRE2 10.35 (composer.json require.php) — exit 0
+### corpus/phparkitect/arkitect — Target: PHP 8.0, PCRE2 10.35 (composer.json require.php) — exit 255
 Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/phparkitect/arkitect/src/Analyzer/Pattern.php:14:35
     → /^([a-zA-Z0-9_\x80-\xff]|\\|\*|\?)*$/
@@ -13918,7 +13919,7 @@ corpus/phparkitect/arkitect/src/Analyzer/Pattern.php:14:35
 
 
 
-### corpus/phpbb/phpbb — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+### corpus/phpbb/phpbb — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 255
 corpus/phpbb/phpbb/phpBB/develop/create_variable_overview.php:179:17
     → #{L_([a-z0-9\-_]*?)\}#is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -14316,7 +14317,7 @@ corpus/phpbb/phpbb/phpBB/posting.php:1762:42
 
 
 
-### corpus/phplrt/phplrt — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+### corpus/phplrt/phplrt — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 255
 corpus/phplrt/phplrt/libs/components/lexer-builder/src/Compiler/RegexValidationLexerCompilerPass.php:83:43
     → /([\w_]+\(\):\h+)/
    WARN  Character class contains duplicate elements that do not add new matches.
@@ -14324,7 +14325,7 @@ corpus/phplrt/phplrt/libs/components/lexer-builder/src/Compiler/RegexValidationL
 
 
 
-### corpus/phpmd/phpmd — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+### corpus/phpmd/phpmd — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 255
 corpus/phpmd/phpmd/public/scripts/update-rules.php:70:25
     → (\s+)s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -14351,7 +14352,7 @@ corpus/phpmd/phpmd/src/Rule/Controversial/CamelCaseNamespace.php:41:24
 
 
 
-### corpus/phpmetrics/PhpMetrics — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+### corpus/phpmetrics/PhpMetrics — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 255
 corpus/phpmetrics/PhpMetrics/src/Hal/Metric/Class_/Text/LengthVisitor.php:66:43
     → !('[^']*'|"[^"]*")|((?:#|\/\/).*$)!m
    WARN  An anchor holds for its own alternative only: "('[^']*'|"[^"]*")" matches anywhere in the subject.
@@ -14366,7 +14367,7 @@ corpus/phpmetrics/PhpMetrics/src/Hal/Metric/Class_/Text/LengthVisitor.php:74:39
 
 
 
-### corpus/phpmyadmin/phpmyadmin — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+### corpus/phpmyadmin/phpmyadmin — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 255
 corpus/phpmyadmin/phpmyadmin/src/Bookmarks/Bookmark.php:136:40
     → |/\*(.*\[VARIABLE[0-9]*\].*)\*/|imsU
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -14430,7 +14431,7 @@ corpus/phpmyadmin/phpmyadmin/src/Table/Table.php:586:57
 
 
 
-### corpus/phpmyadmin/sql-parser — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+### corpus/phpmyadmin/sql-parser — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 255
 corpus/phpmyadmin/sql-parser/src/Context.php:676:27
     → /^[$]|^\d+$|[^0-9a-zA-Z$_\x80-\xffff]/
    WARN  Redundant elements detected in character class.
@@ -14438,7 +14439,7 @@ corpus/phpmyadmin/sql-parser/src/Context.php:676:27
 
 
 
-### corpus/phpro/grumphp — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+### corpus/phpro/grumphp — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 255
 corpus/phpro/grumphp/src/Linter/Xml/XmlLinter.php:165:33
     → /\s{1,}/
    TIP 
@@ -17886,10 +17887,22 @@ corpus/squizlabs/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileCommen
        - /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
        + /^([0-9]{4})((.)([0-9]{4}))? (.+)$/
 
+corpus/squizlabs/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FunctionCommentSniff.php:287:28
+    → /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+   TIP 
+       - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+       + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
+
 corpus/squizlabs/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:79:28
     → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9\[\]]+))*)( .*)?`i
    WARN  Alternation branches "array\\([^)]*\\)" and "[\\\\a-z0-9[\\]]+" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+
+corpus/squizlabs/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:314:28
+    → /([^$&.]+)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+   TIP 
+       - /([^$&.]+)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+       + /([^$&.]+)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
 
 corpus/squizlabs/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/VariableCommentSniff.php:120:20
     → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9\[\]]+))*)( .*)?`i
@@ -20908,7 +20921,7 @@ corpus/zenstruck/foundry/src/Persistence/ProxyGenerator.php:177:13
 
 
 ### corpus/zircote/swagger-php — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
-corpus/zircote/swagger-php/src/Annotations/Operation.php:219:115
+corpus/zircote/swagger-php/src/Annotations/Operation.php:221:115
     → /^([12345]{1}\d{2})|([12345]{1}XX)$/
    WARN  Quantifier is redundant; it matches exactly once.
        ↳ Remove the {1} quantifier; it does not change the match.
