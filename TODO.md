@@ -161,8 +161,6 @@ two parsers read differently.
   resolution and the PHP-source helpers they import need a home below
   `regex-linter`, a new split package or a lower one. Removing a `require`
   is never a break.
-- `RepeatRewrites::MAX_COUNT` (the optimizer) repeats the 65535 limit of
-  `PcreNumber`: reading it from there needs `PcreNumber` public.
 - Four tests use `/(?:a[\x{100}-\x{10FFFF}\pL]{0}){1900}/u` as a pattern only
   the engine refuses (`ValidationMemoTest`, `RegexApiTest` ×2,
   `RegexGenerateTest`). Counting a class of every character past 255 plus a
