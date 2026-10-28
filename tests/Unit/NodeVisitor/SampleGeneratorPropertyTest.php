@@ -18,6 +18,7 @@ use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,10 +31,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class SampleGeneratorPropertyTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('providePatterns')]
     public function test_the_sample_has_the_property(string $pattern): void
     {
+        // PCRE2 10.40 is the first to know these forms.
+        $this->requiresPcre2For($pattern, ['10.40' => ['/^\\p{sc=Cyrl}$/u', '/^\\p{Bidi_Class=AL}$/u', '/^\\p{Emoji}$/u']]);
         $this->assertNotFalse(@preg_match($pattern, ''), $pattern);
 
         $regex = Regex::create(['cache' => null]);

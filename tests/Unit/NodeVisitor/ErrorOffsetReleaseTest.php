@@ -168,11 +168,12 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'range from a type in a lookahead before a control escape' => ['pattern' => '/(?=[\\w-a\\cé])/', 'bundled' => 6, 'newer' => 7, 'movedIn' => '10.45'];
         // A property name past 49 code units: up to PCRE2 10.46 each byte
         // counts, from 10.47 each character; 10.45 and 10.46 stop on a
-        // character no name holds.
-        yield 'property name too long, ending in a character past ASCII under UTF' => ['pattern' => '/\\p{'.str_repeat('a', 47).'€bc/u', 'bundled' => 52, 'newer' => 53, 'movedIn' => '10.47', 'quirks' => ['10.45' => 51, '10.46' => 51]];
-        yield 'property name too long in a class, ending in a character past ASCII under UTF' => ['pattern' => '/[\\P{'.str_repeat('a', 47).'€€]/u', 'bundled' => 53, 'newer' => 54, 'movedIn' => '10.47', 'quirks' => ['10.45' => 52, '10.46' => 52]];
+        // character no name holds. 10.39 reads a shorter name and stops 31
+        // bytes into it.
+        yield 'property name too long, ending in a character past ASCII under UTF' => ['pattern' => '/\\p{'.str_repeat('a', 47).'€bc/u', 'bundled' => 52, 'newer' => 53, 'movedIn' => '10.47', 'quirks' => ['10.39' => 34, '10.45' => 51, '10.46' => 51]];
+        yield 'property name too long in a class, ending in a character past ASCII under UTF' => ['pattern' => '/[\\P{'.str_repeat('a', 47).'€€]/u', 'bundled' => 53, 'newer' => 54, 'movedIn' => '10.47', 'quirks' => ['10.39' => 35, '10.45' => 52, '10.46' => 52]];
         // Up to 10.44 a "^" after a hyphen is a letter of the name.
-        yield 'property name too long, a hyphen before its caret' => ['pattern' => '/\\p{-^'.str_repeat('a', 48).'}/u', 'bundled' => 53, 'newer' => 54, 'movedIn' => '10.45'];
+        yield 'property name too long, a hyphen before its caret' => ['pattern' => '/\\p{-^'.str_repeat('a', 48).'}/u', 'bundled' => 53, 'newer' => 54, 'movedIn' => '10.45', 'quirks' => ['10.39' => 34]];
         // Under UTF, past the first byte of the character, then past it.
         yield 'property letter past ASCII under UTF' => ['pattern' => '/\\pé/u', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
         yield 'property letter past ASCII in a class under UTF' => ['pattern' => '/[\\pé]/u', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.47'];
@@ -327,9 +328,10 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'negated property name with a tilde' => ['pattern' => '/\\P{^ L~x}/', 'bundled' => 9, 'newer' => 7, 'movedIn' => '10.45'];
         yield 'property name never closed in a class' => ['pattern' => '/[\\P{L!]/', 'bundled' => 7, 'newer' => 6, 'movedIn' => '10.45'];
         yield 'property name past its last character' => ['pattern' => '/\\p{ ^ L|/', 'bundled' => 8, 'newer' => 8, 'movedIn' => '10.40'];
-        // Every release: a property name is read for 49 characters at most.
-        yield 'property name too long' => ['pattern' => '/\\p{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}/', 'bundled' => 52, 'newer' => 52, 'movedIn' => '10.40'];
-        yield 'property name too long and never closed' => ['pattern' => '/\\p{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/', 'bundled' => 52, 'newer' => 52, 'movedIn' => '10.40'];
+        // From 10.40 a property name is read for 49 characters at most, 10.39
+        // stops 31 bytes into it.
+        yield 'property name too long' => ['pattern' => '/\\p{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}/', 'bundled' => 52, 'newer' => 52, 'movedIn' => '10.40', 'quirks' => ['10.39' => 34]];
+        yield 'property name too long and never closed' => ['pattern' => '/\\p{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/', 'bundled' => 52, 'newer' => 52, 'movedIn' => '10.40', 'quirks' => ['10.39' => 34]];
 
         // PCRE refuses what a class holds as it reads the class, before any
         // error in what follows it.

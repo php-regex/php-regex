@@ -24,7 +24,8 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * A tree without its source text still refuses a group a substring scan
- * names and the pattern lacks: the text only places the caret. PHP refuses the pattern (8.4.27, PCRE2 10.49).
+ * names and the pattern lacks: the text only places the caret. PHP
+ * refuses the pattern (8.4.27, PCRE2 10.49).
  */
 final class ListedGroupWithoutSourceTest extends TestCase
 {
@@ -36,7 +37,8 @@ final class ListedGroupWithoutSourceTest extends TestCase
     {
         $this->assertFalse(@preg_match($pattern, 'a'));
 
-        $tree = RegexParser::create(['cache' => null])->parse($pattern);
+        // Read as a release that knows the substring scan, 10.45 and later.
+        $tree = RegexParser::create(['cache' => null, 'pcre_version' => '10.49'])->parse($pattern);
         $withoutSource = new RegexNode($tree->pattern, $tree->flags, $tree->delimiter, $tree->startPosition, $tree->endPosition);
 
         $this->expectException(SemanticErrorException::class);

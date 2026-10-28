@@ -20,6 +20,7 @@ use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,6 +31,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExplainVocabularyTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideLiterals')]
     public function test_literal_names_a_blank_or_a_control_character(string $value, string $expected): void
@@ -57,6 +60,9 @@ final class ExplainVocabularyTest extends TestCase
     #[Test]
     public function test_every_property_named_is_one_the_engine_takes(): void
     {
+        // PCRE2 10.40 is the first to know the binary properties.
+        $this->requiresPcre2('10.40', 'Every property name');
+
         // The newest PCRE2 knows every name an older release knew.
         foreach (array_keys(Vocabulary::UNICODE_PROPERTIES) as $name) {
             $this->assertNotFalse(@preg_match('/\p{'.$name.'}/u', ''), $name);
@@ -67,6 +73,7 @@ final class ExplainVocabularyTest extends TestCase
     #[DataProvider('provideProperties')]
     public function test_unicode_property_says_what_the_engine_matches(string $name, string $description, string $subject, int $matches): void
     {
+        $this->requiresPcre2For($name, ['10.40' => ['lower', 'Lowercase', 'upper', 'alpha', 'ascii', 'space', 'White_Space']]);
         $this->assertSame($matches, preg_match('/^\p{'.$name.'}$/u', $subject), 'engine');
         $this->assertSame($description, Vocabulary::unicodeProperty(strtolower($name), false));
     }
