@@ -391,6 +391,13 @@ Where the library still departs from what the target's PCRE2 reports:
   have, is never reached; where one of these items comes first, the library
   may find the limit passed later than PCRE2 does, and report such an error
   in its place.
+- **A delimiter byte past 127 on macOS and the BSDs.** PHP judges the
+  delimiter, and skips the white space before it, with the C library's
+  `isalnum()` and `isspace()` under the process's `LC_CTYPE`, not with
+  PCRE2's tables. Under a UTF-8 locale a BSD C library calls `0xFF` a
+  letter and `0xA0` a space, so PHP refuses `"\xFF\xFFa\xFF\xFF"` and
+  reads `"\xA0/a/"`; the library reads both as the C locale and glibc's
+  UTF-8 locales do.
 - **A property name under a locale that is not C, on PCRE2 10.40 to 10.44.**
   These releases drop the characters of a name the C library's `isspace()`
   calls white space, read under the running `LC_CTYPE`: a locale that calls

@@ -228,15 +228,6 @@ two parsers read differently.
 The literal-fragment builder, the repairer and the confirmed mode first:
 they answer wrong, not just incomplete.
 
-- The delimiter tables are ASCII where PHP reads the locale: under this
-  machine's default `LC_CTYPE` (a UTF-8 locale), `"\xFF\xFF"` is judged
-  VALID — PHP refuses it, "Delimiter must not be alphanumeric, backslash,
-  or NUL byte", because `isalnum()` answers true for the high bytes — and
-  `"\xA0/a/"` is judged INVALID where PHP accepts and matches `"a"`
-  (`isspace(0xA0)`). The judged engine's locale decides both tables; the
-  library's own `locale` option reads them for classes but not for the
-  delimiter scan (`PatternParser.php:40,50,202-207`, `Text/Ascii.php`).
-  glibc UTF-8 locales agree with the library; BSD/macOS ones do not.
 
 ### Smaller points, each reproduced once
 
