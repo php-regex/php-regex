@@ -34,10 +34,11 @@ final class JavaScriptEngineParityTest extends TestCase
     use PhpUnitForwardCompat;
 
     /**
-     * The rows that hold from a PCRE2 newer than the floor: "{,3}" is a
+     * The rows that hold from a PCRE2 newer than the floor: a property
+     * spelled loosely or by another short name from 10.40; "{,3}" is a
      * quantifier, and "\w" takes the marks and the connectors, from 10.43.
      */
-    private const NEWER_RELEASES = ['10.43' => ['/a{,3}b/', '/\w/u', '/\W/u', '/\bé/u', '/a\B/u', '/[\W\d]/u', '/[^\W\d]/u', '/[\W]/u', '/[^\S\W]/u', '/[^x\S\W]/u']];
+    private const NEWER_RELEASES = ['10.40' => ['/\p{WSpace}/u', '/\p{white space}/u', '/\p{ lu }/u'], '10.43' => ['/a{,3}b/', '/\w/u', '/\W/u', '/\bé/u', '/a\B/u', '/[\W\d]/u', '/[^\W\d]/u', '/[\W]/u', '/[^\S\W]/u', '/[^x\S\W]/u']];
 
     /**
      * @param list<?array{int, int}>|null $spans byte offsets, as preg_match() gives them

@@ -20,10 +20,13 @@ use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\EscapeChecks;
 use PHPRegex\Parser\Validation\QuantifierCounts;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,6 +38,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class StaticCachesTest extends TestCase
 {
+    use PcreGates;
+
     private const BOUND = 1000;
 
     #[Test]
@@ -51,6 +56,10 @@ final class StaticCachesTest extends TestCase
         (new RedosAnalyzer())->analyze('/(\w+)+$/');
 
         foreach (self::caches() as [$class, $property]) {
+            if (self::neverAsked($class, $property)) {
+                continue;
+            }
+
             $this->assertNotSame([], $this->read($class, $property), 'Not warmed: '.$class.'::$'.$property);
         }
 
@@ -96,7 +105,10 @@ final class StaticCachesTest extends TestCase
     public function test_the_shared_clear_empties_the_validator_caches(): void
     {
         $this->assertTrue(RegexParser::create(['cache' => new NullCache()])->validate('/\p{Latin}a{2,3}/u')->isValid);
-        $this->assertNotSame([], $this->read(EscapeChecks::class, 'unicodePropCache'));
+        if (!self::neverAsked(EscapeChecks::class, 'unicodePropCache')) {
+            $this->assertNotSame([], $this->read(EscapeChecks::class, 'unicodePropCache'));
+        }
+
         $this->assertNotSame([], $this->read(QuantifierCounts::class, 'quantifierBoundsCache'));
 
         StaticCaches::clear();
@@ -149,6 +161,7 @@ final class StaticCachesTest extends TestCase
     #[Test]
     public function test_the_property_sample_cache_is_bounded(): void
     {
+        $this->requiresPcre2('10.40', 'A loose property spelling');
         $this->assertSame(1, preg_match('/\p{l A-t_in}/', 'a'), 'The oracle refuses a loose spelling.');
 
         $this->write(SampleGenerator::class, 'propertySamples', []);
@@ -198,6 +211,18 @@ final class StaticCachesTest extends TestCase
             [SampleGenerator::class, 'codePointChunks'],
             [ClassSetProvider::class, 'sets'],
         ];
+    }
+
+    /**
+     * Whether the running engine never fills the cache: before PCRE2 10.40
+     * the validator looks a property up in the library's own table, never
+     * asking the engine (PHP 8.1, PCRE2 10.39).
+     *
+     * @param class-string $class
+     */
+    private static function neverAsked(string $class, string $property): bool
+    {
+        return EscapeChecks::class === $class && 'unicodePropCache' === $property && !PcreTarget::runtime()->supports(PcreFeature::LoosePropertyNames);
     }
 
     /**

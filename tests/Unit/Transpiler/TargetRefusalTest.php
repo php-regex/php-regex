@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\TargetRegistry;
@@ -28,10 +29,15 @@ use PHPUnit\Framework\TestCase;
  */
 final class TargetRefusalTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideConstructsATargetLacks')]
     public function test_transpile_refuses_a_construct_the_target_lacks(string $target, string $pattern, string $message, ?int $position): void
     {
+        // PCRE2 compiles a lookbehind of more than one length from 10.43.
+        $this->requiresPcre2For($pattern, ['10.43' => ['/(?<=a{1,3})b/', '/(?<=a??)b/', '/(?<=(?:ab|cd){1,2})x/', '/(?<=ab|c{1,2})x/']]);
+
         // Oracle: the engine compiles the pattern, so the refusal is the target's alone.
         $this->assertSame(0, preg_match($pattern, ''), 'Oracle: '.$pattern);
 

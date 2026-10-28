@@ -49,6 +49,14 @@ final class RedosSearchCostTest extends TestCase
 
     use PhpUnitForwardCompat;
 
+    /**
+     * The rows that spell a property loosely, which PCRE2 reads from 10.40.
+     */
+    private const LOOSELY_SPELLED = [
+        '/[\p{A_ny}]*\d$/u', '/[\p{ Any }]*\d$/u', '/[\p{a-n-y}]*\d$/u', '/[\P{^A_ny}]*\d$/u', '/[^\P{a_ny}]*\d$/u',
+        '/a[\p{A_ny}]*+b/u', '/a[\s\S\p{ any}]*+b/u', '/a[\P{^A_ny}]*+b/u',
+    ];
+
     #[Test]
     #[DataProvider('provideQuadraticSearches')]
     public function test_search_cost_witness_is_reported_for_an_unanchored_linear_attempt(string $pattern): void
@@ -594,6 +602,8 @@ final class RedosSearchCostTest extends TestCase
             $this->requiresPcre2('10.48', $pattern);
         }
 
+        $this->requiresPcre2For($pattern, ['10.40' => self::LOOSELY_SPELLED]);
+
         $analysis = (new RedosAnalyzer())->analyze($pattern);
 
         $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);
@@ -686,6 +696,8 @@ final class RedosSearchCostTest extends TestCase
     #[DataProvider('provideSearchesWithoutWitness')]
     public function test_search_cost_is_not_reported_without_a_breaking_suffix(string $pattern): void
     {
+        $this->requiresPcre2For($pattern, ['10.40' => self::LOOSELY_SPELLED]);
+
         $analysis = (new RedosAnalyzer())->analyze($pattern);
 
         $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);

@@ -215,7 +215,8 @@ final class JavaScriptTranspilerTest extends TestCase
         $this->expectException(TranspileException::class);
         $this->expectExceptionMessageIsOrContains('Bidi_Class properties are not supported in JavaScript.');
 
-        Regex::create(['cache' => null])->transpile('/\p{bc:L}/u', 'javascript');
+        // Read for PHP 8.4, PCRE2 10.44: the Bidi classes arrived in 10.40.
+        Regex::create(['cache' => null, 'php_version' => '8.4'])->transpile('/\p{bc:L}/u', 'javascript');
     }
 
     #[Test]

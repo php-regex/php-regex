@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
@@ -28,6 +29,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class HtmlPatternTargetTest extends TestCase
 {
+    use PcreGates;
+
     use PhpUnitForwardCompat;
 
     /**
@@ -38,6 +41,9 @@ final class HtmlPatternTargetTest extends TestCase
     #[DataProvider('provideCaselessPatterns')]
     public function test_the_attribute_accepts_what_preg_match_matches(string $pattern, string $attribute, array $verdicts): void
     {
+        // From PCRE2 10.40 a bare script name is the script extensions.
+        $this->requiresPcre2For($pattern, ['10.40' => ['/^\p{Han}+$/u']]);
+
         $result = Regex::create(['cache' => null])->transpile($pattern, 'html-pattern');
 
         $this->assertSame($attribute, $result->pattern);
@@ -78,6 +84,17 @@ final class HtmlPatternTargetTest extends TestCase
         yield 'a non-space in a class under u' => ['pattern' => '/^[\S\d]$/u', 'attribute' => '^[[^\t-\r \x85\xA0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]\p{Nd}]$', 'verdicts' => ["\u{FEFF}" => true, "\u{85}" => false]];
         yield 'a control escape that is no letter' => ['pattern' => '/^\c?$/', 'attribute' => '^\x7F$', 'verdicts' => ["\x7F" => true, '?' => false]];
         yield 'a lookahead that may be left out' => ['pattern' => '/^(?=a)*b$/', 'attribute' => '^b$', 'verdicts' => ['b' => true, 'a' => false]];
+    }
+
+    /**
+     * PCRE2 10.39 reads a bare script name as the script: PHP 8.1.34 matches
+     * "中" and not "中、" with "/^\p{Han}+$/u", and so does the attribute
+     * (Node 24).
+     */
+    #[Test]
+    public function test_a_script_read_for_php_8_1_is_its_script(): void
+    {
+        $this->assertSame('^\p{Script=Han}+$', Regex::create(['cache' => null, 'php_version' => '8.1'])->transpile('/^\p{Han}+$/u', 'html-pattern')->pattern);
     }
 
     /**
