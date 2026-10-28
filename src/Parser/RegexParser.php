@@ -319,7 +319,10 @@ final class RegexParser
     {
         $stats = $this->cache instanceof RemovableCacheInterface ? $this->cache->getStats() : ['hits' => 0, 'misses' => 0];
         if (null !== $this->front) {
-            // A tree found in memory never reached the persistent cache.
+            // A tree found in memory never reached the persistent cache: its
+            // hit is counted here. A miss in memory went on to the persistent
+            // cache, which counted it as its own hit or miss: adding it here
+            // would count that read twice.
             $stats['hits'] += $this->front->getStats()['hits'];
         }
 

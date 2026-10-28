@@ -97,7 +97,9 @@ final class ParserCacheFrontTest extends TestCase
             $first = $parser->parse('/a+b/');
             $this->assertSame($first, $parser->parse('/a+b/'));
             $this->assertSame($cache, $parser->getCache(), 'getCache() still names the cache given.');
-            $this->assertSame(['hits' => 1, 'misses' => 1], $parser->getCacheStats());
+            // The memory missed the first read too, and the directory counted
+            // that miss: one miss, not two.
+            $this->assertSame(['hits' => 1, 'misses' => 1], $parser->getCacheStats(), 'Each read counted once, at the cache that answered it.');
         } finally {
             $cache->clear();
             @rmdir($directory);
