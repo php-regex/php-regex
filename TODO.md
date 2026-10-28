@@ -257,11 +257,6 @@ they answer wrong, not just incomplete.
   library's own `locale` option reads them for classes but not for the
   delimiter scan (`PatternParser.php:40,50,202-207`, `Text/Ascii.php`).
   glibc UTF-8 locales agree with the library; BSD/macOS ones do not.
-- `--redos-threshold` has no effect on `analyze` in theoretical mode: the
-  payload and console output are byte-identical with and without it, a
-  medium finding stays with `--redos-threshold=critical`; only `lint`
-  filters (`AnalyzeCommand.php:105` passes it, `RedosAnalyzer.php:85-89`
-  gates the confirmation run only).
 - The error-message furniture disagrees with its own caret in two places:
   the removed-`e` message fires whenever `e` appears among the unknown
   flags, so `/a/ze` reports the `e` flag at the offset of `z` (PHP names

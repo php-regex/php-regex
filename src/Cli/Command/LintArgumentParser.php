@@ -50,7 +50,7 @@ final class LintArgumentParser
             Option::flag('--redos', 'Run the ReDoS risk analysis, off by default'),
             Option::flag('--no-redos', 'Skip the ReDoS risk analysis when regex.json turns it on'),
             Option::value('--redos-mode', '<mode>', 'ReDoS mode (theoretical, confirmed)'),
-            Option::value('--redos-threshold', '<sev>', 'Minimum ReDoS severity (low, medium, high, critical)'),
+            Option::value('--redos-threshold', '<sev>', 'Lowest ReDoS severity reported (low, medium, high, critical)'),
             Option::flag('--no-validate', 'Skip validation errors (structural lint only)'),
             Option::flag('--no-optimize', 'Disable optimization suggestions'),
             Option::flag('--lint', 'Run the lint rules (the default)'),
