@@ -123,7 +123,11 @@ before. Which characters a `\p{...}` holds is not: the
 Unicode data of an old release is a blind spot below 10.39. Neither are the
 matching bugs of an old release, such as a
 `(?(DEFINE)...)` inside a lookbehind before 10.35, which some releases refuse
-and others read with the wrong length.
+and others read with the wrong length, or a match missed past a lookahead
+before 10.45: `/(?=x)a?x/` does not match `"x"` on 10.42 and 10.44, with the
+JIT or not, which 10.45 fixed (the first and last code units read past a
+lookahead). The library reads a pattern as the release defines it, so
+`generate()` gives `"x"` for a 10.44 target too.
 
 PHP 7.3 and 7.4 compile every pattern with `PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL`,
 unless it has the `X` modifier: an escape PCRE2 refuses as it reads it is the

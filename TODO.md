@@ -163,11 +163,6 @@ two parsers read differently.
   is never a break.
 - `RepeatRewrites::MAX_COUNT` (the optimizer) repeats the 65535 limit of
   `PcreNumber`: reading it from there needs `PcreNumber` public.
-- Before PCRE2 10.45 the engine misses a match past a lookahead:
-  `/(?=x)a?x/` does not match `"x"` on 10.42 and 10.44, JIT or not; 10.45
-  fixed the first and last code unit read with lookaheads (#444).
-  `generate()` gives `"x"` for a 10.44 target. Whether a target before 10.45
-  is judged by that defect is a call to make.
 - Coverage (98.92% of statements, 2026-10-27): dead regions proven
   unreachable (`RangeChecks:163,183`, `CompiledLength:963,1642`) — delete
   rather than test; and whether tests may hand-build trees to reach the ~50
