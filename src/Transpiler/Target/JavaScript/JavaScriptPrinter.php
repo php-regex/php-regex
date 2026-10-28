@@ -87,8 +87,6 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
     private bool $commentWarningEmitted = false;
 
-    private readonly string $flags;
-
     /**
      * Whether the pattern reads UTF-8, by u or "(*UTF)", for the cases the
      * HTML pattern attribute spells out.
@@ -110,8 +108,6 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         private readonly bool $unicodeSets = false,
     ) {
         parent::__construct($context);
-
-        $this->flags = $context->sourceFlags;
     }
 
     #[\Override]

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Cache;
 use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -23,6 +24,8 @@ use PHPUnit\Framework\TestCase;
 
 final class ArrayCacheTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_parse_hit_returns_cached_ast(): void
     {
@@ -294,11 +297,6 @@ final class ArrayCacheTest extends TestCase
         $this->assertSame(0, $stats['misses']);
     }
 
-    private function tree(string $pattern): RegexNode
-    {
-        return Regex::create(['cache' => null])->parse($pattern);
-    }
-
     /**
      * A cache that keeps no tree would drop every write without a word:
      * NullCache is the cache of none.
@@ -308,7 +306,7 @@ final class ArrayCacheTest extends TestCase
     public function test_a_size_keeping_no_tree_is_refused(int $size): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage(\sprintf('An ArrayCache keeps at least 1 tree, %d given; NullCache keeps none.', $size));
+        $this->expectExceptionMessageIsOrContains(\sprintf('An ArrayCache keeps at least 1 tree, %d given; NullCache keeps none.', $size));
 
         new ArrayCache($size);
     }
@@ -320,5 +318,10 @@ final class ArrayCacheTest extends TestCase
     {
         yield 'zero' => ['size' => 0];
         yield 'negative' => ['size' => -1];
+    }
+
+    private function tree(string $pattern): RegexNode
+    {
+        return Regex::create(['cache' => null])->parse($pattern);
     }
 }
