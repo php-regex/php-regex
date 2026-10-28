@@ -74,7 +74,7 @@ final class PublicSurface
             'ConfirmationRunner', 'ConfirmationRunnerInterface',
             'RedosComplexity', 'RedosProof', 'RedosWitness', 'RedosOptions', 'RedosSearchCost',
         ],
-        'Symfony' => ['PHPRegexBundle', 'Validator/Constraints/ValidRegex', 'Validator/Constraints/ValidRegexValidator'],
+        'Symfony' => ['PHPRegexSymfonyBundle', 'Validator/Constraints/ValidRegex', 'Validator/Constraints/ValidRegexValidator'],
         'Toolkit' => ['Regex', 'AnalysisReport', 'ExplainFormat', 'HighlightFormat'],
         'Transpiler' => ['Transpiler', 'TranspileOptions', 'TranspileResult', 'Exception/TranspileException'],
     ];

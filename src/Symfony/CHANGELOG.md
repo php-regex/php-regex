@@ -14,6 +14,8 @@ CHANGELOG
    where a running counter stood in for the line; a mapping file the
    validator cannot read is `regex.lint.source.unreadable`. An attribute is
    read from the PHP file alone.
+ * The bundle is `PHPRegex\Symfony\PHPRegexSymfonyBundle`, the name Symfony
+   Flex looks for: `composer require` registers it in `config/bundles.php`.
  * The bundle is an `AbstractBundle` that defines its configuration and loads
    its services itself: `PHPRegex\Symfony\DependencyInjection\PHPRegexExtension`
    and `Configuration`, both internal, are gone. The `php_regex` alias and

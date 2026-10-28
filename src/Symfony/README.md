@@ -126,11 +126,11 @@ Its messages are translation keys of the `validators` domain: the bundle ships t
 Integration
 -----------
 
-Register the bundle in `config/bundles.php`:
+With Symfony Flex, `composer require` registers the bundle in `config/bundles.php` for every environment (for `dev` and `test` only when it is installed with `--dev`). Without Flex, register it by hand:
 
 ```php
 return [
-    PHPRegex\Symfony\PHPRegexBundle::class => ['all' => true],
+    PHPRegex\Symfony\PHPRegexSymfonyBundle::class => ['all' => true],
 ];
 ```
 

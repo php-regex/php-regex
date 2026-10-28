@@ -90,7 +90,7 @@ The configuration takes the PHPRegex name:
 
 | 1.3 | 2.0 |
 |---|---|
-| Symfony: `RegexParserBundle`, configured under `regex_parser:` | `PHPRegex\Symfony\PHPRegexBundle`, configured under `php_regex:` |
+| Symfony: `RegexParserBundle`, configured under `regex_parser:` | `PHPRegex\Symfony\PHPRegexSymfonyBundle`, configured under `php_regex:` |
 | Symfony: services and parameters `regex_parser.*` | `php_regex.*` |
 | PHPStan: parameter `regexParser` | `phpRegex` |
 | PHPStan: rule `RegexParserRule` | `PHPRegex\PHPStan\RegexPatternRule` |
@@ -187,7 +187,7 @@ one.
 | `RegexParser\Bridge\Symfony\Extractor\RouteRegexPatternSource` | `PHPRegex\Symfony\Extractor\RoutePatternSource` |
 | `RegexParser\Bridge\Symfony\Extractor\ValidatorRegexPatternSource` | `PHPRegex\Symfony\Extractor\ValidatorPatternSource` |
 | `RegexParser\Bridge\Symfony\Output\SymfonyConsoleFormatter` | `PHPRegex\Linter\Formatter\ConsoleTagFormatter` |
-| `RegexParser\Bridge\Symfony\RegexParserBundle` | `PHPRegex\Symfony\PHPRegexBundle` |
+| `RegexParser\Bridge\Symfony\RegexParserBundle` | `PHPRegex\Symfony\PHPRegexSymfonyBundle` |
 | `RegexParser\Bridge\Symfony\Routing\RouteConflictAnalyzer` | `PHPRegex\Symfony\Routing\RouteConflictAnalyzer` |
 | `RegexParser\Bridge\Symfony\Routing\RouteConflictReport` | `PHPRegex\Symfony\Routing\RouteConflictReport` |
 | `RegexParser\Bridge\Symfony\Routing\RouteConflictSuggestionBuilder` | `PHPRegex\Symfony\Routing\RouteConflictSuggestionBuilder` |
@@ -390,8 +390,8 @@ one.
 | `RegexParser\Automata\Solver\RegexSolverCompilerInterface` | removed: type against `PHPRegex\Automata\LanguageSolver` |
 | `RegexParser\Automata\Solver\RegexSolverInterface` | removed: type against `PHPRegex\Automata\LanguageSolver` |
 | `RegexParser\Bridge\Symfony\Analyzer\AnalyzerRegistry` | removed: no replacement: AnalyzeCommand takes its two analyzers directly |
-| `RegexParser\Bridge\Symfony\DependencyInjection\Configuration` | removed: no replacement: `PHPRegex\Symfony\PHPRegexBundle` defines its configuration itself |
-| `RegexParser\Bridge\Symfony\DependencyInjection\RegexParserExtension` | removed: no replacement: `PHPRegex\Symfony\PHPRegexBundle` loads its services itself; its container extension keeps the php_regex alias |
+| `RegexParser\Bridge\Symfony\DependencyInjection\Configuration` | removed: no replacement: `PHPRegex\Symfony\PHPRegexSymfonyBundle` defines its configuration itself |
+| `RegexParser\Bridge\Symfony\DependencyInjection\RegexParserExtension` | removed: no replacement: `PHPRegex\Symfony\PHPRegexSymfonyBundle` loads its services itself; its container extension keeps the php_regex alias |
 | `RegexParser\Bridge\Symfony\Routing\RouteControllerFileResolver` | removed: no replacement: nothing called it |
 | `RegexParser\Cli\Command\ClearCacheCommand` | removed: no replacement: the binary keeps no cache between runs, so the regex clear-cache command had nothing to clear |
 | `RegexParser\Node\ClassOperationNode` | removed: no replacement: PHP reads "&&" and "--" in a class as members and ranges, so no pattern ever produced it |

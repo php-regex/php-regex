@@ -9,16 +9,17 @@ The bundle registers a `Regex` service for your application and the
 `php_regex` key.
 
 Requires PHP 8.1 or later and Symfony 6.4 LTS, 7.4 or 8.x.
-The bundle ships no Symfony Flex recipe: register it by hand in
-`config/bundles.php`.
-
 {% include install-prerelease.html package="php-regex/regex-symfony" %}
+
+With Symfony Flex, `composer require` registers the bundle in
+`config/bundles.php` for every environment (for `dev` and `test` only when it
+is installed with `--dev`). Without Flex, add it by hand:
 
 ```php
 // config/bundles.php
 return [
     // ...
-    PHPRegex\Symfony\PHPRegexBundle::class => ['all' => true],
+    PHPRegex\Symfony\PHPRegexSymfonyBundle::class => ['all' => true],
 ];
 ```
 

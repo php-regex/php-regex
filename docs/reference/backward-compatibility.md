@@ -94,7 +94,7 @@ In short, the public surface is:
 | `regex-phpunit` | `RegexAssertions`, `Constraint\MatchesPattern`, `Constraint\DoesNotMatchPattern`, `Constraint\CompilesPattern`, `Constraint\IsLinearPattern` |
 | `regex-psalm` | `Plugin` |
 | `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `EscapeLiteralBraceRector`, `AlphabeticAssertionToClassicRector`, `EscapeNulByteRector`, `PossessiveRepeatOnceRector`, `Set\RegexSetList` |
-| `regex-symfony` | `PHPRegexBundle`, `Validator\Constraints\ValidRegex`, `Validator\Constraints\ValidRegexValidator` |
+| `regex-symfony` | `PHPRegexSymfonyBundle`, `Validator\Constraints\ValidRegex`, `Validator\Constraints\ValidRegexValidator` |
 | `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex`, `Rules\ValidRegex` |
 | `regex-cli` | no PHP class is public |
 | `regex-language-server` | no PHP class is public |

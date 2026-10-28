@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Support;
 
-use PHPRegex\Symfony\PHPRegexBundle;
+use PHPRegex\Symfony\PHPRegexSymfonyBundle;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
@@ -47,7 +47,7 @@ final class BundleContainer
     {
         self::kernelParameters($container);
 
-        $bundle = new PHPRegexBundle();
+        $bundle = new PHPRegexSymfonyBundle();
         $extension = self::extensionOf($bundle);
         $container->registerExtension($extension);
         $bundle->build($container);
@@ -67,7 +67,7 @@ final class BundleContainer
 
     public static function extension(): ExtensionInterface
     {
-        return self::extensionOf(new PHPRegexBundle());
+        return self::extensionOf(new PHPRegexSymfonyBundle());
     }
 
     public static function configuration(): ConfigurationInterface
@@ -96,7 +96,7 @@ final class BundleContainer
         }
     }
 
-    private static function extensionOf(PHPRegexBundle $bundle): ExtensionInterface
+    private static function extensionOf(PHPRegexSymfonyBundle $bundle): ExtensionInterface
     {
         $extension = $bundle->getContainerExtension();
         if (null === $extension) {

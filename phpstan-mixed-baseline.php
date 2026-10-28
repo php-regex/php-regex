@@ -220,13 +220,13 @@ return [
     'src/Symfony/Extractor/ValidatorPatternSource.php' => [
         'PHPRegex\Symfony\Extractor\ValidatorPatternSource::patterns()' => ['reflection-sink', 1],
     ],
-    'src/Symfony/PHPRegexBundle.php' => [
-        'PHPRegex\Symfony\PHPRegexBundle::configure()' => ['host-contract', 2],
-        'PHPRegex\Symfony\PHPRegexBundle::createExtractorDefinition()' => ['host-return', 3],
-        'PHPRegex\Symfony\PHPRegexBundle::extractionWarnings()' => ['host-return', 2],
-        'PHPRegex\Symfony\PHPRegexBundle::loadExtension()' => ['host-return', 2],
-        'PHPRegex\Symfony\PHPRegexBundle::redosThreshold()' => ['validator-input', 1],
-        'PHPRegex\Symfony\PHPRegexBundle::targetVersion()' => ['validator-input', 1],
+    'src/Symfony/PHPRegexSymfonyBundle.php' => [
+        'PHPRegex\Symfony\PHPRegexSymfonyBundle::configure()' => ['host-contract', 2],
+        'PHPRegex\Symfony\PHPRegexSymfonyBundle::createExtractorDefinition()' => ['host-return', 3],
+        'PHPRegex\Symfony\PHPRegexSymfonyBundle::extractionWarnings()' => ['host-return', 2],
+        'PHPRegex\Symfony\PHPRegexSymfonyBundle::loadExtension()' => ['host-return', 2],
+        'PHPRegex\Symfony\PHPRegexSymfonyBundle::redosThreshold()' => ['validator-input', 1],
+        'PHPRegex\Symfony\PHPRegexSymfonyBundle::targetVersion()' => ['validator-input', 1],
     ],
     'src/Symfony/Security/SecurityConfigExtractor.php' => [
         'PHPRegex\Symfony\Security\SecurityConfigExtractor::build()' => ['host-return', 1],

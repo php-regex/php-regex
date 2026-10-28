@@ -52,7 +52,7 @@ use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_it
 
 /*
  * The services of the PHPRegex bundle. The arguments its configuration
- * decides are set by PHPRegexBundle::loadExtension().
+ * decides are set by PHPRegexSymfonyBundle::loadExtension().
  *
  * Every service is private and named php_regex.*: the classes behind them
  * are internal, and an application autowires none of them. It autowires

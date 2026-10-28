@@ -91,14 +91,6 @@ commit.
    first.
 
 
-## Symfony Flex recipe
-
-Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
-`PHPRegexBundle`, so `composer require php-regex/regex-symfony` registers
-nothing (`docs/guides/symfony.md` says to register it by hand). Once 2.0.0
-is on Packagist, open a recipe pull request on symfony/recipes-contrib.
-
-
 ## Blog articles
 
 - Publish the four drafts (`catastrophic-backtracking-in-php`,

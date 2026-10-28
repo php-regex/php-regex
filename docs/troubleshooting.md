@@ -392,7 +392,7 @@ composer show php-regex/regex-symfony
 ```php
 // config/bundles.php
 return [
-    PHPRegex\Symfony\PHPRegexBundle::class => ['all' => true],
+    PHPRegex\Symfony\PHPRegexSymfonyBundle::class => ['all' => true],
 ];
 ```
 

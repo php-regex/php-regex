@@ -86,8 +86,8 @@ final class PackageSelectionDocumentationTest extends TestCase
         foreach (['docs/guides/symfony.md', 'docs/troubleshooting.md', 'src/Symfony/README.md'] as $page) {
             $text = (string) file_get_contents(__DIR__.'/../../'.$page);
 
-            $this->assertStringContainsString("PHPRegex\\Symfony\\PHPRegexBundle::class => ['all' => true],", $text, $page);
-            $this->assertStringNotContainsString("PHPRegexBundle::class => ['dev' => true", $text, $page);
+            $this->assertStringContainsString("PHPRegex\\Symfony\\PHPRegexSymfonyBundle::class => ['all' => true],", $text, $page);
+            $this->assertStringNotContainsString("PHPRegexSymfonyBundle::class => ['dev' => true", $text, $page);
         }
 
         foreach (['docs/guides/symfony.md', 'src/Symfony/README.md'] as $page) {

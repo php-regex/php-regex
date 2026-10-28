@@ -40,7 +40,7 @@ use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
  * The PHPRegex bundle: its configuration under php_regex, the Regex
  * service and the regex:* commands.
  */
-final class PHPRegexBundle extends AbstractBundle
+final class PHPRegexSymfonyBundle extends AbstractBundle
 {
     protected string $extensionAlias = 'php_regex';
 

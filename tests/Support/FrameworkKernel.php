@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Support;
 
-use PHPRegex\Symfony\PHPRegexBundle;
+use PHPRegex\Symfony\PHPRegexSymfonyBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -52,11 +52,11 @@ final class FrameworkKernel extends Kernel
     }
 
     /**
-     * @return list<FrameworkBundle|PHPRegexBundle>
+     * @return list<FrameworkBundle|PHPRegexSymfonyBundle>
      */
     public function registerBundles(): iterable
     {
-        return [new FrameworkBundle(), new PHPRegexBundle()];
+        return [new FrameworkBundle(), new PHPRegexSymfonyBundle()];
     }
 
     public function registerContainerConfiguration(LoaderInterface $loader): void

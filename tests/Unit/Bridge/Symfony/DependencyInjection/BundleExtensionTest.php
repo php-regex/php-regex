@@ -17,7 +17,7 @@ use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Parser\Cache\PsrCacheAdapter;
 use PHPRegex\Symfony\Command\ExplainCommand;
-use PHPRegex\Symfony\PHPRegexBundle;
+use PHPRegex\Symfony\PHPRegexSymfonyBundle;
 use PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator;
 use PHPRegex\Tests\Support\BundleContainer;
 use PHPRegex\Tests\Support\DependencyInjectionFunctionOverrides;
@@ -158,7 +158,7 @@ final class BundleExtensionTest extends TestCase
     #[Test]
     public function test_build_cache_definition_uses_pool(): void
     {
-        $extension = new PHPRegexBundle();
+        $extension = new PHPRegexSymfonyBundle();
         $reflection = new \ReflectionClass($extension);
         $method = $reflection->getMethod('buildCacheDefinition');
 
@@ -182,7 +182,7 @@ final class BundleExtensionTest extends TestCase
     {
         DependencyInjectionFunctionOverrides::$classExistsResult = false;
 
-        $extension = new PHPRegexBundle();
+        $extension = new PHPRegexSymfonyBundle();
         $reflection = new \ReflectionClass($extension);
         $method = $reflection->getMethod('createExtractorDefinition');
 

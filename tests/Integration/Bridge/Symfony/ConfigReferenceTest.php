@@ -42,7 +42,7 @@ final class ConfigReferenceTest extends TestCase
     public function test_the_bundle_answers_to_its_name_as_to_its_alias(): void
     {
         // The first line names what was asked for.
-        $this->assertSame(strstr($this->dump('php_regex'), "\n"), strstr($this->dump('PHPRegexBundle'), "\n"));
+        $this->assertSame(strstr($this->dump('php_regex'), "\n"), strstr($this->dump('PHPRegexSymfonyBundle'), "\n"));
     }
 
     private function dump(string $name): string

@@ -26,7 +26,7 @@ use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\RouterInterface;
 
-final class PHPRegexBundleTest extends TestCase
+final class PHPRegexSymfonyBundleTest extends TestCase
 {
     #[Test]
     public function test_regex_service_registered_with_filesystem_cache(): void
