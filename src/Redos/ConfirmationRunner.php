@@ -14,8 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\DelimitedPattern;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreLimits;
+use PHPRegex\Parser\Exception\InternalFailureException;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Redos\Backtrack\WitnessReplayer;
 
@@ -42,9 +45,34 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
      */
     private const JIT_SETTING = '0';
 
-    public function __construct(private readonly PcreEngine $engine = new PcreEngine()) {}
+    /**
+     * @param string|null $locale the LC_CTYPE the pattern runs under, as RedosAnalyzer runs it under its
+     *                            target's; null for the process's
+     */
+    public function __construct(private readonly PcreEngine $engine = new PcreEngine(), private readonly ?string $locale = null) {}
 
+    /**
+     * @throws InvalidRegexOptionException when the machine cannot set the locale
+     */
     public function confirm(string $regex, RedosAnalysis $analysis, ?ConfirmationOptions $options = null): Confirmation
+    {
+        if (null === $this->locale) {
+            return $this->run($regex, $analysis, $options);
+        }
+
+        $confirmation = null;
+        CharacterTables::under($this->locale, function () use ($regex, $analysis, $options, &$confirmation): void {
+            $confirmation = $this->run($regex, $analysis, $options);
+        });
+
+        if (!$confirmation instanceof Confirmation) {
+            throw InternalFailureException::unexpectedState('The confirmation ran under its locale without a result.'); // Unreachable: under() runs the read or throws.
+        }
+
+        return $confirmation;
+    }
+
+    private function run(string $regex, RedosAnalysis $analysis, ?ConfirmationOptions $options): Confirmation
     {
         $options ??= new ConfirmationOptions();
         $skipped = WitnessReplayer::skipped($options);

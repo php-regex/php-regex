@@ -169,9 +169,6 @@ two parsers read differently.
   too: the counting is ready (0 differences from pcre2test 10.45–10.49 over
   210,000 cases), the fixture needs another pattern, and on 10.45+ there may
   be none.
-- `ConfirmationRunner` (public) runs under the process locale when called
-  directly; `RedosAnalyzer` runs it under the target's. Whether its
-  constructor takes a locale.
 
 ## Left by the 2026-10-27 pass, each reproduced
 

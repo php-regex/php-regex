@@ -162,6 +162,11 @@ var_dump($confirmation->confirmed); // bool(true)
 echo $confirmation->evidence, "\n"; // backtrack_limit
 ```
 
+The runner runs the pattern under the process's `LC_CTYPE`, where
+`RedosAnalyzer` runs it under its target's locale:
+`new ConfirmationRunner(locale: 'fr_FR.ISO8859-1')` runs it under that one,
+and refuses a locale the machine cannot set.
+
 Where `ini_set()` is disabled the engine cannot set those limits: nothing is
 run, `$confirmation->wasSkipped()` is true and its evidence is
 `Confirmation::LIMITS_UNAVAILABLE`.
