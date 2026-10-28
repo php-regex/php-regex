@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PcreRule;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -97,7 +98,7 @@ final class PsalmPluginTargetTest extends TestCase
         $this->assertSame(array_keys($expected), array_keys($found), 'The patterns reported.');
         foreach ($expected as $argument => $target) {
             if (null !== $target) {
-                $this->assertStringStartsWith('Regex pattern is invalid for '.$target.': ', $found[$argument]);
+                $this->assertStringStartsWith('Regex pattern is invalid for '.self::judged($target, $options).': ', $found[$argument]);
             }
         }
 
@@ -296,5 +297,26 @@ final class PsalmPluginTargetTest extends TestCase
         }
 
         throw new \LogicException($pattern.' is not in '.self::FILE);
+    }
+
+    /**
+     * The target a message names: the PHP the row judges for with the PCRE2
+     * it bundles, except that the running PHP's minor version is judged with
+     * the PCRE2 it links, as on a CI image linking the system's, unless
+     * <pcreVersion> pins one.
+     *
+     * @param array<string, string> $options
+     */
+    private static function judged(string $target, array $options): string
+    {
+        if (isset($options['pcreVersion']) || 1 !== preg_match('/^PHP (\d+)\.(\d+) with PCRE2 \d+\.\d+$/', $target, $version)) {
+            return $target;
+        }
+
+        if (\PHP_MAJOR_VERSION !== (int) $version[1] || \PHP_MINOR_VERSION !== (int) $version[2]) {
+            return $target;
+        }
+
+        return \sprintf('PHP %s.%s with PCRE2 %s', $version[1], $version[2], PcreTarget::runtime()->pcreVersion);
     }
 }
