@@ -208,10 +208,6 @@ two parsers read differently.
   dies of memory exhaustion prints no envelope from its shutdown handler;
   the official 8.1 build does. Reproduce with that build, then make it
   print (the reserve and the past-the-buffers write are already in).
-- The suite fails a run naming any test that leaves the PCRE limits, the
-  JIT setting or the ini setter changed: the Laravel lint failure one random
-  order in three exposed in a container (seed 1792566553) did not reproduce
-  in this pass; the guard names the culprit the next time it does.
 - No CI job runs PHP 8.1's bundled PCRE2 10.39 (the 8.1 jobs link 10.42):
   run the whole suite on `php:8.1-cli` once, then add that cell to the
   Engines workflow so the rows held to 10.40 readings stay gated.
