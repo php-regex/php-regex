@@ -163,11 +163,6 @@ two parsers read differently.
   is never a break.
 - `RepeatRewrites::MAX_COUNT` (the optimizer) repeats the 65535 limit of
   `PcreNumber`: reading it from there needs `PcreNumber` public.
-- Coverage (98.92% of statements, 2026-10-27): dead regions proven
-  unreachable (`RangeChecks:163,183`, `CompiledLength:963,1642`) — delete
-  rather than test; and whether tests may hand-build trees to reach the ~50
-  guards only such trees reach (printer raw literals, HIR and transpiler
-  empty shapes, railroad and highlighter guards).
 - Four tests use `/(?:a[\x{100}-\x{10FFFF}\pL]{0}){1900}/u` as a pattern only
   the engine refuses (`ValidationMemoTest`, `RegexApiTest` ×2,
   `RegexGenerateTest`). Counting a class of every character past 255 plus a
