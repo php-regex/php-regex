@@ -71,7 +71,7 @@ final class SnippetTest extends TestCase
         $this->assertStringStartsWith("Line 1: ...\u{E9}", $line);
         $this->assertStringEndsWith("\u{E9}...", $line);
         // The caret stands in the column the "(" is drawn in.
-        $this->assertSame(mb_strwidth(substr($line, 0, (int) strpos($line, '(')), 'UTF-8'), strpos($caret, '^'));
+        $this->assertSame(mb_strlen(substr($line, 0, (int) strpos($line, '(')), 'UTF-8'), strpos($caret, '^'));
     }
 
     /**
@@ -111,6 +111,8 @@ final class SnippetTest extends TestCase
     {
         $this->assertSame("Line 1: あいう[\n".str_repeat(' ', 8 + 6).'^', Snippet::render('あいう[', 9));
         $this->assertSame("Line 1: \u{E9}t\u{E9}(\n".str_repeat(' ', 8 + 3).'^', Snippet::render("\u{E9}t\u{E9}(", 5));
+        // An emoji is two columns on every PHP, whatever mbstring's tables say.
+        $this->assertSame("Line 1: \u{1F600}(\n".str_repeat(' ', 8 + 2).'^', Snippet::render("\u{1F600}(", 4));
         // A line that is not UTF-8 is counted in bytes.
         $this->assertSame("Line 1: \xE9t(\n".str_repeat(' ', 8 + 2).'^', Snippet::render("\xE9t(", 2));
     }

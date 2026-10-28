@@ -32,6 +32,17 @@ final class Snippet
 
     private const ELLIPSIS = '...';
 
+    /**
+     * The East Asian Wide and Fullwidth blocks and the emoji blocks, two
+     * columns each in a terminal.
+     */
+    private const WIDE = [
+        [0x1100, 0x115F], [0x2E80, 0x303E], [0x3041, 0x33FF], [0x3400, 0x4DBF],
+        [0x4E00, 0x9FFF], [0xA000, 0xA4CF], [0xAC00, 0xD7A3], [0xF900, 0xFAFF],
+        [0xFE30, 0xFE4F], [0xFF00, 0xFF60], [0xFFE0, 0xFFE6], [0x1F300, 0x1F64F],
+        [0x1F900, 0x1F9FF], [0x20000, 0x2FFFD], [0x30000, 0x3FFFD],
+    ];
+
     private function __construct() {}
 
     /**
@@ -79,7 +90,7 @@ final class Snippet
         // before it take, as a terminal draws them, a wide one two; a line
         // that is not UTF-8 is counted in bytes.
         $before = substr($pattern, $displayStart, max(0, $caretIndex - $displayStart));
-        $width = mb_check_encoding($before, 'UTF-8') ? mb_strwidth($before, 'UTF-8') : \strlen($before);
+        $width = mb_check_encoding($before, 'UTF-8') ? self::columns($before) : \strlen($before);
         $caretOffset = \strlen($prefixEllipsis) + $width;
         $lineLabel = 'Line '.$lineNumber.': ';
 
@@ -104,5 +115,33 @@ final class Snippet
         }
 
         return [$start, $end];
+    }
+
+    /**
+     * The columns a terminal draws a UTF-8 text in: two for a wide East
+     * Asian character or an emoji, one for any other. A table of its own,
+     * not mb_strwidth(), whose tables change with the PHP release: the same
+     * pattern gets the same caret on every PHP.
+     */
+    private static function columns(string $text): int
+    {
+        $columns = 0;
+        foreach (mb_str_split($text, 1, 'UTF-8') as $character) {
+            $codePoint = (int) mb_ord($character, 'UTF-8');
+            $columns += self::isWide($codePoint) ? 2 : 1;
+        }
+
+        return $columns;
+    }
+
+    private static function isWide(int $codePoint): bool
+    {
+        foreach (self::WIDE as [$first, $last]) {
+            if ($codePoint >= $first && $codePoint <= $last) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
