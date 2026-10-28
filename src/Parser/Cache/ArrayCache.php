@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Cache;
 
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Node\RegexNode;
 
 /**
@@ -33,7 +34,15 @@ final class ArrayCache implements RemovableCacheInterface
      */
     private array $trees = [];
 
-    public function __construct(private readonly int $maxEntries = 1024) {}
+    /**
+     * @throws InvalidRegexOptionException when the cache would keep no tree: NullCache is the cache of none
+     */
+    public function __construct(private readonly int $maxEntries = 1024)
+    {
+        if ($maxEntries < 1) {
+            throw new InvalidRegexOptionException(\sprintf('An ArrayCache keeps at least 1 tree, %d given; NullCache keeps none.', $maxEntries));
+        }
+    }
 
     #[\Override]
     public function generateKey(string $seed): string
