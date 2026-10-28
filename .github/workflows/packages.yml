@@ -157,3 +157,59 @@ jobs:
 
       - name: Check the four assertions answer and fail
         run: php tests/Tools/phpunit_bridge_selfcheck.php "$project"
+
+  phar:
+    # The release path on every push: the phar built as the tag workflow
+    # builds it, then run on the lowest PHP the packages admit, as the tag
+    # workflow runs it, so that a release never meets a broken build first.
+    # The branch's phar stays seven days as an artifact of the run.
+    name: Build and run the phar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Box needs PHP 8.2 to build the phar.
+      - name: Setup PHP to build
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.2'
+          extensions: mbstring, tokenizer
+          ini-values: phar.readonly=0
+          tools: composer, box
+
+      - name: Build
+        run: phar/build
+
+      # The version the sources declare, which the phar reports.
+      - name: Read the version of the sources
+        id: version
+        run: |
+          version=$(sed -nE "s/^[[:space:]]*public const VERSION = '([^']+)';/\1/p" src/Toolkit/Regex.php)
+          if [ -z "$version" ]; then
+            echo "No Regex::VERSION in src/Toolkit/Regex.php." >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Setup the lowest PHP the phar runs on
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.1'
+          extensions: mbstring, tokenizer
+          coverage: none
+
+      - name: Check the phar
+        uses: ./.github/actions/check-phar
+        with:
+          version: ${{ steps.version.outputs.version }}
+
+      - name: Keep the phar
+        uses: actions/upload-artifact@v7
+        with:
+          name: regex.phar
+          path: bin/regex.phar
+          retention-days: 7

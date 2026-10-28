@@ -1,0 +1,63 @@
+name: Check the phar
+description: >
+  Runs bin/regex.phar on the PHP set up before this action: its version, a
+  valid and an invalid pattern through validate, and initialize through the
+  language server.
+
+inputs:
+  version:
+    description: The version the phar reports, as "2.1.0" or "2.1.0-DEV".
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # The first line of --version is "PHPRegex <version> by <author>".
+    - name: Check the version
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        read -r name reported _ < <(php bin/regex.phar --version --no-ansi)
+        if [ "$name" != PHPRegex ] || [ "$reported" != "$VERSION" ]; then
+          echo "bin/regex.phar reports \"$name $reported\", not PHPRegex $VERSION." >&2
+          exit 1
+        fi
+
+    # validate exits with 0 on a valid pattern and 1 on an invalid one.
+    - name: Check the phar validates a pattern
+      shell: bash
+      run: |
+        code=0
+        php bin/regex.phar validate --no-ansi '/^(?<year>\d{4})-(?<month>\d{2})$/' > "$RUNNER_TEMP/valid" || code=$?
+        if [ "$code" -ne 0 ]; then
+          echo "bin/regex.phar validate exited with $code on a valid pattern:" >&2; cat "$RUNNER_TEMP/valid" >&2; exit 1
+        fi
+        code=0
+        php bin/regex.phar validate --no-ansi '/(a/' > "$RUNNER_TEMP/invalid" || code=$?
+        if [ "$code" -ne 1 ]; then
+          echo "bin/regex.phar validate exited with $code on /(a/, not 1:" >&2; cat "$RUNNER_TEMP/invalid" >&2; exit 1
+        fi
+
+    # The server answers with framed messages, one header and one JSON body
+    # each, and may send more after its answer: each body is read whole by
+    # its length, and the answer to the request is read as JSON.
+    - name: Check the phar carries the language server
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        message='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}'
+        printf 'Content-Length: %d\r\n\r\n%s' "${#message}" "$message" > "$RUNNER_TEMP/lsp-in"
+        php bin/regex.phar lsp < "$RUNNER_TEMP/lsp-in" > "$RUNNER_TEMP/lsp-out"
+        length=0
+        while IFS= read -r header; do
+          header=${header%$'\r'}
+          case "$header" in
+            Content-Length:*) length=${header#Content-Length: } ;;
+            '') dd bs=1 count="$length" status=none; echo ;;
+          esac
+        done < "$RUNNER_TEMP/lsp-out" > "$RUNNER_TEMP/lsp-messages"
+        if ! jq -e -s --arg version "$VERSION" 'map(select(.id == 1)) | .[0].result.serverInfo == {name: "php-regex-lsp", version: $version}' "$RUNNER_TEMP/lsp-messages" > /dev/null; then
+          echo "bin/regex.phar lsp did not answer initialize as php-regex-lsp $VERSION:" >&2; cat "$RUNNER_TEMP/lsp-out" >&2; exit 1
+        fi
