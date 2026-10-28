@@ -10,6 +10,8 @@ CHANGELOG
    pattern only: the same body under the same modifiers, in any order and
    between any delimiters. Any other entry still skips its body under any
    modifiers.
+ * `IgnoreList` is public: it reads a ReDoS ignore list the way the
+   analysis does, and the lint reads its own with it.
  * A proof of a linear attempt counts the work inside its lookaheads: a loop
    that reads, on the same characters, into a loop of a lookahead's body (as
    in `/^(?:(?=a+)a)+$/`, quadratic) refuses the proof, and `abstractions`

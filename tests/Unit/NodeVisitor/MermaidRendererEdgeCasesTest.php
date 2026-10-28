@@ -15,7 +15,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Explain\MermaidRenderer;
 use PHPRegex\Parser\Node\CalloutNode;
-use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,7 +27,8 @@ final class MermaidRendererEdgeCasesTest extends TestCase
     public function test_limit_match_verb_is_rendered(): void
     {
         $visitor = new MermaidRenderer();
-        $regex = new RegexNode(new PcreVerbNode('LIMIT_MATCH=12', 0, 0), '', '/', 0, 0);
+        // the parser reads (*LIMIT_MATCH=12) as a LimitMatchNode, never as a verb
+        $regex = new RegexNode(new LimitMatchNode(12, 0, 0), '', '/', 0, 0);
 
         $diagram = $regex->accept($visitor);
 

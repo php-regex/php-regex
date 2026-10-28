@@ -23,8 +23,7 @@ use PHPRegex\Parser\Syntax\PatternParser;
  * under the same modifiers, whatever the delimiter and the order of the
  * letters. Any other entry, a body, a fragment or a delimited pattern
  * without modifiers, names its body under any delimiters and modifiers.
- *
- * @internal
+ * The lint reads its ReDoS ignore list with it.
  */
 final class IgnoreList
 {
