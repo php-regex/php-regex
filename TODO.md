@@ -177,10 +177,6 @@ two parsers read differently.
   ~1,160 of 175,625 nodes of the repository's patterns (`DEFINE`,
   `(*ACCEPT)` sequences, class-set operations, script runs): one source,
   checked against the engine, then every copy reading it.
-- In the ReDoS model, a lookahead body that stops at once, `(?=a+?)`, or
-  holds where the loop could go on, `(?!a+)` before `a`, keeps the
-  polynomial proof from the linear one: the model has no cut scoped to a
-  body.
 - On the 8.1 build the CI runners use (a setup-php compile), a child that
   dies of memory exhaustion prints no envelope from its shutdown handler;
   the official 8.1 build does. Reproduce with that build, then make it
