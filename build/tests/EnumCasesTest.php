@@ -80,6 +80,37 @@ final class EnumCasesTest extends TestCase
      *
      * @param class-string<UnitEnum> $class
      */
+    public function test_a_lookup_after_the_first_does_not_list_the_cases_again(string $class): void
+    {
+        if (!is_subclass_of($class, BackedEnum::class)) {
+            $this->assertFalse(method_exists($class, 'tryFrom'), 'A pure enum has no tryFrom().');
+
+            return;
+        }
+
+        $case = $class::cases()[0];
+        $this->assertSame($case, $class::tryFrom($case->value));
+
+        // Listing the cases again would build the instances again: a lookup
+        // that reads the list on every call hands out a new object here.
+        $instances = new \ReflectionProperty($class, 'instances');
+        if (\PHP_VERSION_ID < 80100) {
+            $instances->setAccessible(true);
+        }
+        $shared = $instances->getValue();
+        $instances->setValue(null, []);
+        try {
+            $this->assertSame($case, $class::tryFrom($case->value), 'tryFrom() lists the cases on every call.');
+        } finally {
+            $instances->setValue(null, $shared);
+        }
+    }
+
+    /**
+     * @dataProvider provideClasses
+     *
+     * @param class-string<UnitEnum> $class
+     */
     public function test_a_restored_case_is_the_case_itself(string $class): void
     {
         foreach ($class::cases() as $case) {

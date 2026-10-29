@@ -14,7 +14,8 @@ declare(strict_types=1);
  * - the classes implement PHPRegex\Parser\UnitEnum, and the backed ones
  *   PHPRegex\Parser\BackedEnum, the twin's \UnitEnum and \BackedEnum (the
  *   native interfaces cannot be implemented by a class);
- * - from() throws the \ValueError PHP throws, with its message;
+ * - from() throws the \ValueError PHP throws, with its message, and
+ *   tryFrom() reads a map of the values, built at the first lookup;
  * - a pure enum has no value, a backed one its value with its type;
  * - a method of the enum with no parameter is ported as a map per case;
  * - PHPRegex\Parser\EnumCases lists the classes, for the cache to restore
@@ -84,6 +85,9 @@ foreach ($enums as $fqcn => $relative) {
 		. $reflection->getCases()[0]->getName() . "() returns\n * the same instance at each call.\n */\n";
 	$out .= 'final class ' . $short . ' implements \\PHPRegex\\Parser\\' . ($backing === null ? 'UnitEnum' : 'BackedEnum') . "\n{\n";
 	$out .= "    /** @var array<string, self> */\n    private static array \$instances = [];\n\n";
+	if ($backing !== null) {
+		$out .= "    /** @var array<int|string, self>|null */\n    private static ?array \$byValue = null;\n\n";
+	}
 	$out .= "    public string \$name;\n\n";
 	if ($backing !== null) {
 		$out .= "    public {$backing} \$value;\n\n";
@@ -112,7 +116,8 @@ foreach ($enums as $fqcn => $relative) {
 		$out .= "            throw new \\ValueError({$quote}.' is not a valid backing value for enum " . addslashes($fqcn) . "');\n        }\n\n";
 		$out .= "        return \$case;\n    }\n\n";
 		$out .= "    public static function tryFrom({$backing} \$value): ?self\n    {\n";
-		$out .= "        foreach (self::cases() as \$case) {\n            if (\$case->value === \$value) {\n                return \$case;\n            }\n        }\n\n        return null;\n    }\n";
+		$out .= "        if (null === self::\$byValue) {\n            self::\$byValue = [];\n            foreach (self::cases() as \$case) {\n                self::\$byValue[\$case->value] = \$case;\n            }\n        }\n\n";
+		$out .= "        return self::\$byValue[\$value] ?? null;\n    }\n";
 	}
 
 	foreach ($ported as $method) {

@@ -65,15 +65,6 @@ After the 2.0.0 tag, publish `php-regex/regex-parser-php74` once more from
 the tagged commit, from the `twin` artifact of a green "php74 twin"
 workflow run. The published `c525273` is the build of 2.x at dec0cb9e52.
 
-The enum classes the twin generates look a value up by scanning `cases()`,
-which rebuilds the list of instances on every call, and the lexer looks a
-token type up once per token: validating the 395 distinct patterns of the
-`preg_*` calls in PHPStan and its vendor takes 117 ms with the twin
-against 88 ms with the enums of PHP 8.1 (PHP 8.4, median of five runs).
-Emit `tryFrom()` as a lookup in a map built once
-(`build/emit-enum-factories.php`, covered by `build/tests/EnumCasesTest.php`),
-regenerate, and publish with the rest.
-
 
 ## PHP 8.6 GA, 2026-11-19
 
