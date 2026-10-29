@@ -170,12 +170,13 @@ final class Lexer
     private static ?array $plainBytes = null;
 
     /**
-     * The token regexes this lexer built, by context and reading mode: a
-     * string built once per lexer, which PCRE keeps compiled across them.
+     * The token regexes, by context and reading mode: the token patterns are
+     * constants, so the strings are built once and every lexer of the
+     * process reads with them, as PCRE keeps them compiled.
      *
      * @var array<string, string>
      */
-    private array $regexes = [];
+    private static array $regexes = [];
 
     /**
      * The syntax the PHP and PCRE2 judged read, asked once.
@@ -404,12 +405,12 @@ final class Lexer
     {
         // The token patterns are constants and the regex only varies with
         // the byte mode.
-        return $this->regexes['outside'.($this->state->byteMode ? 1 : 0)] ??= $this->compilePattern(self::PATTERNS_OUTSIDE);
+        return self::$regexes['outside'.($this->state->byteMode ? 1 : 0)] ??= $this->compilePattern(self::PATTERNS_OUTSIDE);
     }
 
     private function getRegexInside(): string
     {
-        return $this->regexes['inside'.($this->state->byteMode ? 1 : 0)] ??= $this->compilePattern(self::PATTERNS_INSIDE);
+        return self::$regexes['inside'.($this->state->byteMode ? 1 : 0)] ??= $this->compilePattern(self::PATTERNS_INSIDE);
     }
 
     /**

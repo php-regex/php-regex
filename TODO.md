@@ -118,31 +118,21 @@ package already stands alone with its own vendor, so that a new undeclared
 use fails there.
 
 
-## Parse cost inside PHPStan
+## PHPStan pull request
 
-Measured on the PHPStan branch that reads regex shapes through PHPRegex,
-over the 395 distinct literal patterns of the `preg_*` calls in PHPStan
-and its vendor (PHP 8.4, one process per run, median of seven):
-
-- one cold pattern costs 0.58 ms with the twin against 0.22 ms with the
-  parser PHPStan generates today: 0.28 ms to parse, 0.08 ms to validate,
-  0.15 ms for the capture shape, 0.06 ms for PHPStan's own group
-  placement; the enum lookup above is 0.08 ms of the parse;
-- the first pattern of a process costs 30 ms against 10 ms, class loading
-  included, and the peak memory is 6 MB higher;
-- a second read of the same pattern is free in the branch, which caches
-  the shape; the generated parser caches the tree and walks it again
-  (46 ms for the 395);
-- a whole run over twelve regex-heavy files, the 395 patterns included,
-  takes the same time with either parser (3.7 s, six alternating runs),
-  and PHPStan's benchmark suite calls no `preg_*` function at all.
-
-The capture shape costs two thirds of what parsing and validating cost
-together: 56 ms for 362 trees against 88 ms. `CaptureFacts` (`of`,
-`values`, `accepts`, `holdsNoLetter`) and
-`CaptureShapeAnalyzer::collectOption` carry most of it; on the lexer side
-`createToken`, the token loop of `Lexer::read()` and `TokenValue::of`
-come next. Profile those before looking anywhere else.
+When the pull request is opened, state the parse cost in its description.
+Measured over the 395 distinct literal patterns of the `preg_*` calls in
+PHPStan and its vendor (PHP 8.4, median of five runs), with the twin
+PHPStan ships: validating takes 97 ms and the capture shape 57 ms, against
+88 ms for everything with the parser PHPStan generates today; the first
+pattern of a process costs 30 ms against 10 ms, class loading included,
+and the peak memory is 6 MB higher; a second read of a pattern is free; a
+run over twelve regex-heavy files, those patterns included, takes the
+same time with either parser (3.7 s), and PHPStan's benchmark suite calls
+no `preg_*` function. The capture shape computes eight facts per group
+and per arm, and nothing cheaper was found: memoising the length
+calculator or the ACCEPT check, or walking the letter check once, each
+measured under 3 %.
 
 
 ## Open questions

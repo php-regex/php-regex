@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lexer;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Token\Token;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -37,6 +38,27 @@ final class LexerUtf8Test extends TestCase
         $tokens = (new Lexer())->tokenize($invalidUtf8)->getTokens();
 
         $this->assertCount(5, $tokens); // a, b, c, \xC3, EOF
+    }
+
+    #[Test]
+    public function test_a_lexer_reads_a_class_in_its_own_mode_after_another_lexer_read_in_the_other(): void
+    {
+        // The token regexes read a class member as a byte or as a UTF-8
+        // character: each lexer reads in the mode of its own pattern,
+        // whatever the lexer before it read.
+        $values = static fn (array $tokens): array => array_map(static fn (Token $token): string => $token->value, $tokens);
+        $positions = static fn (array $tokens): array => array_map(static fn (Token $token): int => $token->position, $tokens);
+
+        $byte = (new Lexer())->tokenize("[\xFF]")->getTokens();
+        $utf8 = (new Lexer())->tokenize('[é]', 'u')->getTokens();
+        $byteAgain = (new Lexer())->tokenize("[\xFF]")->getTokens();
+
+        $this->assertSame(['[', "\xFF", ']', ''], $values($byte));
+        $this->assertSame([0, 1, 2, 3], $positions($byte));
+        $this->assertSame(['[', 'é', ']', ''], $values($utf8));
+        $this->assertSame([0, 1, 3, 4], $positions($utf8));
+        $this->assertSame($values($byte), $values($byteAgain));
+        $this->assertSame($positions($byte), $positions($byteAgain));
     }
 
     #[Test]

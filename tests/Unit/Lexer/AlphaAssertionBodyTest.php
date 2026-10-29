@@ -751,8 +751,8 @@ final class AlphaAssertionBodyTest extends TestCase
 
     /**
      * A pattern that is one alphabetic assertion builds the body item regex
-     * once for the lexer reading it; another lexer builds its own, so the
-     * process keeps none of them.
+     * once for the lexer reading it; another lexer builds its own: the token
+     * regexes every lexer shares carry none of them.
      */
     #[Test]
     public function test_the_body_item_regex_belongs_to_the_lexer_that_built_it(): void
@@ -766,7 +766,9 @@ final class AlphaAssertionBodyTest extends TestCase
         $this->assertInstanceOf(BodyEnds::class, $read);
         $this->assertNotSame([], array_filter((array) (new \ReflectionProperty(BodyEnds::class, 'regexes'))->getValue($read), static fn (string $key): bool => str_starts_with($key, 'body'), \ARRAY_FILTER_USE_KEY));
 
-        $this->assertSame([], $regexes->getValue(new Lexer()));
+        $shared = $regexes->getValue(new Lexer());
+        $this->assertIsArray($shared);
+        $this->assertSame([], array_filter(array_keys($shared), static fn (string $key): bool => str_starts_with($key, 'body')));
         $this->assertNull($bodies(new Lexer()));
     }
 
