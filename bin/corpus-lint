@@ -34,6 +34,11 @@ declare(strict_types=1);
  * notice the linter prints is carried into the merged log; one that allows
  * nothing from 7.3 on is recorded as refused.
  *
+ * Every run carries the ReDoS analysis in confirmed mode: a pattern the
+ * analysis proves linear loses the lint warnings that only guess at
+ * backtracking, and a proven verdict is replayed on the running PCRE so
+ * the log states the length at which preg_match() gives up.
+ *
  * Usage:
  *   bin/corpus-lint [options]
  *
@@ -151,14 +156,14 @@ function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFi
     if (null !== requirePhpConstraint($repoDir)) {
         return [
             'env' => $composer,
-            'args' => ['--ansi', 'lint', $repoDir, '--output', $partFile],
+            'args' => ['--ansi', 'lint', $repoDir, '--redos', '--redos-mode=confirmed', '--output', $partFile],
             'fallback' => false,
         ];
     }
 
     return [
         'env' => null,
-        'args' => ['--ansi', 'lint', $repoDir, '--php-version', $fallbackPhp, '--output', $partFile],
+        'args' => ['--ansi', 'lint', $repoDir, '--php-version', $fallbackPhp, '--redos', '--redos-mode=confirmed', '--output', $partFile],
         'fallback' => true,
     ];
 }

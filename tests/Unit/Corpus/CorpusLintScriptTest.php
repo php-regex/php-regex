@@ -287,7 +287,7 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertSame($this->root.'/corpus/ownerA/repoNew/composer.json', $plan['env']);
         $this->assertFalse($plan['fallback']);
         $this->assertSame(
-            ['--ansi', 'lint', $this->root.'/corpus/ownerA/repoNew', '--output', '/tmp/ownerA__repoNew.log'],
+            ['--ansi', 'lint', $this->root.'/corpus/ownerA/repoNew', '--redos', '--redos-mode=confirmed', '--output', '/tmp/ownerA__repoNew.log'],
             $plan['args'],
         );
 
@@ -295,7 +295,7 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertNull($plan['env']);
         $this->assertTrue($plan['fallback']);
         $this->assertSame(
-            ['--ansi', 'lint', $this->root.'/corpus/ownerC/repoBare', '--php-version', '8.1', '--output', '/tmp/ownerC__repoBare.log'],
+            ['--ansi', 'lint', $this->root.'/corpus/ownerC/repoBare', '--php-version', '8.1', '--redos', '--redos-mode=confirmed', '--output', '/tmp/ownerC__repoBare.log'],
             $plan['args'],
         );
     }

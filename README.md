@@ -197,7 +197,11 @@ allows PHP 7.3 or later is judged from the lowest such PHP, with the note
 saying so in the log, and a `composer.json` that allows nothing from 7.3 on
 is refused: the section names no target (`Target: none — exit 2`) and
 carries the refusal, and the sweep counts it as a failure, never as a clean
-repository. The merged
+repository. Each run carries the ReDoS analysis in confirmed mode
+(`--redos --redos-mode=confirmed`): a pattern the analysis proves linear
+loses the warnings that only guess at backtracking, and a proven verdict is
+replayed on the running PCRE, so the log says at which length `preg_match()`
+gives up. The merged
 `var/log/corpus.log` keeps the issue format of a single run and gains one
 `###` header per repository; each repository's own
 log stays under `var/log/corpus-parts/`. `--only` and `--limit` sweep a slice

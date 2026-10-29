@@ -37,6 +37,8 @@ corpus/Automattic/jetpack/projects/packages/agents-manager/src/class-agents-mana
 
 corpus/Automattic/jetpack/projects/packages/changelogger/lib/KeepAChangelogParser.php:76:20
     → /^\[([^]]+)\]: *(\S+(?: +(?:"(?:[^"]|\\.)*"|'(?:[^']|\\.)*'|\((?:[^()]|\\.)*\)))?)\s*\Z/m
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "[\n]:! (" . "\n\\!" x n Replayed on PCRE2 10.49: preg_match fails from length 49 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching in...
    WARN  Alternation branches "[^"]" and "\\\\." have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Alternation branches "[^']" and "\\\\." have overlapping character sets, which may cause unnecessary backtracking.
@@ -88,6 +90,8 @@ corpus/Automattic/jetpack/projects/packages/forms/src/contact-form/class-contact
 
 corpus/Automattic/jetpack/projects/packages/forms/src/contact-form/class-contact-form-field.php:469:6
     → %^(?:(?:https?|ftp)://)?(?:\S+(?::\S*)?@|\d{1,3}(?:\.\d{1,3}){3}|(?:(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)(?:\.(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)*(?:\.[a-z\x{00a1}-\x{ffff}]{2,6}))(?::\d+)?(?:[^\s]*)?$%iu
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" x n Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). Nested bounded quantifiers detected. May cause polynomial backtracking. Consider simplify...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -186,12 +190,6 @@ corpus/Automattic/jetpack/projects/packages/password-checker/src/class-password-
        ↳ Redundant elements: '|' (covered by range '|'-'|'), '|' (duplicate)
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '|' directly instead of a range.
-
-corpus/Automattic/jetpack/projects/packages/phan-plugins/src/HtmlTemplatePlugin.php:31:30
-    → /@html-template(?=[^a-zA-Z0-9_-]|$)(?:\s+(\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*(?:::[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)?))?/
-   ↳ via self::FQSEN_REGEX
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/Automattic/jetpack/projects/packages/search/src/class-package.php:50:18
     → /^\d+(\.\d+)+$/
@@ -347,14 +345,6 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/extra.php:1
        ↳ Remove the redundant character class element.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
-corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/extra.php:1853:24
-    → /(?:^\n?|\n\n)*$/
-   ↳ via $newline_before_re
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/extra.php:2182:17
     → /^1|block|span$/
@@ -492,10 +482,6 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/modules/shortcodes/googleapps
     → !https?://(docs|drive|spreadsheets\d*|calendar|www)*\.google\.com/([-\w\./]+)\?([^"]+)!
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches "docs" and "drive" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/Automattic/jetpack/projects/plugins/jetpack/modules/shortcodes/googlemaps.php:35:37
     → #&lt;iframe\s[^&]*?(?:&(?!gt;)[^&]*?)*?src="<a href="https?://(.*)?\.google\.(.*?)/(.*?)\?(.+?)&quot;[^&]*?(?:&(?!gt;)[^&]*?)*?&gt;\s*&lt;/iframe&gt;&lt;br">[^"]*?"&gt;\s*&lt;/iframe&gt;(?:&lt;br</a>\s*/&gt;\s*&lt;small&gt;.*?&lt;/small&gt;)?#i
@@ -522,14 +508,14 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/modules/shortcodes/quiz.php:2
     → #(<(?:br /|/?p)>\n?)*(\[/?[a-z]+\])(<(?:br /|/?p)>\n?)*#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
 corpus/Automattic/jetpack/projects/plugins/jetpack/modules/shortcodes/recipe.php:508:18
     → /(?:^|\n|\<p\>)+(?:[\-–—]+|\&#8211;|\&#8212;|\*)+\h+(.*)/mi
    ↳ via $ul_pattern
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "-" x n Replayed on PCRE2 10.49: preg_match fails from length 15 (backtrack_limit 100000, JIT off). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracki...
    WARN  Quantifier "+" repeats an item that can match the empty string: an empty iteration matches nothing more.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -541,6 +527,8 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/modules/shortcodes/recipe.php
 corpus/Automattic/jetpack/projects/plugins/jetpack/modules/shortcodes/recipe.php:509:18
     → /(?:^|\n|\<p\>)+(?:\d+\.|#+)+\h+(.*)/mi
    ↳ via $ol_pattern
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0.##" x n Replayed on PCRE2 10.49: preg_match fails from length 56 (backtrack_limit 100000, JIT off). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtra...
    WARN  Quantifier "+" repeats an item that can match the empty string: an empty iteration matches nothing more.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -699,17 +687,10 @@ corpus/CarbonPHP/carbon/src/Carbon/CarbonInterval.php:1011:20
    ↳ via $pattern
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/CarbonPHP/carbon/src/Carbon/CarbonInterval.php:1314:24
-    → /^(?:\h*-?\d+(?:\.\d+)?\h*[a-z]+)+$/i
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/CarbonPHP/carbon/src/Carbon/CarbonPeriod.php:782:25
     → /^(-?\d(\d(?![\/-])|[^\d\/-]([\/-])?)*|P[T\d].*|(?:\h*\d+(?:\.\d+)?\h*[a-z]+)+)$/i
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/CarbonPHP/carbon/src/Carbon/Lang/uk.php:175:32
     → /(\[(В|в|У|у)\])\s+dddd/u
@@ -808,7 +789,7 @@ corpus/EdgedesignCZ/phpqa/src/Tools/GetVersions.php:173:29
 
 
 
-### corpus/FOSSBilling/FOSSBilling — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
+### corpus/FOSSBilling/FOSSBilling — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 1
 corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/Doctrine/InstallSeeder.php:310:34
     → /\;[\r]*\n/ism
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -850,16 +831,10 @@ corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/Validate.php:51:27
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
-corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/Version.php:20:39
-    → ^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$^
-   ↳ via self::semverRegex
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches "0" and "\\d*[a-zA-Z\\-][0-9a-zA-Z\\-]*" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
 corpus/FOSSBilling/FOSSBilling/src/modules/Email/Service.php:467:24
     → #{%.?block subject.?%}((.*?)+){%.?endblock.?%}#
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "{%block subject%}" . "!" x n . "!endblock" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking...
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -941,7 +916,7 @@ corpus/Heyosseus/sloppy/src/Rules/Php/UnexplainedSuppressionRule.php:220:66
 
 
 
-### corpus/Humbug/php-scoper — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+### corpus/Humbug/php-scoper — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 1
 corpus/Humbug/php-scoper/src/Patcher/SymfonyPatcher.php:35:13
     → /use (Symfony(\\(?:\\)?)Component\\.+?;)/
    WARN  Redundant non-capturing group "(?:\\)" at offset 15; it can be removed without changing behavior.
@@ -954,16 +929,12 @@ corpus/Humbug/php-scoper/src/PhpParser/NodeVisitor/StringScalarPrefixer.php:101:
    ↳ via self::CLASS_LIKE_PATTERN
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/Humbug/php-scoper/src/PhpParser/NodeVisitor/StringScalarPrefixer.php:113:44
     → /^ (\\)? ( [\p{L}_\d]+ \\ )* [\p{L}_\d]+ ::[\p{L}_\d]+ $/ux
    ↳ via self::CONSTANT_FETCH_PATTERN
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/Humbug/php-scoper/src/Scoper/PhpScoper.php:32:32
     → /^#!.+?php.*\n{1,}<\?php/
@@ -983,6 +954,8 @@ corpus/Humbug/php-scoper/src/Scoper/Symfony/XmlScoper.php:37:39
 corpus/Humbug/php-scoper/src/Scoper/Symfony/XmlScoper.php:38:42
     → /(?:(?<singleClass>(?:[\p{L}_][\p{L}_\d]*(?<singleSeparator>\\(?:\\)?))):)|(?<class>(?:[\p{L}_][\p{L}_\d]*(?<separator>\\(?:\\)?)+)+[\p{L}_\d]+)/u
    ↳ via self::SINGLE_CLASS_PATTERN
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "A" . "\\\\" x n Replayed on PCRE2 10.49: preg_match fails from length 21 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Con...
    WARN  Redundant non-capturing group "(?:\\)" at offset 61; it can be removed without changing behavior.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -998,6 +971,8 @@ corpus/Humbug/php-scoper/src/Scoper/Symfony/XmlScoper.php:38:42
 corpus/Humbug/php-scoper/src/Scoper/Symfony/YamlScoper.php:37:35
     → /(?:(?<singleClass>(?:[\p{L}_][\p{L}_\d]*(?<singleSeparator>\\(?:\\)?))):)|(?<class>(?:[\p{L}_][\p{L}_\d]*(?<separator>\\(?:\\)?)+)+[\p{L}_\d]+)/u
    ↳ via self::CLASS_PATTERN
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "A" . "\\\\" x n Replayed on PCRE2 10.49: preg_match fails from length 21 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Con...
    WARN  Redundant non-capturing group "(?:\\)" at offset 61; it can be removed without changing behavior.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -1041,13 +1016,6 @@ Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library 
 ### corpus/KnpLabs/KnpMenu — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
 ### corpus/KnpLabs/snappy — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-corpus/KnpLabs/snappy/src/Knp/Snappy/AbstractGenerator.php:26:52
-    → /^[a-z]:(?:[\\\/]?(?:[\w\s!#()-]+|[\.]{1,2})+)*[\\\/]?/i
-   ↳ via self::WINDOWS_LOCAL_FILENAME_REGEX
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
-
 
 ### corpus/MyIntervals/PHP-CSS-Parser — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
@@ -1150,33 +1118,16 @@ corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/Funct
        - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
        + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
 
-corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:80:28
-    → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9_\[\]]+))*)( .*)?`i
-   WARN  Alternation branches "array\\([^)]*\\)" and "[\\\\a-z0-9_[\\]]+" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
 corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:313:28
     → /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
    TIP 
        - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
        + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
 
-corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/VariableCommentSniff.php:141:20
-    → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9\[\]]+))*)( .*)?`i
-   WARN  Alternation branches "array\\([^)]*\\)" and "[\\\\a-z0-9[\\]]+" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
 corpus/PHPCSStandards/PHP_CodeSniffer/src/Tokenizers/PHP.php:1980:39
     → `^((?<!\.)_[0-9A-F][0-9A-F\.]*)+$`iD
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
-corpus/PHPCSStandards/PHP_CodeSniffer/src/Tokenizers/PHP.php:1984:39
-    → `^(?:(?<![\.e])_[0-9][0-9e\.]*)+$`iD
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/PHPCSStandards/PHP_CodeSniffer/src/Util/Common.php:492:28
     → /^array\(\s*([^\s^=^>]*)(\s*=>\s*(.*))?\s*\)/i
@@ -1203,8 +1154,6 @@ corpus/PHPCompatibility/PHPCompatibility/PHPCompatibility/Sniffs/Numbers/ValidIn
     → `^((?<![\.e])_[0-9][0-9e\.]*)+$`iD
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/PHPCompatibility/PHPCompatibility/PHPCompatibility/Sniffs/Numbers/ValidIntegersSniff.php:176:29
     → `^(?:[o_][0-7_]*)?[8-9]+[_0-9]*$`iD
@@ -1247,8 +1196,6 @@ corpus/PHPMailer/PHPMailer/src/PHPMailer.php:1543:21
 corpus/PHPMailer/PHPMailer/src/PHPMailer.php:1561:21
     → /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/sD
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    TIP 
        - /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/sD
        + /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/D
@@ -1256,8 +1203,6 @@ corpus/PHPMailer/PHPMailer/src/PHPMailer.php:1561:21
 corpus/PHPMailer/PHPMailer/src/PHPMailer.php:1578:21
     → /^[-\p{L}\p{N}\p{M}.!#$%&'*+\/=?^_`{|}~]+@[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?(?:\.[\p{L}\p{N}\p{M}](?:[-\p{L}\p{N}\p{M}]{0,61}[\p{L}\p{N}\p{M}])?)*$/usD
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    TIP 
        - /^[-\p{L}\p{N}\p{M}.!#$%&'*+\/=?^_`{|}~]+@[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?(?:\.[\p{L}\p{N}\p{M}](?:[-\p{L}\p{N}\p{M}]{0,61}[\p{L}\p{N}\p{M}])?)*$/usD
        + /^[-\p{L}\p{N}\p{M}.!#$%&'*+\/=?^_`{|}~]+@[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?(?:\.[\p{L}\p{N}\p{M}](?:[-\p{L}\p{N}\p{M}]{0,61}[\p{L}\p{N}\p{M}])?)*$/uD
@@ -1315,7 +1260,7 @@ corpus/PHPOffice/PHPWord/src/PhpWord/TemplateProcessor.php:481:25
 
 
 
-### corpus/PHPOffice/PhpSpreadsheet — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+### corpus/PHPOffice/PhpSpreadsheet — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 1
 corpus/PHPOffice/PhpSpreadsheet/bin/check-phpdoc-types.php:14:20
     → ~^\+ +\* @(param|var) (mixed|string|int|float|bool|null|array|\?|\|)+( \$\w+)?$~m
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -1337,6 +1282,8 @@ corpus/PHPOffice/PhpSpreadsheet/samples/Pdf/21b_Pdf.php:13:19
 corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php:1175:37
     → /((?:[,(]|^)\s*)([(](?:((([^\s,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.])(?::((([^\s,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.]))?|((([^\s,!&%^\/\*\+<>=-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?([_\p{L}][_\p{L}\p{N}\.]*))(?:\s*,\s*(?:((([^\s,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.])(?::((([^\s,!&%^\/\*\+<>=:`-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\$?\b([a-z]{1,3})\$?(\d{1,7})(?![\w.]))?|((([^\s,!&%^\/\*\+<>=-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?([_\p{L}][_\p{L}\p{N}\.]*)))+\s*[)])/i
    ↳ via self::UNIONABLE_COMMAS
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "(A" . " ,'0'!A" x n . "!)" Replayed on PCRE2 10.49: preg_match fails from length 88 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching...
    WARN  Alternation branches "([^\\s,!&%\\^\\/*+<>=:`\\-]*)" and "('(?:[^']|'[^!])+?')" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Alternation branches "([^\\s,!&%\\^\\/*+<>=:`\\-]*)" and "('(?:[^']|'[^!])+?')" have overlapping character sets, which may cause unnecessary backtracking.
@@ -1638,11 +1585,6 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php:197:41
-    → /(\\(((.)(?!((AM\/PM)|(A\/P))))|([^ ])))(?=(?:[^"]|"[^"]*")*$)/ui
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php:207:41
     → /_.?/ui
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -1651,8 +1593,6 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.
     → /(\[\$[A-Z]*-[0-9A-F]*\])*[hmsdy](?=(?:[^"]|"[^"]*")*$)/miu
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php:214:29
     → /\[\$[A-Z]{3}\]/miu
@@ -1844,7 +1784,7 @@ corpus/PhpCodeArcheology/PhpCodeArcheology/src/Application/Service/TestCoversVis
 
 
 
-### corpus/PrestaShop/PrestaShop — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+### corpus/PrestaShop/PrestaShop — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 1
 corpus/PrestaShop/PrestaShop/classes/AddressFormat.php:97:37
     → #([^\w:_]+)#i
    ↳ via self::_CLEANING_REGEX_
@@ -2247,6 +2187,8 @@ corpus/PrestaShop/PrestaShop/src/Adapter/ImageThumbnailsRegenerator.php:133:32
 
 corpus/PrestaShop/PrestaShop/src/Adapter/Meta/ShopUrlDataConfiguration.php:119:46
     → #^(?:[~\-_\/&\.\+]|\w|%\d+|\s)+$#
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "__" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 15 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Consi...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Alternation branches "[~\\-_\\/&.+]" and "\\w" have overlapping character sets, which may cause unnecessary backtracking.
@@ -2344,8 +2286,6 @@ corpus/PrestaShop/PrestaShop/src/Core/Image/Parser/ImageTagSourceParser.php:23:3
     → /src="(\.\.\/|\.\/)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "\\.\\.\\/" and "\\.\\/" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/PrestaShop/PrestaShop/src/Core/Import/File/FileUploader.php:113:25
     → #([^\.]*?)\.(csv|xls[xt]?|o[dt]s)$#is
@@ -2439,7 +2379,7 @@ corpus/QafooLabs/php-refactoring-browser/features/bootstrap/FeatureContext.php:1
 
 
 
-### corpus/Respect/Validation — Target: PHP 8.5, PCRE2 10.44 (composer.json require.php) — exit 0
+### corpus/Respect/Validation — Target: PHP 8.5, PCRE2 10.44 (composer.json require.php) — exit 1
 corpus/Respect/Validation/src-dev/Markdown/Content.php:145:29
     → /\[(.+?)\](?:\[\]|\(.+?\))/
    TIP 
@@ -2480,6 +2420,8 @@ corpus/Respect/Validation/src/Validators/Consonant.php:42:27
 
 corpus/Respect/Validation/src/Validators/Emoji.php:64:27
     → /^(?: [\x{1F1E6}-\x{1F1FF}]{2} | \x{1F3F4}[\x{E0020}-\x{E007E}]+\x{E007F} | [0-9#*](?:\x{FE0F})?\x{20E3} | \p{Extended_Pictographic} (?:\x{FE0F})? (?:[\x{1F3FB}-\x{1F3FF}])? (?: \x{200D} (?: \p{Extended_Pictographic} | [\x{2640}\x{2642}\x{26A7}] ) (?:\x{FE0F})? (?:[\x{1F3FB}-\x{1F3FF}])? )* )+$/ux
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "\u{1F1E6}\u{1F1E6}\u{A9}\u{200D}\u{2640}" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 193 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause ba...
    WARN  Redundant non-capturing group "(?:\x{FE0F})" at offset 203; it can be removed without changing behavior.
    WARN  Redundant non-capturing group "(?:\x{FE0F})" at offset 322; it can be removed without changing behavior.
    WARN  Redundant non-capturing group "(?:[\x{1F3FB}-\x{1F3FF}])" at offset 400; it can be removed without changing behavior.
@@ -2554,11 +2496,13 @@ corpus/Roave/DocbookTool/src/Writer/ConfluenceWriter.php:317:13
 Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/Seldaek/jsonlint — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+### corpus/Seldaek/jsonlint — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
 Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/Seldaek/jsonlint/src/Seld/JsonLint/JsonParser.php:281:46
     → {"(?:[^"]+|\\")*$}m
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "\"" . "!" x n . "\"" Replayed on PCRE2 10.49: preg_match fails from length 18 (backtrack_limit 100000, JIT off). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Alternation branches "[^"]+" and "\\\\"" have overlapping character sets, which may cause unnecessary backtracking.
@@ -2648,7 +2592,7 @@ corpus/TYPO3/Fluid/src/Core/Parser/SyntaxTree/Expression/TernaryExpressionNode.p
 
 
 
-### corpus/TYPO3/typo3 — Target: PHP 8.5, PCRE2 10.44 (composer.json config.platform.php) — exit 0
+### corpus/TYPO3/typo3 — Target: PHP 8.5, PCRE2 10.44 (composer.json config.platform.php) — exit 1
 corpus/TYPO3/typo3/typo3/sysext/backend/Classes/Form/FormDataProvider/AbstractItemProvider.php:920:29
     → /###SITE:([^#]+)###/m
    ↳ via $siteClausesRegEx
@@ -2675,12 +2619,6 @@ corpus/TYPO3/typo3/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalcon
    TIP 
        - /declare\s?+\(\s?+strict_types\s?+=\s?+1\s?+\);/is
        + /declare\s?+\(\s?+strict_types\s?+=\s?+1\s?+\);/i
-
-corpus/TYPO3/typo3/typo3/sysext/core/Classes/DataHandling/Model/CorrelationId.php:31:34
-    → #^(?P<flags>[[:xdigit:]]{4})\$(?:(?P<scope>[[:alnum:]_-]+):)?(?P<subject>[[:alnum:]_-]+)(?P<aspects>(?:\/[[:alnum:]._-]+)*)$#
-   ↳ via self::PATTERN_V1
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/TYPO3/typo3/typo3/sysext/core/Classes/Database/Schema/SchemaManager/ColumnTypeCommentMethodsTrait.php:80:45
     → (\(DC2Type:(((?!\)).)+)\))
@@ -2739,11 +2677,8 @@ corpus/TYPO3/typo3/typo3/sysext/core/Classes/Log/LogDataTrait.php:66:47
 
 corpus/TYPO3/typo3/typo3/sysext/core/Classes/Service/Archive/ZipService.php:73:31
     → #^(?:\.{2,})+/#
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
-corpus/TYPO3/typo3/typo3/sysext/core/Classes/Service/MarkerBasedTemplateService.php:417:42
-    → /###([^#](?:[^#]*+|#{1,2}[^#])+)###/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "...." x n . "!/" Replayed on PCRE2 10.49: preg_match fails from length 26 (backtrack_limit 100000, JIT off). Nested unbounded quantifiers detected. This allows exponential backtracking. Co...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -2756,11 +2691,6 @@ corpus/TYPO3/typo3/typo3/sysext/core/Classes/Utility/GeneralUtility.php:1491:24
     → /^(?:http|ftp)s?|s(?:ftp|cp):/
    WARN  An anchor holds for its own alternative only: "s(?:ftp|cp):" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "^(?:(?:http|ftp)s?|s(?:ftp|cp):)".
-
-corpus/TYPO3/typo3/typo3/sysext/core/Classes/Utility/GeneralUtility.php:1646:32
-    → #^(?:[[:alnum:]_]+/)+$#
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/TYPO3/typo3/typo3/sysext/extbase/Classes/Validation/Validator/FileSizeValidator.php:103:25
     → /^(\d*\.?\d+)(B|K|M|G)$/i
@@ -2847,10 +2777,6 @@ corpus/TYPO3/typo3/typo3/sysext/redirects/Classes/Evaluation/SourceHost.php:70:3
    ↳ via $validHostnameRegex
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches "[a-zA-Z0-9]" and "[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA…" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/TYPO3/typo3/typo3/sysext/rte_ckeditor/Classes/Configuration/CKEditor5Migrator.php:731:17
     → /^([a-z0-9\-*\s]+)((?:\s*\{[!\w\-,\s\*]+\}\s*|\s*\[[!\w\-,\s\*]+\]\s*|\s*\([!\w\-,\s\*]+\)\s*){0,3})(?:;\s*|$)/i
@@ -3198,11 +3124,6 @@ corpus/WordPress/wordpress-develop/src/wp-admin/includes/upgrade.php:3086:15
        - |\((.*)\)|ms
        + |\((.*)\)|s
 
-corpus/WordPress/wordpress-develop/src/wp-admin/includes/upgrade.php:3123:7
-    → /^ (?P<index_type> PRIMARY\s+KEY|(?:UNIQUE|FULLTEXT|SPATIAL)\s+(?:KEY|INDEX)|KEY|INDEX ) \s+ (?: `? (?P<index_name> (?:[0-9a-zA-Z$_-]|[\xC2-\xDF][\x80-\xBF])+ ) `? \s+ )* \( (?P<index_columns> .+? ) \) $/imx
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/WordPress/wordpress-develop/src/wp-admin/network/site-new.php:47:19
     → |^([a-zA-Z0-9-])+$|
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -3240,6 +3161,8 @@ corpus/WordPress/wordpress-develop/src/wp-includes/ID3/module.audio-video.riff.p
 
 corpus/WordPress/wordpress-develop/src/wp-includes/ID3/module.tag.id3v2.php:2075:23
     → #^([^\x00]+)*\x00(.)([^\x00]+)*\x00(.+)$#s
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "!" x n . "!\x00" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Co...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -3270,8 +3193,6 @@ corpus/WordPress/wordpress-develop/src/wp-includes/PHPMailer/PHPMailer.php:1542:
 corpus/WordPress/wordpress-develop/src/wp-includes/PHPMailer/PHPMailer.php:1560:21
     → /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/sD
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    TIP 
        - /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/sD
        + /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/D
@@ -3279,8 +3200,6 @@ corpus/WordPress/wordpress-develop/src/wp-includes/PHPMailer/PHPMailer.php:1560:
 corpus/WordPress/wordpress-develop/src/wp-includes/PHPMailer/PHPMailer.php:1577:21
     → /^[-\p{L}\p{N}\p{M}.!#$%&'*+\/=?^_`{|}~]+@[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?(?:\.[\p{L}\p{N}\p{M}](?:[-\p{L}\p{N}\p{M}]{0,61}[\p{L}\p{N}\p{M}])?)*$/usD
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    TIP 
        - /^[-\p{L}\p{N}\p{M}.!#$%&'*+\/=?^_`{|}~]+@[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?(?:\.[\p{L}\p{N}\p{M}](?:[-\p{L}\p{N}\p{M}]{0,61}[\p{L}\p{N}\p{M}])?)*$/usD
        + /^[-\p{L}\p{N}\p{M}.!#$%&'*+\/=?^_`{|}~]+@[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?(?:\.[\p{L}\p{N}\p{M}](?:[-\p{L}\p{N}\p{M}]{0,61}[\p{L}\p{N}\p{M}])?)*$/uD
@@ -3330,6 +3249,8 @@ corpus/WordPress/wordpress-develop/src/wp-includes/Requests/src/Requests.php:767
 
 corpus/WordPress/wordpress-develop/src/wp-includes/Requests/src/Requests.php:855:19
     → /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . ";=" x n . "!\x0D\n" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching ...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Redundant non-capturing group "(?:[^\r\n])" at offset 46; it can be removed without changing behavior.
@@ -3339,6 +3260,8 @@ corpus/WordPress/wordpress-develop/src/wp-includes/Requests/src/Requests.php:855
 
 corpus/WordPress/wordpress-develop/src/wp-includes/Requests/src/Requests.php:863:36
     → /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . ";=" x n . "!\x0D\n" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching ...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Redundant non-capturing group "(?:[^\r\n])" at offset 46; it can be removed without changing behavior.
@@ -3542,10 +3465,6 @@ corpus/WordPress/wordpress-develop/src/wp-includes/deprecated.php:3867:23
     → /^("[^"]*("|$)|'[^']*('|$)|\S)*\s*/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches ""[^"]*("|$)" and "\\S" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/WordPress/wordpress-develop/src/wp-includes/deprecated.php:5158:17
     → /^#?([0-9a-fA-F]{1})([0-9a-fA-F]{1})([0-9a-fA-F]{1})([0-9a-fA-F]{1})$/
@@ -3582,11 +3501,6 @@ corpus/WordPress/wordpress-develop/src/wp-includes/embed.php:965:14
        - |(<blockquote>.*?</blockquote>)?.*(<iframe.*?></iframe>)|ms
        + |(<blockquote>.*?</blockquote>)?.*(<iframe.*?></iframe>)|s
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:563:24
-    → !<p><blockquote((?:[^>"']|"[^"]*"|'[^']*')*)>!i
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2061:29
     → #\p{Zs}#siu
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -3599,8 +3513,6 @@ corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2456:19
     → /^\s*(([a-z0-9_]+|`[a-z0-9_]+`)(\s+(ASC|DESC))?\s*(,\s*(?=[a-z0-9_`])|$))+$/i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2651:24
     → #<([0-9]{1})#
@@ -3613,6 +3525,8 @@ corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2651:24
 corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:2668:3
     → #<(/?)((?:[a-z](?:[a-z0-9._]*)-(?:[a-z0-9._-]+)+)|(?:[\w:]+))(?:\s*(/?)|(\s+)([^>]*))>#
    ↳ via $tag_pattern
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<a-" . "-" x n . "!>" Replayed on PCRE2 10.49: preg_match fails from length 20 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching inpu...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -3686,11 +3600,6 @@ corpus/WordPress/wordpress-develop/src/wp-includes/interactivity-api/class-wp-in
     → /^([\w\-_\/]+)/
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
-
-corpus/WordPress/wordpress-develop/src/wp-includes/kses.php:4102:20
-    → /(?:repeating-)?(?:linear|radial|conic)-gradient\((?:[^()]|\([^()]*\))*\)/
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/WordPress/wordpress-develop/src/wp-includes/link-template.php:4619:53
     → /\p{Han}|\p{Hiragana}|\p{Katakana}|\p{Hangul}/u
@@ -3906,8 +3815,6 @@ corpus/aws/aws-sdk-php/src/functions.php:385:20
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -3928,7 +3835,7 @@ corpus/awslabs/aws-crt-php/gen_stub.php:1034:24
 
 
 
-### corpus/bcit-ci/CodeIgniter — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+### corpus/bcit-ci/CodeIgniter — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
 Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/bcit-ci/CodeIgniter/system/core/Input.php:146:36
@@ -4096,6 +4003,8 @@ corpus/bcit-ci/CodeIgniter/system/libraries/Typography.php:153:33
 
 corpus/bcit-ci/CodeIgniter/system/libraries/Typography.php:171:24
     → /(<(?:[^<>]+(?:"[^"]*"|'[^']*')?)+>)/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<" . "!" x n . "<>" Replayed on PCRE2 10.49: preg_match fails from length 18 (backtrack_limit 100000, JIT off). Nested unbounded quantifiers detected. This allows exponential backtracking....
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -4219,8 +4128,6 @@ corpus/bobthecow/psysh/src/Util/Str.php:125:28
     → /^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*(\\[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)*$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 
 
@@ -4272,7 +4179,7 @@ corpus/browscap/browscap-php/src/Parser/Helper/Pattern.php:48:20
 
 
 
-### corpus/cakephp/cakephp — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+### corpus/cakephp/cakephp — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
 corpus/cakephp/cakephp/src/Console/CommandCollection.php:78:25
     → /^[^\s]+(?:(?: [^\s]+){1,2})?$/ui
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -4365,6 +4272,8 @@ corpus/cakephp/cakephp/src/Mailer/Message.php:1666:29
 corpus/cakephp/cakephp/src/Routing/Router.php:827:18
     → #^ (?:(?<plugin>[a-z0-9]+(?:/[a-z0-9]+)*)\.)? (?:(?<prefix>[a-z0-9]+(?:/[a-z0-9]+)*)/)? (?<controller>[a-z0-9]+) :: (?<action>[a-z0-9_]+) (?<params>(?:/(?:[a-z][a-z0-9-_]*=)? (?:([a-z0-9-_=]+)|(["'][^'"]+['"])) )+/?)? $#ix
    ↳ via $regex
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0::0" . "/A=-" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 57 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching i...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -4404,7 +4313,7 @@ corpus/cakephp/cakephp/src/View/StringTemplate.php:334:25
 
 
 
-### corpus/canyongbs/aidingapp — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
+### corpus/canyongbs/aidingapp — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 1
 corpus/canyongbs/aidingapp/app-modules/contact/src/Imports/OrganizationImporter.php:184:42
     → /^(?!-)([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,63}$/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -4431,8 +4340,6 @@ corpus/canyongbs/aidingapp/app-modules/form/src/Rules/IsDomain.php:52:26
     → /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -4448,6 +4355,8 @@ corpus/canyongbs/aidingapp/app-modules/service-management/src/Models/ServiceRequ
 
 corpus/canyongbs/aidingapp/app-modules/service-management/src/Rules/ValidServiceMonitoringKeywordValues.php:132:27
     → /^\s*(?:".*?"|[^",]*)\s*(?:,\s*(?:".*?"|[^",]*)\s*)*$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: ", " x n . "\"" Replayed on PCRE2 10.49: preg_match fails from length 19 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Cons...
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -4487,7 +4396,7 @@ corpus/cartalyst/stripe/src/AmountConverter.php:35:32
 
 
 
-### corpus/cebe/markdown — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+### corpus/cebe/markdown — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
 Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/cebe/markdown/GithubMarkdown.php:84:20
@@ -4521,6 +4430,8 @@ corpus/cebe/markdown/block/RuleTrait.php:21:92
 
 corpus/cebe/markdown/block/TableTrait.php:21:18
     → ~^\s*\|?(\s*:?-[\-\s]*:?\s*\|?)*\s*$~
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: " - " x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 19 (backtrack_limit 100000, JIT off). Adjacent quantified tokens with overlapping character sets can cause ambiguous ba...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -4598,7 +4509,7 @@ Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest th
 
 ### corpus/code-lts/doctum — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
-### corpus/codeigniter4/CodeIgniter4 — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+### corpus/codeigniter4/CodeIgniter4 — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
 corpus/codeigniter4/CodeIgniter4/admin/update-upgrade-guide.php:161:16
     → /^Config\n------\n\n(.*?)(?=^[^\s-][^\n]*\n(?:-+|=+)$|\z)/msu
    TIP 
@@ -4700,6 +4611,8 @@ corpus/codeigniter4/CodeIgniter4/system/Typography/Typography.php:115:42
 
 corpus/codeigniter4/CodeIgniter4/system/Typography/Typography.php:133:30
     → /(<(?:[^<>]+(?:"[^"]*"|'[^']*')?)+>)/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<" . "!" x n . "<>" Replayed on PCRE2 10.49: preg_match fails from length 18 (backtrack_limit 100000, JIT off). Nested unbounded quantifiers detected. This allows exponential backtracking....
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -4721,15 +4634,13 @@ corpus/codeigniter4/CodeIgniter4/system/View/Parser.php:466:20
 
 ### corpus/composer-unused/composer-unused — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
-### corpus/composer/composer — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+### corpus/composer/composer — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
 Note: composer.json config.platform.php pins PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version require.php allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/composer/composer/src/Composer/Autoload/AutoloadGenerator.php:529:42
     → {^(([^.+*?\[^\]$(){}=!<>|:\\#-]+|\\[.+*?\[^\]$(){}=!<>|:#-])*).*}
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/composer/composer/src/Composer/Command/GlobalCommand.php:157:48
     → {\bg(?:l(?:o(?:b(?:a(?:l)?)?)?)?)?\b}
@@ -4740,6 +4651,8 @@ corpus/composer/composer/src/Composer/Command/GlobalCommand.php:157:48
 
 corpus/composer/composer/src/Composer/Command/InitCommand.php:89:55
     → {^[a-z0-9]([_.-]?[a-z0-9]+)*\/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$}D
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . "-00" x n . "!/" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching inpu...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -4747,6 +4660,8 @@ corpus/composer/composer/src/Composer/Command/InitCommand.php:89:55
 
 corpus/composer/composer/src/Composer/Command/InitCommand.php:300:36
     → {^[a-z0-9]([_.-]?[a-z0-9]+)*\/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$}D
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . "-00" x n . "!/" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching inpu...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -4800,11 +4715,6 @@ corpus/composer/composer/src/Composer/Downloader/SvnDownloader.php:147:24
     → {\s*\r?\n\s*}
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
-
-corpus/composer/composer/src/Composer/EventDispatcher/EventDispatcher.php:676:24
-    → {(?:[^\s"']+|"[^"]*"|'[^']*'|["'])+}
-   WARN  Alternation branches ""[^"]*"" and "["']" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/composer/composer/src/Composer/Installer/BinaryInstaller.php:341:27
     → {^(#!.*\r?\n)?[\r\n\t ]*<\?php}
@@ -4866,6 +4776,12 @@ corpus/composer/composer/src/Composer/Package/Version/VersionSelector.php:346:36
    TIP 
        - {^(\d+\.\d+\.\d+)(\.9999999)-dev$}
        + {^(\d+\.\d+\.\d+)(\.9{7})-dev$}
+
+corpus/composer/composer/src/Composer/Repository/PlatformRepository.php:39:43
+    → {^(?:php(?:-64bit|-ipv6|-zts|-debug)?|hhvm|(?:ext|lib)-[a-z0-9](?:[_.-]?[a-z0-9]+)*|composer(?:-(?:plugin|runtime)-api)?)$}iD
+   ↳ via PlatformRepository::PLATFORM_PACKAGE_REGEX
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "EXT-0" . "-00" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 51 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching i...
 
 corpus/composer/composer/src/Composer/Repository/Vcs/GitDriver.php:206:54
     → {^ *[^/]+/HEAD }
@@ -5087,11 +5003,6 @@ corpus/concretecms/concretecms/concrete/src/Sharing/SocialNetwork/LinkUrlValidat
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/concretecms/concretecms/concrete/src/StyleCustomizer/Inline/StyleValues.php:169:24
-    → /^(?:rgb|hsl)a?\(\s*-?(?:\d+|\d*\.\d+)%?(?:(?:\s*[,\/]\s*|\s+)-?(?:\d+|\d*\.\d+)%?){2,3}\s*\)$/iD
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/concretecms/concretecms/concrete/src/Support/CodingStyle/PHPCSFixerConfigurator.php:98:25
     → /^\d+(\.\d+){1,2}/
    INFO  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
@@ -5164,7 +5075,7 @@ corpus/concretecms/concretecms/concrete/src/Validation/SanitizeService.php:37:32
 
 
 
-### corpus/contao/contao — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
+### corpus/contao/contao — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 1
 corpus/contao/contao/core-bundle/contao/controllers/BackendPopup.php:73:98
     → @(://)+@
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -5205,15 +5116,10 @@ corpus/contao/contao/core-bundle/contao/library/Contao/StringUtil.php:214:27
     → /(&#*\w+)[\x00-\x20]+;/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/contao/contao/core-bundle/contao/library/Contao/Validator.php:143:27
-    → /^[\pL\pN!#$%&'*+\/=?^_`{|}~-]+(?:\.[\pL\pN!#$%&'*+\/=?^_`{|}~-]+)*@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/u
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/contao/contao/core-bundle/contao/library/Contao/Validator.php:211:27
     → /^[+(]?(\d+[ +()\/-]*)+$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). Use possessive quantifiers (*+ instead of *, ++ instead of +, or {m,n}+ instead of ...
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -5221,6 +5127,8 @@ corpus/contao/contao/core-bundle/contao/library/Contao/Validator.php:211:27
 
 corpus/contao/contao/core-bundle/src/Cache/CacheTagManager.php:335:33
     → /^(?:[a-z_\x80-\xff][a-z0-9_\x80-\xff]*\\?)+(?<!\\)$/i
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "AA" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Consi...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -5310,6 +5218,8 @@ corpus/craftcms/cms/src/helpers/Json.php:96:25
 
 corpus/craftcms/cms/src/helpers/StringHelper.php:1024:20
     → /<\/?\w+(?:(?:\s+\w+(?:\s*=\s*(?:".*?"|'.*?'|[^'">\s]+))?)*\s*|\s*)\/?>/u
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<0" . " 0=\"\" 0=\"\"" x n . "!>" Replayed on PCRE2 10.49: preg_match fails from length 74 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-m...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -5339,6 +5249,11 @@ corpus/craftcms/cms/src/i18n/Formatter.php:361:29
    TIP 
        - /(?<!\\)(S|w|t|L|B|u|I|Z|U|A|a)/
        + /(?<!\\)([SwtLBuIZUAa])/
+
+corpus/craftcms/cms/src/services/Composer.php:321:24
+    → /^(?:php(?:-64bit|-ipv6|-zts|-debug)?|hhvm|(?:ext|lib)-[a-z0-9](?:[_.-]?[a-z0-9]+)*|composer(?:-(?:plugin|runtime)-api)?)$/iD
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "EXT-0" . "-00" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 51 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching i...
 
 corpus/craftcms/cms/src/web/RedirectRule.php:74:51
     → /<([\w._-]+):?([^>]+)?>/
@@ -5371,16 +5286,9 @@ corpus/cycle/database/src/Injection/JsonExpression.php:112:25
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/cycle/database/src/Query/Interpolator.php:41:13
-    → /(?<dq>"(?:\\\"|[^"])*")|(?<sq>'(?:\\'|[^'])*')|(?<ph>\?)|(?<named>:[a-z_\d]+)/
-   WARN  Alternation branches "\\\\"" and "[^"]" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches "\\\\'" and "[^']" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 
-
-### corpus/deployphp/deployer — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
+### corpus/deployphp/deployer — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 1
 corpus/deployphp/deployer/recipe/codeigniter4.php:28:20
     → /(\d+\.?)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -5403,6 +5311,8 @@ corpus/deployphp/deployer/recipe/laravel.php:20:20
 
 corpus/deployphp/deployer/recipe/magento2.php:118:16
     → /(\d+\.?)+(-p\d+)?$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic grou...
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -5561,7 +5471,7 @@ corpus/dompdf/dompdf/src/Helpers.php:320:23
 
 
 
-### corpus/drupal/drupal — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+### corpus/drupal/drupal — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 1
 corpus/drupal/drupal/core/lib/Drupal/Component/Datetime/DateTimePlus.php:586:29
     → /^([1-2][0-3]|[01]?[0-9])$/
    WARN  Character range is unnecessary; list the characters explicitly.
@@ -5574,6 +5484,8 @@ corpus/drupal/drupal/core/lib/Drupal/Component/Utility/Color.php:24:23
 
 corpus/drupal/drupal/core/lib/Drupal/Component/Utility/UrlHelper.php:456:32
     →          /^ (?:ftp|https?|feed):\/\/ (?: (?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)* (?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@ )? (?: (?:[a-z0-9\-\.]|%[0-9a-f]{2})+ |(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]) ) (?::[0-9]+)? (?:[\/|\?] (?:[\w#!:\.\?\+=&@$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2}) *)? $/xi
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "FTP://" . "!%00" x n Replayed on PCRE2 10.49: preg_match fails from length 62 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input...
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '+' (duplicate)
    WARN  Redundant elements detected in character class.
@@ -5585,8 +5497,6 @@ corpus/drupal/drupal/core/lib/Drupal/Component/Utility/Xss.php:388:36
     → / ^ ( "[^"]*("|$) | '[^']*('|$)| | \S )* \s*/x
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
@@ -5598,6 +5508,8 @@ corpus/drupal/drupal/core/lib/Drupal/Component/Uuid/Uuid.php:28:30
 corpus/drupal/drupal/core/lib/Drupal/Core/Asset/CssCollectionOptimizerLazy.php:191:15
     → /@import\s*(?:'(?:\\'|.)*'|"(?:\\"|.)*"|url\(\s*(?:\\[\)\'\"]|[^'")])*\s*\)|url\(\s*'(?:\'|.)*'\s*\)|url\(\s*"(?:\"|.)*"\s*\)).*;/iU
    ↳ via $regexp
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "@IMPORTURL(\"" . "\"\"" x n . "!;" Replayed on PCRE2 10.49: preg_match fails from length 28 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-...
    WARN  Alternation branches "\\\\'" and "." have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Alternation branches "\\\\"" and "." have overlapping character sets, which may cause unnecessary backtracking.
@@ -5611,6 +5523,8 @@ corpus/drupal/drupal/core/lib/Drupal/Core/Asset/CssCollectionOptimizerLazy.php:1
 
 corpus/drupal/drupal/core/lib/Drupal/Core/Template/ComponentNodeVisitor.php:120:21
     → /^[a-z]([a-zA-Z0-9_-]*[a-zA-Z0-9])*:[a-z]([a-zA-Z0-9_-]*[a-zA-Z0-9])*$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "a" . "00" x n . "!:" Replayed on PCRE2 10.49: preg_match fails from length 19 (backtrack_limit 100000, JIT off). Nested unbounded quantifiers detected. This allows exponential backtracking...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -5638,8 +5552,6 @@ corpus/drupal/drupal/core/modules/ckeditor5/src/Plugin/CKEditor5Plugin/Style.php
     → /^([a-z][0-9a-zA-Z\-]*)((\.[a-zA-Z0-9\x{00A0}-\x{FFFF}\-_]+)+)$/u
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/drupal/drupal/core/modules/field/src/Entity/FieldStorageConfig.php:272:21
     → /^[_a-z]+[_a-z0-9]*$/
@@ -5653,6 +5565,8 @@ corpus/drupal/drupal/core/modules/file/src/EventSubscriber/FileEventSubscriber.p
 
 corpus/drupal/drupal/core/modules/file/src/Plugin/Field/FieldType/FileItem.php:265:23
     → /^([a-z0-9]+([._][a-z0-9])* ?)+$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Consid...
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -5676,8 +5590,6 @@ corpus/drupal/drupal/core/modules/link/src/AttributeXss.php:132:36
     → / ^ ( "[^"]*("|$) | '[^']*('|$)| | \S )* \s*/x
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
@@ -5704,9 +5616,17 @@ corpus/drupal/drupal/core/modules/mysql/src/Driver/Database/mysql/Connection.php
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
+corpus/drupal/drupal/core/modules/package_manager/src/SandboxManagerBase.php:133:51
+    → {^(?:php(?:-64bit|-ipv6|-zts|-debug)?|hhvm|(?:ext|lib)-[a-z0-9](?:[_.-]?[a-z0-9]+)*|composer(?:-(?:plugin|runtime)-api)?)$}iD
+   ↳ via self::COMPOSER_PLATFORM_PACKAGE_REGEX
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "EXT-0" . "-00" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 51 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching i...
+
 corpus/drupal/drupal/core/modules/package_manager/src/SandboxManagerBase.php:146:42
     → /^[a-z0-9]([_.-]?[a-z0-9]+)*\/[a-z0-9](([_.]?|-{0,2})[a-z0-9]+)*$/
    ↳ via self::COMPOSER_PACKAGE_REGEX
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . "-00" x n . "!/" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). Use possessive quantifiers (*+ instead of *, ++ instead of +, or {m,n}+ in...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -5718,15 +5638,11 @@ corpus/drupal/drupal/core/modules/views/src/Plugin/views/HandlerBase.php:831:20
     → /^([\w0-9-_\.]+[+ ]+)+[\w0-9-_\.]+$/u
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/drupal/drupal/core/modules/views/src/Plugin/views/HandlerBase.php:836:24
     → /^([\w0-9-_\.]+[, ]+)*[\w0-9-_\.]+$/u
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/drupal/drupal/core/modules/views/src/Plugin/views/argument_default/QueryParameter.php:70:37
     → #(\[|\]\[|\])#
@@ -5766,8 +5682,13 @@ corpus/egulias/EmailValidator/src/EmailLexer.php:112:40
 
 
 
-### corpus/elementor/elementor — Target: PHP 7.4, PCRE2 10.33 (composer.json config.platform.php) — exit 0
+### corpus/elementor/elementor — Target: PHP 7.4, PCRE2 10.33 (composer.json config.platform.php) — exit 1
 Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
+corpus/elementor/elementor/core/files/css/base.php:376:52
+    → /{{(?:([^.}]+)\.)?([^}| ]*)(?: *\|\| *(?:([^.}]+)\.)?([^}| ]*) *)*}}/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "{{" . " || " x n . "|}}" Replayed on PCRE2 10.49: preg_match fails from length 29 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching i...
+
 corpus/elementor/elementor/core/utils/svg/svg-sanitizer.php:233:33
     → ~^url\(\s*['"]\s*(.*)\s*['"]\s*\)$~xi
    WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
@@ -6257,15 +6178,6 @@ corpus/ezyang/htmlpurifier/library/HTMLPurifier/AttrDef/URI/IPv6.php:81:29
        - #^[0-9a-fA-F]{4}$#s
        + #^[0-9a-fA-F]{4}$#
 
-corpus/ezyang/htmlpurifier/library/HTMLPurifier/Injector/Linkify.php:40:13
-    → /\b((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?\x{00ab}\x{00bb}\x{201c}\x{201d}\x{2018}\x{2019}]))/iu
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 
 
 ### corpus/facebook/facebook-for-woocommerce — Target: PHP 7.4, PCRE2 10.33 (composer.json config.platform.php) — exit 0
@@ -6321,8 +6233,6 @@ corpus/facebook/open-graph-protocol/lib/Michelf/Markdown.php:1618:33
        ↳ Remove the redundant character class element.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 
 
@@ -6335,8 +6245,6 @@ corpus/facebook/php-graph-sdk/src/Facebook/Url/FacebookUrlDetectionHandler.php:1
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -6395,9 +6303,11 @@ corpus/filp/whoops/src/Whoops/Util/TemplateHelper.php:228:30
 
 
 
-### corpus/flarum/framework — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
+### corpus/flarum/framework — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 1
 corpus/flarum/framework/extensions/package-manager/src/Api/Controller/CompatController.php:56:52
     → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . "-00" x n . "!/" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching inpu...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -6405,6 +6315,8 @@ corpus/flarum/framework/extensions/package-manager/src/Api/Controller/CompatCont
 
 corpus/flarum/framework/extensions/package-manager/src/Api/Controller/StartController.php:159:30
     → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . "-00" x n . "!/" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching inpu...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -6412,6 +6324,8 @@ corpus/flarum/framework/extensions/package-manager/src/Api/Controller/StartContr
 
 corpus/flarum/framework/extensions/package-manager/src/Console/UpdateCommand.php:148:30
     → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . "-00" x n . "!/" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching inpu...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -6419,6 +6333,8 @@ corpus/flarum/framework/extensions/package-manager/src/Console/UpdateCommand.php
 
 corpus/flarum/framework/extensions/package-manager/src/Discover/Packagist.php:251:27
     → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . "-00" x n . "!/" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching inpu...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -6426,7 +6342,7 @@ corpus/flarum/framework/extensions/package-manager/src/Discover/Packagist.php:25
 
 
 
-### corpus/freescout-help-desk/freescout — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+### corpus/freescout-help-desk/freescout — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
 Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:891:40
@@ -6504,6 +6420,8 @@ corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2808:33
 
 corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2811:33
     → /([A-Z]{2,3}[\,|\ \,]\ [0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}.*)+$/i
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "AA, 0 AA 0000 0:0:00" x n . "\n!" Replayed on PCRE2 10.49: preg_match fails from length 162 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-...
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -6550,6 +6468,8 @@ corpus/freescout-help-desk/freescout/app/Thread.php:379:28
 corpus/freescout-help-desk/freescout/overrides/barryvdh/laravel-translation-manager/src/Manager.php:412:36
     → /(^[a-zA-Z0-9_-]+([.][^\x01)\ ]+)+$)/siU
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "-" . "...." x n . ")" Replayed on PCRE2 10.49: preg_match fails from length 26 (backtrack_limit 100000, JIT off). Nested unbounded quantifiers detected. This allows exponential backtrackin...
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -6557,11 +6477,6 @@ corpus/freescout-help-desk/freescout/overrides/barryvdh/laravel-translation-mana
    TIP 
        - /(^[a-zA-Z0-9_-]+([.][^\x01)\ ]+)+$)/siU
        + /(^[a-zA-Z0-9_-]+([.][^\x01)\ ]+)+$)/iU
-
-corpus/freescout-help-desk/freescout/overrides/erusev/parsedown/Parsedown.php:976:28
-    → /(?:(\\[|])|[^|`]|`[^`]+`|`)+/
-   WARN  Alternation branches "(\\\\[|])" and "[^|`]" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/freescout-help-desk/freescout/overrides/erusev/parsedown/Parsedown.php:1337:56
     → /^<\/\w[\w-]*[ ]*>/s
@@ -6730,6 +6645,8 @@ corpus/freescout-help-desk/freescout/overrides/symfony/routing/Generator/UrlGene
 
 corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Connection/Protocols/ImapProtocol.php:298:32
     → %^\(*"((.|\\|\")*?)" *%
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "\"" . "\\\\" x n Replayed on PCRE2 10.49: preg_match fails from length 15 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Co...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Alternation branches "." and "\\\\" have overlapping character sets, which may cause unnecessary backtracking.
@@ -6738,6 +6655,8 @@ corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Connection/P
 corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Header.php:1012:33
     → /([0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}\-[0-9]{1,2}\.[0-9]{1,2}.[0-9]{1,2})+$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0000.0.0-0.0000" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 196 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matchin...
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -6760,8 +6679,6 @@ corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Header.php:1
     → /([A-Z]{2,3}\,\ [0-9]{1,2}\ [A-Z]{2,3}\ ([0-9]{2}|[0-9]{4})\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ UT)+$/i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "[0-9]{2}" and "[0-9]{4}" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Header.php:1029:33
     → /([A-Z]{2,3}\,\ [0-9]{1,2}[\,]\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ [\-|\+][0-9]{4})+$/i
@@ -6785,6 +6702,8 @@ corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Header.php:1
 
 corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Header.php:1054:33
     → /([A-Z]{2,3}[\,|\ \,]\ [0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}.*)+$/i
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "AA, 0 AA 0000 0:0:00" x n . "\n!" Replayed on PCRE2 10.49: preg_match fails from length 162 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-...
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -6876,11 +6795,6 @@ corpus/getgrav/grav/system/src/Grav/Common/Markdown/ParsedownExtra.php:32:31
    ↳ via self::START_TAG
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
-corpus/getgrav/grav/system/src/Grav/Common/Markdown/ParsedownGravTrait.php:754:24
-    → /(?:(\\[|])|[^|`]|`[^`]+`|`)+/
-   WARN  Alternation branches "(\\\\[|])" and "[^|`]" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/getgrav/grav/system/src/Grav/Common/Page/Medium/VectorImageMedium.php:53:29
     → /<!DOCTYPE\b[^>]*(?:\[[^\]]*\])?[^>]*>/is
@@ -7213,7 +7127,7 @@ corpus/guzzle/uri-template/src/UriTemplate.php:1540:28
 
 
 
-### corpus/hyperf/hyperf — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+### corpus/hyperf/hyperf — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
 corpus/hyperf/hyperf/src/crontab/src/Parser.php:71:26
     → #^((\*(/[0-9]+)?)|[0-9\-,/]+)\s+((\*(/[0-9]+)?)|[0-9\-,/]+)\s+((\*(/[0-9]+)?)|[0-9\-,/]+)\s+((\*(/[0-9]+)?)|[0-9\-,/]+)\s+((\*(/[0-9]+)?)|[0-9\-,/]+)\s+((\*(/[0-9]+)?)|[0-9\-,/]+)$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -7285,12 +7199,16 @@ corpus/hyperf/hyperf/src/view-engine/src/Compiler/BladeCompiler.php:379:26
 corpus/hyperf/hyperf/src/view-engine/src/Compiler/ComponentTagCompiler.php:255:20
     → / < \s* x[-\:]([\w\-\:\.]*) (?<attributes> (?: \s+ (?: (?: \{\{\s*\$attributes(?:[^}]+?)?\s*\}\} ) | (?: [\w\-:.@]+ ( = (?: \"[^\"]*\" | \'[^\']*\' | [^\'\"=<>]+ ) )? ) ) )* \s* ) (?<![\/=\-]) >/x
    ↳ via $pattern
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<x-" . " -=! " x n . "\">" Replayed on PCRE2 10.49: preg_match fails from length 70 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/hyperf/hyperf/src/view-engine/src/Compiler/ComponentTagCompiler.php:304:20
     → / < \s* x[-\:]([\w\-\:\.]*) \s* (?<attributes> (?: \s+ (?: (?: \{\{\s*\$attributes(?:[^}]+?)?\s*\}\} ) | (?: [\w\-:.@]+ ( = (?: \"[^\"]*\" | \'[^\']*\' | [^\'\"=<>]+ ) )? ) ) )* \s* ) \/>/x
    ↳ via $pattern
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<x-" . " -=! " x n . "\"/>" Replayed on PCRE2 10.49: preg_match fails from length 71 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matchin...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -7417,16 +7335,12 @@ corpus/ircmaxell/php-cfg/lib/PHPCfg/AstVisitor/NameResolver.php:101:18
    ↳ via $regex
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/ircmaxell/php-cfg/lib/PHPCfg/Types/Helper.php:204:18
     → (^([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\\)*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$)
    ↳ via $regex
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/ircmaxell/php-cfg/lib/PHPCfg/Types/Helper.php:217:22
     → (^(\(((?>[^()]+)|(?1))*\)))
@@ -7802,8 +7716,6 @@ corpus/joomla/joomla-cms/libraries/src/Filter/OutputFilter.php:96:29
     → /(\s|[^A-Za-z0-9\-])+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "\\s" and "[^A-Za-z0-9\\-]" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/joomla/joomla-cms/libraries/src/HTML/Helpers/StringHelper.php:56:62
     → #\s+#mui
@@ -7858,8 +7770,6 @@ corpus/joomla/joomla-cms/plugins/editors/tinymce/src/PluginTraits/DisplayTrait.p
     → /(\s|[^A-Za-z0-9_])+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "\\s" and "[^A-Za-z0-9_]" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/joomla/joomla-cms/plugins/editors/tinymce/src/PluginTraits/DisplayTrait.php:70:54
     → /\[\]|\]/
@@ -7873,14 +7783,12 @@ corpus/joomla/joomla-cms/plugins/editors/tinymce/src/PluginTraits/DisplayTrait.p
 Note: composer.json require.php allows PHP 7.0, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/laminas/laminas-code — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+### corpus/laminas/laminas-code — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 1
 corpus/laminas/laminas-code/src/Generator/AttributeGenerator.php:43:43
     → /^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*(\\[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)*$/
    ↳ via self::NAME_PATTERN
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/laminas/laminas-code/src/Generator/FileGenerator.php:437:24
     → #/\* Laminas_Code_Generator_Php_File-(.*?)Marker:#m
@@ -7950,11 +7858,11 @@ corpus/laminas/laminas-code/src/Generator/TypeGenerator/AtomicType.php:62:46
    ↳ via self::VALID_IDENTIFIER_MATCHER
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/laminas/laminas-code/src/Generator/TypeGenerator/CompositeType.php:36:34
     → /^(([|]|[^()&]+)+|(\(([&]|[^|()]+)\))+)+$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "|" x n . "&" Replayed on PCRE2 10.49: preg_match fails from length 8 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Conside...
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -7971,16 +7879,6 @@ corpus/laminas/laminas-code/src/Generator/TypeGenerator/CompositeType.php:36:34
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Alternation branches "[&]" and "[^|()]+" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
-corpus/laminas/laminas-code/src/Reflection/DocBlock/Tag/ParamTag.php:32:26
-    → #((?:[\w|\\]+(?:\[\])*\|?)+)(?:\s+(\$\S+))?(?:\s+(.*))?#s
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
-corpus/laminas/laminas-code/src/Reflection/DocBlock/Tag/ReturnTag.php:30:26
-    → #((?:[\w|\\]+(?:\[\])*\|?)+)(?:\s+(.*))?#s
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/laminas/laminas-code/src/Reflection/DocBlockReflection.php:232:36
     → #[ ]{0,1}\*/$#
@@ -8113,7 +8011,7 @@ corpus/larastan/larastan/src/Collectors/UsedViewInAnotherViewCollector.php:20:37
 
 ### corpus/laravel-zero/laravel-zero — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 
-### corpus/laravel/boost — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+### corpus/laravel/boost — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
 corpus/laravel/boost/src/Concerns/RendersBladeGuidelines.php:103:38
     → /(?<!@)@boostsnippet\(\s*(?P<nameQuote>['"])(?P<name>[^\1]*?)\1(?:\s*,\s*(?P<langQuote>['"])(?P<lang>[^\3]*?)\3)?\s*\)(?P<content>.*?)@endboostsnippet/s
    WARN  Suspicious \1 inside character class: this is octal (\x01), not a backreference to group 1.
@@ -8124,8 +8022,6 @@ corpus/laravel/boost/src/Concerns/RendersBladeGuidelines.php:103:38
 corpus/laravel/boost/src/Concerns/RendersBladeGuidelines.php:131:17
     → /(?<!@)@scoped\(\s*(?P<paths>\[(?:[\s,]|'[^']*'|"[^"]*")*\])\s*\)/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    TIP 
        - /(?<!@)@scoped\(\s*(?P<paths>\[(?:[\s,]|'[^']*'|"[^"]*")*\])\s*\)/s
        + /(?<!@)@scoped\(\s*(?P<paths>\[(?:[\s,]|'[^']*'|"[^"]*")*\])\s*\)/
@@ -8146,6 +8042,8 @@ corpus/laravel/boost/src/Install/SkillComposer.php:278:33
 
 corpus/laravel/boost/src/Mcp/Tools/DatabaseQuery.php:167:52
     → /^\s*EXPLAIN\s+(?:\([^)]*\)\s*|(?:ANALYZE|VERBOSE|QUERY\s+PLAN|FORMAT\s*=?\s*\w+)\s+)*(?:DELETE|UPDATE|DROP|ALTER|TRUNCATE|RENAME|CREATE|MERGE|INSERT|REPLACE)\b/i
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "EXPLAIN " . "()FORMAT 0 " x n . "!DELETE" Replayed on PCRE2 10.49: preg_match fails from length 147 (backtrack_limit 100000, JIT off). Use possessive quantifiers (*+ instead of *, ++ inste...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -8330,11 +8228,6 @@ corpus/laravel/roster/src/Detectors/Approaches/EnumCasing.php:70:24
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/laravel/roster/src/Detectors/Approaches/ModelKeyStyle.php:33:24
-    → /^\s*(?:final\s+|abstract\s+|readonly\s+)*class\s+\w+/m
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 
 
 ### corpus/laravel/valet — Target: PHP 8.0, PCRE2 10.35 (composer.json require.php) — exit 0
@@ -8365,9 +8258,11 @@ corpus/liip/RMT/src/Liip/RMT/Changelog/Formatter/SemanticChangelogFormatter.php:
 
 
 
-### corpus/livewire/blaze — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+### corpus/livewire/blaze — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 1
 corpus/livewire/blaze/src/Directive/BlazeDirective.php:18:26
     → /^\s*(?:\/\*.*?\*\/\s*)*@blaze(?:\s*\(([^)]+)\))?/s
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "/**//**/" x n . "!@blaze" Replayed on PCRE2 10.49: preg_match fails from length 63 (backtrack_limit 100000, JIT off). Nested unbounded quantifiers detected. This allows exponential backtra...
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -8434,7 +8329,7 @@ corpus/livewire/livewire/src/Mechanisms/FrontendAssets/FrontendAssets.php:307:29
 
 ### corpus/llaville/php-compatinfo — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
-### corpus/magento/magento2 — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
+### corpus/magento/magento2 — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 1
 corpus/magento/magento2/app/code/Magento/Catalog/Model/Product/Attribute/Backend/Stock.php:65:50
     → /^-?\d*(\.|,)?\d{0,4}$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -8476,6 +8371,8 @@ corpus/magento/magento2/app/code/Magento/Catalog/Model/ResourceModel/Product/Col
 corpus/magento/magento2/app/code/Magento/CatalogImportExport/Model/Import/Product/Validator/Media.php:19:32
     → |^http(s)?://[a-z0-9-]+(.[a-z0-9-]+)*(:[0-9]+)?(/.*)?$|i
    ↳ via self::URL_REGEXP
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "HTTP://-" . "----" x n . "!!http" Replayed on PCRE2 10.49: preg_match fails from length 34 (backtrack_limit 100000, JIT off). Adjacent quantified tokens with overlapping character sets can...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -8498,6 +8395,8 @@ corpus/magento/magento2/app/code/Magento/Cms/Model/Validator/DirectiveValidator.
 
 corpus/magento/magento2/app/code/Magento/Cms/Model/Validator/DirectiveValidator.php:63:21
     → /^[A-Za-z0-9_]+(?:_[A-Za-z0-9_]+)*::[A-Za-z0-9_.\-\/]+$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . "____" x n . "!::" Replayed on PCRE2 10.49: preg_match fails from length 28 (backtrack_limit 100000, JIT off). Adjacent quantified tokens with overlapping character sets can cause amb...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -8575,8 +8474,6 @@ corpus/magento/magento2/app/code/Magento/Directory/Model/Country.php:162:41
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    INFO  Quantified capturing group "(...)" with "{2,}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    TIP 
        - #(\n\s*){2,}#m
        + #(\n\s*){2,}#
@@ -8589,6 +8486,8 @@ corpus/magento/magento2/app/code/Magento/Eav/Model/Validator/Attribute/Code.php:
 
 corpus/magento/magento2/app/code/Magento/Elasticsearch/Model/Config/Backend/MinimumShouldMatch.php:39:28
     → /^((\d+<)?-?\d+%?\s?)+$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0<00" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 37 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Con...
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -8838,6 +8737,8 @@ corpus/magento/magento2/lib/internal/Magento/Framework/Encryption/Encryptor.php:
 
 corpus/magento/magento2/lib/internal/Magento/Framework/Filesystem/DirectoryList.php:152:25
     → /^([a-z0-9_]+[a-z0-9\._]*(\/[a-z0-9_]+[a-z0-9\._]*)*)?$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . "/00" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 44 (backtrack_limit 100000, JIT off). Adjacent quantified tokens with overlapping character sets can cause ambigu...
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -9044,8 +8945,6 @@ corpus/matomo-org/matomo/core/Http/EgressHostValidator.php:112:25
     → /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/matomo-org/matomo/core/Period.php:98:28
     → /^(last|previous){1}([0-9]*)$/D
@@ -9093,8 +8992,6 @@ corpus/matomo-org/matomo/plugins/AIProviders/Provider/Google.php:310:13
     → ~^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$~i
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/matomo-org/matomo/plugins/CoreConsole/Commands/GeneratePluginBase.php:251:29
     → /[^(\x00-\x7F)]*/
@@ -9701,14 +9598,6 @@ corpus/michelf/php-markdown/Michelf/Markdown.php:1613:33
        ↳ Remove the redundant character class element.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
-corpus/michelf/php-markdown/Michelf/MarkdownExtra.php:415:24
-    → /(?:^\n?|\n\n)*$/
-   ↳ via $newline_before_re
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/michelf/php-markdown/Michelf/MarkdownExtra.php:720:17
     → /^1|block|span$/
@@ -9811,12 +9700,6 @@ corpus/mockery/mockery/library/Mockery/Generator/ClassName.php:28:43
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/mockery/mockery/library/Mockery/Generator/ClassName.php:35:38
-    → #^\\?(?:[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*\\)*[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$#
-   ↳ via self::CLASS_NAME_REGEX
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/mockery/mockery/library/Mockery/Generator/MockConfiguration.php:442:55
     → /^\?Iterator(|Aggregate)$/i
    WARN  Alternation contains an empty alternative.
@@ -9854,11 +9737,6 @@ corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php
 corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:964:27
     → /^([\w\\]+)\s*\[\]$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
-
-corpus/modelcontextprotocol/php-sdk/src/Schema/Extension/ExtensionIdentifier.php:88:30
-    → /^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 
 
@@ -10251,8 +10129,6 @@ corpus/moodle/moodle/public/h5p/h5plib/v128/joubel/core/h5p.classes.php:5139:30
     → / ^ ( "[^"]*("|$) | '[^']*('|$)| | \S )* \s*/x
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
@@ -10330,6 +10206,8 @@ corpus/moodle/moodle/public/lib/adodb/drivers/adodb-mssql_n.inc.php:187:42
 
 corpus/moodle/moodle/public/lib/adodb/drivers/adodb-mssqlnative.inc.php:627:5
     → /^\W*insert[\s\w()[\]",.]+values\s*\((?:[^;']|''|(?:(?:'')*'[^']+'(?:'')*))*;?$/i
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "INSERT\"VALUES(" . "!'''!'" x n . "'values" Replayed on PCRE2 10.49: preg_match fails from length 99 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtrackin...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Alternation branches "''" and "(?:(?:'')*'[^']+'(?:'')*)" have overlapping character sets, which may cause unnecessary backtracking.
@@ -10442,8 +10320,6 @@ corpus/moodle/moodle/public/lib/aws-sdk/src/functions.php:377:20
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -10465,11 +10341,6 @@ corpus/moodle/moodle/public/lib/behat/classes/behat_session_trait.php:1113:29
    TIP 
        - /(\n)+/s
        + /(\n)+/
-
-corpus/moodle/moodle/public/lib/bennu/iCalendar_components.php:246:29
-    → #^(?P<label>[-[:alnum:]]+)(?P<params>(?:;(?:(?:[-[:alnum:]]+)=(?:[^[:cntrl:]";:,]+|"[^[:cntrl:]"]+")))*):(?P<data>.*)$#
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/moodle/moodle/public/lib/bennu/iCalendar_rfc2445.php:144:27
     → #^[a-zA-Z0-9]+[_a-zA-Z0-9\-]*(\.[_a-z0-9\-]+)*@(([0-9a-zA-Z\-]+\.)+[a-zA-Z][0-9a-zA-Z\-]+|([0-9]{1,3}\.){3}[0-9]{1,3})$#
@@ -10703,15 +10574,6 @@ corpus/moodle/moodle/public/lib/htmlpurifier/HTMLPurifier/AttrDef/URI/IPv6.php:8
        - #^[0-9a-fA-F]{4}$#s
        + #^[0-9a-fA-F]{4}$#
 
-corpus/moodle/moodle/public/lib/htmlpurifier/HTMLPurifier/Injector/Linkify.php:40:13
-    → /\b((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?\x{00ab}\x{00bb}\x{201c}\x{201d}\x{2018}\x{2019}]))/iu
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/moodle/moodle/public/lib/markdown/Michelf/Markdown.php:220:24
     → {^\xEF\xBB\xBF|\x1A}
    WARN  An anchor holds for its own alternative only: "\x1A" matches anywhere in the subject.
@@ -10746,14 +10608,6 @@ corpus/moodle/moodle/public/lib/markdown/Michelf/Markdown.php:1613:33
        ↳ Remove the redundant character class element.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
-corpus/moodle/moodle/public/lib/markdown/Michelf/MarkdownExtra.php:415:24
-    → /(?:^\n?|\n\n)*$/
-   ↳ via $newline_before_re
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/moodle/moodle/public/lib/markdown/Michelf/MarkdownExtra.php:720:17
     → /^1|block|span$/
@@ -10980,8 +10834,6 @@ corpus/moodle/moodle/public/lib/phpmailer/src/PHPMailer.php:1413:21
 corpus/moodle/moodle/public/lib/phpmailer/src/PHPMailer.php:1431:21
     → /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/sD
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    TIP 
        - /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/sD
        + /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/D
@@ -11288,11 +11140,6 @@ corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php:182:41
-    → /(\\(((.)(?!((AM\/PM)|(A\/P))))|([^ ])))(?=(?:[^"]|"[^"]*")*$)/ui
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php:193:41
     → /_.?/ui
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -11301,8 +11148,6 @@ corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet
     → /(\[\$[A-Z]*-[0-9A-F]*\])*[hmsdy](?=(?:[^"]|"[^"]*")*$)/miu
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php:200:29
     → /\[\$[A-Z]{3}\]/miu
@@ -12081,6 +11926,8 @@ corpus/moodle/moodle/public/lib/webauthn/src/WebAuthn.php:587:61
 
 corpus/moodle/moodle/public/lib/webauthn/src/WebAuthn.php:682:29
     → /BEGIN PUBLIC KEY\-+(?:\s|\n|\r)+([^\-]+)(?:\s|\n|\r)*\-+END PUBLIC KEY/i
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "BEGIN PUBLIC KEY-" . "\n\n" x n . "!END PUBLIC KEY" Replayed on PCRE2 10.49: preg_match fails from length 42 (backtrack_limit 100000, JIT off). Adjacent quantified tokens with overlapping ...
    WARN  Alternation branches "\\s" and "\\n" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Alternation branches "\\s" and "\\n" have overlapping character sets, which may cause unnecessary backtracking.
@@ -12275,21 +12122,10 @@ corpus/moodle/moodle/public/privacy/classes/local/request/contextlist.php:145:28
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/moodle/moodle/public/question/format/gift/format.php:628:24
-    → ~ \[id: ( (?:\\]|[^][:cntrl:]])+ ) ]~x
-   WARN  Alternation branches "\\\\]" and "[^\\][:cntrl:]]" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
 corpus/moodle/moodle/public/question/format/gift/format.php:646:28
     → ~ \[tag: ( (?:\\]|[^]<>`[:cntrl:]]|)+ ) ]~x
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
-
-corpus/moodle/moodle/public/question/type/calculated/questiontype.php:54:36
-    → ~\{=([^{}]*(?:\{[[:alpha:]][[:alpha:][:digit:]\-_\s]*\}[^{}]*)*)\}~
-   ↳ via self::FORMULAS_IN_TEXT_REGEX
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/moodle/moodle/public/question/type/multianswer/questiontype.php:421:24
     → /\{([0-9]*):((NUMERICAL|NM)|(MULTICHOICE|MC)|(MULTICHOICE_V|MCV)|(MULTICHOICE_H|MCH)|(SHORTANSWER|SA|MW)|(SHORTANSWER_C|SAC|MWC)|(MULTICHOICE_S|MCS)|(MULTICHOICE_VS|MCVS)|(MULTICHOICE_HS|MCHS)|(MULTIRESPONSE|MR)|(MULTIRESPONSE_H|MRH)|(MULTIRESPONSE_S|MRS)|(MULTIRESPONSE_HS|MRHS)):((=|%(-?[0-9]+(?:[.,][0-9]*)?)%)?(.+?(?<!\\)(?=[~}]|(?<!&)#|$))(#(.*?(?<!\\)(?=[~}]|$)))?(~(=|%(-?[0-9]+(?:[.,][0-9]*)?)%)?(.+?(?<!\\)(?=[~}]|(?<!&)#|$))(#(.*?(?<!\\)(?=[~}]|$)))?)*)\}/s
@@ -12406,12 +12242,8 @@ corpus/mpdf/mpdf/src/Css/NormalizeProperties.php:653:19
     → /[\-]{0,1}\d+(in|cm|mm|pt|pc|em|ex|px|%)* [\-]{0,1}\d+(in|cm|mm|pt|pc|em|ex|px|%)*/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "pt" and "pc" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "pt" and "pc" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    TIP 
        - /[\-]{0,1}\d+(in|cm|mm|pt|pc|em|ex|px|%)* [\-]{0,1}\d+(in|cm|mm|pt|pc|em|ex|px|%)*/
        + /[\-]?\d+(in|cm|mm|pt|pc|em|ex|px|%)* [\-]?\d+(in|cm|mm|pt|pc|em|ex|px|%)*/
@@ -12906,8 +12738,6 @@ corpus/mpdf/mpdf/src/Shaper/Indic.php:317:23
     → /^(RH|r)?((Z?F)?[N]{0,2})?(([ZJ]?G(JN?)?)[CR]J?((Z?F)?[N]{0,2})?){0,4}((([ZJ]?G(JN?)?)|GZ)|(GJ)?([ZJ]{0,3}MN?(H|JHJR)?){0,4})(G([CR]J?((Z?F)?[N]{0,2})?|V))?(SZ?)?[v]{0,2}/
    INFO  Quantified capturing group "(...)" with "{0,4}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "{0,4}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -13061,6 +12891,8 @@ corpus/nelmio/alice/src/FixtureBuilder/ExpressionLanguage/Lexer/ReferenceEscaper
 corpus/nelmio/alice/src/FixtureBuilder/ExpressionLanguage/Parser/TokenParser/Chainable/FunctionTokenParser.php:37:26
     → /^\s*<(?<function>(.|\r?\n)+?)\((?<arguments>.*)\)>\s*$/s
    ↳ via self::REGEX
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<" . "\n\n" x n . "!)>" Replayed on PCRE2 10.49: preg_match fails from length 18 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching in...
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -13138,13 +12970,6 @@ corpus/nette/tester/src/Framework/Helpers.php:119:18
 
 
 ### corpus/nette/tracy — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
-corpus/nette/tracy/src/Tracy/BlueScreen/BlueScreen.php:546:4
-    → #'\S(?:[^']|\\')*\S'|"\S(?:[^"]|\\")*\S"#
-   WARN  Alternation branches "[^']" and "\\\\'" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-   WARN  Alternation branches "[^"]" and "\\\\"" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
 corpus/nette/tracy/src/Tracy/Helpers.php:453:4
     → #^Content-Security-Policy(?:-Report-Only)?:.*\sscript-src(?:-elem)?\s+(?:[^;]+\s)?'nonce-([\w+/]+=*)'#mi
    WARN  "+" is a literal character inside a character class, not a quantifier.
@@ -13354,11 +13179,6 @@ corpus/nextcloud/server/lib/public/Util.php:399:18
 
 ### corpus/nikic/PHP-Parser — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-corpus/nikic/PHP-Parser/lib/PhpParser/Comment.php:127:24
-    → (^.*(?:\n\s+\*.*)+$)
-   WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
-       ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
-
 corpus/nikic/PHP-Parser/lib/PhpParser/ParserAbstract.php:721:81
     → /\A#!.*\r?\n\z/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -13472,10 +13292,6 @@ corpus/octobercms/october/modules/system/models/SiteDefinition.php:231:17
     → /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Alternation branches "[a-zA-Z0-9]" and "[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA…" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 
 
@@ -13582,9 +13398,11 @@ corpus/parsecsv/parsecsv-for-php/src/Csv.php:1296:66
 
 ### corpus/pdepend/pdepend — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
-### corpus/pestphp/pest — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
+### corpus/pestphp/pest — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 1
 corpus/pestphp/pest/src/Expectation.php:525:71
     → /^<\?php\s*(\/\*[\s\S]*?\*\/|\/\/[^\r\n]*(?:\r?\n|$)|\s)*declare\s*\(\s*strict_types\s*=\s*1\s*\)\s*;/m
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<?php" . "/**///\n" x n . "!;" Replayed on PCRE2 10.49: preg_match fails from length 70 (backtrack_limit 100000, JIT off). Adjacent quantified tokens with overlapping character sets can ca...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -13701,40 +13519,27 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:549:25
    WARN  Inline flag '-i' overrides a flag set by an earlier inline flag group.
        ↳ Consider removing the outer flag or limiting it to specific groups.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:685:25
-    → /@(phan-)?mixin\s+(\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)\b/
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1590:40
     → /@(?:phan-)?suppress\s+(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(-[a-zA-Z0-9_\x7f-\xff]+)*)(,\s*([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(-[a-zA-Z0-9_\x7f-\xff]+)*))*)/
    ↳ via self::PHAN_SUPPRESS_REGEX
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/phan/phan/src/Phan/Language/FQSEN/FullyQualifiedClassName.php:51:38
     → /^\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*$/D
    ↳ via self::VALID_CLASS_REGEX
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/phan/phan/src/Phan/Language/FQSEN/FullyQualifiedGlobalStructuralElement.php:85:51
     → /^\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*$/D
    ↳ via self::VALID_STRUCTURAL_ELEMENT_REGEX
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/phan/phan/src/Phan/Language/Type.php:1122:25
     → /^(\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*'))$/D
@@ -13767,16 +13572,12 @@ corpus/phan/phan/src/Phan/Language/Type/LiteralStringType.php:367:44
    ↳ via self::NAMESPACED_CLASS_REGEX
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/phan/phan/src/Phan/Language/Type/LiteralStringType.php:370:43
     → /^(\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*(::|\\))?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/D
    ↳ via self::CALLABLE_STRING_REGEX
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/phan/phan/src/Phan/Library/ConversionSpec.php:58:40
     → /%%|%(\d+\$)?([0 ]?|'.)([+-]?)(\d*)(\.\d*)?(?:l)?([bcdeEfFgGosuxX])/
@@ -13881,7 +13682,7 @@ corpus/phpDocumentor/ReflectionDocBlock/src/DocBlock/Tags/Source.php:63:24
 
 
 
-### corpus/phpactor/phpactor — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+### corpus/phpactor/phpactor — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 1
 corpus/phpactor/phpactor/lib/CodeTransform/Adapter/TolerantParser/Refactor/TolerantExtractExpression.php:152:24
     → /(\t| )*$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -13889,6 +13690,8 @@ corpus/phpactor/phpactor/lib/CodeTransform/Adapter/TolerantParser/Refactor/Toler
 
 corpus/phpactor/phpactor/lib/Completion/Bridge/TolerantParser/CompletionContext.php:265:24
     → {(class|interface|trait)\s+[^\s]+\s*(implements|extends)\s+([^,\s\{]+[,\s]*)*$}
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "class !extends " . "!" x n . "{" Replayed on PCRE2 10.49: preg_match fails from length 31 (backtrack_limit 100000, JIT off). Suggested (verify behavior): replace * with *+ in groups to pre...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -14525,7 +14328,7 @@ corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:2583:24
 
 
 
-### corpus/phpspec/phpspec — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+### corpus/phpspec/phpspec — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
 corpus/phpspec/phpspec/src/PhpSpec/Console/ConsoleIO.php:174:24
     → /(^.*)<[a-z-]*>?[^<]*$/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -14539,6 +14342,8 @@ corpus/phpspec/phpspec/src/PhpSpec/Formatter/TapFormatter.php:153:54
 corpus/phpspec/phpspec/src/PhpSpec/Locator/PSR0/PSR0Locator.php:288:20
     → /\A([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*[\/\\]?)*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\z/
    ↳ via $pattern
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "AA" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Consi...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -14616,8 +14421,6 @@ corpus/phpstan/phpstan-src/src/Reflection/ClassNameHelper.php:19:63
     → /^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*(\\[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)*$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/phpstan/phpstan-src/src/Type/Constant/ConstantArrayType.php:3651:36
     → ~^(?:[\\]?+[a-z_\x80-\xFF][0-9a-z_\x80-\xFF-]*+)++$~si
@@ -14633,11 +14436,6 @@ corpus/phpstan/phpstan-src/src/Type/Php/SscanfFunctionDynamicReturnTypeExtension
    TIP 
        - /%(\d*)(\[[^\]]+\]|[cdeEfosux]{1})/
        + /%(\d*)(\[[^\]]+]|[cdeEfosux])/
-
-corpus/phpstan/phpstan-src/turbo-ext/bin/side-by-side.php:515:19
-    → /^\t(?:static\s+)?(?:[\w:<>]+(?:\s*[&*])?\s+)+(\w+?)(_?)\(/
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 
 
@@ -14656,7 +14454,12 @@ corpus/phpunit/environment/src/Console.php:221:32
 
 
 
-### corpus/phpunit/phpunit — Target: PHP 8.5.12, PCRE2 10.44 (composer.json config.platform.php) — exit 0
+### corpus/phpunit/phpunit — Target: PHP 8.5.12, PCRE2 10.44 (composer.json config.platform.php) — exit 1
+corpus/phpunit/phpunit/build/scripts/phar-manifest.php:666:23
+    → {^(?:php(?:-64bit|-ipv6|-zts|-debug)?|hhvm|(?:ext|lib)-[a-z0-9](?:[_.-]?[a-z0-9]+)*|composer(?:-(?:plugin|runtime)-api)?)$}iD
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "EXT-0" . "-00" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 51 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching i...
+
 corpus/phpunit/phpunit/src/Util/Color.php:206:17
     → /(\x1B\[[^m]*m)+(\x1B\[0m)/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -14664,7 +14467,7 @@ corpus/phpunit/phpunit/src/Util/Color.php:206:17
 
 
 
-### corpus/pimcore/pimcore — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 0
+### corpus/pimcore/pimcore — Target: PHP 8.4, PCRE2 10.49 (composer.json require.php) — exit 1
 corpus/pimcore/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:184:42
     → /\s+/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -14693,6 +14496,8 @@ corpus/pimcore/pimcore/lib/Mail/Plugins/RedirectingPlugin.php:127:38
 
 corpus/pimcore/pimcore/lib/Tool/Text.php:91:40
     → /href="([^"]+)*"/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "href=\"" . "!" x n Replayed on PCRE2 10.49: preg_match fails from length 22 (backtrack_limit 100000, JIT off). Nested unbounded quantifiers detected. This allows exponential backtracking. ...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -14700,6 +14505,8 @@ corpus/pimcore/pimcore/lib/Tool/Text.php:91:40
 
 corpus/pimcore/pimcore/lib/Tool/Text.php:135:36
     → /width="([^"]+)*"/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "width=\"" . "!" x n Replayed on PCRE2 10.49: preg_match fails from length 23 (backtrack_limit 100000, JIT off). Nested unbounded quantifiers detected. This allows exponential backtracking....
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -14707,6 +14514,8 @@ corpus/pimcore/pimcore/lib/Tool/Text.php:135:36
 
 corpus/pimcore/pimcore/lib/Tool/Text.php:136:36
     → /height="([^"]+)*"/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "height=\"" . "!" x n Replayed on PCRE2 10.49: preg_match fails from length 24 (backtrack_limit 100000, JIT off). Nested unbounded quantifiers detected. This allows exponential backtracking...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -14714,6 +14523,8 @@ corpus/pimcore/pimcore/lib/Tool/Text.php:136:36
 
 corpus/pimcore/pimcore/lib/Tool/Text.php:137:36
     → /style="([^"]+)*"/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "style=\"" . "!" x n Replayed on PCRE2 10.49: preg_match fails from length 23 (backtrack_limit 100000, JIT off). Nested unbounded quantifiers detected. This allows exponential backtracking....
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -14721,6 +14532,8 @@ corpus/pimcore/pimcore/lib/Tool/Text.php:137:36
 
 corpus/pimcore/pimcore/lib/Tool/Text.php:165:41
     → /pimcore_disable_thumbnail="([^"]+)*"/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "pimcore_disable_thumbnail=\"" . "!" x n Replayed on PCRE2 10.49: preg_match fails from length 43 (backtrack_limit 100000, JIT off). Nested unbounded quantifiers detected. This allows expon...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -14771,6 +14584,8 @@ Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCR
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/processwire/processwire/wire/core/Field.php:1068:27
     → /([_|a-zA-Z0-9]+)*([-._|a-zA-Z0-9]*)([=!%*<>]+)/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" x n Replayed on PCRE2 10.49: preg_match fails from length 15 (backtrack_limit 100000, JIT off). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracki...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -14932,15 +14747,6 @@ corpus/processwire/processwire/wire/modules/Markup/MarkupHTMLPurifier/htmlpurifi
    TIP 
        - #^[0-9a-fA-F]{4}$#s
        + #^[0-9a-fA-F]{4}$#
-
-corpus/processwire/processwire/wire/modules/Markup/MarkupHTMLPurifier/htmlpurifier/HTMLPurifier.standalone.php:18563:13
-    → /\b((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?\x{00ab}\x{00bb}\x{201c}\x{201d}\x{2018}\x{2019}]))/iu
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/processwire/processwire/wire/modules/Markup/MarkupHTMLPurifier/htmlpurifier/HTMLPurifier.standalone.php:19053:24
     → /<!--(.*?)(-->|\z)/is
@@ -15377,7 +15183,7 @@ corpus/roundcube/roundcubemail/program/lib/Roundcube/rcube_washtml.php:764:24
 
 ### corpus/rskuipers/php-assumptions — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 
-### corpus/s9e/TextFormatter — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+### corpus/s9e/TextFormatter — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 1
 corpus/s9e/TextFormatter/scripts/patchCollectionProxies.php:145:3
     → #(?<=\n)(?:(/[*]+\n(?:[*](?! @method).*\n)*?)(?:[*]\n)*(?:[*] @method.*\n)*[*]/\n)?class#
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
@@ -15397,13 +15203,10 @@ corpus/s9e/TextFormatter/scripts/patchDocs.php:19:3
        ---
        +         #x
 
-corpus/s9e/TextFormatter/scripts/patchElementInspector.php:115:21
-    → #^((?:\w+,? )*or [a-z]+) element(?:, or if there is no more content in the parent element and the parent element is an HTML element that is not an? (?:\w+, )*or \w+ element, or an autonomous custom element)?$#
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/s9e/TextFormatter/scripts/patchElementInspector.php:153:19
     → (^[\d.\s]*The (?:\w+, )*(?:(?:\w+ )?and )*\w+ elements?\s*$)
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "The " . "0 and and and " x n . "! element" Replayed on PCRE2 10.49: preg_match fails from length 209 (backtrack_limit 100000, JIT off). Use possessive quantifiers (*+ instead of *, ++ inst...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -15411,8 +15214,6 @@ corpus/s9e/TextFormatter/scripts/patchElementInspector.php:203:24
     → (((?:listed|labelable|submittable|resettable),? )+and autocapitalize-inheriting )
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "listed" and "labelable" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/s9e/TextFormatter/scripts/patchExamples.php:21:4
     → #```php([^`]+)\n```\s+(?!```html|<pre>)#s
@@ -15459,12 +15260,6 @@ corpus/s9e/TextFormatter/src/Parser/AttributeFilters/UrlFilter.php:80:39
        - /\xE3\x80\x82|\xEF(?:\xBC\x8E|\xBD\xA1)/s
        + /\xE3\x80\x82|\xEF(?:\xBC\x8E|\xBD\xA1)/
 
-corpus/s9e/TextFormatter/src/Parser/AttributeFilters/UrlFilter.php:228:14
-    → /^(?!-)[-a-z0-9]{0,62}[a-z0-9](?:\.(?!-)[-a-z0-9]{0,62}[a-z0-9])*$/i
-   ↳ via $regexp
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/s9e/TextFormatter/src/Plugins/BBCodes/Configurator/BBCodeMonkey.php:199:4
     → #(\{(?:PARSE|REGEXP)=)((.).*?(?<!\\)(?>\\\\)*+\g{-1}[DSUisu]*(?:,(.).*?(?<!\\)(?>\\\\)*+\g{-1}[DSUisu]*)*)#
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
@@ -15486,16 +15281,6 @@ corpus/s9e/TextFormatter/src/Plugins/Litedown/Parser/Passes/Images.php:64:4
        - /!\[(?:[^\x17[\]]|\[[^\x17[\]]*\])*\]\(( *(?:[^\x17\s()]|\([^\x17\s()]*\))*(?=[ )]) *(?:"[^\x17]*?"|'[^\x17]*?'|\([^\x17)]*\))? *)\)/
        + /!\[(?:[^\x17[\]]|\[[^\x17[\]]*])*\]\(( *(?:[^\x17\s()]|\([^\x17\s()]*\))*(?=[ )]) *(?:"[^\x17]*?"|'[^\x17]*?'|\([^\x17)]*\))? *)\)/
 
-corpus/s9e/TextFormatter/src/Plugins/Litedown/Parser/Passes/Images.php:89:4
-    → /!\[((?:[^\x17[\]]|\[[^\x17[\]]*\])*)\](?: ?\[([^\x17[\]]+)\])?/
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
-corpus/s9e/TextFormatter/src/Plugins/Litedown/Parser/Passes/Links.php:67:4
-    → /\[((?:[^\x17[\]]|\[[^\x17[\]]*\])*)\]/
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/s9e/TextFormatter/src/Plugins/Litedown/Parser/Passes/Links.php:117:4
     → /\[(?:[^\x17[\]]|\[[^\x17[\]]*\])*\]\(( *(?:\([^\x17\s()]*\)|[^\x17\s)])*(?=[ )]) *(?:"[^\x17]*?"|'[^\x17]*?'|\([^\x17)]*\))? *)\)/
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -15507,11 +15292,6 @@ corpus/s9e/TextFormatter/src/Plugins/Litedown/Parser/Passes/Links.php:117:4
    TIP 
        - /\[(?:[^\x17[\]]|\[[^\x17[\]]*\])*\]\(( *(?:\([^\x17\s()]*\)|[^\x17\s)])*(?=[ )]) *(?:"[^\x17]*?"|'[^\x17]*?'|\([^\x17)]*\))? *)\)/
        + /\[(?:[^\x17[\]]|\[[^\x17[\]]*])*\]\(( *(?:\([^\x17\s()]*\)|[^\x17\s)])*(?=[ )]) *(?:"[^\x17]*?"|'[^\x17]*?'|\([^\x17)]*\))? *)\)/
-
-corpus/s9e/TextFormatter/src/Plugins/PipeTables/Parser.php:327:28
-    → /^ *:?-+:?(?:(?:\+| *\| *):?-+:?)+ *$/
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 
 
@@ -15668,6 +15448,8 @@ corpus/salesagility/SuiteCRM/SugarSecurity.php:126:24
 
 corpus/salesagility/SuiteCRM/data/SugarBean.php:1001:25
     → /\s+ORDER\s+BY\b(?:[^()]|\((?:[^()]*|\([^()]*\))*\))*$/i
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: " ORDER BY" . "!()" x n . "(" Replayed on PCRE2 10.49: preg_match fails from length 49 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matchi...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -15697,12 +15479,6 @@ corpus/salesagility/SuiteCRM/include/EditView/QuickCreate.php:76:24
    TIP 
        - /\d+([^\d])\d+([^\d]*)/s
        + /\d+([^\d])\d+([^\d]*)/
-
-corpus/salesagility/SuiteCRM/include/HtmlSanitizer.php:150:20
-    → /(.*)(&lt;([a-zA-Z0-9.!#$%&'*+\=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*)&gt;)(.*)/
-   ↳ via $pattern
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/salesagility/SuiteCRM/include/InlineEditing/InlineEditing.php:159:34
     → /<script language="javascript">if\(typeof sqs_objects == \'undefined\'\){var sqs_objects = new Array;}sqs_objects\[\'EditView_parent_name\'\].*?<\/script>/
@@ -16233,6 +16009,8 @@ corpus/salesagility/SuiteCRM/include/utils.php:2287:16
    ↳ via $tagsrex
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<0" . " 0=\"\" 0=\"\"" x n . "!>" Replayed on PCRE2 10.49: preg_match fails from length 74 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-m...
    WARN  Alternation branches "\\w" and "\\w[\\w\\-]*\\w" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    TIP 
@@ -16677,10 +16455,12 @@ corpus/scrivo/highlight.php/tools/get_language_definitions.php:74:33
 
 ### corpus/serbanghita/Mobile-Detect — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 
-### corpus/shipmonk-rnd/composer-dependency-analyser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+### corpus/shipmonk-rnd/composer-dependency-analyser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 1
 corpus/shipmonk-rnd/composer-dependency-analyser/src/Config/Configuration.php:709:18
     → ~^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$~
    ↳ via $regex
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . "-00" x n . "!/" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching inpu...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -16705,7 +16485,7 @@ corpus/shipmonk-rnd/dead-code-detector/src/Provider/NetteUsageProvider.php:346:2
 
 ### corpus/shipmonk-rnd/name-collision-detector — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
-### corpus/shopware/shopware — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+### corpus/shopware/shopware — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
 corpus/shopware/shopware/src/Core/Checkout/Promotion/Util/PromotionCodeService.php:25:50
     → /(?<prefix>[^%]*)(?<replacement>(%[sd])+)(?<suffix>.*)/
    ↳ via self::PROMOTION_PATTERN_REGEX
@@ -16771,6 +16551,8 @@ corpus/shopware/shopware/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/A
 
 corpus/shopware/shopware/src/Core/DevOps/Test/AnnotationTagTester.php:190:58
     → /^(?:[A-Z]+(_[A-Z]+)*)+$/D
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "A" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Consid...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -16800,7 +16582,7 @@ corpus/shopware/shopware/src/Storefront/Theme/Validator/SCSSValidator.php:199:24
 
 
 
-### corpus/silverstripe/silverstripe-framework — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
+### corpus/silverstripe/silverstripe-framework — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 1
 corpus/silverstripe/silverstripe-framework/src/Control/ContentNegotiator.php:195:33
     → #(\<option[^>]*[\s]+selected)(?!\s*\=)#si
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -16891,11 +16673,6 @@ corpus/silverstripe/silverstripe-framework/src/ORM/Connect/MySQLDatabase.php:507
     → /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/silverstripe/silverstripe-framework/src/ORM/Connect/MySQLSchemaManager.php:755:13
-    → /\\'(?:[^']|''|\\\\')*\\'/
-   WARN  Alternation branches "[^']" and "\\\\\\\\'" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
 corpus/silverstripe/silverstripe-framework/src/ORM/DataList.php:461:36
     → /^(.+) ([^"]+)$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -16955,6 +16732,8 @@ corpus/silverstripe/silverstripe-framework/src/View/Requirements_Backend.php:137
 
 corpus/silverstripe/silverstripe-framework/src/View/Shortcodes/EmbedShortcodeProvider.php:443:13
     → #^<iframe(?:"[^"]*"|'[^']*'|[^>])*>#i
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<IFRAME" . "\"\"\"\"" x n . "!<iframe" Replayed on PCRE2 10.49: preg_match fails from length 5003 (backtrack_limit 100000, JIT off). Overlapping alternation branches inside a quantifier. e...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Alternation branches ""[^"]*"" and "[^>]" have overlapping character sets, which may cause unnecessary backtracking.
@@ -17055,8 +16834,6 @@ corpus/slevomat/coding-standard/SlevomatCodingStandard/Helpers/TypeHelper.php:23
     → ~^\\?([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*$~
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/slevomat/coding-standard/SlevomatCodingStandard/Sniffs/Commenting/InlineDocCommentDeclarationSniff.php:173:19
     → ~(\$\w+)(?:\s+(.+))?$~i
@@ -17090,7 +16867,7 @@ corpus/slevomat/coding-standard/SlevomatCodingStandard/Sniffs/PHP/TypeCastSniff.
 ### corpus/slimphp/Slim — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/smalot/pdfparser — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+### corpus/smalot/pdfparser — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
 Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/smalot/pdfparser/src/Smalot/PdfParser/Element/ElementArray.php:112:24
@@ -17211,6 +16988,8 @@ corpus/smalot/pdfparser/src/Smalot/PdfParser/Font.php:410:54
 
 corpus/smalot/pdfparser/src/Smalot/PdfParser/PDFObject.php:164:24
     → /\[((\(.*?\)|[0-9\.\-\s]*)*)\]/s
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "[" . "()--" x n . "!]" Replayed on PCRE2 10.49: preg_match fails from length 39 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching inp...
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -17365,43 +17144,31 @@ corpus/smarty-php/smarty/src/Lexer/ConfigfileLexer.php:214:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/ConfigfileLexer.php:316:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/ConfigfileLexer.php:435:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/ConfigfileLexer.php:500:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/ConfigfileLexer.php:575:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/ConfigfileLexer.php:644:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:233:24
     → /^\xEF\xBB\xBF/i
@@ -17411,36 +17178,26 @@ corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:335:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:448:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:583:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:884:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:975:43
     → /(.|\s)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Alternation branches "." and "\\s" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 
 
@@ -17899,21 +17656,11 @@ corpus/squizlabs/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FunctionCo
        - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
        + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
 
-corpus/squizlabs/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:79:28
-    → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9\[\]]+))*)( .*)?`i
-   WARN  Alternation branches "array\\([^)]*\\)" and "[\\\\a-z0-9[\\]]+" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
 corpus/squizlabs/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:314:28
     → /([^$&.]+)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
    TIP 
        - /([^$&.]+)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
        + /([^$&.]+)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
-
-corpus/squizlabs/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/VariableCommentSniff.php:120:20
-    → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9\[\]]+))*)( .*)?`i
-   WARN  Alternation branches "array\\([^)]*\\)" and "[\\\\a-z0-9[\\]]+" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/squizlabs/PHP_CodeSniffer/src/Tokenizers/JS.php:471:32
     → |[a-zA-z0-9_]|
@@ -17933,13 +17680,6 @@ corpus/squizlabs/PHP_CodeSniffer/src/Tokenizers/PHP.php:1603:39
     → `^((?<!\.)_[0-9A-F][0-9A-F\.]*)+$`iD
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
-corpus/squizlabs/PHP_CodeSniffer/src/Tokenizers/PHP.php:1607:39
-    → `^(?:(?<![\.e])_[0-9][0-9e\.]*)+$`iD
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/squizlabs/PHP_CodeSniffer/src/Util/Common.php:476:28
     → /^array\(\s*([^\s^=^>]*)(\s*=>\s*(.*))?\s*\)/i
@@ -18008,8 +17748,6 @@ corpus/statamic/cms/src/Fields/Validator.php:185:26
     → /^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*(\\[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)*$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/statamic/cms/src/Fieldtypes/Concerns/ResolvesStatamicUrls.php:16:38
     → /([("])statamic:\/\/([^()"?#]*)([^()"]*)([)"])/im
@@ -18141,10 +17879,12 @@ corpus/symfony/flex/src/Response.php:78:28
 
 
 
-### corpus/symfony/maker-bundle — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+### corpus/symfony/maker-bundle — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
 corpus/symfony/maker-bundle/src/Test/MakerTestEnvironment.php:29:42
     → #(?:created|updated):\s(?:.*\\)*(.*\.[a-z]{3,4}).*(?:\\n)?#ui
    ↳ via self::GENERATED_FILES_REGEX
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "CREATED: " . "\\\\" x n . "!." Replayed on PCRE2 10.49: preg_match fails from length 25 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matc...
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -18303,7 +18043,7 @@ corpus/symfony/polyfill-mbstring/Mbstring.php:634:31
 
 ### corpus/symfony/recipes — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 
-### corpus/symfony/symfony — Target: PHP 8.4.1, PCRE2 10.49 (composer.json require.php) — exit 0
+### corpus/symfony/symfony — Target: PHP 8.4.1, PCRE2 10.49 (composer.json require.php) — exit 1
 corpus/symfony/symfony/src/Symfony/Bundle/FrameworkBundle/Console/Descriptor/Descriptor.php:156:29
     → /\n\s*/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -18354,6 +18094,8 @@ corpus/symfony/symfony/src/Symfony/Component/Console/Command/Command.php:732:25
 
 corpus/symfony/symfony/src/Symfony/Component/Console/Helper/Table.php:674:82
     → /^<(\w+|(\w+=[\w,]+;?)*)>.+<\/(\w+|(\w+=\w+;?)*)?>$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<" . "0=,0" x n . "!>" Replayed on PCRE2 10.49: preg_match fails from length 59 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching inp...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -18416,6 +18158,8 @@ corpus/symfony/symfony/src/Symfony/Component/Emoji/Resources/bin/build.php:237:4
 
 corpus/symfony/symfony/src/Symfony/Component/ErrorHandler/DebugClassLoader.php:1030:29
     → /^(?:\\?[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)+$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "\\AA" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 46 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Con...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -18464,23 +18208,12 @@ corpus/symfony/symfony/src/Symfony/Component/HttpClient/HttpClientTrait.php:381:
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '_' (duplicate)
 
-corpus/symfony/symfony/src/Symfony/Component/HttpFoundation/JsonResponse.php:84:24
-    → /^[$_\p{L}][$_\p{L}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\x{200C}\x{200D}]*(?:\[(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\d+)\])*?$/u
-   ↳ via $pattern
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/symfony/symfony/src/Symfony/Component/HttpKernel/HttpCache/Esi.php:72:33
     → #<esi\:comment[^>]+>#s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - #<esi\:comment[^>]+>#s
        + #<esi\:comment[^>]+>#
-
-corpus/symfony/symfony/src/Symfony/Component/HttpKernel/HttpClientKernel.php:124:52
-    → {^ *\?1(?:; *[a-z*][-a-z0-9_.*]*(?:=(?:-?\d{1,12}\.\d{1,3}|-?\d{1,15}|"(?:[\x20\x21\x23-\x5B\x5D-\x7E]|\\["\\])*"|[A-Za-z*][-!#$%&'*+.^_`|~0-9A-Za-z:/]*|:[A-Za-z0-9+/=]*:|\?[01]|@-?\d{1,15}|%"(?:[\x20\x21\x23\x24\x26-\x7E]|%[0-9a-f]{2})*"))?)* *$}D
-   WARN  Alternation branches "-?\\d{1,12}\\.\\d{1,3}" and "-?\\d{1,15}" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
 corpus/symfony/symfony/src/Symfony/Component/Intl/Resources/bin/update-data.php:80:59
     → #^release-[0-9]{1,}[.-][0-9]{1}$#
@@ -18590,6 +18323,8 @@ corpus/symfony/symfony/src/Symfony/Component/Routing/Generator/UrlGenerator.php:
 
 corpus/symfony/symfony/src/Symfony/Component/Routing/Loader/AttributeClassLoader.php:249:52
     → /^(?:\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)+$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "\\AA" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 46 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching input. Con...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -18677,7 +18412,7 @@ corpus/symfony/symfony/src/Symfony/Contracts/Translation/TranslatorTrait.php:64:
 
 
 
-### corpus/symfony/ux — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+### corpus/symfony/ux — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 1
 corpus/symfony/ux/src/Icons/src/Icon.php:63:34
     → #^([a-z0-9]+(-[a-z0-9]+)*)(--[a-z0-9]+(-[a-z0-9]+)*)*$#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -18698,6 +18433,8 @@ corpus/symfony/ux/src/Icons/src/Icon.php:76:34
 
 corpus/symfony/ux/src/Toolkit/src/Assert.php:54:30
     → /^[a-z0-9]([_.-]?[a-z0-9]+)*\/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . "-00" x n . "!/" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching inpu...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -18960,7 +18697,7 @@ corpus/thephpleague/geotools/src/Coordinate/Coordinate.php:260:24
 
 
 
-### corpus/thephpleague/glide — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
+### corpus/thephpleague/glide — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 1
 corpus/thephpleague/glide/src/Manipulators/Helpers/Color.php:17:31
     → /^[0-9]{1}[0-9a-f]{3}$/i
    ↳ via self::SHORT_ARGB
@@ -18972,6 +18709,8 @@ corpus/thephpleague/glide/src/Manipulators/Helpers/Color.php:17:31
 
 corpus/thephpleague/glide/src/Manipulators/Size.php:115:24
     → /^(crop|cover)(-top-left|-top|-top-right|-left|-center|-right|-bottom-left|-bottom|-bottom-right?)*$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "crop" . "-top-left-top-left" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 113 (backtrack_limit 100000, JIT off). Overlapping alternation branches inside a quantifier. e....
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -18981,13 +18720,10 @@ corpus/thephpleague/glide/src/Manipulators/Size.php:115:24
 
 corpus/thephpleague/glide/src/Manipulators/Size.php:119:24
     → /^(crop)(-[\d]{1,3}-[\d]{1,3}(?:-[\d]{1,3}(?:\.\d+)?)?)*$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "crop" . "-0-0-0-0-0" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 75 (backtrack_limit 100000, JIT off). Use possessive quantifiers (*+ instead of *, ++ instead of +, or ...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-
-corpus/thephpleague/glide/src/Manipulators/Size.php:481:24
-    → /^crop-([\d]{1,3})-([\d]{1,3})(?:-([\d]{1,3}(?:\.\d+)?))*$/
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 
 
@@ -19049,7 +18785,7 @@ corpus/tijsverkoyen/CssToInlineStyles/src/Css/Rule/Processor.php:91:43
 ### corpus/troelskn/phpweaver — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/tubalmartin/YUI-CSS-compressor-PHP-port — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+### corpus/tubalmartin/YUI-CSS-compressor-PHP-port — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
 Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/tubalmartin/YUI-CSS-compressor-PHP-port/src/Minifier.php:309:13
@@ -19068,6 +18804,8 @@ corpus/tubalmartin/YUI-CSS-compressor-PHP-port/src/Minifier.php:317:13
 
 corpus/tubalmartin/YUI-CSS-compressor-PHP-port/src/Minifier.php:324:13
     → /(?:"(?:[^\\"]|\\.|\\)*")|(?:'(?:[^\\']|\\.|\\)*')/S
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "'" . "!\\!" x n . "!\"" Replayed on PCRE2 10.49: preg_match fails from length 42 (backtrack_limit 100000, JIT off). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab...
    WARN  Alternation branches "\\\\." and "\\\\" have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
    WARN  Alternation branches "\\\\." and "\\\\" have overlapping character sets, which may cause unnecessary backtracking.
@@ -19075,7 +18813,7 @@ corpus/tubalmartin/YUI-CSS-compressor-PHP-port/src/Minifier.php:324:13
 
 
 
-### corpus/twigphp/Twig — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+### corpus/twigphp/Twig — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 1
 corpus/twigphp/Twig/src/Lexer.php:54:33
     → /(?(DEFINE) (?<LNUM>[0-9]+(_[0-9]+)*) (?<FRAC>\.(?&LNUM)) (?<EXPONENT>[eE][+-]?(?&LNUM)) (?<DNUM>(?&LNUM)(?:(?&FRAC))?) )(?:(?&DNUM)(?:(?&EXPONENT))?)/Ax
    ↳ via self::REGEX_NUMBER
@@ -19085,11 +18823,15 @@ corpus/twigphp/Twig/src/Lexer.php:54:33
 corpus/twigphp/Twig/src/Test/IntegrationTestCase.php:191:28
     → /--TEST--\s*(.*?)\s*(?:--CONDITION--\s*(.*))?\s*(?:--DEPRECATION--\s*(.*?))?\s*((?:--TEMPLATE(?:\(.*?\))?--(?:.*?))+)\s*(?:--DATA--\s*(.*))?\s*--EXCEPTION--\s*(.*)/sx
    WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "--TEST--" . "--TEMPLATE()--)--" x n Replayed on PCRE2 10.49: preg_match fails from length 127 (backtrack_limit 100000, JIT off). Adjacent quantified tokens with overlapping character sets ...
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
 
 corpus/twigphp/Twig/src/Test/IntegrationTestCase.php:198:34
     → /--TEST--\s*(.*?)\s*(?:--CONDITION--\s*(.*))?\s*(?:--DEPRECATION--\s*(.*?))?\s*((?:--TEMPLATE(?:\(.*?\))?--(?:.*?))+)--DATA--.*?--EXPECT--.*/s
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "--TEST--" . "--TEMPLATE()--)--" x n . "!--EXPECT--" Replayed on PCRE2 10.49: preg_match fails from length 121 (backtrack_limit 100000, JIT off). Adjacent quantified tokens with overlapping...
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
 
@@ -19103,7 +18845,7 @@ corpus/twigstan/twigstan/src/Processing/Compilation/PhpVisitor/AppendFilePathToL
 
 
 
-### corpus/vimeo/psalm — Target: PHP 8.1.31, PCRE2 10.39 (composer.json require.php) — exit 0
+### corpus/vimeo/psalm — Target: PHP 8.1.31, PCRE2 10.39 (composer.json require.php) — exit 1
 corpus/vimeo/psalm/bin/hack-conformance/lib.php:29:20
     → /^\/\/\/\/\s*expect:\s*(\S+)/m
    TIP 
@@ -19139,6 +18881,8 @@ corpus/vimeo/psalm/src/Psalm/Config/FileFilter.php:262:46
 
 corpus/vimeo/psalm/src/Psalm/Config/FileFilter.php:346:37
     → /^[a-zA-Z_\x80-\xff](?:[\\]?[a-zA-Z0-9_\x80-\xff]+)*$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "A" . "\\00" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching inpu...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -19161,6 +18905,8 @@ corpus/vimeo/psalm/src/Psalm/Internal/Analyzer/Statements/Expression/CallAnalyze
 
 corpus/vimeo/psalm/src/Psalm/Internal/FileManipulation/FileManipulationBuffer.php:151:28
     → @^/\*\*\n(\s*\*\s*\n)*\s*\*?\*/$@
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "/**\n" . " *\n\n" x n . "!*/" Replayed on PCRE2 10.49: preg_match fails from length 63 (backtrack_limit 100000, JIT off). Adjacent quantified tokens with overlapping character sets can cau...
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
@@ -19267,7 +19013,7 @@ corpus/voku/email-check/src/voku/helper/EmailCheck.php:207:26
 
 
 
-### corpus/voku/portable-utf8 — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+### corpus/voku/portable-utf8 — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
 Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/voku/portable-utf8/src/voku/helper/UTF8.php:1205:13
@@ -19288,6 +19034,8 @@ corpus/voku/portable-utf8/src/voku/helper/UTF8.php:2853:25
 
 corpus/voku/portable-utf8/src/voku/helper/UTF8.php:3742:21
     → /<\/?\w+(?:(?:\s+\w+(?:\s*=\s*(?:".*?"|'.*?'|[^'">\s]+))?)*\s*|\s*)\/?>/u
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<0" . " 0=\"\" 0=\"\"" x n . "!>" Replayed on PCRE2 10.49: preg_match fails from length 74 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-m...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
@@ -19540,11 +19288,6 @@ corpus/wikimedia/mediawiki/includes/Languages/LanguageFi.php:33:22
    FAIL  Character class holds "ä", which without /u is the bytes \xC3 \xA4: the class matches each byte on its own.
        ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
-corpus/wikimedia/mediawiki/includes/Media/DjVuImage.php:355:25
-    → /(?:\\(035|037))+/
-   WARN  Alternation branches "035" and "037" have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
 corpus/wikimedia/mediawiki/includes/Media/IPTC.php:350:23
     → /\d\d\d\d\d\d[-+]\d\d\d\d/
    TIP 
@@ -19560,11 +19303,15 @@ corpus/wikimedia/mediawiki/includes/Media/IPTC.php:351:19
 corpus/wikimedia/mediawiki/includes/OutputTransform/Stages/HandleSectionLinks.php:27:3
     → /<H(?P<level>[1-6])(?P<attrib>(?:[^'">]*|"([^"]*)"|'([^']*)')*>)(?P<header>[\s\S]*?)<\/H[1-6] *>/i
    ↳ via self::HEADING_REGEX
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<H1" . "!" x n . "!>" Replayed on PCRE2 10.49: preg_match fails from length 18 (backtrack_limit 100000, JIT off). Quantifier repeats a subpattern that can match empty. This creates ambiguo...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/wikimedia/mediawiki/includes/Parser/BlockLevelPass.php:372:29
     → /^(?:<style\b[^>]*>.*?<\/style>\s*|<link\b[^>]*>\s*)+$/iS
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<STYLE></STYLE><LINK</STYLE>" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 225 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking o...
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -19738,6 +19485,8 @@ corpus/wikimedia/mediawiki/includes/libs/Leximorph/Handler/Overrides/Grammar/Gra
 
 corpus/wikimedia/mediawiki/includes/libs/Mime/XmlTypeCheck.php:440:4
     → /^(?:\s*<!ENTITY\s+\S+\s+(?:"(?:&[^"%&;]{1,64};|(?:[^"%&]|&amp;|&quot;){0,255})"|'(?:&[^'%&;]{1,64};|(?:[^'%&]|&amp;|&apos;){0,255})')\s*>|\s*<!--(?:[^-]|-[^-])*-->|\s*<!ATTLIST svg xmlns:xlink CDATA #FIXED "http:\/\/www.w3.org\/1999\/xlink">)*\s*$/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: " <!ENTITY ! \"&amp;\">" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 261 (backtrack_limit 100000, JIT off). Overlapping alternation branches inside a quantifier. e.g. (a...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Alternation branches "\\s*<!ENTITY\\s+\\S+\\s+(?:"(?:&[^…" and "\\s*<!--(?:[^\\-]|-[^\\-])*-->" have overlapping character sets, which may cause unnecessary backtracking.
@@ -19758,6 +19507,8 @@ corpus/wikimedia/mediawiki/includes/libs/ObjectCache/MemcachedBagOStuff.php:60:5
 
 corpus/wikimedia/mediawiki/includes/libs/Rdbms/Database/DatabasePostgres.php:619:17
     → /(\{?"([^"\\]|\\.)*"|[^,{}]+)+([,}]+)/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "{\"\"\"\"" x n Replayed on PCRE2 10.49: preg_match fails from length 25 (backtrack_limit 100000, JIT off). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. Thi...
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -20208,7 +19959,7 @@ corpus/woocommerce/woocommerce/tools/monorepo/check-changelogger-use.php:85:18
 
 
 
-### corpus/wp-cli/wp-cli — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+### corpus/wp-cli/wp-cli — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
 Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/wp-cli/wp-cli/bundle/rmccue/requests/src/IdnaEncoder.php:144:22
@@ -20224,6 +19975,8 @@ corpus/wp-cli/wp-cli/bundle/rmccue/requests/src/Requests.php:767:17
 
 corpus/wp-cli/wp-cli/bundle/rmccue/requests/src/Requests.php:855:19
     → /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . ";=" x n . "!\x0D\n" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching ...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Redundant non-capturing group "(?:[^\r\n])" at offset 46; it can be removed without changing behavior.
@@ -20233,6 +19986,8 @@ corpus/wp-cli/wp-cli/bundle/rmccue/requests/src/Requests.php:855:19
 
 corpus/wp-cli/wp-cli/bundle/rmccue/requests/src/Requests.php:863:36
     → /^([0-9a-f]+)(?:;(?:[\w-]*)(?:=(?:(?:[\w-]*)*|"(?:[^\r\n])*"))?)*\r\n/i
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "0" . ";=" x n . "!\x0D\n" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtracking on non-matching ...
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    WARN  Redundant non-capturing group "(?:[^\r\n])" at offset 46; it can be removed without changing behavior.
@@ -20306,7 +20061,7 @@ corpus/wp-cli/wp-cli/php/utils.php:1540:18
 
 
 
-### corpus/yiisoft/yii — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+### corpus/yiisoft/yii — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
 Note: composer.json require.php allows PHP 5.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/yiisoft/yii/build/commands/LiteCommand.php:179:26
@@ -20347,6 +20102,8 @@ corpus/yiisoft/yii/build/commands/api/ApiModel.php:653:18
 
 corpus/yiisoft/yii/build/commands/markdown/MarkdownHtml2Tex.php:228:24
     → /<(i|em)>([^<]*)+?<\/(i|em)>/
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "<i>" . "!" x n . "<</i>" Replayed on PCRE2 10.49: preg_match fails from length 24 (backtrack_limit 100000, JIT off). Quantifier repeats a subpattern that can match empty. This creates ambi...
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -20465,15 +20222,6 @@ corpus/yiisoft/yii/framework/vendors/htmlpurifier/HTMLPurifier.standalone.php:13
        - #^[0-9a-fA-F]{4}$#s
        + #^[0-9a-fA-F]{4}$#
 
-corpus/yiisoft/yii/framework/vendors/htmlpurifier/HTMLPurifier.standalone.php:18573:13
-    → /\b((?:[a-z][\w\-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]|\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]|(?:\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?\x{00ab}\x{00bb}\x{201c}\x{201d}\x{2018}\x{2019}]))/iu
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
 corpus/yiisoft/yii/framework/vendors/markdown/markdown.php:108:24
     → {^\xEF\xBB\xBF|\x1A}
    WARN  An anchor holds for its own alternative only: "\x1A" matches anywhere in the subject.
@@ -20508,14 +20256,6 @@ corpus/yiisoft/yii/framework/vendors/markdown/markdown.php:1252:33
        ↳ Remove the redundant character class element.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-
-corpus/yiisoft/yii/framework/vendors/markdown/markdown.php:1637:24
-    → /(?:^\n?|\n\n)*$/
-   ↳ via $newline_before_re
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 corpus/yiisoft/yii/framework/vendors/markdown/markdown.php:1951:17
     → /^1|block|span$/
@@ -20700,7 +20440,7 @@ corpus/yiisoft/yii/requirements/index.php:213:17
 
 
 
-### corpus/yiisoft/yii2 — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+### corpus/yiisoft/yii2 — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 1
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/yiisoft/yii2/build/controllers/ReleaseController.php:896:43
     → /^- Fix(?= #\d+(, #\d+)*: )/
@@ -20775,6 +20515,8 @@ corpus/yiisoft/yii2/framework/db/mysql/Schema.php:509:19
     → /UNIQUE KEY\s+[`"](.+)[`"]\s*\(([`"].+[`"])+\)/mi
    ↳ via $regexp
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
+       ↳ Attack: "UNIQUE KEY \"!\"(" . "\"\"\"\"\"\"" x n . "!)" Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. May cause backtrac...
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -20880,11 +20622,6 @@ corpus/yiisoft/yii2/framework/web/UrlRule.php:337:41
     → /<([\w._-]+):?([^>]+)?>/
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
-
-corpus/yiisoft/yii2/framework/web/ViewAction.php:125:50
-    → ~^\w(?:(?!\/\.{0,2}\/)[\w\/\-\.])*$~
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 
 
