@@ -23,6 +23,7 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Tests\Support\PcreRule;
@@ -136,8 +137,9 @@ final class LintCommandStreamsTest extends TestCase
         $this->assertSame(0, $exitCode);
         $this->assertMatchesRegularExpression('/^  Time: \S+  Memory: \S+ MB  Processes: '.$processes.'$/m', $stdout);
         $this->assertStringNotContainsString('Cache:', $stdout);
-        // The banner shows what the run planned: --jobs.
-        $this->assertStringContainsString("\n".self::bannerRow('Processes', $jobs), $stdout);
+        // The banner shows what the run planned: --jobs; where this PHP cannot
+        // fork, one process ran and the banner says why.
+        $this->assertStringContainsString("\n".self::bannerRow('Processes', ForkedWorkerPool::canFork() || '1' === $jobs ? $jobs : '1 (this PHP cannot fork: --jobs '.$jobs.' ran in one process)'), $stdout);
     }
 
     /**

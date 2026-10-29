@@ -19,6 +19,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Formatter\LintSummary;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 
@@ -79,9 +80,11 @@ final class LintOutputRenderer
     /**
      * @param array<int, string> $configFiles
      * @param bool               $verbose     whether the run is verbose, which names the author
+     * @param bool|null          $forking     whether this PHP can fork the workers; read from the host when null
      */
-    public function renderBanner(Output $output, ProjectTarget $target, int $jobs = 1, array $configFiles = [], bool $verbose = false): string
+    public function renderBanner(Output $output, ProjectTarget $target, int $jobs = 1, array $configFiles = [], bool $verbose = false, ?bool $forking = null): string
     {
+        $forking ??= ForkedWorkerPool::canFork();
         $version = Regex::VERSION;
 
         $banner = $output->color('PHPRegex', Output::CYAN.Output::BOLD).' '.$output->warning($version).($verbose ? ' by Younes ENNAJI' : '')."\n\n";
@@ -95,7 +98,10 @@ final class LintOutputRenderer
         $lines = [
             'Runtime' => 'PHP '.$output->warning(\PHP_VERSION).', PCRE2 '.$output->warning($runningPcre),
             'Target' => 'PHP '.$output->warning($target->php()).', PCRE2 '.$output->warning($target->target()->pcreVersion).('C' === $target->target()->locale ? '' : ', locale '.$output->warning($target->target()->locale)).' ('.$target->source().')',
-            'Processes' => $output->warning((string) $jobs),
+            // What the run planned; where this PHP cannot fork, Windows among
+            // others, the workers asked for run in this process, and the
+            // banner says so beside the count asked for.
+            'Processes' => $forking || $jobs <= 1 ? $output->warning((string) $jobs) : $output->warning('1').' (this PHP cannot fork: --jobs '.$jobs.' ran in one process)',
         ];
         $lines['PCRE JIT'] = $output->warning($runtime->jitSetting ?? 'unknown');
         $lines['Backtrack'] = $output->warning((string) ($runtime->backtrackLimit ?? 'unknown'));

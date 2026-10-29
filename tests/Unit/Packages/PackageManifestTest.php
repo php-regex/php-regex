@@ -107,7 +107,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Formatter\LinkFormatter', 'Linter\Formatter\OutputConfiguration',
             'Linter\Formatter\OutputFormatterInterface', 'Linter\Formatter\RelativePathHelper',
             'Linter\LintStatsCounter', 'Linter\Formatter\LintSummary', 'Linter\RedosVerdict',
-            'Linter\Parallel\WorkerCount', 'Linter\LintProgress', 'Linter\LintReport', 'Linter\LintRequest',
+            'Linter\Parallel\ForkedWorkerPool', 'Linter\Parallel\WorkerCount', 'Linter\LintProgress', 'Linter\LintReport', 'Linter\LintRequest',
             'Linter\Rule\RuleCatalog', 'Linter\Rule\RuleId',
             'Linter\Exception\LintRunFailureException', 'Linter\LintRunner',
             'Linter\LintService', 'Linter\Source\PatternSourceCollection',
