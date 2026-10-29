@@ -575,10 +575,11 @@ subsystem:
 | `lexer`, `parser`, `validate` | tokenizing, parsing and validating |
 | `lint` | the lint run over a fixed set of files, one process; the default rules alone over the lint corpus and over the cases of `data/lint/` |
 | `redos` | the theoretical ReDoS analysis |
-| `redos-corpus` | the same analysis once per pattern of the lint corpus, ASTs cached (the longest group) |
+| `redos-corpus` | the same analysis once per pattern of the lint corpus, ASTs cached (the longest group), and once over the whole corpus in one measurement, for the table |
 | `automata` | NFA construction, determinization, minimization and the language solver |
 | `optimizer` | the optimizer, with its default options and with every rewrite verified by automata (the PHPStan extension's options) |
 | `capture-shape`, `formatter` | reading a capture shape, writing lint reports |
+| `table` | the corpus subjects of the groups above, with the noop floor of each class: what CI compares on a pull request (below) |
 
 ```bash
 composer bench -- --group=automata
@@ -621,11 +622,27 @@ without it, provided `php -n -m` still lists `mbstring`. Compare numbers from
 the same machine only.
 
 CI runs every subject once, each variant for one revolution, and fails on a
-subject that throws or on a run past its time limit; it compares no timing,
-as shared runners are too noisy for that. The same run, locally:
+subject that throws or on a run past its time limit: that job is the gate.
+The same run, locally:
 
 ```bash
 tools/phpbench/vendor/bin/phpbench run --iterations=1 --revs=1 --progress=none --stop-on-error
+```
+
+A second job measures the `table` group and never gates. On a pull request
+that changes `src/` or `tests/Benchmark/`, it measures the base commit
+first, then the pull request, on the same runner, and writes the table to
+the job summary with the difference per subject; a subject taking 50 ms or
+more in the base and more than 30 % longer in the pull request is marked.
+The mark advises: the two passes run one after the other on a shared
+runner, which still varies between them, and nothing is required of the
+author. On a push and on the Monday run the group is measured once and the
+numbers are kept as an artifact for ninety days. The same comparison,
+locally, from the base commit and then from the change:
+
+```bash
+tools/phpbench/vendor/bin/phpbench run --group=table --tag=base
+tools/phpbench/vendor/bin/phpbench run --group=table --ref=base --report=table
 ```
 
 `tests/Unit/Benchmark/BenchmarkDataTest.php` checks every case file: the real

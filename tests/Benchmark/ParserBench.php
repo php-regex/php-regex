@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Benchmark;
 
+use PhpBench\Attributes\Assert;
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Groups;
 use PhpBench\Attributes\Iterations;
@@ -26,6 +27,7 @@ use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Tests\Benchmark\Support\BenchCases;
 use PHPRegex\Tests\Benchmark\Support\ColdStart;
 use PHPRegex\Tests\Benchmark\Support\PeakMemory;
+use PHPRegex\Tests\Benchmark\Support\Table;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -87,9 +89,12 @@ final class ParserBench
      * The memory floor: the same code and inputs loaded, no work.
      */
     #[BeforeMethods('setUpNoop')]
+    #[Groups(['table'])]
     public function benchNoop(): void {}
 
     #[BeforeMethods('coldRealistic')]
+    #[Groups(['table'])]
+    #[Assert(Table::ADVISORY)]
     public function benchParseRealistic(): void
     {
         foreach ($this->patterns as $pattern) {

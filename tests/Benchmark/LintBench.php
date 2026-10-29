@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Benchmark;
 
+use PhpBench\Attributes\Assert;
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Groups;
 use PhpBench\Attributes\Iterations;
@@ -32,6 +33,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Tests\Benchmark\Support\BenchCases;
 use PHPRegex\Tests\Benchmark\Support\ColdStart;
 use PHPRegex\Tests\Benchmark\Support\PeakMemory;
+use PHPRegex\Tests\Benchmark\Support\Table;
 
 /**
  * A whole lint run over a fixed directory of PHP files, in one process
@@ -87,6 +89,7 @@ final class LintBench
      * work.
      */
     #[BeforeMethods('coldLint')]
+    #[Groups(['table'])]
     public function benchNoop(): void {}
 
     #[BeforeMethods('coldLint')]
@@ -100,6 +103,8 @@ final class LintBench
     }
 
     #[BeforeMethods('coldRulesRealistic')]
+    #[Groups(['table'])]
+    #[Assert(Table::ADVISORY)]
     public function benchLintRulesRealistic(): void
     {
         foreach ($this->trees as $tree) {

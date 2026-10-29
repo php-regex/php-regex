@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Benchmark;
 
+use PhpBench\Attributes\Assert;
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Groups;
 use PhpBench\Attributes\Iterations;
@@ -24,6 +25,7 @@ use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Benchmark\Support\PeakMemory;
+use PHPRegex\Tests\Benchmark\Support\Table;
 
 /**
  * The capture shape from the pattern string: parse, analyze, then write the
@@ -74,6 +76,7 @@ final class CaptureShapeBench
      */
     #[BeforeMethods('setUpCorpus')]
     #[ParamProviders('provideCorpora')]
+    #[Groups(['table'])]
     public function benchNoop(array $params): void {}
 
     /**
@@ -81,6 +84,8 @@ final class CaptureShapeBench
      */
     #[BeforeMethods('setUpCorpus')]
     #[ParamProviders('provideCorpora')]
+    #[Groups(['table'])]
+    #[Assert(Table::ADVISORY)]
     public function benchMatchShape(array $params): void
     {
         foreach ($params['patterns'] as $pattern) {

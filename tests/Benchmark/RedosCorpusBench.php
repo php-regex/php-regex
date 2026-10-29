@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Benchmark;
 
+use PhpBench\Attributes\Assert;
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Groups;
 use PhpBench\Attributes\Iterations;
@@ -25,6 +26,7 @@ use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Tests\Benchmark\Support\BenchCases;
 use PHPRegex\Tests\Benchmark\Support\PeakMemory;
+use PHPRegex\Tests\Benchmark\Support\Table;
 
 /**
  * One theoretical ReDoS analysis per pattern of the lint corpus, each keyed
@@ -41,6 +43,10 @@ use PHPRegex\Tests\Benchmark\Support\PeakMemory;
  * instead of the hundred the other warm subjects take: a single pass over
  * every variant already lasts about twenty minutes.
  *
+ * benchTheoreticalVerdictCorpus reads the whole corpus in one measurement,
+ * one revolution and five iterations: the line of the table group, which
+ * joins this group as well.
+ *
  * Run with: composer bench -- --group=redos-corpus
  */
 #[Groups(['redos-corpus'])]
@@ -54,6 +60,11 @@ final class RedosCorpusBench
 
     private string $pattern = '';
 
+    /**
+     * @var list<string>
+     */
+    private array $patterns = [];
+
     public function __construct()
     {
         $this->analyzer = new RedosAnalyzer(RegexParser::create());
@@ -63,6 +74,7 @@ final class RedosCorpusBench
      * The memory floor: the same code loaded and analyzer built, no work.
      */
     #[BeforeMethods('setUpNoop')]
+    #[Groups(['table'])]
     public function benchNoop(): void {}
 
     /**
@@ -73,6 +85,31 @@ final class RedosCorpusBench
     public function benchTheoreticalVerdictWarm(array $params): void
     {
         $this->analyzer->analyze($this->pattern, null, RedosMode::Theoretical);
+    }
+
+    /**
+     * The theoretical verdict of every pattern of the realistic corpus, one
+     * analyzer, one pass: the corpus-scale subject of the table, where the
+     * per-pattern subject above has one variant per pattern.
+     */
+    #[BeforeMethods('setUpCorpus')]
+    #[Groups(['table'])]
+    #[Revs(1)]
+    #[Iterations(5)]
+    #[Assert(Table::ADVISORY)]
+    public function benchTheoreticalVerdictCorpus(): void
+    {
+        foreach ($this->patterns as $pattern) {
+            $this->analyzer->analyze($pattern, null, RedosMode::Theoretical);
+        }
+    }
+
+    public function setUpCorpus(): void
+    {
+        $this->patterns = array_values(BenchCases::realistic());
+        $this->analyzer = new RedosAnalyzer(RegexParser::create());
+        $this->analyzer->analyze('/a/', null, RedosMode::Theoretical);
+        PeakMemory::reset();
     }
 
     /**

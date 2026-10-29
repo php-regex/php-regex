@@ -268,7 +268,8 @@ origin when it runs, and on which every workflow that runs on each push to
 2.x passed: the tests, the engines, static analysis, the packages, coverage,
 the benchmarks, the workflow checks, the spelling, the public API since the
 latest tag, and the demo applications, which install the checkout into a
-Symfony and a Laravel application. `bin/status` shows how
+Symfony and a Laravel application. The benchmark table a pull request gets
+in its job summary is advisory and never blocks. `bin/status` shows how
 far HEAD stands from origin's branch, and reads only.
 
 `bin/release` creates the GitHub release as a draft before it pushes the

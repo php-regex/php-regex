@@ -42,3 +42,105 @@ jobs:
 
       - name: Run Every Subject Once
         run: tools/phpbench/vendor/bin/phpbench run --iterations=1 --revs=1 --progress=none --stop-on-error
+
+  table:
+    # The corpus subjects, measured for the record. On a pull request that
+    # changes src/ or tests/Benchmark/: the base commit first, then the pull
+    # request, on the same runner, with a mark on a subject more than 30 %
+    # past its base. On a push and on the schedule: once, kept as an
+    # artifact. Advisory, whatever happens in it: the workflow concludes on
+    # the smoke job alone.
+    name: Benchmarks (table)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    if: github.actor != 'dependabot[bot]'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Check out the base commit
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+
+      - name: Decide whether the pull request is measured
+        if: github.event_name == 'pull_request'
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+          if grep -Eq '^(src|tests/Benchmark)/' <<< "$changed"; then
+            echo 'The pull request changes src/ or tests/Benchmark/: measured.'
+            echo 'measure=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'The pull request changes neither src/ nor tests/Benchmark/: not measured.'
+            echo 'measure=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          tools: phpbench
+
+      # The same two installs the action runs, in the base tree.
+      - name: Install the base commit
+        if: steps.changes.outputs.measure == 'true'
+        working-directory: base
+        run: |
+          composer install --prefer-dist --no-interaction --no-progress
+          composer install -d tools/phpbench --no-interaction --no-progress
+
+      - name: Measure the base commit
+        if: steps.changes.outputs.measure == 'true'
+        working-directory: base
+        run: tools/phpbench/vendor/bin/phpbench run --group=table --dump-file="$RUNNER_TEMP/base.xml" --progress=none --no-ansi
+
+      # The assertions of the group mark a subject past its tolerance, and
+      # --tolerate-failure leaves the exit code alone: the table is written
+      # whatever it holds. The plain progress logger prints each variant
+      # against its base and, before the table, the list of the marked
+      # ones; it writes to the error stream, so both streams are kept.
+      # An explicit bash runs with pipefail: a crash of phpbench fails the
+      # step, whatever tee returns.
+      - name: Measure the pull request
+        if: steps.changes.outputs.measure == 'true'
+        shell: bash
+        run: tools/phpbench/vendor/bin/phpbench run --group=table --file="$RUNNER_TEMP/base.xml" --report=table --tolerate-failure --progress=plain --no-ansi 2>&1 | tee "$RUNNER_TEMP/table.txt"
+
+      - name: Measure the branch
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: tools/phpbench/vendor/bin/phpbench run --group=table --report=table --dump-file="$RUNNER_TEMP/table-${GITHUB_SHA}.xml" --progress=none --no-ansi | tee "$RUNNER_TEMP/table.txt"
+
+      - name: Write the table to the job summary
+        if: github.event_name != 'pull_request' || steps.changes.outputs.measure == 'true'
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            sentence='Advisory. The base and the pull request were measured one after the other on the same runner, which still varies between the two passes; a ✘ marks a subject more than 30 % past its base. Nothing is required of the author.'
+          else
+            sentence='Measured once on a shared runner, no comparison; the numbers are kept as an artifact.'
+          fi
+          {
+            printf '## Benchmarks\n\n%s\n\n```\n' "$sentence"
+            cat "$RUNNER_TEMP/table.txt"
+            printf '```\n'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the numbers
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: benchmarks-${{ github.sha }}
+          path: ${{ runner.temp }}/table-*.xml
+          retention-days: 90

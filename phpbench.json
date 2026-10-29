@@ -12,5 +12,21 @@
         "pcov.enabled": 0,
         "xdebug.mode": "off"
     },
-    "storage.xml_storage_path": "var/phpbench"
+    "storage.xml_storage_path": "var/phpbench",
+    "report.generators": {
+        "table": {
+            "extends": "aggregate",
+            "title": null,
+            "description": null,
+            "break": [],
+            "cols": {
+                "benchmark": null,
+                "subject": null,
+                "set": null,
+                "mem_peak": null,
+                "mode": null,
+                "rstdev": null
+            }
+        }
+    }
 }
