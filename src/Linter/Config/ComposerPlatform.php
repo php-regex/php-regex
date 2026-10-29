@@ -27,6 +27,8 @@ use PHPRegex\Parser\PcreTarget;
  */
 final class ComposerPlatform
 {
+    private const ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
     private function __construct() {}
 
     /**
@@ -158,8 +160,8 @@ final class ComposerPlatform
         $name = ($env['COMPOSER'] ?? '') ?: 'composer.json';
         // A Windows drive prefix is read from the name itself: a check of
         // the file system needs no regex of the engine, which a pinned
-        // limit would leave giving up on.
-        $windowsDrive = \strlen($name) >= 3 && \ctype_alpha($name[0]) && ':' === $name[1]
+        // limit would leave giving up on, and no extension either.
+        $windowsDrive = \strlen($name) >= 3 && 1 === strspn($name[0], self::ALPHABET) && ':' === $name[1]
             && ('/' === $name[2] || '\\' === $name[2]);
 
         return [$name, str_starts_with($name, '/') || $windowsDrive ? $name : $projectDir.'/'.$name];

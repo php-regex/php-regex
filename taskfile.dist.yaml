@@ -231,6 +231,7 @@ tasks:
       - composer install -d tools/paratest --ignore-platform-req=php+
       - composer install -d tools/deptrac --ignore-platform-req=php+
       - composer install -d tools/bc-check --ignore-platform-req=php+
+      - composer install -d tools/dep-analyser --ignore-platform-req=php+
 
       - task: link
     sources:
@@ -255,6 +256,10 @@ tasks:
       - composer update -W -d tools/phpbench
       - composer outdated --direct -d tools/phpbench
       - composer audit -d tools/phpbench || true
+
+      - composer update -W -d tools/dep-analyser
+      - composer outdated --direct -d tools/dep-analyser
+      - composer audit -d tools/dep-analyser || true
 
       - composer update -W -d tools/phplint
       - composer outdated --direct -d tools/phplint

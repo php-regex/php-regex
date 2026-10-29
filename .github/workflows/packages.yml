@@ -82,6 +82,7 @@ jobs:
         with:
           php-version: '8.4'
           dependencies: none
+          tools: dep-analyser
 
       - name: Install the package in a bare project
         env:
@@ -112,6 +113,14 @@ jobs:
         env:
           PACKAGE: ${{ matrix.package }}
         run: php tests/Tools/package_smoke_check.php "$PACKAGE" "$project"
+
+      # What the installed sources reach must be in the manifest's require,
+      # or among what it suggests: a class, a function or an extension
+      # reached through a dependency's own dependency fails here.
+      - name: Check the manifest declares what the package uses
+        env:
+          PACKAGE: ${{ matrix.package }}
+        run: php tests/Tools/package_dependency_check.php "$PACKAGE" "$project"
 
   phpunit-matrix:
     # The assertion package runs on five PHPUnit majors the monorepo suite

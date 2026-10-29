@@ -180,8 +180,10 @@ final class ConsoleLintRunner
             return (new WorkerCount())->count();
         }
 
-        $count = filter_var($jobs, \FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        if (false === $count) {
+        // digits alone, that read back as the same number: no sign, no space,
+        // no leading zero, nothing past the integer range
+        $count = (int) $jobs;
+        if ('' === $jobs || strspn($jobs, '0123456789') !== \strlen($jobs) || (string) $count !== $jobs || $count < 1) {
             throw new LintRunFailureException('The --jobs value must be a positive integer.', JsonDocument::STAGE_USAGE, LintRunFailureException::EXIT_INVALID);
         }
 

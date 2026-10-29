@@ -265,7 +265,11 @@ waits until it passes. Run it on an idle machine: the times are wall-clock.
 
 `bin/release` releases only a HEAD that origin's branch holds, read from
 origin when it runs, and on which every workflow that runs on each push to
-2.x passed: the tests, the engines, static analysis, the packages, coverage,
+2.x passed: the tests, the engines, static analysis, the packages (each
+installed alone, its manifest checked against what its sources use, which
+`php tests/Tools/package_dependency_check.php Parser <project>` runs on one
+package from a project that installs it, after `composer install -d
+tools/dep-analyser`), coverage,
 the benchmarks, the workflow checks, the spelling, the public API since the
 latest tag, and the demo applications, which install the checkout into a
 Symfony and a Laravel application. The benchmark table a pull request gets

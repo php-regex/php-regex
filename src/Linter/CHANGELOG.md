@@ -27,6 +27,9 @@ CHANGELOG
    line by line reads `--format=json` instead. The JSON `hint` stays one
    string, deduplicated; the GitHub, Checkstyle and JUnit `Suggestion` is
    the rewrite the console lists first.
+ * `--jobs` reads a positive integer written in digits: a sign or a space
+   around the number, which the option let through, is refused with the
+   usage message.
  * The error for an `ide` value `regex.json` refuses names every placeholder
    a template may hold, `%f`, `%file%`, `%relFile%`, `%l`, `%line%`, `%c` and
    `%column%`, where it named `%f` and `%l` only though `%c` alone was taken.

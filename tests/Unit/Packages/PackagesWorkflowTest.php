@@ -27,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 final class PackagesWorkflowTest extends TestCase
 {
     private const SMOKE_SCRIPT = __DIR__.'/../../Tools/package_smoke_check.php';
+    private const DEPENDENCY_SCRIPT = __DIR__.'/../../Tools/package_dependency_check.php';
 
     #[Test]
     public function test_the_standalone_job_installs_every_package(): void
@@ -106,6 +107,41 @@ final class PackagesWorkflowTest extends TestCase
         $this->assertStringNotContainsString('RegexParser::create()', $job);
     }
 
+    /**
+     * After the smoke check, the manifest is checked against what the
+     * installed copy uses: an undeclared import or extension fails the
+     * cell, with no tolerance in the workflow.
+     */
+    #[Test]
+    public function test_the_standalone_job_checks_the_manifest_against_what_the_package_uses(): void
+    {
+        $job = self::job('standalone');
+
+        $this->assertStringContainsString('run: php tests/Tools/package_dependency_check.php "$PACKAGE" "$project"', $job);
+        $this->assertLessThan(strpos($job, 'package_dependency_check.php'), strpos($job, 'package_smoke_check.php'));
+        $this->assertStringContainsString('tools: dep-analyser', $job);
+        $this->assertStringNotContainsString('continue-on-error', $job);
+        $this->assertStringNotContainsString('|| true', $job);
+    }
+
+    #[Test]
+    public function test_the_dependency_script_refuses_a_package_it_does_not_know(): void
+    {
+        [$code, $output] = self::runScript(self::DEPENDENCY_SCRIPT, 'Unknown', \dirname(__DIR__, 3));
+
+        $this->assertSame(2, $code);
+        $this->assertStringContainsString('usage: php tests/Tools/package_dependency_check.php <package> <project-dir>', $output);
+    }
+
+    #[Test]
+    public function test_the_dependency_script_refuses_a_directory_without_an_install(): void
+    {
+        [$code, $output] = self::runScript(self::DEPENDENCY_SCRIPT, 'Parser', sys_get_temp_dir().'/php-regex-no-such-project');
+
+        $this->assertSame(2, $code);
+        $this->assertStringContainsString('usage: php tests/Tools/package_dependency_check.php <package> <project-dir>', $output);
+    }
+
     #[Test]
     public function test_the_smoke_script_refuses_a_package_it_has_no_check_for(): void
     {
@@ -139,8 +175,16 @@ final class PackagesWorkflowTest extends TestCase
      */
     private static function runSmokeScript(string $package, string $project): array
     {
+        return self::runScript(self::SMOKE_SCRIPT, $package, $project);
+    }
+
+    /**
+     * @return array{int, string}
+     */
+    private static function runScript(string $script, string $package, string $project): array
+    {
         $process = proc_open(
-            [\PHP_BINARY, '-d', 'auto_prepend_file=', self::SMOKE_SCRIPT, $package, $project],
+            [\PHP_BINARY, '-d', 'auto_prepend_file=', $script, $package, $project],
             [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
         );
