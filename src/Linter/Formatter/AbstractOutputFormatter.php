@@ -40,25 +40,13 @@ abstract class AbstractOutputFormatter implements OutputFormatterInterface
     }
 
     /**
-     * Format a hint based on verbosity level.
+     * The hint as written, or nothing when hints are off. A hint is never
+     * shortened: the fix it names comes after its evidence, and a ReDoS
+     * replay alone passes 200 bytes.
      */
     protected function formatHint(string $hint): string
     {
-        if (!$this->config->shouldShowHints()) {
-            return '';
-        }
-
-        // In verbose mode, show full hints
-        if ($this->config->shouldShowDetailedReDoS()) {
-            return $hint;
-        }
-
-        // In normal mode, truncate very long hints
-        if (\strlen($hint) > 200) {
-            return substr($hint, 0, 197).'...';
-        }
-
-        return $hint;
+        return $this->config->shouldShowHints() ? $hint : '';
     }
 
     /**

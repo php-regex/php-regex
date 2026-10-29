@@ -91,7 +91,7 @@ final class AbstractOutputFormatterTest extends TestCase
     }
 
     #[Test]
-    public function test_format_hint_truncates_long_hints_in_normal_mode(): void
+    public function test_format_hint_keeps_a_long_hint_whole_in_normal_mode(): void
     {
         $config = new OutputConfiguration(
             verbosity: OutputConfiguration::VERBOSITY_NORMAL,
@@ -99,12 +99,13 @@ final class AbstractOutputFormatterTest extends TestCase
         );
         $formatter = new TestableAbstractOutputFormatter($config);
 
-        $longHint = str_repeat('a', 210);
+        // The fix a ReDoS hint names comes after its evidence, past 200 bytes.
+        $longHint = str_repeat('é', 100).' Consider making it possessive (*+) or using atomic groups (?>...).';
 
         $result = $formatter->formatHint($longHint);
 
-        $this->assertStringEndsWith('...', $result);
-        $this->assertSame(200, \strlen($result));
+        $this->assertSame($longHint, $result);
+        $this->assertStringEndsWith('(?>...).', $result);
     }
 
     #[Test]

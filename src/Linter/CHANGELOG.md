@@ -17,6 +17,10 @@ CHANGELOG
    report links each finding to the docs on php-regex.com: `docs_url` in the
    JSON report, a `Read more:` line in the GitHub and Checkstyle messages.
  * The Checkstyle `source` is the issue's identifier, without a prefix.
+ * The console report writes every hint whole: a hint past 200 bytes was cut
+   at 197 with `...`, which dropped the fix a ReDoS hint names after its
+   replay, and could split a multi-byte character; `--verbose` no longer
+   changes a hint.
  * The error for an `ide` value `regex.json` refuses names every placeholder
    a template may hold, `%f`, `%file%`, `%relFile%`, `%l`, `%line%`, `%c` and
    `%column%`, where it named `%f` and `%l` only though `%c` alone was taken.
