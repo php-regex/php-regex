@@ -349,6 +349,9 @@ final class Pcre2FloorOracleTest extends TestCase
     }
 
     #[Test]
+    // The stub pcre2test is a bash script: where it cannot start, the refusal
+    // expected here would come from the launch, not from the output.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_observe_all_refuses_a_batch_where_a_line_ran_into_the_next(): void
     {
         // Transcript of the real 10.40 pcre2test on this batch: "/ab(\/..."
@@ -373,6 +376,9 @@ final class Pcre2FloorOracleTest extends TestCase
     }
 
     #[Test]
+    // The stub pcre2test is a bash script: where it cannot start, the refusal
+    // expected here would come from the launch, not from the output.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_observe_all_refuses_a_segment_that_does_not_echo_the_line_written(): void
     {
         $written = Pcre2FloorOracle::pcre2testLine('ok', '/', '');
