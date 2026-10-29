@@ -24,14 +24,26 @@ concurrency:
 
 jobs:
   tests:
-    name: Tests (PHP ${{ matrix.php }}, ${{ matrix.dependency }})
-    runs-on: ubuntu-latest
+    # Linux on every PHP and both dependency floors; Windows on every PHP
+    # with the stable dependencies, the floors being Composer's business,
+    # not the host's; macOS on one. Every cell gates.
+    name: Tests (PHP ${{ matrix.php }}, ${{ matrix.dependency }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
+        os: [ ubuntu-latest ]
         php: [ '8.6', '8.5', '8.4', '8.3', '8.2', '8.1' ]
         dependency: [ prefer-lowest, prefer-stable ]
+        include:
+          - { os: windows-latest, php: '8.6', dependency: prefer-stable }
+          - { os: windows-latest, php: '8.5', dependency: prefer-stable }
+          - { os: windows-latest, php: '8.4', dependency: prefer-stable }
+          - { os: windows-latest, php: '8.3', dependency: prefer-stable }
+          - { os: windows-latest, php: '8.2', dependency: prefer-stable }
+          - { os: windows-latest, php: '8.1', dependency: prefer-stable }
+          - { os: macos-latest, php: '8.4', dependency: prefer-stable }
 
     steps:
       - name: Checkout Code
@@ -63,6 +75,7 @@ jobs:
         # stays what this PHP runs; Symfony 6.4 with Laravel 10 is the PHP 8.1
         # row's lowest.
         if: matrix.dependency == 'prefer-lowest' && matrix.php != '8.1'
+        shell: bash
         run: |
           composer update -d tools/phpunit --prefer-lowest --prefer-stable --with-all-dependencies --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }} 'symfony/*'
 
@@ -73,22 +86,26 @@ jobs:
         # to 2.6.3, the first release that resets the PHP version between
         # test classes; the other rows keep the bridge's own floor, 2.4.
         if: matrix.dependency == 'prefer-lowest' && matrix.php == '8.1'
+        shell: bash
         run: composer update -d tools/phpunit --prefer-lowest --prefer-stable --with 'rector/rector:^2.6.3' --no-interaction --no-progress
 
       - name: Configure PHPUnit 10.5
         # PHP 8.1 runs PHPUnit 10.5, which refuses the two details settings
         # PHPUnit 11 brought. phpunit.xml is read before the .dist.
         if: matrix.php == '8.1'
+        shell: bash
         run: sed -e '/displayDetailsOnAllIssues=/d' -e '/displayDetailsOnPhpunitDeprecations=/d' phpunit.xml.dist > phpunit.xml
 
       - name: Smoke test
         # The packages end to end at the floor, loaded from the sources.
         if: matrix.php == '8.1'
+        shell: bash
         run: php tests/Tools/php81_smoke.php --phpstan=tools/phpunit/vendor/bin/phpstan
 
       - name: Run Test Suite
         # The whole tests/ tree, so that the functional, regression and
         # documentation tests are not left to rot outside of CI.
+        shell: bash
         run: tools/phpunit/vendor/bin/phpunit --colors=always
 
   tests-experimental:

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\Attributes\RequiresFunction;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -28,6 +29,7 @@ use PHPUnit\Framework\TestCase;
  */
 #[RequiresFunction('pcntl_sigprocmask')]
 #[RequiresFunction('stream_socket_pair')]
+#[RequiresPhpExtension('pcntl')]
 final class ForkedWorkerServeTest extends TestCase
 {
     private string $tempDirectory = '';

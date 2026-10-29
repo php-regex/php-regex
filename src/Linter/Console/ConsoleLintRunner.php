@@ -24,6 +24,7 @@ use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintRunner;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSetup;
+use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\Parallel\WorkerCount;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\Ascii;
@@ -53,7 +54,10 @@ final class ConsoleLintRunner
      */
     private const STEPS = 3;
 
-    public function __construct(private readonly FormatterRegistry $formatters = new FormatterRegistry()) {}
+    /**
+     * @param bool|null $forking whether this PHP can fork the workers; null reads it from the pool
+     */
+    public function __construct(private readonly FormatterRegistry $formatters = new FormatterRegistry(), private readonly ?bool $forking = null) {}
 
     public function run(ConsoleLintRequest $request, OutputInterface $output): int
     {
@@ -91,7 +95,7 @@ final class ConsoleLintRunner
         $this->formatters->register('json', new JsonFormatter(target: $setup->target->toArray()));
 
         if ($console) {
-            $this->writeBanner($output, $request, $setup, $jobs);
+            $this->writeBanner($output, $request, $setup, $jobs, $this->forking ?? ForkedWorkerPool::canFork());
         } elseif ($output instanceof ConsoleOutputInterface) {
             // Without an error output the notes would land in the document.
             self::writeNotes($errors, $setup);
@@ -190,7 +194,7 @@ final class ConsoleLintRunner
         return $count;
     }
 
-    private function writeBanner(OutputInterface $output, ConsoleLintRequest $request, LintSetup $setup, int $jobs): void
+    private function writeBanner(OutputInterface $output, ConsoleLintRequest $request, LintSetup $setup, int $jobs, bool $forking): void
     {
         $target = $setup->target;
         ConsoleWriter::title($output, $request->version);
@@ -200,7 +204,9 @@ final class ConsoleLintRunner
         $lines = [
             'Runtime' => 'PHP <fg=yellow>'.\PHP_VERSION.'</>',
             'Target' => \sprintf('PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</>%s (%s)', $target->php(), $target->target()->pcreVersion, 'C' === $locale ? '' : ', locale <fg=yellow>'.$locale.'</>', $target->source()),
-            'Processes' => '<fg=yellow>'.$jobs.'</>',
+            // where this PHP cannot fork, Windows among others, the workers
+            // asked for run as this one process, said here once
+            'Processes' => $forking || $jobs <= 1 ? '<fg=yellow>'.$jobs.'</>' : '<fg=yellow>1</> (this PHP cannot fork: --jobs '.$jobs.' ran in one process)',
         ];
         $width = max(array_map(strlen(...), array_keys($lines)));
         foreach ($lines as $label => $value) {

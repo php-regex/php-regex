@@ -1789,9 +1789,10 @@ that number, a fraction rounding up, and so does the cgroup memory limit
 (`docker run --memory=1g`): each worker is a copy of the main process, so the
 limit holds the main process and as many workers as fit beside it, at least
 one. `regex:lint` in Symfony and Laravel counts the same way. Without the
-`pcntl` extension, on Windows for one, the lint runs in one process. The banner shows the number
-planned; the `Processes:` line under the report shows the number of workers
-the run started, 1 when it had a single file or pattern to share out.
+`pcntl` extension, on Windows for one, the lint runs in one process and the
+banner says so beside the count asked for. Elsewhere the banner shows the
+number planned; the `Processes:` line under the report shows the number of
+workers the run started, 1 when it had a single file or pattern to share out.
 
 The workers take the files, then the patterns, a few at a time, as each one
 finishes the last, and report as they go: the progress moves with the work

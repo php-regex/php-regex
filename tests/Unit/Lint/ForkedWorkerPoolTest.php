@@ -31,6 +31,7 @@ use PHPUnit\Framework\TestCase;
  * Every run is under a deadline: a test that waits for a worker that will
  * never answer fails, it does not hang.
  */
+#[RequiresPhpExtension('pcntl')]
 final class ForkedWorkerPoolTest extends TestCase
 {
     private const DEADLINE = 10;

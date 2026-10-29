@@ -729,7 +729,7 @@ final class RegexTest extends TestCase
     #[Test]
     public function test_get_cache_stats_returns_actual_stats_for_removable_cache(): void
     {
-        $cache = new FilesystemCache('/tmp/test-cache-'.uniqid());
+        $cache = new FilesystemCache(sys_get_temp_dir().'/test-cache-'.uniqid());
         $regex = Regex::create(['cache' => $cache]);
 
         // Parse something to potentially generate stats
@@ -782,7 +782,7 @@ final class RegexTest extends TestCase
     #[Test]
     public function test_do_parse_returns_cached_ast_when_available(): void
     {
-        $cacheDir = '/tmp/test-cache-'.uniqid();
+        $cacheDir = sys_get_temp_dir().'/test-cache-'.uniqid();
         $cache = new FilesystemCache($cacheDir);
 
         // Create a regex instance with cache

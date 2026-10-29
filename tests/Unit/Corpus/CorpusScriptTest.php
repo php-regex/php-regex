@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Corpus;
 
+use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -59,7 +60,7 @@ final class CorpusScriptTest extends TestCase
     protected function tearDown(): void
     {
         $paths = [$this->root, $this->origin, $this->extraOrigin];
-        exec('rm -rf '.implode(' ', array_map(escapeshellarg(...), array_filter($paths))));
+        TemporaryDirectory::remove(...array_values(array_filter($paths)));
     }
 
     #[Test]

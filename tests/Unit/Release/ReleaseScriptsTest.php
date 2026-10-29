@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Release;
 
+use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -57,7 +58,7 @@ final class ReleaseScriptsTest extends TestCase
 
     protected function tearDown(): void
     {
-        exec('rm -rf '.escapeshellarg($this->root).' '.escapeshellarg($this->root.'.origin.git'));
+        TemporaryDirectory::remove($this->root, $this->root.'.origin.git');
     }
 
     #[Test]

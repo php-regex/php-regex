@@ -273,6 +273,26 @@ final class ConsoleLintRunnerTest extends TestCase
         $this->assertTrue($this->context->isSourceEnabled('custom'));
     }
 
+    /**
+     * Where this PHP cannot fork, Windows among others, the workers asked
+     * for run as one process: the banner counts the process that ran and
+     * says why, once; where it can, the count is the one asked for.
+     */
+    #[Test]
+    public function test_where_forking_is_impossible_the_banner_counts_one_process_and_says_why(): void
+    {
+        $this->lint(self::request(['/a/'], jobs: '3'), forking: false);
+
+        $this->assertStringContainsString("Processes : 1 (this PHP cannot fork: --jobs 3 ran in one process)\n", $this->standard());
+        $this->assertMatchesRegularExpression('/\\| Processes: 1\n/', $this->standard());
+
+        $this->setUp();
+        $this->lint(self::request(['/a/'], jobs: '3'), forking: true);
+
+        $this->assertStringContainsString("Processes : 3\n", $this->standard());
+        $this->assertStringNotContainsString('cannot fork', $this->standard());
+    }
+
     #[Test]
     public function test_one_job_is_the_least_accepted(): void
     {
@@ -389,11 +409,11 @@ final class ConsoleLintRunnerTest extends TestCase
     /**
      * @param \Closure(self): ConsoleLintRequest $request
      */
-    private function lint(\Closure $request, int $verbosity = OutputInterface::VERBOSITY_NORMAL, bool $decorated = false): int
+    private function lint(\Closure $request, int $verbosity = OutputInterface::VERBOSITY_NORMAL, bool $decorated = false, ?bool $forking = null): int
     {
         $output = self::console($this->standard, new StreamOutput($this->error, $verbosity, $decorated), $verbosity, $decorated);
 
-        return (new ConsoleLintRunner())->run($request($this), $output);
+        return (new ConsoleLintRunner(forking: $forking))->run($request($this), $output);
     }
 
     private function standard(): string

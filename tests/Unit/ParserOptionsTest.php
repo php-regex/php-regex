@@ -308,7 +308,7 @@ final class ParserOptionsTest extends TestCase
     #[Test]
     public function test_from_array_valid_cache_path(): void
     {
-        $options = ParserOptions::fromArray(['cache' => '/tmp']);
+        $options = ParserOptions::fromArray(['cache' => sys_get_temp_dir()]);
         $this->assertInstanceOf(FilesystemCache::class, $options->cache);
     }
 

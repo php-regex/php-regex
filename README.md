@@ -74,7 +74,9 @@ parser package needs only `mbstring`.
 
 Every package runs on PHP 8.1 or later, the integrations included: the
 Symfony bundle on Symfony 6.4, 7.4 and 8, the Laravel integration on Laravel
-10.37 to 13.
+10.37 to 13, and on Linux, macOS and Windows alike; the lint's parallel
+workers need a PHP that forks, which Windows does not have, and run as one
+process there.
 
 PHPRegex is a family of packages, developed together in
 [php-regex/php-regex](https://github.com/php-regex/php-regex) and released

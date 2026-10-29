@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Release;
 
+use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,6 +25,7 @@ use PHPUnit\Framework\TestCase;
  * pull request against its base on the same runner, and never gates. The
  * scripts of its steps run here as GitHub runs them.
  */
+#[RequiresOperatingSystem('Linux|Darwin')]
 final class BenchmarksWorkflowTest extends TestCase
 {
     private string $scratch = '';
@@ -30,7 +33,7 @@ final class BenchmarksWorkflowTest extends TestCase
     protected function tearDown(): void
     {
         if ('' !== $this->scratch) {
-            exec('rm -rf '.escapeshellarg($this->scratch));
+            TemporaryDirectory::remove($this->scratch);
         }
     }
 
