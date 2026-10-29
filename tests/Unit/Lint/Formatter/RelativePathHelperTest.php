@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -41,7 +42,7 @@ final class RelativePathHelperTest extends TestCase
         yield 'up out of the base' => ['base' => '/base/app', 'path' => '../lib/file.php', 'expected' => '/base/lib/file.php'];
         yield 'under a base written with dots' => ['base' => '/base/./app/..', 'path' => '/base/src/file.php', 'expected' => 'src/file.php'];
         // A separator on Windows only: elsewhere a backslash is part of the name.
-        yield 'a Windows path under a Windows base' => ['base' => 'C:\\root', 'path' => 'C:\\root\\src\\file.php', 'expected' => '\\' === \DIRECTORY_SEPARATOR ? 'src/file.php' : 'C:\\root\\src\\file.php'];
+        yield 'a Windows path under a Windows base' => ['base' => 'C:\\root', 'path' => 'C:\\root\\src\\file.php', 'expected' => Path::onWindows() ? 'src/file.php' : 'C:\\root\\src\\file.php'];
         yield 'a drive path under a drive base' => ['base' => 'C:/root', 'path' => 'C:/root/src/file.php', 'expected' => 'src/file.php'];
         // A path from the root of a drive: the one the base is on.
         yield 'a rooted path under a drive base' => ['base' => 'C:/root', 'path' => '/root/src/file.php', 'expected' => 'src/file.php'];
@@ -67,8 +68,8 @@ final class RelativePathHelperTest extends TestCase
         yield 'a path written with dots, kept as written' => ['base' => '/base', 'path' => './src/../lib', 'expected' => '/base/./src/../lib'];
         yield 'an absolute path' => ['base' => '/base', 'path' => '/other/src', 'expected' => '/other/src'];
         yield 'a drive path' => ['base' => '/base', 'path' => 'C:/root/src', 'expected' => 'C:/root/src'];
-        yield 'a Windows drive path' => ['base' => '/base', 'path' => 'C:\\root\\src', 'expected' => '\\' === \DIRECTORY_SEPARATOR ? 'C:\\root\\src' : '/base/C:\\root\\src'];
-        yield 'a Windows rooted path' => ['base' => '/base', 'path' => '\\root\\src', 'expected' => '\\' === \DIRECTORY_SEPARATOR ? '\\root\\src' : '/base/\\root\\src'];
+        yield 'a Windows drive path' => ['base' => '/base', 'path' => 'C:\\root\\src', 'expected' => Path::onWindows() ? 'C:\\root\\src' : '/base/C:\\root\\src'];
+        yield 'a Windows rooted path' => ['base' => '/base', 'path' => '\\root\\src', 'expected' => Path::onWindows() ? '\\root\\src' : '/base/\\root\\src'];
         yield 'a stream URL' => ['base' => '/base', 'path' => 'phar:///a.phar/src', 'expected' => 'phar:///a.phar/src'];
         yield 'an empty path' => ['base' => '/base', 'path' => '', 'expected' => ''];
         yield 'a drive letter alone' => ['base' => '/base', 'path' => 'C:', 'expected' => '/base/C:'];
@@ -105,6 +106,6 @@ final class RelativePathHelperTest extends TestCase
         $cwd = (string) getcwd();
 
         $this->assertSame('src/file.php', (new RelativePathHelper())->getRelativePath($cwd.'/src/file.php'));
-        $this->assertSame(str_replace('\\', '/', $cwd), (new RelativePathHelper())->getBasePath());
+        $this->assertSame(Path::slashes($cwd), (new RelativePathHelper())->getBasePath());
     }
 }

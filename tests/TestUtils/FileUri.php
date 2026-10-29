@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\TestUtils;
 
+use PHPRegex\Parser\Text\Path;
+
 /**
  * The file:// URI an editor sends for a local path: "file:///home/a/x.php"
  * on Linux and macOS, "file:///C%3A/Users/a/x.php" on Windows, where the
@@ -25,7 +27,7 @@ final class FileUri
 
     public static function of(string $path): string
     {
-        $path = str_replace('\\', '/', $path);
+        $path = Path::slashes($path);
         $segments = array_map(rawurlencode(...), explode('/', $path));
 
         return 'file://'.(str_starts_with($path, '/') ? '' : '/').implode('/', $segments);

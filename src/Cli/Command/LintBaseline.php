@@ -22,6 +22,7 @@ use PHPRegex\Linter\LintStatsCounter;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * The issues a lint run already knows, read from a baseline file and taken
@@ -262,7 +263,7 @@ final class LintBaseline
         }
 
         foreach ($excludePaths as $exclude) {
-            $exclude = trim(str_replace('\\', '/', $exclude), '/');
+            $exclude = trim(Path::slashes($exclude), '/');
             if ('' !== $exclude && (str_starts_with($file, $exclude.'/') || str_contains($file, '/'.$exclude.'/'))) {
                 return false;
             }
@@ -486,7 +487,7 @@ final class LintBaseline
      */
     private static function normalizePath(string $path): string
     {
-        $path = str_replace('\\', '/', $path);
+        $path = Path::slashes($path);
         $root = match (true) {
             str_starts_with($path, '/') => '/',
             \strlen($path) >= 3 && Ascii::isAlpha($path[0]) && ':' === $path[1] && '/' === $path[2] => substr($path, 0, 3),

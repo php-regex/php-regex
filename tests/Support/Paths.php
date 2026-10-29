@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Support;
 
+use PHPRegex\Parser\Text\Path;
+
 /**
  * Paths compared as the filesystem reads them, not as they are spelled:
  * resolved, and with "/" whatever the host wrote.
@@ -29,11 +31,6 @@ final class Paths
         $a = realpath($a);
         $b = realpath($b);
 
-        return false !== $a && false !== $b && self::slashes($a) === self::slashes($b);
-    }
-
-    public static function slashes(string $path): string
-    {
-        return str_replace('\\', '/', $path);
+        return false !== $a && false !== $b && Path::slashes($a) === Path::slashes($b);
     }
 }

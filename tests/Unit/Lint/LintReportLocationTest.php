@@ -21,6 +21,7 @@ use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -42,7 +43,7 @@ final class LintReportLocationTest extends TestCase
         $directory = $this->enterProject(['src/a.php' => "<?php\n"]);
         $file = str_replace('{cwd}', $directory, $file);
         // A path from the root is on the drive of the working directory on Windows.
-        $drive = '\\' === \DIRECTORY_SEPARATOR ? substr($directory, 0, 2) : '';
+        $drive = Path::onWindows() ? substr($directory, 0, 2) : '';
         $expected = str_replace(['{cwd}', '{parent}', '{drive}'], [$directory, \dirname($directory), $drive], $expected);
 
         $results = self::lint([new PatternOccurrence('/(a/', $file, 1, 'preg_match')])->results;
@@ -69,7 +70,7 @@ final class LintReportLocationTest extends TestCase
         yield 'a lower-case drive' => ['file' => 'c:/../a.php', 'expected' => 'c:/a.php'];
         yield 'a digit before the colon, no drive' => ['file' => '1:/../a.php', 'expected' => 'a.php'];
         // A separator on Windows only: elsewhere a backslash is part of the name.
-        yield 'a backslash' => ['file' => 'src/a\\b.php', 'expected' => '\\' === \DIRECTORY_SEPARATOR ? 'src/a/b.php' : 'src/a\\b.php'];
+        yield 'a backslash' => ['file' => 'src/a\\b.php', 'expected' => Path::onWindows() ? 'src/a/b.php' : 'src/a\\b.php'];
         yield 'a stream URL' => ['file' => 'file:///elsewhere/./a.php', 'expected' => 'file:///elsewhere/./a.php'];
         yield 'not a path' => ['file' => 'Symfony routes', 'expected' => 'Symfony routes'];
         yield 'no file' => ['file' => '', 'expected' => ''];

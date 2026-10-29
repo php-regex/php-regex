@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Support;
 
+use PHPRegex\Parser\Text\Path;
+
 /**
  * The documentation pages: the root README.md and CONTRIBUTING.md, every
  * Markdown file under docs/ and every package README (src/<Package>/README.md).
@@ -35,7 +37,7 @@ final class DocumentationPages
         );
         foreach ($iterator as $file) {
             if ($file instanceof \SplFileInfo && 'md' === $file->getExtension()) {
-                $pages[] = 'docs/'.str_replace('\\', '/', substr($file->getPathname(), \strlen(self::ROOT.'/docs/')));
+                $pages[] = 'docs/'.Path::slashes(substr($file->getPathname(), \strlen(self::ROOT.'/docs/')));
             }
         }
 

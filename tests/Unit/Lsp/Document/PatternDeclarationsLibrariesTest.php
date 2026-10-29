@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lsp\Document;
 
 use PHPRegex\LanguageServer\Document\PatternDeclarations;
+use PHPRegex\Parser\Text\Path;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -33,7 +34,7 @@ final class PatternDeclarationsLibrariesTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-libraries-'.bin2hex(random_bytes(6));
+        $this->root = Path::slashes(sys_get_temp_dir()).'/regex-parser-lsp-libraries-'.bin2hex(random_bytes(6));
         mkdir($this->root, 0o700, true);
     }
 

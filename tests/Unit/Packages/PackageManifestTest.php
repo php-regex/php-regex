@@ -113,7 +113,7 @@ final class PackageManifestTest extends TestCase
             'Linter\LintService', 'Linter\Source\PatternSourceCollection',
             'Linter\Source\PhpFilePatternSource', 'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
             'Parser\Hir\HirTranslator', 'Parser\Text\Ascii', 'Parser\Printer\DisplayEscaper', 'Parser\Engine\IniFlag',
-            'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss',
+            'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Text\Path',
             'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser', 'Redos\Heatmap', 'Redos\InputGenerator',
             'Transpiler\Target\TargetRegistry',
         ],
@@ -133,7 +133,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpStringLiteral',
             'Linter\Extraction\TargetMarker', 'Linter\Extraction\TargetMarkers',
             'Linter\Extraction\TokenBasedExtractionStrategy', 'Linter\RedosVerdict',
-            'Linter\Rule\InvisibleCharacterRule', 'Linter\Rule\RuleCatalog', 'Linter\Rule\RuleId', 'Parser\Text\Ascii', 'Parser\Engine\IniFlag',
+            'Linter\Rule\InvisibleCharacterRule', 'Linter\Rule\RuleCatalog', 'Linter\Rule\RuleId', 'Parser\Text\Ascii', 'Parser\Text\Path', 'Parser\Engine\IniFlag',
             'Parser\Engine\LibraryPcre',
         ],
         'Laravel' => [
@@ -145,7 +145,7 @@ final class PackageManifestTest extends TestCase
             'Linter\LintService', 'Linter\LintSetup', 'Linter\PatternExtractor',
             'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
-            'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
+            'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\Path',
             'Transpiler\Target\TargetRegistry',
         ],
         // The overlap rule asks PCRE2 for the characters of a branch's first
@@ -153,7 +153,7 @@ final class PackageManifestTest extends TestCase
         'Linter' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Cache\AstSerializer',
             'Parser\Hir\ClassSetProvider',
-            'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Printer\DisplayEscaper',
+            'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Text\Path', 'Parser\Printer\DisplayEscaper',
             'Parser\Analysis\GroupIndex', 'Parser\Json\JsonDocument',
             'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
             'Parser\Syntax\PropertyNames', 'Parser\Syntax\StartOptions', 'Parser\Cache\StaticCaches',
@@ -200,7 +200,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
             'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
-            'Transpiler\Target\TargetRegistry',
+            'Parser\Text\Path', 'Transpiler\Target\TargetRegistry',
         ],
         // The HTML pattern attribute takes no flag: /i is spelled out
         // with the characters the running PCRE takes for each atom.

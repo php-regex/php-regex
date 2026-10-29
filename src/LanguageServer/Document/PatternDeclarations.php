@@ -16,6 +16,7 @@ namespace PHPRegex\LanguageServer\Document;
 use PHPRegex\Linter\Extraction\MemoryBudget;
 use PHPRegex\Linter\Extraction\PatternAttributeScanner;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * The functions and static methods that declare a parameter with
@@ -728,7 +729,7 @@ final class PatternDeclarations
 
     private static function normalize(string $path): string
     {
-        return str_replace('\\', '/', $path);
+        return Path::slashes($path);
     }
 
     private static function isAbsolute(string $path): bool

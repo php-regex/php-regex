@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\DocumentationPages;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -150,7 +151,7 @@ final class NoLegacyTokenNamesTest extends TestCase
         );
         foreach ($iterator as $file) {
             if (!$file instanceof \SplFileInfo || 'php' !== $file->getExtension()
-                || str_contains(str_replace('\\', '/', $file->getPathname()), '/src/Rector/Upgrade/')) {
+                || str_contains(Path::slashes($file->getPathname()), '/src/Rector/Upgrade/')) {
                 continue;
             }
             preg_match_all(self::LEGACY_NAME, (string) file_get_contents($file->getPathname()), $matches);

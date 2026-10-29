@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\TestUtils;
 
+use PHPRegex\Parser\Text\Path;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -31,7 +32,7 @@ final class TemporaryDirectory
      */
     public static function create(string $prefix = 'php-regex'): string
     {
-        $directory = str_replace('\\', '/', (string) realpath(sys_get_temp_dir())).'/'.$prefix.'-'.bin2hex(random_bytes(6));
+        $directory = Path::slashes((string) realpath(sys_get_temp_dir())).'/'.$prefix.'-'.bin2hex(random_bytes(6));
         (new Filesystem())->mkdir($directory);
 
         return $directory;

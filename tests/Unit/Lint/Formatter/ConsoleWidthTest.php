@@ -28,7 +28,7 @@ final class ConsoleWidthTest extends TestCase
     /**
      * The null device, where a terminal is asked for and none answers.
      */
-    private const NULL_DEVICE = '\\' === \DIRECTORY_SEPARATOR ? 'NUL' : '/dev/null';
+    private const NULL_DEVICE = '\\' === \DIRECTORY_SEPARATOR ? 'NUL' : '/dev/null'; // a constant expression: no call here
 
     /**
      * @return iterable<string, array{columns: string|false, expected: ?int}>

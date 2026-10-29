@@ -23,6 +23,7 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
@@ -415,7 +416,7 @@ final class LintCommandEdgeCasesTest extends TestCase
 
     private function makeTempDir(): string
     {
-        $dir = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lint-'.bin2hex(random_bytes(4));
+        $dir = Path::slashes(sys_get_temp_dir()).'/regex-parser-lint-'.bin2hex(random_bytes(4));
         @mkdir($dir, 0o777, true);
         $this->tempDirs[] = $dir;
 

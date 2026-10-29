@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Support;
 
+use PHPRegex\Parser\Text\Path;
 use PHPUnit\Runner\Extension\Extension;
 use PHPUnit\Runner\Extension\Facade;
 use PHPUnit\Runner\Extension\ParameterCollection;
@@ -38,7 +39,7 @@ final class SourceDeprecationListener implements Extension
         // Compared with "/": a frame on Windows spells its file with "\\".
         $source = realpath($sourceDirectory);
 
-        return false !== $source && str_starts_with(str_replace('\\', '/', $file), str_replace('\\', '/', $source).'/');
+        return false !== $source && str_starts_with(Path::slashes($file), Path::slashes($source).'/');
     }
 
     public function bootstrap(Configuration $configuration, Facade $facade, ParameterCollection $parameters): void

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\TestUtils\FileUri;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
@@ -53,7 +54,7 @@ final class ServerRedosTest extends TestCase
         $this->output = $output;
         $this->input = $input;
 
-        $this->root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-redos-'.bin2hex(random_bytes(6));
+        $this->root = Path::slashes(sys_get_temp_dir()).'/regex-parser-lsp-redos-'.bin2hex(random_bytes(6));
         mkdir($this->root, 0o700, true);
     }
 

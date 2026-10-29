@@ -17,6 +17,7 @@ use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\LanguageServer\Document\RegexFinder;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
+use PHPRegex\Parser\Text\Path;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -67,7 +68,7 @@ final class RegexFinderShadowedFunctionTest extends TestCase
     #[Test]
     public function test_a_file_on_the_disk_shadows_too(): void
     {
-        $root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-shadow-'.bin2hex(random_bytes(6));
+        $root = Path::slashes(sys_get_temp_dir()).'/regex-parser-lsp-shadow-'.bin2hex(random_bytes(6));
         mkdir($root.'/src', 0o700, true);
         mkdir($root.'/vendor/acme', 0o700, true);
 
@@ -105,7 +106,7 @@ final class RegexFinderShadowedFunctionTest extends TestCase
     #[Test]
     public function test_a_saved_text_shadows_until_its_function_is_removed(): void
     {
-        $root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-saved-'.bin2hex(random_bytes(6));
+        $root = Path::slashes(sys_get_temp_dir()).'/regex-parser-lsp-saved-'.bin2hex(random_bytes(6));
         mkdir($root.'/src', 0o700, true);
         $file = $root.'/src/Shadow.php';
         $empty = "<?php\nnamespace App;\n";

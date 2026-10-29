@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Tools\PHPStan;
 
 use PhpParser\Node;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Text\Path;
 use PHPStan\Analyser\Scope;
 use PHPStan\Node\CollectedDataNode;
 use PHPStan\Rules\IdentifierRuleError;
@@ -90,7 +91,7 @@ final class NoNewMixedRule implements Rule
     {
         $errors = [];
         $entries = $this->entries($errors);
-        $root = null === $this->baseline ? '' : str_replace('\\', '/', \dirname($this->baseline)).'/';
+        $root = null === $this->baseline ? '' : Path::slashes(\dirname($this->baseline)).'/';
 
         foreach ($entries as $file => $symbols) {
             if (!is_file($root.$file)) {
@@ -101,7 +102,7 @@ final class NoNewMixedRule implements Rule
         $unseen = $entries;
         foreach ($node->get(MixedTypeCollector::class) as $file => $records) {
             // Spelled with "/" as the baseline and the paths spell it, whatever the host.
-            $file = str_replace('\\', '/', $file);
+            $file = Path::slashes($file);
             if (!$this->judges($file)) {
                 continue;
             }

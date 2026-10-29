@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 use PHPRegex\LanguageServer\Protocol\MessageLimits;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\TestUtils\FileUri;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -319,7 +320,7 @@ final class ServerTest extends TestCase
     #[Test]
     public function test_a_warning_about_regex_json_names_the_file(): void
     {
-        $root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-server-'.bin2hex(random_bytes(6));
+        $root = Path::slashes(sys_get_temp_dir()).'/regex-parser-lsp-server-'.bin2hex(random_bytes(6));
         mkdir($root, 0o700, true);
         file_put_contents($root.'/regex.json', '{"extraction": {"functions": ["x#a"]}}');
 

@@ -40,6 +40,7 @@ use PHPRegex\Parser\Analysis\MetricsCollector;
 use PHPRegex\Parser\Cache\RemovableCacheInterface;
 use PHPRegex\Parser\NodeFinder;
 use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\PHPStan\ReplacementReferences;
 use PHPRegex\Psalm\CallTypes;
@@ -429,7 +430,7 @@ final class TypeAliasInventoryTest extends TestCase
 
     private static function classFile(string $class): string
     {
-        return self::src().'/'.str_replace('\\', '/', substr($class, \strlen('PHPRegex\\'))).'.php';
+        return self::src().'/'.Path::slashes(substr($class, \strlen('PHPRegex\\'))).'.php';
     }
 
     private static function src(): string

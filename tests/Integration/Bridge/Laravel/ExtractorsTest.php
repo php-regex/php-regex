@@ -21,6 +21,7 @@ use PHPRegex\Laravel\Facades\Regex;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
+use PHPRegex\Parser\Text\Path;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -281,7 +282,7 @@ final class ExtractorsTest extends LaravelTestCase
     #[Test]
     public function test_validation_extractor_respects_exclude_paths(): void
     {
-        $tempDir = str_replace('\\', '/', sys_get_temp_dir()).'/regex_exclude_test_'.uniqid();
+        $tempDir = Path::slashes(sys_get_temp_dir()).'/regex_exclude_test_'.uniqid();
         mkdir($tempDir.'/app', 0o777, true);
         mkdir($tempDir.'/vendor', 0o777, true);
 
@@ -327,7 +328,7 @@ final class ExtractorsTest extends LaravelTestCase
     #[Test]
     public function test_validation_extractor_reads_an_exclude_written_with_backslashes(): void
     {
-        $tempDir = str_replace('\\', '/', sys_get_temp_dir()).'/regex_exclude_test_'.uniqid();
+        $tempDir = Path::slashes(sys_get_temp_dir()).'/regex_exclude_test_'.uniqid();
         mkdir($tempDir.'/app/Legacy', 0o777, true);
         file_put_contents($tempDir.'/app/test.php', "<?php\n\$rules = ['field' => 'regex:/^included$/'];");
         file_put_contents($tempDir.'/app/Legacy/test.php', "<?php\n\$rules = ['field' => 'regex:/^excluded$/'];");

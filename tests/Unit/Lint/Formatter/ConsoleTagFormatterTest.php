@@ -23,6 +23,7 @@ use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Text\Path;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -284,7 +285,7 @@ final class ConsoleTagFormatterTest extends TestCase
 
         foreach ($files as $file) {
             $this->assertInstanceOf(\SplFileInfo::class, $file);
-            if (str_contains(str_replace('\\', '/', $file->getPathname()), '/src/Linter/Console/')) {
+            if (str_contains(Path::slashes($file->getPathname()), '/src/Linter/Console/')) {
                 continue;
             }
             $this->assertStringNotContainsString(

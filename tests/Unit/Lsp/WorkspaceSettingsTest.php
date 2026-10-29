@@ -19,6 +19,7 @@ use PHPRegex\LanguageServer\WorkspaceSettings;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\TestUtils\FileUri;
@@ -327,7 +328,7 @@ final class WorkspaceSettingsTest extends TestCase
         mkdir($root);
         $this->root = $root;
 
-        return str_replace('\\', '/', (string) realpath($root));
+        return Path::slashes((string) realpath($root));
     }
 
     /**

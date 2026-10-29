@@ -21,6 +21,7 @@ use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Tests\Support\StringListAssertions;
@@ -401,7 +402,7 @@ final class PatternExtractorTest extends TestCase
         $reflection = new \ReflectionClass($this->patternExtractor);
         $method = $reflection->getMethod('collectPhpFiles');
 
-        $root = str_replace('\\', '/', sys_get_temp_dir()).'/regexparser_collect_'.uniqid('', true);
+        $root = Path::slashes(sys_get_temp_dir()).'/regexparser_collect_'.uniqid('', true);
         $nested = $root.'/nested';
         $vendor = $root.'/vendor';
 

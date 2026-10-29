@@ -24,6 +24,7 @@ use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * Extracts regex patterns from PHP source files using configured extractor.
@@ -342,7 +343,7 @@ final class PatternExtractor
                 continue;
             }
 
-            $pending = [rtrim(self::slashes($root), '/')];
+            $pending = [rtrim(Path::fromHost($root), '/')];
             while ([] !== $pending) {
                 $directory = array_pop($pending);
                 $real = realpath($directory);
@@ -382,10 +383,10 @@ final class PatternExtractor
     {
         // Paths are walked and matched with "/" on every host: an exclude
         // and a base keep their meaning whichever separator spelled them.
-        $basePrefix = null === $excludeBase ? null : rtrim(str_replace('\\', '/', $excludeBase), '/').'/';
+        $basePrefix = null === $excludeBase ? null : rtrim(Path::slashes($excludeBase), '/').'/';
         $normalizedExcludePaths = [];
         foreach ($excludePaths as $excludePath) {
-            $excludePath = trim(str_replace('\\', '/', $excludePath), '/');
+            $excludePath = trim(Path::slashes($excludePath), '/');
             if ('' !== $excludePath) {
                 $normalizedExcludePaths[] = $excludePath;
             }
@@ -409,7 +410,7 @@ final class PatternExtractor
             }
 
             $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator(self::slashes($path), \RecursiveDirectoryIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
+                new \RecursiveDirectoryIterator(Path::fromHost($path), \RecursiveDirectoryIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
             );
 
             /** @var \SplFileInfo $file */
@@ -449,15 +450,6 @@ final class PatternExtractor
         }
 
         return $files;
-    }
-
-    /**
-     * A path with "/" separators: a backslash is one on Windows only, and
-     * part of the name elsewhere.
-     */
-    private static function slashes(string $path): string
-    {
-        return '\\' === \DIRECTORY_SEPARATOR ? str_replace('\\', '/', $path) : $path;
     }
 
     private static function reportFound(?LintProgress $progress, int $found): void

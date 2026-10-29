@@ -17,6 +17,7 @@ use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * JUnit XML output formatter.
@@ -154,7 +155,7 @@ final class JunitFormatter extends AbstractOutputFormatter
 
     private function normalizeFile(string $file): string
     {
-        return str_replace('\\', '/', $file);
+        return Path::slashes($file);
     }
 
     private function normalizeLine(int $line): int

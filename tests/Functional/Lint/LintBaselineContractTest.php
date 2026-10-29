@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Lint;
 
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\RunsRegexCli;
@@ -498,8 +499,8 @@ final class LintBaselineContractTest extends TestCase
 
         $this->assertCount(1, $reported, $stdout);
         // A separator on Windows only: elsewhere a backslash is part of the name.
-        $this->assertSame(['\\' === \DIRECTORY_SEPARATOR ? 'src/a/b.php' : 'src/a\\b.php'], $reported);
-        $this->assertSame(str_replace('\\', '/', $reported), $baselined);
+        $this->assertSame([Path::onWindows() ? 'src/a/b.php' : 'src/a\\b.php'], $reported);
+        $this->assertSame(array_map(Path::slashes(...), $reported), $baselined);
 
         [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=baseline.json']);
 

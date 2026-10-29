@@ -21,6 +21,7 @@ use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\NearMiss;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * @internal
@@ -313,7 +314,7 @@ final class Application
     {
         return $forced ?? self::colourOnTerminal(
             stream_isatty(\STDOUT),
-            '\\' === \DIRECTORY_SEPARATOR,
+            Path::onWindows(),
             \function_exists('sapi_windows_vt100_support') && sapi_windows_vt100_support(\STDOUT),
         );
     }

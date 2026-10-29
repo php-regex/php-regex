@@ -27,6 +27,7 @@ use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\PatternExtractor;
+use PHPRegex\Parser\Text\Path;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -322,7 +323,7 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertStringContainsString('PHPRegex', $banner);
         // A file under the working directory is named from it, any other in full.
         // A path from the root is on the drive of the working directory on Windows.
-        $this->assertStringContainsString('Configuration : regex.json, '.('\\' === \DIRECTORY_SEPARATOR ? substr((string) getcwd(), 0, 2) : '').'/elsewhere/regex.dist.json', $banner);
+        $this->assertStringContainsString('Configuration : regex.json, '.(Path::onWindows() ? substr((string) getcwd(), 0, 2) : '').'/elsewhere/regex.dist.json', $banner);
     }
 
     #[Test]

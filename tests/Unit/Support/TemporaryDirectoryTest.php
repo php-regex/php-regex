@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Support;
 
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,7 +35,7 @@ final class TemporaryDirectoryTest extends TestCase
             $this->assertDirectoryExists($first);
             $this->assertDirectoryExists($second);
             $this->assertNotSame($first, $second);
-            $this->assertStringStartsWith(str_replace('\\', '/', (string) realpath(sys_get_temp_dir())).'/php-regex-temporary-', $first);
+            $this->assertStringStartsWith(Path::slashes((string) realpath(sys_get_temp_dir())).'/php-regex-temporary-', $first);
             $this->assertStringNotContainsString('\\', $first, 'Spelled with "/" on every host.');
             $this->assertSame([], array_diff(scandir($first) ?: [], ['.', '..']));
         } finally {

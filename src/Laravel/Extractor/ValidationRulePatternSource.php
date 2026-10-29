@@ -18,6 +18,7 @@ use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\InternalFailureException;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * Extracts regex patterns from Laravel validation rules.
@@ -103,11 +104,11 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         // Walked and matched with "/" on every host: an exclude keeps its
         // meaning whichever separator spelled it.
         $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator('\\' === \DIRECTORY_SEPARATOR ? str_replace('\\', '/', $directory) : $directory, \RecursiveDirectoryIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
+            new \RecursiveDirectoryIterator(Path::fromHost($directory), \RecursiveDirectoryIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
         );
         $excludes = [];
         foreach ($excludePaths as $excludePath) {
-            $excludePath = trim(str_replace('\\', '/', $excludePath), '/');
+            $excludePath = trim(Path::slashes($excludePath), '/');
             if ('' !== $excludePath) {
                 $excludes[] = '/'.$excludePath.'/';
             }
