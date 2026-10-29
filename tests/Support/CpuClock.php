@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Support;
 
+use PHPRegex\Parser\Text\Path;
+
 /**
  * The CPU time of the process, for the tests that hold a computation to a
  * time budget: unlike the wall clock, it does not count the time the
@@ -30,6 +32,13 @@ final class CpuClock
      */
     public static function nanoseconds(): int
     {
+        // Windows accounts the CPU time of a process in quanta of 15.6 ms,
+        // which say nothing of a read of a few milliseconds: the wall
+        // clock is read there.
+        if (Path::onWindows()) {
+            return (int) hrtime(true); // an int on the 64-bit PHP the suite runs on
+        }
+
         $usage = getrusage();
         if (false === $usage) {
             throw new \RuntimeException('getrusage() failed: the CPU time of the process cannot be read.');

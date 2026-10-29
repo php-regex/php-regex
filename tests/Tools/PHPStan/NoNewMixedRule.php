@@ -184,7 +184,7 @@ final class NoNewMixedRule implements Rule
     private function judges(string $file): bool
     {
         foreach ($this->paths as $path) {
-            if (str_starts_with($file, rtrim($path, '/').'/')) {
+            if (str_starts_with($file, rtrim(Path::slashes($path), '/').'/')) {
                 return true;
             }
         }

@@ -23,6 +23,7 @@ use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Tests\Support\TemporaryProject;
@@ -881,7 +882,9 @@ final class PatternFunctionPrescanTest extends TestCase
         ]);
         $this->assertTrue(symlink($project.'/packages/lib', $project.'/vendor/acme/lib'));
         $this->assertTrue(symlink($project.'/vendor', $project.'/vendor/acme/up'));
-        $this->assertTrue(symlink($project.'/vendor/self', $project.'/vendor/self'));
+        // A link to itself: PHP cannot create one on Windows, where the loop
+        // through "up" stands alone.
+        $this->assertSame(!Path::onWindows(), @symlink($project.'/vendor/self', $project.'/vendor/self'));
 
         $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/app'], ['vendor'], vendorPaths: [$project.'/vendor']);
 
