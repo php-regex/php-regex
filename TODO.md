@@ -65,6 +65,15 @@ After the 2.0.0 tag, publish `php-regex/regex-parser-php74` once more from
 the tagged commit, from the `twin` artifact of a green "php74 twin"
 workflow run. The published `c525273` is the build of 2.x at dec0cb9e52.
 
+The enum classes the twin generates look a value up by scanning `cases()`,
+which rebuilds the list of instances on every call, and the lexer looks a
+token type up once per token: validating the 395 distinct patterns of the
+`preg_*` calls in PHPStan and its vendor takes 117 ms with the twin
+against 88 ms with the enums of PHP 8.1 (PHP 8.4, median of five runs).
+Emit `tryFrom()` as a lookup in a map built once
+(`build/emit-enum-factories.php`, covered by `build/tests/EnumCasesTest.php`),
+regenerate, and publish with the rest.
+
 
 ## PHP 8.6 GA, 2026-11-19
 
@@ -116,6 +125,33 @@ dependency. Decide for each: require it, suggest it, or a polyfill. Then wire
 the analyser into the standalone install job of `packages.yml`, where every
 package already stands alone with its own vendor, so that a new undeclared
 use fails there.
+
+
+## Parse cost inside PHPStan
+
+Measured on the PHPStan branch that reads regex shapes through PHPRegex,
+over the 395 distinct literal patterns of the `preg_*` calls in PHPStan
+and its vendor (PHP 8.4, one process per run, median of seven):
+
+- one cold pattern costs 0.58 ms with the twin against 0.22 ms with the
+  parser PHPStan generates today: 0.28 ms to parse, 0.08 ms to validate,
+  0.15 ms for the capture shape, 0.06 ms for PHPStan's own group
+  placement; the enum lookup above is 0.08 ms of the parse;
+- the first pattern of a process costs 30 ms against 10 ms, class loading
+  included, and the peak memory is 6 MB higher;
+- a second read of the same pattern is free in the branch, which caches
+  the shape; the generated parser caches the tree and walks it again
+  (46 ms for the 395);
+- a whole run over twelve regex-heavy files, the 395 patterns included,
+  takes the same time with either parser (3.7 s, six alternating runs),
+  and PHPStan's benchmark suite calls no `preg_*` function at all.
+
+The capture shape costs two thirds of what parsing and validating cost
+together: 56 ms for 362 trees against 88 ms. `CaptureFacts` (`of`,
+`values`, `accepts`, `holdsNoLetter`) and
+`CaptureShapeAnalyzer::collectOption` carry most of it; on the lexer side
+`createToken`, the token loop of `Lexer::read()` and `TokenValue::of`
+come next. Profile those before looking anywhere else.
 
 
 ## Open questions
