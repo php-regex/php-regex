@@ -54,8 +54,9 @@ final class DisplayEscaperLinearTimeTest extends TestCase
         $large = self::bestTime($build(2 * $comments));
         $this->assertLessThan($budget, $large, \sprintf('%s, %d comments: %.3f s, %.3f s for half as many.', $verb, 2 * $comments, $large, $small));
 
-        // Below a few milliseconds the clock says more than the reading.
-        if ($large >= 0.02) {
+        // Below a few milliseconds the clock says more than the reading: the
+        // ratio is judged where both readings are above the line.
+        if ($small >= 0.02) {
             $this->assertLessThan(3.0, $large / $small, \sprintf('%s: %.3f s for %d comments, %.3f s for %d.', $verb, $small, $comments, $large, 2 * $comments));
         }
     }
