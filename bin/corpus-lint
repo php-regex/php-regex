@@ -144,11 +144,20 @@ function requirePhpConstraint(string $repoDir): ?string
 }
 
 /**
+ * The environment every lint run gets on top of the shell's: the width the
+ * console folds at, so the log is the same whatever COLUMNS the shell
+ * exports.
+ *
+ * @var array<string, string>
+ */
+const PINNED_ENVIRONMENT = ['COLUMNS' => '120'];
+
+/**
  * How one repository is linted: under its own composer.json through the
  * COMPOSER environment variable, or under the fallback flag when it declares
  * no require.php of its own.
  *
- * @return array{env: ?string, args: list<string>, fallback: bool}
+ * @return array{env: ?string, environment: array<string, string>, args: list<string>, fallback: bool}
  */
 function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFile): array
 {
@@ -156,6 +165,7 @@ function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFi
     if (null !== requirePhpConstraint($repoDir)) {
         return [
             'env' => $composer,
+            'environment' => PINNED_ENVIRONMENT,
             'args' => ['--ansi', 'lint', $repoDir, '--redos', '--redos-mode=confirmed', '--output', $partFile],
             'fallback' => false,
         ];
@@ -163,6 +173,7 @@ function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFi
 
     return [
         'env' => null,
+        'environment' => PINNED_ENVIRONMENT,
         'args' => ['--ansi', 'lint', $repoDir, '--php-version', $fallbackPhp, '--redos', '--redos-mode=confirmed', '--output', $partFile],
         'fallback' => true,
     ];
@@ -294,16 +305,18 @@ function discoverRepositories(string $corpusDir, ?string $only, ?int $limit): ar
  * fill a pipe buffer, would otherwise hold the pipes open forever.
  *
  * @param list<string> $command
+ * @param array<string, string> $environment what the child gets over the shell's environment
  *
  * @return array{0: int, 1: string}
  */
-function runCommand(array $command, ?string $composerEnv): array
+function runCommand(array $command, ?string $composerEnv, array $environment = []): array
 {
     $env = getenv();
     unset($env['COMPOSER']);
     if (null !== $composerEnv) {
         $env['COMPOSER'] = $composerEnv;
     }
+    $env = array_merge($env, $environment);
 
     $stdout = tempnam(sys_get_temp_dir(), 'corpus-lint-out-');
     $stderr = tempnam(sys_get_temp_dir(), 'corpus-lint-err-');
@@ -339,7 +352,7 @@ function runLint(array $plan): array
 {
     $command = array_merge([\PHP_BINARY, \dirname(__DIR__).'/bin/regex'], $plan['args']);
 
-    return runCommand($command, $plan['env']);
+    return runCommand($command, $plan['env'], $plan['environment']);
 }
 
 function printCorpusLintUsage(): void

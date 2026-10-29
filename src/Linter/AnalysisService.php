@@ -539,12 +539,14 @@ final class AnalysisService
         }
 
         if (RedosVerdict::reported($redos, $this->redosSeverityThreshold, $this->redosMode)) {
-            $issues[] = LintIssue::at($occurrence, self::redosSeverity($redos), RedosVerdict::message($redos), RedosVerdict::ISSUE_ID, hint: RedosHints::forAnalysis($redos, $occurrence->pattern), analysis: $redos);
+            $hints = RedosHints::forAnalysis($redos, $occurrence->pattern);
+            $issues[] = LintIssue::at($occurrence, self::redosSeverity($redos), RedosVerdict::message($redos), RedosVerdict::ISSUE_ID, hint: implode(' ', $hints), analysis: $redos, hints: $hints);
         }
 
         $searchCost = $redos->searchCost;
         if (null !== $searchCost && $this->shouldReportSearchCost()) {
-            $issues[] = LintIssue::at($occurrence, LintSeverity::Warning, RedosVerdict::searchMessage($searchCost), RedosVerdict::SEARCH_ISSUE_ID, hint: implode(' ', RedosVerdict::searchEvidence($searchCost, $redos->pcreVersion)), analysis: $redos);
+            $evidence = RedosVerdict::searchEvidence($searchCost, $redos->pcreVersion);
+            $issues[] = LintIssue::at($occurrence, LintSeverity::Warning, RedosVerdict::searchMessage($searchCost), RedosVerdict::SEARCH_ISSUE_ID, hint: implode(' ', $evidence), analysis: $redos, hints: $evidence);
         }
 
         return $issues;

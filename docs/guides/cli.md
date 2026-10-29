@@ -760,11 +760,23 @@ vendor/bin/regex lint src/ --redos
   src/Example.php:4:12
       → /^(a+)+$/
     WARN Exponential backtracking (proven). Severity: CRITICAL, confidence: MEDIUM.
-         ↳ Attack: "a" x n . "!" Unbounded quantifier detected. May cause backtracking on non-matching input. ...
+         ↳ Attack: "a" x n . "!"
+         ↳ The risky part is: a+
+         ↳ Hotspot offsets: 2-4
+         ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
+           (*+) or using atomic groups (?>...).
+         ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
+           (?>...) or possessive quantifiers (*+, ++).
+         ↳ Suggested (verify behavior):
+             - Consider using possessive quantifiers or atomic groups to limit backtracking.
+             - Replace inner quantifiers with possessive variants or wrap them in (?>...).
+             - replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++.
+         ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
     INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
     WARN Nested quantifiers can cause catastrophic backtracking.
-         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+           need.
 
   FAIL 1 invalid patterns, 2 warnings, 1 infos found, 0 optimizations.
 ```
@@ -789,7 +801,10 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed
       → /^(a+)+$/
     ...
     FAIL Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
-         ↳ Attack: "a" x n . "!" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). Unbounded quantifier detected. ...
+         ↳ Attack: "a" x n . "!"
+         ↳ Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off).
+         ↳ The risky part is: a+
+         ...
 
   FAIL 1 invalid patterns, 1 ReDoS errors, 1 warnings, 1 infos found, 0 optimizations.
 ```
@@ -829,8 +844,13 @@ vendor/bin/regex lint app --redos --redos-threshold=medium
 ```
   app/Whitespace.php:3:12
       → /\s+$/
-    WARN Quadratic search: one attempt is linear (proven); an unanchored search is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)); the JIT may avoid it for some patterns. Severity: MEDIUM.
-         ↳ Attack: " " x n . "!". pcre.backtrack_limit does not stop it: the limit counts each attempt apart. preg_match_all(), preg_replace() and preg_split() retry the same way. Anchor the pattern when ever...
+    WARN Quadratic search: one attempt is linear (proven); an unanchored search is quadratic in PCRE2's interpreter
+         (pcre.jit=0, a build without JIT, or (*NO_JIT)); the JIT may avoid it for some patterns. Severity: MEDIUM.
+         ↳ Attack: " " x n . "!".
+         ↳ pcre.backtrack_limit does not stop it: the limit counts each attempt apart.
+         ↳ preg_match_all(), preg_replace() and preg_split() retry the same way.
+         ↳ Anchor the pattern when every match starts at a known place (^, \A, \G or the A modifier), or bound the
+           length of the run.
 
 
   PASS 1 warnings found, 0 optimizations available.

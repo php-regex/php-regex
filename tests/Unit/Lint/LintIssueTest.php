@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint;
 
+use PHPRegex\Linter\Advice\RedosHints;
 use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintSeverity;
@@ -21,6 +22,7 @@ use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSearchCost;
@@ -168,13 +170,42 @@ final class LintIssueTest extends TestCase
         $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/(a+)+$/', RedosSeverity::Low, RedosMode::Theoretical);
         $this->assertNotSame([], RedosVerdict::evidence($analysis));
 
-        $diagnostic = (new LintIssue(LintSeverity::Warning, 'ReDoS.', 'a.php', 1, issueId: RedosVerdict::ISSUE_ID, hint: 'unused', analysis: $analysis))->diagnostic();
+        $hints = RedosHints::forAnalysis($analysis, '/(a+)+$/');
+        $diagnostic = (new LintIssue(LintSeverity::Warning, 'ReDoS.', 'a.php', 1, issueId: RedosVerdict::ISSUE_ID, hint: implode(' ', $hints), hints: $hints, analysis: $analysis))->diagnostic();
 
         $this->assertSame(DiagnosticType::Security, $diagnostic->type);
         $this->assertSame(LintSeverity::Warning, $diagnostic->severity);
         $this->assertSame(RedosVerdict::ISSUE_ID, $diagnostic->code);
-        $this->assertSame(implode("\n", RedosVerdict::evidence($analysis)), $diagnostic->snippet);
-        $this->assertSame($analysis->recommendations[0] ?? null, $diagnostic->suggestion);
+        $this->assertStringContainsString(implode("\n", RedosVerdict::evidence($analysis))."\n", (string) $diagnostic->snippet);
+        $this->assertStringContainsString("\nNested unbounded quantifiers detected.", (string) $diagnostic->snippet);
+        $this->assertStringNotContainsString('Suggested (verify behavior)', (string) $diagnostic->snippet);
+        $suggestions = array_values(array_filter($hints, static fn (string $line): bool => str_starts_with($line, RedosHints::SUGGESTION)));
+        $this->assertNotSame([], $suggestions);
+        $this->assertSame(substr($suggestions[0], \strlen(RedosHints::SUGGESTION)), $diagnostic->suggestion);
+        $this->assertStringNotContainsString('Suggested (verify behavior)', (string) $diagnostic->suggestion);
+        $this->assertNotSame($analysis->recommendations[0] ?? null, $diagnostic->suggestion);
+    }
+
+    #[Test]
+    public function test_a_redos_issue_without_a_suggestion_entry_falls_back_on_its_analysis(): void
+    {
+        $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/(a+)+$/', RedosSeverity::Low, RedosMode::Theoretical);
+
+        $diagnostic = (new LintIssue(LintSeverity::Warning, 'ReDoS.', 'a.php', 1, issueId: RedosVerdict::ISSUE_ID, hint: 'unused', analysis: $analysis))->diagnostic();
+
+        $this->assertSame(['unused'], (new LintIssue(LintSeverity::Warning, 'ReDoS.', 'a.php', 1, hint: 'unused'))->hints);
+        $this->assertSame([], (new LintIssue(LintSeverity::Warning, 'ReDoS.', 'a.php', 1))->hints);
+        $this->assertSame($analysis->recommendations[0], $diagnostic->suggestion);
+        $this->assertNull((new LintIssue(LintSeverity::Warning, 'ReDoS.', 'a.php', 1, issueId: RedosVerdict::ISSUE_ID, analysis: new RedosAnalysis(RedosSeverity::High, 10)))->diagnostic()->suggestion);
+    }
+
+    #[Test]
+    public function test_with_file_keeps_the_hints(): void
+    {
+        $issue = new LintIssue(LintSeverity::Warning, 'm', 'a.php', 1, hint: 'one two', hints: ['one', 'two']);
+
+        $this->assertSame(['one', 'two'], $issue->withFile('b.php')->hints);
+        $this->assertSame('one two', $issue->withFile('b.php')->hint);
     }
 
     #[Test]

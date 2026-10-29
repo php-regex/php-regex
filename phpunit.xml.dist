@@ -29,6 +29,8 @@
         tell own deprecations from vendor ones.
     -->
     <php>
+        <!-- The console reports fold at 120 columns whatever terminal runs the suite. -->
+        <env name="COLUMNS" value="120" force="true"/>
         <ini name="memory_limit" value="-1"/>
         <ini name="error_reporting" value="-1"/>
         <ini name="display_errors" value="stderr"/>

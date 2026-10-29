@@ -206,7 +206,8 @@ gives up. The merged
 `###` header per repository; each repository's own
 log stays under `var/log/corpus-parts/`. `--only` and `--limit` sweep a slice
 of the corpus, and the merged log renders the same whether the command runs
-in a terminal or through a pipe.
+in a terminal or through a pipe, and whatever `COLUMNS` the shell exports:
+every run folds its lines at 120 columns.
 
 To judge the whole tree for one target instead, the PHP running the command
 and the PCRE2 it links, without touching the tracked log:

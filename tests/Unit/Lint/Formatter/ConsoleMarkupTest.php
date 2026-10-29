@@ -152,8 +152,8 @@ final class ConsoleMarkupTest extends TestCase
     #[Test]
     public function test_layout_writes_a_hint_and_a_tip(): void
     {
-        $this->assertSame("         <fg=gray>↳ Use \\<a\\></>\n", (new ConsoleLayout(new TagMarkup()))->hint('Use <a>'));
-        $this->assertSame("         \033[90m↳ Use <a>\033[0m\n", (new ConsoleLayout(new AnsiMarkup(true)))->hint('Use <a>'));
+        $this->assertSame("         <fg=gray>↳ Use \\<a\\></>\n", (new ConsoleLayout(new TagMarkup()))->hints(['Use <a>']));
+        $this->assertSame("         \033[90m↳ Use <a>\033[0m\n", (new ConsoleLayout(new AnsiMarkup(true)))->hints(['Use <a>']));
         $this->assertSame("    <bg=cyan;fg=black;options=bold> TIP </>\n", (new ConsoleLayout(new TagMarkup()))->tip());
     }
 

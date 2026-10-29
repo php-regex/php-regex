@@ -279,6 +279,24 @@ final class CorpusLintScriptTest extends TestCase
     }
 
     #[Test]
+    public function test_the_linter_runs_with_the_pinned_columns_whatever_the_shell_exports(): void
+    {
+        $this->loadScriptFunctions();
+
+        $columns = getenv('COLUMNS');
+        putenv('COLUMNS=80');
+
+        try {
+            [$exitCode, $output] = runCommand([\PHP_BINARY, '-r', 'echo getenv("COLUMNS");'], null, ['COLUMNS' => '120']);
+        } finally {
+            putenv(false === $columns ? 'COLUMNS' : 'COLUMNS='.$columns);
+        }
+
+        $this->assertSame(0, $exitCode);
+        $this->assertSame('120', $output);
+    }
+
+    #[Test]
     public function test_plan_uses_composer_env_or_the_fallback_flag(): void
     {
         $this->loadScriptFunctions();
@@ -286,6 +304,7 @@ final class CorpusLintScriptTest extends TestCase
         $plan = planRepositoryLint($this->root.'/corpus/ownerA/repoNew', '8.1', '/tmp/ownerA__repoNew.log');
         $this->assertSame($this->root.'/corpus/ownerA/repoNew/composer.json', $plan['env']);
         $this->assertFalse($plan['fallback']);
+        $this->assertSame(['COLUMNS' => '120'], $plan['environment']);
         $this->assertSame(
             ['--ansi', 'lint', $this->root.'/corpus/ownerA/repoNew', '--redos', '--redos-mode=confirmed', '--output', '/tmp/ownerA__repoNew.log'],
             $plan['args'],
@@ -294,6 +313,7 @@ final class CorpusLintScriptTest extends TestCase
         $plan = planRepositoryLint($this->root.'/corpus/ownerC/repoBare', '8.1', '/tmp/ownerC__repoBare.log');
         $this->assertNull($plan['env']);
         $this->assertTrue($plan['fallback']);
+        $this->assertSame(['COLUMNS' => '120'], $plan['environment']);
         $this->assertSame(
             ['--ansi', 'lint', $this->root.'/corpus/ownerC/repoBare', '--php-version', '8.1', '--redos', '--redos-mode=confirmed', '--output', '/tmp/ownerC__repoBare.log'],
             $plan['args'],
