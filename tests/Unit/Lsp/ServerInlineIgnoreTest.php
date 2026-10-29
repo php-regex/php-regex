@@ -17,6 +17,7 @@ use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreRule;
+use PHPRegex\Tests\TestUtils\FileUri;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -360,7 +361,7 @@ preg_match('/(a/', \$subject);
     {
         $this->server = new Server(null, $this->input, transport: new Transport($this->output));
         $this->send(
-            ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => 'file://'.$this->root] + ([] === $options ? [] : ['initializationOptions' => $options])],
+            ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => FileUri::of($this->root)] + ([] === $options ? [] : ['initializationOptions' => $options])],
             ['method' => 'initialized', 'params' => []],
         );
     }
@@ -400,7 +401,7 @@ preg_match('/(a/', \$subject);
 
     private function uri(string $relative): string
     {
-        return 'file://'.$this->root.'/'.$relative;
+        return FileUri::of($this->root.'/'.$relative);
     }
 
     /**

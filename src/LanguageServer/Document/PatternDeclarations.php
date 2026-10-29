@@ -430,8 +430,12 @@ final class PatternDeclarations
             return null;
         }
 
-        // parse_url() reads file:///C:/project as C:/project.
-        return rawurldecode((string) parse_url($uri, \PHP_URL_PATH));
+        // parse_url() reads file:///C:/project as C:/project, and the
+        // file:///c%3A/project an editor sends for a Windows path as
+        // /c:/project once decoded: the slash before the drive goes.
+        $path = rawurldecode((string) parse_url($uri, \PHP_URL_PATH));
+
+        return \strlen($path) >= 4 && '/' === $path[0] && ':' === $path[2] && '/' === $path[3] && Ascii::isAlpha($path[1]) ? substr($path, 1) : $path;
     }
 
     /**

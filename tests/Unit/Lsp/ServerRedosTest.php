@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Tests\TestUtils\FileUri;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -202,7 +203,7 @@ final class ServerRedosTest extends TestCase
      */
     private function diagnostics(string $pattern, ?array $options = null, ?Regex $regex = null): array
     {
-        $params = ['rootUri' => 'file://'.$this->root];
+        $params = ['rootUri' => FileUri::of($this->root)];
         if (null !== $options) {
             $params['initializationOptions'] = $options;
         }
@@ -215,7 +216,7 @@ final class ServerRedosTest extends TestCase
             ['id' => 1, 'method' => 'initialize', 'params' => $params],
             ['method' => 'initialized', 'params' => []],
             ['method' => 'textDocument/didOpen', 'params' => ['textDocument' => [
-                'uri' => 'file://'.$this->root.'/a.php',
+                'uri' => FileUri::of($this->root.'/a.php'),
                 'languageId' => 'php',
                 'version' => 1,
                 'text' => "<?php\npreg_match('".$pattern."', \$subject);\n",

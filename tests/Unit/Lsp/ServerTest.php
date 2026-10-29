@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 use PHPRegex\LanguageServer\Protocol\MessageLimits;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Tests\TestUtils\FileUri;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -324,7 +325,7 @@ final class ServerTest extends TestCase
 
         try {
             $this->serve([
-                ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => 'file://'.$root]],
+                ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => FileUri::of($root)]],
                 ['method' => 'initialized'],
             ]);
         } finally {

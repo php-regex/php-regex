@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Tests\TestUtils\FileUri;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -164,7 +165,7 @@ final class ServerExtractionConfigTest extends TestCase
     {
         $this->server = new Server(null, $this->input, $declarations, transport: new Transport($this->output));
         $this->send(
-            ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => 'file://'.$this->root]],
+            ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => FileUri::of($this->root)]],
             ['method' => 'initialized', 'params' => []],
         );
     }
@@ -204,7 +205,7 @@ final class ServerExtractionConfigTest extends TestCase
 
     private function uri(string $relative): string
     {
-        return 'file://'.$this->root.'/'.$relative;
+        return FileUri::of($this->root.'/'.$relative);
     }
 
     private function write(string $relative, string $content): void
