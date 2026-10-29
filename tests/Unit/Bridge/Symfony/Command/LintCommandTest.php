@@ -18,6 +18,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
@@ -621,6 +622,9 @@ final class LintCommandTest extends TestCase
     /**
      * The footer counts the workers the run started, at most --jobs: one
      * pattern is analysed in this process alone, whatever --jobs allows.
+     * The banner shows what the run planned where this PHP can fork, and
+     * says once that it cannot where it cannot, Windows and the official
+     * Docker images among others.
      */
     #[Test]
     public function test_execute_footer_counts_the_workers_started(): void
@@ -631,7 +635,11 @@ final class LintCommandTest extends TestCase
         $display = (string) $tester->getDisplay();
 
         $this->assertSame(0, $status, $display);
-        $this->assertMatchesRegularExpression('/^Processes : 2$/m', $display, 'The banner shows what the run planned.');
+        if (ForkedWorkerPool::canFork()) {
+            $this->assertMatchesRegularExpression('/^Processes : 2$/m', $display, 'The banner shows what the run planned.');
+        } else {
+            $this->assertMatchesRegularExpression('/^Processes : 1 \\(this PHP cannot fork: --jobs 2 ran in one process\\)$/m', $display, 'The banner says why one process ran.');
+        }
         $this->assertMatchesRegularExpression('/\bProcesses: 1$/m', $display);
     }
 
