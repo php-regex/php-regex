@@ -342,7 +342,7 @@ final class PatternExtractor
                 continue;
             }
 
-            $pending = [rtrim($root, '/\\')];
+            $pending = [rtrim(self::slashes($root), '/')];
             while ([] !== $pending) {
                 $directory = array_pop($pending);
                 $real = realpath($directory);
@@ -353,7 +353,7 @@ final class PatternExtractor
 
                 $visited[(string) $real] = true;
                 foreach ($entries as $entry) {
-                    $path = $directory.\DIRECTORY_SEPARATOR.$entry;
+                    $path = $directory.'/'.$entry;
                     if ('.' === $entry || '..' === $entry) {
                         continue;
                     }
@@ -380,10 +380,12 @@ final class PatternExtractor
      */
     private function collectPhpFiles(array $paths, array $excludePaths, ?LintProgress $progress = null, ?string $excludeBase = null): array
     {
-        $basePrefix = null === $excludeBase ? null : rtrim($excludeBase, '/\\').\DIRECTORY_SEPARATOR;
+        // Paths are walked and matched with "/" on every host: an exclude
+        // and a base keep their meaning whichever separator spelled them.
+        $basePrefix = null === $excludeBase ? null : rtrim(str_replace('\\', '/', $excludeBase), '/').'/';
         $normalizedExcludePaths = [];
         foreach ($excludePaths as $excludePath) {
-            $excludePath = trim($excludePath, '/\\');
+            $excludePath = trim(str_replace('\\', '/', $excludePath), '/');
             if ('' !== $excludePath) {
                 $normalizedExcludePaths[] = $excludePath;
             }
@@ -407,7 +409,7 @@ final class PatternExtractor
             }
 
             $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS),
+                new \RecursiveDirectoryIterator(self::slashes($path), \RecursiveDirectoryIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
             );
 
             /** @var \SplFileInfo $file */
@@ -427,7 +429,7 @@ final class PatternExtractor
                 // Skip excluded directories
                 $excluded = false;
                 foreach ($normalizedExcludePaths as $excludePath) {
-                    if (str_contains($matchedPath, \DIRECTORY_SEPARATOR.$excludePath.\DIRECTORY_SEPARATOR) || str_starts_with($matchedPath, $excludePath.\DIRECTORY_SEPARATOR)) {
+                    if (str_contains($matchedPath, '/'.$excludePath.'/') || str_starts_with($matchedPath, $excludePath.'/')) {
                         $excluded = true;
 
                         break;
@@ -447,6 +449,15 @@ final class PatternExtractor
         }
 
         return $files;
+    }
+
+    /**
+     * A path with "/" separators: a backslash is one on Windows only, and
+     * part of the name elsewhere.
+     */
+    private static function slashes(string $path): string
+    {
+        return '\\' === \DIRECTORY_SEPARATOR ? str_replace('\\', '/', $path) : $path;
     }
 
     private static function reportFound(?LintProgress $progress, int $found): void

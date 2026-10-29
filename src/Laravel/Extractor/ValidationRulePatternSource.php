@@ -100,9 +100,18 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     private function extractFromDirectory(string $directory, array $excludePaths): array
     {
         $patterns = [];
+        // Walked and matched with "/" on every host: an exclude keeps its
+        // meaning whichever separator spelled it.
         $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS),
+            new \RecursiveDirectoryIterator('\\' === \DIRECTORY_SEPARATOR ? str_replace('\\', '/', $directory) : $directory, \RecursiveDirectoryIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
         );
+        $excludes = [];
+        foreach ($excludePaths as $excludePath) {
+            $excludePath = trim(str_replace('\\', '/', $excludePath), '/');
+            if ('' !== $excludePath) {
+                $excludes[] = '/'.$excludePath.'/';
+            }
+        }
 
         /** @var \SplFileInfo $file */
         foreach ($iterator as $file) {
@@ -113,8 +122,8 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             $filePath = $file->getPathname();
 
             // Check exclusions
-            foreach ($excludePaths as $excludePath) {
-                if (str_contains($filePath, \DIRECTORY_SEPARATOR.$excludePath.\DIRECTORY_SEPARATOR)) {
+            foreach ($excludes as $exclude) {
+                if (str_contains($filePath, $exclude)) {
                     continue 2;
                 }
             }

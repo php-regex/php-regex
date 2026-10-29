@@ -484,6 +484,25 @@ final class PatternExtractorTest extends TestCase
     }
 
     /**
+     * An exclude is a path whichever separator spells it, and the files
+     * found are spelled with "/" on every host: an exclude written for
+     * Windows reads the same tree as one written for Linux.
+     */
+    #[Test]
+    public function test_an_exclude_written_with_backslashes_is_read_as_a_path(): void
+    {
+        $root = $this->makeProject([
+            'app/src/Keep.php' => "<?php\n",
+            'app/src/Legacy/Old.php' => "<?php\n",
+        ]);
+        $this->extractor->method('extract')->willReturnCallback(self::onePerFile(...));
+
+        $occurrences = $this->patternExtractor->extract([$root.'/app'], ['src\\Legacy\\'], excludeBase: $root.'\\app');
+
+        $this->assertSame([$root.'/app/src/Keep.php'], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->file, $occurrences));
+    }
+
+    /**
      * One occurrence per file, named after it.
      *
      * @param array<string> $files

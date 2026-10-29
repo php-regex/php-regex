@@ -43,6 +43,9 @@ final class RelativePathHelperTest extends TestCase
         // A separator on Windows only: elsewhere a backslash is part of the name.
         yield 'a Windows path under a Windows base' => ['base' => 'C:\\root', 'path' => 'C:\\root\\src\\file.php', 'expected' => '\\' === \DIRECTORY_SEPARATOR ? 'src/file.php' : 'C:\\root\\src\\file.php'];
         yield 'a drive path under a drive base' => ['base' => 'C:/root', 'path' => 'C:/root/src/file.php', 'expected' => 'src/file.php'];
+        // A path from the root of a drive: the one the base is on.
+        yield 'a rooted path under a drive base' => ['base' => 'C:/root', 'path' => '/root/src/file.php', 'expected' => 'src/file.php'];
+        yield 'a rooted path under the root of a drive' => ['base' => 'D:/', 'path' => '/elsewhere/a.php', 'expected' => 'elsewhere/a.php'];
         yield 'an empty base' => ['base' => '', 'path' => '/root/file.php', 'expected' => '/root/file.php'];
         yield 'a stream URL' => ['base' => '/base', 'path' => 'phar:///base/a.phar/file.php', 'expected' => 'phar:///base/a.phar/file.php'];
     }

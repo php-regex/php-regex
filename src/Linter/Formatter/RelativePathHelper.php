@@ -64,7 +64,12 @@ final class RelativePathHelper
 
         $path = self::slashes($file);
         $base = self::collapse(self::slashes($base));
-        $absolute = self::collapse('' !== self::root($path) ? $path : $base.'/'.$path);
+        $absolute = self::collapse(match (self::root($path)) {
+            '' => $base.'/'.$path,
+            // From the root of a drive: the one the base is on.
+            '/' => \strlen(self::root($base)) > 1 ? self::root($base).substr($path, 1) : $path,
+            default => $path,
+        });
 
         $relative = self::under($absolute, $base);
         if (null !== $relative) {
