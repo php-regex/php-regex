@@ -29,11 +29,14 @@ inputs:
 runs:
   using: composite
   steps:
+    # fileinfo and zip are built into the Linux builds and a DLL on Windows,
+    # where Composer's dependencies of the test tooling need the first and
+    # Composer itself prefers the second.
     - name: Setup PHP ${{ inputs.php-version }}
       uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
       with:
         php-version: ${{ inputs.php-version }}
-        extensions: mbstring, intl, pcre, tokenizer, xml
+        extensions: mbstring, intl, pcre, tokenizer, xml, fileinfo, zip
         ini-values: ${{ inputs.ini-values }}
         coverage: ${{ inputs.coverage }}
 
