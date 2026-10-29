@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Support;
 
+use PHPRegex\Tests\Support\Paths;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -164,7 +165,13 @@ final class PcreGatesStaticContractTest extends TestCase
                 self::fail('PHPStan must answer one JSON object; stdout: '.$stdout.' stderr: '.(string) file_get_contents($stderrFile));
             }
 
-            $file = $files[$fixture] ?? [];
+            // PHPStan spells the file as the host does.
+            $file = [];
+            foreach ($files as $path => $messages) {
+                if (Paths::same((string) $path, $fixture)) {
+                    $file = $messages;
+                }
+            }
             self::assertIsArray($file);
             $messages = $file['messages'] ?? [];
             self::assertIsArray($messages);

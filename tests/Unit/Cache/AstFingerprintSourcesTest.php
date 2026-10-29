@@ -97,7 +97,7 @@ final class AstFingerprintSourcesTest extends TestCase
         // wherever its namespace puts it: a call to one in the same
         // namespace needs no import, so the import check below misses it.
         $helpers = [];
-        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root.'/src/Parser', \FilesystemIterator::SKIP_DOTS));
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root.'/src/Parser', \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS));
         foreach ($files as $file) {
             if (!$file instanceof \SplFileInfo || 'php' !== $file->getExtension()) {
                 continue;
@@ -176,7 +176,7 @@ final class AstFingerprintSourcesTest extends TestCase
         $this->assertDirectoryExists($root.'/'.$directory);
 
         $files = [];
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root.'/'.$directory, \FilesystemIterator::SKIP_DOTS)) as $file) {
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root.'/'.$directory, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS)) as $file) {
             if ($file instanceof \SplFileInfo && 'php' === $file->getExtension()) {
                 $files[] = $file->getPathname();
             }
@@ -218,7 +218,7 @@ final class AstFingerprintSourcesTest extends TestCase
         $this->assertDirectoryExists($root.'/'.$directory);
 
         $files = [];
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root.'/'.$directory, \FilesystemIterator::SKIP_DOTS)) as $file) {
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root.'/'.$directory, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS)) as $file) {
             if ($file instanceof \SplFileInfo && 'php' === $file->getExtension() && !\in_array($file->getBasename('.php'), self::NOT_READING_A_PATTERN, true)) {
                 $files[] = $file->getPathname();
             }

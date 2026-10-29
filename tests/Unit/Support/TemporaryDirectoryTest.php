@@ -34,7 +34,8 @@ final class TemporaryDirectoryTest extends TestCase
             $this->assertDirectoryExists($first);
             $this->assertDirectoryExists($second);
             $this->assertNotSame($first, $second);
-            $this->assertStringStartsWith(realpath(sys_get_temp_dir()).\DIRECTORY_SEPARATOR.'php-regex-temporary-', $first);
+            $this->assertStringStartsWith(str_replace('\\', '/', (string) realpath(sys_get_temp_dir())).'/php-regex-temporary-', $first);
+            $this->assertStringNotContainsString('\\', $first, 'Spelled with "/" on every host.');
             $this->assertSame([], array_diff(scandir($first) ?: [], ['.', '..']));
         } finally {
             TemporaryDirectory::remove($first, $second);
@@ -51,6 +52,8 @@ final class TemporaryDirectoryTest extends TestCase
         mkdir($directory.'/a/b/c', 0o777, true);
         file_put_contents($directory.'/a/b/c/file.txt', 'x');
         file_put_contents($directory.'/top.txt', 'y');
+        // Read-only, as git writes its objects: removed all the same.
+        chmod($directory.'/a/b/c/file.txt', 0o444);
         $file = $directory.'/top.txt';
 
         TemporaryDirectory::remove($directory);

@@ -13,35 +13,46 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\TestUtils;
 
+use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * The temporary directories the suite writes in and throws away, on every
- * host it runs on: made under the system's temporary directory, removed
- * with their content, without a shell.
+ * host it runs on: made under the system's temporary directory, spelled
+ * with "/" as the library spells the paths it reports, removed with their
+ * content.
  */
 final class TemporaryDirectory
 {
     private function __construct() {}
 
     /**
-     * A fresh, empty directory under the temporary directory, named after
-     * the prefix and a random suffix.
+     * A fresh empty directory, named after the prefix.
      */
     public static function create(string $prefix = 'php-regex'): string
     {
-        $directory = realpath(sys_get_temp_dir()).\DIRECTORY_SEPARATOR.$prefix.'-'.bin2hex(random_bytes(6));
+        $directory = str_replace('\\', '/', (string) realpath(sys_get_temp_dir())).'/'.$prefix.'-'.bin2hex(random_bytes(6));
         (new Filesystem())->mkdir($directory);
 
         return $directory;
     }
 
     /**
-     * Removes files and directories with their content; a path already
-     * gone is no error.
+     * Removes each path with its content; one already gone is no error.
+     * A read-only file (git writes its objects so) goes with the rest.
      */
     public static function remove(string ...$paths): void
     {
-        (new Filesystem())->remove(array_filter($paths, static fn (string $path): bool => '' !== $path));
+        $filesystem = new Filesystem();
+        $paths = array_filter($paths, static fn (string $path): bool => '' !== $path && file_exists($path));
+
+        try {
+            $filesystem->chmod($paths, 0o700, 0, true);
+        } catch (IOException) {
+            // A file whose mode cannot change is removed all the same, or
+            // named by the removal.
+        }
+
+        $filesystem->remove($paths);
     }
 }

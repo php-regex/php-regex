@@ -90,7 +90,7 @@ final class NoNewMixedRule implements Rule
     {
         $errors = [];
         $entries = $this->entries($errors);
-        $root = null === $this->baseline ? '' : \dirname($this->baseline).'/';
+        $root = null === $this->baseline ? '' : str_replace('\\', '/', \dirname($this->baseline)).'/';
 
         foreach ($entries as $file => $symbols) {
             if (!is_file($root.$file)) {
@@ -104,6 +104,8 @@ final class NoNewMixedRule implements Rule
                 continue;
             }
 
+            // Spelled with "/" as the baseline spells it, whatever the host.
+            $file = str_replace('\\', '/', $file);
             $relative = str_starts_with($file, $root) ? substr($file, \strlen($root)) : $file;
             $allowed = $entries[$relative] ?? [];
             unset($unseen[$relative]);

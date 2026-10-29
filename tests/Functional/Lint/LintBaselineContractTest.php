@@ -497,7 +497,8 @@ final class LintBaselineContractTest extends TestCase
         }
 
         $this->assertCount(1, $reported, $stdout);
-        $this->assertSame(['src/a\\b.php'], $reported);
+        // A separator on Windows only: elsewhere a backslash is part of the name.
+        $this->assertSame(['\\' === \DIRECTORY_SEPARATOR ? 'src/a/b.php' : 'src/a\\b.php'], $reported);
         $this->assertSame(str_replace('\\', '/', $reported), $baselined);
 
         [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=baseline.json']);

@@ -147,7 +147,7 @@ final class LintCommandDeclarationPathsTest extends LaravelTestCase
         ]);
 
         $this->assertSame([$project.'/app'], $source->context?->declarationPaths);
-        $this->assertSame([$project.'/vendor'], $source->context->vendorPaths);
+        $this->assertSame([$project.\DIRECTORY_SEPARATOR.'vendor'], $source->context->vendorPaths, 'The vendor directory as Laravel names it.');
     }
 
     /**
