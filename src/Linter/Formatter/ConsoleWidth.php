@@ -79,9 +79,11 @@ final class ConsoleWidth
             return null; // a build without proc_open: not reproducible under the suite, which runs through it
         }
 
+        // The errors go to a pipe, read and dropped: a null device has a
+        // name of its own on each host.
         $process = @proc_open(
             $command,
-            [0 => ['file', $tty, 'r'], 1 => ['pipe', 'w'], 2 => ['file', '/dev/null', 'w']],
+            [0 => ['file', $tty, 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
         );
         if (!\is_resource($process)) {
@@ -89,7 +91,9 @@ final class ConsoleWidth
         }
 
         $size = (string) stream_get_contents($pipes[1]);
+        stream_get_contents($pipes[2]);
         fclose($pipes[1]);
+        fclose($pipes[2]);
         proc_close($process);
 
         return self::fromSttySize($size);
