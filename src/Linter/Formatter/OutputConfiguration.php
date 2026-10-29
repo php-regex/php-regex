@@ -35,6 +35,11 @@ final class OutputConfiguration
         public bool $showOptimizations = true,
         public bool $showHints = true,
         public bool $groupByFile = true,
+        /**
+         * The columns the console folds its lines at; null reads the terminal
+         * or the shell at format time (see ConsoleWidth).
+         */
+        public ?int $width = null,
     ) {}
 
     /**

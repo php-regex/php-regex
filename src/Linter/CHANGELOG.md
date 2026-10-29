@@ -17,10 +17,16 @@ CHANGELOG
    report links each finding to the docs on php-regex.com: `docs_url` in the
    JSON report, a `Read more:` line in the GitHub and Checkstyle messages.
  * The Checkstyle `source` is the issue's identifier, without a prefix.
- * The console report writes every hint whole: a hint past 200 bytes was cut
-   at 197 with `...`, which dropped the fix a ReDoS hint names after its
-   replay, and could split a multi-byte character; `--verbose` no longer
-   changes a hint.
+ * The console report writes a hint one line per sentence behind its arrow,
+   folded at 120 columns (the terminal's width when narrower, `COLUMNS` when
+   the shell exports it) with the continuation under the text, the rewrites
+   to try once under one `Suggested (verify behavior):` heading as dashed
+   items, and an issue message folded under its badge; a hint past 200 bytes
+   was cut at 197 with `...` unless `--verbose` was given, which dropped the
+   fix a ReDoS hint names after its replay. A tool that reads the console
+   line by line reads `--format=json` instead. The JSON `hint` stays one
+   string, deduplicated; the GitHub, Checkstyle and JUnit `Suggestion` is
+   the rewrite the console lists first.
  * The error for an `ide` value `regex.json` refuses names every placeholder
    a template may hold, `%f`, `%file%`, `%relFile%`, `%l`, `%line%`, `%c` and
    `%column%`, where it named `%f` and `%l` only though `%c` alone was taken.

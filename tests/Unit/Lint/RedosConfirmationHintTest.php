@@ -36,7 +36,7 @@ final class RedosConfirmationHintTest extends TestCase
     #[DataProvider('provideAnalyses')]
     public function test_redos_hint_names_the_runtime_checks_only_when_they_confirmed(RedosAnalysis $analysis, bool $observed): void
     {
-        $hint = RedosHints::forAnalysis($analysis, '/(a+)+$/');
+        $hint = implode(' ', RedosHints::forAnalysis($analysis, '/(a+)+$/'));
 
         $this->assertSame($observed, str_contains($hint, self::OBSERVED), $hint);
         $this->assertStringNotContainsString('found no evidence', $hint);

@@ -36,19 +36,23 @@ final class ConsoleTagFormatter implements OutputFormatterInterface
 {
     private readonly TagMarkup $markup;
 
-    private readonly ConsoleLayout $layout;
+    private ?ConsoleLayout $layout = null;
 
     public function __construct(
         private readonly AnalysisService $analysis,
         private readonly LinkFormatter $linkFormatter,
         private readonly bool $decorated = true,
+        private readonly ?int $width = null,
     ) {
         $this->markup = new TagMarkup();
-        $this->layout = new ConsoleLayout($this->markup);
     }
 
     public function format(LintReport $report): string
     {
+        // The width is read for each report written, not when the formatter
+        // is built: a registry builds one for every format.
+        $this->layout = null;
+
         $output = '';
         foreach ($report->results as $result) {
             $output .= $this->displayPatternContext($result);
@@ -57,7 +61,7 @@ final class ConsoleTagFormatter implements OutputFormatterInterface
             $output .= \PHP_EOL;
         }
 
-        return $output.$this->layout->summary($report->stats);
+        return $output.$this->layout()->summary($report->stats);
     }
 
     public function formatError(string $message): string
@@ -131,20 +135,29 @@ final class ConsoleTagFormatter implements OutputFormatterInterface
     }
 
     /**
+     * The layout of the report being written.
+     */
+    private function layout(): ConsoleLayout
+    {
+        return $this->layout ??= new ConsoleLayout($this->markup, $this->width ?? ConsoleWidth::detect());
+    }
+
+    /**
      * @phpstan-param array<LintIssue> $issues
      */
     private function displayIssues(array $issues, ?string $pattern): string
     {
         $output = '';
         foreach ($issues as $issue) {
-            $output .= $this->layout->issue($this->layout->issueBadge($issue->severity->level()), ConsoleResultText::messageWithSnippet($issue, $pattern));
+            $output .= $this->layout()->issue($this->layout()->issueBadge($issue->severity->level()), ConsoleResultText::messageWithSnippet($issue, $pattern));
 
             // An invalid pattern shows the fix its validation names; a ReDoS
             // error its hint, which opens on the evidence, and a lint rule
             // at Error its fix.
-            $hint = null !== $issue->validation ? $issue->validation->hint : $issue->hint;
-            if (null !== $hint && '' !== $hint) {
-                $output .= $this->layout->hint(ReportSpelling::displayText($hint));
+            $hints = null !== $issue->validation ? [$issue->validation->hint] : $issue->hints;
+            $hints = array_values(array_filter(array_map(static fn (?string $hint): string => ReportSpelling::displayText((string) $hint), $hints), static fn (string $hint): bool => '' !== $hint));
+            if ([] !== $hints) {
+                $output .= $this->layout()->hints($hints);
             }
         }
 
@@ -159,7 +172,7 @@ final class ConsoleTagFormatter implements OutputFormatterInterface
         $output = '';
         foreach ($optimizations as $entry) {
             $optimization = $entry['optimization'];
-            $output .= $this->layout->tip();
+            $output .= $this->layout()->tip();
             // An entry a caller built by hand may hold no rewrite: its badge
             // stands alone.
             if (!$optimization instanceof OptimizationResult) {

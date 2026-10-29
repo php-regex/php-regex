@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
@@ -294,6 +295,20 @@ final class AnalysisServiceSearchCostTest extends TestCase
         $this->assertStringContainsString('Attack: '.$cost->render().'.', (string) $hint);
         $this->assertStringStartsWith('"', $cost->render());
         $this->assertStringContainsString('" x n', $cost->render());
+    }
+
+    #[Test]
+    public function test_search_cost_hints_are_the_evidence_lines_and_the_hint_their_join(): void
+    {
+        $issues = self::searchIssues(self::service(redosThreshold: 'medium'), '/^\s+|\s+$/');
+        $this->assertCount(1, $issues);
+        $analysis = $issues[0]->analysis;
+        $this->assertInstanceOf(RedosAnalysis::class, $analysis);
+        $cost = self::searchCostOf($analysis);
+        $this->assertInstanceOf(RedosSearchCost::class, $cost);
+
+        $this->assertSame(RedosVerdict::searchEvidence($cost, $analysis->pcreVersion), $issues[0]->hints);
+        $this->assertSame(implode(' ', $issues[0]->hints), $issues[0]->hint);
     }
 
     private static function service(string $redosThreshold): AnalysisService

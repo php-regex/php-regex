@@ -1111,7 +1111,8 @@ preg_match('/^[\w\*]$/', '*');   // 1, not reported
 ```
       → /(a)[\1]/
     WARN Suspicious \1 inside character class: this is octal (\x01), not a backreference to group 1.
-         ↳ Backreferences do not work inside character classes. If you intended to match the same text as group 1, move the check outside the class.
+         ↳ Backreferences do not work inside character classes. If you intended to match the same text as group 1, move
+           the check outside the class.
 ```
 
 **Fix:** Match the same text as the group outside the class (`(a)\1`), or write the byte you mean (`[\x01]`).

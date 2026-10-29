@@ -38,7 +38,7 @@ final class ConsoleFormatter extends AbstractOutputFormatter
 {
     private readonly AnsiMarkup $markup;
 
-    private readonly ConsoleLayout $layout;
+    private ?ConsoleLayout $layout = null;
 
     public function __construct(
         private readonly ?AnalysisService $analysisService = null,
@@ -48,7 +48,6 @@ final class ConsoleFormatter extends AbstractOutputFormatter
     ) {
         parent::__construct($config);
         $this->markup = new AnsiMarkup($config->ansi);
-        $this->layout = new ConsoleLayout($this->markup);
     }
 
     public function format(LintReport $report): string
@@ -56,6 +55,10 @@ final class ConsoleFormatter extends AbstractOutputFormatter
         if (OutputConfiguration::VERBOSITY_QUIET === $this->config->verbosity) {
             return $this->formatQuiet($report);
         }
+
+        // The width is read for each report written, not when the formatter
+        // is built: a registry builds one for every format.
+        $this->layout = null;
 
         $parts = [];
         foreach ($this->groupResults($report->results) as $results) {
@@ -75,7 +78,7 @@ final class ConsoleFormatter extends AbstractOutputFormatter
      */
     public function getSummary(array $stats): string
     {
-        return $this->layout->summary($stats);
+        return $this->layout()->summary($stats);
     }
 
     public function formatFooter(): string
@@ -138,26 +141,32 @@ final class ConsoleFormatter extends AbstractOutputFormatter
     }
 
     /**
+     * The layout of the report being written.
+     */
+    private function layout(): ConsoleLayout
+    {
+        return $this->layout ??= new ConsoleLayout($this->markup, $this->config->width ?? ConsoleWidth::detect());
+    }
+
+    /**
      * @phpstan-param array<LintIssue> $issues
      */
     private function formatIssues(array $issues, ?string $pattern): string
     {
         $parts = [];
         foreach ($issues as $issue) {
-            $parts[] = $this->layout->issue($this->layout->issueBadge($issue->severity->level()), ConsoleResultText::messageWithSnippet($issue, $pattern));
+            $parts[] = $this->layout()->issue($this->layout()->issueBadge($issue->severity->level()), ConsoleResultText::messageWithSnippet($issue, $pattern));
 
             // An invalid pattern shows the fix its validation names; a ReDoS
             // error its hint, which opens on the evidence, and a lint rule
             // at Error its fix.
-            $hint = null !== $issue->validation ? $issue->validation->hint : $issue->hint;
-            if (null === $hint || '' === $hint || !$this->config->shouldShowHints()) {
+            $hints = null !== $issue->validation ? [$issue->validation->hint] : $issue->hints;
+            $hints = array_values(array_filter(array_map(fn (?string $hint): string => ReportSpelling::displayText($this->formatHint((string) $hint)), $hints), static fn (string $hint): bool => '' !== $hint));
+            if ([] === $hints) {
                 continue;
             }
 
-            $hint = ReportSpelling::displayText($this->formatHint($hint));
-            if ('' !== $hint) {
-                $parts[] = $this->layout->hint($hint);
-            }
+            $parts[] = $this->layout()->hints($hints);
         }
 
         return implode('', $parts);
@@ -174,7 +183,7 @@ final class ConsoleFormatter extends AbstractOutputFormatter
 
         $parts = [];
         foreach ($optimizations as $entry) {
-            $parts[] = $this->layout->tip();
+            $parts[] = $this->layout()->tip();
             // An entry a caller built by hand may hold no rewrite: its badge
             // stands alone.
             if ($entry['optimization'] instanceof OptimizationResult) {
