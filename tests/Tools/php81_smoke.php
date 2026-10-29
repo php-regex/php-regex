@@ -109,8 +109,23 @@ if (null !== $phpstan) {
     file_put_contents($directory.'/redos.php', "<?php\n\npreg_match('/^(a+)+$/', \$subject);\n");
     // Run from the temporary directory: PHPStan loads the autoloader of the
     // project it starts in, and the rule must load from the sources alone.
-    $command = 'cd '.escapeshellarg($directory).' && XDEBUG_MODE=off '.escapeshellarg(\PHP_BINARY).' -d memory_limit=-1 '.escapeshellarg($phpstan).' analyse --no-progress --error-format=json -a autoload.php -c phpstan.neon redos.php fine.php';
-    $output = trim((string) shell_exec($command.' 2>/dev/null'));
+    // No shell: the arguments, the directory and the environment are given
+    // as they are, so that cmd.exe and sh read the same command.
+    $process = proc_open(
+        [\PHP_BINARY, '-d', 'memory_limit=-1', $phpstan, 'analyse', '--no-progress', '--error-format=json', '-a', 'autoload.php', '-c', 'phpstan.neon', 'redos.php', 'fine.php'],
+        [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+        $pipes,
+        $directory,
+        ['XDEBUG_MODE' => 'off'] + getenv(),
+    );
+    $output = '';
+    if (is_resource($process)) {
+        $output = trim((string) stream_get_contents($pipes[1]));
+        stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+    }
     $lines = explode("\n", $output);
     $result = json_decode((string) end($lines), true);
     $messages = is_array($result) ? (string) json_encode($result['files'] ?? []) : '';
