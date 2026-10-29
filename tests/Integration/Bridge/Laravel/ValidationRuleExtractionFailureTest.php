@@ -21,6 +21,7 @@ use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\TemporaryProject;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -215,6 +216,8 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
      * problem for that file and the command fails.
      */
     #[Test]
+    // A mode without read bits: Windows reads the file all the same.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_lint_reports_a_file_the_extractor_could_not_read(): void
     {
         // A file no one can read gives the extractor nothing: the run
@@ -262,6 +265,8 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
      * regex.lint.source.unreadable on that line.
      */
     #[Test]
+    // A mode without read bits: Windows reads the file all the same.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_lint_json_places_an_unread_file_on_its_first_line(): void
     {
         // A file no one can read, as the checkstyle report above: the run

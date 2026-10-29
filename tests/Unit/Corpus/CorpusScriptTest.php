@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Corpus;
 
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -21,6 +22,8 @@ use PHPUnit\Framework\TestCase;
  * bin/corpus, run against a scratch root holding its own corpus.json and
  * corpus/ directory, with a local file:// origin: no network.
  */
+// The scripts under bin/ are bash scripts, started without a shell.
+#[RequiresOperatingSystem('Linux|Darwin')]
 final class CorpusScriptTest extends TestCase
 {
     private string $root = '';

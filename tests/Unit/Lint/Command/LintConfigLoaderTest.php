@@ -16,12 +16,15 @@ namespace PHPRegex\Tests\Unit\Lint\Command;
 use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintConfigLoaderTest extends TestCase
 {
     #[Test]
+    // A mode without read bits: Windows reads the file all the same.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_load_reads_and_normalizes_config(): void
     {
         $cwd = getcwd();

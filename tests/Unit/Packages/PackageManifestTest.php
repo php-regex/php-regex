@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Packages;
 
 use PHPRegex\Psalm\Plugin;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -726,6 +727,13 @@ final class PackageManifestTest extends TestCase
         ksort($expected);
 
         $this->assertSame($expected, $splits);
+    }
+
+    // The executable bit is a POSIX mode; Windows starts the script through bash.
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    #[Test]
+    public function test_the_split_script_is_executable(): void
+    {
         $this->assertTrue(is_executable(self::root().'/bin/split'));
     }
 

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Release;
 
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -22,6 +23,8 @@ use PHPUnit\Framework\TestCase;
  * bin/bump, bin/release and bin/status, run against a scratch copy of the
  * files they read: no network, no tag, no push.
  */
+// The scripts under bin/ are bash scripts, started without a shell.
+#[RequiresOperatingSystem('Linux|Darwin')]
 final class ReleaseScriptsTest extends TestCase
 {
     private const CHANGELOG = <<<'MD'

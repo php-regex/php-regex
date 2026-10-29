@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Tools;
 
 use PHPRegex\Tests\TestUtils\MutationCoverage;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -169,6 +170,8 @@ final class MutationCoverageTest extends TestCase
     }
 
     #[Test]
+    // The script runs through the shell of the mutation workflow, a Linux one.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_the_script_prints_what_it_kept(): void
     {
         exec(\sprintf(
@@ -183,6 +186,8 @@ final class MutationCoverageTest extends TestCase
     }
 
     #[Test]
+    // The script runs through the shell of the mutation workflow, a Linux one.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_the_script_writes_the_paths_of_its_shard(): void
     {
         exec(\sprintf(

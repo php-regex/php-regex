@@ -29,6 +29,7 @@ use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresFunction;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -349,6 +350,8 @@ final class LintCommandStreamsTest extends TestCase
      * read, ends the scan's line before its error too.
      */
     #[Test]
+    // A mode without read bits: Windows reads the directory all the same.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_lint_prints_a_collection_failure_on_a_line_of_its_own_with_ansi(): void
     {
         $directory = $this->enterProject(['composer.json' => self::COMPOSER, 'locked/a.php' => self::PHP_FILE]);
@@ -688,6 +691,8 @@ final class LintCommandStreamsTest extends TestCase
     }
 
     #[Test]
+    // A mode without read bits: Windows reads the directory all the same.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_lint_reports_a_collection_failure_as_json(): void
     {
         $directory = $this->enterProject(['composer.json' => self::COMPOSER, 'locked/a.php' => self::PHP_FILE]);

@@ -28,6 +28,7 @@ use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresFunction;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -562,6 +563,8 @@ final class PatternFunctionPrescanTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideStrategies')]
+    // A mode without read bits: Windows reads the file all the same.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_a_vendor_file_that_cannot_be_read_is_skipped(\Closure $strategy): void
     {
         $project = $this->makeProject([
@@ -833,6 +836,8 @@ final class PatternFunctionPrescanTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideStrategies')]
+    // A mode without read bits: Windows reads the file all the same.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_an_unreadable_directory_under_a_declaration_path_is_skipped(\Closure $strategy): void
     {
         $project = $this->makeProject([
