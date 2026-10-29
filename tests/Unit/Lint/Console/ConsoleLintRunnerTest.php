@@ -31,6 +31,7 @@ use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\Newlines;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -591,7 +592,7 @@ final class ConsoleLintRunnerTest extends TestCase
     private static function read($stream): string
     {
         rewind($stream);
-        $content = (string) stream_get_contents($stream);
+        $content = Newlines::lf((string) stream_get_contents($stream));
         fseek($stream, 0, \SEEK_END);
 
         return $content;

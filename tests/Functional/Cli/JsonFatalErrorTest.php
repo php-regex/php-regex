@@ -59,7 +59,7 @@ final class JsonFatalErrorTest extends TestCase
         // The streams first, with the trace of the shutdown folded into
         // the standard error: the reason a document is missing shows
         // here, before the contract of the document is judged.
-        $this->assertStringEndsWith(\PHP_EOL, $stdout, $stdout.$stderr);
+        $this->assertStringEndsWith("\n", $stdout, $stdout.$stderr);
         $document = JsonContract::decodeDocument($stdout);
         $this->assertSame(['error', 'stage'], array_keys($document), $stdout.$stderr);
         $this->assertSame('internal', $document['stage']);
@@ -103,7 +103,7 @@ final class JsonFatalErrorTest extends TestCase
             // alone left. The official builds print both.
             $this->markTestSkipped('The 8.1 build running this loses the shutdown of an exhausted process: the exit code alone arrives.');
         }
-        $this->assertStringEndsWith(\PHP_EOL, $stdout, $stdout.$stderr);
+        $this->assertStringEndsWith("\n", $stdout, $stdout.$stderr);
         $document = JsonContract::decodeDocument($stdout);
         $this->assertSame(['error', 'stage'], array_keys($document), $stdout);
         $this->assertSame('internal', $document['stage']);

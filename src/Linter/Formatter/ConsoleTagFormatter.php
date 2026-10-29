@@ -58,7 +58,7 @@ final class ConsoleTagFormatter implements OutputFormatterInterface
             $output .= $this->displayPatternContext($result);
             $output .= $this->displayIssues($result['issues'], ConsoleResultText::pattern($result));
             $output .= $this->displayOptimizations($result['optimizations']);
-            $output .= \PHP_EOL;
+            $output .= "\n";
         }
 
         return $output.$this->layout()->summary($report->stats);
@@ -97,14 +97,14 @@ final class ConsoleTagFormatter implements OutputFormatterInterface
         // The label is the file name in display form on one line, its tags
         // escaped; the link still points at the file as named.
         $label = $this->markup->escape(ReportSpelling::displayField($label));
-        $output = '  '.$this->markup->style($this->linkFormatter->format($file, $line, $label, $column > 0 ? $column : 1, $label), ConsoleStyle::AccentBold).\PHP_EOL;
+        $output = '  '.$this->markup->style($this->linkFormatter->format($file, $line, $label, $column > 0 ? $column : 1, $label), ConsoleStyle::AccentBold)."\n";
 
         if (null !== $pattern && '' !== $pattern) {
-            $output .= '      '.$this->markup->style('→ ', ConsoleStyle::AccentBold).$this->markup->style($this->safelyHighlightPattern($pattern), ConsoleStyle::Plain).\PHP_EOL;
+            $output .= '      '.$this->markup->style('→ ', ConsoleStyle::AccentBold).$this->markup->style($this->safelyHighlightPattern($pattern), ConsoleStyle::Plain)."\n";
         }
 
         if (\is_string($location) && '' !== $location) {
-            $output .= '     '.$this->markup->style(ConsoleLayout::ARROW.' '.$this->markup->escape(ReportSpelling::displayField($location)), ConsoleStyle::Muted).\PHP_EOL;
+            $output .= '     '.$this->markup->style(ConsoleLayout::ARROW.' '.$this->markup->escape(ReportSpelling::displayField($location)), ConsoleStyle::Muted)."\n";
         }
 
         return $output;
@@ -178,8 +178,8 @@ final class ConsoleTagFormatter implements OutputFormatterInterface
             if (!$optimization instanceof OptimizationResult) {
                 continue;
             }
-            $output .= '         '.$this->markup->style('- '.$this->safelyHighlightPattern($optimization->original), ConsoleStyle::Error).\PHP_EOL;
-            $output .= '         '.$this->markup->style('+ '.$this->safelyHighlightPattern($optimization->optimized), ConsoleStyle::Success).\PHP_EOL;
+            $output .= '         '.$this->markup->style('- '.$this->safelyHighlightPattern($optimization->original), ConsoleStyle::Error)."\n";
+            $output .= '         '.$this->markup->style('+ '.$this->safelyHighlightPattern($optimization->optimized), ConsoleStyle::Success)."\n";
         }
 
         return $output;

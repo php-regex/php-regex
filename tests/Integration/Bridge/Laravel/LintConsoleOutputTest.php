@@ -23,6 +23,7 @@ use PHPRegex\Linter\Source\PatternSourceInterface;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Tests\Support\Newlines;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\Before;
@@ -45,18 +46,6 @@ final class LintConsoleOutputTest extends LaravelTestCase
      */
     private const TWO_PATTERNS = "<?php\n\npreg_match('/^[a-z]+$/', \$subject);\npreg_match('/^[0-9]+$/', \$subject);\n";
 
-    #[Before]
-    protected function resetLintFunctions(): void
-    {
-        LintFunctionOverrides::reset();
-    }
-
-    #[After]
-    protected function restoreLintFunctions(): void
-    {
-        LintFunctionOverrides::reset();
-    }
-
     #[Test]
     public function test_console_report_is_written_once(): void
     {
@@ -65,7 +54,7 @@ final class LintConsoleOutputTest extends LaravelTestCase
         $status = Artisan::call('regex:lint', $this->arguments($project.'/src'));
 
         $this->assertSame(1, $status);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
         $this->assertSame(1, substr_count($output, 'Expected ) at end of input'), $output);
         $this->assertSame(1, substr_count($output, '1 invalid patterns, 0 warnings, 0 optimizations.'), $output);
     }
@@ -82,7 +71,7 @@ final class LintConsoleOutputTest extends LaravelTestCase
         $status = Artisan::call('regex:lint', $this->arguments($project.'/src'));
 
         $this->assertSame(0, $status);
-        $this->assertStringContainsString('found 1 patterns.', Artisan::output());
+        $this->assertStringContainsString('found 1 patterns.', Newlines::lf(Artisan::output()));
     }
 
     /**
@@ -94,7 +83,7 @@ final class LintConsoleOutputTest extends LaravelTestCase
         $project = $this->makeProject(['src/Pattern.php' => "<?php\n\npreg_match('/^[a-z]+$/', \$subject);\n"]);
 
         $status = Artisan::call('regex:lint', $this->arguments($project.'/src'));
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertSame(0, $status, $output);
         $scanning = strpos($output, '[1/3] Scanning files');
@@ -124,7 +113,7 @@ final class LintConsoleOutputTest extends LaravelTestCase
         LintFunctionOverrides::queuePcntlForkResult(2_000_000_002);
 
         $status = self::withinTimeLimit(fn (): int => Artisan::call('regex:lint', ['--jobs' => '2'] + $this->arguments($project.'/src')));
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertSame(1, $status, $output);
         $this->assertSame(1, substr_count($output, 'Parallel analysis failed: a worker exited unexpectedly while reading '), $output);
@@ -145,7 +134,7 @@ final class LintConsoleOutputTest extends LaravelTestCase
         unset($arguments['--jobs']);
 
         $status = Artisan::call('regex:lint', $arguments);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertSame(0, $status, $output);
         $this->assertMatchesRegularExpression('/^Processes : 1$/m', $output);
@@ -173,7 +162,7 @@ final class LintConsoleOutputTest extends LaravelTestCase
         $startedAt = microtime(true);
         $status = Artisan::call('regex:lint', ['--jobs' => '2'] + $this->arguments($project.'/src'));
         $duration = microtime(true) - $startedAt;
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertSame(0, $status, $output);
         $this->assertGreaterThanOrEqual(1.2, $duration, 'The workers did not wait: nothing was tested.');
@@ -194,7 +183,7 @@ final class LintConsoleOutputTest extends LaravelTestCase
         $status = Artisan::call('regex:lint', $this->arguments('src'));
 
         $this->assertSame($exitCode, $status);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
         $this->assertSame(1, substr_count($output, $error), $output);
         $this->assertNull(json_decode($output, true), $output);
     }
@@ -244,6 +233,33 @@ final class LintConsoleOutputTest extends LaravelTestCase
         $analysis = $this->application()->make('php-regex.analysis');
         $this->assertInstanceOf(AnalysisService::class, $analysis);
         $this->application()->instance('php-regex.lint', new LintService($analysis, new PatternSourceCollection([$failing])));
+    }
+
+    #[Before]
+    protected function resetLintFunctions(): void
+    {
+        LintFunctionOverrides::reset();
+    }
+
+    #[After]
+    protected function restoreLintFunctions(): void
+    {
+        LintFunctionOverrides::reset();
+    }
+
+    /**
+     * @return array<class-string>
+     */
+    protected function getPackageProviders($app): array
+    {
+        return [PHPRegexServiceProvider::class];
+    }
+
+    protected function defineEnvironment($app): void
+    {
+        self::configOf($app)->set('php-regex.cache.directory', null);
+        self::configOf($app)->set('php-regex.cache.store', null);
+        self::configOf($app)->set('php-regex.runtime_pcre_validation', false);
     }
 
     /**
@@ -304,21 +320,6 @@ final class LintConsoleOutputTest extends LaravelTestCase
             pcntl_signal(\SIGALRM, \SIG_DFL);
             pcntl_async_signals($async);
         }
-    }
-
-    /**
-     * @return array<class-string>
-     */
-    protected function getPackageProviders($app): array
-    {
-        return [PHPRegexServiceProvider::class];
-    }
-
-    protected function defineEnvironment($app): void
-    {
-        self::configOf($app)->set('php-regex.cache.directory', null);
-        self::configOf($app)->set('php-regex.cache.store', null);
-        self::configOf($app)->set('php-regex.runtime_pcre_validation', false);
     }
 
     /**

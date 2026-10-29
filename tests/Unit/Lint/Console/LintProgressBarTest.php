@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint\Console;
 
 use PHPRegex\Linter\Console\LintProgressBar;
 use PHPRegex\Linter\LintProgress;
+use PHPRegex\Tests\Support\Newlines;
 use PHPRegex\Tests\Support\TerminalScreen;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -561,7 +562,7 @@ final class LintProgressBarTest extends TestCase
     private static function read($stream): string
     {
         rewind($stream);
-        $content = (string) stream_get_contents($stream);
+        $content = Newlines::lf((string) stream_get_contents($stream));
         fseek($stream, 0, \SEEK_END);
 
         return $content;

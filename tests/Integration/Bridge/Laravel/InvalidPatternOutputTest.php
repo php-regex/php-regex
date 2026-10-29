@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Tests\Support\Newlines;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -32,7 +33,7 @@ final class InvalidPatternOutputTest extends LaravelTestCase
     public function test_command_prints_the_message_and_the_caret_snippet(string $command, array $options): void
     {
         $exitCode = Artisan::call($command, ['pattern' => '/(?<=a+)b/'] + $options);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString("Lookbehind is unbounded. PCRE requires a bounded maximum length.\nLine 1: (?<=a+)b\n", $output);
@@ -63,7 +64,7 @@ final class InvalidPatternOutputTest extends LaravelTestCase
         $this->assertSame(1, preg_match($pattern, 'a'), 'control: PCRE compiles the pattern');
 
         $exitCode = Artisan::call($command, ['pattern' => $pattern] + $options);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString('Pattern not analyzed:', $output);
@@ -75,7 +76,7 @@ final class InvalidPatternOutputTest extends LaravelTestCase
     public function test_transpile_json_carries_the_snippet_apart(): void
     {
         Artisan::call('regex:transpile', ['pattern' => '/(?<=a+)b/', '--format' => 'json']);
-        $payload = json_decode(Artisan::output(), true);
+        $payload = json_decode(Newlines::lf(Artisan::output()), true);
 
         // The error envelope, its validation carrying the message and the
         // snippet as the text itself.

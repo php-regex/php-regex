@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Corpus;
 
+use PHPRegex\Tests\Support\Newlines;
 use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
@@ -405,7 +406,7 @@ final class CorpusLintScriptTest extends TestCase
         ];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $output = Newlines::lf((string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]));
         fclose($pipes[1]);
         fclose($pipes[2]);
 

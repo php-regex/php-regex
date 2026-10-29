@@ -49,7 +49,7 @@ final class LintCommandTargetOutputTest extends TestCase
 
         $status = $tester->execute(['paths' => [$project.'/src'], '--no-routes' => true, '--no-validators' => true, '--jobs' => '1']);
 
-        $display = $tester->getDisplay();
+        $display = $tester->getDisplay(true);
         $this->assertSame(Command::SUCCESS, $status, $display);
         $this->assertStringContainsString('running PHP', $display);
         $this->assertStringContainsString('Note: ', $display);
@@ -68,7 +68,7 @@ final class LintCommandTargetOutputTest extends TestCase
             ['capture_stderr_separately' => true],
         );
 
-        $this->assertIsArray(json_decode($tester->getDisplay(), true), 'stdout is not JSON: '.$tester->getDisplay());
+        $this->assertIsArray(json_decode($tester->getDisplay(true), true), 'stdout is not JSON: '.$tester->getDisplay(true));
         $this->assertStringContainsString('Target: PHP 8.2, PCRE2 10.40 (php_regex.php_version)', $tester->getErrorOutput());
     }
 
@@ -84,7 +84,7 @@ final class LintCommandTargetOutputTest extends TestCase
         );
 
         $this->assertStringContainsString('Note: ', $tester->getErrorOutput());
-        $this->assertStringNotContainsString('Note: ', $tester->getDisplay());
+        $this->assertStringNotContainsString('Note: ', $tester->getDisplay(true));
     }
 
     #[Test]
@@ -96,7 +96,7 @@ final class LintCommandTargetOutputTest extends TestCase
         $status = $tester->execute(['paths' => ['.'], '--no-routes' => true, '--no-validators' => true]);
 
         $this->assertSame(Command::INVALID, $status);
-        $this->assertStringContainsString('php_version', $tester->getDisplay());
+        $this->assertStringContainsString('php_version', $tester->getDisplay(true));
     }
 
     /**
@@ -114,7 +114,7 @@ final class LintCommandTargetOutputTest extends TestCase
         $this->assertSame(Command::INVALID, $status);
         $this->assertSame(
             ['error' => 'php_regex.php_version names PHP 7.2: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.', 'stage' => 'target'],
-            json_decode($tester->getDisplay(), true),
+            json_decode($tester->getDisplay(true), true),
         );
     }
 

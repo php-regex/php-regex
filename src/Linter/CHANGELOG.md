@@ -19,6 +19,8 @@ CHANGELOG
  * The Checkstyle `source` is the issue's identifier, without a prefix.
  * Where the PHP cannot fork, Windows among others, `--jobs` above one runs
    in one process and the banner says so beside the count asked for.
+ * The console report ends its lines with "\n" on every host, as the rest
+   of the output does, where it ended them with "\r\n" on Windows.
  * The console report writes a hint one line per sentence behind its arrow,
    folded at 120 columns (the terminal's width when narrower, `COLUMNS` when
    the shell exports it) with the continuation under the text, the rewrites

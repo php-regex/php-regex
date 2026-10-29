@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Tests\Support\Newlines;
 use PHPRegex\Tests\Support\ResetsShellVerbosity;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,7 +35,7 @@ final class TranspileCommandOutputTest extends LaravelTestCase
         $this->assertSame(1, preg_match('/a\77/', 'a?'));
 
         $status = Artisan::call('regex:transpile', ['pattern' => '/a\77/', '--target' => 'javascript']);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertSame(0, $status);
         $this->assertStringContainsString("Warnings:\n  ⚠ Converted octal escape to hex/Unicode escape for JavaScript.\n", $output);
@@ -46,7 +47,7 @@ final class TranspileCommandOutputTest extends LaravelTestCase
     public function test_console_calls_a_translation_without_warnings_compatible(): void
     {
         $status = Artisan::call('regex:transpile', ['pattern' => '/a+b/', '--target' => 'javascript']);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertSame(0, $status);
         $this->assertStringContainsString(' COMPATIBLE  Pattern transpiled successfully.', $output);
@@ -59,7 +60,7 @@ final class TranspileCommandOutputTest extends LaravelTestCase
         $status = Artisan::call('regex:transpile', ['pattern' => '/a++b/', '--target' => 'javascript']);
 
         $this->assertSame(1, $status);
-        $this->assertStringContainsString('Transpilation failed: Possessive quantifiers are not supported in JavaScript.', Artisan::output());
+        $this->assertStringContainsString('Transpilation failed: Possessive quantifiers are not supported in JavaScript.', Newlines::lf(Artisan::output()));
     }
 
     #[Test]
@@ -81,14 +82,14 @@ final class TranspileCommandOutputTest extends LaravelTestCase
         $status = Artisan::call('regex:transpile', ['pattern' => '/a+b/', '--target' => 'js']);
 
         $this->assertSame(0, $status);
-        $this->assertStringContainsString('Target (Javascript)', Artisan::output());
+        $this->assertStringContainsString('Target (Javascript)', Newlines::lf(Artisan::output()));
     }
 
     #[Test]
     public function test_console_unknown_target_lists_the_transpiler_targets(): void
     {
         $status = Artisan::call('regex:transpile', ['pattern' => '/a/', '--target' => 'ruby']);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertSame(2, $status);
         $this->assertStringContainsString("Invalid target 'ruby'. Supported targets: html, html-pattern, javascript, js, py, python", $output);
@@ -99,7 +100,7 @@ final class TranspileCommandOutputTest extends LaravelTestCase
     {
         // As the CLI and Symfony: `--format=xml` is a usage error, not a console run.
         $status = Artisan::call('regex:transpile', ['pattern' => '/a/', '--format' => 'xml']);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertSame(2, $status);
         $this->assertStringContainsString('Invalid value for --format: xml. Use console or json.', $output);
@@ -112,14 +113,14 @@ final class TranspileCommandOutputTest extends LaravelTestCase
         $status = Artisan::call('regex:transpile', ['pattern' => '/a/', '--format' => 'Console']);
 
         $this->assertSame(0, $status);
-        $this->assertStringContainsString('Target (Javascript)', Artisan::output());
+        $this->assertStringContainsString('Target (Javascript)', Newlines::lf(Artisan::output()));
     }
 
     #[Test]
     public function test_json_unknown_target_prints_the_usage_envelope(): void
     {
         $status = Artisan::call('regex:transpile', ['pattern' => '/a/', '--target' => 'perl', '--format' => 'json']);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertSame(2, $status);
         $this->assertStringEndsWith("}\n", $output);
@@ -135,16 +136,9 @@ final class TranspileCommandOutputTest extends LaravelTestCase
         $status = Artisan::call('regex:transpile', ['pattern' => '/<b>a+/', '--format' => 'json', '--quiet' => true]);
 
         $this->assertSame(0, $status);
-        $document = json_decode(Artisan::output(), true, flags: \JSON_THROW_ON_ERROR);
+        $document = json_decode(Newlines::lf(Artisan::output()), true, flags: \JSON_THROW_ON_ERROR);
         $this->assertIsArray($document);
         $this->assertSame('/<b>a+/', $document['source'] ?? null);
-    }
-
-    protected function getPackageProviders($app): array
-    {
-        return [
-            PHPRegexServiceProvider::class,
-        ];
     }
 
     /**
@@ -157,7 +151,14 @@ final class TranspileCommandOutputTest extends LaravelTestCase
     {
         $this->assertSame(1, Artisan::call('regex:transpile', ['pattern' => '/(?>a)b/', '--target' => 'python']));
         $this->assertSame(0, Artisan::call('regex:transpile', ['pattern' => '/(?>a)b/', '--target' => 'python', '--python-version' => '3.11']));
-        $this->assertStringContainsString('(?>a)b', Artisan::output());
+        $this->assertStringContainsString('(?>a)b', Newlines::lf(Artisan::output()));
         $this->assertSame(2, Artisan::call('regex:transpile', ['pattern' => '/a/', '--target' => 'python', '--python-version' => 'three']));
+    }
+
+    protected function getPackageProviders($app): array
+    {
+        return [
+            PHPRegexServiceProvider::class,
+        ];
     }
 }

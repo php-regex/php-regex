@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 use Illuminate\Support\Facades\Artisan;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Tests\Support\Newlines;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -29,7 +30,7 @@ final class ExplainCommandRedosTest extends LaravelTestCase
     public function test_explain_prints_the_pattern_and_the_vulnerable_part_literally(): void
     {
         Artisan::call('regex:explain', ['pattern' => '#(<error>x</error>)a+#']);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertStringContainsString('Pattern:', $output);
         $this->assertStringContainsString('(<error>x</error>)a+', $output);
@@ -43,7 +44,7 @@ final class ExplainCommandRedosTest extends LaravelTestCase
         $this->assertNotNull($witness);
 
         Artisan::call('regex:explain', ['pattern' => $pattern]);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertStringContainsString($headline, $output);
         $this->assertStringContainsString('Attack: '.$witness->render(), $output);
@@ -71,7 +72,7 @@ final class ExplainCommandRedosTest extends LaravelTestCase
         $this->assertSame($severity, $analysis->severity->value);
 
         Artisan::call('regex:explain', ['pattern' => $pattern]);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertMatchesRegularExpression(
             '/^\s*'.preg_quote($analysis->headline(), '/').'\R\s*Severity: '.preg_quote($severity, '/').'$/m',
@@ -99,7 +100,7 @@ final class ExplainCommandRedosTest extends LaravelTestCase
     public function test_explain_names_a_heuristic_verdict_without_an_attack(): void
     {
         Artisan::call('regex:explain', ['pattern' => '/(a+)+\1$/']);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertStringContainsString('Potential backtracking (heuristic)', $output);
         $this->assertStringNotContainsString('Attack:', $output);
@@ -114,7 +115,7 @@ final class ExplainCommandRedosTest extends LaravelTestCase
     public function test_explain_prints_the_attack_escaped(string $pattern, string $attack): void
     {
         Artisan::call('regex:explain', ['pattern' => $pattern]);
-        $output = Artisan::output();
+        $output = Newlines::lf(Artisan::output());
 
         $this->assertStringContainsString('Attack: '.$attack, $output);
         $this->assertSame(1, preg_match('/Attack: (.*)$/m', $output, $match));
