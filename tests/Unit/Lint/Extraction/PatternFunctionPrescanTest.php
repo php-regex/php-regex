@@ -879,9 +879,9 @@ final class PatternFunctionPrescanTest extends TestCase
             'packages/lib/Helpers.php' => self::HELPER,
             'vendor/acme/.keep' => '',
         ]);
-        $this->assertTrue(symlink('../../packages/lib', $project.'/vendor/acme/lib'));
-        $this->assertTrue(symlink('..', $project.'/vendor/acme/up'));
-        $this->assertTrue(symlink('self', $project.'/vendor/self'));
+        $this->assertTrue(symlink($project.'/packages/lib', $project.'/vendor/acme/lib'));
+        $this->assertTrue(symlink($project.'/vendor', $project.'/vendor/acme/up'));
+        $this->assertTrue(symlink($project.'/vendor/self', $project.'/vendor/self'));
 
         $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/app'], ['vendor'], vendorPaths: [$project.'/vendor']);
 

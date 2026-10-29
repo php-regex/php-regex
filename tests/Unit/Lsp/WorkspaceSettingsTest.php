@@ -327,7 +327,7 @@ final class WorkspaceSettingsTest extends TestCase
         mkdir($root);
         $this->root = $root;
 
-        return (string) realpath($root);
+        return str_replace('\\', '/', (string) realpath($root));
     }
 
     /**

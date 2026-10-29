@@ -100,12 +100,12 @@ final class NoNewMixedRule implements Rule
 
         $unseen = $entries;
         foreach ($node->get(MixedTypeCollector::class) as $file => $records) {
+            // Spelled with "/" as the baseline and the paths spell it, whatever the host.
+            $file = str_replace('\\', '/', $file);
             if (!$this->judges($file)) {
                 continue;
             }
 
-            // Spelled with "/" as the baseline spells it, whatever the host.
-            $file = str_replace('\\', '/', $file);
             $relative = str_starts_with($file, $root) ? substr($file, \strlen($root)) : $file;
             $allowed = $entries[$relative] ?? [];
             unset($unseen[$relative]);

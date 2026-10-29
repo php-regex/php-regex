@@ -41,7 +41,9 @@ final class LintReportLocationTest extends TestCase
     {
         $directory = $this->enterProject(['src/a.php' => "<?php\n"]);
         $file = str_replace('{cwd}', $directory, $file);
-        $expected = str_replace(['{cwd}', '{parent}'], [$directory, \dirname($directory)], $expected);
+        // A path from the root is on the drive of the working directory on Windows.
+        $drive = '\\' === \DIRECTORY_SEPARATOR ? substr($directory, 0, 2) : '';
+        $expected = str_replace(['{cwd}', '{parent}', '{drive}'], [$directory, \dirname($directory), $drive], $expected);
 
         $results = self::lint([new PatternOccurrence('/(a/', $file, 1, 'preg_match')])->results;
 
@@ -59,7 +61,7 @@ final class LintReportLocationTest extends TestCase
         yield 'with a leading dot' => ['file' => './src/a.php', 'expected' => 'src/a.php'];
         yield 'with a dot and a doubled slash inside' => ['file' => 'src/./x//../a.php', 'expected' => 'src/a.php'];
         yield 'absolute, under the working directory' => ['file' => '{cwd}/src/a.php', 'expected' => 'src/a.php'];
-        yield 'absolute, elsewhere' => ['file' => '/elsewhere/./lib/../a.php', 'expected' => '/elsewhere/a.php'];
+        yield 'absolute, elsewhere' => ['file' => '/elsewhere/./lib/../a.php', 'expected' => '{drive}/elsewhere/a.php'];
         yield 'relative, up out of the working directory' => ['file' => '../outside/a.php', 'expected' => '{parent}/outside/a.php'];
         yield 'a drive path' => ['file' => 'C:/project/./a.php', 'expected' => 'C:/project/a.php'];
         // ".." stops at a root: the drive's, not the working directory's.

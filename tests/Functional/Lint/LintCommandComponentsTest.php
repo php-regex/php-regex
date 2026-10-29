@@ -321,7 +321,8 @@ final class LintCommandComponentsTest extends TestCase
         $banner = $renderer->renderBanner($output, ProjectTarget::fromSources([], [], null, []), 2, [$configPath.'/regex.json', '/elsewhere/regex.dist.json']);
         $this->assertStringContainsString('PHPRegex', $banner);
         // A file under the working directory is named from it, any other in full.
-        $this->assertStringContainsString('Configuration : regex.json, /elsewhere/regex.dist.json', $banner);
+        // A path from the root is on the drive of the working directory on Windows.
+        $this->assertStringContainsString('Configuration : regex.json, '.('\\' === \DIRECTORY_SEPARATOR ? substr((string) getcwd(), 0, 2) : '').'/elsewhere/regex.dist.json', $banner);
     }
 
     #[Test]

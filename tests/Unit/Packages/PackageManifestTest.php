@@ -371,7 +371,6 @@ final class PackageManifestTest extends TestCase
         foreach (['Cli' => 'bin/regex', 'LanguageServer' => 'bin/regex-lsp'] as $directory => $script) {
             $this->assertSame([$script], self::dig(self::manifest($directory), 'bin'));
             $this->assertFileIsReadable(self::root().'/src/'.$directory.'/'.$script);
-            $this->assertTrue(is_executable(self::root().'/src/'.$directory.'/'.$script), $script);
         }
     }
 
@@ -729,12 +728,14 @@ final class PackageManifestTest extends TestCase
         $this->assertSame($expected, $splits);
     }
 
-    // The executable bit is a POSIX mode; Windows starts the script through bash.
+    // The executable bit is a POSIX mode; Windows starts a script through php or bash.
     #[RequiresOperatingSystem('Linux|Darwin')]
     #[Test]
-    public function test_the_split_script_is_executable(): void
+    public function test_the_scripts_are_executable(): void
     {
-        $this->assertTrue(is_executable(self::root().'/bin/split'));
+        foreach (['bin/split', 'src/Cli/bin/regex', 'src/LanguageServer/bin/regex-lsp'] as $script) {
+            $this->assertTrue(is_executable(self::root().'/'.$script), $script);
+        }
     }
 
     #[Test]

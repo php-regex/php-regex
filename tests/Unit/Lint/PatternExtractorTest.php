@@ -401,7 +401,7 @@ final class PatternExtractorTest extends TestCase
         $reflection = new \ReflectionClass($this->patternExtractor);
         $method = $reflection->getMethod('collectPhpFiles');
 
-        $root = sys_get_temp_dir().'/regexparser_collect_'.uniqid('', true);
+        $root = str_replace('\\', '/', sys_get_temp_dir()).'/regexparser_collect_'.uniqid('', true);
         $nested = $root.'/nested';
         $vendor = $root.'/vendor';
 

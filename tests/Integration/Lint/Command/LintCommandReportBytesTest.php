@@ -24,6 +24,7 @@ use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -131,6 +132,8 @@ final class LintCommandReportBytesTest extends TestCase
      * own.
      */
     #[Test]
+    // A colon, a comma or a control character is no character of a name on Windows.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_github_annotation_escapes_a_colon_and_a_comma_in_its_properties(): void
     {
         file_put_contents('a:b,c.php', "<?php\npreg_match('/invalid[range/', \$x);\n");
@@ -174,6 +177,8 @@ final class LintCommandReportBytesTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideReadableFormats')]
+    // A colon, a comma or a control character is no character of a name on Windows.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_report_spells_the_hidden_characters_of_a_file_name(string $format, bool $ansi): void
     {
         $file = "ab\u{202E}cd\x1B[2Jx.php";
@@ -211,6 +216,8 @@ final class LintCommandReportBytesTest extends TestCase
      * after it is still a property of its own.
      */
     #[Test]
+    // A colon, a comma or a control character is no character of a name on Windows.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_github_annotation_escapes_a_file_name_with_hidden_characters_and_separators(): void
     {
         $file = "a:b,\u{202E}c\x1B[2Jx.php";

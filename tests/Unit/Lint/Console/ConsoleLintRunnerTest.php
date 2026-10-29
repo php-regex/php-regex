@@ -30,6 +30,7 @@ use PHPRegex\Linter\Source\PatternSourceInterface;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\Newlines;
 use PHPRegex\Tests\Support\TemporaryProject;
@@ -51,6 +52,7 @@ use Symfony\Component\Console\Output\StreamOutput;
  */
 final class ConsoleLintRunnerTest extends TestCase
 {
+    use InstalledLocales;
     use TemporaryProject;
 
     /**
@@ -134,6 +136,7 @@ final class ConsoleLintRunnerTest extends TestCase
     #[Test]
     public function test_the_banner_names_a_locale_other_than_c(): void
     {
+        $this->requiresLocale('C.UTF-8', 'The banner');
         $this->lint(self::request(['/a/'], setup: static function (): LintSetup {
             $analysis = new AnalysisService(RegexParser::create());
 
