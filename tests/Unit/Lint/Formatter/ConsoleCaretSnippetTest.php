@@ -90,7 +90,7 @@ final class ConsoleCaretSnippetTest extends TestCase
      */
     private function assertCaretUnder(string $character, string $output): void
     {
-        $lines = explode(\PHP_EOL, $output);
+        $lines = explode("\n", $output);
         foreach ($lines as $index => $line) {
             // Columns in characters: the arrow before the snippet is one
             // character of three bytes.

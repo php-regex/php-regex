@@ -69,7 +69,7 @@ final class LintCommandTargetOutputTest extends TestCase
         );
 
         $this->assertIsArray(json_decode($tester->getDisplay(true), true), 'stdout is not JSON: '.$tester->getDisplay(true));
-        $this->assertStringContainsString('Target: PHP 8.2, PCRE2 10.40 (php_regex.php_version)', $tester->getErrorOutput());
+        $this->assertStringContainsString('Target: PHP 8.2, PCRE2 10.40 (php_regex.php_version)', $tester->getErrorOutput(true));
     }
 
     #[Test]
@@ -83,7 +83,7 @@ final class LintCommandTargetOutputTest extends TestCase
             ['capture_stderr_separately' => true],
         );
 
-        $this->assertStringContainsString('Note: ', $tester->getErrorOutput());
+        $this->assertStringContainsString('Note: ', $tester->getErrorOutput(true));
         $this->assertStringNotContainsString('Note: ', $tester->getDisplay(true));
     }
 
@@ -133,12 +133,12 @@ final class LintCommandTargetOutputTest extends TestCase
             ['capture_stderr_separately' => true],
         );
 
-        $this->assertSame(Command::SUCCESS, $status, $tester->getErrorOutput());
+        $this->assertSame(Command::SUCCESS, $status, $tester->getErrorOutput(true));
         $this->assertStringContainsString(
             "Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.\n",
-            $tester->getErrorOutput(),
+            $tester->getErrorOutput(true),
         );
-        $this->assertStringContainsString('Target: PHP 7.3, PCRE2 10.32 (composer.json require.php)', $tester->getErrorOutput());
+        $this->assertStringContainsString('Target: PHP 7.3, PCRE2 10.32 (composer.json require.php)', $tester->getErrorOutput(true));
     }
 
     private function command(?string $projectDir, ?string $phpVersion = null): LintCommand

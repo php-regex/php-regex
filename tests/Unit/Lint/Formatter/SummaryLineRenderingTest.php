@@ -101,8 +101,8 @@ final class SummaryLineRenderingTest extends TestCase
     #[DataProvider('provideSummaries')]
     public function test_console_summary_renders_byte_for_byte(array $stats, string $plain, string $ansi, string $quiet, string $tags): void
     {
-        $this->assertSame(self::eol($plain), (new ConsoleFormatter(null, new OutputConfiguration(ansi: false)))->getSummary($stats));
-        $this->assertSame(self::eol($ansi), (new ConsoleFormatter(null, new OutputConfiguration(ansi: true)))->getSummary($stats));
+        $this->assertSame($plain, (new ConsoleFormatter(null, new OutputConfiguration(ansi: false)))->getSummary($stats));
+        $this->assertSame($ansi, (new ConsoleFormatter(null, new OutputConfiguration(ansi: true)))->getSummary($stats));
     }
 
     /**
@@ -112,7 +112,7 @@ final class SummaryLineRenderingTest extends TestCase
     #[DataProvider('provideSummaries')]
     public function test_quiet_report_is_the_summary_line_alone(array $stats, string $plain, string $ansi, string $quiet, string $tags): void
     {
-        $this->assertSame(self::eol($quiet), (new ConsoleFormatter(null, OutputConfiguration::quiet()))->format(new LintReport([], $stats)));
+        $this->assertSame($quiet, (new ConsoleFormatter(null, OutputConfiguration::quiet()))->format(new LintReport([], $stats)));
     }
 
     /**
@@ -125,8 +125,8 @@ final class SummaryLineRenderingTest extends TestCase
         $service = new AnalysisService(RegexParser::create(['cache' => null]));
         $links = new LinkFormatter(null, new RelativePathHelper('/project'));
 
-        $this->assertSame(self::eol($tags), (new ConsoleTagFormatter($service, $links, true))->format(new LintReport([], $stats)));
-        $this->assertSame(self::eol($tags), (new ConsoleTagFormatter($service, $links, true))->format(new LintReport([], $stats)));
+        $this->assertSame($tags, (new ConsoleTagFormatter($service, $links, true))->format(new LintReport([], $stats)));
+        $this->assertSame($tags, (new ConsoleTagFormatter($service, $links, true))->format(new LintReport([], $stats)));
     }
 
     /**
@@ -172,10 +172,5 @@ final class SummaryLineRenderingTest extends TestCase
     {
         $this->assertSame('0 invalid patterns', LintSummary::errors(['errors' => 0, 'warnings' => 0, 'optimizations' => 0]));
         $this->assertSame('0 invalid patterns', LintSummary::errors(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos' => 0, 'lintErrors' => 0]));
-    }
-
-    private static function eol(string $text): string
-    {
-        return str_replace("\n", \PHP_EOL, $text);
     }
 }

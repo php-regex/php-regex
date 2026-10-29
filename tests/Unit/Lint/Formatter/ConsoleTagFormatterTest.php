@@ -85,7 +85,7 @@ final class ConsoleTagFormatterTest extends TestCase
             // character becomes "\xHH"), then escaped as Symfony escapes it
             // from 6.4.44: every bracket, "\<" included, which 6.4.43 and
             // earlier left as it was.
-            "         <fg=gray>\u{21B3} ".self::escapedAsSymfony6444(ReportSpelling::displayText($text)).'</>'.\PHP_EOL,
+            "         <fg=gray>\u{21B3} ".self::escapedAsSymfony6444(ReportSpelling::displayText($text))."</>\n",
             $formatter->format($report),
         );
     }
@@ -224,7 +224,7 @@ final class ConsoleTagFormatterTest extends TestCase
         ]], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $this->assertStringContainsString(
-            '<fg=white>'.OutputFormatter::escape('/(<a>/').'</>'.\PHP_EOL,
+            '<fg=white>'.OutputFormatter::escape('/(<a>/')."</>\n",
             $formatter->format($report),
         );
     }
@@ -252,7 +252,7 @@ final class ConsoleTagFormatterTest extends TestCase
             'optimizations' => [],
         ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
-        $this->assertStringContainsString('<fg=white>'.OutputFormatter::escape($requirement).'</>'.\PHP_EOL, $formatter->format($report));
+        $this->assertStringContainsString('<fg=white>'.OutputFormatter::escape($requirement)."</>\n", $formatter->format($report));
     }
 
     /**
