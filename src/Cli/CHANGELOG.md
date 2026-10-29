@@ -8,6 +8,10 @@ CHANGELOG
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * `regex lint` names the author in its title and ends on the request for a
    GitHub star under `--verbose` only, as the bridges' `regex:lint` does.
+ * Without `--ansi` or `--no-ansi`, colour follows the standard output on
+   every system: a terminal gets it, a pipe does not, and on Windows a
+   console that renders the escape sequences; it never depended on the
+   posix extension.
  * `--locale <name>` names the `LC_CTYPE` locale patterns are judged under,
    and wins over `locale` in `regex.json`.
  * `--cache-dir <dir>` keeps what the running PCRE2 answered about Unicode

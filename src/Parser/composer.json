@@ -39,7 +39,8 @@
     "suggest": {
         "psr/cache": "To share the AST cache through a PSR-6 pool.",
         "psr/simple-cache": "To share the AST cache through a PSR-16 cache.",
-        "ext-intl": "To resolve \\N{name} escapes by Unicode name."
+        "ext-intl": "To resolve \\N{name} escapes by Unicode name.",
+        "ext-posix": "To check that the cache directory belongs to the running user."
     },
     "autoload": {
         "psr-4": {

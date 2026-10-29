@@ -273,6 +273,15 @@ final class ConsoleLintRunnerTest extends TestCase
         $this->assertTrue($this->context->isSourceEnabled('custom'));
     }
 
+    #[Test]
+    public function test_one_job_is_the_least_accepted(): void
+    {
+        $this->lint(self::request(['/a/'], format: 'json', jobs: '1'));
+
+        $this->assertInstanceOf(PatternSourceContext::class, $this->context);
+        $this->assertSame(1, $this->context->workers);
+    }
+
     /**
      * The format is read first: a run it cannot write stops before anything
      * else is said.
@@ -320,6 +329,10 @@ final class ConsoleLintRunnerTest extends TestCase
         yield 'a --jobs below one' => ['request' => ['jobs' => '0', 'paths' => ['missing']], 'message' => 'The --jobs value must be a positive integer.', 'stage' => 'usage', 'exitCode' => 2];
         yield 'a --jobs that is no whole number' => ['request' => ['jobs' => '2.5'], 'message' => 'The --jobs value must be a positive integer.', 'stage' => 'usage', 'exitCode' => 2];
         yield 'a --jobs with no value' => ['request' => ['jobs' => ''], 'message' => 'The --jobs value must be a positive integer.', 'stage' => 'usage', 'exitCode' => 2];
+        yield 'a --jobs with a sign' => ['request' => ['jobs' => '+5'], 'message' => 'The --jobs value must be a positive integer.', 'stage' => 'usage', 'exitCode' => 2];
+        yield 'a --jobs with a space around it' => ['request' => ['jobs' => ' 5'], 'message' => 'The --jobs value must be a positive integer.', 'stage' => 'usage', 'exitCode' => 2];
+        yield 'a --jobs with a leading zero' => ['request' => ['jobs' => '05'], 'message' => 'The --jobs value must be a positive integer.', 'stage' => 'usage', 'exitCode' => 2];
+        yield 'a --jobs past the integer range' => ['request' => ['jobs' => '99999999999999999999'], 'message' => 'The --jobs value must be a positive integer.', 'stage' => 'usage', 'exitCode' => 2];
         yield 'a path given that does not exist' => ['request' => ['paths' => ['missing'], 'setup' => self::failingSetup(new UnsupportedTargetException('No target.'))], 'message' => 'Path not found: missing', 'stage' => 'usage', 'exitCode' => 2];
         yield 'a configured path that does not exist' => ['request' => ['paths' => ['missing'], 'pathsSetting' => 'php_regex.paths'], 'message' => 'Path not found: missing (from php_regex.paths)', 'stage' => 'config', 'exitCode' => 2];
         yield 'a target the run cannot judge for' => ['request' => ['setup' => self::failingSetup(new UnsupportedTargetException('No target.'))], 'message' => 'No target.', 'stage' => 'target', 'exitCode' => 2];

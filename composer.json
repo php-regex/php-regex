@@ -132,6 +132,7 @@
         "phpstan/phpstan": "<2.0",
         "phpunit/phpunit": "<9.6",
         "rector/rector": "<2.4",
+        "sebastian/comparator": "<4.0.8",
         "symfony/config": "<6.4",
         "symfony/console": "<6.4",
         "symfony/dependency-injection": "<6.4",

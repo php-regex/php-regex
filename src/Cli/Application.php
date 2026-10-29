@@ -188,6 +188,22 @@ final class Application
     }
 
     /**
+     * Whether the standard output gets colour when neither --ansi nor
+     * --no-ansi says: a terminal does, except a Windows console that does
+     * not render the escape sequences; a pipe never does.
+     *
+     * @internal
+     *
+     * @param bool $terminal the standard output is a terminal
+     * @param bool $windows  the host is Windows
+     * @param bool $vt100    the console renders the escape sequences
+     */
+    public static function colourOnTerminal(bool $terminal, bool $windows, bool $vt100): bool
+    {
+        return $terminal && (!$windows || $vt100);
+    }
+
+    /**
      * Whether the command line asks for JSON of a command that has a JSON
      * mode, or of a command it does not name: a command without one reports
      * in text whatever the command line holds.
@@ -295,7 +311,11 @@ final class Application
 
     private function shouldUseAnsi(?bool $forced): bool
     {
-        return $forced ?? (\function_exists('posix_isatty') && posix_isatty(\STDOUT));
+        return $forced ?? self::colourOnTerminal(
+            stream_isatty(\STDOUT),
+            '\\' === \DIRECTORY_SEPARATOR,
+            \function_exists('sapi_windows_vt100_support') && sapi_windows_vt100_support(\STDOUT),
+        );
     }
 
     private function handleError(string $errorMessage, bool $json = false): int

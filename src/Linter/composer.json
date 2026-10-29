@@ -45,7 +45,7 @@
     "suggest": {
         "ext-intl": "To resolve \\N{...} escapes by Unicode name.",
         "ext-pcntl": "To lint in parallel worker processes.",
-        "ext-posix": "For TTY detection and worker signaling.",
+        "ext-posix": "To signal the lint workers.",
         "nikic/php-parser": "To extract patterns with a full PHP parser instead of the tokenizer.",
         "symfony/console": "To run the lint from a Symfony console command, as the Symfony and Laravel bridges do."
     },
