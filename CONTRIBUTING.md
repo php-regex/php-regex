@@ -268,8 +268,8 @@ origin when it runs, and on which every workflow that runs on each push to
 2.x passed: the tests, the engines, static analysis, the packages (each
 installed alone, its manifest checked against what its sources use, which
 `php tests/Tools/package_dependency_check.php Parser <project>` runs on one
-package from a project that installs it, after `composer install -d
-tools/dep-analyser`), coverage,
+package from a throwaway project that installs it, which the check adds to,
+after `composer install -d tools/dep-analyser`), coverage,
 the benchmarks, the workflow checks, the spelling, the public API since the
 latest tag, and the demo applications, which install the checkout into a
 Symfony and a Laravel application. The benchmark table a pull request gets

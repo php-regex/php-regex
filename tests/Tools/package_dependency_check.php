@@ -20,8 +20,10 @@ declare(strict_types=1);
  *     php tests/Tools/package_dependency_check.php <package> <project-dir>
  *
  * The package is a directory name under src/ ("Parser", "Symfony"); the
- * project directory holds the Composer install of that package. Exits with
- * the analyser's code (1 on a finding), 2 on a wrong argument.
+ * project directory holds the Composer install of that package, and is a
+ * throwaway: the check writes the analyser's files into it and requires
+ * what the manifest suggests beside the package. Exits with the analyser's
+ * code (1 on a finding), 2 on a wrong argument.
  */
 
 namespace PHPRegex\Tests\Tools;
@@ -39,6 +41,8 @@ if ('' === $package || !is_file($source) || !is_file($project.'/vendor/autoload.
     fwrite(\STDERR, "       the directory holds a Composer install of that package.\n");
     exit(2);
 }
+// absolute from here: the analyser runs from inside the project
+$project = (string) realpath($project);
 
 $fail = static function (string $message): never {
     fwrite(\STDERR, $message."\n");
