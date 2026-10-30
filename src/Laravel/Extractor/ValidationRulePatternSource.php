@@ -18,6 +18,7 @@ use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\InternalFailureException;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * Extracts regex patterns from Laravel validation rules.
@@ -100,9 +101,18 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     private function extractFromDirectory(string $directory, array $excludePaths): array
     {
         $patterns = [];
+        // Walked and matched with "/" on every host: an exclude keeps its
+        // meaning whichever separator spelled it.
         $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS),
+            new \RecursiveDirectoryIterator(Path::fromHost($directory), \RecursiveDirectoryIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
         );
+        $excludes = [];
+        foreach ($excludePaths as $excludePath) {
+            $excludePath = trim(Path::normalize($excludePath), '/');
+            if ('' !== $excludePath) {
+                $excludes[] = '/'.$excludePath.'/';
+            }
+        }
 
         /** @var \SplFileInfo $file */
         foreach ($iterator as $file) {
@@ -113,8 +123,8 @@ final class ValidationRulePatternSource implements PatternSourceInterface
             $filePath = $file->getPathname();
 
             // Check exclusions
-            foreach ($excludePaths as $excludePath) {
-                if (str_contains($filePath, \DIRECTORY_SEPARATOR.$excludePath.\DIRECTORY_SEPARATOR)) {
+            foreach ($excludes as $exclude) {
+                if (str_contains($filePath, $exclude)) {
                     continue 2;
                 }
             }

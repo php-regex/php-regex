@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\LibrarySource;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -47,7 +48,7 @@ final class LibraryExitTest extends TestCase
     {
         $file = (string) (new \ReflectionClass(ForkedWorkerPool::class))->getFileName();
 
-        $this->assertStringEndsWith('src/Linter/Parallel/ForkedWorkerPool.php', str_replace('\\', '/', $file));
+        $this->assertStringEndsWith('src/Linter/Parallel/ForkedWorkerPool.php', Path::fromHost($file));
     }
 
     #[Test]

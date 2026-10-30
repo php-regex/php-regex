@@ -27,6 +27,7 @@ use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\PatternExtractor;
+use PHPRegex\Parser\Text\Path;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -321,7 +322,13 @@ final class LintCommandComponentsTest extends TestCase
         $banner = $renderer->renderBanner($output, ProjectTarget::fromSources([], [], null, []), 2, [$configPath.'/regex.json', '/elsewhere/regex.dist.json']);
         $this->assertStringContainsString('PHPRegex', $banner);
         // A file under the working directory is named from it, any other in full.
-        $this->assertStringContainsString('Configuration : regex.json, /elsewhere/regex.dist.json', $banner);
+        // A path from the root is on the drive of the working directory on Windows.
+        $this->assertStringContainsString('Configuration : regex.json, '.(Path::onWindows() ? substr((string) getcwd(), 0, 2) : '').'/elsewhere/regex.dist.json', $banner);
+
+        // Where this PHP cannot fork, the banner says one process ran and why; where it can, the count planned.
+        $this->assertStringContainsString('Processes     : 1 (this PHP cannot fork: --jobs 2 ran in one process)', $renderer->renderBanner($output, ProjectTarget::fromSources([], [], null, []), 2, [$configPath.'/regex.json'], forking: false));
+        $this->assertStringContainsString("Processes     : 2\n", $renderer->renderBanner($output, ProjectTarget::fromSources([], [], null, []), 2, [$configPath.'/regex.json'], forking: true));
+        $this->assertStringContainsString("Processes : 1\n", $renderer->renderBanner($output, ProjectTarget::fromSources([], [], null, []), 1, [], forking: false));
     }
 
     #[Test]

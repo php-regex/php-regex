@@ -16,6 +16,7 @@ namespace PHPRegex\LanguageServer\Document;
 use PHPRegex\Linter\Extraction\MemoryBudget;
 use PHPRegex\Linter\Extraction\PatternAttributeScanner;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * The functions and static methods that declare a parameter with
@@ -430,8 +431,12 @@ final class PatternDeclarations
             return null;
         }
 
-        // parse_url() reads file:///C:/project as C:/project.
-        return rawurldecode((string) parse_url($uri, \PHP_URL_PATH));
+        // parse_url() reads file:///C:/project as C:/project, and the
+        // file:///c%3A/project an editor sends for a Windows path as
+        // /c:/project once decoded: the slash before the drive goes.
+        $path = rawurldecode((string) parse_url($uri, \PHP_URL_PATH));
+
+        return \strlen($path) >= 4 && '/' === $path[0] && ':' === $path[2] && '/' === $path[3] && Ascii::isAlpha($path[1]) ? substr($path, 1) : $path;
     }
 
     /**
@@ -724,7 +729,7 @@ final class PatternDeclarations
 
     private static function normalize(string $path): string
     {
-        return str_replace('\\', '/', $path);
+        return Path::normalize($path);
     }
 
     private static function isAbsolute(string $path): bool

@@ -15,8 +15,10 @@ namespace PHPRegex\Tests\Unit\Lsp;
 
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreRule;
+use PHPRegex\Tests\TestUtils\FileUri;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -58,7 +60,7 @@ final class ServerInlineIgnoreTest extends TestCase
         $this->output = $output;
         $this->input = $input;
 
-        $this->root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-ignore-'.bin2hex(random_bytes(6));
+        $this->root = Path::fromHost(sys_get_temp_dir()).'/regex-parser-lsp-ignore-'.bin2hex(random_bytes(6));
         mkdir($this->root.'/src', 0o700, true);
     }
 
@@ -360,7 +362,7 @@ preg_match('/(a/', \$subject);
     {
         $this->server = new Server(null, $this->input, transport: new Transport($this->output));
         $this->send(
-            ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => 'file://'.$this->root] + ([] === $options ? [] : ['initializationOptions' => $options])],
+            ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => FileUri::of($this->root)] + ([] === $options ? [] : ['initializationOptions' => $options])],
             ['method' => 'initialized', 'params' => []],
         );
     }
@@ -400,7 +402,7 @@ preg_match('/(a/', \$subject);
 
     private function uri(string $relative): string
     {
-        return 'file://'.$this->root.'/'.$relative;
+        return FileUri::of($this->root.'/'.$relative);
     }
 
     /**

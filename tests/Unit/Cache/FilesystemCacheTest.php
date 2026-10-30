@@ -12,12 +12,13 @@ declare(strict_types=1);
  */
 
 namespace PHPRegex\Tests\Unit\Cache {
-    use PHPRegex\Parser\Cache\FilesystemCache;
     use PHPRegex\Parser\Cache\AstSerializer;
+    use PHPRegex\Parser\Cache\FilesystemCache;
     use PHPRegex\Parser\Exception\CacheException;
     use PHPRegex\Parser\Node\RegexNode;
     use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
     use PHPRegex\Toolkit\Regex;
+    use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
     use PHPUnit\Framework\Attributes\Test;
     use PHPUnit\Framework\TestCase;
 
@@ -88,6 +89,8 @@ namespace PHPRegex\Tests\Unit\Cache {
             $this->assertSame(['hits' => 0, 'misses' => 1], $cache->getStats());
         }
 
+        // A read-only mode on a directory: Windows writes into it all the same.
+        #[RequiresOperatingSystem('Linux|Darwin')]
         #[Test]
         public function test_write_throws_on_unwritable_directory(): void
         {

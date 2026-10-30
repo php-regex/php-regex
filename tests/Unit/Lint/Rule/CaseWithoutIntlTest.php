@@ -88,10 +88,10 @@ final class CaseWithoutIntlTest extends TestCase
     public function test_lint_rules_do_not_read_intl(): void
     {
         $readers = [];
-        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(__DIR__.'/../../../../src', \FilesystemIterator::SKIP_DOTS));
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(\dirname(__DIR__, 4).'/src', \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS));
         foreach ($files as $file) {
             if ($file instanceof \SplFileInfo && 'php' === $file->getExtension() && str_contains((string) file_get_contents($file->getPathname()), 'IntlChar')) {
-                $readers[] = str_replace('\\', '/', substr($file->getPathname(), (int) strpos($file->getPathname(), 'src/')));
+                $readers[] = 'src/'.substr($file->getPathname(), \strlen(\dirname(__DIR__, 4).'/src/'));
             }
         }
         sort($readers);

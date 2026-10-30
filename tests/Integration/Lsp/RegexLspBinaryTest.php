@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Lsp;
 
+use PHPRegex\Tests\TestUtils\FileUri;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -76,9 +77,9 @@ final class RegexLspBinaryTest extends TestCase
     #[Test]
     public function test_a_full_session_writes_nothing_but_frames_on_stdout(): void
     {
-        $uri = 'file://'.$this->directory.'/a.php';
+        $uri = FileUri::of($this->directory.'/a.php');
         $run = $this->serve(
-            self::frame(['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => [], 'rootUri' => 'file://'.$this->directory, 'trace' => 'verbose']])
+            self::frame(['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => [], 'rootUri' => FileUri::of($this->directory), 'trace' => 'verbose']])
             .self::frame(['method' => 'initialized'])
             .self::frame(['method' => 'textDocument/didOpen', 'params' => ['textDocument' => ['uri' => $uri, 'languageId' => 'php', 'version' => 1, 'text' => "<?php\npreg_match('/(é/u', \$s);\n"]]])
             .self::frame(['id' => 2, 'method' => 'textDocument/hover', 'params' => ['textDocument' => ['uri' => $uri], 'position' => ['line' => 1, 'character' => 13]]])

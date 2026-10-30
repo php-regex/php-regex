@@ -62,7 +62,7 @@ final class PublicSurfaceTest extends TestCase
     public static function provideClasses(): iterable
     {
         foreach (self::PUBLIC as $package => $public) {
-            $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(self::src().'/'.$package, \FilesystemIterator::SKIP_DOTS));
+            $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(self::src().'/'.$package, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS));
             foreach ($files as $file) {
                 if (!$file instanceof \SplFileInfo || 'php' !== $file->getExtension()) {
                     continue;

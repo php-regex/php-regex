@@ -71,7 +71,7 @@ final class OrganizationProfileTest extends TestCase
     {
         $root = self::root().'/.github/organization';
         $files = [];
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS));
         foreach ($iterator as $file) {
             $this->assertInstanceOf(\SplFileInfo::class, $file);
             $files[] = substr($file->getPathname(), \strlen($root) + 1);

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Support;
 
+use PHPRegex\Parser\Text\Path;
 use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\Before;
 
@@ -59,7 +60,8 @@ trait TemporaryProject
     {
         $directory = sys_get_temp_dir().'/regex-parser-project-'.bin2hex(random_bytes(8));
         mkdir($directory, 0o700, true);
-        $directory = (string) realpath($directory);
+        // Spelled with "/" on every host, as the library spells the paths it reports.
+        $directory = Path::fromHost((string) realpath($directory));
         $this->temporaryProjects[] = $directory;
 
         foreach ($files as $path => $contents) {

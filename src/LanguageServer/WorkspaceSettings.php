@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\LanguageServer;
 
+use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\LanguageServer\Protocol\TraceLevel;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Linter\Config\LintArguments;
@@ -226,14 +227,9 @@ final class WorkspaceSettings
         $uri = \is_array($folders) && \is_array($folders[0] ?? null) ? ($folders[0]['uri'] ?? null) : null;
         $uri ??= $params['rootUri'] ?? null;
 
-        if (!\is_string($uri) || !str_starts_with($uri, 'file://')) {
-            return null;
-        }
+        $path = \is_string($uri) ? PatternDeclarations::pathOf($uri) : null;
 
-        // parse_url() reads file:///C:/project as C:/project.
-        $path = rawurldecode((string) parse_url($uri, \PHP_URL_PATH));
-
-        return is_dir($path) ? $path : null;
+        return null !== $path && is_dir($path) ? $path : null;
     }
 
     /**

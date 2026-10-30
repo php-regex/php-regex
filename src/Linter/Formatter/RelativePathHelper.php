@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * How the reports, the links and the lint banner name a file: relative to
@@ -45,7 +46,7 @@ final class RelativePathHelper
             $basePath = false === $cwd ? null : $cwd;
         }
 
-        return null === $basePath ? null : self::slashes($basePath);
+        return null === $basePath ? null : Path::fromHost($basePath);
     }
 
     /**
@@ -62,9 +63,14 @@ final class RelativePathHelper
             return $file;
         }
 
-        $path = self::slashes($file);
-        $base = self::collapse(self::slashes($base));
-        $absolute = self::collapse('' !== self::root($path) ? $path : $base.'/'.$path);
+        $path = Path::fromHost($file);
+        $base = self::collapse(Path::fromHost($base));
+        $absolute = self::collapse(match (self::root($path)) {
+            '' => $base.'/'.$path,
+            // From the root of a drive: the one the base is on.
+            '/' => \strlen(self::root($base)) > 1 ? self::root($base).substr($path, 1) : $path,
+            default => $path,
+        });
 
         $relative = self::under($absolute, $base);
         if (null !== $relative) {
@@ -76,7 +82,7 @@ final class RelativePathHelper
         $resolvedFile = realpath($file);
         $resolvedBase = realpath($base);
         if (false !== $resolvedFile && false !== $resolvedBase) {
-            $relative = self::under(self::slashes($resolvedFile), self::slashes($resolvedBase));
+            $relative = self::under(Path::fromHost($resolvedFile), Path::fromHost($resolvedBase));
             if (null !== $relative) {
                 return $relative;
             }
@@ -91,20 +97,11 @@ final class RelativePathHelper
      */
     public static function absolutize(string $path, string $base): string
     {
-        if ('' === $path || str_contains($path, '://') || '' !== self::root(self::slashes($path))) {
+        if ('' === $path || str_contains($path, '://') || '' !== self::root(Path::fromHost($path))) {
             return $path;
         }
 
         return rtrim($base, '/\\').'/'.$path;
-    }
-
-    /**
-     * The path with "/" separators on Windows; elsewhere a backslash is
-     * part of a name.
-     */
-    private static function slashes(string $path): string
-    {
-        return '\\' === \DIRECTORY_SEPARATOR ? str_replace('\\', '/', $path) : $path;
     }
 
     /**

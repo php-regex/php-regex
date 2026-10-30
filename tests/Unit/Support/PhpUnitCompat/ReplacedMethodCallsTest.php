@@ -40,7 +40,7 @@ final class ReplacedMethodCallsTest extends TestCase
         $polyfills = $tests.'/Support/PhpUnitCompat/Polyfill/';
 
         $calls = [];
-        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($tests, \FilesystemIterator::SKIP_DOTS));
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($tests, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS));
         foreach ($files as $file) {
             if (!$file instanceof \SplFileInfo || 'php' !== $file->getExtension() || str_starts_with($file->getPathname(), $polyfills)) {
                 continue;

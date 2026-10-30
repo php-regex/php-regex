@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\AbstractTraversingVisitor;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Tests\Support\Paths;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -230,7 +231,8 @@ final class VisitorGenericDefaultTest extends TestCase
         }
 
         foreach ($files as $path => $file) {
-            if ($path === $fixture && \is_array($file)) {
+            // PHPStan spells the file as the host does.
+            if (Paths::same((string) $path, $fixture) && \is_array($file)) {
                 $messages = $file['messages'] ?? [];
 
                 return \is_array($messages) ? array_values($messages) : [];

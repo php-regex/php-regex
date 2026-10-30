@@ -118,6 +118,7 @@ final class AstFingerprint
         'src/Parser/Text/Ascii.php',
         'src/Parser/Text/Bytes.php',
         'src/Parser/Text/NearMiss.php',
+        'src/Parser/Text/Path.php',
         'src/Parser/Text/Utf8.php',
         // The HIR and the automata built from it: a persistent DFA cache is
         // keyed on this version too, so a change there must drop it.

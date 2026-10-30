@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Toolkit;
 
+use PHPRegex\Tests\Support\Paths;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -88,7 +89,13 @@ final class OptionsShapeTest extends TestCase
             self::assertIsArray($json, $stdout.$stderr);
             $files = $json['files'] ?? [];
             self::assertIsArray($files);
-            $file = $files[$fixture] ?? [];
+            // PHPStan spells the file as the host does.
+            $file = [];
+            foreach ($files as $path => $messages) {
+                if (Paths::same((string) $path, $fixture)) {
+                    $file = $messages;
+                }
+            }
             self::assertIsArray($file);
             $messages = $file['messages'] ?? [];
             self::assertIsArray($messages);

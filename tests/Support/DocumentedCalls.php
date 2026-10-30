@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Support;
 
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * The method calls of a PHP code example, each with the library class it is
@@ -643,7 +644,7 @@ final class DocumentedCalls
             if (!$file instanceof \SplFileInfo || 'php' !== $file->getExtension()) {
                 continue;
             }
-            $relative = str_replace('\\', '/', substr($file->getPathname(), \strlen(DocumentationPages::ROOT.'/src/'), -4));
+            $relative = Path::fromHost(substr($file->getPathname(), \strlen(DocumentationPages::ROOT.'/src/'), -4));
             if (str_contains('/'.$relative.'/', '/Tests/') || str_contains('/'.$relative.'/', '/Resources/')) {
                 continue;
             }

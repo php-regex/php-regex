@@ -23,8 +23,10 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -321,6 +323,8 @@ final class LintCommandEdgeCasesTest extends TestCase
     }
 
     #[Test]
+    // A mode without read bits: Windows reads the directory all the same.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_lint_command_reports_collection_failure(): void
     {
         $dir = $this->makeTempDir();
@@ -412,7 +416,7 @@ final class LintCommandEdgeCasesTest extends TestCase
 
     private function makeTempDir(): string
     {
-        $dir = sys_get_temp_dir().'/regex-parser-lint-'.bin2hex(random_bytes(4));
+        $dir = Path::fromHost(sys_get_temp_dir()).'/regex-parser-lint-'.bin2hex(random_bytes(4));
         @mkdir($dir, 0o777, true);
         $this->tempDirs[] = $dir;
 

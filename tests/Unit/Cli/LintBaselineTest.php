@@ -24,7 +24,9 @@ use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -49,8 +51,7 @@ final class LintBaselineTest extends TestCase
     protected function setUp(): void
     {
         $this->previousDirectory = (string) getcwd();
-        $this->directory = sys_get_temp_dir().'/regex-lint-baseline-'.bin2hex(random_bytes(6));
-        mkdir($this->directory);
+        $this->directory = TemporaryDirectory::create('regex-lint-baseline');
     }
 
     protected function tearDown(): void
@@ -261,6 +262,8 @@ final class LintBaselineTest extends TestCase
      * with its backslashes turned to slashes and nothing taken off. PHP 8.5
      * and older then give no working directory, PHP 8.6 the removed one.
      */
+    // Windows keeps a working directory from being removed.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     #[Test]
     public function test_generate_keeps_the_path_when_the_working_directory_is_gone(): void
     {

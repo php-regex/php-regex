@@ -15,6 +15,7 @@ namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * Checkstyle XML output formatter.
@@ -115,7 +116,7 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
 
     private function normalizeFile(string $file): string
     {
-        return str_replace('\\', '/', $file);
+        return Path::normalize($file);
     }
 
     private function normalizeLine(int $line): int

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Cli;
 
+use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,7 +38,7 @@ final class EntryPointAutoloadTest extends TestCase
 
     protected function tearDown(): void
     {
-        exec('rm -rf '.escapeshellarg($this->root));
+        TemporaryDirectory::remove($this->root);
     }
 
     #[Test]
@@ -91,9 +92,14 @@ final class EntryPointAutoloadTest extends TestCase
         mkdir(\dirname($script), 0o777, true);
         copy(\dirname(__DIR__, 3).'/'.$source, $script);
 
-        $output = [];
-        exec(escapeshellarg(\PHP_BINARY).' '.escapeshellarg($script).' --version 2>&1 >/dev/null', $output, $code);
-        $stderr = implode("\n", $output);
+        // Started without a shell: the standard error alone is read.
+        $process = proc_open([\PHP_BINARY, $script, '--version'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $this->assertIsResource($process);
+        stream_get_contents($pipes[1]);
+        $stderr = (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $code = proc_close($process);
 
         $this->assertSame(1, $code, $stderr);
         $this->assertStringContainsString('composer install', $stderr);

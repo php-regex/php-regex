@@ -66,7 +66,7 @@ final class ConsoleFormatter extends AbstractOutputFormatter
                 $parts[] = $this->formatPatternContext($result);
                 $parts[] = $this->formatIssues($result['issues'], ConsoleResultText::pattern($result));
                 $parts[] = $this->formatOptimizations($result['optimizations']);
-                $parts[] = \PHP_EOL;
+                $parts[] = "\n";
             }
         }
 
@@ -83,16 +83,16 @@ final class ConsoleFormatter extends AbstractOutputFormatter
 
     public function formatFooter(): string
     {
-        return '  '.$this->markup->style('If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex', ConsoleStyle::Muted).\PHP_EOL.\PHP_EOL;
+        return '  '.$this->markup->style('If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex', ConsoleStyle::Muted)."\n\n";
     }
 
     private function formatQuiet(LintReport $report): string
     {
         if ($report->stats['errors'] > 0) {
-            return \sprintf('FAIL: %s, %s.'.\PHP_EOL, LintSummary::errors($report->stats), LintSummary::failureCounts($report->stats));
+            return \sprintf("FAIL: %s, %s.\n", LintSummary::errors($report->stats), LintSummary::failureCounts($report->stats));
         }
 
-        return \sprintf('%s: %s, %d optimizations available.'.\PHP_EOL, $report->stats['warnings'] > 0 ? 'WARN' : 'PASS', LintSummary::passCounts($report->stats), $report->stats['optimizations']);
+        return \sprintf("%s: %s, %d optimizations available.\n", $report->stats['warnings'] > 0 ? 'WARN' : 'PASS', LintSummary::passCounts($report->stats), $report->stats['optimizations']);
     }
 
     /**
@@ -128,13 +128,13 @@ final class ConsoleFormatter extends AbstractOutputFormatter
 
         $hasPattern = null !== $pattern && '' !== $pattern;
         $label = '' !== $prefix ? $prefix : ($hasPattern ? '(pattern)' : '(pattern unavailable)');
-        $output = '  '.$this->markup->style($label, ConsoleStyle::AccentBold).\PHP_EOL;
+        $output = '  '.$this->markup->style($label, ConsoleStyle::AccentBold)."\n";
         if ($hasPattern) {
-            $output .= '      '.$this->markup->style('→ ', ConsoleStyle::AccentBold).$this->formatPatternForDisplay($pattern).\PHP_EOL;
+            $output .= '      '.$this->markup->style('→ ', ConsoleStyle::AccentBold).$this->formatPatternForDisplay($pattern)."\n";
         }
 
         if (\is_string($location) && '' !== $location) {
-            $output .= '     '.$this->markup->style(ConsoleLayout::ARROW.' '.ReportSpelling::displayField($location), ConsoleStyle::Accent).\PHP_EOL;
+            $output .= '     '.$this->markup->style(ConsoleLayout::ARROW.' '.ReportSpelling::displayField($location), ConsoleStyle::Accent)."\n";
         }
 
         return $output;
@@ -242,7 +242,7 @@ final class ConsoleFormatter extends AbstractOutputFormatter
 
     private function formatDiffLine(string $sign, string $line, ConsoleStyle $signStyle): string
     {
-        return '         '.$this->markup->style($sign.' ', $signStyle).$line.\PHP_EOL;
+        return '         '.$this->markup->style($sign.' ', $signStyle).$line."\n";
     }
 
     /**
@@ -274,7 +274,7 @@ final class ConsoleFormatter extends AbstractOutputFormatter
             $insertLines .= $this->formatDiffLine('+', $line, ConsoleStyle::Success);
         }
 
-        $separator = '' !== $deleteLines && '' !== $insertLines ? '         '.$this->markup->style('---', ConsoleStyle::Muted).\PHP_EOL : '';
+        $separator = '' !== $deleteLines && '' !== $insertLines ? '         '.$this->markup->style('---', ConsoleStyle::Muted)."\n" : '';
 
         return $deleteLines.$separator.$insertLines;
     }

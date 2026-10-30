@@ -26,6 +26,11 @@ use PHPUnit\Framework\TestCase;
 final class ConsoleWidthTest extends TestCase
 {
     /**
+     * The null device, where a terminal is asked for and none answers.
+     */
+    private const NULL_DEVICE = '\\' === \DIRECTORY_SEPARATOR ? 'NUL' : '/dev/null'; // a constant expression: no call here
+
+    /**
      * @return iterable<string, array{columns: string|false, expected: ?int}>
      */
     public static function provideColumns(): iterable
@@ -88,7 +93,7 @@ final class ConsoleWidthTest extends TestCase
         $this->assertTrue(null === $width || ($width >= 40 && $width <= 120), var_export($width, true));
 
         // Asked of something that is no terminal, stty answers nothing: no width.
-        $this->assertNull(ConsoleWidth::fromTerminal('/dev/null'));
+        $this->assertNull(ConsoleWidth::fromTerminal(self::NULL_DEVICE));
     }
 
     /**
@@ -112,10 +117,10 @@ final class ConsoleWidthTest extends TestCase
     #[Test]
     public function test_the_probe_reads_the_columns_the_command_prints(): void
     {
-        $this->assertSame(100, ConsoleWidth::fromTerminal('/dev/null', ['printf', '24 100\n']));
-        $this->assertSame(120, ConsoleWidth::fromTerminal('/dev/null', ['printf', '24 500\n']));
-        $this->assertNull(ConsoleWidth::fromTerminal('/dev/null', ['printf', 'no terminal']));
-        $this->assertNull(ConsoleWidth::fromTerminal('/dev/null', ['printf', '']));
+        $this->assertSame(100, ConsoleWidth::fromTerminal(self::NULL_DEVICE, ['printf', '24 100\n']));
+        $this->assertSame(120, ConsoleWidth::fromTerminal(self::NULL_DEVICE, ['printf', '24 500\n']));
+        $this->assertNull(ConsoleWidth::fromTerminal(self::NULL_DEVICE, ['printf', 'no terminal']));
+        $this->assertNull(ConsoleWidth::fromTerminal(self::NULL_DEVICE, ['printf', '']));
     }
 
     #[Test]

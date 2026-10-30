@@ -15,6 +15,7 @@ namespace PHPRegex\Parser\Hir;
 
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * The engine's answers about Unicode classes, kept in a directory between
@@ -129,7 +130,7 @@ final class ClassSetStore
      */
     private function isTrusted(): bool
     {
-        if ('\\' === \DIRECTORY_SEPARATOR || !is_dir($this->directory)) {
+        if (Path::onWindows() || !is_dir($this->directory)) {
             return true;
         }
 

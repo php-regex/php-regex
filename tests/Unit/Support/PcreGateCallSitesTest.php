@@ -138,7 +138,7 @@ final class PcreGateCallSitesTest extends TestCase
     {
         $callSites = [];
         $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS),
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
         );
 
         foreach ($files as $file) {

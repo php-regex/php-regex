@@ -15,6 +15,8 @@ namespace PHPRegex\Tests\Unit\Lsp;
 
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Parser\Text\Path;
+use PHPRegex\Tests\TestUtils\FileUri;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -49,7 +51,7 @@ final class ServerLiteralReadingsTest extends TestCase
         $this->output = $output;
         $this->input = $input;
 
-        $this->root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-readings-'.bin2hex(random_bytes(6));
+        $this->root = Path::fromHost(sys_get_temp_dir()).'/regex-parser-lsp-readings-'.bin2hex(random_bytes(6));
         mkdir($this->root.'/src', 0o700, true);
     }
 
@@ -75,7 +77,7 @@ final class ServerLiteralReadingsTest extends TestCase
      */
     private function utf8Diagnostics(string $secondCall): array
     {
-        $uri = 'file://'.$this->root.'/src/M.php';
+        $uri = FileUri::of($this->root.'/src/M.php');
         // The source spells the byte with an escape, as an editor holds it:
         // a raw 0xff byte is no UTF-8, which the protocol carries.
         $text = "<?php\nuse Nette\\Utils\\Strings;\n\nfinal class M\n{\n    private const RE = \"/\\xFF/\";\n\n    public function run(string \$s): void\n    {\n        preg_match(self::RE, \$s);".$secondCall."\n    }\n}\n";
@@ -84,7 +86,7 @@ final class ServerLiteralReadingsTest extends TestCase
         rewind($this->output);
         $server = new Server(null, $this->input, transport: new Transport($this->output));
         $messages = [
-            ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => 'file://'.$this->root]],
+            ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => FileUri::of($this->root)]],
             ['method' => 'initialized', 'params' => []],
             ['method' => 'textDocument/didOpen', 'params' => ['textDocument' => ['uri' => $uri, 'languageId' => 'php', 'version' => 1, 'text' => $text]]],
         ];

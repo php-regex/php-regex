@@ -21,6 +21,7 @@ use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Tests\Support\StringListAssertions;
@@ -401,7 +402,7 @@ final class PatternExtractorTest extends TestCase
         $reflection = new \ReflectionClass($this->patternExtractor);
         $method = $reflection->getMethod('collectPhpFiles');
 
-        $root = sys_get_temp_dir().'/regexparser_collect_'.uniqid('', true);
+        $root = Path::fromHost(sys_get_temp_dir()).'/regexparser_collect_'.uniqid('', true);
         $nested = $root.'/nested';
         $vendor = $root.'/vendor';
 
@@ -481,6 +482,25 @@ final class PatternExtractorTest extends TestCase
         yield 'no base: every file under a vendor directory' => ['base' => null, 'expected' => []];
         yield 'the project' => ['base' => 'vendor/app', 'expected' => ['vendor/app/src/Keep.php']];
         yield 'the project, written with a trailing slash' => ['base' => 'vendor/app/', 'expected' => ['vendor/app/src/Keep.php']];
+    }
+
+    /**
+     * An exclude is a path whichever separator spells it, and the files
+     * found are spelled with "/" on every host: an exclude written for
+     * Windows reads the same tree as one written for Linux.
+     */
+    #[Test]
+    public function test_an_exclude_written_with_backslashes_is_read_as_a_path(): void
+    {
+        $root = $this->makeProject([
+            'app/src/Keep.php' => "<?php\n",
+            'app/src/Legacy/Old.php' => "<?php\n",
+        ]);
+        $this->extractor->method('extract')->willReturnCallback(self::onePerFile(...));
+
+        $occurrences = $this->patternExtractor->extract([$root.'/app'], ['src\\Legacy\\'], excludeBase: $root.'\\app');
+
+        $this->assertSame([$root.'/app/src/Keep.php'], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->file, $occurrences));
     }
 
     /**

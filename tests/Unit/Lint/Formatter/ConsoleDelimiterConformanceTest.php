@@ -96,7 +96,7 @@ final class ConsoleDelimiterConformanceTest extends TestCase
         $output = self::formatter()->format(self::reportWithRewrite($original, $optimized));
 
         $this->assertStringNotContainsString(self::LINE_DIFF_MARKER, $output);
-        $this->assertStringContainsString('         - \x00/a{1}\n b/x'.\PHP_EOL, $output);
+        $this->assertStringContainsString("         - \\x00/a{1}\\n b/x\n", $output);
     }
 
     #[Test]

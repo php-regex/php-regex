@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * @internal
@@ -148,7 +149,7 @@ final class LinkFormatter
 
     private function normalizePath(string $path): string
     {
-        return str_replace('\\', '/', $path);
+        return Path::normalize($path);
     }
 
     private function encodePath(string $path): string

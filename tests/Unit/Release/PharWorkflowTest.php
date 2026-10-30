@@ -14,7 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Release;
 
 use PHPRegex\Cli\SelfUpdate\SelfUpdater;
+use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -25,6 +27,7 @@ use PHPUnit\Framework\TestCase;
  * that live in the check-phar action, which the packages workflow runs on
  * every push as well.
  */
+#[RequiresOperatingSystem('Linux|Darwin')]
 final class PharWorkflowTest extends TestCase
 {
     /**
@@ -54,7 +57,7 @@ final class PharWorkflowTest extends TestCase
     protected function tearDown(): void
     {
         if ('' !== $this->scratch) {
-            exec('rm -rf '.escapeshellarg($this->scratch));
+            TemporaryDirectory::remove($this->scratch);
         }
     }
 

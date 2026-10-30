@@ -522,6 +522,31 @@ final class CpuCoreCounterTest extends TestCase
     }
 
     /**
+     * Windows sets NUMBER_OF_PROCESSORS for every process and has none of
+     * the files or commands: the variable counts, before any command is
+     * started, and only when it is a count.
+     */
+    #[Test]
+    #[DataProvider('provideProcessorCounts')]
+    public function test_count_reads_the_processor_count_windows_exports(string $exported, int $expected): void
+    {
+        $counter = $this->counter(files: [], commands: [self::NPROC => '6'], env: ['NUMBER_OF_PROCESSORS' => $exported]);
+
+        $this->assertSame($expected, $counter->count());
+    }
+
+    /**
+     * @return iterable<string, array{exported: string, expected: int}>
+     */
+    public static function provideProcessorCounts(): iterable
+    {
+        yield 'a count' => ['exported' => '8', 'expected' => 8];
+        yield 'a count with a line break' => ['exported' => "4\n", 'expected' => 4];
+        yield 'not a count: the commands answer' => ['exported' => 'eight', 'expected' => 6];
+        yield 'zero: the commands answer' => ['exported' => '0', 'expected' => 6];
+    }
+
+    /**
      * @param array<string, string|null> $files    path => content, null or absent = unreadable
      * @param array<string, string|null> $commands command => stdout, null or absent = failed
      * @param array<string, string>      $env

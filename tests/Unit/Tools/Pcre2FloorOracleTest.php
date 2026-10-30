@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Tools;
 
 use PHPRegex\Tests\TestUtils\Pcre2FloorOracle;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -291,6 +292,8 @@ final class Pcre2FloorOracleTest extends TestCase
     }
 
     #[Test]
+    // The stub pcre2test is a bash script.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_check_binary_accepts_the_floor_build(): void
     {
         $binary = $this->stub("PCRE2 version 10.40 2022-04-14\n", self::FLOOR_CONFIGURATION, []);
@@ -299,6 +302,8 @@ final class Pcre2FloorOracleTest extends TestCase
     }
 
     #[Test]
+    // The stub pcre2test is a bash script.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_check_binary_refuses_the_right_version_with_another_configuration(): void
     {
         $binary = $this->stub(
@@ -311,6 +316,8 @@ final class Pcre2FloorOracleTest extends TestCase
     }
 
     #[Test]
+    // The stub pcre2test is a bash script.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_check_binary_refuses_another_version(): void
     {
         $binary = $this->stub("PCRE2 version 10.48 2026-08-31\n", self::FLOOR_CONFIGURATION, []);
@@ -319,6 +326,8 @@ final class Pcre2FloorOracleTest extends TestCase
     }
 
     #[Test]
+    // The stub pcre2test is a bash script.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_observe_all_reads_each_case_from_one_batch(): void
     {
         $rejected = Pcre2FloorOracle::pcre2testLine('[abc', '/', '');
@@ -340,6 +349,9 @@ final class Pcre2FloorOracleTest extends TestCase
     }
 
     #[Test]
+    // The stub pcre2test is a bash script: where it cannot start, the refusal
+    // expected here would come from the launch, not from the output.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_observe_all_refuses_a_batch_where_a_line_ran_into_the_next(): void
     {
         // Transcript of the real 10.40 pcre2test on this batch: "/ab(\/..."
@@ -364,6 +376,9 @@ final class Pcre2FloorOracleTest extends TestCase
     }
 
     #[Test]
+    // The stub pcre2test is a bash script: where it cannot start, the refusal
+    // expected here would come from the launch, not from the output.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_observe_all_refuses_a_segment_that_does_not_echo_the_line_written(): void
     {
         $written = Pcre2FloorOracle::pcre2testLine('ok', '/', '');

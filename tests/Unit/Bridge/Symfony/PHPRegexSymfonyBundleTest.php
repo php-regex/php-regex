@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony;
 
 use PHPRegex\Symfony\PHPRegexSymfonyBundle;
+use PHPRegex\Tests\Support\Paths;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
@@ -25,7 +26,7 @@ final class PHPRegexSymfonyBundleTest extends TestCase
     {
         $bundle = new PHPRegexSymfonyBundle();
 
-        $this->assertSame(\dirname(__DIR__, 4).'/src/Symfony', $bundle->getPath());
+        $this->assertTrue(Paths::same(\dirname(__DIR__, 4).'/src/Symfony', $bundle->getPath()), $bundle->getPath());
     }
 
     /**

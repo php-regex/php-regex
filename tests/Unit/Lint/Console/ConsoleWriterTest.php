@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Console;
 
 use PHPRegex\Linter\Console\ConsoleWriter;
+use PHPRegex\Tests\Support\Newlines;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -35,7 +36,7 @@ final class ConsoleWriterTest extends TestCase
 
         ConsoleWriter::document($output, "{\"pattern\":\"/<b>a/\"}\n");
 
-        $this->assertSame("{\"pattern\":\"/<b>a/\"}\n", $output->fetch());
+        $this->assertSame("{\"pattern\":\"/<b>a/\"}\n", Newlines::lf($output->fetch()));
     }
 
     #[Test]
@@ -45,7 +46,7 @@ final class ConsoleWriterTest extends TestCase
 
         ConsoleWriter::footer($output);
 
-        $this->assertSame("  If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex\n\n", $output->fetch());
+        $this->assertSame("  If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex\n\n", Newlines::lf($output->fetch()));
     }
 
     #[Test]
@@ -55,7 +56,7 @@ final class ConsoleWriterTest extends TestCase
 
         ConsoleWriter::footer($output);
 
-        $this->assertSame('', $output->fetch());
+        $this->assertSame('', Newlines::lf($output->fetch()));
     }
 
     #[Test]
@@ -67,8 +68,8 @@ final class ConsoleWriterTest extends TestCase
         ConsoleWriter::title($plain, '9.9.9');
         ConsoleWriter::title($verbose, '9.9.9');
 
-        $this->assertSame("PHPRegex 9.9.9\n", $plain->fetch());
-        $this->assertSame("PHPRegex 9.9.9 by Younes ENNAJI\n", $verbose->fetch());
+        $this->assertSame("PHPRegex 9.9.9\n", Newlines::lf($plain->fetch()));
+        $this->assertSame("PHPRegex 9.9.9 by Younes ENNAJI\n", Newlines::lf($verbose->fetch()));
     }
 
     #[Test]
@@ -78,6 +79,6 @@ final class ConsoleWriterTest extends TestCase
 
         ConsoleWriter::title($output, '9.9.9');
 
-        $this->assertSame("\e[36;1mPHPRegex\e[39;22m \e[33m9.9.9\e[39m\n", $output->fetch());
+        $this->assertSame("\e[36;1mPHPRegex\e[39;22m \e[33m9.9.9\e[39m\n", Newlines::lf($output->fetch()));
     }
 }

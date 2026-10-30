@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Support;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Tests\Support\PcreSettingsGuard;
+use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -210,7 +211,7 @@ final class PcreSettingsGuardTest extends TestCase
             $this->assertStringContainsString('Tests: 2, Assertions: 2', $leakOutput, 'The test after the leak finds the limit restored.');
             $this->assertSame(0, $cleanExit, "a test putting the limit back passes\n".$cleanOutput);
         } finally {
-            exec('rm -rf '.escapeshellarg($root));
+            TemporaryDirectory::remove($root);
         }
     }
 

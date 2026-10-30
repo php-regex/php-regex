@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Cli;
 
 use PHPRegex\Cli\Application;
 use PHPRegex\Cli\ApplicationFactory;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -46,7 +47,7 @@ final class AnsiDefaultTest extends TestCase
     public function test_colour_follows_the_option_or_the_standard_output(array $args, ?bool $ansi): void
     {
         // starts in the opposite state of each expectation, so that the run is what sets it
-        $terminal = Application::colourOnTerminal(stream_isatty(\STDOUT), '\\' === \DIRECTORY_SEPARATOR, \function_exists('sapi_windows_vt100_support') && sapi_windows_vt100_support(\STDOUT));
+        $terminal = Application::colourOnTerminal(stream_isatty(\STDOUT), Path::onWindows(), \function_exists('sapi_windows_vt100_support') && sapi_windows_vt100_support(\STDOUT));
         $output = OutputFactory::create(ansi: !($ansi ?? $terminal));
 
         ob_start();

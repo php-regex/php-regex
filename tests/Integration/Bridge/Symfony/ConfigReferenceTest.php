@@ -58,6 +58,6 @@ final class ConfigReferenceTest extends TestCase
 
         $this->assertSame(Command::SUCCESS, $status);
 
-        return $tester->getDisplay();
+        return $tester->getDisplay(true);
     }
 }

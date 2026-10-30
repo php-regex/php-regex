@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Cache;
 use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -68,6 +69,8 @@ final class FilesystemCacheSecurityTest extends TestCase
     }
 
     #[Test]
+    // POSIX modes and owners: on Windows the cache trusts its directory.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_directories_and_files_belong_to_their_owner(): void
     {
         $umask = umask();
@@ -109,6 +112,8 @@ final class FilesystemCacheSecurityTest extends TestCase
     }
 
     #[Test]
+    // POSIX modes and owners: on Windows the cache trusts its directory.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_a_directory_others_can_write_to_is_not_trusted(): void
     {
         $tree = Regex::create(['cache' => null])->parse('/a/');

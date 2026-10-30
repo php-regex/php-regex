@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lsp\Document;
 
 use PHPRegex\LanguageServer\Document\PatternDeclarations;
+use PHPRegex\Parser\Text\Path;
+use PHPRegex\Tests\TestUtils\FileUri;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -33,7 +35,7 @@ final class PatternDeclarationsTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-declarations-'.bin2hex(random_bytes(6));
+        $this->root = Path::fromHost(sys_get_temp_dir()).'/regex-parser-lsp-declarations-'.bin2hex(random_bytes(6));
         mkdir($this->root, 0o700, true);
     }
 
@@ -166,7 +168,7 @@ final class PatternDeclarationsTest extends TestCase
         $path = $this->write('src/Grep.php', self::GREP);
         $declarations = new PatternDeclarations();
         $declarations->scanWorkspace($this->root, ['src'], []);
-        $uri = 'file://'.$path;
+        $uri = FileUri::of($path);
 
         $this->assertTrue($declarations->readDocument($uri, "<?php\nnamespace App;\nfunction grep(\$regex) {}\n"));
         $this->assertNull($declarations->functionArgument('App\grep'));
@@ -267,7 +269,7 @@ final class PatternDeclarationsTest extends TestCase
         $declarations->scanWorkspace($this->root, ['src'], []);
         $this->assertSame(['app\grep'], $declarations->plainFunctions(['grep']));
 
-        $declarations->readDocument('file://'.$path, "<?php\nnamespace App;\nfunction find() {}\n");
+        $declarations->readDocument(FileUri::of($path), "<?php\nnamespace App;\nfunction find() {}\n");
 
         $this->assertSame([], $declarations->plainFunctions(['grep']));
     }
@@ -295,6 +297,11 @@ final class PatternDeclarationsTest extends TestCase
     {
         $this->assertSame('/work space/src/A.php', PatternDeclarations::pathOf('file:///work%20space/src/A.php'));
         $this->assertSame('C:/project/A.php', PatternDeclarations::pathOf('file:///C:/project/A.php'));
+        // VS Code percent-encodes the colon of the drive, which parse_url()
+        // then leaves behind the slash of the root.
+        $this->assertSame('c:/project/A.php', PatternDeclarations::pathOf('file:///c%3A/project/A.php'));
+        $this->assertSame('C:/work space/A.php', PatternDeclarations::pathOf(FileUri::of('C:/work space/A.php')));
+        $this->assertSame('/home/a/x.php', PatternDeclarations::pathOf(FileUri::of('/home/a/x.php')));
         $this->assertNull(PatternDeclarations::pathOf('untitled:Untitled-1'));
     }
 

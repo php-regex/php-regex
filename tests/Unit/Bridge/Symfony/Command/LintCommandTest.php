@@ -18,6 +18,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
@@ -72,7 +73,7 @@ final class LintCommandTest extends TestCase
         $status = $tester->execute(['paths' => ['.']]);
 
         $this->assertSame(0, $status);
-        $this->assertStringContainsString('No regex patterns found', (string) $tester->getDisplay());
+        $this->assertStringContainsString('No regex patterns found', (string) $tester->getDisplay(true));
     }
 
     #[Test]
@@ -112,7 +113,7 @@ final class LintCommandTest extends TestCase
 
         $this->assertSame(0, $status);
 
-        $output = $tester->getDisplay();
+        $output = $tester->getDisplay(true);
         $this->assertStringNotContainsString('No regex patterns found', (string) $output);
         $this->assertStringNotContainsString('Regex Parser', (string) $output);
 
@@ -134,7 +135,7 @@ final class LintCommandTest extends TestCase
         $status = $tester->execute(['paths' => ['.'], '--format' => 'invalid']);
 
         $this->assertSame(2, $status);
-        $display = preg_replace('/\s+/', ' ', $tester->getDisplay()) ?? '';
+        $display = preg_replace('/\s+/', ' ', $tester->getDisplay(true)) ?? '';
         $this->assertStringContainsString(
             'Invalid format \'invalid\'. Supported formats: console, json, github, checkstyle, junit',
             (string) $display,
@@ -168,7 +169,7 @@ final class LintCommandTest extends TestCase
         $tester = new CommandTester($this->createCommandWithSources([self::occurrences($patterns)]));
         $tester->execute(['paths' => ['.'], '--format' => 'json', '--jobs' => '1']);
 
-        $document = json_decode($tester->getDisplay(), true);
+        $document = json_decode($tester->getDisplay(true), true);
         $this->assertIsArray($document);
         /** @var array<array{file: string, line: int}> $sorted */
         $sorted = $document['results'];
@@ -192,7 +193,7 @@ final class LintCommandTest extends TestCase
         $tester->execute(['paths' => ['.'], '--jobs' => '1'], ['capture_stderr_separately' => true]);
 
         $target = ProjectTarget::fromSources([], [], null, []);
-        $this->assertStringStartsWith(\sprintf("PHPRegex %s\n\nRuntime   : PHP %s\nTarget    : PHP %s, PCRE2 %s (%s)\nProcesses : 1\n\n", Regex::VERSION, \PHP_VERSION, $target->php(), $target->target()->pcreVersion, $target->source()), $tester->getDisplay());
+        $this->assertStringStartsWith(\sprintf("PHPRegex %s\n\nRuntime   : PHP %s\nTarget    : PHP %s, PCRE2 %s (%s)\nProcesses : 1\n\n", Regex::VERSION, \PHP_VERSION, $target->php(), $target->target()->pcreVersion, $target->source()), $tester->getDisplay(true));
     }
 
     #[Test]
@@ -201,7 +202,7 @@ final class LintCommandTest extends TestCase
         $tester = new CommandTester($this->createCommand());
         $tester->execute(['paths' => ['.'], '--jobs' => '1'], ['capture_stderr_separately' => true, 'verbosity' => OutputInterface::VERBOSITY_VERBOSE]);
 
-        $this->assertStringEndsWith("\n\n   PASS  No regex patterns found.\n\n  If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex\n\n", $tester->getDisplay());
+        $this->assertStringEndsWith("\n\n   PASS  No regex patterns found.\n\n  If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex\n\n", $tester->getDisplay(true));
     }
 
     #[Test]
@@ -281,7 +282,7 @@ final class LintCommandTest extends TestCase
         $status = $tester->execute(['paths' => ['.'], '--jobs' => '0']);
 
         $this->assertSame(2, $status);
-        $this->assertStringContainsString('positive integer', (string) $tester->getDisplay());
+        $this->assertStringContainsString('positive integer', (string) $tester->getDisplay(true));
     }
 
     /**
@@ -327,7 +328,7 @@ final class LintCommandTest extends TestCase
         $status = $tester->execute(['paths' => ['.']]);
 
         $this->assertSame(0, $status);
-        $this->assertStringContainsString('No regex patterns found', (string) $tester->getDisplay());
+        $this->assertStringContainsString('No regex patterns found', (string) $tester->getDisplay(true));
         $this->assertInstanceOf(LintProgress::class, $progressSource->progress, 'The console run hands the sources its progress.');
     }
 
@@ -357,7 +358,7 @@ final class LintCommandTest extends TestCase
         $status = $tester->execute(['paths' => ['.']]);
 
         $this->assertSame(1, $status);
-        $this->assertStringContainsString('boom', (string) $tester->getDisplay());
+        $this->assertStringContainsString('boom', (string) $tester->getDisplay(true));
     }
 
     #[Test]
@@ -386,7 +387,7 @@ final class LintCommandTest extends TestCase
         $status = $tester->execute(['paths' => ['.'], '--format' => 'json']);
 
         $this->assertSame(1, $status);
-        $this->assertStringContainsString('Failed to collect patterns', (string) $tester->getDisplay());
+        $this->assertStringContainsString('Failed to collect patterns', (string) $tester->getDisplay(true));
     }
 
     #[Test]
@@ -417,7 +418,7 @@ final class LintCommandTest extends TestCase
         $status = $tester->execute(['paths' => ['.']]);
 
         $this->assertSame(0, $status);
-        $this->assertStringContainsString('Analyzing patterns', (string) $tester->getDisplay());
+        $this->assertStringContainsString('Analyzing patterns', (string) $tester->getDisplay(true));
     }
 
     /**
@@ -451,12 +452,12 @@ final class LintCommandTest extends TestCase
         $status = $tester->execute(['paths' => ['.']]);
 
         $this->assertSame(0, $status);
-        $this->assertStringContainsString('found 1 patterns.', (string) $tester->getDisplay());
+        $this->assertStringContainsString('found 1 patterns.', (string) $tester->getDisplay(true));
 
         $tester = new CommandTester($this->createCommandWithSources([$source]));
         $tester->execute(['paths' => ['.'], '--format' => 'json']);
 
-        $data = json_decode($tester->getDisplay(), true);
+        $data = json_decode($tester->getDisplay(true), true);
         $this->assertIsArray($data);
         $this->assertIsArray($data['stats']);
         $this->assertSame(1, $data['stats']['parser_fallbacks'] ?? null);
@@ -490,8 +491,8 @@ final class LintCommandTest extends TestCase
         $status = $tester->execute(['paths' => ['.'], '--format' => 'json']);
 
         $this->assertSame(0, $status);
-        $this->assertStringNotContainsString('Analyzing patterns', (string) $tester->getDisplay());
-        $this->assertIsArray(json_decode($tester->getDisplay(), true));
+        $this->assertStringNotContainsString('Analyzing patterns', (string) $tester->getDisplay(true));
+        $this->assertIsArray(json_decode($tester->getDisplay(true), true));
     }
 
     /**
@@ -507,7 +508,7 @@ final class LintCommandTest extends TestCase
         $status = $tester->execute(['paths' => ['.'], '--format' => 'json']);
 
         $this->assertSame(1, $status);
-        $issue = self::firstIssue($tester->getDisplay());
+        $issue = self::firstIssue($tester->getDisplay(true));
         $this->assertSame('error', $issue['severity'] ?? null);
         $this->assertSame('regex.lint.unicode.multibyteInClassWithoutU', $issue['issue_id'] ?? null);
     }
@@ -519,8 +520,8 @@ final class LintCommandTest extends TestCase
         $status = $tester->execute(['paths' => ['.'], '--format' => 'json']);
 
         $this->assertSame(0, $status);
-        $this->assertSame('info', self::firstIssue($tester->getDisplay())['severity'] ?? null);
-        $data = json_decode($tester->getDisplay(), true);
+        $this->assertSame('info', self::firstIssue($tester->getDisplay(true))['severity'] ?? null);
+        $data = json_decode($tester->getDisplay(true), true);
         $this->assertIsArray($data);
         $this->assertIsArray($data['stats'] ?? null);
         $this->assertSame(1, $data['stats']['infos'] ?? null);
@@ -542,7 +543,7 @@ final class LintCommandTest extends TestCase
 
         $tester = new CommandTester($this->createCommandWithSources([new RoutePatternSource(new RouteRequirementNormalizer(), $router)]));
         $status = $tester->execute(['paths' => ['.']]);
-        $display = (string) $tester->getDisplay();
+        $display = (string) $tester->getDisplay(true);
 
         $this->assertSame(0, $status, $display);
         $this->assertStringContainsString('found 2 patterns', $display);
@@ -560,7 +561,7 @@ final class LintCommandTest extends TestCase
         $tester = new CommandTester($this->createCommandWithSources([self::sourceOf('/foo/')]));
 
         $status = $tester->execute(['paths' => ['.'], '--jobs' => '1']);
-        $display = (string) $tester->getDisplay();
+        $display = (string) $tester->getDisplay(true);
 
         $this->assertSame(0, $status, $display);
         $scanning = strpos($display, '[1/3] Scanning files');
@@ -590,7 +591,7 @@ final class LintCommandTest extends TestCase
         $tester = new CommandTester($this->createCommandWithSources([self::sourceOf('/foo/', '/bar/')]));
 
         $status = self::withinTimeLimit(static fn (): int => $tester->execute(['paths' => ['.'], '--jobs' => '2']));
-        $display = preg_replace('/\s+/', ' ', $tester->getDisplay()) ?? '';
+        $display = preg_replace('/\s+/', ' ', $tester->getDisplay(true)) ?? '';
 
         $this->assertSame(1, $status, $display);
         $this->assertStringContainsString('Parallel analysis failed: a worker exited unexpectedly while reading test.php', $display);
@@ -608,7 +609,7 @@ final class LintCommandTest extends TestCase
         $tester = new CommandTester($this->createCommandWithSources([self::sourceOf('/foo/', '/bar/')]));
 
         $status = $tester->execute(['paths' => ['.']]);
-        $display = (string) $tester->getDisplay();
+        $display = (string) $tester->getDisplay(true);
 
         $this->assertSame(0, $status, $display);
         $this->assertMatchesRegularExpression('/^Processes : 1$/m', $display);
@@ -621,6 +622,9 @@ final class LintCommandTest extends TestCase
     /**
      * The footer counts the workers the run started, at most --jobs: one
      * pattern is analysed in this process alone, whatever --jobs allows.
+     * The banner shows what the run planned where this PHP can fork, and
+     * says once that it cannot where it cannot, Windows and the official
+     * Docker images among others.
      */
     #[Test]
     public function test_execute_footer_counts_the_workers_started(): void
@@ -628,10 +632,14 @@ final class LintCommandTest extends TestCase
         $tester = new CommandTester($this->createCommandWithSources([self::sourceOf('/foo/')]));
 
         $status = $tester->execute(['paths' => ['.'], '--jobs' => '2']);
-        $display = (string) $tester->getDisplay();
+        $display = (string) $tester->getDisplay(true);
 
         $this->assertSame(0, $status, $display);
-        $this->assertMatchesRegularExpression('/^Processes : 2$/m', $display, 'The banner shows what the run planned.');
+        if (ForkedWorkerPool::canFork()) {
+            $this->assertMatchesRegularExpression('/^Processes : 2$/m', $display, 'The banner shows what the run planned.');
+        } else {
+            $this->assertMatchesRegularExpression('/^Processes : 1 \\(this PHP cannot fork: --jobs 2 ran in one process\\)$/m', $display, 'The banner says why one process ran.');
+        }
         $this->assertMatchesRegularExpression('/\bProcesses: 1$/m', $display);
     }
 
@@ -660,7 +668,7 @@ final class LintCommandTest extends TestCase
         } finally {
             @unlink($marker);
         }
-        $display = (string) $tester->getDisplay();
+        $display = (string) $tester->getDisplay(true);
 
         $this->assertSame(0, $status, $display);
         $this->assertGreaterThanOrEqual(1.2, $duration, 'The workers did not wait: nothing was tested.');

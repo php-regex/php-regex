@@ -18,6 +18,7 @@ use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -276,6 +277,8 @@ final class JsonErrorEnvelopeTest extends TestCase
      * refused before the run, as a usage error.
      */
     #[Test]
+    // A read-only mode on a directory: Windows writes into it all the same.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_lint_generate_baseline_in_a_read_only_directory_is_a_usage_error(): void
     {
         $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/a/', \$s);\n"]);

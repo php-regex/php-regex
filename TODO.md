@@ -154,4 +154,9 @@ measured under 3 %.
   sure, makes the library refuse it too. The counting is ready (no difference from pcre2test 10.45–10.49 over
   some 210,000 cases); the fixture needs another pattern, and on 10.45 and
   later there may be none.
-
+- `AlphaAssertionBodyTest` reads `(*pla:[a])` bodies at 1,000 then 4,000
+  units and holds the ratio under the line a shared runner allows (11):
+  PHP 8.1 on a loaded runner read 15 once (0.29 s then 4.39 s), where PHP
+  8.4 reads 4.9 locally (0.15 s then 0.72 s) and 8,000 units take 2.5
+  times 4,000. The read grows a little faster than its text; whether the
+  growth is the validator's or the garbage collector's is not measured.

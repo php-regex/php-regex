@@ -71,7 +71,11 @@ final class CpuCoreCounter
 
     private function found(): int
     {
+        // Windows exports the count and has none of the files or commands.
+        $exported = ($this->getEnv)('NUMBER_OF_PROCESSORS');
+
         return $this->affinity()
+            ?? self::positive(false === $exported ? null : $exported)
             ?? self::positive(($this->runCommand)('nproc'))
             ?? self::positive(($this->runCommand)('sysctl -n hw.logicalcpu'))
             ?? $this->cpuInfo()
@@ -233,13 +237,17 @@ final class CpuCoreCounter
             return null;
         }
 
-        $process = @proc_open($command, [1 => ['pipe', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes);
+        // The errors go to a pipe, read and dropped: a null device has a
+        // name of its own on each host.
+        $process = @proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         if (!\is_resource($process)) {
             return null; // proc_open() refused to start the shell: no test can make it.
         }
 
         $stdout = trim((string) stream_get_contents($pipes[1]), " \t\n\r\0\x0B");
+        stream_get_contents($pipes[2]);
         fclose($pipes[1]);
+        fclose($pipes[2]);
 
         return 0 === proc_close($process) && '' !== $stdout ? $stdout : null;
     }

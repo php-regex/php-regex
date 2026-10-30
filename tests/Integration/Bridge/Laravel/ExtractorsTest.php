@@ -13,14 +13,15 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
-use PHPRegex\Laravel\Extractor\RoutePatternSource;
-use PHPRegex\Linter\Source\PatternSourceContext;
-use PHPRegex\Linter\PatternOccurrence;
-use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
-use PHPRegex\Laravel\PHPRegexServiceProvider;
-use PHPRegex\Laravel\Facades\Regex;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
+use PHPRegex\Laravel\Extractor\RoutePatternSource;
+use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
+use PHPRegex\Laravel\Facades\Regex;
+use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\Source\PatternSourceContext;
+use PHPRegex\Parser\Text\Path;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -281,7 +282,7 @@ final class ExtractorsTest extends LaravelTestCase
     #[Test]
     public function test_validation_extractor_respects_exclude_paths(): void
     {
-        $tempDir = sys_get_temp_dir().'/regex_exclude_test_'.uniqid();
+        $tempDir = Path::fromHost(sys_get_temp_dir()).'/regex_exclude_test_'.uniqid();
         mkdir($tempDir.'/app', 0o777, true);
         mkdir($tempDir.'/vendor', 0o777, true);
 
@@ -318,6 +319,32 @@ final class ExtractorsTest extends LaravelTestCase
         rmdir($tempDir.'/app');
         rmdir($tempDir.'/vendor');
         rmdir($tempDir);
+    }
+
+    /**
+     * An exclude is a path whichever separator spells it, and a file found
+     * is spelled with "/" on every host.
+     */
+    #[Test]
+    public function test_validation_extractor_reads_an_exclude_written_with_backslashes(): void
+    {
+        $tempDir = Path::fromHost(sys_get_temp_dir()).'/regex_exclude_test_'.uniqid();
+        mkdir($tempDir.'/app/Legacy', 0o777, true);
+        file_put_contents($tempDir.'/app/test.php', "<?php\n\$rules = ['field' => 'regex:/^included$/'];");
+        file_put_contents($tempDir.'/app/Legacy/test.php', "<?php\n\$rules = ['field' => 'regex:/^excluded$/'];");
+
+        try {
+            $patterns = (new ValidationRulePatternSource())->extract(new PatternSourceContext(paths: [$tempDir.'/app'], excludePaths: ['app\\Legacy\\']));
+
+            $this->assertSame(['/^included$/'], array_map(static fn (PatternOccurrence $p): string => $p->pattern, $patterns));
+            $this->assertSame([$tempDir.'/app/test.php'], array_map(static fn (PatternOccurrence $p): string => $p->file, $patterns));
+        } finally {
+            unlink($tempDir.'/app/test.php');
+            unlink($tempDir.'/app/Legacy/test.php');
+            rmdir($tempDir.'/app/Legacy');
+            rmdir($tempDir.'/app');
+            rmdir($tempDir);
+        }
     }
 
     /**

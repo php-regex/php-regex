@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Support;
 
 use PHPRegex\Tests\Support\SourceDeprecationListener;
+use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -190,7 +191,7 @@ final class SourceDeprecationListenerTest extends TestCase
             $this->assertNotSame(0, $engineExit, "an engine deprecation under the guarded source must fail the run\n".$engineOutput);
             $this->assertSame(0, $vendorExit, "a vendor deprecation stays informational\n".$vendorOutput);
         } finally {
-            exec('rm -rf '.escapeshellarg($root));
+            TemporaryDirectory::remove($root);
         }
     }
 

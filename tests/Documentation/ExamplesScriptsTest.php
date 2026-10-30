@@ -39,7 +39,7 @@ final class ExamplesScriptsTest extends TestCase
 
         $scripts = [];
         $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($demoRoot, \FilesystemIterator::SKIP_DOTS),
+            new \RecursiveDirectoryIterator($demoRoot, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
         );
 
         foreach ($files as $file) {
@@ -96,14 +96,14 @@ final class ExamplesScriptsTest extends TestCase
      */
     private function runScript(string $script): array
     {
-        $path = \dirname(__DIR__, 2).'/'.$script;
-        $command = [\PHP_BINARY, $path];
-        $escaped = array_map(escapeshellarg(...), $command);
-        $output = [];
-        $exitCode = 0;
+        // Started without a shell, both streams read: the quoting of a
+        // shell is not the same on every host.
+        $process = proc_open([\PHP_BINARY, \dirname(__DIR__, 2).'/'.$script], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $this->assertIsResource($process);
+        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
 
-        exec(implode(' ', $escaped).' 2>&1', $output, $exitCode);
-
-        return [implode("\n", $output), $exitCode];
+        return [rtrim($output, "\n"), proc_close($process)];
     }
 }

@@ -23,12 +23,14 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresFunction;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -135,8 +137,9 @@ final class LintCommandStreamsTest extends TestCase
         $this->assertSame(0, $exitCode);
         $this->assertMatchesRegularExpression('/^  Time: \S+  Memory: \S+ MB  Processes: '.$processes.'$/m', $stdout);
         $this->assertStringNotContainsString('Cache:', $stdout);
-        // The banner shows what the run planned: --jobs.
-        $this->assertStringContainsString("\n".self::bannerRow('Processes', $jobs), $stdout);
+        // The banner shows what the run planned: --jobs; where this PHP cannot
+        // fork, one process ran and the banner says why.
+        $this->assertStringContainsString("\n".self::bannerRow('Processes', ForkedWorkerPool::canFork() || '1' === $jobs ? $jobs : '1 (this PHP cannot fork: --jobs '.$jobs.' ran in one process)'), $stdout);
     }
 
     /**
@@ -349,6 +352,8 @@ final class LintCommandStreamsTest extends TestCase
      * read, ends the scan's line before its error too.
      */
     #[Test]
+    // A mode without read bits: Windows reads the directory all the same.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_lint_prints_a_collection_failure_on_a_line_of_its_own_with_ansi(): void
     {
         $directory = $this->enterProject(['composer.json' => self::COMPOSER, 'locked/a.php' => self::PHP_FILE]);
@@ -676,6 +681,8 @@ final class LintCommandStreamsTest extends TestCase
      * A writable file that is not a regular one, a device or a pipe, takes
      * the report as a file does: /dev/null throws it away.
      */
+    // /dev/null is a device on Linux and macOS; Windows names its null device NUL.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     #[Test]
     public function test_lint_writes_the_output_to_a_device(): void
     {
@@ -688,6 +695,8 @@ final class LintCommandStreamsTest extends TestCase
     }
 
     #[Test]
+    // A mode without read bits: Windows reads the directory all the same.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_lint_reports_a_collection_failure_as_json(): void
     {
         $directory = $this->enterProject(['composer.json' => self::COMPOSER, 'locked/a.php' => self::PHP_FILE]);

@@ -14,6 +14,9 @@ CHANGELOG
    posix extension.
  * `--locale <name>` names the `LC_CTYPE` locale patterns are judged under,
    and wins over `locale` in `regex.json`.
+ * Where the PHP cannot fork, Windows among others, `--jobs` above one runs
+   in one process and the banner says so beside the count asked for, as the
+   bridges' `regex:lint` does.
  * `--cache-dir <dir>` keeps what the running PCRE2 answered about Unicode
    classes in `<dir>`, for the next run to read instead of asking again.
  * `regex lsp` runs the language server over stdio, so `regex.phar` carries

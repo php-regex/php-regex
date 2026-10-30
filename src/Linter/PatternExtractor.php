@@ -24,6 +24,7 @@ use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * Extracts regex patterns from PHP source files using configured extractor.
@@ -342,7 +343,7 @@ final class PatternExtractor
                 continue;
             }
 
-            $pending = [rtrim($root, '/\\')];
+            $pending = [rtrim(Path::fromHost($root), '/')];
             while ([] !== $pending) {
                 $directory = array_pop($pending);
                 $real = realpath($directory);
@@ -353,7 +354,7 @@ final class PatternExtractor
 
                 $visited[(string) $real] = true;
                 foreach ($entries as $entry) {
-                    $path = $directory.\DIRECTORY_SEPARATOR.$entry;
+                    $path = $directory.'/'.$entry;
                     if ('.' === $entry || '..' === $entry) {
                         continue;
                     }
@@ -380,10 +381,12 @@ final class PatternExtractor
      */
     private function collectPhpFiles(array $paths, array $excludePaths, ?LintProgress $progress = null, ?string $excludeBase = null): array
     {
-        $basePrefix = null === $excludeBase ? null : rtrim($excludeBase, '/\\').\DIRECTORY_SEPARATOR;
+        // Paths are walked and matched with "/" on every host: an exclude
+        // and a base keep their meaning whichever separator spelled them.
+        $basePrefix = null === $excludeBase ? null : rtrim(Path::normalize($excludeBase), '/').'/';
         $normalizedExcludePaths = [];
         foreach ($excludePaths as $excludePath) {
-            $excludePath = trim($excludePath, '/\\');
+            $excludePath = trim(Path::normalize($excludePath), '/');
             if ('' !== $excludePath) {
                 $normalizedExcludePaths[] = $excludePath;
             }
@@ -407,7 +410,7 @@ final class PatternExtractor
             }
 
             $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS),
+                new \RecursiveDirectoryIterator(Path::fromHost($path), \RecursiveDirectoryIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
             );
 
             /** @var \SplFileInfo $file */
@@ -427,7 +430,7 @@ final class PatternExtractor
                 // Skip excluded directories
                 $excluded = false;
                 foreach ($normalizedExcludePaths as $excludePath) {
-                    if (str_contains($matchedPath, \DIRECTORY_SEPARATOR.$excludePath.\DIRECTORY_SEPARATOR) || str_starts_with($matchedPath, $excludePath.\DIRECTORY_SEPARATOR)) {
+                    if (str_contains($matchedPath, '/'.$excludePath.'/') || str_starts_with($matchedPath, $excludePath.'/')) {
                         $excluded = true;
 
                         break;

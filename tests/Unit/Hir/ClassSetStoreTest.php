@@ -18,6 +18,7 @@ use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Hir\ClassSetStore;
 use PHPRegex\Parser\RegexParser;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -168,6 +169,8 @@ final class ClassSetStoreTest extends TestCase
      * into is neither read nor written, as the tree cache does.
      */
     #[Test]
+    // POSIX modes: on Windows the store trusts its directory.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_a_directory_others_may_write_is_left_alone(): void
     {
         $store = new ClassSetStore($this->root);

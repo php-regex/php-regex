@@ -15,6 +15,8 @@ namespace PHPRegex\Tests\Unit\Lsp;
 
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Parser\Text\Path;
+use PHPRegex\Tests\TestUtils\FileUri;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -50,7 +52,7 @@ final class ServerLintRulesTest extends TestCase
         $this->output = $output;
         $this->input = $input;
 
-        $this->root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-rules-'.bin2hex(random_bytes(6));
+        $this->root = Path::fromHost(sys_get_temp_dir()).'/regex-parser-lsp-rules-'.bin2hex(random_bytes(6));
         mkdir($this->root, 0o700, true);
     }
 
@@ -88,10 +90,10 @@ final class ServerLintRulesTest extends TestCase
         ftruncate($this->input, 0);
         rewind($this->input);
         foreach ([
-            ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => 'file://'.$this->root]],
+            ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => FileUri::of($this->root)]],
             ['method' => 'initialized', 'params' => []],
             ['method' => 'textDocument/didOpen', 'params' => ['textDocument' => [
-                'uri' => 'file://'.$this->root.'/a.php',
+                'uri' => FileUri::of($this->root.'/a.php'),
                 'languageId' => 'php',
                 'version' => 1,
                 'text' => self::DOCUMENT,

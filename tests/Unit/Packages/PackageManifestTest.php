@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Packages;
 
 use PHPRegex\Psalm\Plugin;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -106,13 +107,13 @@ final class PackageManifestTest extends TestCase
             'Linter\Formatter\LinkFormatter', 'Linter\Formatter\OutputConfiguration',
             'Linter\Formatter\OutputFormatterInterface', 'Linter\Formatter\RelativePathHelper',
             'Linter\LintStatsCounter', 'Linter\Formatter\LintSummary', 'Linter\RedosVerdict',
-            'Linter\Parallel\WorkerCount', 'Linter\LintProgress', 'Linter\LintReport', 'Linter\LintRequest',
+            'Linter\Parallel\ForkedWorkerPool', 'Linter\Parallel\WorkerCount', 'Linter\LintProgress', 'Linter\LintReport', 'Linter\LintRequest',
             'Linter\Rule\RuleCatalog', 'Linter\Rule\RuleId',
             'Linter\Exception\LintRunFailureException', 'Linter\LintRunner',
             'Linter\LintService', 'Linter\Source\PatternSourceCollection',
             'Linter\Source\PhpFilePatternSource', 'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
             'Parser\Hir\HirTranslator', 'Parser\Text\Ascii', 'Parser\Printer\DisplayEscaper', 'Parser\Engine\IniFlag',
-            'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss',
+            'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Text\Path',
             'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser', 'Redos\Heatmap', 'Redos\InputGenerator',
             'Transpiler\Target\TargetRegistry',
         ],
@@ -132,7 +133,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpStringLiteral',
             'Linter\Extraction\TargetMarker', 'Linter\Extraction\TargetMarkers',
             'Linter\Extraction\TokenBasedExtractionStrategy', 'Linter\RedosVerdict',
-            'Linter\Rule\InvisibleCharacterRule', 'Linter\Rule\RuleCatalog', 'Linter\Rule\RuleId', 'Parser\Text\Ascii', 'Parser\Engine\IniFlag',
+            'Linter\Rule\InvisibleCharacterRule', 'Linter\Rule\RuleCatalog', 'Linter\Rule\RuleId', 'Parser\Text\Ascii', 'Parser\Text\Path', 'Parser\Engine\IniFlag',
             'Parser\Engine\LibraryPcre',
         ],
         'Laravel' => [
@@ -144,7 +145,7 @@ final class PackageManifestTest extends TestCase
             'Linter\LintService', 'Linter\LintSetup', 'Linter\PatternExtractor',
             'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
-            'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
+            'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\Path',
             'Transpiler\Target\TargetRegistry',
         ],
         // The overlap rule asks PCRE2 for the characters of a branch's first
@@ -152,7 +153,7 @@ final class PackageManifestTest extends TestCase
         'Linter' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Cache\AstSerializer',
             'Parser\Hir\ClassSetProvider',
-            'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Printer\DisplayEscaper',
+            'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Text\Path', 'Parser\Printer\DisplayEscaper',
             'Parser\Analysis\GroupIndex', 'Parser\Json\JsonDocument',
             'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
             'Parser\Syntax\PropertyNames', 'Parser\Syntax\StartOptions', 'Parser\Cache\StaticCaches',
@@ -199,7 +200,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
             'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
-            'Transpiler\Target\TargetRegistry',
+            'Parser\Text\Path', 'Transpiler\Target\TargetRegistry',
         ],
         // The HTML pattern attribute takes no flag: /i is spelled out
         // with the characters the running PCRE takes for each atom.
@@ -370,7 +371,6 @@ final class PackageManifestTest extends TestCase
         foreach (['Cli' => 'bin/regex', 'LanguageServer' => 'bin/regex-lsp'] as $directory => $script) {
             $this->assertSame([$script], self::dig(self::manifest($directory), 'bin'));
             $this->assertFileIsReadable(self::root().'/src/'.$directory.'/'.$script);
-            $this->assertTrue(is_executable(self::root().'/src/'.$directory.'/'.$script), $script);
         }
     }
 
@@ -726,7 +726,16 @@ final class PackageManifestTest extends TestCase
         ksort($expected);
 
         $this->assertSame($expected, $splits);
-        $this->assertTrue(is_executable(self::root().'/bin/split'));
+    }
+
+    // The executable bit is a POSIX mode; Windows starts a script through php or bash.
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    #[Test]
+    public function test_the_scripts_are_executable(): void
+    {
+        foreach (['bin/split', 'src/Cli/bin/regex', 'src/LanguageServer/bin/regex-lsp'] as $script) {
+            $this->assertTrue(is_executable(self::root().'/'.$script), $script);
+        }
     }
 
     #[Test]

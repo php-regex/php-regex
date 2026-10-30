@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Tests\Support\PcreRule;
+use PHPRegex\Tests\TestUtils\FileUri;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -193,7 +194,7 @@ final class ServerTargetFallbackTest extends TestCase
 
     private function rootUri(): string
     {
-        return 'file://'.$this->root;
+        return FileUri::of($this->root);
     }
 
     /**

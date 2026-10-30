@@ -14,7 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Config;
 
 use PHPRegex\Linter\Config\ComposerPlatform;
+use PHPRegex\Parser\Text\Path;
+use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -36,7 +39,7 @@ final class ComposerPlatformTest extends TestCase
 
     protected function tearDown(): void
     {
-        exec('rm -rf '.escapeshellarg($this->dir));
+        TemporaryDirectory::remove($this->dir);
     }
 
     #[Test]
@@ -80,10 +83,12 @@ final class ComposerPlatformTest extends TestCase
 
     #[Test]
     #[DataProvider('provideDriveLikeNames')]
+    // A colon is no character of a name on Windows: the file under the project cannot exist there, and the absolute-path test reads a drive name.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     public function test_a_name_starting_with_a_drive_is_kept_whole_and_any_other_is_joined_to_the_project(string $name, bool $keptWhole): void
     {
         // the same name as a path under the project: read when joined, missed when kept whole
-        $under = $this->dir.'/'.str_replace('\\', '/', $name);
+        $under = $this->dir.'/'.Path::normalize($name);
         mkdir(\dirname($under), 0o777, true);
         file_put_contents($under, '{"require": {"php": ">=8.3"}}');
         $notices = [];

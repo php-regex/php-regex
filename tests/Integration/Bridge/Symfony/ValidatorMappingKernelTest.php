@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Fixtures\Symfony\ValidatorMapping\Entity\Account;
 use PHPRegex\Tests\Fixtures\Symfony\ValidatorMapping\Entity\Customer;
 use PHPRegex\Tests\Support\FrameworkKernel;
@@ -105,7 +106,7 @@ final class ValidatorMappingKernelTest extends TestCase
             $source = $result['source'] ?? null;
             $pattern = $result['pattern'] ?? null;
             $results[] = [
-                substr($absolute, \strlen($project) + 1),
+                Path::fromHost(substr($absolute, \strlen($project) + 1)),
                 $line,
                 \is_string($source) ? $source : null,
                 \is_string($pattern) ? $pattern : null,

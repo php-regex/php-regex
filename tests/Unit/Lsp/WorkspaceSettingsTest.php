@@ -19,8 +19,10 @@ use PHPRegex\LanguageServer\WorkspaceSettings;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\TestUtils\FileUri;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -70,10 +72,10 @@ final class WorkspaceSettingsTest extends TestCase
         $root = $this->workspace();
         $elsewhere = \dirname($root);
 
-        $this->assertSame($root, $this->read(['workspaceFolders' => [['uri' => 'file://'.$root], ['uri' => 'file://'.$elsewhere]], 'rootUri' => 'file://'.$elsewhere])->root);
-        $this->assertSame($root, $this->read(['workspaceFolders' => null, 'rootUri' => 'file://'.$root])->root);
-        $this->assertSame($root, $this->read(['workspaceFolders' => [], 'rootUri' => 'file://'.$root])->root);
-        $this->assertSame($root, $this->read(['workspaceFolders' => ['file://'.$elsewhere], 'rootUri' => 'file://'.$root])->root);
+        $this->assertSame($root, $this->read(['workspaceFolders' => [['uri' => FileUri::of($root)], ['uri' => FileUri::of($elsewhere)]], 'rootUri' => FileUri::of($elsewhere)])->root);
+        $this->assertSame($root, $this->read(['workspaceFolders' => null, 'rootUri' => FileUri::of($root)])->root);
+        $this->assertSame($root, $this->read(['workspaceFolders' => [], 'rootUri' => FileUri::of($root)])->root);
+        $this->assertSame($root, $this->read(['workspaceFolders' => [FileUri::of($elsewhere)], 'rootUri' => FileUri::of($root)])->root);
     }
 
     #[Test]
@@ -81,7 +83,7 @@ final class WorkspaceSettingsTest extends TestCase
     {
         $root = $this->workspace('a b');
 
-        $this->assertSame($root, $this->read(['rootUri' => 'file://'.str_replace(' ', '%20', $root)])->root);
+        $this->assertSame($root, $this->read(['rootUri' => FileUri::of($root)])->root);
     }
 
     /**
@@ -107,7 +109,7 @@ final class WorkspaceSettingsTest extends TestCase
         yield 'not a file URI' => ['params' => ['rootUri' => 'untitled:Untitled-1']];
         yield 'not a string' => ['params' => ['rootUri' => 42]];
         yield 'a directory that does not exist' => ['params' => ['rootUri' => 'file:///no/such/directory/at/all']];
-        yield 'a file' => ['params' => ['rootUri' => 'file://'.__FILE__]];
+        yield 'a file' => ['params' => ['rootUri' => FileUri::of(__FILE__)]];
         yield 'a folder without uri' => ['params' => ['workspaceFolders' => [['name' => 'a']]]];
     }
 
@@ -117,7 +119,7 @@ final class WorkspaceSettingsTest extends TestCase
         $root = $this->workspace();
         file_put_contents($root.'/regex.json', '{"paths": "src", "exclude": ["var", "vendor"], "extraction": {"functions": ["x#a"]}}');
 
-        $settings = $this->read(['rootUri' => 'file://'.$root]);
+        $settings = $this->read(['rootUri' => FileUri::of($root)]);
 
         $this->assertSame($root, $settings->root);
         $this->assertSame(['src'], $settings->paths());
@@ -131,7 +133,7 @@ final class WorkspaceSettingsTest extends TestCase
         $root = $this->workspace();
         file_put_contents($root.'/regex.json', '{"paths": 3}');
 
-        $settings = $this->read(['rootUri' => 'file://'.$root]);
+        $settings = $this->read(['rootUri' => FileUri::of($root)]);
 
         $this->assertSame([], $settings->config);
         $frames = $this->frames();
@@ -161,7 +163,7 @@ final class WorkspaceSettingsTest extends TestCase
         $root = $this->workspace();
         file_put_contents($root.'/regex.json', '{"paths": ["src", "lib"], "exclude": []}');
 
-        $settings = $this->read(['rootUri' => 'file://'.$root]);
+        $settings = $this->read(['rootUri' => FileUri::of($root)]);
 
         $this->assertSame(['src', 'lib'], $settings->paths());
         $this->assertSame([], $settings->exclude());
@@ -177,7 +179,7 @@ final class WorkspaceSettingsTest extends TestCase
         $root = $this->workspace();
         file_put_contents($root.'/regex.json', $config);
 
-        $settings = $this->read(['rootUri' => 'file://'.$root, 'initializationOptions' => $options]);
+        $settings = $this->read(['rootUri' => FileUri::of($root), 'initializationOptions' => $options]);
 
         $this->assertSame([$mode, $threshold], $settings->redos($settings->lintArguments()));
     }
@@ -203,7 +205,7 @@ final class WorkspaceSettingsTest extends TestCase
         $root = $this->workspace();
         file_put_contents($root.'/regex.json', '{"phpVersion": "8.1", "pcreVersion": "10.39", "locale": "C"}');
 
-        $target = $this->read(['rootUri' => 'file://'.$root, 'initializationOptions' => ['phpVersion' => '8.3', 'pcreVersion' => '10.42']])->target();
+        $target = $this->read(['rootUri' => FileUri::of($root), 'initializationOptions' => ['phpVersion' => '8.3', 'pcreVersion' => '10.42']])->target();
 
         $this->assertSame(80300, $target->target()->phpVersionId);
         $this->assertSame('10.42', $target->target()->pcreVersion);
@@ -217,7 +219,7 @@ final class WorkspaceSettingsTest extends TestCase
         $root = $this->workspace();
         file_put_contents($root.'/regex.json', '{"phpVersion": 80100, "pcreVersion": "10.42", "locale": "C"}');
 
-        $target = $this->read(['rootUri' => 'file://'.$root])->target();
+        $target = $this->read(['rootUri' => FileUri::of($root)])->target();
 
         $this->assertSame(80100, $target->target()->phpVersionId);
         $this->assertSame('10.42', $target->target()->pcreVersion);
@@ -229,7 +231,7 @@ final class WorkspaceSettingsTest extends TestCase
         $root = $this->workspace();
         file_put_contents($root.'/regex.json', '{"phpVersion": "8.2", "pcreVersion": "10.40"}');
 
-        $target = $this->read(['rootUri' => 'file://'.$root, 'initializationOptions' => ['phpVersion' => 'eight', 'pcreVersion' => ['10.44'], 'locale' => 'xx_NOWHERE.UTF-8']])->target();
+        $target = $this->read(['rootUri' => FileUri::of($root), 'initializationOptions' => ['phpVersion' => 'eight', 'pcreVersion' => ['10.44'], 'locale' => 'xx_NOWHERE.UTF-8']])->target();
 
         $this->assertSame(80200, $target->target()->phpVersionId);
         $this->assertSame('10.40', $target->target()->pcreVersion);
@@ -254,8 +256,8 @@ final class WorkspaceSettingsTest extends TestCase
 
         $root = $this->workspace();
         file_put_contents($root.'/composer.json', '{"config": {"platform": {"php": "8.2", "lib-pcre": "10.43"}}}');
-        $this->assertSame('10.43', $this->read(['rootUri' => 'file://'.$root])->target()->target()->pcreVersion);
-        $this->assertSame('10.39', $this->read(['rootUri' => 'file://'.$root, 'initializationOptions' => ['pcreVersion' => '10.39']])->target()->target()->pcreVersion);
+        $this->assertSame('10.43', $this->read(['rootUri' => FileUri::of($root)])->target()->target()->pcreVersion);
+        $this->assertSame('10.39', $this->read(['rootUri' => FileUri::of($root), 'initializationOptions' => ['pcreVersion' => '10.39']])->target()->target()->pcreVersion);
     }
 
     #[Test]
@@ -284,7 +286,7 @@ final class WorkspaceSettingsTest extends TestCase
 
         $this->expectException(InvalidRegexOptionException::class);
 
-        $this->read(['rootUri' => 'file://'.$root])->target();
+        $this->read(['rootUri' => FileUri::of($root)])->target();
     }
 
     /**
@@ -326,7 +328,7 @@ final class WorkspaceSettingsTest extends TestCase
         mkdir($root);
         $this->root = $root;
 
-        return (string) realpath($root);
+        return Path::fromHost((string) realpath($root));
     }
 
     /**

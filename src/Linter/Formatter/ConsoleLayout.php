@@ -76,10 +76,10 @@ final class ConsoleLayout
 
         $output = '';
         foreach (TextWrap::lines($first, $this->width - self::MESSAGE_COLUMN) as $index => $line) {
-            $output .= (0 === $index ? '    '.$badge.' ' : str_repeat(' ', self::MESSAGE_COLUMN)).$this->markup->style($this->markup->escape($line), ConsoleStyle::Plain).\PHP_EOL;
+            $output .= (0 === $index ? '    '.$badge.' ' : str_repeat(' ', self::MESSAGE_COLUMN)).$this->markup->style($this->markup->escape($line), ConsoleStyle::Plain)."\n";
         }
         foreach ($lines as $index => $line) {
-            $output .= '         '.$this->markup->muted(0 === $index ? self::ARROW : ' ', $this->markup->escape(ConsoleResultText::withoutLineLabels($line))).\PHP_EOL;
+            $output .= '         '.$this->markup->muted(0 === $index ? self::ARROW : ' ', $this->markup->escape(ConsoleResultText::withoutLineLabels($line)))."\n";
         }
 
         return $output;
@@ -120,7 +120,7 @@ final class ConsoleLayout
      */
     public function tip(): string
     {
-        return '    '.$this->markup->badge(ConsoleBadge::Tip).\PHP_EOL;
+        return '    '.$this->markup->badge(ConsoleBadge::Tip)."\n";
     }
 
     /**
@@ -137,7 +137,7 @@ final class ConsoleLayout
             default => [ConsoleBadge::Pass, LintSummary::passCounts($stats), ConsoleStyle::SuccessBold, \sprintf(', %d optimizations available.', $stats['optimizations'])],
         };
 
-        return \PHP_EOL.'  '.$this->markup->badge($badge).' '.$this->markup->style($lead, $leadStyle).$this->markup->style($rest, ConsoleStyle::Muted).\PHP_EOL;
+        return "\n  ".$this->markup->badge($badge).' '.$this->markup->style($lead, $leadStyle).$this->markup->style($rest, ConsoleStyle::Muted)."\n";
     }
 
     /**
@@ -150,8 +150,8 @@ final class ConsoleLayout
         $output = '';
         foreach ($lines as $index => $line) {
             $output .= 0 === $index
-                ? '         '.$this->markup->style(self::ARROW.' '.$this->markup->escape($line), ConsoleStyle::Muted).\PHP_EOL
-                : str_repeat(' ', self::HINT_COLUMN).$this->markup->style($this->markup->escape($line), ConsoleStyle::Muted).\PHP_EOL;
+                ? '         '.$this->markup->style(self::ARROW.' '.$this->markup->escape($line), ConsoleStyle::Muted)."\n"
+                : str_repeat(' ', self::HINT_COLUMN).$this->markup->style($this->markup->escape($line), ConsoleStyle::Muted)."\n";
         }
 
         return $output;
@@ -168,8 +168,8 @@ final class ConsoleLayout
         $output = '';
         foreach ($lines as $index => $line) {
             $output .= 0 === $index
-                ? str_repeat(' ', self::ITEM_COLUMN - 2).$this->markup->style('- '.$this->markup->escape($line), ConsoleStyle::Muted).\PHP_EOL
-                : str_repeat(' ', self::ITEM_COLUMN).$this->markup->style($this->markup->escape($line), ConsoleStyle::Muted).\PHP_EOL;
+                ? str_repeat(' ', self::ITEM_COLUMN - 2).$this->markup->style('- '.$this->markup->escape($line), ConsoleStyle::Muted)."\n"
+                : str_repeat(' ', self::ITEM_COLUMN).$this->markup->style($this->markup->escape($line), ConsoleStyle::Muted)."\n";
         }
 
         return $output;
