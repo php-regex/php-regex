@@ -27,7 +27,7 @@ final class FileUri
 
     public static function of(string $path): string
     {
-        $path = Path::normalize($path);
+        $path = Path::fromHost($path);
         $segments = array_map(rawurlencode(...), explode('/', $path));
 
         return 'file://'.(str_starts_with($path, '/') ? '' : '/').implode('/', $segments);

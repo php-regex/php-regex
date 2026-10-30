@@ -285,7 +285,7 @@ final class ConsoleTagFormatterTest extends TestCase
 
         foreach ($files as $file) {
             $this->assertInstanceOf(\SplFileInfo::class, $file);
-            if (str_contains(Path::normalize($file->getPathname()), '/src/Linter/Console/')) {
+            if (str_contains(Path::fromHost($file->getPathname()), '/src/Linter/Console/')) {
                 continue;
             }
             $this->assertStringNotContainsString(

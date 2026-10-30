@@ -48,7 +48,7 @@ final class LibraryExitTest extends TestCase
     {
         $file = (string) (new \ReflectionClass(ForkedWorkerPool::class))->getFileName();
 
-        $this->assertStringEndsWith('src/Linter/Parallel/ForkedWorkerPool.php', Path::normalize($file));
+        $this->assertStringEndsWith('src/Linter/Parallel/ForkedWorkerPool.php', Path::fromHost($file));
     }
 
     #[Test]

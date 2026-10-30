@@ -681,6 +681,8 @@ final class LintCommandStreamsTest extends TestCase
      * A writable file that is not a regular one, a device or a pipe, takes
      * the report as a file does: /dev/null throws it away.
      */
+    // /dev/null is a device on Linux and macOS; Windows names its null device NUL.
+    #[RequiresOperatingSystem('Linux|Darwin')]
     #[Test]
     public function test_lint_writes_the_output_to_a_device(): void
     {

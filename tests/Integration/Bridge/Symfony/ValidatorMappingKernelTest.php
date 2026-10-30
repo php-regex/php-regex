@@ -106,7 +106,7 @@ final class ValidatorMappingKernelTest extends TestCase
             $source = $result['source'] ?? null;
             $pattern = $result['pattern'] ?? null;
             $results[] = [
-                Path::normalize(substr($absolute, \strlen($project) + 1)),
+                Path::fromHost(substr($absolute, \strlen($project) + 1)),
                 $line,
                 \is_string($source) ? $source : null,
                 \is_string($pattern) ? $pattern : null,

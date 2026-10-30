@@ -35,7 +35,7 @@ final class PatternDeclarationsTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->root = Path::normalize(sys_get_temp_dir()).'/regex-parser-lsp-declarations-'.bin2hex(random_bytes(6));
+        $this->root = Path::fromHost(sys_get_temp_dir()).'/regex-parser-lsp-declarations-'.bin2hex(random_bytes(6));
         mkdir($this->root, 0o700, true);
     }
 
@@ -300,7 +300,7 @@ final class PatternDeclarationsTest extends TestCase
         // VS Code percent-encodes the colon of the drive, which parse_url()
         // then leaves behind the slash of the root.
         $this->assertSame('c:/project/A.php', PatternDeclarations::pathOf('file:///c%3A/project/A.php'));
-        $this->assertSame('C:/work space/A.php', PatternDeclarations::pathOf(FileUri::of('C:\\work space\\A.php')));
+        $this->assertSame('C:/work space/A.php', PatternDeclarations::pathOf(FileUri::of('C:/work space/A.php')));
         $this->assertSame('/home/a/x.php', PatternDeclarations::pathOf(FileUri::of('/home/a/x.php')));
         $this->assertNull(PatternDeclarations::pathOf('untitled:Untitled-1'));
     }

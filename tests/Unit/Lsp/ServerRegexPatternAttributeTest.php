@@ -88,7 +88,7 @@ final class ServerRegexPatternAttributeTest extends TestCase
         $this->output = $output;
         $this->input = $input;
 
-        $this->root = Path::normalize(sys_get_temp_dir()).'/regex-parser-lsp-attribute-'.bin2hex(random_bytes(6));
+        $this->root = Path::fromHost(sys_get_temp_dir()).'/regex-parser-lsp-attribute-'.bin2hex(random_bytes(6));
         mkdir($this->root.'/src', 0o700, true);
     }
 

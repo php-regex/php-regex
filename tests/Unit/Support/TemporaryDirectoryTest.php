@@ -35,7 +35,7 @@ final class TemporaryDirectoryTest extends TestCase
             $this->assertDirectoryExists($first);
             $this->assertDirectoryExists($second);
             $this->assertNotSame($first, $second);
-            $this->assertStringStartsWith(Path::normalize((string) realpath(sys_get_temp_dir())).'/php-regex-temporary-', $first);
+            $this->assertStringStartsWith(Path::fromHost((string) realpath(sys_get_temp_dir())).'/php-regex-temporary-', $first);
             $this->assertStringNotContainsString('\\', $first, 'Spelled with "/" on every host.');
             $this->assertSame([], array_diff(scandir($first) ?: [], ['.', '..']));
         } finally {

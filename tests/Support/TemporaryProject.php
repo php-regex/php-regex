@@ -61,7 +61,7 @@ trait TemporaryProject
         $directory = sys_get_temp_dir().'/regex-parser-project-'.bin2hex(random_bytes(8));
         mkdir($directory, 0o700, true);
         // Spelled with "/" on every host, as the library spells the paths it reports.
-        $directory = Path::normalize((string) realpath($directory));
+        $directory = Path::fromHost((string) realpath($directory));
         $this->temporaryProjects[] = $directory;
 
         foreach ($files as $path => $contents) {

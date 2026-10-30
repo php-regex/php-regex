@@ -31,6 +31,6 @@ final class Paths
         $a = realpath($a);
         $b = realpath($b);
 
-        return false !== $a && false !== $b && Path::normalize($a) === Path::normalize($b);
+        return false !== $a && false !== $b && Path::fromHost($a) === Path::fromHost($b);
     }
 }

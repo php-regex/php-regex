@@ -35,11 +35,13 @@ final class SourceDeprecationListener implements Extension
 {
     public static function isOwnSource(string $file, string $sourceDirectory): bool
     {
-        // Compared with "/": a frame on Windows spells its file with "\\". The
-        // extension runs where the library is not loaded, so no helper of it.
+        // A frame on Windows spells its file with "\\", a separator there and a
+        // character of a name elsewhere. The extension runs where the library
+        // is not loaded, so no helper of it.
         $source = realpath($sourceDirectory);
+        $slashes = static fn (string $path): string => '\\' === \DIRECTORY_SEPARATOR ? str_replace('\\', '/', $path) : $path;
 
-        return false !== $source && str_starts_with(str_replace('\\', '/', $file), str_replace('\\', '/', $source).'/');
+        return false !== $source && str_starts_with($slashes($file), $slashes($source).'/');
     }
 
     public function bootstrap(Configuration $configuration, Facade $facade, ParameterCollection $parameters): void

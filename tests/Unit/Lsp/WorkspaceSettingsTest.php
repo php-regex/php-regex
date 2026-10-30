@@ -328,7 +328,7 @@ final class WorkspaceSettingsTest extends TestCase
         mkdir($root);
         $this->root = $root;
 
-        return Path::normalize((string) realpath($root));
+        return Path::fromHost((string) realpath($root));
     }
 
     /**

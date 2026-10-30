@@ -644,7 +644,7 @@ final class DocumentedCalls
             if (!$file instanceof \SplFileInfo || 'php' !== $file->getExtension()) {
                 continue;
             }
-            $relative = Path::normalize(substr($file->getPathname(), \strlen(DocumentationPages::ROOT.'/src/'), -4));
+            $relative = Path::fromHost(substr($file->getPathname(), \strlen(DocumentationPages::ROOT.'/src/'), -4));
             if (str_contains('/'.$relative.'/', '/Tests/') || str_contains('/'.$relative.'/', '/Resources/')) {
                 continue;
             }

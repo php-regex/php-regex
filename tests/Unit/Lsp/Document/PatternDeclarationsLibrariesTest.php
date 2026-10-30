@@ -34,7 +34,7 @@ final class PatternDeclarationsLibrariesTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->root = Path::normalize(sys_get_temp_dir()).'/regex-parser-lsp-libraries-'.bin2hex(random_bytes(6));
+        $this->root = Path::fromHost(sys_get_temp_dir()).'/regex-parser-lsp-libraries-'.bin2hex(random_bytes(6));
         mkdir($this->root, 0o700, true);
     }
 

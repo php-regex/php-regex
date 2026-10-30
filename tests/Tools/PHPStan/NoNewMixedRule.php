@@ -91,7 +91,7 @@ final class NoNewMixedRule implements Rule
     {
         $errors = [];
         $entries = $this->entries($errors);
-        $root = null === $this->baseline ? '' : Path::normalize(\dirname($this->baseline)).'/';
+        $root = null === $this->baseline ? '' : Path::fromHost(\dirname($this->baseline)).'/';
 
         foreach ($entries as $file => $symbols) {
             if (!is_file($root.$file)) {
@@ -102,7 +102,7 @@ final class NoNewMixedRule implements Rule
         $unseen = $entries;
         foreach ($node->get(MixedTypeCollector::class) as $file => $records) {
             // Spelled with "/" as the baseline and the paths spell it, whatever the host.
-            $file = Path::normalize($file);
+            $file = Path::fromHost($file);
             if (!$this->judges($file)) {
                 continue;
             }
@@ -184,7 +184,7 @@ final class NoNewMixedRule implements Rule
     private function judges(string $file): bool
     {
         foreach ($this->paths as $path) {
-            if (str_starts_with($file, rtrim(Path::normalize($path), '/').'/')) {
+            if (str_starts_with($file, rtrim(Path::fromHost($path), '/').'/')) {
                 return true;
             }
         }

@@ -32,7 +32,7 @@ final class TemporaryDirectory
      */
     public static function create(string $prefix = 'php-regex'): string
     {
-        $directory = Path::normalize((string) realpath(sys_get_temp_dir())).'/'.$prefix.'-'.bin2hex(random_bytes(6));
+        $directory = Path::fromHost((string) realpath(sys_get_temp_dir())).'/'.$prefix.'-'.bin2hex(random_bytes(6));
         (new Filesystem())->mkdir($directory);
 
         return $directory;
