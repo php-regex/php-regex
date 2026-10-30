@@ -243,15 +243,15 @@ final class CrossFileConstantsTest extends TestCase
     {
         $reader = <<<'PHP_WRAP'
             <?php
-        
+
             namespace App;
-        
+
             use PHPRegex\Parser\Attribute\RegexPattern;
-        
+
             function grep(#[RegexPattern] string $expression): void
             {
             }
-        
+
             preg_match(Patterns::EMAIL, 'x');
             grep('/own/');
             PHP_WRAP;
