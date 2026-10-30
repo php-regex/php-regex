@@ -89,10 +89,12 @@ prose (the site under `docs/`, the READMEs, the changelogs, the upgrade guide,
 the documentation tests, and the link check when the site under `docs/`
 changes, and nothing else: the suite, the engines, static analysis, the
 packages, coverage, the benchmarks and the public API comparison wait for a
-change elsewhere. Each workflow names the prose it stays out of in its
-`paths-ignore` list, one list copied as is. The documentation tests are the
-`documentation` group of the suite, every test under `tests/Documentation` and
-every test that names a file of the prose:
+change elsewhere. Each of those workflows names the prose it stays out of in
+its `paths-ignore` list, one list copied as is; the workflows that read a part
+of the tree name it instead, and the spelling check runs on every pull
+request. The documentation tests are the `documentation` group of the suite,
+every test under `tests/Documentation` and every test that names a file of
+the prose:
 
 ```bash
 tools/phpunit/vendor/bin/phpunit --group documentation
