@@ -181,7 +181,7 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
             // else thrown here is a defect of ours, and is not caught.
             return [
                 PatternOccurrence::parserFallback($file, $e->getMessage()),
-                ...(new TokenBasedExtractionStrategy([], $this->registry))->extract([$file]),
+                ...(new TokenBasedExtractionStrategy([], $this->registry, $this->project))->extract([$file]),
             ];
         }
 

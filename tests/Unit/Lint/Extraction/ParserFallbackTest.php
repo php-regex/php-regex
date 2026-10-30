@@ -400,6 +400,7 @@ final class ParserFallbackTest extends TestCase
         $strategy = $reflection->newInstanceWithoutConstructor();
         $reflection->getProperty('parser')->setValue($strategy, $parser);
         $reflection->getProperty('registry')->setValue($strategy, PatternFunctionRegistry::defaults());
+        $reflection->getProperty('project')->setValue($strategy, null);
 
         return $strategy;
     }
