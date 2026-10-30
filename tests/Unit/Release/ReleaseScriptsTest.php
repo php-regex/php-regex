@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Release;
 
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,6 +26,7 @@ use PHPUnit\Framework\TestCase;
  */
 // The scripts under bin/ are bash scripts, started without a shell.
 #[RequiresOperatingSystem('Linux|Darwin')]
+#[Group('documentation')]
 final class ReleaseScriptsTest extends TestCase
 {
     private const CHANGELOG = <<<'MD'

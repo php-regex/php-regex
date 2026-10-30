@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\PHPStan\ErrorFactory;
 use PHPRegex\PHPStan\PatternChecker;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +27,7 @@ use PHPUnit\Framework\TestCase;
  * removed opens a 404. The link of a lint issue is the one the rule
  * catalogue gives every report.
  */
+#[Group('documentation')]
 final class RegexPatternRuleDocLinksTest extends TestCase
 {
     private const SITE = 'https://php-regex.com/';

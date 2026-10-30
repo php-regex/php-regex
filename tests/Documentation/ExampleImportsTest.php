@@ -24,6 +24,7 @@ use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PublicSurface;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -38,6 +39,7 @@ use PHPUnit\Framework\TestCase;
  * The pages written for contributors to the library itself show its
  * internal classes on purpose, and are not read.
  */
+#[Group('documentation')]
 final class ExampleImportsTest extends TestCase
 {
     private const CONTRIBUTOR_PAGES = ['docs/adding-a-lint-rule.md'];

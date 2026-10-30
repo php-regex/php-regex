@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -24,6 +25,7 @@ use PHPUnit\Framework\TestCase;
  * for the opt-in ones, "off by default"), the mapping page that names every
  * Sonar regex rule on PHP once, and the CHANGELOG.
  */
+#[Group('documentation')]
 final class SonarParityReferenceTest extends TestCase
 {
     private const REFERENCE = __DIR__.'/../../docs/reference/rules.md';

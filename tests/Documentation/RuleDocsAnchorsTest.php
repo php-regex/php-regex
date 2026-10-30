@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -24,6 +25,7 @@ use PHPUnit\Framework\TestCase;
  * section names the issue: an anchor the site does not generate opens the
  * top of the page, a page the docs no longer hold opens a 404.
  */
+#[Group('documentation')]
 final class RuleDocsAnchorsTest extends TestCase
 {
     private const SITE = 'https://php-regex.com/';

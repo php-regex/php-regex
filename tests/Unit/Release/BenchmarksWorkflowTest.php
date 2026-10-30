@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Release;
 
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,6 +27,7 @@ use PHPUnit\Framework\TestCase;
  * scripts of its steps run here as GitHub runs them.
  */
 #[RequiresOperatingSystem('Linux|Darwin')]
+#[Group('documentation')]
 final class BenchmarksWorkflowTest extends TestCase
 {
     private string $scratch = '';

@@ -29,9 +29,11 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[Group('documentation')]
 final class ReadmeExamplesTest extends TestCase
 {
     private Regex $regex;

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Bridge\Rector;
 use PHPRegex\Rector\Upgrade\UpgradeMap;
 use PHPRegex\Tests\Support\UpgradeGuide;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,6 +24,7 @@ use PHPUnit\Framework\TestCase;
  * The 1.3 → 2.0 map behind UPGRADE-2.0.md and the Rector set: every class 1.3
  * shipped has a 2.0 name or says what replaces it.
  */
+#[Group('documentation')]
 final class UpgradeMapTest extends TestCase
 {
     #[Test]

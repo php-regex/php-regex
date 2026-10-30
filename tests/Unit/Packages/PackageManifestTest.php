@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Packages;
 
 use PHPRegex\Psalm\Plugin;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,7 @@ use PHPUnit\Framework\TestCase;
  * code imports, siblings as hard requirements and other libraries as
  * requirements or suggestions, and the root package replaces it.
  */
+#[Group('documentation')]
 final class PackageManifestTest extends TestCase
 {
     private const PACKAGES = [

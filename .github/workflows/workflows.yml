@@ -1,11 +1,11 @@
 name: Workflows
 
-# The workflows and the local action under .github/, and the workflow each
+# The workflows and the local actions under .github/, and the workflow each
 # package carries for its read-only repository: actionlint for their syntax,
 # expressions and shell scripts, zizmor for their security. They run on every
 # push to 2.x, as bin/release wants a run on the commit it tags, on a pull
-# request that changes one of them, and every Monday, when a new finding may
-# name old code.
+# request that changes one of them (the community files under .github/ are
+# not one), and every Monday, when a new finding may name old code.
 
 on:
   push:
@@ -13,7 +13,9 @@ on:
   pull_request:
     branches: [ 2.x ]
     paths:
-      - '.github/**'
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - '.github/zizmor.yml'
       - 'src/*/.github/**'
   schedule:
     - cron: '7 4 * * 1'

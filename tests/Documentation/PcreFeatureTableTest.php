@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Parser\PcreFeature;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -21,6 +22,7 @@ use PHPUnit\Framework\TestCase;
  * The table of what changed in which release, in the PCRE concepts page,
  * lists every behaviour the code knows, with its release.
  */
+#[Group('documentation')]
 final class PcreFeatureTableTest extends TestCase
 {
     #[Test]

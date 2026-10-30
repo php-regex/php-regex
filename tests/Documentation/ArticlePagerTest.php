@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,6 +24,7 @@ use PHPUnit\Framework\TestCase;
  * article published there is nowhere to step and nothing more to list, so
  * neither the pager nor the list is written.
  */
+#[Group('documentation')]
 final class ArticlePagerTest extends TestCase
 {
     private const LAYOUT = __DIR__.'/../../docs/_layouts/article.html';

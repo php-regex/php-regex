@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -21,6 +22,7 @@ use PHPUnit\Framework\TestCase;
  * regex.lint.redos.search, naming the PHPStan identifier, a warning that is
  * never an error; the ReDoS guide names the id.
  */
+#[Group('documentation')]
 final class RedosSearchCostReferenceTest extends TestCase
 {
     private const REFERENCE = __DIR__.'/../../docs/reference/rules.md';

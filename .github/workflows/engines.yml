@@ -9,6 +9,28 @@ on:
     branches: [ 2.x ]
   pull_request:
     branches: [ 2.x ]
+    # Not for the prose alone: a pull request that changes only what is
+    # listed here runs the spelling check and the documentation tests, and
+    # the link check when the site changes. Every push to 2.x runs this
+    # workflow whatever it changed.
+    paths-ignore:
+      - 'docs/**'
+      - 'art/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'UPGRADE-2.0.md'
+      - 'CONTRIBUTING.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'SECURITY.md'
+      - 'TODO.md'
+      - 'LICENSE'
+      - 'src/*/README.md'
+      - 'src/*/CHANGELOG.md'
+      - '.github/organization/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/FUNDING.yml'
+      - '.github/CODEOWNERS'
   schedule:
     # Every Monday, against the week's tool releases, which no lock file pins.
     - cron: '43 2 * * 1'
