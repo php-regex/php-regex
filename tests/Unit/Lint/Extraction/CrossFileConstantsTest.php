@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
+use PhpParser\ErrorHandler;
+use PhpParser\Parser;
 use PhpParser\ParserFactory;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
@@ -229,6 +231,82 @@ final class CrossFileConstantsTest extends TestCase
             ['/g/', 'Patterns.php', '>=8.1'],
             ['/own/', 'Reader.php', '>=8.4'],
         ], $this->guardsAcross(['Patterns.php' => $patterns, 'Reader.php' => $reader]));
+    }
+
+    /**
+     * A strategy used on its own reads the #[RegexPattern] declarations of
+     * the files it is handed, through a copy of itself: the copy keeps
+     * the project's constants.
+     */
+    #[Test]
+    public function test_a_strategy_reading_its_own_declarations_keeps_the_project_constants(): void
+    {
+        $reader = <<<'PHP_WRAP'
+            <?php
+
+            namespace App;
+
+            use PHPRegex\Parser\Attribute\RegexPattern;
+
+            function grep(#[RegexPattern] string $expression): void
+            {
+            }
+
+            preg_match(Patterns::EMAIL, 'x');
+            grep('/own/');
+            PHP_WRAP;
+        $directory = $this->makeProject(['Patterns.php' => self::PATTERNS, 'Reader.php' => $reader]);
+        $constants = ProjectConstants::of([ProjectConstants::scanFile($directory.'/Patterns.php')]);
+        $expected = [
+            ['pattern' => '/^[^@]+@[^@]+$/', 'line' => 7, 'offset' => strpos(self::PATTERNS, "'/^[^@]"), 'source' => 'preg_match()', 'location' => 'via Patterns::EMAIL', 'file' => 'Patterns.php'],
+            ['pattern' => '/own/', 'line' => 12, 'offset' => strpos($reader, "'/own/'"), 'source' => 'grep()', 'location' => null, 'file' => 'Reader.php'],
+        ];
+
+        $this->assertSame($expected, $this->readWith($this->withConstants(new TokenBasedExtractionStrategy([], PatternFunctionRegistry::native()), $constants), [$directory.'/Reader.php']));
+        if (class_exists(ParserFactory::class)) {
+            $this->assertSame($expected, $this->readWith($this->withConstants(new PhpParserExtractionStrategy([], PatternFunctionRegistry::native()), $constants), [$directory.'/Reader.php']));
+        }
+    }
+
+    /**
+     * A file the parser cannot read goes to the tokenizer with the
+     * project's constants: it reads the file as the tokenizer alone does.
+     */
+    #[Test]
+    public function test_the_tokenizer_fallback_keeps_the_project_constants(): void
+    {
+        $reader = "<?php\n\nuse App\\Patterns;\n\npreg_match(Patterns::EMAIL, 'x');\n";
+        $directory = $this->makeProject(['Patterns.php' => self::PATTERNS, 'Reader.php' => $reader]);
+        $constants = ProjectConstants::of([ProjectConstants::scanFile($directory.'/Patterns.php')]);
+        if (!class_exists(ParserFactory::class)) {
+            $this->assertSame([], $this->withConstants(new PhpParserExtractionStrategy([], PatternFunctionRegistry::native()), $constants)->extract([$directory.'/Reader.php']), 'Without the parser, the strategy reads nothing.');
+
+            return;
+        }
+
+        $parser = new class implements Parser {
+            public function parse(string $code, ?ErrorHandler $errorHandler = null): ?array
+            {
+                throw new \RangeException('The lexer returned an invalid token (id=400, value=x)');
+            }
+
+            public function getTokens(): array
+            {
+                return [];
+            }
+        };
+        $reflection = new \ReflectionClass(PhpParserExtractionStrategy::class);
+        $strategy = $reflection->newInstanceWithoutConstructor();
+        $reflection->getProperty('parser')->setValue($strategy, $parser);
+        $reflection->getProperty('registry')->setValue($strategy, PatternFunctionRegistry::native());
+        $reflection->getProperty('project')->setValue($strategy, $constants);
+
+        $occurrences = $strategy->extract([$directory.'/Reader.php']);
+
+        $this->assertCount(2, $occurrences);
+        $this->assertSame('The lexer returned an invalid token (id=400, value=x)', $occurrences[0]->parserFallback);
+        $this->assertSame('/^[^@]+@[^@]+$/', $occurrences[1]->pattern);
+        $this->assertSame($directory.'/Patterns.php', $occurrences[1]->file);
     }
 
     /**

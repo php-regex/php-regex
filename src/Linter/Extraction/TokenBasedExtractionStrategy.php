@@ -65,7 +65,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         // Used on its own, the functions the files mark with #[RegexPattern]
         // join the registry for this run.
         $specs = $this->registry->declarationsRead() ? [] : PatternAttributeScanner::specs($files);
-        $strategy = [] === $specs ? $this : new self([], $this->registry->withDeclaredFunctions($specs));
+        $strategy = [] === $specs ? $this : new self([], $this->registry->withDeclaredFunctions($specs), $this->project);
 
         return $strategy->extractFiles($files);
     }
