@@ -271,15 +271,15 @@ final class SearchFilter
 }
 ```
 
-- `message` (default `This value is not a valid regular expression: {{ error }}`)
-  takes `{{ value }}`, `{{ error }}` (the library's message, `Unmatched closing
-  parenthesis at position 4.` for `/abc)/`) and `{{ hint }}` (how to fix it,
+- `message` (default {% raw %}`This value is not a valid regular expression: {{ error }}`{% endraw %})
+  takes {% raw %}`{{ value }}`{% endraw %}, {% raw %}`{{ error }}`{% endraw %} (the library's message, `Unmatched closing
+  parenthesis at position 4.` for `/abc)/`) and {% raw %}`{{ hint }}`{% endraw %} (how to fix it,
   or an empty string). The code is `ValidRegex::INVALID_ERROR`.
 - `redos: true` also refuses a pattern whose [ReDoS](redos.md) severity reaches
   `redosThreshold`: `low`, `medium`, `high` (the default) or `critical`, as a
   string or a `RedosSeverity`. `/x*x*x*$/` (polynomial, `high`) is refused,
-  `/a*a*$/` (`medium`) passes. `redosMessage` takes `{{ value }}` and
-  `{{ severity }}`; the code is `ValidRegex::REDOS_ERROR`. An invalid pattern
+  `/a*a*$/` (`medium`) passes. `redosMessage` takes {% raw %}`{{ value }}`{% endraw %} and
+  {% raw %}`{{ severity }}`{% endraw %}; the code is `ValidRegex::REDOS_ERROR`. An invalid pattern
   is never analysed for ReDoS.
 - Null and the empty string are valid, as for every Symfony constraint: add
   `NotBlank` to refuse them.
@@ -287,13 +287,15 @@ final class SearchFilter
   domain, as the messages of Symfony's own constraints are: the bundle ships
   their English catalogue (`Resources/translations/validators.en.xlf`), and
   your application translates them in its own `translations/validators.<locale>.*`
-  files. `{{ error }}` and `{{ hint }}` are the library's English messages,
+  files. {% raw %}`{{ error }}`{% endraw %} and {% raw %}`{{ hint }}`{% endraw %} are the library's English messages,
   not translated.
 
+{% raw %}
 ```yaml
 # translations/validators.fr.yaml
 'This value is not a valid regular expression: {{ error }}': 'Cette valeur n''est pas une expression régulière valide : {{ error }}'
 ```
+{% endraw %}
 
 ## How route requirements and security patterns are read
 
