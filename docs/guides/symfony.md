@@ -221,7 +221,7 @@ written as an attribute, `#[Assert\Regex]`, is read from the PHP file (the
 out.
 
 The `matches` operator of the Twig templates under the linted paths is read
-too, as `preg_match()` of its literal: `{% if slug matches '/^[a-z]+$/' %}`
+too, as `preg_match()` of its literal: {% raw %}`{% if slug matches '/^[a-z]+$/' %}`{% endraw %}
 is reported at the template, with `twig:matches` as its source (see the
 [CLI guide](cli.md#twig-templates) for what Twig makes of the backslashes).
 `--no-twig` leaves the templates out.

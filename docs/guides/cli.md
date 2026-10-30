@@ -863,7 +863,7 @@ or `"redos.search": false` in `checks.lint.rules`, turns it off.
 
 #### Twig templates
 
-Twig's `matches` operator is a `preg_match()`: `{% if slug matches '/^[a-z]+$/' %}`
+Twig's `matches` operator is a `preg_match()`: {% raw %}`{% if slug matches '/^[a-z]+$/' %}`{% endraw %}
 compiles to a call of the engine on that literal. The lint reads it from the
 `*.twig` files under the linted paths (list `templates` in `paths`, or name
 the directory on the command line), and reports it at the template, the line
@@ -873,12 +873,12 @@ the same rules and the same ReDoS verdict as a pattern of the PHP files.
 
 The pattern is the one Twig hands to the engine, not the text between the
 quotes: Twig folds the backslash escapes of its strings as C does, so
-`'/\d+/'` is the pattern `/d+/` and `'/\d+/'` the pattern `/\d+/`. A
+`'/\d+/'` is the pattern `/d+/` and `'/\\d+/'` the pattern `/\d+/`. A
 template that writes `'/\d+/'` matches a `d`; the lint reports what the
 engine runs.
 
-The operator is read inside `{{ }}` and `{% %}` only, never in a `{# #}`
-comment, a `{% verbatim %}` block or the text around the tags, and only when
+The operator is read inside {% raw %}`{{ }}` and `{% %}`{% endraw %} only, never in a `{# #}`
+comment, a {% raw %}`{% verbatim %}`{% endraw %} block or the text around the tags, and only when
 its right operand is one string literal: a variable, a concatenation
 (`'/' ~ sep ~ '/'`) or an interpolated string (`"/#{sep}/"`) is not read. A
 `{# @regex-ignore #}` comment silences the line as a PHP comment does, and
