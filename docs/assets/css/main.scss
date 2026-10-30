@@ -2697,6 +2697,21 @@ a:focus-visible .article-nav-arrow {
   color: var(--amber);
 }
 
+/* The card's only word of intent sits in that label; an arrow closes it,
+   the same "Read the API →" idiom the landing cards use, so a first-time
+   reader sees a destination and not a definition. The nudge on hover is
+   covered by the reduced-motion block like every other transition. */
+.task-card span::after {
+  content: "→";
+  margin-left: .35em;
+  transition: transform .15s ease;
+}
+
+.task-card:hover span::after,
+.task-card:focus-visible span::after {
+  transform: translateX(.25em);
+}
+
 /* ---- Guide grids -----------------------------------------------------------
  * The guides index lists seven integrations, each a heading and one
  * sentence: a single column of those is a page of air. From 1100px the
