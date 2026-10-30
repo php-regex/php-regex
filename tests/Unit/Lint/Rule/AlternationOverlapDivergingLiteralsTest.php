@@ -40,6 +40,10 @@ final class AlternationOverlapDivergingLiteralsTest extends TestCase
         yield 'a word followed by a group' => ['pattern' => '/(?:callable-(?:string|object)|class-string)+/'];
         yield 'an escaped literal in the text' => ['pattern' => '/(?:<\?xml\b.*?\?>|<!--.*?-->)+/'];
         yield 'words read through capturing groups' => ['pattern' => '/(?:(associative)-array|(array))+/'];
+        yield 'a group holding more than text' => ['pattern' => '/(?:(ab\d)|ac)+/'];
+        yield 'a branch holding bare flags alone' => ['pattern' => '/(?:(?i)(?s)|ab)+/'];
+        yield 'an empty branch' => ['pattern' => '/(?:|ab)+/'];
+        yield 'a caseless group after a case-sensitive text' => ['pattern' => '/(?:Ab(?i:\d)|ab)+/'];
         yield 'words told apart under /i' => ['pattern' => '/(?:Array|associative-array)+/i'];
         yield 'a name and a wider word that only share a letter' => ['pattern' => '/(?:ab|AC)+/i'];
         yield 'texts above ASCII' => ['pattern' => '/(?:été|école)+/u'];
@@ -63,6 +67,13 @@ final class AlternationOverlapDivergingLiteralsTest extends TestCase
         yield 'a quantified first character' => ['pattern' => '/(?:a+b|ac)+/'];
         yield 'texts that fold to a prefix under /i' => ['pattern' => '/(?:A\d|ab)+/i'];
         yield 'a single character before a longer text' => ['pattern' => '/(?:a|ab\d)+/'];
+        yield 'a caseless first branch beside a case-sensitive one' => ['pattern' => '/(?:(?i)Ab\d|ab)+/'];
+        yield 'a caseless second branch beside a case-sensitive one' => ['pattern' => '/(?:ab\d|(?i)AB)+/'];
+        yield 'a caseless group around the text' => ['pattern' => '/(?:(?i:Ab)\d|ab)+/'];
+        // A bare (?i) in one branch holds for the branches after it: PCRE
+        // matches "AB" through the second branch here.
+        yield 'a bare caseless flag in the first branch, reaching the second' => ['pattern' => '/(?:Ab(?i)\d|ab)+/'];
+        yield 'texts that fold to a prefix with a final sigma' => ['pattern' => '/(?:σa\d|ςab)+/iu'];
         yield 'a text above ASCII that prefixes the other' => ['pattern' => '/(?:é\d|ét)+/u'];
         yield 'a text that prefixes the other, beside a byte class above ASCII' => ['pattern' => '/(?:[\xC0-\xFF]a|ab|a\d)+/'];
     }

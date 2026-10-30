@@ -9,7 +9,10 @@ CHANGELOG
  * The character-set overlap of an alternation is no longer reported for two
    branches whose leading literal texts tell them apart,
    `associative-array|array`: the second character already decides which
-   branch takes the input, so no backtracking between them follows.
+   branch takes the input, so no backtracking between them follows. The
+   texts are folded as PCRE folds under `/i`, a final sigma meeting its
+   sigma, and the case a branch starts in is read at its first atom: a
+   `(?i:` later in the branch leaves its start case-sensitive.
  * A class constant or an enum case of another file of the project is read
    as one of the same file is: the constants of every file are read once
    before the patterns, with the declarations, and a call naming a class its

@@ -48,6 +48,7 @@ final class AlternationOverlapCaseTest extends TestCase
         yield 'one branch caseless' => ['pattern' => '/^(?:a|(?i:A))+$/', 'letter' => 'a'];
         yield 'a prefix in another case' => ['pattern' => '/^(?:ab|AB)+$/i', 'letter' => 'ab'];
         yield 'two cases of a letter under u' => ['pattern' => '/^(?:é|É)+$/iu', 'letter' => 'é'];
+        yield 'a sigma and a final sigma under u' => ['pattern' => '/^(?:σ|ς)+$/iu', 'letter' => 'σ'];
     }
 
     #[Test]

@@ -164,11 +164,15 @@ final class OverlappingAlternationRule extends AbstractLintRule
         $caselessAt = [];
         $anyUnknown = false;
         foreach ($context->flagsAtEachChild($node) as $index => $flags) {
-            $charSet = $context->firstChars($node->alternatives[$index], $flags);
+            $alternative = $node->alternatives[$index];
+            $charSet = $context->firstChars($alternative, $flags);
             if ($charSet->isUnknown()) {
                 $anyUnknown = true;
             }
-            $caseless = str_contains($flags, 'i') || NodePredicates::turnsCaselessOn($node->alternatives[$index]);
+            // The case the branch starts in: the flags at its first atom, a
+            // "(?i:" around it or a bare "(?i)" before it included, not one
+            // later in the branch, which leaves the start case-sensitive.
+            $caseless = str_contains($context->flagsAt(self::firstLeaf($alternative), $alternative, $flags), 'i');
             $caselessAt[] = $caseless;
             $charSets[] = $caseless ? self::foldCharSet($charSet) : $charSet;
         }
@@ -177,7 +181,11 @@ final class OverlappingAlternationRule extends AbstractLintRule
             $total = \count($charSets);
             for ($i = 0; $i < $total; $i++) {
                 for ($j = $i + 1; $j < $total; $j++) {
-                    if (!$charSets[$i]->isEmpty() && !$charSets[$j]->isEmpty() && $charSets[$i]->intersects($charSets[$j]) && !$this->tellsApart($node, $i, $j, $caselessAt, $context)) {
+                    if (!$charSets[$i]->isEmpty() && !$charSets[$j]->isEmpty() && $charSets[$i]->intersects($charSets[$j])) {
+                        if ($this->tellsApart($node, $i, $j, $caselessAt, $context)) {
+                            continue;
+                        }
+
                         return $this->makeCharsetViolation($node, $i, $j, $context);
                     }
                 }
@@ -223,13 +231,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
             $node = $node->child;
         }
 
-        if (!$node instanceof SequenceNode) {
-            return $this->extractLiteralSequence($node) ?? '';
-        }
-
         $text = '';
-        foreach ($node->children as $child) {
-            $piece = $child instanceof LiteralNode || $child instanceof GroupNode ? $this->extractLiteralSequence($child) : null;
+        foreach ($node instanceof SequenceNode ? $node->children : [$node] as $child) {
+            $piece = $this->extractLiteralSequence($child);
             if (null === $piece) {
                 break;
             }
@@ -238,6 +242,40 @@ final class OverlappingAlternationRule extends AbstractLintRule
         }
 
         return $text;
+    }
+
+    /**
+     * The first atom of a branch, whose flags say the case the branch
+     * starts in: through the groups that only capture or set options, a
+     * bare "(?i)" at the start passed over, into a quantifier taken at
+     * least once; the branch itself when it starts with nothing else.
+     */
+    private static function firstLeaf(NodeInterface $node): NodeInterface
+    {
+        while (true) {
+            if ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags], true) && !NodePredicates::isStandaloneInlineFlags($node)) {
+                $node = $node->child;
+            } elseif ($node instanceof SequenceNode) {
+                $first = null;
+                foreach ($node->children as $child) {
+                    if (!NodePredicates::isStandaloneInlineFlagsGroup($child)) {
+                        $first = $child;
+
+                        break;
+                    }
+                }
+
+                if (null === $first) {
+                    return $node;
+                }
+
+                $node = $first;
+            } elseif ($node instanceof QuantifierNode && QuantifierMath::parseRange($node)[0] >= 1) {
+                $node = $node->node;
+            } else {
+                return $node;
+            }
+        }
     }
 
     /**
@@ -433,7 +471,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
      */
     private static function fold(string $text, LintContext $context): string
     {
-        return $context->pattern->unicodeMode ? mb_strtolower($text, 'UTF-8') : Ascii::lower($text);
+        // The simple case folding, as PCRE compares caselessly: a final
+        // sigma folds to the sigma, "ß" stays itself.
+        return $context->pattern->unicodeMode ? mb_convert_case($text, \MB_CASE_FOLD_SIMPLE, 'UTF-8') : Ascii::lower($text);
     }
 
     /**
