@@ -102,6 +102,29 @@ final class PatternExtractorCrossFileTest extends TestCase
     }
 
     /**
+     * A linted file the walk of a declaration root reaches under another
+     * spelling is one file, not a class declared twice: its constants are
+     * read, and reported under the spelling the run lints it by, where its
+     * markers are read.
+     */
+    #[Test]
+    public function test_a_linted_file_spelled_otherwise_than_its_declaration_root_is_one_file(): void
+    {
+        $project = $this->makeProject([
+            'src/Patterns.php' => self::PATTERNS,
+            'src/Service/Reader.php' => self::READER,
+        ]);
+        $extractor = new PatternExtractor(new TokenBasedExtractionStrategy([], PatternFunctionRegistry::native()));
+
+        $occurrences = $extractor->extract([$project.'/src/./Patterns.php', $project.'/src/Service/Reader.php'], [], null, 1, declarationPaths: [$project.'/src']);
+
+        $this->assertSame([
+            ['/^[^@]+@[^@]+$/', 'src/./Patterns.php', 7, 'via Patterns::EMAIL', false],
+            ['/^[a-z-]+$/', 'src/./Patterns.php', 8, 'via Patterns::SLUG', true],
+        ], self::rows($occurrences, $project));
+    }
+
+    /**
      * A library's constant is read when a project file names it, from the
      * libraries the declarations are read from; a project class of the same
      * name hides it.

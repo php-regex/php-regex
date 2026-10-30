@@ -343,8 +343,16 @@ final class PatternExtractor
             }
         }
 
-        // Keys dedupe in one pass, without a call to the filesystem per file.
-        return array_keys(array_flip([...$phpFiles, ...$this->walkDeclarationPaths($walk, $linted)]));
+        // One file under two spellings, linted by one and walked under a
+        // declaration path by the other, is one file, not a class declared
+        // twice: it is kept once, as the run lints it, where its markers
+        // are read.
+        $files = [];
+        foreach ([...$phpFiles, ...$this->walkDeclarationPaths($walk, $linted)] as $file) {
+            $files[realpath($file) ?: $file] ??= $file;
+        }
+
+        return array_values($files);
     }
 
     /**
