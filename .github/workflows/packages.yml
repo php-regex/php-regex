@@ -9,8 +9,9 @@ on:
   pull_request:
     branches: [ 2.x ]
     # Not for the prose alone: a pull request that changes only what is
-    # listed here runs the spelling check, the documentation tests and the
-    # link check. Every push to 2.x runs this workflow whatever it changed.
+    # listed here runs the spelling check and the documentation tests, and
+    # the link check when the site changes. Every push to 2.x runs this
+    # workflow whatever it changed.
     paths-ignore:
       - 'docs/**'
       - 'art/**'

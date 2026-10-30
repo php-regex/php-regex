@@ -85,19 +85,21 @@ task lint       # or: composer lint
 
 A pull request runs what its changes can affect. One that changes only the
 prose (the site under `docs/`, the READMEs, the changelogs, the upgrade guide,
-`art/` and the community files under `.github/`) runs the spelling check,
-the documentation tests and the link check, and nothing else: the suite, the
-engines, static analysis, the packages, coverage, the benchmarks and the
-public API comparison wait for a change elsewhere. Each workflow names the
-prose it stays out of in its `paths-ignore` list, one list copied as is. The
-documentation tests are the `documentation` group of the suite, every test
-under `tests/Documentation` and every test that names a file of the prose:
+`art/` and the community files under `.github/`) runs the spelling check and
+the documentation tests, and the link check when the site under `docs/`
+changes, and nothing else: the suite, the engines, static analysis, the
+packages, coverage, the benchmarks and the public API comparison wait for a
+change elsewhere. Each workflow names the prose it stays out of in its
+`paths-ignore` list, one list copied as is. The documentation tests are the
+`documentation` group of the suite, every test under `tests/Documentation` and
+every test that names a file of the prose:
 
 ```bash
 tools/phpunit/vendor/bin/phpunit --group documentation
 ```
 
-Every push to 2.x runs every workflow, whatever it changed.
+Every push to 2.x runs every workflow that judges the code, whatever it
+changed; the documentation tests run there with the whole suite.
 
 Two checks run only in CI. The spelling of the documentation and the
 sources is read by [typos](https://github.com/crate-ci/typos), scoped by

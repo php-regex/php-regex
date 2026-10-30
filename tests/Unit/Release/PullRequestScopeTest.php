@@ -22,8 +22,9 @@ use PHPUnit\Framework\TestCase;
  * Every workflow runs on each push to 2.x, which bin/release reads. A pull
  * request runs what its changes can affect: the prose (the site under docs/,
  * the READMEs, the changelogs, the upgrade guide, the community files) is
- * read by the spelling check, the documentation tests and the link check,
- * and by nothing else, so the workflows that judge the code stay out of a
+ * read by the spelling check and the documentation tests, by the link check
+ * when the site changes, and by nothing else, so the workflows that judge
+ * the code stay out of a
  * pull request that changes the prose alone. The prose is one list, copied
  * as is into every workflow that names it.
  */
