@@ -552,9 +552,11 @@ final class Slug
   namespace `const X`, or a `define('X', value)` with a literal name and these
   two arguments only (a `define()` written otherwise, with named arguments, a
   third argument or a name that is no quoted literal, is not read); an
-  unqualified name tried in the namespace, then globally. A constant built
-  from other constants (`'/'.self::PART.'/'`) is folded, up to 32 constants
-  deep; a cycle reads nothing, and neither does a value folded past 64 KiB. A
+  unqualified name tried in the namespace, then globally; the backing value
+  of an enum case through `->value` (`Kind::Re->value`, `self::Re->value` in
+  the enum's own methods), never the case itself or its `->name`. A constant
+  built from other constants (`'/'.self::PART.'/'`, `self::Re->value`) is
+  folded, up to 32 constants deep; a cycle reads nothing, and neither does a value folded past 64 KiB. A
   constant array feeds `preg_replace()` its values and
   `preg_replace_callback_array()` its keys, and Symfony's `Regex` its
   `pattern` option alone. A `define()` or a global `const` of a name PHP

@@ -57,6 +57,7 @@ use PhpParser\Node\Stmt\Const_;
 use PhpParser\Node\Stmt\Declare_;
 use PhpParser\Node\Stmt\Do_;
 use PhpParser\Node\Stmt\Enum_;
+use PhpParser\Node\Stmt\EnumCase;
 use PhpParser\Node\Stmt\For_;
 use PhpParser\Node\Stmt\Foreach_;
 use PhpParser\Node\Stmt\Function_;
@@ -202,6 +203,8 @@ final class AstValueCollector extends NodeVisitorAbstract
             $this->writeEverything($node->value);
         } elseif ($node instanceof ClassConst) {
             $this->declareClassConstants($node);
+        } elseif ($node instanceof EnumCase) {
+            $this->declareEnumCase($node);
         } elseif ($node instanceof Property) {
             $this->declareProperties($node);
         } elseif ($node instanceof Const_) {
@@ -265,6 +268,11 @@ final class AstValueCollector extends NodeVisitorAbstract
 
         if ($expr instanceof ClassConstFetch) {
             return $this->classConstant($expr);
+        }
+
+        // Kind::Re->value: the backing value of an enum case.
+        if ($expr instanceof PropertyFetch && $expr->var instanceof ClassConstFetch && $expr->name instanceof Identifier && 'value' === $expr->name->toString()) {
+            return ValueExpr::enumCaseValue($this->classConstant($expr->var));
         }
 
         if ($expr instanceof ConstFetch) {
@@ -355,6 +363,20 @@ final class AstValueCollector extends NodeVisitorAbstract
         foreach ($constants->consts as $const) {
             $this->values->declareClassConstant($class, $const->name->toString(), $this->expression($const->value), $constants->isFinal());
         }
+    }
+
+    /**
+     * A case of a backed enum; a pure enum's case, which has no value,
+     * declares nothing.
+     */
+    private function declareEnumCase(EnumCase $case): void
+    {
+        $enum = $this->classKey();
+        if (null === $enum || null === $case->expr) {
+            return;
+        }
+
+        $this->values->declareEnumCase($enum, $case->name->toString(), $this->expression($case->expr));
     }
 
     private function declareProperties(Property $property): void

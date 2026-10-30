@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A pattern read through the backing value of an enum case,
+   `Kind::Re->value` or `self::Re->value`, is read as one held in a class
+   constant is: reported once, at the case.
  * The ReDoS ignore list reads an entry as `RedosAnalyzer` does: a delimited
    pattern without modifiers, `/(a+)+b/`, skips its body under any
    modifiers, where it skipped that string byte for byte only; one written
