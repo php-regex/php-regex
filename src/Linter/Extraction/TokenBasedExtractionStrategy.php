@@ -29,21 +29,30 @@ use PHPRegex\Parser\Text\Ascii;
  *
  * @internal
  */
-final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface
+final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface, ProjectConstantsAwareInterface
 {
     private readonly PatternFunctionRegistry $registry;
 
     /**
-     * @param array<int, string> $customFunctions Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')
+     * @param array<int, string>    $customFunctions Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')
+     * @param ProjectConstants|null $project         the constants of the project's other files, when read before
      */
-    public function __construct(array $customFunctions = [], ?PatternFunctionRegistry $registry = null)
-    {
+    public function __construct(
+        array $customFunctions = [],
+        ?PatternFunctionRegistry $registry = null,
+        private readonly ?ProjectConstants $project = null
+    ) {
         $this->registry = ($registry ?? PatternFunctionRegistry::defaults())->withCustomFunctions($customFunctions);
     }
 
     public function withPatternFunctions(array $specs, array $plain = []): static
     {
-        return new self([], $this->registry->withDeclaredFunctions($specs, $plain)->withDeclarationsRead());
+        return new self([], $this->registry->withDeclaredFunctions($specs, $plain)->withDeclarationsRead(), $this->project);
+    }
+
+    public function withProjectConstants(ProjectConstants $constants): static
+    {
+        return new self([], $this->registry, $constants);
     }
 
     public function customGlobalFunctions(): array
@@ -132,6 +141,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         // Each pattern judged for the versions the guards around it keep.
         return TokenGuards::regions($tokens, $tokenOffsets, $closers, $content)->apply(
             $this->settle(array_values($found->getArrayCopy()), $patternArguments, $tokens, $tokenOffsets, $closers, $file, $content),
+            $file,
         );
     }
 
@@ -271,6 +281,9 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
 
         [$variables, $properties] = $this->watchedNames($pending, $tokens);
         $collector = new TokenValueCollector($tokens, $tokenOffsets, $closers, $content, $variables, $properties);
+        if (null !== $this->project) {
+            $collector->values()->useProject($this->project);
+        }
         foreach ($patternArguments as $start) {
             $collector->markPatternArgument($start);
         }

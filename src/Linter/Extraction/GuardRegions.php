@@ -64,19 +64,21 @@ final class GuardRegions
     }
 
     /**
-     * The occurrences, each judged for the versions the guards around its
-     * literal keep.
+     * The occurrences, each of $file judged for the versions the guards
+     * around its literal keep; one of another file, read through a
+     * constant, is judged by that file's own guards, and left as it is.
      *
      * @param list<PatternOccurrence> $occurrences
+     * @param string                  $file        the file the regions are read from
      *
      * @return list<PatternOccurrence>
      */
-    public function apply(array $occurrences): array
+    public function apply(array $occurrences, string $file): array
     {
         if ([] === $this->regions) {
             return $occurrences;
         }
 
-        return array_map(fn (PatternOccurrence $occurrence): PatternOccurrence => $occurrence->guardedBy($this->at($occurrence->fileOffset)), $occurrences);
+        return array_map(fn (PatternOccurrence $occurrence): PatternOccurrence => $occurrence->file === $file ? $occurrence->guardedBy($this->at($occurrence->fileOffset)) : $occurrence, $occurrences);
     }
 }

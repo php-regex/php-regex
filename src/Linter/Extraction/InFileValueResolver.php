@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Linter\Config\TargetConstraint;
+
 /**
  * What one PHP file proves about the values its names hold, and the
  * patterns a call reads through them.
@@ -53,6 +55,12 @@ final class InFileValueResolver
      * each other reach any size in a few lines, so past it nothing is read.
      */
     public const MAX_LENGTH = 65536;
+
+    /**
+     * The constants of the project's other files, for a class the file
+     * does not declare; none when the file is read on its own.
+     */
+    private ?ProjectConstants $project = null;
 
     /**
      * @var array<string, bool|null> lowercase class => whether it is final; null when the file declares it twice
@@ -153,9 +161,30 @@ final class InFileValueResolver
     private array $folding = [];
 
     /**
-     * @var array<string, true> "offset|pattern" of the patterns already reported
+     * @var array<string, array<int, array<string, ValueExpr>>> file ("" for this one) => offset => pattern => the literal already reported
      */
     private array $reported = [];
+
+    /**
+     * Resolve a class the file does not declare through the project's
+     * constants: the file's own class of a name always wins.
+     */
+    public function useProject(ProjectConstants $project): void
+    {
+        $this->project = $project;
+    }
+
+    /**
+     * What the file declared so far, as its contribution to the project's
+     * constants: its classes, each with whether it is final (null when
+     * declared twice), and their constants, the enum cases among them.
+     *
+     * @return array{classes: array<string, bool|null>, constants: array<string, array{ValueExpr, bool}>}
+     */
+    public function declarations(): array
+    {
+        return ['classes' => $this->classes, 'constants' => $this->classConstants];
+    }
 
     public function declareClass(string $class, bool $final): void
     {
@@ -292,7 +321,7 @@ final class InFileValueResolver
      * call reaches it: "via self::RE", "via $re"; none for a pattern the
      * call assembles itself.
      *
-     * @return list<array{pattern: string, offset: int, line: int, location: string|null}>
+     * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null}> each with the file, the column and the guard of its literal when it is another file's
      */
     public function patterns(ValueExpr $expr, PatternFunction $function): array
     {
@@ -328,13 +357,14 @@ final class InFileValueResolver
                 }
 
                 $pattern = $literal->value.$function->patternSuffix;
-                $key = $literal->offset.'|'.$pattern;
-                if (isset($this->reported[$key])) {
+                // A literal of another file is told from one of the file
+                // at the same offset: each file keeps its own.
+                if (isset($this->reported[$literal->file ?? ''][$literal->offset][$pattern])) {
                     continue;
                 }
 
-                $this->reported[$key] = true;
-                $patterns[] = ['pattern' => $pattern, 'offset' => $literal->offset, 'line' => $literal->line, 'location' => $location];
+                $this->reported[$literal->file ?? ''][$literal->offset][$pattern] = $literal;
+                $patterns[] = ['pattern' => $pattern, 'offset' => $literal->offset, 'line' => $literal->line, 'location' => $location, 'file' => $literal->file, 'column' => $literal->column, 'guard' => $literal->guard];
             }
         }
 
@@ -571,7 +601,7 @@ final class InFileValueResolver
                 }
 
                 // A whole pattern is reported where the concatenation starts.
-                return ValueExpr::literal($value, $expr->offset, $expr->line);
+                return ValueExpr::literal($value, $expr->offset, $expr->line, $expr->file, $expr->column);
 
             case ValueExpr::ARRAY:
                 $items = [];
@@ -589,8 +619,20 @@ final class InFileValueResolver
 
             case ValueExpr::CLASS_CONSTANT:
                 $class = $expr->class;
-                $final = null === $class ? null : $this->classes[$class] ?? null;
-                $constant = null === $final ? null : $this->classConstants[$class.'::'.$expr->value] ?? null;
+                if (null === $class) {
+                    return null;
+                }
+
+                if (\array_key_exists($class, $this->classes)) {
+                    $final = $this->classes[$class];
+                    $constant = null === $final ? null : $this->classConstants[$class.'::'.$expr->value] ?? null;
+                } else {
+                    // A class the file does not declare may be another
+                    // file's, read through the project's constants.
+                    $final = $this->project?->isFinal($class);
+                    $constant = $this->project?->constant($class, $expr->value);
+                }
+
                 if (null === $constant) {
                     return null;
                 }
