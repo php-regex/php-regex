@@ -151,17 +151,21 @@ final class ProjectConstants
     {
         [$classes, $constants] = self::merge($project);
         [$libraryClasses, $libraryConstants] = self::merge($libraries);
+        // The library constants grouped by their class once: a library tree
+        // declares thousands of classes and of constants, and each class
+        // takes its own group, not a pass over every constant.
+        $byClass = [];
+        foreach ($libraryConstants as $key => $constant) {
+            $byClass[substr($key, 0, (int) strrpos($key, '::'))][$key] = $constant;
+        }
+
         foreach ($libraryClasses as $class => $final) {
             if (\array_key_exists($class, $classes)) {
                 continue;
             }
 
             $classes[$class] = $final;
-            foreach ($libraryConstants as $key => $constant) {
-                if (str_starts_with($key, $class.'::')) {
-                    $constants[$key] = $constant;
-                }
-            }
+            $constants += $byClass[$class] ?? [];
         }
 
         return new self($classes, $constants);
