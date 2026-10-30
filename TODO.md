@@ -102,22 +102,6 @@ workflow run. The published `c525273` is the build of 2.x at dec0cb9e52.
   `str_contains()` measured, Symfony route requirements audited.
 
 
-## Package manifests
-
-Each package's manifest against what its sources use, measured on 2026-10-28
-with a dependency analyser run on each package installed alone, its
-suggested packages added: `regex-linter` calls `ctype_alpha()`
-(`Config/ComposerPlatform.php`) and reads `FILTER_VALIDATE_INT`
-(`Console/ConsoleLintRunner.php`) without requiring ext-ctype or ext-filter;
-`regex-cli` uses ext-posix, which it neither requires nor suggests;
-`regex-phpunit` uses `sebastian/comparator`, and `regex-psalm` ext-simplexml
-and `nikic/php-parser`, each reached only through a dependency's own
-dependency. Decide for each: require it, suggest it, or a polyfill. Then wire
-the analyser into the standalone install job of `packages.yml`, where every
-package already stands alone with its own vendor, so that a new undeclared
-use fails there.
-
-
 ## PHPStan pull request
 
 When the pull request is opened, state the parse cost in its description.
