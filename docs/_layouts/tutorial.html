@@ -18,10 +18,20 @@
     <div class="page-main">
       <main id="main" tabindex="-1">
         {% include breadcrumb.html nav=tutorial_nav %}
+        {% comment %}
+          The banner rides in right after the chapter's own h1, injected by
+          string replace: every chapter opens with exactly one `# Title`, and
+          a literal `</h1>` inside a chapter's prose arrives escaped. The
+          title stays the page's first content — the "you are in the right
+          place" word lands once the reader knows which chapter they are in.
+        {% endcomment %}
+        {% capture tutorial_banner %}
         <aside class="tutorial-banner">
           <p>New to regex? You are in the right place. Building a static-analysis tool? <a href="/quick-start/">Start with the Quick Start</a>.</p>
         </aside>
-        {{ content }}
+        {% endcapture %}
+        {% capture h1_with_banner %}</h1>{{ tutorial_banner }}{% endcapture %}
+        {{ content | replace: '</h1>', h1_with_banner }}
         {% include pager.html nav=tutorial_nav numbered=true %}
       </main>
       {% include toc.html %}
