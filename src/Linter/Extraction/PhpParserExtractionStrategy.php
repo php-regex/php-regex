@@ -65,17 +65,21 @@ use PHPRegex\Linter\PatternOccurrence;
  *
  * @internal
  */
-final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface
+final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface, ProjectConstantsAwareInterface
 {
     private readonly ?Parser $parser;
 
     private readonly PatternFunctionRegistry $registry;
 
     /**
-     * @param array<int, string> $customFunctions Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')
+     * @param array<int, string>    $customFunctions Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')
+     * @param ProjectConstants|null $project         the constants of the project's other files, when read before
      */
-    public function __construct(array $customFunctions = [], ?PatternFunctionRegistry $registry = null)
-    {
+    public function __construct(
+        array $customFunctions = [],
+        ?PatternFunctionRegistry $registry = null,
+        private readonly ?ProjectConstants $project = null
+    ) {
         $parser = null;
         if (class_exists(ParserFactory::class)) {
             $parserFactory = new ParserFactory();
@@ -88,7 +92,12 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
 
     public function withPatternFunctions(array $specs, array $plain = []): static
     {
-        return new self([], $this->registry->withDeclaredFunctions($specs, $plain)->withDeclarationsRead());
+        return new self([], $this->registry->withDeclaredFunctions($specs, $plain)->withDeclarationsRead(), $this->project);
+    }
+
+    public function withProjectConstants(ProjectConstants $constants): static
+    {
+        return new self([], $this->registry, $constants);
     }
 
     public function customGlobalFunctions(): array
@@ -105,7 +114,7 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
         // Used on its own, the functions the files mark with #[RegexPattern]
         // join the registry for this run.
         $specs = $this->registry->declarationsRead() ? [] : PatternAttributeScanner::specs($files);
-        $strategy = [] === $specs ? $this : new self([], $this->registry->withDeclaredFunctions($specs));
+        $strategy = [] === $specs ? $this : new self([], $this->registry->withDeclaredFunctions($specs), $this->project);
 
         return $strategy->analyzeFilesWithPhpStan($files);
     }
@@ -203,6 +212,9 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
         }
 
         $collector = new AstValueCollector($this->patternArguments(...));
+        if (null !== $this->project) {
+            $collector->values()->useProject($this->project);
+        }
         $traverser = new NodeTraverser();
         $traverser->addVisitor($collector);
         $traverser->traverse($ast);

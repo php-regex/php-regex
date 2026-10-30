@@ -20,8 +20,11 @@ use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\PatternAttributeScanner;
 use PHPRegex\Linter\Extraction\PatternFunctionAwareInterface;
+use PHPRegex\Linter\Extraction\ProjectConstants;
+use PHPRegex\Linter\Extraction\ProjectConstantsAwareInterface;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
+use PHPRegex\Linter\Extraction\ValueExpr;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Path;
@@ -41,6 +44,7 @@ final class PatternExtractor
         IgnoreMarker::class,
         TargetMarker::class,
         TargetConstraint::class,
+        ValueExpr::class,
     ];
 
     /**
@@ -150,7 +154,37 @@ final class PatternExtractor
         }
         $progress?->finish();
 
-        return $occurrences;
+        return self::once($occurrences);
+    }
+
+    /**
+     * A pattern read through a name is reported once, where its literal is
+     * written: a constant of one file that several files read gives one
+     * occurrence, the first file's.
+     *
+     * @param list<PatternOccurrence> $occurrences
+     *
+     * @return list<PatternOccurrence>
+     */
+    private static function once(array $occurrences): array
+    {
+        /** @var array<string, array<int, array<string, PatternOccurrence>>> $reported file => offset => pattern => the first occurrence */
+        $reported = [];
+        $kept = [];
+        foreach ($occurrences as $occurrence) {
+            // An extractor of the project's own may hand anything back.
+            if ($occurrence instanceof PatternOccurrence && null !== $occurrence->location && null !== $occurrence->fileOffset) {
+                if (isset($reported[$occurrence->file][$occurrence->fileOffset][$occurrence->pattern])) {
+                    continue;
+                }
+
+                $reported[$occurrence->file][$occurrence->fileOffset][$occurrence->pattern] = $occurrence;
+            }
+
+            $kept[] = $occurrence;
+        }
+
+        return $kept;
     }
 
     /**
@@ -171,10 +205,24 @@ final class PatternExtractor
     {
         $files = [...$projectFiles, ...$vendorFiles];
         $progress?->step(LintProgress::STEP_DECLARATIONS, \count($files));
-        $read = $this->readEach($files, $workers, static fn (string $file): array => PatternAttributeScanner::specs([$file]), $progress);
+        // The constants of the files are read in the same pass, for an
+        // extractor that resolves a class of another file through them.
+        $constantsRead = $extractor instanceof ProjectConstantsAwareInterface;
+        $read = $this->readEach(
+            $files,
+            $workers,
+            static fn (string $file): array => [PatternAttributeScanner::specs([$file]), $constantsRead ? ProjectConstants::scanFile($file) : ProjectConstants::nothing()],
+            $progress,
+        );
         $progress?->finish();
 
         $projectCount = \count($projectFiles);
+        if ($extractor instanceof ProjectConstantsAwareInterface) {
+            $contributions = array_column($read, 1);
+            $extractor = $extractor->withProjectConstants(ProjectConstants::of(\array_slice($contributions, 0, $projectCount), \array_slice($contributions, $projectCount)));
+        }
+
+        $read = array_column($read, 0);
         $specs = array_values(array_unique(array_merge([], ...\array_slice($read, 0, $projectCount))));
         $declared = array_fill_keys(array_map(self::specName(...), $specs), true);
         foreach (array_unique(array_merge([], ...\array_slice($read, $projectCount))) as $spec) {
@@ -413,6 +461,11 @@ final class PatternExtractor
                 new \RecursiveDirectoryIterator(Path::fromHost($path), \RecursiveDirectoryIterator::SKIP_DOTS | \FilesystemIterator::UNIX_PATHS),
             );
 
+            // A directory is read in the order of its paths' names, whatever
+            // the filesystem's: a pattern several files read through a
+            // constant is reported for the first of them.
+            $found = [];
+
             /** @var \SplFileInfo $file */
             foreach ($iterator as $file) {
                 if (!$file->isFile() || 'php' !== $file->getExtension()) {
@@ -438,9 +491,14 @@ final class PatternExtractor
                 }
 
                 if (!$excluded) {
-                    $files[] = $filePath;
-                    self::reportFound($progress, \count($files));
+                    $found[] = $filePath;
                 }
+            }
+
+            sort($found, \SORT_STRING);
+            foreach ($found as $filePath) {
+                $files[] = $filePath;
+                self::reportFound($progress, \count($files));
             }
         }
 

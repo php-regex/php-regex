@@ -30,6 +30,7 @@ use PHPRegex\LanguageServer\Handler\CompletionHandler;
 use PHPRegex\Linter\Config\LintConfigResult;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Extraction\ProjectConstants;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\Rule\GroupIndex;
@@ -113,6 +114,7 @@ final class TypeAliasInventoryTest extends TestCase
         LintDefaultsBuilder::class => ['LintDefaults'],
         JsonFormatter::class => ['JsonIssue', 'JsonOptimization'],
         ProjectTarget::class => ['TargetDescription'],
+        ProjectConstants::class => ['Contribution'],
         GroupIndex::class => ['CapturingGroupInfo'],
         CaptureFacts::class => ['Facts'],
         ReplacementReferences::class => ['GroupReference'],

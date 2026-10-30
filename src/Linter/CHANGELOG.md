@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A class constant or an enum case of another file of the project is read
+   as one of the same file is: the constants of every file are read once
+   before the patterns, with the declarations, and a call naming a class its
+   file does not declare resolves it through them. The pattern is reported
+   once, at its literal, in the file that writes it. A class declared in two
+   files reads nothing; a project class hides a library's of the same name.
  * A pattern read through the backing value of an enum case,
    `Kind::Re->value` or `self::Re->value`, is read as one held in a class
    constant is: reported once, at the case.
