@@ -81,11 +81,13 @@ sitemap: false
     {% if emitted %},{% endif %}{% assign emitted = true %}
     {% assign body = p.content %}
     {% if p.content contains '<div class="github-only">' %}
-      {% assign parts = p.content | split: '</div>' %}
-      {% assign body = parts[1] | default: p.content %}
+      {% comment %}Drop the block itself, not everything up to the page's
+        second closing div: a split on "</div>" stops at the task grid's
+        own close and silently loses every heading below it.{% endcomment %}
+      {% assign body = p.content | split: '<div class="github-only">' | last | remove_first: '</div>' %}
     {% endif %}
     {% assign html = body | markdownify %}
-    {"url": {{ u | absolute_url | jsonify }}, "title": {{ p.title | default: u | jsonify }}, "section": {{ section | jsonify }}, "excerpt": {{ p.description | default: html | strip_html | normalize_whitespace | truncate: 600 | jsonify }}}
+    {"url": {{ u | absolute_url | jsonify }}, "title": {{ p.title | default: u | jsonify }}, "section": {{ section | jsonify }}, "excerpt": {{ p.description | default: html | markdownify | strip_html | normalize_whitespace | truncate: 600 | jsonify }}}
     {% assign hchunks = html | split: '<h' %}
     {% for hc in hchunks %}
       {% assign level = hc | slice: 0 %}
