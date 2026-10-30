@@ -237,10 +237,13 @@ final class OverlappingAlternationRule extends AbstractLintRule
             return '';
         }
 
+        // The text ends where the case changes: what a "(?i:" or a bare
+        // "(?i)" puts after it takes the other case as well, and tells
+        // nothing apart.
         $text = '';
         foreach ($node->children as $child) {
             $piece = $this->extractLiteralSequence($child);
-            if (null === $piece) {
+            if (null === $piece || NodePredicates::turnsCaselessOn($child)) {
                 break;
             }
 
@@ -251,11 +254,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
     }
 
     /**
-     * The first item of a branch, whose flags say the case the branch
+     * The first atom of a branch, whose flags say the case the branch
      * starts in: through the groups that only capture or set options, a
-     * bare "(?i)" at the start passed over; the branch itself when it
-     * holds nothing else. A quantifier is read where it stands: the flags
-     * inside it reach its set through the set's own reading.
+     * bare "(?i)" at the start passed over, into a quantifier, taken once
+     * or not; the branch itself when it holds nothing else.
      */
     private static function firstLeaf(NodeInterface $node): NodeInterface
     {
@@ -277,6 +279,8 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 }
 
                 $node = $first;
+            } elseif ($node instanceof QuantifierNode) {
+                $node = $node->node;
             } else {
                 return $node;
             }
