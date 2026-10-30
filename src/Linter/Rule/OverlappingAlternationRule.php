@@ -231,8 +231,14 @@ final class OverlappingAlternationRule extends AbstractLintRule
             $node = $node->child;
         }
 
+        // A branch of one item holds one character of text at most, which
+        // the other text starts with or not as it does with no text at all.
+        if (!$node instanceof SequenceNode) {
+            return '';
+        }
+
         $text = '';
-        foreach ($node instanceof SequenceNode ? $node->children : [$node] as $child) {
+        foreach ($node->children as $child) {
             $piece = $this->extractLiteralSequence($child);
             if (null === $piece) {
                 break;
@@ -245,10 +251,11 @@ final class OverlappingAlternationRule extends AbstractLintRule
     }
 
     /**
-     * The first atom of a branch, whose flags say the case the branch
+     * The first item of a branch, whose flags say the case the branch
      * starts in: through the groups that only capture or set options, a
-     * bare "(?i)" at the start passed over, into a quantifier taken at
-     * least once; the branch itself when it starts with nothing else.
+     * bare "(?i)" at the start passed over; the branch itself when it
+     * holds nothing else. A quantifier is read where it stands: the flags
+     * inside it reach its set through the set's own reading.
      */
     private static function firstLeaf(NodeInterface $node): NodeInterface
     {
@@ -270,8 +277,6 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 }
 
                 $node = $first;
-            } elseif ($node instanceof QuantifierNode && QuantifierMath::parseRange($node)[0] >= 1) {
-                $node = $node->node;
             } else {
                 return $node;
             }

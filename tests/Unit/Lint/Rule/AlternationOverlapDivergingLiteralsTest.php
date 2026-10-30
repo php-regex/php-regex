@@ -67,6 +67,7 @@ final class AlternationOverlapDivergingLiteralsTest extends TestCase
         yield 'a quantified first character' => ['pattern' => '/(?:a+b|ac)+/'];
         yield 'texts that fold to a prefix under /i' => ['pattern' => '/(?:A\d|ab)+/i'];
         yield 'a single character before a longer text' => ['pattern' => '/(?:a|ab\d)+/'];
+        yield 'a third branch overlapping the first, past a second told apart' => ['pattern' => '/(?:ab|ac|ab\d)+/'];
         yield 'a caseless first branch beside a case-sensitive one' => ['pattern' => '/(?:(?i)Ab\d|ab)+/'];
         yield 'a caseless second branch beside a case-sensitive one' => ['pattern' => '/(?:ab\d|(?i)AB)+/'];
         yield 'a caseless group around the text' => ['pattern' => '/(?:(?i:Ab)\d|ab)+/'];
