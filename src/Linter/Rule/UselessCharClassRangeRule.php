@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\Rule\Support\CharClassSets;
 use PHPRegex\Linter\Rule\Support\CodePoints;
 use PHPRegex\Parser\Node\CharClassNode;
@@ -75,12 +76,16 @@ final class UselessCharClassRangeRule extends AbstractLintRule
                     CodePoints::formatCodePointForHint($max),
                 );
 
+            // A range of one character is a mistake; one of two consecutive
+            // characters is correct as written, and a generated table holds
+            // them by the thousand: worth telling, not warning about.
             $issues[] = new RuleViolation(
                 self::ID,
                 'Character range is unnecessary; list the characters explicitly.',
                 $part->startPosition,
                 $hint,
-                end: $part->getEndPosition(),
+                $max === $min ? LintSeverity::Warning : LintSeverity::Info,
+                $part->getEndPosition(),
             );
         }
 
