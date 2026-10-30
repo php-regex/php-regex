@@ -122,7 +122,12 @@
     })
     .then(function (pages) {
       if (Array.isArray(pages)) {
-        show(pages, segmentsOf(window.location.pathname));
+        // The index now carries section entries too — a heading anchored
+        // inside the very page the reader is being offered. Suggestions
+        // speak in pages, so fragments never take a slot.
+        show(pages.filter(function (page) {
+          return page.url.indexOf('#') === -1;
+        }), segmentsOf(window.location.pathname));
       }
     })
     .catch(function () {

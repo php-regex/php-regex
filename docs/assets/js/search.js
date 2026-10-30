@@ -77,11 +77,18 @@
               decoder.innerHTML = doc.section;
               doc.section = decoder.value;
             }
+            if (doc.context) {
+              decoder.innerHTML = doc.context;
+              doc.context = decoder.value;
+            }
           });
           var instance = new MiniSearchCtor({
             idField: 'url',
             fields: ['title', 'excerpt'],
-            storeFields: ['url', 'title', 'excerpt', 'section'],
+            // context rides along for display only: it is the page title a
+            // heading entry belongs to, and indexing it would make a query
+            // naming a page match every section of that page.
+            storeFields: ['url', 'title', 'excerpt', 'section', 'context'],
             boost: { title: 3 }
           });
           instance.addAll(documents);
@@ -248,10 +255,11 @@
       }
       appendHighlighted(title, hit.title, tokens);
       link.appendChild(title);
-      if (hit.excerpt) {
+      var context = hit.excerpt || hit.context;
+      if (context) {
         var excerpt = document.createElement('span');
         excerpt.className = 'result-excerpt';
-        appendHighlighted(excerpt, hit.excerpt, tokens);
+        appendHighlighted(excerpt, context, tokens);
         link.appendChild(excerpt);
       }
       var path = document.createElement('small');
@@ -309,14 +317,19 @@
       announce('');
       return;
     }
-    var hits = engine.search(term, { limit: 12, prefix: true });
+    // MiniSearch has no result limit of its own — a `limit` key in the
+    // options is silently ignored, and a broad term rendered every match
+    // into the listbox. The engine sorts by score, so cutting after the
+    // search keeps the best twelve and the count still tells the truth.
+    var matches = engine.search(term, { prefix: true });
+    var hits = matches.slice(0, 12);
     render(hits, term);
-    if (hits.length === 0) {
-      announce('No pages match "' + term + '"');
-    } else if (hits.length === 1) {
-      announce('1 page matches "' + term + '"');
+    if (matches.length === 0) {
+      announce('No results match "' + term + '"');
+    } else if (matches.length === 1) {
+      announce('1 result matches "' + term + '"');
     } else {
-      announce(hits.length + ' pages match "' + term + '"');
+      announce(matches.length + ' results match "' + term + '"');
     }
   }
 
