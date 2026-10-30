@@ -142,7 +142,7 @@
     "suggest": {
         "ext-intl": "To resolve \\N{...} escapes by Unicode name.",
         "ext-pcntl": "To lint in parallel worker processes.",
-        "ext-posix": "For TTY detection and worker signaling.",
+        "ext-posix": "To signal the lint workers and to check that the cache directory belongs to the running user.",
         "illuminate/console": "Required for Laravel Artisan commands.",
         "illuminate/contracts": "Required for Laravel integration.",
         "illuminate/routing": "Required for Laravel route analysis.",
