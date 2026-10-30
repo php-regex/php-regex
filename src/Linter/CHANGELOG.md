@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The character-set overlap of an alternation is no longer reported for two
+   branches whose leading literal texts tell them apart,
+   `associative-array|array`: the second character already decides which
+   branch takes the input, so no backtracking between them follows.
  * A class constant or an enum case of another file of the project is read
    as one of the same file is: the constants of every file are read once
    before the patterns, with the declarations, and a call naming a class its
