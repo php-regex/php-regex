@@ -431,8 +431,8 @@ final class TokenValueCollector
         // Kind::Re->value: the backing value of an enum case, read as the
         // case's fetch and then named by its "->value".
         if ($third !== $last) {
-            $arrow = $this->next($third + 1, $last + 1);
-            $value = null === $arrow ? null : $this->next($arrow + 1, $last + 1);
+            $arrow = $this->next($third + 1);
+            $value = null === $arrow ? null : $this->next($arrow + 1);
             if ($value !== $last || !$this->is($arrow, \T_OBJECT_OPERATOR) || 'value' !== PhpTokens::identifier($this->tokens[$last])) {
                 return ValueExpr::unknown();
             }
@@ -657,28 +657,22 @@ final class TokenValueCollector
                 continue;
             }
 
-            if (\T_CONST === $id) {
-                $this->memberConstants[$i] = true;
-                $end = $this->statementEnd($i, $close);
-                if (null !== $class) {
-                    foreach ($this->constantItems($i + 1, $end, $context) as [$name, $value]) {
-                        $this->values->declareClassConstant($class, $name, $value, isset($modifiers[\T_FINAL]));
-                    }
+            // A "case" among the members is an enum's, declared as its
+            // constants are: backed, it declares its value; a pure enum's
+            // case declares nothing.
+            if (\T_CONST === $id || \T_CASE === $id) {
+                if (\T_CONST === $id) {
+                    $this->memberConstants[$i] = true;
                 }
 
-                $modifiers = [];
-                $i = $end + 1;
-
-                continue;
-            }
-
-            // A "case" among the members is an enum's: backed, it declares
-            // its value; a pure enum's case declares nothing.
-            if (\T_CASE === $id) {
                 $end = $this->statementEnd($i, $close);
                 if (null !== $class) {
                     foreach ($this->constantItems($i + 1, $end, $context) as [$name, $value]) {
-                        $this->values->declareEnumCase($class, $name, $value);
+                        if (\T_CASE === $id) {
+                            $this->values->declareEnumCase($class, $name, $value);
+                        } else {
+                            $this->values->declareClassConstant($class, $name, $value, isset($modifiers[\T_FINAL]));
+                        }
                     }
                 }
 

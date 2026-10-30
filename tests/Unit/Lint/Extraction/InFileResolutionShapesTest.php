@@ -518,9 +518,9 @@ final class InFileResolutionShapesTest extends TestCase
      * string: from the enum's own methods as self::Case->value, from another
      * class as Kind::Case->value; static:: reads too, an enum being final.
      * The case itself, which is an object, its "->name", a nullsafe
-     * "?->value", which no case needs, "::class->value" and a pure enum's
-     * case, which has no value, give no pattern, at a call or held in a
-     * constant.
+     * "?->value", which no case needs, "::class->value", a computed member
+     * and a pure enum's case, which has no value, give no pattern, at a
+     * call or held in a constant.
      */
     #[Test]
     public function test_a_backed_enum_case_is_read_through_its_value(): void
@@ -563,6 +563,7 @@ final class InFileResolutionShapesTest extends TestCase
                         && 1 === preg_match(Kind::Other?->value, $s)
                         && 1 === preg_match(Kind::class->value, $s)
                         && 1 === preg_match(Pure::None->value, $s)
+                        && 1 === preg_match(Kind::Other->{$s}, $s)
                         && 1 === preg_match(self::NAMED, $s)
                         && 1 === preg_match(self::NAME_FIRST, $s)
                         && 1 === preg_match(self::SAFE, $s);
@@ -572,6 +573,40 @@ final class InFileResolutionShapesTest extends TestCase
             enum Pure
             {
                 case None;
+            }
+            CODE);
+    }
+
+    /**
+     * The enum is named as any class is: through an import, an alias or
+     * its qualified name.
+     */
+    #[Test]
+    public function test_an_enum_case_value_is_read_through_the_name_the_file_gives_the_enum(): void
+    {
+        $this->assertExtractedByBoth([
+            ['pattern' => '/enum-aliased/', 'at' => "'/enum-aliased/'", 'location' => 'via K::Re->value'],
+        ], <<<'CODE'
+            <?php
+
+            namespace App\Model;
+
+            enum Kind: string
+            {
+                case Re = '/enum-aliased/';
+            }
+
+            namespace App\Reader;
+
+            use App\Model\Kind as K;
+
+            final class Reader
+            {
+                public function run(string $s): bool
+                {
+                    return 1 === preg_match(K::Re->value, $s)
+                        && 1 === preg_match(\App\Model\Kind::Re->value, $s);
+                }
             }
             CODE);
     }

@@ -670,8 +670,13 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
 
         if ($expr instanceof PropertyFetch) {
             // $this->re, or an enum case's backing value, Kind::Re->value.
-            return ($expr->var instanceof Variable && 'this' === $expr->var->name && $expr->name instanceof Identifier)
-                || ($expr->var instanceof ClassConstFetch && $expr->name instanceof Identifier && 'value' === $expr->name->toString());
+            if (!$expr->name instanceof Identifier) {
+                return false;
+            }
+
+            return $expr->var instanceof ClassConstFetch
+                ? 'value' === $expr->name->toString()
+                : $expr->var instanceof Variable && 'this' === $expr->var->name;
         }
 
         return $expr instanceof Concat || $expr instanceof ClassConstFetch || ($expr instanceof Variable && \is_string($expr->name) && 'this' !== $expr->name);
