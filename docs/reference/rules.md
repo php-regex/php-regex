@@ -1022,14 +1022,14 @@ preg_match('/[\w]/', $input);
 
 **Identifier:** `regex.lint.range.useless`
 
-**When it triggers:** A range spans only one or two characters (e.g., `[a-a]` or `[a-b]`) and can be written explicitly.
+**When it triggers:** A range spans only one or two characters (e.g., `[a-a]` or `[a-b]`) and can be written explicitly. A range of one character is a warning; one of two consecutive characters is correct as written, a generated Unicode table holds them by the thousand, and is reported as information.
 
 **Example:**
 ```php
 // WARNING: Range only spans one character
 preg_match('/[a-a]/', $input);
 
-// WARNING: Range only spans two characters
+// INFO: Range only spans two characters
 preg_match('/[a-b]/', $input);
 
 // PREFERRED: List characters explicitly
@@ -1625,7 +1625,7 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 | Backrefs    | `regex.lint.backref.useless`, `.undefined`                                                | warning  | Move or remove the backreference  |
 | Character   | `regex.lint.charclass.redundant`, `.duplicateChars`, `.suspiciousRange`, `.suspiciousPipe`, `.literalMetachar`, `.backrefAsOctal` | warning | Clean up the class |
 | Character   | `regex.lint.charclass.single` (off by default)                                            | style    | Write the character alone         |
-| Ranges      | `regex.lint.range.useless`                                                                | warning  | Replace with literals             |
+| Ranges      | `regex.lint.range.useless`                                                                | warning (info for two characters) | Replace with literals |
 | Escapes     | `regex.lint.escape.suspicious`                                                            | warning  | Fix the escape sequence           |
 | Literals    | `regex.lint.literal.multipleSpaces` (off by default)                                      | style    | Count the spaces                  |
 | Literals    | `regex.lint.literal.invisible`                                                            | warning  | Write the escape                  |
