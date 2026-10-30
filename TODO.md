@@ -119,6 +119,14 @@ calculator or the ACCEPT check, or walking the letter check once, each
 measured under 3 %.
 
 
+## Distribution
+
+- A composite GitHub Action that installs the phar and runs `regex lint`
+  with `--format=github`, so a workflow needs one `uses:` line.
+- Phive: a GPG-signed `regex.phar` with its `.asc` beside it on each
+  release, so `phive install php-regex/regex` works.
+
+
 ## Open questions
 
 - Seventeen packages, two of them small: `regex-generator` holds four files
@@ -144,3 +152,10 @@ measured under 3 %.
   8.4 reads 4.9 locally (0.15 s then 0.72 s) and 8,000 units take 2.5
   times 4,000. The read grows a little faster than its text; whether the
   growth is the validator's or the garbage collector's is not measured.
+- The language server reads the file it analyses on its own: a pattern
+  held in a constant of another file is the lint's. Reporting it at the
+  call in the open document needs the argument's range, which the
+  occurrence does not carry; decide whether to add it.
+- The token strategy strips the outer parentheses of an argument only, so
+  `(Patterns::RE)` or `(Kind::Re)->value` is not read where the parser
+  strategy reads it: a parity gap for every parenthesised constant form.
