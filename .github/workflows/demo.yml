@@ -2,9 +2,9 @@ name: Demo applications
 
 # Installs the checkout itself, through the path repository each demo
 # application reads, into a Symfony and a Laravel application and runs their
-# tests. It runs on every push to 2.x, as bin/release wants a run on the
-# commit it tags, and on a pull request that changes what the applications
-# install.
+# tests. It runs on a pull request that changes what the applications
+# install, as bin/release wants a run on the pull request of the commit it
+# tags, on the weekly schedule and by hand.
 
 on:
   pull_request:

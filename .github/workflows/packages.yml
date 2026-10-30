@@ -193,7 +193,7 @@ jobs:
         run: php tests/Tools/phpunit_bridge_selfcheck.php "$project"
 
   phar:
-    # The release path on every push: the phar built as the tag workflow
+    # The release path on every pull request: the phar built as the tag workflow
     # builds it, then run on the lowest PHP the packages admit, as the tag
     # workflow runs it, so that a release never meets a broken build first.
     # The branch's phar stays seven days as an artifact of the run.
