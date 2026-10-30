@@ -1,14 +1,12 @@
 name: Backward compatibility
 
 on:
-  push:
-    branches: [ 2.x ]
   pull_request:
     branches: [ 2.x ]
     # Not for the prose alone: a pull request that changes only what is
     # listed here runs the spelling check and the documentation tests, and
-    # the link check when the site changes. Every push to 2.x runs this
-    # workflow whatever it changed.
+    # the link check when the site changes. A merge into 2.x runs nothing:
+    # its pull request already did.
     paths-ignore:
       - 'docs/**'
       - 'art/**'

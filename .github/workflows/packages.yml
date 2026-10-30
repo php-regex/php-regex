@@ -4,14 +4,12 @@ name: Packages
 # monorepo.
 
 on:
-  push:
-    branches: [ 2.x ]
   pull_request:
     branches: [ 2.x ]
     # Not for the prose alone: a pull request that changes only what is
     # listed here runs the spelling check and the documentation tests, and
-    # the link check when the site changes. Every push to 2.x runs this
-    # workflow whatever it changed.
+    # the link check when the site changes. A merge into 2.x runs nothing:
+    # its pull request already did.
     paths-ignore:
       - 'docs/**'
       - 'art/**'
@@ -39,7 +37,7 @@ permissions:
   contents: read
 
 concurrency:
-  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # The event in the key: a scheduled run on 2.x neither cancels a manual
   # run nor is cancelled by one.
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
@@ -195,7 +193,7 @@ jobs:
         run: php tests/Tools/phpunit_bridge_selfcheck.php "$project"
 
   phar:
-    # The release path on every push: the phar built as the tag workflow
+    # The release path on every pull request: the phar built as the tag workflow
     # builds it, then run on the lowest PHP the packages admit, as the tag
     # workflow runs it, so that a release never meets a broken build first.
     # The branch's phar stays seven days as an artifact of the run.

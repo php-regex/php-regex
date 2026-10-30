@@ -365,17 +365,19 @@ exit 1
     }
 
     /**
-     * A release asks for a run of each workflow on the commit it tags, so
-     * each one runs on every push to the branch, whatever the push changed.
+     * A release reads the checks of the pull request a commit came from:
+     * each gating workflow runs on every pull request to the branch, never
+     * on the merge into it, and by hand on any branch.
      */
     #[Test]
-    public function test_every_workflow_a_release_checks_runs_on_every_push(): void
+    public function test_every_workflow_a_release_checks_runs_on_the_pull_requests_not_the_merges(): void
     {
         foreach (self::gatedWorkflows('release') as $workflow) {
             $source = (string) file_get_contents(\dirname(__DIR__, 3).'/.github/workflows/'.$workflow);
-            $this->assertSame(1, preg_match('~^on:\n  push:\n((?:    .*\n)+)~m', $source, $push), $workflow);
-            $this->assertMatchesRegularExpression('~^    branches: \[ ?2\.x ?\]$~m', $push[1], $workflow);
-            $this->assertStringNotContainsString('paths', $push[1], $workflow);
+            $this->assertSame(1, preg_match('~^on:\n((?:  .*\n)+)~m', $source, $on), $workflow);
+            $this->assertStringNotContainsString("\n  push:", "\n".$on[1], $workflow);
+            $this->assertMatchesRegularExpression('~^  pull_request:\n    branches: \[ ?2\.x ?\]$~m', $on[1], $workflow);
+            $this->assertStringContainsString("\n  workflow_dispatch:", "\n".$on[1], $workflow);
         }
     }
 

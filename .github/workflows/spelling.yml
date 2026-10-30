@@ -1,8 +1,6 @@
 name: Spelling
 
 on:
-  push:
-    branches: [ 2.x ]
   pull_request:
     branches: [ 2.x ]
   schedule:
@@ -14,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # The event in the key: a scheduled run on 2.x neither cancels a manual
   # run nor is cancelled by one.
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true

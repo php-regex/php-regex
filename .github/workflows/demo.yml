@@ -2,13 +2,11 @@ name: Demo applications
 
 # Installs the checkout itself, through the path repository each demo
 # application reads, into a Symfony and a Laravel application and runs their
-# tests. It runs on every push to 2.x, as bin/release wants a run on the
-# commit it tags, and on a pull request that changes what the applications
-# install.
+# tests. It runs on a pull request that changes what the applications
+# install, as bin/release wants a run on the pull request of the commit it
+# tags, on the weekly schedule and by hand.
 
 on:
-  push:
-    branches: [2.x]
   pull_request:
     branches: [2.x]
     paths:
@@ -26,7 +24,7 @@ permissions:
   contents: read
 
 concurrency:
-  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # The event in the key: a scheduled run on 2.x neither cancels a manual
   # run nor is cancelled by one.
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true

@@ -81,11 +81,18 @@ if [ "$skip_ci" -eq 0 ]; then
     if ! command -v gh >/dev/null 2>&1; then
         problems+=("gh is not installed: it checks CI and publishes the release (or pass --skip-ci).")
     else
-        # The workflows that gate a release, each run on every push to the
-        # branch; the experimental and scheduled ones do not. demo.yml
-        # installs HEAD itself into a Symfony and a Laravel application.
+        # The workflows that gate a release, each run on the pull request a
+        # commit of the branch came from: a merge commit answers for the
+        # head of its pull request. The experimental and scheduled ones do
+        # not gate. demo.yml installs HEAD itself into a Symfony and a
+        # Laravel application.
+        merged=$(git rev-parse -q --verify HEAD^2 2>/dev/null || true)
         for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml spelling.yml backward-compatibility.yml demo.yml; do
-            conclusion=$(gh run list --commit "$head" --workflow "$workflow" --json conclusion --jq '.[0].conclusion' 2>/dev/null || echo "")
+            conclusion=""
+            for sha in $head $merged; do
+                conclusion=$(gh run list --commit "$sha" --workflow "$workflow" --json conclusion --jq '.[0].conclusion' 2>/dev/null || echo "")
+                [ -z "$conclusion" ] || break
+            done
             [ "$conclusion" = "success" ] || problems+=("$workflow on $(git rev-parse --short HEAD) is \"${conclusion:-not found}\", not \"success\".")
         done
     fi
