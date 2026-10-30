@@ -1,14 +1,12 @@
 name: Coverage
 
 on:
-  push:
-    branches: [ 2.x ]
   pull_request:
     branches: [ 2.x ]
     # Not for the prose alone: a pull request that changes only what is
     # listed here runs the spelling check and the documentation tests, and
-    # the link check when the site changes. Every push to 2.x runs this
-    # workflow whatever it changed.
+    # the link check when the site changes. A merge into 2.x runs nothing:
+    # its pull request already did.
     paths-ignore:
       - 'docs/**'
       - 'art/**'
@@ -36,7 +34,7 @@ permissions:
   contents: read
 
 concurrency:
-  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # The event in the key: a scheduled run on 2.x neither cancels a manual
   # run nor is cancelled by one.
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
@@ -84,27 +82,21 @@ jobs:
         run: php tests/Tools/check_coverage.php var/coverage/clover.xml .github/coverage-threshold
 
       - name: Choose What to Mutate
-        # The lines a pull request changes from its base, and the lines a
-        # push adds to the commit before it (its parent when that commit is
-        # gone); on a manual run of a branch, the lines it changes from 2.x.
-        # The whole parser on Mondays and on a manual run of 2.x itself,
-        # which has no base to read changes against.
+        # The lines a pull request changes from its base; on a manual run
+        # of a branch, the lines it changes from 2.x. The whole parser on
+        # Mondays and on a manual run of 2.x itself, which has no base to
+        # read changes against.
         id: scope
         env:
           EVENT: ${{ github.event_name }}
           REF: ${{ github.ref }}
           BASE_REF: ${{ github.base_ref }}
-          BEFORE: ${{ github.event.before }}
         run: |
           case "$EVENT" in
             pull_request) base="origin/$BASE_REF" ;;
-            push) base="$BEFORE" ;;
             workflow_dispatch) if [ "$REF" = refs/heads/2.x ]; then base=''; else base=origin/2.x; fi ;;
             *) base='' ;;
           esac
-          if [ "$EVENT" = push ] && ! git cat-file -e "${base:-0000000000000000000000000000000000000000}^{commit}" 2>/dev/null; then
-            base=$(git rev-parse HEAD^)
-          fi
           if [ -n "$base" ]; then
             base=$(git merge-base "$base" HEAD)
             git diff "$base" --diff-filter=AM --name-only -- src > var/coverage/mutated-paths

@@ -94,10 +94,17 @@ if ! command -v gh >/dev/null 2>&1; then
     exit 1
 fi
 
+# The checks run on the pull request a commit came from: a merge commit
+# answers for the head of its pull request.
 head=$(git -C "$root" rev-parse HEAD)
 short=$(git -C "$root" rev-parse --short HEAD)
+merged=$(git -C "$root" rev-parse -q --verify HEAD^2 2>/dev/null || true)
 for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml spelling.yml backward-compatibility.yml demo.yml; do
-    ci=$(gh run list --commit "$head" --workflow "$workflow" --json conclusion,status --jq '.[0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null)
+    ci=""
+    for sha in $head $merged; do
+        ci=$(gh run list --commit "$sha" --workflow "$workflow" --json conclusion,status --jq '.[0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null)
+        [ -z "$ci" ] || break
+    done
     case "$ci" in
         "completed success") ok "$workflow passed on $short" ;;
         "") ko "no $workflow run on $short" ;;

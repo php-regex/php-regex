@@ -1,13 +1,6 @@
 name: php74 twin
 
 on:
-  push:
-    branches: [2.x]
-    paths:
-      - 'src/Parser/**'
-      - 'build/**'
-      - 'tests/**'
-      - '.github/workflows/php74-twin.yml'
   pull_request:
     paths:
       - 'src/Parser/**'

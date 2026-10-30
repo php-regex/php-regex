@@ -4,14 +4,12 @@ name: Tests
 # lowest and the latest dependencies, and on the next PHP as an experiment.
 
 on:
-  push:
-    branches: [ 2.x ]
   pull_request:
     branches: [ 2.x ]
     # Not for the prose alone: a pull request that changes only what is
     # listed here runs the spelling check and the documentation tests, and
-    # the link check when the site changes. Every push to 2.x runs this
-    # workflow whatever it changed.
+    # the link check when the site changes. A merge into 2.x runs nothing:
+    # its pull request already did.
     paths-ignore:
       - 'docs/**'
       - 'art/**'
@@ -39,7 +37,7 @@ permissions:
   contents: read
 
 concurrency:
-  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # The event in the key: a scheduled run on 2.x neither cancels a manual
   # run nor is cancelled by one.
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true

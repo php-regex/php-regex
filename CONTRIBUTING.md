@@ -100,8 +100,10 @@ the prose:
 tools/phpunit/vendor/bin/phpunit --group documentation
 ```
 
-Every push to 2.x runs every workflow that judges the code, whatever it
-changed; the documentation tests run there with the whole suite.
+A merge into 2.x runs nothing: its pull request already ran what the change
+could affect, and `bin/status` and `bin/release` read a merge commit's checks
+from the head of its pull request. Every Monday the scheduled runs read 2.x
+whole, and each workflow runs on any branch by hand (`workflow_dispatch`).
 
 Two checks run only in CI. The spelling of the documentation and the
 sources is read by [typos](https://github.com/crate-ci/typos), scoped by
@@ -240,7 +242,7 @@ php -d pcov.enabled=1 tools/phpunit/vendor/bin/phpunit --coverage-clover var/cov
 php tests/Tools/check_coverage.php var/coverage/clover.xml .github/coverage-threshold
 ```
 
-On that same coverage, CI mutates the lines a pull request or a push changes,
+On that same coverage, CI mutates the lines a pull request changes,
 held to the scores `infection.json.dist` declares, and every Monday the whole
 parser. Run mutation testing on your machine with `composer infection`,
 pointed at what you are working on (`composer infection src/Parser/Lexer.php`,
@@ -270,8 +272,7 @@ Every package is released together, from the monorepo:
 php -d xdebug.mode=off tests/Tools/redos-verdict-gate.php   # ReDoS analysis cost on the corpus
 bin/status                     # CI, the split repositories, Packagist
 bin/bump 2.1.0                 # Regex::VERSION and VERSION_ID, and the CHANGELOG section dated
-git commit -am "Release 2.1.0"
-git push origin 2.x            # wait for CI to pass
+git commit -am "[Release] Release 2.1.0"   # on its own branch: open the pull request, merge it once green
 bin/release --dry-run 2.1.0    # every check, nothing tagged
 bin/release 2.1.0              # a draft release and the tag; the phar workflow publishes it
 bin/bump --next 2.1.1          # 2.1.1-DEV and a new Unreleased section
