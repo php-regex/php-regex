@@ -18,6 +18,7 @@ Verify the binary:
 ```bash
 vendor/bin/regex --version
 ```
+{: data-copy="" }
 
 ## Run your first analysis
 
@@ -27,6 +28,7 @@ Start with a date pattern you can read at a glance:
 vendor/bin/regex validate '/^\d{4}-\d{2}-\d{2}$/'
 vendor/bin/regex explain '/^\d{4}-\d{2}-\d{2}$/' --no-visuals
 ```
+{: data-copy="" }
 
 `validate()` answers whether the target PHP and its PCRE2 release accept the pattern. `explain()` describes what the AST means instead of guessing from string fragments.
 
@@ -35,6 +37,7 @@ Now try a pattern with catastrophic backtracking:
 ```bash
 vendor/bin/regex analyze '/^(?:a+)+$/' --no-visuals
 ```
+{: data-copy="" }
 
 The important distinction is the verdict label:
 
@@ -59,6 +62,7 @@ echo $validation->isValid ? "valid\n" : $validation->error."\n";
 $redos = $regex->redos('/^(?:a+)+$/');
 echo $redos->headline(), "\n";
 ```
+{: data-copy="" }
 
 If `redos()` reports a proven witness, the result also carries the input shape that makes the pattern backtrack. Use that witness in a regression test before you rewrite the pattern.
 
@@ -86,6 +90,7 @@ For a codebase-wide first run:
 ```bash
 vendor/bin/regex lint src/ --redos
 ```
+{: data-copy="" }
 
 Start without `--redos` on a large legacy project, then enable it once the ordinary validation and lint findings are under control. Use `--format=github` in GitHub Actions or `--format=json` when another tool consumes the report.
 
