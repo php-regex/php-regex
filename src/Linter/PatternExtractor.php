@@ -383,10 +383,10 @@ final class PatternExtractor
     {
         // Paths are walked and matched with "/" on every host: an exclude
         // and a base keep their meaning whichever separator spelled them.
-        $basePrefix = null === $excludeBase ? null : rtrim(Path::slashes($excludeBase), '/').'/';
+        $basePrefix = null === $excludeBase ? null : rtrim(Path::normalize($excludeBase), '/').'/';
         $normalizedExcludePaths = [];
         foreach ($excludePaths as $excludePath) {
-            $excludePath = trim(Path::slashes($excludePath), '/');
+            $excludePath = trim(Path::normalize($excludePath), '/');
             if ('' !== $excludePath) {
                 $normalizedExcludePaths[] = $excludePath;
             }

@@ -249,11 +249,11 @@ final class ValidatorPatternSource implements PatternSourceInterface
      */
     private static function isExcluded(string $file, PatternSourceContext $context): bool
     {
-        $file = Path::slashes(realpath($file) ?: $file);
-        $base = null === $context->excludeBase ? null : rtrim(Path::slashes(realpath($context->excludeBase) ?: $context->excludeBase), '/');
+        $file = Path::normalize(realpath($file) ?: $file);
+        $base = null === $context->excludeBase ? null : rtrim(Path::normalize(realpath($context->excludeBase) ?: $context->excludeBase), '/');
 
         foreach ($context->excludePaths as $exclude) {
-            $exclude = trim(Path::slashes($exclude), '/');
+            $exclude = trim(Path::normalize($exclude), '/');
             if ('' === $exclude) {
                 continue;
             }

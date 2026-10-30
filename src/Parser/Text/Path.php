@@ -36,9 +36,10 @@ final class Path
 
     /**
      * A spelled path with every backslash read as a separator and written
-     * "/", whatever the host.
+     * "/", whatever the host. The separators only: a "." or ".." segment
+     * stays as written.
      */
-    public static function slashes(string $path): string
+    public static function normalize(string $path): string
     {
         return str_replace('\\', '/', $path);
     }
@@ -49,6 +50,6 @@ final class Path
      */
     public static function fromHost(string $path): string
     {
-        return self::onWindows() ? self::slashes($path) : $path;
+        return self::onWindows() ? self::normalize($path) : $path;
     }
 }

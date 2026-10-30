@@ -143,7 +143,7 @@ final class AstFingerprintSourcesTest extends TestCase
         foreach ($fingerprinted as $file) {
             preg_match_all('/^use (PHPRegex\\\\[\\w\\\\]+)(?: as \\w+)?;/m', (string) file_get_contents($root.'/'.$file), $imports);
             foreach ($imports[1] as $class) {
-                $path = 'src/'.Path::slashes(substr($class, \strlen('PHPRegex\\'))).'.php';
+                $path = 'src/'.Path::normalize(substr($class, \strlen('PHPRegex\\'))).'.php';
                 if (\in_array($path, $fingerprinted, true)) {
                     continue;
                 }

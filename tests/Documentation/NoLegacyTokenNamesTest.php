@@ -151,7 +151,7 @@ final class NoLegacyTokenNamesTest extends TestCase
         );
         foreach ($iterator as $file) {
             if (!$file instanceof \SplFileInfo || 'php' !== $file->getExtension()
-                || str_contains(Path::slashes($file->getPathname()), '/src/Rector/Upgrade/')) {
+                || str_contains(Path::normalize($file->getPathname()), '/src/Rector/Upgrade/')) {
                 continue;
             }
             preg_match_all(self::LEGACY_NAME, (string) file_get_contents($file->getPathname()), $matches);

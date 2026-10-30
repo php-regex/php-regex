@@ -108,7 +108,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         );
         $excludes = [];
         foreach ($excludePaths as $excludePath) {
-            $excludePath = trim(Path::slashes($excludePath), '/');
+            $excludePath = trim(Path::normalize($excludePath), '/');
             if ('' !== $excludePath) {
                 $excludes[] = '/'.$excludePath.'/';
             }

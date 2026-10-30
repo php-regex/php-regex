@@ -106,6 +106,6 @@ final class RelativePathHelperTest extends TestCase
         $cwd = (string) getcwd();
 
         $this->assertSame('src/file.php', (new RelativePathHelper())->getRelativePath($cwd.'/src/file.php'));
-        $this->assertSame(Path::slashes($cwd), (new RelativePathHelper())->getBasePath());
+        $this->assertSame(Path::normalize($cwd), (new RelativePathHelper())->getBasePath());
     }
 }

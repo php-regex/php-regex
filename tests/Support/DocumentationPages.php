@@ -37,7 +37,7 @@ final class DocumentationPages
         );
         foreach ($iterator as $file) {
             if ($file instanceof \SplFileInfo && 'md' === $file->getExtension()) {
-                $pages[] = 'docs/'.Path::slashes(substr($file->getPathname(), \strlen(self::ROOT.'/docs/')));
+                $pages[] = 'docs/'.Path::normalize(substr($file->getPathname(), \strlen(self::ROOT.'/docs/')));
             }
         }
 

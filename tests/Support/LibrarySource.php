@@ -38,7 +38,7 @@ final class LibrarySource
                 continue;
             }
 
-            $path = Path::slashes(substr((string) realpath($file->getPathname()), \strlen((string) realpath(self::ROOT)) + 1));
+            $path = Path::normalize(substr((string) realpath($file->getPathname()), \strlen((string) realpath(self::ROOT)) + 1));
             $files[$path] = token_get_all((string) file_get_contents($file->getPathname()));
         }
 

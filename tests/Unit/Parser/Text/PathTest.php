@@ -41,9 +41,9 @@ final class PathTest extends TestCase
 
     #[Test]
     #[DataProvider('provideSpelledPaths')]
-    public function test_a_spelled_path_reads_every_backslash_as_a_separator_on_every_host(string $path, string $expected): void
+    public function test_a_spelled_path_is_normalized_to_slashes_on_every_host(string $path, string $expected): void
     {
-        $this->assertSame($expected, Path::slashes($path));
+        $this->assertSame($expected, Path::normalize($path));
     }
 
     #[Test]

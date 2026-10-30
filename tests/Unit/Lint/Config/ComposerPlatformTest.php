@@ -88,7 +88,7 @@ final class ComposerPlatformTest extends TestCase
     public function test_a_name_starting_with_a_drive_is_kept_whole_and_any_other_is_joined_to_the_project(string $name, bool $keptWhole): void
     {
         // the same name as a path under the project: read when joined, missed when kept whole
-        $under = $this->dir.'/'.Path::slashes($name);
+        $under = $this->dir.'/'.Path::normalize($name);
         mkdir(\dirname($under), 0o777, true);
         file_put_contents($under, '{"require": {"php": ">=8.3"}}');
         $notices = [];

@@ -729,7 +729,7 @@ final class PatternDeclarations
 
     private static function normalize(string $path): string
     {
-        return Path::slashes($path);
+        return Path::normalize($path);
     }
 
     private static function isAbsolute(string $path): bool

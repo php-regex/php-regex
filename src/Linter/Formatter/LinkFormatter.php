@@ -149,7 +149,7 @@ final class LinkFormatter
 
     private function normalizePath(string $path): string
     {
-        return Path::slashes($path);
+        return Path::normalize($path);
     }
 
     private function encodePath(string $path): string

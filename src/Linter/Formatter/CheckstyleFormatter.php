@@ -116,7 +116,7 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
 
     private function normalizeFile(string $file): string
     {
-        return Path::slashes($file);
+        return Path::normalize($file);
     }
 
     private function normalizeLine(int $line): int

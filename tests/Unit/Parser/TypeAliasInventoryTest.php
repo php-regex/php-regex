@@ -430,7 +430,7 @@ final class TypeAliasInventoryTest extends TestCase
 
     private static function classFile(string $class): string
     {
-        return self::src().'/'.Path::slashes(substr($class, \strlen('PHPRegex\\'))).'.php';
+        return self::src().'/'.Path::normalize(substr($class, \strlen('PHPRegex\\'))).'.php';
     }
 
     private static function src(): string

@@ -500,7 +500,7 @@ final class LintBaselineContractTest extends TestCase
         $this->assertCount(1, $reported, $stdout);
         // A separator on Windows only: elsewhere a backslash is part of the name.
         $this->assertSame([Path::onWindows() ? 'src/a/b.php' : 'src/a\\b.php'], $reported);
-        $this->assertSame(array_map(Path::slashes(...), $reported), $baselined);
+        $this->assertSame(array_map(Path::normalize(...), $reported), $baselined);
 
         [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=baseline.json']);
 

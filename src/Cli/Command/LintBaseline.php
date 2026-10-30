@@ -263,7 +263,7 @@ final class LintBaseline
         }
 
         foreach ($excludePaths as $exclude) {
-            $exclude = trim(Path::slashes($exclude), '/');
+            $exclude = trim(Path::normalize($exclude), '/');
             if ('' !== $exclude && (str_starts_with($file, $exclude.'/') || str_contains($file, '/'.$exclude.'/'))) {
                 return false;
             }
@@ -487,7 +487,7 @@ final class LintBaseline
      */
     private static function normalizePath(string $path): string
     {
-        $path = Path::slashes($path);
+        $path = Path::normalize($path);
         $root = match (true) {
             str_starts_with($path, '/') => '/',
             \strlen($path) >= 3 && Ascii::isAlpha($path[0]) && ':' === $path[1] && '/' === $path[2] => substr($path, 0, 3),

@@ -35,7 +35,7 @@ final class PatternDeclarationsTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->root = Path::slashes(sys_get_temp_dir()).'/regex-parser-lsp-declarations-'.bin2hex(random_bytes(6));
+        $this->root = Path::normalize(sys_get_temp_dir()).'/regex-parser-lsp-declarations-'.bin2hex(random_bytes(6));
         mkdir($this->root, 0o700, true);
     }
 
