@@ -249,18 +249,18 @@ or `--git-diff-lines --git-diff-base=origin/2.x` for your branch).
 ## Submitting Changes
 
 ### Commit Messages
-Write the subject as a short imperative sentence that says what the change does, with no type prefix; explain the why in the body when it is not obvious:
+Start the subject with the component in brackets, then a short imperative sentence that says what the change does; explain the why in the body when it is not obvious. The component is the package directory under `src/` (`Parser`, `Linter`, `Cli`, `Symfony`, `Laravel`, `PHPStan`, `Psalm`, `Rector`, `PHPUnit`, `LanguageServer`, `Redos`, `Transpiler`, `Optimizer`, `Automata`, `Explain`, `Generator`, `Toolkit`), or, outside the packages, `Docs`, `CI`, `Release` or `Corpus`; a change spanning two components names both:
 ```bash
-git commit -m "Escape numeric references when compiling a backreference"
-git commit -m "Support branch reset groups (?|...)"
-git commit -m "Test lookarounds against the running engine"
+git commit -m "[Parser] Escape numeric references when compiling a backreference"
+git commit -m "[Parser] Support branch reset groups (?|...)"
+git commit -m "[Linter][Cli] Read the matches patterns of the Twig templates"
 ```
 
 ### Pull Request Process
 1. Sync with upstream and rebase your branch
-2. Create PR using the template
+2. Title the pull request as a commit, `[Component] What it does`, and fill in the template: the questions, one paragraph on the change, and the PHP and PCRE2 it was checked on when it touches what a pattern means, compiles to or matches
 3. Address review feedback
-4. Maintainers will squash and merge
+4. Maintainers merge the pull request; its title becomes the subject of the merge commit
 
 ## Releasing (maintainers)
 

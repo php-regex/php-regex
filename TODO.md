@@ -119,6 +119,45 @@ calculator or the ACCEPT check, or walking the letter check once, each
 measured under 3 %.
 
 
+## Distribution
+
+- A composite GitHub Action that installs the phar and runs `regex lint`
+  with `--format=github`, so a workflow needs one `uses:` line.
+- Phive: a GPG-signed `regex.phar` with its `.asc` beside it on each
+  release, so `phive install php-regex/regex` works.
+
+
+## Linter output after the corpus re-run
+
+The re-run covers 2993 entries against 2915 before, for 114 new finding
+blocks and 36 gone. The growth comes from constants now resolved at
+analysis time, not from a scanning regression. Most of it is true (the six
+new proven ReDoS failures replay on PCRE2 10.49, and the multi-byte class
+failures are fixed by `/u`), but two rules need revisiting.
+
+- `OverlappingAlternationRule` warns about "overlapping character sets" for
+  alternatives that share only their first character, and adds "Do not
+  reorder overlapping alternatives as it changes match semantics":
+  `associative-array` against `array` (30 times),
+  `callable-(?:string|object|arra…` against `class-string` (15 times),
+  `<\?xml\b.*?\?>` against `<!--.*?-->`. Neither branch prefixes the other,
+  so their order cannot change the match and the warning is false as worded.
+  `checkSemanticOverlaps()` compares the first-character sets of the
+  branches (`firstChars()`, or `firstAtom()` through PCRE above ASCII) and
+  fires inside an unbounded quantifier whenever two of them intersect; the
+  literal check beside it already asks for a prefix. Keep the warning for an
+  alternative that prefixes another, or reword the advice.
+- `UselessCharClassRangeRule` warns on every range of at most two code
+  points; the test is `$max - $min > 1` in
+  `src/Linter/Rule/UselessCharClassRangeRule.php` line 66. 1244 of the
+  1246 new warnings come from
+  `corpus/symfony/polyfill/src/Intl/Idn/Resources/unidata/Regex.php`,
+  generated tables where `0-1`, `\x{5C4}-\x{5C5}` and `.-/` are correct as
+  written: the rewrites are equivalent, but the volume is noise. Exempt
+  ranges whose bounds are consecutive by construction, or demote them to
+  INFO.
+
+
 ## Open questions
 
 - Seventeen packages, two of them small: `regex-generator` holds four files
@@ -144,3 +183,10 @@ measured under 3 %.
   8.4 reads 4.9 locally (0.15 s then 0.72 s) and 8,000 units take 2.5
   times 4,000. The read grows a little faster than its text; whether the
   growth is the validator's or the garbage collector's is not measured.
+- The language server reads the file it analyses on its own: a pattern
+  held in a constant of another file is the lint's. Reporting it at the
+  call in the open document needs the argument's range, which the
+  occurrence does not carry; decide whether to add it.
+- The token strategy strips the outer parentheses of an argument only, so
+  `(Patterns::RE)` or `(Kind::Re)->value` is not read where the parser
+  strategy reads it: a parity gap for every parenthesised constant form.
