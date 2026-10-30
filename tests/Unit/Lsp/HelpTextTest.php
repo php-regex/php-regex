@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lsp;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -20,6 +21,7 @@ use PHPUnit\Framework\TestCase;
  * The server's help points at the editor guide instead of a VS Code setting
  * that does not exist: VS Code starts a language server from an extension.
  */
+#[Group('documentation')]
 final class HelpTextTest extends TestCase
 {
     #[Test]

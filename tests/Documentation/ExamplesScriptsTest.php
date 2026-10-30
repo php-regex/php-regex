@@ -14,9 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Documentation;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[Group('documentation')]
 final class ExamplesScriptsTest extends TestCase
 {
     /**

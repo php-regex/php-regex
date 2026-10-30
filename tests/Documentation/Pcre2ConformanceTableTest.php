@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Tests\TestUtils\Pcre2ConformanceTable;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +27,7 @@ use PHPUnit\Framework\TestCase;
  * and baseline fixtures. A regenerated table that was not committed, or a
  * hand edit to the generated sections, fails here.
  */
+#[Group('documentation')]
 final class Pcre2ConformanceTableTest extends TestCase
 {
     private const PAGE = __DIR__.'/../../docs/reference/pcre2-conformance.md';

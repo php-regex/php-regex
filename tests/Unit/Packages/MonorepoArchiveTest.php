@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Packages;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -24,6 +25,7 @@ use PHPUnit\Framework\TestCase;
  * which an install does not have: the executables an install links are
  * the packages' own, under src/.
  */
+#[Group('documentation')]
 final class MonorepoArchiveTest extends TestCase
 {
     private const SHIPPED = ['CHANGELOG.md', 'LICENSE', 'README.md', 'UPGRADE-2.0.md', 'composer.json', 'src'];

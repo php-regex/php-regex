@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,6 +24,7 @@ use PHPUnit\Framework\TestCase;
  * would, with its own filter chain, for a description holding a quote, and
  * read back by an HTML parser.
  */
+#[Group('documentation')]
 final class HeadMetaEscapingTest extends TestCase
 {
     private const HEAD = __DIR__.'/../../docs/_includes/head.html';

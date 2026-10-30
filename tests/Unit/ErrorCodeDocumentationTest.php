@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -22,6 +23,7 @@ use PHPUnit\Framework\TestCase;
  * matches against: a code missing from it, or a row naming a code that no
  * longer exists, is a promise the library does not keep.
  */
+#[Group('documentation')]
 final class ErrorCodeDocumentationTest extends TestCase
 {
     private const DOCUMENT = __DIR__.'/../../docs/reference/diagnostics.md';

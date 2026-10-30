@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Tests\Support\JsonContract;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -47,6 +48,7 @@ use PHPUnit\Framework\TestCase;
  * - The error envelope's stage values are each named in a code span
  *   somewhere on the page.
  */
+#[Group('documentation')]
 final class JsonOutputReferenceTest extends TestCase
 {
     private const PAGE = __DIR__.'/../../docs/reference/json-output.md';

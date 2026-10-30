@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Release;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -20,6 +21,7 @@ use PHPUnit\Framework\TestCase;
  * The docs-links workflow builds the site as php-regex.com builds it, then
  * checks every external link the built pages carry.
  */
+#[Group('documentation')]
 final class DocsLinksWorkflowTest extends TestCase
 {
     /**

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -22,6 +23,7 @@ use PHPUnit\Framework\TestCase;
  * its update date or else its publication date: a deploy that does not
  * touch it leaves its card cached. Every other page keeps the build time.
  */
+#[Group('documentation')]
 final class SocialImageVersionTest extends TestCase
 {
     private const HEAD = __DIR__.'/../../docs/_includes/head.html';

@@ -13,9 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[Group('documentation')]
 final class CookbookQuickReferenceTest extends TestCase
 {
     private const COOKBOOK = __DIR__.'/../../docs/cookbook.md';

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,6 +24,7 @@ use PHPUnit\Framework\TestCase;
  * commands are written once in the include, whichever form a page asks
  * for, so the switch to the stable release is still one edit.
  */
+#[Group('documentation')]
 final class ArticleInstallIncludeTest extends TestCase
 {
     private const INCLUDE = __DIR__.'/../../docs/_includes/install-prerelease.html';

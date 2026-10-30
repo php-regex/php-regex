@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Release;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -22,6 +23,7 @@ use PHPUnit\Framework\TestCase;
  * own, the seventeen read-only ones among them. bin/split pushes it to that
  * repository's main branch.
  */
+#[Group('documentation')]
 final class OrganizationProfileTest extends TestCase
 {
     /**

@@ -19,6 +19,7 @@ use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -30,6 +31,7 @@ use PHPUnit\Framework\TestCase;
  * reworded in a minor does not resurface it; a 1.x list, whose entries have
  * no issue_id, is not a baseline at all: reading it is a usage error.
  */
+#[Group('documentation')]
 final class LintBaselineContractTest extends TestCase
 {
     use PcreGates;

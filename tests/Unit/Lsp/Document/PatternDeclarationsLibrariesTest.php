@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lsp\Document;
 
 use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\Parser\Text\Path;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -24,6 +25,7 @@ use PHPUnit\Framework\TestCase;
  * file of theirs changes or Composer installs others. A declaration of the
  * project wins over a library's of the same function.
  */
+#[Group('documentation')]
 final class PatternDeclarationsLibrariesTest extends TestCase
 {
     private const GREP = "<?php\nnamespace App;\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\nfunction grep(string \$subject, #[RegexPattern] string \$regex) {}\n";

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\TemporaryProject;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,6 +24,7 @@ use PHPUnit\Framework\TestCase;
  * real run: "regex lint src/ --format=github" on a project requiring PHP
  * ^8.2 whose src/demo.php holds a nested quantifier on its third line.
  */
+#[Group('documentation')]
 final class CliReadmeGithubExampleTest extends TestCase
 {
     use PcreRule;

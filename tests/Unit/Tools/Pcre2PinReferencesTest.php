@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Tools;
 
 use PHPRegex\Tests\TestUtils\Pcre2TestdataExtractor;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,6 +24,7 @@ use PHPUnit\Framework\TestCase;
  * conformance page name the same one, so a re-pin leaves none of them on
  * the old release.
  */
+#[Group('documentation')]
 final class Pcre2PinReferencesTest extends TestCase
 {
     #[Test]

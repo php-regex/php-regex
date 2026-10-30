@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Documentation;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -25,6 +26,7 @@ use PHPUnit\Framework\TestCase;
  * CHANGELOG names every rule that is off by default, in an entry of its
  * own and in its list of them.
  */
+#[Group('documentation')]
 final class LintRuleInventoryTest extends TestCase
 {
     private const ROOT = __DIR__.'/../../';

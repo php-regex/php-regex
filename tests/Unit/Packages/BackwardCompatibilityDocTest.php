@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Packages;
 
 use PHPRegex\Tests\Support\PublicSurface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,6 +24,7 @@ use PHPUnit\Framework\TestCase;
  * classes the code treats as public are the same list: one row per package,
  * each an exhaustive list of backticked class paths relative to the package.
  */
+#[Group('documentation')]
 final class BackwardCompatibilityDocTest extends TestCase
 {
     private const DOC = 'docs/reference/backward-compatibility.md';

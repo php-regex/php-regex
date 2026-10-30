@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 use Illuminate\Support\Facades\Artisan;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -23,6 +24,7 @@ use PHPUnit\Framework\Attributes\Test;
  * constraints; it detects no conflict between routes, and its description,
  * its help and the docs no longer promise one.
  */
+#[Group('documentation')]
 final class RoutesCommandDescriptionTest extends LaravelTestCase
 {
     #[Test]

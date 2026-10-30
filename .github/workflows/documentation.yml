@@ -1,0 +1,61 @@
+name: Documentation
+
+# The tests that read the prose: the site under docs/, the READMEs, the
+# changelogs, the upgrade guide, the community files. A pull request that
+# changes the prose alone runs them here, by themselves, where the workflows
+# that judge the code stay out; a pull request that changes the code runs
+# them with the whole suite, and so does every push to 2.x.
+
+on:
+  pull_request:
+    branches: [ 2.x ]
+    paths:
+      - 'docs/**'
+      - 'art/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'UPGRADE-2.0.md'
+      - 'CONTRIBUTING.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'SECURITY.md'
+      - 'TODO.md'
+      - 'LICENSE'
+      - 'src/*/README.md'
+      - 'src/*/CHANGELOG.md'
+      - '.github/organization/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '.github/FUNDING.yml'
+      - '.github/CODEOWNERS'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  documentation:
+    # The "documentation" group of the suite: every test under
+    # tests/Documentation and every test that names a file of the prose.
+    name: Documentation tests (PHP 8.4)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          ini-values: phar.readonly=0
+          tools: phpunit
+
+      - name: Run the Documentation Tests
+        run: tools/phpunit/vendor/bin/phpunit --colors=always --group documentation

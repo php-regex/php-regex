@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration;
 
 use PHPRegex\Tests\TestUtils\Pcre2LiveCrossCheck;
 use PHPRegex\Tests\TestUtils\Pcre2TestdataExtractor;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -36,6 +37,7 @@ use PHPUnit\Framework\TestCase;
  * fixture, an extractor bug or a hand-edited file fails here on every
  * machine, in seconds — this test never skips and never vacuously passes.
  */
+#[Group('documentation')]
 final class Pcre2ExtractorFidelityTest extends TestCase
 {
     private const TESTDATA_DIR = __DIR__.'/../Fixtures/Pcre2/testdata';

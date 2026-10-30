@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Documentation;
 use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\DocumentationPages;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -32,6 +33,7 @@ use PHPUnit\Framework\TestCase;
  * The pages read are those of DocumentationPages. CHANGELOG.md and
  * UPGRADE-2.0.md name the 1.x cases on purpose and are not among them.
  */
+#[Group('documentation')]
 final class NoLegacyTokenNamesTest extends TestCase
 {
     private const LEGACY_NAME = '/\bT_[A-Z][A-Z_]+\b/';

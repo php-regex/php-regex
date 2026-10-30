@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Documentation;
 use PHPRegex\Tests\Support\DocumentationPages;
 use PHPRegex\Tests\Support\DocumentedCalls;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -29,6 +30,7 @@ use PHPUnit\Framework\TestCase;
  * (other libraries, untyped variables, methods the example defines) are not
  * checked.
  */
+#[Group('documentation')]
 final class DocumentedApiCallsTest extends TestCase
 {
     #[Test]
