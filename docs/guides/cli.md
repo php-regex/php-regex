@@ -630,7 +630,8 @@ command line) are read once before the patterns, in the same pass as the
 for the classes the project does not declare. The pattern is reported once,
 at its literal, in the file that writes it, with the first call that reads
 it as its `source` and `via Patterns::EMAIL` as its `location`; a marker on
-the line of the literal silences it. The rules of the file apply across
+the line of the literal silences it, and a version guard around its class
+narrows it, as the guards of the reading file do not. The rules of the file apply across
 files: a value holding a variable, a property or an expression the file
 cannot fold is not read, `static::X` needs a `final` class or constant, a
 constant built from constants of other files is folded, 32 constants deep
@@ -1347,7 +1348,8 @@ anything but a literal, an `&&` one side of which is no guard,
 namespace, an unqualified `PHP_VERSION_ID` is read only when the file
 declares no constant of that name. A pattern held in a constant or a property
 is judged where its literal is written, as for `@regex-ignore`: a guard
-around the call does not narrow it. A guard that keeps no version of the
+around the call does not narrow it, and a constant of another file is
+judged by the guards of that file. A guard that keeps no version of the
 range leaves the pattern unjudged: the code never runs there.
 
 Where no guard says it, `@regex-target` names the versions, as a Composer

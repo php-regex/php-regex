@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\ProjectConstants;
 use PHPRegex\Linter\Extraction\ValueExpr;
 use PHPRegex\Tests\Support\TemporaryProject;
@@ -213,10 +214,39 @@ final class ProjectConstantsTest extends TestCase
         $this->assertEquals($contribution, unserialize(serialize($contribution), ['allowed_classes' => [ValueExpr::class]]));
     }
 
+    /**
+     * A constant declared in a block a version guard keeps carries the
+     * guard, on its literal, on its concatenation and on each item of its
+     * array: the file that reads it judges it as its own file would.
+     */
+    #[Test]
+    public function test_a_constant_declared_under_a_version_guard_carries_the_guard(): void
+    {
+        $content = "<?php\n\nif (PHP_VERSION_ID >= 80100) {\n    final class Guarded\n    {\n        public const RE = '/g/';\n        public const FULL = '/'.self::RE.'/';\n        public const LIST = ['/l/'];\n    }\n}\n\nfinal class Free\n{\n    public const RE = '/f/';\n}\n";
+        $contribution = ProjectConstants::scan($content, 'a.php');
+        $constants = ProjectConstants::of([$contribution]);
+
+        $this->assertSame('>=8.1', self::valueOf($constants->constant('guarded', 'RE'))->guard?->phpConstraint());
+        $this->assertSame('>=8.1', self::valueOf($constants->constant('guarded', 'FULL'))->guard?->phpConstraint());
+        $this->assertSame('>=8.1', self::valueOf($constants->constant('guarded', 'LIST'))->items[0][1]->guard?->phpConstraint());
+        $this->assertNull(self::valueOf($constants->constant('free', 'RE'))->guard);
+        $this->assertEquals($contribution, unserialize(serialize($contribution), ['allowed_classes' => [ValueExpr::class, TargetConstraint::class]]), 'The guard travels with the contribution.');
+    }
+
     #[Test]
     public function test_none_knows_nothing(): void
     {
         $this->assertFalse(ProjectConstants::none()->has('a'));
         $this->assertNull(ProjectConstants::none()->constant('a', 'RE'));
+    }
+
+    /**
+     * @param array{ValueExpr, bool}|null $constant
+     */
+    private static function valueOf(?array $constant): ValueExpr
+    {
+        self::assertNotNull($constant);
+
+        return $constant[0];
     }
 }

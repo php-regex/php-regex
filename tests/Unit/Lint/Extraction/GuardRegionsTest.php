@@ -14,9 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PhpParser\ParserFactory;
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\GuardRegions;
 use PHPRegex\Linter\Extraction\PhpParserGuards;
 use PHPRegex\Linter\Extraction\TokenGuards;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -172,6 +174,24 @@ final class GuardRegionsTest extends TestCase
 
         $this->assertNull(self::tokens($content)->at((int) strpos($content, "'@'")));
         $this->assertNull(self::tokens("<?php\nif (PHP_VERSION_ID >= 80400) {\n    f('@');\n}\n")->at(null));
+    }
+
+    /**
+     * The regions are those of one file: an occurrence of another file,
+     * read through a constant, keeps its own guard whatever its offset.
+     */
+    #[Test]
+    public function test_the_regions_judge_the_occurrences_of_their_file_alone(): void
+    {
+        $regions = new GuardRegions();
+        $regions->add(0, 100, TargetConstraint::phpFrom(80400, null));
+        $own = new PatternOccurrence('/a/', 'a.php', 1, 'preg_match()', fileOffset: 10);
+        $other = new PatternOccurrence('/b/', 'b.php', 1, 'preg_match()', fileOffset: 10, guard: TargetConstraint::phpFrom(80100, null));
+
+        [$judgedOwn, $judgedOther] = $regions->apply([$own, $other], 'a.php');
+
+        $this->assertSame('>=8.4', $judgedOwn->guard?->phpConstraint());
+        $this->assertSame($other, $judgedOther);
     }
 
     private static function tokens(string $content): GuardRegions

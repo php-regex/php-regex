@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -58,6 +59,9 @@ final class ValueExpr
      *                                                       is written in; null for one of the file being read
      * @param int|null                           $column     its column on its line, one-based, in bytes, known
      *                                                       with the file
+     * @param TargetConstraint|null              $guard      the versions the guards of that file keep around it;
+     *                                                       null when none holds there, or for one of the file
+     *                                                       being read, whose guards the reader applies
      */
     private function __construct(
         public readonly string $kind,
@@ -73,6 +77,7 @@ final class ValueExpr
         public readonly string $written = '',
         public readonly ?string $file = null,
         public readonly ?int $column = null,
+        public readonly ?TargetConstraint $guard = null,
     ) {}
 
     public static function literal(string $value, int $offset, int $line, ?string $file = null, ?int $column = null): self
@@ -82,19 +87,21 @@ final class ValueExpr
 
     /**
      * The same expression, its literals and concatenations placed in the
-     * file they are read from, with their column: what another file reads
-     * through a constant is reported there.
+     * file they are read from, with their column and the versions the
+     * file's guards keep around them: what another file reads through a
+     * constant is reported there, and judged as there.
      *
-     * @param string $content the file's text, the columns are counted in
+     * @param string       $content the file's text, the columns are counted in
+     * @param GuardRegions $guards  the version guards of the file
      */
-    public function inFile(string $file, string $content): self
+    public function inFile(string $file, string $content, GuardRegions $guards): self
     {
         return match ($this->kind) {
-            self::LITERAL => new self(self::LITERAL, $this->value, $this->offset, $this->line, file: $file, column: PendingPattern::column($content, $this->offset)),
+            self::LITERAL => new self(self::LITERAL, $this->value, $this->offset, $this->line, file: $file, column: PendingPattern::column($content, $this->offset), guard: $guards->at($this->offset)),
             // A concatenation is reported whole, where it starts: its parts
             // need no place of their own.
-            self::CONCAT => new self(self::CONCAT, offset: $this->offset, line: $this->line, parts: $this->parts, file: $file, column: PendingPattern::column($content, $this->offset)),
-            self::ARRAY => new self(self::ARRAY, items: array_map(static fn (array $item): array => [$item[0]?->inFile($file, $content), $item[1]->inFile($file, $content)], $this->items)),
+            self::CONCAT => new self(self::CONCAT, offset: $this->offset, line: $this->line, parts: $this->parts, file: $file, column: PendingPattern::column($content, $this->offset), guard: $guards->at($this->offset)),
+            self::ARRAY => new self(self::ARRAY, items: array_map(static fn (array $item): array => [$item[0]?->inFile($file, $content, $guards), $item[1]->inFile($file, $content, $guards)], $this->items)),
             default => $this,
         };
     }

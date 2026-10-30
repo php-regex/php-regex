@@ -14,12 +14,14 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PhpParser\ParserFactory;
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\ProjectConstants;
 use PHPRegex\Linter\Extraction\ProjectConstantsAwareInterface;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\ExtractsWithBothStrategies;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -210,6 +212,26 @@ final class CrossFileConstantsTest extends TestCase
     }
 
     /**
+     * A literal of another file is judged by the version guards of its own
+     * file, as a literal of the file is by its own: the guard around the
+     * call does not narrow it, nor does one of the reading file that spans
+     * the offset the literal is at in its file.
+     */
+    #[Test]
+    public function test_a_literal_of_another_file_is_judged_by_the_guards_of_its_own_file(): void
+    {
+        $patterns = "<?php\n\nif (PHP_VERSION_ID >= 80100) {\n    final class Guarded\n    {\n        public const RE = '/g/';\n    }\n}\n\nfinal class Free\n{\n    public const RE = '/f/';\n}\n";
+        $reader = "<?php\n\nif (PHP_VERSION_ID >= 80400) {\n    preg_match(Guarded::RE, 'x');\n    preg_match(Free::RE, 'x');\n    preg_match('/own/', 'x');\n    // The block spans every offset a literal of the other file is at.\n    //".str_repeat(' ', 160)."\n}\n";
+        $this->assertGreaterThan(strpos($patterns, "'/f/'"), strrpos($reader, '}'));
+
+        $this->assertSame([
+            ['/f/', 'Patterns.php', null],
+            ['/g/', 'Patterns.php', '>=8.1'],
+            ['/own/', 'Reader.php', '>=8.4'],
+        ], $this->guardsAcross(['Patterns.php' => $patterns, 'Reader.php' => $reader]));
+    }
+
+    /**
      * Without the project's constants, a constant of another file is not
      * read, as before.
      */
@@ -243,6 +265,48 @@ final class CrossFileConstantsTest extends TestCase
         }
 
         return $fromTokens;
+    }
+
+    /**
+     * Each strategy, handed the constants of every file, reads the files:
+     * each pattern, its file and the versions its guards keep; both must
+     * read the same.
+     *
+     * @param array<string, string> $files relative path => contents
+     *
+     * @return list<array{string, string, string|null}>
+     */
+    private function guardsAcross(array $files): array
+    {
+        $directory = $this->makeProject($files);
+        $paths = array_map(static fn (string $relative): string => $directory.'/'.$relative, array_keys($files));
+        $constants = ProjectConstants::of(array_map(ProjectConstants::scanFile(...), $paths));
+
+        $fromTokens = $this->guardsWith($this->withConstants(new TokenBasedExtractionStrategy([], PatternFunctionRegistry::native()), $constants), $paths);
+        if (class_exists(ParserFactory::class)) {
+            $fromAst = $this->guardsWith($this->withConstants(new PhpParserExtractionStrategy([], PatternFunctionRegistry::native()), $constants), $paths);
+            $this->assertSame($fromAst, $fromTokens, 'The token strategy reads otherwise than the parser strategy.');
+        }
+
+        return $fromTokens;
+    }
+
+    /**
+     * @param list<string> $paths
+     *
+     * @return list<array{string, string, string|null}>
+     */
+    private function guardsWith(ExtractorInterface $strategy, array $paths): array
+    {
+        $read = [];
+        foreach ($strategy->extract($paths) as $occurrence) {
+            $this->assertInstanceOf(PatternOccurrence::class, $occurrence);
+            $guard = $occurrence->guard;
+            $read[] = [$occurrence->pattern, basename($occurrence->file), $guard instanceof TargetConstraint ? $guard->phpConstraint() : null];
+        }
+        sort($read);
+
+        return $read;
     }
 
     private function withConstants(ExtractorInterface $strategy, ProjectConstants $constants): ExtractorInterface

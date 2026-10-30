@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Linter\Config\TargetConstraint;
+
 /**
  * What one PHP file proves about the values its names hold, and the
  * patterns a call reads through them.
@@ -319,7 +321,7 @@ final class InFileValueResolver
      * call reaches it: "via self::RE", "via $re"; none for a pattern the
      * call assembles itself.
      *
-     * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null}> each with the file and the column of its literal when it is another file's
+     * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null}> each with the file, the column and the guard of its literal when it is another file's
      */
     public function patterns(ValueExpr $expr, PatternFunction $function): array
     {
@@ -362,7 +364,7 @@ final class InFileValueResolver
                 }
 
                 $this->reported[$literal->file ?? ''][$literal->offset][$pattern] = $literal;
-                $patterns[] = ['pattern' => $pattern, 'offset' => $literal->offset, 'line' => $literal->line, 'location' => $location, 'file' => $literal->file, 'column' => $literal->column];
+                $patterns[] = ['pattern' => $pattern, 'offset' => $literal->offset, 'line' => $literal->line, 'location' => $location, 'file' => $literal->file, 'column' => $literal->column, 'guard' => $literal->guard];
             }
         }
 

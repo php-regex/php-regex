@@ -61,8 +61,9 @@ final class PendingPattern
         $occurrences = [];
         foreach ($resolver->patterns($value, $this->function) as $pattern) {
             // A literal of another file, read through the project's
-            // constants, is reported there, at the column read with it.
-            $occurrences[] = new PatternOccurrence(
+            // constants, is reported there, at the column read with it,
+            // for the versions the guards of that file keep around it.
+            $occurrences[] = (new PatternOccurrence(
                 $pattern['pattern'],
                 $pattern['file'] ?? $file,
                 $pattern['line'],
@@ -70,7 +71,7 @@ final class PendingPattern
                 location: $pattern['location'],
                 column: null === $pattern['file'] ? self::column($content, $pattern['offset']) : $pattern['column'],
                 fileOffset: $pattern['offset'],
-            );
+            ))->guardedBy($pattern['guard']);
         }
 
         return $occurrences;

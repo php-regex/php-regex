@@ -96,7 +96,9 @@ final class ProjectConstants
         // their members declare the constants and the cases; a trait has
         // no class to declare them under, a function body declares none.
         $tokens = token_get_all($content);
-        $collector = new TokenValueCollector($tokens, PhpTokens::offsets($tokens), PhpTokens::closers($tokens), $content, [], false);
+        $offsets = PhpTokens::offsets($tokens);
+        $closers = PhpTokens::closers($tokens);
+        $collector = new TokenValueCollector($tokens, $offsets, $closers, $content, [], false);
         $context = new NameResolutionContext();
         for ($i = 0, $totalTokens = \count($tokens); $i < $totalTokens; $i++) {
             $token = $tokens[$i];
@@ -123,11 +125,15 @@ final class ProjectConstants
             }
         }
 
+        // A constant declared in a block a version guard keeps, a class
+        // for the versions that have it say, is judged for those versions
+        // wherever it is read: its literal carries the guards of its file.
+        $guards = TokenGuards::regions($tokens, $offsets, $closers, $content);
         ['classes' => $classes, 'constants' => $constants] = $collector->values()->declarations();
         $kept = [];
         foreach ($constants as $key => [$value, $final]) {
             if (self::proves($value)) {
-                $kept[$key] = [$value->inFile($file, $content), $final];
+                $kept[$key] = [$value->inFile($file, $content, $guards), $final];
             }
         }
 

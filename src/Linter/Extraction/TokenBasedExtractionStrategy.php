@@ -141,6 +141,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         // Each pattern judged for the versions the guards around it keep.
         return TokenGuards::regions($tokens, $tokenOffsets, $closers, $content)->apply(
             $this->settle(array_values($found->getArrayCopy()), $patternArguments, $tokens, $tokenOffsets, $closers, $file, $content),
+            $file,
         );
     }
 
