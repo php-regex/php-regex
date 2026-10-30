@@ -5,14 +5,23 @@ sitemap: false
 ---
 {% comment %}
   Search index for the docs search dialog. The dialog fetches this file once,
-  on the first search, never at page load. One entry per documentation page;
-  every field is escaped on its own so JSON quoting stays the engine's job.
+  on the first search, never at page load. One entry per documentation page,
+  then one entry per section heading of that page; every field is escaped on
+  its own so JSON quoting stays the engine's job.
 
   Excerpts: most pages enter the page list through the no-front-matter and
   readme-index generators and have not been converted to HTML yet when this
   file renders. Running the content through markdownify first yields clean
   text for those pages, and is idempotent for the rare page that was already
   converted earlier in the render order.
+
+  Headings: the vocabulary a reader searches for — "atomic group",
+  "possessive", a lint rule's name — lives in section titles, not in page
+  titles. Each h2 and h3 of the rendered content becomes an entry of its
+  own, anchored to its fragment, carrying the page title as its excerpt so
+  a result still says where it lands. Headings wearing the filter-toc or
+  nav-title classes are skipped: a table of contents matches every query
+  and answers none of them.
 
   Sections: each entry also carries the sidebar section the page lives in,
   resolved against the navigation data (a group title from nav.yml or
@@ -71,18 +80,56 @@ sitemap: false
       {% assign parts = p.content | split: '</div>' %}
       {% assign body = parts[1] | default: p.content %}
     {% endif %}
-    {% assign excerpt = p.description | default: body %}
-    {"url": {{ u | absolute_url | jsonify }}, "title": {{ p.title | default: u | jsonify }}, "section": {{ section | jsonify }}, "excerpt": {{ excerpt | markdownify | strip_html | normalize_whitespace | truncate: 600 | jsonify }}}
+    {% assign html = body | markdownify %}
+    {"url": {{ u | absolute_url | jsonify }}, "title": {{ p.title | default: u | jsonify }}, "section": {{ section | jsonify }}, "excerpt": {{ p.description | default: html | strip_html | normalize_whitespace | truncate: 600 | jsonify }}}
+    {% assign hchunks = html | split: '<h' %}
+    {% for hc in hchunks %}
+      {% assign level = hc | slice: 0 %}
+      {% if level == '2' or level == '3' %}
+        {% unless hc contains 'filter-toc' or hc contains 'nav-title' %}
+          {% assign hid_parts = hc | split: 'id="' %}
+          {% assign hid = hid_parts[1] | split: '"' | first %}
+          {% if hid and hid != '' %}
+            {% assign hopen = hc | split: '</h' | first | split: '>' | first %}
+            {% assign htitle = hc | split: '</h' | first | remove_first: hopen | remove_first: '>' | strip_html | normalize_whitespace | strip %}
+            {% if htitle != '' %}
+              {% if emitted %},{% endif %}{% assign emitted = true %}
+              {"url": {{ u | absolute_url | append: '#' | append: hid | jsonify }}, "title": {{ htitle | jsonify }}, "section": {{ section | jsonify }}, "excerpt": {{ p.title | default: u | jsonify }}}
+            {% endif %}
+          {% endif %}
+        {% endunless %}
+      {% endif %}
+    {% endfor %}
   {% endunless %}
 {% endfor %}
 {% comment %}
   Articles live in the articles collection, not in site.pages; they enter
   the index here with their own section name, excerpted from the page
   description rather than the body — an article's opening pattern makes a
-  poor search excerpt.
+  poor search excerpt. Their headings are indexed like every other page's:
+  the questions an article answers are its section titles.
 {% endcomment %}
 {% for a in site.articles %}
   {% if emitted %},{% endif %}{% assign emitted = true %}
     {"url": {{ a.url | absolute_url | jsonify }}, "title": {{ a.title | default: a.url | jsonify }}, "section": "Articles", "excerpt": {{ a.description | default: '' | strip_html | jsonify }}}
+  {% assign ahtml = a.content | markdownify %}
+  {% assign hchunks = ahtml | split: '<h' %}
+  {% for hc in hchunks %}
+    {% assign level = hc | slice: 0 %}
+    {% if level == '2' or level == '3' %}
+      {% unless hc contains 'filter-toc' or hc contains 'nav-title' %}
+        {% assign hid_parts = hc | split: 'id="' %}
+        {% assign hid = hid_parts[1] | split: '"' | first %}
+        {% if hid and hid != '' %}
+          {% assign hopen = hc | split: '</h' | first | split: '>' | first %}
+          {% assign htitle = hc | split: '</h' | first | remove_first: hopen | remove_first: '>' | strip_html | normalize_whitespace | strip %}
+          {% if htitle != '' %}
+            {% if emitted %},{% endif %}{% assign emitted = true %}
+            {"url": {{ a.url | absolute_url | append: '#' | append: hid | jsonify }}, "title": {{ htitle | jsonify }}, "section": "Articles", "excerpt": {{ a.title | default: a.url | jsonify }}}
+          {% endif %}
+        {% endif %}
+      {% endunless %}
+    {% endif %}
+  {% endfor %}
 {% endfor %}
 ]
