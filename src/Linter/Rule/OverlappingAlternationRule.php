@@ -161,13 +161,19 @@ final class OverlappingAlternationRule extends AbstractLintRule
         // Each alternative reads the flags in effect there, with the ones an
         // earlier alternative carries into it.
         $charSets = [];
+        $caselessAt = [];
         $anyUnknown = false;
         foreach ($context->flagsAtEachChild($node) as $index => $flags) {
-            $charSet = $context->firstChars($node->alternatives[$index], $flags);
+            $alternative = $node->alternatives[$index];
+            $charSet = $context->firstChars($alternative, $flags);
             if ($charSet->isUnknown()) {
                 $anyUnknown = true;
             }
-            $caseless = str_contains($flags, 'i') || NodePredicates::turnsCaselessOn($node->alternatives[$index]);
+            // The case the branch starts in: the flags at its first atom, a
+            // "(?i:" around it or a bare "(?i)" before it included, not one
+            // later in the branch, which leaves the start case-sensitive.
+            $caseless = str_contains($context->flagsAt(self::firstLeaf($alternative), $alternative, $flags), 'i');
+            $caselessAt[] = $caseless;
             $charSets[] = $caseless ? self::foldCharSet($charSet) : $charSet;
         }
 
@@ -176,6 +182,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
             for ($i = 0; $i < $total; $i++) {
                 for ($j = $i + 1; $j < $total; $j++) {
                     if (!$charSets[$i]->isEmpty() && !$charSets[$j]->isEmpty() && $charSets[$i]->intersects($charSets[$j])) {
+                        if ($this->tellsApart($node, $i, $j, $caselessAt, $context)) {
+                            continue;
+                        }
+
                         return $this->makeCharsetViolation($node, $i, $j, $context);
                     }
                 }
@@ -186,7 +196,95 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
         // At least one charset is unknown (e.g. above-ASCII byte ranges that
         // ByteCharSet cannot model). Fall back to PCRE-queried sets.
-        return $this->checkWithClassSetProvider($node, $context);
+        return $this->checkWithClassSetProvider($node, $caselessAt, $context);
+    }
+
+    /**
+     * Whether the texts two branches start with tell them apart: when
+     * neither text is a prefix of the other, "associative-array" and
+     * "array", an input one branch takes the other never does, whatever
+     * character they share at their start. A branch that starts with no
+     * literal tells nothing.
+     *
+     * @param list<bool> $caselessAt whether each branch matches caselessly
+     */
+    private function tellsApart(AlternationNode $node, int $i, int $j, array $caselessAt, LintContext $context): bool
+    {
+        $first = $this->leadingText($node->alternatives[$i]);
+        $second = $this->leadingText($node->alternatives[$j]);
+        if ($caselessAt[$i] || $caselessAt[$j]) {
+            $first = self::fold($first, $context);
+            $second = self::fold($second, $context);
+        }
+
+        return !str_starts_with($first, $second) && !str_starts_with($second, $first);
+    }
+
+    /**
+     * The literal text a branch starts with, through the groups that only
+     * capture, up to its first item that is no literal: "callable-" for
+     * "callable-(?:string|object)", "" for "a+b".
+     */
+    private function leadingText(NodeInterface $node): string
+    {
+        while ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named], true)) {
+            $node = $node->child;
+        }
+
+        // A branch of one item holds one character of text at most, which
+        // the other text starts with or not as it does with no text at all.
+        if (!$node instanceof SequenceNode) {
+            return '';
+        }
+
+        // The text ends where the case changes: what a "(?i:" or a bare
+        // "(?i)" puts after it takes the other case as well, and tells
+        // nothing apart.
+        $text = '';
+        foreach ($node->children as $child) {
+            $piece = $this->extractLiteralSequence($child);
+            if (null === $piece || NodePredicates::turnsCaselessOn($child)) {
+                break;
+            }
+
+            $text .= $piece;
+        }
+
+        return $text;
+    }
+
+    /**
+     * The first atom of a branch, whose flags say the case the branch
+     * starts in: through the groups that only capture or set options, a
+     * bare "(?i)" at the start passed over, into a quantifier, taken once
+     * or not; the branch itself when it holds nothing else.
+     */
+    private static function firstLeaf(NodeInterface $node): NodeInterface
+    {
+        while (true) {
+            if ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags], true) && !NodePredicates::isStandaloneInlineFlags($node)) {
+                $node = $node->child;
+            } elseif ($node instanceof SequenceNode) {
+                $first = null;
+                foreach ($node->children as $child) {
+                    if (!NodePredicates::isStandaloneInlineFlagsGroup($child)) {
+                        $first = $child;
+
+                        break;
+                    }
+                }
+
+                if (null === $first) {
+                    return $node;
+                }
+
+                $node = $first;
+            } elseif ($node instanceof QuantifierNode) {
+                $node = $node->node;
+            } else {
+                return $node;
+            }
+        }
     }
 
     /**
@@ -195,8 +293,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * target reads them: its properties, and without u the tables of its
      * locale. A branch whose first character is not one atom, or that may
      * start with what follows it, is not judged.
+     *
+     * @param list<bool> $caselessAt whether each branch matches caselessly
      */
-    private function checkWithClassSetProvider(AlternationNode $node, LintContext $context): ?RuleViolation
+    private function checkWithClassSetProvider(AlternationNode $node, array $caselessAt, LintContext $context): ?RuleViolation
     {
         $startVerbs = StartOptions::of($context->pattern->source);
         $unicodeFlag = str_contains($context->pattern->flags, 'u');
@@ -222,7 +322,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
         $total = \count($sets);
         for ($i = 0; $i < $total; $i++) {
             for ($j = $i + 1; $j < $total; $j++) {
-                if (!$sets[$i]->intersect($sets[$j])->isEmpty()) {
+                if (!$sets[$i]->intersect($sets[$j])->isEmpty() && !$this->tellsApart($node, $i, $j, $caselessAt, $context)) {
                     return $this->makeCharsetViolation($node, $i, $j, $context);
                 }
             }
@@ -380,7 +480,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
      */
     private static function fold(string $text, LintContext $context): string
     {
-        return $context->pattern->unicodeMode ? mb_strtolower($text, 'UTF-8') : Ascii::lower($text);
+        // The simple case folding, as PCRE compares caselessly: a final
+        // sigma folds to the sigma, "ß" stays itself.
+        return $context->pattern->unicodeMode ? mb_convert_case($text, \MB_CASE_FOLD_SIMPLE, 'UTF-8') : Ascii::lower($text);
     }
 
     /**
