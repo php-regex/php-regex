@@ -19,6 +19,7 @@ use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
+use PHPRegex\Linter\Source\TwigTemplatePatternSource;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
@@ -96,6 +97,9 @@ return static function (ContainerConfigurator $container): void {
         ->args([
             '$extractor' => service('php_regex.extractor'),
         ])
+        ->tag('php_regex.pattern_source');
+
+    $services->set('php_regex.pattern_source.twig', TwigTemplatePatternSource::class)
         ->tag('php_regex.pattern_source');
 
     $services->set('php_regex.pattern_source.routes', RoutePatternSource::class)

@@ -84,7 +84,7 @@ final class InlineIgnores
         foreach (token_get_all($content) as $token) {
             $text = \is_array($token) ? $token[1] : $token;
             if (\is_array($token) && (\T_COMMENT === $token[0] || \T_DOC_COMMENT === $token[0])) {
-                array_push($markers, ...self::markersIn($token[1], $token[2], $offset, $content));
+                array_push($markers, ...self::markersOfComment($token[1], $token[2], $offset, $content));
             }
             $offset += \strlen($text);
         }
@@ -96,11 +96,16 @@ final class InlineIgnores
      * The markers of one comment: each starts the comment, after "//", "#",
      * "/*" or "/**", or a line of it, after the "*" that may open the line.
      * A marker met in the middle of a sentence, or quoted, is prose about
-     * the markers.
+     * the markers. A Twig comment is read the same, given from its "#".
+     *
+     * @param string $comment       the comment with its opener, as the source writes it
+     * @param int    $startLine     the line the comment opens on, one-based
+     * @param int    $commentOffset where the comment starts in the source, in bytes
+     * @param string $content       the source the comment is read from
      *
      * @return list<IgnoreMarker>
      */
-    private static function markersIn(string $comment, int $startLine, int $commentOffset, string $content): array
+    public static function markersOfComment(string $comment, int $startLine, int $commentOffset, string $content): array
     {
         if (!LibraryPcre::matchAll('~(?:\A(?://|#|/\*\*?)|\n[ \t]*\*?)[ \t]*\K@regex-ignore(?:-next-line)?(?![\w-])~', $comment, $found, \PREG_OFFSET_CAPTURE)) {
             return [];

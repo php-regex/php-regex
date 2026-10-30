@@ -220,6 +220,12 @@ written as an attribute, `#[Assert\Regex]`, is read from the PHP file (the
 `symfony-validator` preset), once. `--no-validators` leaves the mapping files
 out.
 
+The `matches` operator of the Twig templates under the linted paths is read
+too, as `preg_match()` of its literal: {% raw %}`{% if slug matches '/^[a-z]+$/' %}`{% endraw %}
+is reported at the template, with `twig:matches` as its source (see the
+[CLI guide](cli.md#twig-templates) for what Twig makes of the backslashes).
+`--no-twig` leaves the templates out.
+
 ## Using the service
 
 The container registers `php_regex.regex`, a private service autowirable as
@@ -416,7 +422,7 @@ and options:
 
 | Command | Arguments | Options |
 |---|---|---|
-| `regex:lint` | `[paths]...` | `--exclude=...` (default: `exclude`), `--min-savings=1`, `-j`/`--jobs=N`, `--no-routes`, `--no-validators`, `--format=console\|json\|github\|checkstyle\|junit` |
+| `regex:lint` | `[paths]...` | `--exclude=...` (default: `exclude`), `--min-savings=1`, `-j`/`--jobs=N`, `--no-routes`, `--no-validators`, `--no-twig`, `--format=console\|json\|github\|checkstyle\|junit` |
 | `regex:routes` | | `--show-overlaps` (conflicts are always checked) |
 | `regex:security` | | `--show-overlaps`, `-c`/`--config=<file>...`, `--skip-firewalls`, `--redos-threshold=high` |
 | `regex:analyze` | | `--only=routes\|security...`, `--show-overlaps`, `-c`/`--config=<file>...`, `--skip-firewalls`, `--redos-threshold=high`, `--format=console\|json`, `--debug`, `--fail-on=shadowed,redos,critical` (also `overlap`, `any`, `none`) |

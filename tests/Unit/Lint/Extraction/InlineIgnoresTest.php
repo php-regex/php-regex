@@ -212,4 +212,24 @@ final class InlineIgnoresTest extends TestCase
 
         $this->assertSame([], InlineIgnores::suppressedLines($content));
     }
+
+    /**
+     * One comment, given with its opener, is read on its own: a Twig
+     * template hands its "{# #}" comments over this way.
+     */
+    #[Test]
+    public function test_the_markers_of_one_comment_are_read_from_its_opener(): void
+    {
+        $content = "<p>\n{# @regex-ignore-next-line redos, quantifier.nested a note #}\n";
+        $markers = InlineIgnores::markersOfComment('# @regex-ignore-next-line redos, quantifier.nested a note ', 2, 5, $content);
+
+        $this->assertCount(1, $markers);
+        $this->assertSame('@regex-ignore-next-line', $markers[0]->marker);
+        $this->assertSame(2, $markers[0]->line);
+        $this->assertSame(3, $markers[0]->coveredLine);
+        $this->assertSame(['regex.lint.redos', 'regex.lint.quantifier.nested'], $markers[0]->identifiers);
+        $this->assertSame(7, $markers[0]->offset);
+        $this->assertSame(4, $markers[0]->column);
+        $this->assertSame([], InlineIgnores::markersOfComment('# see @regex-ignore', 1, 0, '# see @regex-ignore'));
+    }
 }

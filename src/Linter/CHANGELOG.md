@@ -9,6 +9,12 @@ CHANGELOG
  * A pattern read through the backing value of an enum case,
    `Kind::Re->value` or `self::Re->value`, is read as one held in a class
    constant is: reported once, at the case.
+ * The `matches` operator of the Twig templates under the linted paths is
+   read as the `preg_match()` it compiles to: the pattern as Twig hands it
+   to the engine (its backslash escapes folded), reported at the template,
+   the line and the column of its quote with `twig:matches` as its source,
+   silenced by a `{# @regex-ignore #}` comment as a PHP line is. The
+   `TwigTemplatePatternSource` is one more pattern source, named `twig`.
  * The ReDoS ignore list reads an entry as `RedosAnalyzer` does: a delimited
    pattern without modifiers, `/(a+)+b/`, skips its body under any
    modifiers, where it skipped that string byte for byte only; one written
