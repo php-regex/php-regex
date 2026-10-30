@@ -424,8 +424,20 @@ final class TokenValueCollector
         }
 
         $third = $this->next($second + 1, $last + 1);
-        if ($third !== $last) {
+        if (null === $third) {
             return ValueExpr::unknown();
+        }
+
+        // Kind::Re->value: the backing value of an enum case, read as the
+        // case's fetch and then named by its "->value".
+        if ($third !== $last) {
+            $arrow = $this->next($third + 1, $last + 1);
+            $value = null === $arrow ? null : $this->next($arrow + 1, $last + 1);
+            if ($value !== $last || !$this->is($arrow, \T_OBJECT_OPERATOR) || 'value' !== PhpTokens::identifier($this->tokens[$last])) {
+                return ValueExpr::unknown();
+            }
+
+            return ValueExpr::enumCaseValue($this->operand($first, $third, $context));
         }
 
         $name = PhpTokens::identifier($this->tokens[$last]);
@@ -660,7 +672,23 @@ final class TokenValueCollector
                 continue;
             }
 
-            if (\T_FUNCTION === $id || \T_USE === $id || \T_CASE === $id) {
+            // A "case" among the members is an enum's: backed, it declares
+            // its value; a pure enum's case declares nothing.
+            if (\T_CASE === $id) {
+                $end = $this->statementEnd($i, $close);
+                if (null !== $class) {
+                    foreach ($this->constantItems($i + 1, $end, $context) as [$name, $value]) {
+                        $this->values->declareEnumCase($class, $name, $value);
+                    }
+                }
+
+                $modifiers = [];
+                $i = $end + 1;
+
+                continue;
+            }
+
+            if (\T_FUNCTION === $id || \T_USE === $id) {
                 $end = $this->memberEnd($i, $close);
                 if (\T_USE === $id && null !== $owner) {
                     // use A, B { ... }: the names before the brace or the ";".

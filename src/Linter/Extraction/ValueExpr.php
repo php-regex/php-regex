@@ -88,6 +88,32 @@ final class ValueExpr
     }
 
     /**
+     * The backing value of an enum case, Kind::Re->value: a class constant
+     * under the name the resolver declares the case by, "Re->value", the
+     * only form a call reads the case's string through. The case alone is an
+     * object, and reads nothing.
+     *
+     * @param self $case the fetch of the case, Kind::Re, as a class constant
+     */
+    public static function enumCaseValue(self $case): self
+    {
+        if (self::CLASS_CONSTANT !== $case->kind) {
+            return self::unknown();
+        }
+
+        return new self(self::CLASS_CONSTANT, self::enumCaseName($case->value), class: $case->class, lateStatic: $case->lateStatic, written: $case->written.'->value');
+    }
+
+    /**
+     * The name an enum case is declared under among the class constants:
+     * its "->value" read, which no constant is named as.
+     */
+    public static function enumCaseName(string $case): string
+    {
+        return $case.'->value';
+    }
+
+    /**
      * @param list<string> $names
      */
     public static function constant(array $names, string $written): self

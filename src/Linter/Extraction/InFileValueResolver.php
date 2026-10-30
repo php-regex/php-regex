@@ -188,6 +188,17 @@ final class InFileValueResolver
     }
 
     /**
+     * A backed enum case, as the constant its "->value" read names: a case
+     * cannot be redeclared, so it proves as a final constant does.
+     *
+     * @param string $enum the lowercase name of the enum
+     */
+    public function declareEnumCase(string $enum, string $name, ValueExpr $value): void
+    {
+        $this->declareClassConstant($enum, ValueExpr::enumCaseName($name), $value, true);
+    }
+
+    /**
      * @param string $name the constant's fully qualified name
      */
     public function declareConstant(string $name, ValueExpr $value): void

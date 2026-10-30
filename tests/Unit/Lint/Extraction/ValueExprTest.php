@@ -90,4 +90,26 @@ final class ValueExprTest extends TestCase
         $this->assertSame($reference, $expr->isReference());
         $this->assertSame($resolvable, $expr->isResolvable());
     }
+
+    /**
+     * An enum case's value is the class constant the case is declared as,
+     * "Re->value", on the same class, with the same late static binding,
+     * written as the source does; anything but a class constant stays
+     * unknown.
+     */
+    #[Test]
+    public function test_an_enum_case_value_names_the_case_as_the_resolver_declares_it(): void
+    {
+        $value = ValueExpr::enumCaseValue(ValueExpr::classConstant('app\\kind', 'Re', true, 'static::Re'));
+
+        $this->assertSame(ValueExpr::CLASS_CONSTANT, $value->kind);
+        $this->assertSame('Re->value', $value->value);
+        $this->assertSame(ValueExpr::enumCaseName('Re'), $value->value);
+        $this->assertSame('app\\kind', $value->class);
+        $this->assertTrue($value->lateStatic);
+        $this->assertSame('static::Re->value', $value->written);
+
+        $this->assertSame(ValueExpr::UNKNOWN, ValueExpr::enumCaseValue(ValueExpr::unknown())->kind);
+        $this->assertSame(ValueExpr::UNKNOWN, ValueExpr::enumCaseValue(ValueExpr::property('app\\a', 'value'))->kind);
+    }
 }

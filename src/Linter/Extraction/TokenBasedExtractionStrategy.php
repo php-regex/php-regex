@@ -782,6 +782,12 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             return \T_VARIABLE === $first[0] ? '$this' !== $first[1] : null !== $name && !\in_array(Ascii::lower(ltrim($name, '\\')), ['true', 'false', 'null'], true);
         }
 
+        // Kind::Re->value: an enum case's backing value.
+        if (5 === $count && \is_array($significant[3]) && \T_OBJECT_OPERATOR === $significant[3][0]
+            && \is_array($significant[4]) && 'value' === PhpTokens::identifier($significant[4])) {
+            return $this->mayName(\array_slice($significant, 0, 3)) && \is_array($second) && \T_DOUBLE_COLON === $second[0];
+        }
+
         if (3 !== $count || !\is_array($first) || !\is_array($second) || !\is_array($third)) {
             return false;
         }

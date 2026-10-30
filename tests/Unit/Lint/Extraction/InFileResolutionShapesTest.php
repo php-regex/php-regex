@@ -512,4 +512,92 @@ final class InFileResolutionShapesTest extends TestCase
 
         $this->assertSame($expected, $this->patternsReadByBoth($code, PatternFunctionRegistry::create(['nette-utils'])));
     }
+
+    /**
+     * A backed enum case is read through "->value", the way a call gets its
+     * string: from the enum's own methods as self::Case->value, from another
+     * class as Kind::Case->value; static:: reads too, an enum being final.
+     * The case itself, which is an object, its "->name", a nullsafe
+     * "?->value", which no case needs, "::class->value" and a pure enum's
+     * case, which has no value, give no pattern, at a call or held in a
+     * constant.
+     */
+    #[Test]
+    public function test_a_backed_enum_case_is_read_through_its_value(): void
+    {
+        $this->assertExtractedByBoth([
+            ['pattern' => '/enum-case/', 'at' => "'/enum-case/'", 'location' => 'via self::Own->value'],
+            ['pattern' => '/enum-late/', 'at' => "'/enum-late/'", 'location' => 'via static::Late->value'],
+            ['pattern' => '/enum-other/', 'at' => "'/enum-other/'", 'location' => 'via Kind::Other->value'],
+        ], <<<'CODE'
+            <?php
+
+            namespace App;
+
+            enum Kind: string
+            {
+                case Own = '/enum-case/';
+                case Other = '/enum-other/';
+                case Late = '/enum-late/';
+                case Bare = '/enum-bare/';
+                case Plain = 'plain';
+
+                public function run(string $s): bool
+                {
+                    return 1 === preg_match(self::Own->value, $s)
+                        && 1 === preg_match(static::Late->value, $s);
+                }
+            }
+
+            final class Reader
+            {
+                private const NAMED = Kind::Bare->name;
+                private const NAME_FIRST = Kind::Bare->name->value;
+                private const SAFE = Kind::Bare?->value;
+
+                public function run(string $s): bool
+                {
+                    return 1 === preg_match(Kind::Other->value, $s)
+                        && 1 === preg_match(Kind::Bare, $s)
+                        && 1 === preg_match(Kind::Other->name, $s)
+                        && 1 === preg_match(Kind::Other?->value, $s)
+                        && 1 === preg_match(Kind::class->value, $s)
+                        && 1 === preg_match(Pure::None->value, $s)
+                        && 1 === preg_match(self::NAMED, $s)
+                        && 1 === preg_match(self::NAME_FIRST, $s)
+                        && 1 === preg_match(self::SAFE, $s);
+                }
+            }
+
+            enum Pure
+            {
+                case None;
+            }
+            CODE);
+    }
+
+    /**
+     * A constant holding a case's value folds to the case: the pattern is
+     * read once, at the case.
+     */
+    #[Test]
+    public function test_a_constant_holding_an_enum_case_value_is_folded_to_the_case(): void
+    {
+        $this->assertExtractedByBoth([
+            ['pattern' => '/enum-folded/', 'at' => "'/enum-folded/'", 'location' => 'via self::FOLDED'],
+        ], <<<'CODE'
+            <?php
+
+            enum Kind: string
+            {
+                case Own = '/enum-folded/';
+                private const FOLDED = self::Own->value;
+
+                public function run(string $s): bool
+                {
+                    return 1 === preg_match(self::FOLDED, $s);
+                }
+            }
+            CODE);
+    }
 }
