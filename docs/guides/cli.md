@@ -861,6 +861,30 @@ vendor/bin/regex lint app --redos --redos-threshold=medium
 Its attack is in the analysis' `search_cost`; `--disable-rule=regex.lint.redos.search`,
 or `"redos.search": false` in `checks.lint.rules`, turns it off.
 
+#### Twig templates
+
+Twig's `matches` operator is a `preg_match()`: `{% if slug matches '/^[a-z]+$/' %}`
+compiles to a call of the engine on that literal. The lint reads it from the
+`*.twig` files under the linted paths (list `templates` in `paths`, or name
+the directory on the command line), and reports it at the template, the line
+and the column of its opening quote, with `twig:matches` as its source, under
+the same rules and the same ReDoS verdict as a pattern of the PHP files.
+`--no-twig` leaves the templates out.
+
+The pattern is the one Twig hands to the engine, not the text between the
+quotes: Twig folds the backslash escapes of its strings as C does, so
+`'/\d+/'` is the pattern `/d+/` and `'/\d+/'` the pattern `/\d+/`. A
+template that writes `'/\d+/'` matches a `d`; the lint reports what the
+engine runs.
+
+The operator is read inside `{{ }}` and `{% %}` only, never in a `{# #}`
+comment, a `{% verbatim %}` block or the text around the tags, and only when
+its right operand is one string literal: a variable, a concatenation
+(`'/' ~ sep ~ '/'`) or an interpolated string (`"/#{sep}/"`) is not read. A
+`{# @regex-ignore #}` comment silences the line as a PHP comment does, and
+`{# @regex-ignore-next-line #}` the line after; a marker that silences
+nothing is reported the same way.
+
 ---
 
 ### 8. Graph (Automaton)
@@ -1513,6 +1537,10 @@ the line of its literal, where it is reported, not on the call:
 private const LEGACY = '/(a+)+$/'; // @regex-ignore
 ```
 
+In a Twig template, the marker is a Twig comment, on the line or the line
+before: `{# @regex-ignore #}`, `{# @regex-ignore-next-line #}`, with the
+same words after it.
+
 A marker may name the issues it silences, comma-separated, right after it.
 The other issues of the line are still reported:
 
@@ -1755,6 +1783,7 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--disable-rule=<id>` | Turn a lint rule off (repeatable)                |
 | `--interop <presets>` | Libraries to read patterns from, every preset by default (comma separated, `none` for the native calls only) |
 | `--no-interop`      | Read patterns from the native calls only (`preg_*`, `RegexIterator`, `filter_var()`) |
+| `--no-twig`         | Skip the `matches` patterns of the Twig templates under the paths |
 | `--pattern-function <spec>` | Extra call carrying a pattern (repeatable) |
 | `-v, --verbose`     | Detailed output                                    |
 | `--debug`           | Debug information                                  |

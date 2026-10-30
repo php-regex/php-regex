@@ -6,6 +6,8 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:lint` reads the `matches` patterns of the Twig templates under the
+   linted paths; `--no-twig` leaves them out.
  * `regex:lint` reads the `Regex` constraints of the validator mapping files
    FrameworkBundle hands the validator (`config/validator/`,
    `framework.validation.mapping.paths`, the bundles' validation files), where

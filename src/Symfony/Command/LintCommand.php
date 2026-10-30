@@ -120,6 +120,7 @@ final class LintCommand extends Command
             ->addOption('jobs', 'j', InputOption::VALUE_OPTIONAL, 'Parallel workers for analysis (auto-detected if not specified)')
             ->addOption('no-routes', null, InputOption::VALUE_NONE, 'Skip route validation')
             ->addOption('no-validators', null, InputOption::VALUE_NONE, 'Skip validator validation')
+            ->addOption('no-twig', null, InputOption::VALUE_NONE, 'Skip the "matches" patterns of the Twig templates')
             ->addOption('format', null, InputOption::VALUE_OPTIONAL, 'Output format (console, json, github, checkstyle, junit)', 'console')
             ->setHelp(<<<'EOF'
                 The <info>%command.name%</info> command scans your PHP code for regex patterns and provides:
@@ -179,7 +180,7 @@ final class LintCommand extends Command
             minSavings: is_numeric($minSavings) ? (int) $minSavings : 1,
             // --jobs with no value is no count either.
             jobs: $input->hasParameterOption(['--jobs', '-j'], true) ? (\is_string($jobs) ? $jobs : '') : null,
-            disabledSources: array_keys(array_filter(['routes' => (bool) $input->getOption('no-routes'), 'validators' => (bool) $input->getOption('no-validators')])),
+            disabledSources: array_keys(array_filter(['routes' => (bool) $input->getOption('no-routes'), 'validators' => (bool) $input->getOption('no-validators'), 'twig' => (bool) $input->getOption('no-twig')])),
             optimizations: $this->defaultOptimizations,
             checkRedos: $this->checkRedos,
             checkComplexity: $this->checkComplexity,

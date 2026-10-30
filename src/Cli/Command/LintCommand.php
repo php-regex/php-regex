@@ -42,6 +42,7 @@ use PHPRegex\Linter\Parallel\WorkerCount;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
+use PHPRegex\Linter\Source\TwigTemplatePatternSource;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
@@ -243,6 +244,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         $extractor = $this->extractorFactory->create($arguments);
         $sources = new PatternSourceCollection([
             new PhpFilePatternSource($extractor),
+            new TwigTemplatePatternSource(),
         ]);
         $runner = new LintRunner(new LintService($analysis, $sources));
 
@@ -261,6 +263,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 paths: $paths,
                 excludePaths: $exclude,
                 minSavings: $minSavings,
+                disabledSources: $arguments->readTwig ? [] : [TwigTemplatePatternSource::NAME],
                 checkValidation: $checkValidation,
                 checkRedos: $checkRedos,
                 checkOptimizations: $checkOptimizations,

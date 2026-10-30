@@ -84,6 +84,8 @@ final class BundleExtensionTest extends TestCase
         $this->assertTrue($container->hasDefinition('php_regex.regex'));
         $this->assertTrue($container->hasDefinition('php_regex.extractor'));
         $this->assertTrue($container->hasDefinition('php_regex.command.lint'));
+        $this->assertTrue($container->hasDefinition('php_regex.pattern_source.twig'));
+        $this->assertTrue($container->getDefinition('php_regex.pattern_source.twig')->hasTag('php_regex.pattern_source'));
     }
 
     /**

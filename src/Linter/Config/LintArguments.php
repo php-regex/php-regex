@@ -34,6 +34,8 @@ final class LintArguments
      *                                                                   reported, once checkComplexity turns it on
      * @param bool                               $reportUnmatchedIgnores whether an inline marker or a baseline entry
      *                                                                   that silences nothing is reported
+     * @param bool                               $readTwig               whether the Twig templates under the paths
+     *                                                                   are read for their "matches" patterns
      */
     public function __construct(
         public readonly array $paths,
@@ -59,6 +61,7 @@ final class LintArguments
         public readonly bool $checkComplexity = false,
         public readonly int $complexityThreshold = 50,
         public readonly bool $reportUnmatchedIgnores = true,
+        public readonly bool $readTwig = true,
     ) {}
 
     /**
@@ -98,6 +101,7 @@ final class LintArguments
         ?bool $checkComplexity = null,
         ?int $complexityThreshold = null,
         ?bool $reportUnmatchedIgnores = null,
+        ?bool $readTwig = null,
     ): self {
         return new self(
             paths: $paths ?? $this->paths,
@@ -123,6 +127,7 @@ final class LintArguments
             checkComplexity: $checkComplexity ?? $this->checkComplexity,
             complexityThreshold: $complexityThreshold ?? $this->complexityThreshold,
             reportUnmatchedIgnores: $reportUnmatchedIgnores ?? $this->reportUnmatchedIgnores,
+            readTwig: $readTwig ?? $this->readTwig,
         );
     }
 

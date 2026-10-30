@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Source;
 
 use PHPRegex\Linter\LintProgress;
+use PHPRegex\Parser\Text\Path;
 
 /**
  * Context passed to pattern sources during extraction.
@@ -47,5 +48,29 @@ final class PatternSourceContext
     public function isSourceEnabled(string $name): bool
     {
         return !\in_array($name, $this->disabledSources, true);
+    }
+
+    /**
+     * Whether a file of the filesystem lies under a directory the lint
+     * excludes, as the PHP files are left out: an exclude names a
+     * directory under the one the excludes are read from, when one is
+     * given, or anywhere in the file's path; the paths are matched with
+     * "/" whichever separator spelled them.
+     *
+     * @param string $file the file's path, written with "/" separators
+     */
+    public function excludes(string $file): bool
+    {
+        $base = null === $this->excludeBase ? null : rtrim(Path::normalize($this->excludeBase), '/').'/';
+        $matched = null !== $base && str_starts_with($file, $base) ? substr($file, \strlen($base)) : $file;
+
+        foreach ($this->excludePaths as $exclude) {
+            $exclude = trim(Path::normalize($exclude), '/');
+            if ('' !== $exclude && (str_contains($matched, '/'.$exclude.'/') || str_starts_with($matched, $exclude.'/'))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

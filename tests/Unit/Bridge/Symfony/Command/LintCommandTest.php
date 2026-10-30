@@ -97,6 +97,7 @@ final class LintCommandTest extends TestCase
         $this->assertTrue($definition->hasOption('jobs'));
         $this->assertTrue($definition->hasOption('no-routes'));
         $this->assertTrue($definition->hasOption('no-validators'));
+        $this->assertTrue($definition->hasOption('no-twig'));
         $this->assertTrue($definition->hasOption('format'));
 
         $this->assertFalse($definition->hasOption('analyze-redos'));

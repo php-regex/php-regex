@@ -617,8 +617,9 @@ final class HelpCommandTest extends TestCase
         $this->assertArrayHasKey('examples', $data);
         $this->assertIsArray($data['options']);
         $this->assertIsArray($data['notes']);
-        $this->assertCount(23, $data['options']);
+        $this->assertCount(24, $data['options']);
         $this->assertContains(['--json', 'Same as --format=json'], $data['options']);
+        $this->assertContains(['--no-twig', 'Skip the "matches" patterns of the Twig templates under the paths'], $data['options']);
         $this->assertCount(4, $data['notes']);
     }
 

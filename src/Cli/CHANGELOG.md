@@ -6,6 +6,8 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex lint` reads the `matches` patterns of the Twig templates under the
+   linted paths; `--no-twig` leaves them out.
  * `regex lint` names the author in its title and ends on the request for a
    GitHub star under `--verbose` only, as the bridges' `regex:lint` does.
  * Without `--ansi` or `--no-ansi`, colour follows the standard output on
