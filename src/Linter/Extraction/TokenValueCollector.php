@@ -411,6 +411,29 @@ final class TokenValueCollector
             return $this->arrayOf($first, $last, $context);
         }
 
+        // (Kind::Re)->value, ((Kind::Re))->value: parentheses around the
+        // operand, which PHP drops, and the "->value" that may follow them.
+        if ('(' === $token && null !== ($closer = $this->closers[$first] ?? null) && $closer <= $last) {
+            $innerFirst = $this->next($first + 1, $closer);
+            if (null === $innerFirst) {
+                return ValueExpr::unknown();
+            }
+
+            $innerLast = $this->previous($closer - 1, $innerFirst) ?? $innerFirst;
+
+            if ($closer === $last) {
+                return $this->operand($innerFirst, $innerLast, $context);
+            }
+
+            $arrow = $this->next($closer + 1);
+            $value = null === $arrow ? null : $this->next($arrow + 1);
+            if ($value !== $last || !$this->is($arrow, \T_OBJECT_OPERATOR) || 'value' !== PhpTokens::identifier($this->tokens[$last])) {
+                return ValueExpr::unknown();
+            }
+
+            return ValueExpr::enumCaseValue($this->operand($innerFirst, $innerLast, $context));
+        }
+
         // $first < $last: a significant token follows the first.
         $second = $this->next($first + 1) ?? $last;
 

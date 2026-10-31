@@ -795,6 +795,13 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             return \T_VARIABLE === $first[0] ? '$this' !== $first[1] : null !== $name && !\in_array(Ascii::lower(ltrim($name, '\\')), ['true', 'false', 'null'], true);
         }
 
+        // (Kind::Re)->value: PHP drops the parentheses around the case.
+        if ($count > 5 && '(' === $first && PhpTokens::isObjectOrStaticOperator($significant[$count - 2]) && 'value' === PhpTokens::identifier($significant[$count - 1])) {
+            $case = self::unwrapped(\array_slice($significant, 0, -2));
+
+            return 3 === \count($case) && \is_array($case[0]) && PhpTokens::isDoubleColon($case[1]) && (\T_STATIC === $case[0][0] || null !== PhpTokens::name($case[0]));
+        }
+
         // Kind::Re->value: an enum case's backing value, a class constant
         // followed by "->value".
         if (5 === $count && \is_array($first) && PhpTokens::isDoubleColon($significant[1]) && PhpTokens::isObjectOrStaticOperator($significant[3]) && 'value' === PhpTokens::identifier($significant[4])) {
@@ -810,6 +817,24 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         }
 
         return \T_VARIABLE === $first[0] && '$this' === $first[1] && \T_OBJECT_OPERATOR === $second[0];
+    }
+
+    /**
+     * The significant tokens without the parentheses at both ends, however
+     * many: ((a)) is a. Whether they wrapped everything is not asked here:
+     * (a)(b) becomes a)(b, which names nothing either.
+     *
+     * @param list<array{int, string, int}|string> $significant
+     *
+     * @return list<array{int, string, int}|string>
+     */
+    private static function unwrapped(array $significant): array
+    {
+        while (['(', ')'] === [$significant[0] ?? null, $significant[\count($significant) - 1] ?? null]) {
+            $significant = \array_slice($significant, 1, -1);
+        }
+
+        return $significant;
     }
 
     /**

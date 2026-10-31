@@ -27,7 +27,9 @@ CHANGELOG
    declaration path reaches under another spelling is one file.
  * A pattern read through the backing value of an enum case,
    `Kind::Re->value` or `self::Re->value`, is read as one held in a class
-   constant is: reported once, at the case.
+   constant is: reported once, at the case. Parentheses around the case,
+   `(Kind::Re)->value`, change nothing, with the tokenizer as with the
+   parser.
  * The `matches` operator of the Twig templates under the linted paths is
    read as the `preg_match()` it compiles to: the pattern as Twig hands it
    to the engine (its backslash escapes folded), reported at the template,
