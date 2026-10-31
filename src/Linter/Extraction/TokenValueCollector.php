@@ -415,10 +415,11 @@ final class TokenValueCollector
         // operand, which PHP drops, and the "->value" that may follow them.
         if ('(' === $token && null !== ($closer = $this->closers[$first] ?? null) && $closer <= $last) {
             $innerFirst = $this->next($first + 1, $closer);
-            $innerLast = $this->previous($closer - 1, $first + 1);
-            if (null === $innerFirst || null === $innerLast) {
+            if (null === $innerFirst) {
                 return ValueExpr::unknown();
             }
+
+            $innerLast = $this->previous($closer - 1, $innerFirst) ?? $innerFirst;
 
             if ($closer === $last) {
                 return $this->operand($innerFirst, $innerLast, $context);
