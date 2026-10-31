@@ -135,6 +135,3 @@ measured under 3 %.
   held in a constant of another file is the lint's. Reporting it at the
   call in the open document needs the argument's range, which the
   occurrence does not carry; decide whether to add it.
-- The token strategy strips the outer parentheses of an argument only, so
-  `(Patterns::RE)` or `(Kind::Re)->value` is not read where the parser
-  strategy reads it: a parity gap for every parenthesised constant form.
