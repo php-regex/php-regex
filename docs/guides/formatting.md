@@ -7,7 +7,7 @@ A long pattern on one line reads like minified JSON: you split it in your head b
 
 Both only change how the pattern is written, never what it matches.
 
-{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+{% include install.html package="php-regex/regex-toolkit" %}
 
 ## Quick start
 

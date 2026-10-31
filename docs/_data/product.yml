@@ -1,4 +1,7 @@
 release: 2.x
+# Whether a stable release exists: false while the packages are only
+# 2.x-dev, true from the first final release on. bin/bump flips it.
+stable: false
 version_label: 2.x pre-release
 php_floor: '8.1'
 corpus_codebases: 170+

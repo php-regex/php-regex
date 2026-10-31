@@ -21,7 +21,7 @@ analysis are there too, off until you ask for them.
 </div>
 <p class="page-empty" role="status" hidden>Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
 
-{% include install-prerelease.html package="php-regex/regex-phpstan" dev=true %}
+{% include install.html package="php-regex/regex-phpstan" dev=true %}
 
 The extension runs on PHP 8.1 or later and PHPStan 2.x
 (`phpstan/phpstan ^2.0`); reading a parameter attribute needs PHPStan

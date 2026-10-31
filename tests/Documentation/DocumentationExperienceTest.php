@@ -98,7 +98,8 @@ final class DocumentationExperienceTest extends TestCase
 
         $this->assertStringContainsString("php_floor: '8.1'", $product);
         $this->assertStringContainsString('site.data.product.php_floor', $home);
-        $this->assertStringContainsString('site.data.product.release', $home);
+        $this->assertStringContainsString('{% include install.html package="php-regex/regex-cli" dev=true inline=true %}', $home);
+        $this->assertStringNotContainsString('composer config', $home);
         $this->assertStringNotContainsString('php-regex/php-regex:2.x-dev', $home);
         $this->assertStringNotContainsString('PCRE2 10.49', $home);
         $this->assertStringNotContainsString('2.0.0-DEV', $home);

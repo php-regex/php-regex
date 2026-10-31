@@ -47,6 +47,64 @@ final class ReleaseScriptsTest extends TestCase
         MD;
 
     /**
+     * The install story before the first stable release: the packages are
+     * `2.x-dev`, so the consuming project allows the dev channel first.
+     */
+    private const PRODUCT = <<<'YAML'
+        release: 2.x
+        stable: false
+        version_label: 2.x pre-release
+        php_floor: '8.1'
+
+        YAML;
+
+    private const README = <<<'MD'
+        # PHPRegex
+
+        ## 2.0 is coming
+
+        The focused packages are published as `2.x-dev`; shape the release with us:
+
+        ```bash
+        composer config minimum-stability dev
+        composer config prefer-stable true
+        composer require --dev php-regex/regex-cli:2.x-dev
+        ```
+
+        ## Getting started
+
+        ```bash
+        # Install the CLI
+        composer config minimum-stability dev
+        composer config prefer-stable true
+        composer require --dev php-regex/regex-cli:2.x-dev
+
+        # Try it
+        vendor/bin/regex explain '/a/'
+        ```
+
+        MD;
+
+    /**
+     * The README once a stable release exists: the pre-release section is
+     * gone, and the install command names the package alone.
+     */
+    private const README_STABLE = <<<'MD'
+        # PHPRegex
+
+        ## Getting started
+
+        ```bash
+        # Install the CLI
+        composer require --dev php-regex/regex-cli
+
+        # Try it
+        vendor/bin/regex explain '/a/'
+        ```
+
+        MD;
+
+    /**
      * The identity bin/release tags with: a CI runner has none of its own.
      */
     private const IDENTITY = ['GIT_AUTHOR_NAME' => 't', 'GIT_AUTHOR_EMAIL' => 't@t', 'GIT_COMMITTER_NAME' => 't', 'GIT_COMMITTER_EMAIL' => 't@t'];
@@ -59,6 +117,13 @@ final class ReleaseScriptsTest extends TestCase
         mkdir($this->root.'/src/Toolkit', 0o777, true);
         file_put_contents($this->root.'/src/Toolkit/Regex.php', "<?php\n\nfinal class Regex\n{\n    public const VERSION = '2.0.0-DEV';\n    public const VERSION_ID = 20000;\n}\n");
         file_put_contents($this->root.'/CHANGELOG.md', self::CHANGELOG);
+        mkdir($this->root.'/docs/_data', 0o777, true);
+        mkdir($this->root.'/docs/guides', 0o777, true);
+        file_put_contents($this->root.'/docs/_data/product.yml', self::PRODUCT);
+        file_put_contents($this->root.'/README.md', self::README);
+        file_put_contents($this->root.'/docs/llms.txt', "# PHPRegex\n\nInstall: composer require --dev php-regex/regex-cli:2.x-dev for the CLI\n");
+        file_put_contents($this->root.'/docs/guides/cli.md', "```text\nPHPRegex 2.0.0-DEV\n```\n\nThe 2.0.0 release dates the section.\n");
+        file_put_contents($this->root.'/docs/guides/lsp.md', "{\"serverInfo\":{\"name\":\"php-regex-lsp\",\"version\":\"2.0.0-DEV\"}}\n");
     }
 
     protected function tearDown(): void
@@ -147,6 +212,94 @@ final class ReleaseScriptsTest extends TestCase
         $this->assertSame(0, $code);
         $this->assertSame('2.1.3-DEV', $this->version());
         $this->assertStringContainsString('public const VERSION_ID = 20103;', (string) file_get_contents($this->root.'/src/Toolkit/Regex.php'));
+    }
+
+    /**
+     * The first final release moves every install command of the docs from
+     * the dev channel to the package alone, in the same bump: the pages read
+     * product.yml, the README and llms.txt are rewritten, and the sample
+     * outputs report the released version.
+     */
+    #[Test]
+    public function test_bump_of_a_final_version_switches_the_install_story_to_the_release(): void
+    {
+        [$code, $output] = $this->script('bump', '--date', '2026-10-01', '2.0.0');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertSame(self::README_STABLE, (string) file_get_contents($this->root.'/README.md'));
+        $this->assertSame("# PHPRegex\n\nInstall: composer require --dev php-regex/regex-cli for the CLI\n", (string) file_get_contents($this->root.'/docs/llms.txt'));
+        $this->assertSame("release: 2.x\nstable: true\nversion_label: 2.0.0\nphp_floor: '8.1'\n", (string) file_get_contents($this->root.'/docs/_data/product.yml'));
+        $this->assertSame("```text\nPHPRegex 2.0.0\n```\n\nThe 2.0.0 release dates the section.\n", (string) file_get_contents($this->root.'/docs/guides/cli.md'));
+        $this->assertSame("{\"serverInfo\":{\"name\":\"php-regex-lsp\",\"version\":\"2.0.0\"}}\n", (string) file_get_contents($this->root.'/docs/guides/lsp.md'));
+        $this->assertStringContainsString('README.md', $output);
+        $this->assertStringContainsString('docs/_data/product.yml: stable: true', $output);
+    }
+
+    #[Test]
+    public function test_bump_of_a_pre_release_keeps_the_dev_channel_and_names_itself_in_the_samples(): void
+    {
+        [$code, $output] = $this->script('bump', '2.0.0-RC1');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertSame(self::README, (string) file_get_contents($this->root.'/README.md'));
+        $this->assertSame(self::PRODUCT, (string) file_get_contents($this->root.'/docs/_data/product.yml'));
+        $this->assertStringContainsString("PHPRegex 2.0.0-RC1\n", (string) file_get_contents($this->root.'/docs/guides/cli.md'));
+        $this->assertStringContainsString('"version":"2.0.0-RC1"', (string) file_get_contents($this->root.'/docs/guides/lsp.md'));
+    }
+
+    #[Test]
+    public function test_bump_next_keeps_the_stable_install_story_and_the_released_samples(): void
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        [$code, $output] = $this->script('bump', '--next', '2.0.1');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertSame(self::README_STABLE, (string) file_get_contents($this->root.'/README.md'));
+        $this->assertStringContainsString("stable: true\nversion_label: 2.0.0\n", (string) file_get_contents($this->root.'/docs/_data/product.yml'));
+        $this->assertStringContainsString("PHPRegex 2.0.0\n", (string) file_get_contents($this->root.'/docs/guides/cli.md'));
+    }
+
+    #[Test]
+    public function test_bump_dry_run_names_the_install_story_of_a_final_version(): void
+    {
+        [$code, $output] = $this->script('bump', '--dry-run', '2.0.0');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertSame(self::README, (string) file_get_contents($this->root.'/README.md'));
+        $this->assertSame(self::PRODUCT, (string) file_get_contents($this->root.'/docs/_data/product.yml'));
+        $this->assertStringContainsString('README.md', $output);
+        $this->assertStringContainsString('docs/llms.txt', $output);
+        $this->assertStringContainsString('docs/_data/product.yml: stable: true', $output);
+        $this->assertStringContainsString('docs/guides/cli.md', $output);
+    }
+
+    #[Test]
+    public function test_bump_refuses_a_product_file_without_the_stable_key(): void
+    {
+        file_put_contents($this->root.'/docs/_data/product.yml', "release: 2.x\n");
+
+        [$code, $output] = $this->script('bump', '--date', '2026-10-01', '2.0.0');
+
+        $this->assertSame(1, $code);
+        $this->assertStringContainsString('stable', $output);
+        $this->assertSame('2.0.0-DEV', $this->version());
+    }
+
+    #[Test]
+    public function test_release_refuses_a_final_version_whose_install_story_still_reads_the_dev_channel(): void
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        file_put_contents($this->root.'/docs/_data/product.yml', self::PRODUCT);
+        file_put_contents($this->root.'/README.md', self::README);
+        $this->commit();
+        $this->publish();
+
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
+
+        $this->assertSame(1, $code);
+        $this->assertStringContainsString('docs/_data/product.yml', $output);
+        $this->assertStringContainsString('README.md', $output);
+        $this->assertStringContainsString('bin/bump', $output);
     }
 
     #[Test]

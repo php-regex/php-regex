@@ -71,7 +71,7 @@ The model covers characters and classes (exact sets under `/u` and `/i`, compute
 
 The result says which of the two decided: `proof` is `proven`, `heuristic`, `budget_exceeded` or `not_analyzed`. The [ReDoS guide](../guides/redos.md#the-guarantee) states what a proof guarantees, and its limits.
 
-{% include install-prerelease.html package="php-regex/regex-cli" dev=true %}
+{% include install.html package="php-regex/regex-cli" dev=true %}
 
 The CLI commands live in the `regex` binary from `php-regex/regex-cli`; the PHP API lives in `php-regex/regex-toolkit`.
 

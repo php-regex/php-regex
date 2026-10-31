@@ -14,7 +14,7 @@ The binary requires PHP 8.1 or later.
 </div>
 <p class="page-empty" role="status" hidden>Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
 
-{% include install-prerelease.html package="php-regex/regex-cli" dev=true %}
+{% include install.html package="php-regex/regex-cli" dev=true %}
 
 Once installed, the binary is `vendor/bin/regex`:
 

@@ -9,7 +9,7 @@ The bundle registers a `Regex` service for your application and the
 `php_regex` key.
 
 Requires PHP 8.1 or later and Symfony 6.4 LTS, 7.4 or 8.x.
-{% include install-prerelease.html package="php-regex/regex-symfony" %}
+{% include install.html package="php-regex/regex-symfony" %}
 
 With Symfony Flex, `composer require` registers the bundle in
 `config/bundles.php` for every environment (for `dev` and `test` only when it
