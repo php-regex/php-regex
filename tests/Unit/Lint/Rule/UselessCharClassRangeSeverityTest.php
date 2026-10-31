@@ -23,8 +23,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * A range of one character, [a-a], is a mistake worth a warning. One of
  * two consecutive characters, [a-b] or [\x{5C4}-\x{5C5}], is correct as
- * written and no shorter as a list: the rule has nothing to say about it,
- * and a generated Unicode table holds them by the thousand.
+ * written and the list [ab] saves one character only: the rule has nothing
+ * to say about it, and a generated Unicode table holds them by the thousand.
  */
 final class UselessCharClassRangeSeverityTest extends TestCase
 {

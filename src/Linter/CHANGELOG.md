@@ -14,9 +14,9 @@ CHANGELOG
    sigma, and the case a branch starts in is read at its first atom: a
    `(?i:` later in the branch leaves its start case-sensitive.
  * A character range of two consecutive characters, `[a-b]` or
-   `[\x{5C4}-\x{5C5}]`, is no longer reported: it is correct as written and
-   no shorter as a list, and a generated Unicode table holds thousands. A
-   range of one character, `[a-a]`, stays a warning.
+   `[\x{5C4}-\x{5C5}]`, is no longer reported: it is correct as written,
+   the list saves one character only, and a generated Unicode table holds
+   thousands. A range of one character, `[a-a]`, stays a warning.
  * A class constant or an enum case of another file of the project is read
    as one of the same file is: the constants of every file are read once
    before the patterns, with the declarations, and a call naming a class its

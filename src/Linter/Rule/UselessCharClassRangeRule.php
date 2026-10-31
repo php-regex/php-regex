@@ -23,8 +23,8 @@ use PHPRegex\Parser\Node\RangeNode;
 /**
  * Detects a range of one character, [a-a], which is a mistake: the author
  * meant a character or a wider range. A range of two consecutive characters,
- * [a-b], is correct as written and no shorter as a list, so it is not
- * reported: a generated Unicode table holds them by the thousand.
+ * [a-b], is correct as written and the list [ab] saves one character only,
+ * so it is not reported: a generated Unicode table holds them by the thousand.
  *
  * @internal
  */

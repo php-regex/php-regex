@@ -1022,7 +1022,7 @@ preg_match('/[\w]/', $input);
 
 **Identifier:** `regex.lint.range.useless`
 
-**When it triggers:** A range spans one character, as `[a-a]`: the author meant a character or a wider range. A range of two consecutive characters, `[a-b]` or `[0-1]`, is correct as written and no shorter as a list, so it is not reported: a generated Unicode table holds them by the thousand.
+**When it triggers:** A range spans one character, as `[a-a]`: the author meant a character or a wider range. A range of two consecutive characters, `[a-b]` or `[0-1]`, is correct as written and the list `[ab]` saves one character only, so it is not reported: a generated Unicode table holds them by the thousand.
 
 **Example:**
 ```php
