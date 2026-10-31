@@ -795,6 +795,13 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             return \T_VARIABLE === $first[0] ? '$this' !== $first[1] : null !== $name && !\in_array(Ascii::lower(ltrim($name, '\\')), ['true', 'false', 'null'], true);
         }
 
+        // (Kind::Re)->value: PHP drops the parentheses around the case.
+        if ($count > 5 && '(' === $first && PhpTokens::isObjectOrStaticOperator($significant[$count - 2]) && 'value' === PhpTokens::identifier($significant[$count - 1])) {
+            $significant = [...self::unwrapped(\array_slice($significant, 0, -2)), $significant[$count - 2], $significant[$count - 1]];
+            [$first, $second, $third] = $significant + [null, null, null];
+            $count = \count($significant);
+        }
+
         // Kind::Re->value: an enum case's backing value, a class constant
         // followed by "->value".
         if (5 === $count && \is_array($first) && PhpTokens::isDoubleColon($significant[1]) && PhpTokens::isObjectOrStaticOperator($significant[3]) && 'value' === PhpTokens::identifier($significant[4])) {
@@ -810,6 +817,33 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         }
 
         return \T_VARIABLE === $first[0] && '$this' === $first[1] && \T_OBJECT_OPERATOR === $second[0];
+    }
+
+    /**
+     * The significant tokens without the parentheses that wrap them all,
+     * however many: ((a)) is a.
+     *
+     * @param list<array{int, string, int}|string> $significant
+     *
+     * @return list<array{int, string, int}|string>
+     */
+    private static function unwrapped(array $significant): array
+    {
+        while (\count($significant) > 2 && '(' === $significant[0] && ')' === $significant[\count($significant) - 1]) {
+            $depth = 0;
+            foreach ($significant as $index => $token) {
+                if ('(' === $token) {
+                    $depth++;
+                } elseif (')' === $token && 0 === --$depth && $index < \count($significant) - 1) {
+                    // (a)(b): the first parenthesis closes before the end.
+                    return $significant;
+                }
+            }
+
+            $significant = \array_slice($significant, 1, -1);
+        }
+
+        return $significant;
     }
 
     /**
