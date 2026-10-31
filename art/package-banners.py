@@ -31,7 +31,8 @@ PACKAGES = [
     ("Automata", "Automata"), ("Cli", "CLI"), ("Explain", "Explain"),
     ("Generator", "Generator"), ("LanguageServer", "Language Server"),
     ("Laravel", "Laravel"), ("Linter", "Linter"), ("Optimizer", "Optimizer"),
-    ("Parser", "Parser"), ("PHPStan", "PHPStan"), ("PHPUnit", "PHPUnit"), ("Redos", "ReDoS"),
+    ("Parser", "Parser"), ("PHPStan", "PHPStan"), ("Psalm", "Psalm"),
+    ("PHPUnit", "PHPUnit"), ("Rector", "Rector"), ("Redos", "ReDoS"),
     ("Symfony", "Symfony"), ("Toolkit", "Toolkit"), ("Transpiler", "Transpiler"),
 ]
 
