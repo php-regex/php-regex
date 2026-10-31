@@ -254,6 +254,23 @@ final class ReleaseScriptsTest extends TestCase
     }
 
     /**
+     * A pre-release after a stable release moves the tree, not the docs:
+     * the installed package still reports the stable version.
+     */
+    #[Test]
+    public function test_a_pre_release_after_a_stable_release_leaves_the_version_the_docs_print(): void
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        $this->script('bump', '--next', '2.1.0');
+        [$code, $output] = $this->script('bump', '2.1.0-RC1');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertSame('2.1.0-RC1', $this->version());
+        $this->assertSame("release: 2.x\nversion: 2.0.0\nstable: true\nversion_label: 2.0.0\nphp_floor: '8.1'\n", (string) file_get_contents($this->root.'/docs/_data/product.yml'));
+        $this->assertStringNotContainsString('product.yml', $output);
+    }
+
+    /**
      * A later final release, after the switch, keeps the install story and
      * names itself: nothing of the first release's switch is repeated.
      */

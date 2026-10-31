@@ -15,8 +15,9 @@
 #
 #   <version>   2.1.0, 2.1.0-BETA1, 2.1.0-RC1: sets Regex::VERSION and VERSION_ID,
 #               and the "version" of docs/_data/product.yml, which the sample
-#               outputs of the docs print (the version the published package
-#               reports: --next leaves it); for a final version dates the
+#               outputs of the docs print: the version the published package
+#               reports, so a pre-release after a stable release and --next
+#               leave it; for a final version dates the
 #               CHANGELOG's Unreleased section, names it after <version>, and
 #               sets the "version_label" of product.yml. The first final
 #               version also moves the install story from the dev channel to
@@ -124,9 +125,12 @@ final=0
 if [ "$next" -eq 0 ] && ! printf '%s' "$version" | grep -q -- '-'; then final=1; fi
 
 # The version the docs print is the one the published package reports:
-# --next moves the tree on, not the docs.
+# --next, and a pre-release once a stable release exists, move the tree on,
+# not the docs.
+prints=0
+if [ "$next" -eq 0 ] && { [ "$stable" = "false" ] || [ "$final" -eq 1 ]; }; then prints=1; fi
 product_plan=""
-[ "$next" -eq 0 ] && product_plan="version: $target"
+[ "$prints" -eq 1 ] && product_plan="version: $target"
 if [ "$final" -eq 1 ]; then
     [ "$stable" = "false" ] && product_plan="$product_plan, stable: true"
     product_plan="$product_plan, version_label: $version"
@@ -177,7 +181,7 @@ if [ "$final" -eq 1 ]; then
     done
     rewrite "$product" -E -e 's/^stable: false$/stable: true/' -e "s/^version_label: .*$/version_label: $version/"
 fi
-if [ "$next" -eq 0 ]; then
+if [ "$prints" -eq 1 ]; then
     rewrite "$product" -E -e "s/^version: .*$/version: $target/"
 fi
 if [ -n "$new_changelog" ]; then
