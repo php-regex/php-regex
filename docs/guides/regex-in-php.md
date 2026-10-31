@@ -335,7 +335,7 @@ echo $m[0];  // "<p>Hello</p>"
 
 ## Where PHPRegex Helps
 
-{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+{% include install.html package="php-regex/regex-toolkit" %}
 
 The examples below use the `Regex` facade; the [Quick Start](../quick-start.md) covers a first full analysis.
 

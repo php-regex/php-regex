@@ -207,7 +207,7 @@ PHPRegex, the library behind this site, reads regex patterns the way PCRE2 does.
 
 One limit first: PHPRegex judges PHP 8.1 and newer only, with PCRE2 10.39 or newer. It cannot tell you what PHP 7.2 thought of a pattern. It can tell you what the PHP you move to will think of it.
 
-{% include install-prerelease.html package="php-regex/php-regex" dev=true inline=true %}
+{% include install.html package="php-regex/php-regex" dev=true inline=true %}
 
 Here is a file from a project that started on PHP 7.2:
 
@@ -226,7 +226,7 @@ Lint the `src/` folder for PHP 8.1:
 
 ```console
 $ vendor/bin/regex lint src/ --php-version=8.1
-PHPRegex 2.0.0-DEV by Younes ENNAJI
+PHPRegex {{ site.data.product.version }} by Younes ENNAJI
 
 Runtime   : PHP 8.4.26, PCRE2 10.49
 Target    : PHP 8.1, PCRE2 10.39 (--php-version)

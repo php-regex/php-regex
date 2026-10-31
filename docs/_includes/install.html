@@ -4,11 +4,14 @@
   true for a development tool (CLI, static analysis, editor), left out for a
   package the application runs in production; inline — true to write the
   commands alone, without the "Installation" heading, inside a section of
-  the page's own (an article's closing one).
+  the page's own (an article's closing one). While no stable release exists
+  (product.yml: stable: false), the consuming project allows the dev channel
+  first and installs the branch; from the first stable release on, the
+  command names the package alone.
 {% endcomment %}
-{% capture install_commands %}composer config minimum-stability dev
+{% capture install_commands %}{% unless site.data.product.stable %}composer config minimum-stability dev
 composer config prefer-stable true
-composer require {% if include.dev %}--dev {% endif %}{{ include.package }}:{{ site.data.product.release }}-dev{% endcapture %}
+{% endunless %}composer require {% if include.dev %}--dev {% endif %}{{ include.package }}{% unless site.data.product.stable %}:{{ site.data.product.release }}-dev{% endunless %}{% endcapture %}
 {% if include.inline %}
 <div class="install"><pre><code>{{ install_commands }}</code></pre></div>
 {% else %}

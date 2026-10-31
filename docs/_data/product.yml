@@ -1,4 +1,10 @@
 release: 2.x
+# The version the tree reports, Regex::VERSION, which the sample outputs of
+# the docs print. bin/bump writes it.
+version: 2.0.0-DEV
+# Whether a stable release exists: false while the packages are only
+# 2.x-dev, true from the first final release on. bin/bump flips it.
+stable: false
 version_label: 2.x pre-release
 php_floor: '8.1'
 corpus_codebases: 170+

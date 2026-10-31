@@ -12,7 +12,7 @@ expectation's group keys are validated against the pattern's own groups
 before any value is compared, so a typo'd name is a failure that names the
 pattern's real groups — never a silent pass.
 
-{% include install-prerelease.html package="php-regex/regex-phpunit" dev=true %}
+{% include install.html package="php-regex/regex-phpunit" dev=true %}
 
 The assertions run on PHP 8.1 or later and PHPUnit 9.6 to 13 (10 on PHP 8.1,
 11 on 8.2, 12 on 8.3, 13 on 8.4). Add the trait to your test case:

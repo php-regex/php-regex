@@ -33,46 +33,61 @@ final class PackageSelectionDocumentationTest extends TestCase
         $this->assertStringContainsString('[choose the right package](/packages/)', $quickStart);
     }
 
+    /**
+     * The home page, the quick start and the README install the CLI package
+     * the way the channel of the day asks: the dev channel first while the
+     * packages are `2.x-dev`, the package alone once a stable release
+     * exists. product.yml says which, and bin/bump flips it.
+     */
     #[Test]
     public function test_onboarding_installs_the_focused_cli_package(): void
     {
-        $home = (string) file_get_contents(__DIR__.'/../../docs/index.md');
+        $home = self::rendered((string) file_get_contents(__DIR__.'/../../docs/index.md'));
         $quickStart = self::rendered((string) file_get_contents(__DIR__.'/../../docs/quick-start.md'));
         $readme = (string) file_get_contents(__DIR__.'/../../README.md');
 
-        $command = 'composer require --dev php-regex/regex-cli:{{ site.data.product.release }}-dev';
+        $stable = self::stable();
+        $command = $stable ? 'composer require --dev php-regex/regex-cli' : 'composer require --dev php-regex/regex-cli:{{ site.data.product.release }}-dev';
+        $readmeCommand = $stable ? "composer require --dev php-regex/regex-cli\n" : "composer require --dev php-regex/regex-cli:2.x-dev\n";
 
-        $this->assertStringContainsString('composer config minimum-stability dev', $home);
-        $this->assertStringContainsString('composer config prefer-stable true', $home);
-        $this->assertStringContainsString($command, $home);
-        $this->assertStringContainsString('composer config minimum-stability dev', $quickStart);
-        $this->assertStringContainsString($command, $quickStart);
-        $this->assertStringContainsString('composer config minimum-stability dev', $readme);
-        $this->assertStringContainsString('composer require --dev php-regex/regex-cli:2.x-dev', $readme);
+        foreach ([$home, $quickStart] as $page) {
+            $this->assertSame(!$stable, str_contains($page, 'composer config minimum-stability dev'));
+            $this->assertSame(!$stable, str_contains($page, 'composer config prefer-stable true'));
+            $this->assertStringContainsString($command, $page);
+        }
+        $this->assertSame(!$stable, str_contains($readme, 'composer config minimum-stability dev'));
+        $this->assertSame(!$stable, str_contains($readme, '## 2.0 is coming'));
+        $this->assertStringContainsString($readmeCommand, $readme);
         $this->assertStringNotContainsString('composer require --dev php-regex/php-regex:2.x-dev', $readme);
+        $this->assertStringNotContainsString('php-regex/regex-cli:2.x-dev ', $readme);
     }
 
+    /**
+     * The commands are written once, in the include, and the dev channel
+     * sits in it under the one condition product.yml answers.
+     */
     #[Test]
     public function test_each_page_installs_its_own_focused_package(): void
     {
-        $include = (string) file_get_contents(__DIR__.'/../../docs/_includes/install-prerelease.html');
+        $include = (string) file_get_contents(__DIR__.'/../../docs/_includes/install.html');
 
-        $this->assertStringContainsString('{{ include.package }}:{{ site.data.product.release }}-dev', $include);
-        $this->assertStringNotContainsString('php-regex/php-regex:{{ site.data.product.release }}-dev', $include);
-        $this->assertStringNotContainsString('unused until the 2.0.0 switch', $include);
+        $this->assertStringContainsString('{{ include.package }}{% unless site.data.product.stable %}:{{ site.data.product.release }}-dev{% endunless %}', $include);
+        $this->assertStringContainsString('{% unless site.data.product.stable %}composer config minimum-stability dev', $include);
+        $this->assertStringNotContainsString('php-regex/php-regex', $include);
+        $this->assertFileDoesNotExist(__DIR__.'/../../docs/_includes/install-prerelease.html');
     }
 
     #[Test]
     public function test_a_package_that_runs_in_production_installs_without_dev(): void
     {
-        $include = (string) file_get_contents(__DIR__.'/../../docs/_includes/install-prerelease.html');
+        $include = (string) file_get_contents(__DIR__.'/../../docs/_includes/install.html');
         $this->assertStringContainsString('composer require {% if include.dev %}--dev {% endif %}{{ include.package }}', $include);
 
         $runtime = ['guides/laravel.md', 'guides/symfony.md', 'reference/api.md', 'reference/logic-solver.md', 'cookbook.md', 'guides/regex-in-php.md'];
         $tools = ['guides/cli.md', 'guides/phpstan.md', 'guides/psalm.md', 'guides/rector.md', 'guides/lsp.md', 'concepts/redos.md'];
         foreach ([...$runtime, ...$tools] as $page) {
             $text = (string) file_get_contents(__DIR__.'/../../docs/'.$page);
-            $this->assertSame(1, preg_match('~\{% include install-prerelease\.html package="[^"]+"( dev=true)? %\}~', $text, $match), $page);
+            $this->assertSame(1, preg_match('~\{% include install\.html package="[^"]+"( dev=true)? %\}~', $text, $match), $page);
             $this->assertSame(\in_array($page, $tools, true), isset($match[1]), $page.': a development tool passes dev=true, a runtime package does not.');
         }
     }
@@ -128,11 +143,12 @@ final class PackageSelectionDocumentationTest extends TestCase
      */
     private static function rendered(string $page): string
     {
-        $include = (string) file_get_contents(__DIR__.'/../../docs/_includes/install-prerelease.html');
+        $include = (string) file_get_contents(__DIR__.'/../../docs/_includes/install.html');
         $include = (string) preg_replace('/\{%-? comment -?%\}.*?\{%-? endcomment -?%\}\s*/s', '', $include);
+        $include = (string) preg_replace('/\{% unless site\.data\.product\.stable %\}(.*?)\{% endunless %\}/s', self::stable() ? '' : '$1', $include);
 
         return (string) preg_replace_callback(
-            '/\{%-? include install-prerelease\.html((?:\s+\w+=(?:"[^"]*"|\w+))*)\s*-?%\}/',
+            '/\{%-? include install\.html((?:\s+\w+=(?:"[^"]*"|\w+))*)\s*-?%\}/',
             static function (array $match) use ($include): string {
                 preg_match_all('/(\w+)=(?:"([^"]*)"|(\w+))/', $match[1], $parameters, \PREG_SET_ORDER);
                 $values = [];
@@ -147,5 +163,16 @@ final class PackageSelectionDocumentationTest extends TestCase
             },
             $page,
         );
+    }
+
+    /**
+     * Whether a stable release exists, as docs/_data/product.yml says.
+     */
+    private static function stable(): bool
+    {
+        $product = (string) file_get_contents(__DIR__.'/../../docs/_data/product.yml');
+        self::assertSame(1, preg_match('/^stable: (true|false)$/m', $product, $match), 'product.yml says whether a stable release exists.');
+
+        return 'true' === $match[1];
     }
 }

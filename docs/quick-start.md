@@ -9,9 +9,9 @@ This page is the shortest path from installation to a useful result. It does not
 
 ## Installation
 
-{% include install-prerelease.html package="php-regex/regex-cli" dev=true inline=true %}
+{% include install.html package="php-regex/regex-cli" dev=true inline=true %}
 
-You need PHP {{ site.data.product.php_floor }} or later with the `mbstring` and `tokenizer` extensions. The first two Composer commands run once: while the focused packages are `{{ site.data.product.release }}-dev`, they allow those prerelease versions while still preferring stable releases for everything else. The CLI package provides the `regex` binary and pulls in the toolkit facade, so this page can use both the terminal and the PHP API. For another surface, [choose the right package](/packages/).
+You need PHP {{ site.data.product.php_floor }} or later with the `mbstring` and `tokenizer` extensions. {% unless site.data.product.stable %}The first two Composer commands run once: while the focused packages are `{{ site.data.product.release }}-dev`, they allow those prerelease versions while still preferring stable releases for everything else. {% endunless %}The CLI package provides the `regex` binary and pulls in the toolkit facade, so this page can use both the terminal and the PHP API. For another surface, [choose the right package](/packages/).
 
 Verify the binary:
 
