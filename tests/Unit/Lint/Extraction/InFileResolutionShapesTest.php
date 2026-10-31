@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Tests\Support\ExtractsWithBothStrategies;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhp;
@@ -517,10 +518,11 @@ final class InFileResolutionShapesTest extends TestCase
      * A backed enum case is read through "->value", the way a call gets its
      * string: from the enum's own methods as self::Case->value, from another
      * class as Kind::Case->value; static:: reads too, an enum being final.
-     * The case itself, which is an object, its "->name", a nullsafe
-     * "?->value", which no case needs, "::class->value", a computed member
-     * and a pure enum's case, which has no value, give no pattern, at a
-     * call or held in a constant.
+     * Parentheses around the case, (Kind::Case)->value, change nothing: PHP
+     * drops them. The case itself, which is an object, its "->name", a
+     * nullsafe "?->value", which no case needs, "::class->value", a computed
+     * member and a pure enum's case, which has no value, give no pattern,
+     * at a call or held in a constant.
      */
     #[Test]
     public function test_a_backed_enum_case_is_read_through_its_value(): void
@@ -529,6 +531,8 @@ final class InFileResolutionShapesTest extends TestCase
             ['pattern' => '/enum-case/', 'at' => "'/enum-case/'", 'location' => 'via self::Own->value'],
             ['pattern' => '/enum-late/', 'at' => "'/enum-late/'", 'location' => 'via static::Late->value'],
             ['pattern' => '/enum-other/', 'at' => "'/enum-other/'", 'location' => 'via Kind::Other->value'],
+            ['pattern' => '/enum-wrapped/', 'at' => "'/enum-wrapped/'", 'location' => 'via Kind::Wrapped->value'],
+            ['pattern' => '/enum-twice/', 'at' => "'/enum-twice/'", 'location' => 'via Kind::Twice->value'],
         ], <<<'CODE'
             <?php
 
@@ -540,6 +544,8 @@ final class InFileResolutionShapesTest extends TestCase
                 case Other = '/enum-other/';
                 case Late = '/enum-late/';
                 case Bare = '/enum-bare/';
+                case Wrapped = '/enum-wrapped/';
+                case Twice = '/enum-twice/';
                 case Plain = 'plain';
 
                 public function run(string $s): bool
@@ -552,12 +558,18 @@ final class InFileResolutionShapesTest extends TestCase
             final class Reader
             {
                 private const NAMED = Kind::Bare->name;
+                private const WRAPPED_NAME = (Kind::Bare)->name;
                 private const NAME_FIRST = Kind::Bare->name->value;
                 private const SAFE = Kind::Bare?->value;
 
                 public function run(string $s): bool
                 {
                     return 1 === preg_match(Kind::Other->value, $s)
+                        && 1 === preg_match((Kind::Wrapped)->value, $s)
+                        && 1 === preg_match(((Kind::Twice))->value, $s)
+                        && 1 === preg_match((Kind::Bare)->name, $s)
+                        && 1 === preg_match((Kind::Bare)(Kind::Bare)->value, $s)
+                        && 1 === preg_match((Kind::Bare), $s)
                         && 1 === preg_match(Kind::Bare, $s)
                         && 1 === preg_match(Kind::Other->name, $s)
                         && 1 === preg_match(Kind::Other?->value, $s)
@@ -565,6 +577,7 @@ final class InFileResolutionShapesTest extends TestCase
                         && 1 === preg_match(Pure::None->value, $s)
                         && 1 === preg_match(Kind::Other->{$s}, $s)
                         && 1 === preg_match(self::NAMED, $s)
+                        && 1 === preg_match(self::WRAPPED_NAME, $s)
                         && 1 === preg_match(self::NAME_FIRST, $s)
                         && 1 === preg_match(self::SAFE, $s);
                 }
@@ -575,6 +588,34 @@ final class InFileResolutionShapesTest extends TestCase
                 case None;
             }
             CODE);
+    }
+
+    /**
+     * The tokenizer reads a file the parser would refuse as far as its
+     * tokens go: "()->value" names nothing, and the literal after it is
+     * still read.
+     */
+    #[Test]
+    public function test_the_tokenizer_reads_past_an_empty_parenthesis_before_a_value(): void
+    {
+        $directory = $this->makeProject(['subject.php' => <<<'CODE'
+            <?php
+
+            final class Reader
+            {
+                private const EMPTY = ()->value;
+
+                public function run(string $s): bool
+                {
+                    return 1 === preg_match(self::EMPTY, $s)
+                        && 1 === preg_match('/kept/', $s);
+                }
+            }
+            CODE]);
+
+        $read = $this->readWith(new TokenBasedExtractionStrategy([], PatternFunctionRegistry::native()), [$directory.'/subject.php']);
+
+        $this->assertSame(['/kept/'], array_column($read, 'pattern'));
     }
 
     /**
