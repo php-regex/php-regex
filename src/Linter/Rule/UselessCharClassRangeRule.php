@@ -21,8 +21,10 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RangeNode;
 
 /**
- * Detects two-element (or single-element) ranges that are clearer as an
- * explicit character list.
+ * Detects a range of one character, [a-a], which is a mistake: the author
+ * meant a character or a wider range. A range of two consecutive characters,
+ * [a-b], is correct as written and no shorter as a list, so it is not
+ * reported: a generated Unicode table holds them by the thousand.
  *
  * @internal
  */
@@ -61,30 +63,16 @@ final class UselessCharClassRangeRule extends AbstractLintRule
                 continue;
             }
 
-            $min = min($start, $end);
-            $max = max($start, $end);
-
-            if ($max - $min > 1) {
+            if ($start !== $end) {
                 continue;
             }
 
-            $hint = $max === $min
-                ? \sprintf('Use %s directly instead of a range.', CodePoints::formatCodePointForHint($min))
-                : \sprintf(
-                    'Use %s and %s explicitly instead of a range.',
-                    CodePoints::formatCodePointForHint($min),
-                    CodePoints::formatCodePointForHint($max),
-                );
-
-            // A range of one character is a mistake; one of two consecutive
-            // characters is correct as written, and a generated table holds
-            // them by the thousand: worth telling, not warning about.
             $issues[] = new RuleViolation(
                 self::ID,
                 'Character range is unnecessary; list the characters explicitly.',
                 $part->startPosition,
-                $hint,
-                $max === $min ? LintSeverity::Warning : LintSeverity::Info,
+                \sprintf('Use %s directly instead of a range.', CodePoints::formatCodePointForHint($start)),
+                LintSeverity::Warning,
                 $part->getEndPosition(),
             );
         }
