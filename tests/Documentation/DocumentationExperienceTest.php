@@ -97,6 +97,13 @@ final class DocumentationExperienceTest extends TestCase
         $home = (string) file_get_contents(self::HOME);
 
         $this->assertStringContainsString("php_floor: '8.1'", $product);
+        $this->assertSame(1, preg_match('/^version: (\S+)$/m', $product, $version), 'product.yml carries the version the tree reports.');
+        $this->assertStringContainsString("public const VERSION = '".$version[1]."';", (string) file_get_contents(__DIR__.'/../../src/Toolkit/Regex.php'));
+        foreach (['guides/cli.md', 'guides/lsp.md', '_articles/which-pcre2-ships-with-which-php.md', '_articles/why-pcre2-is-a-separate-library.md'] as $page) {
+            $text = (string) file_get_contents(__DIR__.'/../../docs/'.$page);
+            $this->assertStringContainsString('{{ site.data.product.version }}', $text, $page.': a sample output reads the version from product.yml.');
+            $this->assertStringNotContainsString($version[1], $text, $page.': a sample output does not spell the version.');
+        }
         $this->assertStringContainsString('site.data.product.php_floor', $home);
         $this->assertStringContainsString('{% include install.html package="php-regex/regex-cli" dev=true inline=true %}', $home);
         $this->assertStringNotContainsString('composer config', $home);

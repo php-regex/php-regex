@@ -226,7 +226,7 @@ Lint the `src/` folder for PHP 8.1:
 
 ```console
 $ vendor/bin/regex lint src/ --php-version=8.1
-PHPRegex 2.0.0-DEV by Younes ENNAJI
+PHPRegex {{ site.data.product.version }} by Younes ENNAJI
 
 Runtime   : PHP 8.4.26, PCRE2 10.49
 Target    : PHP 8.1, PCRE2 10.39 (--php-version)

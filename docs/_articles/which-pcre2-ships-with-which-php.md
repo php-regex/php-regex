@@ -305,7 +305,7 @@ Plain `php lib/patterns.php` prints `int(1)` twice on the Mac above. The linter 
 
 ```console
 $ vendor/bin/regex lint lib/
-PHPRegex 2.0.0-DEV by Younes ENNAJI
+PHPRegex {{ site.data.product.version }} by Younes ENNAJI
 
 Runtime   : PHP 8.4.26, PCRE2 10.49
 Target    : PHP 8.2, PCRE2 10.40 (composer.json require.php)

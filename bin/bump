@@ -14,16 +14,19 @@
 #   bin/bump [--dry-run] [--root <dir>] --next <version>
 #
 #   <version>   2.1.0, 2.1.0-BETA1, 2.1.0-RC1: sets Regex::VERSION and VERSION_ID,
-#               and for a final version dates the CHANGELOG's Unreleased section
-#               and names it after <version>. The sample outputs of the docs
-#               that report the current pre-release version report <version>.
-#               The first final version also moves the install story from the
-#               dev channel to the release: docs/_data/product.yml says
-#               "stable: true" (the pages read it), and README.md and
-#               docs/llms.txt lose the two "composer config" lines, the
-#               ":2.x-dev" suffix and the "is coming" section.
-#   --next      after a release: sets Regex::VERSION to <version>-DEV and opens
-#               a "## [<version>] - Unreleased" section in the CHANGELOG
+#               and the "version" of docs/_data/product.yml, which the sample
+#               outputs of the docs print; for a final version dates the
+#               CHANGELOG's Unreleased section, names it after <version>, and
+#               sets the "version_label" of product.yml. The first final
+#               version also moves the install story from the dev channel to
+#               the release: product.yml says "stable: true" (the pages read
+#               it), and README.md and docs/llms.txt lose the two "composer
+#               config" lines, the ":2.x-dev" suffix and the "is coming"
+#               section. Regex::VERSION is written last: a bump that stopped
+#               halfway runs again.
+#   --next      after a release: sets Regex::VERSION and the "version" of
+#               product.yml to <version>-DEV and opens a
+#               "## [<version>] - Unreleased" section in the CHANGELOG
 #   --date      the release date written in the CHANGELOG (default: today)
 #   --dry-run   say what would change, change nothing
 #   --root      the monorepo checkout to change (default: the one holding this script)
@@ -100,49 +103,42 @@ IFS=. read -r major minor patch <<< "$base"
 version_id=$((major * 10000 + minor * 100 + patch))
 echo "src/Toolkit/Regex.php: VERSION = '$target', VERSION_ID = $version_id"
 
-# The install story: docs/_data/product.yml says whether a stable release
-# exists, and the pages read it. The first final version flips it, and
-# rewrites the two files Jekyll does not render, README.md and docs/llms.txt.
+# The install story and the version the docs print, both in
+# docs/_data/product.yml: "stable" says whether a stable release exists, and
+# the pages read it; "version" is what the sample outputs print. The first
+# final version flips "stable", and rewrites the two files Jekyll does not
+# render, README.md and docs/llms.txt.
 product="$root/docs/_data/product.yml"
 readme="$root/README.md"
 llms="$root/docs/llms.txt"
-[ -f "$product" ] || { echo "No docs/_data/product.yml: it says whether a stable release exists." >&2; exit 1; }
+[ -f "$product" ] || { echo "No docs/_data/product.yml: it says whether a stable release exists, and the version the docs print." >&2; exit 1; }
 stable=$(sed -nE 's/^stable: (true|false)$/\1/p' "$product")
 [ -n "$stable" ] || { echo "docs/_data/product.yml has no \"stable: true|false\" line: it says whether a stable release exists." >&2; exit 1; }
+grep -qE '^version: ' "$product" || { echo "docs/_data/product.yml has no \"version:\" line: it is the version the docs print." >&2; exit 1; }
 release=$(sed -nE 's/^release: (.+)$/\1/p' "$product")
 release_pattern=$(printf '%s' "$release" | sed 's/[.[\*^$]/\\&/g')
 final=0
 if [ "$next" -eq 0 ] && ! printf '%s' "$version" | grep -q -- '-'; then final=1; fi
-switch=0
-if [ "$final" -eq 1 ] && [ "$stable" = "false" ]; then switch=1; fi
 
+product_plan="version: $target"
 if [ "$final" -eq 1 ]; then
-    if [ "$switch" -eq 1 ]; then
-        echo "docs/_data/product.yml: stable: true, version_label: $version"
-        for file in "$readme" "$llms"; do
-            [ -f "$file" ] || continue
-            relative=${file#"$root/"}
-            if grep -qE '^## .* is coming$' "$file"; then
-                echo "$relative: the \"is coming\" section and the dev channel removed"
-            elif grep -qE "composer config (minimum-stability dev|prefer-stable true)|:${release_pattern}-dev" "$file"; then
-                echo "$relative: the dev channel removed"
-            fi
-        done
-    else
-        echo "docs/_data/product.yml: version_label: $version"
-    fi
+    [ "$stable" = "false" ] && product_plan="$product_plan, stable: true"
+    product_plan="$product_plan, version_label: $version"
 fi
+echo "docs/_data/product.yml: $product_plan"
 
-# The sample outputs: a pre-release version the docs report, "PHPRegex
-# 2.1.0-DEV", reports the version the tree moves to. A released version
-# stays: it is what the published phar prints.
-samples=()
-if [ "$next" -eq 0 ] && printf '%s' "$current" | grep -q -- '-' && [ -d "$root/docs" ]; then
-    while IFS= read -r file; do
-        [ -n "$file" ] && samples+=("$file")
-    done < <(grep -rlF --include='*.md' --exclude-dir=_site -- "$current" "$root/docs" | LC_ALL=C sort)
-    for file in ${samples[@]+"${samples[@]}"}; do
-        echo "${file#"$root/"}: $current -> $target"
+# The dev channel, wherever a final version finds it: a run that stopped
+# halfway leaves nothing behind that the next one does not take away.
+dev_channel="^composer config (minimum-stability dev|prefer-stable true)$|:${release_pattern}-dev|^## .* is coming$"
+if [ "$final" -eq 1 ]; then
+    for file in "$readme" "$llms"; do
+        [ -f "$file" ] || continue
+        relative=${file#"$root/"}
+        if grep -qE '^## .* is coming$' "$file"; then
+            echo "$relative: the \"is coming\" section and the dev channel removed"
+        elif grep -qE "$dev_channel" "$file"; then
+            echo "$relative: the dev channel removed"
+        fi
     done
 fi
 
@@ -160,15 +156,10 @@ rewrite() { # <file> <sed arguments...>
     rm -f "$tmp"
 }
 
-rewrite "$regex" -E -e "s/(public const VERSION = ')[^']+(';)/\1$target\2/" -e "s/(public const VERSION_ID = )[0-9]+;/\1$version_id;/"
-if [ -n "$new_changelog" ]; then
-    printf '%s\n' "$new_changelog" > "$changelog"
-fi
+# In this order, the version the code reports last: a run that stops before
+# it is run again as it was, and every step before it leaves a file it
+# already rewrote as it is.
 if [ "$final" -eq 1 ]; then
-    rewrite "$product" -E -e "s/^version_label: .*$/version_label: $version/"
-fi
-if [ "$switch" -eq 1 ]; then
-    rewrite "$product" -E -e 's/^stable: false$/stable: true/'
     for file in "$readme" "$llms"; do
         [ -f "$file" ] || continue
         if grep -qE '^## .* is coming$' "$file"; then
@@ -178,7 +169,10 @@ if [ "$switch" -eq 1 ]; then
         fi
         rewrite "$file" -E -e '/^composer config (minimum-stability dev|prefer-stable true)$/d' -e "s/:${release_pattern}-dev//g"
     done
+    rewrite "$product" -E -e 's/^stable: false$/stable: true/' -e "s/^version_label: .*$/version_label: $version/"
 fi
-for file in ${samples[@]+"${samples[@]}"}; do
-    rewrite "$file" -e "s/$(printf '%s' "$current" | sed 's/[.[\*^$/]/\\&/g')/$target/g"
-done
+rewrite "$product" -E -e "s/^version: .*$/version: $target/"
+if [ -n "$new_changelog" ]; then
+    printf '%s\n' "$new_changelog" > "$changelog"
+fi
+rewrite "$regex" -E -e "s/(public const VERSION = ')[^']+(';)/\1$target\2/" -e "s/(public const VERSION_ID = )[0-9]+;/\1$version_id;/"

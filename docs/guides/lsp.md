@@ -704,7 +704,7 @@ refusal included, is never retried.
    ```text
    Content-Length: 369
 
-   {"jsonrpc":"2.0","id":1,"result":{"capabilities":{"textDocumentSync":{"openClose":true,"change":1,"save":{"includeText":true}},"hoverProvider":true,"codeActionProvider":{"codeActionKinds":["quickfix","refactor.rewrite"]},"completionProvider":{"triggerCharacters":["\\","[","(","/"],"resolveProvider":false}},"serverInfo":{"name":"php-regex-lsp","version":"2.0.0-DEV"}}}
+   {"jsonrpc":"2.0","id":1,"result":{"capabilities":{"textDocumentSync":{"openClose":true,"change":1,"save":{"includeText":true}},"hoverProvider":true,"codeActionProvider":{"codeActionKinds":["quickfix","refactor.rewrite"]},"completionProvider":{"triggerCharacters":["\\","[","(","/"],"resolveProvider":false}},"serverInfo":{"name":"php-regex-lsp","version":"{{ site.data.product.version }}"}}}
    Content-Length: 124
 
    {"jsonrpc":"2.0","method":"window/logMessage","params":{"type":3,"message":"Target: PHP 8.4.26, PCRE2 10.49 (running PHP)"}}

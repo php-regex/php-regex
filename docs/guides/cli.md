@@ -742,7 +742,7 @@ without any configuration.
 
 **Console Output:**
 ```
-PHPRegex 2.0.0-DEV
+PHPRegex {{ site.data.product.version }}
 
 Runtime       : PHP 8.4.26, PCRE2 10.49
 Target        : PHP 8.2, PCRE2 10.40 (composer.json require.php)

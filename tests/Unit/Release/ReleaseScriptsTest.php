@@ -52,6 +52,7 @@ final class ReleaseScriptsTest extends TestCase
      */
     private const PRODUCT = <<<'YAML'
         release: 2.x
+        version: 2.0.0-DEV
         stable: false
         version_label: 2.x pre-release
         php_floor: '8.1'
@@ -122,8 +123,6 @@ final class ReleaseScriptsTest extends TestCase
         file_put_contents($this->root.'/docs/_data/product.yml', self::PRODUCT);
         file_put_contents($this->root.'/README.md', self::README);
         file_put_contents($this->root.'/docs/llms.txt', "# PHPRegex\n\nInstall: composer require --dev php-regex/regex-cli:2.x-dev for the CLI\n");
-        file_put_contents($this->root.'/docs/guides/cli.md', "```text\nPHPRegex 2.0.0-DEV\n```\n\nThe 2.0.0 release dates the section.\n");
-        file_put_contents($this->root.'/docs/guides/lsp.md', "{\"serverInfo\":{\"name\":\"php-regex-lsp\",\"version\":\"2.0.0-DEV\"}}\n");
     }
 
     protected function tearDown(): void
@@ -217,8 +216,8 @@ final class ReleaseScriptsTest extends TestCase
     /**
      * The first final release moves every install command of the docs from
      * the dev channel to the package alone, in the same bump: the pages read
-     * product.yml, the README and llms.txt are rewritten, and the sample
-     * outputs report the released version.
+     * product.yml, which also carries the version the sample outputs of the
+     * docs print, and the README and llms.txt are rewritten.
      */
     #[Test]
     public function test_bump_of_a_final_version_switches_the_install_story_to_the_release(): void
@@ -228,35 +227,48 @@ final class ReleaseScriptsTest extends TestCase
         $this->assertSame(0, $code, $output);
         $this->assertSame(self::README_STABLE, (string) file_get_contents($this->root.'/README.md'));
         $this->assertSame("# PHPRegex\n\nInstall: composer require --dev php-regex/regex-cli for the CLI\n", (string) file_get_contents($this->root.'/docs/llms.txt'));
-        $this->assertSame("release: 2.x\nstable: true\nversion_label: 2.0.0\nphp_floor: '8.1'\n", (string) file_get_contents($this->root.'/docs/_data/product.yml'));
-        $this->assertSame("```text\nPHPRegex 2.0.0\n```\n\nThe 2.0.0 release dates the section.\n", (string) file_get_contents($this->root.'/docs/guides/cli.md'));
-        $this->assertSame("{\"serverInfo\":{\"name\":\"php-regex-lsp\",\"version\":\"2.0.0\"}}\n", (string) file_get_contents($this->root.'/docs/guides/lsp.md'));
+        $this->assertSame("release: 2.x\nversion: 2.0.0\nstable: true\nversion_label: 2.0.0\nphp_floor: '8.1'\n", (string) file_get_contents($this->root.'/docs/_data/product.yml'));
         $this->assertStringContainsString('README.md', $output);
-        $this->assertStringContainsString('docs/_data/product.yml: stable: true', $output);
+        $this->assertStringContainsString('docs/_data/product.yml: version: 2.0.0, stable: true, version_label: 2.0.0', $output);
     }
 
     #[Test]
-    public function test_bump_of_a_pre_release_keeps_the_dev_channel_and_names_itself_in_the_samples(): void
+    public function test_bump_of_a_pre_release_keeps_the_dev_channel_and_names_itself_as_the_version(): void
     {
         [$code, $output] = $this->script('bump', '2.0.0-RC1');
 
         $this->assertSame(0, $code, $output);
         $this->assertSame(self::README, (string) file_get_contents($this->root.'/README.md'));
-        $this->assertSame(self::PRODUCT, (string) file_get_contents($this->root.'/docs/_data/product.yml'));
-        $this->assertStringContainsString("PHPRegex 2.0.0-RC1\n", (string) file_get_contents($this->root.'/docs/guides/cli.md'));
-        $this->assertStringContainsString('"version":"2.0.0-RC1"', (string) file_get_contents($this->root.'/docs/guides/lsp.md'));
+        $this->assertSame(str_replace('version: 2.0.0-DEV', 'version: 2.0.0-RC1', self::PRODUCT), (string) file_get_contents($this->root.'/docs/_data/product.yml'));
     }
 
     #[Test]
-    public function test_bump_next_keeps_the_stable_install_story_and_the_released_samples(): void
+    public function test_bump_next_keeps_the_stable_install_story_and_names_the_next_version(): void
     {
         $this->script('bump', '--date', '2026-10-01', '2.0.0');
         [$code, $output] = $this->script('bump', '--next', '2.0.1');
 
         $this->assertSame(0, $code, $output);
         $this->assertSame(self::README_STABLE, (string) file_get_contents($this->root.'/README.md'));
-        $this->assertStringContainsString("stable: true\nversion_label: 2.0.0\n", (string) file_get_contents($this->root.'/docs/_data/product.yml'));
-        $this->assertStringContainsString("PHPRegex 2.0.0\n", (string) file_get_contents($this->root.'/docs/guides/cli.md'));
+        $this->assertSame("release: 2.x\nversion: 2.0.1-DEV\nstable: true\nversion_label: 2.0.0\nphp_floor: '8.1'\n", (string) file_get_contents($this->root.'/docs/_data/product.yml'));
+    }
+
+    /**
+     * A later final release, after the switch, keeps the install story and
+     * names itself: nothing of the first release's switch is repeated.
+     */
+    #[Test]
+    public function test_a_later_final_bump_names_itself_and_leaves_the_switched_story_alone(): void
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        $this->script('bump', '--next', '2.1.0');
+        [$code, $output] = $this->script('bump', '--date', '2026-12-01', '2.1.0');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertSame(self::README_STABLE, (string) file_get_contents($this->root.'/README.md'));
+        $this->assertSame("release: 2.x\nversion: 2.1.0\nstable: true\nversion_label: 2.1.0\nphp_floor: '8.1'\n", (string) file_get_contents($this->root.'/docs/_data/product.yml'));
+        $this->assertStringContainsString('docs/_data/product.yml: version: 2.1.0, version_label: 2.1.0', $output);
+        $this->assertStringNotContainsString('README.md', $output);
     }
 
     #[Test]
@@ -269,20 +281,41 @@ final class ReleaseScriptsTest extends TestCase
         $this->assertSame(self::PRODUCT, (string) file_get_contents($this->root.'/docs/_data/product.yml'));
         $this->assertStringContainsString('README.md', $output);
         $this->assertStringContainsString('docs/llms.txt', $output);
-        $this->assertStringContainsString('docs/_data/product.yml: stable: true', $output);
-        $this->assertStringContainsString('docs/guides/cli.md', $output);
+        $this->assertStringContainsString('docs/_data/product.yml: version: 2.0.0, stable: true, version_label: 2.0.0', $output);
     }
 
+    /**
+     * A bump that stopped halfway can run again: the version the code
+     * reports is written last, so the version check still lets it in, and
+     * every rewrite before it is one that holds already-rewritten files
+     * as they are.
+     */
     #[Test]
-    public function test_bump_refuses_a_product_file_without_the_stable_key(): void
+    public function test_a_final_bump_that_stopped_halfway_runs_again_to_the_end(): void
     {
-        file_put_contents($this->root.'/docs/_data/product.yml', "release: 2.x\n");
+        file_put_contents($this->root.'/docs/_data/product.yml', str_replace('stable: false', 'stable: true', self::PRODUCT));
 
         [$code, $output] = $this->script('bump', '--date', '2026-10-01', '2.0.0');
 
-        $this->assertSame(1, $code);
-        $this->assertStringContainsString('stable', $output);
-        $this->assertSame('2.0.0-DEV', $this->version());
+        $this->assertSame(0, $code, $output);
+        $this->assertSame('2.0.0', $this->version());
+        $this->assertSame(self::README_STABLE, (string) file_get_contents($this->root.'/README.md'));
+        $this->assertSame("# PHPRegex\n\nInstall: composer require --dev php-regex/regex-cli for the CLI\n", (string) file_get_contents($this->root.'/docs/llms.txt'));
+        $this->assertSame("release: 2.x\nversion: 2.0.0\nstable: true\nversion_label: 2.0.0\nphp_floor: '8.1'\n", (string) file_get_contents($this->root.'/docs/_data/product.yml'));
+    }
+
+    #[Test]
+    public function test_bump_refuses_a_product_file_without_the_stable_or_version_key(): void
+    {
+        foreach (["release: 2.x\nversion: 2.0.0-DEV\n" => 'stable', "release: 2.x\nstable: false\n" => 'version'] as $product => $missing) {
+            file_put_contents($this->root.'/docs/_data/product.yml', $product);
+
+            [$code, $output] = $this->script('bump', '--date', '2026-10-01', '2.0.0');
+
+            $this->assertSame(1, $code, $output);
+            $this->assertStringContainsString($missing, $output);
+            $this->assertSame('2.0.0-DEV', $this->version());
+        }
     }
 
     #[Test]
@@ -299,6 +332,35 @@ final class ReleaseScriptsTest extends TestCase
         $this->assertSame(1, $code);
         $this->assertStringContainsString('docs/_data/product.yml', $output);
         $this->assertStringContainsString('README.md', $output);
+        $this->assertStringContainsString('bin/bump', $output);
+    }
+
+    /**
+     * The dev channel left in one install command, the branch suffix alone
+     * or in llms.txt, is enough to refuse the release.
+     *
+     * @return iterable<string, array{file: string, content: string}>
+     */
+    public static function provideDevChannelLeftovers(): iterable
+    {
+        yield 'the suffix alone in the README' => ['file' => 'README.md', 'content' => "# PHPRegex\n\n```bash\ncomposer require --dev php-regex/regex-cli:2.x-dev\n```\n"];
+        yield 'the suffix in llms.txt' => ['file' => 'docs/llms.txt', 'content' => "Install: composer require --dev php-regex/regex-cli:2.x-dev\n"];
+        yield 'the composer configuration in llms.txt' => ['file' => 'docs/llms.txt', 'content' => "composer config minimum-stability dev\ncomposer require --dev php-regex/regex-cli\n"];
+    }
+
+    #[Test]
+    #[DataProvider('provideDevChannelLeftovers')]
+    public function test_release_refuses_a_final_version_with_the_dev_channel_left_in_one_file(string $file, string $content): void
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        file_put_contents($this->root.'/'.$file, $content);
+        $this->commit();
+        $this->publish();
+
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
+
+        $this->assertSame(1, $code);
+        $this->assertStringContainsString($file, $output);
         $this->assertStringContainsString('bin/bump', $output);
     }
 
