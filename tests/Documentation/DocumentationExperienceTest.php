@@ -97,8 +97,14 @@ final class DocumentationExperienceTest extends TestCase
         $home = (string) file_get_contents(self::HOME);
 
         $this->assertStringContainsString("php_floor: '8.1'", $product);
-        $this->assertSame(1, preg_match('/^version: (\S+)$/m', $product, $version), 'product.yml carries the version the tree reports.');
-        $this->assertStringContainsString("public const VERSION = '".$version[1]."';", (string) file_get_contents(__DIR__.'/../../src/Toolkit/Regex.php'));
+        $this->assertSame(1, preg_match('/^version: (\S+)$/m', $product, $version), 'product.yml carries the version the docs print.');
+        $this->assertSame(1, preg_match('/^stable: (true|false)$/m', $product, $stable));
+        $this->assertSame(1, preg_match('/^version_label: (.+)$/m', $product, $label));
+        if ('true' === $stable[1]) {
+            $this->assertSame($label[1], $version[1], 'From the first stable release on, the docs print the released version, the one the installed package reports.');
+        } else {
+            $this->assertStringContainsString("public const VERSION = '".$version[1]."';", (string) file_get_contents(__DIR__.'/../../src/Toolkit/Regex.php'), 'Before the first stable release, the docs print the version the tree reports.');
+        }
         foreach (['guides/cli.md', 'guides/lsp.md', '_articles/which-pcre2-ships-with-which-php.md', '_articles/why-pcre2-is-a-separate-library.md'] as $page) {
             $text = (string) file_get_contents(__DIR__.'/../../docs/'.$page);
             $this->assertStringContainsString('{{ site.data.product.version }}', $text, $page.': a sample output reads the version from product.yml.');

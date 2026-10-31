@@ -250,7 +250,7 @@ final class ReleaseScriptsTest extends TestCase
 
         $this->assertSame(0, $code, $output);
         $this->assertSame(self::README_STABLE, (string) file_get_contents($this->root.'/README.md'));
-        $this->assertSame("release: 2.x\nversion: 2.0.1-DEV\nstable: true\nversion_label: 2.0.0\nphp_floor: '8.1'\n", (string) file_get_contents($this->root.'/docs/_data/product.yml'));
+        $this->assertSame("release: 2.x\nversion: 2.0.0\nstable: true\nversion_label: 2.0.0\nphp_floor: '8.1'\n", (string) file_get_contents($this->root.'/docs/_data/product.yml'), 'The docs print the released version, which the installed package reports, not the next one the tree moves to.');
     }
 
     /**
@@ -302,6 +302,24 @@ final class ReleaseScriptsTest extends TestCase
         $this->assertSame(self::README_STABLE, (string) file_get_contents($this->root.'/README.md'));
         $this->assertSame("# PHPRegex\n\nInstall: composer require --dev php-regex/regex-cli for the CLI\n", (string) file_get_contents($this->root.'/docs/llms.txt'));
         $this->assertSame("release: 2.x\nversion: 2.0.0\nstable: true\nversion_label: 2.0.0\nphp_floor: '8.1'\n", (string) file_get_contents($this->root.'/docs/_data/product.yml'));
+    }
+
+    /**
+     * The CHANGELOG is written before the version the code reports: a
+     * retry finds the section already dated and leaves it so.
+     */
+    #[Test]
+    public function test_a_final_bump_that_stopped_after_the_changelog_runs_again_to_the_end(): void
+    {
+        file_put_contents($this->root.'/CHANGELOG.md', str_replace('## [2.0.0] - Unreleased', '## [2.0.0] - 2026-10-01', self::CHANGELOG));
+
+        [$code, $output] = $this->script('bump', '--date', '2026-10-02', '2.0.0');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertSame('2.0.0', $this->version());
+        $this->assertStringContainsString("## [2.0.0] - 2026-10-01\n", $this->changelog());
+        $this->assertStringNotContainsString('2026-10-02', $this->changelog());
+        $this->assertStringContainsString('CHANGELOG.md: ## [2.0.0] already dated', $output);
     }
 
     #[Test]

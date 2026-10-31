@@ -15,7 +15,8 @@
 #
 #   <version>   2.1.0, 2.1.0-BETA1, 2.1.0-RC1: sets Regex::VERSION and VERSION_ID,
 #               and the "version" of docs/_data/product.yml, which the sample
-#               outputs of the docs print; for a final version dates the
+#               outputs of the docs print (the version the published package
+#               reports: --next leaves it); for a final version dates the
 #               CHANGELOG's Unreleased section, names it after <version>, and
 #               sets the "version_label" of product.yml. The first final
 #               version also moves the install story from the dev channel to
@@ -23,10 +24,10 @@
 #               it), and README.md and docs/llms.txt lose the two "composer
 #               config" lines, the ":2.x-dev" suffix and the "is coming"
 #               section. Regex::VERSION is written last: a bump that stopped
-#               halfway runs again.
-#   --next      after a release: sets Regex::VERSION and the "version" of
-#               product.yml to <version>-DEV and opens a
-#               "## [<version>] - Unreleased" section in the CHANGELOG
+#               halfway runs again, a CHANGELOG section it already dated
+#               included.
+#   --next      after a release: sets Regex::VERSION to <version>-DEV and opens
+#               a "## [<version>] - Unreleased" section in the CHANGELOG
 #   --date      the release date written in the CHANGELOG (default: today)
 #   --dry-run   say what would change, change nothing
 #   --root      the monorepo checkout to change (default: the one holding this script)
@@ -89,13 +90,15 @@ if [ "$next" -eq 1 ]; then
     fi
 elif printf '%s' "$version" | grep -q -- '-'; then
     echo "CHANGELOG.md: unchanged for a pre-release"
-else
-    if ! grep -qE '^## \[[^]]+\] - Unreleased$' "$changelog"; then
-        echo "CHANGELOG.md has no Unreleased section to release as $version." >&2
-        exit 1
-    fi
+elif grep -qE '^## \[[^]]+\] - Unreleased$' "$changelog"; then
     new_changelog=$(awk -v v="$version" -v d="$date" 'done == 0 && /^## \[[^]]+\] - Unreleased$/ { print "## [" v "] - " d; done = 1; next } { print }' "$changelog")
     echo "CHANGELOG.md: ## [$version] - $date"
+elif grep -qE "^## \[$(printf '%s' "$version" | sed 's/\./\\./g')\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$" "$changelog"; then
+    # A bump that stopped after this step: its work stands.
+    echo "CHANGELOG.md: ## [$version] already dated"
+else
+    echo "CHANGELOG.md has no Unreleased section to release as $version." >&2
+    exit 1
 fi
 # VERSION_ID is the version as an integer, 2.1.3 as 20103, as PHP_VERSION_ID.
 base=${version%%-*}
@@ -120,12 +123,15 @@ release_pattern=$(printf '%s' "$release" | sed 's/[.[\*^$]/\\&/g')
 final=0
 if [ "$next" -eq 0 ] && ! printf '%s' "$version" | grep -q -- '-'; then final=1; fi
 
-product_plan="version: $target"
+# The version the docs print is the one the published package reports:
+# --next moves the tree on, not the docs.
+product_plan=""
+[ "$next" -eq 0 ] && product_plan="version: $target"
 if [ "$final" -eq 1 ]; then
     [ "$stable" = "false" ] && product_plan="$product_plan, stable: true"
     product_plan="$product_plan, version_label: $version"
 fi
-echo "docs/_data/product.yml: $product_plan"
+[ -z "$product_plan" ] || echo "docs/_data/product.yml: $product_plan"
 
 # The dev channel, wherever a final version finds it: a run that stopped
 # halfway leaves nothing behind that the next one does not take away.
@@ -171,7 +177,9 @@ if [ "$final" -eq 1 ]; then
     done
     rewrite "$product" -E -e 's/^stable: false$/stable: true/' -e "s/^version_label: .*$/version_label: $version/"
 fi
-rewrite "$product" -E -e "s/^version: .*$/version: $target/"
+if [ "$next" -eq 0 ]; then
+    rewrite "$product" -E -e "s/^version: .*$/version: $target/"
+fi
 if [ -n "$new_changelog" ]; then
     printf '%s\n' "$new_changelog" > "$changelog"
 fi
