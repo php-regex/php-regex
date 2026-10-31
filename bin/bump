@@ -141,7 +141,7 @@ if [ "$next" -eq 0 ] && printf '%s' "$current" | grep -q -- '-' && [ -d "$root/d
     while IFS= read -r file; do
         [ -n "$file" ] && samples+=("$file")
     done < <(grep -rlF --include='*.md' --exclude-dir=_site -- "$current" "$root/docs" | LC_ALL=C sort)
-    for file in "${samples[@]}"; do
+    for file in ${samples[@]+"${samples[@]}"}; do
         echo "${file#"$root/"}: $current -> $target"
     done
 fi
@@ -179,6 +179,6 @@ if [ "$switch" -eq 1 ]; then
         rewrite "$file" -E -e '/^composer config (minimum-stability dev|prefer-stable true)$/d' -e "s/:${release_pattern}-dev//g"
     done
 fi
-for file in "${samples[@]}"; do
+for file in ${samples[@]+"${samples[@]}"}; do
     rewrite "$file" -e "s/$(printf '%s' "$current" | sed 's/[.[\*^$/]/\\&/g')/$target/g"
 done
