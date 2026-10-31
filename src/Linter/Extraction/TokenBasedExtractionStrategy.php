@@ -797,9 +797,9 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
 
         // (Kind::Re)->value: PHP drops the parentheses around the case.
         if ($count > 5 && '(' === $first && PhpTokens::isObjectOrStaticOperator($significant[$count - 2]) && 'value' === PhpTokens::identifier($significant[$count - 1])) {
-            $significant = [...self::unwrapped(\array_slice($significant, 0, -2)), $significant[$count - 2], $significant[$count - 1]];
-            [$first, $second, $third] = $significant + [null, null, null];
-            $count = \count($significant);
+            $case = self::unwrapped(\array_slice($significant, 0, -2));
+
+            return 3 === \count($case) && \is_array($case[0]) && PhpTokens::isDoubleColon($case[1]) && (\T_STATIC === $case[0][0] || null !== PhpTokens::name($case[0]));
         }
 
         // Kind::Re->value: an enum case's backing value, a class constant
@@ -820,8 +820,9 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     }
 
     /**
-     * The significant tokens without the parentheses that wrap them all,
-     * however many: ((a)) is a.
+     * The significant tokens without the parentheses at both ends, however
+     * many: ((a)) is a. Whether they wrapped everything is not asked here:
+     * (a)(b) becomes a)(b, which names nothing either.
      *
      * @param list<array{int, string, int}|string> $significant
      *
@@ -829,17 +830,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private static function unwrapped(array $significant): array
     {
-        while (\count($significant) > 2 && '(' === $significant[0] && ')' === $significant[\count($significant) - 1]) {
-            $depth = 0;
-            foreach ($significant as $index => $token) {
-                if ('(' === $token) {
-                    $depth++;
-                } elseif (')' === $token && 0 === --$depth && $index < \count($significant) - 1) {
-                    // (a)(b): the first parenthesis closes before the end.
-                    return $significant;
-                }
-            }
-
+        while (['(', ')'] === [$significant[0] ?? null, $significant[\count($significant) - 1] ?? null]) {
             $significant = \array_slice($significant, 1, -1);
         }
 

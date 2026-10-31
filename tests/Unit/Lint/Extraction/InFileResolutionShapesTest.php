@@ -559,6 +559,7 @@ final class InFileResolutionShapesTest extends TestCase
             {
                 private const NAMED = Kind::Bare->name;
                 private const WRAPPED_NAME = (Kind::Bare)->name;
+                private const WRAPPED_SAFE = (Kind::Other)?->value;
                 private const NAME_FIRST = Kind::Bare->name->value;
                 private const SAFE = Kind::Bare?->value;
 
@@ -578,6 +579,7 @@ final class InFileResolutionShapesTest extends TestCase
                         && 1 === preg_match(Kind::Other->{$s}, $s)
                         && 1 === preg_match(self::NAMED, $s)
                         && 1 === preg_match(self::WRAPPED_NAME, $s)
+                        && 1 === preg_match(self::WRAPPED_SAFE, $s)
                         && 1 === preg_match(self::NAME_FIRST, $s)
                         && 1 === preg_match(self::SAFE, $s);
                 }
@@ -592,8 +594,8 @@ final class InFileResolutionShapesTest extends TestCase
 
     /**
      * The tokenizer reads a file the parser would refuse as far as its
-     * tokens go: "()->value" names nothing, and the literal after it is
-     * still read.
+     * tokens go: "()->value" and "(())->value" name nothing, and the
+     * literal after them is still read.
      */
     #[Test]
     public function test_the_tokenizer_reads_past_an_empty_parenthesis_before_a_value(): void
@@ -608,6 +610,7 @@ final class InFileResolutionShapesTest extends TestCase
                 public function run(string $s): bool
                 {
                     return 1 === preg_match(self::EMPTY, $s)
+                        && 1 === preg_match((())->value, $s)
                         && 1 === preg_match('/kept/', $s);
                 }
             }
