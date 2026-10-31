@@ -10,24 +10,15 @@ In this order.
    tag would release the 1.x package as 2.0.0 (`bin/status` reports it ✗
    until then; `UPGRADE-2.0.md` promises it stays on 1.x). Afterwards, its
    dev channel lists `1.x-dev` only.
-2. **The bump commit.** `bin/bump 2.0.0` sets `Regex::VERSION`,
-   `Regex::VERSION_ID` and dates the CHANGELOG section. In the same commit,
-   the install story moves from `2.x-dev` to the stable release:
-   - `docs/_includes/install-prerelease.html`, which every install block of
-     the docs and the articles reads: drop the two `composer config` lines
-     and the `:{{ site.data.product.release }}-dev` suffix, written once in
-     its `install_commands` capture;
-   - outside the include: `docs/index.md` (hero install block),
-     `docs/packages.md`, `docs/quick-start.md`, `README.md` ("2.0 is coming"
-     and "Getting started"), `docs/llms.txt`;
-   - `docs/_data/product.yml`: `version_label`;
-   - the `2.0.0-DEV` sample outputs in `docs/guides/cli.md`, in the
-     `initialize` answer of `docs/guides/lsp.md`, and in the articles
-     `which-pcre2-ships-with-which-php.md` and
-     `why-pcre2-is-a-separate-library.md`;
-   - `tests/Documentation/PackageSelectionDocumentationTest.php` and
-     `tests/Documentation/ArticleInstallIncludeTest.php` pin the prerelease
-     commands: they move with them.
+2. **The bump commit.** `bin/bump 2.0.0` sets `Regex::VERSION` and
+   `Regex::VERSION_ID`, dates the CHANGELOG section, and moves the install
+   story from `2.x-dev` to the stable release: `docs/_data/product.yml`
+   says `stable: true`, which the install include every page and article
+   reads; `README.md` and `docs/llms.txt` lose the two `composer config`
+   lines, the `:2.x-dev` suffix and the "2.0 is coming" section; and the
+   `2.0.0-DEV` sample outputs of the docs report `2.0.0`. Read the diff,
+   then commit it on its own branch. `bin/release` refuses a final version
+   whose docs still install from the dev channel.
 3. **Before the tag**, check with `bin/status` that each of the seventeen
    split repositories carries a fresh 2.x head and a crawled dev version.
    The split pushes are not atomic: between the first and the last webhook
@@ -52,18 +43,11 @@ In this order.
    needs the stable public URL the tag gives it.
 
 
-## GitHub settings for the phar
-
-`.github/workflows/phar.yml` builds, attests and attaches the phar on a
-version tag. If Settings → Actions → General restricts the actions allowed,
-allow `actions/attest-build-provenance` and `shivammathur/setup-php`.
-
-
 ## PHP 7.4 twin
 
 After the 2.0.0 tag, publish `php-regex/regex-parser-php74` once more from
 the tagged commit, from the `twin` artifact of a green "php74 twin"
-workflow run. The published `c525273` is the build of 2.x at dec0cb9e52.
+workflow run. The published `6eb39fa` is the build of 2.x at caea95400d.
 
 
 ## PHP 8.6 GA, 2026-11-19
@@ -127,30 +111,8 @@ measured under 3 %.
   release, so `phive install php-regex/regex` works.
 
 
-## Linter output after the corpus re-run
-
-The re-run covers 2993 entries against 2915 before, the growth coming from
-constants now resolved at analysis time, not from a scanning regression.
-One rule is still too loud.
-
-- `UselessCharClassRangeRule` warns on every range of at most two code
-  points; the test is `$max - $min > 1` in
-  `src/Linter/Rule/UselessCharClassRangeRule.php` line 66. 1244 of the
-  1246 new warnings come from
-  `corpus/symfony/polyfill/src/Intl/Idn/Resources/unidata/Regex.php`,
-  generated tables where `0-1`, `\x{5C4}-\x{5C5}` and `.-/` are correct as
-  written: the rewrites are equivalent, but the volume is noise. Exempt
-  ranges whose bounds are consecutive by construction, or demote them to
-  INFO.
-
-
 ## Open questions
 
-- Seventeen packages, two of them small: `regex-generator` holds four files
-  and `regex-toolkit` five. Merging two packages after the tag breaks the
-  `composer require` of whoever installed the one that disappears, while
-  splitting one later is additive; nobody installs them yet. Decide before
-  the tag whether each keeps its repository, its Packagist entry and its CI.
 - The Psalm and PHPStan bridges require `regex-linter` whole, for the
   target resolution and the PHP-source helpers they import. Those need a
   home below it, a new split package or a lower one; dropping the
