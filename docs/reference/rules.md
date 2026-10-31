@@ -1022,22 +1022,21 @@ preg_match('/[\w]/', $input);
 
 **Identifier:** `regex.lint.range.useless`
 
-**When it triggers:** A range spans only one or two characters (e.g., `[a-a]` or `[a-b]`) and can be written explicitly. A range of one character is a warning; one of two consecutive characters is correct as written, a generated Unicode table holds them by the thousand, and is reported as information.
+**When it triggers:** A range spans one character, as `[a-a]`: the author meant a character or a wider range. A range of two consecutive characters, `[a-b]` or `[0-1]`, is correct as written and the list `[ab]` saves one character only, so it is not reported: a generated Unicode table holds them by the thousand.
 
 **Example:**
 ```php
 // WARNING: Range only spans one character
 preg_match('/[a-a]/', $input);
 
-// INFO: Range only spans two characters
-preg_match('/[a-b]/', $input);
-
-// PREFERRED: List characters explicitly
+// PREFERRED: Write the character alone
 preg_match('/[a]/', $input);
-preg_match('/[ab]/', $input);
+
+// Left alone: two consecutive characters are correct as written
+preg_match('/[a-b]/', $input);
 ```
 
-**Fix:** Replace the range with literal characters inside the class.
+**Fix:** Write the character alone, or widen the range to what was meant.
 
 ---
 
@@ -1625,7 +1624,7 @@ at 0; an info, `style` included, is printed under an `INFO` badge and leaves the
 | Backrefs    | `regex.lint.backref.useless`, `.undefined`                                                | warning  | Move or remove the backreference  |
 | Character   | `regex.lint.charclass.redundant`, `.duplicateChars`, `.suspiciousRange`, `.suspiciousPipe`, `.literalMetachar`, `.backrefAsOctal` | warning | Clean up the class |
 | Character   | `regex.lint.charclass.single` (off by default)                                            | style    | Write the character alone         |
-| Ranges      | `regex.lint.range.useless`                                                                | warning (info for two characters) | Replace with literals |
+| Ranges      | `regex.lint.range.useless`                                                                | warning  | Write the character alone         |
 | Escapes     | `regex.lint.escape.suspicious`                                                            | warning  | Fix the escape sequence           |
 | Literals    | `regex.lint.literal.multipleSpaces` (off by default)                                      | style    | Count the spaces                  |
 | Literals    | `regex.lint.literal.invisible`                                                            | warning  | Write the escape                  |

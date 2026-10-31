@@ -79,7 +79,7 @@ final class LinterPortedRulesTest extends TestCase
     public static function provideUselessRangePatterns(): \Iterator
     {
         yield 'single char range' => ['/[\x61-\x61]/', true];
-        yield 'adjacent range' => ['/[\x61-\x62]/', true];
+        yield 'adjacent range' => ['/[\x61-\x62]/', false];
         yield 'three chars range' => ['/[\x61-\x63]/', false];
         yield 'digit range' => ['/[\x30-\x39]/', false];
     }
