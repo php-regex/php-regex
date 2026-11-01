@@ -144,6 +144,48 @@ calculator or the ACCEPT check, or walking the letter check once, each
 measured under 3 %.
 
 
+## PHPStan fork: preg_quote() placeholders
+
+Everything below happens in the phpstan-src checkout
+`~/projects/php-regex/phpstan-src`, branch `read-regex-shapes-through-phpregex`;
+nothing changes in this repository. `RegexExpressionHelper::resolvePatternConcat()`
+(`src/Type/Regex/RegexExpressionHelper.php`, the single choke point — its callers
+are `RegexArrayShapeMatcher.php:726`, `PregMatchDynamicReturnTypeExtension.php:83`
+and `RegularExpressionPatternRule.php:92`) replaces every `preg_quote()` with
+`(?:.*)`, sound only where the pattern reads the quoted text as literal
+characters. Six positions are not that: in a class, where
+`'/[' . preg_quote($x, '/') . ']/'` folds to a class over the characters of the
+placeholder; after `\`, where the escaped `(` eats the placeholder's and the
+group never opens; after `(?`, where `'/(?<' . preg_quote($x, '/') . '>a)/'`
+folds to a group name PCRE refuses, so a valid call is reported invalid; inside
+`\Q…\E`; in braces; and before a quantifier or a comment an empty text leaves to
+what precedes it.
+
+`src/Psalm/QuotedPattern.php` in this repository is the contract to port:
+`(?:[\s\S]*)` for any text, as `.*` misses `"\n"` without `s`; each quoted part
+re-read in place with the probes `''`, `'\\\\E'`, `'0'`, `'n'`, `','`, `"'"`,
+`'\.'`, `'\000'` (the forms `preg_quote()` emits) and the other parts empty;
+each probe must parse, keep the exact group list (`CaptureShapeAnalyzer`), and
+show its characters as literal nodes outside every class between the exact
+offsets; `[*+?{#]` or `(?#` right after an empty text withholds; the first and
+the last parts must carry the delimiters, as `preg_quote()` escapes the
+delimiter only when it is given; any failure withholds, never guesses. A
+withheld check returns a type with no constant strings, so the three callers
+degrade; the probe logic sits in a class beside `RegexGroupParser`, which shows
+how the pinned `php-regex/regex-parser-php74` build is consumed — anything new
+must exist in that pinned build. The prose contract is "Patterns built with
+`preg_quote()`" in `docs/guides/psalm.md`.
+
+Red first, under `~/projects/php-regex/phpstan-src`: the six positions assert
+the plain fallback type in `tests/PHPStan/Analyser/nsrt/preg_match_shapes.php`,
+beside the existing `preg_quote` rows (386-422), which keep their types — a
+quoted part in literal position loses nothing; and the `(?<` case leaves
+`RegularExpressionPatternRuleTest` silent on a valid call. Green through
+`make tests`, `make phpstan`, and the 329-pattern engine parity test. A separate
+follow-up folds `preg_quote()` of a constant string to the literal it returns,
+as `CallTypes::quote` does.
+
+
 ## Distribution
 
 - A composite GitHub Action that installs the phar and runs `regex lint`
