@@ -26,8 +26,8 @@ Think of them like bookmarks: start of string, end of string, or the edge betwee
 `^` matches the very beginning of the subject.
 
 ```php
-print_r(preg_match('/^cat/', 'cat food')); // 1
-print_r(preg_match('/^cat/', 'The cat'));  // 0 (not at start)
+echo preg_match('/^cat/', 'cat food'), PHP_EOL; // 1
+echo preg_match('/^cat/', 'The cat'), PHP_EOL;  // 0 (not at start)
 ```
 {: data-run="" }
 
@@ -36,8 +36,8 @@ print_r(preg_match('/^cat/', 'The cat'));  // 0 (not at start)
 `$` matches the very end of the subject.
 
 ```php
-print_r(preg_match('/cat$/', 'The cat'));  // 1
-print_r(preg_match('/cat$/', 'cat food')); // 0 (not at end)
+echo preg_match('/cat$/', 'The cat'), PHP_EOL;  // 1
+echo preg_match('/cat$/', 'cat food'), PHP_EOL; // 0 (not at end)
 ```
 {: data-run="" }
 
@@ -46,9 +46,9 @@ print_r(preg_match('/cat$/', 'cat food')); // 0 (not at end)
 Combine `^` and `$` to require an **exact match** of the whole string.
 
 ```php
-print_r(preg_match('/^cat$/', 'cat'));      // 1
-print_r(preg_match('/^cat$/', 'cat food')); // 0
-print_r(preg_match('/^cat$/', 'The cat'));  // 0
+echo preg_match('/^cat$/', 'cat'), PHP_EOL;      // 1
+echo preg_match('/^cat$/', 'cat food'), PHP_EOL; // 0
+echo preg_match('/^cat$/', 'The cat'), PHP_EOL;  // 0
 ```
 {: data-run="" }
 
@@ -63,8 +63,8 @@ With the `m` ([multiline](01-basics.md#5-case-and-flags)) flag, `^` and `$` can 
 ```php
 $text = "cat\nbird";
 
-print_r(preg_match('/^cat/m', $text));  // 1 (start of first line)
-print_r(preg_match('/^bird/m', $text)); // 1 (start of second line)
+echo preg_match('/^cat/m', $text), PHP_EOL;  // 1 (start of first line)
+echo preg_match('/^bird/m', $text), PHP_EOL; // 1 (start of second line)
 ```
 {: data-run="" }
 
@@ -82,9 +82,9 @@ Sometimes you want to be strict and **ignore** the multiline behavior entirely.
 ```php
 $text = "cat\nbird";
 
-print_r(preg_match('/\Acat/m', $text));  // 1 (absolute start)
-print_r(preg_match('/\Abird/m', $text)); // 0
-print_r(preg_match('/bird\z/m', $text)); // 1 (absolute end)
+echo preg_match('/\Acat/m', $text), PHP_EOL;  // 1 (absolute start)
+echo preg_match('/\Abird/m', $text), PHP_EOL; // 0
+echo preg_match('/bird\z/m', $text), PHP_EOL; // 1 (absolute end)
 ```
 {: data-run="" }
 
@@ -93,8 +93,8 @@ print_r(preg_match('/bird\z/m', $text)); // 1 (absolute end)
 One subtle point: without `m`, `$` can match **just before a final newline**. `\z` never does this — it only matches at the very end with nothing after it.
 
 ```php
-print_r(preg_match('/^cat$/', "cat\n")); // 1 (before the final newline)
-print_r(preg_match('/^cat\z/', "cat\n")); // 0
+echo preg_match('/^cat$/', "cat\n"), PHP_EOL; // 1 (before the final newline)
+echo preg_match('/^cat\z/', "cat\n"), PHP_EOL; // 0
 ```
 {: data-run="" }
 
@@ -111,9 +111,9 @@ Crucially, `\b` matches **a position, not a space**. It won't add extra characte
 ### Matching whole words
 
 ```php
-print_r(preg_match('/\bcat\b/', 'the cat sat')); // 1
-print_r(preg_match('/\bcat\b/', 'category'));    // 0 (cat is part of the word)
-print_r(preg_match('/\bcat\b/', 'wildcat'));     // 0
+echo preg_match('/\bcat\b/', 'the cat sat'), PHP_EOL; // 1
+echo preg_match('/\bcat\b/', 'category'), PHP_EOL;    // 0 (cat is part of the word)
+echo preg_match('/\bcat\b/', 'wildcat'), PHP_EOL;     // 0
 ```
 {: data-run="" }
 
@@ -128,8 +128,8 @@ print_r(preg_match('/\bcat\b/', 'wildcat'));     // 0
 You can also use `\B` for the **opposite**: a position where there is **no** word boundary (i.e. between two word characters, or two non-word characters).
 
 ```php
-print_r(preg_match('/\Bcat\B/', 'concatenate')); // 1 ("cat" in the middle)
-print_r(preg_match('/\Bcat\B/', 'the cat'));     // 0
+echo preg_match('/\Bcat\B/', 'concatenate'), PHP_EOL; // 1 ("cat" in the middle)
+echo preg_match('/\Bcat\B/', 'the cat'), PHP_EOL;     // 0
 ```
 {: data-run="" }
 
@@ -145,17 +145,17 @@ A few examples to get the idea:
 
 ```php
 // Only digits
-print_r(preg_match('/^\d+$/', '12345')); // 1
+echo preg_match('/^\d+$/', '12345'), PHP_EOL; // 1
 
 // Starts with "http://"
-print_r(preg_match('/^https?:\/\//', 'https://example.com')); // 1
+echo preg_match('/^https?:\/\//', 'https://example.com'), PHP_EOL; // 1
 
 // Ends with ".txt"
-print_r(preg_match('/\.txt$/', 'readme.txt')); // 1
+echo preg_match('/\.txt$/', 'readme.txt'), PHP_EOL; // 1
 
 // Whole word only
-print_r(preg_match('/\berror\b/', 'error: failed')); // 1
-print_r(preg_match('/\berror\b/', 'errorCode'));     // 0
+echo preg_match('/\berror\b/', 'error: failed'), PHP_EOL; // 1
+echo preg_match('/\berror\b/', 'errorCode'), PHP_EOL;     // 0
 ```
 {: data-run="" }
 

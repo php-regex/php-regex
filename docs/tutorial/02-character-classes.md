@@ -33,9 +33,9 @@ Put characters between `[` and `]`:
 
 ```php
 preg_match('/[aeiou]/', 'hello', $matches); // matches 'e'
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/[bcd]/', 'cat', $matches);     // matches 'c'
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 
@@ -45,11 +45,11 @@ To avoid listing every letter or digit, use `-` to define a range:
 
 ```php
 preg_match('/[0-9]/', 'Age: 42', $matches); // matches '4'
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/[a-z]/', 'Hello', $matches);   // matches 'e' (lowercase only)
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/[A-Z]/', 'Hello', $matches);   // matches 'H'
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 
@@ -63,9 +63,9 @@ Prefix with `^` inside the brackets to match **anything except** what's in the s
 
 ```php
 preg_match('/[^0-9]/', 'ABC123', $matches); // matches 'A'
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/[^aeiou]/', 'apple', $matches); // matches 'p', 'p', 'l'
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 
@@ -85,13 +85,13 @@ Rules change a little inside `[...]`. Most characters lose their special meaning
 
 ```php
 preg_match('/[.]/', 'a.b', $matches);      // matches '.'
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/[abc-]/', 'a-b', $matches);   // matches 'a' or '-' (dash at end)
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/[-abc]/', '-abc', $matches); // matches '-' (dash at start)
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/[\]]/', 'a]b', $matches);     // matches ']'
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 
@@ -115,13 +115,13 @@ Typing `[0-9]`, `[a-zA-Z0-9_]` etc. gets repetitive. PCRE provides shorthands:
 
 ```php
 preg_match('/\d/', 'Order 123', $matches);     // matches '1'
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/\w+/', 'hello_world', $matches);  // matches 'hello_world'
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/\s/', "hello world", $matches);   // matches space
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/./', 'abc', $matches);            // matches 'a'
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 
@@ -135,11 +135,11 @@ If you need to match letters from other languages, digits from other scripts, or
 
 ```php
 preg_match('/^\p{L}+$/u', 'café', $matches); // matches (letters)
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/^\p{N}+$/u', '١٢٣', $matches);   // matches (Arabic-Indic digits)
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/\p{Emoji}/u', 'Hi 👋', $matches); // matches emoji
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 

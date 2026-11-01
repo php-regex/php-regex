@@ -29,7 +29,7 @@ if (preg_match($pattern, 'user@example.com')) {
 
 ```php
 $pattern = '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i';
-print_r(preg_match($pattern, 'USER@Example.COM')); // 1 — the i flag covers the case
+echo preg_match($pattern, 'USER@Example.COM'), PHP_EOL; // 1 — the i flag covers the case
 ```
 
 ---
@@ -88,9 +88,9 @@ Covers common formats with spaces, dashes, or parentheses.
 $pattern = '/^\+?\d{1,3}[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/';
 
 preg_match($pattern, '+1 (555) 123-4567'); // matches
-print_r(preg_match($pattern, '+1 (555) 123-4567')); // 1
+echo preg_match($pattern, '+1 (555) 123-4567'), PHP_EOL; // 1
 preg_match($pattern, '555-123-4567');     // matches
-print_r(preg_match($pattern, '555-123-4567')); // 1
+echo preg_match($pattern, '555-123-4567'), PHP_EOL; // 1
 ```
 {: data-run="" }
 
@@ -230,8 +230,8 @@ Write a pattern for a 5-digit US zip code, optionally followed by a dash and 4 d
 
 ```php
 $pattern = '/^\d{5}(?:-\d{4})?$/';
-print_r(preg_match($pattern, '12345-6789')); // 1
-print_r(preg_match($pattern, '1234'));       // 0
+echo preg_match($pattern, '12345-6789'), PHP_EOL; // 1
+echo preg_match($pattern, '1234'), PHP_EOL;       // 0
 ```
 {: data-run="" }
 

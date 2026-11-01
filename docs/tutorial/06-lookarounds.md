@@ -53,7 +53,7 @@ To truly reject `"100USD"`, anchor the pattern or add context so there's nowhere
 
 ```php
 preg_match('/\b\d+\b(?!USD)/', 'Price: 100USD'); // no match (word boundary prevents partial)
-print_r(preg_match('/\b\d+\b(?!USD)/', 'Price: 100USD')); // 0
+echo preg_match('/\b\d+\b(?!USD)/', 'Price: 100USD'), PHP_EOL; // 0
 ```
 {: data-run="" }
 
@@ -110,7 +110,7 @@ To reject the entire number, anchor it so the engine can't skip the first digit:
 
 ```php
 preg_match('/(?<!\$)\b\d+/', 'Total: $49'); // no match (word boundary forces start at "4")
-print_r(preg_match('/(?<!\$)\b\d+/', 'Total: $49')); // 0
+echo preg_match('/(?<!\$)\b\d+/', 'Total: $49'), PHP_EOL; // 0
 ```
 {: data-run="" }
 
@@ -130,9 +130,9 @@ echo $matches[0]; // "document"
 
 ```php
 preg_match('/\bwalk(?!ing)\b/', 'I walk to work', $matches); // matches
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/\bwalk(?!ing)\b/', 'I am walking');             // no match
-print_r(preg_match('/\bwalk(?!ing)\b/', 'I am walking'));    // 0
+echo preg_match('/\bwalk(?!ing)\b/', 'I am walking'), PHP_EOL;    // 0
 ```
 {: data-run="" }
 
@@ -144,9 +144,9 @@ You can chain lookaheads at the start to assert things exist, without consuming 
 // Must be at least 8 chars and contain at least one digit
 $pattern = '/^(?=.*\d).{8,}$/';
 preg_match($pattern, 'abcdefg1', $matches); // matches
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match($pattern, 'abcdefg');            // no match
-print_r(preg_match($pattern, 'abcdefg'));   // 0
+echo preg_match($pattern, 'abcdefg'), PHP_EOL;   // 0
 ```
 {: data-run="" }
 
@@ -167,11 +167,11 @@ If you're ever unsure, test with a fixed length, or restructure with a lookahead
 ```php
 // Unbounded — the engine refuses it
 preg_match('/(?<=a+)b/', 'aaab');
-print_r(preg_match('/(?<=a+)b/', 'aaab')); // prints nothing: preg_match() returned false
+echo preg_match('/(?<=a+)b/', 'aaab'), PHP_EOL; // prints nothing: preg_match() returned false
 
 // Bounded — safer
 preg_match('/(?<=a{1,5})b/', 'aaab');
-print_r(preg_match('/(?<=a{1,5})b/', 'aaab')); // 1
+echo preg_match('/(?<=a{1,5})b/', 'aaab'), PHP_EOL; // 1
 ```
 {: data-run="" }
 

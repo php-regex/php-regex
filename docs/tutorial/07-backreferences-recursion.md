@@ -109,11 +109,11 @@ Conditionals let you do "if this group matched, do X, else do Y".
 $pattern = '/^(a)?(?(1)b|c)/';
 
 preg_match($pattern, 'ab', $matches); // matches
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match($pattern, 'c',  $matches); // matches
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match($pattern, 'ac');           // no match
-print_r(preg_match($pattern, 'ac'));  // 0
+echo preg_match($pattern, 'ac'), PHP_EOL;  // 0
 ```
 {: data-run="" }
 
@@ -123,9 +123,9 @@ print_r(preg_match($pattern, 'ac'));  // 0
 $pattern = '/^(?<has>a)?(?(has)b|c)/';
 
 preg_match($pattern, 'ab', $matches); // matches
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match($pattern, 'c',  $matches); // matches
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 

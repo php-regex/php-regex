@@ -128,8 +128,8 @@ Sometimes you want to ignore case. You can add a **flag** after the closing deli
 The most common one to know right now is `i` (case-insensitive):
 
 ```php
-print_r(preg_match('/cat/i', 'CAT')); // 1 — matches
-print_r(preg_match('/cat/i', 'Cat')); // 1 — matches
+echo preg_match('/cat/i', 'CAT'), PHP_EOL; // 1 — matches
+echo preg_match('/cat/i', 'Cat'), PHP_EOL; // 1 — matches
 ```
 {: data-run="" }
 

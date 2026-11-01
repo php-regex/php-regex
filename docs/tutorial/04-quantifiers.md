@@ -34,11 +34,11 @@ They work on a single character, a [character class](02-character-classes.md), o
 
 ```php
 preg_match('/ab*/', 'a', $matches);    // matches "a" (zero 'b's)
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/ab*/', 'ab', $matches);   // matches "ab"
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/ab*/', 'abbb', $matches); // matches "abbb"
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 
@@ -46,11 +46,11 @@ print_r($matches[0]);
 
 ```php
 preg_match('/ab+/', 'a'); // no match (needs at least one 'b')
-print_r(preg_match('/ab+/', 'a')); // 0
+echo preg_match('/ab+/', 'a'), PHP_EOL; // 0
 preg_match('/ab+/', 'ab', $matches);   // matches "ab"
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/ab+/', 'abbb', $matches); // matches "abbb"
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 
@@ -58,11 +58,11 @@ print_r($matches[0]);
 
 ```php
 preg_match('/ab?/', 'a', $matches);   // matches "a"
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/ab?/', 'ab', $matches);  // matches "ab"
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/ab?/', 'abb', $matches); // matches "ab" (only takes one 'b')
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 
@@ -72,11 +72,11 @@ This is where quantifiers become really useful.
 
 ```php
 preg_match('/\d+/', 'Order 123', $matches);      // matches "123"
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/[a-z]+/', 'Hello World', $matches); // matches "ello"
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/\s*/', 'abc', $matches);            // matches "" (zero spaces)
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 
@@ -88,17 +88,17 @@ When you need precision, use curly braces.
 
 ```php
 preg_match('/\d{3}/', '123', $matches);     // matches "123"
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/\d{3}/', '12');                // no match
-print_r(preg_match('/\d{3}/', '12'));       // 0
+echo preg_match('/\d{3}/', '12'), PHP_EOL;       // 0
 preg_match('/\d{3}/', '12345', $matches);   // matches "123" (first 3)
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/\d{2,4}/', '12345', $matches); // matches "1234" (up to 4)
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 preg_match('/\d{2,}/', '1');                // no match (needs at least 2)
-print_r(preg_match('/\d{2,}/', '1'));       // 0
+echo preg_match('/\d{2,}/', '1'), PHP_EOL;       // 0
 preg_match('/\d{2,}/', '123', $matches);    // matches "123"
-print_r($matches[0]);
+echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
 
