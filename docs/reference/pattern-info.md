@@ -1,5 +1,5 @@
 ---
-description: "The facts PatternInfo reads from a pattern — capture counts, names, limits, anchors, match lengths — and the PHP and PCRE2 versions it is valid on."
+description: "The facts PatternInfo reads from a pattern — capture counts, names, limits, anchors, match lengths, a sure match — and the PHP and PCRE2 versions it is valid on."
 ---
 
 # Pattern Info and Compatibility
@@ -8,7 +8,8 @@ PCRE2 computes a handful of facts on every compiled pattern, through
 `pcre2_pattern_info()`: how many groups it captures, their names, the highest
 group a back reference names, the limits the pattern asks for. PHP exposes
 none of them. `Regex::info()` reads them from the pattern alone, with the
-length and the anchoring of what the pattern matches, and
+length and the anchoring of what the pattern matches and whether it is sure
+to match, and
 `Regex::compatibility()` says on which PHP versions and PCRE2 releases the
 pattern is valid at all.
 
@@ -129,6 +130,8 @@ did not have.
 | `maxLookbehind` | `int` | The longest branch of the lookbehinds PCRE2 measures at the target, in the same unit, `0` for none |
 | `anchoredStart` | `bool` | `true` when proven: every match attempt is tied to where the search starts |
 | `anchoredEnd` | `bool` | `true` when proven: every successful match ends at the end of the subject |
+| `alwaysMatches` | `bool` | `true` when proven: `preg_match()` never returns `0`, whatever the subject, when the search starts at offset 0 |
+| `alwaysMatchesFromAnyOffset` | `bool` | `true` when proven: `preg_match()` never returns `0`, whatever the subject and the offset within it |
 
 The unit follows the mode: `/é{2}/u` has a length of 2, and `/é{2}/` of 3,
 as without `u` the `é` is two bytes and `{2}` repeats the second.
@@ -178,6 +181,69 @@ last item of the alternative, not under a quantifier that allows zero, not
 inside an assertion. A reachable `(*ACCEPT)` ends a match anywhere, so
 `/a(*ACCEPT)b\z/` is not anchored at the end.
 
+### A pattern sure to match
+
+`alwaysMatches` is true when proven: a path through the pattern consumes
+nothing and asserts nothing the engine could refuse, so `preg_match()` returns
+`1` on every subject, never `0`. A static analysis tool then types
+`preg_match()` as `1|false` instead of `0|1|false`, and `preg_match_all()` as
+`int<1, max>|false`. The facts speak of `0` only: `false` stays with the
+caller, for an invalid UTF-8 subject under `u`, a match limit or the JIT
+stack.
+
+```php
+$info = Regex::create()->info('/(.*)/');
+$info->alwaysMatches;              // true
+$info->alwaysMatchesFromAnyOffset; // true
+
+$info = Regex::create()->info('/^(.*)$/');
+$info->alwaysMatches;              // false: preg_match('/^(.*)$/', "a\nb") returns 0
+```
+
+The two patterns differ by their anchors. `/(.*)/` matches an empty text
+anywhere. `/^(.*)$/` needs the `.*` to reach the `$`, and `.` does not read a
+newline without `s`: on `"a\nb"` the engine returns `0`. The fact is proven or
+withheld, never guessed: a pattern that matches every subject by a route the
+analyzer does not read is reported `false`, which stays sound.
+
+The proven paths are: an empty pattern or group, a repeat allowed zero times
+(`a*`, `a{0}`, `(?<n>a)?`), an alternative that is one of these (`/^$|a*/`,
+`/(?|a|)/`), `\K`, and a `(?(DEFINE)...)` group; through a capturing, atomic
+or branch reset group, and through a repeat that runs at least once
+(`(a*)+`). Along the path, start anchors (`^`, `\A`, `\G`) or end anchors
+(`$`, `\z`, `\Z`) are allowed, but not both: `/^a*/` and `/a*$/` are proven,
+`/^a*$/` is not, as it fails on `"ab"`. The idiom `/^(.*)$/s`, a start
+anchor, a repeat of every character of the mode (`.` under `s`, `[\s\S]`,
+`\C` without `u`) and an end anchor, is proven too. A start anchor after
+something that may have consumed text is not reached: an atomic group or a
+possessive repeat does not give the text back (`/(?>a|)^/` and `/a?+^/` fail
+on `"a"`), the idiom eats the subject (`/(^.*$){2}/s` fails on `"a"`), and
+the fact does not read greed, so `/a*^/` is reported `false` though the
+engine backtracks. A word boundary, a lookaround, a back reference, a
+conditional, a subroutine call, a callout and a backtracking verb stop the
+proof: `/(?=a)/` and `/\ba*/` fail on `""`, `/(a)?\1/` fails on an unset
+group, `/(*FAIL)/` always fails; `/(?!a)/` matches every subject and is
+reported `false`. A `(*COMMIT)`, `(*PRUNE)`, `(*SKIP)` or `(*THEN)` anywhere
+in the pattern withholds both facts: the engine never tries the empty path
+beside it, `/(?:a(*COMMIT)b)?/` fails on `"a"` and `/(*COMMIT)a|/` on `""`.
+
+`alwaysMatchesFromAnyOffset` is true when the path asserts no start anchor:
+`preg_match($p, $s, $m, 0, $n)` with `$n <= strlen($s)` never returns `0`
+either. `/(.*)/` and `/(.*)$/` are proven from any offset, as the scan reaches
+the end of the subject where `$` holds; `/^(.*)/` and `/^(.*)$/s` are not, as
+`^` fails at offset 1 on `"ab"`, and so does `^` under `m` at every offset
+past 0 on `"ab"`. `\G` is read as a start anchor, though it holds at the
+offset: `/\Ga*/` is proven at offset 0 only. Past the end of the subject the
+engine returns `false`, outside the facts.
+
+Under the `A` modifier the attempt is tied to the offset, so the scan does not
+reach the end of the subject: `/a*$/A` returns `0` on `"ab"` and is not
+proven, where `/a*/A` and `/^a*/A` are. A pattern opening with `(*NOTEMPTY)` or
+`(*NOTEMPTY_ATSTART)` refuses the empty match the paths prove, and is never
+proven: the interpreter (`pcre.jit=0`) and `pcre2test` return `0` on `""`, where
+the JIT, PHP's default, ignores both options and returns `1`; a fact must hold
+under both.
+
 ## Mapping to `pcre2_pattern_info()`
 
 The names are PHPRegex's own because some of PCRE2's would mislead: its
@@ -201,6 +267,7 @@ under `/I`, and says where the two differ.
 | `maxLookbehind` | `MAXLOOKBEHIND` | `Max lookbehind` | PCRE2 also counts the character `\b`, `\B` and `\A` look back at: `\bx` gives 1 there and `0` here. A group repeated zero times inside a lookbehind is read as PCRE2 10.43 and later read it, whatever the target: `(?<=(?:a\|bc){0})x` gives `0`. As PCRE2, it leaves out a lookbehind that PCRE2 never measures, inside a lookbehind: after a `(*ACCEPT)` or a `(*FAIL)` that ends its branch, `(?<=(*ACCEPT)(?<=abcd))` giving `0`; in a DEFINE group from 10.35, `(?<=(?(DEFINE)(?<=abcd)))` giving `0`; in a lookahead before 10.34, `(?<=(?=(?<=abcd)))` giving `0` on 10.33 and `4` from 10.34. Before 10.34 PCRE2 reports the longest branch it measured for a lookbehind, of a group in it or of a group it calls too, and so does `maxLookbehind` for such a target: `(?<=(?:abc\|xyz){0}d)` gives `3` on 10.33 and `1` from 10.34. For a DEFINE group in a lookbehind, or one that opens with a group, on 10.32 to 10.34, see [the known differences](../concepts/pcre.md#known-differences) |
 | `anchoredStart` | `ALLOPTIONS` holding `PCRE2_ANCHORED` | `Overall options: anchored` | PCRE2 also anchors a pattern starting with `.*` under `s`, and drops an item repeated zero times before the anchor; neither is modelled: `/.*a/s` and `/(?:a){0}\Ab/` are anchored there and not here. PCRE2 reports `A` with a `(*SKIP)` as anchored, which the JIT does not honour (above); `false` here. A `true` here is always anchored in PCRE2 |
 | `anchoredEnd` | none | none | PCRE2 does not infer it; `PCRE2_ENDANCHORED` is a compile option, not a fact |
+| `alwaysMatches`, `alwaysMatchesFromAnyOffset` | none | none | PCRE2 does not infer them; `MATCHEMPTY` (`May match empty string`) says the pattern may match an empty text, not that it always matches: `/(?=a)/` may match empty and fails on `""` |
 
 The first code unit, the starting code units and the last required code unit
 (`FIRSTCODEUNIT`, `FIRSTBITMAP`, `LASTCODEUNIT`) are not offered: PCRE2's

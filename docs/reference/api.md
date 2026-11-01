@@ -478,7 +478,7 @@ For the group numbers alone, branch resets and duplicate names included, see
 ### info(string $regex): PatternInfo
 
 Reads the facts PCRE2 computes on the compiled pattern, which PHP does not expose, with the length and the anchoring of
-what the pattern matches. The pattern is validated first at the facade's target: `info()` throws what `validate()`
+what the pattern matches and whether it is sure to match. The pattern is validated first at the facade's target: `info()` throws what `validate()`
 refuses, the exception `parse()` throws or a `SemanticErrorException` carrying the validation error and its code.
 
 ```php
@@ -490,11 +490,14 @@ $info->captureCount;   // 2
 $info->names;          // ['month' => [2], 'year' => [1]]
 $info->minMatchLength; // 7
 $info->anchoredStart;  // true
+$info->alwaysMatches;  // false: the pattern needs seven characters
+
+Regex::create()->info('/(.*)/')->alwaysMatches; // true: preg_match() never returns 0
 ```
 
 `captureCount`, `names`, `maxBackreference`, `usesBackslashC`, `matchLimit`, `depthLimit`, `heapLimit`, `newline` and
-`bsr` equal what PCRE2 reports. `minMatchLength`, `maxMatchLength`, `maxLookbehind`, `anchoredStart` and `anchoredEnd`
-are sound bounds a minor release may narrow. A static analysis extension calls `PatternInfoAnalyzer` from
+`bsr` equal what PCRE2 reports. `minMatchLength`, `maxMatchLength`, `maxLookbehind`, `anchoredStart`, `anchoredEnd`,
+`alwaysMatches` and `alwaysMatchesFromAnyOffset` are sound bounds a minor release may narrow. A static analysis extension calls `PatternInfoAnalyzer` from
 `php-regex/regex-parser` instead. See [Pattern Info](pattern-info.md) for each fact and its PCRE2 counterpart.
 
 ---

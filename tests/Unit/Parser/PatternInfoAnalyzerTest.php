@@ -47,10 +47,18 @@ final class PatternInfoAnalyzerTest extends TestCase
      */
     private const TARGET = ['php_version' => '8.4', 'pcre_version' => '10.44'];
 
+    /**
+     * The subjects every always-matching row is replayed on: nothing, one
+     * character, a newline in the middle, a newline alone, a final newline,
+     * the spaced word of phpstan/phpstan#14490, a "0" and an invalid UTF-8
+     * byte, which "u" turns into false, outside the facts.
+     */
+    private const SUBJECTS = ['', 'a', "a\nb", "\n", "ab\n", ' DESC', '0', "\xff"];
+
     #[Test]
-    public function test_analysis_version_is_2(): void
+    public function test_analysis_version_is_3(): void
     {
-        $this->assertSame('2', PatternInfoAnalyzer::ANALYSIS_VERSION);
+        $this->assertSame('3', PatternInfoAnalyzer::ANALYSIS_VERSION);
     }
 
     #[Test]
@@ -69,7 +77,7 @@ final class PatternInfoAnalyzerTest extends TestCase
 
         // canMatchEmpty was cut: it is minMatchLength === 0.
         $this->assertSame([
-            'anchoredEnd', 'anchoredStart', 'bsr', 'captureCount', 'depthLimit', 'heapLimit', 'matchLimit',
+            'alwaysMatches', 'alwaysMatchesFromAnyOffset', 'anchoredEnd', 'anchoredStart', 'bsr', 'captureCount', 'depthLimit', 'heapLimit', 'matchLimit',
             'maxBackreference', 'maxLookbehind', 'maxMatchLength', 'minMatchLength', 'names', 'newline', 'usesBackslashC',
         ], $properties);
 
@@ -905,6 +913,306 @@ final class PatternInfoAnalyzerTest extends TestCase
             $this->assertSame($validation->hint, $refusal->hint);
             $this->assertStringStartsWith('Line 1: (?<=a\Kb)c', (string) $refusal->snippet);
         }
+    }
+
+    /**
+     * @param array{string, int}|null $offsetWitness a subject and an offset within it the engine returns 0 at
+     */
+    #[Test]
+    #[DataProvider('provideAlwaysMatchingPatterns')]
+    public function test_always_matches_is_proven_from_a_path_that_consumes_nothing(string $pattern, bool $fromAnyOffset, ?array $offsetWitness = null): void
+    {
+        $info = $this->info($pattern);
+
+        $this->assertTrue($info->alwaysMatches);
+        $this->assertSame($fromAnyOffset, $info->alwaysMatchesFromAnyOffset);
+        $this->assertFalse($fromAnyOffset && null !== $offsetWitness, 'A row proven from any offset names no offset witness.');
+    }
+
+    /**
+     * The engine never returns 0 for a proven row: at offset 0 on every
+     * subject, and at every offset within the subject when the fact says
+     * so. A row proven at offset 0 only names an offset the engine returns
+     * 0 at, or says the fact is withheld where the engine would allow it.
+     *
+     * @param array{string, int}|null $offsetWitness a subject and an offset within it the engine returns 0 at
+     */
+    #[Test]
+    #[DataProvider('provideAlwaysMatchingPatterns')]
+    public function test_a_proven_row_never_returns_0_on_the_engine(string $pattern, bool $fromAnyOffset, ?array $offsetWitness = null): void
+    {
+        foreach (self::SUBJECTS as $subject) {
+            $this->assertNotSame(0, preg_match($pattern, $subject), \sprintf('%s returns 0 on %s.', $pattern, json_encode($subject)));
+        }
+
+        if (null !== $offsetWitness) {
+            $this->assertFalse($fromAnyOffset, 'The row names an offset the engine returns 0 at: it cannot be proven from any offset.');
+            [$subject, $offset] = $offsetWitness;
+            $this->assertSame(0, preg_match($pattern, $subject, $matches, 0, $offset), 'The offset witness is not one: the engine matches there.');
+
+            return;
+        }
+
+        foreach (self::SUBJECTS as $subject) {
+            for ($offset = 0; $offset <= \strlen($subject); $offset++) {
+                $this->assertNotSame(0, preg_match($pattern, $subject, $matches, 0, $offset), \sprintf('%s returns 0 on %s at offset %d.', $pattern, json_encode($subject), $offset));
+            }
+        }
+    }
+
+    /**
+     * Each proven row was replayed on PHP 8.4.27 / PCRE2 10.49; the test
+     * above replays it on the running engine.
+     *
+     * @return iterable<string, array{pattern: string, fromAnyOffset: bool, offsetWitness?: array{string, int}}>
+     */
+    public static function provideAlwaysMatchingPatterns(): iterable
+    {
+        // The issue's own reductions.
+        yield 'any text, captured' => ['pattern' => '/(.*)/', 'fromAnyOffset' => true];
+        yield 'any text from the start' => ['pattern' => '/^(.*)/', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'any text to the end' => ['pattern' => '/(.*)$/', 'fromAnyOffset' => true];
+
+        // Boundaries: a path that consumes nothing.
+        yield 'empty pattern' => ['pattern' => '//', 'fromAnyOffset' => true];
+        yield 'empty group' => ['pattern' => '/(?:)/', 'fromAnyOffset' => true];
+        yield 'empty capture' => ['pattern' => '/()/', 'fromAnyOffset' => true];
+        yield 'repeated zero times' => ['pattern' => '/a{0}/', 'fromAnyOffset' => true];
+        yield 'repeated zero or more times' => ['pattern' => '/a{0,}/', 'fromAnyOffset' => true];
+        yield 'a free repeat under a required one' => ['pattern' => '/(a*)+/', 'fromAnyOffset' => true];
+        yield 'atomic group' => ['pattern' => '/(?>a*)/', 'fromAnyOffset' => true];
+        yield 'branch reset with an empty alternative' => ['pattern' => '/(?|a|)/', 'fromAnyOffset' => true];
+        yield 'one empty alternative is enough' => ['pattern' => '/^$|a*/', 'fromAnyOffset' => true];
+        yield 'the end-only branch of a start-or-end alternation' => ['pattern' => '/(?:^|$)$/', 'fromAnyOffset' => true];
+        yield 'the start-only branch of a start-or-end alternation' => ['pattern' => '/(?:^|$)^/', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+
+        // Unicode.
+        yield 'graphemes' => ['pattern' => '/\X*/u', 'fromAnyOffset' => true];
+        yield 'letters' => ['pattern' => '/\p{L}*/u', 'fromAnyOffset' => true];
+        yield 'everything, in UTF mode' => ['pattern' => '/[\s\S]*/u', 'fromAnyOffset' => true];
+        yield 'graphemes, bytes' => ['pattern' => '/\X*/', 'fromAnyOffset' => true];
+        yield 'letters, bytes' => ['pattern' => '/\p{L}*/', 'fromAnyOffset' => true];
+        yield 'everything, bytes' => ['pattern' => '/[\s\S]*/', 'fromAnyOffset' => true];
+
+        // Groups.
+        yield 'optional named group' => ['pattern' => '/(?<n>a)?/', 'fromAnyOffset' => true];
+        yield 'optional branch reset' => ['pattern' => '/(?|(a)|(b))?/', 'fromAnyOffset' => true];
+        yield 'DEFINE alone' => ['pattern' => '/(?(DEFINE)(a))/', 'fromAnyOffset' => true];
+
+        // Escapes and classes under a free repeat.
+        yield 'digits' => ['pattern' => '/\d*/', 'fromAnyOffset' => true];
+        yield 'a negated class, not universal, under a free repeat' => ['pattern' => '/[^a]*/', 'fromAnyOffset' => true];
+        yield 'newlines' => ['pattern' => '/\R*/', 'fromAnyOffset' => true];
+        yield 'horizontal spaces' => ['pattern' => '/\h*/', 'fromAnyOffset' => true];
+
+        // Flags: the full class between the anchors.
+        yield 'dot-all between the anchors' => ['pattern' => '/^(.*)$/s', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'dot-all between the anchors, UTF mode' => ['pattern' => '/^(.*)$/su', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'everything between the anchors' => ['pattern' => '/^[\s\S]*$/', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'everything between the anchors, UTF mode' => ['pattern' => '/^[\s\S]*$/u', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'everything between the line anchors' => ['pattern' => '/^[\s\S]*$/m', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'everything between \A and \z' => ['pattern' => '/\A(?s:.*)\z/', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'everything between \A and \Z' => ['pattern' => '/\A[\s\S]*\Z/', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'dot-all set inline before the anchor' => ['pattern' => '/(?s)^.*$/', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'dot-all set inline after the anchor' => ['pattern' => '/^(?s).*$/', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'dot-all, lazy' => ['pattern' => '/^.*?$/s', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'dot-all, possessive' => ['pattern' => '/^.*+$/s', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'dot-all, atomic' => ['pattern' => '/^(?>.*)$/s', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'dot-all with a comment' => ['pattern' => "/^.* # all of it\n\$/sx", 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'dot-all under D' => ['pattern' => '/^.*$/sD', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'dot-all under A' => ['pattern' => '/^.*$/sA', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'one code unit, bytes' => ['pattern' => '/^\C*$/', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'the full class in a capture' => ['pattern' => '/(^.*$)/s', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield 'the full class repeated at least once' => ['pattern' => '/(?:^.*$)+/s', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+
+        // Anchors.
+        yield 'caret then a free repeat' => ['pattern' => '/^a*/', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield '\A then a free repeat' => ['pattern' => '/\Aa*/', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield '\G then a free repeat' => ['pattern' => '/\Ga*/', 'fromAnyOffset' => false];
+        yield 'a free repeat then dollar' => ['pattern' => '/a*$/', 'fromAnyOffset' => true];
+        yield 'a free repeat then \z' => ['pattern' => '/a*\z/', 'fromAnyOffset' => true];
+        yield 'a free repeat then \Z' => ['pattern' => '/a*\Z/', 'fromAnyOffset' => true];
+        yield 'a free repeat then dollar under m' => ['pattern' => '/a*$/m', 'fromAnyOffset' => true];
+        yield 'caret on one alternative' => ['pattern' => '/^|a/', 'fromAnyOffset' => false, 'offsetWitness' => ['bb', 1]];
+        yield 'dollar on one alternative' => ['pattern' => '/a|$/', 'fromAnyOffset' => true];
+        yield 'caret repeated at least once' => ['pattern' => '/(^)+/', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+        yield '\K after a free repeat' => ['pattern' => '/a*\K/', 'fromAnyOffset' => true];
+        yield '\K before a free repeat' => ['pattern' => '/\Ka*/', 'fromAnyOffset' => true];
+
+        // The A modifier: the attempt is tied to the offset.
+        yield 'a free repeat under A' => ['pattern' => '/a*/A', 'fromAnyOffset' => true];
+        yield 'caret then a free repeat under A' => ['pattern' => '/^a*/A', 'fromAnyOffset' => false, 'offsetWitness' => ['ab', 1]];
+
+        // Verbs the engine reads as options of the pattern.
+        yield 'a match limit' => ['pattern' => '/(*LIMIT_MATCH=1000)a*/', 'fromAnyOffset' => true];
+        yield 'a newline convention' => ['pattern' => '/(*CRLF)a*$/', 'fromAnyOffset' => true];
+    }
+
+    #[Test]
+    #[DataProvider('provideWithheldWitnesses')]
+    public function test_a_withheld_row_has_a_subject_the_engine_returns_0_on(string $pattern, string $subject, bool $jit = true): void
+    {
+        $info = $this->info($pattern);
+        $this->assertFalse($info->alwaysMatches);
+        $this->assertFalse($info->alwaysMatchesFromAnyOffset);
+
+        $before = ini_get('pcre.jit');
+
+        try {
+            ini_set('pcre.jit', $jit ? '1' : '0');
+            $this->assertSame(0, preg_match($pattern, $subject), 'The witness is not one: the engine matches.');
+        } finally {
+            ini_set('pcre.jit', (string) $before);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, jit?: bool}>
+     */
+    public static function provideWithheldWitnesses(): iterable
+    {
+        // The issue's own reduction, and the pattern it came from: "." does
+        // not read the newline without "s".
+        yield 'any text between the anchors' => ['pattern' => '/^(.*)$/', 'subject' => "a\nb"];
+        yield 'the pattern of phpstan/phpstan#14490' => ['pattern' => '/^(.*)(\s+(DESC|ASC|))*$/Ui', 'subject' => "a\nb"];
+        yield 'any text between the anchors under D' => ['pattern' => '/^(.*)$/D', 'subject' => "a\nb"];
+        yield 'dot-all cancelled inline' => ['pattern' => '/(?-s)^.*$/s', 'subject' => "a\nb"];
+        yield 'both anchors around nothing' => ['pattern' => '/^$/', 'subject' => 'a'];
+        yield 'both anchors around a free repeat' => ['pattern' => '/^a*$/', 'subject' => 'ab'];
+        yield 'a word boundary' => ['pattern' => '/x?\b/', 'subject' => ''];
+        yield 'a full class from the start to a word boundary' => ['pattern' => '/^.*\b/s', 'subject' => ''];
+        yield 'a full class from a word boundary to the end' => ['pattern' => '/\b.*$/s', 'subject' => ''];
+        yield 'one character between the anchors' => ['pattern' => '/^a$/', 'subject' => ''];
+        yield 'a full class at least once between the anchors' => ['pattern' => '/^.+$/s', 'subject' => ''];
+        yield 'a full class at most three times between the anchors' => ['pattern' => '/^.{0,3}$/s', 'subject' => 'abcd'];
+        yield 'a word boundary before a free repeat' => ['pattern' => '/\ba*/', 'subject' => ''];
+        yield 'a non-boundary before a free repeat' => ['pattern' => '/\Ba*/', 'subject' => 'a'];
+
+        // Failure paths.
+        yield 'lookahead' => ['pattern' => '/(?=a)/', 'subject' => ''];
+        yield 'lookbehind' => ['pattern' => '/(?<=a)/', 'subject' => ''];
+        yield 'a reference to an unset group' => ['pattern' => '/(a)?\1/', 'subject' => ''];
+        yield 'a call to a group needing a character' => ['pattern' => '/(a)?(?1)/', 'subject' => ''];
+        yield 'FAIL' => ['pattern' => '/(*FAIL)/', 'subject' => ''];
+
+        // What may consume before a start anchor: an atomic group or a
+        // possessive repeat does not give the text back for the anchor to
+        // hold, and the idiom of a full class between the anchors eats the
+        // subject before a second start anchor.
+        yield 'an atomic group before a caret' => ['pattern' => '/(?>a|)^/', 'subject' => 'a'];
+        yield 'a possessive repeat before a caret' => ['pattern' => '/a?+^/', 'subject' => 'a'];
+        yield 'a possessive repeat before \\G' => ['pattern' => '/a?+\G/', 'subject' => 'a'];
+        yield 'an atomic group in a group before a caret' => ['pattern' => '/(?:(?>a|)b?)^/', 'subject' => 'a'];
+        yield 'the full class between the anchors, twice' => ['pattern' => '/(^.*$){2}/s', 'subject' => 'a'];
+        yield 'the full class between the anchors, then a caret' => ['pattern' => '/(^.*$)^/s', 'subject' => 'a'];
+        yield 'the full class between the anchors, repeated at least once, then a caret' => ['pattern' => '/(?:^.*$)+^/s', 'subject' => 'a'];
+
+        // A backtracking verb, wherever it stands: the empty path next to
+        // it, under a repeat or in another alternative, is never tried.
+        yield 'COMMIT under an optional group' => ['pattern' => '/(?:a(*COMMIT)b)?/', 'subject' => 'a'];
+        yield 'COMMIT under a free repeat' => ['pattern' => '/(?:(*COMMIT)a)*/', 'subject' => ''];
+        yield 'COMMIT beside an empty alternative' => ['pattern' => '/(*COMMIT)a|/', 'subject' => ''];
+        yield 'COMMIT beside a dollar alternative' => ['pattern' => '/(*COMMIT)a|$/', 'subject' => ''];
+        yield 'PRUNE under an optional group under A' => ['pattern' => '/(?:(*PRUNE)a)?/A', 'subject' => 'b'];
+        yield 'THEN under an optional group under A' => ['pattern' => '/(?:(*THEN)a)?/A', 'subject' => 'b'];
+        yield 'PRUNE under an optional group after a caret' => ['pattern' => '/^(?:a(*PRUNE)b)?/', 'subject' => 'a'];
+        // The JIT, PHP's default, returns 1 here; the interpreter 0.
+        yield 'SKIP under an optional group under A' => ['pattern' => '/(?:a(*SKIP)b)?/A', 'subject' => 'a', 'jit' => false];
+
+        // A free repeat then an end anchor under A: the attempt is tied to
+        // the offset, and the anchor is not reached from there.
+        yield 'a free repeat then dollar under A' => ['pattern' => '/a*$/A', 'subject' => 'ab'];
+
+        // The pattern forbids the empty match. The JIT, PHP's default, does
+        // not honour either option (preg_match() returns 1 on "" under
+        // pcre.jit=1); the interpreter and pcre2test return 0.
+        yield 'NOTEMPTY' => ['pattern' => '/(*NOTEMPTY)a*/', 'subject' => '', 'jit' => false];
+        yield 'NOTEMPTY_ATSTART' => ['pattern' => '/(*NOTEMPTY_ATSTART)a*/', 'subject' => '', 'jit' => false];
+    }
+
+    /**
+     * The fact is withheld though the engine never returns 0: sound, not
+     * exact. Each row says what stops the proof.
+     */
+    #[Test]
+    #[DataProvider('provideWithheldWithoutWitness')]
+    public function test_a_withheld_row_without_a_witness_is_sound_not_exact(string $pattern): void
+    {
+        $info = $this->info($pattern);
+        $this->assertFalse($info->alwaysMatches);
+        $this->assertFalse($info->alwaysMatchesFromAnyOffset);
+
+        foreach (self::SUBJECTS as $subject) {
+            $this->assertNotSame(0, preg_match($pattern, $subject), 'The engine returns 0: the row belongs with the witnesses.');
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideWithheldWithoutWitness(): iterable
+    {
+        yield 'a line anchor around a dot that is not a full class' => ['pattern' => '/^.*$/m'];
+        yield 'graphemes between the anchors are not a class' => ['pattern' => '/^\X*$/u'];
+        yield 'a negative lookahead' => ['pattern' => '/(?!a)/'];
+        yield 'a negative lookbehind' => ['pattern' => '/(?<!a)/'];
+        yield 'a conditional' => ['pattern' => '/(a)?(?(1)b)/'];
+        yield 'COMMIT before a free repeat' => ['pattern' => '/(*COMMIT)a*/'];
+        yield 'ACCEPT' => ['pattern' => '/(*ACCEPT)/'];
+        yield 'a callout' => ['pattern' => '/(?C)a*/'];
+        yield 'THEN beside an empty alternative: the verb jumps to it, the fact does not read verbs' => ['pattern' => '/(*THEN)a|/'];
+        yield 'a free repeat before a caret: the engine gives the text back, the fact does not read greed' => ['pattern' => '/a*^/'];
+        yield 'an empty alternative before a caret' => ['pattern' => '/(?:a|)^/'];
+    }
+
+    #[Test]
+    public function test_the_facts_speak_of_0_only_false_stays_with_the_caller(): void
+    {
+        $this->assertTrue($this->info('/(.*)/u')->alwaysMatchesFromAnyOffset);
+
+        $this->assertFalse(preg_match('/(.*)/u', "\xff"));
+        $this->assertSame(\PREG_BAD_UTF8_ERROR, preg_last_error());
+
+        $this->assertFalse(preg_match('/(.*)/', 'ab', $matches, 0, 5));
+        $this->assertSame(\PREG_INTERNAL_ERROR, preg_last_error());
+    }
+
+    #[Test]
+    public function test_a_pattern_info_built_without_the_sure_match_facts_withholds_them(): void
+    {
+        // The two trailing parameters default: a value built by hand before
+        // they existed keeps compiling, and claims nothing.
+        $info = new PatternInfo(0, [], 0, 0, null, 0, false, null, null, null, null, null, false, false);
+
+        $this->assertFalse($info->alwaysMatches);
+        $this->assertFalse($info->alwaysMatchesFromAnyOffset);
+    }
+
+    #[Test]
+    public function test_a_nesting_of_anchored_sequences_is_read_in_one_walk(): void
+    {
+        // Each level a sequence of three parts whose first part is the level
+        // below: a second reading of the parts at every level doubles the
+        // cost per level.
+        $depth = 24;
+        $pattern = '/'.str_repeat('(', $depth).'^'.str_repeat('a$)', $depth).'/';
+
+        $started = hrtime(true);
+        $info = $this->info($pattern);
+        $elapsed = (hrtime(true) - $started) / 1_000_000_000;
+
+        $this->assertFalse($info->alwaysMatches);
+        $this->assertLessThan(1.0, $elapsed, \sprintf('%d levels read in %.1f s: the parts are walked more than once per level.', $depth, $elapsed));
+    }
+
+    #[Test]
+    public function test_a_nesting_at_the_recursion_depth_limit_still_answers(): void
+    {
+        $depth = RegexParser::DEFAULT_MAX_RECURSION_DEPTH - 1;
+        $info = $this->info('/'.str_repeat('(?:', $depth).'a*'.str_repeat(')', $depth).'/');
+
+        $this->assertTrue($info->alwaysMatches);
+        $this->assertTrue($info->alwaysMatchesFromAnyOffset);
     }
 
     private function info(string $pattern): PatternInfo
