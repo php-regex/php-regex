@@ -57,7 +57,7 @@ final class InternalMembersTest extends TestCase
     {
         $members = [
             PcreEngine::class => ['prepare'],
-            PatternPrinter::class => ['forFormatting', 'forCompacting', 'refusal', 'resetState', 'flags', 'setFlags', 'scope', 'restoreScope', 'countCapture', 'groupOpening', 'conditionText', 'quotedRunPieces', 'separator', 'opensConstruct', 'escapeString'],
+            PatternPrinter::class => ['forFormatting', 'forCompacting', 'refusal', 'resetState', 'flags', 'underFlags', 'scope', 'restoreScope', 'countCapture', 'groupOpening', 'conditionText', 'quotedRunPieces', 'separator', 'opensConstruct', 'escapeString'],
             LiteralSet::class => ['__construct', 'empty', 'fromString', 'concat', 'unite'],
             Dfa::class => ['__construct'],
             DfaState::class => ['__construct', 'packedRanges', 'byteTransitions'],

@@ -458,11 +458,23 @@ final class PatternPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * @internal PatternLayout sets the modifiers in force inside a group it lays out
+     * Prints under other modifiers, then puts the current ones back,
+     * whether the print returns or throws.
+     *
+     * @param \Closure(): string $print
+     *
+     * @internal PatternLayout prints the body of a group it lays out under the group's modifiers
      */
-    public function setFlags(string $flags): void
+    public function underFlags(string $flags, \Closure $print): string
     {
+        $previous = $this->flags;
         $this->flags = $flags;
+
+        try {
+            return $print();
+        } finally {
+            $this->flags = $previous;
+        }
     }
 
     /**

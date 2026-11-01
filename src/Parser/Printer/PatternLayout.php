@@ -452,27 +452,26 @@ final class PatternLayout
 
         $opening = $this->printer->groupOpening($node, $flags);
         $level = $this->indentLevel;
-        $outer = $this->printer->flags();
-        $this->printer->setFlags($inner);
 
-        // A comment written on the opening line trails it.
-        $trailing = '';
-        $lead = $this->leadingSameLineComment($node->child, $node->getStartPosition() + \strlen($opening));
-        if (null !== $lead) {
-            $this->skipNode = $lead;
-            $trailing = $this->trail.rtrim($lead->comment, "\n");
-        }
+        return $opening.$this->printer->underFlags($inner, function () use ($node, $opening, $level): string {
+            // A comment written on the opening line trails it.
+            $trailing = '';
+            $lead = $this->leadingSameLineComment($node->child, $node->getStartPosition() + \strlen($opening));
+            if (null !== $lead) {
+                $this->skipNode = $lead;
+                $trailing = $this->trail.rtrim($lead->comment, "\n");
+            }
 
-        $this->indentLevel++;
-        $this->parentBroke = true;
-        $child = $node->child->accept($this->printer);
-        $this->parentBroke = false;
-        $this->indentLevel--;
-        $this->skipNode = null;
-        $closing = str_contains($this->printer->flags(), 'x') ? "\n".self::indent($level).')' : ')';
-        $this->printer->setFlags($outer);
+            $this->indentLevel++;
+            $this->parentBroke = true;
+            $child = $node->child->accept($this->printer);
+            $this->parentBroke = false;
+            $this->indentLevel--;
+            $this->skipNode = null;
+            $closing = str_contains($this->printer->flags(), 'x') ? "\n".self::indent($level).')' : ')';
 
-        return $opening.$trailing.$this->bodyLine($child, $level + 1).$child.$closing;
+            return $trailing.$this->bodyLine($child, $level + 1).$child.$closing;
+        });
     }
 
     public function conditional(ConditionalNode $node): string
@@ -498,23 +497,25 @@ final class PatternLayout
         $this->active = true;
 
         $level = $this->indentLevel;
-        $this->indentLevel++;
-        $yes = $node->yes->accept($this->printer);
-        $yesKeepsX = str_contains($this->printer->flags(), 'x');
-        $hasNo = !($node->no instanceof LiteralNode && '' === $node->no->value);
-        $no = $yesKeepsX ? $node->no->accept($this->printer) : $this->forceInline($node->no);
-        $this->indentLevel--;
-        $closesOnItsLine = str_contains($this->printer->flags(), 'x');
-        $this->printer->setFlags($flags);
 
-        $text = '(?'.$condition.$this->bodyLine($yes, $level + 1).$yes;
-        if ('' !== $no || $hasNo) {
-            $text .= $yesKeepsX
-                ? "\n".str_repeat(' ', ($level + 1) * \strlen(self::INDENT) - 2).'|'.('' === $no ? '' : ' '.$no)
-                : '|'.$no;
-        }
+        return '(?'.$condition.$this->printer->underFlags($flags, function () use ($node, $level): string {
+            $this->indentLevel++;
+            $yes = $node->yes->accept($this->printer);
+            $yesKeepsX = str_contains($this->printer->flags(), 'x');
+            $hasNo = !($node->no instanceof LiteralNode && '' === $node->no->value);
+            $no = $yesKeepsX ? $node->no->accept($this->printer) : $this->forceInline($node->no);
+            $this->indentLevel--;
+            $closesOnItsLine = str_contains($this->printer->flags(), 'x');
 
-        return $text.($closesOnItsLine ? "\n".self::indent($level) : '').')';
+            $text = $this->bodyLine($yes, $level + 1).$yes;
+            if ('' !== $no || $hasNo) {
+                $text .= $yesKeepsX
+                    ? "\n".str_repeat(' ', ($level + 1) * \strlen(self::INDENT) - 2).'|'.('' === $no ? '' : ' '.$no)
+                    : '|'.$no;
+            }
+
+            return $text.($closesOnItsLine ? "\n".self::indent($level) : '').')';
+        });
     }
 
     /**
