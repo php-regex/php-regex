@@ -92,7 +92,12 @@ final class LanguageSolver
      * @param RegexParser|null       $parser   Reads the patterns, for its PHP and PCRE2 target; a default parser when null
      * @param DfaCacheInterface|null $dfaCache Keeps compiled DFAs between questions; nothing is kept when null
      */
-    public function __construct(private readonly ?RegexParser $parser = null, private readonly ?DfaCacheInterface $dfaCache = null) {}
+    private readonly RegexParser $parser;
+
+    public function __construct(?RegexParser $parser = null, private readonly ?DfaCacheInterface $dfaCache = null)
+    {
+        $this->parser = $parser ?? RegexParser::create();
+    }
 
     /**
      * Whether some string matches both patterns, and the shortest such string.
@@ -229,9 +234,9 @@ final class LanguageSolver
      */
     public function runsOfEveryCall(string $left, string $right): ?array
     {
-        $translator = new HirTranslator($this->parser()->target());
-        $leftAst = $this->parser()->parse($left);
-        $rightAst = $this->parser()->parse($right);
+        $translator = new HirTranslator($this->parser->target());
+        $leftAst = $this->parser->parse($left);
+        $rightAst = $this->parser->parse($right);
         $hirs = [$translator->translate($leftAst), $translator->translate($rightAst)];
 
         if (self::readsAlike($leftAst, $rightAst, $hirs[0], $hirs[1])) {
@@ -291,9 +296,9 @@ final class LanguageSolver
      */
     public function readAlike(string $left, string $right): bool
     {
-        $translator = new HirTranslator($this->parser()->target());
-        $leftAst = $this->parser()->parse($left);
-        $rightAst = $this->parser()->parse($right);
+        $translator = new HirTranslator($this->parser->target());
+        $leftAst = $this->parser->parse($left);
+        $rightAst = $this->parser->parse($right);
 
         return self::readsAlike($leftAst, $rightAst, $translator->translate($leftAst), $translator->translate($rightAst));
     }
@@ -326,13 +331,13 @@ final class LanguageSolver
      */
     public function rewritesAlikeInPlace(string $left, string $right, ?SolverOptions $options = null): bool
     {
-        $leftAst = $this->parser()->parse($left);
-        $rightAst = $this->parser()->parse($right);
+        $leftAst = $this->parser->parse($left);
+        $rightAst = $this->parser->parse($right);
         if (!self::sameSettings($leftAst, $rightAst)) {
             return false;
         }
 
-        $translator = new HirTranslator($this->parser()->target());
+        $translator = new HirTranslator($this->parser->target());
         $leftHir = $translator->translate($leftAst);
         $rightHir = $translator->translate($rightAst);
         if (self::enters($leftHir) || self::enters($rightHir)) {
@@ -381,7 +386,7 @@ final class LanguageSolver
     {
         $dfa = $this->buildDfa($regex, $options ?? new SolverOptions());
 
-        return PrefixReader::begins($dfa, $subject, $this->parser()->parse($regex)->isUnicode());
+        return PrefixReader::begins($dfa, $subject, $this->parser->parse($regex)->isUnicode());
     }
 
     /**
@@ -393,7 +398,7 @@ final class LanguageSolver
      */
     public function language(string $regex, ?SolverOptions $options = null): Language
     {
-        return new Language($this->buildDfa($regex, $options ?? new SolverOptions()), $this->parser()->parse($regex)->isUnicode());
+        return new Language($this->buildDfa($regex, $options ?? new SolverOptions()), $this->parser->parse($regex)->isUnicode());
     }
 
     /**
@@ -698,7 +703,7 @@ final class LanguageSolver
      */
     private function priorityNfa(string $pattern, SolverOptions $options): PriorityNfa
     {
-        $ast = $this->parser()->parse($pattern);
+        $ast = $this->parser->parse($pattern);
 
         // These flags change nothing the tree does not already say.
         $unsupported = array_diff(Bytes::split($ast->flags), ['i', 's', 'u', 'x', 'D', 'U', 'n', 'J', 'S', 'X', 'r']);
@@ -710,12 +715,7 @@ final class LanguageSolver
             throw new ComplexityException('Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the match solver does not model.', 0, $pattern);
         }
 
-        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build((new HirTranslator($this->parser()->target()))->translate($ast), $ast->isUnicode());
-    }
-
-    private function parser(): RegexParser
-    {
-        return $this->parser ?? RegexParser::create();
+        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build((new HirTranslator($this->parser->target()))->translate($ast), $ast->isUnicode());
     }
 
     /**
@@ -751,8 +751,8 @@ final class LanguageSolver
             }
         }
 
-        $ast = $this->parser()->parse($pattern);
-        $hir = (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options, $this->parser()->target());
+        $ast = $this->parser->parse($pattern);
+        $hir = (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options, $this->parser->target());
 
         $transformer = new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast));
         $nfa = $transformer->transform($hir, $options);
@@ -768,7 +768,7 @@ final class LanguageSolver
 
     private function cacheKey(string $pattern, SolverOptions $options): string
     {
-        return self::dfaCacheKey($pattern, $this->parser()->target()->cacheKey(), $options, \PCRE_VERSION);
+        return self::dfaCacheKey($pattern, $this->parser->target()->cacheKey(), $options, \PCRE_VERSION);
     }
 
     /**
