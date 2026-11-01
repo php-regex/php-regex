@@ -53,11 +53,21 @@ final class RedosRepairer
      */
     private const SUBJECTS = 64;
 
+    private readonly RegexParser $parser;
+
+    private readonly RedosAnalyzer $analyzer;
+
+    private readonly LanguageSolver $solver;
+
     public function __construct(
-        private readonly ?RegexParser $parser = null,
-        private readonly ?RedosAnalyzer $analyzer = null,
-        private readonly ?LanguageSolver $solver = null,
-    ) {}
+        ?RegexParser $parser = null,
+        ?RedosAnalyzer $analyzer = null,
+        ?LanguageSolver $solver = null,
+    ) {
+        $this->parser = $parser ?? RegexParser::create();
+        $this->analyzer = $analyzer ?? new RedosAnalyzer($this->parser);
+        $this->solver = $solver ?? new LanguageSolver($this->parser);
+    }
 
     /**
      * The repairs proven linear, certified ones first; none when the
@@ -67,7 +77,7 @@ final class RedosRepairer
      */
     public function repair(string $regex): array
     {
-        $parser = $this->parser ?? RegexParser::create();
+        $parser = $this->parser;
 
         try {
             $ast = $parser->parse($regex);
@@ -75,7 +85,7 @@ final class RedosRepairer
             return [];
         }
 
-        $analyzer = $this->analyzer ?? new RedosAnalyzer($parser);
+        $analyzer = $this->analyzer;
         $verdict = $analyzer->analyze($regex)->complexity;
         if (RedosComplexity::Exponential !== $verdict && RedosComplexity::Polynomial !== $verdict) {
             return [];
@@ -97,12 +107,12 @@ final class RedosRepairer
             // the engine tells apart where the automata cannot judge: they
             // do not read a possessive, which may keep what the pattern
             // gives back ("/(x++x+)+y/" refuses "xxy").
-            $sameSubjects = $this->sameSubjects($regex, $candidate, $parser);
-            if (false === $sameSubjects || (null === $sameSubjects && $this->engineTellsApart($regex, $candidate, $parser))) {
+            $sameSubjects = $this->sameSubjects($regex, $candidate);
+            if (false === $sameSubjects || (null === $sameSubjects && $this->engineTellsApart($regex, $candidate))) {
                 continue;
             }
 
-            $repairs[] = new RedosRepair($candidate, $sameSubjects, $this->sameMatches($regex, $candidate, $parser));
+            $repairs[] = new RedosRepair($candidate, $sameSubjects, $this->sameMatches($regex, $candidate));
         }
 
         // Certified first, then those that also keep $matches.
@@ -206,10 +216,10 @@ final class RedosRepairer
         return $found;
     }
 
-    private function sameSubjects(string $pattern, string $candidate, RegexParser $parser): ?bool
+    private function sameSubjects(string $pattern, string $candidate): ?bool
     {
         try {
-            return ($this->solver ?? new LanguageSolver($parser))->equivalent($pattern, $candidate, new SolverOptions(matchMode: MatchMode::Partial))->isEquivalent;
+            return $this->solver->equivalent($pattern, $candidate, new SolverOptions(matchMode: MatchMode::Partial))->isEquivalent;
         } catch (ComplexityException) {
             return null;
         }
@@ -220,12 +230,12 @@ final class RedosRepairer
      * automata spell for the pattern: the shortest strings it matches, then
      * the shortest it rejects, SUBJECTS of each.
      */
-    private function engineTellsApart(string $pattern, string $candidate, RegexParser $parser): bool
+    private function engineTellsApart(string $pattern, string $candidate): bool
     {
         $engine = new PcreEngine();
 
         try {
-            $language = ($this->solver ?? new LanguageSolver($parser))->language($pattern, new SolverOptions(matchMode: MatchMode::Partial));
+            $language = $this->solver->language($pattern, new SolverOptions(matchMode: MatchMode::Partial));
         } catch (ComplexityException) {
             return false;
         }
@@ -246,10 +256,10 @@ final class RedosRepairer
         return false;
     }
 
-    private function sameMatches(string $pattern, string $candidate, RegexParser $parser): ?bool
+    private function sameMatches(string $pattern, string $candidate): ?bool
     {
         try {
-            return ($this->solver ?? new LanguageSolver($parser))->matchEquivalent($pattern, $candidate)->isEquivalent;
+            return $this->solver->matchEquivalent($pattern, $candidate)->isEquivalent;
         } catch (ComplexityException) {
             return null;
         }

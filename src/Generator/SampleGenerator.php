@@ -227,6 +227,11 @@ final class SampleGenerator extends AbstractNodeVisitor
     private ?PcreTarget $target = null;
 
     /**
+     * The parser of the calls that name none, built on the first of them.
+     */
+    private ?RegexParser $parser = null;
+
+    /**
      * @param int        $maxRepetition Maximum repetitions for quantifiers like `*` or `+`
      * @param PcreEngine $engine        Asks the running engine what a class or a property holds
      * @param int|null   $seed          Locks the random source, as setSeed() does: each sample starts again from it
@@ -264,7 +269,7 @@ final class SampleGenerator extends AbstractNodeVisitor
      * the property can be drawn or checked.
      *
      * @param string           $regex  The delimited pattern
-     * @param RegexParser|null $parser Reads and judges the pattern; one for the running PHP when null
+     * @param RegexParser|null $parser Reads and judges the pattern; one for the running PHP, kept for the next call, when null
      *
      * @throws ParserException           when the pattern does not parse (a delimiter, flag or syntax fault)
      * @throws LexerException            when the pattern does not tokenize
@@ -274,7 +279,7 @@ final class SampleGenerator extends AbstractNodeVisitor
      */
     public function generate(string $regex, ?RegexParser $parser = null): string
     {
-        $parser ??= RegexParser::create();
+        $parser ??= $this->parser ??= RegexParser::create();
         $ast = $parser->parse($regex);
         // A pattern PCRE refuses, as a call to a group that does not exist,
         // has no sample to draw.

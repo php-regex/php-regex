@@ -58,6 +58,8 @@ final class RedosAnalyzer
         'findings' => [],
     ];
 
+    private readonly RegexParser $parser;
+
     private readonly IgnoreList $ignoreList;
 
     private readonly RedosOptions $options;
@@ -66,13 +68,14 @@ final class RedosAnalyzer
      * @param array<string> $ignoredPatterns
      */
     public function __construct(
-        private readonly ?RegexParser $parser = null,
+        ?RegexParser $parser = null,
         array $ignoredPatterns = [],
         private readonly RedosSeverity $threshold = RedosSeverity::High,
         private readonly ?ConfirmationRunnerInterface $confirmationRunner = null,
         ?RedosOptions $options = null,
     ) {
-        $this->ignoreList = new IgnoreList($ignoredPatterns, $this->parser?->target());
+        $this->parser = $parser ?? RegexParser::create();
+        $this->ignoreList = new IgnoreList($ignoredPatterns, $this->parser->target());
         $this->options = $options ?? new RedosOptions();
     }
 
@@ -89,7 +92,7 @@ final class RedosAnalyzer
         }
 
         try {
-            $parser = $this->parser ?? RegexParser::create();
+            $parser = $this->parser;
             $ast = $parser->parse($regex);
 
             // A pattern the library's static checks reject is never proven
@@ -232,7 +235,7 @@ final class RedosAnalyzer
         // with, woven in ahead of the attack, makes a candidate of a second
         // replay, run when the first reproduced nothing.
         $woven = [];
-        foreach (self::endingLiterals($this->parser ?? RegexParser::create(), $regex) as $literal) {
+        foreach (self::endingLiterals($this->parser, $regex) as $literal) {
             foreach ($candidates as $candidate) {
                 if (!str_contains($candidate->build(1), $literal)) {
                     $woven[] = new RedosWitness($literal.$candidate->prefix, $candidate->pump, $candidate->suffix, $candidate->unicode);
@@ -348,7 +351,7 @@ final class RedosAnalyzer
     private function normalizePattern(string $regex): string
     {
         try {
-            [$pattern] = PatternParser::extractPatternAndFlags($regex, $this->parser?->target());
+            [$pattern] = PatternParser::extractPatternAndFlags($regex, $this->parser->target());
 
             return $pattern;
         } catch (\Throwable) {

@@ -75,7 +75,12 @@ final class TrivialMatchClassifier
      */
     private const SHORTHANDS = ['d', 'D', 's', 'S', 'w', 'W', 'h', 'H', 'v', 'V'];
 
-    public function __construct(private readonly ?RegexParser $parser = null, private readonly ?LanguageSolver $solver = null) {}
+    private readonly RegexParser $parser;
+
+    public function __construct(?RegexParser $parser = null, private readonly ?LanguageSolver $solver = null)
+    {
+        $this->parser = $parser ?? RegexParser::create();
+    }
 
     /**
      * The string function the pattern behaves as under preg_match(), or null
@@ -88,7 +93,7 @@ final class TrivialMatchClassifier
             return null;
         }
 
-        $hir = (new HirTranslator(($this->parser ?? RegexParser::create())->target()))->translate($ast);
+        $hir = (new HirTranslator($this->parser->target()))->translate($ast);
         $parts = $hir instanceof ConcatHir ? $hir->parts : [$hir];
 
         $first = $parts[0] ?? null;
@@ -132,7 +137,7 @@ final class TrivialMatchClassifier
             return null;
         }
 
-        $literal = self::literal((new HirTranslator(($this->parser ?? RegexParser::create())->target()))->translate($ast));
+        $literal = self::literal((new HirTranslator($this->parser->target()))->translate($ast));
         if (null === $literal || '' === $literal) {
             return null;
         }
@@ -154,7 +159,7 @@ final class TrivialMatchClassifier
     private function parse(string $pattern): ?RegexNode
     {
         try {
-            $ast = ($this->parser ?? RegexParser::create())->parse($pattern);
+            $ast = $this->parser->parse($pattern);
         } catch (ExceptionInterface) {
             return null;
         }
