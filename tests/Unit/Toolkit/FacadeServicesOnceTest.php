@@ -53,9 +53,9 @@ final class FacadeServicesOnceTest extends TestCase
     #[Test]
     public function test_a_facade_for_another_target_builds_services_of_its_own(): void
     {
-        $regex = Regex::create();
+        $regex = Regex::create()->withTarget(PcreTarget::bundledWith(80100));
         $regex->redos('/(a+)+b/');
-        $other = $regex->withTarget(PcreTarget::bundledWith(80200));
+        $other = $regex->withTarget(PcreTarget::bundledWith(80300));
         $other->redos('/(a+)+b/');
 
         $this->assertNotSame($regex, $other);
