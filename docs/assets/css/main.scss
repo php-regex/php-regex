@@ -788,6 +788,18 @@ main pre.has-copy,
   padding-right: 4.5rem;
 }
 
+/* The run chip earns its own row. A runnable block reserves, above its
+   first line, the height of the controls — the chip at its widest label,
+   the copy chip beside it — so no first line, however long, ever runs
+   under them. The copy chip alone floats over the code (see has-copy
+   above); a line that overflows the block scrolls under it, which the
+   copy chip tolerates because its blocks are short commands. Runnable
+   fences hold real code: their controls sit above it, not on it. */
+main pre.has-run,
+.highlighter-rouge.has-run pre {
+  padding-top: 3.1rem;
+}
+
 main pre code,
 .terminal pre code {
   font-family: inherit;
@@ -1079,6 +1091,134 @@ main table::-webkit-scrollbar-thumb {
   color: var(--amber);
   border-color: var(--amber);
 }
+
+/* Run — the engine controls, the same chip recipe as the copy button. A
+   block can carry both; the run chip sits left of the copy chip so neither
+   covers the other, and both grow leftward (they are anchored right) so a
+   longer label never pushes anything off the block. */
+.run-btn {
+  position: absolute;
+  top: .5rem;
+  right: .5rem;
+  z-index: 1;
+  min-height: 2rem;
+  padding: .3rem .6rem;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+
+.has-copy .run-btn {
+  right: 3.95rem;
+}
+
+.run-btn:hover,
+.run-btn:focus-visible {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.run-btn:disabled {
+  cursor: progress;
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+/* The same transparent skirt as the copy chip: a 44px target without a
+   chip-sized bite out of the first line of code. */
+.run-btn::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  left: -4px;
+  right: -4px;
+}
+
+/* The output panel rides under its block, on the fixed ink panel the
+   terminal uses — identical in both themes, because an engine's answer
+   does not change with the site's palette (amber 5.72:1, ink 12.60:1,
+   error 9.05:1 on #182B45). The caption line is load-bearing on a regex
+   site: which PHP and which PCRE2 answered. */
+.run-out {
+  margin: .45rem 0 1.1rem;
+  padding: .8rem 1.1rem 1rem;
+  background: #182B45;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  color: #EDF1F7;
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  line-height: 1.6;
+}
+
+.run-out[hidden] {
+  display: none;
+}
+
+.run-meta {
+  margin: 0 0 .5rem;
+  color: #F08A3C;
+  font-size: .72rem;
+  letter-spacing: .03em;
+}
+
+.run-stdout,
+.run-stderr {
+  margin: 0;
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.run-stderr {
+  color: #FFB4A6;
+}
+
+.run-stderr:empty {
+  display: none;
+}
+
+/* One version control per page, above the first runnable example: the
+   select follows the search input's form recipe (paper surface, line
+   border, no platform chrome that is not part of the system). */
+.engine-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin: 1.4rem 0;
+  padding: .55rem .8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+}
+
+.engine-bar label {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--ink-soft);
+}
+
+.engine-bar select {
+  padding: .3rem .5rem;
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+}
+
+.engine-note {
+  font-size: .78rem;
+  color: var(--ink-soft);
+}
+
 
 /* ==========================================================================
    Terminal — the fixed ink panel, identical in both themes
@@ -4120,6 +4260,9 @@ main > section:not([class]) > p:not(:has(a.button)) {
   .skip-link,
   .pager,
   .copy-btn,
+  .run-btn,
+  .engine-bar,
+  .run-out,
   .anchor,
   .to-top,
   .site-footer,

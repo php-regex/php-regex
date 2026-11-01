@@ -20,6 +20,7 @@ if (preg_match($pattern, 'user@example.com')) {
     echo "Looks valid";
 }
 ```
+{: data-run="" }
 
 **Notes:**
 - `^` and `$` ensure the **entire** string matches
@@ -28,6 +29,7 @@ if (preg_match($pattern, 'user@example.com')) {
 
 ```php
 $pattern = '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i';
+echo preg_match($pattern, 'USER@Example.COM'), PHP_EOL; // 1 — the i flag covers the case
 ```
 
 ---
@@ -43,16 +45,20 @@ if (preg_match($pattern, '2025-10-23')) {
     echo "Valid format";
 }
 ```
+{: data-run="" }
 
 To check if it's a **real** calendar date, combine with PHP's `checkdate()`:
 
 ```php
+$input = '2025-10-23';
+
 if (preg_match('/^(?<y>(?:19|20)\d{2})-(?<m>0[1-9]|1[0-2])-(?<d>0[1-9]|[12]\d|3[01])$/', $input, $m)) {
     if (checkdate((int)$m['m'], (int)$m['d'], (int)$m['y'])) {
         echo "Valid date";
     }
 }
 ```
+{: data-run="" }
 
 ---
 
@@ -68,6 +74,7 @@ foreach ($urls as $url) {
     echo preg_match($pattern, $url) ? "OK\n" : "NO\n";
 }
 ```
+{: data-run="" }
 
 Notice we used `~` as [delimiter](01-basics.md#3-delimiters-wrapping-the-pattern) to avoid escaping `/`.
 
@@ -78,11 +85,14 @@ Notice we used `~` as [delimiter](01-basics.md#3-delimiters-wrapping-the-pattern
 Covers common formats with spaces, dashes, or parentheses.
 
 ```php
-$pattern = '/^\+?\d{1,3}[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/';
+$pattern = '/^(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/';
 
 preg_match($pattern, '+1 (555) 123-4567'); // matches
-preg_match($pattern, '555-123-4567');     // matches
+echo preg_match($pattern, '+1 (555) 123-4567'), PHP_EOL; // 1
+preg_match($pattern, '555-123-4567');     // matches — the country prefix is optional
+echo preg_match($pattern, '555-123-4567'), PHP_EOL; // 1
 ```
+{: data-run="" }
 
 This is flexible on purpose. If you need strict validation for one specific format, tighten it with [groups](05-groups-alternation.md).
 
@@ -100,6 +110,7 @@ $text = 'Learning #php and #regex today!';
 preg_match_all('/#(\w+)/', $text, $matches);
 print_r($matches[1]); // ["php", "regex"]
 ```
+{: data-run="" }
 
 ### Extract domain from email
 
@@ -107,6 +118,7 @@ print_r($matches[1]); // ["php", "regex"]
 preg_match('/@(.+)$/', 'user@example.com', $m);
 echo $m[1]; // "example.com"
 ```
+{: data-run="" }
 
 ### Extract numbers from a string
 
@@ -114,6 +126,7 @@ echo $m[1]; // "example.com"
 preg_match_all('/-?\d+/', 'Price: $49, Tax: $5', $matches);
 print_r($matches[0]); // ["49", "5"]
 ```
+{: data-run="" }
 
 ---
 
@@ -128,6 +141,7 @@ $text = "Hello   world\n\nfrom   PHP";
 $clean = preg_replace('/\s+/', ' ', $text);
 echo $clean; // "Hello world from PHP"
 ```
+{: data-run="" }
 
 ### Mask credit card (keep last 4)
 
@@ -136,6 +150,7 @@ $card = '1234567812345678';
 $masked = preg_replace('/\d(?=\d{4})/', 'X', $card);
 echo $masked; // "XXXXXXXXXXXX5678"
 ```
+{: data-run="" }
 
 Here `(?=\d{4})` is a [lookahead](06-lookarounds.md) — it checks for 4 digits ahead without consuming them.
 
@@ -159,6 +174,7 @@ function isStrongPassword(string $p): bool {
 var_dump(isValidUsername('john_doe')); // true
 var_dump(isStrongPassword('pass1234')); // true
 ```
+{: data-run="" }
 
 ---
 
@@ -187,6 +203,7 @@ $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $text));
 $slug = trim($slug, '-');
 echo $slug; // "hello-world-php"
 ```
+{: data-run="" }
 
 </details>
 
@@ -201,6 +218,7 @@ $text = 'Contact us at a@b.com or support@test.org';
 preg_match_all('/[\w.-]+@[\w.-]+\.[a-z]{2,}/i', $text, $matches);
 print_r($matches[0]);
 ```
+{: data-run="" }
 
 </details>
 
@@ -212,7 +230,10 @@ Write a pattern for a 5-digit US zip code, optionally followed by a dash and 4 d
 
 ```php
 $pattern = '/^\d{5}(?:-\d{4})?$/';
+echo preg_match($pattern, '12345-6789'), PHP_EOL; // 1
+echo preg_match($pattern, '1234'), PHP_EOL;       // 0
 ```
+{: data-run="" }
 
 </details>
 
@@ -226,7 +247,11 @@ Create a function that validates a username: starts with a letter, 3-20 chars, o
 function validateUsername(string $u): bool {
     return (bool) preg_match('/^[a-z][a-z0-9_]{2,19}$/i', $u);
 }
+
+echo validateUsername('john_doe') ? "OK\n" : "NO\n"; // OK
+echo validateUsername('1john')    ? "OK\n" : "NO\n"; // NO (must start with a letter)
 ```
+{: data-run="" }
 
 </details>
 
