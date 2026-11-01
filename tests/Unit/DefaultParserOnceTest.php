@@ -42,12 +42,13 @@ final class DefaultParserOnceTest extends TestCase
     {
         $call();
         $first = self::parserOf($service);
+        $this->assertInstanceOf(RegexParser::class, $first);
+        $hitsAfterOneCall = $first->getCacheStats()['hits'];
         $call();
         $second = self::parserOf($service);
 
-        $this->assertInstanceOf(RegexParser::class, $first);
         $this->assertSame($first, $second, 'Two calls read with one parser.');
-        $this->assertGreaterThan(0, $first->getCacheStats()['hits'], 'The second call finds the tree the first one read.');
+        $this->assertGreaterThan($hitsAfterOneCall, $first->getCacheStats()['hits'], 'The second call finds the tree the first one read.');
     }
 
     /**
