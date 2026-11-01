@@ -43,6 +43,37 @@ In this order.
    needs the stable public URL the tag gives it.
 
 
+## Architecture pass before the tag
+
+Four seams read on 2026-11-01, none a BC break; one pull request each
+(#199, #200, #201, #202), to merge in this order. (A fifth, the optimizer's solver running without the DFA
+cache, was a false reading: the rewrite checks build priority automata and
+part automata of their own and never ask the cache, as
+`AnalysisServiceDfaCacheTest` already proves.)
+
+1. **Default parsers resolved per call.** `RedosAnalyzer::analyze()`,
+   `LanguageSolver::parser()`, `TrivialMatchClassifier`,
+   `RedosRepairer::repair()` and `SampleGenerator::generate()` fall back to
+   `RegexParser::create()` on each call, so an instance built without a
+   parser gets a fresh parser and a fresh AST cache every time. Resolve the
+   default once per instance; the public constructors keep their defaults.
+2. **The printer exposes its state to its layout.** `PatternPrinter` is a
+   stateful visitor whose `setFlags()` existed only for `PatternLayout`,
+   which set the modifiers around a group's body by hand. The printer now
+   prints such a body under the modifiers it is given and puts its own
+   back, so the setter goes. `resetState()` stays: it is the lifecycle of a
+   visitor reused between patterns, as a reset service has in a container.
+3. **The ReDoS profiler sorts node types by hand.** `RedosProfiler` is a
+   visitor, yet `nullableStatus()` and `firstTriedStep()` are recursive
+   `instanceof` chains over the whole node set (38 checks). Each becomes a
+   visitor of its own, tested against the engine on its own: a node is
+   nullable when the engine matches it on the empty string.
+4. **The facade rebuilds its services per call.** `Toolkit\Regex` is a
+   long-lived service in both bridges, yet `redos()`, `optimize()`,
+   `transpile()` and `compatibility()` construct a new analyzer, optimizer,
+   transpiler or checker on each call. Build each stateless service once
+   per facade.
+
 ## PHP 7.4 twin
 
 After the 2.0.0 tag, publish `php-regex/regex-parser-php74` once more from
