@@ -788,6 +788,18 @@ main pre.has-copy,
   padding-right: 4.5rem;
 }
 
+/* The run chip earns its own row. A runnable block reserves, above its
+   first line, the height of the controls — the chip at its widest label,
+   the copy chip beside it — so no first line, however long, ever runs
+   under them. The copy chip alone floats over the code (see has-copy
+   above); a line that overflows the block scrolls under it, which the
+   copy chip tolerates because its blocks are short commands. Runnable
+   fences hold real code: their controls sit above it, not on it. */
+main pre.has-run,
+.highlighter-rouge.has-run pre {
+  padding-top: 3.1rem;
+}
+
 main pre code,
 .terminal pre code {
   font-family: inherit;

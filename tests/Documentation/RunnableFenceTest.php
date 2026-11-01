@@ -194,6 +194,19 @@ final class RunnableFenceTest extends TestCase
             }
         } while ($status['running'] && microtime(true) < $deadline);
 
+        if ($status['running']) {
+            // The deadline expired and the child is still alive: kill it
+            // before touching the pipes again — a blocking read on a pipe
+            // whose writer never closes would hang right here.
+            proc_terminate($process);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            proc_close($process);
+            unlink($file);
+
+            return 124;
+        }
+
         // The child is gone; the pipes may still hold the tail of its
         // output. Back to blocking reads, where EOF is the only stop.
         stream_set_blocking($pipes[1], true);
@@ -201,14 +214,6 @@ final class RunnableFenceTest extends TestCase
         $stdout .= (string) stream_get_contents($pipes[1]);
         fclose($pipes[1]);
         fclose($pipes[2]);
-
-        if ($status['running']) {
-            proc_terminate($process);
-            proc_close($process);
-            unlink($file);
-
-            return 124;
-        }
 
         $exitCode = proc_close($process);
         unlink($file);
