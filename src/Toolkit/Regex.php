@@ -97,6 +97,18 @@ final class Regex
     public const DEFAULT_MAX_RECURSION_DEPTH = ParserOptions::DEFAULT_MAX_RECURSION_DEPTH;
 
     /**
+     * The services this facade answers through, each built on its first call
+     * and kept: the facade lives as long as the application that holds it.
+     */
+    private ?RedosAnalyzer $redosAnalyzer = null;
+
+    private ?Optimizer $optimizer = null;
+
+    private ?Transpiler $transpiler = null;
+
+    private ?CompatibilityChecker $compatibilityChecker = null;
+
+    /**
      * @param RegexParser   $parser               Reads and judges every pattern
      * @param array<string> $redosIgnoredPatterns Patterns to ignore in ReDoS analysis
      * @param PcreEngine    $engine               Runs the pattern to check the samples
@@ -300,9 +312,9 @@ final class Regex
         RedosMode $mode = RedosMode::Theoretical,
         ?ConfirmationOptions $confirmOptions = null,
     ): RedosAnalysis {
-        $analyzer = new RedosAnalyzer($this->parser, $this->redosIgnoredPatterns);
+        $this->redosAnalyzer ??= new RedosAnalyzer($this->parser, $this->redosIgnoredPatterns);
 
-        return $analyzer->analyze($regex, $threshold, $mode, $confirmOptions);
+        return $this->redosAnalyzer->analyze($regex, $threshold, $mode, $confirmOptions);
     }
 
     /**
@@ -319,7 +331,9 @@ final class Regex
         $this->parse($regex);
         $this->refuseWhatTheEngineRefuses($regex);
 
-        return (new Optimizer($this->parser))->optimize($regex, $options);
+        $this->optimizer ??= new Optimizer($this->parser);
+
+        return $this->optimizer->optimize($regex, $options);
     }
 
     /**
@@ -357,9 +371,9 @@ final class Regex
         $this->parse($regex);
         $this->refuseWhatTheEngineRefuses($regex);
 
-        $transpiler = new Transpiler($this->parser);
+        $this->transpiler ??= new Transpiler($this->parser);
 
-        return $transpiler->transpile($regex, $target, $options);
+        return $this->transpiler->transpile($regex, $target, $options);
     }
 
     /**
@@ -468,7 +482,9 @@ final class Regex
      */
     public function compatibility(string $regex): PatternCompatibility
     {
-        return (new CompatibilityChecker($this->parser))->check($regex);
+        $this->compatibilityChecker ??= new CompatibilityChecker($this->parser);
+
+        return $this->compatibilityChecker->check($regex);
     }
 
     /**
