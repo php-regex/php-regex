@@ -25,7 +25,8 @@ use PHPUnit\Framework\TestCase;
  * decides at match time. The engine grounds every verdict given: on a
  * subject the pattern cannot consume, a nullable pattern matches the empty
  * string where any other fails. The extended class is read by the parser
- * alone: PHP's engine does not compile it.
+ * alone, for the PCRE2 release that introduced it: the engine PHP links
+ * may be older, and PHP's own build does not compile it either way.
  */
 final class NullabilityTest extends TestCase
 {
@@ -37,7 +38,9 @@ final class NullabilityTest extends TestCase
             $this->assertSame($expected, 1 === preg_match($pattern, $subject, $matches) && '' === $matches[0], 'The engine on '.$pattern);
         }
 
-        $this->assertSame($expected, RegexParser::create()->parse($pattern)->accept(new Nullability()));
+        $parser = $engineReadsIt ? RegexParser::create() : RegexParser::create(['pcre_version' => '10.45']);
+
+        $this->assertSame($expected, $parser->parse($pattern)->accept(new Nullability()));
     }
 
     /**
