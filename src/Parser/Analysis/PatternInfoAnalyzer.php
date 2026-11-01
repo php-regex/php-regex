@@ -22,7 +22,10 @@ use PHPRegex\Parser\Hir\AssertionHir;
 use PHPRegex\Parser\Hir\AssertionKind;
 use PHPRegex\Parser\Hir\AtomicHir;
 use PHPRegex\Parser\Hir\CaptureHir;
+use PHPRegex\Parser\Hir\CharSet;
+use PHPRegex\Parser\Hir\ClassHir;
 use PHPRegex\Parser\Hir\ConcatHir;
+use PHPRegex\Parser\Hir\EmptyHir;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Hir\RepetitionHir;
@@ -68,9 +71,36 @@ final class PatternInfoAnalyzer
     /**
      * Rises when a sound bound narrows, or when a fact changes for the same
      * pattern: the same pattern may then get a tighter length range, a
-     * proven anchor it did not have, or another longest lookbehind.
+     * proven anchor or a proven sure match it did not have, or another
+     * longest lookbehind.
      */
-    public const ANALYSIS_VERSION = '2';
+    public const ANALYSIS_VERSION = '3';
+
+    /**
+     * A path through the pattern that consumes nothing and asserts nothing.
+     */
+    private const PATH_FREE = 1;
+
+    /**
+     * A path that consumes nothing and asserts start anchors only: "^",
+     * "\A", "\G".
+     */
+    private const PATH_START = 2;
+
+    /**
+     * A path that consumes nothing and asserts end anchors only: "$", "\z",
+     * "\Z".
+     */
+    private const PATH_END = 4;
+
+    /**
+     * The bits of the three kinds, and the shift that marks a path as one
+     * that may have consumed text: the engine does not give that text back
+     * for a start anchor after it, through an atomic group or a possessive
+     * repeat, and the fact does not read greed.
+     */
+    private const PATH_KINDS = self::PATH_FREE | self::PATH_START | self::PATH_END;
+    private const PATH_EATEN_SHIFT = 3;
 
     public function __construct(private readonly ?PcreTarget $target = null) {}
 
@@ -113,7 +143,7 @@ final class PatternInfoAnalyzer
         }
         ksort($names, \SORT_STRING);
 
-        $facts = ['backreference' => 0, 'backslashC' => false, 'keep' => false, 'skip' => false, 'lookbehinds' => []];
+        $facts = ['backreference' => 0, 'backslashC' => false, 'keep' => false, 'skip' => false, 'verb' => false, 'lookbehinds' => []];
         $this->collect($ast->pattern, $groups, $facts);
 
         [$minLength, $maxLength] = $ast->accept(new LengthRangeCalculator($unicode));
@@ -129,11 +159,22 @@ final class PatternInfoAnalyzer
 
         $maxLookbehind = $this->maxLookbehind($facts['lookbehinds'], $groups, $unicode);
 
-        [$matchLimit, $depthLimit, $heapLimit, $newline, $bsr] = self::startOptions($ast->source ?? '');
+        [$matchLimit, $depthLimit, $heapLimit, $newline, $bsr, $notEmpty] = self::startOptions($ast->source ?? '');
 
         $hir = (new HirTranslator())->translate($ast);
         $source = $ast->source ?? '';
         $groupBefore = static fn (int $position): bool => self::groupBefore($ast->pattern, $position, $source);
+
+        // A "(*NOTEMPTY)" refuses the empty match the paths prove, as the
+        // interpreter reads it; the JIT does not honour it, and a fact must
+        // hold under both. A backtracking verb, wherever it stands, keeps
+        // the engine from the empty path beside it: "(?:a(*COMMIT)b)?" on
+        // "a" never tries the empty iteration. Under "A" the attempt is tied
+        // to the offset: the scan does not reach the end of the subject for
+        // an end anchor, and a start anchor holds at offset 0 only.
+        $paths = $notEmpty || $facts['verb'] ? 0 : self::emptyPaths($hir, $unicode);
+        $kinds = ($paths | $paths >> self::PATH_EATEN_SHIFT) & self::PATH_KINDS;
+        $endReached = !str_contains($ast->flags, 'A') && 0 !== ($kinds & self::PATH_END);
 
         return new PatternInfo(
             $numbering->maxGroupNumber,
@@ -153,6 +194,8 @@ final class PatternInfoAnalyzer
             // at 2): the modifier alone proves nothing then.
             (str_contains($ast->flags, 'A') && !$facts['skip']) || self::startsAnchored($hir, $groupBefore),
             !$hir->properties->accepts && self::endsAnchored($hir),
+            0 !== ($kinds & (self::PATH_FREE | self::PATH_START)) || $endReached,
+            0 !== ($kinds & self::PATH_FREE) || $endReached,
         );
     }
 
@@ -241,7 +284,7 @@ final class PatternInfoAnalyzer
     }
 
     /**
-     * @param array{backreference: int, backslashC: bool, keep: bool, skip: bool, lookbehinds: list<GroupNode>} $facts
+     * @param array{backreference: int, backslashC: bool, keep: bool, skip: bool, verb: bool, lookbehinds: list<GroupNode>} $facts
      */
     private function collect(NodeInterface $node, GroupIndex $groups, array &$facts, bool $inLookbehind = false): void
     {
@@ -255,8 +298,9 @@ final class PatternInfoAnalyzer
             $facts['backslashC'] = true;
         } elseif ($node instanceof KeepNode) {
             $facts['keep'] = true;
-        } elseif ($node instanceof PcreVerbNode && 'SKIP' === $node->name) {
-            $facts['skip'] = true;
+        } elseif ($node instanceof PcreVerbNode && \in_array($node->name, ['COMMIT', 'PRUNE', 'SKIP', 'THEN'], true)) {
+            $facts['verb'] = true;
+            $facts['skip'] = $facts['skip'] || 'SKIP' === $node->name;
         } elseif (self::isLookbehind($node) && !$inLookbehind) {
             // A lookbehind inside another is measured, or not, with it.
             $facts['lookbehinds'][] = $node;
@@ -285,13 +329,15 @@ final class PatternInfoAnalyzer
 
     /**
      * The limits, the newline convention and the "\R" convention the
-     * options the pattern opens with set; the last setting of each wins.
+     * options the pattern opens with set, the last setting of each winning,
+     * and whether one of them refuses the empty match ("(*NOTEMPTY)",
+     * "(*NOTEMPTY_ATSTART)").
      *
-     * @return array{int|null, int|null, int|null, NewlineConvention|null, BsrConvention|null}
+     * @return array{int|null, int|null, int|null, NewlineConvention|null, BsrConvention|null, bool}
      */
     private static function startOptions(string $source): array
     {
-        [$match, $depth, $heap, $newline, $bsr] = [null, null, null, null, null];
+        [$match, $depth, $heap, $newline, $bsr, $notEmpty] = [null, null, null, null, null, false];
         foreach (StartOptions::items($source) as $option) {
             [$name, $value] = explode('=', $option, 2) + [1 => ''];
             match ($name) {
@@ -299,11 +345,167 @@ final class PatternInfoAnalyzer
                 'LIMIT_DEPTH', 'LIMIT_RECURSION' => $depth = (int) $value,
                 'LIMIT_HEAP' => $heap = (int) $value,
                 'BSR_ANYCRLF', 'BSR_UNICODE' => $bsr = BsrConvention::from(substr($name, 4)),
+                'NOTEMPTY', 'NOTEMPTY_ATSTART' => $notEmpty = true,
                 default => $newline = NewlineConvention::tryFrom($name) ?? $newline,
             };
         }
 
-        return [$match, $depth, $heap, $newline, $bsr];
+        return [$match, $depth, $heap, $newline, $bsr, $notEmpty];
+    }
+
+    /**
+     * The kinds of path through the node that consume nothing and assert
+     * nothing the engine could refuse, as PATH_* bits, each shifted by
+     * PATH_EATEN_SHIFT when the node may consume text; 0 when no path is
+     * proven. A free path proves the match from any offset; one asserting
+     * start anchors only holds at offset 0; one asserting end anchors only
+     * holds wherever the search starts, as the scan reaches the end of the
+     * subject. A path with both kinds proves nothing: "/^$/" fails on "a".
+     * "\K" asserts nothing. A word boundary, a lookaround, a back
+     * reference, a conditional, a subroutine call, a verb and a callout are
+     * not read: "\b" fails on "", "(?=a)" fails on "", "\1" fails on an
+     * unset group, "(*FAIL)" always fails.
+     */
+    private static function emptyPaths(Hir $hir, bool $unicode): int
+    {
+        $paths = match (true) {
+            $hir instanceof EmptyHir => self::PATH_FREE,
+            $hir instanceof AssertionHir => match ($hir->kind) {
+                AssertionKind::SubjectStart, AssertionKind::LineStart, AssertionKind::MatchStart => self::PATH_START,
+                AssertionKind::SubjectEnd, AssertionKind::EndOrFinalNewline, AssertionKind::LineEnd => self::PATH_END,
+                AssertionKind::ResetMatchStart => self::PATH_FREE,
+                AssertionKind::WordBoundary, AssertionKind::NotWordBoundary => 0,
+            },
+            $hir instanceof RepetitionHir => self::repeatedPaths($hir, $unicode),
+            $hir instanceof CaptureHir, $hir instanceof AtomicHir => self::emptyPaths($hir->body, $unicode),
+            // PCRE2 tries every branch at every position: one proven is enough.
+            $hir instanceof AlternationHir => array_reduce($hir->branches, static fn (int $paths, Hir $branch): int => $paths | self::emptyPaths($branch, $unicode), 0),
+            $hir instanceof ConcatHir => self::concatPaths($hir, $unicode),
+            default => 0,
+        };
+
+        // What may have consumed text is not given back for a start anchor
+        // after it: an atomic group or a possessive repeat of an "a", then
+        // "^", fails on "a".
+        return 0 === $hir->properties->maxLength ? $paths : ($paths | $paths >> self::PATH_EATEN_SHIFT) << self::PATH_EATEN_SHIFT;
+    }
+
+    /**
+     * A repeat allowed zero times is free; one that runs at least once
+     * joins the body's paths as many times as it must run, until the join
+     * settles: "(^.*$){2}" eats the subject once and its second start
+     * anchor fails.
+     */
+    private static function repeatedPaths(RepetitionHir $hir, bool $unicode): int
+    {
+        if (0 === $hir->min) {
+            return self::PATH_FREE;
+        }
+
+        $body = self::emptyPaths($hir->body, $unicode);
+        $paths = $body;
+        for ($run = 1; $run < $hir->min; $run++) {
+            $next = self::joinPaths($paths, $body);
+            if ($next === $paths) {
+                break;
+            }
+            $paths = $next;
+        }
+
+        return $paths;
+    }
+
+    private static function concatPaths(ConcatHir $hir, bool $unicode): int
+    {
+        $partPaths = array_map(static fn (Hir $part): int => self::emptyPaths($part, $unicode), $hir->parts);
+
+        if (self::isFullClassBetweenAnchors($hir->parts, $partPaths, $unicode)) {
+            // The one path: the start anchor, then the end anchor, prove
+            // nothing joined, and the repeat eats the subject, so a start
+            // anchor after it fails.
+            return self::PATH_START << self::PATH_EATEN_SHIFT;
+        }
+
+        $paths = self::PATH_FREE;
+        foreach ($partPaths as $partPath) {
+            $paths = self::joinPaths($paths, $partPath);
+        }
+
+        return $paths;
+    }
+
+    /**
+     * The paths through one part then the next, pair by pair: a free path
+     * takes the kind of the other, two paths of one kind keep it, a start
+     * then an end prove nothing, and a start anchor after a path that may
+     * have consumed text is not reached. A pair that consumed stays so.
+     */
+    private static function joinPaths(int $before, int $after): int
+    {
+        $joined = 0;
+        foreach ([self::PATH_FREE, self::PATH_START, self::PATH_END] as $first) {
+            foreach ([0, self::PATH_EATEN_SHIFT] as $firstShift) {
+                if (0 === ($before & $first << $firstShift)) {
+                    continue;
+                }
+
+                foreach ([self::PATH_FREE, self::PATH_START, self::PATH_END] as $second) {
+                    foreach ([0, self::PATH_EATEN_SHIFT] as $secondShift) {
+                        if (0 === ($after & $second << $secondShift) || (0 !== $firstShift && self::PATH_START === $second)) {
+                            continue;
+                        }
+
+                        $kind = match (true) {
+                            self::PATH_FREE === $first => $second,
+                            self::PATH_FREE === $second, $first === $second => $first,
+                            default => 0,
+                        };
+                        $joined |= $kind << max($firstShift, $secondShift);
+                    }
+                }
+            }
+        }
+
+        return $joined;
+    }
+
+    /**
+     * A start anchor, then any number of any character of the mode, then an
+     * end anchor, the idiom "/^(.*)$/s" or "/^[\s\S]*$/": the repeat
+     * reaches the end of the subject, where the end anchor holds. A start
+     * path only: "^" fails at an offset past 0, and under "m" on "ab" from
+     * offset 1.
+     *
+     * @param list<Hir> $parts
+     * @param list<int> $partPaths the paths of each part, read once
+     */
+    private static function isFullClassBetweenAnchors(array $parts, array $partPaths, bool $unicode): bool
+    {
+        if (3 !== \count($parts) || self::PATH_START !== $partPaths[0] || self::PATH_END !== $partPaths[2]) {
+            return false;
+        }
+
+        $body = self::ungrouped($parts[1]);
+
+        return $body instanceof RepetitionHir && 0 === $body->min && null === $body->max && self::isUniverse(self::ungrouped($body->body), $unicode);
+    }
+
+    private static function ungrouped(Hir $hir): Hir
+    {
+        while ($hir instanceof CaptureHir || $hir instanceof AtomicHir) {
+            $hir = $hir->body;
+        }
+
+        return $hir;
+    }
+
+    /**
+     * Whether the node is a class of every character the mode has: the
+     * bytes without "u", the code points but the surrogates with it.
+     */
+    private static function isUniverse(Hir $hir, bool $unicode): bool
+    {
+        return $hir instanceof ClassHir && $hir->set->key() === CharSet::universe($unicode)->key();
     }
 
     /**

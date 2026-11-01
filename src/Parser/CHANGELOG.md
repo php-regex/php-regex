@@ -28,6 +28,13 @@ CHANGELOG
    reported an error of the pattern.
  * `Attribute\RegexPattern`: marks a parameter that receives a regex pattern, for
    the tools that read it (`regex lint`).
+ * `PatternInfo::$alwaysMatches` and `$alwaysMatchesFromAnyOffset`: proven
+   when `preg_match()` cannot return 0 on any subject, from offset 0 or from
+   any offset within the subject, so a static analysis tool types the call
+   `1|false`. `/(.*)/` and `/^(.*)$/s` are proven, `/^(.*)$/` is not (it
+   returns 0 on `"a\nb"`), nor is a pattern holding a backtracking verb or a
+   start anchor after what may have consumed text (`/(?>a|)^/` returns 0 on
+   `"a"`). `PatternInfoAnalyzer::ANALYSIS_VERSION` is `3`.
  * `RegexParser::validate()` keeps the results of the last 1024 patterns an
    instance validated, and `clearCaches()` empties them: a pattern validated
    again costs a lookup.

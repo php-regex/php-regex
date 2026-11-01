@@ -224,9 +224,10 @@ add one to yet.
   again. A PHPStan baseline that prints the type may need regenerating; the
   CHANGELOG says when. See [Capture Shapes](capture-shapes.md).
 - **Narrower pattern info**: the sound bounds of `Analysis\PatternInfo`,
-  `minMatchLength`, `maxMatchLength`, `maxLookbehind`, `anchoredStart` and
-  `anchoredEnd`, may become more precise, still holding for every match PCRE2
-  makes: a length range may tighten and an anchor may become proven.
+  `minMatchLength`, `maxMatchLength`, `maxLookbehind`, `anchoredStart`,
+  `anchoredEnd`, `alwaysMatches` and `alwaysMatchesFromAnyOffset`, may become
+  more precise, still holding for every match PCRE2 makes: a length range may
+  tighten, and an anchor or a sure match may become proven.
   `PatternInfoAnalyzer::ANALYSIS_VERSION` rises with any such change, and a
   patch may widen an answer to make it sound again. The exact facts
   (`captureCount`, `names`, `maxBackreference`, `usesBackslashC`, the limits,
