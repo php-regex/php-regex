@@ -14,7 +14,7 @@ This reference documents the public API surface of PHPRegex: entry points, confi
 
 The `Regex` facade lives in `php-regex/regex-toolkit` and needs PHP 8.1 or later with the `mbstring` extension. See [Quick Start](../quick-start.md) for a first tour.
 
-{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+{% include install.html package="php-regex/regex-toolkit" %}
 
 ## Entry Points
 

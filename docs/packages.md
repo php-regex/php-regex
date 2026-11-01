@@ -5,17 +5,13 @@ permalink: /packages/
 ---
 # Choose a package
 
-PHPRegex is developed as one family of focused packages. The focused packages are published now as `{{ site.data.product.release }}-dev`; install the surface you need and let Composer pull its dependencies.
+PHPRegex is developed as one family of focused packages. {% unless site.data.product.stable %}The focused packages are published now as `{{ site.data.product.release }}-dev`. {% endunless %}Install the surface you need and let Composer pull its dependencies.
 
 ## Install the surface you need
 
-```bash
-composer config minimum-stability dev
-composer config prefer-stable true
-composer require --dev php-regex/regex-cli:{{ site.data.product.release }}-dev
-```
+{% include install.html package="php-regex/regex-cli" dev=true inline=true %}
 
-The first two commands run once in the consuming project: they allow the prerelease PHPRegex packages while still preferring stable releases everywhere else. The final command installs the terminal binary and the analyses it runs. Use the table below to pick another surface.
+{% unless site.data.product.stable %}The first two commands run once in the consuming project: they allow the prerelease PHPRegex packages while still preferring stable releases everywhere else. {% endunless %}The `composer require` installs the terminal binary and the analyses it runs. Use the table below to pick another surface.
 
 ## Choose by package
 
@@ -52,8 +48,6 @@ The focused analysis libraries remain available for tools that compose them dire
 
 `php-regex/php-regex` is the development monorepo. Install it only when you are contributing to PHPRegex, testing several integrations from one checkout, or building a tool that composes many packages and you explicitly want every component present:
 
-```bash
-composer require --dev php-regex/php-regex:{{ site.data.product.release }}-dev
-```
+{% include install.html package="php-regex/php-regex" dev=true inline=true %}
 
 It replaces every focused package with the same version, so do not install it merely to use the CLI, parser, or one bridge.

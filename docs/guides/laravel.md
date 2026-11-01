@@ -10,7 +10,7 @@ enables it on install.
 
 Requires Laravel 10.37 or later, 11, 12 or 13, and PHP 8.1 or later (8.2 for Laravel 11 and 12, 8.3 for Laravel 13). Laravel 10 and 11 carry a security advisory with no fixed release (PKSA-mdq4-51ck-6kdq), so Composer refuses to install them unless the project's `audit` settings in `composer.json` (`config.audit.block-insecure`, `config.audit.ignore`) allow it. The `symfony/console` requirement takes the same releases as the [Symfony integration](symfony.md) — 6.4 LTS, 7.4 and 8 — so a Laravel 11 or 12 app holding an earlier Symfony 7.x resolves Console to 7.4 with the package.
 
-{% include install-prerelease.html package="php-regex/regex-laravel" %}
+{% include install.html package="php-regex/regex-laravel" %}
 
 Publishing the configuration is optional: a key missing from your file takes
 the package default, so publish it only to customize it:

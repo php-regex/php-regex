@@ -264,7 +264,7 @@ Every output above was produced on 16 October 2026, on an Apple-silicon Mac:
 
 A rewrite by eye can be wrong; PHPRegex, the library behind this site, checks it. Install it as a development dependency:
 
-{% include install-prerelease.html package="php-regex/php-regex" dev=true inline=true %}
+{% include install.html package="php-regex/php-regex" dev=true inline=true %}
 
 `vendor/bin/regex analyze` reads a pattern and proves that one match attempt stays linear in PCRE2, or gives you the input that makes it slow. Where it can do neither, it says so. With `--redos-mode=confirmed`, it also replays that input on the PCRE2 you run. Here is the ReDoS step of its output for the original pattern:
 

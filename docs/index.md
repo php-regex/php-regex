@@ -14,9 +14,7 @@ description: "PHPRegex lexes and parses PCRE patterns into an immutable AST, the
           <a class="button button-primary" href="/quick-start/">Start in five minutes</a>
           <a class="hero-link" href="/docs/">Browse the docs →</a>
         </div>
-        <div class="install"><pre><code>composer config minimum-stability dev
-composer config prefer-stable true
-composer require --dev php-regex/regex-cli:{{ site.data.product.release }}-dev</code></pre></div>
+        {% include install.html package="php-regex/regex-cli" dev=true inline=true %}
       </div>
       <div class="hero-foot">
         <p class="hero-sub">New to regex? Start with the <a href="/tutorial/">ten-chapter tutorial</a>. Want the long reads? <a href="/blog/">The articles are measured</a>.</p>

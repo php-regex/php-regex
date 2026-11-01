@@ -9,7 +9,7 @@ This guide is for framework maintainers, library maintainers, and tooling author
 
 The PHP snippets below use the `Regex` facade, which ships in `regex-toolkit`. It needs PHP 8.1 or later and the `mbstring` extension (PCRE ships with PHP); the [Quick Start](quick-start.md) covers the first steps if you are new here.
 
-{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+{% include install.html package="php-regex/regex-toolkit" %}
 
 ## Contributor Checklist
 

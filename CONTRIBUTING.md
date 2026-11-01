@@ -271,7 +271,7 @@ Every package is released together, from the monorepo:
 ```bash
 php -d xdebug.mode=off tests/Tools/redos-verdict-gate.php   # ReDoS analysis cost on the corpus
 bin/status                     # CI, the split repositories, Packagist
-bin/bump 2.1.0                 # Regex::VERSION and VERSION_ID, and the CHANGELOG section dated
+bin/bump 2.1.0                 # Regex::VERSION and VERSION_ID, the CHANGELOG section dated, product.yml and the install story of the docs
 git commit -am "[Release] Release 2.1.0"   # on its own branch: open the pull request, merge it once green
 bin/release --dry-run 2.1.0    # every check, nothing tagged
 bin/release 2.1.0              # a draft release and the tag; the phar workflow publishes it

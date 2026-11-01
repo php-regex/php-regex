@@ -17,7 +17,7 @@ ReDoS (Regular Expression Denial of Service) happens when a regex takes exponent
 
 PHPRegex proves a pattern safe, or hands you the input that kills it. Where it cannot do either, it says so, and its structural heuristics decide.
 
-{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+{% include install.html package="php-regex/regex-toolkit" %}
 
 > **Note:** ReDoS analysis is disabled by default in the linter and the integrations. Enable it explicitly:
 > - CLI: `vendor/bin/regex lint src/ --redos`, or `checks.redos.enabled: true` in `regex.json`

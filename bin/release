@@ -75,6 +75,19 @@ if [ "$pre_release" -eq 0 ] && ! grep -qE "^## \[$version\] - [0-9]{4}-[0-9]{2}-
     problems+=("CHANGELOG.md has no dated \"## [$version]\" section: run bin/bump $version and commit.")
 fi
 
+# The install story of a final release: the pages read product.yml, and
+# README.md and docs/llms.txt are the install texts Jekyll does not render.
+if [ "$pre_release" -eq 0 ]; then
+    grep -qE '^stable: true$' docs/_data/product.yml 2>/dev/null || problems+=("docs/_data/product.yml does not say \"stable: true\", so the docs still install from the dev channel: run bin/bump $version and commit.")
+    release_branch=$(sed -nE 's/^release: (.+)$/\1/p' docs/_data/product.yml 2>/dev/null)
+    release_pattern=$(printf '%s' "${release_branch:-$branch}" | sed 's/[.[\*^$]/\\&/g')
+    for file in README.md docs/llms.txt; do
+        if grep -qE "^composer config (minimum-stability dev|prefer-stable true)$|:${release_pattern}-dev|^## .* is coming$" "$file" 2>/dev/null; then
+            problems+=("$file still installs from the dev channel: run bin/bump $version and commit.")
+        fi
+    done
+fi
+
 # CI on the commit to release.
 if [ "$skip_ci" -eq 0 ]; then
     head=$(git rev-parse HEAD)

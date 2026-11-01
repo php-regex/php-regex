@@ -14,7 +14,7 @@ The binary requires PHP 8.1 or later.
 </div>
 <p class="page-empty" role="status" hidden>Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
 
-{% include install-prerelease.html package="php-regex/regex-cli" dev=true %}
+{% include install.html package="php-regex/regex-cli" dev=true %}
 
 Once installed, the binary is `vendor/bin/regex`:
 
@@ -742,7 +742,7 @@ without any configuration.
 
 **Console Output:**
 ```
-PHPRegex 2.0.0-DEV
+PHPRegex {{ site.data.product.version }}
 
 Runtime       : PHP 8.4.26, PCRE2 10.49
 Target        : PHP 8.2, PCRE2 10.40 (composer.json require.php)

@@ -17,7 +17,7 @@ This cookbook collects patterns for common validation and parsing tasks. Every p
 >
 > Always validate and run `redos()` before accepting user-defined patterns.
 
-{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+{% include install.html package="php-regex/regex-toolkit" %}
 
 Requires PHP 8.1 or later and the `mbstring` extension. The PHP examples use the `Regex` facade installed above; the [Quick Start](quick-start.md) walks through a first analysis.
 

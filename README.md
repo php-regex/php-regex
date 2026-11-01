@@ -55,9 +55,9 @@ composer require --dev php-regex/regex-cli:2.x-dev
 Try it, break it, and tell us what your project needs — feedback and wishes go
 to [the discussions](https://github.com/php-regex/php-regex/discussions).
 
-If you are new to regex, start with the [Regex Tutorial](https://php-regex.com/tutorial/). If you want a short overview, see the [Quick Start Guide](https://php-regex.com/quick-start/).
-
 ## Getting started
+
+If you are new to regex, start with the [Regex Tutorial](https://php-regex.com/tutorial/). If you want a short overview, see the [Quick Start Guide](https://php-regex.com/quick-start/).
 
 ```bash
 # Install the CLI (the API toolkit comes with it)

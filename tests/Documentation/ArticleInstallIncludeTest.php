@@ -27,7 +27,7 @@ use PHPUnit\Framework\TestCase;
 #[Group('documentation')]
 final class ArticleInstallIncludeTest extends TestCase
 {
-    private const INCLUDE = __DIR__.'/../../docs/_includes/install-prerelease.html';
+    private const INCLUDE = __DIR__.'/../../docs/_includes/install.html';
 
     private const ARTICLES = __DIR__.'/../../docs/_articles';
 
@@ -48,7 +48,7 @@ final class ArticleInstallIncludeTest extends TestCase
 
         foreach ($articles as $article) {
             $text = (string) file_get_contents($article);
-            preg_match_all('/\{% include install-prerelease\.html([^%]*)%\}/', $text, $includes);
+            preg_match_all('/\{% include install\.html([^%]*)%\}/', $text, $includes);
 
             foreach ($includes[1] as $parameters) {
                 $this->assertStringContainsString(' inline=true', $parameters, basename($article));
