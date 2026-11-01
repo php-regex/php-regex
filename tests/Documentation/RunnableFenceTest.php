@@ -161,33 +161,32 @@ final class RunnableFenceTest extends TestCase
     /**
      * Runs the snippet under the interpreter that runs the suite. A parse
      * error or a fatal writes to stdout/stderr with a non-zero code; an
-     * endless loop dies at the deadline instead of taking the suite down —
-     * which is why the pipes are drained while polling: a blocking read
-     * would wait for the child to close stdout, and a child stuck in a
-     * loop never closes anything.
+     * endless loop dies at the deadline instead of taking the suite down.
+     *
+     * The output lands in files, never in pipes: a pipe read can block on
+     * Windows whatever the blocking mode says (php bug 47918), and a child
+     * stuck in a loop closes nothing. A file is read only once the child
+     * is done with it. And before PHP 8.3, proc_close() reports -1 once
+     * proc_get_status() has observed the exit, so the exit code is the one
+     * read at that observation, and proc_close() only reaps the child.
      */
     private static function runPhp(string $source, string &$stdout): int
     {
         $file = tempnam(sys_get_temp_dir(), 'phpregex-runnable-fence');
         \assert(\is_string($file));
         file_put_contents($file, $source);
+        $stdoutFile = $file.'.out';
+        $stderrFile = $file.'.err';
 
         $process = proc_open(
             [\PHP_BINARY, '-n', '-d', 'display_errors=0', '-d', 'error_reporting=E_ALL', $file],
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            [1 => ['file', $stdoutFile, 'w'], 2 => ['file', $stderrFile, 'w']],
             $pipes,
         );
         \assert(\is_resource($process));
-        stream_set_blocking($pipes[1], false);
-        stream_set_blocking($pipes[2], false);
 
-        $stdout = '';
         $deadline = microtime(true) + 10.0;
         do {
-            // Both pipes are drained: stdout is the assertion's subject,
-            // stderr so a chatty snippet cannot fill the pipe and block.
-            $stdout .= (string) fread($pipes[1], 8192);
-            fread($pipes[2], 8192);
             $status = proc_get_status($process);
             if ($status['running']) {
                 usleep(5000);
@@ -195,27 +194,23 @@ final class RunnableFenceTest extends TestCase
         } while ($status['running'] && microtime(true) < $deadline);
 
         if ($status['running']) {
-            // The deadline expired and the child is still alive: kill it
-            // before touching the pipes again — a blocking read on a pipe
-            // whose writer never closes would hang right here.
+            // The deadline expired and the child is still alive: kill it,
+            // reap it, and leave the files unread — the run is a failure
+            // whatever they hold.
             proc_terminate($process);
-            fclose($pipes[1]);
-            fclose($pipes[2]);
             proc_close($process);
+            unlink($stdoutFile);
+            unlink($stderrFile);
             unlink($file);
 
             return 124;
         }
 
-        // The child is gone; the pipes may still hold the tail of its
-        // output. Back to blocking reads, where EOF is the only stop.
-        stream_set_blocking($pipes[1], true);
-        stream_set_blocking($pipes[2], true);
-        $stdout .= (string) stream_get_contents($pipes[1]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-
-        $exitCode = proc_close($process);
+        $exitCode = $status['exitcode'];
+        proc_close($process);
+        $stdout = (string) file_get_contents($stdoutFile);
+        unlink($stdoutFile);
+        unlink($stderrFile);
         unlink($file);
 
         return $exitCode;
