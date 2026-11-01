@@ -38,6 +38,7 @@ use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Finding;
+use PHPRegex\Redos\Nullability;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosProfiler;
@@ -206,11 +207,11 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
     #[Test]
     public function test_a_script_run_matches_nothing_only_when_its_body_can(): void
     {
-        $visitor = new RedosProfiler();
+        $nullability = new Nullability();
 
-        $this->assertTrue($this->invokePrivate($visitor, 'nullableStatus', [new ScriptRunNode('sr', 0, 6)]));
-        $this->assertFalse($this->invokePrivate($visitor, 'nullableStatus', [new ScriptRunNode('sr', 0, 7, new LiteralNode('a', 0, 1))]));
-        $this->assertTrue($this->invokePrivate($visitor, 'nullableStatus', [new ScriptRunNode('sr', 0, 8, new QuantifierNode(new LiteralNode('a', 0, 1), '*', QuantifierType::Greedy, 0, 2))]));
+        $this->assertTrue((new ScriptRunNode('sr', 0, 6))->accept($nullability));
+        $this->assertFalse((new ScriptRunNode('sr', 0, 7, new LiteralNode('a', 0, 1)))->accept($nullability));
+        $this->assertTrue((new ScriptRunNode('sr', 0, 8, new QuantifierNode(new LiteralNode('a', 0, 1), '*', QuantifierType::Greedy, 0, 2)))->accept($nullability));
     }
 
     /**
