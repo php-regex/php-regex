@@ -32,20 +32,26 @@ The square brackets `[...]` define the set. The pattern matches **exactly one ch
 Put characters between `[` and `]`:
 
 ```php
-preg_match('/[aeiou]/', 'hello'); // matches 'e'
-preg_match('/[bcd]/', 'cat');     // matches 'c'
+preg_match('/[aeiou]/', 'hello', $matches); // matches 'e'
+print_r($matches[0]);
+preg_match('/[bcd]/', 'cat', $matches);     // matches 'c'
+print_r($matches[0]);
 ```
+{: data-run="" }
 
 ### Use ranges
 
 To avoid listing every letter or digit, use `-` to define a range:
 
 ```php
-preg_match('/[0-9]/', 'Age: 42'); // matches '4'
-preg_match('/[a-z]/', 'Hello');   // matches 'e' (lowercase only)
-preg_match('/[A-Z]/', 'Hello');   // matches 'H'
-preg_match('/[a-zA-Z]/', 'Hello'); // matches 'H' or 'e' etc.
+preg_match('/[0-9]/', 'Age: 42', $matches); // matches '4'
+print_r($matches[0]);
+preg_match('/[a-z]/', 'Hello', $matches);   // matches 'e' (lowercase only)
+print_r($matches[0]);
+preg_match('/[A-Z]/', 'Hello', $matches);   // matches 'H'
+print_r($matches[0]);
 ```
+{: data-run="" }
 
 Ranges work based on character codes. For ASCII letters and digits this is fine. Avoid tricks like `[A-z]` — we'll see why later.
 
@@ -56,9 +62,12 @@ Ranges work based on character codes. For ASCII letters and digits this is fine.
 Prefix with `^` inside the brackets to match **anything except** what's in the set:
 
 ```php
-preg_match('/[^0-9]/', 'ABC123'); // matches 'A'
-preg_match('/[^aeiou]/', 'apple'); // matches 'p', 'p', 'l'
+preg_match('/[^0-9]/', 'ABC123', $matches); // matches 'A'
+print_r($matches[0]);
+preg_match('/[^aeiou]/', 'apple', $matches); // matches 'p', 'p', 'l'
+print_r($matches[0]);
 ```
+{: data-run="" }
 
 Here, `[^0-9]` means: *"any single character that is not a digit"*.
 
@@ -75,12 +84,16 @@ Rules change a little inside `[...]`. Most characters lose their special meaning
 - `^` only negates when it's the **first** character. Elsewhere it's literal.
 
 ```php
-preg_match('/[.]/', 'a.b');      // matches '.' 
-preg_match('/[abc-]/', 'a-b');   // matches 'a' or '-' (dash at end)
-preg_match('/[-abc]/', '-abc'); // matches '-' (dash at start)
-preg_match('/[\]]/', 'a]b');     // matches ']'
-preg_match('/[a^]/', 'a^b');     // matches 'a' or '^' (not first)
+preg_match('/[.]/', 'a.b', $matches);      // matches '.'
+print_r($matches[0]);
+preg_match('/[abc-]/', 'a-b', $matches);   // matches 'a' or '-' (dash at end)
+print_r($matches[0]);
+preg_match('/[-abc]/', '-abc', $matches); // matches '-' (dash at start)
+print_r($matches[0]);
+preg_match('/[\]]/', 'a]b', $matches);     // matches ']'
+print_r($matches[0]);
 ```
+{: data-run="" }
 
 Compare with outside a class: `/\./` matches a literal dot too, but inside `[.]` it's already literal.
 
@@ -101,11 +114,16 @@ Typing `[0-9]`, `[a-zA-Z0-9_]` etc. gets repetitive. PCRE provides shorthands:
 | `.` | *(special)* | Any single character **except** newline (by default) |
 
 ```php
-preg_match('/\d/', 'Order 123');     // matches '1'
-preg_match('/\w+/', 'hello_world');  // matches 'hello_world'
-preg_match('/\s/', "hello world");   // matches space
-preg_match('/./', 'abc');            // matches 'a'
+preg_match('/\d/', 'Order 123', $matches);     // matches '1'
+print_r($matches[0]);
+preg_match('/\w+/', 'hello_world', $matches);  // matches 'hello_world'
+print_r($matches[0]);
+preg_match('/\s/', "hello world", $matches);   // matches space
+print_r($matches[0]);
+preg_match('/./', 'abc', $matches);            // matches 'a'
+print_r($matches[0]);
 ```
+{: data-run="" }
 
 Note: `.` is not a "character class" in the `[...]` sense, but it's related — it matches broadly. We'll keep using it as we go.
 
@@ -116,10 +134,14 @@ Note: `.` is not a "character class" in the `[...]` sense, but it's related — 
 If you need to match letters from other languages, digits from other scripts, or emoji, you can use Unicode properties with the `u` [flag](01-basics.md#5-case-and-flags).
 
 ```php
-preg_match('/^\p{L}+$/u', 'café'); // matches (letters)
-preg_match('/^\p{N}+$/u', '١٢٣');   // matches (Arabic-Indic digits)
-preg_match('/\p{Emoji}/u', 'Hi 👋'); // matches emoji
+preg_match('/^\p{L}+$/u', 'café', $matches); // matches (letters)
+print_r($matches[0]);
+preg_match('/^\p{N}+$/u', '١٢٣', $matches);   // matches (Arabic-Indic digits)
+print_r($matches[0]);
+preg_match('/\p{Emoji}/u', 'Hi 👋', $matches); // matches emoji
+print_r($matches[0]);
 ```
+{: data-run="" }
 
 Common ones:
 

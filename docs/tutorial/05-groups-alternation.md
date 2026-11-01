@@ -38,6 +38,7 @@ echo $matches[0]; // "hello world" (full match)
 echo $matches[1]; // "hello" (first group)
 echo $matches[2]; // "world" (second group)
 ```
+{: data-run="" }
 
 ### Non-capturing groups `(?:...)`
 
@@ -49,6 +50,7 @@ preg_match('/(?:https?):\/\/(\w+)/', 'https://example.com', $matches);
 echo $matches[0]; // "https://example"
 echo $matches[1]; // "example" (only the domain group is captured)
 ```
+{: data-run="" }
 
 ### Named groups `(?<name>...)`
 
@@ -61,6 +63,7 @@ echo $matches['year'];  // "2024"
 echo $matches['month']; // "01"
 echo $matches['day'];   // "15"
 ```
+{: data-run="" }
 
 You can also use `'name'` or `P<name>` in some flavors, but `(?<name>...)` is common and clear in PCRE/PHP.
 
@@ -74,6 +77,7 @@ The `|` means **or**. It tries alternatives from **left to right** and takes the
 preg_match('/cat|dog/', 'I have a dog', $matches);
 echo $matches[0]; // "dog"
 ```
+{: data-run="" }
 
 ### Watch your scope
 
@@ -84,6 +88,7 @@ Without grouping, `|` has very wide scope.
 preg_match('/jpg|png.gif/', 'image.png.gif', $matches);
 echo $matches[0]; // "png.gif"
 ```
+{: data-run="" }
 
 Group to limit what alternation applies to:
 
@@ -92,6 +97,7 @@ Group to limit what alternation applies to:
 preg_match('/(?:jpg|png)\.gif/', 'image.png.gif', $matches);
 echo $matches[0]; // "png.gif"
 ```
+{: data-run="" }
 
 ---
 
@@ -109,6 +115,7 @@ preg_match('/^(?:ha)+$/', 'hahahaha', $matches); // matches
 preg_match('/\.([a-z]+)$/i', 'photo.jpg', $matches);
 echo $matches[1]; // "jpg"
 ```
+{: data-run="" }
 
 ---
 

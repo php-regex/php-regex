@@ -33,36 +33,52 @@ They work on a single character, a [character class](02-character-classes.md), o
 ### `*` — zero or more
 
 ```php
-preg_match('/ab*/', 'a');    // matches "a" (zero 'b's)
-preg_match('/ab*/', 'ab');   // matches "ab"
-preg_match('/ab*/', 'abbb'); // matches "abbb"
+preg_match('/ab*/', 'a', $matches);    // matches "a" (zero 'b's)
+print_r($matches[0]);
+preg_match('/ab*/', 'ab', $matches);   // matches "ab"
+print_r($matches[0]);
+preg_match('/ab*/', 'abbb', $matches); // matches "abbb"
+print_r($matches[0]);
 ```
+{: data-run="" }
 
 ### `+` — one or more
 
 ```php
-preg_match('/ab+/', 'a');    // no match (needs at least one 'b')
-preg_match('/ab+/', 'ab');   // matches "ab"
-preg_match('/ab+/', 'abbb'); // matches "abbb"
+preg_match('/ab+/', 'a'); // no match (needs at least one 'b')
+print_r(preg_match('/ab+/', 'a')); // 0
+preg_match('/ab+/', 'ab', $matches);   // matches "ab"
+print_r($matches[0]);
+preg_match('/ab+/', 'abbb', $matches); // matches "abbb"
+print_r($matches[0]);
 ```
+{: data-run="" }
 
 ### `?` — zero or one (optional)
 
 ```php
-preg_match('/ab?/', 'a');   // matches "a"
-preg_match('/ab?/', 'ab');  // matches "ab"
-preg_match('/ab?/', 'abb'); // matches "ab" (only takes one 'b')
+preg_match('/ab?/', 'a', $matches);   // matches "a"
+print_r($matches[0]);
+preg_match('/ab?/', 'ab', $matches);  // matches "ab"
+print_r($matches[0]);
+preg_match('/ab?/', 'abb', $matches); // matches "ab" (only takes one 'b')
+print_r($matches[0]);
 ```
+{: data-run="" }
 
 ### Combining with character classes
 
 This is where quantifiers become really useful.
 
 ```php
-preg_match('/\d+/', 'Order 123');      // matches "123"
-preg_match('/[a-z]+/', 'Hello World'); // matches "ello"
-preg_match('/\s*/', 'abc');            // matches "" (zero spaces)
+preg_match('/\d+/', 'Order 123', $matches);      // matches "123"
+print_r($matches[0]);
+preg_match('/[a-z]+/', 'Hello World', $matches); // matches "ello"
+print_r($matches[0]);
+preg_match('/\s*/', 'abc', $matches);            // matches "" (zero spaces)
+print_r($matches[0]);
 ```
+{: data-run="" }
 
 ---
 
@@ -71,13 +87,20 @@ preg_match('/\s*/', 'abc');            // matches "" (zero spaces)
 When you need precision, use curly braces.
 
 ```php
-preg_match('/\d{3}/', '123');     // matches "123"
-preg_match('/\d{3}/', '12');      // no match
-preg_match('/\d{3}/', '12345');   // matches "123" (first 3)
-preg_match('/\d{2,4}/', '12345'); // matches "1234" (up to 4)
-preg_match('/\d{2,}/', '1');      // no match (needs at least 2)
-preg_match('/\d{2,}/', '123');    // matches "123"
+preg_match('/\d{3}/', '123', $matches);     // matches "123"
+print_r($matches[0]);
+preg_match('/\d{3}/', '12');                // no match
+print_r(preg_match('/\d{3}/', '12'));       // 0
+preg_match('/\d{3}/', '12345', $matches);   // matches "123" (first 3)
+print_r($matches[0]);
+preg_match('/\d{2,4}/', '12345', $matches); // matches "1234" (up to 4)
+print_r($matches[0]);
+preg_match('/\d{2,}/', '1');                // no match (needs at least 2)
+print_r(preg_match('/\d{2,}/', '1'));       // 0
+preg_match('/\d{2,}/', '123', $matches);    // matches "123"
+print_r($matches[0]);
 ```
+{: data-run="" }
 
 A common example: a 3-digit code: `/^\d{3}$/` with [anchors](03-anchors-boundaries.md) to match the whole string.
 
@@ -93,6 +116,7 @@ $text = "<p>hello</p>";
 preg_match('/<.+>/', $text, $matches);
 echo $matches[0]; // Output: "<p>hello</p>"
 ```
+{: data-run="" }
 
 The `.+` could stop earlier, but greedy makes it go all the way to the last `>`.
 
@@ -116,6 +140,7 @@ $text = "<p>hello</p>";
 preg_match('/<.+?>/', $text, $matches);
 echo $matches[0]; // Output: "<p>"
 ```
+{: data-run="" }
 
 ### Greedy vs Lazy side by side
 
@@ -128,6 +153,7 @@ preg_match('/<.+?>/', $text, $m2);  // lazy
 echo $m1[0]; // <div>test</div>
 echo $m2[0]; // <div>
 ```
+{: data-run="" }
 
 ### Extracting content between tags
 
@@ -139,13 +165,17 @@ $text = "<p>hello</p><p>world</p>";
 preg_match('/<p>(.+?)<\/p>/', $text, $matches);
 echo $matches[1]; // "hello"
 ```
+{: data-run="" }
 
 If you want **all** matches, use `preg_match_all()`.
 
 ```php
+$text = "<p>hello</p><p>world</p>";
+
 preg_match_all('/<p>(.+?)<\/p>/', $text, $matches);
 print_r($matches[1]); // ["hello", "world"]
 ```
+{: data-run="" }
 
 ---
 

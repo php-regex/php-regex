@@ -29,6 +29,7 @@ Match only if what follows matches `...`
 preg_match('/\d+(?=USD)/', 'Price: 100USD', $matches);
 echo $matches[0]; // "100" (USD is not included)
 ```
+{: data-run="" }
 
 ### Negative lookahead `(?!...)`
 
@@ -38,6 +39,7 @@ Match only if what follows **does not** match `...`
 preg_match('/\d+(?!USD)/', 'Price: 100EUR', $matches);
 echo $matches[0]; // "100"
 ```
+{: data-run="" }
 
 **Watch out with greedy quantifiers here.** You might expect `\d+(?!USD)` to fail on `"100USD"`, but it won't — the greedy `\d+` backtracks to `"10"` (which is not followed by `"USD"`), so it matches `"10"` instead:
 
@@ -45,12 +47,15 @@ echo $matches[0]; // "100"
 preg_match('/\d+(?!USD)/', 'Price: 100USD', $matches);
 echo $matches[0]; // "10" — not "no match"!
 ```
+{: data-run="" }
 
 To truly reject `"100USD"`, anchor the pattern or add context so there's nowhere to backtrack to:
 
 ```php
-preg_match('/\b\d+\b(?!USD)/', 'Price: 100USD', $matches); // no match (word boundary prevents partial)
+preg_match('/\b\d+\b(?!USD)/', 'Price: 100USD'); // no match (word boundary prevents partial)
+print_r(preg_match('/\b\d+\b(?!USD)/', 'Price: 100USD')); // 0
 ```
+{: data-run="" }
 
 ### Greedy + lookahead matters
 
@@ -65,6 +70,7 @@ echo $matches[0]; // "test12"
 preg_match('/\w+?(?=\d)/', 'test123', $matches);
 echo $matches[0]; // "test"
 ```
+{: data-run="" }
 
 Both pass the lookahead — the difference is *where* they stop.
 
@@ -80,6 +86,7 @@ Match only if what **precedes** matches `...`
 preg_match('/(?<=\$)\d+/', 'Total: $49', $matches);
 echo $matches[0]; // "49" ($ is not included)
 ```
+{: data-run="" }
 
 ### Negative lookbehind `(?<!...)`
 
@@ -89,6 +96,7 @@ Match only if what **precedes does not** match `...`
 preg_match('/(?<!\$)\d+/', 'Total: 49', $matches);
 echo $matches[0]; // "49"
 ```
+{: data-run="" }
 
 **The same backtracking pitfall applies here.** You might expect `(?<!\$)\d+` to fail on `"$49"`, but `\d+` can start at the `"9"` — which is preceded by `"4"`, not `"$"` — so it matches `"9"`:
 
@@ -96,12 +104,15 @@ echo $matches[0]; // "49"
 preg_match('/(?<!\$)\d+/', 'Total: $49', $matches);
 echo $matches[0]; // "9" — not "no match"!
 ```
+{: data-run="" }
 
 To reject the entire number, anchor it so the engine can't skip the first digit:
 
 ```php
-preg_match('/(?<!\$)\b\d+/', 'Total: $49', $matches); // no match (word boundary forces start at "4")
+preg_match('/(?<!\$)\b\d+/', 'Total: $49'); // no match (word boundary forces start at "4")
+print_r(preg_match('/(?<!\$)\b\d+/', 'Total: $49')); // 0
 ```
+{: data-run="" }
 
 ---
 
@@ -113,13 +124,17 @@ preg_match('/(?<!\$)\b\d+/', 'Total: $49', $matches); // no match (word boundary
 preg_match('/^.+?(?=\.[a-z]+$)/i', 'document.pdf', $matches);
 echo $matches[0]; // "document"
 ```
+{: data-run="" }
 
 ### Match word only if not followed by "ing"
 
 ```php
-preg_match('/\bwalk(?!ing)\b/', 'I walk to work', $matches);   // matches
-preg_match('/\bwalk(?!ing)\b/', 'I am walking', $matches);    // no match
+preg_match('/\bwalk(?!ing)\b/', 'I walk to work', $matches); // matches
+print_r($matches[0]);
+preg_match('/\bwalk(?!ing)\b/', 'I am walking');             // no match
+print_r(preg_match('/\bwalk(?!ing)\b/', 'I am walking'));    // 0
 ```
+{: data-run="" }
 
 ### Simple password-like check
 
@@ -129,8 +144,11 @@ You can chain lookaheads at the start to assert things exist, without consuming 
 // Must be at least 8 chars and contain at least one digit
 $pattern = '/^(?=.*\d).{8,}$/';
 preg_match($pattern, 'abcdefg1', $matches); // matches
-preg_match($pattern, 'abcdefg',  $matches); // no match
+print_r($matches[0]);
+preg_match($pattern, 'abcdefg');            // no match
+print_r(preg_match($pattern, 'abcdefg'));   // 0
 ```
+{: data-run="" }
 
 Here `(?=.*\d)` scans ahead from the start to see if any digit exists. It doesn't add to the match, `.{8,}` does the actual consuming.
 
@@ -147,12 +165,15 @@ This is important to know in PHP/PCRE:
 If you're ever unsure, test with a fixed length, or restructure with a lookahead instead.
 
 ```php
-// Unbounded — usually invalid
-preg_match('/(?<=a+)b/', 'aaab'); // may error
+// Unbounded — the engine refuses it
+preg_match('/(?<=a+)b/', 'aaab');
+print_r(preg_match('/(?<=a+)b/', 'aaab')); // prints nothing: preg_match() returned false
 
 // Bounded — safer
-preg_match('/(?<=a{1,5})b/', 'aaab'); // more likely to work
+preg_match('/(?<=a{1,5})b/', 'aaab');
+print_r(preg_match('/(?<=a{1,5})b/', 'aaab')); // 1
 ```
+{: data-run="" }
 
 ---
 
