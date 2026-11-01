@@ -83,10 +83,26 @@ final class RegexPatternArgumentRuleTargetTest extends RuleTestCase
      */
     private static function runningEngineRefusal(string $pattern): ?string
     {
-        if (false !== @preg_match($pattern, '')) {
+        // The warning is read by a handler of its own: under the test
+        // runner's handler, error_get_last() may hold the message of an
+        // earlier call instead.
+        $message = '';
+        set_error_handler(static function (int $severity, string $text) use (&$message): bool {
+            $message = $text;
+
+            return true;
+        });
+
+        try {
+            $matched = preg_match($pattern, '');
+        } finally {
+            restore_error_handler();
+        }
+
+        if (false !== $matched) {
             return null;
         }
 
-        return preg_replace('/^preg_match\(\): Compilation failed: /', '', error_get_last()['message'] ?? '');
+        return preg_replace('/^preg_match\(\): Compilation failed: /', '', $message);
     }
 }
