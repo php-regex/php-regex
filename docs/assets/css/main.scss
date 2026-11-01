@@ -1134,7 +1134,7 @@ main table::-webkit-scrollbar-thumb {
    error 9.05:1 on #182B45). The caption line is load-bearing on a regex
    site: which PHP and which PCRE2 answered. */
 .run-out {
-  margin: .45rem 0 0;
+  margin: .45rem 0 1.1rem;
   padding: .8rem 1.1rem 1rem;
   background: #182B45;
   border: 1px solid var(--line);
@@ -4248,6 +4248,9 @@ main > section:not([class]) > p:not(:has(a.button)) {
   .skip-link,
   .pager,
   .copy-btn,
+  .run-btn,
+  .engine-bar,
+  .run-out,
   .anchor,
   .to-top,
   .site-footer,

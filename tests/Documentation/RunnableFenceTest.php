@@ -161,7 +161,10 @@ final class RunnableFenceTest extends TestCase
     /**
      * Runs the snippet under the interpreter that runs the suite. A parse
      * error or a fatal writes to stdout/stderr with a non-zero code; an
-     * endless loop dies at the deadline instead of taking the suite down.
+     * endless loop dies at the deadline instead of taking the suite down —
+     * which is why the pipes are drained while polling: a blocking read
+     * would wait for the child to close stdout, and a child stuck in a
+     * loop never closes anything.
      */
     private static function runPhp(string $source, string &$stdout): int
     {
@@ -175,17 +178,29 @@ final class RunnableFenceTest extends TestCase
             $pipes,
         );
         \assert(\is_resource($process));
+        stream_set_blocking($pipes[1], false);
+        stream_set_blocking($pipes[2], false);
 
-        $stdout = (string) stream_get_contents($pipes[1]);
+        $stdout = '';
+        $deadline = microtime(true) + 10.0;
+        do {
+            // Both pipes are drained: stdout is the assertion's subject,
+            // stderr so a chatty snippet cannot fill the pipe and block.
+            $stdout .= (string) fread($pipes[1], 8192);
+            fread($pipes[2], 8192);
+            $status = proc_get_status($process);
+            if ($status['running']) {
+                usleep(5000);
+            }
+        } while ($status['running'] && microtime(true) < $deadline);
+
+        // The child is gone; the pipes may still hold the tail of its
+        // output. Back to blocking reads, where EOF is the only stop.
+        stream_set_blocking($pipes[1], true);
+        stream_set_blocking($pipes[2], true);
+        $stdout .= (string) stream_get_contents($pipes[1]);
         fclose($pipes[1]);
         fclose($pipes[2]);
-
-        $deadline = microtime(true) + 10.0;
-        $status = proc_get_status($process);
-        while ($status['running'] && microtime(true) < $deadline) {
-            usleep(5000);
-            $status = proc_get_status($process);
-        }
 
         if ($status['running']) {
             proc_terminate($process);
@@ -195,8 +210,7 @@ final class RunnableFenceTest extends TestCase
             return 124;
         }
 
-        $exitCode = $status['exitcode'];
-        proc_close($process);
+        $exitCode = proc_close($process);
         unlink($file);
 
         return $exitCode;

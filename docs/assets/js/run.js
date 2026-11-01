@@ -121,7 +121,7 @@
       }
       busy = true;
       button.disabled = true;
-      button.textContent = 'Running…';
+      button.textContent = 'Run…';
       meta.textContent = 'loading the PHP engine (first run only)…';
       out.textContent = '';
       err.textContent = '';

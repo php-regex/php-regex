@@ -138,10 +138,16 @@ preg_match('/^\p{L}+$/u', 'café', $matches); // matches (letters)
 echo $matches[0], PHP_EOL;
 preg_match('/^\p{N}+$/u', '١٢٣', $matches);   // matches (Arabic-Indic digits)
 echo $matches[0], PHP_EOL;
-preg_match('/\p{Emoji}/u', 'Hi 👋', $matches); // matches emoji
-echo $matches[0], PHP_EOL;
 ```
 {: data-run="" }
+
+The `\p{Emoji}` property needs a newer engine (PCRE2 10.40, so PHP 8.2 and newer):
+
+```php
+preg_match('/\p{Emoji}/u', 'Hi 👋', $matches); // matches emoji — PHP 8.2+
+```
+
+Run it with the version set to 8.0 or 8.1 above and the engine refuses the pattern outright — one property, two answers, and the caption tells you which engine you are talking to.
 
 Common ones:
 

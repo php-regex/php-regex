@@ -76,7 +76,7 @@ echo $matches[0], PHP_EOL;
 preg_match('/[a-z]+/', 'Hello World', $matches); // matches "ello"
 echo $matches[0], PHP_EOL;
 preg_match('/\s*/', 'abc', $matches);            // matches "" (zero spaces)
-echo $matches[0], PHP_EOL;
+echo '[' . $matches[0] . ']', PHP_EOL; // [] — an empty match
 ```
 {: data-run="" }
 

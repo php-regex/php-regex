@@ -165,13 +165,13 @@ This is important to know in PHP/PCRE:
 If you're ever unsure, test with a fixed length, or restructure with a lookahead instead.
 
 ```php
-// Unbounded — the engine refuses it
+// Unbounded — every engine refuses it
 preg_match('/(?<=a+)b/', 'aaab');
-echo preg_match('/(?<=a+)b/', 'aaab'), PHP_EOL; // prints nothing: preg_match() returned false
+var_dump(preg_match('/(?<=a+)b/', 'aaab')); // bool(false), with a compile warning
 
-// Bounded — safer
+// Bounded — recent engines accept it (PCRE2 10.43, so PHP 8.4+)
 preg_match('/(?<=a{1,5})b/', 'aaab');
-echo preg_match('/(?<=a{1,5})b/', 'aaab'), PHP_EOL; // 1
+var_dump(preg_match('/(?<=a{1,5})b/', 'aaab')); // int(1); bool(false) with the same warning on older engines
 ```
 {: data-run="" }
 

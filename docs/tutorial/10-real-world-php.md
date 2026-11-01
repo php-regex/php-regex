@@ -85,11 +85,11 @@ Notice we used `~` as [delimiter](01-basics.md#3-delimiters-wrapping-the-pattern
 Covers common formats with spaces, dashes, or parentheses.
 
 ```php
-$pattern = '/^\+?\d{1,3}[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/';
+$pattern = '/^(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/';
 
 preg_match($pattern, '+1 (555) 123-4567'); // matches
 echo preg_match($pattern, '+1 (555) 123-4567'), PHP_EOL; // 1
-preg_match($pattern, '555-123-4567');     // matches
+preg_match($pattern, '555-123-4567');     // matches — the country prefix is optional
 echo preg_match($pattern, '555-123-4567'), PHP_EOL; // 1
 ```
 {: data-run="" }
