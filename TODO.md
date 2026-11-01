@@ -50,8 +50,8 @@ the tagged commit, from the `twin` artifact of a green "php74 twin"
 workflow run. The published `6eb39fa` is the build of 2.x at caea95400d.
 
 Before that, the sure-match facts of #198 need a published twin: the build
-of `always-matching-pattern` at 7dafd52a0b was verified on PHP 7.4 and
-committed on a clone of the mirror as `f4d2561`, which waits for a push to
+of `always-matching-pattern` at 001b9b5526 was verified on PHP 7.4 and
+committed on a clone of the mirror as `11e3725`, which waits for a push to
 the mirror's `2.x`. The PHPStan fork (`read-regex-shapes-through-phpregex`,
 one commit on upstream 2.3.x) already names that hash in `composer.json`;
 once the mirror holds it, `composer update php-regex/regex-parser-php74`
