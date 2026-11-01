@@ -60,19 +60,6 @@ use PHPRegex\Parser\Text\Ascii;
  */
 final class RedosProfiler extends AbstractNodeVisitor
 {
-    /**
-     * The options PCRE2 reads in the opening run of a pattern, its limits
-     * aside: each lets the attempt through where it stands.
-     */
-    private const OPENING_OPTIONS = [
-        'UTF' => true, 'UTF8' => true, 'UCP' => true,
-        'CR' => true, 'LF' => true, 'CRLF' => true, 'ANYCRLF' => true, 'ANY' => true, 'NUL' => true,
-        'BSR_ANYCRLF' => true, 'BSR_UNICODE' => true,
-        'NOTEMPTY' => true, 'NOTEMPTY_ATSTART' => true,
-        'NO_AUTO_POSSESS' => true, 'NO_DOTSTAR_ANCHOR' => true, 'NO_JIT' => true, 'NO_START_OPT' => true,
-        'CASELESS_RESTRICT' => true, 'TURKISH_CASING' => true,
-    ];
-
     private int $unboundedQuantifierDepth = 0;
 
     /**
@@ -104,7 +91,15 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     private RedosSeverity $culpritSeverity = RedosSeverity::Safe;
 
-    public function __construct(private readonly CharSetAnalyzer $charSetAnalyzer = new CharSetAnalyzer()) {}
+    private readonly Nullability $nullability;
+
+    private readonly FirstTriedStep $firstTriedStep;
+
+    public function __construct(private readonly CharSetAnalyzer $charSetAnalyzer = new CharSetAnalyzer())
+    {
+        $this->nullability = new Nullability();
+        $this->firstTriedStep = new FirstTriedStep();
+    }
 
     /**
      * @return array{severity: RedosSeverity, recommendations: array<string>, vulnerablePattern: ?string, trigger: ?string, confidence: ?RedosConfidence, falsePositiveRisk: ?string, suggestedRewrite: ?string, findings: array<Finding>}
@@ -181,7 +176,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         // A recursion the attempt tries first, before it reads a character,
         // enters the pattern again where it started, and PCRE2 stops the
         // match there with an error: nothing after it ever runs.
-        $recursion = $this->firstTriedStep($node->pattern);
+        $recursion = $node->pattern->accept($this->firstTriedStep);
         if ($recursion instanceof SubroutineNode) {
             $this->addVulnerability(
                 RedosSeverity::Low,
@@ -939,127 +934,6 @@ final class RedosProfiler extends AbstractNodeVisitor
         ];
     }
 
-    private function nullableStatus(NodeInterface $node): ?bool
-    {
-        if ($node instanceof RegexNode) {
-            return $this->nullableStatus($node->pattern);
-        }
-
-        if ($node instanceof LiteralNode) {
-            return '' === $node->value;
-        }
-
-        if ($node instanceof CharTypeNode
-            || $node instanceof DotNode
-            || $node instanceof CharClassNode
-            || $node instanceof RangeNode
-            || $node instanceof UnicodePropNode
-            || $node instanceof CharLiteralNode
-            || $node instanceof PosixClassNode
-            || $node instanceof ControlCharNode
-            || $node instanceof ExtendedCharClassNode
-            || $node instanceof ClassSetOperationNode
-        ) {
-            return false;
-        }
-
-        // A script run matches what its body matches, in one script.
-        if ($node instanceof ScriptRunNode) {
-            return null === $node->content ? true : $this->nullableStatus($node->content);
-        }
-
-        if ($node instanceof AnchorNode
-            || $node instanceof AssertionNode
-            || $node instanceof KeepNode
-            || $node instanceof PcreVerbNode
-            || $node instanceof CommentNode
-            || $node instanceof CalloutNode
-            || $node instanceof LimitMatchNode
-            || $node instanceof VersionConditionNode
-            || $node instanceof DefineNode
-        ) {
-            return true;
-        }
-
-        if ($node instanceof BackrefNode || $node instanceof SubroutineNode) {
-            return null;
-        }
-
-        if ($node instanceof GroupNode) {
-            if (\in_array($node->type, [
-                GroupType::LookaheadPositive,
-                GroupType::LookaheadNegative,
-                GroupType::LookbehindPositive,
-                GroupType::LookbehindNegative,
-                GroupType::ScanSubstring,
-            ], true)) {
-                return true;
-            }
-
-            return $this->nullableStatus($node->child);
-        }
-
-        if ($node instanceof QuantifierNode) {
-            [$min] = $this->quantifierBounds($node);
-            if (0 === $min) {
-                return true;
-            }
-
-            $childNullable = $this->nullableStatus($node->node);
-            if (null === $childNullable) {
-                return null;
-            }
-
-            return $childNullable;
-        }
-
-        if ($node instanceof SequenceNode) {
-            $unknown = false;
-            foreach ($node->children as $child) {
-                $childNullable = $this->nullableStatus($child);
-                if (false === $childNullable) {
-                    return false;
-                }
-                if (null === $childNullable) {
-                    $unknown = true;
-                }
-            }
-
-            return $unknown ? null : true;
-        }
-
-        if ($node instanceof AlternationNode) {
-            $unknown = false;
-            foreach ($node->alternatives as $alt) {
-                $altNullable = $this->nullableStatus($alt);
-                if (true === $altNullable) {
-                    return true;
-                }
-                if (null === $altNullable) {
-                    $unknown = true;
-                }
-            }
-
-            return $unknown ? null : false;
-        }
-
-        if ($node instanceof ConditionalNode) {
-            $yes = $this->nullableStatus($node->yes);
-            $no = $this->nullableStatus($node->no);
-
-            if (true === $yes || true === $no) {
-                return true;
-            }
-            if (false === $yes && false === $no) {
-                return false;
-            }
-
-            return null;
-        }
-
-        return null;
-    }
-
     /**
      * @return array{0:int, 1:int|null}
      */
@@ -1076,7 +950,7 @@ final class RedosProfiler extends AbstractNodeVisitor
             return false;
         }
 
-        return true === $this->nullableStatus($node);
+        return true === $node->accept($this->nullability);
     }
 
     private function shouldDowngradeEmptyRepeat(NodeInterface $node): bool
@@ -1090,7 +964,7 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     private function hasAtomicNullableBranch(NodeInterface $node): bool
     {
-        if (true !== $this->nullableStatus($node)) {
+        if (true !== $node->accept($this->nullability)) {
             return false;
         }
 
@@ -1100,7 +974,7 @@ final class RedosProfiler extends AbstractNodeVisitor
 
         if ($node instanceof AlternationNode) {
             foreach ($node->alternatives as $alt) {
-                if (true === $this->nullableStatus($alt) && $this->isAtomicNullableNode($alt)) {
+                if (true === $alt->accept($this->nullability) && $this->isAtomicNullableNode($alt)) {
                     return true;
                 }
             }
@@ -1137,7 +1011,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         }
 
         if ($node instanceof GroupNode && GroupType::Atomic === $node->type) {
-            return true === $this->nullableStatus($node->child);
+            return true === $node->child->accept($this->nullability);
         }
 
         return false;
@@ -1318,58 +1192,5 @@ final class RedosProfiler extends AbstractNodeVisitor
     private static function isReferenceCondition(ConditionalNode $node): bool
     {
         return $node->condition instanceof BackrefNode || $node->condition instanceof SubroutineNode;
-    }
-
-    /**
-     * Follows the step an attempt tries first, from the node, as long as it
-     * reads no character and cannot fail: the recursion into the whole
-     * pattern it reaches, true when the node lets it through without
-     * reading, false when it reads, may fail, or the analysis cannot tell.
-     */
-    private function firstTriedStep(NodeInterface $node): SubroutineNode|bool
-    {
-        if ($node instanceof SubroutineNode) {
-            return \in_array($node->reference, ['R', '0'], true) ? $node : false;
-        }
-
-        if ($node instanceof SequenceNode) {
-            foreach ($node->children as $child) {
-                $step = $this->firstTriedStep($child);
-                if (true !== $step) {
-                    return $step;
-                }
-            }
-
-            return true;
-        }
-
-        if ($node instanceof AlternationNode) {
-            return [] === $node->alternatives ? false : $this->firstTriedStep($node->alternatives[0]);
-        }
-
-        if ($node instanceof GroupNode) {
-            if (!\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags, GroupType::Atomic, GroupType::BranchReset], true)) {
-                return false;
-            }
-
-            return $this->firstTriedStep($node->child);
-        }
-
-        if ($node instanceof QuantifierNode) {
-            [$min, $max] = $this->quantifierBounds($node);
-            if (0 === $max || (0 === $min && QuantifierType::Lazy === $node->type)) {
-                return true;
-            }
-
-            return $this->firstTriedStep($node->node);
-        }
-
-        // The options of the opening run, a comment, a DEFINE block and \K
-        // let the attempt through where it stands.
-        return ($node instanceof LiteralNode && '' === $node->value)
-            || $node instanceof CommentNode
-            || $node instanceof DefineNode
-            || $node instanceof KeepNode
-            || ($node instanceof PcreVerbNode && isset(self::OPENING_OPTIONS[$node->verb]));
     }
 }
