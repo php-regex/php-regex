@@ -174,6 +174,32 @@ final class PlaygroundDriverTest extends TestCase
 
     #[Test]
     #[DataProvider('provideDrivers')]
+    public function test_the_engine_is_asked_even_when_the_library_refuses(string $driver, string $root): void
+    {
+        // The page's own sequence: the analysis without the match, then the
+        // match on its own, whatever the library said about the pattern.
+        $regex = '/(?<d>\d{4})-(/';
+        $analysis = PlaygroundDriver::analyze($driver, $root, $regex, '2026-', null, [], false);
+        $this->assertNull($analysis['ast']);
+        $this->assertNull($analysis['matches']);
+        $this->assertNull($analysis['engineError'], 'The analysis alone does not ask the engine.');
+
+        $matched = PlaygroundDriver::match($driver, $root, $regex, '2026-');
+        $this->assertStringStartsWith('Compilation failed: missing closing parenthesis at offset 13', (string) $matched['engineError']);
+        $this->assertNull($matched['matches']);
+
+        // A pattern the library refuses for the engine it judges for, and
+        // the engine compiles: the match still runs.
+        $refused = PlaygroundDriver::analyze($driver, $root, '/\p{Script=Latin}/u', 'a', ['php' => '8.0.30', 'pcre' => '10.35'], [], false);
+        $this->assertCount(1, $refused['errors']);
+        $this->assertNull($refused['engineError']);
+        $live = PlaygroundDriver::match($driver, $root, '/\p{Script=Latin}/u', 'a');
+        $this->assertNull($live['engineError']);
+        $this->assertSame(1, self::matchesOf($live)['count']);
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
     public function test_an_unclosed_class_reports_position_four(string $driver, string $root): void
     {
         $payload = PlaygroundDriver::analyze($driver, $root, '/[a-z/u', 'x');
@@ -285,9 +311,13 @@ final class PlaygroundDriverTest extends TestCase
     #[DataProvider('provideDrivers')]
     public function test_describe_pairs_with_the_dumped_tree_for_every_node_kind(string $driver, string $root): void
     {
+        // The corpus reaches into syntax the newest PCRE2 knows (the class
+        // set operators of 10.45): judged for that release whatever the
+        // local engine is, as JsonDumperTest itself parses it.
+        $target = ['php' => \PHP_VERSION, 'pcre' => '10.49'];
         foreach (JsonDumperTest::provideCorpus() as $name => $row) {
             $regex = $row['pattern'];
-            $analysis = PlaygroundDriver::analyze($driver, $root, $regex, '');
+            $analysis = PlaygroundDriver::analyze($driver, $root, $regex, '', $target, [], false);
             $parseErrors = array_filter($analysis['errors'], static fn (array $error): bool => 'parse' === $error['source']);
             $this->assertSame([], $parseErrors, $name.': the corpus parses (a validation verdict is another matter).');
 
@@ -296,7 +326,7 @@ final class PlaygroundDriverTest extends TestCase
             $this->assertGreaterThan(1, \count($spans), $name);
 
             foreach ($spans as $index => [$start, $end]) {
-                $described = PlaygroundDriver::describe($driver, $root, $regex, $index);
+                $described = PlaygroundDriver::describe($driver, $root, $regex, $index, $target);
                 $this->assertSame($index, $described['index'], $name);
                 $this->assertSame($start, $described['start'], sprintf('%s: node %d starts where the dump says.', $name, $index));
                 $this->assertSame($end, $described['end'], sprintf('%s: node %d ends where the dump says.', $name, $index));
@@ -305,7 +335,7 @@ final class PlaygroundDriverTest extends TestCase
                 $this->assertStringNotContainsString("\n", (string) $described['text'], 'One line per node.');
             }
 
-            $past = PlaygroundDriver::describe($driver, $root, $regex, \count($spans));
+            $past = PlaygroundDriver::describe($driver, $root, $regex, \count($spans), $target);
             $this->assertNull($past['text'], $name.': past the tree there is nothing to describe.');
         }
     }

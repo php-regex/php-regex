@@ -208,12 +208,18 @@ final class PlaygroundDriver
     }
 
     /**
+     * @param Target|null $target
+     *
      * @return Description
      */
-    public static function describe(string $driver, string $root, string $regex, int $index): array
+    public static function describe(string $driver, string $root, string $regex, int $index, ?array $target = null): array
     {
+        $input = ['op' => 'describe', 'regex' => $regex, 'index' => $index];
+        if (null !== $target) {
+            $input['target'] = $target;
+        }
         /** @var Description $answer */
-        $answer = self::ask($driver, $root, ['op' => 'describe', 'regex' => $regex, 'index' => $index]);
+        $answer = self::ask($driver, $root, $input);
 
         return $answer;
     }

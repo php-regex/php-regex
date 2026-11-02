@@ -83,6 +83,12 @@ final class PullRequestScopeTest extends TestCase
     ];
 
     /**
+     * The one PHP file the prose carries on purpose: the playground's
+     * driver, which the documentation workflow tests and bundles.
+     */
+    private const PROSE_CODE = ['docs/assets/playground/driver.php'];
+
+    /**
      * A workflow a pull request starts has chosen its scope: it judges the
      * code and stays out of a prose change, or it names the paths it reads.
      */
@@ -172,7 +178,7 @@ final class PullRequestScopeTest extends TestCase
     /**
      * The prose holds no code: a tracked file the prose patterns match is
      * never a PHP file, a test, a manifest or a configuration the code
-     * workflows judge.
+     * workflows judge, the playground's driver aside.
      */
     #[Test]
     public function test_the_prose_holds_no_code(): void
@@ -194,7 +200,10 @@ final class PullRequestScopeTest extends TestCase
 
         $this->assertContains('docs/index.md', $prose);
         $this->assertContains('src/Parser/README.md', $prose);
-        foreach ($prose as $path) {
+        foreach (self::PROSE_CODE as $path) {
+            $this->assertContains($path, $prose);
+        }
+        foreach (array_diff($prose, self::PROSE_CODE) as $path) {
             $this->assertStringNotContainsString('.php', $path, $path.' is code, not prose.');
             $this->assertDoesNotMatchRegularExpression('~^(tests|bin|tools|phar|build|demo)/|composer\.json$|\.neon$|\.dist$~', $path, $path.' is code, not prose.');
         }
