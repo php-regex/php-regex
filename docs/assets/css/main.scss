@@ -1166,6 +1166,22 @@ main table::-webkit-scrollbar-thumb {
   border-color: var(--ink);
 }
 
+/* On a phone the band stacks: the chips keep the first line, the select
+   takes the second. A large system font grows every rem the select is
+   made of while the viewport does not move, and the two controls would
+   otherwise reach each other — the stack removes the meeting before it
+   can happen. */
+@media (max-width: 639px) {
+  main pre.has-run,
+  .highlighter-rouge.has-run pre {
+    padding-top: 5.4rem;
+  }
+
+  .run-version {
+    top: 2.7rem;
+  }
+}
+
 /* The output panel rides under its block, on the fixed ink panel the
    terminal uses — identical in both themes, because an engine's answer
    does not change with the site's palette (amber 5.72:1, ink 12.60:1,
