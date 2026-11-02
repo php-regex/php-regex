@@ -681,7 +681,13 @@
     }
     clear(el.subjectMirror);
     el.subjectMirror.appendChild(markRanges(subject, ranges));
-    announce(matches && !matches.pending ? (matches.count === 1 ? '1 match' : matches.count + ' matches') : 'No match');
+    if (payload.errors && payload.errors.length) {
+      announce((payload.errors[0].source === 'validate' ? 'Invalid for this engine: ' : 'Syntax error: ') + payload.errors[0].message);
+    } else if (matches && !matches.pending) {
+      announce(matches.count === 1 ? '1 match' : matches.count + ' matches');
+    } else if (!matches && payload.engineError) {
+      announce('The engine refused the pattern: ' + payload.engineError);
+    }
   }
 
   function highlightMatch(index, on) {
@@ -881,34 +887,40 @@
       return;
     }
 
-    (function walk(node, parentList) {
+    // Each item is the tree item itself (the pattern the role asks for):
+    // focusable, one tab stop for the whole tree, the arrow keys move
+    // between items. Every node is expanded; the attribute says so.
+    (function walk(node, parentList, level) {
       var index = nodes.length;
       var entry = { index: index, node: node, start: node.start, end: node.end, button: null };
       nodes.push(entry);
       var item = text('li', 'tree-item');
       item.setAttribute('role', 'treeitem');
+      item.setAttribute('aria-level', String(level));
+      item.setAttribute('aria-selected', 'false');
+      item.setAttribute('tabindex', index === 0 ? '0' : '-1');
+      item.setAttribute('data-index', String(index));
       var row = describeRow(node);
-      var button = text('button', 'tree-row');
-      button.type = 'button';
-      button.setAttribute('data-index', String(index));
-      button.appendChild(text('span', 'tree-kind', row.kind));
+      var label = text('span', 'tree-row');
+      label.appendChild(text('span', 'tree-kind', row.kind));
       if (row.detail) {
-        button.appendChild(text('span', 'tree-value', row.detail));
+        label.appendChild(text('span', 'tree-value', row.detail));
       }
-      button.appendChild(text('span', 'tree-span', node.start + '\u2013' + node.end));
-      entry.button = button;
-      item.appendChild(button);
+      label.appendChild(text('span', 'tree-span', node.start + '\u2013' + node.end));
+      entry.button = item;
+      item.appendChild(label);
       parentList.appendChild(item);
       var children = childNodes(node);
       if (children.length) {
+        item.setAttribute('aria-expanded', 'true');
         var list = text('ul', 'tree-children');
         list.setAttribute('role', 'group');
         item.appendChild(list);
         children.forEach(function (child) {
-          walk(child, list);
+          walk(child, list, level + 1);
         });
       }
-    })(payload.ast, el.treeNodes);
+    })(payload.ast, el.treeNodes, 1);
 
     // The pattern, piece by piece: one span per node, nested the way the
     // tree is, so pointing at a character names the deepest node around
@@ -960,6 +972,8 @@
     }
     if (currentNode >= 0 && nodes[currentNode]) {
       nodes[currentNode].button.classList.remove('is-current');
+      nodes[currentNode].button.setAttribute('aria-selected', 'false');
+      nodes[currentNode].button.setAttribute('tabindex', '-1');
     }
     currentNode = index;
     Array.prototype.forEach.call(el.treePattern.querySelectorAll('mark'), function (mark) {
@@ -967,6 +981,10 @@
     });
     if (index >= 0 && nodes[index]) {
       nodes[index].button.classList.add('is-current');
+      nodes[index].button.setAttribute('aria-selected', 'true');
+      nodes[index].button.setAttribute('tabindex', '0');
+    } else if (nodes[0]) {
+      nodes[0].button.setAttribute('tabindex', '0');
     }
     showDetail(index);
     if (current) {
@@ -1070,14 +1088,44 @@
     });
   });
 
+  // The deepest item under the pointer, the focus or the click is the one
+  // meant: items nest, and an event on a child reaches its parents too.
   ['mouseover', 'focusin', 'click'].forEach(function (type) {
     el.treeNodes.addEventListener(type, function (event) {
-      var button = event.target.closest('.tree-row');
-      if (button) {
-        setCurrentNode(Number(button.getAttribute('data-index')));
+      var item = event.target.closest('[role="treeitem"]');
+      if (item) {
+        setCurrentNode(Number(item.getAttribute('data-index')));
       }
     });
   });
+  // The arrow keys walk the tree: down and up in reading order, right to
+  // the first child, left to the parent, Home and End to the ends.
+  el.treeNodes.addEventListener('keydown', function (event) {
+    var item = event.target.closest('[role="treeitem"]');
+    if (!item || !nodes.length) {
+      return;
+    }
+    var index = Number(item.getAttribute('data-index'));
+    var target = -1;
+    switch (event.key) {
+      case 'ArrowDown': target = Math.min(index + 1, nodes.length - 1); break;
+      case 'ArrowUp': target = Math.max(index - 1, 0); break;
+      case 'Home': target = 0; break;
+      case 'End': target = nodes.length - 1; break;
+      case 'ArrowRight': target = childNodes(nodes[index].node).length ? index + 1 : index; break;
+      case 'ArrowLeft': target = parentIndex(index); break;
+      default: return;
+    }
+    event.preventDefault();
+    if (target >= 0 && target !== index) {
+      nodes[target].button.focus();
+    }
+  });
+
+  function parentIndex(index) {
+    var item = nodes[index].button.parentNode.closest('[role="treeitem"]');
+    return item ? Number(item.getAttribute('data-index')) : index;
+  }
   el.treePattern.addEventListener('mouseover', function (event) {
     var mark = event.target.closest('mark');
     if (mark) {

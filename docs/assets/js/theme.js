@@ -30,8 +30,11 @@
 
   function apply() {
     root.dataset.theme = state;
+    // A toggle names its state, and aria-pressed says whether it is on:
+    // "Dark theme, pressed" reads right, "Switch to light theme, pressed"
+    // contradicts itself.
     button.setAttribute('aria-pressed', state === 'dark' ? 'true' : 'false');
-    button.setAttribute('aria-label', state === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+    button.setAttribute('aria-label', 'Dark theme');
     var metas = document.querySelectorAll('meta[name="theme-color"]');
     for (var i = 0; i < metas.length; i++) {
       metas[i].setAttribute('content', colors[state]);

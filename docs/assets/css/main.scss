@@ -94,10 +94,10 @@
   --amber-tint: rgba(177, 78, 6, 0.06);
   --amber-deep: #9A4307;
   /* The playground's marks over the subject and the pattern. */
-  --mark-match: rgba(177, 78, 6, 0.18);
-  --mark-match-alt: rgba(100, 116, 139, 0.18);
-  --mark-match-current: rgba(177, 78, 6, 0.32);
-  --mark-error: rgba(177, 78, 6, 0.16);
+  --mark-match: rgba(177, 78, 6, 0.28);
+  --mark-match-alt: rgba(100, 116, 139, 0.28);
+  --mark-match-current: rgba(177, 78, 6, 0.42);
+  --mark-error: rgba(177, 78, 6, 0.22);
   --scrim: rgba(24, 43, 69, 0.55);
   /* Elevations, in the ink the borders already speak. */
   --shadow-1: 0 1px 2px rgba(24, 43, 69, 0.06), 0 2px 8px rgba(24, 43, 69, 0.05);
@@ -4685,7 +4685,7 @@ body.search-open {
   min-width: 4.5rem;
   padding: .2rem .55rem;
   font-family: var(--font-mono);
-  font-size: .7rem;
+  font-size: .78rem;
   line-height: 1.4;
   text-align: center;
   color: var(--ink-soft);
@@ -4752,7 +4752,7 @@ body.search-open {
 
 .pg-count {
   font-family: var(--font-mono);
-  font-size: .7rem;
+  font-size: .78rem;
   color: var(--ink-soft);
 }
 .pg-count.is-over {
@@ -4849,12 +4849,13 @@ body.search-open {
   list-style: none;
 }
 .pg-examples-label {
-  font-size: .76rem;
+  font-size: .78rem;
   color: var(--ink-soft);
 }
 .pg-example {
-  padding: .2rem .6rem;
-  font-size: .76rem;
+  min-height: 1.75rem;
+  padding: .3rem .65rem;
+  font-size: .78rem;
   color: var(--ink-soft);
   background: transparent;
   border: 1px solid var(--line-soft);
@@ -4911,7 +4912,7 @@ body.search-open {
 }
 .pg-panel-note {
   font-family: var(--font-mono);
-  font-size: .72rem;
+  font-size: .78rem;
   font-weight: 400;
   color: var(--ink-soft);
 }
@@ -4947,7 +4948,7 @@ body.search-open {
 }
 .pg-match-n {
   font-family: var(--font-mono);
-  font-size: .72rem;
+  font-size: .78rem;
   color: var(--ink-soft);
 }
 .pg-match-value {
@@ -4959,7 +4960,7 @@ body.search-open {
 }
 .pg-match-at {
   font-family: var(--font-mono);
-  font-size: .7rem;
+  font-size: .78rem;
   color: var(--ink-soft);
 }
 .pg-groups {
@@ -4971,7 +4972,7 @@ body.search-open {
 }
 .pg-group-name {
   font-family: var(--font-mono);
-  font-size: .74rem;
+  font-size: .78rem;
   color: var(--ink-soft);
 }
 .pg-group-value {
@@ -5043,7 +5044,7 @@ body.search-open {
 }
 .pg-diag-facts {
   font-family: var(--font-mono);
-  font-size: .72rem;
+  font-size: .78rem;
 }
 .pg-diag-rule {
   font-family: var(--font-mono);
@@ -5070,7 +5071,7 @@ body.search-open {
 
 .pg-credits {
   margin: 0;
-  font-size: .72rem;
+  font-size: .78rem;
   color: var(--ink-soft);
 }
 
@@ -5121,15 +5122,14 @@ body.search-open {
   color: inherit;
   background: transparent;
   border-radius: var(--radius-s);
-  cursor: default;
+  cursor: help;
 }
+.tree-pattern mark:hover,
 .tree-pattern mark.is-current {
   background: var(--amber-tint);
   box-shadow: inset 0 -2px 0 var(--amber);
 }
 .tree-wrap {
-  max-height: 34rem;
-  overflow: auto;
   padding: .25rem 0;
 }
 .tree-nodes,
@@ -5145,33 +5145,34 @@ body.search-open {
 }
 .tree-item {
   margin: 0;
+  outline: 0;
 }
 /* A row: the kind, what tells the node apart, the bytes at the far right.
-   The current one carries the accent on its left edge, not a box. */
+   The current one carries the accent on its left edge, not a box. The
+   item is what takes the focus; its row shows it. */
 .tree-row {
   display: flex;
   align-items: baseline;
   gap: .55rem;
-  width: 100%;
-  padding: .22rem .5rem .22rem .55rem;
+  min-height: 1.75rem;
+  padding: .3rem .5rem .3rem .55rem;
   font-family: var(--font-mono);
   font-size: .78rem;
   line-height: 1.5;
   text-align: left;
   color: var(--ink);
-  background: transparent;
-  border: 0;
   border-left: 2px solid transparent;
   border-radius: 0 var(--radius-s) var(--radius-s) 0;
   cursor: pointer;
 }
 .tree-row:hover,
-.tree-row:focus-visible,
-.tree-row.is-current {
+.tree-item.is-current > .tree-row {
   background: var(--amber-tint);
   border-left-color: var(--amber);
 }
-.tree-row:focus-visible {
+.tree-item:focus-visible > .tree-row {
+  background: var(--amber-tint);
+  border-left-color: var(--amber);
   outline: 2px solid var(--amber);
   outline-offset: -2px;
 }
@@ -5184,7 +5185,7 @@ body.search-open {
 .tree-span {
   margin-left: auto;
   flex: none;
-  font-size: .7rem;
+  font-size: .78rem;
   color: var(--ink-soft);
 }
 .tree-detail {
@@ -5202,7 +5203,7 @@ body.search-open {
 .tree-detail-empty,
 .tree-detail-span {
   font-family: var(--font-mono);
-  font-size: .72rem;
+  font-size: .78rem;
   color: var(--ink-soft);
 }
 .tree-detail-text.is-pending {
@@ -5226,7 +5227,7 @@ body.search-open {
   align-items: stretch;
   overflow: hidden;
   font-family: var(--font-mono);
-  font-size: .7rem;
+  font-size: .78rem;
   line-height: 1.5;
   color: var(--ink);
   border: 1px solid var(--line-soft);
@@ -5258,6 +5259,11 @@ body.search-open {
   .pg-controls {
     grid-column: 1 / -1;
     justify-content: flex-end;
+  }
+  .pg-titlebar .pg-version,
+  .pg-titlebar .pg-run {
+    min-height: 2.5rem;
+    padding-inline: .9rem;
   }
   .pg-match-list {
     max-height: 14rem;
