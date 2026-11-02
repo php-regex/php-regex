@@ -1,0 +1,165 @@
+#!/usr/bin/env node
+'use strict';
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+/*
+ * Runs the playground bundle inside the browser's PHP engine, under Node,
+ * and compares its answers with the ones the local PHP wrote into
+ * docs/_data/playground.json. The PHPUnit suite runs the driver on the local
+ * PHP only; this is the one check of the path a visitor runs: php-wasm, its
+ * mbstring extension, the bundle written into the engine's filesystem, the
+ * driver included once and asked many times.
+ *
+ * php-wasm and php-wasm-mbstring (the versions run-worker.js pins) are
+ * installed into a temporary directory for the run: the repository carries
+ * no package.json.
+ *
+ * Usage: bin/playground-check
+ */
+
+const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
+
+const ROOT = path.resolve(__dirname, '..');
+const BUNDLE = path.join(ROOT, 'docs/assets/playground/bundle.json');
+const DEFAULT_DATA = path.join(ROOT, 'docs/_data/playground.json');
+const PHP_WASM = 'php-wasm@0.2.0';
+const MBSTRING = 'php-wasm-mbstring@0.2.0';
+const LIBRARY_DIR = '/lib';
+
+function fail(message) {
+  process.stderr.write(message + '\n');
+  process.exit(1);
+}
+
+function stripped(payload, keys) {
+  const copy = JSON.parse(JSON.stringify(payload));
+  keys.forEach((key) => delete copy[key]);
+  return copy;
+}
+
+// The first path where two JSON values differ, or null.
+function firstDifference(a, b, at = '$') {
+  if (typeof a !== typeof b || Array.isArray(a) !== Array.isArray(b)) {
+    return `${at}: ${JSON.stringify(a)} vs ${JSON.stringify(b)}`;
+  }
+  if (a === null || typeof a !== 'object') {
+    return a === b ? null : `${at}: ${JSON.stringify(a)} vs ${JSON.stringify(b)}`;
+  }
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const key of keys) {
+    const difference = firstDifference(a[key], b[key], `${at}.${key}`);
+    if (difference) {
+      return difference;
+    }
+  }
+  return null;
+}
+
+async function main() {
+  const bundle = JSON.parse(fs.readFileSync(BUNDLE, 'utf8'));
+  const data = JSON.parse(fs.readFileSync(DEFAULT_DATA, 'utf8'));
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'phpregex-playground-check-'));
+  process.stdout.write(`Installing ${PHP_WASM} and ${MBSTRING} into ${dir}…\n`);
+  execFileSync('npm', ['install', '--no-save', '--no-audit', '--no-fund', '--no-package-lock', '--prefix', dir, PHP_WASM, MBSTRING], { stdio: ['ignore', 'ignore', 'inherit'] });
+
+  const { PhpNode } = await import(pathToFileURL(path.join(dir, 'node_modules/php-wasm/PhpNode.mjs')).href);
+  const mbstring = (await import(pathToFileURL(path.join(dir, 'node_modules/php-wasm-mbstring/index.mjs')).href)).default;
+
+  let output = '';
+  const engine = (version, withLibrary) => {
+    const php = new PhpNode({ version, sharedLibs: [mbstring], ini: 'pcre.backtrack_limit=1000000' });
+    php.addEventListener('output', (event) => { output += Array.isArray(event.detail) ? event.detail.join('') : String(event.detail || ''); });
+    php.addEventListener('error', (event) => { output += Array.isArray(event.detail) ? event.detail.join('') : String(event.detail || ''); });
+    return php.binary.then(async (binary) => {
+      const FS = binary.FS;
+      const files = withLibrary ? bundle.files : { 'driver.php': bundle.files['driver.php'] };
+      for (const file of Object.keys(files)) {
+        const target = `${LIBRARY_DIR}/${file}`;
+        FS.createPath('/', target.substring(1, target.lastIndexOf('/')));
+        FS.writeFile(target, files[file]);
+      }
+      if (!FS.analyzePath('/tmp').exists) {
+        FS.mkdir('/tmp');
+      }
+      output = '';
+      await php.run(`<?php require "${LIBRARY_DIR}/driver.php";`);
+      return { php, FS };
+    });
+  };
+  const ask = async (instance, input) => {
+    instance.FS.writeFile('/tmp/in.json', JSON.stringify(input));
+    output = '';
+    await instance.php.run('<?php echo phpregex_playground_run("/tmp/in.json");');
+    const found = /\x1e([\s\S]*)\x1e/.exec(output);
+    if (!found) {
+      fail(`No envelope from the engine for ${JSON.stringify(input).slice(0, 120)}:\n${output.slice(0, 500)}`);
+    }
+    return JSON.parse(found[1]);
+  };
+
+  const problems = [];
+  const expect = (condition, message) => { if (!condition) problems.push(message); };
+
+  // The default engine: the sample judged for it must be its own answer.
+  const main84 = await engine(data.default.target.php.slice(0, 3), true);
+  output = '';
+  await main84.php.run('<?php echo PHP_VERSION, " ", (int) function_exists("mb_strlen");');
+  const [php84, mb] = output.trim().split(' ');
+  expect(mb === '1', `mbstring is not loaded on PHP ${php84}.`);
+  expect(php84 === data.default.target.php, `The default engine is PHP ${php84}, the sample was judged for ${data.default.target.php}: update bin/playground-bundle's DEFAULT_TARGET and regenerate.`);
+
+  const analyze = await ask(main84, { op: 'analyze', regex: data.default.regex, subject: data.default.subject });
+  expect(analyze.engine && analyze.engine.pcre === data.default.target.pcre, `The default engine bundles PCRE2 ${analyze.engine && analyze.engine.pcre}, the sample was judged for ${data.default.target.pcre}.`);
+  expect(analyze.engine && analyze.engine.jit === false, 'The browser engine reports JIT on; the caption says off.');
+  const analyzeDifference = firstDifference(stripped(analyze, ['engine', 'timing']), data.analyze);
+  expect(analyzeDifference === null, `The engine's analysis differs from the sample at ${analyzeDifference}.`);
+
+  const lint = await ask(main84, { op: 'lint', regex: data.default.regex });
+  const lintDifference = firstDifference(stripped(lint, ['timing']), data.lint);
+  expect(lintDifference === null, `The engine's lint differs from the sample at ${lintDifference}.`);
+
+  // A pattern the engine refuses: its message is framed differently in the
+  // browser engine, and the driver must still hand over PCRE2's own words.
+  const broken = await ask(main84, { op: 'analyze', regex: '/(?<d>\\d{4})-(/', subject: '' });
+  expect(broken.errors.length === 1 && broken.errors[0].position === 13, `The library did not report the unclosed group at 13: ${JSON.stringify(broken.errors)}`);
+  expect(typeof broken.engineError === 'string' && broken.engineError.startsWith('Compilation failed') && broken.engineError.includes('offset 13'), `The engine's compile message came through as ${JSON.stringify(broken.engineError)}.`);
+  expect(broken.matches === null, 'A pattern the engine refuses has no matches.');
+
+  // The backtrack limit set through the ini: an answer, not a hang.
+  const limit = await ask(main84, { op: 'analyze', regex: '/(a+)+$/', subject: 'a'.repeat(30) + 'b' });
+  expect(limit.matches && limit.matches.error === 'Backtrack limit exhausted', `The backtrack limit did not stop the match: ${JSON.stringify(limit.matches)}`);
+  expect(limit.engine && limit.engine.backtrackLimit === 1000000, 'The ini backtrack limit was not applied.');
+
+  // A node described, the way the X-Ray asks.
+  const described = await ask(main84, { op: 'describe', regex: data.default.regex, index: 2 });
+  expect(typeof described.text === 'string' && described.text.length > 0, `Node 2 of the sample has no description: ${JSON.stringify(described)}`);
+
+  // The oldest engine: the library does not run there, the match does.
+  const php80 = await engine('8.0', false);
+  const matched = await ask(php80, { op: 'match', regex: data.default.regex, subject: data.default.subject });
+  expect(matched.engine && matched.engine.php.startsWith('8.0'), `The 8.0 engine reports PHP ${matched.engine && matched.engine.php}.`);
+  expect(matched.matches && matched.matches.count === data.analyze.matches.count, `PHP 8.0 found ${matched.matches && matched.matches.count} matches, the sample ${data.analyze.matches.count}.`);
+  expect(matched.fatal === undefined, `The match request failed on PHP 8.0: ${matched.fatal}`);
+
+  fs.rmSync(dir, { recursive: true, force: true });
+
+  if (problems.length) {
+    fail(problems.map((p) => '- ' + p).join('\n'));
+  }
+  process.stdout.write(`The bundle answers inside the browser engine as the sample says (PHP ${php84}, PCRE2 ${analyze.engine.pcre}; match on PHP ${matched.engine.php}).\n`);
+}
+
+main().catch((error) => fail(String(error && error.stack || error)));

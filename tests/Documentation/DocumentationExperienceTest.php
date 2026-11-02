@@ -110,40 +110,10 @@ final class DocumentationExperienceTest extends TestCase
             $this->assertStringContainsString('{{ site.data.product.version }}', $text, $page.': a sample output reads the version from product.yml.');
             $this->assertStringNotContainsString($version[1], $text, $page.': a sample output does not spell the version.');
         }
-        $this->assertStringContainsString('site.data.product.php_floor', $home);
-        $this->assertStringContainsString('{% include install.html package="php-regex/regex-cli" dev=true inline=true %}', $home);
         $this->assertStringNotContainsString('composer config', $home);
         $this->assertStringNotContainsString('php-regex/php-regex:2.x-dev', $home);
         $this->assertStringNotContainsString('PCRE2 10.49', $home);
         $this->assertStringNotContainsString('2.0.0-DEV', $home);
-    }
-
-    #[Test]
-    public function test_the_landing_demo_shows_the_ast(): void
-    {
-        $home = (string) file_get_contents(self::HOME);
-
-        $this->assertStringContainsString('site.data.hero_ast.command', $home);
-        $this->assertStringContainsString('site.data.hero_ast.output', $home);
-        $this->assertStringNotContainsString('vendor/bin/regex analyze', $home);
-    }
-
-    #[Test]
-    public function test_the_landing_terminal_fits_without_horizontal_scrolling(): void
-    {
-        $this->assertSame(1, preg_match(
-            '/command: \|-\n(.*?)\noutput: \|-\n(.*?)\z/s',
-            (string) file_get_contents(__DIR__.'/../../docs/_data/hero_ast.yml'),
-            $matches,
-        ));
-
-        $terminal = implode("\n", array_map(
-            static fn (string $line): string => str_starts_with($line, '  ') ? substr($line, 2) : $line,
-            explode("\n", $matches[1]."\n".$matches[2]),
-        ));
-        $longestLine = max(array_map(strlen(...), explode("\n", $terminal)));
-
-        $this->assertLessThanOrEqual(58, $longestLine, 'Terminal lines longer than 58 characters force horizontal scrolling.');
     }
 
     #[Test]

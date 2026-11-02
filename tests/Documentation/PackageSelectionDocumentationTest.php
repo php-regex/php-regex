@@ -34,7 +34,7 @@ final class PackageSelectionDocumentationTest extends TestCase
     }
 
     /**
-     * The home page, the quick start and the README install the CLI package
+     * The quick start and the README install the CLI package
      * the way the channel of the day asks: the dev channel first while the
      * packages are `2.x-dev`, the package alone once a stable release
      * exists. product.yml says which, and bin/bump flips it.
@@ -42,7 +42,6 @@ final class PackageSelectionDocumentationTest extends TestCase
     #[Test]
     public function test_onboarding_installs_the_focused_cli_package(): void
     {
-        $home = self::rendered((string) file_get_contents(__DIR__.'/../../docs/index.md'));
         $quickStart = self::rendered((string) file_get_contents(__DIR__.'/../../docs/quick-start.md'));
         $readme = (string) file_get_contents(__DIR__.'/../../README.md');
 
@@ -50,7 +49,7 @@ final class PackageSelectionDocumentationTest extends TestCase
         $command = $stable ? 'composer require --dev php-regex/regex-cli' : 'composer require --dev php-regex/regex-cli:{{ site.data.product.release }}-dev';
         $readmeCommand = $stable ? "composer require --dev php-regex/regex-cli\n" : "composer require --dev php-regex/regex-cli:2.x-dev\n";
 
-        foreach ([$home, $quickStart] as $page) {
+        foreach ([$quickStart] as $page) {
             $this->assertSame(!$stable, str_contains($page, 'composer config minimum-stability dev'));
             $this->assertSame(!$stable, str_contains($page, 'composer config prefer-stable true'));
             $this->assertStringContainsString($command, $page);

@@ -59,3 +59,8 @@ jobs:
 
       - name: Run the Documentation Tests
         run: tools/phpunit/vendor/bin/phpunit --colors=always --group documentation
+
+      # The one check of the playground's actual path: the bundle inside the
+      # browser's PHP engine, under Node, compared with the local driver.
+      - name: Run the playground bundle inside the browser engine
+        run: bin/playground-check
