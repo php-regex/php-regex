@@ -4832,10 +4832,11 @@ body.search-open {
   outline: 2px solid var(--amber);
   outline-offset: 1px;
 }
+/* The marks under the fields run square, as the pieces above the tree
+   do: a highlight over characters, not a chip. */
 .pg-mirror mark {
   color: transparent;
   background: transparent;
-  border-radius: var(--radius-s);
 }
 .pg-mirror .pg-mark-match {
   background: var(--mark-match);
