@@ -1,6 +1,6 @@
 ---
 layout: tutorial
-description: "Control where a match can happen with anchors (^, $, \A, \z) and word boundaries (\b)."
+description: 'Control where a match can happen with anchors (^, $, \A, \z) and word boundaries (\b).'
 ---
 
 # Chapter 3: Anchors & Boundaries

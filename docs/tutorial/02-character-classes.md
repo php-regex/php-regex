@@ -1,6 +1,6 @@
 ---
 layout: tutorial
-description: "Match sets of characters with [abc], ranges, negation, shorthand classes like \d and \w, and when to use them."
+description: 'Match sets of characters with [abc], ranges, negation, shorthand classes like \d and \w, and when to use them.'
 ---
 
 # Chapter 2: Character Classes & Escapes
