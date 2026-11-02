@@ -220,6 +220,16 @@
     autosize(el.subject);
     counter(el.pattern, el.patternCount, PATTERN_CAP);
     counter(el.subject, el.subjectCount, SUBJECT_CAP);
+    syncExamples();
+  }
+
+  // The example that sits in the fields, if any: pressed, so the row
+  // says what the window is showing.
+  function syncExamples() {
+    Array.prototype.forEach.call(el.examples, function (chip) {
+      var on = chip.getAttribute('data-regex') === el.pattern.value && chip.getAttribute('data-subject') === el.subject.value;
+      chip.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
   }
 
   // --- the worker ----------------------------------------------------------
@@ -1137,6 +1147,13 @@
     });
   });
   el.run.addEventListener('click', analyzeNow);
+  // Ctrl/⌘+Enter runs from anywhere in the window, the fields included.
+  root.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+      analyzeNow();
+    }
+  });
 
   Array.prototype.forEach.call(el.examples, function (chip) {
     chip.addEventListener('click', function () {

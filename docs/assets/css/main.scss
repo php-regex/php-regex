@@ -4891,6 +4891,13 @@ body.search-open {
   color: var(--ink);
   border-color: var(--amber);
 }
+/* The example the fields hold: pressed, tinted — the row says what the
+   window is showing. */
+.pg-example[aria-pressed="true"] {
+  color: var(--ink);
+  background: var(--amber-tint);
+  border-color: var(--amber);
+}
 
 /* The line keeps its height, said or not: the panels under it do not
    move each time a run gesture lights a word in it. A zero-width space
@@ -5249,7 +5256,8 @@ body.search-open {
 .tree-span {
   margin-left: auto;
   flex: none;
-  font-size: .78rem;
+  /* A notch under the row's words: the range answers, the node speaks. */
+  font-size: .88em;
   color: var(--ink-soft);
 }
 .tree-detail {
