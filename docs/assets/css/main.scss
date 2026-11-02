@@ -4599,22 +4599,31 @@ body.search-open {
 }
 
 /* The window: a title bar, a body, a status bar. It floats one step
-   above the page, like the dialogs do. */
+   above the page, like the dialogs do. The frame clips its children to
+   its rounded corners — `clip`, not `hidden`: a hidden overflow would
+   make the frame the scrollport of the sticky tree, which would then
+   never stick and sit below its row. Browsers without `clip` keep the
+   hidden fallback and lose the stick, nothing else. */
 .playground {
   min-width: 0;
   overflow: hidden;
+  overflow: clip;
   background: var(--panel);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-l);
   box-shadow: var(--shadow-1);
 }
 .pg-titlebar {
+  /* Inside the frame the bar carries no chrome of its own: the frame
+     draws the border and the corners. */
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: .75rem;
   min-height: 2.75rem;
-  padding: .4rem .9rem .4rem .8rem;
+  padding: .4rem .9rem;
+  border: 0;
+  border-radius: 0;
   color: var(--code-ink);
   background: var(--code-bg);
 }
@@ -4648,7 +4657,7 @@ body.search-open {
   min-height: 1.9rem;
   padding: .25rem .5rem;
   font-family: var(--font-mono);
-  font-size: .76rem;
+  font-size: .78rem;
   line-height: 1;
   color: var(--code-ink);
   background: transparent;
@@ -4664,7 +4673,7 @@ body.search-open {
   min-height: 1.9rem;
   padding: .25rem .8rem;
   font-family: var(--font-body);
-  font-size: .8rem;
+  font-size: .78rem;
   font-weight: 600;
   line-height: 1;
   color: var(--code-bg);
@@ -4681,8 +4690,14 @@ body.search-open {
   cursor: progress;
   opacity: .7;
 }
+/* The same height as the select and the button beside it: the three
+   controls read as one cluster. */
 .pg-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 4.5rem;
+  min-height: 1.9rem;
   padding: .2rem .55rem;
   font-family: var(--font-mono);
   font-size: .78rem;
@@ -5116,13 +5131,14 @@ body.search-open {
   border-radius: var(--radius-m);
 }
 /* One mark per node, nested like the tree: a node lights up as a whole,
-   and the deepest node under the pointer is the one named. */
+   and the deepest node under the pointer is the one named. Pointing at
+   a piece selects it, like pointing at a row: the same hand cursor. */
 .tree-pattern mark {
   padding: .1rem 0;
   color: inherit;
   background: transparent;
   border-radius: var(--radius-s);
-  cursor: help;
+  cursor: pointer;
 }
 .tree-pattern mark:hover,
 .tree-pattern mark.is-current {
@@ -5261,8 +5277,12 @@ body.search-open {
     justify-content: flex-end;
   }
   .pg-titlebar .pg-version,
-  .pg-titlebar .pg-run {
+  .pg-titlebar .pg-run,
+  .pg-titlebar .pg-state {
     min-height: 2.5rem;
+  }
+  .pg-titlebar .pg-version,
+  .pg-titlebar .pg-run {
     padding-inline: .9rem;
   }
   .pg-match-list {

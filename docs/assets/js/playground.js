@@ -447,6 +447,9 @@
         if (lastLint) {
           renderLint(lastLint);
         }
+        // The match has answered; its status line has said its word. When
+        // a lint follows, its own messages take the line from here.
+        setStatus('', '');
       }
     } else if (request.type === 'lint') {
       if (current && current.regex === request.regex) {
@@ -878,7 +881,6 @@
     currentNode = -1;
     clear(el.treeNodes);
     clear(el.treePattern);
-    showDetail(-1);
     if (!payload.ast) {
       el.treeDetail.textContent = (payload.errors && payload.errors[0]) ? 'No tree: ' + payload.errors[0].message : 'No tree.';
       return;
@@ -930,6 +932,9 @@
     var bodyUnits = payload.delimited ? regex.slice(base, payload.unitOf[payload.delimited.bodyEnd]) : (payload.ast.source || '');
     el.treePattern.appendChild(pieceOf(payload, 0, bodyUnits, base));
     el.treePattern.appendChild(document.createTextNode('\n'));
+    // After the walk, so the empty state says its line: nodes is still
+    // empty before it, and the hint would never show.
+    showDetail(-1);
   }
 
   function pieceOf(payload, index, body, base) {
