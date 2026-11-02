@@ -12,16 +12,27 @@
             "dist": {
                 "type": "path",
                 "url": "../..",
-                "reference": "1d3c2c6764e9b23111dc8218a628b3594c8637a1"
+                "reference": "e8359b2c684269b5f8e490223de64d0f49589b7b"
             },
             "require": {
                 "ext-mbstring": "*",
                 "ext-tokenizer": "*",
-                "php": ">=8.2"
+                "php": ">=8.1"
             },
             "conflict": {
+                "illuminate/console": "<10.37",
+                "illuminate/contracts": "<10.37",
+                "illuminate/routing": "<10.37",
+                "illuminate/support": "<10.37",
                 "nikic/php-parser": "<4.18",
+                "phpstan/phpstan": "<2.0",
+                "phpunit/phpunit": "<9.6",
                 "rector/rector": "<2.4",
+                "sebastian/comparator": "<4.0.8",
+                "symfony/config": "<6.4",
+                "symfony/console": "<6.4",
+                "symfony/dependency-injection": "<6.4",
+                "symfony/http-kernel": "<6.4",
                 "vimeo/psalm": "<6.19"
             },
             "replace": {
@@ -35,6 +46,7 @@
                 "php-regex/regex-optimizer": "self.version",
                 "php-regex/regex-parser": "self.version",
                 "php-regex/regex-phpstan": "self.version",
+                "php-regex/regex-phpunit": "self.version",
                 "php-regex/regex-psalm": "self.version",
                 "php-regex/regex-rector": "self.version",
                 "php-regex/regex-redos": "self.version",
@@ -43,15 +55,23 @@
                 "php-regex/regex-transpiler": "self.version"
             },
             "suggest": {
+                "ext-intl": "To resolve \\N{...} escapes by Unicode name.",
+                "ext-pcntl": "To lint in parallel worker processes.",
+                "ext-posix": "To signal the lint workers and to check that the cache directory belongs to the running user.",
                 "illuminate/console": "Required for Laravel Artisan commands.",
+                "illuminate/contracts": "Required for Laravel integration.",
                 "illuminate/routing": "Required for Laravel route analysis.",
                 "illuminate/support": "Required for Laravel integration.",
                 "nikic/php-parser": "To extract regex patterns from PHP sources with a real parser instead of the tokenizer.",
                 "phpstan/extension-installer": "To automatically enable the PHPStan rule for regex validation.",
                 "phpstan/phpstan": "To run static analysis and detect invalid regex patterns.",
+                "phpunit/phpunit": "To assert on regex patterns in your test suite (php-regex/regex-phpunit).",
                 "psr/cache": "To share AST cache via PSR-6 pools.",
                 "psr/simple-cache": "To share AST cache via PSR-16 caches.",
                 "rector/rector": "To rewrite preg_* calls into the string functions the automata prove they match.",
+                "symfony/routing": "To analyze route requirements with regex:routes.",
+                "symfony/validator": "To lint the patterns of Regex constraints, and to validate submitted patterns with ValidRegex.",
+                "symfony/yaml": "To read a security file named with regex:security --config or regex:analyze --config.",
                 "vimeo/psalm": "To type $matches from the pattern and report invalid patterns in Psalm (php-regex/regex-psalm)."
             },
             "bin": [
@@ -76,8 +96,8 @@
                         "src/PHPStan/extension.neon"
                     ]
                 },
-                "ide": {
-                    "regex.dist.json": "./src/Linter/regex.schema.json"
+                "psalm": {
+                    "pluginClass": "PHPRegex\\Psalm\\Plugin"
                 }
             },
             "autoload": {
@@ -90,16 +110,21 @@
                     "PHPRegex\\Tests\\": "tests/"
                 },
                 "exclude-from-classmap": [
+                    "tests/Benchmark/Fixtures/",
                     "tests/Fixtures/",
                     "tests/Integration/Bridge/PHPStan/Fixtures/",
                     "tests/Integration/Bridge/Psalm/Fixtures/",
                     "tests/Integration/Bridge/Rector/**/Fixture/",
-                    "tests/Integration/Bridge/Rector/**/Fixture*/"
+                    "tests/Integration/Bridge/Rector/**/Fixture*/",
+                    "tests/Tools/PHPStan/Fixtures/"
                 ]
             },
             "scripts": {
                 "phpunit": [
                     "tools/phpunit/vendor/bin/phpunit"
+                ],
+                "test:parallel": [
+                    "php -d phar.readonly=0 tools/paratest/vendor/bin/paratest --passthru-php=\"'-d' 'phar.readonly=0'\""
                 ],
                 "phpstan": [
                     "tools/phpstan/vendor/bin/phpstan analyse"
@@ -111,7 +136,8 @@
                     "tools/php-cs-fixer/vendor/bin/php-cs-fixer fix"
                 ],
                 "phplint": [
-                    "tools/phplint/vendor/bin/phplint"
+                    "@putenv PLINT_DIAGNOSTIC=never",
+                    "tools/phplint/vendor/bin/phplint lint"
                 ],
                 "bench": [
                     "tools/phpbench/vendor/bin/phpbench run"
@@ -3004,16 +3030,16 @@
         },
         {
             "name": "phpunit/php-code-coverage",
-            "version": "14.4.1",
+            "version": "14.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "f1e54f06b6b4cea73cd6104ba3c0cfa0efa6d73f"
+                "reference": "1db2f40af7a6538742e4a634b71ee556d6219be7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/f1e54f06b6b4cea73cd6104ba3c0cfa0efa6d73f",
-                "reference": "f1e54f06b6b4cea73cd6104ba3c0cfa0efa6d73f",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/1db2f40af7a6538742e4a634b71ee556d6219be7",
+                "reference": "1db2f40af7a6538742e4a634b71ee556d6219be7",
                 "shasum": ""
             },
             "require": {
@@ -3026,13 +3052,12 @@
                 "phpunit/php-text-template": "^6.0.1",
                 "sebastian/complexity": "^6.0",
                 "sebastian/environment": "^9.3.3",
-                "sebastian/git-state": "^1.0",
+                "sebastian/git-state": "^1.1.0",
                 "sebastian/lines-of-code": "^5.0.2",
-                "sebastian/version": "^7.0",
-                "theseer/tokenizer": "^2.0.1"
+                "sebastian/version": "^7.0.1"
             },
             "require-dev": {
-                "phpunit/phpunit": "^13.3.6"
+                "phpunit/phpunit": "^13.4.5"
             },
             "suggest": {
                 "ext-pcov": "PHP extension that provides line coverage",
@@ -3041,7 +3066,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "14.4.x-dev"
+                    "dev-main": "14.5.x-dev"
                 }
             },
             "autoload": {
@@ -3070,7 +3095,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/php-code-coverage/issues",
                 "security": "https://github.com/sebastianbergmann/php-code-coverage/security/policy",
-                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/14.4.1"
+                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/14.5.0"
             },
             "funding": [
                 {
@@ -3090,7 +3115,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-03T14:05:38+00:00"
+            "time": "2026-10-30T08:11:15+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -3387,16 +3412,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "13.4.2",
+            "version": "13.4.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "7b9ba83328f01ce299ef82161720195bd827a4bb"
+                "reference": "71b681ad89bfaf576ae51b77db2c2b3770e93ddf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/7b9ba83328f01ce299ef82161720195bd827a4bb",
-                "reference": "7b9ba83328f01ce299ef82161720195bd827a4bb",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/71b681ad89bfaf576ae51b77db2c2b3770e93ddf",
+                "reference": "71b681ad89bfaf576ae51b77db2c2b3770e93ddf",
                 "shasum": ""
             },
             "require": {
@@ -3421,7 +3446,7 @@
                 "sebastian/environment": "^9.3.3",
                 "sebastian/exporter": "^8.2.1",
                 "sebastian/file-filter": "^1.0",
-                "sebastian/git-state": "^1.0",
+                "sebastian/git-state": "^1.1",
                 "sebastian/global-state": "^9.0.1",
                 "sebastian/object-enumerator": "^8.1.0",
                 "sebastian/recursion-context": "^8.0.1",
@@ -3467,7 +3492,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/13.4.2"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/13.4.4"
             },
             "funding": [
                 {
@@ -3475,7 +3500,7 @@
                     "type": "other"
                 }
             ],
-            "time": "2026-10-12T15:29:04+00:00"
+            "time": "2026-10-27T03:15:33+00:00"
         },
         {
             "name": "sebastian/cli-parser",
@@ -4024,28 +4049,28 @@
         },
         {
             "name": "sebastian/git-state",
-            "version": "1.0.0",
+            "version": "1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/git-state.git",
-                "reference": "792a952e0eba55b6960a48aeceb9f371aad1f76b"
+                "reference": "31a565f463686f0eefa85f899549256bf5805985"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/git-state/zipball/792a952e0eba55b6960a48aeceb9f371aad1f76b",
-                "reference": "792a952e0eba55b6960a48aeceb9f371aad1f76b",
+                "url": "https://api.github.com/repos/sebastianbergmann/git-state/zipball/31a565f463686f0eefa85f899549256bf5805985",
+                "reference": "31a565f463686f0eefa85f899549256bf5805985",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.4"
             },
             "require-dev": {
-                "phpunit/phpunit": "^13.0"
+                "phpunit/phpunit": "^13.4.3"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.0-dev"
+                    "dev-main": "1.1-dev"
                 }
             },
             "autoload": {
@@ -4069,7 +4094,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/git-state/issues",
                 "security": "https://github.com/sebastianbergmann/git-state/security/policy",
-                "source": "https://github.com/sebastianbergmann/git-state/tree/1.0.0"
+                "source": "https://github.com/sebastianbergmann/git-state/tree/1.1.0"
             },
             "funding": [
                 {
@@ -4089,7 +4114,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-03-21T12:54:28+00:00"
+            "time": "2026-10-21T05:59:52+00:00"
         },
         {
             "name": "sebastian/global-state",
@@ -4845,56 +4870,6 @@
                 }
             ],
             "time": "2026-08-21T17:47:34+00:00"
-        },
-        {
-            "name": "theseer/tokenizer",
-            "version": "2.0.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/theseer/tokenizer.git",
-                "reference": "7989e43bf381af0eac72e4f0ca5bcbfa81658be4"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/theseer/tokenizer/zipball/7989e43bf381af0eac72e4f0ca5bcbfa81658be4",
-                "reference": "7989e43bf381af0eac72e4f0ca5bcbfa81658be4",
-                "shasum": ""
-            },
-            "require": {
-                "ext-dom": "*",
-                "ext-tokenizer": "*",
-                "ext-xmlwriter": "*",
-                "php": "^8.1"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "src/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Arne Blankerts",
-                    "email": "arne@blankerts.de",
-                    "role": "Developer"
-                }
-            ],
-            "description": "A small library for converting tokenized PHP source code into XML and potentially other formats",
-            "support": {
-                "issues": "https://github.com/theseer/tokenizer/issues",
-                "source": "https://github.com/theseer/tokenizer/tree/2.0.1"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/theseer",
-                    "type": "github"
-                }
-            ],
-            "time": "2025-12-08T11:19:18+00:00"
         }
     ],
     "aliases": [],
@@ -4909,6 +4884,6 @@
         "ext-ctype": "*",
         "ext-iconv": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "plugin-api-version": "2.9.0"
 }
