@@ -76,7 +76,8 @@
     diagnostics: root.querySelector('.pg-diagnostics'),
     lintNote: root.querySelector('.pg-lint-note'),
     facts: root.querySelector('.pg-facts'),
-    caption: root.querySelector('.pg-caption'),
+    state: root.querySelector('.pg-state'),
+    caption: document.querySelector('.pg-caption'),
     live: root.querySelector('.pg-live'),
     treePattern: tree.querySelector('.tree-pattern'),
     treeNodes: tree.querySelector('.tree-nodes'),
@@ -130,6 +131,12 @@
   function setStatus(message, tone) {
     el.status.textContent = message || '';
     el.status.className = 'pg-status' + (tone ? ' is-' + tone : '');
+  }
+
+  // The word in the title bar: what the window is doing right now.
+  function setState(word, tone) {
+    el.state.textContent = word;
+    el.state.className = 'pg-state' + (tone ? ' is-' + tone : '');
   }
 
   function announce(message) {
@@ -287,9 +294,11 @@
     el.run.disabled = false;
     if (failures[key] < 2) {
       setStatus(reason + ' Starting the engine again…', 'warn');
+      setState('Restarting…', 'busy');
       send(request);
       return;
     }
+    setState('Stopped', 'error');
     if (!wasBooted) {
       // Never got an engine: the network, the CDN or the browser, not the input.
       setStatus('The PHP engine could not be loaded from cdn.jsdelivr.net (' + reason + '). The sample stays below; press Run to try again.', 'error');
@@ -354,6 +363,9 @@
         send(describeRequest);
       }
     }
+    if (!inflight && !pending && booted) {
+      setState('Ready');
+    }
   }
 
   function describeKey(state, index) {
@@ -374,10 +386,12 @@
     var request = inflight.request;
     if (message.type === 'progress') {
       setStatus((STAGES[message.stage] || 'Loading…').replace('{v}', request.version), 'busy');
+      setState('Loading…', 'busy');
       return;
     }
     if (message.type === 'ready') {
       booted = true;
+      setState('Running…', 'busy');
       window.clearTimeout(timers[message.id]);
       timers[message.id] = window.setTimeout(function () {
         fail(request, 'The engine did not answer within ' + REQUEST_TIMEOUT_MS / 1000 + ' s.');
@@ -417,6 +431,7 @@
     if (request.type === 'analyze') {
       render(payload, request, false);
       setStatus('', '');
+      setState('Ready');
     } else if (request.type === 'match') {
       if (current && current.regex === request.regex && current.subject === request.subject) {
         matchFor = requestKey(request);
@@ -476,6 +491,16 @@
       lintFor = null;
     }
     current = { payload: payload, regex: request.regex, subject: request.subject, version: request.version, prerendered: prerendered };
+    if (!prerendered) {
+      // A fresh analysis asks for a fresh match, and gives a phase that was
+      // given up another chance: pressing Run is how a visitor retries.
+      matchFor = null;
+      delete failures[requestKey({ type: 'match', regex: request.regex, subject: request.subject, version: request.version })];
+      if (lastLint === null) {
+        lintFor = null;
+        delete failures[requestKey({ type: 'lint', regex: request.regex, version: request.version })];
+      }
+    }
     if (!prerendered && payload.matches === null && payload.engineError === null) {
       payload.matches = { pending: true };
     }
@@ -537,6 +562,11 @@
     }
     if (engine && engine.jit === false) {
       el.caption.appendChild(text('span', 'pg-caption-jit', 'JIT is off in this browser build. A server with pcre.jit=1, PHP\u2019s default, matches the same strings, but a pattern that exhausts the backtrack limit here may match there, or fail with a JIT stack error instead.'));
+    }
+    if (!el.caption.firstChild) {
+      el.caption.hidden = true;
+    } else {
+      el.caption.hidden = false;
     }
   }
 

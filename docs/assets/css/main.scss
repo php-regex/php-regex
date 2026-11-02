@@ -1243,7 +1243,8 @@ main table::-webkit-scrollbar-thumb {
    string 7.79, number 6.97 — all >= 4.5:1 on the #182B45 panel.
    ========================================================================== */
 
-.terminal {
+.terminal,
+.pg-titlebar {
   --code-bg: #182B45;
   --code-ink: #EDF1F7;
   --ink-soft: #A3B0C4;
@@ -4597,14 +4598,113 @@ body.search-open {
   align-items: start;
 }
 
+/* The window: a title bar, a body, a status bar. It floats one step
+   above the page, like the dialogs do. */
 .playground {
-  display: grid;
-  gap: .9rem;
   min-width: 0;
-  padding: 1.1rem 1.1rem 1rem;
+  overflow: hidden;
   background: var(--panel);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-l);
+  box-shadow: var(--shadow-1);
+}
+.pg-titlebar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .75rem;
+  min-height: 2.75rem;
+  padding: .4rem .9rem .4rem .8rem;
+  color: var(--code-ink);
+  background: var(--code-bg);
+}
+.pg-lights {
+  display: inline-flex;
+  gap: .4rem;
+}
+.pg-lights i {
+  width: .7rem;
+  height: .7rem;
+  background: var(--ink-soft);
+  border-radius: var(--radius-pill);
+  opacity: .55;
+}
+.pg-title {
+  overflow: hidden;
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-soft);
+}
+.pg-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+.pg-titlebar .pg-version {
+  min-height: 1.9rem;
+  padding: .25rem .5rem;
+  font-family: var(--font-mono);
+  font-size: .76rem;
+  line-height: 1;
+  color: var(--code-ink);
+  background: transparent;
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.pg-titlebar .pg-version:hover,
+.pg-titlebar .pg-version:focus-visible {
+  border-color: var(--code-ink);
+}
+.pg-titlebar .pg-run {
+  min-height: 1.9rem;
+  padding: .25rem .8rem;
+  font-family: var(--font-body);
+  font-size: .8rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--code-bg);
+  background: var(--tk-key);
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.pg-titlebar .pg-run:hover,
+.pg-titlebar .pg-run:focus-visible {
+  filter: brightness(1.08);
+}
+.pg-titlebar .pg-run:disabled {
+  cursor: progress;
+  opacity: .7;
+}
+.pg-state {
+  min-width: 4.5rem;
+  padding: .2rem .55rem;
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--ink-soft);
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius-pill);
+}
+.pg-state.is-busy {
+  color: var(--tk-key);
+  border-color: var(--tk-key);
+}
+.pg-state.is-error {
+  color: var(--tk-key);
+  border-color: var(--tk-key);
+  font-weight: 600;
+}
+.pg-body {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1rem 1.1rem;
 }
 .pg-main {
   display: grid;
@@ -4612,32 +4712,27 @@ body.search-open {
   min-width: 0;
   align-content: start;
 }
+.pg-statusbar {
+  padding: .5rem .9rem;
+  background: var(--paper);
+  border-top: 1px solid var(--line-soft);
+}
+.pg-statusbar:has(.pg-facts:empty) {
+  display: none;
+}
 /* Wide screens: the fields and the answers on the left, the tree on the
-   right, pinned under the header while the answers scroll; the credits
-   under both. */
+   right, pinned under the header while the answers scroll. */
 @media (min-width: 1024px) {
-  .playground {
+  .pg-body {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    column-gap: 1.4rem;
+    column-gap: 1.25rem;
     align-items: start;
   }
-  .playground > .pg-main {
-    grid-column: 1;
-    grid-row: 1;
-  }
-  .playground > .tree {
-    grid-column: 2;
-    grid-row: 1;
+  .pg-body > .tree {
     position: sticky;
     top: calc(var(--header-h) + 1rem);
     max-height: calc(100vh - var(--header-h) - 2rem);
     overflow: auto;
-  }
-  .playground > .pg-live,
-  .playground > .pg-credits,
-  .playground > .visually-hidden,
-  .playground > script {
-    grid-column: 1 / -1;
   }
 }
 
@@ -4744,50 +4839,21 @@ body.search-open {
   box-shadow: inset 0 0 0 1px var(--amber);
 }
 
-/* The band: the engine, the two actions. */
-.pg-band {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: .6rem;
-}
-.pg-version {
-  min-height: 2.25rem;
-  padding: .35rem .7rem;
-  font-family: var(--font-mono);
-  font-size: .8rem;
-  line-height: 1;
-  color: var(--ink-soft);
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-s);
-  cursor: pointer;
-}
-.pg-version:hover,
-.pg-version:focus-visible {
-  color: var(--ink);
-  border-color: var(--ink);
-}
-.pg-band .pg-run {
-  min-height: 2.25rem;
-  padding: .35rem .95rem;
-  font-size: .85rem;
-}
-.pg-band .pg-run:disabled {
-  cursor: progress;
-  opacity: .7;
-}
-
 .pg-examples {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: .4rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
+.pg-examples-label {
+  font-size: .76rem;
+  color: var(--ink-soft);
+}
 .pg-example {
-  padding: .25rem .6rem;
+  padding: .2rem .6rem;
   font-size: .76rem;
   color: var(--ink-soft);
   background: transparent;
@@ -4995,6 +5061,9 @@ body.search-open {
   line-height: 1.5;
   color: var(--ink-soft);
 }
+.pg-caption[hidden] {
+  display: none;
+}
 .pg-caption:empty {
   display: none;
 }
@@ -5154,28 +5223,41 @@ body.search-open {
 }
 .pg-chip {
   display: inline-flex;
-  align-items: baseline;
-  gap: .35rem;
-  padding: .2rem .55rem;
+  align-items: stretch;
+  overflow: hidden;
   font-family: var(--font-mono);
-  font-size: .72rem;
+  font-size: .7rem;
   line-height: 1.5;
   color: var(--ink);
   border: 1px solid var(--line-soft);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-s);
 }
 .pg-chip-label {
+  padding: .15rem .45rem;
   color: var(--ink-soft);
+  background: var(--code-bg);
 }
-.pg-chip.is-engine {
+.pg-chip-value {
+  padding: .15rem .5rem;
+}
+.pg-chip.is-engine .pg-chip-value {
   color: var(--amber-deep);
-  border-color: var(--amber);
+  font-weight: 600;
 }
 
 @media (max-width: 639px) {
-  .playground,
+  .pg-body {
+    padding: .85rem .8rem .9rem;
+  }
   .tree {
     padding: .85rem .8rem .9rem;
+  }
+  .pg-titlebar {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .pg-controls {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
   }
   .pg-match-list {
     max-height: 14rem;
