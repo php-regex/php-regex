@@ -21,9 +21,9 @@
 
 (function () {
   var root = document.getElementById('playground');
-  var xray = document.getElementById('pg-xray'); // always open, beside the answers
+  var tree = document.getElementById('pg-tree'); // always open, beside the answers
   var dataTag = document.getElementById('playground-data');
-  if (!root || !xray || !dataTag) {
+  if (!root || !tree || !dataTag) {
     return;
   }
 
@@ -75,12 +75,12 @@
     explain: root.querySelector('.pg-explain'),
     diagnostics: root.querySelector('.pg-diagnostics'),
     lintNote: root.querySelector('.pg-lint-note'),
+    facts: root.querySelector('.pg-facts'),
     caption: root.querySelector('.pg-caption'),
     live: root.querySelector('.pg-live'),
-    xrayPattern: xray.querySelector('.xray-pattern'),
-    xrayTree: xray.querySelector('.xray-tree'),
-    xrayEmpty: xray.querySelector('.xray-node-empty'),
-    xrayFacts: xray.querySelector('.xray-node-facts'),
+    treePattern: tree.querySelector('.tree-pattern'),
+    treeNodes: tree.querySelector('.tree-nodes'),
+    treeDetail: tree.querySelector('.tree-detail'),
   };
 
   // --- state ---------------------------------------------------------------
@@ -90,7 +90,7 @@
   var timers = {};          // request id -> timeout handle
   var inflight = null;      // { id, type, request }
   var pending = null;       // the latest analysis asked for while one ran
-  var describeWanted = -1;  // the node index the X-Ray wants described
+  var describeWanted = -1;  // the node index the tree wants described
   var failures = {};        // request key -> consecutive failures
   var booted = false;
   var current = null;       // the last payload rendered: { payload, regex, subject, version, prerendered }
@@ -98,7 +98,7 @@
   var lastLint = null;      // those findings, for the pattern mirror
   var matchFor = null;      // the request key the matches panel belongs to
   var describeCache = {};   // regex + index -> text
-  var nodes = [];           // the X-Ray's nodes in pre-order: { index, node, start, end, button, spans }
+  var nodes = [];           // the tree's nodes in pre-order: { index, node, start, end, button }
   var currentNode = -1;
   var announceTimer = null;
 
@@ -440,7 +440,7 @@
     } else if (request.type === 'describe') {
       describeCache[request.version + '\u0000' + request.regex + '\u0000' + request.index] = payload.text === null ? '' : payload.text;
       if (currentNode === request.index && current && current.regex === request.regex) {
-        showNode(request.index);
+        showDetail(request.index);
       }
     }
     drain();
@@ -491,45 +491,52 @@
     } else if (lastLint) {
       renderLint(lastLint);
     }
-    renderXray(payload, request.regex);
+    renderTree(payload, request.regex);
   }
 
-  function engineLabel(engine) {
-    if (!engine) {
-      return '';
+  function chip(label, value, className) {
+    var item = text('li', 'pg-chip' + (className ? ' ' + className : ''));
+    if (label) {
+      item.appendChild(text('span', 'pg-chip-label', label));
     }
-    var label = 'PHP ' + engine.php + ' · PCRE2 ' + engine.pcre;
-    if (engine.jit === false) {
-      label += ' · JIT off';
-    }
-    if (engine.backtrackLimit) {
-      label += ' · backtrack limit ' + engine.backtrackLimit;
-    }
-    return label;
+    item.appendChild(text('span', 'pg-chip-value', value));
+    return item;
   }
 
+  // The facts, one chip each: which PHP and which PCRE2 answered, the
+  // limits that shaped the answer, the library snapshot.
   function renderCaption(payload, prerendered) {
+    clear(el.facts);
     clear(el.caption);
     if (prerendered) {
       el.caption.appendChild(text('span', 'pg-caption-sample', 'Sample rendered ahead of time. Press Run, or type, to run the PHP in your browser.'));
       return;
     }
-    var line = engineLabel(payload.engine);
-    if (payload.analysisEngine && payload.engine && payload.analysisEngine.php !== payload.engine.php) {
-      line += ' · analysed on PHP ' + payload.analysisEngine.php + ', judged for PCRE2 ' + (payload.target ? payload.target.pcre : payload.engine.pcre);
-    } else if (payload.target && payload.engine && payload.target.php !== payload.engine.php) {
-      line = 'Analysis on PHP ' + payload.engine.php + ', judged for PHP ' + payload.target.php + ' / PCRE2 ' + payload.target.pcre + ' (the engine that matches)';
-    }
-    el.caption.appendChild(text('span', 'pg-caption-engine', line));
-    if (payload.library) {
-      var lib = 'PHPRegex ' + payload.library.version;
-      if (manifest) {
-        lib += ' · built ' + manifest.built + ' · ' + manifest.commit;
+    var engine = payload.engine;
+    if (engine) {
+      el.facts.appendChild(chip('PHP', engine.php, 'is-engine'));
+      el.facts.appendChild(chip('PCRE2', engine.pcre, 'is-engine'));
+      if (engine.jit === false) {
+        el.facts.appendChild(chip('JIT', 'off'));
       }
-      el.caption.appendChild(text('span', 'pg-caption-library', lib));
+      if (engine.backtrackLimit) {
+        el.facts.appendChild(chip('backtrack limit', String(engine.backtrackLimit).replace(/\B(?=(\d{3})+$)/g, '\u202f')));
+      }
     }
-    if (payload.engine && payload.engine.jit === false) {
-      el.caption.appendChild(text('span', 'pg-caption-jit', 'JIT is off in this browser build. A server with pcre.jit=1, PHP’s default, matches the same strings, but a pattern that exhausts the backtrack limit here may match there, or fail with a JIT stack error instead.'));
+    if (payload.analysisEngine && engine && payload.analysisEngine.php !== engine.php) {
+      el.facts.appendChild(chip('analysed on', 'PHP ' + payload.analysisEngine.php));
+    } else if (payload.target && engine && payload.target.php !== engine.php) {
+      el.facts.appendChild(chip('judged for', 'PHP ' + payload.target.php + ' · PCRE2 ' + payload.target.pcre));
+    }
+    if (payload.library) {
+      var lib = payload.library.version;
+      if (manifest) {
+        lib += ' · ' + manifest.commit;
+      }
+      el.facts.appendChild(chip('PHPRegex', lib));
+    }
+    if (engine && engine.jit === false) {
+      el.caption.appendChild(text('span', 'pg-caption-jit', 'JIT is off in this browser build. A server with pcre.jit=1, PHP\u2019s default, matches the same strings, but a pattern that exhausts the backtrack limit here may match there, or fail with a JIT stack error instead.'));
     }
   }
 
@@ -538,7 +545,7 @@
   var manifest = null;
 
   // The pattern field's mirror: the error position underlined, lint spans
-  // dotted, the X-Ray's current node highlighted.
+  // dotted, the tree's current node highlighted.
   function renderPatternMirror(payload, regex, lint) {
     var ranges = [];
     (payload.errors || []).forEach(function (error) {
@@ -781,10 +788,9 @@
     }
   }
 
-  // --- the X-Ray -----------------------------------------------------------
+  // --- the syntax tree -----------------------------------------------------
 
   var CHILD_KEYS = ['pattern', 'children', 'alternatives', 'child', 'members', 'from', 'to', 'expression', 'left', 'right', 'content', 'condition', 'yes', 'no'];
-  var FACT_KEYS_SKIPPED = { type: 1, start: 1, end: 1, version: 1, source: 1 };
 
   function childNodes(node) {
     var children = [];
@@ -803,74 +809,84 @@
     return children;
   }
 
-  function summarize(node) {
+  // What a row says about its node: the kind, then what tells this node
+  // from its siblings (a name, a number, a value, a bound).
+  function describeRow(node) {
     var kind = String(node.type).replace(/_/g, ' ');
+    var detail = '';
     switch (node.type) {
-      case 'regex': return 'pattern' + (node.flags ? ' · flags ' + node.flags : '');
-      case 'group': return 'group · ' + node.kind + (node.name ? ' "' + node.name + '"' : '') + (typeof node.number === 'number' ? ' · #' + node.number : '');
-      case 'quantifier': return 'quantifier · {' + node.min + ',' + (node.max === null ? '' : node.max) + '} ' + node.mode;
-      case 'literal': return 'literal · ' + JSON.stringify(node.value === undefined ? node.bytes : node.value);
-      case 'char_type': return 'char type · \\' + node.value;
-      case 'anchor': return 'anchor · ' + node.value;
-      case 'char_class': return 'class' + (node.negated ? ' · negated' : '');
-      case 'unicode_property': return 'property · \\' + (node.negated ? 'P' : 'p') + '{' + node.name + '}';
-      case 'backref': return 'backreference · ' + node.reference;
-      case 'range': return 'range';
-      case 'dot': return 'dot · any character';
-      default: return kind;
+      case 'regex': detail = node.flags ? 'flags ' + node.flags : ''; kind = 'pattern'; break;
+      case 'group': detail = node.kind + (node.name ? ' \u201c' + node.name + '\u201d' : '') + (typeof node.number === 'number' ? ' #' + node.number : ''); break;
+      case 'quantifier': detail = '{' + node.min + ',' + (node.max === null ? '' : node.max) + '} ' + node.mode; break;
+      case 'literal': detail = JSON.stringify(node.value === undefined ? node.bytes : node.value); break;
+      case 'char_type': detail = '\\' + node.value; break;
+      case 'anchor': detail = String(node.value); break;
+      case 'char_class': detail = node.negated ? 'negated' : ''; break;
+      case 'unicode_property': detail = '\\' + (node.negated ? 'P' : 'p') + '{' + node.name + '}'; break;
+      case 'backref': detail = String(node.reference); break;
+      case 'dot': detail = 'any character'; break;
+      default:
+        Object.keys(node).forEach(function (key) {
+          var value = node[key];
+          if (!detail && key !== 'type' && key !== 'start' && key !== 'end' && CHILD_KEYS.indexOf(key) === -1 && (typeof value === 'string' || typeof value === 'number')) {
+            detail = String(value);
+          }
+        });
     }
+    return { kind: kind, detail: detail };
   }
 
-  function renderXray(payload, regex) {
+  function renderTree(payload, regex) {
     nodes = [];
     currentNode = -1;
-    clear(el.xrayTree);
-    clear(el.xrayPattern);
-    el.xrayEmpty.hidden = false;
-    el.xrayFacts.hidden = true;
-    clear(el.xrayFacts);
+    clear(el.treeNodes);
+    clear(el.treePattern);
+    showDetail(-1);
     if (!payload.ast) {
-      el.xrayEmpty.textContent = (payload.errors && payload.errors[0]) ? 'No tree: ' + payload.errors[0].message : 'No tree.';
-      el.xrayPattern.textContent = '';
+      el.treeDetail.textContent = (payload.errors && payload.errors[0]) ? 'No tree: ' + payload.errors[0].message : 'No tree.';
       return;
     }
     if (payload.ast.version !== JSON_DUMPER) {
-      el.xrayEmpty.textContent = 'The engine dumped a tree this page does not know how to draw: reload the page.';
+      el.treeDetail.textContent = 'The engine dumped a tree this page does not know how to draw: reload the page.';
       return;
     }
-    el.xrayEmpty.textContent = 'Point at a node to read it.';
 
-    (function walk(node, parentList, depth) {
+    (function walk(node, parentList) {
       var index = nodes.length;
       var entry = { index: index, node: node, start: node.start, end: node.end, button: null };
       nodes.push(entry);
-      var item = text('li', 'xray-item');
+      var item = text('li', 'tree-item');
       item.setAttribute('role', 'treeitem');
-      var button = text('button', 'xray-node-button', summarize(node));
+      var row = describeRow(node);
+      var button = text('button', 'tree-row');
       button.type = 'button';
       button.setAttribute('data-index', String(index));
-      button.appendChild(text('span', 'xray-span', ' ' + node.start + '–' + node.end));
+      button.appendChild(text('span', 'tree-kind', row.kind));
+      if (row.detail) {
+        button.appendChild(text('span', 'tree-value', row.detail));
+      }
+      button.appendChild(text('span', 'tree-span', node.start + '\u2013' + node.end));
       entry.button = button;
       item.appendChild(button);
       parentList.appendChild(item);
       var children = childNodes(node);
       if (children.length) {
-        var list = text('ul', 'xray-children');
+        var list = text('ul', 'tree-children');
         list.setAttribute('role', 'group');
         item.appendChild(list);
         children.forEach(function (child) {
-          walk(child, list, depth + 1);
+          walk(child, list);
         });
       }
-    })(payload.ast, el.xrayTree, 0);
+    })(payload.ast, el.treeNodes);
 
     // The pattern, piece by piece: one span per node, nested the way the
     // tree is, so pointing at a character names the deepest node around
     // it and lighting a node lights its whole span.
     var base = payload.delimited ? payload.unitOf[payload.delimited.bodyStart] : 0;
     var bodyUnits = payload.delimited ? regex.slice(base, payload.unitOf[payload.delimited.bodyEnd]) : (payload.ast.source || '');
-    el.xrayPattern.appendChild(pieceOf(payload, 0, bodyUnits, base));
-    el.xrayPattern.appendChild(document.createTextNode('\n'));
+    el.treePattern.appendChild(pieceOf(payload, 0, bodyUnits, base));
+    el.treePattern.appendChild(document.createTextNode('\n'));
   }
 
   function pieceOf(payload, index, body, base) {
@@ -878,12 +894,12 @@
     var range = unitRange(payload, entry.start, entry.end);
     var from = range.start - base;
     var to = Math.max(from, (entry.end > entry.start ? range.end : range.start) - base);
-    var span = text('mark', 'xray-piece');
+    var span = text('mark', 'tree-piece');
     span.setAttribute('data-index', String(index));
     var at = from;
     var children = childNodes(entry.node);
     var childIndex = index + 1;
-    children.forEach(function (child) {
+    children.forEach(function () {
       var childEntry = nodes[childIndex];
       var childRange = unitRange(payload, childEntry.start, childEntry.end);
       var childFrom = Math.max(at, childRange.start - base);
@@ -916,55 +932,38 @@
       nodes[currentNode].button.classList.remove('is-current');
     }
     currentNode = index;
-    Array.prototype.forEach.call(el.xrayPattern.querySelectorAll('mark'), function (mark) {
+    Array.prototype.forEach.call(el.treePattern.querySelectorAll('mark'), function (mark) {
       mark.classList.toggle('is-current', Number(mark.getAttribute('data-index')) === index);
     });
     if (index >= 0 && nodes[index]) {
       nodes[index].button.classList.add('is-current');
-      showNode(index);
-    } else {
-      el.xrayEmpty.hidden = false;
-      el.xrayFacts.hidden = true;
     }
+    showDetail(index);
     if (current) {
       renderPatternMirror(current.payload, current.regex, lintFor === current.regex ? lastLint : null);
     }
   }
 
-  function showNode(index) {
+  // One still line under the tree: the node's bytes and what it reads as.
+  // Its height never moves, whatever node is under the pointer.
+  function showDetail(index) {
+    clear(el.treeDetail);
     var entry = nodes[index];
     if (!entry) {
+      el.treeDetail.appendChild(text('span', 'tree-detail-empty', nodes.length ? 'Point at a node to read it.' : ''));
       return;
     }
-    clear(el.xrayFacts);
-    el.xrayEmpty.hidden = true;
-    el.xrayFacts.hidden = false;
-    var add = function (term, value) {
-      el.xrayFacts.appendChild(text('dt', null, term));
-      el.xrayFacts.appendChild(text('dd', null, value));
-    };
-    add('kind', entry.node.type);
-    add('bytes', entry.start + '–' + entry.end + ' of the pattern body');
-    Object.keys(entry.node).forEach(function (key) {
-      if (FACT_KEYS_SKIPPED[key] || CHILD_KEYS.indexOf(key) !== -1) {
-        return;
-      }
-      var value = entry.node[key];
-      if (value === null || typeof value !== 'object') {
-        add(key.replace(/_/g, ' '), value === null ? 'none' : String(value));
-      } else if (Array.isArray(value) && value.every(function (v) { return typeof v !== 'object'; })) {
-        add(key.replace(/_/g, ' '), value.length ? value.join(', ') : 'none');
-      }
-    });
+    var row = describeRow(entry.node);
+    el.treeDetail.appendChild(text('span', 'tree-detail-span', 'bytes ' + entry.start + '\u2013' + entry.end));
     var cached = current ? describeCache[describeKey(current, index)] : undefined;
-    if (cached !== undefined) {
-      if (cached) {
-        add('reads as', cached);
-      }
-    } else if (current && !current.prerendered) {
-      add('reads as', '…');
+    if (cached) {
+      el.treeDetail.appendChild(text('span', 'tree-detail-text', cached));
+    } else if (cached === undefined && current && !current.prerendered) {
+      el.treeDetail.appendChild(text('span', 'tree-detail-text is-pending', row.kind + (row.detail ? ' ' + row.detail : '')));
       describeWanted = index;
       drain();
+    } else {
+      el.treeDetail.appendChild(text('span', 'tree-detail-text', row.kind + (row.detail ? ' ' + row.detail : '')));
     }
   }
 
@@ -1041,25 +1040,15 @@
     });
   });
 
-  el.xrayTree.addEventListener('mouseover', function (event) {
-    var button = event.target.closest('.xray-node-button');
-    if (button) {
-      setCurrentNode(Number(button.getAttribute('data-index')));
-    }
+  ['mouseover', 'focusin', 'click'].forEach(function (type) {
+    el.treeNodes.addEventListener(type, function (event) {
+      var button = event.target.closest('.tree-row');
+      if (button) {
+        setCurrentNode(Number(button.getAttribute('data-index')));
+      }
+    });
   });
-  el.xrayTree.addEventListener('focusin', function (event) {
-    var button = event.target.closest('.xray-node-button');
-    if (button) {
-      setCurrentNode(Number(button.getAttribute('data-index')));
-    }
-  });
-  el.xrayTree.addEventListener('click', function (event) {
-    var button = event.target.closest('.xray-node-button');
-    if (button) {
-      setCurrentNode(Number(button.getAttribute('data-index')));
-    }
-  });
-  el.xrayPattern.addEventListener('mouseover', function (event) {
+  el.treePattern.addEventListener('mouseover', function (event) {
     var mark = event.target.closest('mark');
     if (mark) {
       var index = Number(mark.getAttribute('data-index'));

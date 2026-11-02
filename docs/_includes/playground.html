@@ -10,7 +10,7 @@
   so the include escapes it: a "<" could otherwise close the script element.
 
   Two columns on a wide screen: the fields and the answers on the left,
-  the Pattern X-Ray on the right, always open; one column under 1024px.
+  the syntax tree on the right, always open; one column under 1024px.
 {% endcomment %}
 <div class="playground" id="playground" data-bundle="/assets/playground/bundle.json?v={{ site.time | date: '%s' }}">
   <script type="application/json" id="playground-data">{{ site.data.playground | jsonify | replace: '<', '\u003C' }}</script>
@@ -44,6 +44,7 @@
     <li><button type="button" class="pg-example" data-regex="/\p{Lu}\p{Ll}+/u" data-subject="Ünïcode Straße Ωmega">Unicode properties</button></li>
   </ul>
   <p class="pg-status" role="status" aria-live="polite"></p>
+  <ul class="pg-facts" aria-label="The engine that answered"></ul>
   <p class="pg-caption"></p>
   <div class="pg-results">
     <div class="pg-panel pg-panel-matches">
@@ -63,20 +64,15 @@
   </div>
   <p class="pg-live visually-hidden" aria-live="polite"></p>
   <p class="pg-credits">Runs on <a href="https://github.com/seanmorris/php-wasm">php-wasm</a> (Apache-2.0) with mbstring and <a href="https://github.com/kkos/oniguruma">oniguruma</a> (BSD), loaded from jsDelivr when you press Run. Nothing you type leaves your browser.</p>
-  <div class="xray" id="pg-xray">
-    <div class="xray-head">
-      <h3 class="xray-title">Pattern X-Ray</h3>
-      <p class="xray-sub">The tree the parser built, byte for byte. Point at a node, or at a piece of the pattern.</p>
+  <div class="tree" id="pg-tree">
+    <div class="tree-head">
+      <h3 class="tree-title">Syntax tree</h3>
+      <p class="tree-sub">The pattern as the parser reads it, node by node. Point at a node, or at a piece of the pattern.</p>
     </div>
-    <pre class="xray-pattern" aria-label="The pattern, piece by piece"></pre>
-    <div class="xray-body">
-      <div class="xray-tree-wrap">
-        <ul class="xray-tree" role="tree" aria-label="Abstract syntax tree"></ul>
-      </div>
-      <div class="xray-node">
-        <p class="xray-node-empty">Point at a node to read it.</p>
-        <dl class="xray-node-facts" hidden></dl>
-      </div>
+    <pre class="tree-pattern" aria-label="The pattern, piece by piece"></pre>
+    <div class="tree-wrap">
+      <ul class="tree-nodes" role="tree" aria-label="Syntax tree"></ul>
     </div>
+    <p class="tree-detail"><span class="tree-detail-empty">Point at a node to read it.</span></p>
   </div>
 </div>

@@ -4612,7 +4612,7 @@ body.search-open {
   min-width: 0;
   align-content: start;
 }
-/* Wide screens: the fields and the answers on the left, the X-Ray on the
+/* Wide screens: the fields and the answers on the left, the tree on the
    right, pinned under the header while the answers scroll; the credits
    under both. */
 @media (min-width: 1024px) {
@@ -4625,7 +4625,7 @@ body.search-open {
     grid-column: 1;
     grid-row: 1;
   }
-  .playground > .xray {
+  .playground > .tree {
     grid-column: 2;
     grid-row: 1;
     position: sticky;
@@ -4995,14 +4995,6 @@ body.search-open {
   line-height: 1.5;
   color: var(--ink-soft);
 }
-.pg-caption-engine,
-.pg-caption-library {
-  font-family: var(--font-mono);
-  font-size: .72rem;
-}
-.pg-caption-engine {
-  color: var(--amber-deep);
-}
 .pg-caption:empty {
   display: none;
 }
@@ -5013,32 +5005,35 @@ body.search-open {
   color: var(--ink-soft);
 }
 
-/* The X-Ray: the pattern piece by piece, the tree, the node. */
-.xray {
+/* The syntax tree: the pattern piece by piece, the rows, one still line
+   of detail under them. */
+.tree {
   display: grid;
   gap: .9rem;
   min-width: 0;
-  padding: 1.1rem 1.1rem 1.2rem;
+  padding: 1.1rem 1.1rem 1rem;
   background: var(--paper);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-m);
 }
-.xray-head {
+.tree-head {
   display: grid;
   gap: .25rem;
 }
-.xray-title {
+.tree-title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 650;
-}
-.xray-sub {
-  margin: 0;
-  font-size: .85rem;
+  font-family: var(--font-body);
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .02em;
   color: var(--ink-soft);
 }
-.xray-pattern {
+.tree-sub {
+  margin: 0;
+  font-size: .82rem;
+  color: var(--ink-soft);
+}
+.tree-pattern {
   margin: 0;
   padding: .6rem .75rem;
   font-family: var(--font-mono);
@@ -5052,102 +5047,134 @@ body.search-open {
 }
 /* One mark per node, nested like the tree: a node lights up as a whole,
    and the deepest node under the pointer is the one named. */
-.xray-pattern mark {
+.tree-pattern mark {
   padding: .1rem 0;
   color: inherit;
   background: transparent;
   border-radius: var(--radius-s);
   cursor: default;
 }
-.xray-pattern mark.is-current {
+.tree-pattern mark.is-current {
   background: var(--amber-tint);
   box-shadow: inset 0 -2px 0 var(--amber);
 }
-.xray-body {
-  display: grid;
-  gap: .9rem;
-}
-@media (min-width: 1280px) {
-  .xray-body {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    align-items: start;
-  }
-}
-.xray-tree-wrap {
-  max-height: 32rem;
+.tree-wrap {
+  max-height: 34rem;
   overflow: auto;
-  padding: .4rem .25rem;
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-m);
+  padding: .25rem 0;
 }
-.xray-tree,
-.xray-children {
+.tree-nodes,
+.tree-children {
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.xray-children {
-  margin-left: .9rem;
-  padding-left: .55rem;
+.tree-children {
+  margin-left: .8rem;
+  padding-left: .7rem;
   border-left: 1px solid var(--line-soft);
 }
-.xray-item {
-  margin: .05rem 0;
+.tree-item {
+  margin: 0;
 }
-.xray-node-button {
-  display: block;
+/* A row: the kind, what tells the node apart, the bytes at the far right.
+   The current one carries the accent on its left edge, not a box. */
+.tree-row {
+  display: flex;
+  align-items: baseline;
+  gap: .55rem;
   width: 100%;
-  padding: .2rem .45rem;
+  padding: .22rem .5rem .22rem .55rem;
   font-family: var(--font-mono);
   font-size: .78rem;
   line-height: 1.5;
   text-align: left;
   color: var(--ink);
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-s);
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
   cursor: pointer;
 }
-.xray-node-button:hover,
-.xray-node-button:focus-visible,
-.xray-node-button.is-current {
+.tree-row:hover,
+.tree-row:focus-visible,
+.tree-row.is-current {
   background: var(--amber-tint);
-  border-color: var(--amber);
+  border-left-color: var(--amber);
 }
-.xray-span {
+.tree-row:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: -2px;
+}
+.tree-kind {
   color: var(--ink-soft);
 }
-.xray-node {
-  min-height: 6rem;
-  padding: .75rem .85rem;
-  background: var(--paper);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-m);
+.tree-value {
+  overflow-wrap: anywhere;
+}
+.tree-span {
+  margin-left: auto;
+  flex: none;
+  font-size: .7rem;
+  color: var(--ink-soft);
+}
+.tree-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .25rem .75rem;
+  min-height: 2.6rem;
+  margin: 0;
+  padding: .55rem .75rem;
   font-size: .85rem;
+  line-height: 1.5;
+  border-top: 1px solid var(--line-soft);
 }
-.xray-node-empty {
-  margin: 0;
-  color: var(--ink-soft);
-}
-.xray-node-facts {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: .3rem .75rem;
-  margin: 0;
-}
-.xray-node-facts dt {
+.tree-detail-empty,
+.tree-detail-span {
   font-family: var(--font-mono);
   font-size: .72rem;
   color: var(--ink-soft);
 }
-.xray-node-facts dd {
+.tree-detail-text.is-pending {
+  color: var(--ink-soft);
+}
+
+/* The facts about the engine that answered: one chip each. */
+.pg-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
   margin: 0;
-  overflow-wrap: anywhere;
+  padding: 0;
+  list-style: none;
+}
+.pg-facts:empty {
+  display: none;
+}
+.pg-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .35rem;
+  padding: .2rem .55rem;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  line-height: 1.5;
+  color: var(--ink);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+}
+.pg-chip-label {
+  color: var(--ink-soft);
+}
+.pg-chip.is-engine {
+  color: var(--amber-deep);
+  border-color: var(--amber);
 }
 
 @media (max-width: 639px) {
   .playground,
-  .xray {
+  .tree {
     padding: .85rem .8rem .9rem;
   }
   .pg-match-list {
@@ -5156,7 +5183,7 @@ body.search-open {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .xray-node-button,
+  .tree-row,
   .pg-example,
   .pg-match {
     transition: border-color .12s ease, background-color .12s ease;
