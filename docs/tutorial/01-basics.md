@@ -48,6 +48,7 @@ if (preg_match('/cat/', $text)) {
     echo "Found it!";
 }
 ```
+{: data-run="" }
 
 You don't need any extra library to follow this chapter. What matters is understanding the **pattern**, not the function.
 
@@ -127,9 +128,10 @@ Sometimes you want to ignore case. You can add a **flag** after the closing deli
 The most common one to know right now is `i` (case-insensitive):
 
 ```php
-preg_match('/cat/i', 'CAT'); // matches
-preg_match('/cat/i', 'Cat'); // matches
+echo preg_match('/cat/i', 'CAT'), PHP_EOL; // 1 — matches
+echo preg_match('/cat/i', 'Cat'), PHP_EOL; // 1 — matches
 ```
+{: data-run="" }
 
 Other flags exist (`m`, `s`, `u`, `x`...), but we only introduce them when a chapter actually needs them. For now, `i` is more than enough.
 

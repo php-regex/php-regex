@@ -20,6 +20,7 @@ A **backreference** lets you match **exactly the same text** that was captured b
 preg_match('/\b(\w+)\s+\1\b/', 'hello hello world', $matches);
 echo $matches[0]; // "hello hello"
 ```
+{: data-run="" }
 
 Group `1` captured `hello`, `\1` requires the same string again.
 
@@ -31,6 +32,7 @@ Easier to read when you have multiple groups:
 preg_match('/\b(?<word>\w+)\s+\k<word>\b/', 'test test', $matches);
 echo $matches[0]; // "test test"
 ```
+{: data-run="" }
 
 ### Matching quotes
 
@@ -38,6 +40,7 @@ echo $matches[0]; // "test test"
 preg_match('/(["\'])(.*?)\1/', '"hello"', $matches);
 echo $matches[0]; // '"hello"'
 ```
+{: data-run="" }
 
 Group `1` captures either `"` or `'`, `\1` forces the same one at the end. Note we use `(.*?)` (lazy) to avoid consuming too much.
 
@@ -54,6 +57,7 @@ A **subroutine** reuses the **pattern** of another group, without treating it as
 preg_match('/(a)(?1)/', 'aa', $matches);
 echo $matches[0]; // "aa"
 ```
+{: data-run="" }
 
 Group 1 matches `a`, `(?1)` runs the same pattern again (`a`).
 
@@ -63,6 +67,7 @@ Group 1 matches `a`, `(?1)` runs the same pattern again (`a`).
 preg_match('/(?<char>a)(?&char)/', 'aa', $matches);
 echo $matches[0]; // "aa"
 ```
+{: data-run="" }
 
 ---
 
@@ -80,6 +85,7 @@ echo $matches[0]; // "(hello)"
 preg_match($pattern, '(a(b)c)', $matches);
 echo $matches[0]; // "(a(b)c)"
 ```
+{: data-run="" }
 
 ### How it works
 
@@ -103,9 +109,13 @@ Conditionals let you do "if this group matched, do X, else do Y".
 $pattern = '/^(a)?(?(1)b|c)/';
 
 preg_match($pattern, 'ab', $matches); // matches
+echo $matches[0], PHP_EOL;
 preg_match($pattern, 'c',  $matches); // matches
-preg_match($pattern, 'ac', $matches); // no match
+echo $matches[0], PHP_EOL;
+preg_match($pattern, 'ac');           // no match
+echo preg_match($pattern, 'ac'), PHP_EOL;  // 0
 ```
+{: data-run="" }
 
 ### Based on a named group
 
@@ -113,8 +123,11 @@ preg_match($pattern, 'ac', $matches); // no match
 $pattern = '/^(?<has>a)?(?(has)b|c)/';
 
 preg_match($pattern, 'ab', $matches); // matches
+echo $matches[0], PHP_EOL;
 preg_match($pattern, 'c',  $matches); // matches
+echo $matches[0], PHP_EOL;
 ```
+{: data-run="" }
 
 ---
 

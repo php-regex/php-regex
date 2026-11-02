@@ -31,11 +31,16 @@ Remember from [Chapter 4](04-quantifiers.md): when a match fails, the engine **b
 With **nested quantifiers**, the number of possible splits grows exponentially.
 
 ```php
-// Try to match "aaab" against /(a+)+b/
-$pattern = '/(a+)+b/';
-// Text: "aaab" - but wait, "aaab" ends with 'b'? "a","a","a","b" yes
-// Actually better example: "aaa!" fails at the end
+// /(a+)+$/ against lots of 'a' and a final '!': no split can ever match,
+// so the engine tries them all — until the backtrack limit stops it
+$pattern = '/(a+)+$/';
+$subject = str_repeat('a', 24) . '!';
+
+preg_match($pattern, $subject, $matches);
+print_r($matches);          // nothing matched
+echo preg_last_error_msg(); // Backtrack limit exhausted
 ```
+{: data-run="" }
 
 For `/(a+)+$/` against `"aaaa...!"` (lots of a's followed by `!`):
 1. The inner `a+` and outer `(a+)+` can split the a's in many ways

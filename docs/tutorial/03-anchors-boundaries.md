@@ -26,28 +26,31 @@ Think of them like bookmarks: start of string, end of string, or the edge betwee
 `^` matches the very beginning of the subject.
 
 ```php
-preg_match('/^cat/', 'cat food'); // matches
-preg_match('/^cat/', 'The cat');  // no match (not at start)
+echo preg_match('/^cat/', 'cat food'), PHP_EOL; // 1
+echo preg_match('/^cat/', 'The cat'), PHP_EOL;  // 0 (not at start)
 ```
+{: data-run="" }
 
 ### `$` — end of the string
 
 `$` matches the very end of the subject.
 
 ```php
-preg_match('/cat$/', 'The cat');  // matches
-preg_match('/cat$/', 'cat food'); // no match (not at end)
+echo preg_match('/cat$/', 'The cat'), PHP_EOL;  // 1
+echo preg_match('/cat$/', 'cat food'), PHP_EOL; // 0 (not at end)
 ```
+{: data-run="" }
 
 ### Matching the entire string
 
 Combine `^` and `$` to require an **exact match** of the whole string.
 
 ```php
-preg_match('/^cat$/', 'cat');      // matches
-preg_match('/^cat$/', 'cat food'); // no match
-preg_match('/^cat$/', 'The cat');  // no match
+echo preg_match('/^cat$/', 'cat'), PHP_EOL;      // 1
+echo preg_match('/^cat$/', 'cat food'), PHP_EOL; // 0
+echo preg_match('/^cat$/', 'The cat'), PHP_EOL;  // 0
 ```
+{: data-run="" }
 
 This is extremely useful for validation. If you want "this input must be exactly X", anchors are your friend.
 
@@ -60,9 +63,10 @@ With the `m` ([multiline](01-basics.md#5-case-and-flags)) flag, `^` and `$` can 
 ```php
 $text = "cat\nbird";
 
-preg_match('/^cat/m', $text);  // matches (start of first line)
-preg_match('/^bird/m', $text); // matches (start of second line)
+echo preg_match('/^cat/m', $text), PHP_EOL;  // 1 (start of first line)
+echo preg_match('/^bird/m', $text), PHP_EOL; // 1 (start of second line)
 ```
+{: data-run="" }
 
 For now, just know this exists. We'll not rely on `m` in this chapter's exercises.
 
@@ -78,19 +82,21 @@ Sometimes you want to be strict and **ignore** the multiline behavior entirely.
 ```php
 $text = "cat\nbird";
 
-preg_match('/\Acat/m', $text);  // matches (absolute start)
-preg_match('/\Abird/m', $text); // no match
-preg_match('/bird\z/m', $text); // matches (absolute end)
+echo preg_match('/\Acat/m', $text), PHP_EOL;  // 1 (absolute start)
+echo preg_match('/\Abird/m', $text), PHP_EOL; // 0
+echo preg_match('/bird\z/m', $text), PHP_EOL; // 1 (absolute end)
 ```
+{: data-run="" }
 
 ### The trailing newline trap
 
 One subtle point: without `m`, `$` can match **just before a final newline**. `\z` never does this — it only matches at the very end with nothing after it.
 
 ```php
-preg_match('/^cat$/', "cat\n"); // matches (before the final newline)
-preg_match('/^cat\z/', "cat\n"); // no match
+echo preg_match('/^cat$/', "cat\n"), PHP_EOL; // 1 (before the final newline)
+echo preg_match('/^cat\z/', "cat\n"), PHP_EOL; // 0
 ```
+{: data-run="" }
 
 If you truly mean "the entire input must be exactly this", `\A...\z` is the clearest and safest choice.
 
@@ -105,10 +111,11 @@ Crucially, `\b` matches **a position, not a space**. It won't add extra characte
 ### Matching whole words
 
 ```php
-preg_match('/\bcat\b/', 'the cat sat'); // matches "cat"
-preg_match('/\bcat\b/', 'category');    // no match (cat is part of the word)
-preg_match('/\bcat\b/', 'wildcat');     // no match
+echo preg_match('/\bcat\b/', 'the cat sat'), PHP_EOL; // 1
+echo preg_match('/\bcat\b/', 'category'), PHP_EOL;    // 0 (cat is part of the word)
+echo preg_match('/\bcat\b/', 'wildcat'), PHP_EOL;     // 0
 ```
+{: data-run="" }
 
 ### Seeing it differently
 
@@ -121,9 +128,10 @@ preg_match('/\bcat\b/', 'wildcat');     // no match
 You can also use `\B` for the **opposite**: a position where there is **no** word boundary (i.e. between two word characters, or two non-word characters).
 
 ```php
-preg_match('/\Bcat\B/', 'concatenate'); // matches "cat" in the middle
-preg_match('/\Bcat\B/', 'the cat');     // no match
+echo preg_match('/\Bcat\B/', 'concatenate'), PHP_EOL; // 1 ("cat" in the middle)
+echo preg_match('/\Bcat\B/', 'the cat'), PHP_EOL;     // 0
 ```
+{: data-run="" }
 
 You won't need `\B` often as a beginner, but it's good to know it exists.
 
@@ -137,18 +145,19 @@ A few examples to get the idea:
 
 ```php
 // Only digits
-preg_match('/^\d+$/', '12345'); // matches
+echo preg_match('/^\d+$/', '12345'), PHP_EOL; // 1
 
 // Starts with "http://"
-preg_match('/^https?:\/\//', 'https://example.com'); // matches
+echo preg_match('/^https?:\/\//', 'https://example.com'), PHP_EOL; // 1
 
 // Ends with ".txt"
-preg_match('/\.txt$/', 'readme.txt'); // matches
+echo preg_match('/\.txt$/', 'readme.txt'), PHP_EOL; // 1
 
 // Whole word only
-preg_match('/\berror\b/', 'error: failed'); // matches
-preg_match('/\berror\b/', 'errorCode');     // no match
+echo preg_match('/\berror\b/', 'error: failed'), PHP_EOL; // 1
+echo preg_match('/\berror\b/', 'errorCode'), PHP_EOL;     // 0
 ```
+{: data-run="" }
 
 Don't worry about `+` yet — we'll cover [quantifiers](04-quantifiers.md) in the next chapter.
 

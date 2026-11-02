@@ -21,6 +21,7 @@ if (preg_match($pattern, $text, $matches)) {
     echo "Found: " . $matches[0]; // "123"
 }
 ```
+{: data-run="" }
 
 To find **all** matches:
 
@@ -28,6 +29,7 @@ To find **all** matches:
 preg_match_all('/\d+/', 'a1 b22 c333', $matches);
 print_r($matches[0]); // ["1", "22", "333"]
 ```
+{: data-run="" }
 
 ---
 
@@ -44,6 +46,7 @@ $pattern = '/^hello$/';
 var_dump(preg_match($pattern, 'hello')); // int(1)
 var_dump(preg_match($pattern, 'hello!')); // int(0)
 ```
+{: data-run="" }
 
 ### Step 2: Check anchors and scope
 
@@ -52,10 +55,13 @@ If it's matching too much or too little, check [anchors](03-anchors-boundaries.m
 ```php
 // Matches anywhere
 preg_match('/cat/', 'category'); // matches "cat"
+echo preg_match('/cat/', 'category'), PHP_EOL; // 1
 
 // Match whole word only
 preg_match('/\bcat\b/', 'category'); // no match
+echo preg_match('/\bcat\b/', 'category'), PHP_EOL; // 0
 ```
+{: data-run="" }
 
 ### Step 3: Check quantifiers
 
@@ -66,10 +72,13 @@ $text = '<b>hi</b>';
 
 // Too much
 preg_match('/<.+>/', $text, $m);  // <b>hi</b>
+echo $m[0], PHP_EOL;
 
 // Just right
 preg_match('/<.+?>/', $text, $m); // <b>
+echo $m[0], PHP_EOL;
 ```
+{: data-run="" }
 
 ### Step 4: Check groups and alternation
 
@@ -78,9 +87,12 @@ If `|` is behaving oddly, it's usually a grouping issue ([Chapter 5](05-groups-a
 ```php
 // Wrong scope
 preg_match('/jpg|png\.gif/', 'a.png.gif', $m); // matches "png.gif" but for wrong reason
+echo $m[0], PHP_EOL;
 // Better
 preg_match('/(?:jpg|png)\.gif/', 'a.png.gif', $m);
+echo $m[0], PHP_EOL;
 ```
+{: data-run="" }
 
 ---
 
@@ -93,6 +105,7 @@ preg_match('/(\w+)@(\w+)\.(\w+)/', 'user@example.com', $matches);
 var_dump($matches);
 // Shows full match + each captured group
 ```
+{: data-run="" }
 
 ### Test with `preg_match_all` to see all matches
 
@@ -100,6 +113,7 @@ var_dump($matches);
 preg_match_all('/\b\w{4}\b/', 'cat dog bird fish', $matches);
 print_r($matches[0]); // ["bird", "fish"]
 ```
+{: data-run="" }
 
 ### Isolate pieces
 
@@ -108,9 +122,13 @@ If a long pattern fails, break it down. Test each part separately, then combine.
 ```php
 // Test parts
 preg_match('/^\w+$/', 'user');      // yes
+echo preg_match('/^\w+$/', 'user'), PHP_EOL; // 1
 preg_match('/^@/', '@example');     // yes
-preg_match('/^\w+\.\w+$/', 'com');  // yes
+echo preg_match('/^@/', '@example'), PHP_EOL; // 1
+preg_match('/^\w+\.\w+$/', 'com');  // no — this part expects a dot
+echo preg_match('/^\w+\.\w+$/', 'com'), PHP_EOL; // 0
 ```
+{: data-run="" }
 
 ### Watch for escaping
 
@@ -119,14 +137,18 @@ Remember [Chapter 1](01-basics.md): in PHP strings, backslashes need care. In si
 ```php
 // In PHP string
 $pattern = '/\d+/'; // \d is fine in single quotes
+echo preg_match($pattern, 'Order 123'), PHP_EOL; // 1
 ```
 
 ### Check case sensitivity
 
 ```php
 preg_match('/hello/', 'HELLO');   // no match
+echo preg_match('/hello/', 'HELLO'), PHP_EOL; // 0
 preg_match('/hello/i', 'HELLO'); // match
+echo preg_match('/hello/i', 'HELLO'), PHP_EOL; // 1
 ```
+{: data-run="" }
 
 ---
 
@@ -151,7 +173,9 @@ This pattern is supposed to match dates like `2025-10-23`, but something's wrong
 
 ```php
 $pattern = '/\d{4}\d{2}\d{2}/'; // broken
+echo preg_match($pattern, '2025-10-23'), PHP_EOL; // 0 — it never matches a real date
 ```
+{: data-run="" }
 
 <details markdown="1">
 <summary>Solution</summary>
@@ -160,7 +184,9 @@ Missing the dashes:
 
 ```php
 $pattern = '/\d{4}-\d{2}-\d{2}/';
+echo preg_match($pattern, '2025-10-23'), PHP_EOL; // 1
 ```
+{: data-run="" }
 
 </details>
 
@@ -174,6 +200,7 @@ Extract just `title` from `<title>My Page</title>`. Use a lazy match.
 preg_match('/<title>(.*?)<\/title>/', '<title>My Page</title>', $matches);
 echo $matches[1]; // "My Page"
 ```
+{: data-run="" }
 
 </details>
 
@@ -182,14 +209,18 @@ Fix this so it matches `cat` only as a whole word, not in `category`.
 
 ```php
 $pattern = '/cat/';
+echo preg_match($pattern, 'category'), PHP_EOL; // 1 — matches too much
 ```
+{: data-run="" }
 
 <details markdown="1">
 <summary>Solution</summary>
 
 ```php
 $pattern = '/\bcat\b/';
+echo preg_match($pattern, 'category'), PHP_EOL; // 0
 ```
+{: data-run="" }
 
 </details>
 
@@ -207,6 +238,7 @@ foreach ($tests as $t) {
     echo $t . ': ' . (preg_match($pattern, $t) ? 'OK' : 'NO') . PHP_EOL;
 }
 ```
+{: data-run="" }
 
 </details>
 

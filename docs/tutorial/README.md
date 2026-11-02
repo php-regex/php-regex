@@ -10,6 +10,8 @@ Learn regular expressions from the ground up. This tutorial assumes **no prior k
 
 Most examples use plain PHP's `preg_match()` to show matches, but the concepts you'll learn apply to almost any regex flavor that uses PCRE.
 
+Examples marked with a **Run** button execute right here in the page: pick a PHP version at the top of a chapter, press Run, and the output appears under the example with the engine that produced it — PHP and the PCRE2 build it bundles. Nothing is sent to a server; the engine is downloaded once, only when you actually run something.
+
 ## What You'll Learn
 
 {% assign c1 = site.pages | where: "url", "/tutorial/01-basics/" | first %}
