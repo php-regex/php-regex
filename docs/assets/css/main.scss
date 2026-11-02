@@ -186,6 +186,7 @@
   --pad-hero: clamp(3.5rem, 2rem + 6vw, 6.5rem);
   --pad-section: clamp(2.5rem, 1.5rem + 3vw, 4rem);
   --pad-blog: clamp(2rem, 1.5rem + 3vw, 3.5rem);
+  --pad-playground: clamp(1.5rem, 1rem + 2vw, 2.5rem);
 
   --header-h: 4rem;
   /* Page gutter: the aligned column is 75rem (1200px), centered — a width
@@ -4585,20 +4586,15 @@ body.search-open {
    Playground — the home page's live pattern, subject and verdicts
    ========================================================================== */
 
-/* Desktop: the copy column keeps two fifths, the playground takes three;
-   the X-Ray band, when open, spans both columns under them. */
-@media (min-width: 1024px) {
-  .hero-inner {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-  }
-  .hero-inner > .playground {
-    grid-column: 2;
-    align-self: start;
-    min-width: 0;
-  }
-  .hero-inner > .xray {
-    grid-column: 1 / -1;
-  }
+/* The home is the playground: one column, the band under it. The hero's
+   vertical rhythm is kept, its two-column pitch is not. */
+.hero-playground {
+  padding-block: var(--pad-playground) var(--pad-section);
+  border-bottom: 0;
+}
+.hero-playground .hero-inner {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
 }
 
 .playground {
@@ -4609,6 +4605,40 @@ body.search-open {
   background: var(--panel);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-l);
+}
+.pg-main {
+  display: grid;
+  gap: .9rem;
+  min-width: 0;
+  align-content: start;
+}
+/* Wide screens: the fields and the answers on the left, the X-Ray on the
+   right, pinned under the header while the answers scroll; the credits
+   under both. */
+@media (min-width: 1024px) {
+  .playground {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 1.4rem;
+    align-items: start;
+  }
+  .playground > .pg-main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .playground > .xray {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: calc(var(--header-h) + 1rem);
+    max-height: calc(100vh - var(--header-h) - 2rem);
+    overflow: auto;
+  }
+  .playground > .pg-live,
+  .playground > .pg-credits,
+  .playground > .visually-hidden,
+  .playground > script {
+    grid-column: 1 / -1;
+  }
 }
 
 .pg-field {
@@ -4721,8 +4751,7 @@ body.search-open {
   align-items: center;
   gap: .6rem;
 }
-.pg-version,
-.pg-xray-toggle {
+.pg-version {
   min-height: 2.25rem;
   padding: .35rem .7rem;
   font-family: var(--font-mono);
@@ -4735,16 +4764,9 @@ body.search-open {
   cursor: pointer;
 }
 .pg-version:hover,
-.pg-version:focus-visible,
-.pg-xray-toggle:hover,
-.pg-xray-toggle:focus-visible {
+.pg-version:focus-visible {
   color: var(--ink);
   border-color: var(--ink);
-}
-.pg-xray-toggle[aria-pressed='true'] {
-  color: var(--amber-deep);
-  border-color: var(--amber);
-  background: var(--amber-tint);
 }
 .pg-band .pg-run {
   min-height: 2.25rem;
@@ -4991,17 +5013,15 @@ body.search-open {
   color: var(--ink-soft);
 }
 
-/* The X-Ray band: the pattern piece by piece, the tree, the node. */
+/* The X-Ray: the pattern piece by piece, the tree, the node. */
 .xray {
   display: grid;
   gap: .9rem;
+  min-width: 0;
   padding: 1.1rem 1.1rem 1.2rem;
-  background: var(--panel);
+  background: var(--paper);
   border: 1px solid var(--line-soft);
-  border-radius: var(--radius-l);
-}
-.xray[hidden] {
-  display: none;
+  border-radius: var(--radius-m);
 }
 .xray-head {
   display: grid;
@@ -5047,14 +5067,14 @@ body.search-open {
   display: grid;
   gap: .9rem;
 }
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .xray-body {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
     align-items: start;
   }
 }
 .xray-tree-wrap {
-  max-height: 26rem;
+  max-height: 32rem;
   overflow: auto;
   padding: .4rem .25rem;
   border: 1px solid var(--line-soft);

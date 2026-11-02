@@ -110,8 +110,6 @@ final class DocumentationExperienceTest extends TestCase
             $this->assertStringContainsString('{{ site.data.product.version }}', $text, $page.': a sample output reads the version from product.yml.');
             $this->assertStringNotContainsString($version[1], $text, $page.': a sample output does not spell the version.');
         }
-        $this->assertStringContainsString('site.data.product.php_floor', $home);
-        $this->assertStringContainsString('{% include install.html package="php-regex/regex-cli" dev=true inline=true %}', $home);
         $this->assertStringNotContainsString('composer config', $home);
         $this->assertStringNotContainsString('php-regex/php-regex:2.x-dev', $home);
         $this->assertStringNotContainsString('PCRE2 10.49', $home);

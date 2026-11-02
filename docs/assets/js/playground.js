@@ -21,7 +21,7 @@
 
 (function () {
   var root = document.getElementById('playground');
-  var xray = document.getElementById('pg-xray');
+  var xray = document.getElementById('pg-xray'); // always open, beside the answers
   var dataTag = document.getElementById('playground-data');
   if (!root || !xray || !dataTag) {
     return;
@@ -67,7 +67,6 @@
     subjectCount: root.querySelector('#pg-subject-count'),
     version: root.querySelector('#pg-version'),
     run: root.querySelector('.pg-run'),
-    xrayToggle: root.querySelector('.pg-xray-toggle'),
     examples: root.querySelectorAll('.pg-example'),
     status: root.querySelector('.pg-status'),
     matchList: root.querySelector('.pg-match-list'),
@@ -334,7 +333,10 @@
     }
     if (current && !current.prerendered) {
       var matchRequest = { type: 'match', regex: current.regex, subject: current.subject, version: current.version };
-      if (matchFor !== requestKey(matchRequest) && !exhausted(matchRequest) && current.payload.ast) {
+      // The engine is asked whatever the library said: its compile message
+      // is one of the two voices, and a pattern the library refuses may
+      // still compile.
+      if (matchFor !== requestKey(matchRequest) && !exhausted(matchRequest)) {
         send(matchRequest);
         return;
       }
@@ -474,7 +476,7 @@
       lintFor = null;
     }
     current = { payload: payload, regex: request.regex, subject: request.subject, version: request.version, prerendered: prerendered };
-    if (!prerendered && payload.matches === null && payload.engineError === null && payload.ast) {
+    if (!prerendered && payload.matches === null && payload.engineError === null) {
       payload.matches = { pending: true };
     }
     renderCaption(payload, prerendered);
@@ -1037,12 +1039,6 @@
       refreshFields();
       analyzeNow();
     });
-  });
-
-  el.xrayToggle.addEventListener('click', function () {
-    var open = el.xrayToggle.getAttribute('aria-pressed') !== 'true';
-    el.xrayToggle.setAttribute('aria-pressed', open ? 'true' : 'false');
-    xray.hidden = !open;
   });
 
   el.xrayTree.addEventListener('mouseover', function (event) {
