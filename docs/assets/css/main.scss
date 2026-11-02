@@ -5011,6 +5011,9 @@ body.search-open {
   font-size: .8rem;
 }
 
+/* Two voices, as the tree's rows: the construct's kind in the quiet
+   mono, the meaning in the page's ink. A block — a line that holds
+   lines — breathes around its children. */
 .pg-explain-list {
   margin: 0;
   padding-left: 1rem;
@@ -5024,10 +5027,37 @@ body.search-open {
 .pg-explain-item {
   margin: .1rem 0;
 }
+.pg-explain-item.is-block {
+  margin: .25rem 0 .4rem;
+}
 .pg-explain-item > .pg-explain-list {
-  margin-top: .1rem;
+  margin-top: .15rem;
   border-left: 1px solid var(--line-soft);
   list-style: none;
+}
+.pg-explain-kind,
+.pg-explain-keyword,
+.pg-explain-literal,
+.pg-explain-flags {
+  font-family: var(--font-mono);
+  font-size: .88em;
+}
+.pg-explain-kind,
+.pg-explain-keyword {
+  color: var(--ink-soft);
+}
+.pg-explain-keyword {
+  letter-spacing: .02em;
+}
+.pg-explain-flags {
+  margin-left: .5rem;
+  padding: .05rem .5rem;
+  color: var(--ink-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+}
+.pg-explain-root {
+  color: var(--ink);
 }
 
 .pg-diagnostics {
@@ -5148,12 +5178,13 @@ body.search-open {
 }
 /* One mark per node, nested like the tree: a node lights up as a whole,
    and the deepest node under the pointer is the one named. Pointing at
-   a piece selects it, like pointing at a row: the same hand cursor. */
+   a piece selects it, like pointing at a row: the same hand cursor. The
+   highlight runs square, like a selection: these are characters, not
+   chips, and pieces sit edge to edge. */
 .tree-pattern mark {
   padding: .1rem 0;
   color: inherit;
   background: transparent;
-  border-radius: var(--radius-s);
   cursor: pointer;
 }
 .tree-pattern mark:hover,

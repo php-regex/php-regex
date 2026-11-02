@@ -702,7 +702,9 @@
   }
 
   // The explanation, one line per construct, indented two spaces per level,
-  // rebuilt as nested lists.
+  // rebuilt as nested lists. Two voices, as the tree's rows have them: the
+  // construct's kind in the quiet mono, what it means in the page's ink —
+  // the eye finds the structure before it reads the prose.
   function renderExplain(explain) {
     clear(el.explain);
     if (!explain) {
@@ -711,6 +713,7 @@
     }
     var lines = explain.split('\n');
     var stack = [{ depth: -1, list: text('ul', 'pg-explain-list') }];
+    var rootDone = false;
     lines.forEach(function (line) {
       var depth = line.match(/^ */)[0].length / 2;
       var content = line.trim();
@@ -722,16 +725,66 @@
       while (stack.length > 1 && stack[stack.length - 1].depth >= depth) {
         stack.pop();
       }
-      var item = text('li', 'pg-explain-item', content);
-      stack[stack.length - 1].list.appendChild(item);
+      var item = text('li', 'pg-explain-item');
+      var head = text('span', 'pg-explain-head');
+      if (!rootDone && depth === 0) {
+        // The root line says what the pattern does; the flags it says as
+        // a chip, as the status bar names the engine.
+        rootDone = true;
+        var flags = content.match(/\(with flags: (.+)\)$/);
+        head.appendChild(text('span', 'pg-explain-root', flags ? content.slice(0, content.length - flags[0].length).trim() : content));
+        if (flags) {
+          head.appendChild(text('span', 'pg-explain-flags', 'flags ' + flags[1]));
+        }
+      } else {
+        explainVoices(content, head);
+      }
+      item.appendChild(head);
       var sublist = text('ul', 'pg-explain-list');
       item.appendChild(sublist);
+      stack[stack.length - 1].list.appendChild(item);
       stack.push({ depth: depth, list: sublist });
     });
     el.explain.appendChild(stack[0].list);
-    Array.prototype.forEach.call(el.explain.querySelectorAll('ul:empty'), function (empty) {
-      empty.parentNode.removeChild(empty);
+    Array.prototype.forEach.call(el.explain.querySelectorAll('.pg-explain-item'), function (item) {
+      var sublist = item.querySelector(':scope > .pg-explain-list');
+      if (!sublist) {
+        return;
+      }
+      if (sublist.children.length) {
+        // What holds lines under it is structure: words that came as
+        // plain prose take the quiet voice, like a labelled kind.
+        item.classList.add('is-block');
+        var spans = item.querySelectorAll(':scope > .pg-explain-head > span');
+        if (spans.length === 1 && spans[0].className === 'pg-explain-text') {
+          spans[0].className = 'pg-explain-kind';
+        }
+      } else {
+        sublist.parentNode.removeChild(sublist);
+      }
     });
+  }
+
+  // One line, split into its voices: a branch keyword, a labelled kind
+  // ("Anchor: …"), a bare quoted literal, or plain prose.
+  function explainVoices(content, head) {
+    var keyword = content.match(/^(IF|THEN|ELSE|EITHER|OR)(?:\s+(.*))?$/);
+    var labeled = keyword ? null : content.match(/^([A-Z][A-Za-z]*(?: [A-Za-z]+)*): (.+)$/);
+    if (keyword) {
+      head.appendChild(text('span', 'pg-explain-keyword', keyword[1]));
+      if (keyword[2]) {
+        head.appendChild(document.createTextNode(' '));
+        head.appendChild(text('span', 'pg-explain-text', keyword[2]));
+      }
+    } else if (labeled) {
+      head.appendChild(text('span', 'pg-explain-kind', labeled[1]));
+      head.appendChild(document.createTextNode(' '));
+      head.appendChild(text('span', 'pg-explain-text', labeled[2]));
+    } else if (/^['"].*['"]$/.test(content)) {
+      head.appendChild(text('span', 'pg-explain-literal', content));
+    } else {
+      head.appendChild(text('span', 'pg-explain-text', content));
+    }
   }
 
   var SEVERITY_LABELS = { critical: 'critical', error: 'error', warning: 'warning', style: 'style', perf: 'performance', info: 'info' };
