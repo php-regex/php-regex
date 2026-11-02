@@ -4636,7 +4636,7 @@ body.search-open {
   height: .7rem;
   background: var(--ink-soft);
   border-radius: var(--radius-pill);
-  opacity: .55;
+  opacity: .8;
 }
 .pg-title {
   overflow: hidden;
@@ -4748,6 +4748,8 @@ body.search-open {
     top: calc(var(--header-h) + 1rem);
     max-height: calc(100vh - var(--header-h) - 2rem);
     overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
   }
 }
 
@@ -4819,6 +4821,12 @@ body.search-open {
   color: var(--code-ink);
   background: transparent;
   caret-color: var(--amber);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.pg-editor .pg-input::placeholder {
+  color: var(--ink-soft);
+  opacity: .75;
 }
 .pg-editor .pg-input:focus-visible {
   outline: 2px solid var(--amber);
@@ -4880,14 +4888,20 @@ body.search-open {
 .pg-example:hover,
 .pg-example:focus-visible {
   color: var(--ink);
-  border-color: var(--ink);
+  border-color: var(--amber);
 }
 
+/* The line keeps its height, said or not: the panels under it do not
+   move each time a run gesture lights a word in it. A zero-width space
+   holds the line box while there is nothing to say. */
 .pg-status {
   min-height: 1.2em;
   margin: 0;
   font-size: .8rem;
   color: var(--ink-soft);
+}
+.pg-status:empty::before {
+  content: '\200B';
 }
 .pg-status.is-busy {
   color: var(--amber-deep);
@@ -4896,9 +4910,6 @@ body.search-open {
 .pg-status.is-error {
   color: var(--amber-deep);
   font-weight: 500;
-}
-.pg-status:empty {
-  display: none;
 }
 
 /* The panels: matches, explanation, diagnostics. */
@@ -4945,6 +4956,8 @@ body.search-open {
   padding: 0;
   overflow: auto;
   list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
 }
 .pg-match {
   padding: .4rem .55rem;
@@ -5118,6 +5131,8 @@ body.search-open {
   font-size: .82rem;
   color: var(--ink-soft);
 }
+/* The pattern as the tree reads it — a display, not a field: the same
+   code ground as the inputs, but no border, so no one types in it. */
 .tree-pattern {
   margin: 0;
   padding: .6rem .75rem;
@@ -5129,6 +5144,7 @@ body.search-open {
   color: var(--code-ink);
   background: var(--code-bg);
   border-radius: var(--radius-m);
+  border: 0;
 }
 /* One mark per node, nested like the tree: a node lights up as a whole,
    and the deepest node under the pointer is the one named. Pointing at
@@ -5284,6 +5300,9 @@ body.search-open {
   .pg-titlebar .pg-version,
   .pg-titlebar .pg-run {
     padding-inline: .9rem;
+  }
+  .pg-example {
+    min-height: 2rem;
   }
   .pg-match-list {
     max-height: 14rem;
