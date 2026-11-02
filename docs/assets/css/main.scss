@@ -4872,8 +4872,12 @@ body.search-open {
   padding: 0;
   list-style: none;
 }
+/* One label voice in the column: "Try" speaks as "Pattern" and
+   "Subject" do. */
 .pg-examples-label {
   font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .02em;
   color: var(--ink-soft);
 }
 .pg-example {
