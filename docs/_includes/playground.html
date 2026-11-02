@@ -1,0 +1,81 @@
+{% comment %}
+  The home page's playground: a pattern, a subject, the PHP version, and
+  what the real PHP and PCRE2 say about them, run in the visitor's browser
+  by a PHP compiled to WebAssembly with PHPRegex loaded into it. Before the
+  visitor asks for a run, the panels show the sample stored in
+  _data/playground.json, rendered by the same script as a live result; the
+  engine is downloaded on the first run gesture only, never on load.
+
+  The data is embedded as JSON. Liquid writes "<" back when it re-encodes,
+  so the include escapes it: a "<" could otherwise close the script element.
+
+  Two siblings on purpose: the playground takes the hero's second column,
+  the X-Ray band spans both columns under it.
+{% endcomment %}
+<div class="playground" id="playground" data-bundle="/assets/playground/bundle.json?v={{ site.time | date: '%s' }}">
+  <script type="application/json" id="playground-data">{{ site.data.playground | jsonify | replace: '<', '\u003C' }}</script>
+  <h2 class="visually-hidden">Playground</h2>
+  <div class="pg-field">
+    <label class="pg-label" for="pg-pattern">Pattern</label>
+    <div class="pg-editor pg-editor-pattern">
+      <pre class="pg-mirror" aria-hidden="true"></pre>
+      <textarea id="pg-pattern" class="pg-input" rows="1" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="pg-pattern-count"></textarea>
+    </div>
+    <span class="pg-count" id="pg-pattern-count"></span>
+  </div>
+  <div class="pg-field">
+    <label class="pg-label" for="pg-subject">Subject</label>
+    <div class="pg-editor pg-editor-subject">
+      <pre class="pg-mirror" aria-hidden="true"></pre>
+      <textarea id="pg-subject" class="pg-input" rows="3" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="pg-subject-count"></textarea>
+    </div>
+    <span class="pg-count" id="pg-subject-count"></span>
+  </div>
+  <div class="pg-band">
+    <label class="visually-hidden" for="pg-version">PHP version</label>
+    <select id="pg-version" class="pg-version"></select>
+    <button type="button" class="pg-run button button-primary">Run</button>
+    <button type="button" class="pg-xray-toggle" aria-pressed="false" aria-controls="pg-xray">Pattern X-Ray</button>
+  </div>
+  <ul class="pg-examples" aria-label="Examples">
+    <li><button type="button" class="pg-example" data-regex="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m" data-subject="2026-11-02&#10;2026-11-19&#10;not a date">Named groups</button></li>
+    <li><button type="button" class="pg-example" data-regex="/[\w.+-]+@[\w-]+\.[\w.-]+/i" data-subject="Write to hello@php-regex.com or to noreply@example.org.">E-mail addresses</button></li>
+    <li><button type="button" class="pg-example" data-regex="/^(a+)+$/" data-subject="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab">Catastrophic backtracking</button></li>
+    <li><button type="button" class="pg-example" data-regex="/\p{Lu}\p{Ll}+/u" data-subject="Ünïcode Straße Ωmega">Unicode properties</button></li>
+  </ul>
+  <p class="pg-status" role="status" aria-live="polite"></p>
+  <div class="pg-results">
+    <div class="pg-panel pg-panel-matches">
+      <h3 class="pg-panel-title">Matches <span class="pg-panel-note pg-matches-note"></span></h3>
+      <ol class="pg-match-list"></ol>
+      <p class="pg-empty pg-matches-empty" hidden></p>
+    </div>
+    <div class="pg-panel pg-panel-explain">
+      <h3 class="pg-panel-title">Explanation</h3>
+      <div class="pg-explain"></div>
+    </div>
+    <div class="pg-panel pg-panel-diagnostics">
+      <h3 class="pg-panel-title">Diagnostics <span class="pg-panel-note pg-lint-note"></span></h3>
+      <ul class="pg-diagnostics"></ul>
+    </div>
+  </div>
+  <p class="pg-caption"></p>
+  <p class="pg-live visually-hidden" aria-live="polite"></p>
+  <p class="pg-credits">Runs on <a href="https://github.com/seanmorris/php-wasm">php-wasm</a> (Apache-2.0) with mbstring and <a href="https://github.com/kkos/oniguruma">oniguruma</a> (BSD), loaded from jsDelivr when you press Run. Nothing you type leaves your browser.</p>
+</div>
+<div class="xray" id="pg-xray" hidden>
+  <div class="xray-head">
+    <h3 class="xray-title">Pattern X-Ray</h3>
+    <p class="xray-sub">The tree the parser built, byte for byte. Point at a node or at a piece of the pattern.</p>
+  </div>
+  <pre class="xray-pattern" aria-label="The pattern, piece by piece"></pre>
+  <div class="xray-body">
+    <div class="xray-tree-wrap">
+      <ul class="xray-tree" role="tree" aria-label="Abstract syntax tree"></ul>
+    </div>
+    <div class="xray-node">
+      <p class="xray-node-empty">Point at a node to read it.</p>
+      <dl class="xray-node-facts" hidden></dl>
+    </div>
+  </div>
+</div>

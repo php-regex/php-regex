@@ -9,7 +9,7 @@ description: "PHPRegex lexes and parses PCRE patterns into an immutable AST, the
     <div class="hero-copy">
       <div class="hero-head">
         <h1 class="hero-claim">See a PHP regex as a tree.</h1>
-        <p class="hero-sub">PHPRegex turns a pattern literal into an immutable AST. Explanations, validation, capture shapes, ReDoS findings, and rewrites all read that same tree.</p>
+        <p class="hero-sub">PHPRegex turns a pattern literal into an immutable AST. Explanations, validation, capture shapes, ReDoS findings, and rewrites all read that same tree. Try it here: the real PHP and PCRE2, in your browser, in the PHP version you pick.</p>
         <div class="hero-ctas">
           <a class="button button-primary" href="/quick-start/">Start in five minutes</a>
           <a class="hero-link" href="/docs/">Browse the docs →</a>
@@ -20,12 +20,7 @@ description: "PHPRegex lexes and parses PCRE patterns into an immutable AST, the
         <p class="hero-sub">New to regex? Start with the <a href="/tutorial/">ten-chapter tutorial</a>. Want the long reads? <a href="/blog/">The articles are measured</a>.</p>
       </div>
     </div>
-    <div class="terminal">
-      <div class="terminal-bar">AST</div>
-      <pre class="terminal-body"><span class="command">{{ site.data.hero_ast.command | escape }}</span>
-{{ site.data.hero_ast.output | escape }}</pre>
-      <p class="terminal-more">Learn the tree behind every verdict in <a href="/concepts/ast/">What is an AST?</a>.</p>
-    </div>
+    {% include playground.html %}
   </div>
 </div>
 
