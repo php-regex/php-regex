@@ -565,6 +565,43 @@ corpus:
 tools/phpbench/vendor/bin/phpbench run tests/Benchmark/CaptureShapeBench.php --report=default
 ```
 
+## The Playground Bundle
+
+The home page's playground runs PHPRegex inside a PHP compiled to
+WebAssembly, in the visitor's browser. What that engine loads is one
+committed file, `docs/assets/playground/bundle.json`: the core library (every
+package under `src/` but the CLI, the language server and the framework
+bridges) and the driver `docs/assets/playground/driver.php`, comments
+stripped, with a manifest naming the version, the commit and the date of the
+snapshot. The page captions that snapshot; between two regenerations the
+playground runs the library as it was, not as `src/` is.
+
+Regenerate it before a release, after any change to the driver, and whenever
+a change under `src/` should reach the playground:
+
+```bash
+bin/playground-bundle
+```
+
+The script also writes `docs/_data/playground.json`, the answer the home shows
+before a visitor asks for a run, judged for the default browser engine. The
+suite holds the bundle's shape, runs the bundled driver against the bundled
+library, and fails when the driver in the tree differs from the bundled one.
+
+What the suite cannot see is the browser engine itself: the extensions it
+lacks, the way it runs a request. `bin/playground-check` runs the bundle
+inside that engine under Node (php-wasm and its mbstring extension are
+installed into a temporary directory for the run) and compares its answers
+with the local driver's. The documentation workflow runs it on every change
+to the docs; run it by hand before regenerating:
+
+```bash
+bin/playground-check
+```
+
+The engine and the extension are loaded from jsDelivr by version, without
+subresource integrity, as the tutorial's Run buttons already do.
+
 ## Benchmarks
 
 `tests/Benchmark/` measures time and memory with PHPBench, one group per
