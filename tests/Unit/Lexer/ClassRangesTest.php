@@ -19,6 +19,7 @@ use PHPRegex\Parser\Lexing\PatternText;
 use PHPRegex\Parser\Lexing\TargetSyntax;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Token\Token;
+use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -38,13 +39,13 @@ final class ClassRangesTest extends TestCase
     #[DataProvider('provideReversedRanges')]
     public function test_the_first_reversed_range_is_refused_where_pcre_reports_it(string $pattern): void
     {
-        $this->assertFalse(@preg_match('/'.$pattern.'/', ''));
-        $this->assertSame(1, preg_match('/at offset (\d++)/', error_get_last()['message'] ?? '', $reported));
+        $reported = PhpErrorOffset::of('/'.$pattern.'/');
+        $this->assertNotNull($reported);
 
         $end = ClassRanges::reversedRangeEnd(self::text($pattern), self::tokens($pattern), 0);
 
         $this->assertNotNull($end);
-        $this->assertSame((int) $reported[1], PcreTarget::runtime()->faultOffset($end));
+        $this->assertSame($reported, PcreTarget::runtime()->faultOffset($end));
     }
 
     /**
