@@ -1,0 +1,255 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+/*
+ * Writes what the home page's playground loads into the browser's PHP:
+ *
+ *   docs/assets/playground/bundle.json   the core library and the driver,
+ *                                        comments stripped, as one JSON map
+ *                                        with a manifest
+ *   docs/_data/playground.json           the driver's answer for the default
+ *                                        pattern and subject, judged for the
+ *                                        default browser engine, shown on the
+ *                                        home before a visitor asks for a run
+ *
+ * The bundle is a snapshot: the home runs the library as it was when this
+ * script last ran, and says so in its caption (version, commit, date). Run
+ * it before a release, after a change to the driver, and whenever a change
+ * under src/ should reach the playground.
+ *
+ * Usage:
+ *   bin/playground-bundle            write both files
+ *   bin/playground-bundle --check    write nothing, exit 1 when the files
+ *                                    on disk differ from a fresh generation
+ *                                    (manifest commit and date aside)
+ */
+
+require __DIR__.'/../vendor/autoload.php';
+// The driver declares the protocol the page reads; the manifest repeats it
+// from the same constant, never from a copy.
+require __DIR__.'/../docs/assets/playground/driver.php';
+
+use PHPRegex\Parser\Printer\JsonDumper;
+use PHPRegex\Toolkit\Regex;
+
+const ROOT = __DIR__.'/..';
+const BUNDLE = ROOT.'/docs/assets/playground/bundle.json';
+const DEFAULT_DATA = ROOT.'/docs/_data/playground.json';
+const DRIVER = ROOT.'/docs/assets/playground/driver.php';
+
+// The library's packages: everything under src/ but the surfaces a web page
+// has no use for. Tests, resources and executables of the kept packages are
+// left out too.
+const OUTSIDE = ['Cli', 'LanguageServer', 'Laravel', 'Symfony', 'PHPStan', 'Psalm', 'Rector', 'PHPUnit'];
+
+// The sample the home shows before any run: a pattern with a named group,
+// a numbered one, a flag, and a subject with lines that match and one that
+// does not. Judged for the default browser engine.
+const DEFAULT_REGEX = '/^(?<date>\d{4})-(\d{2})-(\d{2})$/m';
+const DEFAULT_SUBJECT = "2026-11-02\n2026-11-19\nnot a date";
+const DEFAULT_TARGET = ['php' => '8.4.1', 'pcre' => '10.44'];
+
+$check = \in_array('--check', \array_slice($argv, 1), true);
+
+// The child processes below run with this PHP's own ini, so what this
+// process sees is what they will have.
+if (!\function_exists('mb_strlen')) {
+    fwrite(\STDERR, "The library needs mbstring; this PHP has none.\n");
+    exit(1);
+}
+
+$files = collectFiles();
+$files['driver.php'] = php_strip_whitespace(DRIVER);
+
+$manifest = [
+    'version' => Regex::VERSION,
+    'commit' => commit(),
+    'built' => date('Y-m-d'),
+    'files' => \count($files),
+    'bytes' => array_sum(array_map('strlen', $files)),
+    'protocol' => PHPREGEX_PLAYGROUND_PROTOCOL,
+    'jsonDumper' => JsonDumper::VERSION,
+];
+
+$bundle = encode(['manifest' => $manifest, 'files' => $files], 0);
+$default = encode(defaultData($files), \JSON_PRETTY_PRINT | \JSON_HEX_TAG);
+
+if ($check) {
+    $same = sameButStamp((string) @file_get_contents(BUNDLE), $bundle) && (string) @file_get_contents(DEFAULT_DATA) === $default;
+    echo $same ? "The playground bundle and the default data are current.\n" : "The playground bundle or the default data are stale: run bin/playground-bundle.\n";
+    exit($same ? 0 : 1);
+}
+
+file_put_contents(BUNDLE, $bundle);
+file_put_contents(DEFAULT_DATA, $default);
+printf(
+    "bundle.json: %d files, %s stripped, %s on disk (PHPRegex %s, %s, %s)\nplayground.json: %s\n",
+    $manifest['files'],
+    human($manifest['bytes']),
+    human(\strlen($bundle)),
+    $manifest['version'],
+    $manifest['commit'],
+    $manifest['built'],
+    human(\strlen($default)),
+);
+
+/**
+ * @return array<string, string> path relative to the repository → stripped source
+ */
+function collectFiles(): array
+{
+    $files = [];
+    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(ROOT.'/src', FilesystemIterator::SKIP_DOTS));
+    foreach ($iterator as $file) {
+        if (!$file instanceof SplFileInfo || 'php' !== $file->getExtension()) {
+            continue;
+        }
+        $relative = 'src/'.str_replace(\DIRECTORY_SEPARATOR, '/', substr($file->getPathname(), \strlen(ROOT.'/src/')));
+        $package = explode('/', $relative)[1];
+        if (\in_array($package, OUTSIDE, true)) {
+            continue;
+        }
+        if (str_contains($relative, '/Tests/') || str_contains($relative, '/Resources/') || str_contains($relative, '/bin/')) {
+            continue;
+        }
+        $files[$relative] = php_strip_whitespace($file->getPathname());
+    }
+    ksort($files, \SORT_STRING);
+
+    return $files;
+}
+
+function commit(): string
+{
+    $commit = trim((string) shell_exec(sprintf('git -C %s rev-parse --short=10 HEAD 2>/dev/null', escapeshellarg(ROOT))));
+    if (1 !== preg_match('/^[0-9a-f]{7,40}$/', $commit)) {
+        fwrite(\STDERR, "The commit could not be read from git.\n");
+        exit(1);
+    }
+
+    return $commit;
+}
+
+/**
+ * The bundled driver's answers for the sample, as the page renders them,
+ * without the fields that belong to the machine that ran it.
+ *
+ * @param array<string, string> $files
+ *
+ * @return array<string, mixed>
+ */
+function defaultData(array $files): array
+{
+    $dir = sys_get_temp_dir().'/phpregex-playground-bundle-'.bin2hex(random_bytes(6));
+    foreach ($files as $path => $source) {
+        $target = $dir.'/'.$path;
+        if (!is_dir(\dirname($target))) {
+            mkdir(\dirname($target), 0777, true);
+        }
+        file_put_contents($target, $source);
+    }
+
+    $analyze = answer($dir, ['op' => 'analyze', 'regex' => DEFAULT_REGEX, 'subject' => DEFAULT_SUBJECT, 'target' => DEFAULT_TARGET]);
+    $lint = answer($dir, ['op' => 'lint', 'regex' => DEFAULT_REGEX, 'target' => DEFAULT_TARGET]);
+    unset($analyze->engine, $analyze->timing, $lint->timing);
+
+    foreach ([$analyze, $lint] as $payload) {
+        if (isset($payload->fatal)) {
+            fwrite(\STDERR, 'The bundled driver failed on the sample: '.$payload->fatal."\n");
+            exit(1);
+        }
+    }
+    if ([] !== $analyze->errors) {
+        fwrite(\STDERR, 'The sample pattern does not parse: '.json_encode($analyze->errors)."\n");
+        exit(1);
+    }
+
+    removeDirectory($dir);
+
+    return [
+        'default' => ['regex' => DEFAULT_REGEX, 'subject' => DEFAULT_SUBJECT, 'target' => DEFAULT_TARGET],
+        'analyze' => $analyze,
+        'lint' => $lint,
+    ];
+}
+
+/**
+ * The driver's answer as objects, not arrays: a JSON object whose keys are
+ * digits ({"0": ...}, a sparse match set) would otherwise come back as a
+ * list and be written as one, and the page would read two shapes for one
+ * thing.
+ *
+ * @param array<string, mixed> $input
+ */
+function answer(string $dir, array $input): stdClass
+{
+    $inputFile = $dir.'/in.json';
+    file_put_contents($inputFile, json_encode($input, \JSON_THROW_ON_ERROR));
+    $runner = $dir.'/run.php';
+    file_put_contents($runner, sprintf('<?php require %s; echo phpregex_playground_run(%s);', var_export($dir.'/driver.php', true), var_export($inputFile, true)));
+
+    $process = proc_open(
+        [\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'display_errors=stderr', '-d', 'error_reporting=E_ALL', $runner],
+        [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+        $pipes,
+    );
+    \assert(\is_resource($process));
+    $stdout = (string) stream_get_contents($pipes[1]);
+    $stderr = (string) stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    $exit = proc_close($process);
+
+    if (0 !== $exit || '' !== $stderr || 1 !== preg_match('/\A\x1e(.*)\x1e\z/s', $stdout, $m)) {
+        fwrite(\STDERR, sprintf("The bundled driver did not answer (exit %d).\n%s%s\n", $exit, $stdout, $stderr));
+        exit(1);
+    }
+
+    $payload = json_decode($m[1], false, 8192, \JSON_THROW_ON_ERROR);
+    \assert($payload instanceof stdClass);
+
+    return $payload;
+}
+
+/**
+ * @param array<string, mixed> $value
+ */
+function encode(array $value, int $flags): string
+{
+    return json_encode($value, $flags | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR)."\n";
+}
+
+/**
+ * Two bundles are the same when only the commit and the date differ.
+ */
+function sameButStamp(string $onDisk, string $fresh): bool
+{
+    $strip = static fn (string $json): string => (string) preg_replace('/"commit":"[0-9a-f]+","built":"\d{4}-\d{2}-\d{2}"/', '', $json);
+
+    return $strip($onDisk) === $strip($fresh);
+}
+
+function removeDirectory(string $dir): void
+{
+    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
+    foreach ($iterator as $file) {
+        $file instanceof SplFileInfo && ($file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname()));
+    }
+    rmdir($dir);
+}
+
+function human(int $bytes): string
+{
+    return $bytes >= 1048576 ? sprintf('%.1f MB', $bytes / 1048576) : sprintf('%d KB', intdiv($bytes, 1024));
+}
