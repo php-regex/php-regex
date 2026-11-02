@@ -21,7 +21,7 @@
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1",
+        "laravel/tinker": "^3.0.2",
         "php-regex/php-regex": "2.x-dev"
     },
     "require-dev": {
