@@ -256,6 +256,7 @@
       worker = createWorker();
       if (!worker) {
         setStatus('This browser cannot run the engine: it has no module workers.', 'error');
+        setState('Stopped', 'error');
         return false;
       }
     }
