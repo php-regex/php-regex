@@ -29,6 +29,8 @@ This architecture allows for advanced static analysis:
 
 Built for robust regex tooling in PHP projects.
 
+Try it before installing anything: the [playground on php-regex.com](https://php-regex.com/) runs the real PHP and PCRE2 in your browser, in the PHP version you pick, with PHPRegex explaining, linting and dissecting the pattern as you type.
+
 The documentation lives at [php-regex.com](https://php-regex.com): a
 [regex tutorial](https://php-regex.com/tutorial/), a guide for every
 integration, and the reference pages behind each verdict the library prints.

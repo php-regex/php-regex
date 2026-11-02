@@ -9,6 +9,7 @@ License: MIT
 
 ## Learn
 
+- [Playground](https://php-regex.com/): a pattern and a subject run on the real PHP and PCRE2 in the browser, in the PHP version you pick, with the explanation, the lint findings and the tree
 - [Documentation](https://php-regex.com/docs/): the documentation map, organized by task
 - [Quick Start](https://php-regex.com/quick-start/): install and first analysis in a few runnable steps
 - [Regex 101 tutorial](https://php-regex.com/tutorial/): regular expressions from basics to real-world PHP, ten chapters
