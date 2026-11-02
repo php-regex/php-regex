@@ -543,9 +543,14 @@ function phpregex_playground_target(array $input): array
  */
 function phpregex_playground_library(array $target): Regex
 {
+    // The library wants a release ("8.6.0"); an engine may call itself
+    // "8.6.0RC4". The caption keeps the engine's own words.
+    $php = 1 === preg_match('/^\d+\.\d+(?:\.\d+)?/', $target['php'], $m) ? $m[0] : $target['php'];
+    $pcre = 1 === preg_match('/^\d+\.\d+/', $target['pcre'], $m) ? $m[0] : $target['pcre'];
+
     return Regex::create([
-        'php_version' => $target['php'],
-        'pcre_version' => $target['pcre'],
+        'php_version' => $php,
+        'pcre_version' => $pcre,
         'max_pattern_length' => PHPREGEX_PLAYGROUND_PATTERN_CAP,
     ]);
 }

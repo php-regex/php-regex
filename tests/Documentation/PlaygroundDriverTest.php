@@ -194,8 +194,13 @@ final class PlaygroundDriverTest extends TestCase
         $this->assertCount(1, $refused['errors']);
         $this->assertNull($refused['engineError']);
         $live = PlaygroundDriver::match($driver, $root, '/\p{Script=Latin}/u', 'a');
-        $this->assertNull($live['engineError']);
-        $this->assertSame(1, self::matchesOf($live)['count']);
+        if (self::hostKnowsScriptProperties()) {
+            $this->assertNull($live['engineError']);
+            $this->assertSame(1, self::matchesOf($live)['count']);
+        } else {
+            $this->assertStringStartsWith('Compilation failed: unknown property name', (string) $live['engineError'], 'A host before PCRE2 10.40 refuses the property itself.');
+            $this->assertNull($live['matches']);
+        }
     }
 
     #[Test]
@@ -226,7 +231,11 @@ final class PlaygroundDriverTest extends TestCase
 
         $here = PlaygroundDriver::analyze($driver, $root, '/\p{Script=Latin}/u', 'a');
         $this->assertSame(\PHP_VERSION, $here['target']['php'], 'No target given: the engine judges for itself.');
-        $this->assertSame([], $here['errors']);
+        if (self::hostKnowsScriptProperties()) {
+            $this->assertSame([], $here['errors']);
+        } else {
+            $this->assertSame('regex.unicode.property_invalid', $here['errors'][0]['code'] ?? null, 'A host before PCRE2 10.40 refuses the property like the 8.0 target does.');
+        }
     }
 
     #[Test]
@@ -474,6 +483,15 @@ final class PlaygroundDriverTest extends TestCase
 
         exec(sprintf('%s -n -l %s 2>&1', escapeshellarg(\PHP_BINARY), escapeshellarg(PlaygroundDriver::TREE_DRIVER)), $lines, $exit);
         $this->assertSame(0, $exit, implode("\n", $lines));
+    }
+
+    /**
+     * \p{Script=Latin} arrived in PCRE2 10.40; a host bundling an older
+     * release refuses it, and so does the library judging for that host.
+     */
+    private static function hostKnowsScriptProperties(): bool
+    {
+        return version_compare(explode(' ', \PCRE_VERSION)[0], '10.40', '>=');
     }
 
     /**
