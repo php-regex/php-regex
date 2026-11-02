@@ -8,8 +8,10 @@
 //
 // The snippet runs in the visitor's browser, in a Web Worker, on a PHP
 // compiled to WebAssembly (loaded from jsDelivr on the first click, so a
-// reader who never runs anything pays nothing). The version select is one
-// per page — thirty selects on a chapter would be noise — and each output
+// reader who never runs anything pays nothing). Every runnable example
+// carries its own version select in its control band — changing the engine
+// never means scrolling away from the example — and the selects move
+// together: they are one choice, written beside every Run. Each output
 // panel captions itself with the engine that answered, because on a regex
 // site the PCRE2 build decides what the answer means.
 
@@ -34,6 +36,13 @@
   var worker = null;
   var nextId = 1;
   var busy = false;
+  var selects = [];
+
+  var stored = null;
+  try {
+    stored = localStorage.getItem(STORAGE_KEY);
+  } catch (error) {/* private mode keeps the default */}
+  var chosen = -1 !== VERSIONS.indexOf(stored) ? stored : DEFAULT_VERSION;
 
   var status = document.createElement('p');
   status.className = 'visually-hidden';
@@ -95,6 +104,32 @@
     container.classList.add('has-run');
     container.appendChild(button);
 
+    // The engine choice, beside the button it applies to. One select per
+    // example, all showing the same choice: moving one moves them all, and
+    // the choice persists across the track's pages. It applies to the next
+    // Run press — an already-open panel is not silently re-run.
+    var version = document.createElement('select');
+    version.className = 'run-version';
+    version.setAttribute('aria-label', 'PHP version for this example');
+    VERSIONS.forEach(function (value) {
+      var option = document.createElement('option');
+      option.value = value;
+      option.textContent = 'PHP ' + value;
+      option.selected = value === chosen;
+      version.appendChild(option);
+    });
+    version.addEventListener('change', function () {
+      chosen = version.value;
+      try {
+        localStorage.setItem(STORAGE_KEY, chosen);
+      } catch (error) {/* the choice simply does not persist */}
+      selects.forEach(function (other) {
+        other.value = chosen;
+      });
+    });
+    selects.push(version);
+    container.appendChild(version);
+
     var panel = document.createElement('div');
     panel.className = 'run-out';
     panel.hidden = true;
@@ -154,7 +189,7 @@
           return;
         }
         if (message.type === 'ready') {
-          meta.textContent = 'running on PHP ' + versionSelect.value + '…';
+          meta.textContent = 'running on PHP ' + version.value + '…';
           timers.armRun(function () {
             killWorker();
             stop('stopped: still running after ' + RUN_TIMEOUT_MS / 1000 + ' s\n', true);
@@ -202,47 +237,9 @@
       });
 
       var source = code.innerText;
-      worker.postMessage({ id: id, type: 'run', code: source, version: versionSelect.value });
+      worker.postMessage({ id: id, type: 'run', code: source, version: version.value });
     });
   }
-
-  // The one version control per page, placed just above the first runnable
-  // example. Its choice persists across the track's pages, and it applies
-  // to the next Run press — an already-open panel is not silently re-run.
-  var versionSelect = document.createElement('select');
-  versionSelect.id = 'php-version';
-  var stored = null;
-  try {
-    stored = localStorage.getItem(STORAGE_KEY);
-  } catch (error) {/* private mode keeps the default */}
-  VERSIONS.forEach(function (version) {
-    var option = document.createElement('option');
-    option.value = version;
-    option.textContent = 'PHP ' + version;
-    if (version === (VERSIONS.indexOf(stored) !== -1 ? stored : DEFAULT_VERSION)) {
-      option.selected = true;
-    }
-    versionSelect.appendChild(option);
-  });
-  versionSelect.addEventListener('change', function () {
-    try {
-      localStorage.setItem(STORAGE_KEY, versionSelect.value);
-    } catch (error) {/* the choice simply does not persist */}
-  });
-
-  var bar = document.createElement('div');
-  bar.className = 'engine-bar';
-  var label = document.createElement('label');
-  label.setAttribute('for', 'php-version');
-  label.textContent = 'PHP version';
-  bar.appendChild(label);
-  bar.appendChild(versionSelect);
-  var note = document.createElement('span');
-  note.className = 'engine-note';
-  bar.appendChild(note);
-
-  var first = blocks[0];
-  first.parentNode.insertBefore(bar, first);
 
   blocks.forEach(function (container, index) {
     makeRunnable(container, index);

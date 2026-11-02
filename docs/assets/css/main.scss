@@ -1140,6 +1140,32 @@ main table::-webkit-scrollbar-thumb {
   right: -4px;
 }
 
+/* The engine choice lives in the same band, left of the code it runs:
+   changing the PHP version is one glance from the Run button it applies
+   to, never a scroll to the top of the chapter. All of a page's selects
+   move together — they are one choice written in several places. */
+.run-version {
+  position: absolute;
+  top: .45rem;
+  left: 1.25rem;
+  z-index: 1;
+  padding: .3rem .5rem;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+
+.run-version:hover,
+.run-version:focus-visible {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
 /* The output panel rides under its block, on the fixed ink panel the
    terminal uses — identical in both themes, because an engine's answer
    does not change with the site's palette (amber 5.72:1, ink 12.60:1,
@@ -1182,41 +1208,6 @@ main table::-webkit-scrollbar-thumb {
 
 .run-stderr:empty {
   display: none;
-}
-
-/* One version control per page, above the first runnable example: the
-   select follows the search input's form recipe (paper surface, line
-   border, no platform chrome that is not part of the system). */
-.engine-bar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: .6rem;
-  margin: 1.4rem 0;
-  padding: .55rem .8rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-s);
-}
-
-.engine-bar label {
-  font-family: var(--font-mono);
-  font-size: .78rem;
-  color: var(--ink-soft);
-}
-
-.engine-bar select {
-  padding: .3rem .5rem;
-  font-family: var(--font-mono);
-  font-size: .8rem;
-  color: var(--ink);
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-s);
-}
-
-.engine-note {
-  font-size: .78rem;
-  color: var(--ink-soft);
 }
 
 
@@ -4261,7 +4252,7 @@ main > section:not([class]) > p:not(:has(a.button)) {
   .pager,
   .copy-btn,
   .run-btn,
-  .engine-bar,
+  .run-version,
   .run-out,
   .anchor,
   .to-top,
