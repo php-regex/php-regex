@@ -117,7 +117,7 @@ final class ConditionParserTest extends TestCase
         $node = $this->conditional('(?(VERSION>=10.4)a)');
 
         $this->assertInstanceOf(ConditionalNode::class, $node);
-        $this->assertEquals(new VersionConditionNode('>=', '10.4', 3, 15), $node->condition);
+        $this->assertEquals(new VersionConditionNode('>=', '10.4', 3, 16), $node->condition);
     }
 
     #[Test]
@@ -126,8 +126,18 @@ final class ConditionParserTest extends TestCase
         $node = $this->conditional('(?(R2)a)');
 
         $this->assertInstanceOf(ConditionalNode::class, $node);
-        $this->assertEquals(new SubroutineNode('R2', '', 3, 4), $node->condition);
+        $this->assertEquals(new SubroutineNode('R2', '', 3, 5), $node->condition);
         $this->assertSame(['R2'], $this->recursionTests);
+    }
+
+    #[Test]
+    public function test_a_bare_recursion_test_ends_where_its_letter_does(): void
+    {
+        $node = $this->conditional('(?(R)a)');
+
+        $this->assertInstanceOf(ConditionalNode::class, $node);
+        $this->assertEquals(new SubroutineNode('R', '', 3, 4), $node->condition);
+        $this->assertSame(['R'], $this->recursionTests);
     }
 
     #[Test]
@@ -146,7 +156,7 @@ final class ConditionParserTest extends TestCase
         $node = $this->conditional('(?(R&n)a)');
 
         $this->assertInstanceOf(ConditionalNode::class, $node);
-        $this->assertEquals(new SubroutineNode('R&n', '', 3, 5), $node->condition);
+        $this->assertEquals(new SubroutineNode('R&n', '', 3, 6), $node->condition);
         $this->assertSame([], $this->recursionTests);
     }
 

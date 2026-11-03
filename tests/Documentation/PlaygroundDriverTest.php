@@ -141,6 +141,50 @@ final class PlaygroundDriverTest extends TestCase
 
     #[Test]
     #[DataProvider('provideDrivers')]
+    public function test_a_python_named_group_colors_its_name_not_the_syntax(string $driver, string $root): void
+    {
+        // "(?P<P>": the name is the last "P" of the glue, not the one of the
+        // Python syntax before it.
+        $payload = PlaygroundDriver::analyze($driver, $root, '/(?P<P>a)/', 'a');
+
+        $this->assertSame([
+            [0, 4, 'group'],
+            [4, 5, 'identifier'],
+            [5, 6, 'group'],
+            [6, 7, 'literal'],
+            [7, 8, 'group'],
+        ], $payload['tokens']);
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_a_group_name_is_read_after_its_opener_and_nowhere_else(string $driver, string $root): void
+    {
+        // "\Q" and "\E" spell letters a name may be made of: the name is
+        // what follows "(?<", nothing in the glue that closes the group.
+        $payload = PlaygroundDriver::analyze($driver, $root, '/(?<Q>\Qa\E)(?<E>b\E)/', 'ab');
+
+        $this->assertSame([
+            [0, 3, 'group'], [3, 4, 'identifier'], [4, 7, 'group'], [7, 8, 'literal'], [8, 11, 'group'],
+            [11, 14, 'group'], [14, 15, 'identifier'], [15, 16, 'group'], [16, 17, 'literal'], [17, 20, 'group'],
+        ], $payload['tokens']);
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_a_condition_is_one_token_up_to_its_closing_parenthesis(string $driver, string $root): void
+    {
+        $payload = PlaygroundDriver::analyze($driver, $root, '/(?(VERSION>=10.4)a)(?(R2)b)(?(R)c)/', 'abc');
+
+        $this->assertSame([
+            [0, 3, 'group'], [3, 16, 'keyword'], [16, 17, 'group'], [17, 18, 'literal'], [18, 19, 'group'],
+            [19, 22, 'group'], [22, 24, 'keyword'], [24, 25, 'group'], [25, 26, 'literal'], [26, 27, 'group'],
+            [27, 30, 'group'], [30, 31, 'keyword'], [31, 32, 'group'], [32, 33, 'literal'], [33, 34, 'group'],
+        ], $payload['tokens']);
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
     public function test_tokens_tile_the_corpus_bodies_exactly(string $driver, string $root): void
     {
         $target = ['php' => \PHP_VERSION, 'pcre' => '10.49'];

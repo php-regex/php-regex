@@ -512,9 +512,13 @@
   function analyzeNow() {
     window.clearTimeout(debounce);
     stopStroll();
-    // The mirror's colors belong to the last answer; a new question makes
-    // them stale, and the field reads in its own ink until the next one.
-    el.patternEditor.classList.remove('is-live');
+    // The mirror holds the last answer's pattern: when the field says
+    // another one — an example, a link, a keystroke — the field reads in
+    // its own ink until the next answer. A run on a new subject alone
+    // keeps the frame, the tokens being the pattern's.
+    if (!current || current.regex !== el.pattern.value) {
+      el.patternEditor.classList.remove('is-live');
+    }
     var request = { type: 'analyze', regex: el.pattern.value, subject: el.subject.value, version: chosen };
     writeHash(request);
     if (inflight) {
@@ -1298,11 +1302,11 @@
     });
     area.addEventListener('input', function () {
       stopStroll();
-      if (area === el.pattern) {
-        el.patternEditor.classList.remove('is-untouched');
-      }
+      // Before the debounce fires: the field must read as it is typed,
+      // and a keystroke ends the caret that said it could be.
       if (area === el.pattern) {
         el.patternEditor.classList.remove('is-live');
+        el.patternEditor.classList.remove('is-untouched');
       }
       refreshFields();
       schedule();

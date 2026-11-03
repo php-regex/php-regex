@@ -422,6 +422,9 @@ function phpregex_playground_token_walk(array $node, string $body, array &$token
 /**
  * The span [$from, $to) as one token, or — inside a group's glue — a name
  * or an inline setting's flags told apart from the punctuation around them.
+ * The name is what follows its opener, "(?<", "(?'" or "(?P<", in the glue
+ * that opens the group: the glue around it may spell the same letters
+ * ("(?P<P>", "\Q", "\E"). The flags are the only letters of theirs.
  *
  * @param array<string, mixed>          $node
  * @param list<array{int, int, string}> $tokens
@@ -430,12 +433,18 @@ function phpregex_playground_token_span(int $from, int $to, string $class, array
 {
     $cuts = [];
     if ('group' === $node['type']) {
-        foreach (['identifier' => $node['name'] ?? null, 'flag' => $node['flags'] ?? null] as $cutClass => $spelled) {
-            if (\is_string($spelled) && '' !== $spelled) {
-                $found = strpos(substr($body, $from, $to - $from), $spelled);
-                if (false !== $found) {
-                    $cuts[] = [$from + $found, $from + $found + \strlen($spelled), $cutClass];
-                }
+        $glue = substr($body, $from, $to - $from);
+        $name = $node['name'] ?? null;
+        if (\is_string($name) && '' !== $name && $from === (int) $node['start']
+            && 1 === preg_match('/^\(\?(?:P?<|\')/', $glue, $opener)
+            && substr($glue, \strlen($opener[0]), \strlen($name)) === $name) {
+            $cuts[] = [$from + \strlen($opener[0]), $from + \strlen($opener[0]) + \strlen($name), 'identifier'];
+        }
+        $flags = $node['flags'] ?? null;
+        if (\is_string($flags) && '' !== $flags) {
+            $found = strpos($glue, $flags);
+            if (false !== $found) {
+                $cuts[] = [$from + $found, $from + $found + \strlen($flags), 'flag'];
             }
         }
     }
