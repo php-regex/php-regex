@@ -422,7 +422,9 @@
       // The second step of a tool failed twice: the tab says so and the
       // first step is not asked again until the input moves.
       var who = step.purpose || step.type;
-      toolAnswers[who] = { key: requestKey(toolRequest(who) || step), payload: { error: { message: 'The engine did not answer.', position: null } }, request: step, checked: true, failed: true };
+      // Keyed by the request that failed (the chain's first step for a second
+      // step), never by the tab's current settings, which may have moved.
+      toolAnswers[who] = { key: step.chainKey || requestKey(step), payload: { error: { message: 'The engine did not answer.', position: null } }, request: step, checked: true, failed: true };
       if (activeTool === who) {
         renderTool(who);
       }
@@ -528,7 +530,7 @@
         // A tab that failed holds the failure, and does not ask again
         // until the input moves.
         var failed = request.purpose && request.type === 'check' ? request.purpose : request.type;
-        toolAnswers[failed] = { key: requestKey(toolRequest(failed) || request), payload: { error: { message: payload.fatal, position: null } }, request: request, checked: true, failed: true };
+        toolAnswers[failed] = { key: request.chainKey || requestKey(request), payload: { error: { message: payload.fatal, position: null } }, request: request, checked: true, failed: true };
         if (activeTool === failed) {
           renderTool(failed);
         }
@@ -630,6 +632,9 @@
           delete failures[requestKey(stale)];
         }
         if (toolAnswers[tool] && toolAnswers[tool].failed) {
+          // The step that failed may be the chain's second one, with a
+          // count of its own.
+          delete failures[requestKey(toolAnswers[tool].request)];
           delete toolAnswers[tool];
         }
       });
