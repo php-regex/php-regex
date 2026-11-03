@@ -122,6 +122,10 @@ deptrac:
       collectors:
         - type: classLike
           value: '^PHPRegex\\Cli\\'
+    - name: Mcp
+      collectors:
+        - type: classLike
+          value: '^PHPRegex\\Mcp\\'
     - name: LanguageServer
       collectors:
         - type: bool
@@ -181,6 +185,7 @@ deptrac:
     Toolkit: [Parser, Explain, Optimizer, Generator, ReDoS, Transpiler, Linter]
     # The language server is started by its class name, when its package is installed.
     Cli: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Automata, AutomataInternal, ReDoS, RedosInternal, Transpiler, TranspilerInternal, Linter, LinterInternal, LanguageServerInternal]
+    Mcp: [Toolkit, Parser, ParserInternal, ReDoS, Transpiler]
     LanguageServer: [Toolkit, Parser, ParserInternal, Explain, ReDoS, Linter, LinterInternal, LanguageServerInternal]
     LanguageServerInternal: [LanguageServer, Toolkit, Parser, ParserInternal, Explain, ReDoS, Linter, LinterInternal]
     PHPStan: [Parser, ParserInternal, Linter, LinterInternal, ReDoS, Automata, Optimizer]

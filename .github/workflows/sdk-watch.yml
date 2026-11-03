@@ -1,0 +1,67 @@
+name: SDK watch
+
+# The MCP server speaks through mcp/sdk, pinned to one minor in
+# src/Mcp/composer.json while the SDK is experimental. Once a week, the
+# newest release on Packagist is compared with the pin; one issue is opened,
+# or kept up to date, when a newer minor exists. Nothing is bumped here.
+
+on:
+  schedule:
+    - cron: '13 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Compare the newest mcp/sdk with the pin
+        id: compare
+        run: |
+          pin=$(jq -r '.require["mcp/sdk"]' src/Mcp/composer.json)
+          case "$pin" in
+            ^*) pinned=${pin#^} ;;
+            *) echo "src/Mcp/composer.json pins mcp/sdk as \"$pin\", not as a caret minor." >&2; exit 1 ;;
+          esac
+          newest=$(curl -sSf https://repo.packagist.org/p2/mcp/sdk.json | jq -r '.packages["mcp/sdk"] | map(.version | ltrimstr("v")) | map(select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))) | sort_by(split(".") | map(tonumber)) | last')
+          echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
+          echo "newest=$newest" >> "$GITHUB_OUTPUT"
+          pinned_minor=$(printf '%s' "$pinned" | cut -d. -f1-2)
+          newest_minor=$(printf '%s' "$newest" | cut -d. -f1-2)
+          if [ "$(printf '%s\n%s\n' "$pinned_minor" "$newest_minor" | sort -V | tail -n1)" != "$pinned_minor" ]; then
+            echo "outside=true" >> "$GITHUB_OUTPUT"
+            echo "mcp/sdk $newest is out; src/Mcp/composer.json pins ^$pinned."
+          else
+            echo "outside=false" >> "$GITHUB_OUTPUT"
+            echo "mcp/sdk $newest is within the ^$pinned pin."
+          fi
+
+      - name: Open or update the issue
+        if: steps.compare.outputs.outside == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEWEST: ${{ steps.compare.outputs.newest }}
+          PINNED: ${{ steps.compare.outputs.pinned }}
+        run: |
+          title="mcp/sdk $NEWEST is out: the MCP server pins ^$PINNED"
+          body="A new minor of mcp/sdk, $NEWEST, is on Packagist; src/Mcp/composer.json pins ^$PINNED and phar/composer.lock carries the release of that minor.<br><br>To move: read the changelog at https://github.com/modelcontextprotocol/php-sdk/blob/main/CHANGELOG.md, adjust src/Mcp/Sdk/SdkServer.php (the one file that speaks to the SDK), bump the pin and the conflict in src/Mcp/composer.json, bump phar/composer.json and run phar/lock, then run the suite."
+          existing=$(gh issue list --state open --search "\"mcp/sdk\" in:title" --json number,title --jq '.[] | select(.title | startswith("mcp/sdk ")) | .number' | head -n1)
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --title "$title" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi

@@ -26,6 +26,29 @@ return [
     'src/Cli/Command/RedosBenchmark.php' => [
         'PHPRegex\Cli\Command\RedosBenchmark::milliseconds()' => ['host-return', 2],
     ],
+    'src/Mcp/RegexFactory.php' => [
+        'PHPRegex\Mcp\RegexFactory::for()' => ['protocol-slot', 1],
+    ],
+    'src/Mcp/Tool/AbstractTool.php' => [
+        'PHPRegex\Mcp\Tool\AbstractTool::pattern()' => ['protocol-slot', 1],
+        'PHPRegex\Mcp\Tool\AbstractTool::regex()' => ['protocol-slot', 1],
+    ],
+    'src/Mcp/ToolCatalog.php' => [
+        'PHPRegex\Mcp\ToolCatalog::input()' => ['protocol-slot', 2],
+        'PHPRegex\Mcp\ToolCatalog::output()' => ['protocol-slot', 2],
+        'PHPRegex\Mcp\ToolCatalog::validation()' => ['protocol-slot', 1],
+    ],
+    'src/Mcp/ToolDefinition.php' => [
+        'PHPRegex\Mcp\ToolDefinition::__construct()' => ['protocol-slot', 2],
+    ],
+    'src/Mcp/ToolInterface.php' => [
+        'PHPRegex\Mcp\ToolInterface::execute()' => ['protocol-slot', 1],
+    ],
+    'src/Mcp/ToolResult.php' => [
+        'PHPRegex\Mcp\ToolResult::__construct()' => ['protocol-slot', 1],
+        'PHPRegex\Mcp\ToolResult::document()' => ['protocol-slot', 1],
+        'PHPRegex\Mcp\ToolResult::asCliDocument()' => ['json-decode', 2],
+    ],
     'src/LanguageServer/Protocol/Message.php' => [
         'PHPRegex\LanguageServer\Protocol\Message::__construct()' => ['protocol-slot', 1],
         'PHPRegex\LanguageServer\Protocol\Message::fromObject()' => ['json-decode', 1],

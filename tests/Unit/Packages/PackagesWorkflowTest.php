@@ -40,7 +40,7 @@ final class PackagesWorkflowTest extends TestCase
     }
 
     /**
-     * The root manifest and the seventeen package manifests are validated
+     * The root manifest and the eighteen package manifests are validated
      * strictly: a warning fails the job as an error does.
      */
     #[Test]
@@ -216,7 +216,7 @@ final class PackagesWorkflowTest extends TestCase
         }
         sort($packages);
 
-        self::assertCount(17, $packages);
+        self::assertCount(18, $packages);
 
         return $packages;
     }

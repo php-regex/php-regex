@@ -1,0 +1,90 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+// Find autoloader: first the project's one, named by the proxy Composer
+// writes in vendor/bin, the only one to trust when a path repository
+// symlinks the package
+$autoloadPaths = [
+    $GLOBALS['_composer_autoload_path'] ?? null,
+    __DIR__.'/../../../vendor/autoload.php',
+    __DIR__.'/../../../autoload.php',
+    __DIR__.'/../../../../../autoload.php',
+];
+
+$autoloaded = false;
+foreach ($autoloadPaths as $autoloadPath) {
+    if (is_string($autoloadPath) && file_exists($autoloadPath)) {
+        require $autoloadPath;
+        $autoloaded = true;
+        break;
+    }
+}
+
+if (!$autoloaded) {
+    fwrite(STDERR, "Error: Could not find autoloader. Run 'composer install'.\n");
+    exit(1);
+}
+
+use PHPRegex\Mcp\Application;
+use PHPRegex\Toolkit\Regex;
+
+// Handle --help and --version
+if (in_array('--help', $argv, true) || in_array('-h', $argv, true)) {
+    echo <<<'HELP'
+PHPRegex MCP Server
+
+Usage: regex-mcp [options]
+
+Options:
+  --help, -h             Show this help message
+  --version, -v          Show version information
+  --php-version=<ver>    The PHP release every tool judges for (default: the running PHP)
+  --pcre-version=<ver>   The PCRE2 release every tool judges for (default: the one the PHP release bundles)
+  --locale=<name>        The LC_CTYPE locale every tool judges for
+
+The server speaks the Model Context Protocol on stdin and stdout, one JSON
+document per line. A tool call may name its own php_version and
+pcre_version.
+
+Client setup (Claude Code, Claude Desktop, Cursor, Zed, VS Code):
+  https://php-regex.com/guides/mcp/
+
+HELP;
+    exit(0);
+}
+
+if (in_array('--version', $argv, true) || in_array('-v', $argv, true)) {
+    echo 'php-regex-mcp '.Regex::VERSION."\n";
+    exit(0);
+}
+
+$target = [];
+foreach (array_slice($argv, 1) as $argument) {
+    foreach (['--php-version=' => 'php_version', '--pcre-version=' => 'pcre_version', '--locale=' => 'locale'] as $flag => $key) {
+        if (str_starts_with($argument, $flag)) {
+            $target[$key] = substr($argument, strlen($flag));
+            continue 2;
+        }
+    }
+    fwrite(STDERR, "Unknown option: $argument\nRun regex-mcp --help for the options.\n");
+    exit(2);
+}
+
+if (!class_exists('Mcp\Server')) {
+    fwrite(STDERR, "The MCP server needs the mcp/sdk library: run composer require mcp/sdk.\n");
+    exit(2);
+}
+
+// Run the server
+exit((new Application())->run($target));

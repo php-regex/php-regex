@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Each package directory carries the workflow its read-only repository runs
  * on a pull request: one file, the same in every package, so a change made
- * to one reaches all seventeen.
+ * to one reaches all eighteen.
  */
 final class SplitRepositoryWorkflowTest extends TestCase
 {
@@ -78,7 +78,7 @@ final class SplitRepositoryWorkflowTest extends TestCase
             $packages[] = \dirname($manifest);
         }
 
-        self::assertCount(17, $packages);
+        self::assertCount(18, $packages);
 
         return $packages;
     }
