@@ -5533,3 +5533,209 @@ body.search-open {
     transition: border-color .12s ease, background-color .12s ease;
   }
 }
+
+/* The Tools panel: one tab strip, five tools, each shown on demand. The
+   strip follows the tabs pattern: arrow keys move between tabs, the
+   active one is pressed and underlined in amber. */
+.pg-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+  margin: 0 0 .6rem;
+  padding: 0 0 .35rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.pg-tab {
+  min-height: 1.75rem;
+  padding: .3rem .65rem;
+  font-size: .78rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+.pg-tab:hover,
+.pg-tab:focus-visible {
+  color: var(--ink);
+  border-color: var(--amber);
+}
+.pg-tab[aria-selected="true"] {
+  color: var(--ink);
+  background: var(--amber-tint);
+  border-color: var(--amber);
+}
+.pg-tool {
+  font-size: .85rem;
+}
+.pg-tool:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+.pg-tool-hint,
+.pg-tool-line {
+  margin: 0 0 .5rem;
+  color: var(--ink-soft);
+}
+.pg-tool-line.is-warn {
+  color: var(--amber-deep);
+  font-weight: 500;
+}
+.pg-tool-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem .6rem;
+  margin: 0 0 .6rem;
+}
+.pg-tool-row label {
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--ink-soft);
+}
+.pg-tool-row select,
+.pg-tool-row input[type="number"] {
+  min-height: 1.75rem;
+  padding: .2rem .45rem;
+  font: inherit;
+  font-size: .8rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+}
+.pg-tool-row input[type="number"] {
+  width: 4.5rem;
+}
+.pg-tool-button {
+  min-height: 1.75rem;
+  padding: .3rem .65rem;
+  font-size: .78rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+.pg-tool-button:hover,
+.pg-tool-button:focus-visible {
+  border-color: var(--amber);
+}
+.pg-tool-button[aria-pressed="true"] {
+  background: var(--amber-tint);
+  border-color: var(--amber);
+}
+.pg-tool-button:disabled {
+  color: var(--ink-soft);
+  cursor: default;
+  opacity: .6;
+}
+.pg-tool-code {
+  max-height: 22rem;
+  margin: 0 0 .5rem;
+  padding: .5rem .65rem;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  line-height: 1.5;
+  white-space: pre;
+  background: var(--amber-tint);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+  scrollbar-width: thin;
+}
+.pg-tool-code.is-wrapped {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.pg-tool-list {
+  margin: 0 0 .5rem;
+  padding-left: 1.1rem;
+}
+.pg-tool-list li {
+  margin: .15rem 0;
+}
+.pg-tool-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin: 0 0 .5rem;
+  padding: 0;
+  list-style: none;
+}
+.pg-tool-chip {
+  max-width: 100%;
+  min-height: 1.75rem;
+  padding: .3rem .65rem;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: pre;
+  background: transparent;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+.pg-tool-chip:hover,
+.pg-tool-chip:focus-visible {
+  border-color: var(--amber);
+}
+.pg-tool-chip.is-empty {
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.pg-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .3rem .6rem;
+  margin: 0 0 .5rem;
+}
+.pg-verdict-badge {
+  padding: .1rem .45rem;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--amber-tint);
+  border-radius: var(--radius-s);
+}
+.pg-verdict.is-high .pg-verdict-badge,
+.pg-verdict.is-critical .pg-verdict-badge {
+  color: var(--paper);
+  background: var(--amber-deep);
+}
+.pg-verdict-head {
+  font-weight: 600;
+}
+.pg-verdict-facts {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--ink-soft);
+}
+/* The hotspots lit in the pattern field, behind the letters. */
+.pg-mark-hot {
+  background: var(--amber-tint);
+  box-shadow: inset 0 -2px 0 var(--amber);
+}
+.pg-mark-hot.is-high,
+.pg-mark-hot.is-critical {
+  box-shadow: inset 0 -2px 0 var(--amber-deep);
+}
+.pg-tool-textarea {
+  width: 100%;
+  min-height: 8rem;
+  margin: 0 0 .5rem;
+  padding: .5rem .65rem;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+}

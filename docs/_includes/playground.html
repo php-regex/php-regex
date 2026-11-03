@@ -12,7 +12,11 @@
   A window: the title bar holds the PHP version, Run and the state; the
   body sets the fields and the answers on the left and the syntax tree on
   the right (one column under 1024px); the status bar at the bottom names
-  the engine that answered. The pattern field is colored by the same
+  the engine that answered. A Tools panel, one tab strip, holds what the
+  console does with a pattern: the ReDoS verdict with its attack string,
+  the translation to JavaScript, HTML or Python, sample subjects, a
+  regex-phpunit test to paste, the pattern laid out over lines; each tab
+  asks the engine when it is opened, never on every keystroke. The pattern field is colored by the same
   answer — the engine's token spans, drawn in a mirror under the field,
   the code blocks' palette — and falls back to the field's own ink
   whenever the mirror does not render what the field says. The tree's
@@ -77,6 +81,21 @@
         <div class="pg-panel pg-panel-diagnostics">
           <h3 class="pg-panel-title">Diagnostics <span class="pg-panel-note pg-lint-note"></span></h3>
           <ul class="pg-diagnostics"></ul>
+        </div>
+        <div class="pg-panel pg-panel-tools">
+          <h3 class="pg-panel-title" id="pg-tools-title">Tools <span class="pg-panel-note pg-tools-note"></span></h3>
+          <div class="pg-tabs" role="tablist" aria-labelledby="pg-tools-title">
+            <button type="button" class="pg-tab" role="tab" id="pg-tab-redos" aria-controls="pg-tool-redos" aria-selected="true" data-tool="redos">ReDoS</button>
+            <button type="button" class="pg-tab" role="tab" id="pg-tab-transpile" aria-controls="pg-tool-transpile" aria-selected="false" tabindex="-1" data-tool="transpile">Translate</button>
+            <button type="button" class="pg-tab" role="tab" id="pg-tab-samples" aria-controls="pg-tool-samples" aria-selected="false" tabindex="-1" data-tool="samples">Samples</button>
+            <button type="button" class="pg-tab" role="tab" id="pg-tab-export" aria-controls="pg-tool-export" aria-selected="false" tabindex="-1" data-tool="export">Test</button>
+            <button type="button" class="pg-tab" role="tab" id="pg-tab-format" aria-controls="pg-tool-format" aria-selected="false" tabindex="-1" data-tool="format">Format</button>
+          </div>
+          <div class="pg-tool" role="tabpanel" id="pg-tool-redos" aria-labelledby="pg-tab-redos" tabindex="0"></div>
+          <div class="pg-tool" role="tabpanel" id="pg-tool-transpile" aria-labelledby="pg-tab-transpile" tabindex="0" hidden></div>
+          <div class="pg-tool" role="tabpanel" id="pg-tool-samples" aria-labelledby="pg-tab-samples" tabindex="0" hidden></div>
+          <div class="pg-tool" role="tabpanel" id="pg-tool-export" aria-labelledby="pg-tab-export" tabindex="0" hidden></div>
+          <div class="pg-tool" role="tabpanel" id="pg-tool-format" aria-labelledby="pg-tab-format" tabindex="0" hidden></div>
         </div>
       </div>
     </div>
