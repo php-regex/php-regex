@@ -4729,8 +4729,9 @@ body.search-open {
    where the answer will land. The status line and the state word say
    the same in their live regions; this one is for the eye, and the hand
    passes through it: a field can be typed in while the engine comes. On
-   a narrow screen the body runs past the viewport, so the card keeps to
-   its top; on a wide one it sits in the middle. */
+   a narrow screen the body runs past the viewport and the fields hold
+   its top, so the card keeps to the bottom of the screen, clear of them;
+   on a wide one it sits in the middle. */
 .pg-loader {
   position: absolute;
   inset: 0;
@@ -4743,8 +4744,10 @@ body.search-open {
   display: none;
 }
 .pg-loader-card {
-  position: sticky;
-  top: calc(var(--header-h) + 1.5rem);
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
   display: grid;
   justify-items: center;
   gap: .4rem;
@@ -4764,6 +4767,7 @@ body.search-open {
   }
   .pg-loader-card {
     position: static;
+    inset: auto;
   }
 }
 .pg-loader-ring {
