@@ -488,9 +488,6 @@
 
   function analyzeNow() {
     window.clearTimeout(debounce);
-    // The mirror's colors belong to the last answer; a new question makes
-    // them stale, and the field reads in its own ink until the next one.
-    el.patternEditor.classList.remove('is-live');
     var request = { type: 'analyze', regex: el.pattern.value, subject: el.subject.value, version: chosen };
     writeHash(request);
     if (inflight) {
@@ -1264,6 +1261,9 @@
 
   [el.pattern, el.subject].forEach(function (area) {
     area.addEventListener('input', function () {
+      // The mirror's colors belong to the last answer about the pattern: a
+      // new pattern makes them stale, and the field reads in its own ink
+      // until the next answer. A new subject leaves them true.
       if (area === el.pattern) {
         el.patternEditor.classList.remove('is-live');
       }

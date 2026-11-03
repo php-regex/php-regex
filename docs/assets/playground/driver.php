@@ -422,6 +422,8 @@ function phpregex_playground_token_walk(array $node, string $body, array &$token
 /**
  * The span [$from, $to) as one token, or — inside a group's glue — a name
  * or an inline setting's flags told apart from the punctuation around them.
+ * The name is the last word of its glue ("(?P<P>" spells a "P" before it),
+ * the flags the only letters of theirs.
  *
  * @param array<string, mixed>          $node
  * @param list<array{int, int, string}> $tokens
@@ -432,7 +434,7 @@ function phpregex_playground_token_span(int $from, int $to, string $class, array
     if ('group' === $node['type']) {
         foreach (['identifier' => $node['name'] ?? null, 'flag' => $node['flags'] ?? null] as $cutClass => $spelled) {
             if (\is_string($spelled) && '' !== $spelled) {
-                $found = strpos(substr($body, $from, $to - $from), $spelled);
+                $found = strrpos(substr($body, $from, $to - $from), $spelled);
                 if (false !== $found) {
                     $cuts[] = [$from + $found, $from + $found + \strlen($spelled), $cutClass];
                 }
