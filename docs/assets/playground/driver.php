@@ -1027,7 +1027,8 @@ if (!\function_exists('phpregex_playground_run')) {
     {
         $started = hrtime(true);
         $regex = phpregex_playground_string($input, 'regex');
-        $target = phpregex_playground_string($input, 'target');
+        // The dialect has a key of its own: "target" names the engine to judge for.
+        $target = phpregex_playground_string($input, 'dialect');
         $library = phpregex_playground_library(phpregex_playground_target($input));
         $answer = ['protocol' => PHPREGEX_PLAYGROUND_PROTOCOL, 'transpile' => null, 'refusal' => null, 'error' => null, 'timing' => ['transpileMs' => 0.0]];
 

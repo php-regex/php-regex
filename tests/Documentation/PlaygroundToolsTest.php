@@ -303,15 +303,31 @@ final class PlaygroundToolsTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, target: string, fields: array<string, string>, message: string}>
+     * Under PHP 8.0 the worker names the engine to judge for under "target":
+     * the dialect travels under its own key, so the two never collide.
+     */
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_transpile_keeps_its_dialect_beside_an_engine_target(string $driver, string $root): void
+    {
+        $answer = PlaygroundDriver::tool($driver, $root, 'transpile', '/^a$/m', ['dialect' => 'js'], ['php' => '8.0.30', 'pcre' => '10.35']);
+
+        $this->assertNull($answer['refusal']);
+        $this->assertNotNull($answer['transpile']);
+        $this->assertSame('/(?:^|(?<=\n)(?!$))a(?=\n|$)/', $answer['transpile']['literal']);
+        $this->assertSame('javascript', $answer['transpile']['target']);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, dialect: string, fields: array<string, string>, message: string}>
      */
     public static function provideRefusals(): iterable
     {
-        yield 'atomic group to JavaScript' => ['pattern' => '/(?>a+)b/', 'target' => 'js', 'fields' => [], 'message' => 'Atomic groups are not supported in JavaScript.'];
-        yield 'a verb to JavaScript' => ['pattern' => '/a(*SKIP)b/', 'target' => 'js', 'fields' => [], 'message' => 'PCRE verbs are not supported in JavaScript.'];
-        yield '\K to JavaScript' => ['pattern' => '/(?<=a)b\K/', 'target' => 'js', 'fields' => [], 'message' => '\K is not supported in JavaScript.'];
-        yield 'atomic group to Python 3.10' => ['pattern' => '/(?>a+)b/', 'target' => 'python', 'fields' => ['pythonVersion' => '3.10'], 'message' => 'Atomic groups are not supported in Python re.'];
-        yield 'an unknown target' => ['pattern' => '/a/', 'target' => 'ruby', 'fields' => [], 'message' => 'Unknown transpile target: ruby. Expected one of: html, html-pattern, javascript, js, py, python.'];
+        yield 'atomic group to JavaScript' => ['pattern' => '/(?>a+)b/', 'dialect' => 'js', 'fields' => [], 'message' => 'Atomic groups are not supported in JavaScript.'];
+        yield 'a verb to JavaScript' => ['pattern' => '/a(*SKIP)b/', 'dialect' => 'js', 'fields' => [], 'message' => 'PCRE verbs are not supported in JavaScript.'];
+        yield '\K to JavaScript' => ['pattern' => '/(?<=a)b\K/', 'dialect' => 'js', 'fields' => [], 'message' => '\K is not supported in JavaScript.'];
+        yield 'atomic group to Python 3.10' => ['pattern' => '/(?>a+)b/', 'dialect' => 'python', 'fields' => ['pythonVersion' => '3.10'], 'message' => 'Atomic groups are not supported in Python re.'];
+        yield 'an unknown target' => ['pattern' => '/a/', 'dialect' => 'ruby', 'fields' => [], 'message' => 'Unknown transpile target: ruby. Expected one of: html, html-pattern, javascript, js, py, python.'];
     }
 
     /**
@@ -319,10 +335,10 @@ final class PlaygroundToolsTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideRefusals')]
-    public function test_transpile_reports_a_refusal_verbatim(string $pattern, string $target, array $fields, string $message): void
+    public function test_transpile_reports_a_refusal_verbatim(string $pattern, string $dialect, array $fields, string $message): void
     {
         $bundle = PlaygroundDriver::extractBundle();
-        $payload = self::transpile($bundle['driver'], $bundle['root'], $pattern, $target, $fields);
+        $payload = self::transpile($bundle['driver'], $bundle['root'], $pattern, $dialect, $fields);
 
         $this->assertNull($payload['error']);
         $this->assertNull($payload['transpile']);
@@ -655,7 +671,7 @@ final class PlaygroundToolsTest extends TestCase
 
         foreach ([
             ['op' => 'format', 'regex' => $regex],
-            ['op' => 'transpile', 'regex' => $regex, 'target' => 'js'],
+            ['op' => 'transpile', 'regex' => $regex, 'dialect' => 'js'],
             ['op' => 'samples', 'regex' => $regex],
             ['op' => 'export', 'regex' => $regex, 'subjects' => ['a']],
         ] as $input) {
@@ -685,7 +701,7 @@ final class PlaygroundToolsTest extends TestCase
             ['op' => 'format', 'regex' => '/(/'],
             ['op' => 'redos', 'regex' => self::CATASTROPHIC],
             ['op' => 'redos', 'regex' => '/(/', 'mode' => 'confirmed'],
-            ['op' => 'transpile', 'regex' => '/a/', 'target' => 'js'],
+            ['op' => 'transpile', 'regex' => '/a/', 'dialect' => 'js'],
             ['op' => 'transpile', 'regex' => '/a/'],
             ['op' => 'samples', 'regex' => '/a/'],
             ['op' => 'check', 'regex' => '/a/', 'subjects' => ['a']],
@@ -738,10 +754,10 @@ final class PlaygroundToolsTest extends TestCase
      *
      * @return Transpile
      */
-    private static function transpile(string $driver, string $root, string $regex, string $target, array $fields = []): array
+    private static function transpile(string $driver, string $root, string $regex, string $dialect, array $fields = []): array
     {
         /** @var Transpile $answer */
-        $answer = PlaygroundDriver::tool($driver, $root, 'transpile', $regex, ['target' => $target] + $fields);
+        $answer = PlaygroundDriver::tool($driver, $root, 'transpile', $regex, ['dialect' => $dialect] + $fields);
 
         return $answer;
     }

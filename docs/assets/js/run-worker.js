@@ -321,7 +321,7 @@ self.onmessage = async (event) => {
       await analysisRequest(message, { op: 'redos', regex: message.regex, mode: message.mode });
       return;
     case 'transpile':
-      await analysisRequest(message, { op: 'transpile', regex: message.regex, target: message.target, pythonVersion: message.pythonVersion });
+      await analysisRequest(message, { op: 'transpile', regex: message.regex, dialect: message.dialect, pythonVersion: message.pythonVersion });
       return;
     case 'samples':
       await analysisRequest(message, { op: 'samples', regex: message.regex });
