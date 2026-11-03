@@ -38,9 +38,11 @@ trap cleanup EXIT
     | tar --null -T - -cf -
 ) | tar -xf - -C "${TMP_DIR}"
 
-if [ -f "${ROOT}/composer.lock" ]; then
-  cp "${ROOT}/composer.lock" "${TMP_DIR}/composer.lock"
-fi
+# The phar's own manifest and lock: the root manifest plus the libraries
+# only the phar carries (the MCP server's SDK), resolved once by phar/lock
+# so that two builds of one tag pack the same vendor.
+cp "${ROOT}/phar/composer.json" "${TMP_DIR}/composer.json"
+cp "${ROOT}/phar/composer.lock" "${TMP_DIR}/composer.lock"
 
 (
   cd "${TMP_DIR}"
