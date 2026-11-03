@@ -150,6 +150,7 @@ final class PlaygroundDriverTest extends TestCase
             $this->assertSame([], $parseErrors, $name.': the corpus parses (a validation verdict is another matter).');
 
             $end = self::tree($analysis)['end'];
+            $this->assertIsArray($analysis['tokens'], $name.': a pattern that parses has tokens.');
             $at = 0;
             foreach ($analysis['tokens'] as $token) {
                 $this->assertIsArray($token, $name);
