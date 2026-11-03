@@ -172,6 +172,11 @@ async function main() {
 
   const samples = await ask(main84, { op: 'samples', regex: data.default.regex });
   expect(samples.samples && samples.samples.matching.length > 0 && samples.samples.nonMatching.length > 0 && samples.samples.dropped === 0, `The generators gave ${JSON.stringify(samples.samples)}.`);
+  // A seed draws the same samples on the 32-bit browser engine as on the
+  // machine that wrote the sample, and raises nothing on the way.
+  expect(!samples.notices || samples.notices.length === 0, `The generators raised ${samples.notices ? samples.notices.length : 0} notice(s) on the browser engine.`);
+  const samplesDifference = firstDifference(stripped(samples, ['timing', 'notices']), data.samples);
+  expect(samplesDifference === null, `The engine's samples differ from the sample at ${samplesDifference}.`);
 
   const checked = await ask(main84, { op: 'check', regex: data.default.regex, subjects: (samples.samples ? samples.samples.matching : []).concat(samples.samples ? samples.samples.nonMatching : []) });
   const sampleCount = samples.samples ? samples.samples.matching.length + samples.samples.nonMatching.length : 0;

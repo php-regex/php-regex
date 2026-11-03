@@ -164,15 +164,18 @@ function defaultData(array $files): array
     $analyze = answer($dir, ['op' => 'analyze', 'regex' => DEFAULT_REGEX, 'subject' => DEFAULT_SUBJECT, 'target' => DEFAULT_TARGET]);
     $lint = answer($dir, ['op' => 'lint', 'regex' => DEFAULT_REGEX, 'target' => DEFAULT_TARGET]);
     $redos = answer($dir, ['op' => 'redos', 'regex' => DEFAULT_REGEX, 'target' => DEFAULT_TARGET]);
+    // The samples too: drawn from a seed, they are the same on every PHP
+    // the generator runs on, the 32-bit browser engine included.
+    $samples = answer($dir, ['op' => 'samples', 'regex' => DEFAULT_REGEX, 'target' => DEFAULT_TARGET]);
     // What belongs to the machine that answered stays out of the sample:
     // the engine, the timings, the notices it raised, and the PHP and
     // PCRE2 the verdict names as having run it.
-    unset($analyze->engine, $analyze->timing, $analyze->notices, $lint->timing, $lint->notices, $redos->timing, $redos->notices);
+    unset($analyze->engine, $analyze->timing, $analyze->notices, $lint->timing, $lint->notices, $redos->timing, $redos->notices, $samples->timing, $samples->notices);
     if (isset($redos->redos) && $redos->redos instanceof stdClass) {
         unset($redos->redos->pcre_version, $redos->redos->php_version);
     }
 
-    foreach ([$analyze, $lint, $redos] as $payload) {
+    foreach ([$analyze, $lint, $redos, $samples] as $payload) {
         if (isset($payload->fatal)) {
             fwrite(\STDERR, 'The bundled driver failed on the sample: '.$payload->fatal."\n");
             exit(1);
@@ -190,6 +193,7 @@ function defaultData(array $files): array
         'analyze' => $analyze,
         'lint' => $lint,
         'redos' => $redos,
+        'samples' => $samples,
     ];
 }
 

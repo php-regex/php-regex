@@ -67,6 +67,57 @@ final class MersenneTwisterTest extends TestCase
     }
 
     /**
+     * A PHP whose integers hold 32 bits cannot hold a word of the twister:
+     * there, the process's own twister is seeded and drawn instead, which
+     * draws the same numbers. The host path is asked for here, on any PHP.
+     */
+    #[Test]
+    #[DataProvider('provideDraws')]
+    public function test_the_hosts_twister_draws_what_mt_rand_draws_for_the_seed(int $seed, int $min, int $max): void
+    {
+        $twister = new MersenneTwister($seed, host: true);
+        $drawn = [];
+        for ($i = 0; $i < 300; $i++) {
+            $drawn[] = $twister->between($min, $max);
+        }
+
+        mt_srand($seed, \MT_RAND_MT19937);
+        $expected = [];
+        for ($i = 0; $i < 300; $i++) {
+            $expected[] = mt_rand($min, $max);
+        }
+
+        $this->assertSame($expected, $drawn);
+    }
+
+    #[Test]
+    public function test_the_own_twister_leaves_the_processes_sequence_alone(): void
+    {
+        mt_srand(2026, \MT_RAND_MT19937);
+        $first = mt_rand(0, 1000);
+        mt_srand(2026, \MT_RAND_MT19937);
+        $twister = new MersenneTwister(99);
+        $twister->between(0, 1000);
+        $twister->between(0, 1000);
+
+        $this->assertSame($first, mt_rand(0, 1000), 'The process draws its own first number: the twister took none of it.');
+    }
+
+    #[Test]
+    public function test_the_hosts_twister_is_the_processes_sequence(): void
+    {
+        $twister = new MersenneTwister(99, host: true);
+        $twister->between(0, 1000);
+        mt_srand(99, \MT_RAND_MT19937);
+        mt_rand(0, 1000);
+        $expected = mt_rand(0, 1000);
+        mt_srand(99, \MT_RAND_MT19937);
+        $twister->between(0, 1000);
+
+        $this->assertSame($expected, mt_rand(0, 1000), 'The host path draws from the process: the process is one draw further.');
+    }
+
+    /**
      * The samples never draw among more than 2^32 values (a count, a code
      * point, an alternative): a wider span is refused rather than drawn
      * with a bias.

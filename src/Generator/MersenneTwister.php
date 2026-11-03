@@ -21,6 +21,10 @@ use PHPRegex\Generator\Exception\SampleGenerationException;
  * randomizer over its Mt19937 engine, on every PHP the library runs on, and
  * the process's own mt_rand() sequence is left alone.
  *
+ * A PHP whose integers hold 32 bits cannot hold a word of the twister: there
+ * the process's own twister is seeded and drawn instead, which draws the
+ * same numbers, and the process's sequence moves with the generator's.
+ *
  * @internal
  */
 final class MersenneTwister
@@ -45,11 +49,25 @@ final class MersenneTwister
     private int $next = self::N;
 
     /**
-     * @param int|null $seed cut to its low 32 bits, as PHP does; a random
-     *                       one when null
+     * Whether the draws come from the process's own twister.
      */
-    public function __construct(?int $seed = null)
+    private readonly bool $host;
+
+    /**
+     * @param int|null  $seed cut to its low 32 bits, as PHP does; a random
+     *                        one when null
+     * @param bool|null $host the process's own twister rather than this one;
+     *                        by default on a PHP whose integers hold 32 bits
+     */
+    public function __construct(?int $seed = null, ?bool $host = null)
     {
+        $this->host = $host ?? \PHP_INT_SIZE < 8;
+        if ($this->host) {
+            null === $seed ? mt_srand() : mt_srand($seed, \MT_RAND_MT19937);
+
+            return;
+        }
+
         $this->state[0] = ($seed ?? random_int(0, self::WORD)) & self::WORD;
         for ($i = 1; $i < self::N; $i++) {
             $previous = $this->state[$i - 1];
@@ -68,6 +86,10 @@ final class MersenneTwister
     {
         if ($max < $min || $max - $min > self::WORD) {
             throw new SampleGenerationException(\sprintf('Cannot draw a number among more than 2^32 values, from %d to %d.', $min, $max));
+        }
+
+        if ($this->host) {
+            return mt_rand($min, $max);
         }
 
         $span = $max - $min;

@@ -367,5 +367,23 @@
             "attack": null
         },
         "error": null
+    },
+    "samples": {
+        "protocol": 2,
+        "samples": {
+            "matching": [
+                "0476-70-34",
+                "9468-89-02",
+                "2508-04-66"
+            ],
+            "nonMatching": [
+                "000.0.0",
+                "000.0.000",
+                "000.000.0"
+            ],
+            "seed": 460442294,
+            "dropped": 0
+        },
+        "error": null
     }
 }
