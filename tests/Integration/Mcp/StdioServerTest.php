@@ -247,7 +247,12 @@ final class StdioServerTest extends TestCase
         fclose($clientWrites);
 
         try {
-            $exitCode = (new Application($catalog))->run($target, $serverReads, $serverWrites);
+            // The server's log goes to a stream of the test's, never to the
+            // process's stderr: a refused tool is logged as an error, and a
+            // byte on stderr fails a run under the mutation tool.
+            $errors = fopen('php://memory', 'w+');
+            $this->assertIsResource($errors);
+            $exitCode = (new Application($catalog, new StderrLogger($errors)))->run($target, $serverReads, $serverWrites);
             // The transport closes the streams it was given when the session ends.
             foreach ([$serverReads, $serverWrites] as $stream) {
                 if (\is_resource($stream)) {
