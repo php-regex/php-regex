@@ -116,13 +116,13 @@ final class FormatToolTest extends TestCase
         $this->assertTrue($unclosed->isError);
         $this->assertSame('pattern', $unclosed->structured['stage']);
         $this->assertIsString($unclosed->structured['error']);
-        $this->assertStringContainsString('nclosed character class', $unclosed->structured['error']);
+        $this->assertStringContainsString('nclosed character class', (string) $unclosed->structured['error']);
 
         $tooLong = $tool->execute(['pattern' => '/'.str_repeat('a', 200_000).'/']);
         $this->assertTrue($tooLong->isError);
         $this->assertSame('pattern', $tooLong->structured['stage']);
         $this->assertIsString($tooLong->structured['error']);
-        $this->assertStringContainsString('length', $tooLong->structured['error']);
+        $this->assertStringContainsString('length', (string) $tooLong->structured['error']);
     }
 
     #[Test]
