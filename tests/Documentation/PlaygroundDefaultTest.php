@@ -90,6 +90,32 @@ final class PlaygroundDefaultTest extends TestCase
         $this->assertSame(1, preg_match('/\{% if page\.layout == \'landing\' %\}\s*<script defer src="\/assets\/js\/playground\.js\?v=/', $scripts), 'playground.js loads on the landing layout only.');
     }
 
+    #[Test]
+    public function test_the_first_paint_gestures_are_wired_and_bow_to_reduced_motion(): void
+    {
+        $include = (string) file_get_contents(self::INCLUDE);
+        $script = (string) file_get_contents(PlaygroundDriver::ROOT.'/docs/assets/js/playground.js');
+        $stylesheet = (string) file_get_contents(PlaygroundDriver::ROOT.'/docs/assets/css/main.scss');
+
+        // The engine's loader: in the window, hidden until a boot, out of
+        // the live regions the status line and the state word already are.
+        $this->assertSame(1, preg_match('/<div class="pg-loader" hidden aria-hidden="true">/', $include));
+        $this->assertStringContainsString('pg-loader-stage', $include);
+        $this->assertStringContainsString('el.loader.hidden = false', $script);
+
+        // The caret that says the pattern is editable: shown while the
+        // field is untouched, gone at the first focus or keystroke.
+        $this->assertStringContainsString('pg-editor pg-editor-pattern is-untouched', $include);
+        $this->assertStringContainsString('.pg-editor-pattern.is-untouched .pg-caret', $stylesheet);
+        $this->assertStringContainsString("classList.remove('is-untouched')", $script);
+
+        // The walk through the tree: a JavaScript motion the stylesheet's
+        // reduced-motion rule cannot stop, so the script asks itself.
+        $this->assertStringContainsString("matchMedia('(prefers-reduced-motion: reduce)')", $script);
+        $this->assertStringContainsString("motion.addEventListener('change'", $script, 'A preference set while the walk runs ends it too.');
+        $this->assertStringContainsString('is-visiting', $stylesheet);
+    }
+
     /**
      * @return array{default: array{regex: string, subject: string}, analyze: array<string, mixed>, lint: array<string, mixed>}
      */

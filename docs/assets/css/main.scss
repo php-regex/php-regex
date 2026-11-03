@@ -99,6 +99,7 @@
   --mark-match-current: rgba(177, 78, 6, 0.42);
   --mark-error: rgba(177, 78, 6, 0.22);
   --scrim: rgba(24, 43, 69, 0.55);
+  --veil: rgba(247, 248, 244, 0.45);
   /* Elevations, in the ink the borders already speak. */
   --shadow-1: 0 1px 2px rgba(24, 43, 69, 0.06), 0 2px 8px rgba(24, 43, 69, 0.05);
   --shadow-2: 0 2px 6px rgba(24, 43, 69, 0.10), 0 12px 32px rgba(24, 43, 69, 0.14);
@@ -123,6 +124,7 @@
   --mark-match-current: rgba(233, 118, 37, 0.4);
   --mark-error: rgba(233, 118, 37, 0.2);
   --scrim: rgba(2, 6, 12, 0.62);
+  --veil: rgba(15, 27, 46, 0.5);
   /* The same two steps, deepened for navy paper: an ink-tinted shadow
      would vanish against it. */
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.30);
@@ -4717,9 +4719,80 @@ body.search-open {
   font-weight: 600;
 }
 .pg-body {
+  position: relative;
   display: grid;
   gap: 1rem;
   padding: 1rem 1rem 1.1rem;
+}
+/* The engine's loader: over the window's body while the engine boots,
+   the panels dimmed but legible under it, so the download is announced
+   where the answer will land. The status line and the state word say
+   the same in their live regions; this one is for the eye, and the hand
+   passes through it: a field can be typed in while the engine comes. On
+   a narrow screen the body runs past the viewport and the fields hold
+   its top, so the card keeps to the bottom of the screen, clear of them;
+   on a wide one it sits in the middle. */
+.pg-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 1rem;
+  pointer-events: none;
+  background: var(--veil);
+}
+.pg-loader[hidden] {
+  display: none;
+}
+.pg-loader-card {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  display: grid;
+  justify-items: center;
+  gap: .4rem;
+  max-width: 22rem;
+  margin: 0 auto;
+  padding: 1rem 1.25rem 1.1rem;
+  text-align: center;
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-2);
+}
+@media (min-width: 1024px) {
+  .pg-loader {
+    display: grid;
+    place-items: center;
+  }
+  .pg-loader-card {
+    position: static;
+    inset: auto;
+  }
+}
+.pg-loader-ring {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-bottom: .2rem;
+  border: 2px solid var(--line-soft);
+  border-top-color: var(--amber);
+  border-radius: 50%;
+  animation: pg-spin .9s linear infinite;
+}
+.pg-loader-stage {
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  color: var(--ink);
+}
+.pg-loader-note {
+  font-size: .78rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+@keyframes pg-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .pg-main {
   display: grid;
@@ -4863,6 +4936,28 @@ body.search-open {
   box-shadow: inset 0 0 0 1px var(--amber);
 }
 
+/* Until the pattern field is touched, a caret blinks at the end of the
+   pattern in the mirror, where typing would go on: the field reads as
+   editable before anyone clicks it. The first focus or keystroke ends
+   it; the field's own caret takes over. */
+.pg-caret {
+  display: none;
+  width: 2px;
+  height: 1.15em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--amber);
+  border-radius: 1px;
+  animation: pg-caret-blink 1.1s steps(2, start) infinite;
+}
+.pg-editor-pattern.is-untouched .pg-caret {
+  display: inline-block;
+}
+@keyframes pg-caret-blink {
+  to {
+    visibility: hidden;
+  }
+}
 /* The pattern field speaks in the code blocks' colors: the mirror draws
    the glyphs, one class per token the engine answered, and the textarea
    above them keeps the caret and a translucent selection, so the letters
@@ -5274,7 +5369,8 @@ body.search-open {
   cursor: pointer;
 }
 .tree-pattern mark:hover,
-.tree-pattern mark.is-current {
+.tree-pattern mark.is-current,
+.tree-pattern mark.is-visiting {
   background: var(--amber-tint);
   box-shadow: inset 0 -2px 0 var(--amber);
 }
@@ -5315,7 +5411,10 @@ body.search-open {
   cursor: pointer;
 }
 .tree-row:hover,
-.tree-item.is-current > .tree-row {
+/* The walk's light wears the pointer's own highlight: what it shows is
+   what pointing does. */
+.tree-item.is-current > .tree-row,
+.tree-item.is-visiting > .tree-row {
   background: var(--amber-tint);
   border-left-color: var(--amber);
 }
