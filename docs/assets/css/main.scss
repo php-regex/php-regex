@@ -5719,12 +5719,12 @@ body.search-open {
   color: var(--ink-soft);
 }
 /* The hotspots lit in the pattern field, behind the letters. */
-.pg-mark-hot {
+.pg-mirror .pg-mark-hot {
   background: var(--amber-tint);
   box-shadow: inset 0 -2px 0 var(--amber);
 }
-.pg-mark-hot.is-high,
-.pg-mark-hot.is-critical {
+.pg-mirror .pg-mark-hot.is-high,
+.pg-mirror .pg-mark-hot.is-critical {
   box-shadow: inset 0 -2px 0 var(--amber-deep);
 }
 .pg-tool-textarea {
