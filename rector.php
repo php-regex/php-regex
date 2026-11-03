@@ -70,8 +70,8 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__.'/src/Redos/.phpstorm.meta.php',
         __DIR__.'/src/Toolkit/.phpstorm.meta.php',
         __DIR__.'/tests/Support/.phpstorm.meta.php',
-        // The CLI package runs without the language server: it names the
-        // server's class, never imports it
-        StringClassNameToClassConstantRector::class => [__DIR__.'/src/Cli/Command/LspCommand.php'],
+        // The CLI package runs without the language server and without the
+        // MCP server: it names their classes, never imports them
+        StringClassNameToClassConstantRector::class => [__DIR__.'/src/Cli/Command/LspCommand.php', __DIR__.'/src/Cli/Command/McpCommand.php'],
     ]);
 };

@@ -38,7 +38,7 @@ final class HelpCommand extends AbstractCommand
     private const DOCUMENTED_COMMANDS = [
         'parse', 'analyze', 'compare', 'explain', 'debug', 'redos', 'diagram',
         'graph', 'highlight', 'validate', 'transpile', 'format', 'lint', 'lsp',
-        'version', 'self-update', 'help',
+        'mcp', 'version', 'self-update', 'help',
     ];
 
     /**
@@ -375,6 +375,18 @@ final class HelpCommand extends AbstractCommand
                 ],
                 examples: [
                     [[$this->resolveInvocation(), 'lsp'], 'Start the server, as an editor does'],
+                ],
+            ),
+            'mcp' => self::commandHelp(
+                description: 'Run the MCP server over stdio',
+                declaration: McpCommand::options(),
+                notes: [
+                    'Speaks the Model Context Protocol on stdin and stdout, as vendor/bin/regex-mcp does.',
+                    '--php-version, --pcre-version and --locale set the target every tool judges for; a call may name its own php_version and pcre_version.',
+                ],
+                examples: [
+                    [[$this->resolveInvocation(), 'mcp'], 'Start the server, as a client does'],
+                    [[$this->resolveInvocation(), 'mcp', '--php-version=8.2'], 'Judge every pattern for PHP 8.2'],
                 ],
             ),
             'version' => self::commandHelp(

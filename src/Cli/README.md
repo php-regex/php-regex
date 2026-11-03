@@ -19,9 +19,9 @@
 PHPRegex CLI
 ============
 
-The regex console: sixteen subcommands to parse, explain, validate, lint, hunt ReDoS, transpile, diagram and debug patterns — also shipped as a self-updating regex.phar.
+The regex console: seventeen subcommands to parse, explain, validate, lint, hunt ReDoS, transpile, diagram and debug patterns — also shipped as a self-updating regex.phar.
 
-Documentation: [php-regex.com](https://php-regex.com) — the [CLI guide](https://php-regex.com/guides/cli/) takes the sixteen subcommands one by one.
+Documentation: [php-regex.com](https://php-regex.com) — the [CLI guide](https://php-regex.com/guides/cli/) takes the seventeen subcommands one by one.
 
 Features
 --------
