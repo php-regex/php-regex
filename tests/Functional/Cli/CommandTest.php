@@ -559,7 +559,7 @@ final class CommandTest extends TestCase
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('explain', ['/a+/', '--format=text']), $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
-        $this->assertStringContainsString("Unsupported format 'text'. Use --format=console or --format=html.", $buffer);
+        $this->assertStringContainsString("Unsupported format 'text'. Use --format=console, --format=html or --format=json.", $buffer);
     }
 
     #[Test]

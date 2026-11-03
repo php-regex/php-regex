@@ -129,7 +129,7 @@ final class JsonErrorEnvelopeTest extends TestCase
      */
     public static function provideTextUsageErrors(): iterable
     {
-        yield 'validate has no JSON mode, global option without its value' => ['arguments' => ['validate', '/a/', '--json', '--php-version']];
+        yield 'parse has no JSON mode, global option without its value' => ['arguments' => ['parse', '/a/', '--json', '--php-version']];
         yield 'highlight has no JSON mode, global option without its value' => ['arguments' => ['/a/', '--json', '--php-version']];
         yield 'the last --format wins, console after json' => ['arguments' => ['analyze', '--format=json', '--format=console']];
         yield 'the last --format wins, --format console after --json' => ['arguments' => ['debug', '--json', '--format', 'console']];

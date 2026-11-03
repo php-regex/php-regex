@@ -34,6 +34,7 @@ use PHPRegex\Linter\Extraction\ProjectConstants;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\Rule\GroupIndex;
+use PHPRegex\Mcp\RegexFactory;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Analysis\CaptureFacts;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
@@ -98,6 +99,7 @@ final class TypeAliasInventoryTest extends TestCase
         OptimizerOptions::class => ['OptimizerOptionsArray'],
         RedosSearchCost::class => ['SearchCostArray'],
         RedosWitness::class => ['WitnessArray'],
+        RegexFactory::class => ['Target'],
 
         // Internal homes: shapes shared inside one subsystem.
         RegexOccurrence::class => ['Position', 'Range'],
