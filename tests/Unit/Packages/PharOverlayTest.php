@@ -35,8 +35,16 @@ final class PharOverlayTest extends TestCase
         $require['mcp/sdk'] = self::pharSdkVersion();
         $expected = $root;
         $expected['require'] = $require;
+        // The lock is resolved for the oldest PHP the phar runs on, whatever
+        // PHP runs phar/lock: resolved on 8.4, it would pick libraries that
+        // 8.1 and 8.2 cannot install.
+        $config = (array) ($expected['config'] ?? []);
+        $config['platform'] = ['php' => '8.1.0'];
+        ksort($config);
+        $expected['config'] = $config;
 
         $this->assertSame($expected, $phar);
+        $this->assertArrayNotHasKey('platform', (array) ($root['config'] ?? []), 'The platform pin belongs to the phar build alone.');
         $this->assertArrayNotHasKey('mcp/sdk', self::strings($root['require'] ?? null), 'The monorepo package never requires the SDK.');
     }
 
