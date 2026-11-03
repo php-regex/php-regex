@@ -1540,7 +1540,7 @@
       // Drawn by the analysing engine, judged for this one: the engine the
       // page shows checks every sample before a chip is made of it.
       toolAnswers.samples.key = '';
-      pendingTool = { type: 'check', purpose: 'samples', regex: request.regex, subject: request.subject, version: request.version, subjects: payload.samples.matching.concat(payload.samples.nonMatching) };
+      pendingTool = { type: 'check', purpose: 'samples', regex: request.regex, subject: request.subject, version: request.version, subjects: payload.samples.matching.concat(payload.samples.nonMatching), chainKey: requestKey(request) };
     }
     if (tool === 'redos') {
       lastHotspots = payload.redos && payload.redos.hotspots ? payload.redos.hotspots : null;
