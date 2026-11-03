@@ -25,6 +25,11 @@ declare(strict_types=1);
  *   lint      the lint findings of a pattern that parses strictly
  *   describe  one line about the node at a pre-order index of the tree
  *
+ * The analysis also answers the pattern's tokens — one byte span per piece
+ * the parser reads, in the highlighting visitor's vocabulary — because the
+ * page colors the pattern field, and a colored field must align with what
+ * the visitor typed: spans as data, never rebuilt HTML.
+ *
  * The library counts bytes of the pattern body; a browser counts UTF-16
  * units of the whole delimited string. Every offset the page needs is
  * therefore returned converted or with the table that converts it, and the
@@ -145,6 +150,7 @@ function phpregex_playground_analyze(array $input): array
     $explain = null;
     $delimited = null;
     $groupNames = [];
+    $tokens = null;
 
     $parsed = $library->parseTolerant($regex);
     foreach ($parsed->errors as $error) {
@@ -154,6 +160,7 @@ function phpregex_playground_analyze(array $input): array
     if ([] === $errors) {
         $ast = $parsed->ast->accept(new JsonDumper());
         $groupNames = phpregex_playground_group_names($ast);
+        $tokens = phpregex_playground_tokens($ast, $regex);
         $explain = $parsed->ast->accept(new TextExplainer($library->target()));
         $validation = $library->validate($regex);
         if (!$validation->isValid) {
@@ -190,6 +197,7 @@ function phpregex_playground_analyze(array $input): array
         'delimited' => $delimited,
         'unitOf' => phpregex_playground_unit_of(substr($regex, 0, PHPREGEX_PLAYGROUND_PATTERN_CAP)),
         'ast' => $ast,
+        'tokens' => $tokens,
         'groupNames' => (object) $groupNames,
         'explain' => $explain,
         'errors' => $errors,
@@ -369,6 +377,165 @@ function phpregex_playground_group_names(array $node): array
     }
 
     return $names;
+}
+
+/**
+ * The pattern's tokens: one span per piece the parser reads, read from the
+ * dumped tree the way the page draws pieces with — a node's children carry
+ * their own class, the glue between them the node's. Answered as data, for
+ * the page colors the field itself and must align with what the visitor
+ * typed.
+ *
+ * @param array<string, mixed> $node the dumped tree
+ *
+ * @return list<array{int, int, string}> [start, end, class], body bytes, end exclusive
+ */
+function phpregex_playground_tokens(array $node, string $regex): array
+{
+    $tokens = [];
+    phpregex_playground_token_walk($node, substr($regex, phpregex_playground_body_start($regex)), $tokens);
+
+    return $tokens;
+}
+
+/**
+ * @param array<string, mixed>          $node
+ * @param list<array{int, int, string}> $tokens
+ */
+function phpregex_playground_token_walk(array $node, string $body, array &$tokens): void
+{
+    $class = phpregex_playground_token_class($node);
+    $at = (int) $node['start'];
+    foreach (phpregex_playground_children($node) as $child) {
+        $childStart = (int) $child['start'];
+        if ($childStart > $at) {
+            phpregex_playground_token_span($at, $childStart, $class, $node, $body, $tokens);
+        }
+        phpregex_playground_token_walk($child, $body, $tokens);
+        $at = max($at, (int) $child['end']);
+    }
+    if ((int) $node['end'] > $at) {
+        phpregex_playground_token_span($at, (int) $node['end'], $class, $node, $body, $tokens);
+    }
+}
+
+/**
+ * The span [$from, $to) as one token, or — inside a group's glue — a name
+ * or an inline setting's flags told apart from the punctuation around them.
+ *
+ * @param array<string, mixed>          $node
+ * @param list<array{int, int, string}> $tokens
+ */
+function phpregex_playground_token_span(int $from, int $to, string $class, array $node, string $body, array &$tokens): void
+{
+    $cuts = [];
+    if ('group' === $node['type']) {
+        foreach (['identifier' => $node['name'] ?? null, 'flag' => $node['flags'] ?? null] as $cutClass => $spelled) {
+            if (\is_string($spelled) && '' !== $spelled) {
+                $found = strpos(substr($body, $from, $to - $from), $spelled);
+                if (false !== $found) {
+                    $cuts[] = [$from + $found, $from + $found + \strlen($spelled), $cutClass];
+                }
+            }
+        }
+    }
+
+    if ([] === $cuts) {
+        $tokens[] = [$from, $to, $class];
+
+        return;
+    }
+
+    usort($cuts, static function (array $a, array $b): int {
+        return $a[0] <=> $b[0];
+    });
+    $at = $from;
+    foreach ($cuts as [$cutStart, $cutEnd, $cutClass]) {
+        if ($cutStart > $at) {
+            $tokens[] = [$at, $cutStart, $class];
+        }
+        $tokens[] = [$cutStart, $cutEnd, $cutClass];
+        $at = max($at, $cutEnd);
+    }
+    if ($to > $at) {
+        $tokens[] = [$at, $to, $class];
+    }
+}
+
+/**
+ * The direct children of a dumped node, in the order the document lists
+ * them: pattern order.
+ *
+ * @param array<string, mixed> $node
+ *
+ * @return list<array<string, mixed>>
+ */
+function phpregex_playground_children(array $node): array
+{
+    $children = [];
+    foreach ($node as $value) {
+        if (!\is_array($value)) {
+            continue;
+        }
+        if (isset($value['type'])) {
+            $children[] = $value;
+
+            continue;
+        }
+        foreach ($value as $item) {
+            if (\is_array($item) && isset($item['type'])) {
+                $children[] = $item;
+            }
+        }
+    }
+
+    return $children;
+}
+
+/**
+ * The class a node's own bytes speak: the highlighting visitor's
+ * vocabulary, told from the dumped kind.
+ *
+ * @param array<string, mixed> $node
+ */
+function phpregex_playground_token_class(array $node): string
+{
+    switch ($node['type']) {
+        case 'anchor':
+        case 'assertion':
+            return 'anchor';
+        case 'quantifier':
+            return 'quantifier';
+        case 'literal':
+            return 'literal';
+        case 'char_type':
+        case 'char_literal':
+        case 'control_char':
+        case 'unicode_property':
+        case 'posix_class':
+        case 'keep':
+            return 'escape';
+        case 'backref':
+            return 'backref';
+        case 'comment':
+            return 'comment';
+        case 'subroutine':
+        case 'pcre_verb':
+        case 'define':
+        case 'limit_match':
+        case 'callout':
+        case 'script_run':
+        case 'version_condition':
+            return 'keyword';
+        case 'group':
+        case 'conditional':
+        case 'extended_char_class':
+            return 'group';
+        default:
+            // sequence, alternation, regex, dot, char_class, range and the
+            // class set operators: the pattern's own structure.
+            return 'meta';
+    }
 }
 
 /**

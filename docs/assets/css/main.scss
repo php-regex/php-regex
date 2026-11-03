@@ -4863,6 +4863,74 @@ body.search-open {
   box-shadow: inset 0 0 0 1px var(--amber);
 }
 
+/* The pattern field speaks in the code blocks' colors: the mirror draws
+   the glyphs, one class per token the engine answered, and the textarea
+   above them keeps the caret and a translucent selection, so the letters
+   stay readable under it. While the mirror's rendering is not the field's
+   own text — typing, an engine on its way — the field draws its ink
+   itself and the mirror holds its paints. */
+.pg-editor-pattern.is-live .pg-input {
+  color: transparent;
+}
+.pg-editor-pattern.is-live .pg-input::selection {
+  background: var(--mark-match);
+  color: transparent;
+}
+.pg-editor-pattern.is-live .pg-mirror {
+  color: var(--code-ink);
+}
+/* :where keeps this fallback at the bare mark's own weight, so a token
+   class below — one class above the mark — always outshines it. */
+:where(.pg-editor-pattern.is-live) .pg-mirror mark {
+  color: var(--code-ink);
+}
+/* The token classes, told from the highlighting visitor's vocabulary,
+   mapped onto the code roles: no color exists here that a code block has
+   not already measured on the same background. They serve two surfaces —
+   the field's mirror as marks, the tree's pattern as spans inside the
+   pieces — and the tree's spans need the bare class, for nothing competes
+   with it there. */
+.pg-mirror mark.pg-tok-group,
+.pg-tok-group,
+.pg-mirror mark.pg-tok-meta,
+.pg-tok-meta {
+  color: var(--tk-punct);
+}
+.pg-mirror mark.pg-tok-escape,
+.pg-tok-escape,
+.pg-mirror mark.pg-tok-backref,
+.pg-tok-backref,
+.pg-mirror mark.pg-tok-keyword,
+.pg-tok-keyword {
+  color: var(--tk-key);
+}
+.pg-mirror mark.pg-tok-quantifier,
+.pg-tok-quantifier,
+.pg-mirror mark.pg-tok-flag,
+.pg-tok-flag,
+.pg-mirror mark.pg-tok-number,
+.pg-tok-number {
+  color: var(--tk-num);
+}
+.pg-mirror mark.pg-tok-anchor,
+.pg-tok-anchor {
+  color: var(--tk-str);
+}
+.pg-mirror mark.pg-tok-literal,
+.pg-tok-literal {
+  color: var(--tk-fn);
+}
+.pg-mirror mark.pg-tok-identifier,
+.pg-tok-identifier {
+  color: var(--tk-fn);
+  font-weight: 500;
+}
+.pg-mirror mark.pg-tok-comment,
+.pg-tok-comment {
+  color: var(--tk-com);
+  font-style: italic;
+}
+
 .pg-examples {
   display: flex;
   flex-wrap: wrap;

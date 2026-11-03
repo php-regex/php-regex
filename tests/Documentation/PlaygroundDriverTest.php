@@ -47,6 +47,13 @@ use PHPUnit\Framework\TestCase;
 final class PlaygroundDriverTest extends TestCase
 {
     /**
+     * The classes the highlighting visitor speaks: the driver answers with
+     * the same vocabulary, so the page colors what the library would
+     * highlight, without the page re-deriving it.
+     */
+    private const TOKEN_CLASSES = ['meta', 'quantifier', 'literal', 'anchor', 'escape', 'backref', 'group', 'comment', 'keyword', 'flag', 'identifier', 'number'];
+
+    /**
      * @return iterable<string, array{driver: string, root: string}>
      */
     public static function provideDrivers(): iterable
@@ -61,7 +68,7 @@ final class PlaygroundDriverTest extends TestCase
         $payload = PlaygroundDriver::analyze($driver, $root, '/^(?<date>\d{4})-(\d{2})$/m', "2026-11\n1999-12\nnope");
 
         $this->assertSame(1, $payload['protocol']);
-        foreach (['engine', 'library', 'target', 'input', 'delimited', 'unitOf', 'ast', 'explain', 'errors', 'engineError', 'matches', 'timing'] as $key) {
+        foreach (['engine', 'library', 'target', 'input', 'delimited', 'unitOf', 'ast', 'tokens', 'explain', 'errors', 'engineError', 'matches', 'timing'] as $key) {
             $this->assertArrayHasKey($key, $payload);
         }
         $this->assertSame(\PHP_VERSION, $payload['engine']['php']);
@@ -93,6 +100,78 @@ final class PlaygroundDriverTest extends TestCase
         $this->assertSame(10, self::delimited($payload)['bodyEnd']);
         $this->assertCount(\strlen($regex) + 1, $payload['unitOf']);
         $this->assertSame(range(0, \strlen($regex)), $payload['unitOf'], 'ASCII: one unit per byte.');
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_tokens_read_the_pattern_piece_by_piece(string $driver, string $root): void
+    {
+        $payload = PlaygroundDriver::analyze($driver, $root, '/^(?<date>\d{4})-(\d{2})-(\d{2})$/m', "2026-11-02\n");
+
+        // Body bytes, one span per piece the parser reads: the glue between
+        // a node's children carries the node's own class; a group's name and
+        // an inline setting's flags are told apart inside their glue.
+        $this->assertSame([
+            [0, 1, 'anchor'],
+            [1, 4, 'group'], [4, 8, 'identifier'], [8, 9, 'group'],
+            [9, 11, 'escape'], [11, 14, 'quantifier'], [14, 15, 'group'],
+            [15, 16, 'literal'],
+            [16, 17, 'group'], [17, 19, 'escape'], [19, 22, 'quantifier'], [22, 23, 'group'],
+            [23, 24, 'literal'],
+            [24, 25, 'group'], [25, 27, 'escape'], [27, 30, 'quantifier'], [30, 31, 'group'],
+            [31, 32, 'anchor'],
+        ], $payload['tokens']);
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_inline_flags_are_a_token_of_their_own(string $driver, string $root): void
+    {
+        $payload = PlaygroundDriver::analyze($driver, $root, '/(?i:a)b/', 'ab');
+
+        $this->assertSame([
+            [0, 2, 'group'],
+            [2, 3, 'flag'],
+            [3, 4, 'group'],
+            [4, 5, 'literal'],
+            [5, 6, 'group'],
+            [6, 7, 'literal'],
+        ], $payload['tokens']);
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_tokens_tile_the_corpus_bodies_exactly(string $driver, string $root): void
+    {
+        $target = ['php' => \PHP_VERSION, 'pcre' => '10.49'];
+        foreach (JsonDumperTest::provideCorpus() as $name => $row) {
+            $analysis = PlaygroundDriver::analyze($driver, $root, $row['pattern'], '', $target, [], false);
+            $parseErrors = array_filter($analysis['errors'], static fn (array $error): bool => 'parse' === $error['source']);
+            $this->assertSame([], $parseErrors, $name.': the corpus parses (a validation verdict is another matter).');
+
+            $end = self::tree($analysis)['end'];
+            $at = 0;
+            foreach ($analysis['tokens'] as $token) {
+                $this->assertIsArray($token, $name);
+                [$start, $stop, $class] = $token;
+                $this->assertSame($at, $start, sprintf('%s: token [%d, %d, %s] leaves a gap or overlaps.', $name, $start, $stop, $class));
+                $this->assertGreaterThan($start, $stop, $name.': a token is never empty.');
+                $this->assertLessThanOrEqual($end, $stop, $name);
+                $this->assertContains($class, self::TOKEN_CLASSES, $name);
+                $at = $stop;
+            }
+            $this->assertSame($end, $at, $name.': the tokens cover the body exactly.');
+        }
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_a_pattern_that_does_not_parse_has_no_tokens(string $driver, string $root): void
+    {
+        $payload = PlaygroundDriver::analyze($driver, $root, '/(?<d>\d{4})-(/', '2026-');
+
+        $this->assertNull($payload['ast']);
+        $this->assertNull($payload['tokens']);
     }
 
     #[Test]

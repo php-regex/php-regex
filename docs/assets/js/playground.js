@@ -17,7 +17,8 @@
 // Offsets: the library counts bytes of the pattern body, the browser counts
 // UTF-16 units of the whole field. The engine returns the table that maps
 // one to the other, and the matches already converted; this script only
-// looks up.
+// looks up. The pattern's tokens come the same way — byte spans in the
+// highlighting visitor's vocabulary — and color the field's mirror.
 
 (function () {
   var root = document.getElementById('playground');
@@ -60,6 +61,7 @@
 
   var el = {
     pattern: root.querySelector('#pg-pattern'),
+    patternEditor: root.querySelector('.pg-editor-pattern'),
     patternMirror: root.querySelector('.pg-editor-pattern .pg-mirror'),
     patternCount: root.querySelector('#pg-pattern-count'),
     subject: root.querySelector('#pg-subject'),
@@ -486,6 +488,9 @@
 
   function analyzeNow() {
     window.clearTimeout(debounce);
+    // The mirror's colors belong to the last answer; a new question makes
+    // them stale, and the field reads in its own ink until the next one.
+    el.patternEditor.classList.remove('is-live');
     var request = { type: 'analyze', regex: el.pattern.value, subject: el.subject.value, version: chosen };
     writeHash(request);
     if (inflight) {
@@ -588,8 +593,10 @@
   // names. It travels with the first result.
   var manifest = null;
 
-  // The pattern field's mirror: the error position underlined, lint spans
-  // dotted, the tree's current node highlighted.
+  // The pattern field's mirror: the engine's tokens color the text, the
+  // error position underlined, lint spans dotted, the tree's current node
+  // highlighted. The two channels compose — one paints the letters, the
+  // others paint behind and under them.
   function renderPatternMirror(payload, regex, lint) {
     var ranges = [];
     (payload.errors || []).forEach(function (error) {
@@ -611,7 +618,89 @@
       }
     }
     clear(el.patternMirror);
-    el.patternMirror.appendChild(markRanges(regex, dedupe(ranges)));
+    el.patternMirror.appendChild(tilePattern(payload, regex, dedupe(ranges)));
+    // The colored glyphs live in the mirror: they stand in for the field's
+    // own only while the two say the same thing. The frame in between —
+    // typing, an engine on its way — keeps the field's plain ink, so what
+    // the visitor types is always readable.
+    el.patternEditor.classList.toggle('is-live', regex === el.pattern.value);
+  }
+
+  // The engine's token spans in UTF-16 units, with the delimiters and the
+  // flags around them: the field keeps its frame even where the pattern
+  // does not parse, for the delimiters still stand.
+  function patternTokens(payload) {
+    var tokens = [];
+    var delimited = payload.delimited;
+    if (!payload.unitOf || !delimited) {
+      return tokens;
+    }
+    var bodyStart = payload.unitOf[Math.min(delimited.bodyStart, payload.unitOf.length - 1)];
+    var bodyEnd = payload.unitOf[Math.min(delimited.bodyEnd, payload.unitOf.length - 1)];
+    if (bodyStart > 0) {
+      tokens.push({ start: 0, end: bodyStart, type: 'meta' });
+    }
+    // bodyEnd sits on the closing delimiter; the flags follow it.
+    tokens.push({ start: bodyEnd, end: bodyEnd + 1, type: 'meta' });
+    if (delimited.flags) {
+      tokens.push({ start: bodyEnd + 1, end: bodyEnd + 1 + delimited.flags.length, type: 'flag' });
+    }
+    (payload.tokens || []).forEach(function (token) {
+      var range = unitRange(payload, token[0], token[1]);
+      if (range) {
+        tokens.push({ start: range.start, end: range.end, type: token[2] });
+      }
+    });
+    return tokens;
+  }
+
+  // The pattern as colored pieces: the token spans cut by the overlay
+  // spans, so a piece carries its color and whatever note sits on it. The
+  // overlays were deduped: at most one covers any point.
+  function tilePattern(payload, regex, overlays) {
+    var tokens = patternTokens(payload);
+    var cuts = [0, regex.length];
+    tokens.forEach(function (token) {
+      cuts.push(token.start, token.end);
+    });
+    overlays.forEach(function (range) {
+      cuts.push(range.start, range.end);
+    });
+    cuts.sort(function (a, b) {
+      return a - b;
+    });
+    var fragment = document.createDocumentFragment();
+    for (var i = 0; i < cuts.length - 1; i += 1) {
+      var start = cuts[i];
+      var end = cuts[i + 1];
+      if (end <= start) {
+        continue;
+      }
+      var token = null;
+      var overlay = null;
+      tokens.forEach(function (candidate) {
+        if (!token && candidate.start <= start && start < candidate.end) {
+          token = candidate;
+        }
+      });
+      overlays.forEach(function (candidate) {
+        if (!overlay && candidate.start <= start && start < candidate.end) {
+          overlay = candidate;
+        }
+      });
+      var classes = overlay ? [overlay.className] : [];
+      if (token) {
+        classes.push('pg-tok-' + token.type);
+      }
+      var mark = text('mark', classes.join(' '), regex.slice(start, end));
+      if (overlay && overlay.title) {
+        mark.title = overlay.title;
+      }
+      fragment.appendChild(mark);
+    }
+    // A trailing newline needs a visible line in a pre to keep heights equal.
+    fragment.appendChild(document.createTextNode('\n'));
+    return fragment;
   }
 
   // Overlapping ranges would hide each other; the node highlight wins, then
@@ -990,17 +1079,54 @@
 
     // The pattern, piece by piece: one span per node, nested the way the
     // tree is, so pointing at a character names the deepest node around
-    // it and lighting a node lights its whole span.
+    // it and lighting a node lights its whole span. The glue between the
+    // children carries the engine's token colors, as the field's mirror
+    // does — the tree reads what the parser read.
     var base = payload.delimited ? payload.unitOf[payload.delimited.bodyStart] : 0;
     var bodyUnits = payload.delimited ? regex.slice(base, payload.unitOf[payload.delimited.bodyEnd]) : (payload.ast.source || '');
-    el.treePattern.appendChild(pieceOf(payload, 0, bodyUnits, base));
+    el.treePattern.appendChild(pieceOf(payload, 0, bodyUnits, base, treeTiles(payload, base, bodyUnits.length)));
     el.treePattern.appendChild(document.createTextNode('\n'));
     // After the walk, so the empty state says its line: nodes is still
     // empty before it, and the hint would never show.
     showDetail(-1);
   }
 
-  function pieceOf(payload, index, body, base) {
+  // The engine's tokens over the tree's body: the same spans the field's
+  // mirror colors, shifted to where the pieces are cut from.
+  function treeTiles(payload, base, length) {
+    var tiles = [];
+    patternTokens(payload).forEach(function (token) {
+      var start = Math.max(token.start - base, 0);
+      var end = Math.min(token.end - base, length);
+      if (end > start) {
+        tiles.push({ start: start, end: end, type: token.type });
+      }
+    });
+    return tiles;
+  }
+
+  // The glue between a piece's children, colored the way the engine reads
+  // it: one span per token that crosses it, plain text where none does.
+  function tileText(body, tiles, from, to) {
+    var fragment = document.createDocumentFragment();
+    var at = from;
+    tiles.forEach(function (tile) {
+      if (tile.end <= at || tile.start >= to) {
+        return;
+      }
+      if (tile.start > at) {
+        fragment.appendChild(document.createTextNode(body.slice(at, tile.start)));
+      }
+      fragment.appendChild(text('span', 'pg-tok-' + tile.type, body.slice(Math.max(at, tile.start), Math.min(to, tile.end))));
+      at = Math.min(to, tile.end);
+    });
+    if (to > at) {
+      fragment.appendChild(document.createTextNode(body.slice(at, to)));
+    }
+    return fragment;
+  }
+
+  function pieceOf(payload, index, body, base, tiles) {
     var entry = nodes[index];
     var range = unitRange(payload, entry.start, entry.end);
     var from = range.start - base;
@@ -1015,14 +1141,14 @@
       var childRange = unitRange(payload, childEntry.start, childEntry.end);
       var childFrom = Math.max(at, childRange.start - base);
       if (childFrom > at) {
-        span.appendChild(document.createTextNode(body.slice(at, childFrom)));
+        span.appendChild(tileText(body, tiles, at, childFrom));
       }
-      span.appendChild(pieceOf(payload, childIndex, body, base));
+      span.appendChild(pieceOf(payload, childIndex, body, base, tiles));
       at = Math.max(at, (childEntry.end > childEntry.start ? childRange.end : childRange.start) - base);
       childIndex += subtreeSize(childIndex);
     });
     if (to > at) {
-      span.appendChild(document.createTextNode(body.slice(at, to)));
+      span.appendChild(tileText(body, tiles, at, to));
     }
     return span;
   }
@@ -1138,6 +1264,9 @@
 
   [el.pattern, el.subject].forEach(function (area) {
     area.addEventListener('input', function () {
+      if (area === el.pattern) {
+        el.patternEditor.classList.remove('is-live');
+      }
       refreshFields();
       schedule();
     });

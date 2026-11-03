@@ -12,7 +12,12 @@
   A window: the title bar holds the PHP version, Run and the state; the
   body sets the fields and the answers on the left and the syntax tree on
   the right (one column under 1024px); the status bar at the bottom names
-  the engine that answered. The notes and the credits sit under the window.
+  the engine that answered. The pattern field is colored by the same
+  answer — the engine's token spans, drawn in a mirror under the field,
+  the code blocks' palette — and falls back to the field's own ink
+  whenever the mirror does not render what the field says. The tree's
+  pattern, piece by piece, wears the same colors inside its pieces. The
+  notes and the credits sit under the window.
 {% endcomment %}
 <div class="playground" id="playground" data-bundle="/assets/playground/bundle.json?v={{ site.time | date: '%s' }}">
   <script type="application/json" id="playground-data">{{ site.data.playground | jsonify | replace: '<', '\u003C' }}</script>

@@ -32,7 +32,8 @@ namespace PHPRegex\Tests\Support;
  * @phpstan-type Matches array{count: int, error: string, shown: int, cap: int, names: array<string, string>, sets: list<array<int, Capture>>}
  * @phpstan-type Fault array{source: string, class: ?string, message: string, position: ?int, code: ?string, hint: ?string}
  * @phpstan-type Finding array{id: string, message: string, offset: ?int, end: ?int, severity: string, hint: ?string}
- * @phpstan-type Analysis array{protocol: int, engine: Engine, library: array{version: string, jsonDumper: int}, target: Target, input: Input, delimited: Delimited|null, unitOf: list<int>, ast: array<string, mixed>|null, groupNames: array<string, string>, explain: ?string, errors: list<Fault>, engineError: ?string, matches: Matches|null, timing: array{analyzeMs: float, matchMs: float|null}}
+ * @phpstan-type Token list{int, int, string}
+ * @phpstan-type Analysis array{protocol: int, engine: Engine, library: array{version: string, jsonDumper: int}, target: Target, input: Input, delimited: Delimited|null, unitOf: list<int>, ast: array<string, mixed>|null, tokens: list<Token>|null, groupNames: array<string, string>, explain: ?string, errors: list<Fault>, engineError: ?string, matches: Matches|null, timing: array{analyzeMs: float, matchMs: float|null}}
  * @phpstan-type Match array{protocol: int, engine: Engine, input: Input, engineError: ?string, matches: Matches|null, timing: array{matchMs: float}}
  * @phpstan-type Lint array{protocol: int, lint: list<Finding>|null, timing: array{lintMs: float}}
  * @phpstan-type Description array{protocol: int, index: int, start: ?int, end: ?int, text: ?string}
