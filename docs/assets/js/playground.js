@@ -84,6 +84,9 @@
     treePattern: tree.querySelector('.tree-pattern'),
     treeNodes: tree.querySelector('.tree-nodes'),
     treeDetail: tree.querySelector('.tree-detail'),
+    treeBox: tree,
+    loader: root.querySelector('.pg-loader'),
+    loaderStage: root.querySelector('.pg-loader-stage'),
   };
 
   // --- state ---------------------------------------------------------------
@@ -139,6 +142,18 @@
   function setState(word, tone) {
     el.state.textContent = word;
     el.state.className = 'pg-state' + (tone ? ' is-' + tone : '');
+  }
+
+  // The loader over the window's body: shown from the moment an engine
+  // is asked for until it is ready, naming the stage the status line
+  // names. It is for the eye alone; the live regions already speak.
+  function showLoader(stage) {
+    el.loaderStage.textContent = stage;
+    el.loader.hidden = false;
+  }
+
+  function hideLoader() {
+    el.loader.hidden = true;
   }
 
   function announce(message) {
@@ -276,6 +291,9 @@
     var message = Object.assign({ id: id, bundleUrl: bundleUrl }, request);
     inflight = { id: id, type: request.type, request: request };
     el.run.disabled = true;
+    if (!booted) {
+      showLoader('Loading PHP ' + request.version + '…');
+    }
     timers[id] = window.setTimeout(function () {
       fail(request, booted ? 'The engine did not answer within ' + REQUEST_TIMEOUT_MS / 1000 + ' s.' : 'The engine did not load within ' + BOOT_TIMEOUT_MS / 1000 + ' s.');
     }, booted ? REQUEST_TIMEOUT_MS : BOOT_TIMEOUT_MS);
@@ -311,6 +329,7 @@
       send(request);
       return;
     }
+    hideLoader();
     setState('Stopped', 'error');
     if (!wasBooted) {
       // Never got an engine: the network, the CDN or the browser, not the input.
@@ -398,12 +417,15 @@
     }
     var request = inflight.request;
     if (message.type === 'progress') {
-      setStatus((STAGES[message.stage] || 'Loading…').replace('{v}', request.version), 'busy');
+      var stage = (STAGES[message.stage] || 'Loading…').replace('{v}', request.version);
+      setStatus(stage, 'busy');
       setState('Loading…', 'busy');
+      showLoader(stage);
       return;
     }
     if (message.type === 'ready') {
       booted = true;
+      hideLoader();
       setState('Running…', 'busy');
       window.clearTimeout(timers[message.id]);
       timers[message.id] = window.setTimeout(function () {
@@ -488,6 +510,7 @@
 
   function analyzeNow() {
     window.clearTimeout(debounce);
+    stopStroll();
     // The mirror's colors belong to the last answer; a new question makes
     // them stale, and the field reads in its own ink until the next one.
     el.patternEditor.classList.remove('is-live');
@@ -698,6 +721,9 @@
       }
       fragment.appendChild(mark);
     }
+    // The caret that says the field is editable, where typing would go
+    // on; the stylesheet shows it while the field is untouched.
+    fragment.appendChild(text('span', 'pg-caret'));
     // A trailing newline needs a visible line in a pre to keep heights equal.
     fragment.appendChild(document.createTextNode('\n'));
     return fragment;
@@ -1263,7 +1289,17 @@
   });
 
   [el.pattern, el.subject].forEach(function (area) {
+    area.addEventListener('focus', function () {
+      stopStroll();
+      if (area === el.pattern) {
+        el.patternEditor.classList.remove('is-untouched');
+      }
+    });
     area.addEventListener('input', function () {
+      stopStroll();
+      if (area === el.pattern) {
+        el.patternEditor.classList.remove('is-untouched');
+      }
       if (area === el.pattern) {
         el.patternEditor.classList.remove('is-live');
       }
@@ -1293,15 +1329,118 @@
     });
   });
 
+  // --- the walk through the tree ------------------------------------------
+
+  // Before a hand reaches for the tree, a light walks it top to bottom,
+  // one node at a time, the way a pointer would: the tree is something to
+  // point at, and the walk says so without a word. It lights the row and
+  // the piece of the pattern, nothing the live regions would announce. It
+  // runs on the sample alone, only while the tree is on screen, never
+  // under a reduced-motion preference, and the first gesture on the tree
+  // or in a field ends it for good.
+  var STROLL_STEP_MS = 650;
+  var STROLL_REST_MS = 1400;
+  var stroll = { timer: 0, at: -1, ended: false, visible: true, observer: null };
+
+  function strollLight(index) {
+    if (stroll.at >= 0 && nodes[stroll.at]) {
+      nodes[stroll.at].button.classList.remove('is-visiting');
+    }
+    stroll.at = index;
+    Array.prototype.forEach.call(el.treePattern.querySelectorAll('mark'), function (mark) {
+      mark.classList.toggle('is-visiting', index >= 0 && Number(mark.getAttribute('data-index')) === index);
+    });
+    if (index >= 0 && nodes[index]) {
+      nodes[index].button.classList.add('is-visiting');
+      revealInTree(nodes[index].button);
+    }
+  }
+
+  // The tree scrolls on its own on a wide screen: the lit row stays in
+  // view there, without moving the page.
+  function revealInTree(item) {
+    var box = el.treeBox;
+    if (box.scrollHeight <= box.clientHeight) {
+      return;
+    }
+    var row = item.firstElementChild.getBoundingClientRect();
+    var frame = box.getBoundingClientRect();
+    if (row.top < frame.top) {
+      box.scrollTop += row.top - frame.top;
+    } else if (row.bottom > frame.bottom) {
+      box.scrollTop += row.bottom - frame.bottom;
+    }
+  }
+
+  function strollStep() {
+    stroll.timer = 0;
+    if (stroll.ended || !stroll.visible || document.hidden || !nodes.length) {
+      return;
+    }
+    var next = stroll.at + 1;
+    if (next >= nodes.length) {
+      // The walk rests at the top before it goes again.
+      strollLight(-1);
+      stroll.timer = window.setTimeout(strollStep, STROLL_REST_MS);
+      return;
+    }
+    strollLight(next);
+    stroll.timer = window.setTimeout(strollStep, STROLL_STEP_MS);
+  }
+
+  function strollResume() {
+    if (!stroll.ended && !stroll.timer && stroll.visible && !document.hidden) {
+      stroll.timer = window.setTimeout(strollStep, STROLL_STEP_MS);
+    }
+  }
+
+  function startStroll() {
+    var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (stroll.ended || still || !nodes.length) {
+      return;
+    }
+    if ('IntersectionObserver' in window) {
+      stroll.observer = new IntersectionObserver(function (entries) {
+        stroll.visible = entries.some(function (entry) {
+          return entry.isIntersecting;
+        });
+        strollResume();
+      }, { threshold: 0.25 });
+      stroll.observer.observe(el.treeBox);
+    }
+    document.addEventListener('visibilitychange', strollResume);
+    strollResume();
+  }
+
+  function stopStroll() {
+    if (stroll.ended) {
+      return;
+    }
+    stroll.ended = true;
+    window.clearTimeout(stroll.timer);
+    stroll.timer = 0;
+    if (stroll.observer) {
+      stroll.observer.disconnect();
+    }
+    document.removeEventListener('visibilitychange', strollResume);
+    strollLight(-1);
+  }
+
+  // --- the tree's hands ---------------------------------------------------
+
   // The deepest item under the pointer, the focus or the click is the one
   // meant: items nest, and an event on a child reaches its parents too.
   ['mouseover', 'focusin', 'click'].forEach(function (type) {
     el.treeNodes.addEventListener(type, function (event) {
       var item = event.target.closest('[role="treeitem"]');
       if (item) {
+        stopStroll();
         setCurrentNode(Number(item.getAttribute('data-index')));
       }
     });
+  });
+  ['touchstart', 'keydown'].forEach(function (type) {
+    el.treeBox.addEventListener(type, stopStroll, { passive: true });
   });
   // The arrow keys walk the tree: down and up in reading order, right to
   // the first child, left to the parent, Home and End to the ends.
@@ -1334,6 +1473,7 @@
   el.treePattern.addEventListener('mouseover', function (event) {
     var mark = event.target.closest('mark');
     if (mark) {
+      stopStroll();
       var index = Number(mark.getAttribute('data-index'));
       setCurrentNode(index);
       if (nodes[index]) {
@@ -1364,6 +1504,7 @@
     refreshFields();
     render(sample.analyze, { regex: sample.default.regex, subject: sample.default.subject, version: chosen }, true);
     renderLint(sample.lint ? sample.lint.lint : null);
+    startStroll();
   } else {
     refreshFields();
   }
