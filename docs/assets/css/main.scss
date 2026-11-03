@@ -4884,6 +4884,12 @@ body.search-open {
 :where(.pg-editor-pattern.is-live) .pg-mirror mark {
   color: var(--code-ink);
 }
+/* Off the live frame the mirror holds the last answer's text, not the
+   field's: its glyphs stay unseen under the field's own ink, whatever
+   token class they carry (one class above the token rules). */
+.pg-editor-pattern:not(.is-live) .pg-mirror mark {
+  color: transparent;
+}
 /* The token classes, told from the highlighting visitor's vocabulary,
    mapped onto the code roles: no color exists here that a code block has
    not already measured on the same background. They serve two surfaces —
