@@ -120,6 +120,11 @@ final class JsonOutputContractTest extends TestCase
         yield 'format, --compact --json' => ['arguments' => ['format', "/\n    a  # one\n    b\n/x", '--compact', '--json'], 'address' => 'format'];
         yield 'format, a refusal' => ['arguments' => ['format', '/a{ 1,2 }(?:bcdefghij)/', '--width=10', '--json'], 'address' => 'format'];
         yield 'format, quiet' => ['arguments' => ['--quiet', 'format', '/a+b/', '--format=json'], 'address' => 'format'];
+        yield 'validate, a valid pattern' => ['arguments' => ['validate', '/a+b/', '--format=json'], 'address' => 'validate'];
+        yield 'validate, an invalid pattern' => ['arguments' => ['validate', '/(a/', '--json'], 'address' => 'validate'];
+        yield 'validate, quiet' => ['arguments' => ['--quiet', 'validate', '/a+b/', '--json'], 'address' => 'validate'];
+        yield 'explain' => ['arguments' => ['explain', '/a+b/', '--format=json'], 'address' => 'explain'];
+        yield 'explain, quiet' => ['arguments' => ['--quiet', 'explain', '/a+b/', '--json'], 'address' => 'explain'];
         yield 'lint' => ['arguments' => self::LINT, 'address' => 'lint'];
         yield 'lint, confirmed ReDoS' => ['arguments' => [...self::LINT, '--redos-mode=confirmed'], 'address' => 'lint'];
         yield 'lint, with a baseline' => ['arguments' => [...self::LINT, '--baseline=baseline.json'], 'address' => 'lint'];
@@ -128,6 +133,7 @@ final class JsonOutputContractTest extends TestCase
         yield 'error envelope, a usage error' => ['arguments' => ['analyze', '/a/', '--bogus', '--json'], 'address' => 'error'];
         yield 'error envelope, an invalid pattern' => ['arguments' => ['transpile', '/(a/', '--format=json'], 'address' => 'error'];
         yield 'error envelope, an invalid pattern to format' => ['arguments' => ['format', '/(a/', '--format=json'], 'address' => 'error'];
+        yield 'error envelope, an invalid pattern to explain' => ['arguments' => ['explain', '/(a/', '--format=json'], 'address' => 'error'];
     }
 
     /**
@@ -305,6 +311,7 @@ final class JsonOutputContractTest extends TestCase
     {
         foreach (self::provideInvalidPatterns() as $name => $invalid) {
             yield 'transpile, '.$name => ['command' => 'transpile', 'options' => ['--format=json'], ...$invalid];
+            yield 'explain, '.$name => ['command' => 'explain', 'options' => ['--format=json'], ...$invalid];
             yield 'redos, '.$name => ['command' => 'redos', 'options' => self::REDOS, ...$invalid];
         }
     }

@@ -103,6 +103,12 @@ final class JsonContract
         // regex format --format=json
         'format' => ['pattern', 'formatted', 'changed', 'refusal'],
 
+        // regex validate --format=json
+        'validate' => ['pattern', 'validation'],
+
+        // regex explain --format=json
+        'explain' => ['pattern', 'explanation'],
+
         // regex lint --generate-baseline
         'baseline' => ['version', 'issues'],
         'baseline.issues[]' => ['file', 'line', 'column', 'issue_id', 'message', 'severity', 'pattern', 'pattern_hash'],
@@ -150,6 +156,7 @@ final class JsonContract
         'analyze.validation' => 'validation',
         'debug.validation' => 'validation',
         'error.validation' => 'validation',
+        'validate.validation' => 'validation',
         'lint.results[].issues[].validation' => 'validation',
         'analyze.redos' => 'redos_analysis',
         'debug.analysis' => 'redos_analysis',

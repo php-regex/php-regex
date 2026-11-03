@@ -16,12 +16,15 @@ namespace PHPRegex\Cli\Command;
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
+use PHPRegex\Cli\JsonRequest;
 use PHPRegex\Cli\Option\Arguments;
+use PHPRegex\Cli\Option\Option;
 use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Toolkit\Regex;
@@ -29,7 +32,7 @@ use PHPRegex\Toolkit\Regex;
 /**
  * @internal
  */
-final class ValidateCommand extends AbstractCommand
+final class ValidateCommand extends AbstractCommand implements JsonCommandInterface
 {
     public function getName(): string
     {
@@ -52,28 +55,47 @@ final class ValidateCommand extends AbstractCommand
     public static function options(): Options
     {
         return new Options(Arguments::LoosePattern, [
+            Option::value('--format', '<format>', 'Output format (console, json)'),
+            Option::flag('--json', 'Same as --format=json'),
             ...GlobalOptionsParser::target(),
-        ], "Usage: regex validate <pattern>\n");
+        ], "Usage: regex validate <pattern> [--format=console|json]\n");
     }
 
     public function run(Input $input, Output $output): int
     {
+        $json = JsonRequest::in($input->args);
+        $usage = self::options()->usage;
         $arguments = self::options()->parse($input->args);
         if (null !== $arguments->error) {
-            return $this->usageError($output, $arguments->error, self::options()->usage);
+            return $this->usageError($output, $arguments->error, $usage, $json);
+        }
+
+        // --json and --format name the same thing: the last one wins.
+        $format = JsonRequest::format($input->args) ?? 'console';
+        if (!\in_array($format, ['console', 'json'], true)) {
+            return $this->usageError($output, 'Invalid value for --format. Use console or json.', $usage, $json);
         }
 
         $pattern = $arguments->argument();
-        $regex = $this->createRegex($output, $input->regexOptions);
+        $regex = $this->createRegex($output, $input->regexOptions, $json);
         if (null === $regex) {
             return self::INVALID;
+        }
+
+        $validation = $regex->validate($pattern);
+
+        // The verdict is the document, valid or not: an invalid pattern is
+        // what the command reports on, never a failure of the run.
+        if ($json) {
+            $output->writeDocument(JsonDocument::encode(['pattern' => $pattern, 'validation' => $validation]));
+
+            return $validation->isValid ? self::SUCCESS : self::FAILURE;
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         $meta = $this->buildRuntimeMeta($input, $output);
         $style->renderBanner('validate', $meta);
 
-        $validation = $regex->validate($pattern);
         $highlightedPattern = $this->highlightPattern($regex, $pattern, $output, $validation);
 
         $this->renderValidationSection($style, $highlightedPattern);
