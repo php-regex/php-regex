@@ -756,51 +756,6 @@ final class PlaygroundToolsTest extends TestCase
         yield 'every subject refused' => ['subjects' => [str_repeat('a', 40).'!']];
     }
 
-    /**
-     * The exported class run under this repository's PHPUnit, with
-     * regex-phpunit autoloaded: it must pass.
-     *
-     * @return array{tests: int}
-     */
-    private static function runExported(string $class): array
-    {
-        $dir = sys_get_temp_dir().'/phpregex-playground-export-'.bin2hex(random_bytes(6));
-        mkdir($dir);
-        $file = $dir.'/PatternTest.php';
-        file_put_contents($file, $class);
-
-        try {
-            $command = [
-                \PHP_BINARY, '-d', 'auto_prepend_file=',
-                PlaygroundDriver::ROOT.'/tools/phpunit/vendor/bin/phpunit',
-                '--no-configuration', '--do-not-cache-result', '--no-output', '--log-junit', $dir.'/junit.xml',
-                '--bootstrap', PlaygroundDriver::ROOT.'/vendor/autoload.php',
-                $file,
-            ];
-            $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $dir);
-            self::assertIsResource($process);
-            $stdout = (string) stream_get_contents($pipes[1]);
-            $stderr = (string) stream_get_contents($pipes[2]);
-            fclose($pipes[1]);
-            fclose($pipes[2]);
-            $exit = proc_close($process);
-            $junit = (string) @file_get_contents($dir.'/junit.xml');
-            self::assertSame(0, $exit, "The exported test failed.\n".$stdout.$stderr."\n".$junit."\n".$class);
-            self::assertSame(1, preg_match('/<testsuite [^>]*\btests="(\d+)"/', $junit, $tests), $junit);
-            self::assertSame(1, preg_match('/<testsuite [^>]*\bfailures="(\d+)"/', $junit, $failures));
-            self::assertSame(1, preg_match('/<testsuite [^>]*\berrors="(\d+)"/', $junit, $errors));
-            self::assertSame('0', $failures[1]);
-            self::assertSame('0', $errors[1]);
-
-            return ['tests' => (int) $tests[1]];
-        } finally {
-            foreach (glob($dir.'/*') ?: [] as $leftover) {
-                unlink($leftover);
-            }
-            rmdir($dir);
-        }
-    }
-
     // --- every op --------------------------------------------------------------
 
     #[Test]
@@ -858,6 +813,51 @@ final class PlaygroundToolsTest extends TestCase
             $this->assertSame(2, $payload['protocol'], $label);
             $this->assertArrayNotHasKey('fatal', $payload, $label);
             $this->assertSame([], $payload['notices'], $label.': the library raised a notice on this engine.');
+        }
+    }
+
+    /**
+     * The exported class run under this repository's PHPUnit, with
+     * regex-phpunit autoloaded: it must pass.
+     *
+     * @return array{tests: int}
+     */
+    private static function runExported(string $class): array
+    {
+        $dir = sys_get_temp_dir().'/phpregex-playground-export-'.bin2hex(random_bytes(6));
+        mkdir($dir);
+        $file = $dir.'/PatternTest.php';
+        file_put_contents($file, $class);
+
+        try {
+            $command = [
+                \PHP_BINARY, '-d', 'auto_prepend_file=',
+                PlaygroundDriver::ROOT.'/tools/phpunit/vendor/bin/phpunit',
+                '--no-configuration', '--do-not-cache-result', '--no-output', '--log-junit', $dir.'/junit.xml',
+                '--bootstrap', PlaygroundDriver::ROOT.'/vendor/autoload.php',
+                $file,
+            ];
+            $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $dir);
+            self::assertIsResource($process);
+            $stdout = (string) stream_get_contents($pipes[1]);
+            $stderr = (string) stream_get_contents($pipes[2]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            $exit = proc_close($process);
+            $junit = (string) @file_get_contents($dir.'/junit.xml');
+            self::assertSame(0, $exit, "The exported test failed.\n".$stdout.$stderr."\n".$junit."\n".$class);
+            self::assertSame(1, preg_match('/<testsuite [^>]*\btests="(\d+)"/', $junit, $tests), $junit);
+            self::assertSame(1, preg_match('/<testsuite [^>]*\bfailures="(\d+)"/', $junit, $failures));
+            self::assertSame(1, preg_match('/<testsuite [^>]*\berrors="(\d+)"/', $junit, $errors));
+            self::assertSame('0', $failures[1]);
+            self::assertSame('0', $errors[1]);
+
+            return ['tests' => (int) $tests[1]];
+        } finally {
+            foreach (glob($dir.'/*') ?: [] as $leftover) {
+                unlink($leftover);
+            }
+            rmdir($dir);
         }
     }
 
