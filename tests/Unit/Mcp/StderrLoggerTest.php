@@ -32,6 +32,8 @@ final class StderrLoggerTest extends TestCase
         $this->assertSame('', self::written(LogLevel::INFO, 'whatever', 'said'));
         $this->assertSame("[info] said\n", self::written(LogLevel::INFO, LogLevel::INFO, 'said'));
         $this->assertSame('', self::written(LogLevel::WARNING, LogLevel::INFO, 'said'));
+        // A floor that is no level name is the lowest floor: everything is written.
+        $this->assertSame("[debug] said\n", self::written('bogus', LogLevel::DEBUG, 'said'));
     }
 
     #[Test]
