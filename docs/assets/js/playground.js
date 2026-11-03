@@ -1602,9 +1602,10 @@
   // match count said by the run is not spoken over.
   //
   // A rebuild drops every control of the panel: the one that had the
-  // keyboard's focus is found again at its place among the new ones, so a
-  // change made from a select or a button never sends the focus to the
-  // body.
+  // keyboard's focus is found again at its place among the new ones, or the
+  // panel itself takes the focus when the new ones are fewer (a hint alone
+  // while the engine answers), so a change made from a select or a button
+  // never sends the focus to the body.
   function renderTool(tool, announceResult) {
     var panel = toolPanel(tool);
     var focused = document.activeElement;
@@ -1612,9 +1613,7 @@
     renderToolPanel(tool, announceResult);
     if (place !== -1) {
       var again = focusables(panel)[place];
-      if (again) {
-        again.focus();
-      }
+      (again || panel).focus();
     }
   }
 
@@ -2032,12 +2031,16 @@
   }
 
   // The tab strip's hands: a click opens a tab; the arrow keys, Home and
-  // End move between tabs and open the one they land on.
+  // End move between tabs and open the one they land on. A modified key
+  // stays the browser's (Alt+Left is Back).
   Array.prototype.forEach.call(el.toolTabs, function (tab, index, tabs) {
     tab.addEventListener('click', function () {
       activateTool(tab.getAttribute('data-tool'), false);
     });
     tab.addEventListener('keydown', function (event) {
+      if (event.altKey || event.ctrlKey || event.metaKey) {
+        return;
+      }
       var target = -1;
       switch (event.key) {
         case 'ArrowRight': target = (index + 1) % tabs.length; break;

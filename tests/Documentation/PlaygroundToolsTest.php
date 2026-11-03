@@ -460,6 +460,20 @@ final class PlaygroundToolsTest extends TestCase
 
     #[Test]
     #[DataProvider('provideDrivers')]
+    public function test_samples_longer_than_a_subject_can_be_are_not_kept(string $driver, string $root): void
+    {
+        // A quantifier may draw a string longer than the subject cap: such a
+        // sample would be cut before the match tab, the check and the export
+        // could read it, so it is not a chip.
+        $payload = self::samples($driver, $root, '/a{20000}/');
+        $this->assertNotNull($payload['samples'], (string) json_encode($payload));
+        foreach (array_merge($payload['samples']['matching'], $payload['samples']['nonMatching']) as $sample) {
+            $this->assertLessThanOrEqual(10000, \strlen($sample), 'A sample is a subject the other tools can take as it is.');
+        }
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
     public function test_samples_are_stable_for_a_pattern(string $driver, string $root): void
     {
         $first = self::samples($driver, $root, self::DATE);

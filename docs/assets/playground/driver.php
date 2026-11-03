@@ -1117,7 +1117,9 @@ if (!\function_exists('phpregex_playground_run')) {
     /**
      * The strings the engine agrees with, at most three, no duplicate, none
      * with a control byte a chip could not show (a line feed and a tab may
-     * stand in a subject), none that is not UTF-8 (the page carries text).
+     * stand in a subject), none that is not UTF-8 (the page carries text),
+     * none longer than a subject can be (the match tab, the check and the
+     * export would cut it).
      *
      * @param list<string> $candidates
      *
@@ -1128,8 +1130,9 @@ if (!\function_exists('phpregex_playground_run')) {
         $kept = [];
         foreach ($candidates as $candidate) {
             // No duplicate, no control byte a chip could not show, nothing a
-            // page carrying text could not send back as it is.
-            if (!\is_string($candidate) || \in_array($candidate, $kept, true) || 1 === preg_match('/[\x00-\x08\x0B-\x1F\x7F]/', $candidate) || 1 !== preg_match('//u', $candidate)) {
+            // page carrying text could not send back as it is, nothing
+            // longer than a subject can be.
+            if (!\is_string($candidate) || \strlen($candidate) > PHPREGEX_PLAYGROUND_SUBJECT_CAP || \in_array($candidate, $kept, true) || 1 === preg_match('/[\x00-\x08\x0B-\x1F\x7F]/', $candidate) || 1 !== preg_match('//u', $candidate)) {
                 continue;
             }
             if (phpregex_playground_check_one($regex, $candidate)['matched'] !== $expected) {
