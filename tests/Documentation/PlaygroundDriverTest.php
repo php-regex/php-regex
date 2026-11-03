@@ -158,6 +158,20 @@ final class PlaygroundDriverTest extends TestCase
 
     #[Test]
     #[DataProvider('provideDrivers')]
+    public function test_a_group_name_is_read_after_its_opener_and_nowhere_else(string $driver, string $root): void
+    {
+        // "\Q" and "\E" spell letters a name may be made of: the name is
+        // what follows "(?<", nothing in the glue that closes the group.
+        $payload = PlaygroundDriver::analyze($driver, $root, '/(?<Q>\Qa\E)(?<E>b\E)/', 'ab');
+
+        $this->assertSame([
+            [0, 3, 'group'], [3, 4, 'identifier'], [4, 7, 'group'], [7, 8, 'literal'], [8, 11, 'group'],
+            [11, 14, 'group'], [14, 15, 'identifier'], [15, 16, 'group'], [16, 17, 'literal'], [17, 20, 'group'],
+        ], $payload['tokens']);
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
     public function test_a_condition_is_one_token_up_to_its_closing_parenthesis(string $driver, string $root): void
     {
         $payload = PlaygroundDriver::analyze($driver, $root, '/(?(VERSION>=10.4)a)(?(R2)b)(?(R)c)/', 'abc');
