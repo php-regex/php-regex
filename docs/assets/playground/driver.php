@@ -106,6 +106,11 @@ if (!\function_exists('phpregex_playground_run')) {
         // instead, so the page can say it and the answer still arrives.
         $notices = [];
         set_error_handler(static function (int $severity, string $message) use (&$notices): bool {
+            // What "@" silences (the driver's own read of the request) is no
+            // notice of the engine's: the mask says so.
+            if (0 === (error_reporting() & $severity)) {
+                return true;
+            }
             if (!\in_array($message, $notices, true)) {
                 $notices[] = $message;
             }

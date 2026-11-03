@@ -58,6 +58,23 @@ final class PlaygroundToolsTest extends TestCase
 
     // --- format --------------------------------------------------------------
 
+    /**
+     * The driver silences its own read of the request with "@": what "@"
+     * silences is no notice of the engine's, and never reaches the page.
+     */
+    #[Test]
+    public function test_a_diagnostic_the_driver_silences_itself_is_no_notice(): void
+    {
+        require_once PlaygroundDriver::TREE_DRIVER;
+        $envelope = phpregex_playground_run(sys_get_temp_dir().'/phpregex-playground-no-such-request-'.bin2hex(random_bytes(4)).'.json');
+        $this->assertSame(1, preg_match('/\A\x1e(.*)\x1e\z/s', $envelope, $m));
+        $payload = json_decode($m[1], true, 512, \JSON_THROW_ON_ERROR);
+
+        $this->assertIsArray($payload);
+        $this->assertSame('The request is not a JSON object.', $payload['fatal']);
+        $this->assertSame([], $payload['notices'], 'A warning the driver itself silenced is no notice.');
+    }
+
     #[Test]
     #[DataProvider('provideDrivers')]
     public function test_format_lays_out_at_the_width(string $driver, string $root): void
