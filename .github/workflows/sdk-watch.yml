@@ -31,6 +31,7 @@ jobs:
 
       - name: Compare the newest mcp/sdk with the pin
         id: compare
+        shell: bash
         run: |
           pin=$(jq -r '.require["mcp/sdk"]' src/Mcp/composer.json)
           case "$pin" in
@@ -38,6 +39,10 @@ jobs:
             *) echo "src/Mcp/composer.json pins mcp/sdk as \"$pin\", not as a caret minor." >&2; exit 1 ;;
           esac
           newest=$(curl -sSf https://repo.packagist.org/p2/mcp/sdk.json | jq -r '.packages["mcp/sdk"] | map(.version | ltrimstr("v")) | map(select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))) | sort_by(split(".") | map(tonumber)) | last')
+          if ! printf '%s' "$newest" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Packagist gave no release for mcp/sdk (read \"$newest\")." >&2
+            exit 1
+          fi
           echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
           echo "newest=$newest" >> "$GITHUB_OUTPUT"
           pinned_minor=$(printf '%s' "$pinned" | cut -d. -f1-2)
