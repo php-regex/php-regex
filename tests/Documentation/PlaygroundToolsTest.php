@@ -17,6 +17,7 @@ use PHPRegex\Parser\Printer\FormatRefusal;
 use PHPRegex\Tests\Support\PlaygroundDriver;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -504,6 +505,7 @@ final class PlaygroundToolsTest extends TestCase
 
     #[Test]
     #[DataProvider('provideDrivers')]
+    #[RequiresPhp('>= 8.2.0')]
     public function test_export_under_n_asserts_by_name_only(string $driver, string $root): void
     {
         $method = self::export($driver, $root, '/(?<a>x)(y)?(z)/n', ['xz'])['export']['method'] ?? '';
