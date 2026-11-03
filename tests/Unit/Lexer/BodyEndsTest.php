@@ -17,6 +17,7 @@ use PHPRegex\Parser\Lexing\BodyEnds;
 use PHPRegex\Parser\Lexing\PatternText;
 use PHPRegex\Parser\Lexing\TargetSyntax;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,12 +38,12 @@ final class BodyEndsTest extends TestCase
     #[DataProvider('provideClosedBodies')]
     public function test_a_body_ends_past_the_parenthesis_pcre_closes_it_with(string $pattern, string $opener, bool $extended, int $end, ?int $unmatched): void
     {
-        $compiled = @preg_match('/'.($extended ? '(?x)' : '').$pattern.'/', '');
+        $warning = EngineProbe::warning('/'.($extended ? '(?x)' : '').$pattern.'/');
         if (null === $unmatched) {
-            $this->assertSame(0, $compiled);
+            $this->assertNull($warning, 'Oracle: PCRE compiles the pattern.');
         } else {
-            $this->assertFalse($compiled);
-            $this->assertStringContainsString('unmatched closing parenthesis at offset '.PcreTarget::runtime()->faultOffset($unmatched + 1 + ($extended ? 4 : 0)), error_get_last()['message'] ?? '');
+            $this->assertNotNull($warning, 'Oracle: PCRE refuses the pattern.');
+            $this->assertStringContainsString('unmatched closing parenthesis at offset '.PcreTarget::runtime()->faultOffset($unmatched + 1 + ($extended ? 4 : 0)), (string) $warning);
         }
 
         $this->assertSame($end, (new BodyEnds())->assertionEnd(self::text($pattern), 0, $opener, $extended, false));
@@ -65,8 +66,9 @@ final class BodyEndsTest extends TestCase
     #[DataProvider('provideUnclosedBodies')]
     public function test_a_body_that_never_closes_has_no_end(string $pattern, string $pcreMessage): void
     {
-        $this->assertFalse(@preg_match('/'.$pattern.'/', ''));
-        $this->assertStringContainsString($pcreMessage, error_get_last()['message'] ?? '');
+        $warning = EngineProbe::warning('/'.$pattern.'/');
+        $this->assertNotNull($warning, 'Oracle: PCRE refuses the body.');
+        $this->assertStringContainsString($pcreMessage, (string) $warning);
 
         $this->assertNull((new BodyEnds())->assertionEnd(self::text($pattern), 0, '(*pla:', false, false));
     }
@@ -95,8 +97,9 @@ final class BodyEndsTest extends TestCase
     #[Test]
     public function test_a_backslash_ending_the_text_leaves_the_body_unclosed(): void
     {
-        $this->assertFalse(@preg_match(self::delimited('(*pla:(?#)\\'), ''));
-        $this->assertStringContainsString('No ending delimiter', error_get_last()['message'] ?? '');
+        $warning = EngineProbe::warning(self::delimited('(*pla:(?#)\\'));
+        $this->assertNotNull($warning, 'Oracle: PCRE refuses the pattern.');
+        $this->assertStringContainsString('No ending delimiter', (string) $warning);
 
         $this->assertNull((new BodyEnds())->assertionEnd(self::text('(*pla:(?#)\\'), 0, '(*pla:', false, false));
         $this->assertNull((new BodyEnds())->assertionEnd(self::text('(*pla:[)\\'), 0, '(*pla:', false, false));

@@ -17,6 +17,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
@@ -70,8 +71,7 @@ final class KeepInLookaroundTest extends TestCase
         // The offset is PHP 8.5's; before, nothing is refused.
         unset($offset);
 
-        error_clear_last();
-        $compiles = false !== @preg_match($pattern, '') || null === error_get_last();
+        $compiles = EngineProbe::compiles($pattern);
 
         $this->assertSame($compiles, Regex::create(['cache' => null])->validate($pattern)->isValid, $pattern);
     }

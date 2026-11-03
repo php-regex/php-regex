@@ -18,6 +18,7 @@ use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -48,8 +49,7 @@ final class PaddedReferenceBracesTest extends TestCase
     #[DataProvider('providePaddedReferences')]
     public function test_validate_follows_the_running_php(string $pattern): void
     {
-        error_clear_last();
-        $compiles = false !== @preg_match($pattern, '') || null === error_get_last();
+        $compiles = EngineProbe::compiles($pattern);
 
         $this->assertSame($compiles, Regex::create(['cache' => null])->validate($pattern)->isValid, $pattern);
     }

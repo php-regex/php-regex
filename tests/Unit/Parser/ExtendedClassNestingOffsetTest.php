@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,8 +36,9 @@ final class ExtendedClassNestingOffsetTest extends TestCase
     public function test_the_nesting_limit_is_refused_where_the_release_says(string $pattern, string $pcreVersion, int $offset): void
     {
         if (version_compare(explode(' ', \PCRE_VERSION)[0], '10.47', '>=')) {
-            $this->assertFalse(@preg_match($pattern, ''), 'Oracle: PCRE refuses the nesting.');
-            $this->assertStringEndsWith('at offset 69', (string) (error_get_last()['message'] ?? ''), 'Oracle: PCRE refuses it there.');
+            $warning = EngineProbe::warning($pattern);
+            $this->assertNotNull($warning, 'Oracle: PCRE refuses the nesting.');
+            $this->assertStringEndsWith('at offset 69', $warning, 'Oracle: PCRE refuses it there.');
         }
 
         $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => $pcreVersion])->validate($pattern);
