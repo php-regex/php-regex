@@ -156,7 +156,7 @@ final class StdioServerTest extends TestCase
 
         rewind($errors);
         $this->assertSame(1, $exitCode);
-        $this->assertStringContainsString('[error] The MCP server stopped on a transport failure.', (string) stream_get_contents($errors));
+        $this->assertStringContainsString('[error] The MCP server stopped on a transport failure: ', (string) stream_get_contents($errors));
     }
 
     #[Test]
@@ -167,6 +167,76 @@ final class StdioServerTest extends TestCase
         fclose($closed);
 
         $this->assertSame(1, (new Application())->run([], $closed, $closed));
+    }
+
+    /**
+     * One closed stream is enough to refuse the session, and the refusal
+     * is silent: nothing was tried, so nothing is logged.
+     */
+    #[Test]
+    public function test_one_closed_stream_exits_with_one_before_any_log(): void
+    {
+        foreach (['input', 'output'] as $which) {
+            $closed = fopen('php://memory', 'r+');
+            $open = fopen('php://memory', 'r+');
+            $errors = fopen('php://memory', 'w+');
+            $this->assertIsResource($closed);
+            $this->assertIsResource($open);
+            $this->assertIsResource($errors);
+            fclose($closed);
+
+            $input = 'input' === $which ? $closed : $open;
+            $output = 'output' === $which ? $closed : $open;
+            $this->assertSame(1, (new Application(null, new StderrLogger($errors)))->run([], $input, $output), $which);
+            rewind($errors);
+            $this->assertSame('', stream_get_contents($errors), 'A closed '.$which.' is refused before the server runs, so nothing is logged.');
+        }
+    }
+
+    /**
+     * The boundary of the process: a transport that fails is logged with
+     * its cause and answered with an exit code, never a stack trace.
+     */
+    #[Test]
+    public function test_a_transport_failure_is_logged_with_its_cause(): void
+    {
+        $input = fopen('php://memory', 'w+');
+        $readOnly = fopen('php://memory', 'r');
+        $errors = fopen('php://memory', 'w+');
+        $this->assertIsResource($input);
+        $this->assertIsResource($readOnly);
+        $this->assertIsResource($errors);
+        fwrite($input, self::request(1, 'initialize', self::INITIALIZE)."\n");
+        rewind($input);
+
+        $exitCode = (new Application(null, new StderrLogger($errors)))->run([], $input, $readOnly);
+        rewind($errors);
+        $log = (string) stream_get_contents($errors);
+
+        $this->assertSame(1, $exitCode);
+        $this->assertStringStartsWith('[error] The MCP server stopped on a transport failure: ', $log);
+    }
+
+    /**
+     * A warning PHP prints on stdout would be read as protocol: the session
+     * sends PHP's own output to stderr.
+     */
+    #[Test]
+    public function test_the_session_sends_phps_warnings_to_stderr(): void
+    {
+        $before = ini_get('display_errors');
+        $closed = fopen('php://memory', 'r+');
+        $this->assertIsResource($closed);
+        fclose($closed);
+
+        try {
+            ini_set('display_errors', '1');
+            (new Application())->run([], $closed, $closed);
+
+            $this->assertSame('stderr', ini_get('display_errors'));
+        } finally {
+            ini_set('display_errors', (string) $before);
+        }
     }
 
     #[Test]

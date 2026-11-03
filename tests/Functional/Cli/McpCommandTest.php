@@ -183,6 +183,26 @@ final class McpCommandTest extends TestCase
         $this->assertStringContainsString('Speaks the Model Context Protocol on stdin and stdout, as vendor/bin/regex-mcp does.', $page);
         $this->assertStringContainsString('--php-version, --pcre-version and --locale set the target every tool judges for; a call may name its own php_version and pcre_version.', $page);
         $this->assertStringContainsString('Start the server, as a client does', $page);
+        // The examples spell the binary before the command, as every
+        // command's do, and the page lists the three target options.
+        $this->assertMatchesRegularExpression('~^  \S.* mcp +# Start the server, as a client does$~m', $page);
+        $this->assertMatchesRegularExpression('~^  \S.* mcp --php-version=8\.2 +# Judge every pattern for PHP 8\.2$~m', $page);
+        $this->assertMatchesRegularExpression('~^  --php-version <ver> +Target PHP version for validation$~m', $page);
+        $this->assertMatchesRegularExpression('~^  --pcre-version <ver> +Target PCRE2 release for validation$~m', $page);
+        $this->assertMatchesRegularExpression('~^  --locale <name> +Target LC_CTYPE locale for validation$~m', $page);
+    }
+
+    /**
+     * The command's own parser knows the three target options and no other
+     * (the application reads their values before the command runs).
+     */
+    #[Test]
+    public function test_the_command_declares_the_three_target_options(): void
+    {
+        $names = array_map(static fn ($option): string => $option->name, McpCommand::options()->options);
+
+        $this->assertSame(['--php-version', '--pcre-version', '--locale'], $names);
+        $this->assertNotNull(McpCommand::options()->parse(['--bogus'])->error);
     }
 
     #[Test]

@@ -42,6 +42,33 @@ final class ToolCatalogTest extends TestCase
         $this->assertSame(['regex_validate', 'regex_explain', 'regex_format', 'regex_transpile', 'regex_redos'], $names);
     }
 
+    /**
+     * The schemas are the contract a client reads: every property, type,
+     * enum, description, required list and annotation is pinned by the
+     * fixture, so a change to one is a deliberate edit of both.
+     */
+    #[Test]
+    public function test_the_schemas_are_the_pinned_contract(): void
+    {
+        $pinned = json_decode((string) file_get_contents(__DIR__.'/../../Fixtures/Mcp/schemas.json'), true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($pinned);
+
+        $actual = [];
+        foreach (ToolCatalog::v1()->tools() as $definition) {
+            $actual[$definition->name] = [
+                'title' => $definition->title,
+                'description' => $definition->description,
+                'inputSchema' => $definition->inputSchema,
+                'outputSchema' => $definition->outputSchema,
+                'annotations' => $definition->annotations,
+            ];
+        }
+        // Through JSON, so the fixture's spelling is the comparison's.
+        $actual = json_decode((string) json_encode($actual, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE), true, 512, \JSON_THROW_ON_ERROR);
+
+        $this->assertSame($pinned, $actual, 'tests/Fixtures/Mcp/schemas.json pins the tools\' contract: regenerate it on purpose, never on a whim.');
+    }
+
     #[Test]
     public function test_every_name_follows_the_sdk_rule(): void
     {

@@ -56,7 +56,7 @@ final class SdkServer implements ServerInterface
         try {
             $exitCode = $builder->build()->run(new StdioTransport($input, $output, $this->logger));
         } catch (\Throwable $e) {
-            $this->logger->error('The MCP server stopped on a transport failure.', ['exception' => $e]);
+            $this->logger->error('The MCP server stopped on a transport failure', ['exception' => $e]);
 
             return 1;
         }

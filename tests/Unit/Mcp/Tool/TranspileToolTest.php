@@ -125,6 +125,30 @@ final class TranspileToolTest extends TestCase
     }
 
     #[Test]
+    public function test_a_dialect_the_transpiler_has_no_target_for_is_a_usage_failure(): void
+    {
+        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'perl']);
+
+        $this->assertTrue($result->isError);
+        $this->assertSame('usage', $result->structured['stage']);
+        $this->assertSame('The "target" argument is required: js, html or python.', $result->structured['error']);
+    }
+
+    #[Test]
+    public function test_a_pattern_the_lexer_or_the_parser_refuses_is_a_pattern_failure(): void
+    {
+        $tool = ToolCatalog::v1()->get('regex_transpile')->tool;
+
+        foreach (['/[/' => 'unclosed character class', '/(?<n/' => 'name'] as $pattern => $word) {
+            $result = $tool->execute(['pattern' => $pattern, 'target' => 'js']);
+            $this->assertTrue($result->isError, $pattern);
+            $this->assertSame('pattern', $result->structured['stage'], $pattern);
+            $this->assertIsString($result->structured['error']);
+            $this->assertStringContainsString($word, strtolower($result->structured['error']), $pattern);
+        }
+    }
+
+    #[Test]
     public function test_a_python_version_that_is_not_a_release_is_a_usage_failure(): void
     {
         $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'python', 'python_version' => 'three']);
