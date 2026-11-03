@@ -14,16 +14,22 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Explain\TextExplainer;
+use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\Parser\DelimitedPattern;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Printer\JsonDumper;
+use PHPRegex\PHPUnit\RegexAssertions;
+use PHPRegex\Redos\RedosMode;
 use PHPRegex\Tests\Support\PlaygroundDriver;
 use PHPRegex\Tests\Unit\Parser\Printer\JsonDumperTest;
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\TranspileOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -67,7 +73,7 @@ final class PlaygroundDriverTest extends TestCase
     {
         $payload = PlaygroundDriver::analyze($driver, $root, '/^(?<date>\d{4})-(\d{2})$/m', "2026-11\n1999-12\nnope");
 
-        $this->assertSame(1, $payload['protocol']);
+        $this->assertSame(2, $payload['protocol']);
         foreach (['engine', 'library', 'target', 'input', 'delimited', 'unitOf', 'ast', 'tokens', 'explain', 'errors', 'engineError', 'matches', 'timing'] as $key) {
             $this->assertArrayHasKey($key, $payload);
         }
@@ -368,7 +374,7 @@ final class PlaygroundDriverTest extends TestCase
     {
         $payload = PlaygroundDriver::lint($driver, $root, '/(a+)+$/');
 
-        $this->assertSame(1, $payload['protocol']);
+        $this->assertSame(2, $payload['protocol']);
         $this->assertNotNull($payload['lint']);
         $nested = array_values(array_filter($payload['lint'], static fn (array $finding): bool => 'regex.lint.quantifier.nested' === $finding['id']));
         $this->assertCount(1, $nested);
@@ -526,7 +532,7 @@ final class PlaygroundDriverTest extends TestCase
             $this->assertSame('', $run['stderr'], $label);
             $this->assertMatchesRegularExpression('/\A\x1e\{.*\}\x1e\z/s', $run['stdout'], $label);
             $payload = PlaygroundDriver::payload($run);
-            $this->assertSame(1, $payload['protocol']);
+            $this->assertSame(2, $payload['protocol']);
         }
     }
 
@@ -589,6 +595,14 @@ final class PlaygroundDriverTest extends TestCase
             RegexException::class,
             SemanticErrorException::class,
             TextExplainer::class,
+            InvalidRegexOptionException::class,
+            RedosMode::class,
+            SampleGenerator::class,
+            TestCaseGenerator::class,
+            TranspileOptions::class,
+            // Named in the text of the test the driver writes for a visitor
+            // to paste; never loaded by the driver, never in the bundle.
+            RegexAssertions::class,
         ];
         preg_match_all('/^use ([\w\\\\]+);$/m', $source, $uses);
         $this->assertNotSame([], $uses[1], 'The driver imports what it uses.');

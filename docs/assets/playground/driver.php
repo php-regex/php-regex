@@ -18,12 +18,18 @@ declare(strict_types=1);
  * It is included once per engine, then called once per request:
  * phpregex_playground_run() reads a JSON request from a file and returns one
  * JSON document between two record separators (0x1E), so the caller can tell
- * the answer from anything else the engine prints. Four requests exist:
+ * the answer from anything else the engine prints. Ten requests exist:
  *
  *   analyze   parse (tolerant), explain, validate, dump the tree, match
  *   match     the engine alone: its compile message and preg_match_all()
  *   lint      the lint findings of a pattern that parses strictly
  *   describe  one line about the node at a pre-order index of the tree
+ *   format    the pattern laid out over lines, or compacted to one
+ *   redos     the ReDoS verdict, its witness and the attack string
+ *   transpile the pattern in JavaScript, HTML or Python, losses included
+ *   samples   subjects the engine matches, and some it does not
+ *   check     the engine alone: preg_match() without JIT on each subject
+ *   export    a regex-phpunit test asserting what the engine answered
  *
  * The analysis also answers the pattern's tokens — one byte span per piece
  * the parser reads, in the highlighting visitor's vocabulary — because the
@@ -35,28 +41,33 @@ declare(strict_types=1);
  * therefore returned converted or with the table that converts it, and the
  * page only looks up.
  *
- * The match request runs on PHP 8.0 too (the oldest engine the page offers,
- * where the library itself does not run), so this file keeps to PHP 8.0
- * syntax. It is also run by the local test suite, under the local PHP,
+ * The match and check requests run on PHP 8.0 too (the oldest engine the
+ * page offers, where the library itself does not run), so this file keeps
+ * to PHP 8.0 syntax. It is also run by the local test suite, under the local PHP,
  * against the library in the tree and against its bundled copy.
  */
 
 use PHPRegex\Explain\TextExplainer;
+use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\Parser\DelimitedPattern;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Printer\JsonDumper;
+use PHPRegex\Redos\RedosMode;
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\TranspileOptions;
 
 // Declared only once per process: a second include is a no-op. The functions
 // below are declared inside this block on purpose, so they are not hoisted
 // ahead of it.
 if (!\function_exists('phpregex_playground_run')) {
 if (!\defined('PHPREGEX_PLAYGROUND_PROTOCOL')) {
-    \define('PHPREGEX_PLAYGROUND_PROTOCOL', 1);
+    \define('PHPREGEX_PLAYGROUND_PROTOCOL', 2);
 }
 if (!\defined('PHPREGEX_PLAYGROUND_PATTERN_CAP')) {
     \define('PHPREGEX_PLAYGROUND_PATTERN_CAP', 2000);
@@ -66,6 +77,9 @@ if (!\defined('PHPREGEX_PLAYGROUND_SUBJECT_CAP')) {
 }
 if (!\defined('PHPREGEX_PLAYGROUND_SETS_CAP')) {
     \define('PHPREGEX_PLAYGROUND_SETS_CAP', 500);
+}
+if (!\defined('PHPREGEX_PLAYGROUND_SUBJECTS_CAP')) {
+    \define('PHPREGEX_PLAYGROUND_SUBJECTS_CAP', 50);
 }
 
 // The library's sources: the "src" directory beside this file (the layout
@@ -86,6 +100,18 @@ spl_autoload_register(static function (string $class): void {
  */
 function phpregex_playground_run(string $inputFile): string
 {
+    // A notice or a deprecation the library raises on this engine (a
+    // 32-bit one reads some constants as floats) would be printed into
+    // the output and break the envelope: it is collected and answered
+    // instead, so the page can say it and the answer still arrives.
+    $notices = [];
+    set_error_handler(static function (int $severity, string $message) use (&$notices): bool {
+        if (!\in_array($message, $notices, true)) {
+            $notices[] = $message;
+        }
+
+        return true;
+    }, \E_NOTICE | \E_USER_NOTICE | \E_DEPRECATED | \E_USER_DEPRECATED | \E_WARNING | \E_USER_WARNING);
     try {
         $input = json_decode((string) @file_get_contents($inputFile), true);
         if (!\is_array($input)) {
@@ -97,11 +123,22 @@ function phpregex_playground_run(string $inputFile): string
             'protocol' => PHPREGEX_PLAYGROUND_PROTOCOL,
             'fatal' => $e instanceof \InvalidArgumentException ? $e->getMessage() : phpregex_playground_short_class($e).': '.$e->getMessage(),
         ];
+    } finally {
+        restore_error_handler();
     }
+    $payload['notices'] = $notices;
 
     // The tree nests one level per group: a pattern under the cap can go
-    // past json_encode's default depth of 512, never past this one.
-    $json = json_encode($payload, \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE, 8192);
+    // past json_encode's default depth of 512, never past this one. An
+    // object of the answer that cannot be written out is a fatal answer,
+    // not a blank one.
+    try {
+        $json = json_encode($payload, \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE, 8192);
+    } catch (\Throwable $e) {
+        $json = false;
+        $payload = ['protocol' => PHPREGEX_PLAYGROUND_PROTOCOL, 'fatal' => 'The answer could not be written: '.phpregex_playground_short_class($e).': '.$e->getMessage()];
+        $json = json_encode($payload);
+    }
     if (!\is_string($json)) {
         $json = json_encode(['protocol' => PHPREGEX_PLAYGROUND_PROTOCOL, 'fatal' => 'The answer could not be encoded: '.json_last_error_msg()]);
     }
@@ -127,6 +164,18 @@ function phpregex_playground_answer(array $input): array
             return phpregex_playground_lint($input);
         case 'describe':
             return phpregex_playground_describe($input);
+        case 'format':
+            return phpregex_playground_format($input);
+        case 'redos':
+            return phpregex_playground_redos($input);
+        case 'transpile':
+            return phpregex_playground_transpile($input);
+        case 'samples':
+            return phpregex_playground_samples($input);
+        case 'check':
+            return phpregex_playground_check($input);
+        case 'export':
+            return phpregex_playground_export($input);
     }
 
     throw new \InvalidArgumentException(\sprintf('Unknown op "%s".', $op));
@@ -784,5 +833,615 @@ function phpregex_playground_subject(array $input): array
     }
 
     return [substr($subject, 0, $cut), true];
+}
+
+/**
+ * @param array<mixed> $input
+ *
+ * @return array<string, mixed>
+ */
+function phpregex_playground_format(array $input): array
+{
+    $started = hrtime(true);
+    $regex = phpregex_playground_string($input, 'regex');
+    $library = phpregex_playground_library(phpregex_playground_target($input));
+    $answer = ['protocol' => PHPREGEX_PLAYGROUND_PROTOCOL, 'format' => null, 'error' => null, 'timing' => ['formatMs' => 0.0]];
+
+    $fault = phpregex_playground_parse_fault($library, $regex);
+    if (null !== $fault) {
+        $answer['error'] = $fault;
+
+        return phpregex_playground_timed($answer, 'formatMs', $started);
+    }
+
+    $width = \is_int($input['width'] ?? null) ? $input['width'] : 80;
+    $compact = true === ($input['compact'] ?? false);
+    try {
+        $result = $compact ? $library->compact($regex) : $library->format($regex, $width);
+    } catch (InvalidRegexOptionException $e) {
+        $answer['error'] = ['source' => 'format', 'class' => phpregex_playground_short_class($e), 'message' => $e->getMessage(), 'position' => null, 'code' => null, 'hint' => null];
+
+        return phpregex_playground_timed($answer, 'formatMs', $started);
+    } catch (RegexException $e) {
+        // The formatter refused to hand over a pattern that would not read
+        // back as the same one: the pattern stays as written.
+        $answer['format'] = ['pattern' => $regex, 'changed' => false, 'refusal' => phpregex_playground_format_refusal('round_trip')];
+
+        return phpregex_playground_timed($answer, 'formatMs', $started);
+    }
+
+    $refusal = null !== $result->refusal ? phpregex_playground_format_refusal($result->refusal->value) : null;
+    $pattern = $result->pattern;
+    $changed = $result->changed;
+    // The formatter checks its own output; the boundary checks once more,
+    // for the page shows the result as a pattern to copy: it parses, and
+    // written on one line it is the pattern that was given.
+    if (null === $refusal && $changed && !phpregex_playground_same_pattern($library, $regex, $pattern)) {
+        $refusal = phpregex_playground_format_refusal('round_trip');
+        $pattern = $regex;
+        $changed = false;
+    }
+    $answer['format'] = ['pattern' => $pattern, 'changed' => $changed, 'refusal' => $refusal];
+
+    return phpregex_playground_timed($answer, 'formatMs', $started);
+}
+
+/**
+ * Two spellings of one pattern: both parse, and compacted to one line they
+ * are the same bytes.
+ */
+function phpregex_playground_same_pattern(Regex $library, string $before, string $after): bool
+{
+    try {
+        if ([] !== $library->parseTolerant($after)->errors) {
+            return false;
+        }
+
+        return $library->compact($before)->pattern === $library->compact($after)->pattern;
+    } catch (RegexException $e) {
+        return false;
+    }
+}
+
+/**
+ * The formatter's refusals, each said in a sentence: the library names
+ * them by a code and leaves the words to the caller.
+ *
+ * @return array{code: string, message: string}
+ */
+function phpregex_playground_format_refusal(string $code): array
+{
+    $sentences = [
+        'newline_convention' => 'The pattern holds # comments under a newline convention where a comment does not end at a line feed.',
+        'spaced_quantifier' => 'The pattern holds a quantifier written with spaces, which x would turn into another pattern.',
+        'extended_mode_switched_off' => 'The pattern turns x off at its top level: a line break after that point would be a literal.',
+        'line_break_in_name' => 'A verb name or a callout string holds a raw line break that no escape can spell.',
+        'parenthesis_in_comment' => 'Under a ( delimiter, a # comment holds a ) that PHP counts and no escape can hide.',
+        'delimiter_misread' => 'The pattern hides a character of its delimiter behind \c\, which PHP and PCRE read differently.',
+        'round_trip' => 'The formatter\'s output did not read back as the same pattern.',
+    ];
+
+    return ['code' => $code, 'message' => $sentences[$code] ?? 'The formatter gave the pattern back as written.'];
+}
+
+/**
+ * @param array<mixed> $input
+ *
+ * @return array<string, mixed>
+ */
+function phpregex_playground_redos(array $input): array
+{
+    $started = hrtime(true);
+    $regex = phpregex_playground_string($input, 'regex');
+    $library = phpregex_playground_library(phpregex_playground_target($input));
+    $mode = 'confirmed' === ($input['mode'] ?? null) ? RedosMode::Confirmed : RedosMode::Theoretical;
+    $answer = ['protocol' => PHPREGEX_PLAYGROUND_PROTOCOL, 'redos' => null, 'error' => null, 'timing' => ['redosMs' => 0.0]];
+
+    $replayError = null;
+    try {
+        $analysis = $library->redos($regex, null, $mode);
+        $verdict = phpregex_playground_verdict($analysis);
+    } catch (RegexException $e) {
+        $answer['error'] = phpregex_playground_error($e, 'redos');
+
+        return phpregex_playground_timed($answer, 'redosMs', $started);
+    } catch (\Error $e) {
+        // The replay runs the library's confirmation, which this engine may
+        // not carry through, when it runs or when it is written out (a
+        // 32-bit engine reads a 32-bit mask as a float, which the library
+        // refuses). The verdict without the replay is answered, with the
+        // reason the replay has none.
+        if (RedosMode::Confirmed !== $mode) {
+            throw $e;
+        }
+        $replayError = phpregex_playground_short_class($e).': '.$e->getMessage();
+        $analysis = $library->redos($regex, null, RedosMode::Theoretical);
+        $verdict = phpregex_playground_verdict($analysis);
+    }
+
+    $verdict['replay_error'] = $replayError;
+    // The rule regex-phpunit's assertPatternIsLinear() applies: a linear
+    // attempt and a linear unanchored search.
+    $verdict['linear'] = $analysis->isProvenSafe() && null === $analysis->searchCost;
+    // The witness as bytes, built here: its JSON spelling is escaped text.
+    $verdict['attack'] = null;
+    $witness = $analysis->witness;
+    if (null !== $witness) {
+        $attack = $witness->build(30);
+        $confirmation = $analysis->confirmation;
+        if (null !== $confirmation) {
+            foreach ($confirmation->samples as $sample) {
+                // The input that tripped the engine, as it was: the preview
+                // holds it whole when it fits.
+                if (null !== $sample->pregError && \is_string($sample->inputPreview) && \strlen($sample->inputPreview) === $sample->inputLength) {
+                    $attack = $sample->inputPreview;
+                    break;
+                }
+            }
+        }
+        // The page carries text: an attack of bytes that are not UTF-8
+        // could not reach the subject field as it is.
+        $verdict['attack'] = 1 === preg_match('//u', $attack) ? $attack : null;
+    }
+    $answer['redos'] = $verdict;
+
+    return phpregex_playground_timed($answer, 'redosMs', $started);
+}
+
+/**
+ * The verdict as plain arrays: the library's objects are written out here,
+ * where a failure to write them is still the request's own.
+ *
+ * @return array<string, mixed>
+ */
+function phpregex_playground_verdict(object $analysis): array
+{
+    /** @var array<string, mixed> $verdict */
+    $verdict = json_decode(json_encode($analysis->jsonSerialize(), \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_THROW_ON_ERROR), true, 512, \JSON_THROW_ON_ERROR);
+
+    return $verdict;
+}
+
+/**
+ * @param array<mixed> $input
+ *
+ * @return array<string, mixed>
+ */
+function phpregex_playground_transpile(array $input): array
+{
+    $started = hrtime(true);
+    $regex = phpregex_playground_string($input, 'regex');
+    $target = phpregex_playground_string($input, 'target');
+    $library = phpregex_playground_library(phpregex_playground_target($input));
+    $answer = ['protocol' => PHPREGEX_PLAYGROUND_PROTOCOL, 'transpile' => null, 'refusal' => null, 'error' => null, 'timing' => ['transpileMs' => 0.0]];
+
+    $fault = phpregex_playground_parse_fault($library, $regex);
+    if (null !== $fault) {
+        $answer['error'] = $fault;
+
+        return phpregex_playground_timed($answer, 'transpileMs', $started);
+    }
+
+    $options = null;
+    $pythonVersion = $input['pythonVersion'] ?? null;
+    if (\is_string($pythonVersion) && '' !== $pythonVersion) {
+        try {
+            $options = new TranspileOptions(pythonVersion: $pythonVersion);
+        } catch (InvalidRegexOptionException $e) {
+            $answer['error'] = ['source' => 'transpile', 'class' => phpregex_playground_short_class($e), 'message' => $e->getMessage(), 'position' => null, 'code' => null, 'hint' => null];
+
+            return phpregex_playground_timed($answer, 'transpileMs', $started);
+        }
+    }
+
+    try {
+        $answer['transpile'] = $library->transpile($regex, $target, $options)->jsonSerialize();
+    } catch (RegexException $e) {
+        // A construct the target has no spelling for, or a target the
+        // transpiler does not know: content, in the transpiler's words.
+        $answer['refusal'] = ['message' => $e->getMessage()];
+    }
+
+    return phpregex_playground_timed($answer, 'transpileMs', $started);
+}
+
+/**
+ * Subjects for the pattern: a few the engine matches, drawn at random from
+ * the tree (the same ones for the same pattern), a few it does not, each
+ * one run through preg_match() here before it is answered.
+ *
+ * @param array<mixed> $input
+ *
+ * @return array<string, mixed>
+ */
+function phpregex_playground_samples(array $input): array
+{
+    $started = hrtime(true);
+    $regex = phpregex_playground_string($input, 'regex');
+    $library = phpregex_playground_library(phpregex_playground_target($input));
+    $answer = ['protocol' => PHPREGEX_PLAYGROUND_PROTOCOL, 'samples' => null, 'error' => null, 'timing' => ['samplesMs' => 0.0]];
+
+    $fault = phpregex_playground_parse_fault($library, $regex);
+    if (null !== $fault) {
+        $answer['error'] = $fault;
+
+        return phpregex_playground_timed($answer, 'samplesMs', $started);
+    }
+
+    $seed = crc32($regex);
+    $matching = [];
+    foreach ([0, 1, 2] as $draw) {
+        try {
+            $matching[] = (new SampleGenerator(3, seed: $seed + $draw))->generate($regex, $library->parser());
+        } catch (RegexException $e) {
+            break;
+        }
+    }
+    $cases = $library->parse($regex)->accept(new TestCaseGenerator());
+    $matching = array_merge($matching, $cases['matching']);
+    $nonMatching = $cases['non_matching'];
+
+    $dropped = 0;
+    $answer['samples'] = [
+        'matching' => phpregex_playground_kept($regex, $matching, 1, $dropped),
+        'nonMatching' => phpregex_playground_kept($regex, $nonMatching, 0, $dropped),
+        'seed' => $seed,
+        'dropped' => $dropped,
+    ];
+
+    return phpregex_playground_timed($answer, 'samplesMs', $started);
+}
+
+/**
+ * The strings the engine agrees with, at most three, no duplicate, none
+ * with a control byte a chip could not show (a line feed and a tab may
+ * stand in a subject), none that is not UTF-8 (the page carries text).
+ *
+ * @param list<string> $candidates
+ *
+ * @return list<string>
+ */
+function phpregex_playground_kept(string $regex, array $candidates, int $expected, int &$dropped): array
+{
+    $kept = [];
+    foreach ($candidates as $candidate) {
+        // No duplicate, no control byte a chip could not show, nothing a
+        // page carrying text could not send back as it is.
+        if (!\is_string($candidate) || \in_array($candidate, $kept, true) || 1 === preg_match('/[\x00-\x08\x0B-\x1F\x7F]/', $candidate) || 1 !== preg_match('//u', $candidate)) {
+            continue;
+        }
+        if (phpregex_playground_check_one($regex, $candidate)['matched'] !== $expected) {
+            ++$dropped;
+            continue;
+        }
+        $kept[] = $candidate;
+        if (3 === \count($kept)) {
+            break;
+        }
+    }
+
+    return $kept;
+}
+
+/**
+ * The engine alone on a list of subjects: what preg_match() answers for
+ * each, run without the JIT the way regex-phpunit runs its assertions, so
+ * what is answered here is what a pasted test will see.
+ *
+ * @param array<mixed> $input
+ *
+ * @return array<string, mixed>
+ */
+function phpregex_playground_check(array $input): array
+{
+    $started = hrtime(true);
+    $regex = phpregex_playground_string($input, 'regex');
+    $subjects = phpregex_playground_subjects($input);
+    $checks = [];
+    if (\is_array($subjects) && \strlen($regex) <= PHPREGEX_PLAYGROUND_PATTERN_CAP) {
+        foreach ($subjects as $subject) {
+            $checks[] = phpregex_playground_check_one($regex, $subject);
+        }
+    }
+
+    return phpregex_playground_timed([
+        'protocol' => PHPREGEX_PLAYGROUND_PROTOCOL,
+        'engine' => phpregex_playground_engine(),
+        'checks' => $checks,
+        'timing' => ['checkMs' => 0.0],
+    ], 'checkMs', $started);
+}
+
+/**
+ * The subjects a request names, when they are what a check or an export
+ * takes: a list of at most fifty strings, none past the subject cap.
+ * Otherwise the reason, in a sentence.
+ *
+ * @param array<mixed> $input
+ *
+ * @return list<string>|string
+ */
+function phpregex_playground_subjects(array $input)
+{
+    $subjects = $input['subjects'] ?? null;
+    if (!\is_array($subjects)) {
+        return 'The subjects must be a list of strings.';
+    }
+    if (\count($subjects) > PHPREGEX_PLAYGROUND_SUBJECTS_CAP) {
+        return \sprintf('At most %d subjects at a time.', PHPREGEX_PLAYGROUND_SUBJECTS_CAP);
+    }
+    $list = [];
+    foreach ($subjects as $subject) {
+        if (!\is_string($subject)) {
+            return 'The subjects must be a list of strings.';
+        }
+        if (\strlen($subject) > PHPREGEX_PLAYGROUND_SUBJECT_CAP) {
+            return \sprintf('A subject is longer than %d bytes: the test would assert something that was never matched.', PHPREGEX_PLAYGROUND_SUBJECT_CAP);
+        }
+        $list[] = $subject;
+    }
+
+    return $list;
+}
+
+/**
+ * One preg_match() without the JIT: matched (1, 0, or null when the engine
+ * refused or gave up), the engine's message, and the first match's groups
+ * as PHP writes them, by name and by number, a group that did not
+ * participate as null.
+ *
+ * @return array{matched: ?int, error: ?string, groups: ?object}
+ */
+function phpregex_playground_check_one(string $regex, string $subject): array
+{
+    $jit = ini_get('pcre.jit');
+    $warning = null;
+    set_error_handler(static function (int $severity, string $message) use (&$warning): bool {
+        $warning ??= $message;
+
+        return true;
+    });
+    try {
+        // ini_set() may be disabled: the engine then runs as it is set,
+        // which the browser engine already runs without JIT.
+        @ini_set('pcre.jit', '0');
+        $result = preg_match($regex, $subject, $groups, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL);
+        $error = preg_last_error_msg();
+    } finally {
+        if (false !== $jit) {
+            @ini_set('pcre.jit', $jit);
+        }
+        restore_error_handler();
+    }
+
+    if (null !== $warning) {
+        return ['matched' => null, 'error' => phpregex_playground_engine_message($warning), 'groups' => null];
+    }
+    if (false === $result) {
+        return ['matched' => null, 'error' => $error, 'groups' => null];
+    }
+    if (0 === $result) {
+        return ['matched' => 0, 'error' => null, 'groups' => null];
+    }
+    $shape = [];
+    foreach ($groups as $key => [$text, $offset]) {
+        $shape[(string) $key] = null === $text || -1 === $offset ? null : [$text, $offset];
+    }
+
+    return ['matched' => 1, 'error' => null, 'groups' => (object) $shape];
+}
+
+/**
+ * A regex-phpunit test asserting what the engine answered for the
+ * subjects: a method with its data provider, to paste into a test class,
+ * and the same body wrapped in a class of its own. Every string in it is
+ * written by var_export(); every expectation is the engine's own answer.
+ *
+ * @param array<mixed> $input
+ *
+ * @return array<string, mixed>
+ */
+function phpregex_playground_export(array $input): array
+{
+    $started = hrtime(true);
+    $regex = phpregex_playground_string($input, 'regex');
+    $library = phpregex_playground_library(phpregex_playground_target($input));
+    $answer = ['protocol' => PHPREGEX_PLAYGROUND_PROTOCOL, 'export' => null, 'error' => null, 'timing' => ['exportMs' => 0.0]];
+
+    $fault = phpregex_playground_parse_fault($library, $regex);
+    if (null !== $fault) {
+        $answer['error'] = $fault;
+
+        return phpregex_playground_timed($answer, 'exportMs', $started);
+    }
+    $subjects = phpregex_playground_subjects($input);
+    if (\is_string($subjects)) {
+        $answer['error'] = ['source' => 'export', 'class' => null, 'message' => $subjects, 'position' => null, 'code' => null, 'hint' => null];
+
+        return phpregex_playground_timed($answer, 'exportMs', $started);
+    }
+
+    // The engine's answers: the ones handed over (another instance of the
+    // engine matched, the one the page shows), else this engine's.
+    $checks = [];
+    $given = $input['checks'] ?? null;
+    foreach ($subjects as $i => $subject) {
+        $check = \is_array($given) ? ($given[$i] ?? null) : null;
+        $checks[] = \is_array($check) && \array_key_exists('matched', $check) ? $check : phpregex_playground_check_one($regex, $subject);
+    }
+
+    $analysis = $library->redos($regex);
+    $linear = $analysis->isProvenSafe() && null === $analysis->searchCost;
+
+    // A name owning two numbers, under (?J), is asserted by number alone.
+    $names = phpregex_playground_group_names($library->parse($regex)->accept(new JsonDumper()));
+    $duplicates = array_keys(array_filter(array_count_values($names), static fn (int $count): bool => $count > 1));
+
+    $rows = [];
+    $refused = 0;
+    $assertions = 1;
+    foreach ($subjects as $i => $subject) {
+        $check = $checks[$i];
+        if (null === $check['matched']) {
+            ++$refused;
+            $rows[] = \sprintf('        // %s: the engine answered "%s"; nothing to assert', var_export($subject, true), (string) $check['error']);
+            continue;
+        }
+        ++$assertions;
+        $expectation = 1 === $check['matched'] ? phpregex_playground_expectation((array) ($check['groups'] ?? []), $duplicates) : '[]';
+        $rows[] = \sprintf(
+            "        yield 'subject %d' => ['subject' => %s, 'matches' => %s, 'expectation' => %s];",
+            $i + 1,
+            var_export($subject, true),
+            1 === $check['matched'] ? 'true' : 'false',
+            $expectation,
+        );
+    }
+
+    // The docblock openers are spelled in two pieces: the bundle holds no
+    // file with one, the stripped driver included.
+    $docblock = '    /'.'**';
+    $method = implode("\n", [
+        '    private const PATTERN = '.var_export($regex, true).';',
+        '',
+        $docblock,
+        '     * @return iterable<string, array{subject: string, matches: bool, expectation: array<int|string, mixed>}>',
+        '     */',
+        '    public static function providePatternSubjects(): iterable',
+        '    {',
+        ...$rows,
+        '    }',
+        '',
+        $docblock,
+        '     * @param array<int|string, mixed> $expectation',
+        '     */',
+        "    #[DataProvider('providePatternSubjects')]",
+        '    public function test_the_pattern_matches_as_the_engine_answered(string $subject, bool $matches, array $expectation): void',
+        '    {',
+        '        if ($matches) {',
+        '            self::assertPatternMatches(self::PATTERN, $subject, $expectation);',
+        '',
+        '            return;',
+        '        }',
+        '        self::assertPatternDoesNotMatch(self::PATTERN, $subject);',
+        '    }',
+        '',
+        '    public function test_the_pattern_compiles(): void',
+        '    {',
+        '        self::assertPatternCompiles(self::PATTERN);',
+        ...($linear ? ['        self::assertPatternIsLinear(self::PATTERN);'] : []),
+        '    }',
+    ]);
+
+    $engine = phpregex_playground_engine();
+    $class = implode("\n", [
+        '<?php',
+        '',
+        'declare(strict_types=1);',
+        '',
+        '/*',
+        \sprintf(' * Written by the PHPRegex playground on %s from the answers of PHP %s and PCRE2 %s.', date('Y-m-d'), $engine['php'], $engine['pcre']),
+        ' * Needs php-regex/regex-phpunit and PHPUnit 10 or newer (on 9.6, spell the provider as @dataProvider).',
+        ' */',
+        '',
+        'use PHPRegex\PHPUnit\RegexAssertions;',
+        'use PHPUnit\Framework\Attributes\DataProvider;',
+        'use PHPUnit\Framework\TestCase;',
+        '',
+        'final class PatternTest extends TestCase',
+        '{',
+        '    use RegexAssertions;',
+        '',
+        $method,
+        '}',
+        '',
+    ]);
+
+    $answer['export'] = ['method' => $method, 'class' => $class, 'assertions' => $assertions, 'linear' => $linear, 'refused' => $refused];
+
+    return phpregex_playground_timed($answer, 'exportMs', $started);
+}
+
+/**
+ * The expectation regex-phpunit takes, spelled as PHP: by name when the
+ * group has one, by number otherwise; a group that did not participate as
+ * false; group 0 left out, the assertion being the match. A name used
+ * twice is asserted by its numbers.
+ *
+ * @param array<string, array{string, int}|null> $groups
+ * @param list<string>                           $duplicates
+ */
+function phpregex_playground_expectation(array $groups, array $duplicates): string
+{
+    $named = [];
+    $pendingName = null;
+    $parts = [];
+    foreach ($groups as $key => $capture) {
+        if ('0' === (string) $key) {
+            continue;
+        }
+        if (!\is_numeric($key)) {
+            $pendingName = (string) $key;
+            if (\in_array($pendingName, $duplicates, true)) {
+                continue;
+            }
+            $parts[] = var_export($pendingName, true).' => '.phpregex_playground_capture($capture);
+            continue;
+        }
+        // PHP writes a group's name right before its number.
+        $name = $pendingName;
+        $pendingName = null;
+        if (null !== $name) {
+            $named[(int) $key] = $name;
+        }
+        if (null !== $name && !\in_array($name, $duplicates, true)) {
+            continue;
+        }
+        $parts[] = (int) $key.' => '.phpregex_playground_capture($capture);
+    }
+
+    return '['.implode(', ', $parts).']';
+}
+
+/**
+ * @param array{string, int}|null $capture
+ */
+function phpregex_playground_capture($capture): string
+{
+    if (!\is_array($capture)) {
+        return 'false';
+    }
+
+    return '['.var_export((string) $capture[0], true).', '.(int) $capture[1].']';
+}
+
+/**
+ * The first fault of a pattern that does not parse, else null.
+ *
+ * @return array<string, mixed>|null
+ */
+function phpregex_playground_parse_fault(Regex $library, string $regex): ?array
+{
+    $parsed = $library->parseTolerant($regex);
+    foreach ($parsed->errors as $error) {
+        return phpregex_playground_error($error, 'parse');
+    }
+
+    return null;
+}
+
+/**
+ * The answer with its timing written: hrtime() is an int on a server, a
+ * float in the browser engine.
+ *
+ * @param array<string, mixed> $answer
+ *
+ * @return array<string, mixed>
+ */
+function phpregex_playground_timed(array $answer, string $key, int|float $started): array
+{
+    $answer['timing'][$key] = round((hrtime(true) - $started) / 1e6, 2);
+
+    return $answer;
 }
 }

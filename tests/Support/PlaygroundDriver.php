@@ -33,10 +33,21 @@ namespace PHPRegex\Tests\Support;
  * @phpstan-type Fault array{source: string, class: ?string, message: string, position: ?int, code: ?string, hint: ?string}
  * @phpstan-type Finding array{id: string, message: string, offset: ?int, end: ?int, severity: string, hint: ?string}
  * @phpstan-type Token list{int, int, string}
- * @phpstan-type Analysis array{protocol: int, engine: Engine, library: array{version: string, jsonDumper: int}, target: Target, input: Input, delimited: Delimited|null, unitOf: list<int>, ast: array<string, mixed>|null, tokens: list<Token>|null, groupNames: array<string, string>, explain: ?string, errors: list<Fault>, engineError: ?string, matches: Matches|null, timing: array{analyzeMs: float, matchMs: float|null}}
- * @phpstan-type Match array{protocol: int, engine: Engine, input: Input, engineError: ?string, matches: Matches|null, timing: array{matchMs: float}}
- * @phpstan-type Lint array{protocol: int, lint: list<Finding>|null, timing: array{lintMs: float}}
- * @phpstan-type Description array{protocol: int, index: int, start: ?int, end: ?int, text: ?string}
+ * @phpstan-type Analysis array{protocol: int, notices: list<string>, engine: Engine, library: array{version: string, jsonDumper: int}, target: Target, input: Input, delimited: Delimited|null, unitOf: list<int>, ast: array<string, mixed>|null, tokens: list<Token>|null, groupNames: array<string, string>, explain: ?string, errors: list<Fault>, engineError: ?string, matches: Matches|null, timing: array{analyzeMs: float, matchMs: float|null}}
+ * @phpstan-type Match array{protocol: int, notices: list<string>, engine: Engine, input: Input, engineError: ?string, matches: Matches|null, timing: array{matchMs: float}}
+ * @phpstan-type Lint array{protocol: int, notices: list<string>, lint: list<Finding>|null, timing: array{lintMs: float}}
+ * @phpstan-type Description array{protocol: int, notices: list<string>, index: int, start: ?int, end: ?int, text: ?string}
+ * @phpstan-type Format array{protocol: int, notices: list<string>, format: array{pattern: string, changed: bool, refusal: array{code: string, message: string}|null}|null, error: Fault|null, timing: array{formatMs: float}}
+ * @phpstan-type Hotspot array{start: int, end: int, severity: string, pattern: string, trigger: ?string}
+ * @phpstan-type Confirmation array{confirmed: bool, evidence: ?string, backtrack_limit: ?int, samples: list<array<string, mixed>>}
+ * @phpstan-type Verdict array{severity: string, complexity: string, mode: string, confirmed: bool, error: ?string, hotspots: list<Hotspot>, witness: array{prefix: string, pump: string, suffix: string}|null, confirmation: Confirmation|null, linear: bool, attack: ?string, replay_error: ?string}
+ * @phpstan-type Redos array{protocol: int, notices: list<string>, redos: Verdict|null, error: Fault|null, timing: array{redosMs: float}}
+ * @phpstan-type TranspileDocument array{target: string, source: string, pattern: string, flags: string, literal: string, constructor: string, warnings: list<string>, notes: list<string>}
+ * @phpstan-type Transpile array{protocol: int, notices: list<string>, transpile: TranspileDocument|null, refusal: array{message: string}|null, error: Fault|null, timing: array{transpileMs: float}}
+ * @phpstan-type Samples array{protocol: int, notices: list<string>, samples: array{matching: list<string>, nonMatching: list<string>, seed: int, dropped: int}|null, error: Fault|null, timing: array{samplesMs: float}}
+ * @phpstan-type Check array{matched: ?int, error: ?string, groups: array<string, array{string, int}|null>|null}
+ * @phpstan-type Checks array{protocol: int, notices: list<string>, engine: Engine, checks: list<Check>, timing: array{checkMs: float}}
+ * @phpstan-type Export array{protocol: int, notices: list<string>, export: array{method: string, class: string, assertions: int, linear: bool, refused: int}|null, error: Fault|null, timing: array{exportMs: float}}
  */
 final class PlaygroundDriver
 {
@@ -223,6 +234,27 @@ final class PlaygroundDriver
         $answer = self::ask($driver, $root, $input);
 
         return $answer;
+    }
+
+    /**
+     * One of the tool requests (format, redos, transpile, samples, check,
+     * export): the op's own fields on top of the regex, judged for the
+     * target when one is given.
+     *
+     * @param array<string, mixed> $fields
+     * @param Target|null          $target
+     * @param list<string>         $ini
+     *
+     * @return array<string, mixed>
+     */
+    public static function tool(string $driver, string $root, string $op, string $regex, array $fields = [], ?array $target = null, array $ini = []): array
+    {
+        $input = ['op' => $op, 'regex' => $regex] + $fields;
+        if (null !== $target) {
+            $input['target'] = $target;
+        }
+
+        return self::ask($driver, $root, $input, $ini);
     }
 
     /**

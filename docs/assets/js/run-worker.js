@@ -242,6 +242,21 @@ async function analyze(message) {
   }
 }
 
+// An engine-only request on the engine the page shows: the check, like
+// the match, runs where the library does not.
+async function engineRequest(message, input) {
+  const id = message.id;
+  job = { id: id, capturing: false, metaOut: '' };
+  try {
+    const matcher = await playground(message.version, message.bundleUrl, id);
+    self.postMessage({ id: id, type: 'ready' });
+    const payload = await ask(matcher, input);
+    self.postMessage({ id: id, type: 'result', payload: payload, manifest: bundle ? bundle.manifest : null });
+  } catch (error) {
+    self.postMessage({ id: id, type: 'fatal', message: String((error && error.message) || error) });
+  }
+}
+
 async function match(message) {
   const id = message.id;
   job = { id: id, capturing: false, metaOut: '' };
@@ -296,6 +311,26 @@ self.onmessage = async (event) => {
       return;
     case 'describe':
       await analysisRequest(message, { op: 'describe', regex: message.regex, index: message.index });
+      return;
+    // The tools: the library answers on the analysing engine, judged for
+    // the engine the page shows; the check runs on that engine itself.
+    case 'format':
+      await analysisRequest(message, { op: 'format', regex: message.regex, width: message.width, compact: message.compact === true });
+      return;
+    case 'redos':
+      await analysisRequest(message, { op: 'redos', regex: message.regex, mode: message.mode });
+      return;
+    case 'transpile':
+      await analysisRequest(message, { op: 'transpile', regex: message.regex, target: message.target, pythonVersion: message.pythonVersion });
+      return;
+    case 'samples':
+      await analysisRequest(message, { op: 'samples', regex: message.regex });
+      return;
+    case 'export':
+      await analysisRequest(message, { op: 'export', regex: message.regex, subjects: message.subjects, checks: message.checks });
+      return;
+    case 'check':
+      await engineRequest(message, { op: 'check', regex: message.regex, subjects: message.subjects });
       return;
   }
 };
