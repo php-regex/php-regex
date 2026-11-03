@@ -34,6 +34,8 @@ final class StdioServerTest extends TestCase
 {
     private const INITIALIZE = ['protocolVersion' => '2025-06-18', 'capabilities' => [], 'clientInfo' => ['name' => 'test', 'version' => '0']];
 
+    private static string $log = '';
+
     #[Test]
     public function test_initialize_lists_the_five_tools(): void
     {
@@ -254,11 +256,13 @@ final class StdioServerTest extends TestCase
      */
     private static function at(array $answers, int $id, string ...$keys): mixed
     {
-        self::assertArrayHasKey($id, $answers, 'No answer to request '.$id);
+        // What the server logged is the first thing to read when an answer
+        // is not the one expected.
+        self::assertArrayHasKey($id, $answers, 'No answer to request '.$id.". Server log:\n".self::$log);
         $value = $answers[$id];
         foreach ($keys as $key) {
-            $value = JsonContract::asArray($value, 'No '.$key.' in the answer to request '.$id);
-            self::assertArrayHasKey($key, $value, 'No '.$key.' in the answer to request '.$id);
+            $value = JsonContract::asArray($value, 'No '.$key.' in the answer to request '.$id.". Server log:\n".self::$log);
+            self::assertArrayHasKey($key, $value, 'No '.$key.' in the answer to request '.$id.". Server log:\n".self::$log);
             $value = $value[$key];
         }
 
@@ -274,7 +278,7 @@ final class StdioServerTest extends TestCase
     private function serve(array $lines, array $target = [], ?ToolCatalog $catalog = null): array
     {
         [$exitCode, $stdout] = $this->serveRaw($lines, $target, $catalog);
-        $this->assertSame(0, $exitCode);
+        $this->assertSame(0, $exitCode, self::$log);
 
         $answers = [];
         foreach (explode("\n", rtrim($stdout, "\n")) as $line) {
@@ -330,6 +334,8 @@ final class StdioServerTest extends TestCase
                 }
             }
             $stdout = (string) file_get_contents($path);
+            rewind($errors);
+            self::$log = (string) stream_get_contents($errors);
         } finally {
             @unlink($path);
         }
