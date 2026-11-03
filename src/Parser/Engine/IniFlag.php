@@ -96,9 +96,11 @@ final class IniFlag
         // PHP, 31 on a 32-bit one.
         $longMax = (string) \PHP_INT_MAX;
         if ($width > \strlen($longMax) || ($width === \strlen($longMax) && strcmp($digits, $longMax) > 0)) {
-            // strtol() saturates: LONG_MAX keeps its low bits set, LONG_MIN
-            // none (a magnitude of 2^63, or 2^31, is LONG_MIN itself).
-            return '-' !== $sign;
+            // strtol() saturates: LONG_MAX keeps its low bits set; LONG_MIN
+            // (a magnitude of 2^63, or 2^31, is LONG_MIN itself) keeps the
+            // bits the mask selects, none on a 64-bit PHP, its sign bit on a
+            // 32-bit one.
+            return '-' !== $sign || 0 !== (\PHP_INT_MIN & $mask);
         }
 
         // The sign does not change whether the low bits are zero.

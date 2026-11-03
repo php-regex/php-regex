@@ -79,6 +79,11 @@ final class IniFlagTest extends TestCase
         yield 'padded signed 2^32 + 1' => ['setting' => '  +4294967297', 'expected' => true];
         // Past a C long, strtol() saturates: LONG_MAX keeps 32 bits set,
         // LONG_MIN none.
+        // Below LONG_MAX, the value is read whole: its own low bits decide,
+        // not the saturation rule, whatever its digit count or spelling.
+        yield '2^62, nineteen digits, low bits clear' => ['setting' => '4611686018427387904', 'expected' => false];
+        yield 'minus LONG_MAX, read whole, low bits set' => ['setting' => '-9223372036854775807', 'expected' => true];
+        yield '22 times 2^32, spelled above LONG_MAX letter by letter' => ['setting' => '94489280512', 'expected' => false];
         yield 'LONG_MAX' => ['setting' => '9223372036854775807', 'expected' => true];
         yield 'past LONG_MAX' => ['setting' => '9223372036854775808', 'expected' => true];
         yield 'far past LONG_MAX' => ['setting' => '99999999999999999999', 'expected' => true];
