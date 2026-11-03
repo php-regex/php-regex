@@ -13,7 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Mcp\Exception;
 
+use PHPRegex\Parser\Exception\ExceptionInterface as LibraryExceptionInterface;
+
 /**
- * Marker interface for every exception the MCP package throws.
+ * Marker interface for every exception the MCP package throws: caught by
+ * the library's own marker whichever package threw it.
  */
-interface ExceptionInterface extends \Throwable {}
+interface ExceptionInterface extends LibraryExceptionInterface {}
