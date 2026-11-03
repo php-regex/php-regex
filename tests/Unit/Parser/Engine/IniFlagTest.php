@@ -134,7 +134,8 @@ final class IniFlagTest extends TestCase
         yield "PHP's default backtrack limit" => ['value' => 1_000_000, 'expected' => 1_000_000];
         yield 'INT_MAX' => ['value' => 2147483647, 'expected' => 2147483647];
         yield 'minus one, unlimited' => ['value' => -1, 'expected' => \PHP_INT_SIZE > 4 ? 4294967295 : \PHP_INT_MAX];
-        yield 'INT_MIN' => ['value' => -2147483648, 'expected' => \PHP_INT_SIZE > 4 ? 2147483648 : \PHP_INT_MAX];
+        // Spelled -2147483648, the value is a float on a 32-bit PHP: PHP_INT_MIN is the int.
+        yield 'INT_MIN' => ['value' => \PHP_INT_SIZE > 4 ? -2147483648 : \PHP_INT_MIN, 'expected' => \PHP_INT_SIZE > 4 ? 2147483648 : \PHP_INT_MAX];
         if (\PHP_INT_SIZE > 4) {
             yield '2^32 - 1' => ['value' => 4294967295, 'expected' => 4294967295];
             yield '2^32 truncates to zero' => ['value' => 4294967296, 'expected' => 0];
