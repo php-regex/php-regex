@@ -422,7 +422,7 @@
       // The second step of a tool failed twice: the tab says so and the
       // first step is not asked again until the input moves.
       var who = step.purpose || step.type;
-      toolAnswers[who] = { key: requestKey(toolRequest(who) || step), payload: { error: { message: 'The engine did not answer.', position: null } }, request: step, checked: true };
+      toolAnswers[who] = { key: requestKey(toolRequest(who) || step), payload: { error: { message: 'The engine did not answer.', position: null } }, request: step, checked: true, failed: true };
       if (activeTool === who) {
         renderTool(who);
       }
@@ -528,7 +528,7 @@
         // A tab that failed holds the failure, and does not ask again
         // until the input moves.
         var failed = request.purpose && request.type === 'check' ? request.purpose : request.type;
-        toolAnswers[failed] = { key: requestKey(toolRequest(failed) || request), payload: { error: { message: payload.fatal, position: null } }, request: request, checked: true };
+        toolAnswers[failed] = { key: requestKey(toolRequest(failed) || request), payload: { error: { message: payload.fatal, position: null } }, request: request, checked: true, failed: true };
         if (activeTool === failed) {
           renderTool(failed);
         }
@@ -622,11 +622,15 @@
       // given up another chance: pressing Run is how a visitor retries.
       matchFor = null;
       delete failures[requestKey({ type: 'match', regex: request.regex, subject: request.subject, version: request.version })];
-      // A tab that gave up on this input asks again on the next Run.
+      // A tab that gave up on this input asks again on the next Run: its
+      // failure count goes, and so does the answer that held the failure.
       TOOLS.forEach(function (tool) {
         var stale = toolRequest(tool);
         if (stale) {
           delete failures[requestKey(stale)];
+        }
+        if (toolAnswers[tool] && toolAnswers[tool].failed) {
+          delete toolAnswers[tool];
         }
       });
       if (lastLint === null) {
