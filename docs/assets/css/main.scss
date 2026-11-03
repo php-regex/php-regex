@@ -99,7 +99,7 @@
   --mark-match-current: rgba(177, 78, 6, 0.42);
   --mark-error: rgba(177, 78, 6, 0.22);
   --scrim: rgba(24, 43, 69, 0.55);
-  --veil: rgba(247, 248, 244, 0.72);
+  --veil: rgba(247, 248, 244, 0.45);
   /* Elevations, in the ink the borders already speak. */
   --shadow-1: 0 1px 2px rgba(24, 43, 69, 0.06), 0 2px 8px rgba(24, 43, 69, 0.05);
   --shadow-2: 0 2px 6px rgba(24, 43, 69, 0.10), 0 12px 32px rgba(24, 43, 69, 0.14);
@@ -124,7 +124,7 @@
   --mark-match-current: rgba(233, 118, 37, 0.4);
   --mark-error: rgba(233, 118, 37, 0.2);
   --scrim: rgba(2, 6, 12, 0.62);
-  --veil: rgba(15, 27, 46, 0.72);
+  --veil: rgba(15, 27, 46, 0.5);
   /* The same two steps, deepened for navy paper: an ink-tinted shadow
      would vanish against it. */
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.30);
@@ -4727,30 +4727,44 @@ body.search-open {
 /* The engine's loader: over the window's body while the engine boots,
    the panels dimmed but legible under it, so the download is announced
    where the answer will land. The status line and the state word say
-   the same in their live regions; this one is for the eye. */
+   the same in their live regions; this one is for the eye, and the hand
+   passes through it: a field can be typed in while the engine comes. On
+   a narrow screen the body runs past the viewport, so the card keeps to
+   its top; on a wide one it sits in the middle. */
 .pg-loader {
   position: absolute;
   inset: 0;
   z-index: 2;
-  display: grid;
-  place-items: center;
   padding: 1rem;
+  pointer-events: none;
   background: var(--veil);
 }
 .pg-loader[hidden] {
   display: none;
 }
 .pg-loader-card {
+  position: sticky;
+  top: calc(var(--header-h) + 1.5rem);
   display: grid;
   justify-items: center;
   gap: .4rem;
   max-width: 22rem;
+  margin: 0 auto;
   padding: 1rem 1.25rem 1.1rem;
   text-align: center;
   background: var(--paper);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-m);
   box-shadow: var(--shadow-2);
+}
+@media (min-width: 1024px) {
+  .pg-loader {
+    display: grid;
+    place-items: center;
+  }
+  .pg-loader-card {
+    position: static;
+  }
 }
 .pg-loader-ring {
   width: 1.5rem;

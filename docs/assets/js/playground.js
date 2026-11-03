@@ -284,6 +284,7 @@
       if (!worker) {
         setStatus('This browser cannot run the engine: it has no module workers.', 'error');
         setState('Stopped', 'error');
+        hideLoader();
         return false;
       }
     }
@@ -1395,9 +1396,17 @@
   }
 
   function startStroll() {
-    var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (stroll.ended || still || !nodes.length) {
+    var motion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+    if (stroll.ended || (motion && motion.matches) || !nodes.length) {
       return;
+    }
+    // A preference set while the walk runs ends it as well.
+    if (motion && motion.addEventListener) {
+      motion.addEventListener('change', function (event) {
+        if (event.matches) {
+          stopStroll();
+        }
+      });
     }
     if ('IntersectionObserver' in window) {
       stroll.observer = new IntersectionObserver(function (entries) {

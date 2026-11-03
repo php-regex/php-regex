@@ -112,6 +112,7 @@ final class PlaygroundDefaultTest extends TestCase
         // The walk through the tree: a JavaScript motion the stylesheet's
         // reduced-motion rule cannot stop, so the script asks itself.
         $this->assertStringContainsString("matchMedia('(prefers-reduced-motion: reduce)')", $script);
+        $this->assertStringContainsString("motion.addEventListener('change'", $script, 'A preference set while the walk runs ends it too.');
         $this->assertStringContainsString('is-visiting', $stylesheet);
     }
 
