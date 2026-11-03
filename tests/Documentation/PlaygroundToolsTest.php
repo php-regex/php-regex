@@ -716,10 +716,58 @@ final class PlaygroundToolsTest extends TestCase
         $payload = self::export($bundle['driver'], $bundle['root'], '/(?<year>\d{4})-(\d{2})-(?<day>\d{2})(x)?/', $subjects);
         $this->assertNotNull($payload['export'], (string) json_encode($payload['error']));
 
+        $run = self::runExported($payload['export']['class']);
+        $this->assertGreaterThanOrEqual(5, $run['tests'], 'Four subject rows plus the compile test.');
+    }
+
+    /**
+     * A provider without a row is not a generator: PHPUnit would call it and
+     * get nothing of an iterable. The export then has no provider and no
+     * data-driven test, the compile test alone.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideSubjectsAssertingNothing')]
+    public function test_an_export_asserting_no_subject_keeps_the_compile_test_alone(array $subjects): void
+    {
+        $bundle = PlaygroundDriver::extractBundle();
+        $payload = self::export($bundle['driver'], $bundle['root'], self::CATASTROPHIC, $subjects);
+        $this->assertNotNull($payload['export'], (string) json_encode($payload['error']));
+
+        $method = $payload['export']['method'];
+        $this->assertStringNotContainsString('providePatternSubjects', $method);
+        $this->assertStringNotContainsString('DataProvider', $method);
+        $this->assertStringContainsString('test_the_pattern_compiles', $method);
+        foreach ($subjects as $subject) {
+            $this->assertStringContainsString(var_export($subject, true), $method, 'A refused subject is still named, as a comment.');
+        }
+
+        $run = self::runExported($payload['export']['class']);
+        $this->assertSame(1, $run['tests']);
+    }
+
+    /**
+     * @return iterable<string, array{subjects: list<string>}>
+     */
+    public static function provideSubjectsAssertingNothing(): iterable
+    {
+        yield 'no subject' => ['subjects' => []];
+        yield 'every subject refused' => ['subjects' => [str_repeat('a', 40).'!']];
+    }
+
+    /**
+     * The exported class run under this repository's PHPUnit, with
+     * regex-phpunit autoloaded: it must pass.
+     *
+     * @return array{tests: int}
+     */
+    private static function runExported(string $class): array
+    {
         $dir = sys_get_temp_dir().'/phpregex-playground-export-'.bin2hex(random_bytes(6));
         mkdir($dir);
         $file = $dir.'/PatternTest.php';
-        file_put_contents($file, $payload['export']['class']);
+        file_put_contents($file, $class);
 
         try {
             $command = [
@@ -730,20 +778,21 @@ final class PlaygroundToolsTest extends TestCase
                 $file,
             ];
             $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $dir);
-            $this->assertIsResource($process);
+            self::assertIsResource($process);
             $stdout = (string) stream_get_contents($pipes[1]);
             $stderr = (string) stream_get_contents($pipes[2]);
             fclose($pipes[1]);
             fclose($pipes[2]);
             $exit = proc_close($process);
             $junit = (string) @file_get_contents($dir.'/junit.xml');
-            $this->assertSame(0, $exit, "The exported test failed.\n".$stdout.$stderr."\n".$junit."\n".$payload['export']['class']);
-            $this->assertSame(1, preg_match('/<testsuite [^>]*\btests="(\d+)"/', $junit, $tests), $junit);
-            $this->assertSame(1, preg_match('/<testsuite [^>]*\bfailures="(\d+)"/', $junit, $failures));
-            $this->assertSame(1, preg_match('/<testsuite [^>]*\berrors="(\d+)"/', $junit, $errors));
-            $this->assertGreaterThanOrEqual(5, (int) $tests[1], 'Four subject rows plus the compile test.');
-            $this->assertSame('0', $failures[1]);
-            $this->assertSame('0', $errors[1]);
+            self::assertSame(0, $exit, "The exported test failed.\n".$stdout.$stderr."\n".$junit."\n".$class);
+            self::assertSame(1, preg_match('/<testsuite [^>]*\btests="(\d+)"/', $junit, $tests), $junit);
+            self::assertSame(1, preg_match('/<testsuite [^>]*\bfailures="(\d+)"/', $junit, $failures));
+            self::assertSame(1, preg_match('/<testsuite [^>]*\berrors="(\d+)"/', $junit, $errors));
+            self::assertSame('0', $failures[1]);
+            self::assertSame('0', $errors[1]);
+
+            return ['tests' => (int) $tests[1]];
         } finally {
             foreach (glob($dir.'/*') ?: [] as $leftover) {
                 unlink($leftover);

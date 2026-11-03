@@ -1342,9 +1342,11 @@ if (!\function_exists('phpregex_playground_run')) {
         // The docblock openers are spelled in two pieces: the bundle holds no
         // file with one, the stripped driver included.
         $docblock = '    /'.str_repeat('*', 2);
-        $method = implode("\n", [
-            '    private const PATTERN = '.var_export($regex, true).';',
-            '',
+        // A provider without a row would not be a generator, and PHPUnit
+        // would get nothing of an iterable from it: when no subject is
+        // asserted, the refusals stand as comments before the compile test,
+        // which is then the test alone.
+        $dataDriven = $assertions > 1 ? [
             $docblock,
             '     * @return iterable<string, array{subject: string, matches: bool, expectation: array<int|string, mixed>}>',
             '     */',
@@ -1367,6 +1369,11 @@ if (!\function_exists('phpregex_playground_run')) {
             '        self::assertPatternDoesNotMatch(self::PATTERN, $subject);',
             '    }',
             '',
+        ] : array_map(static fn (string $row): string => substr($row, 4), $rows);
+        $method = implode("\n", [
+            '    private const PATTERN = '.var_export($regex, true).';',
+            '',
+            ...$dataDriven,
             '    public function test_the_pattern_compiles(): void',
             '    {',
             '        self::assertPatternCompiles(self::PATTERN);',
