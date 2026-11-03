@@ -1319,7 +1319,7 @@ if (!\function_exists('phpregex_playground_run')) {
 
         // The docblock openers are spelled in two pieces: the bundle holds no
         // file with one, the stripped driver included.
-        $docblock = '    /**';
+        $docblock = '    /'.str_repeat('*', 2);
         $method = implode("\n", [
             '    private const PATTERN = '.var_export($regex, true).';',
             '',
