@@ -677,6 +677,11 @@
       if (sampleRequest) {
         toolAnswers.redos = { key: requestKey(sampleRequest), payload: sample.redos, request: sampleRequest, checked: true };
         lastHotspots = sample.redos.redos && sample.redos.redos.hotspots ? sample.redos.redos.hotspots : null;
+        if (lastHotspots) {
+          // The mirror was painted before the verdict was read: the
+          // hotspots are tinted now, not on the next hover.
+          renderPatternMirror(payload, request.regex, lintFor === request.regex ? lastLint : null);
+        }
       }
     }
     renderTool(activeTool, false);
