@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Parser\Syntax;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -102,8 +103,9 @@ final class StartOptionsTest extends TestCase
         // Oracle: PHP's PCRE refuses it, "(*VERB) not recognized or
         // malformed". Some engine builds word the refusal without the
         // offset: the offset is compared only where the engine names one.
-        $this->assertFalse(@preg_match($pattern, ''));
-        $namesOffset = 1 === preg_match('/at offset (\d++)$/', (string) (error_get_last()['message'] ?? ''), $offset);
+        $warning = EngineProbe::warning($pattern);
+        $this->assertNotNull($warning, 'Oracle: PCRE refuses the pattern.');
+        $namesOffset = 1 === preg_match('/at offset (\d++)$/', $warning, $offset);
 
         $result = RegexParser::create(['cache' => null])->validate($pattern);
 
