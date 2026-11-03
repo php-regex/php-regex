@@ -59,4 +59,20 @@ enum FormatRefusal: string
      * PCRE does, and end the pattern elsewhere.
      */
     case DelimiterMisread = 'delimiter_misread';
+
+    /**
+     * The refusal in one sentence, as the console and the MCP server print
+     * it after "left as written".
+     */
+    public function note(): string
+    {
+        return match ($this) {
+            self::NewlineConvention => 'left as written: under (*CR), (*CRLF) or (*NUL) a # comment does not end at a line feed, so the pattern cannot be laid out over lines.',
+            self::SpacedQuantifier => 'left as written: a quantifier written with spaces, such as a{ 1,2 }, means something else before PCRE2 10.43 once x is added or dropped.',
+            self::ExtendedModeSwitchedOff => 'left as written: (?-x) or (?^) turns x off at the top level, where a line break would be a literal.',
+            self::LineBreakInName => 'left as written: a line break inside a name, such as (*MARK:…), has no escape, so it could not be told from layout.',
+            self::ParenthesisInComment => 'left as written: a # comment holds the ")" that balances the delimiter, and no (?#…) comment can hold it.',
+            self::DelimiterMisread => 'left as written: a \\c\\ hides a character of the delimiter from PHP, which laid out it would read, ending the pattern elsewhere.',
+        };
+    }
 }

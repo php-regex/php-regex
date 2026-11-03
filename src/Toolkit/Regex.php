@@ -41,6 +41,7 @@ use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\RegexNode;
@@ -342,6 +343,9 @@ final class Regex
      * unless it holds a raw line break, which is respelled as an escape.
      *
      * @throws InvalidRegexOptionException when the width is below 1
+     * @throws LexerException              when the pattern does not tokenize
+     * @throws ParserException             when the pattern does not parse
+     * @throws LimitException              when the pattern passes a limit of the library
      * @throws FormattingException         when the result would not read back as the same pattern
      */
     public function format(string $regex, int $width = 80): FormatResult
@@ -354,6 +358,9 @@ final class Regex
     /**
      * Write a pattern on one line, without x, layout or comments.
      *
+     * @throws LexerException      when the pattern does not tokenize
+     * @throws ParserException     when the pattern does not parse
+     * @throws LimitException      when the pattern passes a limit of the library
      * @throws FormattingException when the result would not read back as the same pattern
      */
     public function compact(string $regex): FormatResult
