@@ -75,6 +75,21 @@ final class PlaygroundToolsTest extends TestCase
         $this->assertSame([], $payload['notices'], 'A warning the driver itself silenced is no notice.');
     }
 
+    /**
+     * A host may disable ini_set(): the check still answers, the engine
+     * running with the JIT setting it has.
+     */
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_the_check_answers_where_ini_set_is_disabled(string $driver, string $root): void
+    {
+        $payload = self::check($driver, $root.'/does-not-exist', '/(?<a>x)/', ['xz', 'q'], ['disable_functions=ini_set']);
+
+        $this->assertNotNull($payload['checks'], (string) json_encode($payload));
+        $this->assertSame(1, $payload['checks'][0]['matched']);
+        $this->assertSame(0, $payload['checks'][1]['matched']);
+    }
+
     #[Test]
     #[DataProvider('provideDrivers')]
     public function test_format_lays_out_at_the_width(string $driver, string $root): void

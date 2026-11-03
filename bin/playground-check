@@ -173,6 +173,8 @@ async function main() {
   expect(samples.samples && samples.samples.matching.length > 0 && samples.samples.nonMatching.length > 0 && samples.samples.dropped === 0, `The generators gave ${JSON.stringify(samples.samples)}.`);
 
   const checked = await ask(main84, { op: 'check', regex: data.default.regex, subjects: (samples.samples ? samples.samples.matching : []).concat(samples.samples ? samples.samples.nonMatching : []) });
+  const sampleCount = samples.samples ? samples.samples.matching.length + samples.samples.nonMatching.length : 0;
+  expect(checked.checks && checked.checks.length === sampleCount, `The engine checked ${checked.checks ? checked.checks.length : 0} of ${sampleCount} samples.`);
   const agreed = checked.checks && checked.checks.every((check, i) => check.matched === (i < samples.samples.matching.length ? 1 : 0));
   expect(agreed === true, `The engine disagrees with a sample it was said to have checked: ${JSON.stringify(checked.checks)}`);
 

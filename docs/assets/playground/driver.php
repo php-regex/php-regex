@@ -1226,13 +1226,17 @@ if (!\function_exists('phpregex_playground_run')) {
         });
 
         try {
-            // ini_set() may be disabled: the engine then runs as it is set,
-            // which the browser engine already runs without JIT.
-            @ini_set('pcre.jit', '0');
+            // ini_set() may be disabled, in which case PHP 8 has no such
+            // function: the engine then runs as it is set, which the browser
+            // engine already runs without JIT.
+            $toggles = \function_exists('ini_set');
+            if ($toggles) {
+                @ini_set('pcre.jit', '0');
+            }
             $result = preg_match($regex, $subject, $groups, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL);
             $error = preg_last_error_msg();
         } finally {
-            if (false !== $jit) {
+            if ($toggles && false !== $jit) {
                 @ini_set('pcre.jit', $jit);
             }
             restore_error_handler();
