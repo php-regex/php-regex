@@ -38,6 +38,11 @@ final class IniFlagTest extends TestCase
      */
     public static function provideSettings(): iterable
     {
+        // A C long is as wide as a PHP int: a magnitude past PHP_INT_MAX
+        // saturates, which keeps the bits a 32-bit mask selects (LONG_MAX's
+        // low bits, LONG_MIN's sign bit) and so reads as on, where a 64-bit
+        // long is read whole and its low 32 bits decide.
+        $wide = \PHP_INT_SIZE > 4;
         yield 'zero' => ['setting' => '0', 'expected' => false];
         yield 'one' => ['setting' => '1', 'expected' => true];
         yield 'empty, as php -d pcre.jit=off leaves it' => ['setting' => '', 'expected' => false];
@@ -67,11 +72,11 @@ final class IniFlagTest extends TestCase
         yield 'many leading zeros' => ['setting' => '00000000000000000000000001', 'expected' => true];
         yield 'hexadecimal' => ['setting' => '0x1', 'expected' => false];
         // atoi() returns a C int: the value keeps its low 32 bits.
-        yield '2^32 truncates to zero' => ['setting' => '4294967296', 'expected' => false];
+        yield '2^32 truncates to zero' => ['setting' => '4294967296', 'expected' => !$wide];
         yield '2^32 + 1 truncates to one' => ['setting' => '4294967297', 'expected' => true];
-        yield '2^32 with trailing text' => ['setting' => '4294967296abc', 'expected' => false];
+        yield '2^32 with trailing text' => ['setting' => '4294967296abc', 'expected' => !$wide];
         yield '2^33 + 1 truncates to one' => ['setting' => '8589934593', 'expected' => true];
-        yield 'minus 2^32 truncates to zero' => ['setting' => '-4294967296', 'expected' => false];
+        yield 'minus 2^32 truncates to zero' => ['setting' => '-4294967296', 'expected' => !$wide];
         yield '2^32 - 1' => ['setting' => '4294967295', 'expected' => true];
         yield '2^31, past INT_MAX' => ['setting' => '2147483648', 'expected' => true];
         yield 'INT_MAX' => ['setting' => '2147483647', 'expected' => true];
@@ -81,15 +86,15 @@ final class IniFlagTest extends TestCase
         // LONG_MIN none.
         // Below LONG_MAX, the value is read whole: its own low bits decide,
         // not the saturation rule, whatever its digit count or spelling.
-        yield '2^62, nineteen digits, low bits clear' => ['setting' => '4611686018427387904', 'expected' => false];
+        yield '2^62, nineteen digits, low bits clear' => ['setting' => '4611686018427387904', 'expected' => !$wide];
         yield 'minus LONG_MAX, read whole, low bits set' => ['setting' => '-9223372036854775807', 'expected' => true];
-        yield '22 times 2^32, spelled above LONG_MAX letter by letter' => ['setting' => '94489280512', 'expected' => false];
+        yield '22 times 2^32, spelled above LONG_MAX letter by letter' => ['setting' => '94489280512', 'expected' => !$wide];
         yield 'LONG_MAX' => ['setting' => '9223372036854775807', 'expected' => true];
         yield 'past LONG_MAX' => ['setting' => '9223372036854775808', 'expected' => true];
         yield 'far past LONG_MAX' => ['setting' => '99999999999999999999', 'expected' => true];
         yield '2^64' => ['setting' => '18446744073709551616', 'expected' => true];
-        yield 'LONG_MIN' => ['setting' => '-9223372036854775808', 'expected' => false];
-        yield 'far past LONG_MIN' => ['setting' => '-99999999999999999999', 'expected' => false];
+        yield 'LONG_MIN' => ['setting' => '-9223372036854775808', 'expected' => !$wide];
+        yield 'far past LONG_MIN' => ['setting' => '-99999999999999999999', 'expected' => !$wide];
     }
 
     /**
@@ -159,6 +164,9 @@ final class IniFlagTest extends TestCase
      */
     public static function provideDisplayErrorsSettings(): iterable
     {
+        // Past PHP_INT_MAX a magnitude saturates to LONG_MAX, whose low byte
+        // is set, where a 64-bit long is read whole.
+        $wide = \PHP_INT_SIZE > 4;
         yield 'zero' => ['setting' => '0', 'expected' => false];
         yield 'one' => ['setting' => '1', 'expected' => true];
         yield 'empty, as php -d display_errors=off leaves it' => ['setting' => '', 'expected' => false];
@@ -180,7 +188,7 @@ final class IniFlagTest extends TestCase
         yield '256 truncates to zero' => ['setting' => '256', 'expected' => false];
         yield '257 truncates to one' => ['setting' => '257', 'expected' => true];
         yield '512 truncates to zero' => ['setting' => '512', 'expected' => false];
-        yield '2^32 truncates to zero' => ['setting' => '4294967296', 'expected' => false];
+        yield '2^32 truncates to zero' => ['setting' => '4294967296', 'expected' => !$wide];
         yield 'past LONG_MAX saturates, low bits set' => ['setting' => '9223372036854775808', 'expected' => true];
         yield 'LONG_MIN, low bits clear' => ['setting' => '-9223372036854775808', 'expected' => false];
     }
