@@ -243,7 +243,7 @@ final class JsonDumperTest extends TestCase
             'pattern' => '/(?(VERSION>=10.4)x)/',
             'expected' => [
                 'type' => 'conditional', 'start' => 0, 'end' => 19,
-                'condition' => ['type' => 'version_condition', 'start' => 3, 'end' => 15, 'operator' => '>=', 'version' => '10.4'],
+                'condition' => ['type' => 'version_condition', 'start' => 3, 'end' => 16, 'operator' => '>=', 'version' => '10.4'],
                 'yes' => ['type' => 'literal', 'start' => 17, 'end' => 18, 'value' => 'x'],
                 'no' => ['type' => 'literal', 'start' => 18, 'end' => 18, 'value' => ''],
             ],

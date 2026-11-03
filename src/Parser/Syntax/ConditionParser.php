@@ -563,7 +563,7 @@ final class ConditionParser
             $condition->operator,
             $condition->version,
             $startPosition,
-            $this->stream->previous()->position,
+            $this->stream->previous()->end(),
         );
     }
 
@@ -655,7 +655,7 @@ final class ConditionParser
             return null;
         }
 
-        $endPosition = $this->stream->previous()->position;
+        $endPosition = $this->stream->previous()->end();
 
         // "(?(R&name)...)" asks whether the most recent recursion is into the
         // named group.
@@ -669,7 +669,7 @@ final class ConditionParser
                 throw $this->state->error(\sprintf('Missing ")" to close the condition name at position %d.', $position), ErrorCode::GroupNameUnterminated, $position);
             }
 
-            return new SubroutineNode('R&'.$name, '', $startPosition, $this->stream->previous()->position);
+            return new SubroutineNode('R&'.$name, '', $startPosition, $this->stream->current()->position);
         }
 
         // Anything else PCRE reads as a name up to the ")": a sign, as in
@@ -694,7 +694,7 @@ final class ConditionParser
         ($this->recursionTest)($name);
 
         if ('' !== $digits) {
-            $endPosition = $this->stream->previous()->position;
+            $endPosition = $this->stream->previous()->end();
         }
 
         return new SubroutineNode($name, '', $startPosition, $endPosition);
