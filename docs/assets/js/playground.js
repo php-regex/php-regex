@@ -390,6 +390,14 @@
     } else if (request.type === 'describe') {
       describeWanted = -1;
       setStatus('', '');
+    } else if (TOOLS.indexOf(request.type) !== -1 || request.type === 'check') {
+      // A tab's request is given up for this input: the tab says so, and
+      // Run is how the visitor asks again.
+      var tab = request.purpose || request.type;
+      setStatus(reason + ' The engine could not finish this tab; press Run to try again.', 'warn');
+      if (activeTool === tab) {
+        renderTool(tab, false);
+      }
     } else {
       setStatus(reason + ' The engine could not finish on this input; the last answer stays below. Change the pattern or the subject to try again.', 'error');
     }
@@ -1590,7 +1598,29 @@
   // announceResult: true when the answer just arrived or a setting of the
   // tab moved, false on a rerender (a new analysis, a tab switch), so the
   // match count said by the run is not spoken over.
+  //
+  // A rebuild drops every control of the panel: the one that had the
+  // keyboard's focus is found again at its place among the new ones, so a
+  // change made from a select or a button never sends the focus to the
+  // body.
   function renderTool(tool, announceResult) {
+    var panel = toolPanel(tool);
+    var focused = document.activeElement;
+    var place = panel && focused && panel.contains(focused) ? focusables(panel).indexOf(focused) : -1;
+    renderToolPanel(tool, announceResult);
+    if (place !== -1) {
+      var again = focusables(panel)[place];
+      if (again) {
+        again.focus();
+      }
+    }
+  }
+
+  function focusables(panel) {
+    return Array.prototype.slice.call(panel.querySelectorAll('button, select, input, textarea, a[href], [tabindex]'));
+  }
+
+  function renderToolPanel(tool, announceResult) {
     var panel = toolPanel(tool);
     clear(panel);
     if (!current) {
