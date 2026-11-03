@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -41,9 +42,7 @@ final class PcreErrorOffsetRulesTest extends TestCase
 
         // The running engine says where: its offset is the one to report,
         // whatever release it is. The row's offsets stand where it says none.
-        error_clear_last();
-        @preg_match($pattern, '');
-        if (1 === preg_match('/at offset (\d++)/', error_get_last()['message'] ?? '', $running)) {
+        if (1 === preg_match('/at offset (\d++)/', (string) EngineProbe::warning($pattern), $running)) {
             $this->assertSame((int) $running[1], $result->offset, \sprintf('%s: PCRE2 %s reports offset %d, the library %s: %s', $pattern, \PCRE_VERSION, (int) $running[1], var_export($result->offset, true), explode("\n", (string) $result->error)[0]));
         }
 

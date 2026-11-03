@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit;
 
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,8 +31,7 @@ final class RuntimePcreDetectionTest extends TestCase
     #[DataProvider('provideVersionDependentPatterns')]
     public function test_validate_follows_the_pcre2_this_php_links(string $pattern): void
     {
-        error_clear_last();
-        $compiles = false !== @preg_match($pattern, '') || null === error_get_last();
+        $compiles = EngineProbe::compiles($pattern);
 
         $result = Regex::create(['cache' => null])->validate($pattern);
 
