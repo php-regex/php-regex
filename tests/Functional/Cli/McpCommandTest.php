@@ -59,15 +59,20 @@ final class McpCommandTest extends TestCase
             // A hard deadline: a server that never sees the end of its input
             // is killed and the test fails with what it wrote, never hangs.
             $deadline = microtime(true) + 30;
-            while (proc_get_status($process)['running'] && microtime(true) < $deadline) {
+            $status = proc_get_status($process);
+            while ($status['running'] && microtime(true) < $deadline) {
                 usleep(50_000);
+                $status = proc_get_status($process);
             }
-            if (proc_get_status($process)['running']) {
+            if ($status['running']) {
                 proc_terminate($process, 9);
                 proc_close($process);
                 $this->fail("regex mcp did not end within 30 s.\nstdout: ".(string) file_get_contents($directory.'/stdout')."\nstderr: ".(string) file_get_contents($directory.'/stderr'));
             }
-            $exitCode = proc_close($process);
+            // Before PHP 8.3, proc_close() answers -1 once proc_get_status()
+            // has read the exit code: the last status holds it then.
+            $closed = proc_close($process);
+            $exitCode = -1 === $closed ? $status['exitcode'] : $closed;
 
             $stdout = (string) file_get_contents($directory.'/stdout');
             $this->assertSame(0, $exitCode, (string) file_get_contents($directory.'/stderr'));
