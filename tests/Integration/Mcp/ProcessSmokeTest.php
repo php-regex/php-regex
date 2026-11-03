@@ -21,6 +21,7 @@ use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RequiresFunction;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -31,6 +32,10 @@ use PHPUnit\Framework\TestCase;
  */
 #[Group('slow')]
 #[RequiresFunction('proc_open')]
+// The SDK's client reads the server's pipes without blocking, which a
+// Windows pipe does not offer: a read there waits for bytes a quiet
+// server never writes, and the client's deadlines never come round.
+#[RequiresOperatingSystem('Linux|Darwin')]
 final class ProcessSmokeTest extends TestCase
 {
     /**

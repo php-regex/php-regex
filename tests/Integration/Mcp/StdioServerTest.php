@@ -19,6 +19,7 @@ use PHPRegex\Mcp\ToolCatalog;
 use PHPRegex\Mcp\ToolDefinition;
 use PHPRegex\Mcp\ToolInterface;
 use PHPRegex\Mcp\ToolResult;
+use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
@@ -309,8 +310,10 @@ final class StdioServerTest extends TestCase
         // The input is a socket pair, which the transport selects on; the
         // output is a file, read once the session ended: a socket read only
         // after the session would fill under a long answer and block the
-        // transport's write forever, the test being its only reader.
-        $pair = stream_socket_pair(\STREAM_PF_UNIX, \STREAM_SOCK_STREAM, \STREAM_IPPROTO_IP);
+        // transport's write forever, the test being its only reader. The
+        // pair's domain is the host's: Windows has no Unix domain for a
+        // pair, and the others no internet one.
+        $pair = stream_socket_pair(Path::onWindows() ? \STREAM_PF_INET : \STREAM_PF_UNIX, \STREAM_SOCK_STREAM, \STREAM_IPPROTO_IP);
         $this->assertIsArray($pair);
         [$clientWrites, $serverReads] = $pair;
         $path = (string) tempnam(sys_get_temp_dir(), 'regex-mcp-out-');

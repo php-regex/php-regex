@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Mcp;
 
+use PHPRegex\Parser\Text\Path;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -34,7 +35,7 @@ final class SdkIsolationTest extends TestCase
                 continue;
             }
             if (1 === preg_match('~(?<![\w\\\\])\\\\?Mcp\\\\[A-Z]~', (string) file_get_contents($file->getPathname()))) {
-                $importing[] = substr($file->getPathname(), \strlen($root) + 1);
+                $importing[] = Path::fromHost(substr($file->getPathname(), \strlen($root) + 1));
             }
         }
 
