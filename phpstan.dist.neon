@@ -115,6 +115,7 @@ parameters:
     scanFiles:
         - bin/corpus
         - bin/corpus-lint
+        - docs/assets/playground/driver.php
 
     # The benchmarks' attributes live in the phpbench tool's own vendor.
     scanDirectories:

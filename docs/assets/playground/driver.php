@@ -1315,7 +1315,7 @@ if (!\function_exists('phpregex_playground_run')) {
                 continue;
             }
             $assertions++;
-            $expectation = 1 === $check['matched'] ? phpregex_playground_expectation((array) ($check['groups'] ?? []), $duplicates) : '[]';
+            $expectation = 1 === $check['matched'] ? phpregex_playground_expectation((array) ($check['groups'] ?? []), $names, $duplicates) : '[]';
             $rows[] = \sprintf(
                 "        yield 'subject %d' => ['subject' => %s, 'matches' => %s, 'expectation' => %s];",
                 $i + 1,
@@ -1396,36 +1396,37 @@ if (!\function_exists('phpregex_playground_run')) {
      * twice is asserted by its numbers.
      *
      * @param array<string, array{string, int}|null> $groups
+     * @param array<string, string>                  $names      the group names of the pattern, by number
      * @param list<string>                           $duplicates
      */
-    function phpregex_playground_expectation(array $groups, array $duplicates): string
+    function phpregex_playground_expectation(array $groups, array $names, array $duplicates): string
     {
-        $named = [];
-        $pendingName = null;
-        $parts = [];
+        // The engine writes a group under its name and its number; a JSON
+        // round-trip may put the number first. The expectation goes by
+        // number, and names the group when the pattern names it once.
+        $numbered = [];
+        $present = [];
         foreach ($groups as $key => $capture) {
-            if ('0' === (string) $key) {
+            if (\is_numeric($key)) {
+                $numbered[(int) $key] = $capture;
+            } else {
+                $present[(string) $key] = true;
+            }
+        }
+        ksort($numbered);
+
+        $parts = [];
+        foreach ($numbered as $number => $capture) {
+            if (0 === $number) {
                 continue;
             }
-            if (!\is_numeric($key)) {
-                $pendingName = (string) $key;
-                if (\in_array($pendingName, $duplicates, true)) {
-                    continue;
-                }
-                $parts[] = var_export($pendingName, true).' => '.phpregex_playground_capture($capture);
+            $name = $names[(string) $number] ?? null;
+            if (\is_string($name) && isset($present[$name]) && !\in_array($name, $duplicates, true)) {
+                $parts[] = var_export($name, true).' => '.phpregex_playground_capture($capture);
 
                 continue;
             }
-            // PHP writes a group's name right before its number.
-            $name = $pendingName;
-            $pendingName = null;
-            if (null !== $name) {
-                $named[(int) $key] = $name;
-            }
-            if (null !== $name && !\in_array($name, $duplicates, true)) {
-                continue;
-            }
-            $parts[] = (int) $key.' => '.phpregex_playground_capture($capture);
+            $parts[] = $number.' => '.phpregex_playground_capture($capture);
         }
 
         return '['.implode(', ', $parts).']';

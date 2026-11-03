@@ -330,7 +330,7 @@ final class PlaygroundToolsTest extends TestCase
         $answer = PlaygroundDriver::tool($driver, $root, 'transpile', '/^a$/m', ['dialect' => 'js'], ['php' => '8.0.30', 'pcre' => '10.35']);
 
         $this->assertNull($answer['refusal']);
-        $this->assertNotNull($answer['transpile']);
+        $this->assertIsArray($answer['transpile']);
         $this->assertSame('/(?:^|(?<=\n)(?!$))a(?=\n|$)/', $answer['transpile']['literal']);
         $this->assertSame('javascript', $answer['transpile']['target']);
     }
@@ -599,6 +599,22 @@ final class PlaygroundToolsTest extends TestCase
         $payload = self::export($driver, $root, '/a(b)/', ['ab'], ['checks' => $checks]);
 
         $this->assertStringContainsString("1 => ['b', 1]", $payload['export']['method'] ?? '');
+    }
+
+    /**
+     * A browser's JSON round-trip may list a group's number before its name:
+     * the expectation goes by group number and names the group once.
+     */
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_export_names_a_group_once_whatever_the_order_of_its_keys(string $driver, string $root): void
+    {
+        $checks = [['matched' => 1, 'error' => null, 'groups' => ['0' => ['2026', 0], '1' => ['2026', 0], 'date' => ['2026', 0]]]];
+        $payload = self::export($driver, $root, '/(?<date>\d{4})/', ['2026'], ['checks' => $checks]);
+
+        $method = $payload['export']['method'] ?? '';
+        $this->assertStringContainsString("'date' => ['2026', 0]", $method);
+        $this->assertStringNotContainsString('1 =>', $method, 'The number is the name\'s, never written twice.');
     }
 
     #[Test]
