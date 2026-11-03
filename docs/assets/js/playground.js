@@ -1933,7 +1933,8 @@
         refreshFields();
         analyzeNow();
       });
-      append.setAttribute('aria-label', 'Append every sample to the subject, one per line');
+      // The visible words stay in the name, for a voice that says them.
+      append.setAttribute('aria-label', 'Add all as lines: every sample appended to the subject, one per line');
       row.appendChild(append);
     }
     if (samples.dropped) {
