@@ -18,7 +18,8 @@ declare(strict_types=1);
  *   docs/assets/playground/bundle.json   the core library and the driver,
  *                                        comments stripped, as one JSON map
  *                                        with a manifest
- *   docs/_data/playground.json           the driver's answer for the default
+ *   docs/_data/playground.json           the driver's answers (analysis, lint,
+ *                                        ReDoS verdict) for the default
  *                                        pattern and subject, judged for the
  *                                        default browser engine, shown on the
  *                                        home before a visitor asks for a run
@@ -155,16 +156,23 @@ function defaultData(array $files): array
     foreach ($files as $path => $source) {
         $target = $dir.'/'.$path;
         if (!is_dir(\dirname($target))) {
-            mkdir(\dirname($target), 0777, true);
+            mkdir(\dirname($target), 0o777, true);
         }
         file_put_contents($target, $source);
     }
 
     $analyze = answer($dir, ['op' => 'analyze', 'regex' => DEFAULT_REGEX, 'subject' => DEFAULT_SUBJECT, 'target' => DEFAULT_TARGET]);
     $lint = answer($dir, ['op' => 'lint', 'regex' => DEFAULT_REGEX, 'target' => DEFAULT_TARGET]);
-    unset($analyze->engine, $analyze->timing, $lint->timing);
+    $redos = answer($dir, ['op' => 'redos', 'regex' => DEFAULT_REGEX, 'target' => DEFAULT_TARGET]);
+    // What belongs to the machine that answered stays out of the sample:
+    // the engine, the timings, the notices it raised, and the PHP and
+    // PCRE2 the verdict names as having run it.
+    unset($analyze->engine, $analyze->timing, $analyze->notices, $lint->timing, $lint->notices, $redos->timing, $redos->notices);
+    if (isset($redos->redos) && $redos->redos instanceof stdClass) {
+        unset($redos->redos->pcre_version, $redos->redos->php_version);
+    }
 
-    foreach ([$analyze, $lint] as $payload) {
+    foreach ([$analyze, $lint, $redos] as $payload) {
         if (isset($payload->fatal)) {
             fwrite(\STDERR, 'The bundled driver failed on the sample: '.$payload->fatal."\n");
             exit(1);
@@ -181,6 +189,7 @@ function defaultData(array $files): array
         'default' => ['regex' => DEFAULT_REGEX, 'subject' => DEFAULT_SUBJECT, 'target' => DEFAULT_TARGET],
         'analyze' => $analyze,
         'lint' => $lint,
+        'redos' => $redos,
     ];
 }
 

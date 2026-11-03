@@ -8,7 +8,7 @@
         }
     },
     "analyze": {
-        "protocol": 1,
+        "protocol": 2,
         "library": {
             "version": "2.0.0-DEV",
             "jsonDumper": 1
@@ -333,7 +333,39 @@
         }
     },
     "lint": {
-        "protocol": 1,
+        "protocol": 2,
         "lint": []
+    },
+    "redos": {
+        "protocol": 2,
+        "redos": {
+            "severity": "safe",
+            "score": 0,
+            "mode": "theoretical",
+            "confirmed": false,
+            "confidence": "high",
+            "vulnerable_part": null,
+            "trigger": null,
+            "false_positive_risk": null,
+            "suggested_rewrite": null,
+            "recommendations": [],
+            "error": null,
+            "findings": [],
+            "hotspots": [],
+            "confirmation": null,
+            "complexity": "linear",
+            "degree": null,
+            "proof": "proven",
+            "witness": null,
+            "replayed": null,
+            "abstractions": [],
+            "analysis_version": "1",
+            "search_cost": null,
+            "upper_bound_degree": 0,
+            "replay_error": null,
+            "linear": true,
+            "attack": null
+        },
+        "error": null
     }
 }

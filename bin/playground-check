@@ -124,12 +124,60 @@ async function main() {
   const analyze = await ask(main84, { op: 'analyze', regex: data.default.regex, subject: data.default.subject });
   expect(analyze.engine && analyze.engine.pcre === data.default.target.pcre, `The default engine bundles PCRE2 ${analyze.engine && analyze.engine.pcre}, the sample was judged for ${data.default.target.pcre}.`);
   expect(analyze.engine && analyze.engine.jit === false, 'The browser engine reports JIT on; the caption says off.');
-  const analyzeDifference = firstDifference(stripped(analyze, ['engine', 'timing']), data.analyze);
+  const analyzeDifference = firstDifference(stripped(analyze, ['engine', 'timing', 'notices']), data.analyze);
   expect(analyzeDifference === null, `The engine's analysis differs from the sample at ${analyzeDifference}.`);
 
   const lint = await ask(main84, { op: 'lint', regex: data.default.regex });
-  const lintDifference = firstDifference(stripped(lint, ['timing']), data.lint);
+  const lintDifference = firstDifference(stripped(lint, ['timing', 'notices']), data.lint);
   expect(lintDifference === null, `The engine's lint differs from the sample at ${lintDifference}.`);
+
+  const redos = await ask(main84, { op: 'redos', regex: data.default.regex });
+  const redosToCompare = stripped(redos, ['timing', 'notices']);
+  if (redosToCompare.redos) {
+    // The verdict names the PHP and PCRE2 that ran it: the engine's, not the sample's.
+    delete redosToCompare.redos.pcre_version;
+    delete redosToCompare.redos.php_version;
+  }
+  const redosDifference = firstDifference(redosToCompare, data.redos);
+  if (analyze.notices && analyze.notices.length) {
+    process.stdout.write(`The analysis raised ${analyze.notices.length} notice(s) on the browser engine, answered rather than printed: ${analyze.notices[0]}\n`);
+  }
+  expect(redosDifference === null, `The engine's ReDoS verdict differs from the sample at ${redosDifference}.`);
+
+  // The tools, inside the engine: the replay runs under the library's
+  // own caps (an ini the engine ignored would show here, not to a
+  // visitor), the formatter, the transpiler, the generators and the
+  // test export answer as the local driver does.
+  const confirmed = await ask(main84, { op: 'redos', regex: '/^(a+)+$/', mode: 'confirmed' });
+  expect(confirmed.redos && confirmed.redos.severity === 'critical' && typeof confirmed.redos.attack === 'string', `The confirmed request lost the verdict: ${JSON.stringify(confirmed.redos)}`);
+  expect(confirmed.redos && confirmed.redos.replay_error === null, `The replay did not run on the browser engine: ${JSON.stringify(confirmed.redos && confirmed.redos.replay_error)}`);
+  expect(confirmed.redos && confirmed.redos.confirmed === true, `The replay did not confirm the catastrophic pattern: ${JSON.stringify(confirmed.redos && confirmed.redos.confirmation)}`);
+  expect(confirmed.redos && confirmed.redos.confirmation && confirmed.redos.confirmation.backtrack_limit === 100000, 'The replay did not run under the library\'s backtrack limit of 100 000.');
+  expect(confirmed.redos && confirmed.redos.confirmation && confirmed.redos.confirmation.evidence === 'backtrack_limit', `The replay's evidence is ${JSON.stringify(confirmed.redos && confirmed.redos.confirmation && confirmed.redos.confirmation.evidence)}, not the backtrack limit.`);
+  expect(confirmed.redos && confirmed.redos.attack === 'a'.repeat(16) + '!', `The attack string is ${JSON.stringify(confirmed.redos && confirmed.redos.attack)}.`);
+  if (confirmed.notices && confirmed.notices.length) {
+    process.stdout.write(`The replay raised ${confirmed.notices.length} notice(s) on the browser engine, answered rather than printed: ${confirmed.notices[0]}\n`);
+  }
+
+  const laidOut = await ask(main84, { op: 'format', regex: data.default.regex, width: 24 });
+  expect(laidOut.format && laidOut.format.changed === true && laidOut.format.pattern.includes('\n'), `The formatter did not lay the sample out: ${JSON.stringify(laidOut)}`);
+  const compacted = await ask(main84, { op: 'format', regex: laidOut.format ? laidOut.format.pattern : '', compact: true });
+  expect(compacted.format && compacted.format.pattern === data.default.regex, `Compacting the layout did not give the sample back: ${JSON.stringify(compacted.format)}`);
+
+  const translated = await ask(main84, { op: 'transpile', regex: data.default.regex, target: 'js' });
+  expect(translated.transpile && typeof translated.transpile.literal === 'string' && translated.refusal === null, `The sample has no JavaScript translation: ${JSON.stringify(translated)}`);
+  const refused = await ask(main84, { op: 'transpile', regex: '/(?>a+)b/', target: 'js' });
+  expect(refused.refusal && refused.refusal.message === 'Atomic groups are not supported in JavaScript.', `The transpiler's refusal came through as ${JSON.stringify(refused.refusal)}.`);
+
+  const samples = await ask(main84, { op: 'samples', regex: data.default.regex });
+  expect(samples.samples && samples.samples.matching.length > 0 && samples.samples.nonMatching.length > 0 && samples.samples.dropped === 0, `The generators gave ${JSON.stringify(samples.samples)}.`);
+
+  const checked = await ask(main84, { op: 'check', regex: data.default.regex, subjects: (samples.samples ? samples.samples.matching : []).concat(samples.samples ? samples.samples.nonMatching : []) });
+  const agreed = checked.checks && checked.checks.every((check, i) => check.matched === (i < samples.samples.matching.length ? 1 : 0));
+  expect(agreed === true, `The engine disagrees with a sample it was said to have checked: ${JSON.stringify(checked.checks)}`);
+
+  const exported = await ask(main84, { op: 'export', regex: data.default.regex, subjects: [data.default.subject], checks: checked.checks ? checked.checks.slice(0, 1) : undefined });
+  expect(exported.export && exported.export.class.includes('final class PatternTest') && exported.export.method.includes('assertPatternMatches'), `The export did not come through: ${JSON.stringify(exported)}`);
 
   // A pattern the engine refuses: its message is framed differently in the
   // browser engine, and the driver must still hand over PCRE2's own words.
@@ -153,6 +201,10 @@ async function main() {
   expect(matched.engine && matched.engine.php.startsWith('8.0'), `The 8.0 engine reports PHP ${matched.engine && matched.engine.php}.`);
   expect(matched.matches && matched.matches.count === data.analyze.matches.count, `PHP 8.0 found ${matched.matches && matched.matches.count} matches, the sample ${data.analyze.matches.count}.`);
   expect(matched.fatal === undefined, `The match request failed on PHP 8.0: ${matched.fatal}`);
+  // The check runs there too: the samples and the test export are judged
+  // by the engine the page shows, whatever engine drew them.
+  const checked80 = await ask(php80, { op: 'check', regex: data.default.regex, subjects: ['2026-11-02', 'not a date'] });
+  expect(checked80.fatal === undefined && checked80.checks && checked80.checks[0].matched === 1 && checked80.checks[1].matched === 0, `The check request failed on PHP 8.0: ${JSON.stringify(checked80)}`);
 
   fs.rmSync(dir, { recursive: true, force: true });
 
