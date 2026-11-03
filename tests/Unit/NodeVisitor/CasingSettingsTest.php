@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -33,8 +34,7 @@ final class CasingSettingsTest extends TestCase
     #[DataProvider('providePatterns')]
     public function test_without_a_target_the_running_pcre2_decides(string $pattern): void
     {
-        error_clear_last();
-        $compiles = false !== @preg_match($pattern, '') || null === error_get_last();
+        $compiles = EngineProbe::compiles($pattern);
 
         $result = Regex::create(['cache' => null])->validate($pattern);
 

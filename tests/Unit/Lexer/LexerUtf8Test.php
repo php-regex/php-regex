@@ -17,6 +17,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Token\Token;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -88,8 +89,9 @@ final class LexerUtf8Test extends TestCase
     #[DataProvider('provideInvalidUtf8InUtfMode')]
     public function test_lexer_reports_the_first_invalid_utf8_byte_in_utf_mode(string $pattern, string $flags, int $offset): void
     {
-        $this->assertFalse(@preg_match('/'.$pattern.'/'.$flags, ''));
-        $this->assertStringEndsWith('at offset '.$offset, (string) (error_get_last()['message'] ?? ''));
+        $warning = EngineProbe::warning('/'.$pattern.'/'.$flags);
+        $this->assertNotNull($warning, 'Oracle: PCRE refuses the pattern.');
+        $this->assertStringEndsWith('at offset '.$offset, $warning);
 
         try {
             (new Lexer())->tokenize($pattern, $flags);
@@ -119,8 +121,9 @@ final class LexerUtf8Test extends TestCase
     #[DataProvider('provideControlEscapesBeforeAMultibyteCharacter')]
     public function test_validate_reports_a_control_escape_where_pcre_does(string $pattern): void
     {
-        $this->assertFalse(@preg_match($pattern, ''));
-        $this->assertSame(1, preg_match('/at offset (\d+)$/', (string) (error_get_last()['message'] ?? ''), $engine), 'Oracle: PCRE gives an offset.');
+        $warning = EngineProbe::warning($pattern);
+        $this->assertNotNull($warning, 'Oracle: PCRE refuses the pattern.');
+        $this->assertSame(1, preg_match('/at offset (\d+)$/', $warning, $engine), 'Oracle: PCRE gives an offset.');
 
         $result = Regex::create(['cache' => null])->validate($pattern);
 

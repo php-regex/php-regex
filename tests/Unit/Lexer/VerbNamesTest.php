@@ -21,6 +21,7 @@ use PHPRegex\Parser\Lexing\VerbNames;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -38,8 +39,9 @@ final class VerbNamesTest extends TestCase
     #[DataProvider('provideRefusedNames')]
     public function test_a_name_pcre_refuses_is_refused_where_pcre_reports_it(string $pattern, string $name, int $start, ErrorCode $code, string $pcreMessage): void
     {
-        $this->assertFalse(@preg_match('/'.$pattern.'/', ''));
-        $this->assertStringContainsString($pcreMessage, preg_last_error_msg().(error_get_last()['message'] ?? ''));
+        $warning = EngineProbe::warning('/'.$pattern.'/');
+        $this->assertNotNull($warning, 'Oracle: PCRE refuses the name.');
+        $this->assertStringContainsString($pcreMessage, (string) $warning);
 
         try {
             VerbNames::refuse(self::text($pattern), $name, $start, [], false);
@@ -47,7 +49,7 @@ final class VerbNamesTest extends TestCase
         } catch (LexerException $exception) {
             $this->assertSame($code, $exception->errorCode);
             $this->assertNotNull($exception->position);
-            $this->assertStringContainsString('at offset '.$exception->position, error_get_last()['message'] ?? '');
+            $this->assertStringContainsString('at offset '.$exception->position, (string) $warning);
         }
     }
 
