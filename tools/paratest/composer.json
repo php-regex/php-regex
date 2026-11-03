@@ -26,7 +26,8 @@
         "orchestra/testbench": "^8.18|^9.0|^10.0|^11.0",
         "rector/rector": "^2.4",
         "vimeo/psalm": "^6.19",
-        "mcp/sdk": "^0.9"
+        "mcp/sdk": "^0.9",
+        "phpdocumentor/type-resolver": "^1.10|^2.0"
     },
     "config": {
         "preferred-install": {

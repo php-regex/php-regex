@@ -104,7 +104,10 @@ jobs:
         # (the first Laravel 10 that Testbench 8.18, the first with the
         # attributes the tests use, takes) and PHPUnit 10.5.0. Rector is held
         # to 2.6.3, the first release that resets the PHP version between
-        # test classes; the other rows keep the bridge's own floor, 2.4.
+        # test classes; the other rows keep the bridge's own floor, 2.4. The
+        # docblock type resolver is held to 1.10, the first that reads both
+        # majors of the docblock parser: once a rule test has run, the PHPStan
+        # phar's own copy of the parser answers the whole process.
         if: matrix.dependency == 'prefer-lowest' && matrix.php == '8.1'
         shell: bash
         run: composer update -d tools/phpunit --prefer-lowest --prefer-stable --with 'rector/rector:^2.6.3' --no-interaction --no-progress
