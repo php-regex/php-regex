@@ -624,6 +624,8 @@
       lastLint = null;
       lintFor = null;
       lastHotspots = null;
+      // A replay is asked for one pattern: another pattern starts from the verdict.
+      toolSettings.redos.mode = 'theoretical';
     }
     current = { payload: payload, regex: request.regex, subject: request.subject, version: request.version, prerendered: prerendered };
     pendingTool = null;
