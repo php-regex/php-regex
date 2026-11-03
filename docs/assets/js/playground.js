@@ -622,6 +622,13 @@
       // given up another chance: pressing Run is how a visitor retries.
       matchFor = null;
       delete failures[requestKey({ type: 'match', regex: request.regex, subject: request.subject, version: request.version })];
+      // A tab that gave up on this input asks again on the next Run.
+      TOOLS.forEach(function (tool) {
+        var stale = toolRequest(tool);
+        if (stale) {
+          delete failures[requestKey(stale)];
+        }
+      });
       if (lastLint === null) {
         lintFor = null;
         delete failures[requestKey({ type: 'lint', regex: request.regex, version: request.version })];
