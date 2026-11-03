@@ -1256,7 +1256,14 @@ if (!\function_exists('phpregex_playground_run')) {
         }
         $shape = [];
         foreach ($groups as $key => [$text, $offset]) {
-            $shape[(string) $key] = null === $text || -1 === $offset ? null : [$text, $offset];
+            if (null === $text || -1 === $offset) {
+                $shape[(string) $key] = null;
+
+                continue;
+            }
+            // Without u, a group may take part of a character: the answer
+            // carries text, so the bytes travel beside it, in hex.
+            $shape[(string) $key] = 1 === preg_match('//u', $text) ? [$text, $offset] : [$text, $offset, bin2hex($text)];
         }
 
         return ['matched' => 1, 'error' => null, 'groups' => (object) $shape];
@@ -1440,15 +1447,36 @@ if (!\function_exists('phpregex_playground_run')) {
     }
 
     /**
-     * @param array{string, int}|null $capture
+     * A capture as PHP: the text by var_export(); a capture that is not text
+     * (part of a character, taken without u) by its bytes, in hex beside the
+     * text when it went through JSON, spelled as "\xNN" escapes so the
+     * exported file is ASCII and asserts what preg_match() writes.
+     *
+     * @param array{string, int, 2?: string}|null $capture
      */
     function phpregex_playground_capture($capture): string
     {
         if (!\is_array($capture)) {
             return 'false';
         }
+        $text = (string) $capture[0];
+        if (isset($capture[2]) && \is_string($capture[2]) && 1 === preg_match('/^(?:[0-9a-f]{2})+$/', $capture[2])) {
+            $text = (string) hex2bin($capture[2]);
+        }
+        $spelled = 1 === preg_match('//u', $text) ? var_export($text, true) : phpregex_playground_bytes($text);
 
-        return '['.var_export((string) $capture[0], true).', '.(int) $capture[1].']';
+        return '['.$spelled.', '.(int) $capture[1].']';
+    }
+
+    /**
+     * A string of bytes as a double-quoted PHP literal, every byte outside
+     * printable ASCII as a "\xNN" escape.
+     */
+    function phpregex_playground_bytes(string $bytes): string
+    {
+        return '"'.preg_replace_callback('/[^\x20-\x7E]|["$\\\\]/', static function (array $match): string {
+            return \sprintf('\\x%02X', \ord($match[0]));
+        }, $bytes).'"';
     }
 
     /**

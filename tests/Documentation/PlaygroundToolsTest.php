@@ -619,6 +619,35 @@ final class PlaygroundToolsTest extends TestCase
 
     #[Test]
     #[DataProvider('provideDrivers')]
+    public function test_export_spells_a_capture_that_is_not_text_as_bytes(string $driver, string $root): void
+    {
+        // Without u, a group may take part of a character: the engine
+        // captures the byte, the page carries text, so the export spells
+        // the bytes in ASCII, and the pasted test asserts what preg_match()
+        // writes rather than a replacement character.
+        $method = self::export($driver, $root, '/(.)/', ["\u{e9}"])['export']['method'] ?? '';
+
+        $this->assertStringContainsString('1 => ["\\xC3", 0]', $method);
+        $this->assertStringNotContainsString("\u{FFFD}", $method);
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_export_spells_the_bytes_of_a_capture_handed_over(string $driver, string $root): void
+    {
+        // The check that matched on the engine the page shows went through
+        // JSON: the capture carries its bytes beside its text, and the
+        // export reads them.
+        $checks = self::check($driver, $root, '/(.)/', ["\u{e9}"])['checks'];
+        $this->assertNotNull($checks);
+        $method = self::export($driver, $root, '/(.)/', ["\u{e9}"], ['checks' => $checks])['export']['method'] ?? '';
+
+        $this->assertStringContainsString('1 => ["\\xC3", 0]', $method);
+        $this->assertStringNotContainsString("\u{FFFD}", $method);
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
     public function test_export_takes_the_checks_of_another_engine(string $driver, string $root): void
     {
         // The page may hand the engine's answers over (the 8.0 instance
