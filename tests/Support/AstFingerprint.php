@@ -83,6 +83,7 @@ final class AstFingerprint
         'src/Parser/Analysis/GroupIndex.php',
         'src/Parser/Analysis/LookbehindLength.php',
         'src/Parser/Engine/LibraryPcre.php',
+        'src/Parser/Engine/IniFlag.php',
         // The character tables of the locale judged decide the size verdict.
         'src/Parser/Engine/CharacterTables.php',
         'src/Parser/Engine/NoJit.php',

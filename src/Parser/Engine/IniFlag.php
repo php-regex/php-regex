@@ -29,7 +29,13 @@ use PHPRegex\Parser\Text\Ascii;
  */
 final class IniFlag
 {
-    private const LONG_MAX_DIGITS = '9223372036854775807';
+    /**
+     * The bits of a C int, 32 wide, in a PHP int: the low 32 bits on a
+     * 64-bit PHP, every bit on a 32-bit PHP (php-wasm), where the literal
+     * 0xFFFFFFFF would be a float. Reading a long cast to an int keeps
+     * these bits.
+     */
+    public const INT_MASK = \PHP_INT_SIZE > 4 ? 0xFFFFFFFF : -1;
 
     public static function isOn(string $setting): bool
     {
@@ -37,7 +43,7 @@ final class IniFlag
             return true;
         }
 
-        return self::hasLowBitsSet($setting, 0xFFFFFFFF);
+        return self::hasLowBitsSet($setting, self::INT_MASK);
     }
 
     /**
@@ -56,6 +62,23 @@ final class IniFlag
     }
 
     /**
+     * A PHP int read as the C unsigned 32-bit int the engine receives for a
+     * limit: the low 32 bits on a 64-bit PHP, so -1 is 4294967295 and 2^32
+     * is 0. On a 32-bit PHP a negative value stands past PHP_INT_MAX, which
+     * no PHP int holds: PHP_INT_MAX is answered, and compares the same way
+     * against every limit the library knows.
+     */
+    public static function unsignedInt(int $value): int
+    {
+        if (\PHP_INT_SIZE > 4) {
+            return $value & self::INT_MASK;
+        }
+
+        // Reached on a 32-bit PHP only, where the test above runs it.
+        return $value < 0 ? \PHP_INT_MAX : $value;
+    }
+
+    /**
      * Whether the C long strtol() reads from the value has a bit of the mask
      * set, the mask standing for the C type the long is cast to.
      */
@@ -69,9 +92,12 @@ final class IniFlag
 
         $digits = ltrim(substr($rest, 0, strspn($rest, '0123456789')), '0');
         $width = \strlen($digits);
-        if ($width > \strlen(self::LONG_MAX_DIGITS) || ($width === \strlen(self::LONG_MAX_DIGITS) && strcmp($digits, self::LONG_MAX_DIGITS) > 0)) {
+        // A C long is as wide as a PHP int: 63 bits and a sign on a 64-bit
+        // PHP, 31 on a 32-bit one.
+        $longMax = (string) \PHP_INT_MAX;
+        if ($width > \strlen($longMax) || ($width === \strlen($longMax) && strcmp($digits, $longMax) > 0)) {
             // strtol() saturates: LONG_MAX keeps its low bits set, LONG_MIN
-            // none (a magnitude of 2^63 is LONG_MIN itself).
+            // none (a magnitude of 2^63, or 2^31, is LONG_MIN itself).
             return '-' !== $sign;
         }
 
