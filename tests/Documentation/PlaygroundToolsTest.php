@@ -648,6 +648,18 @@ final class PlaygroundToolsTest extends TestCase
 
     #[Test]
     #[DataProvider('provideDrivers')]
+    public function test_export_names_the_engine_whose_answers_it_asserts(string $driver, string $root): void
+    {
+        // Judged for an older engine, whose checks the page hands over: the
+        // header names that engine, not the one that wrote the file.
+        $checks = [['matched' => 1, 'error' => null, 'groups' => ['0' => ['ab', 0], '1' => ['b', 1]]]];
+        $payload = PlaygroundDriver::tool($driver, $root, 'export', '/a(b)/', ['subjects' => ['ab'], 'checks' => $checks], ['php' => '8.0.30', 'pcre' => '10.35']);
+
+        $this->assertStringContainsString('from the answers of PHP 8.0.30 and PCRE2 10.35.', $payload['export']['class'] ?? '');
+    }
+
+    #[Test]
+    #[DataProvider('provideDrivers')]
     public function test_export_takes_the_checks_of_another_engine(string $driver, string $root): void
     {
         // The page may hand the engine's answers over (the 8.0 instance

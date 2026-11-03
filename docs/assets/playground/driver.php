@@ -1381,7 +1381,9 @@ if (!\function_exists('phpregex_playground_run')) {
             '    }',
         ]);
 
-        $engine = phpregex_playground_engine();
+        // The engine whose answers the file asserts: the one the request
+        // names when another analysed, else this one.
+        $engine = phpregex_playground_target($input);
         $class = implode("\n", [
             '<?php',
             '',
