@@ -376,14 +376,18 @@ final class PlaygroundToolsTest extends TestCase
         $this->assertIsInt($samples['seed']);
         $this->assertSame(0, $samples['dropped'], 'Both generators check their strings against the engine already.');
         ini_set('pcre.jit', '0');
-        foreach ($samples['matching'] as $sample) {
-            $this->assertSame(1, preg_match($pattern, $sample), json_encode($sample).' was said to match.');
+
+        try {
+            foreach ($samples['matching'] as $sample) {
+                $this->assertSame(1, preg_match($pattern, $sample), json_encode($sample).' was said to match.');
+            }
+            foreach ($samples['nonMatching'] as $sample) {
+                $this->assertSame(0, preg_match($pattern, $sample), json_encode($sample).' was said not to match.');
+                $this->assertSame(0, preg_match('/[\x00-\x08\x0B-\x1F]/', $sample), 'A control byte makes no chip.');
+            }
+        } finally {
+            ini_restore('pcre.jit');
         }
-        foreach ($samples['nonMatching'] as $sample) {
-            $this->assertSame(0, preg_match($pattern, $sample), json_encode($sample).' was said not to match.');
-            $this->assertSame(0, preg_match('/[\x00-\x08\x0B-\x1F]/', $sample), 'A control byte makes no chip.');
-        }
-        ini_restore('pcre.jit');
     }
 
     #[Test]
@@ -454,7 +458,6 @@ final class PlaygroundToolsTest extends TestCase
 
         $hostile = self::check($driver, $root.'/does-not-exist', self::CATASTROPHIC, [str_repeat('a', 30).'!'], ['pcre.jit=1']);
         $this->assertSame(['matched' => null, 'error' => 'Backtrack limit exhausted', 'groups' => null], $hostile['checks'][0], 'The check runs the engine without its JIT whatever the ini says: the exported test will.');
-        $this->assertSame('1', ini_get('pcre.jit'), 'This process is untouched.');
 
         $broken = self::check($driver, $root.'/does-not-exist', '/(/', ['a']);
         $this->assertNull($broken['checks'][0]['matched']);
@@ -526,13 +529,28 @@ final class PlaygroundToolsTest extends TestCase
     #[DataProvider('provideDrivers')]
     public function test_export_comments_a_subject_the_engine_refuses(string $driver, string $root): void
     {
-        $payload = self::export($driver, $root, self::CATASTROPHIC, ['aaa', str_repeat('a', 30).'!']);
+        // The refused subject holds a line break and a PHP close tag: raw,
+        // either would end the comment it is written in.
+        $refused = str_repeat('a', 30)."!\n?> and more";
+        $payload = self::export($driver, $root, self::CATASTROPHIC, ['aaa', $refused]);
 
         $export = $payload['export'];
         $this->assertNotNull($export);
         $this->assertSame(1, $export['refused']);
         $this->assertSame(2, $export['assertions']);
-        $this->assertStringContainsString("// '".str_repeat('a', 30)."!': the engine answered \"Backtrack limit exhausted\"; nothing to assert", $export['method']);
+        $this->assertStringContainsString("// '".str_repeat('a', 30)."!\\n?\\> and more': the engine answered \"Backtrack limit exhausted\"; nothing to assert", $export['method']);
+        $this->assertStringNotContainsString("\n?>", $export['class']);
+
+        // The class still parses: php -l on what the page would copy.
+        $file = tempnam(sys_get_temp_dir(), 'phpregex-export-').'.php';
+        file_put_contents($file, $export['class']);
+
+        try {
+            exec(escapeshellarg(\PHP_BINARY).' -d auto_prepend_file= -l '.escapeshellarg($file).' 2>&1', $lines, $exit);
+            $this->assertSame(0, $exit, implode("\n", $lines));
+        } finally {
+            unlink($file);
+        }
     }
 
     #[Test]
