@@ -310,7 +310,7 @@
   }
 
   function requestKey(request) {
-    var fields = ['mode', 'target', 'pythonVersion', 'width', 'compact', 'purpose'].map(function (name) {
+    var fields = ['mode', 'dialect', 'pythonVersion', 'width', 'compact', 'purpose'].map(function (name) {
       return request[name] === undefined ? '' : String(request[name]);
     });
     return request.type + '\u0000' + request.version + '\u0000' + request.regex + '\u0000' + (request.subject || '') + '\u0000' + (request.index === undefined ? '' : request.index) + '\u0000' + fields.join('\u0000') + '\u0000' + (request.subjects ? JSON.stringify(request.subjects) : '');
@@ -426,7 +426,7 @@
       // step), never by the tab's current settings, which may have moved.
       toolAnswers[who] = { key: step.chainKey || requestKey(step), payload: { error: { message: 'The engine did not answer.', position: null } }, request: step, checked: true, failed: true };
       if (activeTool === who) {
-        renderTool(who);
+        renderTool(who, true);
       }
     }
     if (current && !current.prerendered) {
@@ -532,7 +532,7 @@
         var failed = request.purpose && request.type === 'check' ? request.purpose : request.type;
         toolAnswers[failed] = { key: request.chainKey || requestKey(request), payload: { error: { message: payload.fatal, position: null } }, request: request, checked: true, failed: true };
         if (activeTool === failed) {
-          renderTool(failed);
+          renderTool(failed, true);
         }
       }
       drain();
@@ -669,7 +669,7 @@
         lastHotspots = sample.redos.redos && sample.redos.redos.hotspots ? sample.redos.redos.hotspots : null;
       }
     }
-    renderTool(activeTool);
+    renderTool(activeTool, false);
   }
 
   function chip(label, value, className) {
@@ -1405,13 +1405,16 @@
     if (!current) {
       return null;
     }
-    var request = { type: tool, regex: current.regex, subject: current.subject, version: current.version };
+    // The subject is the export's business alone (through its subject
+    // list): a subject-only edit leaves the other tabs' answers current.
+    var request = { type: tool, regex: current.regex, version: current.version };
     switch (tool) {
       case 'redos':
         request.mode = toolSettings.redos.mode;
         break;
       case 'transpile':
-        request.target = toolSettings.transpile.target;
+        // "target" is the engine's word in a request: the dialect has its own.
+        request.dialect = toolSettings.transpile.target;
         request.pythonVersion = toolSettings.transpile.target === 'python' ? toolSettings.transpile.pythonVersion : '';
         break;
       case 'format':
@@ -1423,6 +1426,7 @@
         // from its answers. Two steps, the first one an engine-only check.
         request.type = 'check';
         request.purpose = 'export';
+        request.subject = current.subject;
         request.subjects = exportSubjects();
         break;
       case 'samples':
@@ -1528,7 +1532,7 @@
         drawn.checked = true;
         drawn.key = requestKey(drawn.request);
         if (activeTool === 'samples') {
-          renderTool('samples');
+          renderTool('samples', true);
         }
       }
       return;
@@ -1549,7 +1553,7 @@
       }
     }
     if (activeTool === tool) {
-      renderTool(tool);
+      renderTool(tool, true);
     }
   }
 
@@ -1577,13 +1581,16 @@
     TOOLS.forEach(function (name) {
       toolPanel(name).hidden = name !== tool;
     });
-    renderTool(tool);
+    renderTool(tool, false);
     drain();
   }
 
   // --- rendering the tabs ---------------------------------------------------
 
-  function renderTool(tool) {
+  // announceResult: true when the answer just arrived or a setting of the
+  // tab moved, false on a rerender (a new analysis, a tab switch), so the
+  // match count said by the run is not spoken over.
+  function renderTool(tool, announceResult) {
     var panel = toolPanel(tool);
     clear(panel);
     if (!current) {
@@ -1610,10 +1617,10 @@
     }
     switch (tool) {
       case 'redos': renderRedos(panel, answer.payload); break;
-      case 'transpile': renderTranspile(panel, answer.payload); break;
-      case 'samples': renderSamples(panel, answer); break;
-      case 'export': renderExport(panel, answer.payload); break;
-      case 'format': renderFormat(panel, answer.payload); break;
+      case 'transpile': renderTranspile(panel, answer.payload, announceResult); break;
+      case 'samples': renderSamples(panel, answer, announceResult); break;
+      case 'export': renderExport(panel, answer.payload, announceResult); break;
+      case 'format': renderFormat(panel, answer.payload, announceResult); break;
       default: break;
     }
   }
@@ -1738,7 +1745,7 @@
     } else if (redos.severity !== 'safe') {
       replay.appendChild(toolButton('Replay the attack', function () {
         toolSettings.redos.mode = 'confirmed';
-        renderTool('redos');
+        renderTool('redos', true);
         drain();
       }));
       replay.appendChild(text('span', 'pg-tool-line', 'runs the witness through the engine, three lengths, under the library’s caps (backtrack limit 100 000, 50 ms a run).'));
@@ -1772,7 +1779,7 @@
     });
     select.addEventListener('change', function () {
       toolSettings.transpile.target = select.value;
-      renderTool('transpile');
+      renderTool('transpile', true);
       drain();
     });
     row.appendChild(label);
@@ -1791,7 +1798,7 @@
       });
       version.addEventListener('change', function () {
         toolSettings.transpile.pythonVersion = version.value;
-        renderTool('transpile');
+        renderTool('transpile', true);
         drain();
       });
       row.appendChild(versionLabel);
@@ -1800,14 +1807,14 @@
     panel.appendChild(row);
   }
 
-  function renderTranspile(panel, payload) {
+  function renderTranspile(panel, payload, announceResult) {
     if (payload.error) {
       faultLine(panel, payload.error, 'Nothing to translate: ');
       return;
     }
     if (payload.refusal) {
       panel.appendChild(text('p', 'pg-tool-line is-warn', 'No translation: ' + payload.refusal.message));
-      announce('No translation: ' + payload.refusal.message);
+      if (announceResult) announce('No translation: ' + payload.refusal.message);
       return;
     }
     var result = payload.transpile;
@@ -1838,12 +1845,12 @@
       });
       panel.appendChild(list);
     }
-    announce('Translated to ' + TARGET_LABELS[toolSettings.transpile.target] + ', ' + (result.warnings || []).length + ' warning' + ((result.warnings || []).length === 1 ? '' : 's') + ', ' + (result.notes || []).length + ' note' + ((result.notes || []).length === 1 ? '' : 's') + '.');
+    if (announceResult) announce('Translated to ' + TARGET_LABELS[toolSettings.transpile.target] + ', ' + (result.warnings || []).length + ' warning' + ((result.warnings || []).length === 1 ? '' : 's') + ', ' + (result.notes || []).length + ' note' + ((result.notes || []).length === 1 ? '' : 's') + '.');
   }
 
   // --- samples --------------------------------------------------------------
 
-  function renderSamples(panel, answer) {
+  function renderSamples(panel, answer, announceResult) {
     var payload = answer.payload;
     if (payload.error) {
       faultLine(panel, payload.error, 'No sample: ');
@@ -1902,12 +1909,12 @@
       row.appendChild(text('span', 'pg-tool-line', samples.dropped + ' sample' + (samples.dropped === 1 ? '' : 's') + ' discarded by the engine.'));
     }
     panel.appendChild(row);
-    announce(samples.matching.length + ' matching sample' + (samples.matching.length === 1 ? '' : 's') + ', ' + samples.nonMatching.length + ' that do' + (samples.nonMatching.length === 1 ? 'es' : '') + ' not match.');
+    if (announceResult) announce(samples.matching.length + ' matching sample' + (samples.matching.length === 1 ? '' : 's') + ', ' + samples.nonMatching.length + ' that do' + (samples.nonMatching.length === 1 ? 'es' : '') + ' not match.');
   }
 
   // --- test ------------------------------------------------------------------
 
-  function renderExport(panel, payload) {
+  function renderExport(panel, payload, announceResult) {
     if (payload.error) {
       faultLine(panel, payload.error, 'No test: ');
       return;
@@ -1927,11 +1934,11 @@
     }));
     row.appendChild(toolButton('Full class', function () {
       toolSettings.export.full = !toolSettings.export.full;
-      renderTool('export');
+      renderTool('export', true);
     }, full));
     row.appendChild(text('span', 'pg-tool-line', result.assertions + ' assertion' + (result.assertions === 1 ? '' : 's') + (result.linear ? ', linear proven' : '') + (result.refused ? ', ' + result.refused + ' subject' + (result.refused === 1 ? '' : 's') + ' the engine refused (commented)' : '') + '. Needs php-regex/regex-phpunit.'));
     panel.appendChild(row);
-    announce('Test written: ' + result.assertions + ' assertion' + (result.assertions === 1 ? '' : 's') + '.');
+    if (announceResult) announce('Test written: ' + result.assertions + ' assertion' + (result.assertions === 1 ? '' : 's') + '.');
   }
 
   // --- format ---------------------------------------------------------------
@@ -1951,20 +1958,20 @@
       var value = parseInt(width.value, 10);
       toolSettings.format.width = value >= 1 && value <= 200 ? value : null;
       width.value = String(formatWidth());
-      renderTool('format');
+      renderTool('format', true);
       drain();
     });
     row.appendChild(label);
     row.appendChild(width);
     row.appendChild(toolButton('Compact', function () {
       toolSettings.format.compact = !toolSettings.format.compact;
-      renderTool('format');
+      renderTool('format', true);
       drain();
     }, toolSettings.format.compact));
     panel.appendChild(row);
   }
 
-  function renderFormat(panel, payload) {
+  function renderFormat(panel, payload, announceResult) {
     if (payload.error) {
       faultLine(panel, payload.error, 'Nothing to lay out: ');
       return;
@@ -1975,7 +1982,7 @@
     }
     if (result.refusal) {
       panel.appendChild(text('p', 'pg-tool-line is-warn', 'Left as written: ' + result.refusal.message));
-      announce('Left as written: ' + result.refusal.message);
+      if (announceResult) announce('Left as written: ' + result.refusal.message);
       return;
     }
     var code = text('pre', 'pg-tool-code', result.pattern);
@@ -1989,7 +1996,7 @@
     var lines = result.pattern.split('\n').length;
     row.appendChild(text('span', 'pg-tool-line', result.changed ? (toolSettings.format.compact ? 'Written on one line; it matches what the pattern above matches.' : 'Laid out over ' + lines + ' line' + (lines === 1 ? '' : 's') + ' under x; it matches what the pattern above matches.') : 'The pattern fits the width: unchanged.'));
     panel.appendChild(row);
-    announce(result.changed ? (toolSettings.format.compact ? 'Pattern written on one line.' : 'Pattern laid out over ' + lines + ' lines.') : 'The pattern fits the width: unchanged.');
+    if (announceResult) announce(result.changed ? (toolSettings.format.compact ? 'Pattern written on one line.' : 'Pattern laid out over ' + lines + ' lines.') : 'The pattern fits the width: unchanged.');
   }
 
   // The tab strip's hands: a click opens a tab; the arrow keys, Home and
