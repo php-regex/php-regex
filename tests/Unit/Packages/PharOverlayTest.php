@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Packages;
 
+use PHPRegex\Parser\Text\Path;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -77,7 +78,8 @@ final class PharOverlayTest extends TestCase
         $this->assertStringContainsString('phar/composer.json', $build);
         $this->assertStringContainsString('phar/composer.lock', $build);
         $this->assertFileIsReadable(self::root().'/phar/lock');
-        $this->assertTrue(is_executable(self::root().'/phar/lock'));
+        // The executable bit is one Windows does not keep.
+        $this->assertTrue(Path::onWindows() || is_executable(self::root().'/phar/lock'));
     }
 
     #[Test]
