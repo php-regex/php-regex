@@ -134,7 +134,9 @@ if (!\function_exists('phpregex_playground_run')) {
         // object of the answer that cannot be written out is a fatal answer,
         // not a blank one.
         try {
-            $json = json_encode($payload, \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE, 8192);
+            // A timing of exactly 16.0 ms (a Windows clock tick) stays a float
+            // on the page's side.
+            $json = json_encode($payload, \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_PRESERVE_ZERO_FRACTION, 8192);
         } catch (\Throwable $e) {
             $json = false;
             $payload = ['protocol' => PHPREGEX_PLAYGROUND_PROTOCOL, 'fatal' => 'The answer could not be written: '.phpregex_playground_short_class($e).': '.$e->getMessage()];
