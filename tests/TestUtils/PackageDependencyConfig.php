@@ -85,10 +85,6 @@ final class PackageDependencyConfig
             $lines[] = '    // the host carries php-parser, which the sources reach through it';
             $lines[] = "    ->ignoreErrorsOnPackage('nikic/php-parser', [ErrorType::SHADOW_DEPENDENCY])";
         }
-        if (\in_array('psalm/psalm-plugin-api', self::keys($manifest['require'] ?? null), true)) {
-            $lines[] = '    // the metapackage versioning the plugin API of Psalm: nothing to use';
-            $lines[] = "    ->ignoreErrorsOnPackage('psalm/psalm-plugin-api', [ErrorType::UNUSED_DEPENDENCY])";
-        }
         if (\in_array('symfony/dependency-injection', self::keys($manifest['require'] ?? null), true)) {
             $lines[] = '    // the container configuration calls the functions its loader declares';
             $lines[] = '    ->ignoreErrorsOnPath(__DIR__.'.self::quote('/'.$vendorPath.'/Resources/config').', [ErrorType::UNKNOWN_FUNCTION])';

@@ -27,5 +27,3 @@ CHANGELOG
    sets on a `preg_match()` or `preg_match_all()` call reach the node data
    Psalm 7 reads, behind the view it hands a plugin, and the callback of
    `preg_replace_callback()` is typed with the constructor Psalm 7 keeps.
-   The package requires `psalm/psalm-plugin-api`, so a Psalm that breaks
-   its plugin API is refused until the plugin follows it.

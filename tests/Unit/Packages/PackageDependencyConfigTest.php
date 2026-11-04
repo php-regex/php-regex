@@ -101,20 +101,6 @@ final class PackageDependencyConfigTest extends TestCase
         $this->assertSame($helpers, PackageDependencyConfig::helpers($manifest));
     }
 
-    /**
-     * Psalm versions its plugin API as a metapackage: a plugin requires it
-     * so a Psalm that breaks the API is refused, and no source reaches it.
-     */
-    #[Test]
-    public function test_the_psalm_plugin_api_metapackage_is_required_without_being_used(): void
-    {
-        $manifest = ['name' => 'php-regex/regex-x', 'require' => ['vimeo/psalm' => '^6.19|^7.0', 'psalm/psalm-plugin-api' => '^0.4']];
-
-        $this->assertStringContainsString("->ignoreErrorsOnPackage('psalm/psalm-plugin-api', [ErrorType::UNUSED_DEPENDENCY])", PackageDependencyConfig::configuration($manifest, 'vendor/php-regex/regex-x'));
-        $this->assertStringNotContainsString('UNUSED_DEPENDENCY', PackageDependencyConfig::configuration(['name' => 'php-regex/regex-x', 'require' => ['vimeo/psalm' => '^6.19|^7.0']], 'vendor/php-regex/regex-x'));
-        $this->assertSame([], PackageDependencyConfig::helpers($manifest));
-    }
-
     #[Test]
     public function test_the_symfony_container_dsl_is_read_as_functions_the_loader_declares(): void
     {
