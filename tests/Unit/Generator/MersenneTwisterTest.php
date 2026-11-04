@@ -147,6 +147,23 @@ final class MersenneTwisterTest extends TestCase
         (new MersenneTwister(1, engine: MersenneTwister::RANDOMIZER))->between(0, 0x1_0000_0000);
     }
 
+    /**
+     * The own engine holds 32-bit words: a PHP whose integers cannot is
+     * refused it rather than handed a float where a word should be.
+     */
+    #[Test]
+    public function test_the_own_engine_is_refused_where_an_integer_cannot_hold_a_word(): void
+    {
+        if (\PHP_INT_SIZE < 8) {
+            $this->expectException(\LogicException::class);
+        }
+
+        $drawn = (new MersenneTwister(42, engine: MersenneTwister::OWN))->between(0, 1000);
+
+        mt_srand(42, \MT_RAND_MT19937);
+        $this->assertSame(mt_rand(0, 1000), $drawn, 'Where an integer holds a word, the own engine draws.');
+    }
+
     #[Test]
     public function test_an_unknown_engine_is_refused(): void
     {

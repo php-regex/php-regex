@@ -84,6 +84,9 @@ final class MersenneTwister
         if (!\in_array($engine, [self::OWN, self::RANDOMIZER, self::HOST], true)) {
             throw new \LogicException(\sprintf('Unknown engine "%s": one of "own", "randomizer" or "host".', $engine));
         }
+        if (self::OWN === $engine && \PHP_INT_SIZE < 8) {
+            throw new \LogicException('The own engine holds 32-bit words, which an integer of this PHP cannot: ask for the randomizer or the host.');
+        }
         $this->engine = $engine;
         $this->randomizer = self::RANDOMIZER === $engine ? new Randomizer(new Mt19937($seed)) : null;
         if (self::HOST === $engine) {
