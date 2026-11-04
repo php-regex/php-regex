@@ -2516,9 +2516,12 @@
       drain();
     }, function (error) {
       probe.running = false;
-      // A newer answer is not stopped by an older one's failure.
+      // A newer answer is not stopped by an older one's failure, and may be
+      // waiting on this probe: drain() lets it ask its own witness.
       if (toolAnswers.trace === answer) {
         traceGaveUp(error.message);
+      } else {
+        drain();
       }
     });
   }

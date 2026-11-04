@@ -89,7 +89,9 @@ sha256 differs from `manifest.json`, which is what CI does.
 The module is a WASI reactor: a loader calls `_initialize()` once before
 any other export, writes the pattern and the subject into memory it takes
 from `malloc`, calls `pcre2_trace_run()`, reads the NUL-terminated JSON at
-the returned pointer and releases it with `pcre2_trace_free()`.
+the returned pointer and releases it with `pcre2_trace_free()`, then
+releases the pattern and the subject with `free()`, on an error too
+(`docs/assets/js/trace-worker.js` does so in a `finally`).
 
 ### Checking the shim against pcre2test
 
@@ -126,11 +128,13 @@ wrapper changes between versions: `(?<=a\K)` is allowed from 8.1 to 8.4
 and refused in 8.5, the `n` modifier exists from 8.2, `r` from 8.4.
 `docs/assets/js/php-pcre-options.js` holds one row per exact PHP version
 the playground's engines report, each read from `ext/pcre/php_pcre.c` at
-that version's tag and naming the commit. To add a row, with a php-src
-checkout at hand:
+that version's tag and naming the commit. The generator writes only the
+tags it is given, so the command lists every row the table keeps: a new
+minor adds its tag, and an engine php-wasm upgrades (8.4.1 to 8.4.2)
+replaces its old tag, never beside it. With a php-src checkout at hand:
 
 ```bash
-php wasm/pcre2-trace/php-pcre-options/generate.php /path/to/php-src php-8.1.28 php-8.2.11 php-8.3.11 php-8.4.1 php-8.5.2
+php wasm/pcre2-trace/php-pcre-options/generate.php /path/to/php-src php-8.1.28 php-8.2.11 php-8.3.11 php-8.4.1 php-8.5.2 php-<new version>
 ```
 
 The rows are written in the order given. The script reads the modifier
