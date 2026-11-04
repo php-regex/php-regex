@@ -36,6 +36,9 @@
         },
         "audit": {
             "block-insecure": false
+        },
+        "allow-plugins": {
+            "php-http/discovery": true
         }
     }
 }
