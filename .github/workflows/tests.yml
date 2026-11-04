@@ -224,8 +224,8 @@ jobs:
 
   psalm:
     # The Psalm plugin reaches a few of Psalm's internal classes, which a
-    # minor release may move: its tests run on the lowest Psalm its manifest
-    # admits and on the newest release of that major, whatever the other
+    # release may move: its tests run on the lowest Psalm its manifest admits
+    # and on the newest release of each major it admits, whatever the other
     # cells happen to resolve.
     name: Psalm plugin (Psalm ${{ matrix.psalm }})
     runs-on: ubuntu-latest
@@ -235,7 +235,8 @@ jobs:
       matrix:
         include:
           - { psalm: 'lowest', constraint: '6.19.0' }
-          - { psalm: 'newest', constraint: '^6.19' }
+          - { psalm: 'newest 6', constraint: '^6.19' }
+          - { psalm: 'newest 7', constraint: '^7.0' }
 
     steps:
       - name: Checkout Code

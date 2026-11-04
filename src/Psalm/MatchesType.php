@@ -200,7 +200,20 @@ final class MatchesType
             $properties[$key->key] = $value->setPossiblyUndefined($key->optional);
         }
 
-        return TKeyedArray::make($properties ?: throw new \LogicException('A layout holds the whole match under 0, always.'));
+        return self::keyed($properties ?: throw new \LogicException('A layout holds the whole match under 0, always.'));
+    }
+
+    /**
+     * The shape of the properties. Psalm 7 answers an array of never for a
+     * single property of never, which no shape of a match holds.
+     *
+     * @param non-empty-array<int|string, Union> $properties
+     */
+    private static function keyed(array $properties, bool $isList = false): TKeyedArray
+    {
+        $shape = TKeyedArray::make($properties, null, null, $isList);
+
+        return $shape instanceof TKeyedArray ? $shape : throw new \LogicException('A shape of a match holds a string or a list under each key.'); // Never: no key holds never.
     }
 
     /**
@@ -251,10 +264,10 @@ final class MatchesType
         $atomics = [];
         foreach ([...array_values($a->getAtomicTypes()), ...array_values($b->getAtomicTypes())] as $atomic) {
             if ($atomic instanceof TKeyedArray && $atomic->is_list && isset($atomic->properties[0], $atomic->properties[1]) && 2 === \count($atomic->properties)) {
-                $pair = null === $pair ? $atomic : TKeyedArray::make([
+                $pair = null === $pair ? $atomic : self::keyed([
                     self::union($pair->properties[0], $atomic->properties[0]),
                     Type::combineUnionTypes($pair->properties[1], $atomic->properties[1]),
-                ], null, null, true);
+                ], true);
 
                 continue;
             }

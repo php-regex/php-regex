@@ -1,17 +1,16 @@
 parameters:
 	ignoreErrors:
-
-		-
-			rawMessage: 'Attribute references internal class PHPUnit\Framework\Attributes\IgnorePhpunitDeprecations.'
-			identifier: attribute.internalClass
-			count: 1
-			path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
-
 		-
 			rawMessage: 'Static property PHPRegex\Cli\Application::$memoryReserve is never read, only written.'
 			identifier: property.onlyWritten
 			count: 1
 			path: src/Cli/Application.php
+
+		-
+			rawMessage: Access to constant on internal class Psalm\Internal\Analyzer\StatementsAnalyzer.
+			identifier: classConstant.internalClass
+			count: 1
+			path: src/Psalm/PsalmInternals.php
 
 		-
 			rawMessage: Access to constant on internal class Psalm\Internal\Analyzer\Statements\ExpressionAnalyzer.
@@ -29,6 +28,12 @@ parameters:
 			rawMessage: Access to constant on internal class Psalm\Internal\Provider\NodeDataProvider.
 			identifier: classConstant.internalClass
 			count: 1
+			path: src/Psalm/PsalmInternals.php
+
+		-
+			rawMessage: Access to property $node_data of internal class Psalm\Internal\Analyzer\StatementsAnalyzer from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 2
 			path: src/Psalm/PsalmInternals.php
 
 		-
@@ -64,13 +69,7 @@ parameters:
 		-
 			rawMessage: Instanceof references internal class Psalm\Internal\Analyzer\StatementsAnalyzer.
 			identifier: instanceof.internalClass
-			count: 3
-			path: src/Psalm/PsalmInternals.php
-
-		-
-			rawMessage: Instanceof references internal class Psalm\Internal\Provider\NodeDataProvider.
-			identifier: instanceof.internalClass
-			count: 1
+			count: 4
 			path: src/Psalm/PsalmInternals.php
 
 		-
@@ -140,15 +139,33 @@ parameters:
 			path: tests/Integration/Bridge/PHPStan/RegexPatternRuleSearchCostTest.php
 
 		-
+			rawMessage: Access to constant on internal class Psalm\Internal\Analyzer\StatementsAnalyzer.
+			identifier: classConstant.internalClass
+			count: 2
+			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
+
+		-
+			rawMessage: Access to property $node_data of internal class Psalm\Internal\Analyzer\StatementsAnalyzer from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 5
+			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
+
+		-
 			rawMessage: 'Call to internal method Psalm\Context::__construct() from outside its root namespace Psalm.'
 			identifier: method.internal
 			count: 2
 			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
 
 		-
+			rawMessage: 'Call to method __construct() of internal class Psalm\Internal\Analyzer\FileAnalyzer from outside its root namespace Psalm.'
+			identifier: method.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
+
+		-
 			rawMessage: 'Call to method __construct() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
 			identifier: method.internalClass
-			count: 3
+			count: 1
 			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
 
 		-
@@ -164,9 +181,27 @@ parameters:
 			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
 
 		-
+			rawMessage: 'Call to static method getInstance() of internal class Psalm\Internal\Analyzer\ProjectAnalyzer from outside its root namespace Psalm.'
+			identifier: staticMethod.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
+
+		-
+			rawMessage: Instantiation of internal class Psalm\Internal\Analyzer\FileAnalyzer.
+			identifier: new.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
+
+		-
 			rawMessage: Instantiation of internal class Psalm\Internal\Provider\NodeDataProvider.
 			identifier: new.internalClass
-			count: 3
+			count: 1
+			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
+
+		-
+			rawMessage: 'Return type of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmInternalsTest::analyzer() has typehint with internal class Psalm\Internal\Analyzer\StatementsAnalyzer.'
+			identifier: return.internalClass
+			count: 1
 			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
 
 		-
@@ -668,6 +703,12 @@ parameters:
 			path: tests/Unit/Bridge/PHPStan/RegexPatternRuleThresholdTypeTest.php
 
 		-
+			rawMessage: Attribute references internal class PHPUnit\Framework\Attributes\IgnorePhpunitDeprecations.
+			identifier: attribute.internalClass
+			count: 1
+			path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
+
+		-
 			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertNotSame() with array{} and array{PHPRegex\Parser\ErrorCode::AssertionInvalid, PHPRegex\Parser\ErrorCode::BackrefInvalidSyntax, PHPRegex\Parser\ErrorCode::BackrefMissingGroup, PHPRegex\Parser\ErrorCode::BackrefMissingNamedGroup, PHPRegex\Parser\ErrorCode::BackrefRelative, PHPRegex\Parser\ErrorCode::BackrefZero, PHPRegex\Parser\ErrorCode::CalloutInvalidDelimiter, PHPRegex\Parser\ErrorCode::CalloutOutOfRange, ...} will always evaluate to true.'
 			identifier: method.alreadyNarrowedType
 			count: 1
@@ -684,6 +725,12 @@ parameters:
 			identifier: argument.templateType
 			count: 1
 			path: tests/Unit/Lint/ForkedWorkerPoolTest.php
+
+		-
+			rawMessage: 'Parameter #1 $results of class PHPRegex\Linter\LintReport constructor expects array<array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<PHPRegex\Linter\LintIssue>, ...}>, array{array{file: ''valid.php'', line: 1, pattern: ''/test/'', issues: array{}, optimizations: array{}}, ''invalid''} given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Lint/Formatter/JsonFormatterTest.php
 
 		-
 			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 8 and 8 will always evaluate to true.'
@@ -882,9 +929,3 @@ parameters:
 			identifier: function.impossibleType
 			count: 1
 			path: tests/Unit/ValidationResultTest.php
-
-		-
-			rawMessage: 'Parameter #1 $results of class PHPRegex\Linter\LintReport constructor expects array<array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<PHPRegex\Linter\LintIssue>, ...}>, array{array{file: ''valid.php'', line: 1, pattern: ''/test/'', issues: array{}, optimizations: array{}}, ''invalid''} given.'
-			identifier: argument.type
-			count: 1
-			path: tests/Unit/Lint/Formatter/JsonFormatterTest.php

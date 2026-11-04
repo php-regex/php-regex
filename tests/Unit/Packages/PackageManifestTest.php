@@ -486,12 +486,15 @@ final class PackageManifestTest extends TestCase
     }
 
     #[Test]
-    public function test_psalm_package_is_a_psalm_plugin_on_psalm_6(): void
+    public function test_psalm_package_is_a_psalm_plugin_on_psalm_6_and_7(): void
     {
         $manifest = self::manifest('Psalm');
 
         $this->assertSame('psalm-plugin', self::dig($manifest, 'type'));
-        $this->assertSame('^6.19', self::dig($manifest, 'require', 'vimeo/psalm'));
+        $this->assertSame('^6.19|^7.0', self::dig($manifest, 'require', 'vimeo/psalm'));
+        // Psalm 7 versions its plugin API as a metapackage that conflicts
+        // with every Psalm 6: requiring it would refuse Psalm 6.
+        $this->assertNull(self::dig($manifest, 'require', 'psalm/psalm-plugin-api'));
         $this->assertSame(Plugin::class, self::dig($manifest, 'extra', 'psalm', 'pluginClass'));
         $this->assertFileExists(self::root().'/src/Psalm/Plugin.php');
         // Psalm requires the parser it runs on: requiring another copy could

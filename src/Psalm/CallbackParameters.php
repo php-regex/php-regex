@@ -52,7 +52,7 @@ final class CallbackParameters implements FunctionParamsProviderInterface
             return $parameters;
         }
 
-        $callback = new Union([new TCallable('callable', [new FunctionLikeParameter('matches', false, $type, $type, null, null, false)], Type::getString())]);
+        $callback = new Union([new TCallable(params: [new FunctionLikeParameter('matches', false, $type, $type, null, null, false)], return_type: Type::getString())]);
 
         return array_map(static fn (FunctionLikeParameter $parameter): FunctionLikeParameter => 'callback' === $parameter->name ? $parameter->setType($callback) : $parameter, $parameters);
     }
