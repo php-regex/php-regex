@@ -61,9 +61,12 @@ final class MersenneTwisterTest extends TestCase
         yield 'code points' => ['seed' => 99, 'min' => 0x20, 'max' => 0x10FFFF];
         yield 'negative bounds' => ['seed' => 1, 'min' => -5, 'max' => 5];
         yield 'zero seed' => ['seed' => 0, 'min' => 3, 'max' => 3];
-        yield 'seed past 32 bits' => ['seed' => 0x1_0000_0005, 'min' => 0, 'max' => 1000];
         yield 'negative seed' => ['seed' => -1, 'min' => 0, 'max' => 1000];
-        yield 'full 32-bit range' => ['seed' => 5, 'min' => 0, 'max' => 0xFFFFFFFF];
+        // A number past 32 bits is no integer on a 32-bit PHP.
+        if (8 === \PHP_INT_SIZE) {
+            yield 'seed past 32 bits' => ['seed' => 0x1_0000_0005, 'min' => 0, 'max' => 1000];
+            yield 'full 32-bit range' => ['seed' => 5, 'min' => 0, 'max' => 0xFFFFFFFF];
+        }
     }
 
     /**
@@ -96,7 +99,7 @@ final class MersenneTwisterTest extends TestCase
         mt_srand(2026, \MT_RAND_MT19937);
         $first = mt_rand(0, 1000);
         mt_srand(2026, \MT_RAND_MT19937);
-        $twister = new MersenneTwister(99);
+        $twister = new MersenneTwister(99, host: false);
         $twister->between(0, 1000);
         $twister->between(0, 1000);
 
