@@ -128,6 +128,7 @@ final class PhpPcreOptionsTableTest extends TestCase
         require_once self::GENERATOR;
         $dir = sys_get_temp_dir().'/phpregex-pcre-options-'.bin2hex(random_bytes(6));
         mkdir($dir);
+
         try {
             $this->assertTrue(phpregex_pcre_options_write($dir.'/table.js', "window.T = {};\n"));
             $this->assertSame("window.T = {};\n", file_get_contents($dir.'/table.js'));
