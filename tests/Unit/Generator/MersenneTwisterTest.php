@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Generator;
 use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\MersenneTwister;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -78,7 +79,32 @@ final class MersenneTwisterTest extends TestCase
     #[DataProvider('provideDraws')]
     public function test_the_hosts_twister_draws_what_mt_rand_draws_for_the_seed(int $seed, int $min, int $max): void
     {
-        $twister = new MersenneTwister($seed, host: true);
+        $twister = new MersenneTwister($seed, engine: MersenneTwister::HOST);
+        $drawn = [];
+        for ($i = 0; $i < 300; $i++) {
+            $drawn[] = $twister->between($min, $max);
+        }
+
+        mt_srand($seed, \MT_RAND_MT19937);
+        $expected = [];
+        for ($i = 0; $i < 300; $i++) {
+            $expected[] = mt_rand($min, $max);
+        }
+
+        $this->assertSame($expected, $drawn);
+    }
+
+    /**
+     * PHP 8.2's randomizer over its Mt19937 engine draws the same numbers
+     * too, from an engine of its own: the path a 32-bit PHP takes when it
+     * has one, asked for here on any PHP.
+     */
+    #[Test]
+    #[DataProvider('provideDraws')]
+    #[RequiresPhp('>= 8.2.0')]
+    public function test_the_randomizers_engine_draws_what_mt_rand_draws_for_the_seed(int $seed, int $min, int $max): void
+    {
+        $twister = new MersenneTwister($seed, engine: MersenneTwister::RANDOMIZER);
         $drawn = [];
         for ($i = 0; $i < 300; $i++) {
             $drawn[] = $twister->between($min, $max);
@@ -94,12 +120,43 @@ final class MersenneTwisterTest extends TestCase
     }
 
     #[Test]
+    #[RequiresPhp('>= 8.2.0')]
+    public function test_the_randomizers_engine_leaves_the_processes_sequence_alone(): void
+    {
+        mt_srand(2026, \MT_RAND_MT19937);
+        $first = mt_rand(0, 1000);
+        mt_srand(2026, \MT_RAND_MT19937);
+        $twister = new MersenneTwister(99, engine: MersenneTwister::RANDOMIZER);
+        $twister->between(0, 1000);
+        $twister->between(0, 1000);
+
+        $this->assertSame($first, mt_rand(0, 1000), 'The process draws its own first number: the randomizer took none of it.');
+    }
+
+    #[Test]
+    #[RequiresPhp('>= 8.2.0')]
+    public function test_the_randomizers_engine_refuses_a_span_past_32_bits_too(): void
+    {
+        $this->expectException(SampleGenerationException::class);
+
+        (new MersenneTwister(1, engine: MersenneTwister::RANDOMIZER))->between(0, 0x1_0000_0000);
+    }
+
+    #[Test]
+    public function test_an_unknown_engine_is_refused(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        new MersenneTwister(1, engine: 'dice');
+    }
+
+    #[Test]
     public function test_the_own_twister_leaves_the_processes_sequence_alone(): void
     {
         mt_srand(2026, \MT_RAND_MT19937);
         $first = mt_rand(0, 1000);
         mt_srand(2026, \MT_RAND_MT19937);
-        $twister = new MersenneTwister(99, host: false);
+        $twister = new MersenneTwister(99, engine: MersenneTwister::OWN);
         $twister->between(0, 1000);
         $twister->between(0, 1000);
 
@@ -109,7 +166,7 @@ final class MersenneTwisterTest extends TestCase
     #[Test]
     public function test_the_hosts_twister_is_the_processes_sequence(): void
     {
-        $twister = new MersenneTwister(99, host: true);
+        $twister = new MersenneTwister(99, engine: MersenneTwister::HOST);
         $twister->between(0, 1000);
         mt_srand(99, \MT_RAND_MT19937);
         mt_rand(0, 1000);

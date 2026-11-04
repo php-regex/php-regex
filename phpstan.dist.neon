@@ -162,6 +162,16 @@ parameters:
           identifier: method.deprecated
           path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
           reportUnmatched: false
+        # The generator's twister draws through PHP 8.2's randomizer on a
+        # 32-bit PHP that has one, behind a class_exists() check: the
+        # analysis for 8.1 has no such class, the one for 8.2 sees it whole.
+        - message: '#Random\\(Randomizer|Engine\\Mt19937)#'
+          path: src/Generator/MersenneTwister.php
+          reportUnmatched: false
+        - message: '#^Method PHPRegex\\Generator\\MersenneTwister::between\(\) should return int but returns mixed\.$#'
+          identifier: return.type
+          path: src/Generator/MersenneTwister.php
+          reportUnmatched: false
         # These tests probe the running engine for syntax newer PCRE2 releases
         # added, as (?[...]), (*scs:...), (?^i), a \K inside a lookbehind or a
         # group name past 32 code units, and only match with it when it

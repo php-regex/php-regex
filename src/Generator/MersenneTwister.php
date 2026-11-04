@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Generator;
 
 use PHPRegex\Generator\Exception\SampleGenerationException;
+use Random\Engine\Mt19937;
+use Random\Randomizer;
 
 /**
  * PHP's Mersenne Twister, held by the generator alone: a seed draws the same
@@ -22,8 +24,10 @@ use PHPRegex\Generator\Exception\SampleGenerationException;
  * the process's own mt_rand() sequence is left alone.
  *
  * A PHP whose integers hold 32 bits cannot hold a word of the twister: there
- * the process's own twister is seeded and drawn instead, which draws the
- * same numbers, and the process's sequence moves with the generator's.
+ * the draws come from PHP 8.2's randomizer over its own Mt19937 engine, an
+ * engine of this instance's own that draws the same numbers; on PHP 8.1 the
+ * process's own twister is seeded and drawn instead, and the process's
+ * sequence moves with the generator's.
  *
  * @internal
  */
@@ -49,22 +53,43 @@ final class MersenneTwister
     private int $next = self::N;
 
     /**
-     * Whether the draws come from the process's own twister.
+     * The twister held here, word by word.
      */
-    private readonly bool $host;
+    public const OWN = 'own';
 
     /**
-     * @param int|null  $seed cut to its low 32 bits, as PHP does; a random
-     *                        one when null
-     * @param bool|null $host the process's own twister rather than this one;
-     *                        by default on a PHP whose integers hold 32 bits
+     * PHP 8.2's randomizer over an Mt19937 engine of this instance's own.
      */
-    public function __construct(?int $seed = null, ?bool $host = null)
-    {
-        $this->host = $host ?? \PHP_INT_SIZE < 8;
-        if ($this->host) {
-            null === $seed ? mt_srand() : mt_srand($seed, \MT_RAND_MT19937);
+    public const RANDOMIZER = 'randomizer';
 
+    /**
+     * The process's own twister, mt_srand() then mt_rand().
+     */
+    public const HOST = 'host';
+
+    private readonly string $engine;
+
+    private readonly ?Randomizer $randomizer;
+
+    /**
+     * @param int|null    $seed   cut to its low 32 bits, as PHP does; a
+     *                            random one when null
+     * @param string|null $engine OWN, RANDOMIZER or HOST; by default OWN, or
+     *                            on a PHP whose integers hold 32 bits the
+     *                            RANDOMIZER when it has one, else the HOST
+     */
+    public function __construct(?int $seed = null, ?string $engine = null)
+    {
+        $engine ??= \PHP_INT_SIZE >= 8 ? self::OWN : (class_exists(Randomizer::class) ? self::RANDOMIZER : self::HOST);
+        if (!\in_array($engine, [self::OWN, self::RANDOMIZER, self::HOST], true)) {
+            throw new \InvalidArgumentException(\sprintf('Unknown engine "%s": one of "own", "randomizer" or "host".', $engine));
+        }
+        $this->engine = $engine;
+        $this->randomizer = self::RANDOMIZER === $engine ? new Randomizer(new Mt19937($seed)) : null;
+        if (self::HOST === $engine) {
+            null === $seed ? mt_srand() : mt_srand($seed, \MT_RAND_MT19937);
+        }
+        if (self::OWN !== $engine) {
             return;
         }
 
@@ -88,7 +113,10 @@ final class MersenneTwister
             throw new SampleGenerationException(\sprintf('Cannot draw a number among more than 2^32 values, from %d to %d.', $min, $max));
         }
 
-        if ($this->host) {
+        if (null !== $this->randomizer) {
+            return $this->randomizer->getInt($min, $max);
+        }
+        if (self::HOST === $this->engine) {
             return mt_rand($min, $max);
         }
 
