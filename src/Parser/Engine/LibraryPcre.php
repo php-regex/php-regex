@@ -440,7 +440,7 @@ final class LibraryPcre
     {
         $limit = (string) (int) $value === $value ? (int) $value : self::quantity($value);
 
-        return ($limit & 0xFFFFFFFF) < $floor;
+        return IniFlag::unsignedInt($limit) < $floor;
     }
 
     /**

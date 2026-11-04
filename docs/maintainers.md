@@ -583,10 +583,31 @@ a change under `src/` should reach the playground:
 bin/playground-bundle
 ```
 
-The script also writes `docs/_data/playground.json`, the answer the home shows
-before a visitor asks for a run, judged for the default browser engine. The
-suite holds the bundle's shape, runs the bundled driver against the bundled
-library, and fails when the driver in the tree differs from the bundled one.
+The script also writes `docs/_data/playground.json`, the answers the home
+shows before a visitor asks for a run (the analysis, the lint findings and
+the ReDoS verdict of the sample), judged for the default browser engine,
+and the samples drawn for the sample pattern, which `bin/playground-check`
+expects the browser engine to draw again, word for word: a change to the
+generators makes the stored data stale, so regenerate after one. The suite
+holds the bundle's shape, runs the bundled driver against the bundled
+library, and fails when the driver in the tree differs from the bundled
+one.
+
+The driver answers ten requests, each one JSON in, one JSON document out:
+`analyze`, `match`, `lint` and `describe` feed the panels and the syntax
+tree; `format`, `redos`, `transpile`, `samples`, `check` and `export` feed
+the Tools panel's tabs. `match` and `check` touch no class of the library,
+so they run on PHP 8.0 too, where the library does not; the driver keeps to
+PHP 8.0 syntax for that reason. The answers carry a protocol number
+(`PHPREGEX_PLAYGROUND_PROTOCOL`, read by the page as `PROTOCOL`): a field
+added to an answer is additive, a field removed or renamed bumps it, and
+the page refuses an answer whose number it does not know.
+Every answer also carries `notices`: a notice, warning or deprecation the
+library raised while answering, each once, collected instead of printed
+(printed, it would break the envelope). The page shows them in its status
+line when it has nothing else to say, once per run, so what the engine
+raised is never hidden; the sample stored in `_data/playground.json` holds
+none, and `bin/playground-check` prints the ones the browser engine raised.
 
 What the suite cannot see is the browser engine itself: the extensions it
 lacks, the way it runs a request. `bin/playground-check` runs the bundle

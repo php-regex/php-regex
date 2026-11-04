@@ -41,7 +41,7 @@ final class PlaygroundBundleTest extends TestCase
         $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}$/', $manifest['built']);
         $this->assertGreaterThanOrEqual(500, $manifest['files']);
         $this->assertIsInt($manifest['bytes']);
-        $this->assertSame(1, $manifest['protocol']);
+        $this->assertSame(2, $manifest['protocol']);
         $this->assertSame(JsonDumper::VERSION, $manifest['jsonDumper']);
         $this->assertSame(\count(PlaygroundDriver::bundle()['files']), $manifest['files']);
     }

@@ -43,13 +43,27 @@ final class PlaygroundDefaultTest extends TestCase
 
         $live = PlaygroundDriver::analyze($bundle['driver'], $bundle['root'], $data['default']['regex'], $data['default']['subject'], $target);
         $stored = $live;
-        unset($stored['engine'], $stored['timing']);
+        unset($stored['engine'], $stored['timing'], $stored['notices']);
         $this->assertSame($stored, $data['analyze'], 'The stored result is not what the bundled driver answers: regenerate the bundle.');
 
         $lint = PlaygroundDriver::lint($bundle['driver'], $bundle['root'], $data['default']['regex'], $target);
         $storedLint = $lint;
-        unset($storedLint['timing']);
+        unset($storedLint['timing'], $storedLint['notices']);
         $this->assertSame($storedLint, $data['lint']);
+
+        // The verdict names the PHP and PCRE2 that ran it: the machine's,
+        // not the sample's.
+        $redos = PlaygroundDriver::tool($bundle['driver'], $bundle['root'], 'redos', $data['default']['regex'], [], $target);
+        $verdict = $redos['redos'];
+        $this->assertIsArray($verdict);
+        unset($verdict['pcre_version'], $verdict['php_version']);
+        $storedRedos = $redos;
+        $storedRedos['redos'] = $verdict;
+        unset($storedRedos['timing'], $storedRedos['notices']);
+        $this->assertSame($storedRedos, $data['redos'], 'The stored verdict is not what the bundled driver answers: regenerate the bundle.');
+        $verdict = $data['redos']['redos'];
+        $this->assertIsArray($verdict);
+        $this->assertSame('safe', $verdict['severity'], 'The sample is a pattern the verdict calls safe.');
 
         $this->assertSame([], $live['errors'], 'The sample is a pattern that parses.');
         $this->assertNotNull($live['matches']);
@@ -117,11 +131,11 @@ final class PlaygroundDefaultTest extends TestCase
     }
 
     /**
-     * @return array{default: array{regex: string, subject: string}, analyze: array<string, mixed>, lint: array<string, mixed>}
+     * @return array{default: array{regex: string, subject: string}, analyze: array<string, mixed>, lint: array<string, mixed>, redos: array<string, mixed>}
      */
     private static function data(): array
     {
-        /** @var array{default: array{regex: string, subject: string}, analyze: array<string, mixed>, lint: array<string, mixed>} $data */
+        /** @var array{default: array{regex: string, subject: string}, analyze: array<string, mixed>, lint: array<string, mixed>, redos: array<string, mixed>} $data */
         $data = json_decode((string) file_get_contents(PlaygroundDriver::DEFAULT_DATA), true, 512, \JSON_THROW_ON_ERROR);
 
         return $data;

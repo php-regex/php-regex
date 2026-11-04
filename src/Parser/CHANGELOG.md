@@ -9,6 +9,12 @@ CHANGELOG
  * `FormatRefusal::note()` says in one sentence why the formatter gave a
    pattern back as written, the sentence the console prints.
  * An empty script run, `(*sr:)` or `(*asr:)`, parses as a `ScriptRunNode`.
+ * The ini masks fit a 32-bit PHP: `IniFlag::INT_MASK` is an int on every
+   width, `IniFlag::unsignedInt()` reads a limit as the engine's unsigned
+   32-bit int, and the backtrack and recursion floors are compared through
+   it. On a 32-bit PHP (the browser engine of the playground) the ReDoS
+   confirmation threw a `TypeError` and the limit check raised a
+   deprecation.
  * The `locale` option and `PcreTarget::$locale` name the `LC_CTYPE` locale
    the patterns run under, the runtime's by default: the size verdict
    counts exactly the classes whose length follows its character tables,
