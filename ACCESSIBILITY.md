@@ -31,13 +31,9 @@ conformance — if you hit a barrier, we want to hear about it.
 
 ## Reporting a barrier
 
-Open a [GitHub issue](https://github.com/php-regex/php-regex/issues) — the bug
-template works well. Accessibility reports are treated as bugs, not feature
-requests. When you can, include:
-
-- the page or command involved,
-- your browser and terminal, if relevant,
-- the assistive technology you were using.
+Open a [GitHub issue](https://github.com/php-regex/php-regex/issues) with the
+**Accessibility barrier** form — it asks for what helps us act and nothing
+else. Accessibility reports are treated as bugs, not feature requests.
 
 If you prefer a private report, write to **younes.ennaji.pro@gmail.com** (the
 same address as the security policy).

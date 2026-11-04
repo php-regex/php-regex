@@ -1,0 +1,51 @@
+name: Accessibility barrier
+description: Something that is hard or impossible to use with a screen reader, the keyboard alone, magnification or reduced motion.
+labels: [ bug, accessibility ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Accessibility reports are treated as bugs, not feature requests. What
+        helps us act is where the barrier is, what you expected, and what
+        happened instead — the rest is optional, fill in what you know.
+
+  - type: input
+    id: where
+    attributes:
+      label: Page or command
+      description: A URL on php-regex.com, a documentation page, or the regex command you ran.
+      placeholder: https://php-regex.com/playground/
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and terminal
+      description: Optional, only when relevant.
+
+  - type: input
+    id: assistive-technology
+    attributes:
+      label: Assistive technology
+      description: Optional, e.g. NVDA 2024.4, VoiceOver, keyboard-only, 400% zoom.
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Optional, the shortest path from opening the page to the barrier.
