@@ -1,0 +1,1622 @@
+[
+  {
+    "id": "testinput1:13",
+    "regex": "/the quick brown fox/",
+    "subject": "the quick brown fox"
+  },
+  {
+    "id": "testinput1:13",
+    "regex": "/the quick brown fox/",
+    "subject": "What do you know about the quick brown fox?"
+  },
+  {
+    "id": "testinput1:20",
+    "regex": "/The quick brown fox/i",
+    "subject": "the quick brown fox"
+  },
+  {
+    "id": "testinput1:20",
+    "regex": "/The quick brown fox/i",
+    "subject": "The quick brown FOX"
+  },
+  {
+    "id": "testinput1:33",
+    "regex": "/a*abc?xyz+pqr{3}ab{2,}xy{4,5}pq{0,6}AB{0,}zz/",
+    "subject": "abxyzpqrrrabbxyyyypqAzz"
+  },
+  {
+    "id": "testinput1:33",
+    "regex": "/a*abc?xyz+pqr{3}ab{2,}xy{4,5}pq{0,6}AB{0,}zz/",
+    "subject": "abxyzpqrrrabbxyyyypqAzz"
+  },
+  {
+    "id": "testinput1:72",
+    "regex": "/^(abc){1,2}zz/",
+    "subject": "abczz"
+  },
+  {
+    "id": "testinput1:72",
+    "regex": "/^(abc){1,2}zz/",
+    "subject": "abcabczz"
+  },
+  {
+    "id": "testinput1:80",
+    "regex": "/^(b+?|a){1,2}?c/",
+    "subject": "bc"
+  },
+  {
+    "id": "testinput1:80",
+    "regex": "/^(b+?|a){1,2}?c/",
+    "subject": "bbc"
+  },
+  {
+    "id": "testinput1:93",
+    "regex": "/^(b+|a){1,2}c/",
+    "subject": "bc"
+  },
+  {
+    "id": "testinput1:93",
+    "regex": "/^(b+|a){1,2}c/",
+    "subject": "bbc"
+  },
+  {
+    "id": "testinput1:106",
+    "regex": "/^(ba|b*){1,2}?bc/",
+    "subject": "babc"
+  },
+  {
+    "id": "testinput1:106",
+    "regex": "/^(ba|b*){1,2}?bc/",
+    "subject": "bbabc"
+  },
+  {
+    "id": "testinput1:121",
+    "regex": "/^[ab\\]cde]/",
+    "subject": "athing"
+  },
+  {
+    "id": "testinput1:121",
+    "regex": "/^[ab\\]cde]/",
+    "subject": "bthing"
+  },
+  {
+    "id": "testinput1:133",
+    "regex": "/^[]cde]/",
+    "subject": "]thing"
+  },
+  {
+    "id": "testinput1:133",
+    "regex": "/^[]cde]/",
+    "subject": "cthing"
+  },
+  {
+    "id": "testinput1:142",
+    "regex": "/^[^ab\\]cde]/",
+    "subject": "fthing"
+  },
+  {
+    "id": "testinput1:142",
+    "regex": "/^[^ab\\]cde]/",
+    "subject": "[thing"
+  },
+  {
+    "id": "testinput1:154",
+    "regex": "/^[^]cde]/",
+    "subject": "athing"
+  },
+  {
+    "id": "testinput1:154",
+    "regex": "/^[^]cde]/",
+    "subject": "fthing"
+  },
+  {
+    "id": "testinput1:169",
+    "regex": "/^[0-9]+$/",
+    "subject": "0"
+  },
+  {
+    "id": "testinput1:169",
+    "regex": "/^[0-9]+$/",
+    "subject": "1"
+  },
+  {
+    "id": "testinput1:185",
+    "regex": "/^.*nter/",
+    "subject": "enter"
+  },
+  {
+    "id": "testinput1:185",
+    "regex": "/^.*nter/",
+    "subject": "inter"
+  },
+  {
+    "id": "testinput1:190",
+    "regex": "/^xxx[0-9]+$/",
+    "subject": "xxx0"
+  },
+  {
+    "id": "testinput1:190",
+    "regex": "/^xxx[0-9]+$/",
+    "subject": "xxx1234"
+  },
+  {
+    "id": "testinput1:196",
+    "regex": "/^.+[0-9][0-9][0-9]$/",
+    "subject": "x123"
+  },
+  {
+    "id": "testinput1:196",
+    "regex": "/^.+[0-9][0-9][0-9]$/",
+    "subject": "x1234"
+  },
+  {
+    "id": "testinput1:204",
+    "regex": "/^.+?[0-9][0-9][0-9]$/",
+    "subject": "x123"
+  },
+  {
+    "id": "testinput1:204",
+    "regex": "/^.+?[0-9][0-9][0-9]$/",
+    "subject": "x1234"
+  },
+  {
+    "id": "testinput1:212",
+    "regex": "/^([^!]+)!(.+)=apquxz\\.ixr\\.zzz\\.ac\\.uk$/",
+    "subject": "abc!pqr=apquxz.ixr.zzz.ac.uk"
+  },
+  {
+    "id": "testinput1:212",
+    "regex": "/^([^!]+)!(.+)=apquxz\\.ixr\\.zzz\\.ac\\.uk$/",
+    "subject": "!pqr=apquxz.ixr.zzz.ac.uk"
+  },
+  {
+    "id": "testinput1:220",
+    "regex": "/:/",
+    "subject": "Well, we need a colon: somewhere"
+  },
+  {
+    "id": "testinput1:220",
+    "regex": "/:/",
+    "subject": "Fail without a colon"
+  },
+  {
+    "id": "testinput1:225",
+    "regex": "/([\\da-f:]+)$/i",
+    "subject": "0abc"
+  },
+  {
+    "id": "testinput1:225",
+    "regex": "/([\\da-f:]+)$/i",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:240",
+    "regex": "/^.*\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$/",
+    "subject": ".1.2.3"
+  },
+  {
+    "id": "testinput1:240",
+    "regex": "/^.*\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$/",
+    "subject": "A.12.123.0"
+  },
+  {
+    "id": "testinput1:248",
+    "regex": "/^(\\d+)\\s+IN\\s+SOA\\s+(\\S+)\\s+(\\S+)\\s*\\(\\s*$/",
+    "subject": "1 IN SOA non-sp1 non-sp2("
+  },
+  {
+    "id": "testinput1:248",
+    "regex": "/^(\\d+)\\s+IN\\s+SOA\\s+(\\S+)\\s+(\\S+)\\s*\\(\\s*$/",
+    "subject": "1    IN    SOA    non-sp1    non-sp2   ("
+  },
+  {
+    "id": "testinput1:254",
+    "regex": "/^[a-zA-Z\\d][a-zA-Z\\d\\-]*(\\.[a-zA-Z\\d][a-zA-Z\\d\\-]*)*\\.$/",
+    "subject": "a."
+  },
+  {
+    "id": "testinput1:254",
+    "regex": "/^[a-zA-Z\\d][a-zA-Z\\d\\-]*(\\.[a-zA-Z\\d][a-zA-Z\\d\\-]*)*\\.$/",
+    "subject": "Z."
+  },
+  {
+    "id": "testinput1:264",
+    "regex": "/^\\*\\.[a-z]([a-z\\-\\d]*[a-z\\d]+)?(\\.[a-z]([a-z\\-\\d]*[a-z\\d]+)?)*$/",
+    "subject": "*.a"
+  },
+  {
+    "id": "testinput1:264",
+    "regex": "/^\\*\\.[a-z]([a-z\\-\\d]*[a-z\\d]+)?(\\.[a-z]([a-z\\-\\d]*[a-z\\d]+)?)*$/",
+    "subject": "*.b0-a"
+  },
+  {
+    "id": "testinput1:275",
+    "regex": "/^(?=ab(de))(abd)(e)/",
+    "subject": "abde"
+  },
+  {
+    "id": "testinput1:278",
+    "regex": "/^(?!(ab)de|x)(abd)(f)/",
+    "subject": "abdf"
+  },
+  {
+    "id": "testinput1:281",
+    "regex": "/^(?=(ab(cd)))(ab)/",
+    "subject": "abcd"
+  },
+  {
+    "id": "testinput1:284",
+    "regex": "/^[\\da-f](\\.[\\da-f])*$/i",
+    "subject": "a.b.c.d"
+  },
+  {
+    "id": "testinput1:284",
+    "regex": "/^[\\da-f](\\.[\\da-f])*$/i",
+    "subject": "A.B.C.D"
+  },
+  {
+    "id": "testinput1:296",
+    "regex": "/^$/",
+    "subject": "A non-empty line"
+  },
+  {
+    "id": "testinput1:301",
+    "regex": "/   ^    a   (?# begins with a)  b\\sc (?# then b c) $ (?# then end)/x",
+    "subject": "ab c"
+  },
+  {
+    "id": "testinput1:301",
+    "regex": "/   ^    a   (?# begins with a)  b\\sc (?# then b c) $ (?# then end)/x",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:307",
+    "regex": "/(?x)   ^    a   (?# begins with a)  b\\sc (?# then b c) $ (?# then end)/",
+    "subject": "ab c"
+  },
+  {
+    "id": "testinput1:307",
+    "regex": "/(?x)   ^    a   (?# begins with a)  b\\sc (?# then b c) $ (?# then end)/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:313",
+    "regex": "/^   a\\ b[c ]d       $/x",
+    "subject": "a bcd"
+  },
+  {
+    "id": "testinput1:313",
+    "regex": "/^   a\\ b[c ]d       $/x",
+    "subject": "a b d"
+  },
+  {
+    "id": "testinput1:320",
+    "regex": "/^(a(b(c)))(d(e(f)))(h(i(j)))(k(l(m)))$/",
+    "subject": "abcdefhijklm"
+  },
+  {
+    "id": "testinput1:323",
+    "regex": "/^(?:a(b(c)))(?:d(e(f)))(?:h(i(j)))(?:k(l(m)))$/",
+    "subject": "abcdefhijklm"
+  },
+  {
+    "id": "testinput1:332",
+    "regex": "/^a*\\w/",
+    "subject": "z"
+  },
+  {
+    "id": "testinput1:332",
+    "regex": "/^a*\\w/",
+    "subject": "az"
+  },
+  {
+    "id": "testinput1:342",
+    "regex": "/^a*?\\w/",
+    "subject": "z"
+  },
+  {
+    "id": "testinput1:342",
+    "regex": "/^a*?\\w/",
+    "subject": "az"
+  },
+  {
+    "id": "testinput1:352",
+    "regex": "/^a+\\w/",
+    "subject": "az"
+  },
+  {
+    "id": "testinput1:352",
+    "regex": "/^a+\\w/",
+    "subject": "aaaz"
+  },
+  {
+    "id": "testinput1:359",
+    "regex": "/^a+?\\w/",
+    "subject": "az"
+  },
+  {
+    "id": "testinput1:359",
+    "regex": "/^a+?\\w/",
+    "subject": "aaaz"
+  },
+  {
+    "id": "testinput1:366",
+    "regex": "/^\\d{8}\\w{2,}/",
+    "subject": "1234567890"
+  },
+  {
+    "id": "testinput1:366",
+    "regex": "/^\\d{8}\\w{2,}/",
+    "subject": "12345678ab"
+  },
+  {
+    "id": "testinput1:373",
+    "regex": "/^[aeiou\\d]{4,5}$/",
+    "subject": "uoie"
+  },
+  {
+    "id": "testinput1:373",
+    "regex": "/^[aeiou\\d]{4,5}$/",
+    "subject": "1234"
+  },
+  {
+    "id": "testinput1:381",
+    "regex": "/^[aeiou\\d]{4,5}?/",
+    "subject": "uoie"
+  },
+  {
+    "id": "testinput1:381",
+    "regex": "/^[aeiou\\d]{4,5}?/",
+    "subject": "1234"
+  },
+  {
+    "id": "testinput1:388",
+    "regex": "/\\A(abc|def)=(\\1){2,3}\\Z/",
+    "subject": "abc=abcabc"
+  },
+  {
+    "id": "testinput1:388",
+    "regex": "/\\A(abc|def)=(\\1){2,3}\\Z/",
+    "subject": "def=defdefdef"
+  },
+  {
+    "id": "testinput1:394",
+    "regex": "/^(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)\\11*(\\3\\4)\\1(?#)2$/",
+    "subject": "abcdefghijkcda2"
+  },
+  {
+    "id": "testinput1:394",
+    "regex": "/^(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)\\11*(\\3\\4)\\1(?#)2$/",
+    "subject": "abcdefghijkkkkcda2"
+  },
+  {
+    "id": "testinput1:398",
+    "regex": "/(cat(a(ract|tonic)|erpillar)) \\1()2(3)/",
+    "subject": "cataract cataract23"
+  },
+  {
+    "id": "testinput1:398",
+    "regex": "/(cat(a(ract|tonic)|erpillar)) \\1()2(3)/",
+    "subject": "catatonic catatonic23"
+  },
+  {
+    "id": "testinput1:404",
+    "regex": "/^From +([^ ]+) +[a-zA-Z][a-zA-Z][a-zA-Z] +[a-zA-Z][a-zA-Z][a-zA-Z] +[0-9]?[0-9] +[0-9][0-9]:[0-9][0-9]/",
+    "subject": "From abcd  Mon Sep 01 12:33:02 1997"
+  },
+  {
+    "id": "testinput1:407",
+    "regex": "/^From\\s+\\S+\\s+([a-zA-Z]{3}\\s+){2}\\d{1,2}\\s+\\d\\d:\\d\\d/",
+    "subject": "From abcd  Mon Sep 01 12:33:02 1997"
+  },
+  {
+    "id": "testinput1:407",
+    "regex": "/^From\\s+\\S+\\s+([a-zA-Z]{3}\\s+){2}\\d{1,2}\\s+\\d\\d:\\d\\d/",
+    "subject": "From abcd  Mon Sep  1 12:33:02 1997"
+  },
+  {
+    "id": "testinput1:420",
+    "regex": "/foo(?!bar)(.*)/",
+    "subject": "foobar is foolish see?"
+  },
+  {
+    "id": "testinput1:423",
+    "regex": "/(?:(?!foo)...|^.{0,2})bar(.*)/",
+    "subject": "foobar crowbar etc"
+  },
+  {
+    "id": "testinput1:423",
+    "regex": "/(?:(?!foo)...|^.{0,2})bar(.*)/",
+    "subject": "barrel"
+  },
+  {
+    "id": "testinput1:429",
+    "regex": "/^(\\D*)(?=\\d)(?!123)/",
+    "subject": "abc456"
+  },
+  {
+    "id": "testinput1:429",
+    "regex": "/^(\\D*)(?=\\d)(?!123)/",
+    "subject": "abc123"
+  },
+  {
+    "id": "testinput1:446",
+    "regex": "/^abcd#rhubarb/x",
+    "subject": "abcd"
+  },
+  {
+    "id": "testinput1:449",
+    "regex": "/^(a)\\1{2,3}(.)/",
+    "subject": "aaab"
+  },
+  {
+    "id": "testinput1:449",
+    "regex": "/^(a)\\1{2,3}(.)/",
+    "subject": "aaaab"
+  },
+  {
+    "id": "testinput1:455",
+    "regex": "/(?!^)abc/",
+    "subject": "the abc"
+  },
+  {
+    "id": "testinput1:455",
+    "regex": "/(?!^)abc/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:460",
+    "regex": "/(?=^)abc/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:460",
+    "regex": "/(?=^)abc/",
+    "subject": "the abc"
+  },
+  {
+    "id": "testinput1:465",
+    "regex": "/^[ab]{1,3}(ab*|b)/",
+    "subject": "aabbbbb"
+  },
+  {
+    "id": "testinput1:468",
+    "regex": "/^[ab]{1,3}?(ab*|b)/",
+    "subject": "aabbbbb"
+  },
+  {
+    "id": "testinput1:471",
+    "regex": "/^[ab]{1,3}?(ab*?|b)/",
+    "subject": "aabbbbb"
+  },
+  {
+    "id": "testinput1:474",
+    "regex": "/^[ab]{1,3}(ab*?|b)/",
+    "subject": "aabbbbb"
+  },
+  {
+    "id": "testinput1:1300",
+    "regex": "/^(cow|)\\1(bell)/",
+    "subject": "cowcowbell"
+  },
+  {
+    "id": "testinput1:1300",
+    "regex": "/^(cow|)\\1(bell)/",
+    "subject": "bell"
+  },
+  {
+    "id": "testinput1:1306",
+    "regex": "/^\\s/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1319",
+    "regex": "/^(a|)\\1*b/",
+    "subject": "ab"
+  },
+  {
+    "id": "testinput1:1319",
+    "regex": "/^(a|)\\1*b/",
+    "subject": "aaaab"
+  },
+  {
+    "id": "testinput1:1326",
+    "regex": "/^(a|)\\1+b/",
+    "subject": "aab"
+  },
+  {
+    "id": "testinput1:1326",
+    "regex": "/^(a|)\\1+b/",
+    "subject": "aaaab"
+  },
+  {
+    "id": "testinput1:1333",
+    "regex": "/^(a|)\\1?b/",
+    "subject": "ab"
+  },
+  {
+    "id": "testinput1:1333",
+    "regex": "/^(a|)\\1?b/",
+    "subject": "aab"
+  },
+  {
+    "id": "testinput1:1340",
+    "regex": "/^(a|)\\1{2}b/",
+    "subject": "aaab"
+  },
+  {
+    "id": "testinput1:1340",
+    "regex": "/^(a|)\\1{2}b/",
+    "subject": "b"
+  },
+  {
+    "id": "testinput1:1348",
+    "regex": "/^(a|)\\1{2,3}b/",
+    "subject": "aaab"
+  },
+  {
+    "id": "testinput1:1348",
+    "regex": "/^(a|)\\1{2,3}b/",
+    "subject": "aaaab"
+  },
+  {
+    "id": "testinput1:1357",
+    "regex": "/ab{1,3}bc/",
+    "subject": "abbbbc"
+  },
+  {
+    "id": "testinput1:1357",
+    "regex": "/ab{1,3}bc/",
+    "subject": "abbbc"
+  },
+  {
+    "id": "testinput1:1365",
+    "regex": "/([^.]*)\\.([^:]*):[T ]+(.*)/",
+    "subject": "track1.title:TBlah blah blah"
+  },
+  {
+    "id": "testinput1:1368",
+    "regex": "/([^.]*)\\.([^:]*):[T ]+(.*)/i",
+    "subject": "track1.title:TBlah blah blah"
+  },
+  {
+    "id": "testinput1:1371",
+    "regex": "/([^.]*)\\.([^:]*):[t ]+(.*)/i",
+    "subject": "track1.title:TBlah blah blah"
+  },
+  {
+    "id": "testinput1:1376",
+    "regex": "/^[W-c]+$/",
+    "subject": "WXY_^abc"
+  },
+  {
+    "id": "testinput1:1376",
+    "regex": "/^[W-c]+$/",
+    "subject": "wxy"
+  },
+  {
+    "id": "testinput1:1381",
+    "regex": "/^[W-c]+$/i",
+    "subject": "WXY_^abc"
+  },
+  {
+    "id": "testinput1:1381",
+    "regex": "/^[W-c]+$/i",
+    "subject": "wxy_^ABC"
+  },
+  {
+    "id": "testinput1:1385",
+    "regex": "/^[\\x3f-\\x5F]+$/i",
+    "subject": "WXY_^abc"
+  },
+  {
+    "id": "testinput1:1385",
+    "regex": "/^[\\x3f-\\x5F]+$/i",
+    "subject": "wxy_^ABC"
+  },
+  {
+    "id": "testinput1:1391",
+    "regex": "/^abc$/m",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1397",
+    "regex": "/^abc$/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1404",
+    "regex": "/\\Aabc\\Z/m",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1404",
+    "regex": "/\\Aabc\\Z/m",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1419",
+    "regex": "/(?:b)|(?::+)/",
+    "subject": "b::c"
+  },
+  {
+    "id": "testinput1:1419",
+    "regex": "/(?:b)|(?::+)/",
+    "subject": "c::b"
+  },
+  {
+    "id": "testinput1:1423",
+    "regex": "/[-az]+/",
+    "subject": "az-"
+  },
+  {
+    "id": "testinput1:1423",
+    "regex": "/[-az]+/",
+    "subject": "b"
+  },
+  {
+    "id": "testinput1:1428",
+    "regex": "/[az-]+/",
+    "subject": "za-"
+  },
+  {
+    "id": "testinput1:1428",
+    "regex": "/[az-]+/",
+    "subject": "b"
+  },
+  {
+    "id": "testinput1:1433",
+    "regex": "/[a\\-z]+/",
+    "subject": "a-z"
+  },
+  {
+    "id": "testinput1:1433",
+    "regex": "/[a\\-z]+/",
+    "subject": "b"
+  },
+  {
+    "id": "testinput1:1438",
+    "regex": "/[a-z]+/",
+    "subject": "abcdxyz"
+  },
+  {
+    "id": "testinput1:1441",
+    "regex": "/[\\d-]+/",
+    "subject": "12-34"
+  },
+  {
+    "id": "testinput1:1441",
+    "regex": "/[\\d-]+/",
+    "subject": "aaa"
+  },
+  {
+    "id": "testinput1:1451",
+    "regex": "/\\x20Z/",
+    "subject": "the Zoo"
+  },
+  {
+    "id": "testinput1:1451",
+    "regex": "/\\x20Z/",
+    "subject": "Zulu"
+  },
+  {
+    "id": "testinput1:1458",
+    "regex": "/(abc)\\1/i",
+    "subject": "abcabc"
+  },
+  {
+    "id": "testinput1:1458",
+    "regex": "/(abc)\\1/i",
+    "subject": "ABCabc"
+  },
+  {
+    "id": "testinput1:1463",
+    "regex": "/abc$/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1494",
+    "regex": "/^(A)(B)(C)(D)(E)(F)(G)(H)(I)\\8\\9$/",
+    "subject": "ABCDEFGHIHI "
+  },
+  {
+    "id": "testinput1:1497",
+    "regex": "/^[A\\8B\\9C]+$/",
+    "subject": "A8B9C"
+  },
+  {
+    "id": "testinput1:1504",
+    "regex": "/(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)(l)\\12\\123/",
+    "subject": "abcdefghijkllS"
+  },
+  {
+    "id": "testinput1:1512",
+    "regex": "/a{0}bc/",
+    "subject": "bc"
+  },
+  {
+    "id": "testinput1:1515",
+    "regex": "/(a|(bc)){0,0}?xyz/",
+    "subject": "xyz"
+  },
+  {
+    "id": "testinput1:1534",
+    "regex": "/^([^a])([^\\b])([^c]*)([^d]{3,4})/",
+    "subject": "baNOTccccd"
+  },
+  {
+    "id": "testinput1:1534",
+    "regex": "/^([^a])([^\\b])([^c]*)([^d]{3,4})/",
+    "subject": "baNOTcccd"
+  },
+  {
+    "id": "testinput1:1544",
+    "regex": "/[^a]/",
+    "subject": "Abc"
+  },
+  {
+    "id": "testinput1:1544",
+    "regex": "/[^a]/",
+    "subject": "Abc "
+  },
+  {
+    "id": "testinput1:1547",
+    "regex": "/[^a]/i",
+    "subject": "Abc "
+  },
+  {
+    "id": "testinput1:1550",
+    "regex": "/[^a]+/",
+    "subject": "AAAaAbc"
+  },
+  {
+    "id": "testinput1:1550",
+    "regex": "/[^a]+/",
+    "subject": "AAAaAbc "
+  },
+  {
+    "id": "testinput1:1553",
+    "regex": "/[^a]+/i",
+    "subject": "AAAaAbc "
+  },
+  {
+    "id": "testinput1:1556",
+    "regex": "/[^a]+/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1556",
+    "regex": "/[^a]+/",
+    "subject": "abk   "
+  },
+  {
+    "id": "testinput1:1559",
+    "regex": "/[^k]$/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1559",
+    "regex": "/[^k]$/",
+    "subject": "abk   "
+  },
+  {
+    "id": "testinput1:1564",
+    "regex": "/[^k]{2,3}$/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1564",
+    "regex": "/[^k]{2,3}$/",
+    "subject": "kbc"
+  },
+  {
+    "id": "testinput1:1580",
+    "regex": "/(a)\\1{8,}/",
+    "subject": "aaaaaaaaa"
+  },
+  {
+    "id": "testinput1:1580",
+    "regex": "/(a)\\1{8,}/",
+    "subject": "aaaaaaaaaa"
+  },
+  {
+    "id": "testinput1:1586",
+    "regex": "/[^a]/",
+    "subject": "aaaabcd"
+  },
+  {
+    "id": "testinput1:1586",
+    "regex": "/[^a]/",
+    "subject": "aaAabcd "
+  },
+  {
+    "id": "testinput1:1590",
+    "regex": "/[^a]/i",
+    "subject": "aaaabcd"
+  },
+  {
+    "id": "testinput1:1590",
+    "regex": "/[^a]/i",
+    "subject": "aaAabcd "
+  },
+  {
+    "id": "testinput1:1594",
+    "regex": "/[^az]/",
+    "subject": "aaaabcd"
+  },
+  {
+    "id": "testinput1:1594",
+    "regex": "/[^az]/",
+    "subject": "aaAabcd "
+  },
+  {
+    "id": "testinput1:1598",
+    "regex": "/[^az]/i",
+    "subject": "aaaabcd"
+  },
+  {
+    "id": "testinput1:1598",
+    "regex": "/[^az]/i",
+    "subject": "aaAabcd "
+  },
+  {
+    "id": "testinput1:1609",
+    "regex": "/P[^*]TAIRE[^*]{1,6}?LL/",
+    "subject": "xxxxxxxxxxxPSTAIREISLLxxxxxxxxx"
+  },
+  {
+    "id": "testinput1:1612",
+    "regex": "/P[^*]TAIRE[^*]{1,}?LL/",
+    "subject": "xxxxxxxxxxxPSTAIREISLLxxxxxxxxx"
+  },
+  {
+    "id": "testinput1:1615",
+    "regex": "/(\\.\\d\\d[1-9]?)\\d+/",
+    "subject": "1.230003938"
+  },
+  {
+    "id": "testinput1:1615",
+    "regex": "/(\\.\\d\\d[1-9]?)\\d+/",
+    "subject": "1.875000282   "
+  },
+  {
+    "id": "testinput1:1620",
+    "regex": "/(\\.\\d\\d((?=0)|\\d(?=\\d)))/",
+    "subject": "1.230003938      "
+  },
+  {
+    "id": "testinput1:1620",
+    "regex": "/(\\.\\d\\d((?=0)|\\d(?=\\d)))/",
+    "subject": "1.875000282"
+  },
+  {
+    "id": "testinput1:1626",
+    "regex": "/a(?)b/",
+    "subject": "ab "
+  },
+  {
+    "id": "testinput1:1626",
+    "regex": "/a(?)b/",
+    "subject": "Food is on the foo table"
+  },
+  {
+    "id": "testinput1:1629",
+    "regex": "/\\b(foo)\\s+(\\w+)/i",
+    "subject": "Food is on the foo table"
+  },
+  {
+    "id": "testinput1:1629",
+    "regex": "/\\b(foo)\\s+(\\w+)/i",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1632",
+    "regex": "/foo(.*)bar/",
+    "subject": "The food is under the bar in the barn."
+  },
+  {
+    "id": "testinput1:1632",
+    "regex": "/foo(.*)bar/",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1635",
+    "regex": "/foo(.*?)bar/",
+    "subject": "The food is under the bar in the barn."
+  },
+  {
+    "id": "testinput1:1638",
+    "regex": "/(.*)(\\d*)/",
+    "subject": "I have 2 numbers: 53147"
+  },
+  {
+    "id": "testinput1:1638",
+    "regex": "/(.*)(\\d*)/",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1641",
+    "regex": "/(.*)(\\d+)/",
+    "subject": "I have 2 numbers: 53147"
+  },
+  {
+    "id": "testinput1:1641",
+    "regex": "/(.*)(\\d+)/",
+    "subject": "I have 2 numbers: 53147"
+  },
+  {
+    "id": "testinput1:1644",
+    "regex": "/(.*?)(\\d*)/",
+    "subject": "I have 2 numbers: 53147"
+  },
+  {
+    "id": "testinput1:1647",
+    "regex": "/(.*?)(\\d+)/",
+    "subject": "I have 2 numbers: 53147"
+  },
+  {
+    "id": "testinput1:1650",
+    "regex": "/(.*)(\\d+)$/",
+    "subject": "I have 2 numbers: 53147"
+  },
+  {
+    "id": "testinput1:1653",
+    "regex": "/(.*?)(\\d+)$/",
+    "subject": "I have 2 numbers: 53147"
+  },
+  {
+    "id": "testinput1:1656",
+    "regex": "/(.*)\\b(\\d+)$/",
+    "subject": "I have 2 numbers: 53147"
+  },
+  {
+    "id": "testinput1:1659",
+    "regex": "/(.*\\D)(\\d+)$/",
+    "subject": "I have 2 numbers: 53147"
+  },
+  {
+    "id": "testinput1:1662",
+    "regex": "/^\\D*(?!123)/",
+    "subject": "ABC123"
+  },
+  {
+    "id": "testinput1:1662",
+    "regex": "/^\\D*(?!123)/",
+    "subject": " "
+  },
+  {
+    "id": "testinput1:1665",
+    "regex": "/^(\\D*)(?=\\d)(?!123)/",
+    "subject": "ABC445"
+  },
+  {
+    "id": "testinput1:1665",
+    "regex": "/^(\\D*)(?=\\d)(?!123)/",
+    "subject": "ABC123"
+  },
+  {
+    "id": "testinput1:1670",
+    "regex": "/^[W-]46]/",
+    "subject": "W46]789 "
+  },
+  {
+    "id": "testinput1:1670",
+    "regex": "/^[W-]46]/",
+    "subject": "-46]789"
+  },
+  {
+    "id": "testinput1:1682",
+    "regex": "/^[W-\\]46]/",
+    "subject": "W46]789 "
+  },
+  {
+    "id": "testinput1:1682",
+    "regex": "/^[W-\\]46]/",
+    "subject": "Wall"
+  },
+  {
+    "id": "testinput1:1700",
+    "regex": "/word (?:[a-zA-Z0-9]+ ){0,10}otherword/",
+    "subject": "word cat dog elephant mussel cow horse canary baboon snake shark otherword"
+  },
+  {
+    "id": "testinput1:1700",
+    "regex": "/word (?:[a-zA-Z0-9]+ ){0,10}otherword/",
+    "subject": "word cat dog elephant mussel cow horse canary baboon snake shark"
+  },
+  {
+    "id": "testinput1:1705",
+    "regex": "/word (?:[a-zA-Z0-9]+ ){0,300}otherword/",
+    "subject": "word cat dog elephant mussel cow horse canary baboon snake shark the quick brown fox and the lazy dog and several other words getting close to thirty by now I hope"
+  },
+  {
+    "id": "testinput1:1709",
+    "regex": "/^(a){0,0}/",
+    "subject": "bcd"
+  },
+  {
+    "id": "testinput1:1709",
+    "regex": "/^(a){0,0}/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1714",
+    "regex": "/^(a){0,1}/",
+    "subject": "bcd"
+  },
+  {
+    "id": "testinput1:1714",
+    "regex": "/^(a){0,1}/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1719",
+    "regex": "/^(a){0,2}/",
+    "subject": "bcd"
+  },
+  {
+    "id": "testinput1:1719",
+    "regex": "/^(a){0,2}/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1724",
+    "regex": "/^(a){0,3}/",
+    "subject": "bcd"
+  },
+  {
+    "id": "testinput1:1724",
+    "regex": "/^(a){0,3}/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1730",
+    "regex": "/^(a){0,}/",
+    "subject": "bcd"
+  },
+  {
+    "id": "testinput1:1730",
+    "regex": "/^(a){0,}/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1737",
+    "regex": "/^(a){1,1}/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1737",
+    "regex": "/^(a){1,1}/",
+    "subject": "aab  "
+  },
+  {
+    "id": "testinput1:1743",
+    "regex": "/^(a){1,2}/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1743",
+    "regex": "/^(a){1,2}/",
+    "subject": "aab  "
+  },
+  {
+    "id": "testinput1:1749",
+    "regex": "/^(a){1,3}/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1749",
+    "regex": "/^(a){1,3}/",
+    "subject": "aab"
+  },
+  {
+    "id": "testinput1:1756",
+    "regex": "/^(a){1,}/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1756",
+    "regex": "/^(a){1,}/",
+    "subject": "aab"
+  },
+  {
+    "id": "testinput1:1776",
+    "regex": "/.*\\.gif/ms",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1788",
+    "regex": "/.*$/ms",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1800",
+    "regex": "/.*$/ms",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1800",
+    "regex": "/.*$/ms",
+    "subject": "BarFoo "
+  },
+  {
+    "id": "testinput1:1803",
+    "regex": "/(.*X|^B)/",
+    "subject": "BarFoo "
+  },
+  {
+    "id": "testinput1:1809",
+    "regex": "/(.*X|^B)/m",
+    "subject": "BarFoo "
+  },
+  {
+    "id": "testinput1:1814",
+    "regex": "/(.*X|^B)/s",
+    "subject": "BarFoo "
+  },
+  {
+    "id": "testinput1:1820",
+    "regex": "/(.*X|^B)/ms",
+    "subject": "BarFoo "
+  },
+  {
+    "id": "testinput1:1825",
+    "regex": "/(?s)(.*X|^B)/",
+    "subject": "BarFoo "
+  },
+  {
+    "id": "testinput1:1831",
+    "regex": "/(?s:.*X|^B)/",
+    "subject": "BarFoo "
+  },
+  {
+    "id": "testinput1:1837",
+    "regex": "/^.*B/",
+    "subject": " "
+  },
+  {
+    "id": "testinput1:1844",
+    "regex": "/(?m)^.*B/",
+    "subject": " "
+  },
+  {
+    "id": "testinput1:1856",
+    "regex": "/^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]/",
+    "subject": "123456654321"
+  },
+  {
+    "id": "testinput1:1856",
+    "regex": "/^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]/",
+    "subject": "123456654321 "
+  },
+  {
+    "id": "testinput1:1859",
+    "regex": "/^\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d\\d/",
+    "subject": "123456654321 "
+  },
+  {
+    "id": "testinput1:1862",
+    "regex": "/^[\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d]/",
+    "subject": "123456654321"
+  },
+  {
+    "id": "testinput1:1862",
+    "regex": "/^[\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d][\\d]/",
+    "subject": "abcabcabcabc"
+  },
+  {
+    "id": "testinput1:1865",
+    "regex": "/^[abc]{12}/",
+    "subject": "abcabcabcabc"
+  },
+  {
+    "id": "testinput1:1865",
+    "regex": "/^[abc]{12}/",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1868",
+    "regex": "/^[a-c]{12}/",
+    "subject": "abcabcabcabc"
+  },
+  {
+    "id": "testinput1:1868",
+    "regex": "/^[a-c]{12}/",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1871",
+    "regex": "/^(a|b|c){12}/",
+    "subject": "abcabcabcabc "
+  },
+  {
+    "id": "testinput1:1874",
+    "regex": "/^[abcdefghijklmnopqrstuvwxy0123456789]/",
+    "subject": "n"
+  },
+  {
+    "id": "testinput1:1874",
+    "regex": "/^[abcdefghijklmnopqrstuvwxy0123456789]/",
+    "subject": "z "
+  },
+  {
+    "id": "testinput1:1879",
+    "regex": "/abcde{0,0}/",
+    "subject": "abcd"
+  },
+  {
+    "id": "testinput1:1879",
+    "regex": "/abcde{0,0}/",
+    "subject": "abce  "
+  },
+  {
+    "id": "testinput1:1884",
+    "regex": "/ab[cd]{0,0}e/",
+    "subject": "abe"
+  },
+  {
+    "id": "testinput1:1884",
+    "regex": "/ab[cd]{0,0}e/",
+    "subject": "abcde "
+  },
+  {
+    "id": "testinput1:1889",
+    "regex": "/ab(c){0,0}d/",
+    "subject": "abd"
+  },
+  {
+    "id": "testinput1:1889",
+    "regex": "/ab(c){0,0}d/",
+    "subject": "abcd   "
+  },
+  {
+    "id": "testinput1:1894",
+    "regex": "/a(b*)/",
+    "subject": "a"
+  },
+  {
+    "id": "testinput1:1894",
+    "regex": "/a(b*)/",
+    "subject": "ab"
+  },
+  {
+    "id": "testinput1:1901",
+    "regex": "/ab\\d{0}e/",
+    "subject": "abe"
+  },
+  {
+    "id": "testinput1:1901",
+    "regex": "/ab\\d{0}e/",
+    "subject": "ab1e   "
+  },
+  {
+    "id": "testinput1:1910",
+    "regex": "/.*?/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1910",
+    "regex": "/.*?/",
+    "subject": "abc "
+  },
+  {
+    "id": "testinput1:1913",
+    "regex": "/\\b/",
+    "subject": "abc "
+  },
+  {
+    "id": "testinput1:1916",
+    "regex": "/\\b/",
+    "subject": "abc "
+  },
+  {
+    "id": "testinput1:1919",
+    "regex": "//",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:1925",
+    "regex": "/a[^a]b/",
+    "subject": "acb"
+  },
+  {
+    "id": "testinput1:1925",
+    "regex": "/a[^a]b/",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1929",
+    "regex": "/a.b/",
+    "subject": "acb"
+  },
+  {
+    "id": "testinput1:1929",
+    "regex": "/a.b/",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1934",
+    "regex": "/a[^a]b/s",
+    "subject": "acb"
+  },
+  {
+    "id": "testinput1:1934",
+    "regex": "/a[^a]b/s",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1938",
+    "regex": "/a.b/s",
+    "subject": "acb"
+  },
+  {
+    "id": "testinput1:1942",
+    "regex": "/^(b+?|a){1,2}?c/",
+    "subject": "bac"
+  },
+  {
+    "id": "testinput1:1942",
+    "regex": "/^(b+?|a){1,2}?c/",
+    "subject": "bbac"
+  },
+  {
+    "id": "testinput1:1949",
+    "regex": "/^(b+|a){1,2}?c/",
+    "subject": "bac"
+  },
+  {
+    "id": "testinput1:1949",
+    "regex": "/^(b+|a){1,2}?c/",
+    "subject": "bbac"
+  },
+  {
+    "id": "testinput1:1956",
+    "regex": "/(?!\\A)x/m",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1956",
+    "regex": "/(?!\\A)x/m",
+    "subject": "CD "
+  },
+  {
+    "id": "testinput1:1962",
+    "regex": "/(A|B)*?CD/",
+    "subject": "CD "
+  },
+  {
+    "id": "testinput1:1962",
+    "regex": "/(A|B)*?CD/",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1965",
+    "regex": "/(A|B)*CD/",
+    "subject": "CD "
+  },
+  {
+    "id": "testinput1:1968",
+    "regex": "/(AB)*?\\1/",
+    "subject": "ABABAB"
+  },
+  {
+    "id": "testinput1:1971",
+    "regex": "/(AB)*\\1/",
+    "subject": "ABABAB"
+  },
+  {
+    "id": "testinput1:1971",
+    "regex": "/(AB)*\\1/",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:1974",
+    "regex": "/(?<!bar)foo/",
+    "subject": "foo"
+  },
+  {
+    "id": "testinput1:1974",
+    "regex": "/(?<!bar)foo/",
+    "subject": "catfood"
+  },
+  {
+    "id": "testinput1:1983",
+    "regex": "/\\w{3}(?<!bar)foo/",
+    "subject": "catfood"
+  },
+  {
+    "id": "testinput1:1983",
+    "regex": "/\\w{3}(?<!bar)foo/",
+    "subject": "foo"
+  },
+  {
+    "id": "testinput1:1990",
+    "regex": "/(?<=(foo)a)bar/",
+    "subject": "fooabar"
+  },
+  {
+    "id": "testinput1:1990",
+    "regex": "/(?<=(foo)a)bar/",
+    "subject": "bar"
+  },
+  {
+    "id": "testinput1:1996",
+    "regex": "/\\Aabc\\z/m",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:2009",
+    "regex": "/(?>(\\.\\d\\d[1-9]?))\\d+/",
+    "subject": "1.230003938"
+  },
+  {
+    "id": "testinput1:2009",
+    "regex": "/(?>(\\.\\d\\d[1-9]?))\\d+/",
+    "subject": "1.875000282"
+  },
+  {
+    "id": "testinput1:2015",
+    "regex": "/^((?>\\w+)|(?>\\s+))*$/",
+    "subject": "now is the time for all good men to come to the aid of the party"
+  },
+  {
+    "id": "testinput1:2015",
+    "regex": "/^((?>\\w+)|(?>\\s+))*$/",
+    "subject": "this is not a line with only words and spaces!"
+  },
+  {
+    "id": "testinput1:2020",
+    "regex": "/(\\d+)(\\w)/",
+    "subject": "12345a"
+  },
+  {
+    "id": "testinput1:2020",
+    "regex": "/(\\d+)(\\w)/",
+    "subject": "12345+ "
+  },
+  {
+    "id": "testinput1:2024",
+    "regex": "/((?>\\d+))(\\w)/",
+    "subject": "12345a"
+  },
+  {
+    "id": "testinput1:2024",
+    "regex": "/((?>\\d+))(\\w)/",
+    "subject": "12345+ "
+  },
+  {
+    "id": "testinput1:2029",
+    "regex": "/(?>a+)b/",
+    "subject": "aaab"
+  },
+  {
+    "id": "testinput1:2032",
+    "regex": "/((?>a+)b)/",
+    "subject": "aaab"
+  },
+  {
+    "id": "testinput1:2035",
+    "regex": "/(?>(a+))b/",
+    "subject": "aaab"
+  },
+  {
+    "id": "testinput1:2038",
+    "regex": "/(?>b)+/",
+    "subject": "aaabbbccc"
+  },
+  {
+    "id": "testinput1:2041",
+    "regex": "/(?>a+|b+|c+)*c/",
+    "subject": "aaabbbbccccd"
+  },
+  {
+    "id": "testinput1:2044",
+    "regex": "/((?>[^()]+)|\\([^()]*\\))+/",
+    "subject": "((abc(ade)ufh()()x"
+  },
+  {
+    "id": "testinput1:2044",
+    "regex": "/((?>[^()]+)|\\([^()]*\\))+/",
+    "subject": ""
+  },
+  {
+    "id": "testinput1:2047",
+    "regex": "/\\(((?>[^()]+)|\\([^()]+\\))+\\)/",
+    "subject": "(abc)"
+  },
+  {
+    "id": "testinput1:2047",
+    "regex": "/\\(((?>[^()]+)|\\([^()]+\\))+\\)/",
+    "subject": "(abc(def)xyz)"
+  },
+  {
+    "id": "testinput1:2053",
+    "regex": "/a(?-i)b/i",
+    "subject": "ab"
+  },
+  {
+    "id": "testinput1:2053",
+    "regex": "/a(?-i)b/i",
+    "subject": "Ab"
+  },
+  {
+    "id": "testinput1:2060",
+    "regex": "/(a (?x)b c)d e/",
+    "subject": "a bcd e"
+  },
+  {
+    "id": "testinput1:2060",
+    "regex": "/(a (?x)b c)d e/",
+    "subject": "a b cd e"
+  },
+  {
+    "id": "testinput1:2067",
+    "regex": "/(a b(?x)c d (?-x)e f)/",
+    "subject": "a bcde f"
+  },
+  {
+    "id": "testinput1:2067",
+    "regex": "/(a b(?x)c d (?-x)e f)/",
+    "subject": "abcdef  "
+  },
+  {
+    "id": "testinput1:2072",
+    "regex": "/(a(?i)b)c/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:2072",
+    "regex": "/(a(?i)b)c/",
+    "subject": "aBc"
+  },
+  {
+    "id": "testinput1:2083",
+    "regex": "/a(?i:b)c/",
+    "subject": "abc"
+  },
+  {
+    "id": "testinput1:2083",
+    "regex": "/a(?i:b)c/",
+    "subject": "aBc"
+  },
+  {
+    "id": "testinput1:2091",
+    "regex": "/a(?i:b)*c/",
+    "subject": "aBc"
+  },
+  {
+    "id": "testinput1:2091",
+    "regex": "/a(?i:b)*c/",
+    "subject": "aBBc"
+  },
+  {
+    "id": "testinput1:2098",
+    "regex": "/a(?=b(?i)c)\\w\\wd/",
+    "subject": "abcd"
+  },
+  {
+    "id": "testinput1:2098",
+    "regex": "/a(?=b(?i)c)\\w\\wd/",
+    "subject": "abCd"
+  },
+  {
+    "id": "bsk-lookahead-reversed",
+    "regex": "/(?=a\\K)/",
+    "subject": "a"
+  },
+  {
+    "id": "frames-twenty-groups",
+    "regex": "/^(?:((((((((((((((((((((.))))))))))))))))))))|b)*$/",
+    "subject": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
+    "id": "frames-thousand-groups",
+    "regex": "/()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()/",
+    "subject": ""
+  },
+  {
+    "id": "frames-depth-limit",
+    "regex": "/^(?:(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((.)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))|b)*$/",
+    "subject": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  }
+]

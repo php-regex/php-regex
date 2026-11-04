@@ -23,6 +23,7 @@
 /bin/regex.phar
 /bin/regex.phar.sha256
 /coverage/
+/wasm/pcre2-trace/build/
 
 # Logs
 *.log

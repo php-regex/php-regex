@@ -1,0 +1,29 @@
+{
+    "release": "10.44",
+    "pcre2": {
+        "tag": "pcre2-10.44",
+        "commit": "6ae58beca071f13ccfed31d03b3f479ab520639b"
+    },
+    "emscripten": {
+        "image": "emscripten/emsdk:4.0.15",
+        "digest": "sha256:27bc6267cb285223b8aebb7627bfebae7cb3ad2aaa0d5923b8aa5321793033e8"
+    },
+    "module": "pcre2-10.44.wasm",
+    "sha256": "78e68fff05d8c0e0743e062f22b072125895de453878f43fb555a6cde0460d1d",
+    "bytes": 289812,
+    "exports": [
+        "memory",
+        "__indirect_function_table",
+        "malloc",
+        "free",
+        "pcre2_trace_run",
+        "pcre2_trace_version",
+        "pcre2_trace_free",
+        "_initialize",
+        "_emscripten_stack_restore",
+        "emscripten_stack_get_current"
+    ],
+    "imports": [
+        "env.emscripten_notify_memory_growth"
+    ]
+}

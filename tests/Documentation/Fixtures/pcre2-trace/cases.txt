@@ -1,0 +1,93 @@
+# pcre2test input: the corpus and the edge-case walk of the step debugger, one
+# "# name:" line before each pattern. Pinned outputs per PCRE2 release live beside
+# this file as <release>.txt (pcre2test -q cases.txt, saved verbatim).
+#
+# name: nested-quantifier
+/^(a+)+$/auto_callout
+    aab\=callout_extra,callout_capture
+
+# name: leftmost-first
+/(a|ab)(c|bcd)(d*)/auto_callout
+    abcd\=callout_extra,callout_capture
+
+# name: possessive
+/a++a/auto_callout
+    aaa\=callout_extra,callout_capture
+
+# name: atomic
+/(?>a+)a/auto_callout
+    aaa\=callout_extra,callout_capture
+
+# name: lookbehind
+/(?<=b)a+/auto_callout
+    xba\=callout_extra,callout_capture
+
+# name: lookaround-bsk
+/(?<=a\K)bc/auto_callout,allow_lookaround_bsk
+    abc\=callout_extra,callout_capture
+
+# name: ucp-word
+/\w+/auto_callout,utf,ucp
+    caf\x{e9}\=callout_extra,callout_capture
+
+# name: empty-body
+//auto_callout
+    \=callout_extra,callout_capture
+
+# name: empty-subject
+/a?/auto_callout
+    \=callout_extra,callout_capture
+
+# name: extended-comment
+/a # comment
+ b/auto_callout,extended
+    ab\=callout_extra,callout_capture
+
+# name: dupnames
+/(?J)(?<n>a)|(?<n>b)/auto_callout
+    b\=callout_extra,callout_capture
+
+# name: no-auto-capture
+/(?n)(a)(?<x>b)/auto_callout
+    ab\=callout_extra,callout_capture
+
+# name: lookbehind-at-start
+/(?<=^)a/auto_callout
+    a\=callout_extra,callout_capture
+
+# name: crlf-dollar
+/a$/auto_callout
+    a\r\n\=callout_extra,callout_capture
+
+# name: bsr-nel-utf
+/\R/auto_callout,utf
+    \x{85}\=callout_extra,callout_capture
+
+# name: auto-possess
+/a+[bc]/auto_callout
+    aaac\=callout_extra,callout_capture
+
+# name: recursion
+/^(\((?1)*\))$/auto_callout
+    (()())\=callout_extra,callout_capture
+
+# name: backreference
+/(a)\1/auto_callout
+    aa\=callout_extra,callout_capture
+
+# name: branch-reset
+/(?|(a)|(b))\1/auto_callout
+    bb\=callout_extra,callout_capture
+
+# name: conditional
+/(a)?(?(1)b|c)/auto_callout
+    c\=callout_extra,callout_capture
+
+# name: skip-verb
+/a+(*SKIP)b|c/auto_callout
+    aaac\=callout_extra,callout_capture
+
+# name: nest-limit
+/((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((()))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))/auto_callout
+    \=callout_extra,callout_capture
+

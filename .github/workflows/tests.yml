@@ -71,6 +71,15 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install the PCRE2 headers and tools
+        # The native build of the playground's trace shim, in the
+        # documentation tests: it compiles against pcre2-config and the
+        # system's cc, and skips itself where either is missing. Linux only;
+        # macOS and Windows keep their hosts as they are.
+        if: runner.os == 'Linux'
+        shell: bash
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpcre2-dev pcre2-utils
+
       # PHPStan too, and PHPBench whose sources its configuration scans: a
       # test analyses a fixture with the repository's own configuration.
       - name: Setup PHP ${{ matrix.php }} and the project
@@ -152,6 +161,11 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+
+      - name: Install the PCRE2 headers and tools
+        # The native build of the playground's trace shim, as in the cells
+        # above.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpcre2-dev pcre2-utils
 
       - name: Setup PHP 8.7 and the project
         uses: ./.github/actions/setup-php-project

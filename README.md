@@ -361,7 +361,7 @@ Guides:
 
 Key references:
 - [Architecture](https://php-regex.com/architecture/)
-- [Concepts](https://php-regex.com/concepts/): [AST](https://php-regex.com/concepts/ast/), [PCRE versions](https://php-regex.com/concepts/pcre/), [ReDoS](https://php-regex.com/concepts/redos/), [visitors](https://php-regex.com/concepts/visitors/)
+- [Concepts](https://php-regex.com/concepts/): [AST](https://php-regex.com/concepts/ast/), [PCRE versions](https://php-regex.com/concepts/pcre/), [how PCRE2 matches](https://php-regex.com/concepts/how-pcre2-matches/), [ReDoS](https://php-regex.com/concepts/redos/), [visitors](https://php-regex.com/concepts/visitors/)
 - [API Reference](https://php-regex.com/reference/api/)
 - [Diagnostics](https://php-regex.com/reference/diagnostics/)
 - [Feature Support Matrix](https://php-regex.com/reference/feature-support-matrix/)

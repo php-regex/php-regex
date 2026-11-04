@@ -15,7 +15,9 @@
   the engine that answered. A Tools panel, one tab strip, holds what the
   console does with a pattern: the ReDoS verdict with its attack string,
   the translation to JavaScript, HTML or Python, sample subjects, a
-  regex-phpunit test to paste, the pattern laid out over lines; each tab
+  regex-phpunit test to paste, the pattern laid out over lines, and the
+  match stepped through as PCRE2 itself ran it (the real PCRE2, compiled
+  to WebAssembly, in a worker of its own); each tab
   asks the engine when it is opened, never on every keystroke. The pattern field is colored by the same
   answer — the engine's token spans, drawn in a mirror under the field,
   the code blocks' palette — and falls back to the field's own ink
@@ -90,12 +92,14 @@
             <button type="button" class="pg-tab" role="tab" id="pg-tab-samples" aria-controls="pg-tool-samples" aria-selected="false" tabindex="-1" data-tool="samples">Samples</button>
             <button type="button" class="pg-tab" role="tab" id="pg-tab-export" aria-controls="pg-tool-export" aria-selected="false" tabindex="-1" data-tool="export">Test</button>
             <button type="button" class="pg-tab" role="tab" id="pg-tab-format" aria-controls="pg-tool-format" aria-selected="false" tabindex="-1" data-tool="format">Format</button>
+            <button type="button" class="pg-tab" role="tab" id="pg-tab-trace" aria-controls="pg-tool-trace" aria-selected="false" tabindex="-1" data-tool="trace">Step through</button>
           </div>
           <div class="pg-tool" role="tabpanel" id="pg-tool-redos" aria-labelledby="pg-tab-redos" tabindex="0"></div>
           <div class="pg-tool" role="tabpanel" id="pg-tool-transpile" aria-labelledby="pg-tab-transpile" tabindex="0" hidden></div>
           <div class="pg-tool" role="tabpanel" id="pg-tool-samples" aria-labelledby="pg-tab-samples" tabindex="0" hidden></div>
           <div class="pg-tool" role="tabpanel" id="pg-tool-export" aria-labelledby="pg-tab-export" tabindex="0" hidden></div>
           <div class="pg-tool" role="tabpanel" id="pg-tool-format" aria-labelledby="pg-tab-format" tabindex="0" hidden></div>
+          <div class="pg-tool" role="tabpanel" id="pg-tool-trace" aria-labelledby="pg-tab-trace" tabindex="0" hidden></div>
         </div>
       </div>
     </div>
@@ -124,4 +128,4 @@
   <p class="pg-live visually-hidden" aria-live="polite"></p>
 </div>
 <p class="pg-caption"></p>
-<p class="pg-credits">Runs on <a href="https://github.com/seanmorris/php-wasm">php-wasm</a> (Apache-2.0) with mbstring and <a href="https://github.com/kkos/oniguruma">oniguruma</a> (BSD), loaded from jsDelivr when you press Run. Nothing you type leaves your browser.</p>
+<p class="pg-credits">Runs on <a href="https://github.com/seanmorris/php-wasm">php-wasm</a> (Apache-2.0) with mbstring and <a href="https://github.com/kkos/oniguruma">oniguruma</a> (BSD), loaded from jsDelivr when you press Run. The Step through tab traces the match with <a href="https://github.com/PCRE2Project/pcre2">PCRE2</a> itself (BSD-3-Clause), compiled to WebAssembly without a change. Nothing you type leaves your browser.</p>

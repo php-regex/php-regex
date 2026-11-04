@@ -18,6 +18,24 @@
  * mbstring extension, the bundle written into the engine's filesystem, the
  * driver included once and asked many times.
  *
+ * The trace module behind the step debugger rides in the same bundle, and
+ * this is the one check of what visitors get of it too:
+ *
+ *   - the embedded bytes are the ones wasm/pcre2-trace/manifest.json pins
+ *     (size, sha256, and the built file when wasm/pcre2-trace/build/ has
+ *     it), the module imports only the memory-growth notice and exports what the manifest lists;
+ *   - run under Node, the module reproduces pcre2test's own trace of every
+ *     case in tests/Documentation/Fixtures/pcre2-trace/cases.txt, pinned
+ *     for its release;
+ *   - over the pinned outcomes and the same cases, the module run with the
+ *     options PHP passes (docs/assets/js/php-pcre-options.js, the row of
+ *     the engine's exact version) answers as the engine's preg_match()
+ *     does: matched or not, the numbered captures, the error;
+ *   - the four witnesses the page probes before offering the debugger
+ *     agree between the module and every engine that has a row and a
+ *     module: the newline convention, \R on NEL under u, \K in a
+ *     lookbehind, and the parentheses nesting limit.
+ *
  * php-wasm and php-wasm-mbstring (the versions run-worker.js pins) are
  * installed into a temporary directory for the run: the repository carries
  * no package.json.
@@ -26,21 +44,98 @@
  */
 
 const { execFileSync } = require('node:child_process');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
+const vm = require('node:vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const BUNDLE = path.join(ROOT, 'docs/assets/playground/bundle.json');
 const DEFAULT_DATA = path.join(ROOT, 'docs/_data/playground.json');
+const MODULE_MANIFEST = path.join(ROOT, 'wasm/pcre2-trace/manifest.json');
+const MODULE_BUILD = path.join(ROOT, 'wasm/pcre2-trace/build');
+const OPTIONS_TABLE = path.join(ROOT, 'docs/assets/js/php-pcre-options.js');
+const FIXTURES = path.join(ROOT, 'tests/Documentation/Fixtures/pcre2-trace');
 const PHP_WASM = 'php-wasm@0.2.0';
 const MBSTRING = 'php-wasm-mbstring@0.2.0';
 const LIBRARY_DIR = '/lib';
 
+// The page's limits: the worker's ini and the recording cap.
+const MATCH_LIMIT = 1000000;
+const DEPTH_LIMIT = 100000;
+const STEP_CAP = 20000;
+
+// PCRE2's bits, stable from 10.3x to 10.49, and the callout facts.
+const UTF = 0x80000;
+const UCP = 0x20000;
+const EXTENDED = 0x80;
+const EXTRA_ALLOW_LOOKAROUND_BSK = 0x40;
+const AUTO_CALLOUT_NUMBER = 255;
+const STARTMATCH = 1;
+const BACKTRACK = 2;
+
+// pcre2test's modifiers as the bits the module takes.
+const PCRE2TEST_MODIFIERS = {
+  auto_callout: { compile: 0, extra: 0, php: '' },
+  utf: { compile: UTF, extra: 0, php: 'u' },
+  ucp: { compile: UCP, extra: 0, php: '' },
+  extended: { compile: EXTENDED, extra: 0, php: 'x' },
+  allow_lookaround_bsk: { compile: 0, extra: EXTRA_ALLOW_LOOKAROUND_BSK, php: '' },
+};
+
+// The exports a loader calls, whatever else the toolchain adds.
+const REQUIRED_EXPORTS = ['memory', 'malloc', 'free', 'pcre2_trace_run', 'pcre2_trace_free', 'pcre2_trace_version', '_initialize'];
+
+// preg_last_error_msg() for each PREG_* code of a row's error map.
+const PREG_MESSAGES = {
+  1: 'Internal error',
+  2: 'Backtrack limit exhausted',
+  3: 'Recursion limit exhausted',
+  4: 'Malformed UTF-8 characters, possibly incorrectly encoded',
+  5: 'The offset did not correspond to the beginning of a valid UTF-8 code point',
+  6: 'JIT stack limit exhausted',
+};
+
+// PCRE2's match error codes PHP maps (pcre_handle_exec_error).
+const PCRE2_ERROR_UTF8_ERR1 = -3;
+const PCRE2_ERROR_UTF8_ERR21 = -23;
+const PCRE2_ERROR_BADUTFOFFSET = -36;
+const PCRE2_ERROR_JIT_STACKLIMIT = -46;
+const PCRE2_ERROR_MATCHLIMIT = -47;
+const PCRE2_ERROR_NOMEMORY = -48;
+const PCRE2_ERROR_DEPTHLIMIT = -53;
+
+// php_pcre.c, when a matches array is passed: a whole match whose end is
+// before its start (\K in a lookahead) is a warning and false, not a match.
+const PHP_REVERSED_MATCH = 'Get subpatterns list failed';
+
+// The module's one import, Emscripten's memory-growth notice, answered by
+// a no-op as the page answers it (trace-worker.js).
+const MODULE_IMPORTS = ['env.emscripten_notify_memory_growth'];
+const IMPORT_OBJECT = { env: { emscripten_notify_memory_growth: () => {} } };
+
+// The four witnesses the page probes once per engine before offering the
+// debugger: the newline convention, BSR under u, \K in a lookbehind, the
+// parentheses nesting limit.
+const WITNESSES = [
+  { name: 'newline', regex: '/a$/', subject: 'a\r\n' },
+  { name: 'bsr', regex: '/\\R/u', subject: '\u0085' },
+  { name: 'lookbehind-bsk', regex: '/(?<=a\\K)bc/', subject: 'abc' },
+  { name: 'nest-limit', regex: '/' + '('.repeat(251) + 'a' + ')'.repeat(251) + '/', subject: 'a' },
+];
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder('utf-8', { fatal: true });
+
 function fail(message) {
   process.stderr.write(message + '\n');
   process.exit(1);
+}
+
+function say(line) {
+  process.stdout.write(line + '\n');
 }
 
 function stripped(payload, keys) {
@@ -67,12 +162,570 @@ function firstDifference(a, b, at = '$') {
   return null;
 }
 
+function sha256(bytes) {
+  return crypto.createHash('sha256').update(bytes).digest('hex');
+}
+
+function sameBytes(a, b) {
+  return a.length === b.length && Buffer.compare(Buffer.from(a), Buffer.from(b)) === 0;
+}
+
+function sameList(a, b) {
+  return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((item, i) => item === b[i]);
+}
+
+function sorted(list) {
+  return [...list].sort();
+}
+
+// --- the embedded module -----------------------------------------------------
+
+// The module the bundle embeds, checked against the tree's pin: the bytes,
+// their checksum, the built file when it is there, the imports and the
+// exports. Returns the compiled module with its name and release.
+function embeddedModule(bundle, expect) {
+  const pinned = JSON.parse(fs.readFileSync(MODULE_MANIFEST, 'utf8'));
+  const name = `pcre2-${pinned.release}`;
+  const modules = bundle.modules || {};
+  expect(sameList(Object.keys(modules), [name]), `The bundle embeds ${JSON.stringify(Object.keys(modules))}, the tree pins ${name}.`);
+  const embedded = modules[name];
+  if (!embedded) {
+    return null;
+  }
+  expect(sameList(Object.keys(embedded), ['release', 'sha256', 'bytes', 'base64']), `The ${name} entry carries ${JSON.stringify(Object.keys(embedded))}.`);
+  expect(embedded.release === pinned.release, `The ${name} entry names release ${embedded.release}, the tree pins ${pinned.release}.`);
+
+  const bytes = Buffer.from(embedded.base64, 'base64');
+  expect(bytes.toString('base64') === embedded.base64, `The ${name} entry is not strict base64.`);
+  expect(bytes.length === embedded.bytes, `The ${name} entry decodes to ${bytes.length} bytes, its size says ${embedded.bytes}.`);
+  expect(bytes.length === pinned.bytes, `The ${name} entry decodes to ${bytes.length} bytes, the tree pins ${pinned.bytes}.`);
+  const digest = sha256(bytes);
+  expect(digest === embedded.sha256, `The ${name} entry's bytes hash to ${digest}, its sha256 says ${embedded.sha256}.`);
+  expect(digest === pinned.sha256, `The ${name} entry's bytes hash to ${digest}, the tree pins ${pinned.sha256}: rebuild the module or regenerate the bundle.`);
+  const manifest = (bundle.manifest.modules || {})[name];
+  const manifestDifference = firstDifference(manifest, { release: embedded.release, sha256: embedded.sha256, bytes: embedded.bytes });
+  expect(manifestDifference === null, `The bundle manifest's ${name} entry differs from the embedded module at ${manifestDifference}.`);
+
+  const built = path.join(MODULE_BUILD, pinned.module);
+  let builtState = 'no built file to compare with';
+  if (fs.existsSync(built)) {
+    const same = sameBytes(fs.readFileSync(built), bytes);
+    expect(same, `The ${name} entry differs from the built ${built}: regenerate the bundle or rebuild the module.`);
+    builtState = same ? `byte-equal to ${path.relative(ROOT, built)}` : `differs from ${path.relative(ROOT, built)}`;
+  }
+
+  let module = null;
+  try {
+    module = new WebAssembly.Module(bytes);
+  } catch (error) {
+    expect(false, `The ${name} entry is not a WebAssembly module: ${error.message}`);
+    return null;
+  }
+  const imports = WebAssembly.Module.imports(module).map((entry) => `${entry.module}.${entry.name}`);
+  expect(sameList(sorted(imports), sorted(MODULE_IMPORTS)), `The ${name} module imports ${JSON.stringify(imports)}; the page provides exactly ${JSON.stringify(MODULE_IMPORTS)}.`);
+  expect(sameList(sorted(pinned.imports || []), sorted(MODULE_IMPORTS)), `The tree pins imports ${JSON.stringify(pinned.imports)} for ${name}; the page provides exactly ${JSON.stringify(MODULE_IMPORTS)}.`);
+  const exports = WebAssembly.Module.exports(module).map((entry) => entry.name);
+  expect(sameList(sorted(exports), sorted(pinned.exports)), `The ${name} module exports ${JSON.stringify(sorted(exports))}, the tree pins ${JSON.stringify(sorted(pinned.exports))}.`);
+  REQUIRED_EXPORTS.forEach((required) => expect(exports.includes(required), `The ${name} module does not export ${required}.`));
+
+  say(`The bundle embeds ${name} as the tree pins it: ${bytes.length} bytes, sha256 ${digest.slice(0, 12)}…, ${builtState}, one import (the memory-growth notice), ${exports.length} exports.`);
+  return { name, release: pinned.release, module, bytes };
+}
+
+// The module instantiated the way the page does it, the memory-growth
+// notice answered by a no-op and _initialize() called once; run() takes
+// bytes and gives the JSON document back. The memory may grow under malloc
+// and under pcre2_trace_run, which detaches the previous buffer: heap()
+// takes a fresh view at every read and write.
+async function tracer(module) {
+  const instance = await WebAssembly.instantiate(module, IMPORT_OBJECT);
+  const e = instance.exports;
+  e._initialize();
+  const heap = () => new Uint8Array(e.memory.buffer);
+  const put = (bytes) => {
+    // One byte more than the length: an empty pattern or subject still gets
+    // a pointer of its own, and the memory may grow under malloc.
+    const pointer = e.malloc(bytes.length + 1);
+    heap().set(bytes, pointer);
+    return pointer;
+  };
+  const readz = (pointer) => {
+    const memory = heap();
+    let end = pointer;
+    while (memory[end] !== 0) {
+      end++;
+    }
+    return decoder.decode(memory.subarray(pointer, end));
+  };
+  return {
+    version: readz(e.pcre2_trace_version()),
+    run(pattern, subject, compile, extra, matchLimit = MATCH_LIMIT, depthLimit = DEPTH_LIMIT, stepCap = STEP_CAP) {
+      const patternPointer = put(pattern);
+      const subjectPointer = put(subject);
+      const json = e.pcre2_trace_run(patternPointer, pattern.length, subjectPointer, subject.length, compile, extra, matchLimit, depthLimit, stepCap);
+      const trace = JSON.parse(readz(json));
+      e.pcre2_trace_free(json);
+      e.free(patternPointer);
+      e.free(subjectPointer);
+      return trace;
+    },
+  };
+}
+
+// --- the pinned pcre2test cases ----------------------------------------------
+
+// pcre2test's subject or pattern escapes back to bytes: \n, \r, \t, \\,
+// \x{hh} (a code point under utf, a byte otherwise) and \xhh (a byte).
+function unescape(text, utf) {
+  const out = [];
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c !== '\\') {
+      out.push(...encoder.encode(c));
+      continue;
+    }
+    const next = text[i + 1];
+    if (next === 'x' && text[i + 2] === '{') {
+      const close = text.indexOf('}', i + 3);
+      const code = parseInt(text.slice(i + 3, close), 16);
+      out.push(...(utf ? encoder.encode(String.fromCodePoint(code)) : [code]));
+      i = close;
+    } else if (next === 'x') {
+      out.push(parseInt(text.slice(i + 2, i + 4), 16));
+      i += 3;
+    } else if (next === 'n') {
+      out.push(10);
+      i++;
+    } else if (next === 'r') {
+      out.push(13);
+      i++;
+    } else if (next === 't') {
+      out.push(9);
+      i++;
+    } else if (next === '\\') {
+      out.push(92);
+      i++;
+    } else {
+      throw new Error(`An escape this check does not read: ${JSON.stringify(text.slice(i, i + 2))}`);
+    }
+  }
+  return Uint8Array.from(out);
+}
+
+// pcre2test's display of pattern or subject text back to bytes: \x{hh}
+// (a code point under utf, a byte otherwise) and \xhh (a byte); any other
+// backslash is the pattern's own.
+function decode(text, utf) {
+  const out = [];
+  const parts = text.split(/(\\x\{[0-9a-f]+\}|\\x[0-9a-f]{2})/);
+  parts.forEach((part, i) => {
+    if (i % 2 === 0) {
+      out.push(...encoder.encode(part));
+    } else if (part[2] === '{') {
+      const code = parseInt(part.slice(3, -1), 16);
+      out.push(...(utf ? encoder.encode(String.fromCodePoint(code)) : [code]));
+    } else {
+      out.push(parseInt(part.slice(2), 16));
+    }
+  });
+  return Uint8Array.from(out);
+}
+
+// cases.txt as cases: the name, the pattern body as bytes, the subject as
+// bytes, the module's compile and extra options for the pcre2test
+// modifiers, and the PHP modifiers the same pattern carries.
+function readCases() {
+  const lines = fs.readFileSync(path.join(FIXTURES, 'cases.txt'), 'utf8').split('\n');
+  const cases = [];
+  let name = null;
+  let pattern = null;
+  for (const line of lines) {
+    const named = /^# name: (\S+)$/.exec(line);
+    if (named) {
+      name = named[1];
+      continue;
+    }
+    if (name === null || line.startsWith('#')) {
+      continue;
+    }
+    if (pattern === null) {
+      if (line === '') {
+        continue;
+      }
+      pattern = line;
+    } else if (!/^\/(?:\\.|[^\\/])*\/[a-z_,]*$/s.test(pattern)) {
+      pattern += '\n' + line;
+    } else {
+      const parts = /^\/((?:\\.|[^\\/])*)\/([a-z_,]*)$/s.exec(pattern);
+      const modifiers = parts[2] === '' ? [] : parts[2].split(',');
+      let compile = 0;
+      let extra = 0;
+      let php = '';
+      modifiers.forEach((modifier) => {
+        const known = PCRE2TEST_MODIFIERS[modifier];
+        if (!known) {
+          throw new Error(`cases.txt: the modifier ${modifier} of ${name} is one this check does not map.`);
+        }
+        compile |= known.compile;
+        extra |= known.extra;
+        php += known.php;
+      });
+      const subject = /^\s*(.*)\\=callout_extra,callout_capture$/.exec(line);
+      if (!subject) {
+        throw new Error(`cases.txt: the subject line of ${name} is not "subject\\=callout_extra,callout_capture".`);
+      }
+      const utf = (compile & UTF) !== 0;
+      cases.push({ name, body: encoder.encode(parts[1]), subject: unescape(subject[1], utf), compile, extra, modifiers: php, utf });
+      name = null;
+      pattern = null;
+    }
+  }
+  return cases;
+}
+
+// The pinned output of one release, split by "# name:" line.
+function pinnedBlocks(release) {
+  const blocks = {};
+  let name = null;
+  fs.readFileSync(path.join(FIXTURES, `${release}.txt`), 'utf8').split('\n').forEach((line) => {
+    const named = /^# name: (\S+)$/.exec(line);
+    if (named) {
+      name = named[1];
+      blocks[name] = [];
+    } else if (name !== null) {
+      blocks[name].push(line);
+    }
+  });
+  return blocks;
+}
+
+// The subject's characters as pcre2test sees them: code and byte length,
+// one per byte without utf, one per code point under it.
+function characters(subject, utf) {
+  const list = [];
+  if (!utf) {
+    subject.forEach((byte) => list.push([byte, 1]));
+    return list;
+  }
+  let i = 0;
+  while (i < subject.length) {
+    const lead = subject[i];
+    const length = lead < 0x80 ? 1 : lead < 0xE0 ? 2 : lead < 0xF0 ? 3 : 4;
+    list.push([decoder.decode(subject.subarray(i, i + length)).codePointAt(0), length]);
+    i += length;
+  }
+  return list;
+}
+
+function pchar(code, utf) {
+  if (code >= 32 && code < 127) {
+    return String.fromCharCode(code);
+  }
+  const hex = code.toString(16).padStart(2, '0');
+  return utf ? `\\x{${hex}}` : `\\x${hex}`;
+}
+
+// The subject as pcre2test prints it after "--->", and the byte offset of
+// every character boundary by its display column.
+function display(subject, utf) {
+  let text = '';
+  const columns = { 0: 0 };
+  let offset = 0;
+  characters(subject, utf).forEach(([code, bytes]) => {
+    text += pchar(code, utf);
+    offset += bytes;
+    columns[text.length] = offset;
+  });
+  return { text, columns };
+}
+
+// One case's pinned text as steps, the way the PHPUnit shim test reads it:
+// "New match attempt" is the STARTMATCH flag and "Backtrack" the BACKTRACK
+// flag of the next item; " +p ^ ^ item" gives the pattern position, the
+// start of the match and the cursor from the caret columns over the
+// subject display, and the item text (continued on the next line when the
+// item itself holds a newline, which 10.44 prints raw); the capture lines
+// after "Callout 255:" the groups below capture_top. A "Failed: error N"
+// line is a compile error.
+function expected(lines, subject, utf) {
+  const shown = display(subject, utf);
+  const width = shown.text.length;
+  const result = { compileError: null, steps: [], outcome: null };
+  let flags = 0;
+  let caps = [];
+  let afterSubject = false;
+  let inOutcome = false;
+  let continuing = false;
+  for (const line of lines) {
+    if (!afterSubject) {
+      const failed = /^Failed: error (\d+)/.exec(line);
+      if (failed) {
+        result.compileError = parseInt(failed[1], 10);
+      }
+      afterSubject = line.endsWith('\\=callout_extra,callout_capture');
+      continue;
+    }
+    if (line === '' || line === 'No other matching paths') {
+      continue;
+    }
+    if (line === 'New match attempt') {
+      flags |= STARTMATCH;
+      continuing = false;
+      continue;
+    }
+    if (line === 'Backtrack') {
+      flags |= BACKTRACK;
+      continuing = false;
+      continue;
+    }
+    if (line === 'No match') {
+      result.outcome = { rc: -1, group0: null };
+      continuing = false;
+      continue;
+    }
+    const callout = /^Callout (\d+): last capture = \d+$/.exec(line);
+    if (callout) {
+      if (parseInt(callout[1], 10) !== AUTO_CALLOUT_NUMBER) {
+        throw new Error(`The pinned trace holds a callout ${callout[1]}; automatic callouts only were expected.`);
+      }
+      caps = [];
+      continuing = false;
+      continue;
+    }
+    const capture = /^ (\d+): (.*)$/.exec(line);
+    if (capture) {
+      const group = parseInt(capture[1], 10);
+      if (group === 0) {
+        inOutcome = true;
+        result.outcome = { rc: 1, group0: decode(capture[2], utf) };
+      } else if (!inOutcome) {
+        caps[group] = capture[2] === '<unset>' ? null : decode(capture[2], utf);
+      }
+      continuing = false;
+      continue;
+    }
+    if (line.startsWith('--->')) {
+      if (line !== '--->' + shown.text) {
+        throw new Error(`The subject as pcre2test displays it: ${JSON.stringify(line)} is not ${JSON.stringify('--->' + shown.text)}.`);
+      }
+      continuing = false;
+      continue;
+    }
+    const item = /^\s*\+(\d+) $/.exec(line.slice(0, 4));
+    if (!item) {
+      if (continuing) {
+        result.steps[result.steps.length - 1].item += '\n' + line;
+        continue;
+      }
+      throw new Error(`A line this check does not read: ${JSON.stringify(line)}`);
+    }
+    const region = line.slice(4, 4 + width + 5);
+    const first = region.indexOf('^');
+    if (first < 0 || !(first in shown.columns)) {
+      throw new Error(`No caret on a character boundary under the subject: ${JSON.stringify(line)}`);
+    }
+    const second = region.indexOf('^', first + 1);
+    result.steps.push({
+      p: parseInt(item[1], 10),
+      item: line.slice(4 + width + 5),
+      start: shown.columns[first],
+      s: second < 0 ? null : shown.columns[second],
+      flags,
+      caps: caps.map((text, group) => [group, text]).filter(Boolean),
+    });
+    flags = 0;
+    continuing = true;
+  }
+  result.steps.forEach((step) => { step.item = decode(step.item, utf); });
+  return result;
+}
+
+// The module's trace of one case against the pinned text: the number of
+// callouts, and per step the pattern position and item, the flags, the
+// start and the cursor, the captures below capture_top.
+function compareTrace(name, body, subject, want, trace, expect) {
+  if (want.compileError !== null) {
+    expect(trace.compile.error !== null, `${name}: pcre2test refuses the pattern, the module must too.`);
+    expect(trace.compile.error && trace.compile.error.code === want.compileError, `${name}: compile error ${JSON.stringify(trace.compile.error)}, pcre2test says ${want.compileError}.`);
+    expect(trace.steps.length === 0 && trace.outcome === null, `${name}: a refused pattern has no steps and no outcome.`);
+    return;
+  }
+  if (trace.compile.error !== null) {
+    expect(false, `${name}: the module refuses the pattern (${JSON.stringify(trace.compile.error)}), pcre2test compiles it.`);
+    return;
+  }
+  expect(trace.truncated === false, `${name}: the trace was truncated.`);
+  expect(trace.steps.length === want.steps.length && trace.steps_total === want.steps.length, `${name}: ${trace.steps.length} steps recorded (${trace.steps_total} in all), pcre2test prints ${want.steps.length}.`);
+  let cap = null;
+  const count = Math.min(trace.steps.length, want.steps.length);
+  for (let i = 0; i < count; i++) {
+    const step = trace.steps[i];
+    const wanted = want.steps[i];
+    const label = `${name}, step ${i} (${JSON.stringify(decoder.decode(wanted.item))} at +${wanted.p})`;
+    expect(step.n === AUTO_CALLOUT_NUMBER, `${label}: callout ${step.n}.`);
+    expect(step.p === wanted.p, `${label}: pattern_position ${step.p}.`);
+    if (decoder.decode(wanted.item) === 'End of pattern') {
+      expect(step.p === body.length && step.len === 0, `${label}: the end of the pattern is at ${step.p} with length ${step.len}.`);
+    } else {
+      expect(step.len === wanted.item.length, `${label}: next_item_length ${step.len}.`);
+      expect(sameBytes(body.subarray(step.p, step.p + step.len), wanted.item), `${label}: the body at ${step.p} is ${JSON.stringify(decoder.decode(body.subarray(step.p, step.p + step.len)))}.`);
+    }
+    expect(step.flags === wanted.flags, `${label}: callout_flags ${step.flags}, pcre2test says ${wanted.flags}.`);
+    expect(step.start === wanted.start, `${label}: start_match ${step.start}, pcre2test says ${wanted.start}.`);
+    if (wanted.s !== null) {
+      expect(step.s === wanted.s, `${label}: current_position ${step.s}, pcre2test says ${wanted.s}.`);
+    } else {
+      // pcre2test prints one caret when the cursor is at the start of the
+      // match or before it (inside a lookbehind).
+      expect(step.s <= wanted.start, `${label}: current_position ${step.s} past start_match ${wanted.start} under one caret.`);
+    }
+    if ('cap' in step) {
+      expect(i === 0 || firstDifference(cap, step.cap) !== null, `${label}: cap is sent only when it changed.`);
+      cap = step.cap;
+    } else {
+      expect(cap !== null, `${label}: the first step always carries cap.`);
+    }
+    expect(step.top === 1 + wanted.caps.length, `${label}: capture_top ${step.top}, pcre2test lists ${wanted.caps.length} group(s).`);
+    expect(Array.isArray(cap) && cap.length === step.top, `${label}: cap holds ${cap && cap.length} pairs for capture_top ${step.top}.`);
+    wanted.caps.forEach(([group, text]) => {
+      const pair = cap ? cap[group] : undefined;
+      if (text === null) {
+        expect(pair === null, `${label}: group ${group} is ${JSON.stringify(pair)}, pcre2test says unset.`);
+      } else {
+        expect(Array.isArray(pair) && sameBytes(subject.subarray(pair[0], pair[1]), text), `${label}: group ${group} is ${JSON.stringify(pair)}, pcre2test says ${JSON.stringify(decoder.decode(text))}.`);
+      }
+    });
+  }
+  expect(trace.outcome !== null && trace.outcome.error === null, `${name}: the outcome is ${JSON.stringify(trace.outcome)}.`);
+  expect(want.outcome !== null, `${name}: the pinned trace ends with neither a match nor "No match".`);
+  if (!trace.outcome || !want.outcome) {
+    return;
+  }
+  if (want.outcome.rc === -1) {
+    expect(trace.outcome.rc === -1, `${name}: rc ${trace.outcome.rc}, pcre2test says no match.`);
+  } else {
+    const pair = trace.outcome.rc >= 1 ? trace.outcome.ovector[0] : null;
+    expect(pair !== null && sameBytes(subject.subarray(pair[0], pair[1]), want.outcome.group0), `${name}: the match is ${JSON.stringify(trace.outcome)}, pcre2test says ${JSON.stringify(decoder.decode(want.outcome.group0))}.`);
+  }
+}
+
+// --- PHP's side ----------------------------------------------------------------
+
+// The options table the page ships, read as the page reads it.
+function optionsTable() {
+  const context = { window: {} };
+  vm.runInNewContext(fs.readFileSync(OPTIONS_TABLE, 'utf8'), context);
+  return context.window.PHPRegexPcreOptions || {};
+}
+
+// The compile and extra options a row passes for a modifier string, or the
+// modifier the row does not know.
+function rowOptions(row, modifiers) {
+  let compile = row.base;
+  let extra = row.extra.always || 0;
+  for (const modifier of modifiers) {
+    if (modifier in row.modifiers) {
+      compile |= row.modifiers[modifier];
+    } else if (modifier in row.extra) {
+      extra |= row.extra[modifier];
+    } else {
+      return { unknown: modifier };
+    }
+  }
+  return { compile: compile >>> 0, extra: extra >>> 0 };
+}
+
+// pcre_handle_exec_error, as the row names its codes.
+function pregCode(row, pcre2) {
+  if (pcre2 === PCRE2_ERROR_MATCHLIMIT) return row.errors.matchLimit;
+  if (pcre2 === PCRE2_ERROR_DEPTHLIMIT) return row.errors.depthLimit;
+  if (pcre2 === PCRE2_ERROR_BADUTFOFFSET) return row.errors.badUtfOffset;
+  if (pcre2 === PCRE2_ERROR_JIT_STACKLIMIT) return row.errors.jitStackLimit;
+  if (pcre2 <= PCRE2_ERROR_UTF8_ERR1 && pcre2 >= PCRE2_ERROR_UTF8_ERR21) return row.errors.badUtf;
+  return row.errors.internal;
+}
+
+// A regex as the page writes it, /body/modifiers, split for the module.
+function split(regex) {
+  const parts = /^\/(.*)\/([A-Za-z]*)$/s.exec(regex);
+  return parts ? { body: parts[1], modifiers: parts[2] } : null;
+}
+
+// The bytes of a captured group as the engine answers it: the text, or the
+// hex the driver adds when the group cut a character.
+function groupBytes(group) {
+  return group.length === 3 ? Uint8Array.from(Buffer.from(group[2], 'hex')) : encoder.encode(group[0]);
+}
+
+// The module run with the row's options against one answer of the engine's
+// check: matched or not, the numbered captures after PHP's rule (a group
+// below rc by text and offset, any other unset and null), a whole match
+// ending before its start as PHP refuses it, the error message. The
+// module running out of memory is a limit of the trace, never an outcome
+// to compare: it is reported as a problem, by name.
+function compareOutcome(label, row, trace, subject, check, expect) {
+  if (trace.compile.error !== null) {
+    expect(check.matched === null && typeof check.error === 'string' && check.error.startsWith('Compilation failed'), `${label}: the module refuses the pattern (${trace.compile.error.message}), the engine answers ${JSON.stringify(check)}.`);
+    return 'refused';
+  }
+  const outcome = trace.outcome;
+  if (outcome.rc === PCRE2_ERROR_NOMEMORY) {
+    expect(false, `${label}: the module ran out of memory (${outcome.rc}, ${outcome.error && outcome.error.message}); no outcome to compare with the engine's ${JSON.stringify(check)}.`);
+    return 'out of memory';
+  }
+  if (outcome.rc >= 1 && outcome.ovector[0] && outcome.ovector[0][1] < outcome.ovector[0][0]) {
+    // php_pcre.c: offsets[1] < offsets[0] with a matches array is the
+    // warning and false, whatever the groups hold.
+    expect(check.matched === null && check.error === PHP_REVERSED_MATCH, `${label}: the module's match ends before it starts (${JSON.stringify(outcome.ovector[0])}), which PHP refuses with ${JSON.stringify(PHP_REVERSED_MATCH)}; the engine answers ${JSON.stringify(check)}.`);
+    return 'reversed';
+  }
+  if (outcome.rc >= 1) {
+    expect(check.matched === 1 && check.error === null, `${label}: the module matched, the engine answers ${JSON.stringify(check)}.`);
+    if (check.matched !== 1) {
+      return 'matched';
+    }
+    Object.keys(check.groups).filter((key) => /^\d+$/.test(key)).forEach((key) => {
+      const group = parseInt(key, 10);
+      const pair = group < outcome.rc ? outcome.ovector[group] : null;
+      const answered = check.groups[key];
+      if (pair === null || pair === undefined) {
+        expect(answered === null, `${label}: group ${group} is ${JSON.stringify(answered)} for the engine, unset for the module.`);
+      } else {
+        expect(answered !== null && answered[1] === pair[0] && sameBytes(groupBytes(answered), subject.subarray(pair[0], pair[1])), `${label}: group ${group} is ${JSON.stringify(answered)} for the engine, ${JSON.stringify(pair)} for the module.`);
+      }
+    });
+    return 'matched';
+  }
+  if (outcome.rc === -1) {
+    expect(check.matched === 0 && check.error === null, `${label}: the module did not match, the engine answers ${JSON.stringify(check)}.`);
+    return 'no match';
+  }
+  const message = PREG_MESSAGES[pregCode(row, outcome.rc)];
+  expect(check.matched === null && check.error === message, `${label}: the module failed with ${outcome.rc} (${outcome.error && outcome.error.message}), PHP would say ${JSON.stringify(message)}, the engine answers ${JSON.stringify(check)}.`);
+  return 'failed';
+}
+
+// What one witness answered, in a word, for the probe's comparison.
+function witnessWord(trace, check) {
+  const module = trace.compile.error !== null ? 'compile failure' : trace.outcome.rc >= 1 ? 'match' : trace.outcome.rc === -1 ? 'no match' : `error ${trace.outcome.rc}`;
+  const engine = check.matched === 1 ? 'match' : check.matched === 0 ? 'no match' : typeof check.error === 'string' && check.error.startsWith('Compilation failed') ? 'compile failure' : `error ${JSON.stringify(check.error)}`;
+  return { module, engine };
+}
+
 async function main() {
   const bundle = JSON.parse(fs.readFileSync(BUNDLE, 'utf8'));
   const data = JSON.parse(fs.readFileSync(DEFAULT_DATA, 'utf8'));
 
+  const problems = [];
+  const expect = (condition, message) => { if (!condition) problems.push(message); return Boolean(condition); };
+
+  // The module first: a bundle that embeds other bytes than the tree pins
+  // is said before any engine boots.
+  const embedded = embeddedModule(bundle, expect);
+  const table = optionsTable();
+
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'phpregex-playground-check-'));
-  process.stdout.write(`Installing ${PHP_WASM} and ${MBSTRING} into ${dir}…\n`);
+  say(`Installing ${PHP_WASM} and ${MBSTRING} into ${dir}…`);
   execFileSync('npm', ['install', '--no-save', '--no-audit', '--no-fund', '--no-package-lock', '--prefix', dir, PHP_WASM, MBSTRING], { stdio: ['ignore', 'ignore', 'inherit'] });
 
   const { PhpNode } = await import(pathToFileURL(path.join(dir, 'node_modules/php-wasm/PhpNode.mjs')).href);
@@ -111,16 +764,14 @@ async function main() {
     // A notice, warning or deprecation the engine raised is answered rather
     // than printed: every one is said here, whatever the request.
     if (answer.notices && answer.notices.length) {
-      process.stdout.write(`The ${input.op} request raised ${answer.notices.length} notice(s) on the browser engine, answered rather than printed:\n`);
-      answer.notices.forEach((notice) => process.stdout.write(`  ${notice}\n`));
+      say(`The ${input.op} request raised ${answer.notices.length} notice(s) on the browser engine, answered rather than printed:`);
+      answer.notices.forEach((notice) => say(`  ${notice}`));
     }
     return answer;
   };
 
-  const problems = [];
-  const expect = (condition, message) => { if (!condition) problems.push(message); };
-
   // The default engine: the sample judged for it must be its own answer.
+  const beforeEngines = problems.length;
   const main84 = await engine(data.default.target.php.slice(0, 3), true);
   output = '';
   await main84.php.run('<?php echo PHP_VERSION, " ", (int) function_exists("mb_strlen");');
@@ -207,6 +858,20 @@ async function main() {
   const described = await ask(main84, { op: 'describe', regex: data.default.regex, index: 2 });
   expect(typeof described.text === 'string' && described.text.length > 0, `Node 2 of the sample has no description: ${JSON.stringify(described)}`);
 
+  // The trace's input, parsed by the driver: the body and the modifiers of
+  // the sample with the body's offsets, and the refusal of an explicit
+  // callout.
+  const sampleBody = split(data.default.regex);
+  const beforeTraceInput = problems.length;
+  const traceInput = await ask(main84, { op: 'trace-input', regex: data.default.regex, subject: data.default.subject });
+  expect(traceInput.protocol === 3, `The trace-input answer carries protocol ${traceInput.protocol}, not 3.`);
+  expect(traceInput.error === null && traceInput.refusal === null, `The trace-input request on the sample answered ${JSON.stringify(traceInput)}.`);
+  expect(traceInput.input && traceInput.input.body === sampleBody.body && traceInput.input.modifiers === sampleBody.modifiers && traceInput.input.bodyStart === 1 && traceInput.input.bodyEnd === 1 + Buffer.byteLength(sampleBody.body), `The sample's trace input is ${JSON.stringify(traceInput.input)}.`);
+  expect(traceInput.input && traceInput.input.subject === data.default.subject && traceInput.input.subjectTruncated === false, `The sample's subject came back as ${JSON.stringify(traceInput.input && traceInput.input.subject)}.`);
+  const callout = await ask(main84, { op: 'trace-input', regex: '/(?C1)a/', subject: 'a' });
+  expect(callout.input !== null && typeof callout.refusal === 'string' && callout.refusal.length > 0 && callout.error === null, `A pattern with an explicit callout is not refused by trace-input: ${JSON.stringify(callout)}.`);
+  say(`The trace-input request ${problems.length === beforeTraceInput ? 'parses' : 'does not parse'} the sample (body ${JSON.stringify(sampleBody.body)}, modifiers ${JSON.stringify(sampleBody.modifiers)}, body at 1) ${callout.refusal ? 'and refuses' : 'and does not refuse'} an explicit callout.`);
+
   // The oldest engine: the library does not run there, the match does.
   const php80 = await engine('8.0', false);
   const matched = await ask(php80, { op: 'match', regex: data.default.regex, subject: data.default.subject });
@@ -218,12 +883,118 @@ async function main() {
   const checked80 = await ask(php80, { op: 'check', regex: data.default.regex, subjects: ['2026-11-02', 'not a date'] });
   expect(checked80.fatal === undefined && checked80.checks && checked80.checks[0].matched === 1 && checked80.checks[1].matched === 0, `The check request failed on PHP 8.0: ${JSON.stringify(checked80)}`);
 
+  say(`The bundle ${problems.length === beforeEngines ? 'answers' : 'does not answer'} inside the browser engine as the sample says (PHP ${php84}, PCRE2 ${analyze.engine.pcre}; match on PHP ${matched.engine.php}).`);
+
+  // --- the trace module, run as the page runs it ---------------------------
+
+  if (embedded) {
+    const trace = await tracer(embedded.module);
+    expect(trace.version === embedded.release, `The ${embedded.name} module reports PCRE2 ${trace.version}, the tree pins ${embedded.release}.`);
+
+    // pcre2test's own trace of every case, pinned for the module's release:
+    // the module must print the same steps.
+    let before = problems.length;
+    const cases = readCases();
+    const blocks = pinnedBlocks(embedded.release);
+    expect(cases.length >= 22, `cases.txt holds ${cases.length} cases; 22 or more were expected.`);
+    let steps = 0;
+    let refusals = 0;
+    cases.forEach((one) => {
+      if (!expect(one.name in blocks, `${embedded.release}.txt carries no "# name: ${one.name}" block: re-pin it from cases.txt.`)) {
+        return;
+      }
+      let want;
+      try {
+        want = expected(blocks[one.name], one.subject, one.utf);
+      } catch (error) {
+        expect(false, `${one.name}: the pinned text could not be read: ${error.message}`);
+        return;
+      }
+      const traced = trace.run(one.body, one.subject, one.compile, one.extra);
+      compareTrace(one.name, one.body, one.subject, want, traced, expect);
+      steps += want.steps.length;
+      refusals += want.compileError === null ? 0 : 1;
+    });
+    say(`The ${embedded.name} module ${problems.length === before ? 'reproduces' : 'does not reproduce'} pcre2test ${embedded.release}'s trace of the ${cases.length} cases (${steps} steps, ${refusals} refused).`);
+
+    // The differential: the pinned outcomes and the cases, matched by the
+    // engine's preg_match() and by the module run with the options the
+    // engine's row passes, must answer the same.
+    const row = table[php84];
+    if (expect(row !== undefined, `The options table has no row for PHP ${php84}, the default engine: the debugger would be refused there.`)) {
+      expect(row.pcre2 === analyze.engine.pcre, `The ${php84} row names PCRE2 ${row.pcre2}, the engine reports ${analyze.engine.pcre}.`);
+      expect(row.matchLimit === analyze.engine.backtrackLimit, `The ${php84} row's match limit is ${row.matchLimit}, the engine runs with ${analyze.engine.backtrackLimit}.`);
+      const rows = cases.map((one) => ({ id: one.name, regex: `/${decoder.decode(one.body)}/${one.modifiers}`, subject: decoder.decode(one.subject) }))
+        .concat(JSON.parse(fs.readFileSync(path.join(FIXTURES, 'outcomes.json'), 'utf8')));
+      expect(rows.length >= 322, `${rows.length} rows to compare; 300 pinned outcomes and the cases were expected.`);
+      before = problems.length;
+      const byRegex = new Map();
+      rows.forEach((one) => {
+        if (!byRegex.has(one.regex)) {
+          byRegex.set(one.regex, []);
+        }
+        byRegex.get(one.regex).push(one);
+      });
+      const tally = {};
+      for (const [regex, group] of byRegex) {
+        const parts = split(regex);
+        if (!expect(parts !== null, `${group[0].id}: ${regex} is not /body/modifiers.`)) {
+          continue;
+        }
+        const options = rowOptions(row, parts.modifiers);
+        if (!expect(options.unknown === undefined, `${group[0].id}: PHP ${php84} has no modifier ${options.unknown}.`)) {
+          continue;
+        }
+        for (let start = 0; start < group.length; start += 50) {
+          const slice = group.slice(start, start + 50);
+          const answer = await ask(main84, { op: 'check', regex, subjects: slice.map((one) => one.subject) });
+          if (!expect(answer.checks && answer.checks.length === slice.length, `${slice[0].id}: the engine checked ${answer.checks ? answer.checks.length : 0} of ${slice.length} subjects of ${regex}.`)) {
+            continue;
+          }
+          slice.forEach((one, i) => {
+            const label = `${one.id} ${regex} on ${JSON.stringify(one.subject)}`;
+            const subject = encoder.encode(one.subject);
+            const traced = trace.run(encoder.encode(parts.body), subject, options.compile, options.extra, row.matchLimit, row.depthLimit);
+            const word = compareOutcome(label, row, traced, subject, answer.checks[i], expect);
+            tally[word] = (tally[word] || 0) + 1;
+          });
+        }
+      }
+      say(`The ${embedded.name} module and PHP ${php84} ${problems.length === before ? 'agree' : 'disagree'} on ${rows.length} outcomes with the ${php84} row's options (${Object.keys(tally).sort().map((word) => `${tally[word]} ${word}`).join(', ')}).`);
+    }
+
+    // The probe: every engine the table has a row for whose PCRE2 the bundle
+    // has a module runs the four witnesses on both sides.
+    for (const version of Object.keys(table)) {
+      const candidate = table[version];
+      if (!(`pcre2-${candidate.pcre2}` in bundle.modules)) {
+        continue;
+      }
+      const short = version.split('.').slice(0, 2).join('.');
+      const instance = short === php84.split('.').slice(0, 2).join('.') ? main84 : await engine(short, false);
+      const words = [];
+      let agreed = true;
+      for (const witness of WITNESSES) {
+        const answer = await ask(instance, { op: 'check', regex: witness.regex, subjects: [witness.subject] });
+        if (!expect(answer.engine && answer.engine.php === version, `The ${short} engine reports PHP ${answer.engine && answer.engine.php}, the table has a row for ${version}.`)) {
+          break;
+        }
+        const parts = split(witness.regex);
+        const options = rowOptions(candidate, parts.modifiers);
+        const traced = trace.run(encoder.encode(parts.body), encoder.encode(witness.subject), options.compile, options.extra, candidate.matchLimit, candidate.depthLimit);
+        const word = witnessWord(traced, answer.checks[0]);
+        agreed = expect(word.module === word.engine, `Probe ${witness.name} on PHP ${version}: the module says ${word.module}, the engine says ${word.engine}.`) && agreed;
+        words.push(`${witness.name} ${word.module}${word.module === word.engine ? '' : ` (engine: ${word.engine})`}`);
+      }
+      say(`Probe on PHP ${version} (PCRE2 ${candidate.pcre2}, ${embedded.name}): ${words.join(', ')} — ${agreed ? 'the engine agrees' : 'the engine disagrees'}.`);
+    }
+  }
+
   fs.rmSync(dir, { recursive: true, force: true });
 
   if (problems.length) {
     fail(problems.map((p) => '- ' + p).join('\n'));
   }
-  process.stdout.write(`The bundle answers inside the browser engine as the sample says (PHP ${php84}, PCRE2 ${analyze.engine.pcre}; match on PHP ${matched.engine.php}).\n`);
 }
 
 main().catch((error) => fail(String(error && error.stack || error)));
