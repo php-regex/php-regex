@@ -137,6 +137,11 @@ final class MersenneTwisterTest extends TestCase
     #[RequiresPhp('>= 8.2.0')]
     public function test_the_randomizers_engine_refuses_a_span_past_32_bits_too(): void
     {
+        if (\PHP_INT_SIZE < 8) {
+            $this->assertLessThan(2 ** 32, (float) \PHP_INT_MAX - (float) \PHP_INT_MIN, 'No two integers of this PHP span past 32 bits: nothing to refuse.');
+
+            return;
+        }
         $this->expectException(SampleGenerationException::class);
 
         (new MersenneTwister(1, engine: MersenneTwister::RANDOMIZER))->between(0, 0x1_0000_0000);
@@ -185,6 +190,13 @@ final class MersenneTwisterTest extends TestCase
     #[Test]
     public function test_a_span_past_32_bits_is_refused(): void
     {
+        // A number past 32 bits is no integer on a 32-bit PHP: the span
+        // cannot be asked for there, and the twister has nothing to refuse.
+        if (\PHP_INT_SIZE < 8) {
+            $this->assertLessThan(2 ** 32, (float) \PHP_INT_MAX - (float) \PHP_INT_MIN, 'No two integers of this PHP span past 32 bits: nothing to refuse.');
+
+            return;
+        }
         $this->expectException(SampleGenerationException::class);
 
         (new MersenneTwister(1))->between(0, 0x1_0000_0000);
