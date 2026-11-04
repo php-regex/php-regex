@@ -585,10 +585,13 @@ bin/playground-bundle
 
 The script also writes `docs/_data/playground.json`, the answers the home
 shows before a visitor asks for a run (the analysis, the lint findings and
-the ReDoS verdict of the sample), judged for the default browser engine.
-The suite holds the bundle's shape, runs the bundled driver against the
-bundled library, and fails when the driver in the tree differs from the
-bundled one.
+the ReDoS verdict of the sample), judged for the default browser engine,
+and the samples drawn for the sample pattern, which `bin/playground-check`
+expects the browser engine to draw again, word for word: a change to the
+generators makes the stored data stale, so regenerate after one. The suite
+holds the bundle's shape, runs the bundled driver against the bundled
+library, and fails when the driver in the tree differs from the bundled
+one.
 
 The driver answers ten requests, each one JSON in, one JSON document out:
 `analyze`, `match`, `lint` and `describe` feed the panels and the syntax

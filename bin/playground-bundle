@@ -19,10 +19,13 @@ declare(strict_types=1);
  *                                        comments stripped, as one JSON map
  *                                        with a manifest
  *   docs/_data/playground.json           the driver's answers (analysis, lint,
- *                                        ReDoS verdict) for the default
- *                                        pattern and subject, judged for the
- *                                        default browser engine, shown on the
- *                                        home before a visitor asks for a run
+ *                                        ReDoS verdict, samples) for the
+ *                                        default pattern and subject, judged
+ *                                        for the default browser engine,
+ *                                        shown on the home before a visitor
+ *                                        asks for a run; the samples are what
+ *                                        bin/playground-check expects the
+ *                                        browser engine to draw again
  *
  * The bundle is a snapshot: the home runs the library as it was when this
  * script last ran, and says so in its caption (version, commit, date). Run
