@@ -149,6 +149,24 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringNotContainsString('Press Run: the engine answers this tab', $script, 'Every tab answers from the sample.');
     }
 
+    /**
+     * The tint says a pattern is wrong to the eye; the field says it to a
+     * screen reader too, with the error it is described by.
+     */
+    #[Test]
+    public function test_an_invalid_pattern_marks_its_field(): void
+    {
+        $xpath = self::include();
+        $this->assertSame(1, self::nodes($xpath, '//*[@id="pg-pattern-error"]'.self::has('visually-hidden')), 'One hidden error line, beside the field.');
+        $this->assertSame('pg-pattern-count', $xpath->evaluate('string(//*[@id="pg-pattern"]/@aria-describedby)'), 'Described by the error only while there is one.');
+
+        $errors = self::between(self::source(self::SCRIPT), 'function renderErrors(payload) {', "\n  }\n");
+        $this->assertStringContainsString("el.pattern.setAttribute('aria-invalid', 'true');", $errors);
+        $this->assertStringContainsString("el.pattern.removeAttribute('aria-invalid');", $errors);
+        $this->assertStringContainsString("el.pattern.setAttribute('aria-describedby', invalid ? 'pg-pattern-count pg-pattern-error' : 'pg-pattern-count');", $errors);
+        $this->assertStringContainsString('el.patternError.textContent = ', $errors);
+    }
+
     #[Test]
     public function test_the_privacy_chip_lives_in_the_footer(): void
     {
@@ -406,7 +424,9 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringNotContainsString('send(', $quiet);
         $this->assertStringNotContainsString("'Stopped'", $quiet);
         $this->assertLessThan(strpos($fail, 'send(request);'), strpos($fail, "if (request.eager && activeTool !== 'redos') {"), 'Before the replay.');
-        $this->assertStringContainsString("' The engine could not finish the ' + TAB_LABELS[tab] + ' tab; press Run to try again.'", $fail, 'A closed tab is named by its own label.');
+        $this->assertStringContainsString("' The engine could not finish the ' + TAB_LABELS[owner] + ' tab; press Run to try again.'", $fail, 'A closed tab is named by its own label.');
+        $this->assertStringContainsString("var owner = tab === 'probe' || tab === 'selfcheck' ? 'trace' : tab;", $fail, 'The trace\'s probe and self-check speak for the Step through tab.');
+        $this->assertStringContainsString('activeTool === owner ?', $fail);
 
         // The ReDoS tab, opened, asks again: the quiet failure is dropped
         // with its count, and the tab's own request goes out.

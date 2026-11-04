@@ -68,6 +68,7 @@
 
   var el = {
     pattern: root.querySelector('#pg-pattern'),
+    patternError: root.querySelector('#pg-pattern-error'),
     patternEditor: root.querySelector('.pg-editor-pattern'),
     patternMirror: root.querySelector('.pg-editor-pattern .pg-mirror'),
     patternCount: root.querySelector('#pg-pattern-count'),
@@ -426,7 +427,9 @@
       // Run is how the visitor asks again.
       var tab = request.purpose || request.type;
       // A tab may have closed while it was asked for: the line names it.
-      setStatus(reason + (activeTool === tab ? ' The engine could not finish this tab; press Run to try again.' : ' The engine could not finish the ' + TAB_LABELS[tab] + ' tab; press Run to try again.'), 'warn');
+      // The trace's probe and self-check are asked for its tab.
+      var owner = tab === 'probe' || tab === 'selfcheck' ? 'trace' : tab;
+      setStatus(reason + (activeTool === owner ? ' The engine could not finish this tab; press Run to try again.' : ' The engine could not finish the ' + TAB_LABELS[owner] + ' tab; press Run to try again.'), 'warn');
       if (tab === 'probe') {
         probeGaveUp(request, reason);
       } else if (tab === 'selfcheck') {
@@ -1195,8 +1198,18 @@
   }
 
   function renderErrors(payload) {
-    // The field the visitor typed into says it first: the pattern is wrong.
-    el.patternEditor.classList.toggle('is-error', !!((payload.errors && payload.errors.length) || payload.engineError));
+    // The field the visitor typed into says it first: the pattern is wrong,
+    // to the eye by its tint, to a screen reader by its state and the
+    // error it is described by.
+    var invalid = !!((payload.errors && payload.errors.length) || payload.engineError);
+    el.patternEditor.classList.toggle('is-error', invalid);
+    if (invalid) {
+      el.pattern.setAttribute('aria-invalid', 'true');
+    } else {
+      el.pattern.removeAttribute('aria-invalid');
+    }
+    el.patternError.textContent = invalid ? (payload.errors && payload.errors.length ? payload.errors[0].message : 'PHP says: ' + payload.engineError) : '';
+    el.pattern.setAttribute('aria-describedby', invalid ? 'pg-pattern-count pg-pattern-error' : 'pg-pattern-count');
     clear(el.diagnostics);
     (payload.errors || []).forEach(function (error) {
       var item = text('li', 'pg-diag is-error');
