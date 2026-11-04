@@ -216,21 +216,63 @@ function defaultData(array $files): array
 
     $analyze = answer($dir, ['op' => 'analyze', 'regex' => DEFAULT_REGEX, 'subject' => DEFAULT_SUBJECT, 'target' => DEFAULT_TARGET]);
     $lint = answer($dir, ['op' => 'lint', 'regex' => DEFAULT_REGEX, 'target' => DEFAULT_TARGET]);
-    $redos = answer($dir, ['op' => 'redos', 'regex' => DEFAULT_REGEX, 'target' => DEFAULT_TARGET]);
-    // The samples too: drawn from a seed, they are the same on every PHP
-    // the generator runs on, the 32-bit browser engine included.
-    $samples = answer($dir, ['op' => 'samples', 'regex' => DEFAULT_REGEX, 'target' => DEFAULT_TARGET]);
+
+    // Every tool's tab answers from the sample too. Each answer is stored
+    // beside the request it answers, in the page's words: the page holds
+    // the answer while its own request matches, and the browser check
+    // asks the same question again.
+    $version = implode('.', \array_slice(explode('.', DEFAULT_TARGET['php']), 0, 2));
+    $request = static fn (string $type, array $fields = []): array => ['type' => $type, 'regex' => DEFAULT_REGEX, 'version' => $version] + $fields;
+    $tools = [
+        'redos' => $request('redos', ['mode' => 'theoretical']),
+        'transpile' => $request('transpile', ['dialect' => 'js', 'pythonVersion' => '']),
+        'samples' => $request('samples'),
+        'format' => $request('format', ['width' => 80, 'compact' => false]),
+    ];
+    $ask = static fn (string $tool): stdClass => answer($dir, ['op' => $tool, 'regex' => DEFAULT_REGEX, 'target' => DEFAULT_TARGET] + array_diff_key($tools[$tool], ['type' => true, 'regex' => true, 'version' => true]));
+
+    $redos = $ask('redos');
+    $transpile = $ask('transpile');
+    // The samples are drawn from a seed: the same on every PHP the
+    // generator runs on, the 32-bit browser engine included.
+    $samples = $ask('samples');
+    $format = $ask('format');
+
+    // The test asserts the subject and every sample, as the tab asks for,
+    // from the engine's answers; its header carries the day the sample was
+    // first written, kept from one regeneration to the next so the stored
+    // file is compared byte for byte.
+    $drawn = $samples->samples ?? null;
+    // The page's own list: no subject twice, at most fifty.
+    $subjects = \array_slice(array_values(array_unique([DEFAULT_SUBJECT, ...($drawn->matching ?? []), ...($drawn->nonMatching ?? [])])), 0, 50);
+    $tools['export'] = $request('check', ['purpose' => 'export', 'subject' => DEFAULT_SUBJECT, 'subjects' => $subjects, 'date' => storedDate()]);
+    $checks = answer($dir, ['op' => 'check', 'regex' => DEFAULT_REGEX, 'subjects' => $subjects, 'target' => DEFAULT_TARGET]);
+    $export = answer($dir, ['op' => 'export', 'regex' => DEFAULT_REGEX, 'subjects' => $subjects, 'checks' => $checks->checks ?? [], 'date' => $tools['export']['date'], 'target' => DEFAULT_TARGET]);
+
+    // Every answer is in: the library written out for them goes, whatever
+    // the checks below find.
+    removeDirectory($dir);
+
     // What belongs to the machine that answered stays out of the sample:
     // the engine, the timings, the notices it raised, and the PHP and
     // PCRE2 the verdict names as having run it.
-    unset($analyze->engine, $analyze->timing, $analyze->notices, $lint->timing, $lint->notices, $redos->timing, $redos->notices, $samples->timing, $samples->notices);
+    unset($analyze->engine);
+    foreach ([$analyze, $lint, $redos, $transpile, $samples, $format, $export] as $payload) {
+        unset($payload->timing, $payload->notices);
+    }
     if (isset($redos->redos) && $redos->redos instanceof stdClass) {
         unset($redos->redos->pcre_version, $redos->redos->php_version);
     }
 
-    foreach ([$analyze, $lint, $redos, $samples] as $payload) {
+    foreach ([$analyze, $lint, $redos, $transpile, $samples, $format, $checks, $export] as $payload) {
         if (isset($payload->fatal)) {
             fwrite(\STDERR, 'The bundled driver failed on the sample: '.$payload->fatal."\n");
+            exit(1);
+        }
+    }
+    foreach (['transpile' => $transpile, 'samples' => $samples, 'format' => $format, 'export' => $export] as $tool => $payload) {
+        if (null !== ($payload->error ?? null)) {
+            fwrite(\STDERR, \sprintf('The %s tab has no answer for the sample: %s', $tool, json_encode($payload->error))."\n");
             exit(1);
         }
     }
@@ -239,15 +281,28 @@ function defaultData(array $files): array
         exit(1);
     }
 
-    removeDirectory($dir);
-
     return [
-        'default' => ['regex' => DEFAULT_REGEX, 'subject' => DEFAULT_SUBJECT, 'target' => DEFAULT_TARGET],
+        'default' => ['regex' => DEFAULT_REGEX, 'subject' => DEFAULT_SUBJECT, 'target' => DEFAULT_TARGET, 'tools' => $tools],
         'analyze' => $analyze,
         'lint' => $lint,
         'redos' => $redos,
+        'transpile' => $transpile,
         'samples' => $samples,
+        'format' => $format,
+        'export' => $export,
     ];
+}
+
+/**
+ * The day the stored test says it was written: the one the stored data
+ * already carries, else today.
+ */
+function storedDate(): string
+{
+    $stored = json_decode((string) @file_get_contents(DEFAULT_DATA), true);
+    $date = \is_array($stored) ? ($stored['default']['tools']['export']['date'] ?? null) : null;
+
+    return \is_string($date) && 1 === preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D', $date, $day) && checkdate((int) $day[2], (int) $day[3], (int) $day[1]) ? $date : date('Y-m-d');
 }
 
 /**

@@ -842,6 +842,24 @@ async function main() {
   expect(exported.export && exported.export.class.includes('final class PatternTest') && exported.export.method.includes('assertPatternMatches'), `The export did not come through: ${JSON.stringify(exported)}`);
   expect(exported.export && exported.export.method.includes("'date' => ['2026', 0]"), `The exported expectation is not the engine's answer on the default subject: ${JSON.stringify(exported.export && exported.export.method)}`);
 
+  // Every tool's tab answers from the sample: each stored answer is the
+  // engine's own, asked with the request stored beside it.
+  const tools = data.default.tools;
+  const fields = (request) => {
+    const copy = Object.assign({}, request);
+    ['type', 'regex', 'version', 'purpose', 'subject'].forEach((key) => delete copy[key]);
+    return copy;
+  };
+  for (const tool of ['transpile', 'format']) {
+    const answer = await ask(main84, Object.assign({ op: tool, regex: data.default.regex }, fields(tools[tool])));
+    const difference = firstDifference(stripped(answer, ['timing', 'notices']), data[tool]);
+    expect(difference === null, `The engine's ${tool} answer differs from the sample at ${difference}.`);
+  }
+  const storedChecks = await ask(main84, { op: 'check', regex: data.default.regex, subjects: tools.export.subjects });
+  const storedExport = await ask(main84, { op: 'export', regex: data.default.regex, subjects: tools.export.subjects, checks: storedChecks.checks, date: tools.export.date });
+  const exportDifference = firstDifference(stripped(storedExport, ['timing', 'notices']), data.export);
+  expect(exportDifference === null, `The engine's test differs from the sample at ${exportDifference}.`);
+
   // A pattern the engine refuses: its message is framed differently in the
   // browser engine, and the driver must still hand over PCRE2's own words.
   const broken = await ask(main84, { op: 'analyze', regex: '/(?<d>\\d{4})-(/', subject: '' });

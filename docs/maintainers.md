@@ -584,25 +584,34 @@ bin/playground-bundle
 ```
 
 The script also writes `docs/_data/playground.json`, the answers the home
-shows before a visitor asks for a run (the analysis, the lint findings and
-the ReDoS verdict of the sample), judged for the default browser engine,
-and the samples drawn for the sample pattern, which `bin/playground-check`
-expects the browser engine to draw again, word for word: a change to the
+shows before a visitor asks for a run, judged for the default browser
+engine: the analysis and the lint findings of the sample, and the answer
+of each of its five tools (the ReDoS verdict, the JavaScript translation,
+the samples drawn for the pattern, the layout at width 80, and the test
+written from the subject and those samples). Each tool's answer is stored
+beside the request it answers, under `default.tools`, in the page's own
+words: the page holds the answer while its tab asks that very request,
+and `bin/playground-check` asks the browser engine the same questions and
+expects the same answers, word for word. The test's header carries the
+day the sample was first written, kept from one regeneration to the next
+so the stored file stays byte-stable. A change to the driver or to the
 generators makes the stored data stale, so regenerate after one. The suite
 holds the bundle's shape, runs the bundled driver against the bundled
 library, and fails when the driver in the tree differs from the bundled
 one.
 
 The driver answers eleven requests, each one JSON in, one JSON document out:
-`analyze`, `match`, `lint` and `describe` feed the panels and the syntax
-tree; `format`, `redos`, `transpile`, `samples`, `check` and `export` feed
-the Tools panel's tabs; `trace-input` hands the step trace the pattern body,
+`analyze`, `match`, `lint` and `describe` feed the syntax tree, the
+diagnostics and the matches, the first three tabs of the results panel;
+`format`, `redos`, `transpile`, `samples`, `check` and `export` feed its
+tool tabs; `trace-input` hands the step trace the pattern body,
 its modifiers and the body's offsets as the library's delimiter rules read
 them, with the subject cut at the trace's own cap (1 000 bytes, on a
 character boundary), and refuses a pattern with an explicit callout.
-`match` and `check` touch no class of the library, so they run on PHP 8.0
-too, where the library does not; the driver keeps to PHP 8.0 syntax for
-that reason. The answers carry a protocol number
+The ReDoS verdict is asked on every run, whatever tab is open,
+for the badge its tab carries. `match` and `check` touch no class of the library,
+so they run on PHP 8.0 too, where the library does not; the driver keeps to
+PHP 8.0 syntax for that reason. The answers carry a protocol number
 (`PHPREGEX_PLAYGROUND_PROTOCOL`, 3 today, read by the page as `PROTOCOL`):
 a field added to an answer is additive, a field removed or renamed bumps
 it, and the page refuses an answer whose number it does not know.

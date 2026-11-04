@@ -30,11 +30,12 @@ use PHPUnit\Framework\TestCase;
  * @phpstan-import-type Export from PlaygroundDriver
  *
  * The playground's tools: what the console does with a pattern, answered by
- * the driver for the page's Tools panel — a layout, a ReDoS verdict, a
- * translation, sample subjects, a test to paste. Every string the driver
- * says matches or does not match went through preg_match() in the driver
- * first; every row here checks that against the engine once more. Every
- * row runs on the tree's driver over src/ and on the bundled driver.
+ * the driver for the tool tabs of the page's results panel — a layout, a
+ * ReDoS verdict, a translation, sample subjects, a test to paste. Every
+ * string the driver says matches or does not match went through
+ * preg_match() in the driver first; every row here checks that against the
+ * engine once more. Every row runs on the tree's driver over src/ and on the
+ * bundled driver.
  */
 #[Group('documentation')]
 final class PlaygroundToolsTest extends TestCase
@@ -656,6 +657,32 @@ final class PlaygroundToolsTest extends TestCase
         $payload = self::export($driver, $root, '/a(b)/', ['ab'], ['checks' => $checks], ['php' => '8.0.30', 'pcre' => '10.35']);
 
         $this->assertStringContainsString('from the answers of PHP 8.0.30 and PCRE2 10.35.', $payload['export']['class'] ?? '');
+    }
+
+    /**
+     * The header's date is today's, unless the request names one: the
+     * sample the home stores is written once and compared ever after.
+     */
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_export_prints_the_date_it_is_given(string $driver, string $root): void
+    {
+        $given = self::export($driver, $root, '/a/', ['a'], ['date' => '2026-01-02']);
+        $this->assertStringContainsString(' on 2026-01-02 from the answers of', $given['export']['class'] ?? '');
+
+        // The day may turn while the driver runs: either side of it holds.
+        $before = date('Y-m-d');
+        $today = self::export($driver, $root, '/a/', ['a']);
+        $after = date('Y-m-d');
+        $this->assertMatchesRegularExpression('/ on ('.$before.'|'.$after.') from the answers of/', $today['export']['class'] ?? '');
+
+        foreach (['yesterday', '2026-1-2', 20260102, '2026-01-02 ', '2026-13-45'] as $date) {
+            $refused = self::export($driver, $root, '/a/', ['a'], ['date' => $date]);
+            $this->assertNull($refused['export'], var_export($date, true));
+            $this->assertSame('export', $refused['error']['source'] ?? null);
+            $this->assertStringContainsString('date', (string) ($refused['error']['message'] ?? ''));
+            $this->assertSame($today['protocol'], $refused['protocol']);
+        }
     }
 
     #[Test]
