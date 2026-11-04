@@ -82,7 +82,7 @@ final class MersenneTwister
     {
         $engine ??= \PHP_INT_SIZE >= 8 ? self::OWN : (class_exists(Randomizer::class) ? self::RANDOMIZER : self::HOST);
         if (!\in_array($engine, [self::OWN, self::RANDOMIZER, self::HOST], true)) {
-            throw new \InvalidArgumentException(\sprintf('Unknown engine "%s": one of "own", "randomizer" or "host".', $engine));
+            throw new \LogicException(\sprintf('Unknown engine "%s": one of "own", "randomizer" or "host".', $engine));
         }
         $this->engine = $engine;
         $this->randomizer = self::RANDOMIZER === $engine ? new Randomizer(new Mt19937($seed)) : null;

@@ -150,7 +150,7 @@ final class MersenneTwisterTest extends TestCase
     #[Test]
     public function test_an_unknown_engine_is_refused(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\LogicException::class);
 
         new MersenneTwister(1, engine: 'dice');
     }
