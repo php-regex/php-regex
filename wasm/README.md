@@ -6,8 +6,9 @@ module: the PCRE2 trace shim behind the playground's step debugger.
 ## pcre2-trace/
 
 The step debugger shows how PCRE2 walks a pattern over a subject: every
-item the matcher reaches, the cursor, the captures so far, each backtrack
-and each new attempt. PCRE2 reports those as callouts when a pattern is
+item the matcher reaches, the cursor, the captures so far, whether it
+backtracked since the previous item (a flag, never a count) and each new
+attempt. PCRE2 reports those as callouts when a pattern is
 compiled with `PCRE2_AUTO_CALLOUT`; `trace.c` runs one `pcre2_match()`
 that way and records every callout into one JSON document.
 
@@ -54,8 +55,9 @@ goes on, so `truncated` is true and `outcome` is still the engine's.
 
 `compile.error` carries PCRE2's code, offset and message when the pattern
 does not compile (then `steps` is empty and `outcome` null). `outcome.rc`
-is `pcre2_match()`'s return: the number of pairs set on a match (`ovector`
-holds them), -1 for no match, any other negative value an error with its
+is `pcre2_match()`'s return: on a match, one more than the highest group
+set (`ovector` holds that many pairs, `null` for a group left unset below
+it: `(a)?(b)` on `b` gives 3 and `[[0, 1], null, [0, 1]]`), -1 for no match, any other negative value an error with its
 code and message (`ovector` is empty: the engine does not write it on
 failure). A pattern with an explicit callout `(?Cn)` reports `n` in the
 steps it reaches.

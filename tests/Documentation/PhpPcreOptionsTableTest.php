@@ -151,8 +151,12 @@ final class PhpPcreOptionsTableTest extends TestCase
             exec(\sprintf('%s %s --from-file 2>&1', escapeshellarg(\PHP_BINARY), escapeshellarg(self::GENERATOR)), $output, $exit);
             $after = (string) file_get_contents(self::TABLE);
         } finally {
-            // A generator without the guard overwrites the tracked table.
-            file_put_contents(self::TABLE, $before);
+            // A generator without the guard overwrites the tracked table: it
+            // is put back then, and only then, so a reader never sees it
+            // rewritten when nothing touched it.
+            if ((string) file_get_contents(self::TABLE) !== $before) {
+                file_put_contents(self::TABLE, $before);
+            }
         }
 
         $this->assertSame(2, $exit, 'No row to write is a usage error: '.implode("\n", $output));
