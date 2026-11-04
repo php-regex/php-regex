@@ -2231,19 +2231,30 @@
 
   // One request to the trace worker, answered by a promise. Requests are
   // queued: the worker runs one match at a time and the page waits for it.
-  function traceAsk(request, key) {
+  // stale() says the answer the request was made for is no longer the
+  // tab's: such a request is dropped when it reaches the front of the
+  // queue, and never replayed after a failure.
+  function traceAsk(request, key, stale) {
     return new Promise(function (resolve, reject) {
-      tracer.queue.push({ request: request, key: key, resolve: resolve, reject: reject, id: 0 });
+      tracer.queue.push({ request: request, key: key, stale: stale, resolve: resolve, reject: reject, id: 0 });
       traceNext();
     });
   }
 
+  function traceStale(job) {
+    return typeof job.stale === 'function' && job.stale();
+  }
+
   function traceNext() {
-    if (tracer.inflight || !tracer.queue.length) {
-      return;
+    while (!tracer.inflight && tracer.queue.length) {
+      var job = tracer.queue.shift();
+      if (traceStale(job)) {
+        job.reject(new Error('The input changed before the trace ran.'));
+        continue;
+      }
+      tracer.inflight = job;
+      traceSend(job);
     }
-    tracer.inflight = tracer.queue.shift();
-    traceSend(tracer.inflight);
   }
 
   function traceSend(job) {
@@ -2272,7 +2283,7 @@
     }
     traceKill();
     tracer.failures[job.key] = (tracer.failures[job.key] || 0) + 1;
-    if (tracer.failures[job.key] < 2) {
+    if (tracer.failures[job.key] < 2 && !traceStale(job)) {
       setStatus(reason + ' Starting the trace again…', 'warn');
       traceSend(job);
       return;
@@ -2486,14 +2497,19 @@
     var index = nextWitness(probe.module);
     var witness = PROBE_WITNESSES[index];
     probe.running = true;
-    traceAsk(traceMessage(answer, witness.body, witness.subject, traceOptions(answer.row, witness.modifiers)), 'probe\u0000' + answer.engine.php + '\u0000' + index).then(function (payload) {
+    traceAsk(traceMessage(answer, witness.body, witness.subject, traceOptions(answer.row, witness.modifiers)), 'probe\u0000' + answer.engine.php + '\u0000' + index, function () {
+      return toolAnswers.trace !== answer;
+    }).then(function (payload) {
       probe.running = false;
       probe.module[index] = moduleOutcome(payload);
       // The next witness, or the judgement and the trace, through drain().
       drain();
     }, function (error) {
       probe.running = false;
-      traceGaveUp(error.message);
+      // A newer answer is not stopped by an older one's failure.
+      if (toolAnswers.trace === answer) {
+        traceGaveUp(error.message);
+      }
     });
   }
 
@@ -2621,7 +2637,9 @@
 
   function runTrace(answer) {
     var input = answer.payload.input;
-    traceAsk(traceMessage(answer, input.body, input.subject, answer.options), answer.key).then(function (payload) {
+    traceAsk(traceMessage(answer, input.body, input.subject, answer.options), answer.key, function () {
+      return toolAnswers.trace !== answer || !toolIsCurrent('trace');
+    }).then(function (payload) {
       if (toolAnswers.trace !== answer) {
         return;
       }
@@ -2646,7 +2664,9 @@
       // through drain(), which sends it when the engine is free.
       drain();
     }, function (error) {
-      if (toolAnswers.trace === answer) {
+      // A trace dropped because the input moved stops nothing: the current
+      // input has its own answer coming.
+      if (toolAnswers.trace === answer && toolIsCurrent('trace')) {
         traceGaveUp(error.message);
       }
     });

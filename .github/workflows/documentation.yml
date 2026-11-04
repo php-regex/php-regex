@@ -80,7 +80,9 @@ jobs:
     # The "documentation" group of the suite: every test under
     # tests/Documentation and every test that names a file of the prose.
     name: Documentation tests (PHP 8.4)
-    runs-on: ubuntu-latest
+    # Pinned: the native trace shim test needs a pcre2test trace pinned for
+    # the runner's PCRE2 (10.42 on Ubuntu 24.04); a newer image would skip it.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: pcre2-module
 

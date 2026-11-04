@@ -26,11 +26,18 @@ same container and compares the sha256 with the manifest.
 
 ### The trace document
 
+The module's own answer for `a(b)` on `xab` (start optimizations skip
+offset 0, where no `a` stands):
+
 ```json
 {"pcre2": "10.44", "compile": {"error": null},
- "steps": [{"p": 0, "len": 1, "s": 0, "n": 255, "flags": 1, "start": 0, "top": 1, "cap": [null]}],
- "steps_total": 17, "truncated": false,
- "outcome": {"rc": 1, "ovector": [[0, 3], [0, 2]], "error": null, "mark": null}}
+ "steps": [{"p": 0, "len": 1, "s": 1, "n": 255, "flags": 1, "start": 1, "top": 1, "cap": [null]},
+           {"p": 1, "len": 1, "s": 2, "n": 255, "flags": 0, "start": 1, "top": 1},
+           {"p": 2, "len": 1, "s": 2, "n": 255, "flags": 0, "start": 1, "top": 1},
+           {"p": 3, "len": 1, "s": 3, "n": 255, "flags": 0, "start": 1, "top": 1},
+           {"p": 4, "len": 0, "s": 3, "n": 255, "flags": 0, "start": 1, "top": 2, "cap": [null, [2, 3]]}],
+ "steps_total": 5, "truncated": false,
+ "outcome": {"rc": 2, "ovector": [[1, 3], [2, 3]], "error": null, "mark": null}}
 ```
 
 One step per callout: `p` the byte offset of the next item in the pattern,
