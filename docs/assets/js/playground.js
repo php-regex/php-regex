@@ -672,6 +672,11 @@
         if (stale) {
           delete failures[requestKey(stale)];
         }
+        if (toolAnswers[tool] && toolAnswers[tool].selfCheckRequest) {
+          // The trace's self-check gave up on the engine: a Run asks again.
+          delete failures[requestKey(toolAnswers[tool].selfCheckRequest)];
+          delete toolAnswers[tool].selfCheckRequest;
+        }
         if (toolAnswers[tool] && toolAnswers[tool].failed) {
           // The step that failed may be the chain's second one, with a
           // count of its own.
@@ -2592,6 +2597,9 @@
       return;
     }
     answer.selfCheck = { agrees: null, note: 'the engine did not answer the check (' + reason.replace(/\.$/, '') + ')' };
+    // Kept so the next Run clears its failure count: the same input asks
+    // the same check again, and must be allowed to.
+    answer.selfCheckRequest = request;
     showSelfCheck(answer);
   }
 

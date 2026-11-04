@@ -14,7 +14,7 @@ PCRE2 is a backtracking matcher: it walks the compiled pattern one item at a tim
  +7 ^^       c
 ```
 
-The first line is the subject. On the second, `+7` is the offset of the next item in the pattern, the first `^` marks where the current match attempt started, the second `^` marks the cursor, and `c` is the item about to be tried. Reading a trace is reading those blocks in order.
+The first line is the subject. On the second, `+7` is the offset of the next item in the pattern, the first `^` marks where the current match attempt started, the second `^` marks the cursor, and `c` is the item about to be tried. A line with one `^` has the cursor at the start of the attempt, or before it: inside a lookbehind the cursor moves back past the start, and `pcre2test` then shows the start alone. Reading a trace is reading those blocks in order.
 
 ## The match attempt and the bumpalong
 
@@ -85,8 +85,8 @@ Twelve callouts for three characters. The `Backtrack` lines are where the matche
 | 10 `a` and `b` | 3 072 | no match |
 | 15 `a` and `b` | 98 304 | no match |
 | 18 `a` and `b` | 786 432 | no match |
-| 19 `a` and `b` | 1 199 985 recorded when PCRE2 stopped | match limit exceeded |
-| 20 `a` and `b` | 1 199 985 recorded when PCRE2 stopped | match limit exceeded |
+| 19 `a` and `b` | 1 199 985 counted when PCRE2 stopped | match limit exceeded |
+| 20 `a` and `b` | 1 199 985 counted when PCRE2 stopped | match limit exceeded |
 
 The count is 3 × 2ⁿ. From 19 `a` on, PCRE2 gives up with `PCRE2_ERROR_MATCHLIMIT` before it finishes; `preg_match()` returns `false` and `preg_last_error()` is `PREG_BACKTRACK_LIMIT_ERROR`. The [ReDoS deep dive](redos.md) is about recognising that shape before it runs.
 
@@ -210,7 +210,7 @@ What it does not do, so that what it shows is never guessed:
 
 - One `pcre2_match()`: the first match only. `preg_match_all()`'s later matches are not traced.
 - No JIT. The outcome agrees with the browser's PHP, which runs without JIT too.
-- Auto-callouts keep the outcome: PCRE2 documents that they change nothing but the steps it reports, and the self-check confirms it on every run.
+- Auto-callouts keep the outcome: PCRE2 documents that they change nothing but the steps it reports, and the self-check compares the trace with the engine's own `preg_match()` whenever it can. It says "not compared" when the subject was cut to its first 1 000 bytes or when the engine did not answer the check.
 - "Backtracked before this item" is a flag, never a count: at least one backtrack since the previous step.
 - Recording stops at 20 000 steps, or earlier when the recorded steps pass 8 MiB (hundreds of groups rewritten at every step); the match goes on to PCRE2's own answer, and the tab says so. A 15-`a` subject against `/^(a+)+$/` is already past the cap.
 - The subject is read up to 1 000 bytes, cut on a character boundary; a longer subject is traced on its first 1 000 bytes and is not compared with the engine.
