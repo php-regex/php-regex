@@ -1000,13 +1000,26 @@ if (!\function_exists('phpregex_playground_run')) {
                     }
                 }
             }
-            // The page carries text: an attack of bytes that are not UTF-8
-            // could not reach the subject field as it is.
-            $verdict['attack'] = 1 === preg_match('//u', $attack) ? $attack : null;
+            $verdict['attack'] = phpregex_playground_attack($attack);
         }
         $answer['redos'] = $verdict;
 
         return phpregex_playground_timed($answer, 'redosMs', $started);
+    }
+
+    /**
+     * The attack string as the page can offer it for a subject: text (bytes
+     * that are not UTF-8 could not reach the subject field as they are) and
+     * no longer than a subject can be (the match tab would cut it, the check
+     * and the export refuse it), else withheld.
+     */
+    function phpregex_playground_attack(string $attack): ?string
+    {
+        if (\strlen($attack) > PHPREGEX_PLAYGROUND_SUBJECT_CAP || 1 !== preg_match('//u', $attack)) {
+            return null;
+        }
+
+        return $attack;
     }
 
     /**
