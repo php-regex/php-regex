@@ -1552,22 +1552,21 @@
   // One strip of tabs over the answers. The first three are views of the
   // analysis (the tree, the diagnostics, the matches), drawn whenever an
   // answer lands; the others are what the console does with a pattern,
-  // one tool each: the ReDoS verdict, the translation, sample subjects, a
-  // test to paste, the layout, the match stepped through on PCRE2 itself.
+  // one tool each: the ReDoS verdict, the translation, sample subjects,
+  // the layout, the match stepped through on PCRE2 itself.
   // A tool asks the engine when its tab is opened, or when the input moved
   // under it, never on every keystroke (the verdict alone is asked on
   // every run, for its badge); the answer of each belongs to the input it
   // was asked for, like the lint belongs to its pattern.
-  var TABS = ['tree', 'diagnostics', 'matches', 'redos', 'transpile', 'samples', 'export', 'format', 'trace'];
-  var TOOLS = ['redos', 'transpile', 'samples', 'export', 'format', 'trace'];
-  var TAB_LABELS = { tree: 'Tree', diagnostics: 'Diagnostics', matches: 'Matches', redos: 'ReDoS', transpile: 'Translate', samples: 'Samples', export: 'Test', format: 'Format', trace: 'Step through' };
+  var TABS = ['tree', 'diagnostics', 'matches', 'redos', 'transpile', 'samples', 'format', 'trace'];
+  var TOOLS = ['redos', 'transpile', 'samples', 'format', 'trace'];
+  var TAB_LABELS = { tree: 'Tree', diagnostics: 'Diagnostics', matches: 'Matches', redos: 'ReDoS', transpile: 'Translate', samples: 'Samples', format: 'Format', trace: 'Step through' };
   var TOOL_STORAGE_KEY = 'playground-tool';
   var TOOL_STATUS = {
     redos: 'Judging the pattern for backtracking…',
     transpile: 'Translating…',
     samples: 'Drawing subjects…',
     check: 'Asking the engine…',
-    export: 'Writing the test…',
     format: 'Laying the pattern out…',
     'trace-input': 'Reading the pattern for the trace…',
   };
@@ -1580,7 +1579,6 @@
   var SEVERITY_WORDS = { safe: 'safe', low: 'low risk', medium: 'medium risk', high: 'high risk', critical: 'critical', unknown: 'no verdict' };
   var TARGET_LABELS = { js: 'JavaScript', html: 'HTML pattern', python: 'Python' };
   var PYTHON_VERSIONS = ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13'];
-  var SUBJECTS_CAP = 50;
 
   // A first visit opens on the tree; a tab the visitor chose is opened
   // again, and anything else the key holds falls back to the tree.
@@ -1596,7 +1594,6 @@
     redos: { mode: 'theoretical' },
     transpile: { target: 'js', pythonVersion: '3.11' },
     format: { width: 80, fit: false, compact: false }, // the driver's own width, unless the field's is asked for
-    export: { full: false },
   };
   var lastHotspots = null; // the verdict's hotspots lit in the pattern field, for the current regex
 
@@ -1608,8 +1605,8 @@
     if (!current) {
       return null;
     }
-    // The subject is the export's business alone (through its subject
-    // list): a subject-only edit leaves the other tabs' answers current.
+    // The subject is the trace's business alone (through its subject
+    // cut): a subject-only edit leaves the other tabs' answers current.
     var request = { type: tool, regex: current.regex, version: current.version };
     switch (tool) {
       case 'redos':
@@ -1623,14 +1620,6 @@
       case 'format':
         request.width = formatWidth();
         request.compact = toolSettings.format.compact;
-        break;
-      case 'export':
-        // The engine the page shows answers first; the test is written
-        // from its answers. Two steps, the first one an engine-only check.
-        request.type = 'check';
-        request.purpose = 'export';
-        request.subject = current.subject;
-        request.subjects = exportSubjects();
         break;
       case 'samples':
         break;
@@ -1667,26 +1656,6 @@
     return Math.max(24, Math.min(120, width || 80));
   }
 
-  // The subjects a test asserts: the field's text, then every sample chip
-  // the Samples tab holds for this very input, without a duplicate.
-  function exportSubjects() {
-    var subjects = [];
-    var seen = Object.create(null); // "constructor" is a subject like any other
-    var add = function (subject) {
-      if (typeof subject === 'string' && !seen[subject] && subjects.length < SUBJECTS_CAP && byteLength(subject) <= SUBJECT_CAP) {
-        seen[subject] = true;
-        subjects.push(subject);
-      }
-    };
-    add(current ? current.subject : '');
-    var samples = toolAnswers.samples;
-    if (samples && current && samples.request.regex === current.regex && samples.request.version === current.version && samples.payload.samples) {
-      samples.payload.samples.matching.forEach(add);
-      samples.payload.samples.nonMatching.forEach(add);
-    }
-    return subjects;
-  }
-
   // The sample's answers, one per tool, each keyed by the request stored
   // beside it: the tab holds it while its own request is that one. The
   // controls start from what the stored request asked for.
@@ -1704,9 +1673,7 @@
     if (stored.format) {
       toolSettings.format = { width: stored.format.width, fit: false, compact: stored.format.compact };
     }
-    // The samples before the test: the test asserts them, and its request
-    // lists them.
-    ['redos', 'transpile', 'samples', 'format', 'export'].forEach(function (tool) {
+    ['redos', 'transpile', 'samples', 'format'].forEach(function (tool) {
       if (!stored[tool] || !sample[tool]) {
         return;
       }
@@ -1803,9 +1770,6 @@
     if (!request || exhausted(request)) {
       return null;
     }
-    if (tool === 'export' && !current.payload.ast) {
-      return null;
-    }
     // The trace is offered on a pattern the tree can show, on a Run
     // gesture or a tab opening — never on the typeahead path.
     if (tool === 'trace' && (!current.payload.ast || !traceWanted)) {
@@ -1839,13 +1803,6 @@
       }
       return;
     }
-    if (request.type === 'check' && request.purpose === 'export') {
-      // Step two: the test, written from the engine's answers.
-      var exportRequest = { type: 'export', regex: request.regex, subject: request.subject, version: request.version, subjects: request.subjects, checks: payload.checks || [], purpose: 'export' };
-      exportRequest.chainKey = requestKey(request);
-      pendingTool = exportRequest;
-      return;
-    }
     if (request.type === 'check' && request.purpose === 'samples') {
       // The engine the page shows had the last word on each sample.
       var drawn = toolAnswers.samples;
@@ -1871,7 +1828,7 @@
       return;
     }
     var tool = request.type;
-    var key = request.type === 'export' ? request.chainKey : requestKey(request);
+    var key = requestKey(request);
     toolAnswers[tool] = { key: key, payload: payload, request: request, checked: false };
     if (tool === 'samples' && current.version < ANALYSIS_FLOOR_VERSION && payload.samples) {
       // Drawn by the analysing engine, judged for this one: the engine the
@@ -2002,8 +1959,6 @@
     if (!fresh) {
       if (current.prerendered) {
         panel.appendChild(text('p', 'pg-tool-hint', tool === 'trace' ? 'Press Run to step through this pattern on PCRE2.' : 'The engine answers this setting once it runs.'));
-      } else if (tool === 'export' && !current.payload.ast) {
-        panel.appendChild(text('p', 'pg-tool-hint', 'A pattern that does not parse has no test to write.'));
       } else if (tool === 'trace' && !current.payload.ast) {
         panel.appendChild(text('p', 'pg-tool-hint', 'A pattern the parser does not read has no trace: the syntax tree could not show its steps.'));
       } else if (tool === 'trace' && !traceWanted) {
@@ -2018,7 +1973,6 @@
       case 'redos': renderRedos(panel, answer.payload); break;
       case 'transpile': renderTranspile(panel, answer.payload, announceResult); break;
       case 'samples': renderSamples(panel, answer, announceResult); break;
-      case 'export': renderExport(panel, answer.payload, announceResult); break;
       case 'format': renderFormat(panel, answer.payload, announceResult); break;
       case 'trace': renderTrace(panel, answer, announceResult); break;
       default: break;
@@ -2319,35 +2273,6 @@
     }
     panel.appendChild(row);
     if (announceResult) announce(samples.matching.length + ' matching sample' + (samples.matching.length === 1 ? '' : 's') + ', ' + samples.nonMatching.length + ' that do' + (samples.nonMatching.length === 1 ? 'es' : '') + ' not match.');
-  }
-
-  // --- test ------------------------------------------------------------------
-
-  function renderExport(panel, payload, announceResult) {
-    if (payload.error) {
-      faultLine(panel, payload.error, 'No test: ');
-      return;
-    }
-    var result = payload.export;
-    if (!result) {
-      return;
-    }
-    var full = toolSettings.export.full;
-    var code = text('pre', 'pg-tool-code', full ? result.class : result.method);
-    code.tabIndex = 0;
-    code.setAttribute('aria-label', full ? 'The test class' : 'The test method and its data provider');
-    panel.appendChild(code);
-    var row = text('div', 'pg-tool-row');
-    row.appendChild(toolButton('Copy', function () {
-      copyText(full ? result.class : result.method, full ? 'the test class' : 'the test method', panel);
-    }));
-    row.appendChild(toolButton('Full class', function () {
-      toolSettings.export.full = !toolSettings.export.full;
-      renderTool('export', true);
-    }, full));
-    row.appendChild(text('span', 'pg-tool-line', result.assertions + ' assertion' + (result.assertions === 1 ? '' : 's') + (result.linear ? ', linear proven' : '') + (result.refused ? ', ' + result.refused + ' subject' + (result.refused === 1 ? '' : 's') + ' the engine refused (commented)' : '') + '. Needs php-regex/regex-phpunit.'));
-    panel.appendChild(row);
-    if (announceResult) announce('Test written: ' + result.assertions + ' assertion' + (result.assertions === 1 ? '' : 's') + '.');
   }
 
   // --- format ---------------------------------------------------------------

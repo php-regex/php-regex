@@ -4666,21 +4666,32 @@ body.search-open {
   align-items: center;
   gap: .5rem;
 }
+/* The version reads as one of the window's own controls, not the
+   browser's: the native chrome is dropped, the chevron is drawn in the
+   bar's soft ink — the bar is navy in both themes, so one color serves
+   them both — and the border sits at the terminal's hairline weight
+   until a hand or the keyboard claims it. */
 .pg-titlebar .pg-version {
   min-height: 1.9rem;
-  padding: .25rem .5rem;
+  padding: .25rem 1.7rem .25rem .6rem;
   font-family: var(--font-mono);
   font-size: .78rem;
   line-height: 1;
   color: var(--code-ink);
-  background: transparent;
-  border: 1px solid var(--ink-soft);
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1.5 1.5 5 4.5 8.5 1.5' fill='none' stroke='%23EDF1F7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right .55rem center;
+  border: 1px solid var(--term-hairline);
   border-radius: var(--radius-s);
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
 }
-.pg-titlebar .pg-version:hover,
+.pg-titlebar .pg-version:hover {
+  border-color: var(--ink-soft);
+}
 .pg-titlebar .pg-version:focus-visible {
-  border-color: var(--code-ink);
+  border-color: var(--ink-soft);
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
 }
 .pg-titlebar .pg-run {
   min-height: 1.9rem;
@@ -4944,6 +4955,25 @@ body.search-open {
   outline: 2px solid var(--amber);
   outline-offset: 1px;
 }
+/* The text is the second half of the loop — pattern, text, verdict — so
+   its field stands tall from the first paint, the way a tester expects
+   it: a floor the viewport sets on a wide screen, where the column then
+   answers the window's height, a fixed one below. The mirror follows the
+   same floor, for it paints the field's background and the marks under
+   the glyphs; the height the script writes never goes under either. */
+.pg-editor-subject .pg-input {
+  min-height: 9rem;
+  max-height: 30rem;
+}
+.pg-editor-subject .pg-mirror {
+  min-height: 9rem;
+}
+@media (min-width: 1024px) {
+  .pg-editor-subject .pg-input,
+  .pg-editor-subject .pg-mirror {
+    min-height: clamp(12rem, calc(100vh - var(--header-h) - 32rem), 22rem);
+  }
+}
 /* The marks under the fields run square, as the pieces above the tree
    do: a highlight over characters, not a chip. */
 .pg-mirror mark {
@@ -5088,22 +5118,26 @@ body.search-open {
   padding: 0;
   list-style: none;
 }
-/* One label voice in the column: "Try" speaks as "Pattern" and
-   "Subject" do. */
+/* One label voice in the column: "Examples" speaks as "Pattern" and
+   "Text" do. */
 .pg-examples-label {
   font-size: .78rem;
   font-weight: 600;
   letter-spacing: .02em;
   color: var(--ink-soft);
 }
+/* A chip of the row carries a name, not a state: the field's square
+   corners, not the pill the status chips wear, and the page's own voice —
+   a button left to the browser would speak its default font. */
 .pg-example {
   min-height: 1.75rem;
   padding: .3rem .65rem;
+  font-family: var(--font-body);
   font-size: .78rem;
   color: var(--ink-soft);
   background: transparent;
   border: 1px solid var(--line-soft);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-s);
   cursor: pointer;
 }
 .pg-example:hover,
@@ -5416,6 +5450,7 @@ body.search-open {
 .pg-voice-option {
   min-height: 1.6rem;
   padding: .2rem .7rem;
+  font-family: var(--font-body);
   font-size: .76rem;
   font-weight: 500;
   color: var(--ink-soft);
@@ -5623,9 +5658,12 @@ body.search-open {
   .pg-titlebar .pg-state {
     min-height: 2.5rem;
   }
-  .pg-titlebar .pg-version,
   .pg-titlebar .pg-run {
     padding-inline: .9rem;
+  }
+  /* The select keeps room for its chevron; the button does not. */
+  .pg-titlebar .pg-version {
+    padding-inline: .9rem 2rem;
   }
   .pg-example {
     min-height: 2rem;
@@ -5643,17 +5681,18 @@ body.search-open {
   }
 }
 
-/* The strip of tabs over the answers: three views of the analysis, six
-   tools. It follows the tabs pattern: arrow keys move between tabs, the
-   open one is filled and ringed in amber, a closed one shows a light
-   pill under the pointer. Three tabs carry a badge: a dot in a state
+/* The strip of tabs over the answers: three views of the analysis, five
+   tools. It follows the tabs pattern and speaks the editor's dialect:
+   arrow keys move between tabs, the open one says so with an amber
+   underline that lands on the strip's own edge, a closed one shows a
+   hairline under the pointer. Three tabs carry a badge: a dot in a state
    color, a count, a word for a voice. */
 .pg-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: .25rem;
+  gap: .1rem;
   margin: 0;
-  padding: .5rem .6rem .45rem;
+  padding: .3rem .55rem 0;
   border-bottom: 1px solid var(--line-soft);
   border-radius: var(--radius-m) var(--radius-m) 0 0;
 }
@@ -5664,29 +5703,30 @@ body.search-open {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
-  min-height: 1.75rem;
-  padding: .3rem .65rem;
+  min-height: 2.1rem;
+  padding: .3rem .6rem;
+  font-family: var(--font-body);
   font-size: .78rem;
   font-weight: 500;
   color: var(--ink-soft);
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-pill);
+  border: 0;
+  border-radius: var(--radius-s) var(--radius-s) 0 0;
   cursor: pointer;
 }
 .pg-tab:hover {
   color: var(--ink);
-  background: var(--code-bg);
+  box-shadow: inset 0 -2px 0 var(--line-soft);
 }
 .pg-tab:focus-visible {
   color: var(--ink);
   outline: 2px solid var(--amber);
-  outline-offset: 1px;
+  outline-offset: -2px;
 }
 .pg-tab[aria-selected="true"] {
   color: var(--ink);
-  background: var(--amber-tint);
-  border-color: var(--amber);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--amber);
 }
 .pg-tab-badge {
   display: inline-flex;
@@ -5769,6 +5809,7 @@ body.search-open {
 .pg-tool-button {
   min-height: 1.75rem;
   padding: .3rem .65rem;
+  font-family: var(--font-body);
   font-size: .78rem;
   color: var(--ink);
   background: transparent;
@@ -5857,18 +5898,26 @@ body.search-open {
   font-style: italic;
   color: var(--ink-soft);
 }
-/* A phone: the strip wraps, and tighter pills keep the tree, the
+/* A phone: the strip wraps, and tighter tabs keep the tree, the
    diagnostics, the matches and the verdict on its first row. A count is
    the first thing to go, before any label: the dot still carries the
    state, and the count stays in the tab's name for a voice. */
 @media (max-width: 639px) {
   .pg-tabs {
     gap: .15rem;
-    padding: .35rem .25rem .3rem;
+    padding: .25rem .25rem 0;
   }
   .pg-tab {
     gap: .25rem;
     padding: .3rem .4rem;
+  }
+  /* The strip wraps here, and an open tab of the first row would draw its
+     underline between the rows: the open tab says itself the way a pressed
+     chip does — tinted, ringed in amber — and the underline stays a wide
+     screen's dialect. */
+  .pg-tab[aria-selected="true"] {
+    background: var(--amber-tint);
+    box-shadow: inset 0 0 0 1px var(--amber);
   }
   .pg-tab-count {
     position: absolute;

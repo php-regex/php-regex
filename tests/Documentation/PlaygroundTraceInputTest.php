@@ -57,7 +57,7 @@ final class PlaygroundTraceInputTest extends TestCase
     }
 
     /**
-     * The four Try examples of the playground (docs/_includes/playground.html)
+     * The four Examples of the playground (docs/_includes/playground.html)
      * and the delimiter spellings PHP reads: leading whitespace skipped, a
      * bracket pair, a non-slash delimiter.
      *
@@ -65,10 +65,10 @@ final class PlaygroundTraceInputTest extends TestCase
      */
     public static function provideDelimitedPatterns(): iterable
     {
-        yield 'Try: named groups' => ['regex' => '/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m', 'subject' => "2026-11-02\n2026-11-19\nnot a date", 'body' => '^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$', 'modifiers' => 'm', 'bodyStart' => 1];
-        yield 'Try: e-mail addresses' => ['regex' => '/[\w.+-]+@[\w-]+\.[\w.-]+/i', 'subject' => 'Write to hello@php-regex.com or to noreply@example.org.', 'body' => '[\w.+-]+@[\w-]+\.[\w.-]+', 'modifiers' => 'i', 'bodyStart' => 1];
-        yield 'Try: catastrophic backtracking' => ['regex' => '/^(a+)+$/', 'subject' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab', 'body' => '^(a+)+$', 'modifiers' => '', 'bodyStart' => 1];
-        yield 'Try: Unicode properties' => ['regex' => '/\p{Lu}\p{Ll}+/u', 'subject' => 'Ünïcode Straße Ωmega', 'body' => '\p{Lu}\p{Ll}+', 'modifiers' => 'u', 'bodyStart' => 1];
+        yield 'Examples: named groups' => ['regex' => '/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m', 'subject' => "2026-11-02\n2026-11-19\nnot a date", 'body' => '^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$', 'modifiers' => 'm', 'bodyStart' => 1];
+        yield 'Examples: e-mail addresses' => ['regex' => '/[\w.+-]+@[\w-]+\.[\w.-]+/i', 'subject' => 'Write to hello@php-regex.com or to noreply@example.org.', 'body' => '[\w.+-]+@[\w-]+\.[\w.-]+', 'modifiers' => 'i', 'bodyStart' => 1];
+        yield 'Examples: catastrophic backtracking' => ['regex' => '/^(a+)+$/', 'subject' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab', 'body' => '^(a+)+$', 'modifiers' => '', 'bodyStart' => 1];
+        yield 'Examples: Unicode properties' => ['regex' => '/\p{Lu}\p{Ll}+/u', 'subject' => 'Ünïcode Straße Ωmega', 'body' => '\p{Lu}\p{Ll}+', 'modifiers' => 'u', 'bodyStart' => 1];
         yield 'leading whitespace before the delimiter' => ['regex' => '  /a b/x', 'subject' => 'ab', 'body' => 'a b', 'modifiers' => 'x', 'bodyStart' => 3];
         yield 'bracket delimiter' => ['regex' => '{a{1,2}}i', 'subject' => 'A', 'body' => 'a{1,2}', 'modifiers' => 'i', 'bodyStart' => 1];
         yield 'hash delimiter' => ['regex' => '#a#', 'subject' => 'a', 'body' => 'a', 'modifiers' => '', 'bodyStart' => 1];

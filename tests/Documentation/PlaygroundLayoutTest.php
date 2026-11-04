@@ -43,7 +43,6 @@ final class PlaygroundLayoutTest extends TestCase
         'redos' => 'ReDoS',
         'transpile' => 'Translate',
         'samples' => 'Samples',
-        'export' => 'Test',
         'format' => 'Format',
         'trace' => 'Step through',
     ];
@@ -67,7 +66,7 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     #[Test]
-    public function test_the_nine_tabs_come_in_order(): void
+    public function test_the_eight_tabs_come_in_order(): void
     {
         $xpath = self::include();
         $tabs = $xpath->query('//*[@role="tab"]');
@@ -240,7 +239,7 @@ final class PlaygroundLayoutTest extends TestCase
     {
         $script = self::source(self::SCRIPT);
 
-        $this->assertStringContainsString("var TABS = ['tree', 'diagnostics', 'matches', 'redos', 'transpile', 'samples', 'export', 'format', 'trace'];", $script);
+        $this->assertStringContainsString("var TABS = ['tree', 'diagnostics', 'matches', 'redos', 'transpile', 'samples', 'format', 'trace'];", $script);
         $this->assertStringContainsString("var activeTool = 'tree';", $script, 'A first visit opens on the tree.');
         $this->assertStringContainsString("'playground-tool'", $script, 'The chosen tab is remembered under the key it always had.');
     }
@@ -450,15 +449,19 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     /**
-     * The test asserts every subject, whatever its text: a subject named
-     * after a property every object has ("constructor") is a subject too.
+     * The window answers what the engine says; a test to paste into a test
+     * class is the console's business, not a tab's. The driver keeps the op
+     * (the bundle and its own tests answer it); the page never asks for it,
+     * and a stored choice of the removed tab falls back to the tree.
      */
     #[Test]
-    public function test_the_test_keeps_a_subject_named_like_an_object_property(): void
+    public function test_the_page_offers_no_export_tool(): void
     {
-        $subjects = self::between(self::source(self::SCRIPT), 'function exportSubjects() {', "\n  }\n");
+        $script = self::source(self::SCRIPT);
 
-        $this->assertStringContainsString('var seen = Object.create(null);', $subjects);
+        $this->assertStringNotContainsString("'export'", $script, 'No tool, no label, no seeded answer of the export op on the page.');
+        $this->assertStringNotContainsString('exportSubjects', $script);
+        $this->assertStringContainsString('if (storedTool && TABS.indexOf(storedTool) !== -1) {', $script, 'A stored tab the strip no longer holds opens on the tree.');
     }
 
     /**
