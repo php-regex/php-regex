@@ -377,7 +377,7 @@
     if (request.eager && activeTool !== 'redos') {
       // The verdict no tab asked for: one failure is the last for this
       // input, its badge stays empty, and the window goes on. A Run, or
-      // the ReDoS tab, asks again.
+      // the ReDoS tab when it opens, asks again.
       failures[key] = 2;
       toolAnswers.redos = { key: key, payload: { error: { message: reason, position: null } }, request: request, checked: true, failed: true };
       hideLoader();
@@ -1792,6 +1792,11 @@
       el.results.scrollTop = 0;
     }
     activeTool = tool;
+    if (tool === 'redos' && toolAnswers.redos && toolAnswers.redos.failed && toolAnswers.redos.request.eager) {
+      // The verdict failed while the tab was closed: opened, it asks again.
+      delete failures[toolAnswers.redos.key];
+      delete toolAnswers.redos;
+    }
     try {
       localStorage.setItem(TOOL_STORAGE_KEY, tool);
     } catch (error) {/* the choice simply does not persist */}
@@ -2311,6 +2316,10 @@
     el.results.style.setProperty('--pg-strip-h', el.tabStrip.offsetHeight + 'px');
   }
   window.addEventListener('resize', measureStrip);
+  if (window.ResizeObserver) {
+    // A badge, or a font that arrives late, can wrap the strip on its own.
+    new ResizeObserver(measureStrip).observe(el.tabStrip);
+  }
   measureStrip();
 
   // --- the tree's two voices ----------------------------------------------

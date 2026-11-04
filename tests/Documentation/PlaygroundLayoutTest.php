@@ -249,6 +249,13 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(0, preg_match('/#[0-9A-Fa-f]{3,8}\b|rgba?\(/', $section), 'The playground section holds no raw color.');
         $this->assertSame(1, substr_count($section, 'var(--tk-str)'), 'A code color is not a state color: the string token colors a token only.');
         $this->assertSame(1, preg_match('/\.pg-tok-anchor \{\s*color: var\(--tk-str\);/', $section));
+
+        // The title bar keeps its navy in both themes: the error pill it
+        // holds is read on that navy, not on the page's paper.
+        $this->assertSame(1, preg_match('/\.terminal,\n\.pg-titlebar \{([^}]*)\}/', $stylesheet, $bar));
+        $this->assertSame(1, preg_match('/--code-bg: (#[0-9A-F]{6});/', $bar[1], $navy));
+        $this->assertSame(1, preg_match('/--danger: (#[0-9A-F]{6});/', $bar[1], $danger), 'The title bar says its own danger.');
+        $this->assertGreaterThanOrEqual(4.5, self::contrast($danger[1], $navy[1]), 'The Stopped pill is text: 4.5:1 on the navy.');
     }
 
     #[Test]
@@ -263,6 +270,7 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringContainsString('overflow: auto;', $column[1]);
         $this->assertStringContainsString('scroll-padding-top: var(--pg-strip-h, 3rem);', $column[1], 'A row brought into view stops under the strip, one row of tabs or two.');
         $this->assertStringContainsString("el.results.style.setProperty('--pg-strip-h', el.tabStrip.offsetHeight + 'px');", self::source(self::SCRIPT), 'The strip measures itself.');
+        $this->assertStringContainsString('new ResizeObserver(measureStrip).observe(el.tabStrip);', self::source(self::SCRIPT), 'A badge or a late font wraps the strip without a window resize.');
         $this->assertSame(1, preg_match('/\.pg-results > \.pg-tabs \{([^}]*)\}/', $stylesheet, $strip));
         $this->assertStringContainsString('position: sticky;', $strip[1]);
         $this->assertStringContainsString('top: 0;', $strip[1]);
@@ -395,6 +403,14 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringNotContainsString("'Stopped'", $quiet);
         $this->assertLessThan(strpos($fail, 'send(request);'), strpos($fail, "if (request.eager && activeTool !== 'redos') {"), 'Before the replay.');
         $this->assertStringContainsString("' The engine could not finish the ' + TAB_LABELS[tab] + ' tab; press Run to try again.'", $fail, 'A closed tab is named by its own label.');
+
+        // The ReDoS tab, opened, asks again: the quiet failure is dropped
+        // with its count, and the tab's own request goes out.
+        $activate = self::between($script, 'function activateTool(tool, focus) {', "\n  }\n");
+        $retry = self::between($activate, "if (tool === 'redos' && toolAnswers.redos && toolAnswers.redos.failed && toolAnswers.redos.request.eager) {", "\n    }\n");
+        $this->assertStringContainsString('delete failures[toolAnswers.redos.key];', $retry);
+        $this->assertStringContainsString('delete toolAnswers.redos;', $retry);
+        $this->assertLessThan(strpos($activate, 'drain();'), strpos($activate, "if (tool === 'redos' && toolAnswers.redos"), 'Dropped before the queue drains.');
     }
 
     /**
@@ -419,6 +435,26 @@ final class PlaygroundLayoutTest extends TestCase
         $subjects = self::between(self::source(self::SCRIPT), 'function exportSubjects() {', "\n  }\n");
 
         $this->assertStringContainsString('var seen = Object.create(null);', $subjects);
+    }
+
+    /**
+     * The WCAG contrast ratio of two #RRGGBB colors.
+     */
+    private static function contrast(string $one, string $two): float
+    {
+        $luminance = static function (string $hex): float {
+            $channels = array_map(static function (string $pair): float {
+                $value = hexdec($pair) / 255;
+
+                return $value <= 0.03928 ? $value / 12.92 : (($value + 0.055) / 1.055) ** 2.4;
+            }, str_split(substr($hex, 1), 2));
+
+            return 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
+        };
+        $lighter = max($luminance($one), $luminance($two));
+        $darker = min($luminance($one), $luminance($two));
+
+        return ($lighter + 0.05) / ($darker + 0.05);
     }
 
     /**

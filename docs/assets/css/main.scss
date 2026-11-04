@@ -1251,7 +1251,8 @@ main table::-webkit-scrollbar-thumb {
 /* ==========================================================================
    Terminal — the fixed ink panel, identical in both themes
    (third raw-color block): text 12.60, soft/bar 6.51, keyword 5.72,
-   string 7.79, number 6.97 — all >= 4.5:1 on the #182B45 panel.
+   string 7.79, number 6.97, danger 6.26 — all >= 4.5:1 on the #182B45
+   panel. Danger is the dark theme's: a stopped engine reads on the navy.
    ========================================================================== */
 
 .terminal,
@@ -1265,6 +1266,7 @@ main table::-webkit-scrollbar-thumb {
   --tk-com: #A3B0C4;
   --tk-fn: #EDF1F7;
   --tk-punct: #A3B0C4;
+  --danger: #FF8A80;
   --term-hairline: rgba(237, 241, 247, 0.18);
   background: var(--code-bg);
   border: 1px solid var(--line);
