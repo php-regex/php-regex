@@ -22,8 +22,8 @@ Then declare the plugin in `psalm.xml`:
 From the 2.0.0 tag and the split package, `vendor/bin/psalm-plugin enable
 php-regex/regex-psalm` writes that line for you.
 
-The plugin needs Psalm 6.19 or later (`vimeo/psalm ^6.19`), run with PHP 8.1
-or later, as Psalm 6 itself.
+The plugin needs Psalm 6.19 or later, Psalm 7 included (`vimeo/psalm ^6.19|^7.0`),
+run with the PHP Psalm itself runs on: 8.1 or later for Psalm 6, 8.2 or later for Psalm 7.
 
 ## The shape of `$matches`
 

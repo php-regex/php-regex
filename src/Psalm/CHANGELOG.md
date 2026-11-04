@@ -23,3 +23,9 @@ CHANGELOG
    refused when `<phpVersion>` or Psalm's own PHP version names it, judged
    from the lowest PHP on PCRE2 of the `composer.json` Psalm read it from.
    The package requires `php-regex/regex-linter`, which reads the target.
+ * Runs on Psalm 7 as on Psalm 6.19 and later: the assertions the plugin
+   sets on a `preg_match()` or `preg_match_all()` call reach the node data
+   Psalm 7 reads, behind the view it hands a plugin, and the callback of
+   `preg_replace_callback()` is typed with the constructor Psalm 7 keeps.
+   The package requires `psalm/psalm-plugin-api`, so a Psalm that breaks
+   its plugin API is refused until the plugin follows it.

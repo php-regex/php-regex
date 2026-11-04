@@ -69,7 +69,7 @@ final class PsalmTypes
             \is_int($value) => Type::getInt(false, $value),
             \is_array($value) => [] === $value
                 ? Type::getEmptyArray()
-                : new Union([new TKeyedArray(array_combine(array_keys($value), array_map(static fn (int|string $key): Union => self::ofValue($value[$key]), array_keys($value))), null, null, array_is_list($value))]),
+                : new Union([TKeyedArray::make(array_combine(array_keys($value), array_map(static fn (int|string $key): Union => self::ofValue($value[$key]), array_keys($value))), null, null, array_is_list($value))]),
             default => throw new \LogicException(\sprintf('No Psalm type for a %s here.', get_debug_type($value))),
         };
     }

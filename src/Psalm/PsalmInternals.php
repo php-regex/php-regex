@@ -20,22 +20,21 @@ use Psalm\Internal\Analyzer\Statements\ExpressionAnalyzer;
 use Psalm\Internal\Analyzer\StatementsAnalyzer;
 use Psalm\Internal\Codebase\Functions;
 use Psalm\Internal\Provider\NodeDataProvider;
-use Psalm\NodeTypeProvider;
 use Psalm\StatementsSource;
 use Psalm\Storage\FunctionLikeParameter;
 use Psalm\Storage\Possibilities;
 
 /**
  * Every use the plugin makes of Psalm's internal classes, which Psalm keeps
- * from one minor release to the next only as far as its own code needs:
+ * from one release to the next only as far as its own code needs:
  * asserting on a call's result, analysing an argument before Psalm does,
  * asking whether a function exists and reading a function's parameters.
  *
- * One check stands for the whole set: each method Psalm 6.19 and later have
- * is still there. Should a release move one, every call is left to Psalm's
- * stubs, as a call the plugin cannot read is: no assertion, no callback
- * type, and a namespaced call that may reach a function of the namespace is
- * not read.
+ * One check stands for the whole set: each method and property Psalm 6.19
+ * and later have is still there. Should a release move one, every call is
+ * left to Psalm's stubs, as a call the plugin cannot read is: no assertion,
+ * no callback type, and a namespaced call that may reach a function of the
+ * namespace is not read.
  *
  * @internal
  */
@@ -50,10 +49,21 @@ final class PsalmInternals
         Functions::class => ['functionExists'],
     ];
 
+    /**
+     * The internal properties the plugin reads, by class: the node data an
+     * analyser reads its assertions from. Psalm 7 hands a plugin a view of
+     * it, which resolves type variables; an assertion set on the view is
+     * lost.
+     */
+    private const PROPERTIES = [
+        StatementsAnalyzer::class => ['node_data'],
+    ];
+
     private static ?bool $available = null;
 
     /**
-     * Whether the running Psalm has every internal method the plugin calls.
+     * Whether the running Psalm has every internal method the plugin calls
+     * and every internal property it reads.
      */
     public static function available(): bool
     {
@@ -64,6 +74,11 @@ final class PsalmInternals
                     $available = $available && method_exists($class, $method);
                 }
             }
+            foreach (self::PROPERTIES as $class => $properties) {
+                foreach ($properties as $property) {
+                    $available = $available && property_exists($class, $property);
+                }
+            }
             self::$available = $available;
         }
 
@@ -71,22 +86,23 @@ final class PsalmInternals
     }
 
     /**
-     * Sets what holds where the call is true and, unless null, where it is
-     * false. False when Psalm cannot be told, which leaves the call to its
-     * stub.
+     * Sets, on the node data the analyser reads, what holds where the call
+     * is true and, unless null, where it is false. False when Psalm cannot
+     * be told, which leaves the call to its stub: under a source of another
+     * kind than the statements Psalm analyses, which it never is there.
      *
      * @param list<Possibilities>      $ifTrue
      * @param list<Possibilities>|null $ifFalse
      */
-    public static function assert(NodeTypeProvider $nodeTypes, FuncCall $call, array $ifTrue, ?array $ifFalse): bool
+    public static function assert(StatementsSource $source, FuncCall $call, array $ifTrue, ?array $ifFalse): bool
     {
-        if (!self::available() || !$nodeTypes instanceof NodeDataProvider) {
+        if (!self::available() || !$source instanceof StatementsAnalyzer) {
             return false;
         }
 
-        $nodeTypes->setIfTrueAssertions($call, $ifTrue);
+        $source->node_data->setIfTrueAssertions($call, $ifTrue);
         if (null !== $ifFalse) {
-            $nodeTypes->setIfFalseAssertions($call, $ifFalse);
+            $source->node_data->setIfFalseAssertions($call, $ifFalse);
         }
 
         return true;

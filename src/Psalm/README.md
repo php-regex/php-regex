@@ -15,7 +15,7 @@ A Psalm plugin that reads your regex patterns: it types `$matches` from the
 pattern of `preg_match()` and `preg_match_all()`, and reports the patterns the
 PHP version you target refuses.
 
-Requires PHP 8.1+ to run and Psalm 6.19+. MIT licensed.
+Requires PHP 8.1+ to run and Psalm 6.19+ or 7. MIT licensed.
 
 Documentation: [php-regex.com](https://php-regex.com) — the [Psalm guide](https://php-regex.com/guides/psalm/) is the place to start.
 
@@ -76,7 +76,8 @@ hand instead:
 </plugins>
 ```
 
-The plugin runs on every PHP Psalm 6 runs on, 8.1 or later. The code you
+The plugin runs on every PHP Psalm runs on: 8.1 or later with Psalm 6, 8.2 or
+later with Psalm 7. The code you
 analyse may target an older PHP (see "Configuration").
 
 Usage

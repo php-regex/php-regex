@@ -20,8 +20,10 @@ use PHPRegex\Psalm\PsalmInternals;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psalm\Context;
+use Psalm\Internal\Analyzer\FileAnalyzer;
+use Psalm\Internal\Analyzer\ProjectAnalyzer;
+use Psalm\Internal\Analyzer\StatementsAnalyzer;
 use Psalm\Internal\Provider\NodeDataProvider;
-use Psalm\NodeTypeProvider;
 use Psalm\StatementsSource;
 use Psalm\Storage\Assertion\Truthy;
 use Psalm\Storage\Possibilities;
@@ -58,33 +60,32 @@ final class PsalmInternalsTest extends TestCase
         $this->assertTrue(PsalmInternals::available());
     }
 
+    /**
+     * Psalm 7 hands a plugin a view of the analyser's node data, not the
+     * node data itself: an assertion set on the view would be lost. The
+     * assertion is set on the node data the analyser reads.
+     */
     #[Test]
-    public function test_psalm_internals_assert_sets_both_sides_on_psalm_node_data(): void
+    public function test_psalm_internals_assert_sets_both_sides_on_the_analysers_node_data(): void
     {
-        $nodeTypes = new NodeDataProvider();
+        $analyzer = self::analyzer();
         $call = self::call();
         $ifTrue = [new Possibilities(0, [new Truthy()])];
 
-        $this->assertTrue(PsalmInternals::assert($nodeTypes, $call, $ifTrue, []));
-        $this->assertSame($ifTrue, $nodeTypes->getIfTrueAssertions($call));
-        $this->assertSame([], $nodeTypes->getIfFalseAssertions($call));
+        $this->assertTrue(PsalmInternals::assert($analyzer, $call, $ifTrue, []));
+        $this->assertSame($ifTrue, $analyzer->node_data->getIfTrueAssertions($call));
+        $this->assertSame([], $analyzer->node_data->getIfFalseAssertions($call));
     }
 
     #[Test]
     public function test_psalm_internals_assert_without_false_side_leaves_it_unset(): void
     {
-        $nodeTypes = new NodeDataProvider();
+        $analyzer = self::analyzer();
         $call = self::call();
 
-        $this->assertTrue(PsalmInternals::assert($nodeTypes, $call, [], null));
-        $this->assertSame([], $nodeTypes->getIfTrueAssertions($call));
-        $this->assertNull($nodeTypes->getIfFalseAssertions($call));
-    }
-
-    #[Test]
-    public function test_psalm_internals_assert_leaves_another_node_type_provider(): void
-    {
-        $this->assertFalse(PsalmInternals::assert($this->createStub(NodeTypeProvider::class), self::call(), [], []));
+        $this->assertTrue(PsalmInternals::assert($analyzer, $call, [], null));
+        $this->assertSame([], $analyzer->node_data->getIfTrueAssertions($call));
+        $this->assertNull($analyzer->node_data->getIfFalseAssertions($call));
     }
 
     #[Test]
@@ -92,6 +93,7 @@ final class PsalmInternalsTest extends TestCase
     {
         $source = $this->createStub(StatementsSource::class);
 
+        $this->assertFalse(PsalmInternals::assert($source, self::call(), [], []));
         $this->assertFalse(PsalmInternals::analyse(new String_('/a/'), $source, new Context()));
         $this->assertTrue(PsalmInternals::functionExists($source, 'preg_match'));
         $this->assertNull(PsalmInternals::parameters($source, 'preg_replace_callback'));
@@ -101,13 +103,13 @@ final class PsalmInternalsTest extends TestCase
     public function test_psalm_internals_moved_leave_every_call_to_the_stubs(): void
     {
         self::forceAvailable(false);
-        $nodeTypes = new NodeDataProvider();
+        $analyzer = self::analyzer();
         $call = self::call();
         $source = $this->createStub(StatementsSource::class);
 
         $this->assertFalse(PsalmInternals::available());
-        $this->assertFalse(PsalmInternals::assert($nodeTypes, $call, [], []));
-        $this->assertNull($nodeTypes->getIfTrueAssertions($call));
+        $this->assertFalse(PsalmInternals::assert($analyzer, $call, [], []));
+        $this->assertNull($analyzer->node_data->getIfTrueAssertions($call));
         $this->assertFalse(PsalmInternals::analyse(new String_('/a/'), $source, new Context()));
         $this->assertTrue(PsalmInternals::functionExists($source, 'preg_match'));
         $this->assertNull(PsalmInternals::parameters($source, 'preg_replace_callback'));
@@ -116,6 +118,20 @@ final class PsalmInternalsTest extends TestCase
     private static function call(): FuncCall
     {
         return new FuncCall(new Name('preg_match'), []);
+    }
+
+    /**
+     * A statements analyser of a Psalm project, with node data of its own.
+     */
+    private static function analyzer(): StatementsAnalyzer
+    {
+        PsalmTypes::codebase();
+        $file = new FileAnalyzer(ProjectAnalyzer::getInstance(), __FILE__, basename(__FILE__));
+        $constructor = (new \ReflectionClass(StatementsAnalyzer::class))->getConstructor();
+        self::assertNotNull($constructor);
+
+        // Psalm 7 adds whether the statements are the file's own scope.
+        return (new \ReflectionClass(StatementsAnalyzer::class))->newInstanceArgs(\array_slice([$file, new NodeDataProvider(), true], 0, $constructor->getNumberOfParameters()));
     }
 
     private static function forceAvailable(?bool $available): void
