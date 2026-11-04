@@ -115,9 +115,12 @@ final class LintProgressBar implements LintProgress
             $this->bar = $this->createBar();
         } else {
             // On a terminal the next scan step takes over the line in place;
-            // in a log it starts a line of its own.
+            // in a log it starts a line of its own, with a bar of its own: a
+            // bar that has drawn a frame starts its next one on a new line
+            // (symfony/console 8.1.11 on), under the name line just written.
             if (!$this->stream->isDecorated()) {
                 $this->close();
+                $this->bar = $this->createBar();
             }
             $this->label = self::LABELS[$step] ?? $step;
         }

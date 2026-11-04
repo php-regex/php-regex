@@ -142,6 +142,7 @@ final class LintProgressBarTest extends TestCase
         $written = self::read($this->stream);
 
         $this->assertStringNotContainsString("\x1b[", $written);
+        $this->assertStringNotContainsString("\n\n", $written, 'Each sub-step starts its bar right under its name, whatever symfony/console release draws it.');
         $this->assertSame(1, substr_count($written, 'Declarations'));
         $this->assertMatchesRegularExpression('/^   Declarations\n(?: +\d\/2 \[[^\n]*\n)+   Functions\n(?: +\d\/1 \[[^\n]*\n)+   Patterns\n(?: +\d\/4 \[[^\n]*\n)+$/', $written);
         $this->assertMatchesRegularExpression('/ 4\/4 \[[^\n]*\n$/', $written);
