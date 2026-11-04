@@ -1,0 +1,586 @@
+# pcre2test input: the corpus and the edge-case walk of the step debugger, one
+# "# name:" line before each pattern. Pinned outputs per PCRE2 release live beside
+# this file as <release>.txt (pcre2test -q cases.txt, saved verbatim).
+#
+# name: nested-quantifier
+/^(a+)+$/auto_callout
+    aab\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->aab
+ +0 ^       ^
+Callout 255: last capture = 0
+--->aab
+ +1 ^       (
+Callout 255: last capture = 0
+--->aab
+ +2 ^       a+
+Callout 255: last capture = 0
+--->aab
+ +4 ^ ^     )+
+Callout 255: last capture = 1
+ 1: aa
+--->aab
+ +2 ^ ^     a+
+Backtrack
+Callout 255: last capture = 1
+ 1: aa
+--->aab
+ +6 ^ ^     $
+Backtrack
+Callout 255: last capture = 0
+--->aab
+ +4 ^^      )+
+Callout 255: last capture = 1
+ 1: a
+--->aab
+ +2 ^^      a+
+Callout 255: last capture = 1
+ 1: a
+--->aab
+ +4 ^ ^     )+
+Callout 255: last capture = 1
+ 1: a
+--->aab
+ +2 ^ ^     a+
+Backtrack
+Callout 255: last capture = 1
+ 1: a
+--->aab
+ +6 ^ ^     $
+Backtrack
+Callout 255: last capture = 1
+ 1: a
+--->aab
+ +6 ^^      $
+No match
+
+# name: leftmost-first
+/(a|ab)(c|bcd)(d*)/auto_callout
+    abcd\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->abcd
+ +0 ^        (
+Callout 255: last capture = 0
+--->abcd
+ +1 ^        a
+Callout 255: last capture = 0
+--->abcd
+ +2 ^^       |
+Callout 255: last capture = 1
+ 1: a
+--->abcd
+ +6 ^^       (
+Callout 255: last capture = 1
+ 1: a
+--->abcd
+ +7 ^^       c
+Backtrack
+Callout 255: last capture = 1
+ 1: a
+--->abcd
+ +9 ^^       b
+Callout 255: last capture = 1
+ 1: a
+--->abcd
++10 ^ ^      c
+Callout 255: last capture = 1
+ 1: a
+--->abcd
++11 ^  ^     d
+Callout 255: last capture = 1
+ 1: a
+--->abcd
++12 ^   ^    )
+Callout 255: last capture = 2
+ 1: a
+ 2: bcd
+--->abcd
++13 ^   ^    (
+Callout 255: last capture = 2
+ 1: a
+ 2: bcd
+--->abcd
++14 ^   ^    d*
+Callout 255: last capture = 2
+ 1: a
+ 2: bcd
+--->abcd
++16 ^   ^    )
+Callout 255: last capture = 3
+ 1: a
+ 2: bcd
+ 3: 
+--->abcd
++17 ^   ^    End of pattern
+ 0: abcd
+ 1: a
+ 2: bcd
+ 3: 
+
+# name: possessive
+/a++a/auto_callout
+    aaa\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->aaa
+ +0 ^       a++
+Callout 255: last capture = 0
+--->aaa
+ +3 ^  ^    a
+Backtrack
+No other matching paths
+New match attempt
+Callout 255: last capture = 0
+--->aaa
+ +0  ^      a++
+Callout 255: last capture = 0
+--->aaa
+ +3  ^ ^    a
+No match
+
+# name: atomic
+/(?>a+)a/auto_callout
+    aaa\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->aaa
+ +0 ^       (?>
+Callout 255: last capture = 0
+--->aaa
+ +3 ^       a+
+Callout 255: last capture = 0
+--->aaa
+ +5 ^  ^    )
+Callout 255: last capture = 0
+--->aaa
+ +6 ^  ^    a
+Backtrack
+No other matching paths
+New match attempt
+Callout 255: last capture = 0
+--->aaa
+ +0  ^      (?>
+Callout 255: last capture = 0
+--->aaa
+ +3  ^      a+
+Callout 255: last capture = 0
+--->aaa
+ +5  ^ ^    )
+Callout 255: last capture = 0
+--->aaa
+ +6  ^ ^    a
+No match
+
+# name: lookbehind
+/(?<=b)a+/auto_callout
+    xba\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->xba
+ +0   ^     (?<=
+Callout 255: last capture = 0
+--->xba
+ +4   ^     b
+Callout 255: last capture = 0
+--->xba
+ +5   ^     )
+Callout 255: last capture = 0
+--->xba
+ +6   ^     a+
+Callout 255: last capture = 0
+--->xba
+ +8   ^^    End of pattern
+ 0: a
+
+# name: lookaround-bsk
+/(?<=a\K)bc/auto_callout,allow_lookaround_bsk
+    abc\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->abc
+ +0  ^      (?<=
+Callout 255: last capture = 0
+--->abc
+ +4  ^      a
+Callout 255: last capture = 0
+--->abc
+ +5  ^      \K
+Callout 255: last capture = 0
+--->abc
+ +7  ^      )
+Callout 255: last capture = 0
+--->abc
+ +8  ^      b
+Callout 255: last capture = 0
+--->abc
+ +9  ^^     c
+Callout 255: last capture = 0
+--->abc
++10  ^ ^    End of pattern
+ 0: bc
+
+# name: ucp-word
+/\w+/auto_callout,utf,ucp
+    caf\x{e9}\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->caf\x{e9}
+ +0 ^             \w+
+Callout 255: last capture = 0
+--->caf\x{e9}
+ +3 ^        ^    End of pattern
+ 0: caf\x{e9}
+
+# name: empty-body
+//auto_callout
+    \=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->
+ +0 ^    End of pattern
+ 0: 
+
+# name: empty-subject
+/a?/auto_callout
+    \=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->
+ +0 ^    a?
+Callout 255: last capture = 0
+--->
+ +2 ^    End of pattern
+ 0: 
+
+# name: extended-comment
+/a # comment
+ b/auto_callout,extended
+    ab\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->ab
+ +0 ^      a # comment
+ 
+Callout 255: last capture = 0
+--->ab
++13 ^^     b
+Callout 255: last capture = 0
+--->ab
++14 ^ ^    End of pattern
+ 0: ab
+
+# name: dupnames
+/(?J)(?<n>a)|(?<n>b)/auto_callout
+    b\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->b
+ +0 ^     (?J)
+Callout 255: last capture = 0
+--->b
+ +4 ^     (?<n>
+Callout 255: last capture = 0
+--->b
+ +9 ^     a
+Backtrack
+Callout 255: last capture = 0
+--->b
++12 ^     (?<n>
+Callout 255: last capture = 0
+--->b
++17 ^     b
+Callout 255: last capture = 0
+--->b
++18 ^^    )
+Callout 255: last capture = 2
+ 1: <unset>
+ 2: b
+--->b
++19 ^^    End of pattern
+ 0: b
+ 1: <unset>
+ 2: b
+
+# name: no-auto-capture
+/(?n)(a)(?<x>b)/auto_callout
+    ab\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->ab
+ +0 ^      (?n)
+Callout 255: last capture = 0
+--->ab
+ +4 ^      (
+Callout 255: last capture = 0
+--->ab
+ +5 ^      a
+Callout 255: last capture = 0
+--->ab
+ +6 ^^     )
+Callout 255: last capture = 0
+--->ab
+ +7 ^^     (?<x>
+Callout 255: last capture = 0
+--->ab
++12 ^^     b
+Callout 255: last capture = 0
+--->ab
++13 ^ ^    )
+Callout 255: last capture = 1
+ 1: b
+--->ab
++14 ^ ^    End of pattern
+ 0: ab
+ 1: b
+
+# name: lookbehind-at-start
+/(?<=^)a/auto_callout
+    a\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->a
+ +0 ^     (?<=
+Callout 255: last capture = 0
+--->a
+ +4 ^     ^
+Callout 255: last capture = 0
+--->a
+ +5 ^     )
+Callout 255: last capture = 0
+--->a
+ +6 ^     a
+Callout 255: last capture = 0
+--->a
+ +7 ^^    End of pattern
+ 0: a
+
+# name: crlf-dollar
+/a$/auto_callout
+    a\r\n\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->a\x0d\x0a
+ +0 ^             a
+Callout 255: last capture = 0
+--->a\x0d\x0a
+ +1 ^^            $
+No match
+
+# name: bsr-nel-utf
+/\R/auto_callout,utf
+    \x{85}\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->\x{85}
+ +0 ^          \R
+Callout 255: last capture = 0
+--->\x{85}
+ +2 ^     ^    End of pattern
+ 0: \x{85}
+
+# name: auto-possess
+/a+[bc]/auto_callout
+    aaac\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->aaac
+ +0 ^        a+
+Callout 255: last capture = 0
+--->aaac
+ +2 ^  ^     [bc]
+Callout 255: last capture = 0
+--->aaac
+ +6 ^   ^    End of pattern
+ 0: aaac
+
+# name: recursion
+/^(\((?1)*\))$/auto_callout
+    (()())\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->(()())
+ +0 ^          ^
+Callout 255: last capture = 0
+--->(()())
+ +1 ^          (
+Callout 255: last capture = 0
+--->(()())
+ +2 ^          \(
+Callout 255: last capture = 0
+--->(()())
+ +4 ^^         (?1)*
+Callout 255: last capture = 0
+--->(()())
+ +2 ^^         \(
+Callout 255: last capture = 0
+--->(()())
+ +4 ^ ^        (?1)*
+Callout 255: last capture = 0
+--->(()())
+ +2 ^ ^        \(
+Backtrack
+Callout 255: last capture = 0
+--->(()())
+ +9 ^ ^        \)
+Callout 255: last capture = 0
+--->(()())
++11 ^  ^       )
+Callout 255: last capture = 0
+--->(()())
+ +2 ^  ^       \(
+Callout 255: last capture = 0
+--->(()())
+ +4 ^   ^      (?1)*
+Callout 255: last capture = 0
+--->(()())
+ +2 ^   ^      \(
+Backtrack
+Callout 255: last capture = 0
+--->(()())
+ +9 ^   ^      \)
+Callout 255: last capture = 0
+--->(()())
++11 ^    ^     )
+Callout 255: last capture = 0
+--->(()())
+ +2 ^    ^     \(
+Backtrack
+Callout 255: last capture = 0
+--->(()())
+ +9 ^    ^     \)
+Callout 255: last capture = 0
+--->(()())
++11 ^     ^    )
+Callout 255: last capture = 1
+ 1: (()())
+--->(()())
++12 ^     ^    $
+Callout 255: last capture = 1
+ 1: (()())
+--->(()())
++13 ^     ^    End of pattern
+ 0: (()())
+ 1: (()())
+
+# name: backreference
+/(a)\1/auto_callout
+    aa\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->aa
+ +0 ^      (
+Callout 255: last capture = 0
+--->aa
+ +1 ^      a
+Callout 255: last capture = 0
+--->aa
+ +2 ^^     )
+Callout 255: last capture = 1
+ 1: a
+--->aa
+ +3 ^^     \1
+Callout 255: last capture = 1
+ 1: a
+--->aa
+ +5 ^ ^    End of pattern
+ 0: aa
+ 1: a
+
+# name: branch-reset
+/(?|(a)|(b))\1/auto_callout
+    bb\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->bb
+ +0 ^      (?|
+Callout 255: last capture = 0
+--->bb
+ +3 ^      (
+Callout 255: last capture = 0
+--->bb
+ +4 ^      a
+Backtrack
+Callout 255: last capture = 0
+--->bb
+ +7 ^      (
+Callout 255: last capture = 0
+--->bb
+ +8 ^      b
+Callout 255: last capture = 0
+--->bb
+ +9 ^^     )
+Callout 255: last capture = 1
+ 1: b
+--->bb
++10 ^^     )
+Callout 255: last capture = 1
+ 1: b
+--->bb
++11 ^^     \1
+Callout 255: last capture = 1
+ 1: b
+--->bb
++13 ^ ^    End of pattern
+ 0: bb
+ 1: b
+
+# name: conditional
+/(a)?(?(1)b|c)/auto_callout
+    c\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->c
+ +0 ^     (
+Callout 255: last capture = 0
+--->c
+ +1 ^     a
+Backtrack
+Callout 255: last capture = 0
+--->c
+ +4 ^     (?(1)
+Callout 255: last capture = 0
+--->c
++11 ^     c
+Callout 255: last capture = 0
+--->c
++12 ^^    )
+Callout 255: last capture = 0
+--->c
++13 ^^    End of pattern
+ 0: c
+
+# name: skip-verb
+/a+(*SKIP)b|c/auto_callout
+    aaac\=callout_extra,callout_capture
+New match attempt
+Callout 255: last capture = 0
+--->aaac
+ +0 ^        a+
+Callout 255: last capture = 0
+--->aaac
+ +2 ^  ^     (*SKIP)
+Callout 255: last capture = 0
+--->aaac
+ +9 ^  ^     b
+Backtrack
+No other matching paths
+New match attempt
+Callout 255: last capture = 0
+--->aaac
+ +0    ^     a+
+Backtrack
+Callout 255: last capture = 0
+--->aaac
++11    ^     c
+Callout 255: last capture = 0
+--->aaac
++12    ^^    End of pattern
+ 0: c
+
+# name: nest-limit
+/((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((()))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))/auto_callout
+Failed: error 119 at offset 221: parentheses are too deeply nested
+    \=callout_extra,callout_capture
+

@@ -51,6 +51,7 @@
 
 # Directories not needed in distribution
 /art                    export-ignore
+/wasm                   export-ignore
 /build                  export-ignore
 /corpus                 export-ignore
 /corpus.json            export-ignore

@@ -97,7 +97,7 @@ final class PlaygroundToolsTest extends TestCase
     {
         $payload = self::format($driver, $root, self::DATE, ['width' => 24]);
 
-        $this->assertSame(2, $payload['protocol']);
+        $this->assertSame(3, $payload['protocol']);
         $this->assertNull($payload['error']);
         $this->assertNotNull($payload['format']);
         $this->assertSame(self::DATE_LAID_OUT, $payload['format']['pattern']);
@@ -220,7 +220,7 @@ final class PlaygroundToolsTest extends TestCase
     {
         $payload = self::redos($driver, $root, self::CATASTROPHIC);
 
-        $this->assertSame(2, $payload['protocol']);
+        $this->assertSame(3, $payload['protocol']);
         $this->assertNull($payload['error']);
         $redos = $payload['redos'];
         $this->assertNotNull($redos);
@@ -314,7 +314,7 @@ final class PlaygroundToolsTest extends TestCase
     public function test_transpile_to_each_target(string $driver, string $root): void
     {
         $js = self::transpile($driver, $root, '/^a$/m', 'js');
-        $this->assertSame(2, $js['protocol']);
+        $this->assertSame(3, $js['protocol']);
         $this->assertNull($js['refusal']);
         $this->assertNotNull($js['transpile']);
         $this->assertSame('javascript', $js['transpile']['target']);
@@ -414,7 +414,7 @@ final class PlaygroundToolsTest extends TestCase
         $bundle = PlaygroundDriver::extractBundle();
         $payload = self::samples($bundle['driver'], $bundle['root'], $pattern);
 
-        $this->assertSame(2, $payload['protocol']);
+        $this->assertSame(3, $payload['protocol']);
         $this->assertNull($payload['error']);
         $samples = $payload['samples'];
         $this->assertNotNull($samples);
@@ -514,7 +514,7 @@ final class PlaygroundToolsTest extends TestCase
     {
         $payload = self::check($driver, $root.'/does-not-exist', '/(?<a>x)(y)?(z)/', ['xz', 'q', str_repeat('a', 30)]);
 
-        $this->assertSame(2, $payload['protocol']);
+        $this->assertSame(3, $payload['protocol']);
         $this->assertSame(\PHP_VERSION, $payload['engine']['php']);
         $this->assertCount(3, $payload['checks']);
         $this->assertSame(['matched' => 1, 'error' => null, 'groups' => ['0' => ['xz', 0], 'a' => ['x', 0], '1' => ['x', 0], '2' => null, '3' => ['z', 1]]], $payload['checks'][0]);
@@ -536,7 +536,7 @@ final class PlaygroundToolsTest extends TestCase
     {
         $payload = self::export($driver, $root, '/(?<alpha>a+)(b+)?(?<gamma>c)/', ['aac', 'xyz']);
 
-        $this->assertSame(2, $payload['protocol']);
+        $this->assertSame(3, $payload['protocol']);
         $this->assertNull($payload['error']);
         $export = $payload['export'];
         $this->assertNotNull($export);
@@ -681,7 +681,7 @@ final class PlaygroundToolsTest extends TestCase
             $this->assertNull($refused['export'], var_export($date, true));
             $this->assertSame('export', $refused['error']['source'] ?? null);
             $this->assertStringContainsString('date', (string) ($refused['error']['message'] ?? ''));
-            $this->assertSame(2, $refused['protocol']);
+            $this->assertSame($today['protocol'], $refused['protocol']);
         }
     }
 
@@ -828,7 +828,7 @@ final class PlaygroundToolsTest extends TestCase
 
     #[Test]
     #[DataProvider('provideDrivers')]
-    public function test_every_tool_answers_in_the_envelope_with_protocol_two(string $driver, string $root): void
+    public function test_every_tool_answers_in_the_envelope_with_protocol_three(string $driver, string $root): void
     {
         foreach ([
             ['op' => 'format', 'regex' => self::DATE, 'width' => 24],
@@ -849,7 +849,7 @@ final class PlaygroundToolsTest extends TestCase
             $this->assertSame('', $run['stderr'], $label);
             $this->assertMatchesRegularExpression('/\A\x1e\{.*\}\x1e\z/s', $run['stdout'], $label);
             $payload = PlaygroundDriver::payload($run);
-            $this->assertSame(2, $payload['protocol'], $label);
+            $this->assertSame(3, $payload['protocol'], $label);
             $this->assertArrayNotHasKey('fatal', $payload, $label);
             $this->assertSame([], $payload['notices'], $label.': the library raised a notice on this engine.');
         }

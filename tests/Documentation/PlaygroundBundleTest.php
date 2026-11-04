@@ -24,10 +24,21 @@ use PHPUnit\Framework\TestCase;
  * driver, stripped of comments, as one JSON file. It is generated, so the
  * tests hold its shape and its self-sufficiency, not its freshness against
  * src/: the home runs the snapshot its manifest names, by design.
+ *
+ * @phpstan-type Module array{release: string, sha256: string, bytes: int, base64: string}
+ * @phpstan-type Bundle array{manifest: array<string, mixed>, files: array<string, string>, modules?: array<string, Module>}
  */
 #[Group('documentation')]
 final class PlaygroundBundleTest extends TestCase
 {
+    /**
+     * The PCRE2 release the page's 8.4 and 8.5 engines bundle: the one trace
+     * module shipped at launch, named by it.
+     */
+    private const RELEASE = '10.44';
+    private const MODULE = 'pcre2-'.self::RELEASE;
+    private const MANIFEST = PlaygroundDriver::ROOT.'/wasm/pcre2-trace/manifest.json';
+
     #[Test]
     public function test_the_manifest_is_complete(): void
     {
@@ -41,9 +52,65 @@ final class PlaygroundBundleTest extends TestCase
         $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}$/', $manifest['built']);
         $this->assertGreaterThanOrEqual(500, $manifest['files']);
         $this->assertIsInt($manifest['bytes']);
-        $this->assertSame(2, $manifest['protocol']);
+        $this->assertSame(3, $manifest['protocol']);
         $this->assertSame(JsonDumper::VERSION, $manifest['jsonDumper']);
         $this->assertSame(\count(PlaygroundDriver::bundle()['files']), $manifest['files']);
+
+        $keys = array_keys($manifest);
+        sort($keys);
+        $this->assertSame(['built', 'bytes', 'commit', 'files', 'jsonDumper', 'modules', 'protocol', 'version'], $keys);
+    }
+
+    /**
+     * The trace module rides in the bundle the way the library's sources
+     * do: base64 under a modules key, named by its PCRE2 release, with the
+     * sha256 and the size of the bytes it decodes to. The manifest repeats
+     * the release, the sha256 and the size, without the bytes.
+     */
+    #[Test]
+    public function test_the_bundle_embeds_the_trace_module(): void
+    {
+        $bundle = self::rawBundle();
+
+        $this->assertArrayHasKey('modules', $bundle);
+        $modules = $bundle['modules'] ?? [];
+        $this->assertSame([self::MODULE], array_keys($modules));
+        $module = $modules[self::MODULE];
+        $this->assertSame(['release', 'sha256', 'bytes', 'base64'], array_keys($module));
+        $this->assertSame(self::RELEASE, $module['release']);
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $module['sha256']);
+        $this->assertIsInt($module['bytes']);
+        $this->assertGreaterThan(100000, $module['bytes']);
+
+        $bytes = base64_decode($module['base64'], true);
+        $this->assertIsString($bytes, 'The module is strict base64.');
+        $this->assertSame($module['bytes'], \strlen($bytes));
+        $this->assertSame($module['sha256'], hash('sha256', $bytes));
+        $this->assertStringStartsWith("\0asm", $bytes, 'The bytes are a WebAssembly module.');
+
+        $manifest = $bundle['manifest']['modules'] ?? null;
+        $this->assertSame([self::MODULE => ['release' => $module['release'], 'sha256' => $module['sha256'], 'bytes' => $module['bytes']]], $manifest);
+    }
+
+    /**
+     * The module's checksum is pinned in the tree, where CI rebuilds the
+     * module and compares: the bundle carries the bytes that pin names.
+     */
+    #[Test]
+    public function test_the_embedded_module_is_the_one_the_tree_pins(): void
+    {
+        $this->assertFileExists(self::MANIFEST);
+        /** @var array<string, mixed> $pinned */
+        $pinned = json_decode((string) file_get_contents(self::MANIFEST), true, 512, \JSON_THROW_ON_ERROR);
+        $module = self::rawBundle()['modules'][self::MODULE] ?? null;
+
+        $this->assertIsArray($module, 'The bundle embeds no '.self::MODULE.' module.');
+        $this->assertSame(self::RELEASE, $pinned['release']);
+        $this->assertSame(self::MODULE.'.wasm', $pinned['module']);
+        $this->assertIsString($pinned['sha256']);
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $pinned['sha256']);
+        $this->assertSame($pinned['sha256'], $module['sha256'], 'The bundle embeds other bytes than the tree pins: rebuild the module or regenerate the bundle.');
+        $this->assertSame($pinned['bytes'], $module['bytes']);
     }
 
     #[Test]
@@ -105,6 +172,19 @@ final class PlaygroundBundleTest extends TestCase
         }
         $this->assertLessThan(3 * 1024 * 1024, filesize(PlaygroundDriver::BUNDLE));
         $this->assertSame(array_sum(array_map(strlen(...), $bundle['files'])), $bundle['manifest']['bytes']);
+    }
+
+    /**
+     * The bundle as written, every top-level key included.
+     *
+     * @return Bundle
+     */
+    private static function rawBundle(): array
+    {
+        /** @var Bundle $bundle */
+        $bundle = json_decode((string) file_get_contents(PlaygroundDriver::BUNDLE), true, 512, \JSON_THROW_ON_ERROR);
+
+        return $bundle;
     }
 
     /**

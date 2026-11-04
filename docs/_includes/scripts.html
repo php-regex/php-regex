@@ -11,7 +11,9 @@
   an on-this-page rail, so the two scripts that drive them are left out
   there — both bail out harmlessly when their element is missing, and two
   fewer requests is the better reason to leave them. The landing page alone
-  carries the playground, and alone loads its script.
+  carries the playground, and alone loads its script — and, after it, the
+  table of what each PHP version passes to PCRE2, which the playground's
+  step debugger reads from the window when a trace is asked for.
 {% endcomment %}
 <script defer src="/assets/js/theme.js?v={{ site.time | date: '%s' }}"></script>
 <script defer src="/assets/js/reading.js?v={{ site.time | date: '%s' }}"></script>
@@ -23,6 +25,7 @@
 <script defer src="/assets/js/run.js?v={{ site.time | date: '%s' }}"></script>
 {% if page.layout == 'landing' %}
 <script defer src="/assets/js/playground.js?v={{ site.time | date: '%s' }}"></script>
+<script defer src="/assets/js/php-pcre-options.js?v={{ site.time | date: '%s' }}"></script>
 {% endif %}
 <script defer src="/assets/js/filter.js?v={{ site.time | date: '%s' }}"></script>
 <script defer src="/assets/js/search.js?v={{ site.time | date: '%s' }}"></script>

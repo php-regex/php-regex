@@ -5643,7 +5643,7 @@ body.search-open {
   }
 }
 
-/* The strip of tabs over the answers: three views of the analysis, five
+/* The strip of tabs over the answers: three views of the analysis, six
    tools. It follows the tabs pattern: arrow keys move between tabs, the
    open one is filled and ringed in amber, a closed one shows a light
    pill under the pointer. Three tabs carry a badge: a dot in a state
@@ -5985,4 +5985,210 @@ body.search-open {
   background: var(--paper);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-s);
+}
+
+/* Step through: the match as PCRE2 ran it. The outcome line, the slider
+   with its two buttons, the subject with two cursors (where the attempt
+   started, where PCRE2 stands), the list of steps with the current one
+   pressed in amber, the captures at that step as a small table, and the
+   line that says which PCRE2 traced, whose options were applied, and
+   whether the engine agrees — red, with both answers, when it does not.
+   Every color is a token the themes already carry. */
+.pg-tool-line.is-error {
+  color: var(--danger);
+  font-weight: 600;
+}
+.pg-tool-list.is-error {
+  color: var(--danger);
+}
+.pg-trace-outcome {
+  font-weight: 500;
+  color: var(--ink);
+}
+.pg-trace-nav input[type="range"] {
+  flex: 1 1 10rem;
+  min-width: 6rem;
+  max-width: 100%;
+  margin: 0;
+  accent-color: var(--amber);
+}
+.pg-trace-nav input[type="range"]:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+.pg-trace-count {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.pg-trace-subject {
+  max-height: 8rem;
+  margin: 0 0 .5rem;
+  padding: .5rem .65rem;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--amber-tint);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+  scrollbar-width: thin;
+}
+/* The cursors: a bar before the character, the start of the attempt in
+   the quiet line color, the current position in amber. */
+.pg-trace-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.15em;
+  margin: 0 -1px;
+  vertical-align: text-bottom;
+  color: transparent;
+  background: var(--line);
+}
+.pg-trace-cursor.is-now {
+  width: 3px;
+  background: var(--amber);
+  box-shadow: 0 0 0 1px var(--amber-tint);
+}
+.pg-trace-cursor.is-start.is-now {
+  background: var(--amber-deep);
+}
+.pg-trace-steps {
+  max-height: 18rem;
+  margin: 0 0 .5rem;
+  padding: .25rem 0 .25rem 2.4rem;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  line-height: 1.5;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+  scrollbar-width: thin;
+}
+.pg-trace-steps:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+.pg-trace-step {
+  padding: .1rem .5rem .1rem .25rem;
+  cursor: pointer;
+  border-radius: var(--radius-s);
+}
+.pg-trace-step::marker {
+  color: var(--ink-soft);
+}
+.pg-trace-step:hover {
+  background: var(--amber-tint);
+}
+.pg-trace-step.is-current {
+  background: var(--amber-tint);
+  box-shadow: inset 2px 0 0 var(--amber);
+}
+.pg-trace-step.is-current .pg-trace-try {
+  color: var(--ink);
+  font-weight: 600;
+}
+.pg-trace-attempt,
+.pg-trace-backtrack {
+  display: block;
+  font-family: var(--font-body);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.pg-trace-backtrack {
+  color: var(--amber-deep);
+}
+.pg-trace-try {
+  color: var(--ink-soft);
+}
+.pg-trace-try code {
+  padding: .05rem .3rem;
+  font-size: .78rem;
+  color: var(--ink);
+  background: var(--amber-tint);
+  border-radius: var(--radius-s);
+  overflow-wrap: anywhere;
+}
+.pg-trace-at {
+  color: var(--ink-soft);
+}
+.pg-trace-status {
+  margin: 0 0 .5rem;
+  font-size: .8rem;
+  color: var(--ink);
+}
+.pg-trace-captures {
+  margin: 0 0 .5rem;
+}
+.pg-trace-table {
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+  font-size: .8rem;
+  border-collapse: collapse;
+}
+.pg-trace-table caption {
+  padding: 0 0 .25rem;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  text-align: left;
+  color: var(--ink-soft);
+}
+.pg-trace-table th,
+.pg-trace-table td {
+  padding: .15rem .6rem .15rem 0;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line-soft);
+}
+.pg-trace-table th {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.pg-trace-table td code {
+  font-size: .78rem;
+  overflow-wrap: anywhere;
+}
+.pg-trace-bytes {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.pg-trace-unset {
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.pg-trace-label {
+  color: var(--ink-soft);
+}
+/* The item PCRE2 is about to try, lit in the pattern field. */
+.pg-mirror .pg-mark-trace {
+  background: var(--mark-match-current);
+  box-shadow: inset 0 -2px 0 var(--amber-deep);
+}
+@media (max-width: 639px) {
+  .pg-trace-steps {
+    max-height: 12rem;
+  }
+  .pg-trace-nav input[type="range"] {
+    flex-basis: 100%;
+  }
+}
+@media (forced-colors: active) {
+  .pg-trace-step.is-current {
+    outline: 2px solid CanvasText;
+  }
+  .pg-trace-cursor {
+    background: CanvasText;
+  }
 }

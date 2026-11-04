@@ -18,6 +18,7 @@ Start here if ASTs or the visitor pattern are new to you. These two pages assume
 These pages are written for tool authors — the people behind PHPStan extensions, linters and code generators. They assume the foundations and go into engine internals:
 
 - **[PCRE vs Other Engines](pcre.md)** - Syntax by PCRE2 release, target versioning, engine comparison
+- **[How PCRE2 Matches](how-pcre2-matches.md)** - Items, match attempts, backtracking and captures, read from the engine's own traces
 - **[ReDoS Deep Dive](redos.md)** - Ambiguity, witnesses and the proof model
 
 ## When to read these

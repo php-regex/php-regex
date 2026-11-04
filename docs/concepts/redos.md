@@ -13,7 +13,7 @@ Take `/(a+)+$/` and the input `"aaaaaaaaaaaaaaaaaaa!"`. The `!` means the patter
 
 ### The problem: ambiguity under backtracking
 
-PCRE tries the alternatives of a pattern in a fixed order: the left alternative first, a greedy quantifier's next iteration before its exit, a lazy one the other way round. When an attempt fails, it backtracks to the last choice and tries the next one. That costs nothing when there is only one way to match each part of the input. It costs a lot when there are many:
+PCRE tries the alternatives of a pattern in a fixed order: the left alternative first, a greedy quantifier's next iteration before its exit, a lazy one the other way round. When an attempt fails, it backtracks to the last choice and tries the next one ([How PCRE2 Matches](how-pcre2-matches.md) shows that walk, step by step, in the engine's own traces). That costs nothing when there is only one way to match each part of the input. It costs a lot when there are many:
 
 ```
 Pattern: /(a+)+$/

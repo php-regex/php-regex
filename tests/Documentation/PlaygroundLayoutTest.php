@@ -45,6 +45,7 @@ final class PlaygroundLayoutTest extends TestCase
         'samples' => 'Samples',
         'export' => 'Test',
         'format' => 'Format',
+        'trace' => 'Step through',
     ];
 
     #[Test]
@@ -66,7 +67,7 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     #[Test]
-    public function test_the_eight_tabs_come_in_order(): void
+    public function test_the_nine_tabs_come_in_order(): void
     {
         $xpath = self::include();
         $tabs = $xpath->query('//*[@role="tab"]');
@@ -221,7 +222,7 @@ final class PlaygroundLayoutTest extends TestCase
     {
         $script = self::source(self::SCRIPT);
 
-        $this->assertStringContainsString("var TABS = ['tree', 'diagnostics', 'matches', 'redos', 'transpile', 'samples', 'export', 'format'];", $script);
+        $this->assertStringContainsString("var TABS = ['tree', 'diagnostics', 'matches', 'redos', 'transpile', 'samples', 'export', 'format', 'trace'];", $script);
         $this->assertStringContainsString("var activeTool = 'tree';", $script, 'A first visit opens on the tree.');
         $this->assertStringContainsString("'playground-tool'", $script, 'The chosen tab is remembered under the key it always had.');
     }
@@ -304,7 +305,10 @@ final class PlaygroundLayoutTest extends TestCase
         $script = self::source(self::SCRIPT);
 
         $this->assertSame(1, preg_match("/if \\(fromHash\\) \\{[^}]*setState\\('Loading…', 'busy'\\);[^}]*analyzeNow\\(\\);\\n  \\}/", $script), 'A link with a pattern runs it at once, and the pill says the engine is coming.');
-        $this->assertSame(1, substr_count($script, 'new Worker('), 'One place creates the engine.');
+        $this->assertSame(2, substr_count($script, 'new Worker('), 'Two places create a worker: the engine and the step trace.');
+        $this->assertSame(1, preg_match('/function traceWorkerCreate\(\) \{\s*try \{\s*var created = new Worker\(/', $script));
+        $this->assertSame(1, preg_match_all('/(?<!function )traceWorkerCreate\(\)/', $script), 'The trace worker is asked for by the first trace job only.');
+        $this->assertSame(1, preg_match('/function traceSend\(job\) \{(?:(?!\n  function ).)*traceWorkerCreate\(\)/s', $script));
         $this->assertSame(1, preg_match('/function createWorker\(\) \{\s*try \{\s*var created = new Worker\(/', $script));
         $this->assertSame(1, preg_match_all('/(?<!function )createWorker\(\)/', $script), 'Asked for by the first request only.');
         $this->assertSame(1, preg_match('/function send\(request\) \{(?:(?!\n  function ).)*createWorker\(\)/s', $script));

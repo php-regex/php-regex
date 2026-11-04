@@ -17,7 +17,10 @@ declare(strict_types=1);
  *
  *   docs/assets/playground/bundle.json   the core library and the driver,
  *                                        comments stripped, as one JSON map
- *                                        with a manifest
+ *                                        with a manifest, and the PCRE2
+ *                                        trace module behind the step
+ *                                        debugger, as base64 under a
+ *                                        modules key named by its release
  *   docs/_data/playground.json           the driver's answers (analysis, lint,
  *                                        ReDoS verdict, samples) for the
  *                                        default pattern and subject, judged
@@ -29,8 +32,14 @@ declare(strict_types=1);
  *
  * The bundle is a snapshot: the home runs the library as it was when this
  * script last ran, and says so in its caption (version, commit, date). Run
- * it before a release, after a change to the driver, and whenever a change
- * under src/ should reach the playground.
+ * it before a release, after a change to the driver, whenever a change
+ * under src/ should reach the playground, and after a rebuild of the trace
+ * module.
+ *
+ * The module is read from wasm/pcre2-trace/build/, where
+ * wasm/pcre2-trace/build.sh writes it, and embedded only when its size and
+ * sha256 are the ones wasm/pcre2-trace/manifest.json pins: a module from
+ * another build, or none at all, stops the script.
  *
  * Usage:
  *   bin/playground-bundle            write both files
@@ -51,6 +60,8 @@ const ROOT = __DIR__.'/..';
 const BUNDLE = ROOT.'/docs/assets/playground/bundle.json';
 const DEFAULT_DATA = ROOT.'/docs/_data/playground.json';
 const DRIVER = ROOT.'/docs/assets/playground/driver.php';
+const MODULE_MANIFEST = ROOT.'/wasm/pcre2-trace/manifest.json';
+const MODULE_BUILD = ROOT.'/wasm/pcre2-trace/build';
 
 // The library's packages: everything under src/ but the surfaces a web page
 // has no use for. Tests, resources and executables of the kept packages are
@@ -75,6 +86,7 @@ if (!\function_exists('mb_strlen')) {
 
 $files = collectFiles();
 $files['driver.php'] = php_strip_whitespace(DRIVER);
+$modules = collectModules();
 
 $manifest = [
     'version' => Regex::VERSION,
@@ -84,9 +96,10 @@ $manifest = [
     'bytes' => array_sum(array_map('strlen', $files)),
     'protocol' => PHPREGEX_PLAYGROUND_PROTOCOL,
     'jsonDumper' => JsonDumper::VERSION,
+    'modules' => array_map(static fn (array $module): array => ['release' => $module['release'], 'sha256' => $module['sha256'], 'bytes' => $module['bytes']], $modules),
 ];
 
-$bundle = encode(['manifest' => $manifest, 'files' => $files], 0);
+$bundle = encode(['manifest' => $manifest, 'files' => $files, 'modules' => $modules], 0);
 $default = encode(defaultData($files), \JSON_PRETTY_PRINT | \JSON_HEX_TAG);
 
 if ($check) {
@@ -107,6 +120,9 @@ printf(
     $manifest['built'],
     human(\strlen($default)),
 );
+foreach ($modules as $name => $module) {
+    printf("%s: PCRE2 %s, %s, sha256 %s\n", $name, $module['release'], human($module['bytes']), $module['sha256']);
+}
 
 /**
  * @return array<string, string> path relative to the repository → stripped source
@@ -132,6 +148,40 @@ function collectFiles(): array
     ksort($files, \SORT_STRING);
 
     return $files;
+}
+
+/**
+ * The trace module the tree pins, read from the build directory and
+ * checked against the manifest byte for byte: a stale or missing build
+ * never reaches the page.
+ *
+ * @return array<string, array{release: string, sha256: string, bytes: int, base64: string}> "pcre2-<release>" → the module
+ */
+function collectModules(): array
+{
+    $json = @file_get_contents(MODULE_MANIFEST);
+    if (false === $json) {
+        fwrite(\STDERR, \sprintf("The module manifest %s is missing.\n", MODULE_MANIFEST));
+        exit(1);
+    }
+    $pinned = json_decode($json, true, 16, \JSON_THROW_ON_ERROR);
+    if (!\is_array($pinned) || !\is_string($pinned['release'] ?? null) || !\is_string($pinned['module'] ?? null) || !\is_string($pinned['sha256'] ?? null) || !\is_int($pinned['bytes'] ?? null)) {
+        fwrite(\STDERR, \sprintf("The module manifest %s does not name a release, a module, a sha256 and a size.\n", MODULE_MANIFEST));
+        exit(1);
+    }
+    $path = MODULE_BUILD.'/'.$pinned['module'];
+    $bytes = @file_get_contents($path);
+    if (false === $bytes) {
+        fwrite(\STDERR, \sprintf("The trace module %s is not built: run wasm/pcre2-trace/build.sh inside the pinned container (see wasm/README.md).\n", $path));
+        exit(1);
+    }
+    $sha256 = hash('sha256', $bytes);
+    if (\strlen($bytes) !== $pinned['bytes'] || $sha256 !== $pinned['sha256']) {
+        fwrite(\STDERR, \sprintf("The trace module %s is not the one the manifest pins: %d bytes, sha256 %s, against %d bytes, sha256 %s. Rebuild it, or rewrite the manifest with build.sh --write-manifest.\n", $path, \strlen($bytes), $sha256, $pinned['bytes'], $pinned['sha256']));
+        exit(1);
+    }
+
+    return ['pcre2-'.$pinned['release'] => ['release' => $pinned['release'], 'sha256' => $sha256, 'bytes' => \strlen($bytes), 'base64' => base64_encode($bytes)]];
 }
 
 function commit(): string
