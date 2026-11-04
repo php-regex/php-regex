@@ -17,26 +17,30 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The Psalm plugin reaches a few of Psalm's internal classes, which a minor
+ * The Psalm plugin reaches a few of Psalm's internal classes, which a
  * release may move: its tests run on the lowest Psalm the package admits
- * and on the newest release of that major, whatever the other cells
- * resolve.
+ * and on the newest release of each major it admits, whatever the other
+ * cells resolve.
  */
 final class PsalmWorkflowTest extends TestCase
 {
     #[Test]
-    public function test_psalm_job_runs_the_plugin_tests_on_the_floor_and_the_newest_minor(): void
+    public function test_psalm_job_runs_the_plugin_tests_on_the_floor_and_the_newest_of_each_major(): void
     {
         $manifest = json_decode((string) file_get_contents(self::root().'/src/Psalm/composer.json'), true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($manifest);
         $this->assertIsArray($manifest['require'] ?? null);
         $constraint = $manifest['require']['vimeo/psalm'] ?? null;
         $this->assertIsString($constraint);
-        $this->assertSame(1, preg_match('~^\^(\d+)\.(\d+)$~', $constraint, $version), 'The plugin admits one Psalm major from a floor: '.$constraint);
+        $this->assertSame(1, preg_match('~^\^(\d+)\.(\d+)(?:\|\^\d+\.0)*$~', $constraint, $version), 'The plugin admits Psalm majors from a floor: '.$constraint);
 
         $job = self::job('psalm');
         $this->assertStringContainsString("- { psalm: 'lowest', constraint: '".$version[1].'.'.$version[2].".0' }", $job);
-        $this->assertStringContainsString("- { psalm: 'newest', constraint: '".$constraint."' }", $job);
+        $majors = explode('|', $constraint);
+        $this->assertCount(2, $majors, 'The plugin admits Psalm 6 and 7: '.$constraint);
+        foreach ($majors as $major) {
+            $this->assertStringContainsString("- { psalm: 'newest ".substr($major, 1, strcspn($major, '.', 1))."', constraint: '".$major."' }", $job);
+        }
         $this->assertStringContainsString('composer update -d tools/phpunit vimeo/psalm --with "vimeo/psalm:$PSALM" --with-all-dependencies', $job);
         $this->assertStringContainsString('tools/phpunit/vendor/bin/phpunit tests/Integration/Bridge/Psalm', $job);
     }

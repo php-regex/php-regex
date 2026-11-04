@@ -27,7 +27,6 @@ use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Context;
 use Psalm\IssueBuffer;
-use Psalm\NodeTypeProvider;
 use Psalm\Plugin\EventHandler\AfterExpressionAnalysisInterface;
 use Psalm\Plugin\EventHandler\Event\AfterExpressionAnalysisEvent;
 use Psalm\StatementsSource;
@@ -181,7 +180,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             // A pattern built around preg_quote() of a text not known types $matches from its groups.
             $quoted = 'preg_match' === $function ? self::patternAroundQuotes($arguments['pattern'], $source, $parser) : null;
             if (null !== $quoted) {
-                self::typeAroundQuotes($call, $quoted, $arguments, $nodeTypes, $parser, $codebase);
+                self::typeAroundQuotes($call, $quoted, $arguments, $source, $parser, $codebase);
             }
 
             return;
@@ -207,7 +206,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
                 // Where it returned a count of 1 or more, no list is empty.
                 $matched = CallTypes::matchesType($parser, $pattern, $verdict, $function, $arguments, $nodeTypes, $codebase, true);
                 if (null !== $matched && $matched->isSingle()) {
-                    CallAssertions::assertOnResult($nodeTypes, $call, [CallAssertions::assertion($call, $matches, $matched->getSingleAtomic())], []);
+                    CallAssertions::assertOnResult($source, $call, [CallAssertions::assertion($call, $matches, $matched->getSingleAtomic())], []);
                 }
             }
 
@@ -223,14 +222,14 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         // $matches would lose its [] where nothing matched. A call that types
         // $matches leaves its subject as it is.
         if (null !== $type && null !== $matches && $type->isSingle()) {
-            CallAssertions::assertOnResult($nodeTypes, $call, [CallAssertions::assertion($call, $matches, $type->getSingleAtomic())], [CallAssertions::assertion($call, $matches, Type::getEmptyArrayAtomic())]);
+            CallAssertions::assertOnResult($source, $call, [CallAssertions::assertion($call, $matches, $type->getSingleAtomic())], [CallAssertions::assertion($call, $matches, Type::getEmptyArrayAtomic())]);
 
             return;
         }
 
         $subject = CallTypes::subjectType($pattern, $verdict, $arguments, $nodeTypes, $parser, $codebase);
         if (null !== $subject && isset($arguments['subject'])) {
-            CallAssertions::assertOnResult($nodeTypes, $call, [CallAssertions::assertion($call, $arguments['subject'], $subject)], []);
+            CallAssertions::assertOnResult($source, $call, [CallAssertions::assertion($call, $arguments['subject'], $subject)], []);
         }
     }
 
@@ -268,8 +267,9 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
      *
      * @param array<string, Expr> $arguments
      */
-    private static function typeAroundQuotes(FuncCall $call, string $pattern, array $arguments, NodeTypeProvider $nodeTypes, RegexParser $parser, Codebase $codebase): void
+    private static function typeAroundQuotes(FuncCall $call, string $pattern, array $arguments, StatementsSource $source, RegexParser $parser, Codebase $codebase): void
     {
+        $nodeTypes = $source->getNodeTypeProvider();
         $verdict = PatternVerdicts::verdict($parser, $pattern);
         $matches = $arguments['matches'] ?? null;
         // Never reported: the pattern stands for the groups, not for what the call compiles.
@@ -279,7 +279,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
 
         $type = CallTypes::matchesType($parser, $pattern, $verdict, 'preg_match', $arguments, $nodeTypes, $codebase);
         if (null !== $type && $type->isSingle()) {
-            CallAssertions::assertOnResult($nodeTypes, $call, [CallAssertions::assertion($call, $matches, $type->getSingleAtomic())], []);
+            CallAssertions::assertOnResult($source, $call, [CallAssertions::assertion($call, $matches, $type->getSingleAtomic())], []);
         }
     }
 }

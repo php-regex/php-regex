@@ -26,7 +26,6 @@ use PhpParser\Node\Expr\BinaryOp\SmallerOrEqual;
 use PhpParser\Node\Expr\BinaryOp\Spaceship;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
-use Psalm\NodeTypeProvider;
 use Psalm\StatementsSource;
 use Psalm\Storage\Assertion\InArray;
 use Psalm\Storage\Assertion\IsType;
@@ -85,9 +84,9 @@ final class CallAssertions
      * @param list<Possibilities|null> $ifTrue
      * @param list<Possibilities|null> $ifFalse
      */
-    public static function assertOnResult(NodeTypeProvider $nodeTypes, FuncCall $call, array $ifTrue, array $ifFalse): void
+    public static function assertOnResult(StatementsSource $source, FuncCall $call, array $ifTrue, array $ifFalse): void
     {
-        PsalmInternals::assert($nodeTypes, $call, array_values(array_filter($ifTrue)), [] === $ifFalse ? null : array_values(array_filter($ifFalse)));
+        PsalmInternals::assert($source, $call, array_values(array_filter($ifTrue)), [] === $ifFalse ? null : array_values(array_filter($ifFalse)));
     }
 
     /**
@@ -101,7 +100,7 @@ final class CallAssertions
     {
         foreach ([$comparison->left, $comparison->right] as $operand) {
             if ($operand instanceof FuncCall && $operand->name instanceof Name && \in_array(CallArguments::globalFunction($operand->name, $source), ['preg_match', 'preg_match_all'], true)) {
-                PsalmInternals::assert($source->getNodeTypeProvider(), $operand, [], []);
+                PsalmInternals::assert($source, $operand, [], []);
             }
         }
     }
