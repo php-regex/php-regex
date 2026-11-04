@@ -347,6 +347,28 @@ if (!\function_exists('phpregex_pcre_options_parse')) {
     }
 
     /**
+     * Writes the table whole or not at all: through a temporary file beside
+     * it, renamed over it once every byte is written, so a failed write
+     * never leaves the tracked table empty or cut.
+     */
+    function phpregex_pcre_options_write(string $target, string $contents): bool
+    {
+        $temporary = \dirname($target).'/.'.basename($target).'.'.bin2hex(random_bytes(4)).'.tmp';
+        if (\strlen($contents) !== file_put_contents($temporary, $contents)) {
+            @unlink($temporary);
+
+            return false;
+        }
+        if (!rename($temporary, $target)) {
+            @unlink($temporary);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * The table as the page loads it: one classic-script assignment of a
      * JSON object.
      *
@@ -432,7 +454,11 @@ if (!\function_exists('phpregex_pcre_options_parse')) {
                 return 2;
             }
             $target = \dirname(__DIR__, 3).'/docs/assets/js/php-pcre-options.js';
-            file_put_contents($target, phpregex_pcre_options_render($rows));
+            if (!phpregex_pcre_options_write($target, phpregex_pcre_options_render($rows))) {
+                fwrite(\STDERR, 'generate.php: '.$target." could not be written; the table is left as it was\n");
+
+                return 1;
+            }
             fwrite(\STDOUT, \sprintf("%s: %d rows (%s)\n", $target, \count($rows), implode(', ', array_keys($rows))));
         } catch (RuntimeException $e) {
             fwrite(\STDERR, 'generate.php: '.$e->getMessage()."\n");

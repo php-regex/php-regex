@@ -697,10 +697,11 @@ The options PHP passes are a table, `docs/assets/js/php-pcre-options.js`,
 one row per exact PHP version the page's engines report, each read from
 `ext/pcre/php_pcre.c` at the version's tag and naming the commit. A new
 engine version needs its row, generated from a php-src checkout with every
-row the table already holds, in the order given:
+row the table already holds and the new version's tag last (the generator
+writes only the tags it is given, in that order):
 
 ```bash
-php wasm/pcre2-trace/php-pcre-options/generate.php /path/to/php-src php-8.1.28 php-8.2.11 php-8.3.11 php-8.4.1 php-8.5.2
+php wasm/pcre2-trace/php-pcre-options/generate.php /path/to/php-src php-8.1.28 php-8.2.11 php-8.3.11 php-8.4.1 php-8.5.2 php-<new version>
 ```
 
 The row's excerpt of `php_pcre.c` goes beside the others under

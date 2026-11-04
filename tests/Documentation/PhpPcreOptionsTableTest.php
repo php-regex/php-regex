@@ -123,6 +123,25 @@ final class PhpPcreOptionsTableTest extends TestCase
     }
 
     #[Test]
+    public function test_the_generator_writes_the_whole_table_or_reports_it_did_not(): void
+    {
+        require_once self::GENERATOR;
+        $dir = sys_get_temp_dir().'/phpregex-pcre-options-'.bin2hex(random_bytes(6));
+        mkdir($dir);
+        try {
+            $this->assertTrue(phpregex_pcre_options_write($dir.'/table.js', "window.T = {};\n"));
+            $this->assertSame("window.T = {};\n", file_get_contents($dir.'/table.js'));
+            $this->assertSame(['table.js'], array_values(array_diff((array) scandir($dir), ['.', '..'])), 'No temporary file is left beside the table.');
+
+            $this->assertFalse(@phpregex_pcre_options_write($dir.'/missing/table.js', "window.T = {};\n"), 'A table that cannot be written is reported, not announced.');
+            $this->assertFileDoesNotExist($dir.'/missing/table.js');
+        } finally {
+            @unlink($dir.'/table.js');
+            @rmdir($dir);
+        }
+    }
+
+    #[Test]
     public function test_the_generator_refuses_to_write_a_table_without_rows(): void
     {
         $before = (string) file_get_contents(self::TABLE);
