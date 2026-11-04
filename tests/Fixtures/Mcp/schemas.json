@@ -1,0 +1,764 @@
+{
+    "regex_validate": {
+        "title": "Validate a regex pattern",
+        "description": "Whether the target PHP compiles a PCRE pattern written as in PHP source (/…/flags, delimiters included): the verdict, the error with its byte offset, and a hint. An invalid pattern is the answer, not a failure.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "pattern": {
+                    "type": "string",
+                    "description": "The pattern as written in PHP source, delimiters and flags included, as /^\\d+$/i. The delimiters are required."
+                },
+                "php_version": {
+                    "type": "string",
+                    "description": "The PHP release to judge for, as \"8.2\". Default: the server's target, else the running PHP."
+                },
+                "pcre_version": {
+                    "type": "string",
+                    "description": "The PCRE2 release to judge for, as \"10.44\". Default: the one the PHP release bundles."
+                }
+            },
+            "required": [
+                "pattern"
+            ],
+            "additionalProperties": false
+        },
+        "outputSchema": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "pattern": {
+                            "type": "string"
+                        },
+                        "validation": {
+                            "type": "object",
+                            "properties": {
+                                "is_valid": {
+                                    "type": "boolean"
+                                },
+                                "error": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "complexity_score": {
+                                    "type": "integer"
+                                },
+                                "category": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "offset": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "caret_snippet": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "hint": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "error_code": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "is_valid",
+                                "error",
+                                "complexity_score",
+                                "category",
+                                "offset",
+                                "caret_snippet",
+                                "hint",
+                                "error_code"
+                            ],
+                            "additionalProperties": false
+                        }
+                    },
+                    "required": [
+                        "pattern",
+                        "validation"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "error": {
+                            "type": "string"
+                        },
+                        "stage": {
+                            "type": "string"
+                        },
+                        "validation": {
+                            "type": "object",
+                            "properties": {
+                                "is_valid": {
+                                    "type": "boolean"
+                                },
+                                "error": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "complexity_score": {
+                                    "type": "integer"
+                                },
+                                "category": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "offset": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "caret_snippet": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "hint": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "error_code": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "is_valid",
+                                "error",
+                                "complexity_score",
+                                "category",
+                                "offset",
+                                "caret_snippet",
+                                "hint",
+                                "error_code"
+                            ],
+                            "additionalProperties": false
+                        }
+                    },
+                    "required": [
+                        "error",
+                        "stage"
+                    ],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+        }
+    },
+    "regex_explain": {
+        "title": "Explain a regex pattern",
+        "description": "A PCRE pattern written as in PHP source (/…/flags) explained in plain language, construct by construct, as the target PHP reads it. A pattern the target refuses is reported with its validation instead.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "pattern": {
+                    "type": "string",
+                    "description": "The pattern as written in PHP source, delimiters and flags included, as /^\\d+$/i. The delimiters are required."
+                },
+                "php_version": {
+                    "type": "string",
+                    "description": "The PHP release to judge for, as \"8.2\". Default: the server's target, else the running PHP."
+                },
+                "pcre_version": {
+                    "type": "string",
+                    "description": "The PCRE2 release to judge for, as \"10.44\". Default: the one the PHP release bundles."
+                }
+            },
+            "required": [
+                "pattern"
+            ],
+            "additionalProperties": false
+        },
+        "outputSchema": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "pattern": {
+                            "type": "string"
+                        },
+                        "explanation": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "pattern",
+                        "explanation"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "error": {
+                            "type": "string"
+                        },
+                        "stage": {
+                            "type": "string"
+                        },
+                        "validation": {
+                            "type": "object",
+                            "properties": {
+                                "is_valid": {
+                                    "type": "boolean"
+                                },
+                                "error": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "complexity_score": {
+                                    "type": "integer"
+                                },
+                                "category": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "offset": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "caret_snippet": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "hint": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "error_code": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "is_valid",
+                                "error",
+                                "complexity_score",
+                                "category",
+                                "offset",
+                                "caret_snippet",
+                                "hint",
+                                "error_code"
+                            ],
+                            "additionalProperties": false
+                        }
+                    },
+                    "required": [
+                        "error",
+                        "stage"
+                    ],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+        }
+    },
+    "regex_format": {
+        "title": "Lay a regex pattern out, or compact it",
+        "description": "A PCRE pattern written as in PHP source (/…/flags) laid out over lines under the x flag at the width given, or compacted to one line; the result matches exactly what the pattern given matches. A pattern that cannot be laid out safely is given back as written, with the reason.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "pattern": {
+                    "type": "string",
+                    "description": "The pattern as written in PHP source, delimiters and flags included, as /^\\d+$/i. The delimiters are required."
+                },
+                "width": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "The width a line aims at, indent included. Default 80."
+                },
+                "compact": {
+                    "type": "boolean",
+                    "description": "Write the pattern on one line, without x, layout or comments. Default false."
+                },
+                "php_version": {
+                    "type": "string",
+                    "description": "The PHP release to judge for, as \"8.2\". Default: the server's target, else the running PHP."
+                },
+                "pcre_version": {
+                    "type": "string",
+                    "description": "The PCRE2 release to judge for, as \"10.44\". Default: the one the PHP release bundles."
+                }
+            },
+            "required": [
+                "pattern"
+            ],
+            "additionalProperties": false
+        },
+        "outputSchema": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "pattern": {
+                            "type": "string"
+                        },
+                        "formatted": {
+                            "type": "string"
+                        },
+                        "changed": {
+                            "type": "boolean"
+                        },
+                        "refusal": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "pattern",
+                        "formatted",
+                        "changed",
+                        "refusal"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "error": {
+                            "type": "string"
+                        },
+                        "stage": {
+                            "type": "string"
+                        },
+                        "validation": {
+                            "type": "object",
+                            "properties": {
+                                "is_valid": {
+                                    "type": "boolean"
+                                },
+                                "error": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "complexity_score": {
+                                    "type": "integer"
+                                },
+                                "category": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "offset": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "caret_snippet": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "hint": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "error_code": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "is_valid",
+                                "error",
+                                "complexity_score",
+                                "category",
+                                "offset",
+                                "caret_snippet",
+                                "hint",
+                                "error_code"
+                            ],
+                            "additionalProperties": false
+                        }
+                    },
+                    "required": [
+                        "error",
+                        "stage"
+                    ],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+        }
+    },
+    "regex_transpile": {
+        "title": "Translate a regex pattern to JavaScript, HTML or Python",
+        "description": "A PCRE pattern written as in PHP source (/…/flags) rewritten for JavaScript (js), an HTML pattern attribute (html) or Python (python), with every note on what was rewritten and every warning on what matches differently. A construct the dialect cannot express is refused with its reason, never approximated.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "pattern": {
+                    "type": "string",
+                    "description": "The pattern as written in PHP source, delimiters and flags included, as /^\\d+$/i. The delimiters are required."
+                },
+                "target": {
+                    "type": "string",
+                    "enum": [
+                        "js",
+                        "html",
+                        "python"
+                    ],
+                    "description": "The dialect: js, html or python."
+                },
+                "python_version": {
+                    "type": "string",
+                    "description": "The Python release the pattern runs on, as \"3.11\", which carries atomic groups."
+                },
+                "php_version": {
+                    "type": "string",
+                    "description": "The PHP release to judge for, as \"8.2\". Default: the server's target, else the running PHP."
+                },
+                "pcre_version": {
+                    "type": "string",
+                    "description": "The PCRE2 release to judge for, as \"10.44\". Default: the one the PHP release bundles."
+                }
+            },
+            "required": [
+                "pattern",
+                "target"
+            ],
+            "additionalProperties": false
+        },
+        "outputSchema": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "target": {
+                            "type": "string"
+                        },
+                        "source": {
+                            "type": "string"
+                        },
+                        "pattern": {
+                            "type": "string"
+                        },
+                        "flags": {
+                            "type": "string"
+                        },
+                        "literal": {
+                            "type": "string"
+                        },
+                        "constructor": {
+                            "type": "string"
+                        },
+                        "warnings": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "notes": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": [
+                        "target",
+                        "source",
+                        "pattern",
+                        "flags",
+                        "literal",
+                        "constructor",
+                        "warnings",
+                        "notes"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "error": {
+                            "type": "string"
+                        },
+                        "stage": {
+                            "type": "string"
+                        },
+                        "validation": {
+                            "type": "object",
+                            "properties": {
+                                "is_valid": {
+                                    "type": "boolean"
+                                },
+                                "error": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "complexity_score": {
+                                    "type": "integer"
+                                },
+                                "category": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "offset": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "caret_snippet": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "hint": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "error_code": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "is_valid",
+                                "error",
+                                "complexity_score",
+                                "category",
+                                "offset",
+                                "caret_snippet",
+                                "hint",
+                                "error_code"
+                            ],
+                            "additionalProperties": false
+                        }
+                    },
+                    "required": [
+                        "error",
+                        "stage"
+                    ],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+        }
+    },
+    "regex_redos": {
+        "title": "Judge a regex pattern for ReDoS",
+        "description": "The ReDoS verdict on a PCRE pattern written as in PHP source (/…/flags): severity, complexity, the witness input that pumps the backtracking, the hotspots in the pattern and the recommendations. In confirmed mode the pattern is run on this machine against crafted inputs, under the library's own caps, to prove the verdict.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "pattern": {
+                    "type": "string",
+                    "description": "The pattern as written in PHP source, delimiters and flags included, as /^\\d+$/i. The delimiters are required."
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "theoretical",
+                        "confirmed"
+                    ],
+                    "description": "theoretical (default) reads the pattern; confirmed also replays the witness through the engine on this machine, bounded by the library's caps."
+                },
+                "threshold": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "critical"
+                    ],
+                    "description": "The lowest severity confirmed mode replays."
+                },
+                "php_version": {
+                    "type": "string",
+                    "description": "The PHP release to judge for, as \"8.2\". Default: the server's target, else the running PHP."
+                },
+                "pcre_version": {
+                    "type": "string",
+                    "description": "The PCRE2 release to judge for, as \"10.44\". Default: the one the PHP release bundles."
+                }
+            },
+            "required": [
+                "pattern"
+            ],
+            "additionalProperties": false
+        },
+        "outputSchema": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "pattern": {
+                            "type": "string"
+                        },
+                        "redos": {
+                            "type": "object"
+                        }
+                    },
+                    "required": [
+                        "pattern",
+                        "redos"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "error": {
+                            "type": "string"
+                        },
+                        "stage": {
+                            "type": "string"
+                        },
+                        "validation": {
+                            "type": "object",
+                            "properties": {
+                                "is_valid": {
+                                    "type": "boolean"
+                                },
+                                "error": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "complexity_score": {
+                                    "type": "integer"
+                                },
+                                "category": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "offset": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "caret_snippet": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "hint": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "error_code": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "is_valid",
+                                "error",
+                                "complexity_score",
+                                "category",
+                                "offset",
+                                "caret_snippet",
+                                "hint",
+                                "error_code"
+                            ],
+                            "additionalProperties": false
+                        }
+                    },
+                    "required": [
+                        "error",
+                        "stage"
+                    ],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+        }
+    }
+}

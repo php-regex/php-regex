@@ -77,6 +77,7 @@ PHPRegex CLI provides these commands:
 | `format`      | Lay a pattern out over lines under `x`, or `--compact` it to one line |
 | `lint`        | Lint entire codebase for regex issues                    |
 | `lsp`         | Run the [language server](lsp.md) over stdio             |
+| `mcp`         | Run the [MCP server](mcp.md) over stdio, for a coding agent |
 | `version`     | Display version information                              |
 | `self-update` | Update PHAR to latest version                            |
 | `help`        | Show help message                                        |
@@ -425,6 +426,13 @@ may compile: no verdict, exit code 1):
   Status: NOT ANALYZED
   Regex pattern exceeds the maximum length of 100000 bytes, delimiters and modifiers included.
   A limit of this library, not of PCRE: raise the "max_pattern_length" option to analyze the pattern.
+```
+
+**As JSON** (`--json` or `--format=json`): the pattern and its validation
+object, the same document for a valid and an invalid pattern, told apart by
+the exit code; see the [JSON output reference](../reference/json-output.md#validate).
+```bash
+vendor/bin/regex validate '/(a/' --json
 ```
 
 ---
@@ -1470,8 +1478,8 @@ with a value the command does not accept (an unknown `--format`, `--target`,
 `--method` or `--redos-mode`, an invalid `--php-version` or `--pcre-version`,
 a `--locale` this machine cannot set),
 a missing pattern, an argument the command does not take (one pattern more
-than it reads, or anything after `version`, `self-update` or `lsp`), a
-target given to `lsp` (the server reads it from the editor), an
+than it reads, or anything after `version`, `self-update`, `lsp` or `mcp`),
+a target given to `lsp` (the server reads it from the editor), an
 `--input-file` that cannot be read, an `--output` file that cannot be written,
 a `regex.json` that cannot be read (`lint` and `debug`), and, for `lint`, a
 target PHP of 7.2 or earlier, which ships PCRE1: one named outright, or a
@@ -2083,6 +2091,7 @@ vendor/bin/regex highlight '/test/' --ansi
 ## Learn More
 
 - **[LSP Integration](lsp.md)** - IDE integration via Language Server Protocol
+- **[MCP Server](mcp.md)** - The same judgement for a coding agent, over the Model Context Protocol
 - **[ReDoS Guide](redos.md)** - Preventing catastrophic backtracking
 - **[Cookbook](../cookbook.md)** - Ready-to-use patterns
 
@@ -2104,6 +2113,24 @@ php regex.phar lsp
 The CLI package installed alone does not carry the server: there, the
 command exits with code 2 and names the package to install,
 `php-regex/regex-language-server`.
+
+---
+
+## MCP Server
+
+`regex mcp` runs the [MCP server](mcp.md) on stdin and stdout, as
+`vendor/bin/regex-mcp` does: the phar carries it, so one download serves a
+coding agent too. Name it in the client's configuration:
+
+```bash
+php regex.phar mcp --php-version=8.2
+```
+
+`--php-version`, `--pcre-version` and `--locale` set the target every tool
+judges for; a call may name its own `php_version` and `pcre_version`. The
+CLI package installed alone does not carry the server: there, the command
+exits with code 2 and names what to install, `php-regex/regex-mcp` for the
+server, `mcp/sdk` when the package is present without its SDK.
 
 ---
 

@@ -38,6 +38,10 @@ final class PublicSurface
         ],
         'Generator' => ['SampleGenerator', 'TestCaseGenerator', 'Exception/SampleGenerationException'],
         'LanguageServer' => [],
+        'Mcp' => [
+            'Application', 'ToolCatalog', 'ToolDefinition', 'ToolInterface', 'ToolResult', 'ServerInterface',
+            'Exception/ExceptionInterface', 'Exception/UnknownToolException', 'Exception/TargetException',
+        ],
         'Laravel' => ['PHPRegexServiceProvider', 'Facades/Regex', 'Rules/ValidRegex'],
         'Linter' => ['PatternLinter', 'LintSeverity', 'Exception/LintException', 'Rule/RuleViolation', 'Exception/UnknownLintRuleException', 'Exception/UnsupportedTargetException', 'Extraction/ExtractorInterface', 'PatternOccurrence'],
         'Optimizer' => ['Optimizer', 'OptimizerOptions', 'OptimizationResult', 'Modernizer', 'RedosRepairer', 'RedosRepair'],

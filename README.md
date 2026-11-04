@@ -98,6 +98,7 @@ with one version number. Install the one you need; the
 | [`php-regex/regex-linter`](src/Linter) | lint rules and pattern extraction from PHP sources |
 | [`php-regex/regex-cli`](src/Cli) | the `regex` command |
 | [`php-regex/regex-language-server`](src/LanguageServer) | diagnostics in any LSP editor |
+| [`php-regex/regex-mcp`](src/Mcp) | the MCP server: regex judgement for a coding agent |
 | [`php-regex/regex-phpstan`](src/PHPStan) | the PHPStan extension |
 | [`php-regex/regex-phpunit`](src/PHPUnit) | match, compilation and proven-linearity assertions for your test suite |
 | [`php-regex/regex-psalm`](src/Psalm) | the Psalm plugin: `$matches` typed from the pattern, invalid patterns reported |

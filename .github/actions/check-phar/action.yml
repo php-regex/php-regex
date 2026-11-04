@@ -1,8 +1,8 @@
 name: Check the phar
 description: >
   Runs bin/regex.phar on the PHP set up before this action: its version, a
-  valid and an invalid pattern through validate, and initialize through the
-  language server.
+  valid and an invalid pattern through validate, initialize through the
+  language server, and initialize then tools/list through the MCP server.
 
 inputs:
   version:
@@ -60,4 +60,24 @@ runs:
         done < "$RUNNER_TEMP/lsp-out" > "$RUNNER_TEMP/lsp-messages"
         if ! jq -e -s --arg version "$VERSION" 'map(select(.id == 1)) | .[0].result.serverInfo == {name: "php-regex-lsp", version: $version}' "$RUNNER_TEMP/lsp-messages" > /dev/null; then
           echo "bin/regex.phar lsp did not answer initialize as php-regex-lsp $VERSION:" >&2; cat "$RUNNER_TEMP/lsp-out" >&2; exit 1
+        fi
+
+    # The MCP server answers one JSON document per line: the answer to the
+    # request is the line carrying its id, read as JSON.
+    - name: Check the phar carries the MCP server
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        {
+          echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"check-phar","version":"0"}}}'
+          echo '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+          echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+        } > "$RUNNER_TEMP/mcp-in"
+        php bin/regex.phar mcp < "$RUNNER_TEMP/mcp-in" > "$RUNNER_TEMP/mcp-out"
+        if ! jq -e -s --arg version "$VERSION" 'map(select(.id == 1)) | .[0].result.serverInfo == {name: "php-regex", version: $version}' "$RUNNER_TEMP/mcp-out" > /dev/null; then
+          echo "bin/regex.phar mcp did not answer initialize as php-regex $VERSION:" >&2; cat "$RUNNER_TEMP/mcp-out" >&2; exit 1
+        fi
+        if ! jq -e -s 'map(select(.id == 2)) | .[0].result.tools | map(.name) == ["regex_validate", "regex_explain", "regex_format", "regex_transpile", "regex_redos"]' "$RUNNER_TEMP/mcp-out" > /dev/null; then
+          echo "bin/regex.phar mcp did not list the five tools:" >&2; cat "$RUNNER_TEMP/mcp-out" >&2; exit 1
         fi

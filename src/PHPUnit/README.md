@@ -165,7 +165,7 @@ Documentation
 
 * [The PHPUnit guide](https://php-regex.com/guides/phpunit/) — every assertion, the expectation vocabulary, the failure taxonomy
 * [The ReDoS guide](https://php-regex.com/guides/redos/) — how the linearity verdict is reached and what a witness means
-* [Choose a package](https://php-regex.com/packages/) — the other sixteen packages of the family
+* [Choose a package](https://php-regex.com/packages/) — the other seventeen packages of the family
 * [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — what stays stable across releases
 
 Resources

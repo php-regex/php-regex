@@ -38,6 +38,7 @@ your wishes to the <a href="https://github.com/php-regex/php-regex/discussions">
 - [`regex-rector`](https://github.com/php-regex/regex-rector) — Rector rules that rewrite `preg_*` calls into the string functions the automata prove they match.
 - [`regex-phpunit`](https://github.com/php-regex/regex-phpunit) — PHPUnit assertions backed by the parser: exact captures, engine compilation and proven-linear ReDoS verdicts.
 - [`regex-language-server`](https://github.com/php-regex/regex-language-server) — a Language Server for the regex patterns of PHP files: diagnostics, hovers and code actions.
+- [`regex-mcp`](https://github.com/php-regex/regex-mcp) — an MCP server for coding agents: validation, explanations, layout, translation and ReDoS verdicts, read-only, over stdio.
 
 ## Integrations
 

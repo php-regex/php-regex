@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * .github/organization is the php-regex/.github repository: the organization's profile and
  * the community files GitHub shows in every repository that has none of its
- * own, the seventeen read-only ones among them. bin/split pushes it to that
+ * own, the eighteen read-only ones among them. bin/split pushes it to that
  * repository's main branch.
  */
 #[Group('documentation')]

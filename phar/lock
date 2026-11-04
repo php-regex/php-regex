@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+#
+# This file is part of the PHPRegex package.
+#
+# (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+#
+# For the full copyright and license information, please view the LICENSE
+# file that was distributed with this source code.
+#
+# Writes phar/composer.lock from phar/composer.json: the root manifest plus
+# the libraries only the phar carries (the MCP server's SDK), resolved once
+# and pinned, so that two builds of one tag pack the same vendor. Run it
+# after changing phar/composer.json, and commit both files.
+#
+# Usage:
+#   phar/lock
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TMP_DIR="$(mktemp -d -t php-regex-phar-lock.XXXXXX)"
+trap 'rm -rf "${TMP_DIR}"' EXIT
+
+cp "${ROOT}/phar/composer.json" "${TMP_DIR}/composer.json"
+(
+  cd "${TMP_DIR}"
+  composer update --no-install --no-interaction --quiet
+)
+cp "${TMP_DIR}/composer.lock" "${ROOT}/phar/composer.lock"
+echo "phar/composer.lock written"

@@ -1,6 +1,6 @@
 name: Packages
 
-# Each of the seventeen packages as Packagist will serve it, out of the
+# Each of the eighteen packages as Packagist will serve it, out of the
 # monorepo.
 
 on:
@@ -44,7 +44,7 @@ concurrency:
 
 jobs:
   manifests:
-    # The root manifest and the seventeen package manifests, strictly: a
+    # The root manifest and the eighteen package manifests, strictly: a
     # warning Packagist would show, an unbound requirement or a schema
     # mistake fails here, before a tag publishes it. No lock file is
     # committed, so none is checked.
@@ -71,7 +71,7 @@ jobs:
             composer validate --strict --no-interaction --no-check-lock "$manifest" || status=1
           done
           exit "$status"
-      # One class under one name across the seventeen packages: two files
+      # One class under one name across the eighteen packages: two files
       # declaring the same class, between which an optimized autoloader
       # would pick silently, fail here.
       - name: Check no class is declared twice
@@ -89,7 +89,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [ Parser, Explain, Optimizer, Generator, Automata, Redos, Transpiler, Linter, Toolkit, Cli, LanguageServer, PHPStan, PHPUnit, Psalm, Rector, Symfony, Laravel ]
+        package: [ Parser, Explain, Optimizer, Generator, Automata, Redos, Transpiler, Linter, Toolkit, Cli, LanguageServer, Mcp, PHPStan, PHPUnit, Psalm, Rector, Symfony, Laravel ]
 
     steps:
       - name: Checkout Code
@@ -211,7 +211,7 @@ jobs:
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.2'
-          extensions: mbstring, tokenizer
+          extensions: mbstring, tokenizer, fileinfo
           ini-values: phar.readonly=0
           tools: composer, box
 
@@ -233,7 +233,7 @@ jobs:
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.1'
-          extensions: mbstring, tokenizer
+          extensions: mbstring, tokenizer, fileinfo
           coverage: none
 
       - name: Check the phar

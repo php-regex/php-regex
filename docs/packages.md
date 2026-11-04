@@ -25,6 +25,7 @@ PHPRegex is developed as one family of focused packages. {% unless site.data.pro
 | Verified rewrites | `php-regex/regex-rector` | Rewrites a `preg_*` call only when the automata prove the replacement answers alike. |
 | Regex assertions in your test suite | `php-regex/regex-phpunit` | Asserts what a pattern captures with exact capture semantics, that the running engine compiles it, and that it is proven linear. |
 | Editor diagnostics | `php-regex/regex-language-server` | Serves diagnostics, hovers, completion, and code actions through the Language Server Protocol. |
+| Regex judgement for a coding agent | `php-regex/regex-mcp` | Serves validation, explanations, layout, translation and ReDoS verdicts to any MCP client, read-only, over stdio. |
 | Laravel commands and services | `php-regex/regex-laravel` | Adds the service, facade, and Artisan commands. |
 | Symfony commands and services | `php-regex/regex-symfony` | Adds the bundle, service, and console commands. |
 
@@ -43,6 +44,7 @@ The focused analysis libraries remain available for tools that compose them dire
 2. **Build an analysis tool:** start with `regex-parser`; add only the analysis packages your tool reports.
 3. **Improve an existing project in CI:** start with `regex-cli`; add a static-analysis, testing or framework package when your workflow already uses one.
 4. **Get feedback while editing:** install `regex-language-server`.
+5. **Let a coding agent check its patterns:** install `regex-mcp`, or point the agent at the phar's `regex mcp`.
 
 ## When the monorepo is useful
 

@@ -37,6 +37,7 @@ final class MixedTypeBaselineTest extends TestCase
         'LanguageServer' => 10,
         'Laravel' => 7,
         'Linter' => 33,
+        'Mcp' => 15,
         'Optimizer' => 3,
         'PHPStan' => 2,
         'PHPUnit' => 21,

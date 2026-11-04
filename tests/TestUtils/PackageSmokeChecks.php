@@ -22,6 +22,8 @@ use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Mcp\Application as McpApplication;
+use PHPRegex\Mcp\ToolCatalog;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\PHPStan\RegexPatternRule;
@@ -69,6 +71,7 @@ final class PackageSmokeChecks
                 return false !== $input && 0 === (new Server(null, $input))->run();
             }],
             'Laravel' => [PHPRegexServiceProvider::class, static fn (): bool => self::extends(PHPRegexServiceProvider::class, ServiceProvider::class)],
+            'Mcp' => [McpApplication::class, static fn (): bool => 'Valid.' === ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => '/a+/'])->text],
             'Linter' => [PatternLinter::class, static function (): bool {
                 $linter = new PatternLinter();
                 RegexParser::create()->parse('/[aa]/')->accept($linter);
