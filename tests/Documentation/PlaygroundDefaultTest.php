@@ -65,10 +65,68 @@ final class PlaygroundDefaultTest extends TestCase
         $this->assertIsArray($verdict);
         $this->assertSame('safe', $verdict['severity'], 'The sample is a pattern the verdict calls safe.');
 
+        // Every tool's tab answers from the sample too, each for the very
+        // request stored beside it: the page seeds the tab with it, the
+        // check asks the browser engine with it.
+        $tools = $data['default']['tools'];
+        foreach (['transpile', 'format', 'samples'] as $tool) {
+            $answer = PlaygroundDriver::tool($bundle['driver'], $bundle['root'], $tool, $data['default']['regex'], self::fields($tools[$tool]), $target);
+            unset($answer['timing'], $answer['notices']);
+            $this->assertSame($answer, $data[$tool], \sprintf('The stored %s answer is not what the bundled driver answers: regenerate the bundle.', $tool));
+        }
+        $check = PlaygroundDriver::tool($bundle['driver'], $bundle['root'], 'check', $data['default']['regex'], ['subjects' => $tools['export']['subjects']], $target);
+        $export = PlaygroundDriver::tool($bundle['driver'], $bundle['root'], 'export', $data['default']['regex'], ['subjects' => $tools['export']['subjects'], 'checks' => $check['checks'], 'date' => $tools['export']['date']], $target);
+        unset($export['timing'], $export['notices']);
+        $this->assertSame($export, $data['export'], 'The stored test is not what the bundled driver writes: regenerate the bundle.');
+
         $this->assertSame([], $live['errors'], 'The sample is a pattern that parses.');
         $this->assertNotNull($live['matches']);
         $this->assertGreaterThan(0, $live['matches']['count'], 'The sample matches something.');
         $this->assertNotSame([], $live['matches']['names'], 'The sample shows a named group.');
+    }
+
+    /**
+     * The request stored beside each answer is the one the page builds for
+     * its tab, in the page's words: the tab holds the answer while the
+     * request matches, so no default lives in two places.
+     */
+    #[Test]
+    public function test_the_stored_requests_speak_the_page_vocabulary(): void
+    {
+        $data = self::data();
+        $default = $data['default'];
+        $tools = $default['tools'];
+        $regex = $default['regex'];
+        $version = implode('.', \array_slice(explode('.', $default['target']['php']), 0, 2));
+
+        $this->assertSame(['redos', 'transpile', 'samples', 'format', 'export'], array_keys($tools));
+        $this->assertSame(['type' => 'redos', 'regex' => $regex, 'version' => $version, 'mode' => 'theoretical'], $tools['redos']);
+        $this->assertSame(['type' => 'transpile', 'regex' => $regex, 'version' => $version, 'dialect' => 'js', 'pythonVersion' => ''], $tools['transpile']);
+        $this->assertSame(['type' => 'samples', 'regex' => $regex, 'version' => $version], $tools['samples']);
+        $this->assertSame(['type' => 'format', 'regex' => $regex, 'version' => $version, 'width' => 80, 'compact' => false], $tools['format'], 'The layout of the sample is the driver\'s own width.');
+
+        $samples = $data['samples']['samples'];
+        $this->assertSame([
+            'type' => 'check',
+            'regex' => $regex,
+            'version' => $version,
+            'purpose' => 'export',
+            'subject' => $default['subject'],
+            'subjects' => [$default['subject'], ...$samples['matching'], ...$samples['nonMatching']],
+            'date' => $tools['export']['date'],
+        ], $tools['export'], 'The test asserts the subject and every sample, as the tab asks for.');
+        $date = $tools['export']['date'];
+        $this->assertIsString($date);
+        $this->assertSame(1, preg_match('/^\d{4}-\d{2}-\d{2}$/', $date));
+        $this->assertStringContainsString(' on '.$date.' from the answers of PHP 8.4.1 and PCRE2 10.44.', $data['export']['export']['class'] ?? '', 'The header carries the date the sample was written.');
+    }
+
+    #[Test]
+    public function test_the_embedded_sample_stays_small(): void
+    {
+        $compact = json_encode(self::data(), \JSON_THROW_ON_ERROR);
+
+        $this->assertLessThanOrEqual(48 * 1024, \strlen($compact), 'The sample is inlined in the home page: its growth is a decision, not a drift.');
     }
 
     #[Test]
@@ -131,11 +189,34 @@ final class PlaygroundDefaultTest extends TestCase
     }
 
     /**
-     * @return array{default: array{regex: string, subject: string}, analyze: array<string, mixed>, lint: array<string, mixed>, redos: array<string, mixed>}
+     * The fields of a stored request the driver reads: the page's words
+     * for the request itself (its type, the pattern, the PHP version,
+     * the two-step purpose and the subject) are the envelope's.
+     *
+     * @param array<string, mixed> $request
+     *
+     * @return array<string, mixed>
+     */
+    private static function fields(array $request): array
+    {
+        return array_diff_key($request, array_flip(['type', 'regex', 'version', 'purpose', 'subject']));
+    }
+
+    /**
+     * @return array{
+     *     default: array{regex: string, subject: string, target: array{php: string, pcre: string}, tools: array{redos: array<string, mixed>, transpile: array<string, mixed>, samples: array<string, mixed>, format: array<string, mixed>, export: array{subjects: list<string>, date: string}&array<string, mixed>}},
+     *     analyze: array<string, mixed>,
+     *     lint: array<string, mixed>,
+     *     redos: array<string, mixed>,
+     *     transpile: array<string, mixed>,
+     *     format: array<string, mixed>,
+     *     samples: array{samples: array{matching: list<string>, nonMatching: list<string>}}&array<string, mixed>,
+     *     export: array{export: array{class: string}|null}&array<string, mixed>,
+     * }
      */
     private static function data(): array
     {
-        /** @var array{default: array{regex: string, subject: string}, analyze: array<string, mixed>, lint: array<string, mixed>, redos: array<string, mixed>} $data */
+        /** @var array{default: array{regex: string, subject: string, target: array{php: string, pcre: string}, tools: array{redos: array<string, mixed>, transpile: array<string, mixed>, samples: array<string, mixed>, format: array<string, mixed>, export: array{subjects: list<string>, date: string}&array<string, mixed>}}, analyze: array<string, mixed>, lint: array<string, mixed>, redos: array<string, mixed>, transpile: array<string, mixed>, format: array<string, mixed>, samples: array{samples: array{matching: list<string>, nonMatching: list<string>}}&array<string, mixed>, export: array{export: array{class: string}|null}&array<string, mixed>} $data */
         $data = json_decode((string) file_get_contents(PlaygroundDriver::DEFAULT_DATA), true, 512, \JSON_THROW_ON_ERROR);
 
         return $data;

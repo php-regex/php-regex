@@ -1224,6 +1224,28 @@ if (!\function_exists('phpregex_playground_run')) {
     }
 
     /**
+     * The day the exported file says it was written: the request's, when it
+     * names one (a stored sample is written once and compared ever after),
+     * else today. A day that is not one, spelled YYYY-MM-DD, is refused.
+     *
+     * @param array<mixed> $input
+     *
+     * @return array{date: string, refusal: null}|array{date: null, refusal: string}
+     */
+    function phpregex_playground_date(array $input): array
+    {
+        if (!\array_key_exists('date', $input)) {
+            return ['date' => date('Y-m-d'), 'refusal' => null];
+        }
+        $date = $input['date'];
+        if (\is_string($date) && 1 === preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D', $date, $parts) && checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])) {
+            return ['date' => $date, 'refusal' => null];
+        }
+
+        return ['date' => null, 'refusal' => 'The date must be a day, spelled YYYY-MM-DD.'];
+    }
+
+    /**
      * One preg_match() without the JIT: matched (1, 0, or null when the engine
      * refused or gave up), the engine's message, and the first match's groups
      * as PHP writes them, by name and by number, a group that did not
@@ -1306,8 +1328,9 @@ if (!\function_exists('phpregex_playground_run')) {
             return phpregex_playground_timed($answer, 'exportMs', $started);
         }
         $subjects = phpregex_playground_subjects($input);
-        if (\is_string($subjects)) {
-            $answer['error'] = ['source' => 'export', 'class' => null, 'message' => $subjects, 'position' => null, 'code' => null, 'hint' => null];
+        $date = phpregex_playground_date($input);
+        if (\is_string($subjects) || null === $date['date']) {
+            $answer['error'] = ['source' => 'export', 'class' => null, 'message' => \is_string($subjects) ? $subjects : $date['refusal'], 'position' => null, 'code' => null, 'hint' => null];
 
             return phpregex_playground_timed($answer, 'exportMs', $started);
         }
@@ -1403,7 +1426,7 @@ if (!\function_exists('phpregex_playground_run')) {
             'declare(strict_types=1);',
             '',
             '/*',
-            \sprintf(' * Written by the PHPRegex playground on %s from the answers of PHP %s and PCRE2 %s.', date('Y-m-d'), $engine['php'], $engine['pcre']),
+            \sprintf(' * Written by the PHPRegex playground on %s from the answers of PHP %s and PCRE2 %s.', $date['date'], $engine['php'], $engine['pcre']),
             ' * Needs php-regex/regex-phpunit and PHPUnit 10 or newer (on 9.6, spell the provider as @dataProvider).',
             ' */',
             '',

@@ -2,36 +2,41 @@
   The home page's playground: a pattern, a subject, the PHP version, and
   what the real PHP and PCRE2 say about them, run in the visitor's browser
   by a PHP compiled to WebAssembly with PHPRegex loaded into it. Before the
-  visitor asks for a run, the panels show the sample stored in
+  visitor asks for a run, every tab shows the sample stored in
   _data/playground.json, rendered by the same script as a live result; the
   engine is downloaded on the first run gesture only, never on load.
 
   The data is embedded as JSON. Liquid writes "<" back when it re-encodes,
   so the include escapes it: a "<" could otherwise close the script element.
 
-  A window: the title bar holds the PHP version, Run and the state; the
-  body sets the fields and the answers on the left and the syntax tree on
-  the right (one column under 1024px); the status bar at the bottom names
-  the engine that answered. A Tools panel, one tab strip, holds what the
-  console does with a pattern: the ReDoS verdict with its attack string,
-  the translation to JavaScript, HTML or Python, sample subjects, a
-  regex-phpunit test to paste, the pattern laid out over lines; each tab
-  asks the engine when it is opened, never on every keystroke. The pattern field is colored by the same
-  answer — the engine's token spans, drawn in a mirror under the field,
-  the code blocks' palette — and falls back to the field's own ink
-  whenever the mirror does not render what the field says. The tree's
-  pattern, piece by piece, wears the same colors inside its pieces. Three
-  gestures greet the first visit: a caret blinks at the end of the pattern
-  until the field is touched, so it reads as editable; a light walks the
-  tree top to bottom, one node at a time, until a hand reaches for the
-  tree or a field; and the engine's first boot — a download of a few
-  megabytes — is announced by a loader over the window's body, so what is
-  coming is said rather than guessed. The notes and the credits sit under
-  the window.
+  A window: the title bar holds the PHP version, Run and the state; on the
+  left, what the visitor writes (the examples, the pattern, the subject);
+  on the right, what the engine answers, behind one strip of tabs (one
+  column under 1024px, the answers after the subject). The tree is the
+  first tab, the one the home's title promises, and the explanation its
+  other voice; then the diagnostics, the matches, and what the console
+  does with a pattern: the ReDoS verdict with its attack string, the
+  translation to JavaScript, HTML or Python, sample subjects, a
+  regex-phpunit test to paste, the pattern laid out over lines. Three tabs
+  carry a badge, so the state of the answer reads on a closed tab: the
+  errors and the lint findings, the match count, the verdict. A tool asks
+  the engine when its tab is opened, the verdict on every run; never on
+  every keystroke. The pattern field is colored by the same answer: the
+  engine's token spans, drawn in a mirror under the field, the code
+  blocks' palette; it falls back to the field's own ink whenever the
+  mirror does not render what the field says. The tree's pattern, piece
+  by piece, wears the same colors inside its pieces. Three gestures greet
+  the first visit: a caret blinks at the end of the pattern until the
+  field is touched, so it reads as editable; a light walks the tree top to
+  bottom, one node at a time, until a hand reaches for the tree or a
+  field; and the engine's first boot, a download of a few megabytes, is
+  announced by a loader over the window's body, so what is coming is said
+  rather than guessed. The status bar frames the window from the first
+  paint: what stays on the visitor's machine, then the engine that
+  answered. The notes and the credits sit under the window.
 {% endcomment %}
 <div class="playground" id="playground" data-bundle="/assets/playground/bundle.json?v={{ site.time | date: '%s' }}">
   <script type="application/json" id="playground-data">{{ site.data.playground | jsonify | replace: '<', '\u003C' }}</script>
-  <h2 class="visually-hidden">Playground</h2>
   <div class="pg-titlebar">
     <span class="pg-lights" aria-hidden="true"><i></i><i></i><i></i></span>
     <span class="pg-title">PHPRegex playground</span>
@@ -39,7 +44,7 @@
       <label class="visually-hidden" for="pg-version">PHP version</label>
       <select id="pg-version" class="pg-version"></select>
       <button type="button" class="pg-run" title="Ctrl/⌘ Enter">Run</button>
-      <span class="pg-state" role="status" aria-live="polite">Ready</span>
+      <span class="pg-state" role="status" aria-live="polite">Sample · press Run</span>
     </div>
   </div>
   <div class="pg-body">
@@ -68,47 +73,49 @@
         </div>
       </div>
       <p class="pg-status" role="status" aria-live="polite"></p>
-      <div class="pg-results">
-        <div class="pg-panel pg-panel-matches">
-          <h3 class="pg-panel-title">Matches <span class="pg-panel-note pg-matches-note"></span></h3>
-          <ol class="pg-match-list"></ol>
-          <p class="pg-empty pg-matches-empty" hidden></p>
-        </div>
-        <div class="pg-panel pg-panel-explain">
-          <h3 class="pg-panel-title">Explanation</h3>
-          <div class="pg-explain"></div>
-        </div>
-        <div class="pg-panel pg-panel-diagnostics">
-          <h3 class="pg-panel-title">Diagnostics <span class="pg-panel-note pg-lint-note"></span></h3>
-          <ul class="pg-diagnostics"></ul>
-        </div>
-        <div class="pg-panel pg-panel-tools">
-          <h3 class="pg-panel-title" id="pg-tools-title">Tools <span class="pg-panel-note pg-tools-note"></span></h3>
-          <div class="pg-tabs" role="tablist" aria-labelledby="pg-tools-title">
-            <button type="button" class="pg-tab" role="tab" id="pg-tab-redos" aria-controls="pg-tool-redos" aria-selected="true" data-tool="redos">ReDoS</button>
-            <button type="button" class="pg-tab" role="tab" id="pg-tab-transpile" aria-controls="pg-tool-transpile" aria-selected="false" tabindex="-1" data-tool="transpile">Translate</button>
-            <button type="button" class="pg-tab" role="tab" id="pg-tab-samples" aria-controls="pg-tool-samples" aria-selected="false" tabindex="-1" data-tool="samples">Samples</button>
-            <button type="button" class="pg-tab" role="tab" id="pg-tab-export" aria-controls="pg-tool-export" aria-selected="false" tabindex="-1" data-tool="export">Test</button>
-            <button type="button" class="pg-tab" role="tab" id="pg-tab-format" aria-controls="pg-tool-format" aria-selected="false" tabindex="-1" data-tool="format">Format</button>
-          </div>
-          <div class="pg-tool" role="tabpanel" id="pg-tool-redos" aria-labelledby="pg-tab-redos" tabindex="0"></div>
-          <div class="pg-tool" role="tabpanel" id="pg-tool-transpile" aria-labelledby="pg-tab-transpile" tabindex="0" hidden></div>
-          <div class="pg-tool" role="tabpanel" id="pg-tool-samples" aria-labelledby="pg-tab-samples" tabindex="0" hidden></div>
-          <div class="pg-tool" role="tabpanel" id="pg-tool-export" aria-labelledby="pg-tab-export" tabindex="0" hidden></div>
-          <div class="pg-tool" role="tabpanel" id="pg-tool-format" aria-labelledby="pg-tab-format" tabindex="0" hidden></div>
-        </div>
-      </div>
     </div>
-    <div class="tree" id="pg-tree">
-      <div class="tree-head">
-        <h3 class="tree-title">Syntax tree</h3>
-        <p class="tree-sub">The pattern as the parser reads it, node by node. Point at a node, or at a piece of the pattern; the arrow keys walk the tree.</p>
+    <div class="pg-results">
+      <div class="pg-tabs" role="tablist" aria-label="Results">
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-tree" aria-controls="pg-tool-tree" aria-selected="true" data-tool="tree">Tree</button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-diagnostics" aria-controls="pg-tool-diagnostics" aria-selected="false" tabindex="-1" data-tool="diagnostics">Diagnostics<span class="pg-tab-badge"></span></button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-matches" aria-controls="pg-tool-matches" aria-selected="false" tabindex="-1" data-tool="matches">Matches<span class="pg-tab-badge"></span></button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-redos" aria-controls="pg-tool-redos" aria-selected="false" tabindex="-1" data-tool="redos">ReDoS<span class="pg-tab-badge"></span></button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-transpile" aria-controls="pg-tool-transpile" aria-selected="false" tabindex="-1" data-tool="transpile">Translate</button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-samples" aria-controls="pg-tool-samples" aria-selected="false" tabindex="-1" data-tool="samples">Samples</button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-export" aria-controls="pg-tool-export" aria-selected="false" tabindex="-1" data-tool="export">Test</button>
+        <button type="button" class="pg-tab" role="tab" id="pg-tab-format" aria-controls="pg-tool-format" aria-selected="false" tabindex="-1" data-tool="format">Format</button>
       </div>
-      <pre class="tree-pattern" aria-label="The pattern, piece by piece"></pre>
-      <div class="tree-wrap">
-        <ul class="tree-nodes" role="tree" aria-label="Syntax tree"></ul>
+      <div class="pg-tool tree" role="tabpanel" id="pg-tool-tree" aria-labelledby="pg-tab-tree" tabindex="0">
+        <div class="tree-head">
+          <div class="pg-voice" role="radiogroup" aria-label="Voice">
+            <button type="button" class="pg-voice-option" role="radio" aria-checked="true" data-voice="tree">Tree</button>
+            <button type="button" class="pg-voice-option" role="radio" aria-checked="false" tabindex="-1" data-voice="prose">Plain English</button>
+          </div>
+          <p class="tree-sub">Point at a node, or at a piece of the pattern; the arrow keys walk the tree.</p>
+        </div>
+        <pre class="tree-pattern" aria-label="The pattern, piece by piece"></pre>
+        <div class="pg-error-slot"></div>
+        <div class="tree-wrap">
+          <ul class="tree-nodes" role="tree" aria-label="Syntax tree"></ul>
+        </div>
+        <div class="pg-explain" hidden></div>
+        <p class="tree-detail" aria-live="polite" aria-atomic="true"><span class="tree-detail-empty">Point at a node to read it.</span></p>
       </div>
-      <p class="tree-detail" aria-live="polite" aria-atomic="true"><span class="tree-detail-empty">Point at a node to read it.</span></p>
+      <div class="pg-tool" role="tabpanel" id="pg-tool-diagnostics" aria-labelledby="pg-tab-diagnostics" tabindex="0" hidden>
+        <p class="pg-tool-note pg-lint-note"></p>
+        <ul class="pg-diagnostics"></ul>
+      </div>
+      <div class="pg-tool" role="tabpanel" id="pg-tool-matches" aria-labelledby="pg-tab-matches" tabindex="0" hidden>
+        <p class="pg-tool-note pg-matches-note"></p>
+        <div class="pg-error-slot"></div>
+        <ol class="pg-match-list"></ol>
+        <p class="pg-empty pg-matches-empty" hidden></p>
+      </div>
+      <div class="pg-tool" role="tabpanel" id="pg-tool-redos" aria-labelledby="pg-tab-redos" tabindex="0" hidden></div>
+      <div class="pg-tool" role="tabpanel" id="pg-tool-transpile" aria-labelledby="pg-tab-transpile" tabindex="0" hidden></div>
+      <div class="pg-tool" role="tabpanel" id="pg-tool-samples" aria-labelledby="pg-tab-samples" tabindex="0" hidden></div>
+      <div class="pg-tool" role="tabpanel" id="pg-tool-export" aria-labelledby="pg-tab-export" tabindex="0" hidden></div>
+      <div class="pg-tool" role="tabpanel" id="pg-tool-format" aria-labelledby="pg-tab-format" tabindex="0" hidden></div>
     </div>
     <div class="pg-loader" hidden aria-hidden="true">
       <div class="pg-loader-card">
@@ -120,8 +127,9 @@
   </div>
   <div class="pg-statusbar">
     <ul class="pg-facts" aria-label="The engine that answered"></ul>
+    <span class="pg-privacy">Nothing you type leaves your browser</span>
   </div>
   <p class="pg-live visually-hidden" aria-live="polite"></p>
 </div>
 <p class="pg-caption"></p>
-<p class="pg-credits">Runs on <a href="https://github.com/seanmorris/php-wasm">php-wasm</a> (Apache-2.0) with mbstring and <a href="https://github.com/kkos/oniguruma">oniguruma</a> (BSD), loaded from jsDelivr when you press Run. Nothing you type leaves your browser.</p>
+<p class="pg-credits">Runs on <a href="https://github.com/seanmorris/php-wasm">php-wasm</a> (Apache-2.0) with mbstring and <a href="https://github.com/kkos/oniguruma">oniguruma</a> (BSD), loaded from jsDelivr when you press Run.</p>

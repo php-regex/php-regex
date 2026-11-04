@@ -76,6 +76,13 @@
  * light paper demands.
    ========================================================================== */
 
+/* State colors: --ok and --danger say a state of the answer (a verdict,
+   an error in the pattern, a badge on a tab), never content, and never a
+   code token. Contrast, measured on paper and on panel: light, ok 5.01
+   and 5.21, danger 6.13 and 6.36; dark, ok 9.08 and 8.00, danger 7.56 and
+   6.66. Paper on the light danger reads 6.13, the navy paper on the dark
+   one 7.56. A tint of either is mixed where it is used, never a token of
+   its own. */
 @mixin tokens-light {
   color-scheme: light;
   --paper: #F7F8F4;
@@ -93,11 +100,12 @@
   --link-line: #AD6430;
   --amber-tint: rgba(177, 78, 6, 0.06);
   --amber-deep: #9A4307;
+  --ok: #1E7A46;
+  --danger: #B3261E;
   /* The playground's marks over the subject and the pattern. */
   --mark-match: rgba(177, 78, 6, 0.28);
   --mark-match-alt: rgba(100, 116, 139, 0.28);
   --mark-match-current: rgba(177, 78, 6, 0.42);
-  --mark-error: rgba(177, 78, 6, 0.22);
   --scrim: rgba(24, 43, 69, 0.55);
   --veil: rgba(247, 248, 244, 0.45);
   /* Elevations, in the ink the borders already speak. */
@@ -119,10 +127,11 @@
   --link-line: #B8763A;
   --amber-tint: rgba(233, 118, 37, 0.10);
   --amber-deep: #F08A3C;
+  --ok: #6FCF97;
+  --danger: #FF8A80;
   --mark-match: rgba(233, 118, 37, 0.22);
   --mark-match-alt: rgba(110, 130, 160, 0.26);
   --mark-match-current: rgba(233, 118, 37, 0.4);
-  --mark-error: rgba(233, 118, 37, 0.2);
   --scrim: rgba(2, 6, 12, 0.62);
   --veil: rgba(15, 27, 46, 0.5);
   /* The same two steps, deepened for navy paper: an ink-tinted shadow
@@ -4603,8 +4612,8 @@ body.search-open {
 /* The window: a title bar, a body, a status bar. It floats one step
    above the page, like the dialogs do. The frame clips its children to
    its rounded corners — `clip`, not `hidden`: a hidden overflow would
-   make the frame the scrollport of the sticky tree, which would then
-   never stick and sit below its row. Browsers without `clip` keep the
+   make the frame the scrollport of the sticky answers, which would then
+   never stick and sit below their row. Browsers without `clip` keep the
    hidden fallback and lose the stick, nothing else. */
 .playground {
   min-width: 0;
@@ -4705,6 +4714,7 @@ body.search-open {
   font-size: .78rem;
   line-height: 1.4;
   text-align: center;
+  white-space: nowrap;
   color: var(--ink-soft);
   border: 1px solid var(--ink-soft);
   border-radius: var(--radius-pill);
@@ -4714,8 +4724,8 @@ body.search-open {
   border-color: var(--tk-key);
 }
 .pg-state.is-error {
-  color: var(--tk-key);
-  border-color: var(--tk-key);
+  color: var(--danger);
+  border-color: var(--danger);
   font-weight: 600;
 }
 .pg-body {
@@ -4801,28 +4811,54 @@ body.search-open {
   align-content: start;
 }
 .pg-statusbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem .75rem;
   padding: .5rem .9rem;
   background: var(--paper);
   border-top: 1px solid var(--line-soft);
 }
-.pg-statusbar:has(.pg-facts:empty) {
-  display: none;
+/* What stays on the visitor's machine, said once, at the far end of the
+   bar the engine's facts fill after a run. */
+.pg-privacy {
+  margin-left: auto;
+  padding: .15rem .55rem;
+  font-size: .74rem;
+  color: var(--ink-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
 }
-/* Wide screens: the fields and the answers on the left, the tree on the
-   right, pinned under the header while the answers scroll. */
+/* Wide screens: what the visitor writes on the left, what the engine
+   answers on the right, pinned under the header and of one height
+   whatever tab is open; the answers scroll under their strip of tabs. */
 @media (min-width: 1024px) {
   .pg-body {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
     column-gap: 1.25rem;
     align-items: start;
   }
-  .pg-body > .tree {
+  .pg-body > .pg-results {
     position: sticky;
     top: calc(var(--header-h) + 1rem);
+    /* A row the keyboard or the pointer brings into view stops under the
+       pinned strip of tabs, never behind it. */
+    scroll-padding-top: 3rem;
+    height: clamp(24rem, calc(100vh - var(--header-h) - 10rem), 44rem);
     max-height: calc(100vh - var(--header-h) - 2rem);
     overflow: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--line) transparent;
+  }
+  .pg-results > .pg-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--panel);
+  }
+  .pg-match-list {
+    max-height: none;
+    overflow: visible;
   }
 }
 
@@ -4923,9 +4959,17 @@ body.search-open {
   background: var(--mark-match-current);
 }
 .pg-mirror .pg-mark-error {
-  background: var(--mark-error);
-  box-shadow: inset 0 -2px 0 var(--amber-deep);
-  text-decoration: underline wavy var(--amber-deep);
+  background: color-mix(in srgb, var(--danger) 22%, transparent);
+  box-shadow: inset 0 -2px 0 var(--danger);
+  text-decoration: underline wavy var(--danger);
+}
+/* A pattern that does not parse, or that the engine refuses, says so on
+   the field the visitor typed it in, before any tab is read. */
+.pg-editor-pattern.is-error .pg-input {
+  border-color: var(--danger);
+}
+.pg-editor-pattern.is-error .pg-mirror {
+  background: color-mix(in srgb, var(--danger) 8%, var(--code-bg));
 }
 .pg-mirror .pg-mark-lint {
   box-shadow: inset 0 -2px 0 var(--line);
@@ -5093,35 +5137,51 @@ body.search-open {
   font-weight: 500;
 }
 
-/* The panels: matches, explanation, diagnostics. */
+/* The answers: one framed panel, one strip of tabs at its top, one tab
+   open under it. */
 .pg-results {
   display: grid;
-  gap: .75rem;
-}
-.pg-panel {
+  grid-template-rows: auto 1fr;
+  align-content: start;
   min-width: 0;
-  padding: .75rem .85rem .8rem;
-  background: var(--paper);
+  background: var(--panel);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-m);
 }
-.pg-panel-title {
-  display: flex;
-  align-items: baseline;
-  gap: .5rem;
-  margin: 0 0 .5rem;
-  font-family: var(--font-body);
-  font-size: .8rem;
-  font-weight: 600;
-  letter-spacing: .02em;
-  text-transform: none;
-  color: var(--ink-soft);
+.pg-tool[hidden] {
+  display: none;
 }
-.pg-panel-note {
+.pg-tool-note {
+  margin: 0 0 .5rem;
   font-family: var(--font-mono);
   font-size: .78rem;
-  font-weight: 400;
   color: var(--ink-soft);
+}
+.pg-tool-note:empty {
+  display: none;
+}
+/* The first thing that went wrong, in the tab that is open: the badge of
+   the diagnostics, the message in the page's ink, where it happened. */
+.pg-error-block {
+  display: grid;
+  gap: .2rem;
+  margin: 0 0 .75rem;
+  padding: .6rem .75rem;
+  font-size: .85rem;
+  background: color-mix(in srgb, var(--danger) 7%, transparent);
+  border: 1px solid var(--danger);
+  border-left-width: 3px;
+  border-radius: var(--radius-s);
+}
+.pg-error-block p {
+  margin: 0;
+}
+.pg-error-block .pg-diag-badge {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.pg-error-slot:empty {
+  display: none;
 }
 .pg-empty {
   margin: 0;
@@ -5174,10 +5234,17 @@ body.search-open {
 }
 .pg-groups {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  /* The group, what it caught, where: the offsets align in a column. */
+  grid-template-columns: minmax(4.5rem, max-content) minmax(0, 1fr) max-content;
   gap: .15rem .6rem;
+  align-items: baseline;
   margin: .35rem 0 0;
   font-size: .8rem;
+}
+.pg-group-at {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 .pg-group-name {
   font-family: var(--font-mono);
@@ -5227,6 +5294,14 @@ body.search-open {
 .pg-explain-keyword {
   color: var(--ink-soft);
 }
+/* The kind, a quiet tag before the sentence: the tree's word for it. */
+.pg-explain-kind {
+  padding: 0 .35rem;
+  font-size: .76em;
+  letter-spacing: .02em;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+}
 .pg-explain-keyword {
   letter-spacing: .02em;
 }
@@ -5269,8 +5344,8 @@ body.search-open {
 }
 .pg-diag.is-error .pg-diag-badge,
 .pg-diag.is-critical .pg-diag-badge {
-  color: var(--amber-deep);
-  border-color: var(--amber);
+  color: var(--danger);
+  border-color: var(--danger);
 }
 .pg-diag-message {
   overflow-wrap: anywhere;
@@ -5314,28 +5389,49 @@ body.search-open {
   color: var(--ink-soft);
 }
 
-/* The syntax tree: the pattern piece by piece, the rows, one still line
-   of detail under them. */
+/* The syntax tree, the first tab: its two voices, the pattern piece by
+   piece, the rows or the prose, one still line of detail under them. */
 .tree {
   display: grid;
-  gap: .9rem;
+  gap: .8rem;
+  align-content: start;
   min-width: 0;
-  padding: 1.1rem 1.1rem 1rem;
-  background: var(--paper);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-m);
 }
 .tree-head {
-  display: grid;
-  gap: .25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem .9rem;
 }
-.tree-title {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: .8rem;
-  font-weight: 600;
-  letter-spacing: .02em;
+/* Two voices, one control: a segmented pair, the chosen one filled. */
+.pg-voice {
+  display: inline-flex;
+  padding: .15rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+}
+.pg-voice-option {
+  min-height: 1.6rem;
+  padding: .2rem .7rem;
+  font-size: .76rem;
+  font-weight: 500;
   color: var(--ink-soft);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+.pg-voice-option:hover {
+  color: var(--ink);
+}
+.pg-voice-option:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+.pg-voice-option[aria-checked="true"] {
+  color: var(--ink);
+  background: var(--amber-tint);
+  box-shadow: inset 0 0 0 1px var(--amber);
 }
 .tree-sub {
   margin: 0;
@@ -5428,7 +5524,10 @@ body.search-open {
   color: var(--ink-soft);
 }
 .tree-value {
-  overflow-wrap: anywhere;
+  min-width: 0;
+  /* A value breaks between its words first ("{4,4} greedy"), inside a
+     word only when one alone is wider than the row. */
+  overflow-wrap: break-word;
 }
 .tree-span {
   margin-left: auto;
@@ -5448,6 +5547,12 @@ body.search-open {
   font-size: .85rem;
   line-height: 1.5;
   border-top: 1px solid var(--line-soft);
+}
+/* No tree to read: the error block above says why, and the pattern strip
+   and the detail line take no room. */
+.tree-pattern:empty,
+.tree-detail:empty {
+  display: none;
 }
 .tree-detail-empty,
 .tree-detail-span {
@@ -5499,14 +5604,15 @@ body.search-open {
   .pg-body {
     padding: .85rem .8rem .9rem;
   }
-  .tree {
-    padding: .85rem .8rem .9rem;
+  .pg-tool {
+    padding: .75rem .75rem .85rem;
   }
   .pg-titlebar {
     grid-template-columns: auto minmax(0, 1fr);
   }
   .pg-controls {
     grid-column: 1 / -1;
+    flex-wrap: wrap;
     justify-content: flex-end;
   }
   .pg-titlebar .pg-version,
@@ -5534,18 +5640,27 @@ body.search-open {
   }
 }
 
-/* The Tools panel: one tab strip, five tools, each shown on demand. The
-   strip follows the tabs pattern: arrow keys move between tabs, the
-   active one is pressed and underlined in amber. */
+/* The strip of tabs over the answers: three views of the analysis, five
+   tools. It follows the tabs pattern: arrow keys move between tabs, the
+   open one is filled and ringed in amber, a closed one shows a light
+   pill under the pointer. Three tabs carry a badge: a dot in a state
+   color, a count, a word for a voice. */
 .pg-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: .25rem;
-  margin: 0 0 .6rem;
-  padding: 0 0 .35rem;
+  margin: 0;
+  padding: .5rem .6rem .45rem;
   border-bottom: 1px solid var(--line-soft);
+  border-radius: var(--radius-m) var(--radius-m) 0 0;
+}
+.pg-tabs.is-scrolled {
+  box-shadow: 0 1px 0 var(--line-soft), 0 4px 10px -6px var(--line);
 }
 .pg-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
   min-height: 1.75rem;
   padding: .3rem .65rem;
   font-size: .78rem;
@@ -5556,17 +5671,56 @@ body.search-open {
   border-radius: var(--radius-pill);
   cursor: pointer;
 }
-.pg-tab:hover,
+.pg-tab:hover {
+  color: var(--ink);
+  background: var(--code-bg);
+}
 .pg-tab:focus-visible {
   color: var(--ink);
-  border-color: var(--amber);
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
 }
 .pg-tab[aria-selected="true"] {
   color: var(--ink);
   background: var(--amber-tint);
   border-color: var(--amber);
 }
+.pg-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.pg-tab-badge:empty {
+  display: none;
+}
+.pg-tab-dot {
+  width: .5rem;
+  height: .5rem;
+  background: currentColor;
+  border-radius: 50%;
+}
+.pg-tab-badge.is-ok {
+  color: var(--ok);
+}
+.pg-tab-badge.is-warn {
+  color: var(--amber);
+}
+.pg-tab-badge.is-danger {
+  color: var(--danger);
+}
+.pg-tab-badge.is-lint {
+  color: var(--amber-deep);
+}
+.pg-tab-badge.is-count {
+  color: var(--ink-soft);
+}
 .pg-tool {
+  min-width: 0;
+  padding: .9rem 1rem 1rem;
   font-size: .85rem;
 }
 .pg-tool:focus-visible {
@@ -5626,6 +5780,18 @@ body.search-open {
 .pg-tool-button[aria-pressed="true"] {
   background: var(--amber-tint);
   border-color: var(--amber);
+}
+/* The one action a dangerous verdict asks for, filled like Run. */
+.pg-tool-button.is-primary {
+  font-weight: 600;
+  color: var(--paper);
+  background: var(--amber);
+  border-color: var(--amber);
+}
+.pg-tool-button.is-primary:hover,
+.pg-tool-button.is-primary:focus-visible {
+  background: var(--amber-deep);
+  border-color: var(--amber-deep);
 }
 .pg-tool-button:disabled {
   color: var(--ink-soft);
@@ -5688,34 +5854,101 @@ body.search-open {
   font-style: italic;
   color: var(--ink-soft);
 }
+/* A phone: the strip wraps, and tighter pills keep the tree, the
+   diagnostics, the matches and the verdict on its first row. A count is
+   the first thing to go, before any label: the dot still carries the
+   state, and the count stays in the tab's name for a voice. */
+@media (max-width: 639px) {
+  .pg-tabs {
+    gap: .15rem;
+    padding: .35rem .25rem .3rem;
+  }
+  .pg-tab {
+    gap: .25rem;
+    padding: .3rem .4rem;
+  }
+  .pg-tab-count {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+/* The verdict, large, then how sure it is on a line of its own. A high
+   or a critical verdict warms the whole panel; the others wear their
+   badge alone. */
+#pg-tool-redos.is-hot {
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
+}
 .pg-verdict {
+  display: grid;
+  gap: .25rem;
+  margin: 0 0 .75rem;
+}
+.pg-verdict-line {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: .3rem .6rem;
-  margin: 0 0 .5rem;
+  margin: 0;
 }
 .pg-verdict-badge {
-  padding: .1rem .45rem;
-  font-size: .72rem;
-  font-weight: 600;
-  letter-spacing: .03em;
+  padding: .2rem .6rem;
+  font-size: .9rem;
+  font-weight: 700;
+  letter-spacing: .04em;
   text-transform: uppercase;
   color: var(--ink);
   background: var(--amber-tint);
+  border: 1px solid transparent;
   border-radius: var(--radius-s);
+}
+.pg-verdict.is-safe .pg-verdict-badge {
+  color: var(--ok);
+  background: transparent;
+  border-color: var(--ok);
+}
+.pg-verdict.is-low .pg-verdict-badge,
+.pg-verdict.is-medium .pg-verdict-badge {
+  color: var(--amber-deep);
+  border-color: var(--amber);
 }
 .pg-verdict.is-high .pg-verdict-badge,
 .pg-verdict.is-critical .pg-verdict-badge {
   color: var(--paper);
-  background: var(--amber-deep);
+  background: var(--danger);
 }
 .pg-verdict-head {
+  font-size: .95rem;
   font-weight: 600;
 }
-.pg-verdict-facts {
+.pg-verdict-meta {
+  margin: 0;
   font-family: var(--font-mono);
-  font-size: .78rem;
+  font-size: .74rem;
+  color: var(--ink-soft);
+}
+/* Each hotspot names its severity in the verdict's own scale. */
+.pg-hotspot-severity {
+  margin: 0 .4rem;
+  font-family: var(--font-mono);
+  font-size: .74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.pg-hotspot.is-high .pg-hotspot-severity,
+.pg-hotspot.is-critical .pg-hotspot-severity {
+  color: var(--danger);
+}
+.pg-hotspot.is-low .pg-hotspot-severity,
+.pg-hotspot.is-medium .pg-hotspot-severity {
+  color: var(--amber-deep);
+}
+.pg-hotspot-facts {
+  font-family: var(--font-mono);
+  font-size: .74rem;
   color: var(--ink-soft);
 }
 /* The hotspots lit in the pattern field, behind the letters. */
@@ -5725,7 +5958,8 @@ body.search-open {
 }
 .pg-mirror .pg-mark-hot.is-high,
 .pg-mirror .pg-mark-hot.is-critical {
-  box-shadow: inset 0 -2px 0 var(--amber-deep);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  box-shadow: inset 0 -2px 0 var(--danger);
 }
 .pg-tool-textarea {
   width: 100%;

@@ -8,7 +8,7 @@
 // visitor typed, or the engine answered, reaches the page through
 // textContent.
 //
-// Before the first run gesture the panels show the sample the site ships
+// Before the first run gesture every tab shows the sample the site ships
 // as data, rendered by the very same functions as a live answer. The engine
 // (about five megabytes once, then cached) is downloaded on a run gesture
 // only: typing, the Run button, the version select, an example, or a link
@@ -22,7 +22,7 @@
 
 (function () {
   var root = document.getElementById('playground');
-  var tree = document.getElementById('pg-tree'); // always open, beside the answers
+  var tree = document.getElementById('pg-tool-tree'); // the first tab, the one the home's title promises
   var dataTag = document.getElementById('playground-data');
   if (!root || !tree || !dataTag) {
     return;
@@ -45,6 +45,7 @@
   var PROTOCOL = 2;               // the driver's contract this script renders
   var JSON_DUMPER = 1;            // the tree document this script walks
   var ANNOUNCE_IDLE_MS = 1000;
+  var SAMPLE_STATE = 'Sample · press Run'; // the pill before the engine ran
 
   var bundleUrl = root.getAttribute('data-bundle') || '/assets/playground/bundle.json';
   var sample = null;
@@ -74,6 +75,7 @@
     matchList: root.querySelector('.pg-match-list'),
     matchesNote: root.querySelector('.pg-matches-note'),
     matchesEmpty: root.querySelector('.pg-matches-empty'),
+    matchesError: root.querySelector('#pg-tool-matches .pg-error-slot'),
     explain: root.querySelector('.pg-explain'),
     diagnostics: root.querySelector('.pg-diagnostics'),
     lintNote: root.querySelector('.pg-lint-note'),
@@ -83,11 +85,21 @@
     live: root.querySelector('.pg-live'),
     treePattern: tree.querySelector('.tree-pattern'),
     treeNodes: tree.querySelector('.tree-nodes'),
+    treeWrap: tree.querySelector('.tree-wrap'),
     treeDetail: tree.querySelector('.tree-detail'),
+    treeError: tree.querySelector('.pg-error-slot'),
     treeBox: tree,
+    voices: tree.querySelectorAll('.pg-voice-option'),
+    results: root.querySelector('.pg-results'),
+    tabStrip: root.querySelector('.pg-tabs'),
     loader: root.querySelector('.pg-loader'),
     loaderStage: root.querySelector('.pg-loader-stage'),
     toolTabs: root.querySelectorAll('.pg-tab'),
+    badges: {
+      diagnostics: root.querySelector('#pg-tab-diagnostics .pg-tab-badge'),
+      matches: root.querySelector('#pg-tab-matches .pg-tab-badge'),
+      redos: root.querySelector('#pg-tab-redos .pg-tab-badge'),
+    },
   };
 
   // --- state ---------------------------------------------------------------
@@ -362,6 +374,19 @@
     var key = requestKey(request);
     failures[key] = (failures[key] || 0) + 1;
     el.run.disabled = false;
+    if (request.eager && activeTool !== 'redos') {
+      // The verdict no tab asked for: one failure is the last for this
+      // input, its badge stays empty, and the window goes on. A Run, or
+      // the ReDoS tab, asks again.
+      failures[key] = 2;
+      toolAnswers.redos = { key: key, payload: { error: { message: reason, position: null } }, request: request, checked: true, failed: true };
+      hideLoader();
+      setState('Ready');
+      setStatus(reason + ' The engine could not judge the pattern for backtracking; press Run to try again.', 'warn');
+      updateBadges();
+      drain();
+      return;
+    }
     if (failures[key] < 2) {
       setStatus(reason + ' Starting the engine again…', 'warn');
       setState('Restarting…', 'busy');
@@ -394,7 +419,8 @@
       // A tab's request is given up for this input: the tab says so, and
       // Run is how the visitor asks again.
       var tab = request.purpose || request.type;
-      setStatus(reason + ' The engine could not finish this tab; press Run to try again.', 'warn');
+      // A tab may have closed while it was asked for: the line names it.
+      setStatus(reason + (activeTool === tab ? ' The engine could not finish this tab; press Run to try again.' : ' The engine could not finish the ' + TAB_LABELS[tab] + ' tab; press Run to try again.'), 'warn');
       if (activeTool === tab) {
         renderTool(tab, false);
       }
@@ -449,6 +475,11 @@
       var lintRequest = { type: 'lint', regex: current.regex, version: current.version };
       if (lintFor !== current.regex && !exhausted(lintRequest) && current.payload.ast) {
         send(lintRequest);
+        return;
+      }
+      var verdict = verdictRequest();
+      if (verdict) {
+        send(verdict);
         return;
       }
       var toolRequestNext = nextToolRequest();
@@ -561,6 +592,7 @@
         renderCaption(current.payload, false);
         renderMatches(current.payload, request.subject);
         renderErrors(current.payload);
+        renderTreeError(current.payload);
         if (lastLint) {
           renderLint(lastLint);
         }
@@ -637,6 +669,11 @@
       // A tab that gave up on this input asks again on the next Run: its
       // failure count goes, and so does the answer that held the failure.
       TOOLS.forEach(function (tool) {
+        // The sample's answers were judged ahead of time: a live run asks
+        // the engine in the visitor's browser.
+        if (toolAnswers[tool] && toolAnswers[tool].seeded) {
+          delete toolAnswers[tool];
+        }
         var stale = toolRequest(tool);
         if (stale) {
           delete failures[requestKey(stale)];
@@ -669,21 +706,11 @@
       renderLint(lastLint);
     }
     renderTree(payload, request.regex);
-    if (prerendered && sample && sample.redos) {
-      // The verdict stored with the sample: the ReDoS tab reads it the
-      // way the panels read the sample's analysis.
-      toolSettings.redos.mode = 'theoretical';
-      var sampleRequest = toolRequest('redos');
-      if (sampleRequest) {
-        toolAnswers.redos = { key: requestKey(sampleRequest), payload: sample.redos, request: sampleRequest, checked: true };
-        lastHotspots = sample.redos.redos && sample.redos.redos.hotspots ? sample.redos.redos.hotspots : null;
-        if (lastHotspots) {
-          // The mirror was painted before the verdict was read: the
-          // hotspots are tinted now, not on the next hover.
-          renderPatternMirror(payload, request.regex, lintFor === request.regex ? lastLint : null);
-        }
-      }
+    if (prerendered) {
+      seedTools();
+      setState(SAMPLE_STATE);
     }
+    updateBadges();
     renderTool(activeTool, false);
   }
 
@@ -702,7 +729,8 @@
     clear(el.facts);
     clear(el.caption);
     if (prerendered) {
-      el.caption.appendChild(text('span', 'pg-caption-sample', 'Sample rendered ahead of time. Press Run, or type, to run the PHP in your browser.'));
+      // The pill in the title bar says the sample: nothing ran yet.
+      el.caption.hidden = true;
       return;
     }
     var engine = payload.engine;
@@ -883,23 +911,29 @@
 
   function renderMatches(payload, subject) {
     clear(el.matchList);
+    clear(el.matchesError);
     el.matchesNote.textContent = '';
     el.matchesEmpty.hidden = true;
     var matches = payload.matches;
     var ranges = [];
 
     if (!matches) {
-      el.matchesEmpty.hidden = false;
-      el.matchesEmpty.textContent = payload.engineError ? 'The engine refused the pattern: ' + payload.engineError : 'Nothing to match: the pattern does not compile.';
+      var refusal = errorBlock(payload);
+      if (refusal) {
+        el.matchesError.appendChild(refusal);
+      } else {
+        el.matchesEmpty.hidden = false;
+        el.matchesEmpty.textContent = 'Nothing to match: the pattern does not compile.';
+      }
     } else if (matches.pending) {
       el.matchesEmpty.hidden = false;
       el.matchesEmpty.textContent = 'Matching on PHP ' + (current ? current.version : '') + '…';
     } else if (matches.count === 0) {
       el.matchesEmpty.hidden = false;
       el.matchesEmpty.textContent = matches.error && matches.error !== 'No error' ? 'No match: ' + matches.error + '.' : 'No match.';
-      el.matchesNote.textContent = '0';
     } else {
-      el.matchesNote.textContent = matches.shown < matches.count ? 'first ' + matches.shown + ' of ' + matches.count : String(matches.count);
+      // The count is the tab's badge; a capped list says what it shows.
+      el.matchesNote.textContent = matches.shown < matches.count ? 'The first ' + matches.shown + ' of ' + matches.count + ' matches.' : '';
       var names = Object.assign({}, matches.names || {}, payload.groupNames || {});
       matches.sets.forEach(function (set, i) {
         var whole = set['0'];
@@ -918,17 +952,16 @@
         });
         if (groups.length) {
           var list = text('dl', 'pg-groups');
+          // One row per group, three columns: the group, what it caught,
+          // where. A number reads as one (#2), a name keeps its own.
           groups.forEach(function (key) {
             var capture = set[key];
-            var label = key;
-            if (names[key]) {
-              label = names[key] + ' (' + key + ')';
-            }
+            var label = names[key] ? names[key] + ' (#' + key + ')' : '#' + key;
             list.appendChild(text('dt', 'pg-group-name', label));
             var dd = text('dd', 'pg-group-value');
             dd.appendChild(text('code', null, capture[0]));
-            dd.appendChild(text('span', 'pg-match-at', ' at ' + capture[2]));
             list.appendChild(dd);
+            list.appendChild(text('dd', 'pg-group-at pg-match-at', 'at ' + capture[2]));
           });
           item.appendChild(list);
         }
@@ -943,6 +976,7 @@
     }
     clear(el.subjectMirror);
     el.subjectMirror.appendChild(markRanges(subject, ranges));
+    updateBadges();
     if (payload.errors && payload.errors.length) {
       announce((payload.errors[0].source === 'validate' ? 'Invalid for this engine: ' : 'Syntax error: ') + payload.errors[0].message);
     } else if (matches && !matches.pending && announceEngineError && matches.error && matches.error !== 'No error') {
@@ -971,7 +1005,7 @@
   function renderExplain(explain) {
     clear(el.explain);
     if (!explain) {
-      el.explain.appendChild(text('p', 'pg-empty', 'No explanation: the pattern does not parse.'));
+      // The error block above both voices says why.
       return;
     }
     var lines = explain.split('\n');
@@ -1028,8 +1062,29 @@
     });
   }
 
+  // The library's sentence, reflowed for the eye: "A digit: [0-9]
+  // (exactly 4 times)" reads "A digit [0-9], exactly 4 times". The colon
+  // between a word and a bracketed or escaped token gives way to a space;
+  // a repetition at the end of the line, in brackets, becomes a clause.
+  // Anything else stays as the library wrote it, and so do the lines that
+  // carry the visitor's own words: a comment, a verb's name, a callout's
+  // argument.
+  var EXPLAIN_REFLOW = [
+    [/([A-Za-z]): (?=[[\\])/g, '$1 '],
+    [/ \(((?:zero or more|one or more) times|once or not at all|exactly \d+ times|at least \d+(?: but not more than \d+)? times|with quantifier \S+)((?: \((?:as few as possible|and do not backtrack)\))?)\)$/, ', $1$2'],
+  ];
+
+  var REFLOW_KEEP = ['Comment', 'PCRE Verb', 'Callout'];
+
+  function reflow(sentence) {
+    return EXPLAIN_REFLOW.reduce(function (line, rule) {
+      return line.replace(rule[0], rule[1]);
+    }, sentence);
+  }
+
   // One line, split into its voices: a branch keyword, a labelled kind
-  // ("Anchor: …"), a bare quoted literal, or plain prose.
+  // ("Anchor: …", a quiet tag that names the tree's word for it), a bare
+  // quoted literal, or plain prose.
   function explainVoices(content, head) {
     var keyword = content.match(/^(IF|THEN|ELSE|EITHER|OR)(?:\s+(.*))?$/);
     var labeled = keyword ? null : content.match(/^([A-Z][A-Za-z]*(?: [A-Za-z]+)*): (.+)$/);
@@ -1037,22 +1092,51 @@
       head.appendChild(text('span', 'pg-explain-keyword', keyword[1]));
       if (keyword[2]) {
         head.appendChild(document.createTextNode(' '));
-        head.appendChild(text('span', 'pg-explain-text', keyword[2]));
+        head.appendChild(text('span', 'pg-explain-text', reflow(keyword[2])));
       }
     } else if (labeled) {
       head.appendChild(text('span', 'pg-explain-kind', labeled[1]));
       head.appendChild(document.createTextNode(' '));
-      head.appendChild(text('span', 'pg-explain-text', labeled[2]));
+      head.appendChild(text('span', 'pg-explain-text', REFLOW_KEEP.indexOf(labeled[1]) === -1 ? reflow(labeled[2]) : labeled[2]));
     } else if (/^['"].*['"]$/.test(content)) {
       head.appendChild(text('span', 'pg-explain-literal', content));
     } else {
-      head.appendChild(text('span', 'pg-explain-text', content));
+      head.appendChild(text('span', 'pg-explain-text', reflow(content)));
     }
   }
 
   var SEVERITY_LABELS = { critical: 'critical', error: 'error', warning: 'warning', style: 'style', perf: 'performance', info: 'info' };
 
+  // The first thing that went wrong, as a block the open tab shows: the
+  // library's word on the pattern, else the engine's. Null when nothing did.
+  function errorBlock(payload) {
+    var error = payload.errors && payload.errors[0];
+    if (!error && !payload.engineError) {
+      return null;
+    }
+    var block = text('div', 'pg-error-block');
+    var head = text('p', 'pg-diag-head');
+    if (error) {
+      head.appendChild(text('span', 'pg-diag-badge', error.source === 'validate' ? 'invalid for this engine' : 'syntax error'));
+      head.appendChild(text('span', 'pg-diag-message', error.message));
+      block.appendChild(head);
+      if (typeof error.position === 'number') {
+        block.appendChild(text('p', 'pg-diag-facts', 'byte ' + error.position + ' of the pattern body'));
+      }
+      if (error.hint) {
+        block.appendChild(text('p', 'pg-diag-hint', error.hint));
+      }
+    } else {
+      head.appendChild(text('span', 'pg-diag-badge', 'PHP says'));
+      head.appendChild(text('code', 'pg-diag-message', payload.engineError));
+      block.appendChild(head);
+    }
+    return block;
+  }
+
   function renderErrors(payload) {
+    // The field the visitor typed into says it first: the pattern is wrong.
+    el.patternEditor.classList.toggle('is-error', !!((payload.errors && payload.errors.length) || payload.engineError));
     clear(el.diagnostics);
     (payload.errors || []).forEach(function (error) {
       var item = text('li', 'pg-diag is-error');
@@ -1095,6 +1179,7 @@
       el.diagnostics.appendChild(text('li', 'pg-diag is-note', 'The subject was cut at ' + SUBJECT_CAP + ' bytes.'));
     }
     updateDiagnosticsEmpty();
+    updateBadges();
   }
 
   function renderLint(findings) {
@@ -1132,6 +1217,7 @@
       renderPatternMirror(current.payload, current.regex, findings);
     }
     updateDiagnosticsEmpty();
+    updateBadges();
   }
 
   function updateDiagnosticsEmpty() {
@@ -1197,8 +1283,12 @@
     currentNode = -1;
     clear(el.treeNodes);
     clear(el.treePattern);
+    renderTreeError(payload);
     if (!payload.ast) {
-      el.treeDetail.textContent = (payload.errors && payload.errors[0]) ? 'No tree: ' + payload.errors[0].message : 'No tree.';
+      clear(el.treeDetail);
+      if (!el.treeError.firstChild) {
+        el.treeDetail.textContent = 'No tree.';
+      }
       return;
     }
     if (payload.ast.version !== JSON_DUMPER) {
@@ -1253,6 +1343,16 @@
     // After the walk, so the empty state says its line: nodes is still
     // empty before it, and the hint would never show.
     showDetail(-1);
+  }
+
+  // Above both voices of the tree, the reason there is none, or the
+  // engine's refusal of a pattern the library still read.
+  function renderTreeError(payload) {
+    clear(el.treeError);
+    var block = errorBlock(payload);
+    if (block) {
+      el.treeError.appendChild(block);
+    }
   }
 
   // The engine's tokens over the tree's body: the same spans the field's
@@ -1374,14 +1474,20 @@
     }
   }
 
-  // --- the tools -----------------------------------------------------------
+  // --- the tabs and the tools ----------------------------------------------
 
-  // What the console does with a pattern, one tab each: the ReDoS verdict,
-  // the translation, sample subjects, a test to paste, the layout. A tab
-  // asks the engine when it is opened, or when the input moved under it,
-  // never on every keystroke; the answer of each tab belongs to the input
-  // it was asked for, like the lint belongs to its pattern.
+  // One strip of tabs over the answers. The first three are views of the
+  // analysis (the tree, the diagnostics, the matches), drawn whenever an
+  // answer lands; the others are what the console does with a pattern,
+  // one tool each: the ReDoS verdict, the translation, sample subjects, a
+  // test to paste, the layout. A tool asks the engine when its tab is
+  // opened, or when the input moved under it, never on every keystroke
+  // (the verdict alone is asked on every run, for its badge); the answer
+  // of each belongs to the input it was asked for, like the lint belongs
+  // to its pattern.
+  var TABS = ['tree', 'diagnostics', 'matches', 'redos', 'transpile', 'samples', 'export', 'format'];
   var TOOLS = ['redos', 'transpile', 'samples', 'export', 'format'];
+  var TAB_LABELS = { tree: 'Tree', diagnostics: 'Diagnostics', matches: 'Matches', redos: 'ReDoS', transpile: 'Translate', samples: 'Samples', export: 'Test', format: 'Format' };
   var TOOL_STORAGE_KEY = 'playground-tool';
   var TOOL_STATUS = {
     redos: 'Judging the pattern for backtracking…',
@@ -1396,10 +1502,12 @@
   var PYTHON_VERSIONS = ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13'];
   var SUBJECTS_CAP = 50;
 
-  var activeTool = 'redos';
+  // A first visit opens on the tree; a tab the visitor chose is opened
+  // again, and anything else the key holds falls back to the tree.
+  var activeTool = 'tree';
   try {
     var storedTool = localStorage.getItem(TOOL_STORAGE_KEY);
-    if (storedTool && TOOLS.indexOf(storedTool) !== -1) {
+    if (storedTool && TABS.indexOf(storedTool) !== -1) {
       activeTool = storedTool;
     }
   } catch (error) {/* the choice simply does not persist */}
@@ -1407,7 +1515,7 @@
   var toolSettings = {
     redos: { mode: 'theoretical' },
     transpile: { target: 'js', pythonVersion: '3.11' },
-    format: { width: null, compact: false },
+    format: { width: 80, fit: false, compact: false }, // the driver's own width, unless the field's is asked for
     export: { full: false },
   };
   var lastHotspots = null; // the verdict's hotspots lit in the pattern field, for the current regex
@@ -1452,10 +1560,11 @@
     return request;
   }
 
-  // The width the pattern field shows on one line, as a number of
-  // characters: what "fits" means to the visitor's eye.
+  // The width the layout is asked for: the one set, 80 unless the visitor
+  // moved it; or, on "Fit the field", the characters the pattern field
+  // shows on one line: what "fits" means to the visitor's eye.
   function formatWidth() {
-    if (toolSettings.format.width) {
+    if (!toolSettings.format.fit) {
       return toolSettings.format.width;
     }
     var style = window.getComputedStyle(el.pattern);
@@ -1475,7 +1584,7 @@
   // the Samples tab holds for this very input, without a duplicate.
   function exportSubjects() {
     var subjects = [];
-    var seen = {};
+    var seen = Object.create(null); // "constructor" is a subject like any other
     var add = function (subject) {
       if (typeof subject === 'string' && !seen[subject] && subjects.length < SUBJECTS_CAP && byteLength(subject) <= SUBJECT_CAP) {
         seen[subject] = true;
@@ -1489,6 +1598,102 @@
       samples.payload.samples.nonMatching.forEach(add);
     }
     return subjects;
+  }
+
+  // The sample's answers, one per tool, each keyed by the request stored
+  // beside it: the tab holds it while its own request is that one. The
+  // controls start from what the stored request asked for.
+  function seedTools() {
+    var stored = sample && sample.default && sample.default.tools;
+    if (!stored || !current) {
+      return;
+    }
+    if (stored.redos) {
+      toolSettings.redos.mode = stored.redos.mode;
+    }
+    if (stored.transpile) {
+      toolSettings.transpile.target = stored.transpile.dialect;
+    }
+    if (stored.format) {
+      toolSettings.format = { width: stored.format.width, fit: false, compact: stored.format.compact };
+    }
+    // The samples before the test: the test asserts them, and its request
+    // lists them.
+    ['redos', 'transpile', 'samples', 'format', 'export'].forEach(function (tool) {
+      if (!stored[tool] || !sample[tool]) {
+        return;
+      }
+      var request = Object.assign({}, stored[tool], { version: current.version });
+      toolAnswers[tool] = { key: requestKey(request), payload: sample[tool], request: request, checked: true, seeded: true };
+    });
+    lastHotspots = sample.redos && sample.redos.redos && sample.redos.redos.hotspots ? sample.redos.redos.hotspots : null;
+    if (lastHotspots) {
+      // The mirror was painted before the verdict was read: the hotspots
+      // are tinted now, not on the next hover.
+      renderPatternMirror(current.payload, current.regex, lintFor === current.regex ? lastLint : null);
+    }
+  }
+
+  // The verdict, asked on every run whatever tab is open: its badge says
+  // it on the closed tab, and its hotspots tint the pattern field. The
+  // theoretical verdict only; the replay waits for its button.
+  function verdictRequest() {
+    if (!current || current.prerendered || !current.payload.ast) {
+      return null;
+    }
+    var held = toolAnswers.redos;
+    if (held && held.request && held.request.regex === current.regex && held.request.version === current.version) {
+      return null;
+    }
+    var request = { type: 'redos', regex: current.regex, version: current.version, mode: 'theoretical', eager: true };
+    return exhausted(request) ? null : request;
+  }
+
+  // The badges on the closed tabs: the state of the answer, read without
+  // a click. A color says it, and a count or a word says it again.
+  function setBadge(badge, tone, count, words) {
+    clear(badge);
+    badge.className = 'pg-tab-badge' + (tone ? ' is-' + tone : '');
+    if (!tone && count === null) {
+      return;
+    }
+    badge.appendChild(text('span', 'visually-hidden', ', '));
+    if (tone && tone !== 'count' && tone !== 'lint') {
+      badge.appendChild(text('span', 'pg-tab-dot'));
+    }
+    if (count !== null) {
+      badge.appendChild(text('span', 'pg-tab-count', String(count)));
+    }
+    badge.appendChild(text('span', 'visually-hidden', ' ' + words));
+  }
+
+  var BADGE_TONES = { safe: 'ok', low: 'warn', medium: 'warn', high: 'danger', critical: 'danger' };
+
+  function updateBadges() {
+    if (!current) {
+      return;
+    }
+    var payload = current.payload;
+    var matches = payload.matches;
+    var engineGaveUp = !!(matches && !matches.pending && matches.error && matches.error !== 'No error');
+    var errors = (payload.errors || []).length + (payload.engineError ? 1 : 0) + (engineGaveUp ? 1 : 0);
+    var findings = lintFor === current.regex && lastLint ? lastLint.length : 0;
+    if (errors) {
+      setBadge(el.badges.diagnostics, 'danger', errors, errors === 1 ? 'error' : 'errors');
+    } else if (findings) {
+      setBadge(el.badges.diagnostics, 'lint', findings, findings === 1 ? 'lint finding' : 'lint findings');
+    } else {
+      setBadge(el.badges.diagnostics, '', null, '');
+    }
+    if (matches && !matches.pending && !engineGaveUp && matches.count > 0) {
+      setBadge(el.badges.matches, 'count', matches.count, matches.count === 1 ? 'match' : 'matches');
+    } else {
+      setBadge(el.badges.matches, '', null, '');
+    }
+    var held = toolAnswers.redos;
+    var verdict = held && held.request && held.request.regex === current.regex && held.request.version === current.version && held.payload && !held.payload.error && held.payload.redos && !held.payload.redos.error ? held.payload.redos : null;
+    var tone = verdict ? BADGE_TONES[verdict.severity] : '';
+    setBadge(el.badges.redos, tone || '', null, tone ? SEVERITY_WORDS[verdict.severity] : '');
   }
 
   // Whether the active tab still holds the answer for the current input.
@@ -1566,6 +1771,7 @@
       if (current && current.regex === request.regex) {
         renderPatternMirror(current.payload, current.regex, lastLint);
       }
+      updateBadges();
     }
     if (activeTool === tool) {
       renderTool(tool, true);
@@ -1578,8 +1784,12 @@
   var pendingTool = null;  // the second step of a two-step tool request
 
   function activateTool(tool, focus) {
-    if (TOOLS.indexOf(tool) === -1) {
+    if (TABS.indexOf(tool) === -1) {
       return;
+    }
+    if (tool !== activeTool) {
+      // Another tab opens at its top, not where the last one was scrolled.
+      el.results.scrollTop = 0;
     }
     activeTool = tool;
     try {
@@ -1593,10 +1803,24 @@
         tab.focus();
       }
     });
-    TOOLS.forEach(function (name) {
+    TABS.forEach(function (name) {
       toolPanel(name).hidden = name !== tool;
     });
-    renderTool(tool, false);
+    if (TOOLS.indexOf(tool) !== -1) {
+      renderTool(tool, false);
+    }
+    drain();
+  }
+
+  // A setting of a tool moved: the engine is asked for it. On the sample,
+  // that is a run gesture: the engine boots and answers the new setting.
+  function settingMoved(tool) {
+    // The stored answer was for the old setting: the panel says so at once.
+    renderTool(tool, true);
+    if (current && current.prerendered) {
+      analyzeNow();
+      return;
+    }
     drain();
   }
 
@@ -1612,6 +1836,10 @@
   // while the engine answers), so a change made from a select or a button
   // never sends the focus to the body.
   function renderTool(tool, announceResult) {
+    if (TOOLS.indexOf(tool) === -1) {
+      // A view: drawn with the analysis, never asked for.
+      return;
+    }
     var panel = toolPanel(tool);
     var focused = document.activeElement;
     var place = panel && focused && panel.contains(focused) ? focusables(panel).indexOf(focused) : -1;
@@ -1629,6 +1857,7 @@
   function renderToolPanel(tool, announceResult) {
     var panel = toolPanel(tool);
     clear(panel);
+    panel.classList.remove('is-hot');
     if (!current) {
       panel.appendChild(text('p', 'pg-tool-hint', 'Run a pattern first.'));
       return;
@@ -1642,7 +1871,7 @@
     }
     if (!fresh) {
       if (current.prerendered) {
-        panel.appendChild(text('p', 'pg-tool-hint', 'Press Run: the engine answers this tab for the pattern above.'));
+        panel.appendChild(text('p', 'pg-tool-hint', 'The engine answers this setting once it runs.'));
       } else if (tool === 'export' && !current.payload.ast) {
         panel.appendChild(text('p', 'pg-tool-hint', 'A pattern that does not parse has no test to write.'));
       } else {
@@ -1723,11 +1952,16 @@
       panel.appendChild(text('p', 'pg-tool-line is-warn', 'No verdict: ' + redos.error));
       return;
     }
+    // The verdict first and large; how sure it is, on a line of its own
+    // under it. A high or critical verdict warms the whole panel.
+    panel.classList.toggle('is-hot', redos.severity === 'high' || redos.severity === 'critical');
     var verdict = text('div', 'pg-verdict is-' + redos.severity);
-    verdict.appendChild(text('span', 'pg-verdict-badge', SEVERITY_WORDS[redos.severity] || redos.severity));
+    var line = text('p', 'pg-verdict-line');
+    line.appendChild(text('span', 'pg-verdict-badge', SEVERITY_WORDS[redos.severity] || redos.severity));
     var head = redos.complexity === 'linear' ? 'Linear' : (redos.complexity === 'exponential' ? 'Exponential backtracking' : (redos.complexity === 'polynomial' ? 'Polynomial backtracking' + (redos.degree ? ', degree ' + redos.degree : '') : 'Backtracking not classified'));
-    verdict.appendChild(text('span', 'pg-verdict-head', head + (redos.proof === 'proven' ? ' (proven)' : '')));
-    verdict.appendChild(text('span', 'pg-verdict-facts', redos.confidence + ' confidence · ' + (redos.confirmed ? 'confirmed by the engine' : redos.mode) + (redos.linear ? ' · linear for a test' : '')));
+    line.appendChild(text('span', 'pg-verdict-head', head));
+    verdict.appendChild(line);
+    verdict.appendChild(text('p', 'pg-verdict-meta', (redos.proof === 'proven' ? 'proven · ' : '') + redos.confidence + ' confidence · ' + (redos.confirmed ? 'confirmed by the engine' : redos.mode) + (redos.linear ? ' · linear for a test' : '')));
     panel.appendChild(verdict);
     if (redos.vulnerable_part) {
       panel.appendChild(text('p', 'pg-tool-line', 'Vulnerable part: ' + redos.vulnerable_part + (redos.trigger ? ' (' + redos.trigger + ')' : '')));
@@ -1735,42 +1969,42 @@
     if (redos.hotspots && redos.hotspots.length) {
       var list = text('ul', 'pg-tool-list');
       redos.hotspots.forEach(function (hotspot) {
-        var item = text('li', null);
+        var item = text('li', 'pg-hotspot is-' + hotspot.severity);
         item.appendChild(text('code', null, hotspot.pattern));
-        item.appendChild(text('span', null, ' — ' + hotspot.severity + ', bytes ' + hotspot.start + '–' + hotspot.end + (hotspot.trigger ? ', ' + hotspot.trigger : '')));
+        item.appendChild(text('span', 'pg-hotspot-severity', hotspot.severity));
+        item.appendChild(text('span', 'pg-hotspot-facts', 'bytes ' + hotspot.start + '–' + hotspot.end + (hotspot.trigger ? ', ' + hotspot.trigger : '')));
         list.appendChild(item);
       });
       panel.appendChild(list);
     }
     var witness = redos.witness;
     if (witness) {
-      var line = text('p', 'pg-tool-line');
-      line.appendChild(text('span', null, 'Witness: '));
+      var witnessLine = text('p', 'pg-tool-line');
+      witnessLine.appendChild(text('span', null, 'Witness: '));
       if (witness.prefix) {
-        line.appendChild(text('code', null, '"' + witness.prefix + '"'));
-        line.appendChild(text('span', null, ' + '));
+        witnessLine.appendChild(text('code', null, '"' + witness.prefix + '"'));
+        witnessLine.appendChild(text('span', null, ' + '));
       }
-      line.appendChild(text('code', null, '"' + witness.pump + '"'));
-      line.appendChild(text('span', null, ' × n'));
+      witnessLine.appendChild(text('code', null, '"' + witness.pump + '"'));
+      witnessLine.appendChild(text('span', null, ' × n'));
       if (witness.suffix) {
-        line.appendChild(text('span', null, ' + '));
-        line.appendChild(text('code', null, '"' + witness.suffix + '"'));
+        witnessLine.appendChild(text('span', null, ' + '));
+        witnessLine.appendChild(text('code', null, '"' + witness.suffix + '"'));
       }
-      panel.appendChild(line);
+      panel.appendChild(witnessLine);
       var demonstrable = redos.complexity === 'exponential' || (redos.confirmation && redos.confirmation.evidence === 'backtrack_limit');
-      var row = text('div', 'pg-tool-row');
+      var tryRow = text('div', 'pg-tool-row');
       if (demonstrable && typeof redos.attack === 'string') {
-        row.appendChild(toolButton('Try it', function () {
+        tryRow.appendChild(toolButton('Try it', function () {
           el.subject.value = redos.attack;
           refreshFields();
           announceEngineError = true;
           analyzeNow();
         }));
-        row.appendChild(text('span', 'pg-tool-line', 'puts the ' + byteLength(redos.attack) + '-byte attack string in the subject field; the engine answers with its backtrack limit.'));
+        tryRow.appendChild(text('span', 'pg-tool-line', 'puts the ' + byteLength(redos.attack) + '-byte attack string in the subject field; the engine answers with its backtrack limit.'));
       } else {
-        row.appendChild(text('span', 'pg-tool-line', 'Polynomial: not demonstrable under the ' + SUBJECT_CAP + '-byte subject cap.'));
+        tryRow.appendChild(text('span', 'pg-tool-line', 'Polynomial: not demonstrable under the ' + SUBJECT_CAP + '-byte subject cap.'));
       }
-      panel.appendChild(row);
     }
     var replay = text('div', 'pg-tool-row');
     if (typeof redos.replay_error === 'string') {
@@ -1779,15 +2013,20 @@
       var c = redos.confirmation;
       replay.appendChild(text('span', 'pg-tool-line', 'Replayed: ' + (c.evidence || 'no evidence') + ', ' + (c.samples ? c.samples.length : 0) + ' run' + (c.samples && c.samples.length === 1 ? '' : 's') + ', backtrack limit ' + c.backtrack_limit + ', JIT off.'));
     } else if (redos.severity !== 'safe') {
-      replay.appendChild(toolButton('Replay the attack', function () {
+      // The action of a dangerous verdict: run the attack on the engine.
+      var replayButton = toolButton('Replay the attack', function () {
         toolSettings.redos.mode = 'confirmed';
-        renderTool('redos', true);
-        drain();
-      }));
+        settingMoved('redos');
+      });
+      replayButton.classList.add('is-primary');
+      replay.appendChild(replayButton);
       replay.appendChild(text('span', 'pg-tool-line', 'runs the witness through the engine, three lengths, under the library’s caps (backtrack limit 100 000, 50 ms a run).'));
     }
     if (replay.childNodes.length) {
       panel.appendChild(replay);
+    }
+    if (witness) {
+      panel.appendChild(tryRow);
     }
     if (redos.recommendations && redos.recommendations.length) {
       var hints = text('ul', 'pg-tool-list');
@@ -1815,8 +2054,7 @@
     });
     select.addEventListener('change', function () {
       toolSettings.transpile.target = select.value;
-      renderTool('transpile', true);
-      drain();
+      settingMoved('transpile');
     });
     row.appendChild(label);
     row.appendChild(select);
@@ -1834,8 +2072,7 @@
       });
       version.addEventListener('change', function () {
         toolSettings.transpile.pythonVersion = version.value;
-        renderTool('transpile', true);
-        drain();
+        settingMoved('transpile');
       });
       row.appendChild(versionLabel);
       row.appendChild(version);
@@ -1990,20 +2227,22 @@
     width.min = '1';
     width.max = '200';
     width.value = String(formatWidth());
-    width.disabled = toolSettings.format.compact;
+    width.disabled = toolSettings.format.compact || toolSettings.format.fit;
     width.addEventListener('change', function () {
       var value = parseInt(width.value, 10);
-      toolSettings.format.width = value >= 1 && value <= 200 ? value : null;
+      toolSettings.format.width = value >= 1 && value <= 200 ? value : 80;
       width.value = String(formatWidth());
-      renderTool('format', true);
-      drain();
+      settingMoved('format');
     });
     row.appendChild(label);
     row.appendChild(width);
+    row.appendChild(toolButton('Fit the field', function () {
+      toolSettings.format.fit = !toolSettings.format.fit;
+      settingMoved('format');
+    }, toolSettings.format.fit));
     row.appendChild(toolButton('Compact', function () {
       toolSettings.format.compact = !toolSettings.format.compact;
-      renderTool('format', true);
-      drain();
+      settingMoved('format');
     }, toolSettings.format.compact));
     panel.appendChild(row);
   }
@@ -2041,6 +2280,7 @@
   // stays the browser's (Alt+Left is Back).
   Array.prototype.forEach.call(el.toolTabs, function (tab, index, tabs) {
     tab.addEventListener('click', function () {
+      stopStroll();
       activateTool(tab.getAttribute('data-tool'), false);
     });
     tab.addEventListener('keydown', function (event) {
@@ -2056,7 +2296,66 @@
         default: return;
       }
       event.preventDefault();
+      stopStroll();
       activateTool(tabs[target].getAttribute('data-tool'), true);
+    });
+  });
+
+  // The strip stays at the top of the answers as they scroll under it; a
+  // shadow under it says something is there.
+  el.results.addEventListener('scroll', function () {
+    el.tabStrip.classList.toggle('is-scrolled', el.results.scrollTop > 0);
+  }, { passive: true });
+
+  // --- the tree's two voices ----------------------------------------------
+
+  // The tree, or the same pattern in plain English: two radios, the arrow
+  // keys move between them. A first visit hears the tree; the prose is
+  // remembered only once chosen, and forgotten when the tree is chosen back.
+  var VOICE_STORAGE_KEY = 'playground-voice';
+  var voice = 'tree';
+  try {
+    if (localStorage.getItem(VOICE_STORAGE_KEY) === 'prose') {
+      voice = 'prose';
+    }
+  } catch (error) {/* the choice simply does not persist */}
+
+  function setVoice(next, focus, remember) {
+    voice = next === 'prose' ? 'prose' : 'tree';
+    Array.prototype.forEach.call(el.voices, function (option) {
+      var on = option.getAttribute('data-voice') === voice;
+      option.setAttribute('aria-checked', on ? 'true' : 'false');
+      option.tabIndex = on ? 0 : -1;
+      if (on && focus) {
+        option.focus();
+      }
+    });
+    el.treeWrap.hidden = voice !== 'tree';
+    el.explain.hidden = voice !== 'prose';
+    if (!remember) {
+      return;
+    }
+    try {
+      if (voice === 'prose') {
+        localStorage.setItem(VOICE_STORAGE_KEY, 'prose');
+      } else {
+        localStorage.removeItem(VOICE_STORAGE_KEY);
+      }
+    } catch (error) {/* the choice simply does not persist */}
+  }
+
+  Array.prototype.forEach.call(el.voices, function (option) {
+    option.addEventListener('click', function () {
+      stopStroll();
+      setVoice(option.getAttribute('data-voice'), false, true);
+    });
+    option.addEventListener('keydown', function (event) {
+      if (event.altKey || event.ctrlKey || event.metaKey || ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].indexOf(event.key) === -1) {
+        return;
+      }
+      event.preventDefault();
+      stopStroll();
+      setVoice(voice === 'tree' ? 'prose' : 'tree', true, true);
     });
   });
   var announceEngineError = false; // after "Try it": the engine's own words, once
@@ -2181,17 +2480,20 @@
     }
   }
 
-  // The tree scrolls on its own on a wide screen: the lit row stays in
-  // view there, without moving the page.
+  // The answers scroll on their own on a wide screen: the lit row stays
+  // in view there, without moving the page.
   function revealInTree(item) {
-    var box = el.treeBox;
+    var box = el.results;
     if (box.scrollHeight <= box.clientHeight) {
       return;
     }
     var row = item.firstElementChild.getBoundingClientRect();
     var frame = box.getBoundingClientRect();
-    if (row.top < frame.top) {
-      box.scrollTop += row.top - frame.top;
+    // The strip of tabs is pinned over the top of the answers: a row
+    // under it is not in view.
+    var top = frame.top + el.tabStrip.offsetHeight;
+    if (row.top < top) {
+      box.scrollTop += row.top - top;
     } else if (row.bottom > frame.bottom) {
       box.scrollTop += row.bottom - frame.bottom;
     }
@@ -2221,7 +2523,9 @@
 
   function startStroll() {
     var motion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
-    if (stroll.ended || (motion && motion.matches) || !nodes.length) {
+    // A walk is for a tree on screen: another tab open, or the prose, and
+    // there is nothing to walk.
+    if (stroll.ended || (motion && motion.matches) || !nodes.length || activeTool !== 'tree' || voice !== 'tree') {
       return;
     }
     // A preference set while the walk runs ends it as well.
@@ -2317,6 +2621,7 @@
 
   window.addEventListener('resize', refreshFields);
 
+  setVoice(voice, false, false);
   activateTool(activeTool, false);
 
   // --- first paint ---------------------------------------------------------
@@ -2332,6 +2637,7 @@
     el.matchesEmpty.hidden = false;
     el.matchesEmpty.textContent = 'Loading PHP ' + chosen + '…';
     el.diagnostics.appendChild(text('li', 'pg-diag is-empty', 'Loading…'));
+    setState('Loading…', 'busy');
     analyzeNow();
   } else if (sample && sample.analyze && sample.default) {
     el.pattern.value = sample.default.regex;

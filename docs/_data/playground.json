@@ -5,6 +5,50 @@
         "target": {
             "php": "8.4.1",
             "pcre": "10.44"
+        },
+        "tools": {
+            "redos": {
+                "type": "redos",
+                "regex": "/^(?\u003Cdate\u003E\\d{4})-(\\d{2})-(\\d{2})$/m",
+                "version": "8.4",
+                "mode": "theoretical"
+            },
+            "transpile": {
+                "type": "transpile",
+                "regex": "/^(?\u003Cdate\u003E\\d{4})-(\\d{2})-(\\d{2})$/m",
+                "version": "8.4",
+                "dialect": "js",
+                "pythonVersion": ""
+            },
+            "samples": {
+                "type": "samples",
+                "regex": "/^(?\u003Cdate\u003E\\d{4})-(\\d{2})-(\\d{2})$/m",
+                "version": "8.4"
+            },
+            "format": {
+                "type": "format",
+                "regex": "/^(?\u003Cdate\u003E\\d{4})-(\\d{2})-(\\d{2})$/m",
+                "version": "8.4",
+                "width": 80,
+                "compact": false
+            },
+            "export": {
+                "type": "check",
+                "regex": "/^(?\u003Cdate\u003E\\d{4})-(\\d{2})-(\\d{2})$/m",
+                "version": "8.4",
+                "purpose": "export",
+                "subject": "2026-11-02\n2026-11-19\nnot a date",
+                "subjects": [
+                    "2026-11-02\n2026-11-19\nnot a date",
+                    "0476-70-34",
+                    "9468-89-02",
+                    "2508-04-66",
+                    "000.0.0",
+                    "000.0.000",
+                    "000.000.0"
+                ],
+                "date": "2026-11-04"
+            }
         }
     },
     "analyze": {
@@ -368,6 +412,23 @@
         },
         "error": null
     },
+    "transpile": {
+        "protocol": 2,
+        "transpile": {
+            "target": "javascript",
+            "source": "/^(?\u003Cdate\u003E\\d{4})-(\\d{2})-(\\d{2})$/m",
+            "pattern": "(?:^|(?\u003C=\\n)(?!$))(?\u003Cdate\u003E\\d{4})-(\\d{2})-(\\d{2})(?=\\n|$)",
+            "flags": "",
+            "literal": "/(?:^|(?\u003C=\\n)(?!$))(?\u003Cdate\u003E\\d{4})-(\\d{2})-(\\d{2})(?=\\n|$)/",
+            "constructor": "new RegExp(\"(?:^|(?\u003C=\\\\n)(?!$))(?\u003Cdate\u003E\\\\d{4})-(\\\\d{2})-(\\\\d{2})(?=\\\\n|$)\", \"\")",
+            "warnings": [],
+            "notes": [
+                "Applied /m: \"^\" and \"$\" are written for lines ended by \"\\n\" alone, as PCRE reads them."
+            ]
+        },
+        "refusal": null,
+        "error": null
+    },
     "samples": {
         "protocol": 2,
         "samples": {
@@ -383,6 +444,26 @@
             ],
             "seed": 460442294,
             "dropped": 0
+        },
+        "error": null
+    },
+    "format": {
+        "protocol": 2,
+        "format": {
+            "pattern": "/^(?\u003Cdate\u003E\\d{4})-(\\d{2})-(\\d{2})$/m",
+            "changed": false,
+            "refusal": null
+        },
+        "error": null
+    },
+    "export": {
+        "protocol": 2,
+        "export": {
+            "method": "    private const PATTERN = '/^(?\u003Cdate\u003E\\\\d{4})-(\\\\d{2})-(\\\\d{2})$/m';\n\n    /**\n     * @return iterable\u003Cstring, array{subject: string, matches: bool, expectation: array\u003Cint|string, mixed\u003E}\u003E\n     */\n    public static function providePatternSubjects(): iterable\n    {\n        yield 'subject 1' =\u003E ['subject' =\u003E '2026-11-02\n2026-11-19\nnot a date', 'matches' =\u003E true, 'expectation' =\u003E ['date' =\u003E ['2026', 0], 2 =\u003E ['11', 5], 3 =\u003E ['02', 8]]];\n        yield 'subject 2' =\u003E ['subject' =\u003E '0476-70-34', 'matches' =\u003E true, 'expectation' =\u003E ['date' =\u003E ['0476', 0], 2 =\u003E ['70', 5], 3 =\u003E ['34', 8]]];\n        yield 'subject 3' =\u003E ['subject' =\u003E '9468-89-02', 'matches' =\u003E true, 'expectation' =\u003E ['date' =\u003E ['9468', 0], 2 =\u003E ['89', 5], 3 =\u003E ['02', 8]]];\n        yield 'subject 4' =\u003E ['subject' =\u003E '2508-04-66', 'matches' =\u003E true, 'expectation' =\u003E ['date' =\u003E ['2508', 0], 2 =\u003E ['04', 5], 3 =\u003E ['66', 8]]];\n        yield 'subject 5' =\u003E ['subject' =\u003E '000.0.0', 'matches' =\u003E false, 'expectation' =\u003E []];\n        yield 'subject 6' =\u003E ['subject' =\u003E '000.0.000', 'matches' =\u003E false, 'expectation' =\u003E []];\n        yield 'subject 7' =\u003E ['subject' =\u003E '000.000.0', 'matches' =\u003E false, 'expectation' =\u003E []];\n    }\n\n    /**\n     * @param array\u003Cint|string, mixed\u003E $expectation\n     */\n    #[DataProvider('providePatternSubjects')]\n    public function test_the_pattern_matches_as_the_engine_answered(string $subject, bool $matches, array $expectation): void\n    {\n        if ($matches) {\n            self::assertPatternMatches(self::PATTERN, $subject, $expectation);\n\n            return;\n        }\n        self::assertPatternDoesNotMatch(self::PATTERN, $subject);\n    }\n\n    public function test_the_pattern_compiles(): void\n    {\n        self::assertPatternCompiles(self::PATTERN);\n        self::assertPatternIsLinear(self::PATTERN);\n    }",
+            "class": "\u003C?php\n\ndeclare(strict_types=1);\n\n/*\n * Written by the PHPRegex playground on 2026-11-04 from the answers of PHP 8.4.1 and PCRE2 10.44.\n * Needs php-regex/regex-phpunit and PHPUnit 10 or newer (on 9.6, spell the provider as @dataProvider).\n */\n\nuse PHPRegex\\PHPUnit\\RegexAssertions;\nuse PHPUnit\\Framework\\Attributes\\DataProvider;\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class PatternTest extends TestCase\n{\n    use RegexAssertions;\n\n    private const PATTERN = '/^(?\u003Cdate\u003E\\\\d{4})-(\\\\d{2})-(\\\\d{2})$/m';\n\n    /**\n     * @return iterable\u003Cstring, array{subject: string, matches: bool, expectation: array\u003Cint|string, mixed\u003E}\u003E\n     */\n    public static function providePatternSubjects(): iterable\n    {\n        yield 'subject 1' =\u003E ['subject' =\u003E '2026-11-02\n2026-11-19\nnot a date', 'matches' =\u003E true, 'expectation' =\u003E ['date' =\u003E ['2026', 0], 2 =\u003E ['11', 5], 3 =\u003E ['02', 8]]];\n        yield 'subject 2' =\u003E ['subject' =\u003E '0476-70-34', 'matches' =\u003E true, 'expectation' =\u003E ['date' =\u003E ['0476', 0], 2 =\u003E ['70', 5], 3 =\u003E ['34', 8]]];\n        yield 'subject 3' =\u003E ['subject' =\u003E '9468-89-02', 'matches' =\u003E true, 'expectation' =\u003E ['date' =\u003E ['9468', 0], 2 =\u003E ['89', 5], 3 =\u003E ['02', 8]]];\n        yield 'subject 4' =\u003E ['subject' =\u003E '2508-04-66', 'matches' =\u003E true, 'expectation' =\u003E ['date' =\u003E ['2508', 0], 2 =\u003E ['04', 5], 3 =\u003E ['66', 8]]];\n        yield 'subject 5' =\u003E ['subject' =\u003E '000.0.0', 'matches' =\u003E false, 'expectation' =\u003E []];\n        yield 'subject 6' =\u003E ['subject' =\u003E '000.0.000', 'matches' =\u003E false, 'expectation' =\u003E []];\n        yield 'subject 7' =\u003E ['subject' =\u003E '000.000.0', 'matches' =\u003E false, 'expectation' =\u003E []];\n    }\n\n    /**\n     * @param array\u003Cint|string, mixed\u003E $expectation\n     */\n    #[DataProvider('providePatternSubjects')]\n    public function test_the_pattern_matches_as_the_engine_answered(string $subject, bool $matches, array $expectation): void\n    {\n        if ($matches) {\n            self::assertPatternMatches(self::PATTERN, $subject, $expectation);\n\n            return;\n        }\n        self::assertPatternDoesNotMatch(self::PATTERN, $subject);\n    }\n\n    public function test_the_pattern_compiles(): void\n    {\n        self::assertPatternCompiles(self::PATTERN);\n        self::assertPatternIsLinear(self::PATTERN);\n    }\n}\n",
+            "assertions": 8,
+            "linear": true,
+            "refused": 0
         },
         "error": null
     }
