@@ -33,6 +33,21 @@ use Random\Randomizer;
  */
 final class MersenneTwister
 {
+    /**
+     * The twister held here, word by word.
+     */
+    public const OWN = 'own';
+
+    /**
+     * PHP 8.2's randomizer over an Mt19937 engine of this instance's own.
+     */
+    public const RANDOMIZER = 'randomizer';
+
+    /**
+     * The process's own twister, mt_srand() then mt_rand().
+     */
+    public const HOST = 'host';
+
     private const N = 624;
 
     private const M = 397;
@@ -51,21 +66,6 @@ final class MersenneTwister
     private array $state = [];
 
     private int $next = self::N;
-
-    /**
-     * The twister held here, word by word.
-     */
-    public const OWN = 'own';
-
-    /**
-     * PHP 8.2's randomizer over an Mt19937 engine of this instance's own.
-     */
-    public const RANDOMIZER = 'randomizer';
-
-    /**
-     * The process's own twister, mt_srand() then mt_rand().
-     */
-    public const HOST = 'host';
 
     private readonly string $engine;
 
