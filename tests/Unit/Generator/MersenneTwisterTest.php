@@ -175,6 +175,11 @@ final class MersenneTwisterTest extends TestCase
     #[Test]
     public function test_the_own_twister_leaves_the_processes_sequence_alone(): void
     {
+        // Where an integer cannot hold a word, the own engine is refused
+        // before it could draw.
+        if (\PHP_INT_SIZE < 8) {
+            $this->expectException(\LogicException::class);
+        }
         mt_srand(2026, \MT_RAND_MT19937);
         $first = mt_rand(0, 1000);
         mt_srand(2026, \MT_RAND_MT19937);
