@@ -132,7 +132,9 @@ final class PlaygroundTraceInputTest extends TestCase
         // the split, with the same fault the analyze op reports. The page
         // shows the engine's own verdict, so no trace is offered.
         $regex = self::withModifier('e');
-        $this->assertSame("preg_match(): Unknown modifier 'e'", EngineProbe::warning($regex));
+        // PHP 8.1 to 8.3 name the removed eval modifier; 8.4 on treat it as
+        // any letter it does not know (php_pcre.c, the modifier switch).
+        $this->assertSame(\PHP_VERSION_ID >= 80400 ? "preg_match(): Unknown modifier 'e'" : 'preg_match(): The /e modifier is no longer supported, use preg_replace_callback instead', EngineProbe::warning($regex));
 
         $payload = self::traceInput($driver, $root, $regex, 'a');
 
