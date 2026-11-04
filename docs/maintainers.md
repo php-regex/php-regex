@@ -695,20 +695,23 @@ shim test's table.
 
 The options PHP passes are a table, `docs/assets/js/php-pcre-options.js`,
 one row per exact PHP version the page's engines report, each read from
-`ext/pcre/php_pcre.c` at the version's tag and naming the commit. A new
-engine version needs its row, generated from a php-src checkout with every
-row the table already holds and the new version's tag last (the generator
-writes only the tags it is given, in that order):
+`ext/pcre/php_pcre.c` at the version's tag and naming the commit. The
+table holds one row per engine, never two for the same minor:
+`bin/playground-check` boots each engine and requires its exact version.
+When php-wasm moves an engine (8.4.1 to 8.4.2), that engine's tag is
+replaced in the command; a new minor adds its tag. The generator writes
+only the tags it is given, in that order:
 
 ```bash
-php wasm/pcre2-trace/php-pcre-options/generate.php /path/to/php-src php-8.1.28 php-8.2.11 php-8.3.11 php-8.4.1 php-8.5.2 php-<new version>
+php wasm/pcre2-trace/php-pcre-options/generate.php /path/to/php-src php-8.1.28 php-8.2.11 php-8.3.11 php-8.4.1 php-8.5.2
 ```
 
 The row's excerpt of `php_pcre.c` goes beside the others under
 `tests/Documentation/Fixtures/php-pcre/<version>.txt`, headed by the tag
-and the commit, and the version joins the list in
-`PhpPcreOptionsTableTest`, the versions the page offers: the test fails,
-version named, until the excerpt and the row agree.
+and the commit, and the version takes its place in the list in
+`PhpPcreOptionsTableTest`, the versions the page offers; an upgraded
+engine's old excerpt and list entry go. The test fails, version named,
+until the excerpt and the row agree.
 
 The rule behind all of it: the tab serves no trace it cannot vouch for. A
 php-wasm upgrade whose engine reports a PHP version without a row makes the
