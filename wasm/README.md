@@ -85,9 +85,10 @@ the returned pointer and releases it with `pcre2_trace_free()`.
 ### Checking the shim against pcre2test
 
 `tests/Documentation/PcreTraceShimTest.php` compiles `trace.c` and
-`trace-cli.c` with the host's `cc` against `pcre2-config --cflags --libs8`
-(with an rpath to that library, so another libpcre2-8 earlier in the
-linker's path cannot answer instead),
+`trace-cli.c` with the host's `cc` against `pcre2-config --cflags` and the
+static `libpcre2-8.a` beside the headers (so another libpcre2-8 earlier in
+the dynamic linker's path cannot answer instead; `--libs8` when there is no
+archive),
 then compares the shim's JSON with the trace `pcre2test` itself prints for
 the same patterns (`tests/Documentation/Fixtures/pcre2-trace/cases.txt`),
 pinned verbatim per PCRE2 release as `<release>.txt`. Pinned releases:

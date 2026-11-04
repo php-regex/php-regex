@@ -470,26 +470,44 @@ final class PcreTraceShimTest extends TestCase
             self::assertFileExists(self::SHIM.'/'.$file);
         }
         $binary = self::buildDirectory().'/pcre2-trace';
-        $libs = trim((string) shell_exec('pcre2-config --libs8'));
-        // The library the headers describe, wherever the dynamic linker would
-        // look first: a host may carry another libpcre2-8 ahead of it (a PHP
-        // build of its own), and the shim must run the release it compiled for.
-        preg_match_all('/(?:^|\s)-L(\S+)/', $libs, $dirs);
-        $rpath = implode(' ', array_map(static fn (string $dir): string => '-Wl,-rpath,'.escapeshellarg($dir), $dirs[1]));
         $compile = \sprintf(
-            'cc -O1 -o %s %s %s %s %s %s 2>&1',
+            'cc -O1 -o %s %s %s %s %s 2>&1',
             escapeshellarg($binary),
             escapeshellarg(self::SHIM.'/trace.c'),
             escapeshellarg(self::SHIM.'/trace-cli.c'),
             trim((string) shell_exec('pcre2-config --cflags')),
-            $libs,
-            $rpath,
+            self::library(),
         );
         exec($compile, $output, $exit);
         self::assertSame(0, $exit, "The shim does not compile:\n".$compile."\n".implode("\n", $output));
         self::assertFileExists($binary);
 
         return self::$binary = $binary;
+    }
+
+    /**
+     * The library the headers describe, linked statically when its archive
+     * is there: a host may carry another libpcre2-8 ahead of it for the
+     * dynamic linker (a PHP build of its own, a newer release), and the shim
+     * must run the release it was compiled for.
+     */
+    private static function library(): string
+    {
+        $libs = trim((string) shell_exec('pcre2-config --libs8'));
+        preg_match_all('/(?:^|\s)-L(\S+)/', $libs, $dirs);
+        $candidates = $dirs[1];
+        $pkgconfig = trim((string) shell_exec('pkg-config --variable=libdir libpcre2-8 2>/dev/null'));
+        if ('' !== $pkgconfig) {
+            $candidates[] = $pkgconfig;
+        }
+        $candidates[] = trim((string) shell_exec('pcre2-config --prefix')).'/lib';
+        foreach ($candidates as $dir) {
+            if (is_file($dir.'/libpcre2-8.a')) {
+                return escapeshellarg($dir.'/libpcre2-8.a');
+            }
+        }
+
+        return $libs;
     }
 
     private static function buildDirectory(): string
