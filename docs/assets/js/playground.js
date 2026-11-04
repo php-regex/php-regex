@@ -2447,7 +2447,14 @@
 
   function onProbeCheck(request, payload) {
     var probe = probes[request.php];
-    if (!probe || (payload.engine && payload.engine.php !== request.php)) {
+    if (!probe) {
+      return;
+    }
+    if (payload.engine && payload.engine.php !== request.php) {
+      // Another PHP answered: the witness gets that as its outcome, which
+      // the module never gives, so the probe ends in a named disagreement
+      // instead of asking the same witness again.
+      probe.engine[request.probe] = 'PHP ' + payload.engine.php + ' answered';
       return;
     }
     probe.engine[request.probe] = engineOutcome(payload.checks && payload.checks[0]);

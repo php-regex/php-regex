@@ -424,6 +424,13 @@ if (!\function_exists('phpregex_pcre_options_parse')) {
 
                 return 2;
             }
+            if ([] === $rows) {
+                // An empty table would disable the step debugger on every
+                // engine: the tracked one is kept.
+                fwrite(\STDERR, "generate.php: no row to write, the table is left as it is\n".$usage);
+
+                return 2;
+            }
             $target = \dirname(__DIR__, 3).'/docs/assets/js/php-pcre-options.js';
             file_put_contents($target, phpregex_pcre_options_render($rows));
             fwrite(\STDOUT, \sprintf("%s: %d rows (%s)\n", $target, \count($rows), implode(', ', array_keys($rows))));

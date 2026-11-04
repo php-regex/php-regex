@@ -123,6 +123,24 @@ final class PhpPcreOptionsTableTest extends TestCase
     }
 
     #[Test]
+    public function test_the_generator_refuses_to_write_a_table_without_rows(): void
+    {
+        $before = (string) file_get_contents(self::TABLE);
+
+        try {
+            exec(\sprintf('%s %s --from-file 2>&1', escapeshellarg(\PHP_BINARY), escapeshellarg(self::GENERATOR)), $output, $exit);
+            $after = (string) file_get_contents(self::TABLE);
+        } finally {
+            // A generator without the guard overwrites the tracked table.
+            file_put_contents(self::TABLE, $before);
+        }
+
+        $this->assertSame(2, $exit, 'No row to write is a usage error: '.implode("\n", $output));
+        $this->assertSame($before, $after, 'The tracked table is left as it was.');
+        $this->assertStringContainsString('no row', implode("\n", $output));
+    }
+
+    #[Test]
     public function test_the_table_has_a_row_per_offered_php_version(): void
     {
         $table = self::table();

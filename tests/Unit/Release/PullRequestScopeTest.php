@@ -136,12 +136,12 @@ final class PullRequestScopeTest extends TestCase
         $block = self::pullRequestBlock('documentation.yml');
 
         $this->assertMatchesRegularExpression('~^    branches: \[ 2\.x \]$~m', $block);
-        // The prose, plus the trace module's sources: the module is rebuilt and
-        // compared with the bundle by this workflow, so a change under wasm/
-        // runs it (and still runs the whole suite, where the shim test lives).
+        // The prose, plus what only this workflow runs: the trace module's
+        // sources (rebuilt and compared with the bundle), the two bundle
+        // scripts and the pinned traces the Node check reads.
         $expected = self::PROSE;
-        array_splice($expected, array_search('art/**', $expected, true) + 1, 0, ['wasm/**']);
-        $this->assertSame($expected, self::listUnder('paths', $block), 'The documentation tests read the prose and the module sources.');
+        array_splice($expected, array_search('art/**', $expected, true) + 1, 0, ['wasm/**', 'bin/playground-bundle', 'bin/playground-check', 'tests/Documentation/Fixtures/pcre2-trace/**']);
+        $this->assertSame($expected, self::listUnder('paths', $block), 'The documentation tests read the prose, the module sources and what the bundle check reads.');
         $this->assertStringNotContainsString("\n  push:", $workflow, 'A push to the branch runs the whole suite, these tests in it.');
         $this->assertStringContainsString("\n  workflow_dispatch:\n", $workflow);
         $this->assertStringContainsString("permissions:\n  contents: read\n", $workflow);
