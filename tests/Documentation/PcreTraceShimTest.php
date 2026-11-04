@@ -470,13 +470,20 @@ final class PcreTraceShimTest extends TestCase
             self::assertFileExists(self::SHIM.'/'.$file);
         }
         $binary = self::buildDirectory().'/pcre2-trace';
+        $libs = trim((string) shell_exec('pcre2-config --libs8'));
+        // The library the headers describe, wherever the dynamic linker would
+        // look first: a host may carry another libpcre2-8 ahead of it (a PHP
+        // build of its own), and the shim must run the release it compiled for.
+        preg_match_all('/(?:^|\s)-L(\S+)/', $libs, $dirs);
+        $rpath = implode(' ', array_map(static fn (string $dir): string => '-Wl,-rpath,'.escapeshellarg($dir), $dirs[1]));
         $compile = \sprintf(
-            'cc -O1 -o %s %s %s %s %s 2>&1',
+            'cc -O1 -o %s %s %s %s %s %s 2>&1',
             escapeshellarg($binary),
             escapeshellarg(self::SHIM.'/trace.c'),
             escapeshellarg(self::SHIM.'/trace-cli.c'),
             trim((string) shell_exec('pcre2-config --cflags')),
-            trim((string) shell_exec('pcre2-config --libs8')),
+            $libs,
+            $rpath,
         );
         exec($compile, $output, $exit);
         self::assertSame(0, $exit, "The shim does not compile:\n".$compile."\n".implode("\n", $output));
