@@ -66,6 +66,18 @@ trait NativePcre2
     }
 
     /**
+     * Skip unless the headers the shim was compiled against and the library
+     * it runs describe one release: a host may carry the headers of one
+     * install and, ahead of them, the library of another.
+     */
+    private function requiresMatchingPcre2(string $headers, string $library): void
+    {
+        if ($headers !== $library) {
+            $this->markTestSkipped(\sprintf('The trace shim was compiled against the PCRE2 %s headers but runs the PCRE2 %s library on this host (PHP %s runs PCRE2 %s).', $headers, $library, \PHP_VERSION, \PCRE_VERSION));
+        }
+    }
+
+    /**
      * The path of a tool on the PATH, or null.
      */
     private static function nativePcre2Tool(string $name): ?string

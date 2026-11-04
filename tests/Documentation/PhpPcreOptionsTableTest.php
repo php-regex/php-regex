@@ -284,8 +284,12 @@ final class PhpPcreOptionsTableTest extends TestCase
         // the engine probe rather than a literal call the analyser would
         // judge against its own PHP.
         $this->assertSame(\array_key_exists('n', $row['modifiers']), EngineProbe::compiles('/(a)/n'), 'PHP '.\PHP_VERSION.' and the row disagree on the n modifier.');
-        $this->assertSame(\array_key_exists('r', $row['extra']), EngineProbe::compiles('/k/ir'), 'PHP '.\PHP_VERSION.' and the row disagree on the r modifier.');
-        $this->assertSame(0 !== ($row['extra']['always'] & self::EXTRA_ALLOW_LOOKAROUND_BSK), EngineProbe::compiles('/(?<=a\K)bc/'), 'PHP '.\PHP_VERSION.' and the row disagree on \K in a lookbehind.');
+        // php_pcre.c guards r and the BSK default with #ifdef on the PCRE2
+        // macro, so a PHP built against an older external PCRE2 has neither:
+        // the macros appeared in PCRE2 10.43 and 10.38.
+        $pcre2 = explode(' ', \PCRE_VERSION)[0];
+        $this->assertSame(\array_key_exists('r', $row['extra']) && version_compare($pcre2, '10.43', '>='), EngineProbe::compiles('/k/ir'), 'PHP '.\PHP_VERSION.' (PCRE2 '.$pcre2.') and the row disagree on the r modifier.');
+        $this->assertSame(0 !== ($row['extra']['always'] & self::EXTRA_ALLOW_LOOKAROUND_BSK) && version_compare($pcre2, '10.38', '>='), EngineProbe::compiles('/(?<=a\K)bc/'), 'PHP '.\PHP_VERSION.' (PCRE2 '.$pcre2.') and the row disagree on \K in a lookbehind.');
         $this->assertSame(1, @preg_match('/\w+/u', 'café', $m));
         $this->assertSame(['café'], $m, 'u means UTF|UCP: \w reads é.');
     }

@@ -104,6 +104,7 @@ final class PcreTraceShimTest extends TestCase
     protected function setUp(): void
     {
         $this->requiresNativePcre2();
+        $this->requiresMatchingPcre2(self::headers(), self::release());
     }
 
     /**
@@ -131,7 +132,7 @@ final class PcreTraceShimTest extends TestCase
         $release = self::release();
 
         $this->assertMatchesRegularExpression('/^10\.\d{2}$/', $release);
-        $this->assertSame(trim((string) shell_exec('pcre2-config --version')), $release, 'The shim links the pcre2 that pcre2-config describes.');
+        $this->assertSame(self::headers(), $release, 'The shim runs the PCRE2 release its headers describe.');
     }
 
     /**
@@ -423,6 +424,17 @@ final class PcreTraceShimTest extends TestCase
 
     // --- the shim as a command ----------------------------------------------
 
+    /**
+     * The PCRE2 release of the headers the shim was compiled against.
+     */
+    private static function headers(): string
+    {
+        $run = self::command([self::binary(), '--headers']);
+        self::assertSame(0, $run['exit'], $run['stderr']);
+
+        return trim($run['stdout']);
+    }
+
     private static function release(): string
     {
         $run = self::command([self::binary(), '--version']);
@@ -495,19 +507,18 @@ final class PcreTraceShimTest extends TestCase
     {
         $libs = trim((string) shell_exec('pcre2-config --libs8'));
         preg_match_all('/(?:^|\s)-L(\S+)/', $libs, $dirs);
-        $candidates = $dirs[1];
-        $pkgconfig = trim((string) shell_exec('pkg-config --variable=libdir libpcre2-8 2>/dev/null'));
-        if ('' !== $pkgconfig) {
-            $candidates[] = $pkgconfig;
-        }
-        $candidates[] = trim((string) shell_exec('pcre2-config --prefix')).'/lib';
+        $prefix = trim((string) shell_exec('pcre2-config --prefix'));
+        $multiarch = trim((string) shell_exec('cc -print-multiarch 2>/dev/null'));
+        // Only places the same pcre2-config names: another install's archive
+        // would pair one release's headers with another's library.
+        $candidates = array_merge($dirs[1], [$prefix.'/lib'], '' !== $multiarch ? [$prefix.'/lib/'.$multiarch] : []);
         foreach ($candidates as $dir) {
             if (is_file($dir.'/libpcre2-8.a')) {
                 return escapeshellarg($dir.'/libpcre2-8.a');
             }
         }
 
-        return $libs;
+        return $libs.implode('', array_map(static fn (string $dir): string => ' -Wl,-rpath,'.escapeshellarg($dir), $dirs[1]));
     }
 
     private static function buildDirectory(): string

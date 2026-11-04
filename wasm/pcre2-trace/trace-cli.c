@@ -18,8 +18,11 @@
  * the two files; the trace JSON goes to stdout and the exit code is 0.
  *
  *   pcre2-trace --version
+ *   pcre2-trace --headers
  *
- * prints the PCRE2 release the shim links. Usage errors and unreadable
+ * print the PCRE2 release the shim links, and the release of the headers it
+ * was compiled against; the two differ only on a host that pairs one
+ * install's headers with another's library. Usage errors and unreadable
  * files go to stderr with exit code 2.
  */
 
@@ -28,6 +31,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/* For PCRE2_MAJOR and PCRE2_MINOR, the release of the headers. */
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 
 #include "trace.h"
 
@@ -119,8 +126,13 @@ int main(int argc, char **argv)
 
         return 0;
     }
+    if (argc == 2 && strcmp(argv[1], "--headers") == 0) {
+        printf("%d.%02d\n", PCRE2_MAJOR, PCRE2_MINOR);
+
+        return 0;
+    }
     if (argc != 8) {
-        fprintf(stderr, "usage: pcre2-trace <compile_options> <extra_options> <match_limit> <depth_limit> <step_cap> <pattern-file> <subject-file>\n       pcre2-trace --version\n");
+        fprintf(stderr, "usage: pcre2-trace <compile_options> <extra_options> <match_limit> <depth_limit> <step_cap> <pattern-file> <subject-file>\n       pcre2-trace --version\n       pcre2-trace --headers\n");
 
         return 2;
     }
