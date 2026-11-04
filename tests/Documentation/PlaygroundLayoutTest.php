@@ -208,6 +208,12 @@ final class PlaygroundLayoutTest extends TestCase
         }
 
         $this->assertSame(['diagnostics', 'matches', 'redos'], $tools, 'The state of the product reads on the closed tabs.');
+
+        // On a phone the counts go before the labels: a badge with a count
+        // and no dot of its own shows a dot in its color instead.
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/@media \(max-width: 639px\) \{(?:(?!\n\}).)*\.pg-tab-badge\.is-count::before,\s*\.pg-tab-badge\.is-lint::before \{([^}]*)\}/s', $stylesheet, $dot));
+        $this->assertStringContainsString('background: currentColor;', $dot[1]);
     }
 
     #[Test]
@@ -255,6 +261,8 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringContainsString('position: sticky;', $column[1]);
         $this->assertStringContainsString('max-height:', $column[1]);
         $this->assertStringContainsString('overflow: auto;', $column[1]);
+        $this->assertStringContainsString('scroll-padding-top: var(--pg-strip-h, 3rem);', $column[1], 'A row brought into view stops under the strip, one row of tabs or two.');
+        $this->assertStringContainsString("el.results.style.setProperty('--pg-strip-h', el.tabStrip.offsetHeight + 'px');", self::source(self::SCRIPT), 'The strip measures itself.');
         $this->assertSame(1, preg_match('/\.pg-results > \.pg-tabs \{([^}]*)\}/', $stylesheet, $strip));
         $this->assertStringContainsString('position: sticky;', $strip[1]);
         $this->assertStringContainsString('top: 0;', $strip[1]);

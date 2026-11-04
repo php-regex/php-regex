@@ -2302,10 +2302,16 @@
   });
 
   // The strip stays at the top of the answers as they scroll under it; a
-  // shadow under it says something is there.
+  // shadow under it says something is there. Its height, one row of tabs
+  // or two, is what a row brought into view must clear.
   el.results.addEventListener('scroll', function () {
     el.tabStrip.classList.toggle('is-scrolled', el.results.scrollTop > 0);
   }, { passive: true });
+  function measureStrip() {
+    el.results.style.setProperty('--pg-strip-h', el.tabStrip.offsetHeight + 'px');
+  }
+  window.addEventListener('resize', measureStrip);
+  measureStrip();
 
   // --- the tree's two voices ----------------------------------------------
 

@@ -4842,8 +4842,9 @@ body.search-open {
     position: sticky;
     top: calc(var(--header-h) + 1rem);
     /* A row the keyboard or the pointer brings into view stops under the
-       pinned strip of tabs, never behind it. */
-    scroll-padding-top: 3rem;
+       pinned strip of tabs, never behind it: the strip's own height, one
+       row of tabs or two, measured by the script. */
+    scroll-padding-top: var(--pg-strip-h, 3rem);
     height: clamp(24rem, calc(100vh - var(--header-h) - 10rem), 44rem);
     max-height: calc(100vh - var(--header-h) - 2rem);
     overflow: auto;
@@ -5874,6 +5875,16 @@ body.search-open {
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+  /* A badge that said its state with a count alone keeps a dot of its
+     color, so the closed tab still shows there is something to read. */
+  .pg-tab-badge.is-count::before,
+  .pg-tab-badge.is-lint::before {
+    content: '';
+    width: .4rem;
+    height: .4rem;
+    background: currentColor;
+    border-radius: 50%;
   }
 }
 /* The verdict, large, then how sure it is on a line of its own. A high
