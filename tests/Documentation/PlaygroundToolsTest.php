@@ -653,7 +653,7 @@ final class PlaygroundToolsTest extends TestCase
         // Judged for an older engine, whose checks the page hands over: the
         // header names that engine, not the one that wrote the file.
         $checks = [['matched' => 1, 'error' => null, 'groups' => ['0' => ['ab', 0], '1' => ['b', 1]]]];
-        $payload = PlaygroundDriver::tool($driver, $root, 'export', '/a(b)/', ['subjects' => ['ab'], 'checks' => $checks], ['php' => '8.0.30', 'pcre' => '10.35']);
+        $payload = self::export($driver, $root, '/a(b)/', ['ab'], ['checks' => $checks], ['php' => '8.0.30', 'pcre' => '10.35']);
 
         $this->assertStringContainsString('from the answers of PHP 8.0.30 and PCRE2 10.35.', $payload['export']['class'] ?? '');
     }
@@ -940,15 +940,16 @@ final class PlaygroundToolsTest extends TestCase
     }
 
     /**
-     * @param list<string>         $subjects
-     * @param array<string, mixed> $fields
+     * @param list<string>                          $subjects
+     * @param array<string, mixed>                  $fields
+     * @param array{php: string, pcre: string}|null $target
      *
      * @return Export
      */
-    private static function export(string $driver, string $root, string $regex, array $subjects, array $fields = []): array
+    private static function export(string $driver, string $root, string $regex, array $subjects, array $fields = [], ?array $target = null): array
     {
         /** @var Export $answer */
-        $answer = PlaygroundDriver::tool($driver, $root, 'export', $regex, ['subjects' => $subjects] + $fields);
+        $answer = PlaygroundDriver::tool($driver, $root, 'export', $regex, ['subjects' => $subjects] + $fields, $target);
 
         return $answer;
     }
