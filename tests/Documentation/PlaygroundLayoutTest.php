@@ -21,12 +21,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The playground's window: what the visitor writes on the left (the title
- * bar, the examples, the pattern, the subject), what the engine answers on
- * the right, behind one strip of tabs. The tree is the first tab, the one
- * the home's title promises; the explanation is the tree's other voice.
- * The tests read the include, the script and the stylesheet as the page
- * ships them.
+ * The playground's window: a column of examples, then what the visitor
+ * writes (the pattern, the text), then what the engine answers, behind
+ * one strip of tabs. The tree is the first tab, the one the home's title
+ * promises; the explanation is the tree's other voice. The tests read the
+ * include, the script and the stylesheet as the page ships them.
  */
 #[Group('documentation')]
 final class PlaygroundLayoutTest extends TestCase
@@ -115,8 +114,11 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(0, self::nodes($xpath, $main.'//'.self::self('pg-match-list').' | '.$main.'//'.self::self('pg-explain').' | '.$main.'//'.self::self('pg-diagnostics')));
         $this->assertStringNotContainsString('pg-tools-note', self::source(self::INCLUDE), 'A note nothing writes.');
 
-        // What stays on the left: the examples and the two fields.
-        $this->assertSame(1, self::nodes($xpath, $main.'//'.self::self('pg-examples')));
+        // What stays in the writing column: the two fields. The examples
+        // stand in a column of their own, before it.
+        $this->assertSame(0, self::nodes($xpath, $main.'//'.self::self('pg-examples')), 'The examples are a column of the window, not a row of the fields.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/'.self::self('pg-examples')), 'The examples are the body\'s first column.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/'.self::self('pg-examples').'/following-sibling::*'.self::has('pg-main')), 'The fields follow the examples.');
         $this->assertSame(1, self::nodes($xpath, $main.'//textarea[@id="pg-pattern"]'));
         $this->assertSame(1, self::nodes($xpath, $main.'//textarea[@id="pg-subject"]'));
     }
@@ -303,7 +305,7 @@ final class PlaygroundLayoutTest extends TestCase
         $stylesheet = self::source(self::STYLESHEET);
         $section = substr($stylesheet, (int) strpos($stylesheet, '.hero-playground {'));
 
-        $this->assertSame(0, preg_match('/^\s*order:/m', $section), 'One column reads in the order of the markup: the answers after the subject.');
+        $this->assertSame(0, preg_match('/^\s*order:/m', $section), 'One column reads in the order of the markup: the examples, the fields, the answers.');
 
         $xpath = self::include();
         $columns = $xpath->query(self::byClass('pg-body').'/*');
@@ -313,7 +315,41 @@ final class PlaygroundLayoutTest extends TestCase
             $this->assertInstanceOf(\DOMElement::class, $column);
             $classes[] = explode(' ', $column->getAttribute('class'))[0];
         }
-        $this->assertSame(['pg-main', 'pg-results', 'pg-loader'], $classes);
+        $this->assertSame(['pg-examples', 'pg-main', 'pg-results', 'pg-loader'], $classes);
+    }
+
+    /**
+     * A column of examples beside the fields: one click loads a pattern
+     * and its text. The pattern rides under the name — spelled in the
+     * mono voice, hidden where the column folds back into a row — and the
+     * window holds its three columns only where they fit; below that the
+     * list wraps above the fields (a phone scrolls it as one row).
+     */
+    #[Test]
+    public function test_the_examples_stand_in_their_own_column(): void
+    {
+        $xpath = self::include();
+
+        $examples = $xpath->query(self::byClass('pg-examples').'/li/'.self::self('pg-example'));
+        $this->assertNotFalse($examples);
+        $this->assertGreaterThanOrEqual(10, $examples->length, 'A column is worth a list: the examples are many.');
+        foreach ($examples as $example) {
+            $this->assertInstanceOf(\DOMElement::class, $example);
+            $name = $xpath->evaluate('string(.//*[contains(concat(" ", normalize-space(@class), " "), " pg-example-name ")])', $example);
+            $this->assertNotSame('', $name, 'Every example is named.');
+            $pattern = $xpath->evaluate('string(.//*[contains(concat(" ", normalize-space(@class), " "), " pg-example-pattern ")])', $example);
+            $this->assertSame($example->getAttribute('data-regex'), $pattern, 'The line under the name is the pattern the click loads.');
+            $this->assertNotSame('', $example->getAttribute('data-regex'));
+            $this->assertNotSame('', $example->getAttribute('data-subject'), 'An example carries its own text to match against.');
+            $this->assertSame($example->getAttribute('data-regex'), $example->getAttribute('title'), 'The tooltip says the whole pattern.');
+        }
+
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/\.pg-example-pattern \{\s*display: none;/', $stylesheet), 'The pattern line waits for the column to have room.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-body \{([^}]*)\}/', $stylesheet, $wide), 'The widest screens give the body its three columns.');
+        $this->assertSame(1, preg_match('/grid-template-columns:\s*minmax\([^;]*\)\s+minmax\(0, 2fr\)\s+minmax\(0, 3fr\);/', $wide[1]), 'Examples, fields, answers — three tracks.');
+        $this->assertSame(1, preg_match('/@media \(max-width: 1023px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \{([^}]*)\}/', $stylesheet, $narrow), 'A phone keeps one row: the list scrolls, the fields stay near.');
+        $this->assertStringContainsString('overflow-x: auto;', $narrow[1]);
     }
 
     #[Test]

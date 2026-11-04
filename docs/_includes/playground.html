@@ -9,10 +9,13 @@
   The data is embedded as JSON. Liquid writes "<" back when it re-encodes,
   so the include escapes it: a "<" could otherwise close the script element.
 
-  A window: the title bar holds the PHP version, Run and the state; on the
-  left, what the visitor writes (the examples, the pattern, the text);
-  on the right, what the engine answers, behind one strip of tabs (one
-  column under 1024px, the answers after the text). The tree is the
+  A window: the title bar holds the PHP version, Run and the state; the
+  examples stand in a column of their own, each carrying its pattern
+  under its name, then what the visitor writes (the pattern, the text);
+  on the right, what the engine answers, behind one strip of tabs. Under
+  1280px the column folds back into a row above the fields, one a phone
+  scrolls; under 1024px the window runs on one column, the answers after
+  the text. The tree is the
   first tab, the one the home's title promises, and the explanation its
   other voice; then the diagnostics, the matches, and what the console
   does with a pattern: the ReDoS verdict with its attack string, the
@@ -50,14 +53,20 @@
     </div>
   </div>
   <div class="pg-body">
+    <ul class="pg-examples" aria-label="Examples">
+      <li><span class="pg-examples-label">Examples</span></li>
+      <li><button type="button" class="pg-example" data-regex="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m" data-subject="2026-11-02&#10;2026-11-19&#10;not a date" title="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m"><span class="pg-example-name">named groups</span><span class="pg-example-pattern">/^(?&lt;year&gt;\d{4})-(?&lt;month&gt;\d{2})-(?&lt;day&gt;\d{2})$/m</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/[\w.+-]+@[\w-]+\.[\w.-]+/i" data-subject="Write to hello@php-regex.com or to noreply@example.org." title="/[\w.+-]+@[\w-]+\.[\w.-]+/i"><span class="pg-example-name">e-mail addresses</span><span class="pg-example-pattern">/[\w.+-]+@[\w-]+\.[\w.-]+/i</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/(?<=@)[\w.-]+(?=\.)/" data-subject="Write to hello@php-regex.com or noreply@example.org" title="/(?<=@)[\w.-]+(?=\.)/"><span class="pg-example-name">lookaround</span><span class="pg-example-pattern">/(?&lt;=@)[\w.-]+(?=\.)/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\b(\w+) \1\b/i" data-subject="This this is a a duplicated word test, very very nice." title="/\b(\w+) \1\b/i"><span class="pg-example-name">repeated words</span><span class="pg-example-pattern">/\b(\w+) \1\b/i</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i" data-subject="Colors: #fff, #B14E06, #12ab34 and #12345." title="/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i"><span class="pg-example-name">hex colors</span><span class="pg-example-pattern">/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/&quot;\w++&quot;/" data-subject="Say &quot;hello&quot; and &quot;a b&quot;, not &quot;unclosed." title="/&quot;\w++&quot;/"><span class="pg-example-name">possessive quotes</span><span class="pg-example-pattern">/&quot;\w++&quot;/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\((?:[^()]++|(?R))*\)/" data-subject="(a(b)c) and ((x)) but (broken" title="/\((?:[^()]++|(?R))*\)/"><span class="pg-example-name">balanced parentheses</span><span class="pg-example-pattern">/\((?:[^()]++|(?R))*\)/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/" data-subject="IPs: 192.168.1.10, 8.8.8.8, 256.1.1.1 and 10.0.0.255." title="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/"><span class="pg-example-name">IPv4 addresses</span><span class="pg-example-pattern">/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/^(a+)+$/" data-subject="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab" title="/^(a+)+$/"><span class="pg-example-name">catastrophic backtracking</span><span class="pg-example-pattern">/^(a+)+$/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\p{Lu}\p{Ll}+/u" data-subject="Ünïcode Straße Ωmega" title="/\p{Lu}\p{Ll}+/u"><span class="pg-example-name">Unicode properties</span><span class="pg-example-pattern">/\p{Lu}\p{Ll}+/u</span></button></li>
+    </ul>
     <div class="pg-main">
-      <ul class="pg-examples" aria-label="Examples">
-        <li><span class="pg-examples-label">Examples</span></li>
-        <li><button type="button" class="pg-example" data-regex="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m" data-subject="2026-11-02&#10;2026-11-19&#10;not a date" title="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m">named groups</button></li>
-        <li><button type="button" class="pg-example" data-regex="/[\w.+-]+@[\w-]+\.[\w.-]+/i" data-subject="Write to hello@php-regex.com or to noreply@example.org." title="/[\w.+-]+@[\w-]+\.[\w.-]+/i">e-mail addresses</button></li>
-        <li><button type="button" class="pg-example" data-regex="/^(a+)+$/" data-subject="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab" title="/^(a+)+$/">catastrophic backtracking</button></li>
-        <li><button type="button" class="pg-example" data-regex="/\p{Lu}\p{Ll}+/u" data-subject="Ünïcode Straße Ωmega" title="/\p{Lu}\p{Ll}+/u">Unicode properties</button></li>
-      </ul>
       <div class="pg-field">
         <label class="pg-label" for="pg-pattern">Pattern</label>
         <span class="pg-count" id="pg-pattern-count"></span>

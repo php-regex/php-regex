@@ -4842,8 +4842,8 @@ body.search-open {
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-pill);
 }
-/* Wide screens: what the visitor writes on the left, what the engine
-   answers on the right, pinned under the header and of one height
+/* Wide screens: the examples above the fields on the left, what the
+   engine answers on the right, pinned under the header and of one height
    whatever tab is open; the answers scroll under their strip of tabs. */
 @media (min-width: 1024px) {
   .pg-body {
@@ -4851,7 +4851,15 @@ body.search-open {
     column-gap: 1.25rem;
     align-items: start;
   }
+  .pg-examples {
+    grid-column: 1;
+  }
+  .pg-main {
+    grid-column: 1;
+  }
   .pg-body > .pg-results {
+    grid-column: 2;
+    grid-row: 1 / 3;
     position: sticky;
     top: calc(var(--header-h) + 1rem);
     /* A row the keyboard or the pointer brings into view stops under the
@@ -4873,6 +4881,53 @@ body.search-open {
   .pg-match-list {
     max-height: none;
     overflow: visible;
+  }
+}
+
+/* The widest screens: the examples stand in a column of their own
+   between the window's edge and the fields. Each carries its pattern
+   under its name, in the mono voice, cut to one line — the tooltip says
+   the whole of it. */
+@media (min-width: 1280px) {
+  .pg-body {
+    grid-template-columns: minmax(11rem, 13rem) minmax(0, 2fr) minmax(0, 3fr);
+  }
+  .pg-examples {
+    grid-row: 1;
+    flex-direction: column;
+    align-items: stretch;
+    gap: .3rem;
+  }
+  .pg-examples-label {
+    display: block;
+    margin: 0 0 .1rem;
+    padding: 0 .55rem;
+  }
+  .pg-main {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .pg-body > .pg-results {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .pg-example {
+    display: grid;
+    gap: .12rem;
+    padding: .4rem .55rem;
+    text-align: left;
+  }
+  .pg-example:hover {
+    background: var(--code-bg);
+  }
+  .pg-examples .pg-example-pattern {
+    display: block;
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    color: var(--ink-soft);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -5118,6 +5173,11 @@ body.search-open {
   padding: 0;
   list-style: none;
 }
+/* The gap speaks; the browser's own item margins do not (a column would
+   show them as a crooked head). */
+.pg-examples li {
+  margin: 0;
+}
 /* One label voice in the column: "Examples" speaks as "Pattern" and
    "Text" do. */
 .pg-examples-label {
@@ -5128,7 +5188,8 @@ body.search-open {
 }
 /* A chip of the row carries a name, not a state: the field's square
    corners, not the pill the status chips wear, and the page's own voice —
-   a button left to the browser would speak its default font. */
+   a button left to the browser would speak its default font. The pattern
+   under the name waits for the column to have room for it. */
 .pg-example {
   min-height: 1.75rem;
   padding: .3rem .65rem;
@@ -5151,6 +5212,20 @@ body.search-open {
   color: var(--ink);
   background: var(--amber-tint);
   border-color: var(--amber);
+}
+.pg-example-pattern {
+  display: none;
+}
+/* A phone: the list is one row the thumb scrolls — a column of chips
+   wrapped would push the fields a screen down. */
+@media (max-width: 1023px) {
+  .pg-examples {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: .25rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
 }
 
 /* The line keeps its height, said or not: the panels under it do not
