@@ -4878,57 +4878,6 @@ body.search-open {
     z-index: 1;
     background: var(--panel);
   }
-  .pg-match-list {
-    max-height: none;
-    overflow: visible;
-  }
-}
-
-/* The widest screens: the examples stand in a column of their own
-   between the window's edge and the fields. Each carries its pattern
-   under its name, in the mono voice, cut to one line — the tooltip says
-   the whole of it. */
-@media (min-width: 1280px) {
-  .pg-body {
-    grid-template-columns: minmax(11rem, 13rem) minmax(0, 2fr) minmax(0, 3fr);
-  }
-  .pg-examples {
-    grid-row: 1;
-    flex-direction: column;
-    align-items: stretch;
-    gap: .3rem;
-  }
-  .pg-examples-label {
-    display: block;
-    margin: 0 0 .1rem;
-    padding: 0 .55rem;
-  }
-  .pg-main {
-    grid-column: 2;
-    grid-row: 1;
-  }
-  .pg-body > .pg-results {
-    grid-column: 3;
-    grid-row: 1;
-  }
-  .pg-example {
-    display: grid;
-    gap: .12rem;
-    padding: .4rem .55rem;
-    text-align: left;
-  }
-  .pg-example:hover {
-    background: var(--code-bg);
-  }
-  .pg-examples .pg-example-pattern {
-    display: block;
-    overflow: hidden;
-    font-family: var(--font-mono);
-    font-size: .7rem;
-    color: var(--ink-soft);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
 }
 
 .pg-field {
@@ -5228,6 +5177,74 @@ body.search-open {
   }
 }
 
+/* The widest screens: the examples stand in a column of their own
+   between the window's edge and the fields — one size of box, each
+   carrying its pattern under its name, in the mono voice, cut to one
+   line (the tooltip says the whole of it). The writing column stretches
+   to the answers' height, and the text field takes what is left: a
+   field as tall as the window says a long text belongs here. This block
+   comes last in the section: the widest screens have the final word
+   over every base rule above. */
+@media (min-width: 1280px) {
+  .pg-body {
+    grid-template-columns: minmax(11rem, 13rem) minmax(0, 2fr) minmax(0, 3fr);
+  }
+  .pg-examples {
+    grid-row: 1;
+    flex-direction: column;
+    align-items: stretch;
+    gap: .3rem;
+  }
+  .pg-examples-label {
+    display: block;
+    margin: 0 0 .1rem;
+    padding: 0 .55rem;
+  }
+  .pg-main {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: stretch;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  .pg-field-text {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  /* The field's items align by baseline, for its label and its count
+     read on one line; the editor alone stretches into the row the
+     stylesheet gave it. */
+  .pg-field-text .pg-editor {
+    align-self: stretch;
+  }
+  .pg-body > .pg-results {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .pg-example {
+    display: grid;
+    gap: .12rem;
+    width: 100%;
+    padding: .4rem .55rem;
+    text-align: left;
+  }
+  .pg-example:hover {
+    background: var(--code-bg);
+  }
+  .pg-examples .pg-example-pattern {
+    display: block;
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    color: var(--ink-soft);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pg-editor-subject .pg-input {
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+  }
+}
+
 /* The line keeps its height, said or not: the panels under it do not
    move each time a run gesture lights a word in it. A zero-width space
    holds the line box while there is nothing to say. */
@@ -5294,81 +5311,6 @@ body.search-open {
 }
 .pg-error-slot:empty {
   display: none;
-}
-.pg-empty {
-  margin: 0;
-  font-size: .85rem;
-  color: var(--ink-soft);
-}
-
-.pg-match-list {
-  display: grid;
-  gap: .5rem;
-  max-height: 18rem;
-  margin: 0;
-  padding: 0;
-  overflow: auto;
-  list-style: none;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
-}
-.pg-match {
-  padding: .4rem .55rem;
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-s);
-}
-.pg-match:hover {
-  border-color: var(--amber);
-}
-.pg-match-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: .3rem .6rem;
-  font-size: .85rem;
-}
-.pg-match-n {
-  font-family: var(--font-mono);
-  font-size: .78rem;
-  color: var(--ink-soft);
-}
-.pg-match-value {
-  padding: .05rem .3rem;
-  font-size: .85rem;
-  background: var(--amber-tint);
-  border-radius: var(--radius-s);
-  overflow-wrap: anywhere;
-}
-.pg-match-at {
-  font-family: var(--font-mono);
-  font-size: .78rem;
-  color: var(--ink-soft);
-}
-.pg-groups {
-  display: grid;
-  /* The group, what it caught, where: the offsets align in a column. */
-  grid-template-columns: minmax(4.5rem, max-content) minmax(0, 1fr) max-content;
-  gap: .15rem .6rem;
-  align-items: baseline;
-  margin: .35rem 0 0;
-  font-size: .8rem;
-}
-.pg-group-at {
-  margin: 0;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-.pg-group-name {
-  font-family: var(--font-mono);
-  font-size: .78rem;
-  color: var(--ink-soft);
-}
-.pg-group-value {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.pg-group-value code {
-  font-size: .8rem;
 }
 
 /* Two voices, as the tree's rows: the construct's kind in the quiet
@@ -5743,24 +5685,20 @@ body.search-open {
   .pg-example {
     min-height: 2rem;
   }
-  .pg-match-list {
-    max-height: 14rem;
-  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .tree-row,
-  .pg-example,
-  .pg-match {
+  .pg-example {
     transition: border-color .12s ease, background-color .12s ease;
   }
 }
 
-/* The strip of tabs over the answers: three views of the analysis, five
+/* The strip of tabs over the answers: two views of the analysis, five
    tools. It follows the tabs pattern and speaks the editor's dialect:
    arrow keys move between tabs, the open one says so with an amber
    underline that lands on the strip's own edge, a closed one shows a
-   hairline under the pointer. Three tabs carry a badge: a dot in a state
+   hairline under the pointer. Two tabs carry a badge: a dot in a state
    color, a count, a word for a voice. */
 .pg-tabs {
   display: flex;
@@ -5974,7 +5912,7 @@ body.search-open {
   color: var(--ink-soft);
 }
 /* A phone: the strip wraps, and tighter tabs keep the tree, the
-   diagnostics, the matches and the verdict on its first row. A count is
+   diagnostics and the verdict on its first row. A count is
    the first thing to go, before any label: the dot still carries the
    state, and the count stays in the tab's name for a voice. */
 @media (max-width: 639px) {

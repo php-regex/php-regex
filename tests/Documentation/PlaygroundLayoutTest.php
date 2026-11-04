@@ -38,7 +38,6 @@ final class PlaygroundLayoutTest extends TestCase
     private const TABS = [
         'tree' => 'Tree',
         'diagnostics' => 'Diagnostics',
-        'matches' => 'Matches',
         'redos' => 'ReDoS',
         'transpile' => 'Translate',
         'samples' => 'Samples',
@@ -65,11 +64,14 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     #[Test]
-    public function test_the_eight_tabs_come_in_order(): void
+    public function test_the_seven_tabs_come_in_order(): void
     {
         $xpath = self::include();
         $tabs = $xpath->query('//*[@role="tab"]');
         $this->assertNotFalse($tabs);
+        $panels = $xpath->query('//*[@role="tabpanel"]');
+        $this->assertNotFalse($panels);
+        $this->assertCount(\count($tabs), $panels, 'Every panel is named by a tab; no answer without its strip.');
 
         $seen = [];
         foreach ($tabs as $i => $tab) {
@@ -227,7 +229,7 @@ final class PlaygroundLayoutTest extends TestCase
             $tools[] = $tab->getAttribute('data-tool');
         }
 
-        $this->assertSame(['diagnostics', 'matches', 'redos'], $tools, 'The state of the product reads on the closed tabs.');
+        $this->assertSame(['diagnostics', 'redos'], $tools, 'The state of the product reads on the closed tabs; the matches are said by the text field itself.');
 
         // On a phone the counts go before the labels: a badge with a count
         // and no dot of its own shows a dot in its color instead.
@@ -241,7 +243,7 @@ final class PlaygroundLayoutTest extends TestCase
     {
         $script = self::source(self::SCRIPT);
 
-        $this->assertStringContainsString("var TABS = ['tree', 'diagnostics', 'matches', 'redos', 'transpile', 'samples', 'format', 'trace'];", $script);
+        $this->assertStringContainsString("var TABS = ['tree', 'diagnostics', 'redos', 'transpile', 'samples', 'format', 'trace'];", $script);
         $this->assertStringContainsString("var activeTool = 'tree';", $script, 'A first visit opens on the tree.');
         $this->assertStringContainsString("'playground-tool'", $script, 'The chosen tab is remembered under the key it always had.');
     }
@@ -348,8 +350,35 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(1, preg_match('/\.pg-example-pattern \{\s*display: none;/', $stylesheet), 'The pattern line waits for the column to have room.');
         $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-body \{([^}]*)\}/', $stylesheet, $wide), 'The widest screens give the body its three columns.');
         $this->assertSame(1, preg_match('/grid-template-columns:\s*minmax\([^;]*\)\s+minmax\(0, 2fr\)\s+minmax\(0, 3fr\);/', $wide[1]), 'Examples, fields, answers — three tracks.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-example \{([^}]*)\}/', $stylesheet, $box), 'One column, one size of box.');
+        $this->assertStringContainsString('width: 100%;', $box[1], 'A box fills its item: no example shrinks to its name.');
         $this->assertSame(1, preg_match('/@media \(max-width: 1023px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \{([^}]*)\}/', $stylesheet, $narrow), 'A phone keeps one row: the list scrolls, the fields stay near.');
         $this->assertStringContainsString('overflow-x: auto;', $narrow[1]);
+    }
+
+    /**
+     * The text field is where the matches are read: it stands as tall as
+     * the answers beside it on a wide screen, and scrolls inside for a
+     * longer text — the stylesheet owns its height there, the script's
+     * auto-size keeps to the narrower layouts.
+     */
+    #[Test]
+    public function test_the_text_field_stands_as_tall_as_the_answers(): void
+    {
+        $xpath = self::include();
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-main').'//'.self::self('pg-field-text')), 'The text field carries its own class.');
+        $this->assertStringNotContainsString('pg-tool-matches', self::source(self::INCLUDE), 'The matches live in the text field; no tab holds them anymore.');
+
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-main \{([^}]*)\}/', $stylesheet, $main), 'The writing column stretches on a wide screen.');
+        $this->assertStringContainsString('align-self: stretch;', $main[1]);
+        $this->assertStringContainsString('grid-template-rows: auto minmax(0, 1fr) auto;', $main[1], 'The text field takes whatever height the answers leave.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-editor-subject \.pg-input \{([^}]*)\}/', $stylesheet, $input), 'The text input fills its editor on a wide screen.');
+        $this->assertStringContainsString('height: 100%;', $input[1]);
+        $this->assertStringContainsString('max-height: none;', $input[1], 'No cap cuts the fill short.');
+
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString("matchMedia('(min-width: 1280px)').matches", $script, 'The auto-size yields to the stylesheet exactly where the fill begins.');
     }
 
     #[Test]
