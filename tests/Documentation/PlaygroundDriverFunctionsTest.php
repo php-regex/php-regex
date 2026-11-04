@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Tests\Support\PlaygroundDriver;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,6 +24,7 @@ use PHPUnit\Framework\TestCase;
  * answer the other tests can only reach through an input the library may
  * never produce.
  */
+#[Group('documentation')]
 final class PlaygroundDriverFunctionsTest extends TestCase
 {
     public static function setUpBeforeClass(): void
