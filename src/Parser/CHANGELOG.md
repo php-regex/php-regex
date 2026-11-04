@@ -6,6 +6,8 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `FormatRefusal::note()` says in one sentence why the formatter gave a
+   pattern back as written, the sentence the console prints.
  * An empty script run, `(*sr:)` or `(*asr:)`, parses as a `ScriptRunNode`.
  * The ini masks fit a 32-bit PHP: `IniFlag::INT_MASK` is an int on every
    width, `IniFlag::unsignedInt()` reads a limit as the engine's unsigned

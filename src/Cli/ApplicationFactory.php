@@ -27,6 +27,7 @@ use PHPRegex\Cli\Command\LintArgumentParser;
 use PHPRegex\Cli\Command\LintCommand;
 use PHPRegex\Cli\Command\LintOutputRenderer;
 use PHPRegex\Cli\Command\LspCommand;
+use PHPRegex\Cli\Command\McpCommand;
 use PHPRegex\Cli\Command\ParseCommand;
 use PHPRegex\Cli\Command\RedosCommand;
 use PHPRegex\Cli\Command\SelfUpdateCommand;
@@ -90,6 +91,7 @@ final class ApplicationFactory
                 new LintOutputRenderer(),
             ),
             new LspCommand(),
+            new McpCommand(),
         ];
     }
 }

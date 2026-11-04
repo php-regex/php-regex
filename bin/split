@@ -39,6 +39,7 @@ SPLITS=(
     "src/Toolkit:regex-toolkit"
     "src/Cli:regex-cli"
     "src/LanguageServer:regex-language-server"
+    "src/Mcp:regex-mcp"
     "src/PHPStan:regex-phpstan"
     "src/PHPUnit:regex-phpunit"
     "src/Psalm:regex-psalm"

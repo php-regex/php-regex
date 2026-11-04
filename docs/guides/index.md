@@ -87,6 +87,14 @@ Diagnostics, hover explanations, completion, and quick fixes for PHP files in an
 
 <div class="guide-entry" markdown="1">
 
+### [MCP server](mcp.md)
+
+Validation, explanations, layout, translation and ReDoS verdicts served to a coding agent over the Model Context Protocol: Claude Code, Claude Desktop, Cursor, Zed, VS Code.
+
+</div>
+
+<div class="guide-entry" markdown="1">
+
 ### [CLI](cli.md)
 
 One binary for parsing, validation, explanations, diagrams, linting, ReDoS analysis, pattern comparison, and transpilation.

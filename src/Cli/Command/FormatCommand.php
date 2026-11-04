@@ -25,7 +25,6 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
-use PHPRegex\Parser\Printer\FormatRefusal;
 use PHPRegex\Parser\Printer\PatternFormatter;
 use PHPRegex\Parser\Text\Ascii;
 
@@ -142,7 +141,7 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
         $output->writeDocument($result->pattern."\n");
 
         if (null !== $result->refusal && !$output->isQuiet()) {
-            $output->writeError($output->warning('Note: '.self::refusalNote($result->refusal))."\n");
+            $output->writeError($output->warning('Note: '.$result->refusal->note())."\n");
         }
 
         return self::SUCCESS;
@@ -161,17 +160,5 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
         $width = (int) $value;
 
         return $width >= 1 ? $width : null;
-    }
-
-    private static function refusalNote(FormatRefusal $refusal): string
-    {
-        return match ($refusal) {
-            FormatRefusal::NewlineConvention => 'left as written: under (*CR), (*CRLF) or (*NUL) a # comment does not end at a line feed, so the pattern cannot be laid out over lines.',
-            FormatRefusal::SpacedQuantifier => 'left as written: a quantifier written with spaces, such as a{ 1,2 }, means something else before PCRE2 10.43 once x is added or dropped.',
-            FormatRefusal::ExtendedModeSwitchedOff => 'left as written: (?-x) or (?^) turns x off at the top level, where a line break would be a literal.',
-            FormatRefusal::LineBreakInName => 'left as written: a line break inside a name, such as (*MARK:…), has no escape, so it could not be told from layout.',
-            FormatRefusal::ParenthesisInComment => 'left as written: a # comment holds the ")" that balances the delimiter, and no (?#…) comment can hold it.',
-            FormatRefusal::DelimiterMisread => 'left as written: a \\c\\ hides a character of the delimiter from PHP, which laid out it would read, ending the pattern elsewhere.',
-        };
     }
 }

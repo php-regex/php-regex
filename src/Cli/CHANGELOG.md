@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex mcp` runs the MCP server of `php-regex/regex-mcp` over stdio, as
+   `regex lsp` runs the language server; the phar carries it. The CLI alone
+   names what to install.
+ * `regex validate --json` prints the pattern and its validation object, exit
+   code 1 for an invalid pattern; `regex explain --json` prints the pattern
+   and its explanation, and stops with the error envelope on a pattern the
+   target refuses.
  * `regex lint` reads the `matches` patterns of the Twig templates under the
    linted paths; `--no-twig` leaves them out.
  * `regex lint` names the author in its title and ends on the request for a

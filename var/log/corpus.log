@@ -1346,7 +1346,7 @@ corpus/PHPMailer/PHPMailer/src/PHPMailer.php:946:37
        - /\r\n|\r/m
        + /\r\n|\r/
 
-corpus/PHPMailer/PHPMailer/src/PHPMailer.php:1543:21
+corpus/PHPMailer/PHPMailer/src/PHPMailer.php:1544:21
     → /^(?!(?>(?1)"?(?>\\[ -~]|[^"])"?(?1)){255,})(?!(?>(?1)"?(?>\\[ -~]|[^"])"?(?1)){65,}@)((?>(?>(?>((?>(?>(?>\x0D\x0A)?[\t ])+|(?>[\t ]*\x0D\x0A)?[\t ]+)?)(\((?>(?2)(?>[\x01-\x08\x0B\x0C\x0E-'*-\[\]-\x7F]|\\[\x00-\x7F]|(?3)))*(?2)\)))+(?2))|(?2))?)([!#-'*+\/-9=?^-~-]+|"(?>(?2)(?>[\x01-\x08\x0B\x0C\x0E-!#-\[\]-\x7F]|\\[\x00-\x7F]))*(?2)")(?>(?1)\.(?1)(?4))*(?1)@(?!(?1)[a-z0-9-]{64,})(?1)(?>([a-z0-9](?>[a-z0-9-]*[a-z0-9])?)(?>(?1)\.(?!(?1)[a-z0-9-]{64,})(?1)(?5)){0,126}|\[(?:(?>IPv6:(?>([a-f0-9]{1,4})(?>:(?6)){7}|(?!(?:.*[a-f0-9][:\]]){8,})((?6)(?>:(?6)){0,6})?::(?7)?))|(?>(?>IPv6:(?>(?6)(?>:(?6)){5}:|(?!(?:.*[a-f0-9]:){6,})(?8)?::(?>((?6)(?>:(?6)){0,4}):)?))?(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?>\.(?9)){3}))\])(?1)$/isD
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything
@@ -1361,21 +1361,21 @@ corpus/PHPMailer/PHPMailer/src/PHPMailer.php:1543:21
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/PHPMailer/PHPMailer/src/PHPMailer.php:1561:21
+corpus/PHPMailer/PHPMailer/src/PHPMailer.php:1562:21
     → /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/sD
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/sD
        + /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/D
 
-corpus/PHPMailer/PHPMailer/src/PHPMailer.php:1578:21
+corpus/PHPMailer/PHPMailer/src/PHPMailer.php:1579:21
     → /^[-\p{L}\p{N}\p{M}.!#$%&'*+\/=?^_`{|}~]+@[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?(?:\.[\p{L}\p{N}\p{M}](?:[-\p{L}\p{N}\p{M}]{0,61}[\p{L}\p{N}\p{M}])?)*$/usD
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /^[-\p{L}\p{N}\p{M}.!#$%&'*+\/=?^_`{|}~]+@[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?(?:\.[\p{L}\p{N}\p{M}](?:[-\p{L}\p{N}\p{M}]{0,61}[\p{L}\p{N}\p{M}])?)*$/usD
        + /^[-\p{L}\p{N}\p{M}.!#$%&'*+\/=?^_`{|}~]+@[\p{L}\p{N}\p{M}](?:[\p{L}\p{N}\p{M}-]{0,61}[\p{L}\p{N}\p{M}])?(?:\.[\p{L}\p{N}\p{M}](?:[-\p{L}\p{N}\p{M}]{0,61}[\p{L}\p{N}\p{M}])?)*$/uD
 
-corpus/PHPMailer/PHPMailer/src/PHPMailer.php:2600:29
+corpus/PHPMailer/PHPMailer/src/PHPMailer.php:2601:29
     → /^\$PHPMAILER_LANG\['([a-z\d_]+)'\]\s*=\s*(["'])(.+)*?\2;/
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything
@@ -1386,7 +1386,7 @@ corpus/PHPMailer/PHPMailer/src/PHPMailer.php:2600:29
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/PHPMailer/PHPMailer/src/PHPMailer.php:2918:17
+corpus/PHPMailer/PHPMailer/src/PHPMailer.php:2919:17
     → /^<((([a-z\d!#$%&'*+\/=?^_`{|}~-]+(\.[a-z\d!#$%&'*+\/=?^_`{|}~-]+)*)|("(([\x01-\x08\x0B\x0C\x0E-\x1F\x7F]|[\x21\x23-\x5B\x5D-\x7E])|(\[\x01-\x09\x0B\x0C\x0E-\x7F]))*"))@(([a-z\d!#$%&'*+\/=?^_`{|}~-]+(\.[a-z\d!#$%&'*+\/=?^_`{|}~-]+)*)|(\[(([\x01-\x08\x0B\x0C\x0E-\x1F\x7F]|[\x21-\x5A\x5E-\x7E])|(\[\x01-\x09\x0B\x0C\x0E-\x7F]))*\])))>$/Di
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -1397,7 +1397,7 @@ corpus/PHPMailer/PHPMailer/src/PHPMailer.php:2918:17
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/PHPMailer/PHPMailer/src/PHPMailer.php:5043:24
+corpus/PHPMailer/PHPMailer/src/PHPMailer.php:5044:24
     → #^(.*?)[\\/]*(([^/\\]*?)(\.([^.\\/]+?)|))[\\/.]*$#m
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
@@ -1600,25 +1600,25 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Helper/Sample.php:90:65
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1142:51
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1180:51
     → /\d\d\d\d/
    TIP 
        - /\d\d\d\d/
        + /\d{4}/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1144:43
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1182:43
     → /^\d\d\d\d-\d\d-\d\d$/
    TIP 
        - /^\d\d\d\d-\d\d-\d\d$/
        + /^\d{4}-\d\d-\d\d$/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1146:49
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1184:49
     → /^\d\d\d\d-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
    TIP 
        - /^\d\d\d\d-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
        + /^\d{4}-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1148:49
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1186:49
     → /^\d\d?-[a-zA-Z]+-\d\d\d\d$/
    TIP 
        - /^\d\d?-[a-zA-Z]+-\d\d\d\d$/
@@ -2777,33 +2777,9 @@ corpus/Roave/DocbookTool/src/Writer/ConfluenceWriter.php:317:13
 Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/Seldaek/jsonlint — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
+### corpus/Seldaek/jsonlint — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-corpus/Seldaek/jsonlint/src/Seld/JsonLint/JsonParser.php:281:46
-    → {"(?:[^"]+|\\")*$}m
-   FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
-       ↳ Attack: "\"" . "!" x n . "\""
-       ↳ Replayed on PCRE2 10.49: preg_match fails from length 18 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [^"]+|\\"
-       ↳ Hotspot offsets: 4-13
-       ↳ Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic
-         backtracking.
-       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
-         (?>...) or possessive quantifiers (*+, ++).
-       ↳ Suggested (verify behavior):
-           - Make alternatives mutually exclusive or order longer alternatives first.
-           - Replace inner quantifiers with possessive variants or wrap them in (?>...).
-       ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
-   WARN  Nested quantifiers can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Alternation branches "[^"]+" and "\\\\"" have overlapping character sets, which may cause unnecessary
-       backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
-         changes match semantics.
-
-
 
 ### corpus/Seldaek/monolog — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
@@ -3924,7 +3900,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/deprecated.php:5175:17
        - /^#?([0-9a-fA-F]{1})([0-9a-fA-F]{1})([0-9a-fA-F]{1})$/
        + /^#?([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/
 
-corpus/WordPress/wordpress-develop/src/wp-includes/embed.php:965:14
+corpus/WordPress/wordpress-develop/src/wp-includes/embed.php:966:14
     → |(<blockquote>.*?</blockquote>)?.*(<iframe.*?></iframe>)|ms
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
@@ -4018,20 +3994,20 @@ corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:858:3
    FAIL  Character class holds "«", which without /u is the bytes \xC2 \xAB: the class matches each byte on its own.
        ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6553:26
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6554:26
     → #/(wp-admin/?.*|wp-login\.php.*)#i
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6558:26
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6559:26
     → #/[^/]*$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6570:27
+corpus/WordPress/wordpress-develop/src/wp-includes/functions.php:6571:27
     → #/[^/]*$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/html-api/class-wp-html-tag-processor.php:3982:27
+corpus/WordPress/wordpress-develop/src/wp-includes/html-api/class-wp-html-tag-processor.php:4006:27
     → /^-?>|--!?>/
    WARN  An anchor holds for its own alternative only: "--!?>" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "^(?:-?>|--!?>)".
@@ -5021,12 +4997,6 @@ Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest th
 ### corpus/code-lts/doctum — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
 ### corpus/codeigniter4/CodeIgniter4 — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
-corpus/codeigniter4/CodeIgniter4/admin/update-upgrade-guide.php:174:16
-    → /^Config\n------\n\n(.*?)(?=^[^\s-][^\n]*\n(?:-+|=+)$|\z)/msu
-   TIP 
-       - /^Config\n------\n\n(.*?)(?=^[^\s-][^\n]*\n(?:-+|=+)$|\z)/msu
-       + /^Config\n-{6}\n\n(.*?)(?=^[^\s\-][^\n]*\n(?:-+|=+)$|\z)/msu
-
 corpus/codeigniter4/CodeIgniter4/preload.php:92:17
     → /.+((?<!Test)+\.php$)/i
    WARN  Quantifier "+" on an assertion changes nothing: PCRE checks it once.
@@ -5330,7 +5300,7 @@ corpus/composer/composer/src/Composer/Repository/PlatformRepository.php:39:43
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
 
-corpus/composer/composer/src/Composer/Repository/Vcs/GitDriver.php:206:54
+corpus/composer/composer/src/Composer/Repository/Vcs/GitDriver.php:212:54
     → {^ *[^/]+/HEAD }
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
@@ -5759,7 +5729,7 @@ corpus/craftcms/cms/src/helpers/DateTimeHelper.php:301:48
        - /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d[\+\-]\d\d\:?\d\d$/
        + /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[+\-]\d\d:?\d\d$/
 
-corpus/craftcms/cms/src/helpers/ElementHelper.php:252:29
+corpus/craftcms/cms/src/helpers/ElementHelper.php:253:29
     → /^\/+|(?<=\/)\/+|\/+$/
    WARN  An anchor holds for its own alternative only: "(?<=\/)\/+" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "^(?:\/+|(?<=\/)\/+|\/+)$".
@@ -5790,7 +5760,7 @@ corpus/craftcms/cms/src/helpers/Json.php:96:25
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the second quantifier to its minimum.
 
-corpus/craftcms/cms/src/helpers/StringHelper.php:1024:20
+corpus/craftcms/cms/src/helpers/StringHelper.php:1027:20
     → /<\/?\w+(?:(?:\s+\w+(?:\s*=\s*(?:".*?"|'.*?'|[^'">\s]+))?)*\s*|\s*)\/?>/u
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "<0" . " 0=\"\" 0=\"\"" x n . "!>"
@@ -5813,12 +5783,12 @@ corpus/craftcms/cms/src/helpers/StringHelper.php:1024:20
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/craftcms/cms/src/helpers/StringHelper.php:1435:29
+corpus/craftcms/cms/src/helpers/StringHelper.php:1438:29
     → #/\r\n|\r|\n|<br.*/?>#isU
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/craftcms/cms/src/helpers/StringHelper.php:1854:29
+corpus/craftcms/cms/src/helpers/StringHelper.php:1857:29
     → #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -5829,7 +5799,7 @@ corpus/craftcms/cms/src/helpers/StringHelper.php:1854:29
        - #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
        + #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isuU
 
-corpus/craftcms/cms/src/helpers/StringHelper.php:2494:32
+corpus/craftcms/cms/src/helpers/StringHelper.php:2500:32
     → /['"‘’“”ʻ\[\]\(\)\{\}:]/
    FAIL  Character class holds "‘", which without /u is the bytes \xE2 \x80 \x98: the class matches each byte on its
        own.
@@ -5853,6 +5823,12 @@ corpus/craftcms/cms/src/services/Composer.php:321:24
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
+
+corpus/craftcms/cms/src/services/OAuth.php:424:59
+    → /^(-----BEGIN [A-Z ]+-----)(.+?)(-----END [A-Z ]+-----)$/
+   TIP 
+       - /^(-----BEGIN [A-Z ]+-----)(.+?)(-----END [A-Z ]+-----)$/
+       + /^(-{5}BEGIN [A-Z ]+-{5})(.+?)(-{5}END [A-Z ]+-{5})$/
 
 corpus/craftcms/cms/src/web/RedirectRule.php:74:51
     → /<([\w._-]+):?([^>]+)?>/
@@ -5947,14 +5923,14 @@ corpus/deployphp/deployer/src/Documentation/DocGen.php:404:23
 ### corpus/designsecurity/progpilot — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 
 ### corpus/doctrine/dbal — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
-corpus/doctrine/dbal/src/Platforms/SQLServerPlatform.php:1309:40
+corpus/doctrine/dbal/src/Platforms/SQLServerPlatform.php:1308:40
     → /[\s]+order\s+by\s/im
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /[\s]+order\s+by\s/im
        + /[\s]+order\s+by\s/i
 
-corpus/doctrine/dbal/src/Platforms/SQLite/SQLiteMetadataProvider.php:634:17
+corpus/doctrine/dbal/src/Platforms/SQLite/SQLiteMetadataProvider.php:635:17
     → # (?:CONSTRAINT\s+(\S+)\s+)? (?:FOREIGN\s+KEY[^)]+\)\s*)? REFERENCES\s+\S+\s*(?:\([^)]+\))? (?: [^,]*? (NOT\s+DEFERRABLE|DEFERRABLE) (?:\s+INITIALLY\s+(DEFERRED|IMMEDIATE))? )?#isx
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -5970,7 +5946,7 @@ corpus/doctrine/dbal/src/Platforms/SQLite/SQLiteMetadataProvider.php:634:17
        ---
        +                     )?#ix
 
-corpus/doctrine/dbal/src/Platforms/SQLite/SQLiteMetadataProvider.php:782:24
+corpus/doctrine/dbal/src/Platforms/SQLite/SQLiteMetadataProvider.php:783:24
     → /\)[^)]*$/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -7044,7 +7020,7 @@ corpus/flarum/framework/extensions/package-manager/src/Api/Controller/CompatCont
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/flarum/framework/extensions/package-manager/src/Api/Controller/StartController.php:159:30
+corpus/flarum/framework/extensions/package-manager/src/Api/Controller/StartController.php:152:30
     → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0" . "-00" x n . "!/"
@@ -7061,7 +7037,7 @@ corpus/flarum/framework/extensions/package-manager/src/Api/Controller/StartContr
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/flarum/framework/extensions/package-manager/src/Console/UpdateCommand.php:148:30
+corpus/flarum/framework/extensions/package-manager/src/Console/UpdateCommand.php:151:30
     → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0" . "-00" x n . "!/"
@@ -7078,7 +7054,7 @@ corpus/flarum/framework/extensions/package-manager/src/Console/UpdateCommand.php
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/flarum/framework/extensions/package-manager/src/Discover/Packagist.php:251:27
+corpus/flarum/framework/extensions/package-manager/src/Discover/Packagist.php:304:27
     → #^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0" . "-00" x n . "!/"
@@ -7904,17 +7880,17 @@ corpus/grokability/snipe-it/app/Models/Labels/Label.php:707:36
        - /\/*(.+?)(?:\/|\.)/
        + /\/*(.+?)[\/.]/
 
-corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:428:31
+corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:430:31
     → /\pL/
    FAIL  Without the /u flag, Unicode property "\pL" only covers the first 256 code points.
        ↳ Add the /u flag to match beyond the first 256 code points.
 
-corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:432:31
+corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:434:31
     → /\pN/
    FAIL  Without the /u flag, Unicode property "\pN" only covers the first 256 code points.
        ↳ Add the /u flag to match beyond the first 256 code points.
 
-corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:440:31
+corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:442:31
     → /\p{Z}|\p{S}|\p{P}/
    FAIL  Without the /u flag, Unicode property "\p{Z}" only covers the first 256 code points.
        ↳ Add the /u flag to match beyond the first 256 code points.
@@ -8836,7 +8812,7 @@ corpus/laminas/laminas-validator/src/NotEmpty.php:199:50
 
 
 ### corpus/larastan/larastan — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
-corpus/larastan/larastan/src/Collectors/UsedTranslationViewCollector.php:27:39
+corpus/larastan/larastan/src/Collectors/UsedTranslationViewCollector.php:29:39
     → / ( ( (?<!\w) (trans|trans_choice|Lang::get|Lang::choice|Lang::trans|Lang::transChoice|__|\$t) ) | (@lang|@choice) ) \( (?P<quote>['"]) (?P<string>(\\.|(?!(?P=quote))[^\\\\])*?) (?P=quote) [),]/mix
    ↳ via self::TRANSLATION_REGEX
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -8863,7 +8839,7 @@ corpus/larastan/larastan/src/Collectors/UsedTranslationViewCollector.php:27:39
        ---
        + /ix
 
-corpus/larastan/larastan/src/Collectors/UsedViewInAnotherViewCollector.php:20:37
+corpus/larastan/larastan/src/Collectors/UsedViewInAnotherViewCollector.php:22:37
     → /@(extends|include(If|Unless|When|First)?)(\(.*?(['"])(.*?)(['"])([),]))/m
    ↳ via self::VIEW_NAME_REGEX
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -10034,7 +10010,7 @@ corpus/matthiasmullie/minify/src/CSS.php:720:33
        - /(?<=(\}|;))[^\{\};]+\{\s*\}/
        + /(?<=([};]))[^{};]+\{\s*\}/
 
-corpus/matthiasmullie/minify/src/JS.php:406:33
+corpus/matthiasmullie/minify/src/JS.php:408:33
     → /(for\((?:[^;\{]*|[^;\{]*function[^;\{]*(\{([^\{\}]*(?-2))*[^\{\}]*\})?[^;\{]*);[^;\{]*;[^;\{]*\));(\}|$)/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -10046,7 +10022,7 @@ corpus/matthiasmullie/minify/src/JS.php:406:33
        - /(for\((?:[^;\{]*|[^;\{]*function[^;\{]*(\{([^\{\}]*(?-2))*[^\{\}]*\})?[^;\{]*);[^;\{]*;[^;\{]*\));(\}|$)/s
        + /(for\((?:[^;\{]*|[^;\{]*function[^;\{]*(\{([^\{\}]*(?-2))*[^\{\}]*\})?[^;\{]*);[^;\{]*;[^;\{]*\));(\}|$)/
 
-corpus/matthiasmullie/minify/src/JS.php:407:33
+corpus/matthiasmullie/minify/src/JS.php:409:33
     → /(for\([^;\{]*;(?:[^;\{]*|[^;\{]*function[^;\{]*(\{([^\{\}]*(?-2))*[^\{\}]*\})?[^;\{]*);[^;\{]*\));(\}|$)/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -10058,7 +10034,7 @@ corpus/matthiasmullie/minify/src/JS.php:407:33
        - /(for\([^;\{]*;(?:[^;\{]*|[^;\{]*function[^;\{]*(\{([^\{\}]*(?-2))*[^\{\}]*\})?[^;\{]*);[^;\{]*\));(\}|$)/s
        + /(for\([^;\{]*;(?:[^;\{]*|[^;\{]*function[^;\{]*(\{([^\{\}]*(?-2))*[^\{\}]*\})?[^;\{]*);[^;\{]*\));(\}|$)/
 
-corpus/matthiasmullie/minify/src/JS.php:408:33
+corpus/matthiasmullie/minify/src/JS.php:410:33
     → /(for\([^;\{]*;[^;\{]*;(?:[^;\{]*|[^;\{]*function[^;\{]*(\{([^\{\}]*(?-2))*[^\{\}]*\})?[^;\{]*)\));(\}|$)/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -10070,7 +10046,7 @@ corpus/matthiasmullie/minify/src/JS.php:408:33
        - /(for\([^;\{]*;[^;\{]*;(?:[^;\{]*|[^;\{]*function[^;\{]*(\{([^\{\}]*(?-2))*[^\{\}]*\})?[^;\{]*)\));(\}|$)/s
        + /(for\([^;\{]*;[^;\{]*;(?:[^;\{]*|[^;\{]*function[^;\{]*(\{([^\{\}]*(?-2))*[^\{\}]*\})?[^;\{]*)\));(\}|$)/
 
-corpus/matthiasmullie/minify/src/JS.php:410:33
+corpus/matthiasmullie/minify/src/JS.php:412:33
     → /(for\([^;\{]+\s+in\s+[^;\{]+\));(\}|$)/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -10081,28 +10057,28 @@ corpus/matthiasmullie/minify/src/JS.php:410:33
        - /(for\([^;\{]+\s+in\s+[^;\{]+\));(\}|$)/s
        + /(for\([^;\{]+\s+in\s+[^;\{]+\));(\}|$)/
 
-corpus/matthiasmullie/minify/src/JS.php:415:33
+corpus/matthiasmullie/minify/src/JS.php:417:33
     → /(\bif\s*\([^{;]*\));\}/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /(\bif\s*\([^{;]*\));\}/s
        + /(\bif\s*\([^{;]*\));\}/
 
-corpus/matthiasmullie/minify/src/JS.php:423:33
+corpus/matthiasmullie/minify/src/JS.php:425:33
     → /(while\([^;\{]+\));(\}|$)/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /(while\([^;\{]+\));(\}|$)/s
        + /(while\([^;\{]+\));(\}|$)/
 
-corpus/matthiasmullie/minify/src/JS.php:433:33
+corpus/matthiasmullie/minify/src/JS.php:435:33
     → /else;/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /else;/s
        + /else;/
 
-corpus/matthiasmullie/minify/src/JS.php:441:33
+corpus/matthiasmullie/minify/src/JS.php:443:33
     → /;(\}|$)/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -10709,20 +10685,26 @@ corpus/mockery/mockery/library/Mockery/Generator/StringManipulation/Pass/RemoveD
 
 
 ### corpus/modelcontextprotocol/php-sdk — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:785:24
-    → /^int\s*<\s*[^<>]+\s*>$/i
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:849:24
+    → /^int\s*<\s*[^<>]+\s*>$/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:826:24
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:896:24
     → /^(\??)([\w\\]+)\s*\[\]$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:842:27
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:915:27
     → /^(\??)([\w\\]+)\s*\[\]\[\]$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:964:27
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:1017:24
+    → /^(?:non-empty-)?array\s*<\s*((?:'[^']*'|"[^"]*"|[^<>{},'"]|<[^<>]*>)+?)\s*,\s*(.+?)\s*>$/is
+   WARN  Nested quantifiers can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+         need.
+
+corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:1031:27
     → /^([\w\\]+)\s*\[\]$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -18665,7 +18647,7 @@ corpus/simplepie/simplepie/src/Sanitize.php:577:30
        - %</?(?:html|body)[^>]*?>%is
        + %</?(?:html|body)[^>]*?>%i
 
-corpus/simplepie/simplepie/src/SimplePie.php:2991:102
+corpus/simplepie/simplepie/src/SimplePie.php:2999:102
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
    WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
    WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.
@@ -18673,7 +18655,7 @@ corpus/simplepie/simplepie/src/SimplePie.php:2991:102
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
-corpus/simplepie/simplepie/src/SimplePie.php:3016:102
+corpus/simplepie/simplepie/src/SimplePie.php:3024:102
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
    WARN  Redundant non-capturing group "(?:-)" at offset 2; it can be removed without changing behavior.
    WARN  Redundant non-capturing group "(?:-)" at offset 29; it can be removed without changing behavior.

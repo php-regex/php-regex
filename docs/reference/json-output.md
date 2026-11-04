@@ -1,5 +1,5 @@
 ---
-description: "Every key of every JSON document the regex command prints — lint report, analyze, debug, redos, transpile, format — and of the Symfony and Laravel reports, frozen for all of 2.x."
+description: "Every key of every JSON document the regex command prints — lint report, analyze, debug, redos, transpile, format, validate, explain — and of the Symfony and Laravel reports, frozen for all of 2.x."
 ---
 
 # JSON Output
@@ -30,6 +30,8 @@ This page lists every key of every document.
 | `regex redos` | the [benchmark document](#redos) |
 | `regex transpile` | the [transpile document](#transpile) |
 | `regex format` | the [format document](#format) |
+| `regex validate` | the [validate document](#validate) |
+| `regex explain` | the [explain document](#explain) |
 
 Symfony's and Laravel's `regex:lint` print the same lint report, and their
 `regex:transpile` the same transpile document, with the same error envelope —
@@ -241,7 +243,10 @@ object, and exit with 1. `redos` judges the pattern given with `--safe` the
 same way: an invalid one stops it with the envelope, stage `pattern`. `redos`
 stops so in JSON only: its console output still measures a pattern PHP
 refuses. `format` prints the envelope with stage `pattern` too, without a
-`validation` key, for a pattern that does not parse.
+`validation` key, for a pattern that does not parse. `explain` stops like
+`transpile`: the envelope, stage `pattern`, carrying `validation`, exit code
+1. `validate` is the one command whose document is the verdict itself: an
+invalid pattern is its document, `validation.is_valid` false, exit code 1.
 
 ## Lint Report
 
@@ -625,6 +630,71 @@ message naming the error code `regex.formatting.unsafe`.
 | `formatted` | string | The pattern laid out or compacted; the pattern given, as it was written, when it already fits (and holds no raw line break) or was refused |
 | `changed` | bool | Whether `formatted` differs from `pattern` |
 | `refusal` | string \| null | Why the pattern was given back as it was written: `newline_convention`, `spaced_quantifier`, `extended_mode_switched_off`, `line_break_in_name`, `parenthesis_in_comment` or `delimiter_misread`; an open set. `null` when it was not refused |
+
+## Validate
+
+`regex validate <pattern> --format=json` prints the verdict of the target
+PHP on the pattern. `--json` is short for `--format=json`. The document is
+the same for a valid and an invalid pattern; the exit code tells them
+apart, 0 and 1:
+
+```json
+{
+    "pattern": "/(a/",
+    "validation": {
+        "is_valid": false,
+        "error": "Expected ) at end of input (found eof).",
+        "complexity_score": 0,
+        "category": "syntax",
+        "offset": 2,
+        "caret_snippet": "Line 1: (a\n          ^",
+        "hint": null,
+        "error_code": "regex.group.unclosed"
+    }
+}
+```
+
+A pattern past one of the library's own limits is not a verdict:
+`validation.category` is `limit`, `is_valid` false, exit code 1, as the
+console's `NOT ANALYZED`. A `--format` other than `console` or `json` is a
+usage error, exit code 2.
+
+### Validate: `validate`
+
+| key | type | meaning |
+|---|---|---|
+| `pattern` | string | The pattern given, delimiters and flags included |
+| `validation` | object | The verdict, as a [validation](#validation-validation) object |
+
+The MCP server's `regex_validate` tool answers this document as its
+structured content.
+
+## Explain
+
+`regex explain <pattern> --format=json` prints the pattern explained in
+plain language, the text the console prints. `--json` is short for
+`--format=json`; `--format=html` keeps printing the HTML fragment, as before.
+
+```json
+{
+    "pattern": "/a+/",
+    "explanation": "Regex matches\n  'a' (one or more times)"
+}
+```
+
+Only a valid pattern is explained: a pattern the target refuses, a semantic
+error included, stops the command with the envelope, stage `pattern`,
+carrying `validation`, exit code 1.
+
+### Explain: `explain`
+
+| key | type | meaning |
+|---|---|---|
+| `pattern` | string | The pattern given, delimiters and flags included |
+| `explanation` | string | The explanation, as `Regex::explain()` writes it; its wording is not frozen |
+
+The MCP server's `regex_explain` tool answers this document as its
+structured content.
 
 ## Symfony Analyze
 

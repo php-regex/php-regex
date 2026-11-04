@@ -25,7 +25,8 @@ License: MIT
 - [Laravel](https://php-regex.com/guides/laravel/): Regex service, facade, artisan commands
 - [Symfony](https://php-regex.com/guides/symfony/): bundle, service, console commands
 - [LSP](https://php-regex.com/guides/lsp/): diagnostics, hovers and code actions in any editor
-- [CLI](https://php-regex.com/guides/cli/): sixteen subcommands, config files, output formats, CI recipes
+- [MCP](https://php-regex.com/guides/mcp/): validation, explanations, layout, translation and ReDoS verdicts for a coding agent, over the Model Context Protocol
+- [CLI](https://php-regex.com/guides/cli/): seventeen subcommands, config files, output formats, CI recipes
 - [ReDoS guide](https://php-regex.com/guides/redos/): verdicts, guarantees, confirmed mode, fixes
 - [Cookbook](https://php-regex.com/cookbook/): ready-made patterns with their safety verdicts
 - [Troubleshooting](https://php-regex.com/troubleshooting/): common errors and their fixes

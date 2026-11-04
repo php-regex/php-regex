@@ -434,4 +434,16 @@ final class FormatCommandTest extends TestCase
         $this->assertIsString($document['error'] ?? null);
         $this->assertStringContainsString('--width', (string) $document['error']);
     }
+
+    #[Test]
+    public function test_a_refusal_is_noted_on_stderr_outside_quiet_mode(): void
+    {
+        $this->enterProject();
+
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['format', '/a{ 1,2 }(?:bcdefghij)/', '--width=10']);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertSame("/a{ 1,2 }(?:bcdefghij)/\n", $stdout);
+        $this->assertStringContainsString('Note: left as written: a quantifier written with spaces', $stderr);
+    }
 }

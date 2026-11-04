@@ -36,6 +36,7 @@ final class PackageManifestTest extends TestCase
         'LanguageServer' => 'regex-language-server',
         'Laravel' => 'regex-laravel',
         'Linter' => 'regex-linter',
+        'Mcp' => 'regex-mcp',
         'Optimizer' => 'regex-optimizer',
         'Parser' => 'regex-parser',
         'PHPStan' => 'regex-phpstan',
@@ -62,6 +63,7 @@ final class PackageManifestTest extends TestCase
         'LanguageServer' => '>=8.1',
         'Laravel' => '>=8.1',
         'Linter' => '>=8.1',
+        'Mcp' => '>=8.1',
         'Optimizer' => '>=8.1',
         'Parser' => '>=8.1',
         'PHPStan' => '>=8.1',
@@ -73,6 +75,15 @@ final class PackageManifestTest extends TestCase
         'Toolkit' => '>=8.1',
         'Transpiler' => '>=8.1',
     ];
+
+    /**
+     * A library a package requires that only the phar redistributes: the
+     * monorepo package never requires it, the phar installs it from its own
+     * locked manifest, and the package's own conflict stays its own. The
+     * root conflict list copies the floors of every other third-party
+     * requirement.
+     */
+    private const PHAR_ONLY = ['mcp/sdk'];
 
     /**
      * The uses of a sibling's internal classes 2.0 ships with: every class
@@ -161,6 +172,9 @@ final class PackageManifestTest extends TestCase
             'Parser\Syntax\PropertyNames', 'Parser\Syntax\StartOptions', 'Parser\Cache\StaticCaches',
             'Parser\Lexer', 'Parser\NodeWalker', 'Parser\TraversalAction',
         ],
+        // The tools answer the document the CLI prints: the same encoder
+        // spells every string, an invalid byte as \xNN.
+        'Mcp' => ['Parser\Json\JsonDocument'],
         'Optimizer' => ['Parser\Analysis\CharSetAnalyzer', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser', 'Parser\NodeWalker', 'Parser\TraversalAction'],
         'PHPStan' => [
             'Linter\AnalysisService', 'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget',
@@ -370,7 +384,7 @@ final class PackageManifestTest extends TestCase
             $this->assertFileExists(self::root().'/src/'.$directory.'/.phpstorm.meta.php');
         }
 
-        foreach (['Cli' => 'bin/regex', 'LanguageServer' => 'bin/regex-lsp'] as $directory => $script) {
+        foreach (['Cli' => 'bin/regex', 'LanguageServer' => 'bin/regex-lsp', 'Mcp' => 'bin/regex-mcp'] as $directory => $script) {
             $this->assertSame([$script], self::dig(self::manifest($directory), 'bin'));
             $this->assertFileIsReadable(self::root().'/src/'.$directory.'/'.$script);
         }
@@ -406,7 +420,7 @@ final class PackageManifestTest extends TestCase
         foreach (array_keys(self::PACKAGES) as $directory) {
             $manifest = self::manifest($directory);
             foreach (self::strings(self::dig($manifest, 'require')) as $package => $constraint) {
-                if ('php' === $package || str_starts_with($package, 'ext-') || str_starts_with($package, 'php-regex/')) {
+                if ('php' === $package || str_starts_with($package, 'ext-') || str_starts_with($package, 'php-regex/') || \in_array($package, self::PHAR_ONLY, true)) {
                     continue;
                 }
                 $floor = self::lowestRelease($constraint);
@@ -415,7 +429,9 @@ final class PackageManifestTest extends TestCase
                 }
             }
             foreach (self::strings(self::dig($manifest, 'conflict')) as $package => $constraint) {
-                $conflicts[$package] = $constraint;
+                if (!\in_array($package, self::PHAR_ONLY, true)) {
+                    $conflicts[$package] = $constraint;
+                }
             }
         }
         foreach ($floors as $package => $floor) {
@@ -735,7 +751,7 @@ final class PackageManifestTest extends TestCase
     #[Test]
     public function test_the_scripts_are_executable(): void
     {
-        foreach (['bin/split', 'src/Cli/bin/regex', 'src/LanguageServer/bin/regex-lsp'] as $script) {
+        foreach (['bin/split', 'src/Cli/bin/regex', 'src/LanguageServer/bin/regex-lsp', 'src/Mcp/bin/regex-mcp'] as $script) {
             $this->assertTrue(is_executable(self::root().'/'.$script), $script);
         }
     }
@@ -829,7 +845,7 @@ final class PackageManifestTest extends TestCase
 
     /**
      * Every package is a page of its own on Packagist: the author and the
-     * funding link the monorepo declares, the seventeen packages declare
+     * funding link the monorepo declares, the eighteen packages declare
      * too.
      */
     #[Test]
@@ -1060,6 +1076,7 @@ final class PackageManifestTest extends TestCase
             'Psalm' => 'vimeo/psalm',
             'Symfony' => 'Component' === $second && isset($segments[2]) ? 'symfony/'.$kebab($segments[2]) : null,
             'Illuminate' => 'illuminate/'.strtolower($second),
+            'Mcp' => 'mcp/sdk',
             default => null,
         };
     }

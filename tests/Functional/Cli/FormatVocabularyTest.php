@@ -44,6 +44,7 @@ final class FormatVocabularyTest extends TestCase
     {
         yield 'explain, console' => [['explain', '/a+/', '--format=console']];
         yield 'explain, html' => [['explain', '/a+/', '--format=html']];
+        yield 'explain, json' => [['explain', '/a+/', '--format=json']];
         yield 'diagram, console' => [['diagram', '/a+/', '--format=console']];
         yield 'diagram, svg' => [['diagram', '/a+/', '--format=svg']];
         yield 'highlight, console' => [['highlight', '/a+/', '--format=console']];
@@ -69,7 +70,7 @@ final class FormatVocabularyTest extends TestCase
      */
     public static function provideRefusedFormats(): iterable
     {
-        yield 'explain, text' => [['explain', '/a+/', '--format=text'], "Unsupported format 'text'. Use --format=console or --format=html."];
+        yield 'explain, text' => [['explain', '/a+/', '--format=text'], "Unsupported format 'text'. Use --format=console, --format=html or --format=json."];
         yield 'diagram, text' => [['diagram', '/a+/', '--format=text'], "Unsupported format 'text'. Use --format=console or --format=svg."];
         yield 'diagram, ascii' => [['diagram', '/a+/', '--format=ascii'], "Unsupported format 'ascii'. Use --format=console or --format=svg."];
         yield 'highlight, cli' => [['highlight', '/a+/', '--format=cli'], "Unsupported format 'cli'. Use --format=auto, --format=console or --format=html."];
@@ -90,7 +91,7 @@ final class FormatVocabularyTest extends TestCase
      */
     public static function provideHelpLines(): iterable
     {
-        yield 'explain' => ['explain', 'Output format (console, html)'];
+        yield 'explain' => ['explain', 'Output format (console, html, json)'];
         yield 'diagram' => ['diagram', 'Output format (console, svg)'];
         yield 'highlight' => ['highlight', 'Output format (auto, console, html)'];
     }
