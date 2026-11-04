@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\PlaygroundDriver;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -241,9 +242,12 @@ final class PhpPcreOptionsTableTest extends TestCase
         }
         $row = reset($rows);
 
-        $this->assertSame(\array_key_exists('n', $row['modifiers']), false !== @preg_match('/(a)/n', 'a'), 'PHP '.\PHP_VERSION.' and the row disagree on the n modifier.');
-        $this->assertSame(\array_key_exists('r', $row['extra']), false !== @preg_match('/k/ir', 'K'), 'PHP '.\PHP_VERSION.' and the row disagree on the r modifier.');
-        $this->assertSame(0 !== ($row['extra']['always'] & self::EXTRA_ALLOW_LOOKAROUND_BSK), 1 === @preg_match('/(?<=a\K)bc/', 'abc'), 'PHP '.\PHP_VERSION.' and the row disagree on \K in a lookbehind.');
+        // Each witness compiles on some PHP versions only, so it goes through
+        // the engine probe rather than a literal call the analyser would
+        // judge against its own PHP.
+        $this->assertSame(\array_key_exists('n', $row['modifiers']), EngineProbe::compiles('/(a)/n'), 'PHP '.\PHP_VERSION.' and the row disagree on the n modifier.');
+        $this->assertSame(\array_key_exists('r', $row['extra']), EngineProbe::compiles('/k/ir'), 'PHP '.\PHP_VERSION.' and the row disagree on the r modifier.');
+        $this->assertSame(0 !== ($row['extra']['always'] & self::EXTRA_ALLOW_LOOKAROUND_BSK), EngineProbe::compiles('/(?<=a\K)bc/'), 'PHP '.\PHP_VERSION.' and the row disagree on \K in a lookbehind.');
         $this->assertSame(1, @preg_match('/\w+/u', 'café', $m));
         $this->assertSame(['café'], $m, 'u means UTF|UCP: \w reads é.');
     }
