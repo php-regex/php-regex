@@ -405,6 +405,8 @@
         probeGaveUp(request, reason);
       } else if (tab === 'selfcheck') {
         selfCheckGaveUp(request, reason);
+      } else if (tab === 'trace') {
+        failTool(tab, request, reason.replace(/\.$/, '') + '.');
       } else if (activeTool === tab) {
         renderTool(tab, false);
       }
@@ -413,6 +415,20 @@
     }
     announce('The engine stopped on this input.');
     drain();
+  }
+
+  // A tab's request given up for this input: the tab holds the failure and
+  // does not ask again until the input moves. The trace tab's answer is a
+  // stopped one, so it shows the failure instead of "Reading the pattern…".
+  function failTool(tab, request, message) {
+    var answer = { key: request.chainKey || requestKey(request), payload: { error: { message: message, position: null } }, request: request, checked: true, failed: true };
+    if (tab === 'trace') {
+      traceStop(answer, message + ' Press Run to try again.', 'warn');
+    }
+    toolAnswers[tab] = answer;
+    if (activeTool === tab) {
+      renderTool(tab, true);
+    }
   }
 
   function exhausted(request) {
@@ -450,10 +466,7 @@
       } else {
         // Keyed by the request that failed (the chain's first step for a second
         // step), never by the tab's current settings, which may have moved.
-        toolAnswers[who] = { key: step.chainKey || requestKey(step), payload: { error: { message: 'The engine did not answer.', position: null } }, request: step, checked: true, failed: true };
-        if (activeTool === who) {
-          renderTool(who, true);
-        }
+        failTool(who, step, 'The engine did not answer.');
       }
     }
     if (current && !current.prerendered) {
@@ -562,10 +575,7 @@
         } else if (failed === 'selfcheck') {
           selfCheckGaveUp(request, payload.fatal);
         } else {
-          toolAnswers[failed] = { key: request.chainKey || requestKey(request), payload: { error: { message: payload.fatal, position: null } }, request: request, checked: true, failed: true };
-          if (activeTool === failed) {
-            renderTool(failed, true);
-          }
+          failTool(failed, request, payload.fatal);
         }
       }
       drain();
