@@ -186,6 +186,16 @@ follow-up folds `preg_quote()` of a constant string to the literal it returns,
 as `CallTypes::quote` does.
 
 
+## Explanation wording
+
+- `TextExplainer` reads "Character Type: A digit: [0-9] (exactly 4 times)":
+  a colon before the class, the repetition in brackets. The playground
+  reflows it for the eye ("A digit [0-9], exactly 4 times"); the CLI and
+  the API still print the library's sentence. Rewording it in
+  `Explain\Vocabulary` and `ExplanationBuilder` changes every caller's
+  output and the documented examples, so it needs its own decision.
+
+
 ## Distribution
 
 - A composite GitHub Action that installs the phar and runs `regex lint`
