@@ -18,7 +18,7 @@ The first line is the subject. On the second, `+7` is the offset of the next ite
 
 ## The match attempt and the bumpalong
 
-A match does not start once: it starts at subject offset 0, and when that attempt fails PCRE2 moves the start one character to the right and tries again — the **bumpalong** — until a match is found or the subject runs out. Each start is a `New match attempt` line. Here is `/a++a/` on `aaa`, two attempts, no match:
+A match does not start once: when an attempt fails, PCRE2 moves the start to the right and tries again — the **bumpalong** — until a match is found or the subject runs out. It does not always try every offset: its start-of-match optimizations skip positions where the pattern cannot begin, offset 0 included (the lookbehind example below starts at offset 2, where the `b` it needs sits behind the cursor). Each start it does try is a `New match attempt` line. Here is `/a++a/` on `aaa`, two attempts, no match:
 
 ```
 New match attempt
@@ -212,7 +212,7 @@ What it does not do, so that what it shows is never guessed:
 - No JIT. The outcome agrees with the browser's PHP, which runs without JIT too.
 - Auto-callouts keep the outcome: PCRE2 documents that they change nothing but the steps it reports, and the self-check compares the trace with the engine's own `preg_match()` whenever it can. It says "not compared" when the subject was cut to its first 1 000 bytes or when the engine did not answer the check.
 - "Backtracked before this item" is a flag, never a count: at least one backtrack since the previous step.
-- Recording stops at 20 000 steps, or earlier when the recorded steps pass 8 MiB (hundreds of groups rewritten at every step); the match goes on to PCRE2's own answer, and the tab says so. A 15-`a` subject against `/^(a+)+$/` is already past the cap.
+- Recording stops at 20 000 steps, or earlier when the recorded steps pass 8 MiB (hundreds of groups rewritten at every step); the match goes on to PCRE2's own answer, and the tab says so. A trace that takes more than 10 seconds is stopped and tried once more; when the second try runs out of time too, the tab says so and shows no answer. A 15-`a` subject against `/^(a+)+$/` is already past the cap.
 - The subject is read up to 1 000 bytes, cut on a character boundary; a longer subject is traced on its first 1 000 bytes and is not compared with the engine.
 - A pattern with an explicit callout `(?C…)` is refused: its callouts would interleave with the automatic ones.
 - A PHP version without a row in the options table, or a PCRE2 release without a module, gets a sentence in the tab, not a trace of another release.
