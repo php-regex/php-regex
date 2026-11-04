@@ -76,6 +76,8 @@
       url: /concepts/redos/
     - title: PCRE
       url: /concepts/pcre/
+    - title: How PCRE2 matches
+      url: /concepts/how-pcre2-matches/
 - title: Reference
   url: /reference/
   pages:

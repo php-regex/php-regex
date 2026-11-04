@@ -8,7 +8,7 @@
         }
     },
     "analyze": {
-        "protocol": 2,
+        "protocol": 3,
         "library": {
             "version": "2.0.0-DEV",
             "jsonDumper": 1
@@ -333,11 +333,11 @@
         }
     },
     "lint": {
-        "protocol": 2,
+        "protocol": 3,
         "lint": []
     },
     "redos": {
-        "protocol": 2,
+        "protocol": 3,
         "redos": {
             "severity": "safe",
             "score": 0,
@@ -369,7 +369,7 @@
         "error": null
     },
     "samples": {
-        "protocol": 2,
+        "protocol": 3,
         "samples": {
             "matching": [
                 "0476-70-34",

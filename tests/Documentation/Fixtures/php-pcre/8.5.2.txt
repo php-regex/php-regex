@@ -1,0 +1,163 @@
+# php-src tag php-8.5.2, commit ea75635f1daa18c0244190d2413dec21a3d26bad, ext/pcre/php_pcre.c
+# Verbatim excerpts of the PHP wrapper around PCRE2 as that tag reads them. php-src is
+# distributed under the PHP License 3.01 (https://www.php.net/license/3_01.txt).
+# This product includes PHP software, freely available from <http://www.php.net/software/>.
+# Lines starting with "# " are this fixture's own annotations; every other line is the
+# file's, at the line numbers the annotation before it names.
+#
+# lines 107-141: pcre_handle_exec_error: the PCRE2 match error to PREG_* code map
+static void pcre_handle_exec_error(int pcre_code) /* {{{ */
+{
+	int preg_code = 0;
+
+	switch (pcre_code) {
+		case PCRE2_ERROR_MATCHLIMIT:
+			preg_code = PHP_PCRE_BACKTRACK_LIMIT_ERROR;
+			break;
+
+		case PCRE2_ERROR_RECURSIONLIMIT:
+			preg_code = PHP_PCRE_RECURSION_LIMIT_ERROR;
+			break;
+
+		case PCRE2_ERROR_BADUTFOFFSET:
+			preg_code = PHP_PCRE_BAD_UTF8_OFFSET_ERROR;
+			break;
+
+#ifdef HAVE_PCRE_JIT_SUPPORT
+		case PCRE2_ERROR_JIT_STACKLIMIT:
+			preg_code = PHP_PCRE_JIT_STACKLIMIT_ERROR;
+			break;
+#endif
+
+		default:
+			if (pcre_code <= PCRE2_ERROR_UTF8_ERR1 && pcre_code >= PCRE2_ERROR_UTF8_ERR21) {
+				preg_code = PHP_PCRE_BAD_UTF8_ERROR;
+			} else  {
+				preg_code = PHP_PCRE_INTERNAL_ERROR;
+			}
+			break;
+	}
+
+	PCRE_G(error_code) = preg_code;
+}
+/* }}} */
+#
+# lines 200-223: PHP_PCRE_PREALLOC_MDATA_SIZE and php_pcre_init_pcre2: no PHP_PCRE_DEFAULT_EXTRA_COPTIONS define, no extra option set once
+}
+
+#define PHP_PCRE_PREALLOC_MDATA_SIZE 32
+
+static void php_pcre_init_pcre2(uint8_t jit)
+{/*{{{*/
+	if (!gctx) {
+		gctx = pcre2_general_context_create(php_pcre_malloc, php_pcre_free, NULL);
+		if (!gctx) {
+			pcre2_init_ok = 0;
+			return;
+		}
+	}
+
+	if (!cctx) {
+		cctx = pcre2_compile_context_create(gctx);
+		if (!cctx) {
+			pcre2_init_ok = 0;
+			return;
+		}
+	}
+
+	if (!mctx) {
+		mctx = pcre2_match_context_create(gctx);
+#
+# lines 316-331: OnUpdateBacktrackLimit / OnUpdateRecursionLimit: the ini values wired to the match context
+{/*{{{*/
+	OnUpdateLong(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	if (mctx) {
+		pcre2_set_match_limit(mctx, (uint32_t)PCRE_G(backtrack_limit));
+	}
+
+	return SUCCESS;
+}/*}}}*/
+
+static PHP_INI_MH(OnUpdateRecursionLimit)
+{/*{{{*/
+	OnUpdateLong(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	if (mctx) {
+		pcre2_set_depth_limit(mctx, (uint32_t)PCRE_G(recursion_limit));
+	}
+
+#
+# lines 349-352: the ini entries and their defaults
+PHP_INI_BEGIN()
+	STD_PHP_INI_ENTRY("pcre.backtrack_limit", "1000000", PHP_INI_ALL, OnUpdateBacktrackLimit, backtrack_limit, zend_pcre_globals, pcre_globals)
+	STD_PHP_INI_ENTRY("pcre.recursion_limit", "100000",  PHP_INI_ALL, OnUpdateRecursionLimit, recursion_limit, zend_pcre_globals, pcre_globals)
+#ifdef HAVE_PCRE_JIT_SUPPORT
+#
+# lines 576-585: pcre_get_compiled_regex_cache_ex: the initial compile and extra options
+PHPAPI pcre_cache_entry* pcre_get_compiled_regex_cache_ex(zend_string *regex, bool locale_aware)
+{
+	pcre2_code			*re = NULL;
+#if 10 == PCRE2_MAJOR && 37 == PCRE2_MINOR && !defined(HAVE_BUNDLED_PCRE)
+	uint32_t			 coptions = PCRE2_NO_START_OPTIMIZE;
+#else
+	uint32_t			 coptions = 0;
+#endif
+	uint32_t			 eoptions = 0;
+	PCRE2_UCHAR	         error[128];
+#
+# lines 701-748: the modifier switch
+	/* Parse through the options, setting appropriate flags.  Display
+	   a warning if we encounter an unknown modifier. */
+	while (pp < end_p) {
+		switch (*pp++) {
+			/* Perl compatible options */
+			case 'i':	coptions |= PCRE2_CASELESS;		break;
+			case 'm':	coptions |= PCRE2_MULTILINE;		break;
+			case 'n':	coptions |= PCRE2_NO_AUTO_CAPTURE;	break;
+			case 's':	coptions |= PCRE2_DOTALL;		break;
+			case 'x':	coptions |= PCRE2_EXTENDED;		break;
+
+			/* PCRE specific options */
+			case 'A':	coptions |= PCRE2_ANCHORED;		break;
+			case 'D':	coptions |= PCRE2_DOLLAR_ENDONLY;break;
+#ifdef PCRE2_EXTRA_CASELESS_RESTRICT
+			case 'r':	eoptions |= PCRE2_EXTRA_CASELESS_RESTRICT; break;
+#endif
+			case 'S':	/* Pass. */					break;
+			case 'X':	/* Pass. */					break;
+			case 'U':	coptions |= PCRE2_UNGREEDY;		break;
+			case 'u':	coptions |= PCRE2_UTF;
+	/* In  PCRE,  by  default, \d, \D, \s, \S, \w, and \W recognize only ASCII
+	   characters, even in UTF-8 mode. However, this can be changed by setting
+	   the PCRE2_UCP option. */
+#ifdef PCRE2_UCP
+						coptions |= PCRE2_UCP;
+#endif
+				break;
+			case 'J':	coptions |= PCRE2_DUPNAMES;		break;
+
+			case ' ':
+			case '\n':
+			case '\r':
+				break;
+
+			case 'e': /* legacy eval */
+			default:
+				if (pp[-1]) {
+					php_error_docref(NULL, E_WARNING, "Unknown modifier '%c'", pp[-1]);
+				} else {
+					php_error_docref(NULL, E_WARNING, "NUL byte is not a valid modifier");
+				}
+				pcre_handle_exec_error(PCRE2_ERROR_INTERNAL);
+				efree(pattern);
+				if (key != regex) {
+					zend_string_release_ex(key, 0);
+				}
+				return NULL;
+#
+# lines 770-775: the extra options set per pattern, then the compile call
+	pcre2_set_character_tables(cctx, tables);
+
+	pcre2_set_compile_extra_options(cctx, eoptions);
+
+	/* Compile pattern and display a warning if compilation failed. */
+	re = pcre2_compile((PCRE2_SPTR)pattern, pattern_len, coptions, &errnumber, &erroffset, cctx);

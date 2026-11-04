@@ -5,6 +5,10 @@ name: Documentation
 # changes the prose alone runs them here, by themselves, where the workflows
 # that judge the code stay out; a pull request that changes the code runs
 # them with the whole suite, and so does every push to 2.x.
+#
+# The playground's PCRE2 trace module too: built here from the sources and
+# the toolchain its manifest pins, and compared with the bytes the bundle
+# embeds, so the site never serves a module nobody can rebuild.
 
 on:
   pull_request:
@@ -12,6 +16,7 @@ on:
     paths:
       - 'docs/**'
       - 'art/**'
+      - 'wasm/**'
       - 'README.md'
       - 'CHANGELOG.md'
       - 'UPGRADE-2.0.md'
@@ -37,12 +42,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  pcre2-module:
+    # The PCRE2 trace module the playground embeds, rebuilt from the PCRE2
+    # tag and the Emscripten image wasm/pcre2-trace/manifest.json pins (the
+    # image by digest, so a moved tag cannot change the bytes). The build
+    # script prints the module's size and sha256 and fails when the sha256
+    # is not the manifest's: a toolchain that drifts fails here, by name,
+    # before the bundle check below compares the same bytes.
+    name: PCRE2 trace module (Emscripten, pinned)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container: emscripten/emsdk@sha256:27bc6267cb285223b8aebb7627bfebae7cb3ad2aaa0d5923b8aa5321793033e8
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Build the module and compare it with the manifest
+        # The script clones PCRE2 at its tag itself and refuses to run
+        # outside the pinned image.
+        run: wasm/pcre2-trace/build.sh --check
+
+      - name: Upload the module
+        uses: actions/upload-artifact@v7
+        with:
+          name: pcre2-module
+          path: wasm/pcre2-trace/build/*.wasm
+          if-no-files-found: error
+          retention-days: 1
+
   documentation:
     # The "documentation" group of the suite: every test under
     # tests/Documentation and every test that names a file of the prose.
     name: Documentation tests (PHP 8.4)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs: pcre2-module
 
     steps:
       - name: Checkout Code
@@ -57,10 +94,25 @@ jobs:
           ini-values: phar.readonly=0
           tools: phpunit
 
+      # The trace shim is compiled natively against the system PCRE2 by one
+      # of the documentation tests; the headers and pcre2test make it run
+      # here instead of standing down.
+      - name: Install the PCRE2 headers and tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpcre2-dev pcre2-utils
+
       - name: Run the Documentation Tests
         run: tools/phpunit/vendor/bin/phpunit --colors=always --group documentation
 
+      # The module the job above built, where bin/playground-bundle reads it
+      # from: the check below compares the bytes bundle.json embeds with these.
+      - name: Download the PCRE2 trace module
+        uses: actions/download-artifact@v8
+        with:
+          name: pcre2-module
+          path: wasm/pcre2-trace/build
+
       # The one check of the playground's actual path: the bundle inside the
-      # browser's PHP engine, under Node, compared with the local driver.
+      # browser's PHP engine, under Node, compared with the local driver, and
+      # the embedded PCRE2 trace module compared with the freshly built one.
       - name: Run the playground bundle inside the browser engine
         run: bin/playground-check

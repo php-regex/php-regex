@@ -73,7 +73,7 @@ final class PlaygroundDriverTest extends TestCase
     {
         $payload = PlaygroundDriver::analyze($driver, $root, '/^(?<date>\d{4})-(\d{2})$/m', "2026-11\n1999-12\nnope");
 
-        $this->assertSame(2, $payload['protocol']);
+        $this->assertSame(3, $payload['protocol']);
         foreach (['engine', 'library', 'target', 'input', 'delimited', 'unitOf', 'ast', 'tokens', 'explain', 'errors', 'engineError', 'matches', 'timing'] as $key) {
             $this->assertArrayHasKey($key, $payload);
         }
@@ -374,7 +374,7 @@ final class PlaygroundDriverTest extends TestCase
     {
         $payload = PlaygroundDriver::lint($driver, $root, '/(a+)+$/');
 
-        $this->assertSame(2, $payload['protocol']);
+        $this->assertSame(3, $payload['protocol']);
         $this->assertNotNull($payload['lint']);
         $nested = array_values(array_filter($payload['lint'], static fn (array $finding): bool => 'regex.lint.quantifier.nested' === $finding['id']));
         $this->assertCount(1, $nested);
@@ -532,7 +532,7 @@ final class PlaygroundDriverTest extends TestCase
             $this->assertSame('', $run['stderr'], $label);
             $this->assertMatchesRegularExpression('/\A\x1e\{.*\}\x1e\z/s', $run['stdout'], $label);
             $payload = PlaygroundDriver::payload($run);
-            $this->assertSame(2, $payload['protocol']);
+            $this->assertSame(3, $payload['protocol']);
         }
     }
 

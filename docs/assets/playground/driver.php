@@ -18,7 +18,7 @@ declare(strict_types=1);
  * It is included once per engine, then called once per request:
  * phpregex_playground_run() reads a JSON request from a file and returns one
  * JSON document between two record separators (0x1E), so the caller can tell
- * the answer from anything else the engine prints. Ten requests exist:
+ * the answer from anything else the engine prints. Eleven requests exist:
  *
  *   analyze   parse (tolerant), explain, validate, dump the tree, match
  *   match     the engine alone: its compile message and preg_match_all()
@@ -30,6 +30,8 @@ declare(strict_types=1);
  *   samples   subjects the engine matches, and some it does not
  *   check     the engine alone: preg_match() without JIT on each subject
  *   export    a regex-phpunit test asserting what the engine answered
+ *   trace-input the body, modifiers and offsets the step trace reads,
+ *             and the subject cut for it
  *
  * The analysis also answers the pattern's tokens — one byte span per piece
  * the parser reads, in the highlighting visitor's vocabulary — because the
@@ -67,13 +69,16 @@ use PHPRegex\Transpiler\TranspileOptions;
 // ahead of it.
 if (!\function_exists('phpregex_playground_run')) {
     if (!\defined('PHPREGEX_PLAYGROUND_PROTOCOL')) {
-        \define('PHPREGEX_PLAYGROUND_PROTOCOL', 2);
+        \define('PHPREGEX_PLAYGROUND_PROTOCOL', 3);
     }
     if (!\defined('PHPREGEX_PLAYGROUND_PATTERN_CAP')) {
         \define('PHPREGEX_PLAYGROUND_PATTERN_CAP', 2000);
     }
     if (!\defined('PHPREGEX_PLAYGROUND_SUBJECT_CAP')) {
         \define('PHPREGEX_PLAYGROUND_SUBJECT_CAP', 10000);
+    }
+    if (!\defined('PHPREGEX_PLAYGROUND_TRACE_SUBJECT_CAP')) {
+        \define('PHPREGEX_PLAYGROUND_TRACE_SUBJECT_CAP', 1000);
     }
     if (!\defined('PHPREGEX_PLAYGROUND_SETS_CAP')) {
         \define('PHPREGEX_PLAYGROUND_SETS_CAP', 500);
@@ -184,6 +189,8 @@ if (!\function_exists('phpregex_playground_run')) {
                 return phpregex_playground_check($input);
             case 'export':
                 return phpregex_playground_export($input);
+            case 'trace-input':
+                return phpregex_playground_trace_input($input);
         }
 
         throw new \InvalidArgumentException(\sprintf('Unknown op "%s".', $op));
@@ -840,17 +847,102 @@ if (!\function_exists('phpregex_playground_run')) {
      */
     function phpregex_playground_subject(array $input): array
     {
-        $subject = phpregex_playground_string($input, 'subject');
-        if (\strlen($subject) <= PHPREGEX_PLAYGROUND_SUBJECT_CAP) {
-            return [$subject, false];
+        return phpregex_playground_cut(phpregex_playground_string($input, 'subject'), PHPREGEX_PLAYGROUND_SUBJECT_CAP);
+    }
+
+    /**
+     * The text cut at the cap on a character boundary: a character the cap
+     * would split is dropped whole, so what remains is still UTF-8.
+     *
+     * @return array{string, bool}
+     */
+    function phpregex_playground_cut(string $text, int $cap): array
+    {
+        if (\strlen($text) <= $cap) {
+            return [$text, false];
         }
 
-        $cut = PHPREGEX_PLAYGROUND_SUBJECT_CAP;
-        while ($cut > 0 && (\ord($subject[$cut]) & 0xC0) === 0x80) {
+        $cut = $cap;
+        while ($cut > 0 && (\ord($text[$cut]) & 0xC0) === 0x80) {
             $cut--;
         }
 
-        return [substr($subject, 0, $cut), true];
+        return [substr($text, 0, $cut), true];
+    }
+
+    /**
+     * What the step trace reads of a request: the pattern body, its modifiers
+     * and where the body sits in the regex (byte offsets, the X-Ray's), read
+     * by the library's delimiter rules, and the subject cut at the trace's
+     * own cap. A pattern with an explicit callout is refused, its input still
+     * answered: the trace would interleave it with the automatic ones. A
+     * pattern the delimiter rules refuse, or one past the page's cap, has no
+     * input: the error is the one the analysis reports for it.
+     *
+     * @param array<mixed> $input
+     *
+     * @return array<string, mixed>
+     */
+    function phpregex_playground_trace_input(array $input): array
+    {
+        $started = hrtime(true);
+        $regex = phpregex_playground_string($input, 'regex');
+        $library = phpregex_playground_library(phpregex_playground_target($input));
+        $answer = ['protocol' => PHPREGEX_PLAYGROUND_PROTOCOL, 'input' => null, 'refusal' => null, 'error' => null, 'timing' => ['traceInputMs' => 0.0]];
+
+        $parsed = $library->parseTolerant($regex);
+        $fault = [] !== $parsed->errors ? phpregex_playground_error($parsed->errors[0], 'parse') : null;
+
+        try {
+            $parts = DelimitedPattern::fromDelimited($regex, $library->target());
+        } catch (RegexException $e) {
+            $answer['error'] = $fault ?? phpregex_playground_error($e, 'parse');
+
+            return phpregex_playground_timed($answer, 'traceInputMs', $started);
+        }
+        // Past the cap the library refuses the pattern before reading it: the
+        // fault is the analysis's own.
+        if (null !== $fault && \strlen($regex) > PHPREGEX_PLAYGROUND_PATTERN_CAP) {
+            $answer['error'] = $fault;
+
+            return phpregex_playground_timed($answer, 'traceInputMs', $started);
+        }
+
+        [$subject, $truncated] = phpregex_playground_cut(phpregex_playground_string($input, 'subject'), PHPREGEX_PLAYGROUND_TRACE_SUBJECT_CAP);
+        $bodyStart = phpregex_playground_body_start($regex);
+        $answer['input'] = [
+            'body' => $parts->pattern,
+            'modifiers' => $parts->flags,
+            'bodyStart' => $bodyStart,
+            'bodyEnd' => $bodyStart + \strlen($parts->pattern),
+            'subject' => $subject,
+            'subjectBytes' => \strlen($subject),
+            'subjectTruncated' => $truncated,
+        ];
+        if (phpregex_playground_has_node($parsed->ast->accept(new JsonDumper()), 'callout')) {
+            $answer['refusal'] = 'This pattern carries an explicit callout; the trace is not offered for it.';
+        }
+
+        return phpregex_playground_timed($answer, 'traceInputMs', $started);
+    }
+
+    /**
+     * Whether a dumped tree holds a node of the kind, at any depth.
+     *
+     * @param array<string, mixed> $node
+     */
+    function phpregex_playground_has_node(array $node, string $type): bool
+    {
+        if ($type === ($node['type'] ?? null)) {
+            return true;
+        }
+        foreach (phpregex_playground_children($node) as $child) {
+            if (phpregex_playground_has_node($child, $type)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -1496,9 +1588,7 @@ if (!\function_exists('phpregex_playground_run')) {
      */
     function phpregex_playground_bytes(string $bytes): string
     {
-        return '"'.preg_replace_callback('/[^\x20-\x7E]|["$\\\\]/', static function (array $match): string {
-            return \sprintf('\\x%02X', \ord($match[0]));
-        }, $bytes).'"';
+        return '"'.preg_replace_callback('/[^\x20-\x7E]|["$\\\\]/', static fn (array $match): string => \sprintf('\\x%02X', \ord($match[0])), $bytes).'"';
     }
 
     /**

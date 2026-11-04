@@ -11,9 +11,12 @@
 //
 //   run                a tutorial snippet, streamed to the page as it prints
 //   analyze/match/
-//   lint/describe      the playground: PHPRegex itself is written into the
+//   lint/describe/
+//   trace-input        the playground: PHPRegex itself is written into the
 //                      engine's filesystem, once per PHP version, and a
 //                      driver answers each request with one JSON document
+//                      (trace-input reads the pattern's delimiters for the
+//                      step debugger, whose trace runs in trace-worker.js)
 //
 // A playground instance differs from a run instance (the mbstring extension,
 // the library, a backtrack limit), so the two are cached apart: a page uses
@@ -331,6 +334,12 @@ self.onmessage = async (event) => {
       return;
     case 'check':
       await engineRequest(message, { op: 'check', regex: message.regex, subjects: message.subjects });
+      return;
+    // The step debugger's input: PHP's delimiter rules, read by the library
+    // on the analysing engine, judged for the engine the page shows; the
+    // trace itself never comes through here.
+    case 'trace-input':
+      await analysisRequest(message, { op: 'trace-input', regex: message.regex, subject: message.subject });
       return;
   }
 };

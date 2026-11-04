@@ -19,6 +19,12 @@
 // one to the other, and the matches already converted; this script only
 // looks up. The pattern's tokens come the same way — byte spans in the
 // highlighting visitor's vocabulary — and color the field's mirror.
+//
+// One tab, Step through, asks a second worker (trace-worker.js): PCRE2
+// itself, compiled to WebAssembly, traced through its callout API with the
+// options the engine's PHP passes. That worker is downloaded on the first
+// opening of the tab, never before, and the engine's own answer is
+// compared with the trace's outcome on every run.
 
 (function () {
   var root = document.getElementById('playground');
@@ -42,7 +48,7 @@
   var DEBOUNCE_MS = 150;
   var PATTERN_CAP = 2000;         // bytes; the engine refuses more
   var SUBJECT_CAP = 10000;        // bytes; the engine cuts more
-  var PROTOCOL = 2;               // the driver's contract this script renders
+  var PROTOCOL = 3;               // the driver's contract this script renders
   var JSON_DUMPER = 1;            // the tree document this script walks
   var ANNOUNCE_IDLE_MS = 1000;
 
@@ -390,12 +396,16 @@
     } else if (request.type === 'describe') {
       describeWanted = -1;
       setStatus('', '');
-    } else if (TOOLS.indexOf(request.type) !== -1 || request.type === 'check') {
+    } else if (isToolRequest(request)) {
       // A tab's request is given up for this input: the tab says so, and
       // Run is how the visitor asks again.
       var tab = request.purpose || request.type;
       setStatus(reason + ' The engine could not finish this tab; press Run to try again.', 'warn');
-      if (activeTool === tab) {
+      if (tab === 'probe') {
+        probeGaveUp(request, reason);
+      } else if (tab === 'selfcheck') {
+        selfCheckGaveUp(request, reason);
+      } else if (activeTool === tab) {
         renderTool(tab, false);
       }
     } else {
@@ -420,6 +430,9 @@
       send(next);
       return;
     }
+    // The trace's next witness, if it has one to ask the engine: queued
+    // as the tool's second step, sent right below.
+    advanceTrace();
     if (pendingTool && current && !current.prerendered) {
       var step = pendingTool;
       pendingTool = null;
@@ -430,11 +443,17 @@
       // The second step of a tool failed twice: the tab says so and the
       // first step is not asked again until the input moves.
       var who = step.purpose || step.type;
-      // Keyed by the request that failed (the chain's first step for a second
-      // step), never by the tab's current settings, which may have moved.
-      toolAnswers[who] = { key: step.chainKey || requestKey(step), payload: { error: { message: 'The engine did not answer.', position: null } }, request: step, checked: true, failed: true };
-      if (activeTool === who) {
-        renderTool(who, true);
+      if (who === 'probe') {
+        probeGaveUp(step, 'The engine did not answer.');
+      } else if (who === 'selfcheck') {
+        selfCheckGaveUp(step, 'The engine did not answer.');
+      } else {
+        // Keyed by the request that failed (the chain's first step for a second
+        // step), never by the tab's current settings, which may have moved.
+        toolAnswers[who] = { key: step.chainKey || requestKey(step), payload: { error: { message: 'The engine did not answer.', position: null } }, request: step, checked: true, failed: true };
+        if (activeTool === who) {
+          renderTool(who, true);
+        }
       }
     }
     if (current && !current.prerendered) {
@@ -534,13 +553,19 @@
         matchFor = requestKey(request);
       } else if (request.type === 'lint' && current && current.regex === request.regex) {
         lintFor = request.regex;
-      } else if (TOOLS.indexOf(request.type) !== -1 || request.type === 'check') {
+      } else if (isToolRequest(request)) {
         // A tab that failed holds the failure, and does not ask again
         // until the input moves.
-        var failed = request.purpose && request.type === 'check' ? request.purpose : request.type;
-        toolAnswers[failed] = { key: request.chainKey || requestKey(request), payload: { error: { message: payload.fatal, position: null } }, request: request, checked: true, failed: true };
-        if (activeTool === failed) {
-          renderTool(failed, true);
+        var failed = request.purpose || request.type;
+        if (failed === 'probe') {
+          probeGaveUp(request, payload.fatal);
+        } else if (failed === 'selfcheck') {
+          selfCheckGaveUp(request, payload.fatal);
+        } else {
+          toolAnswers[failed] = { key: request.chainKey || requestKey(request), payload: { error: { message: payload.fatal, position: null } }, request: request, checked: true, failed: true };
+          if (activeTool === failed) {
+            renderTool(failed, true);
+          }
         }
       }
       drain();
@@ -578,7 +603,7 @@
       if (currentNode === request.index && current && current.regex === request.regex) {
         showDetail(request.index);
       }
-    } else if (TOOLS.indexOf(request.type) !== -1 || request.type === 'check') {
+    } else if (isToolRequest(request)) {
       onToolResult(request, payload);
       // The tool has answered: its busy line goes, and the engine's
       // notices, if any, take the line.
@@ -593,10 +618,16 @@
 
   function schedule() {
     window.clearTimeout(debounce);
-    debounce = window.setTimeout(analyzeNow, DEBOUNCE_MS);
+    debounce = window.setTimeout(function () {
+      analyzeNow(true);
+    }, DEBOUNCE_MS);
   }
 
-  function analyzeNow() {
+  // typed: the analysis follows a keystroke (the typeahead path), as
+  // opposed to a Run gesture — the Run button, Ctrl/⌘ Enter, the version
+  // select, an example, a chip, a link. The step debugger runs on a Run
+  // gesture alone, never on the typeahead path.
+  function analyzeNow(typed) {
     window.clearTimeout(debounce);
     stopStroll();
     // The mirror holds the last answer's pattern: when the field says
@@ -606,7 +637,7 @@
     if (!current || current.regex !== el.pattern.value) {
       el.patternEditor.classList.remove('is-live');
     }
-    var request = { type: 'analyze', regex: el.pattern.value, subject: el.subject.value, version: chosen };
+    var request = { type: 'analyze', regex: el.pattern.value, subject: el.subject.value, version: chosen, typed: typed === true };
     writeHash(request);
     if (inflight) {
       pending = request;
@@ -652,7 +683,13 @@
         lintFor = null;
         delete failures[requestKey({ type: 'lint', regex: request.regex, version: request.version })];
       }
+      // The trace runs on a Run gesture, or when its tab is opened; a
+      // typed analysis leaves the tab waiting for Run. A trace that
+      // stopped on the previous input may start again on this one.
+      traceWanted = !request.typed;
+      tracer.failures = {};
     }
+    traceMark = null;
     if (!prerendered && payload.matches === null && payload.engineError === null) {
       payload.matches = { pending: true };
     }
@@ -772,6 +809,14 @@
       var span = unitRange(payload, nodes[currentNode].start, nodes[currentNode].end);
       if (span) {
         ranges.unshift({ start: span.start, end: span.end, className: 'pg-mark-node', priority: 0 });
+      }
+    }
+    // The item PCRE2 is about to try, from the Step through tab: lit over
+    // the node that holds it, which the tree's pattern lights on its own.
+    if (traceMark && activeTool === 'trace') {
+      var item = unitRange(payload, traceMark.start, traceMark.end);
+      if (item) {
+        ranges.unshift({ start: item.start, end: item.end, className: 'pg-mark-trace', priority: -1 });
       }
     }
     clear(el.patternMirror);
@@ -1377,11 +1422,12 @@
   // --- the tools -----------------------------------------------------------
 
   // What the console does with a pattern, one tab each: the ReDoS verdict,
-  // the translation, sample subjects, a test to paste, the layout. A tab
-  // asks the engine when it is opened, or when the input moved under it,
-  // never on every keystroke; the answer of each tab belongs to the input
-  // it was asked for, like the lint belongs to its pattern.
-  var TOOLS = ['redos', 'transpile', 'samples', 'export', 'format'];
+  // the translation, sample subjects, a test to paste, the layout, the
+  // match stepped through on PCRE2 itself. A tab asks the engine when it
+  // is opened, or when the input moved under it, never on every keystroke;
+  // the answer of each tab belongs to the input it was asked for, like the
+  // lint belongs to its pattern.
+  var TOOLS = ['redos', 'transpile', 'samples', 'export', 'format', 'trace'];
   var TOOL_STORAGE_KEY = 'playground-tool';
   var TOOL_STATUS = {
     redos: 'Judging the pattern for backtracking…',
@@ -1390,7 +1436,14 @@
     check: 'Asking the engine…',
     export: 'Writing the test…',
     format: 'Laying the pattern out…',
+    'trace-input': 'Reading the pattern for the trace…',
   };
+
+  // A request one of the tabs made: its own type, an engine-only check it
+  // chained, or the trace's first step through the driver.
+  function isToolRequest(request) {
+    return TOOLS.indexOf(request.type) !== -1 || request.type === 'check' || request.type === 'trace-input';
+  }
   var SEVERITY_WORDS = { safe: 'safe', low: 'low risk', medium: 'medium risk', high: 'high risk', critical: 'critical', unknown: 'no verdict' };
   var TARGET_LABELS = { js: 'JavaScript', html: 'HTML pattern', python: 'Python' };
   var PYTHON_VERSIONS = ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13'];
@@ -1445,6 +1498,13 @@
         request.subjects = exportSubjects();
         break;
       case 'samples':
+        break;
+      case 'trace':
+        // The driver reads the delimiters first; the trace itself goes to
+        // the trace worker once the engine's row and module are known.
+        request.type = 'trace-input';
+        request.purpose = 'trace';
+        request.subject = current.subject;
         break;
       default:
         return null;
@@ -1514,11 +1574,37 @@
     if (tool === 'export' && !current.payload.ast) {
       return null;
     }
+    // The trace is offered on a pattern the tree can show, on a Run
+    // gesture or a tab opening — never on the typeahead path.
+    if (tool === 'trace' && (!current.payload.ast || !traceWanted)) {
+      return null;
+    }
     return request;
   }
 
   function onToolResult(request, payload) {
+    if (request.type === 'check' && request.purpose === 'probe') {
+      // A witness run on the engine: the probe belongs to the engine, not
+      // to the input, so it is kept whatever the fields say now.
+      onProbeCheck(request, payload);
+      return;
+    }
+    if (request.type === 'check' && request.purpose === 'selfcheck') {
+      // The engine's own preg_match() on the traced subject: the trace it
+      // answers is named by the chain key, whatever the fields say now.
+      onSelfCheck(request, payload);
+      return;
+    }
     if (!current || current.regex !== request.regex || current.version !== request.version) {
+      return;
+    }
+    if (request.type === 'trace-input') {
+      toolAnswers.trace = { key: requestKey(request), payload: payload, request: request, checked: false, stage: 'input', step: 0, view: null };
+      prepareTrace(toolAnswers.trace);
+      // drain() follows every result and moves the trace on from here.
+      if (activeTool === 'trace') {
+        renderTool('trace', true);
+      }
       return;
     }
     if (request.type === 'check' && request.purpose === 'export') {
@@ -1581,10 +1667,19 @@
     if (TOOLS.indexOf(tool) === -1) {
       return;
     }
+    var left = activeTool;
     activeTool = tool;
     try {
       localStorage.setItem(TOOL_STORAGE_KEY, tool);
     } catch (error) {/* the choice simply does not persist */}
+    if (tool === 'trace') {
+      // Opening the tab is a gesture: the trace runs for the input shown;
+      // drain(), below, moves a trace already under way.
+      traceWanted = true;
+    } else if (left === 'trace' && traceMark && current) {
+      // The item lit in the pattern field belongs to the tab that left.
+      renderPatternMirror(current.payload, current.regex, lintFor === current.regex ? lastLint : null);
+    }
     Array.prototype.forEach.call(el.toolTabs, function (tab) {
       var on = tab.getAttribute('data-tool') === tool;
       tab.setAttribute('aria-selected', on ? 'true' : 'false');
@@ -1635,6 +1730,9 @@
     }
     var answer = toolAnswers[tool];
     var fresh = toolIsCurrent(tool) && answer;
+    if (tool === 'trace' && !fresh) {
+      clearTraceMark();
+    }
     if (tool === 'format') {
       renderFormatControls(panel);
     } else if (tool === 'transpile') {
@@ -1645,6 +1743,10 @@
         panel.appendChild(text('p', 'pg-tool-hint', 'Press Run: the engine answers this tab for the pattern above.'));
       } else if (tool === 'export' && !current.payload.ast) {
         panel.appendChild(text('p', 'pg-tool-hint', 'A pattern that does not parse has no test to write.'));
+      } else if (tool === 'trace' && !current.payload.ast) {
+        panel.appendChild(text('p', 'pg-tool-hint', 'A pattern the parser does not read has no trace: the syntax tree could not show its steps.'));
+      } else if (tool === 'trace' && !traceWanted) {
+        panel.appendChild(text('p', 'pg-tool-hint', 'Press Run to step through this pattern on PCRE2.'));
       } else {
         var request = toolRequest(tool);
         panel.appendChild(text('p', 'pg-tool-hint', request && exhausted(request) ? 'The engine did not answer this tab: press Run to try again.' : 'Asking the engine…'));
@@ -1657,6 +1759,7 @@
       case 'samples': renderSamples(panel, answer, announceResult); break;
       case 'export': renderExport(panel, answer.payload, announceResult); break;
       case 'format': renderFormat(panel, answer.payload, announceResult); break;
+      case 'trace': renderTrace(panel, answer, announceResult); break;
       default: break;
     }
   }
@@ -2034,6 +2137,1080 @@
     row.appendChild(text('span', 'pg-tool-line', result.changed ? (toolSettings.format.compact ? 'Written on one line; it matches what the pattern above matches.' : 'Laid out over ' + lines + ' line' + (lines === 1 ? '' : 's') + ' under x; it matches what the pattern above matches.') : 'The pattern fits the width: unchanged.'));
     panel.appendChild(row);
     if (announceResult) announce(result.changed ? (toolSettings.format.compact ? 'Pattern written on one line.' : 'Pattern laid out over ' + lines + ' lines.') : 'The pattern fits the width: unchanged.');
+  }
+
+  // --- step through ---------------------------------------------------------
+
+  // The match as PCRE2 ran it: the real PCRE2 of the engine's release,
+  // compiled to WebAssembly, traced through its callout API in a worker of
+  // its own (trace-worker.js). The driver reads the delimiters (the
+  // trace-input request above); this script resolves what the engine's
+  // exact PHP version passes to pcre2_compile() and pcre2_match() from the
+  // table php-pcre-options.js holds (loaded after this script, read only when a trace is asked for), and the
+  // bundle's manifest names the module of the engine's PCRE2 release. Four
+  // witness runs, once per engine, check that the module and the engine
+  // agree on the build facts no table can read — the newline convention,
+  // \R, \K in a lookbehind, the parens nest limit — before the first trace
+  // on that engine; after every trace, the outcome is compared with the
+  // engine's own preg_match() on the traced subject (a check request: one
+  // match, no JIT — the Matches panel runs preg_match_all(), whose later
+  // matches can fail where the first one did not), and a disagreement is
+  // printed, never hidden.
+  var TRACE_PROTOCOL = 1;        // the trace worker's document
+  var TRACE_TIMEOUT_MS = 10000;  // one trace, the module's load included
+  var TRACE_STEP_CAP = 20000;    // recorded steps; the match finishes past it
+  var TRACE_SUBJECT_CAP = 1000;  // bytes the driver keeps for the trace
+  var TRACE_CALLOUT_AUTO = 255;  // the callout number of an automatic callout
+  // PCRE2_ERROR_NOMEMORY: the module's own heap ran out, which is a limit
+  // of the trace and not an answer PHP gives; the trace has no verdict.
+  var PCRE2_ERROR_NOMEMORY = -48;
+  // php_pcre.c, when a matches array is passed: a whole match whose end is
+  // before its start (\K in a lookahead moved the start past the end) is
+  // answered with this warning and false, in every version the page runs.
+  var PHP_REVERSED_MATCH = 'Get subpatterns list failed';
+  // preg_last_error_msg() by PREG_* code, as php_pcre.c spells them: the
+  // check's answer carries the text, the engine's row carries the codes.
+  var PHP_ERROR_CODES = {
+    'No error': 0,
+    'Internal error': 1,
+    'Backtrack limit exhausted': 2,
+    'Recursion limit exhausted': 3,
+    'Malformed UTF-8 characters, possibly incorrectly encoded': 4,
+    'The offset did not correspond to the beginning of a valid UTF-8 code point': 5,
+    'JIT stack limit exhausted': 6,
+  };
+  // The witnesses, each run through the engine and through the module:
+  // what the compile-time configuration of php-src's bundled PCRE2 decides
+  // (NEWLINE_DEFAULT, BSR, PARENS_NEST_LIMIT) and what the PHP row says
+  // (EXTRA_ALLOW_LOOKAROUND_BSK), compared outcome by outcome.
+  var PROBE_WITNESSES = [
+    { name: 'the newline convention (/a$/ on "a\\r\\n")', body: 'a$', modifiers: '', subject: 'a\r\n' },
+    { name: '\\R on U+0085 under u', body: '\\R', modifiers: 'u', subject: '\u0085' },
+    { name: '\\K in a lookbehind', body: '(?<=a\\K)bc', modifiers: '', subject: 'abc' },
+    { name: '251 nested groups', body: '('.repeat(251) + 'a' + ')'.repeat(251), modifiers: '', subject: 'a' },
+  ];
+
+  var decoder = new TextDecoder();
+  var probes = {};          // exact PHP version -> { engine: [], module: [], status, witness, running }
+  var traceWanted = false;  // a Run gesture or a tab opening asked for the trace
+  var traceMark = null;     // the current item's byte span in the body, lit in the pattern field
+
+  // --- the trace worker: one request at a time, a watchdog, one retry ------
+
+  var tracer = { worker: null, inflight: null, queue: [], nextId: 1, timer: null, failures: {} };
+
+  function traceWorkerCreate() {
+    try {
+      var created = new Worker('/assets/js/trace-worker.js' + (assetVersion ? '?v=' + assetVersion : ''), { type: 'module' });
+      created.addEventListener('message', onTraceMessage);
+      created.addEventListener('error', function (event) {
+        if (tracer.inflight) {
+          traceFail(tracer.inflight, 'The trace worker failed: ' + (event.message || 'it could not be loaded') + '.');
+        }
+      });
+      return created;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function traceKill() {
+    window.clearTimeout(tracer.timer);
+    tracer.timer = null;
+    if (tracer.worker) {
+      tracer.worker.removeEventListener('message', onTraceMessage);
+      tracer.worker.terminate();
+      tracer.worker = null;
+    }
+  }
+
+  // One request to the trace worker, answered by a promise. Requests are
+  // queued: the worker runs one match at a time and the page waits for it.
+  function traceAsk(request, key) {
+    return new Promise(function (resolve, reject) {
+      tracer.queue.push({ request: request, key: key, resolve: resolve, reject: reject, id: 0 });
+      traceNext();
+    });
+  }
+
+  function traceNext() {
+    if (tracer.inflight || !tracer.queue.length) {
+      return;
+    }
+    tracer.inflight = tracer.queue.shift();
+    traceSend(tracer.inflight);
+  }
+
+  function traceSend(job) {
+    if (!tracer.worker) {
+      tracer.worker = traceWorkerCreate();
+      if (!tracer.worker) {
+        tracer.inflight = null;
+        job.reject(new Error('This browser cannot run the trace: it has no module workers.'));
+        traceNext();
+        return;
+      }
+    }
+    job.id = tracer.nextId++;
+    tracer.timer = window.setTimeout(function () {
+      traceFail(job, 'The trace did not answer within ' + TRACE_TIMEOUT_MS / 1000 + ' s.');
+    }, TRACE_TIMEOUT_MS);
+    tracer.worker.postMessage(Object.assign({ id: job.id, bundleUrl: bundleUrl }, job.request));
+  }
+
+  // The page's rule, applied to the trace worker: a request that failed is
+  // replayed once on a fresh worker (the module loads again); a second
+  // failure on the same input stops there, until the input changes.
+  function traceFail(job, reason) {
+    if (window.console && console.warn) {
+      console.warn('playground: trace failed: ' + reason);
+    }
+    traceKill();
+    tracer.failures[job.key] = (tracer.failures[job.key] || 0) + 1;
+    if (tracer.failures[job.key] < 2) {
+      setStatus(reason + ' Starting the trace again…', 'warn');
+      traceSend(job);
+      return;
+    }
+    tracer.inflight = null;
+    job.reject(new Error(reason));
+    traceNext();
+  }
+
+  function onTraceMessage(event) {
+    var message = event.data;
+    var job = tracer.inflight;
+    if (!message || !job || message.id !== job.id) {
+      return;
+    }
+    if (message.type === 'fatal') {
+      traceFail(job, 'The trace failed: ' + message.message + '.');
+      return;
+    }
+    if (message.type !== 'result') {
+      return;
+    }
+    window.clearTimeout(tracer.timer);
+    tracer.timer = null;
+    tracer.inflight = null;
+    if (!message.payload || message.payload.protocol !== TRACE_PROTOCOL) {
+      job.reject(new Error('The trace worker answered in a form this page does not know: reload the page.'));
+    } else {
+      job.resolve(message.payload);
+    }
+    traceNext();
+  }
+
+  // --- what PHP passes: the row, the module, the options -------------------
+
+  // The engine the page shows, by exact version: the analysis names it as
+  // its target (the engine itself when the two are one).
+  function traceEngine() {
+    var payload = current ? current.payload : null;
+    if (!payload) {
+      return null;
+    }
+    var engine = payload.target || payload.engine;
+    return engine && typeof engine.php === 'string' && typeof engine.pcre === 'string' ? engine : null;
+  }
+
+  // The compile and extra options of a modifier string under a row, as
+  // PHP's wrapper ORs them; a letter the row does not hold is unknown to
+  // that PHP, and the engine's own verdict on it is the one to show.
+  function traceOptions(row, modifiers) {
+    var has = function (table, letter) {
+      return !!table && Object.prototype.hasOwnProperty.call(table, letter);
+    };
+    var compile = (row.base || 0) >>> 0;
+    var extra = (row.extra && row.extra.always ? row.extra.always : 0) >>> 0;
+    for (var i = 0; i < modifiers.length; i += 1) {
+      var letter = modifiers.charAt(i);
+      if (has(row.modifiers, letter)) {
+        compile = (compile | row.modifiers[letter]) >>> 0;
+      } else if (has(row.extra, letter)) {
+        extra = (extra | row.extra[letter]) >>> 0;
+      } else {
+        return { unknown: letter };
+      }
+    }
+    return { compile: compile, extra: extra, matchLimit: row.matchLimit, depthLimit: row.depthLimit };
+  }
+
+  function traceMessage(answer, body, subject, options) {
+    return { type: 'trace', release: answer.release, body: body, subject: subject, compileOptions: options.compile, extraOptions: options.extra, matchLimit: options.matchLimit, depthLimit: options.depthLimit, stepCap: TRACE_STEP_CAP };
+  }
+
+  // The trace stops here, with a sentence; warn is the tone of a refusal
+  // or a failure, the plain tone that of a fact (no row, no module). A
+  // bare sentence is shown as it is, without the "No trace:" prefix.
+  function traceStop(answer, fault, tone, bare) {
+    answer.stage = 'done';
+    answer.fault = typeof fault === 'string' ? { message: fault, position: null } : fault;
+    answer.tone = tone || '';
+    answer.bare = bare === true;
+  }
+
+  // The driver's answer in hand: the row for the engine's PHP, the module
+  // for its PCRE2, the driver's refusal, the options — each a stop with
+  // its sentence when missing; otherwise the probe comes first.
+  function prepareTrace(answer) {
+    var payload = answer.payload;
+    if (payload.error) {
+      traceStop(answer, { message: payload.error.message, position: payload.error.position }, 'warn');
+      return;
+    }
+    var engine = traceEngine();
+    if (!engine) {
+      traceStop(answer, 'The engine has not said which PHP it is: press Run to try again.', 'warn');
+      return;
+    }
+    answer.engine = engine;
+    var table = window.PHPRegexPcreOptions;
+    var row = table && Object.prototype.hasOwnProperty.call(table, engine.php) ? table[engine.php] : null;
+    if (!row) {
+      traceStop(answer, 'No trace for PHP ' + engine.php + ' yet.');
+      return;
+    }
+    var module = manifest && manifest.modules ? manifest.modules['pcre2-' + engine.pcre] : null;
+    if (!module) {
+      traceStop(answer, 'No trace module for PCRE2 ' + engine.pcre + ' yet.');
+      return;
+    }
+    if (typeof payload.refusal === 'string') {
+      traceStop(answer, payload.refusal, 'warn');
+      return;
+    }
+    if (!payload.input) {
+      traceStop(answer, 'The engine gave no input for the trace: press Run to try again.', 'warn');
+      return;
+    }
+    var options = traceOptions(row, payload.input.modifiers || '');
+    if (options.unknown !== undefined) {
+      // The engine's own words on the modifier, from the Matches panel.
+      traceStop(answer, current.payload.engineError ? 'PHP says ' + current.payload.engineError : 'PHP ' + engine.php + ' does not know the modifier “' + options.unknown + '”.', 'warn');
+      return;
+    }
+    answer.row = row;
+    answer.release = module.release || engine.pcre;
+    answer.options = options;
+    answer.stage = 'probe';
+  }
+
+  // --- the probe: four witnesses, once per engine ---------------------------
+
+  function probeFor(answer) {
+    var php = answer.engine.php;
+    if (!probes[php]) {
+      probes[php] = { engine: [], module: [], status: 'pending', witness: '', running: false };
+    }
+    return probes[php];
+  }
+
+  function nextWitness(answers) {
+    for (var i = 0; i < PROBE_WITNESSES.length; i += 1) {
+      if (answers[i] === undefined) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  function probeCheckRequest(answer, index) {
+    var witness = PROBE_WITNESSES[index];
+    return { type: 'check', purpose: 'probe', probe: index, php: answer.engine.php, regex: '/' + witness.body + '/' + witness.modifiers, subjects: [witness.subject], version: current.version };
+  }
+
+  // One word for an outcome, on either side: the engine's check answer
+  // (matched 1, 0, or null with its message) and the module's document.
+  function engineOutcome(check) {
+    if (!check) {
+      return 'no answer';
+    }
+    if (check.matched === 1) {
+      return 'match';
+    }
+    if (check.matched === 0) {
+      return 'no match';
+    }
+    return typeof check.error === 'string' && /^Compilation failed/.test(check.error) ? 'compile error' : 'error';
+  }
+
+  function moduleOutcome(payload) {
+    if (payload.compile && payload.compile.error) {
+      return 'compile error';
+    }
+    if (!payload.outcome || payload.outcome.error) {
+      return 'error';
+    }
+    return payload.outcome.rc > 0 ? 'match' : 'no match';
+  }
+
+  function onProbeCheck(request, payload) {
+    var probe = probes[request.php];
+    if (!probe || (payload.engine && payload.engine.php !== request.php)) {
+      return;
+    }
+    probe.engine[request.probe] = engineOutcome(payload.checks && payload.checks[0]);
+    // drain() follows every result and asks the next witness, or judges.
+  }
+
+  // The engine did not answer a witness: the trace of this input stops,
+  // the probe stays unanswered, and Run asks again.
+  function probeGaveUp(request, reason) {
+    var answer = toolAnswers.trace;
+    if (!answer || answer.stage !== 'probe') {
+      return;
+    }
+    var witness = PROBE_WITNESSES[request.probe];
+    traceStop(answer, 'The engine did not answer the trace’s check on ' + (witness ? witness.name : 'a witness') + ' (' + reason + ') Press Run to try again.', 'warn');
+    answer.failed = true;
+    answer.request = request;
+    if (activeTool === 'trace') {
+      renderTool('trace', true);
+    }
+  }
+
+  function probeModule(answer, probe) {
+    var index = nextWitness(probe.module);
+    var witness = PROBE_WITNESSES[index];
+    probe.running = true;
+    traceAsk(traceMessage(answer, witness.body, witness.subject, traceOptions(answer.row, witness.modifiers)), 'probe\u0000' + answer.engine.php + '\u0000' + index).then(function (payload) {
+      probe.running = false;
+      probe.module[index] = moduleOutcome(payload);
+      // The next witness, or the judgement and the trace, through drain().
+      drain();
+    }, function (error) {
+      probe.running = false;
+      traceGaveUp(error.message);
+    });
+  }
+
+  function judgeProbe(probe) {
+    for (var i = 0; i < PROBE_WITNESSES.length; i += 1) {
+      if (probe.engine[i] !== probe.module[i]) {
+        probe.status = 'failed';
+        probe.witness = PROBE_WITNESSES[i].name + ' (the module says ' + probe.module[i] + ', PHP says ' + probe.engine[i] + ')';
+        return;
+      }
+    }
+    probe.status = 'ok';
+  }
+
+  // --- the flow: input, probe, trace, self-check ----------------------------
+
+  // Moves the current trace one step on, from wherever it stands: a probe
+  // witness to ask the engine (queued for drain()), one to run on the
+  // module, the judgement, then the trace itself. Idempotent: drain() and
+  // every trace event call it, and it does nothing for an answer the input
+  // has left behind.
+  function advanceTrace() {
+    var answer = toolAnswers.trace;
+    if (!answer || !current || current.prerendered || !toolIsCurrent('trace')) {
+      return;
+    }
+    if (answer.stage === 'probe') {
+      var probe = probeFor(answer);
+      if (probe.status === 'pending') {
+        var ask = nextWitness(probe.engine);
+        if (ask !== -1) {
+          // Queued for drain(), which sends it when the engine is free;
+          // never sent from here, so one request is in flight at a time.
+          if (!pendingTool && !(inflight && inflight.request.purpose === 'probe')) {
+            pendingTool = probeCheckRequest(answer, ask);
+          }
+          return;
+        }
+        if (nextWitness(probe.module) !== -1) {
+          if (!probe.running) {
+            probeModule(answer, probe);
+          }
+          return;
+        }
+        judgeProbe(probe);
+      }
+      if (probe.status === 'failed') {
+        traceStop(answer, 'The trace module disagrees with this PHP on ' + probe.witness + '; no trace on PHP ' + answer.engine.php + '.', 'warn', true);
+        if (activeTool === 'trace') {
+          renderTool('trace', true);
+        }
+        return;
+      }
+      answer.stage = 'trace';
+      if (activeTool === 'trace') {
+        renderTool('trace', false);
+      }
+    }
+    if (answer.stage === 'trace' && !answer.asked) {
+      answer.asked = true;
+      runTrace(answer);
+      return;
+    }
+    if (answer.stage === 'done' && answer.selfCheck && answer.selfCheck.pending) {
+      // The self-check's engine run: queued for drain() like a witness,
+      // one request in flight at a time, never sent from here.
+      if (!pendingTool && !(inflight && inflight.request.purpose === 'selfcheck')) {
+        pendingTool = selfCheckRequest(answer);
+      }
+    }
+  }
+
+  // The engine's own preg_match() on the traced subject, with the trace's
+  // key as the chain's, so the answer finds its trace.
+  function selfCheckRequest(answer) {
+    var input = answer.payload.input;
+    return { type: 'check', purpose: 'selfcheck', php: answer.engine.php, regex: current.regex, subject: current.subject, subjects: [input.subject], version: current.version, chainKey: answer.key };
+  }
+
+  function onSelfCheck(request, payload) {
+    var answer = toolAnswers.trace;
+    if (!answer || answer.key !== request.chainKey || answer.stage !== 'done' || !answer.selfCheck || !answer.selfCheck.pending) {
+      return;
+    }
+    var check = payload.checks && payload.checks[0] ? payload.checks[0] : null;
+    if (payload.engine && payload.engine.php !== answer.engine.php) {
+      answer.selfCheck = { agrees: null, note: 'PHP ' + payload.engine.php + ' answered the check, not the PHP ' + answer.engine.php + ' the trace was run for' };
+    } else if (!check) {
+      answer.selfCheck = { agrees: null, note: 'the engine gave no answer to compare' };
+    } else {
+      answer.selfCheck = selfCheck(answer, check);
+    }
+    showSelfCheck(answer);
+  }
+
+  // The engine did not answer the self-check (twice, or with a fault):
+  // the trace stands, the label says it was not compared.
+  function selfCheckGaveUp(request, reason) {
+    var answer = toolAnswers.trace;
+    if (!answer || answer.key !== request.chainKey || !answer.selfCheck || !answer.selfCheck.pending) {
+      return;
+    }
+    answer.selfCheck = { agrees: null, note: 'the engine did not answer the check (' + reason.replace(/\.$/, '') + ')' };
+    showSelfCheck(answer);
+  }
+
+  // The verdict reaches the tab: the label under the list is rewritten in
+  // place when it is on screen (the visitor's step stays), else the tab
+  // is drawn again when it opens.
+  function showSelfCheck(answer) {
+    var box = answer.labelBox;
+    if (box && box.isConnected && activeTool === 'trace') {
+      fillTraceLabel(box, answer);
+    } else if (activeTool === 'trace') {
+      renderTool('trace', false);
+    }
+    if (activeTool === 'trace') {
+      var check = answer.selfCheck;
+      announce(check.agrees === false ? 'The engine’s answer disagrees with the trace.' : (check.agrees ? 'The engine’s answer agrees with the trace.' : 'The trace was not compared: ' + check.note + '.'));
+    }
+  }
+
+  function runTrace(answer) {
+    var input = answer.payload.input;
+    traceAsk(traceMessage(answer, input.body, input.subject, answer.options), answer.key).then(function (payload) {
+      if (toolAnswers.trace !== answer) {
+        return;
+      }
+      if (!toolIsCurrent('trace')) {
+        // The input moved while PCRE2 ran: the answer is nobody's, and
+        // the same input, asked again, starts from the driver.
+        delete toolAnswers.trace;
+        return;
+      }
+      answer.trace = payload;
+      answer.stage = 'done';
+      answer.step = 0;
+      answer.bodyBytes = encoder.encode(input.body);
+      answer.subjectBytes = encoder.encode(input.subject);
+      answer.subjectUnits = unitTable(input.subject);
+      answer.captures = carryCaptures(payload.steps || []);
+      answer.selfCheck = selfCheckBeforeEngine(answer);
+      if (activeTool === 'trace') {
+        renderTool('trace', true);
+      }
+      // The engine's own answer, when the self-check needs one: queued
+      // through drain(), which sends it when the engine is free.
+      drain();
+    }, function (error) {
+      if (toolAnswers.trace === answer) {
+        traceGaveUp(error.message);
+      }
+    });
+  }
+
+  // The trace worker gave up twice on this input: the tab says so, the
+  // title bar says Stopped, and the next Run asks again.
+  function traceGaveUp(reason) {
+    var answer = toolAnswers.trace;
+    if (!answer || answer.stage === 'done') {
+      return;
+    }
+    traceStop(answer, reason + ' Press Run to try again.', 'warn');
+    answer.failed = true;
+    setStatus(reason + ' The trace stopped on this input; press Run to try again.', 'error');
+    setState('Stopped', 'error');
+    announce('The trace stopped on this input.');
+    if (activeTool === 'trace') {
+      renderTool('trace', true);
+    }
+  }
+
+  // The captures of every step: a step carries its ovector only when it
+  // changed, so each one reads the last that was sent.
+  function carryCaptures(steps) {
+    var captures = [];
+    var last = [];
+    steps.forEach(function (step) {
+      if (Array.isArray(step.cap)) {
+        last = step.cap;
+      }
+      captures.push(last);
+    });
+    return captures;
+  }
+
+  // Byte offset -> UTF-16 index of a string, as the engine's unitOf table
+  // does for the pattern; an inner byte of a character maps to its start.
+  function unitTable(string) {
+    var table = [];
+    var unit = 0;
+    while (unit < string.length) {
+      var point = string.codePointAt(unit);
+      var width = point < 0x80 ? 1 : (point < 0x800 ? 2 : (point < 0x10000 ? 3 : 4));
+      for (var b = 0; b < width; b += 1) {
+        table.push(unit);
+      }
+      unit += point >= 0x10000 ? 2 : 1;
+    }
+    table.push(string.length);
+    return table;
+  }
+
+  function unitAt(table, byteOffset) {
+    return table[Math.max(0, Math.min(byteOffset, table.length - 1))];
+  }
+
+  // PCRE2's error code as PHP's pcre_handle_exec_error() maps it, from the
+  // engine's row: a PREG_* code the Matches panel's text also names.
+  function phpErrorCode(row, code) {
+    var errors = row.errors || {};
+    if (code === -47) {
+      return errors.matchLimit;
+    }
+    if (code === -53) {
+      return errors.depthLimit;
+    }
+    if (code === -36) {
+      return errors.badUtfOffset;
+    }
+    if (code <= -3 && code >= -23) {
+      return errors.badUtf;
+    }
+    return errors.internal;
+  }
+
+  function quoted(value) {
+    return value === null || value === undefined ? 'unset' : '“' + value + '”';
+  }
+
+  function bytesHex(bytes) {
+    var out = '';
+    for (var i = 0; i < bytes.length; i += 1) {
+      out += (bytes[i] < 16 ? '0' : '') + bytes[i].toString(16);
+    }
+    return out;
+  }
+
+  // The whole-match pair of a trace that matched, when its end is before
+  // its start: \K in a lookahead moved the start past the end. PHP answers
+  // such a match with a warning and false when a matches array is passed.
+  function reversedMatch(outcome) {
+    var pair = outcome && outcome.rc > 0 && Array.isArray(outcome.ovector) ? outcome.ovector[0] : null;
+    return Array.isArray(pair) && pair[1] < pair[0] ? pair : null;
+  }
+
+  // What the self-check can say before the engine answers: nothing to
+  // compare (the trace read a cut subject; the module ran out of memory,
+  // which is a limit of the trace and no verdict), or the wait for the
+  // engine's own run — selfCheck() below, once the check has answered.
+  function selfCheckBeforeEngine(answer) {
+    var input = answer.payload.input;
+    var outcome = answer.trace.outcome;
+    if (input.subjectTruncated) {
+      return { agrees: null, note: 'the trace reads the first ' + TRACE_SUBJECT_CAP.toLocaleString('en-US').replace(',', ' ') + ' bytes; the engine’s answer is for the whole subject' };
+    }
+    if (outcome && outcome.error && outcome.error.code === PCRE2_ERROR_NOMEMORY) {
+      return { agrees: null, note: 'the trace module ran out of memory' };
+    }
+    return { agrees: null, pending: true, note: 'waiting for the engine’s own answer' };
+  }
+
+  // One sentence for the engine's check answer: what preg_match() said.
+  function engineSentence(check) {
+    if (check.matched === 1) {
+      return 'PHP found a match.';
+    }
+    if (check.matched === 0) {
+      return 'PHP found no match.';
+    }
+    return 'PHP says: ' + check.error + '.';
+  }
+
+  // The trace's outcome against the engine's own preg_match() on the same
+  // pattern, the same subject, the same engine (the check's answer: one
+  // match, no JIT, offsets, unset groups as null). Captures are read as
+  // PHP writes them (groups below rc, an unset one as null) and compared
+  // by text and byte offset; a whole match whose end is before its start
+  // is what PHP refuses with “Get subpatterns list failed”; an error is
+  // compared by PHP's code. The result is a verdict and its sentences.
+  function selfCheck(answer, check) {
+    var trace = answer.trace;
+    var release = answer.release;
+    var compileError = trace.compile && trace.compile.error ? trace.compile.error : null;
+    var engineRefused = check.matched === null && typeof check.error === 'string' && /^Compilation failed/.test(check.error);
+    if (compileError && engineRefused) {
+      return { agrees: true, note: 'both refuse the pattern' };
+    }
+    if (compileError) {
+      return { agrees: false, details: ['PCRE2 ' + release + ' in the trace refused the pattern: ' + compileError.message + ' at offset ' + compileError.offset + '.', 'PHP compiled it. ' + engineSentence(check)] };
+    }
+    if (engineRefused) {
+      return { agrees: false, details: ['PHP refused the pattern: ' + check.error, 'PCRE2 ' + release + ' in the trace compiled it.'] };
+    }
+    var outcome = trace.outcome || {};
+    var reversed = reversedMatch(outcome);
+    if (reversed) {
+      // PHP's rule comes first: offsets[1] < offsets[0] is a warning and
+      // false, never a match written to the array.
+      var reversedSays = 'The trace’s match ends before it starts (byte ' + reversed[0] + ' to byte ' + reversed[1] + '), which PHP refuses with “' + PHP_REVERSED_MATCH + '”.';
+      if (check.matched === null && check.error === PHP_REVERSED_MATCH) {
+        return { agrees: true, note: 'the match ends before it starts, and PHP refuses it with “' + PHP_REVERSED_MATCH + '”' };
+      }
+      return { agrees: false, details: [reversedSays, engineSentence(check)] };
+    }
+    var traceCode = outcome.error ? phpErrorCode(answer.row, outcome.error.code) : 0;
+    var engineText = check.matched === null ? String(check.error) : 'No error';
+    var engineCode = check.matched === null ? (PHP_ERROR_CODES[engineText] !== undefined ? PHP_ERROR_CODES[engineText] : -1) : 0;
+    var traceSays = outcome.error ? 'The trace stopped with PCRE2 error ' + outcome.error.code + ' (' + outcome.error.message + '), which PHP reports as error ' + traceCode + '.' : 'The trace ended with no error.';
+    var engineSays = 'PHP says: ' + engineText + (engineCode > 0 ? ' (error ' + engineCode + ').' : '.');
+    if (traceCode !== engineCode) {
+      return { agrees: false, details: [traceSays, engineSays] };
+    }
+    if (traceCode !== 0) {
+      return { agrees: true, note: 'both stop with ' + engineText };
+    }
+    var traceMatched = outcome.rc > 0;
+    var engineMatched = check.matched === 1;
+    if (traceMatched !== engineMatched) {
+      return { agrees: false, details: [traceMatched ? 'The trace found a match.' : 'The trace found no match.', engineSentence(check)] };
+    }
+    if (!traceMatched) {
+      return { agrees: true, note: 'no match on either side' };
+    }
+    var groups = check.groups && typeof check.groups === 'object' ? check.groups : {};
+    var ovector = Array.isArray(outcome.ovector) ? outcome.ovector : [];
+    var highest = outcome.rc;
+    Object.keys(groups).forEach(function (key) {
+      if (/^\d+$/.test(key)) {
+        highest = Math.max(highest, Number(key) + 1);
+      }
+    });
+    var details = [];
+    for (var group = 0; group < highest; group += 1) {
+      // PHP's rule: groups from rc on are unset; an unset one is null in
+      // the check's answer (PREG_UNMATCHED_AS_NULL), and so here.
+      var pair = group < outcome.rc && Array.isArray(ovector[group]) ? ovector[group] : null;
+      var traceBytes = pair ? answer.subjectBytes.slice(pair[0], pair[1]) : null;
+      var traceText = traceBytes ? decoder.decode(traceBytes) : null;
+      var engineGroup = Array.isArray(groups[String(group)]) ? groups[String(group)] : null;
+      var engineText2 = engineGroup ? engineGroup[0] : null;
+      // A group that cut a character travels as hex beside its text: the
+      // bytes are compared, not the replacement characters.
+      var sameText = engineGroup && engineGroup.length === 3 ? traceBytes !== null && bytesHex(traceBytes) === engineGroup[2] : traceText === engineText2;
+      if (!sameText) {
+        details.push('Group ' + group + ': the trace holds ' + quoted(traceText) + ', PHP wrote ' + quoted(engineText2) + '.');
+      } else if (pair && engineGroup && pair[0] !== engineGroup[1]) {
+        details.push('Group ' + group + ' starts at byte ' + pair[0] + ' in the trace, at byte ' + engineGroup[1] + ' for PHP.');
+      }
+    }
+    if (details.length) {
+      return { agrees: false, details: details };
+    }
+    return { agrees: true, note: 'the same match, the same groups' };
+  }
+
+  // --- rendering the tab -----------------------------------------------------
+
+  function clearTraceMark() {
+    if (traceMark && current) {
+      traceMark = null;
+      renderPatternMirror(current.payload, current.regex, lintFor === current.regex ? lastLint : null);
+    }
+    traceMark = null;
+  }
+
+  function traceLabel(answer) {
+    return 'PCRE2 ' + answer.release + ', compiled with auto-callouts, options as PHP ' + answer.engine.php + ' passes them';
+  }
+
+  // The honest line under the list: which PCRE2 traced, whose options were
+  // applied, and whether the engine's own answer agrees. A disagreement
+  // stands in red with both answers, never hidden.
+  function renderTraceLabel(panel, answer) {
+    var box = text('div', 'pg-trace-check');
+    fillTraceLabel(box, answer);
+    answer.labelBox = box;
+    panel.appendChild(box);
+  }
+
+  // The label's four states: waiting for the engine's own answer, not
+  // compared (with the reason), agrees, disagrees (red, both answers).
+  function fillTraceLabel(box, answer) {
+    while (box.firstChild) {
+      box.removeChild(box.firstChild);
+    }
+    var check = answer.selfCheck;
+    if (check && check.pending) {
+      box.appendChild(text('p', 'pg-tool-line pg-trace-label', traceLabel(answer) + ' — ' + check.note + '…'));
+      return;
+    }
+    if (!check || check.agrees === null) {
+      box.appendChild(text('p', 'pg-tool-line pg-trace-label', traceLabel(answer) + (check ? ' — not compared: ' + check.note + '.' : '.')));
+      return;
+    }
+    if (check.agrees) {
+      box.appendChild(text('p', 'pg-tool-line pg-trace-label', traceLabel(answer) + ' — the engine’s answer agrees' + (check.note ? ' (' + check.note + ')' : '') + '.'));
+      return;
+    }
+    box.appendChild(text('p', 'pg-tool-line is-error pg-trace-label', traceLabel(answer) + ' — the engine’s answer disagrees:'));
+    var list = text('ul', 'pg-tool-list is-error');
+    check.details.forEach(function (detail) {
+      list.appendChild(text('li', null, detail));
+    });
+    box.appendChild(list);
+  }
+
+  function traceItemText(answer, step) {
+    if (!step.len) {
+      return 'End of pattern';
+    }
+    return decoder.decode(answer.bodyBytes.slice(step.p, step.p + step.len));
+  }
+
+  function traceOutcomeLine(answer) {
+    var trace = answer.trace;
+    var steps = trace.steps || [];
+    var count = typeof trace.steps_total === 'number' ? trace.steps_total : steps.length;
+    var stepsWord = count + (count === 1 ? ' step' : ' steps');
+    var outcome = trace.outcome || {};
+    if (outcome.error && outcome.error.code === PCRE2_ERROR_NOMEMORY) {
+      // The module's heap, not a verdict: PHP's own library has the
+      // host's memory and no PREG_* code names this.
+      return 'The trace module ran out of memory after ' + stepsWord + '; no verdict.';
+    }
+    if (outcome.error) {
+      var code = phpErrorCode(answer.row, outcome.error.code);
+      var name = '';
+      Object.keys(PHP_ERROR_CODES).forEach(function (label) {
+        if (PHP_ERROR_CODES[label] === code) {
+          name = label;
+        }
+      });
+      return 'Stopped after ' + stepsWord + ': ' + outcome.error.message + (name ? ' (PHP: ' + name + ').' : '.');
+    }
+    var reversed = reversedMatch(outcome);
+    if (reversed) {
+      return 'The match ends before it starts (byte ' + reversed[0] + ' to byte ' + reversed[1] + ': \\K moved the start past the end); PHP refuses such a match with “' + PHP_REVERSED_MATCH + '”.';
+    }
+    if (outcome.rc > 0 && Array.isArray(outcome.ovector) && outcome.ovector[0]) {
+      var pair = outcome.ovector[0];
+      return 'Matched ' + quoted(decoder.decode(answer.subjectBytes.slice(pair[0], pair[1]))) + ' at byte ' + pair[0] + ' after ' + stepsWord + '.';
+    }
+    return 'No match after ' + stepsWord + '.';
+  }
+
+  function renderTrace(panel, answer, announceResult) {
+    if (answer.stage !== 'done') {
+      clearTraceMark();
+      if (answer.stage === 'probe') {
+        var probe = probeFor(answer);
+        var done = probe.engine.filter(function (value) { return value !== undefined; }).length + probe.module.filter(function (value) { return value !== undefined; }).length;
+        panel.appendChild(text('p', 'pg-tool-hint', 'Checking the trace module against PHP ' + answer.engine.php + ' (' + Math.min(done, 2 * PROBE_WITNESSES.length) + ' of ' + 2 * PROBE_WITNESSES.length + ' witness runs)…'));
+      } else {
+        panel.appendChild(text('p', 'pg-tool-hint', answer.stage === 'trace' ? 'Tracing on PCRE2 ' + answer.release + '…' : 'Reading the pattern…'));
+      }
+      return;
+    }
+    if (answer.fault) {
+      clearTraceMark();
+      if (answer.tone === 'warn') {
+        faultLine(panel, answer.fault, answer.bare ? '' : 'No trace: ');
+      } else {
+        panel.appendChild(text('p', 'pg-tool-hint', answer.fault.message));
+      }
+      if (announceResult) announce((answer.bare ? '' : 'No trace: ') + answer.fault.message);
+      return;
+    }
+    var trace = answer.trace;
+    var input = answer.payload.input;
+    if (trace.compile && trace.compile.error) {
+      clearTraceMark();
+      panel.appendChild(text('p', 'pg-tool-line is-warn', 'PCRE2 ' + answer.release + ' refused the pattern: ' + trace.compile.error.message + ' (offset ' + trace.compile.error.offset + ').'));
+      renderTraceLabel(panel, answer);
+      if (announceResult) announce('PCRE2 refused the pattern: ' + trace.compile.error.message);
+      return;
+    }
+    var steps = trace.steps || [];
+    var view = { items: [], current: null };
+    answer.view = view;
+
+    panel.appendChild(text('p', 'pg-tool-line pg-trace-outcome', traceOutcomeLine(answer)));
+    if (trace.truncated) {
+      // The record stops at the step cap, or earlier when the recorded steps
+      // outgrow their byte cap (hundreds of groups rewritten at every step).
+      panel.appendChild(text('p', 'pg-tool-line is-warn', 'Recording stopped after ' + steps.length.toLocaleString('en-US').replace(/,/g, ' ') + ' steps' + (steps.length < TRACE_STEP_CAP ? ' (the record reached its size cap)' : '') + '; the outcome is the engine’s.'));
+    }
+    if (input.subjectTruncated) {
+      panel.appendChild(text('p', 'pg-tool-line is-warn', 'The trace reads the first ' + TRACE_SUBJECT_CAP.toLocaleString('en-US').replace(',', ' ') + ' bytes of the subject.'));
+    }
+    if (!steps.length) {
+      panel.appendChild(text('p', 'pg-tool-hint', 'PCRE2 made no step: its start-of-match optimizations found no position worth trying.'));
+      renderTraceLabel(panel, answer);
+      if (announceResult) announce('Traced: no step. ' + traceOutcomeLine(answer));
+      return;
+    }
+
+    // The slider and the two buttons: one hand for the mouse, one for the
+    // keys (the slider's own arrows, Home and End move it).
+    var nav = text('div', 'pg-tool-row pg-trace-nav');
+    var label = text('label', null, 'Step');
+    label.htmlFor = 'pg-trace-step';
+    var slider = document.createElement('input');
+    slider.type = 'range';
+    slider.id = 'pg-trace-step';
+    slider.min = '0';
+    slider.max = String(steps.length - 1);
+    slider.value = String(answer.step);
+    slider.addEventListener('input', function () {
+      setTraceStep(answer, parseInt(slider.value, 10) || 0);
+    });
+    var count = text('span', 'pg-trace-count');
+    nav.appendChild(label);
+    nav.appendChild(slider);
+    nav.appendChild(count);
+    nav.appendChild(toolButton('← Previous', function () {
+      setTraceStep(answer, answer.step - 1);
+    }));
+    nav.appendChild(toolButton('Next →', function () {
+      setTraceStep(answer, answer.step + 1);
+    }));
+    view.slider = slider;
+    view.count = count;
+    panel.appendChild(nav);
+
+    // The subject with its two cursors: where the attempt started, where
+    // PCRE2 stands; the status line under the list says the same in words.
+    var subjectLine = text('pre', 'pg-trace-subject');
+    subjectLine.setAttribute('aria-hidden', 'true');
+    view.subject = subjectLine;
+    panel.appendChild(subjectLine);
+
+    var list = text('ol', 'pg-trace-steps');
+    list.tabIndex = 0;
+    list.setAttribute('aria-label', 'Steps; the arrow keys, Home and End move between them');
+    steps.forEach(function (step, index) {
+      var item = text('li', 'pg-trace-step' + (step.flags & 2 ? ' is-backtrack' : ''));
+      item.setAttribute('data-step', String(index));
+      if (step.flags & 1) {
+        item.appendChild(text('span', 'pg-trace-attempt', 'New match attempt'));
+      }
+      if (step.flags & 2) {
+        item.appendChild(text('span', 'pg-trace-backtrack', 'Backtracked before this item'));
+      }
+      var line = text('span', 'pg-trace-try', 'Try ');
+      line.appendChild(text('code', null, traceItemText(answer, step)));
+      line.appendChild(text('span', 'pg-trace-at', ' at ' + step.s));
+      if (typeof step.n === 'number' && step.n !== TRACE_CALLOUT_AUTO) {
+        line.appendChild(text('span', 'pg-trace-at', ' (callout ' + step.n + ')'));
+      }
+      item.appendChild(line);
+      view.items.push(item);
+      list.appendChild(item);
+    });
+    list.addEventListener('click', function (event) {
+      var item = event.target.closest('li[data-step]');
+      if (item) {
+        setTraceStep(answer, Number(item.getAttribute('data-step')));
+      }
+    });
+    list.addEventListener('keydown', function (event) {
+      if (event.altKey || event.ctrlKey || event.metaKey) {
+        return;
+      }
+      var target = -1;
+      switch (event.key) {
+        case 'ArrowRight': case 'ArrowDown': target = answer.step + 1; break;
+        case 'ArrowLeft': case 'ArrowUp': target = answer.step - 1; break;
+        case 'Home': target = 0; break;
+        case 'End': target = steps.length - 1; break;
+        default: return;
+      }
+      event.preventDefault();
+      setTraceStep(answer, target);
+    });
+    view.list = list;
+    panel.appendChild(list);
+
+    var status = text('p', 'pg-trace-status');
+    status.setAttribute('aria-live', 'polite');
+    status.setAttribute('aria-atomic', 'true');
+    view.status = status;
+    panel.appendChild(status);
+
+    var captures = text('div', 'pg-trace-captures');
+    view.captures = captures;
+    panel.appendChild(captures);
+
+    renderTraceLabel(panel, answer);
+    setTraceStep(answer, answer.step);
+    if (announceResult) {
+      var check = answer.selfCheck;
+      announce('Traced: ' + steps.length + (steps.length === 1 ? ' step. ' : ' steps. ') + traceOutcomeLine(answer) + (check && check.agrees === false ? ' The engine disagrees.' : (check && check.agrees ? ' The engine agrees.' : '')));
+    }
+  }
+
+  // The current step: the list's aria-current, the slider, the cursors in
+  // the subject, the captures as PCRE2 held them, the item lit in the
+  // pattern field and the node under it lit in the tree.
+  function setTraceStep(answer, index) {
+    var view = answer.view;
+    var steps = answer.trace ? answer.trace.steps : null;
+    if (!view || !steps || !steps.length) {
+      return;
+    }
+    index = Math.max(0, Math.min(index, steps.length - 1));
+    answer.step = index;
+    var step = steps[index];
+    if (view.current) {
+      view.current.removeAttribute('aria-current');
+      view.current.classList.remove('is-current');
+    }
+    view.current = view.items[index];
+    view.current.setAttribute('aria-current', 'step');
+    view.current.classList.add('is-current');
+    if (view.list.scrollHeight > view.list.clientHeight) {
+      view.current.scrollIntoView({ block: 'nearest' });
+    }
+    view.slider.value = String(index);
+    view.count.textContent = (index + 1) + ' / ' + steps.length;
+
+    clear(view.subject);
+    view.subject.appendChild(traceSubjectFragment(answer, step));
+
+    var item = traceItemText(answer, step);
+    var where = 'item ' + (index + 1) + ' of ' + steps.length + ' at subject byte ' + step.s + (typeof step.start === 'number' && step.start !== step.s ? ' (the attempt started at byte ' + step.start + ')' : '');
+    view.status.textContent = (step.flags & 1 ? 'New match attempt. ' : '') + (step.flags & 2 ? 'Backtracked before this item. ' : '') + 'Try ' + (step.len ? quoted(item) : item) + ': ' + where + '.';
+
+    clear(view.captures);
+    view.captures.appendChild(traceCapturesFragment(answer, index));
+
+    // The item in the pattern field, and the node around it in the tree.
+    traceMark = { start: step.p, end: step.p + step.len };
+    var node = traceNodeAt(step.p);
+    if (node !== currentNode) {
+      setCurrentNode(node);
+    } else if (current) {
+      renderPatternMirror(current.payload, current.regex, lintFor === current.regex ? lastLint : null);
+    }
+  }
+
+  // The deepest node of the tree that holds a body offset: the nodes are
+  // in pre-order, so the last one around the offset is the deepest.
+  function traceNodeAt(offset) {
+    var found = -1;
+    nodes.forEach(function (entry, index) {
+      if (typeof entry.start === 'number' && entry.start <= offset && offset < entry.end) {
+        found = index;
+      }
+    });
+    return found;
+  }
+
+  // The subject, the start of the attempt and the current position as two
+  // marks in it; one mark when they coincide. The marks are for the eye,
+  // the status line says the same.
+  function traceSubjectFragment(answer, step) {
+    var subject = answer.payload.input.subject;
+    var fragment = document.createDocumentFragment();
+    var atStart = typeof step.start === 'number' ? unitAt(answer.subjectUnits, step.start) : -1;
+    var atNow = unitAt(answer.subjectUnits, step.s);
+    var cuts = [];
+    if (atStart >= 0 && atStart !== atNow) {
+      cuts.push({ at: atStart, className: 'pg-trace-cursor is-start', title: 'start of the attempt, byte ' + step.start });
+    }
+    cuts.push({ at: atNow, className: 'pg-trace-cursor is-now' + (atStart === atNow ? ' is-start' : ''), title: 'subject byte ' + step.s });
+    cuts.sort(function (a, b) {
+      return a.at - b.at;
+    });
+    var from = 0;
+    cuts.forEach(function (cut) {
+      if (cut.at > from) {
+        fragment.appendChild(document.createTextNode(subject.slice(from, cut.at)));
+        from = cut.at;
+      }
+      var mark = text('mark', cut.className);
+      mark.title = cut.title;
+      fragment.appendChild(mark);
+    });
+    if (from < subject.length) {
+      fragment.appendChild(document.createTextNode(subject.slice(from)));
+    }
+    fragment.appendChild(document.createTextNode('\n'));
+    return fragment;
+  }
+
+  // The captures at a step, as PCRE2 held them: groups from 1, the pairs
+  // below capture_top; pair 0 is not a capture during a callout.
+  function traceCapturesFragment(answer, index) {
+    var fragment = document.createDocumentFragment();
+    var pairs = answer.captures[index] || [];
+    var names = Object.assign({}, current.payload.matches && current.payload.matches.names ? current.payload.matches.names : {}, current.payload.groupNames || {});
+    if (pairs.length <= 1) {
+      fragment.appendChild(text('p', 'pg-tool-hint', 'No group captured yet.'));
+      return fragment;
+    }
+    var table = document.createElement('table');
+    table.className = 'pg-trace-table';
+    var caption = text('caption', null, 'Captures at this step');
+    table.appendChild(caption);
+    var head = document.createElement('thead');
+    var headRow = document.createElement('tr');
+    ['Group', 'Text', 'Bytes'].forEach(function (title) {
+      var cell = text('th', null, title);
+      cell.scope = 'col';
+      headRow.appendChild(cell);
+    });
+    head.appendChild(headRow);
+    table.appendChild(head);
+    var body = document.createElement('tbody');
+    for (var group = 1; group < pairs.length; group += 1) {
+      var row = document.createElement('tr');
+      var pair = Array.isArray(pairs[group]) ? pairs[group] : null;
+      var name = text('th', null, names[String(group)] ? names[String(group)] + ' (' + group + ')' : String(group));
+      name.scope = 'row';
+      row.appendChild(name);
+      var value = text('td', null);
+      if (pair) {
+        value.appendChild(text('code', null, decoder.decode(answer.subjectBytes.slice(pair[0], pair[1]))));
+      } else {
+        value.appendChild(text('span', 'pg-trace-unset', 'unset'));
+      }
+      row.appendChild(value);
+      row.appendChild(text('td', 'pg-trace-bytes', pair ? pair[0] + '–' + pair[1] : '—'));
+      body.appendChild(row);
+    }
+    table.appendChild(body);
+    fragment.appendChild(table);
+    return fragment;
   }
 
   // The tab strip's hands: a click opens a tab; the arrow keys, Home and
