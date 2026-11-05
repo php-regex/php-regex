@@ -6725,15 +6725,20 @@ body.search-open {
   }
   .pg-splitter::after {
     content: '';
-    display: block;
-    width: 1px;
-    height: 100%;
-    margin: 0 auto;
-    background: var(--line-soft);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 1.7rem;
+    border-radius: var(--radius-pill);
+    transform: translate(-50%, -50%);
+    background: repeating-linear-gradient(to bottom, var(--line) 0 4px, transparent 4px 9px);
+    opacity: .45;
   }
   .pg-splitter:hover::after,
   .pg-splitter:focus-visible::after {
-    background: var(--amber);
+    background: repeating-linear-gradient(to bottom, var(--amber) 0 4px, transparent 4px 9px);
+    opacity: 1;
   }
   .pg-splitter:focus-visible {
     outline: none;
@@ -6757,10 +6762,11 @@ body.search-open {
     display: grid;
     align-content: start;
     justify-items: center;
-    gap: .3rem;
-    width: 2.4rem;
-    padding: .55rem .3rem;
+    gap: .35rem;
+    width: 2.6rem;
+    padding: 1rem .35rem 1.1rem;
     overflow-y: auto;
+    scrollbar-gutter: stable;
     background: var(--panel);
     border-right: 1px solid var(--line-soft);
     scrollbar-width: thin;
@@ -6769,18 +6775,30 @@ body.search-open {
   .pg-listing-rail[hidden] {
     display: none;
   }
-  .pg-listing-rail-avatar {
+  .pg-listing-rail-avatar,
+  .pg-listing-rail-open {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
     padding: 0;
     background: transparent;
     border: 1px solid transparent;
     border-radius: 50%;
     cursor: pointer;
   }
+  .pg-listing-rail-open {
+    margin-bottom: .25rem;
+    font-family: var(--font-mono);
+    font-size: .95rem;
+    line-height: 1;
+    color: var(--ink-soft);
+  }
   .pg-listing-rail-avatar:hover,
-  .pg-listing-rail-avatar:focus-visible {
+  .pg-listing-rail-avatar:focus-visible,
+  .pg-listing-rail-open:hover,
+  .pg-listing-rail-open:focus-visible {
     border-color: var(--amber);
   }
   /* The columns carry their places from the three-column layout; folded,
@@ -6796,7 +6814,7 @@ body.search-open {
     display: none;
   }
   .playground.is-listing-hidden .pg-listing-tab {
-    transform: rotate(180deg);
+    display: none;
   }
 }
 

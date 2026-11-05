@@ -242,6 +242,11 @@ final class FindingsLayoutTest extends TestCase
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/*[1]'.self::has('pg-listing-tab').'[@aria-expanded="true"][@aria-controls="pg-listing"]'), 'A tab on the window\'s edge folds the column.');
         $script = self::source(self::SCRIPT);
         $this->assertStringContainsString("classList.toggle('is-listing-hidden')", $script, 'The tab toggles the fold.');
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/\.playground\.is-listing-hidden \.pg-listing-tab \{([^}]*)\}/', $stylesheet, $tabfold), 'Folded, the tab gives its edge to the rail.');
+        $this->assertStringContainsString('display: none;', $tabfold[1], 'The tab never sits over the avatars, cutting them.');
+        $this->assertSame(1, preg_match('/\.pg-splitter::after \{([^}]*)\}/', $stylesheet, $grip), 'The separator is a grip.');
+        $this->assertStringContainsString('repeating-linear-gradient', $grip[1], 'A grip speaks in dashes, not a hairline doubling the borders beside it.');
     }
 
     /**
@@ -262,6 +267,7 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringContainsString("'pg-listing-rail-avatar'", $rail);
         $this->assertStringContainsString('avatar.title = login;', $rail, 'An avatar says its project\'s name to a hovering pointer.');
         $this->assertStringContainsString('openOwnerFromRail(login)', $rail, 'A click unfolds the column onto that project.');
+        $this->assertStringContainsString("'pg-listing-rail-open'", $rail, 'The rail carries the unfold control of its own, at its head.');
     }
 
     /**

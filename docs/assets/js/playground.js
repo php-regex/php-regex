@@ -4260,6 +4260,20 @@
   // reads wide.
   function buildRail() {
     clear(el.listingRail);
+    // The rail carries the unfold control of its own, at its head: the tab
+    // gives its edge to the avatars when the column folds.
+    var open = document.createElement('button');
+    open.type = 'button';
+    open.className = 'pg-listing-rail-open';
+    open.setAttribute('aria-label', 'Unfold the list column');
+    open.title = 'Unfold the list column';
+    open.textContent = '›';
+    open.addEventListener('click', function () {
+      if (el.listingTab) {
+        el.listingTab.click();
+      }
+    });
+    el.listingRail.appendChild(open);
     Object.keys(findingsIndex.owners).forEach(function (login) {
       var owner = findingsIndex.owners[login];
       var avatar = document.createElement('button');
