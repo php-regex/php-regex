@@ -147,6 +147,31 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringContainsString('padding-inline: max(1.25rem, calc(50vw - 45rem))', $wide[1], 'A tool page: 90rem centered, the docs keep their 75rem.');
     }
 
+    /**
+     * One group stands open at a time, at each level: opening a project
+     * closes the others, opening a repository closes its siblings — the
+     * list stays a window, never a wall. The keyboard opens as the
+     * pointer does; a link or the filter still opens what they name,
+     * outside the accordion.
+     */
+    #[Test]
+    public function test_one_group_stands_open_at_a_time(): void
+    {
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString('function collapseSiblings(item) {', $script, 'The accordion exists.');
+        $siblings = self::between($script, 'function collapseSiblings(item) {', "\n  }\n");
+        $this->assertStringContainsString("getAttribute('aria-expanded') === 'true'", $siblings);
+        $this->assertStringContainsString('expandItem(sibling, false);', $siblings);
+        $this->assertStringContainsString('function openGroup(item) {', $script);
+        $open = self::between($script, 'function openGroup(item) {', "\n  }\n");
+        $this->assertStringContainsString('collapseSiblings(item);', $open, 'Opening a group closes its level first.');
+        $this->assertStringContainsString('expandItem(item, true);', $open);
+        $activate = self::between($script, 'function activateItem(item) {', "\n  }\n");
+        $this->assertStringContainsString('openGroup(item);', $activate, 'A click that opens runs the accordion.');
+        $keys = self::between($script, 'function onTreeKey(event) {', "\n  }\n");
+        $this->assertStringContainsString('openGroup(item);', $keys, 'The arrow key opens as the pointer does.');
+    }
+
     #[Test]
     public function test_the_card_is_read_only_and_takes_the_text_fields_place(): void
     {

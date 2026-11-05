@@ -3851,13 +3851,32 @@
     item.focus();
   }
 
+  // One group stands open at a time, at each level: opening a project
+  // closes the others, opening a repository closes its siblings — the
+  // list stays a window, never a wall. A link or the filter still opens
+  // what they name: they speak outside the accordion.
+  function collapseSiblings(item) {
+    Array.prototype.forEach.call(item.parentElement.children, function (sibling) {
+      if (sibling !== item && sibling.getAttribute && sibling.getAttribute('aria-expanded') === 'true') {
+        expandItem(sibling, false);
+      }
+    });
+  }
+
+  function openGroup(item) {
+    collapseSiblings(item);
+    expandItem(item, true);
+  }
+
   function activateItem(item) {
     pageTouched = true;
     var key = item.getAttribute('data-key');
     if (key) {
       openFindingKey(key);
+    } else if (item.getAttribute('aria-expanded') === 'true') {
+      expandItem(item, false);
     } else {
-      expandItem(item, item.getAttribute('aria-expanded') !== 'true');
+      openGroup(item);
     }
   }
 
@@ -3879,7 +3898,7 @@
       case 'End': target = items[items.length - 1]; break;
       case 'ArrowRight':
         if (item.getAttribute('aria-expanded') === 'false') {
-          expandItem(item, true);
+          openGroup(item);
         } else if (item.getAttribute('aria-expanded') === 'true') {
           target = items[index + 1] || null;
         }
