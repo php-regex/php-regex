@@ -632,9 +632,10 @@
         current.payload.matches = payload.matches;
         current.payload.input = payload.input || current.payload.input;
         renderCaption(current.payload, false);
-        // A keystroke since the request dropped the marks: the answer to
-        // the old text is kept, not drawn; the new input's answer draws.
-        if (el.pattern.value === request.regex && el.subject.value === request.subject) {
+        // A keystroke or another PHP version since the request dropped the
+        // marks: the answer to the old input is kept, not drawn; the new
+        // input's answer draws.
+        if (el.pattern.value === request.regex && el.subject.value === request.subject && request.version === chosen) {
           renderSubjectMarks(current.payload, request.subject);
         }
         renderErrors(current.payload);
@@ -3624,6 +3625,7 @@
     try {
       localStorage.setItem(STORAGE_KEY, chosen);
     } catch (error) {/* the choice simply does not persist */}
+    dropSubjectMarks();
     analyzeNow();
   });
 

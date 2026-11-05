@@ -437,7 +437,10 @@ final class PlaygroundLayoutTest extends TestCase
         // A match answer that lands after a keystroke belongs to the old
         // text: it is kept, not drawn, so the dropped marks stay dropped.
         $answered = self::between($script, "} else if (request.type === 'match') {", "} else if (request.type === 'lint') {");
-        $this->assertSame(1, preg_match('/if \(el\.pattern\.value === request\.regex && el\.subject\.value === request\.subject\) \{\s*renderSubjectMarks\(current\.payload, request\.subject\);\s*\}/', $answered), 'A late answer does not draw the marks back over a newer text.');
+        $this->assertSame(1, preg_match('/if \(el\.pattern\.value === request\.regex && el\.subject\.value === request\.subject && request\.version === chosen\) \{\s*renderSubjectMarks\(current\.payload, request\.subject\);\s*\}/', $answered), 'A late answer does not draw the marks back over a newer text, nor over another PHP version.');
+        // Another PHP version is another answer: the marks go at once.
+        $version = self::between($script, "el.version.addEventListener('change', function () {", "\n  });\n");
+        $this->assertSame(1, preg_match('/dropSubjectMarks\(\);\s*analyzeNow\(\);/', $version), 'A version change drops the old marks before it asks.');
         $drop = self::between($script, 'function dropSubjectMarks() {', "\n  }\n");
         $this->assertStringContainsString("el.matchSummary.textContent = '';", $drop);
         $this->assertStringContainsString('clear(el.subjectMatches);', $drop);
