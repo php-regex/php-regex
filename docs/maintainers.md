@@ -758,7 +758,9 @@ for `var/log/corpus.log`, once with `--format=json` into
   printed one, the code around it at the clone's commit, and for a proven
   ReDoS the witness and the length at which the replay gave up; fetched
   when the repository opens;
-- `docs/_findings/<vendor>__<repo>.md`: its page, `/findings/<vendor>/<repo>/`;
+- `docs/_findings/<vendor>__<repo>.md`: its page, `/findings/<vendor>/<repo>/`
+  (in the site's file names a dot of the repository's name is spelled `~`:
+  `scrivo/highlight.php` is `scrivo__highlight~php`);
 - `docs/assets/findings/avatars/<owner>.png`: the owner's avatar, downloaded
   once (`--offline` refuses a missing one instead).
 

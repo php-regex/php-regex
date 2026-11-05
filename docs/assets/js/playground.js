@@ -4230,7 +4230,7 @@
   if (storedSource !== 'findings') {
     storedSource = 'examples';
   }
-  if (/^[\w.-]+__[\w.-]+#f-[0-9a-f]{10}(?:-\d+)?$/.test(storedFinding || '')) {
+  if (/^[\w~-]+__[\w~-]+#f-[0-9a-f]{10}(?:-\d+)?$/.test(storedFinding || '')) {
     lastFinding = storedFinding;
   } else if (storedFinding !== null) {
     storedFinding = null;

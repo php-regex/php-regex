@@ -62,7 +62,7 @@ final class FindingsDataTest extends TestCase
     {
         foreach (self::index()['repos'] as $repo) {
             $this->assertMatchesRegularExpression('~^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$~D', $repo['repo']);
-            $this->assertSame(str_replace('/', '__', $repo['repo']), $repo['slug']);
+            $this->assertSame(str_replace(['/', '.'], ['__', '~'], $repo['repo']), $repo['slug'], 'A dot is spelled "~" in the site\'s files: no file under docs/ reads as PHP.');
             $this->assertSame(explode('/', $repo['repo'])[0], $repo['owner']);
             $this->assertMatchesRegularExpression('~^[78]\.\d+(?:\.\d+)?$~D', $repo['target']['php'], $repo['repo'].': the PHP it was judged for.');
             $this->assertMatchesRegularExpression('~^10\.\d+$~D', $repo['target']['pcre'], $repo['repo'].': the PCRE2 that PHP bundles.');

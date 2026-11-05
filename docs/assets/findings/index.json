@@ -4162,7 +4162,7 @@
         {
             "repo": "scrivo/highlight.php",
             "owner": "scrivo",
-            "slug": "scrivo__highlight.php",
+            "slug": "scrivo__highlight~php",
             "target": {
                 "php": "7.3",
                 "pcre": "10.32",

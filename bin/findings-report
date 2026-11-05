@@ -141,7 +141,7 @@ foreach ($judged as $slug => [$part, $repo]) {
     $repos[] = [
         'repo' => $repo,
         'owner' => $owner,
-        'slug' => $slug,
+        'slug' => siteSlug($repo),
         'target' => $target,
         'sha' => $sha,
         'committed' => git($clone, 'log', '-1', '--format=%cs', 'HEAD'),
@@ -150,7 +150,7 @@ foreach ($judged as $slug => [$part, $repo]) {
         'warn' => \count($findings) - $fail,
         'rules' => array_keys($rules),
     ];
-    $files[$slug] = ['repo' => $repo, 'sha' => $sha, 'target' => $target, 'findings' => $findings];
+    $files[siteSlug($repo)] = ['repo' => $repo, 'sha' => $sha, 'target' => $target, 'findings' => $findings];
     $owners[$owner] = owner($owner, $out, $offline);
 }
 ksort($owners, \SORT_STRING);
@@ -212,6 +212,16 @@ function targetSource(string $source): string
     }
 
     return str_starts_with($source, '--php-version') ? 'fallback: no require.php' : $source;
+}
+
+/**
+ * The name a repository's files take on the site: vendor__name, each dot
+ * spelled "~", a character no GitHub name holds. No file under docs/ then
+ * reads as PHP (scrivo/highlight.php) or as another kind of file.
+ */
+function siteSlug(string $repo): string
+{
+    return str_replace(['/', '.'], ['__', '~'], $repo);
 }
 
 /**

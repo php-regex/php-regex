@@ -56,7 +56,7 @@ final class FindingsPagesTest extends TestCase
         foreach (glob(self::DOCS.'/_findings/*.md') ?: [] as $file) {
             $front = self::between(self::source($file), "---\n", "\n---\n");
             $slug = basename($file, '.md');
-            [$vendor, $name] = explode('__', $slug, 2);
+            [$vendor, $name] = explode('__', str_replace('~', '.', $slug), 2);
             $this->assertStringContainsString("layout: landing\n", $front);
             $this->assertStringContainsString("permalink: /findings/{$vendor}/{$name}/\n", $front);
             $this->assertStringContainsString("findings_repo: {$vendor}/{$name}\n", $front);

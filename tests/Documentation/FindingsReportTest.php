@@ -269,8 +269,29 @@ final class FindingsReportTest extends TestCase
         [$exit, $output] = $this->report();
 
         $this->assertSame(0, $exit, $output);
-        $this->assertFileExists($this->dir.'/out/assets/findings/repos/acme__notes.md.json');
-        $this->assertFileExists($this->dir.'/out/_findings/acme__notes.md.md');
+        $this->assertFileExists($this->dir.'/out/assets/findings/repos/acme__notes~md.json');
+        $this->assertFileExists($this->dir.'/out/_findings/acme__notes~md.md');
+    }
+
+    /**
+     * A repository named like a PHP file (scrivo/highlight.php) is no PHP
+     * file of the site: its files spell the dot as "~", which no GitHub
+     * name holds; its address keeps the name as GitHub writes it.
+     */
+    #[Test]
+    public function test_a_repository_named_like_a_php_file_gets_files_that_are_not(): void
+    {
+        $this->repository('acme/tool.php', ['src/Check.php' => self::SOURCE."\n"]);
+        $this->lint('acme/tool.php');
+
+        [$exit, $output] = $this->report();
+
+        $this->assertSame(0, $exit, $output);
+        $this->assertFileExists($this->dir.'/out/assets/findings/repos/acme__tool~php.json');
+        $this->assertFileExists($this->dir.'/out/_findings/acme__tool~php.md');
+        $this->assertFileDoesNotExist($this->dir.'/out/assets/findings/repos/acme__tool.php.json');
+        $this->assertContains('acme__tool~php', array_column($this->index()['repos'], 'slug'));
+        $this->assertStringContainsString("permalink: /findings/acme/tool.php/\n", (string) file_get_contents($this->dir.'/out/_findings/acme__tool~php.md'));
     }
 
     #[Test]
