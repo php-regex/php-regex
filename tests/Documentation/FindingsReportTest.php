@@ -323,11 +323,13 @@ final class FindingsReportTest extends TestCase
         $report = json_decode((string) file_get_contents($part), true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($report);
         $this->assertIsArray($report['results']);
-        foreach ($report['results'] as $i => $result) {
+        $results = [];
+        foreach ($report['results'] as $result) {
             $this->assertIsArray($result);
             $this->assertIsString($result['file']);
-            $report['results'][$i]['file'] = str_replace('/', '\\', $result['file']);
+            $results[] = ['file' => str_replace('/', '\\', $result['file'])] + $result;
         }
+        $report['results'] = $results;
         file_put_contents($part, json_encode($report, \JSON_THROW_ON_ERROR));
 
         [$exit, $output] = $this->report();
