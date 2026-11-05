@@ -4092,7 +4092,10 @@
     el.findingTarget.appendChild(text('span', 'visually-hidden', 'Judged for '));
     el.findingTarget.appendChild(text('span', 'pg-finding-engine', 'PHP ' + repo.target.php));
     el.findingTarget.appendChild(text('span', 'pg-finding-engine', 'PCRE2 ' + repo.target.pcre));
-    el.findingTarget.appendChild(text('span', 'pg-finding-asof', (repo.target.source ? repo.target.source + ' · ' : '') + 'code as of ' + repo.committed));
+    // The source says itself only when it is one: a fallback notice is
+    // the pipeline's business, not the visitor's.
+    var targetSource = repo.target.source && repo.target.source.indexOf('fallback') !== 0 ? repo.target.source + ' · ' : '';
+    el.findingTarget.appendChild(text('span', 'pg-finding-asof', targetSource + 'code as of ' + repo.committed));
     el.snippetFile.textContent = finding.file + ':' + finding.line + (finding.source ? ' · ' + finding.source : '') + (finding.location ? ' · ' + finding.location : '');
 
     clear(el.snippet);
@@ -4265,7 +4268,7 @@
     });
     el.findingsPanel.hidden = !findings;
     el.examplesList.classList.toggle('is-findings', findings);
-    el.examplesList.setAttribute('aria-label', findings ? 'Findings' : 'Examples');
+    el.examplesList.setAttribute('aria-label', findings ? 'Projects' : 'Examples');
     if (findings) {
       loadIndex();
     }

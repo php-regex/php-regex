@@ -6764,11 +6764,21 @@ body.search-open {
   background: var(--code-bg);
   border-radius: var(--radius-s);
 }
+/* A diff reads as a diff: the removed and the added carry their tint on
+   the whole line, the way a review does, not only their glyphs. */
 .pg-fix-del {
+  display: block;
+  padding: .05rem .3rem;
   color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border-radius: var(--radius-s);
 }
 .pg-fix-add {
+  display: block;
+  padding: .05rem .3rem;
   color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 9%, transparent);
+  border-radius: var(--radius-s);
 }
 .pg-finding-actions {
   display: flex;
@@ -6791,9 +6801,17 @@ body.search-open {
 .pg-finding-actions button:focus-visible {
   border-color: var(--amber);
 }
+/* The card's one action: filled like Run, for it is the card's Run. */
 .pg-finding-actions .pg-finding-copy {
-  background: var(--amber-tint);
+  font-weight: 600;
+  color: var(--paper);
+  background: var(--amber);
   border-color: var(--amber);
+}
+.pg-finding-actions .pg-finding-copy:hover,
+.pg-finding-actions .pg-finding-copy:focus-visible {
+  background: var(--amber-deep);
+  border-color: var(--amber-deep);
 }
 .pg-finding-actions a {
   font-size: .78rem;

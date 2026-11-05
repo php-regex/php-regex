@@ -95,7 +95,7 @@ final class FindingsPagesTest extends TestCase
         }
 
         $footer = self::source(self::DOCS.'/_includes/footer.html');
-        $this->assertStringContainsString('<li><a href="/findings/">Findings</a></li>', $footer);
+        $this->assertStringContainsString('<li><a href="/findings/">Projects</a></li>', $footer);
         $this->assertStringNotContainsString('/findings/', self::source(self::DOCS.'/_includes/header.html'), 'Not in the header.');
     }
 

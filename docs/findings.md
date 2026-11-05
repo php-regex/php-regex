@@ -1,10 +1,10 @@
 ---
-title: Findings
+title: Projects
 description: "What PHPRegex's linter reports on the regular expressions of real open-source PHP projects, each judged for the PHP and PCRE2 its own composer.json requires."
 permalink: /findings/
 ---
 
-# Findings
+# Projects
 
 What the linter reports on the regular expressions of real open-source PHP projects: proven catastrophic backtracking, useless flags, redundant quantifiers, overlapping classes. Each project is judged for the PHP its own composer.json asks for (its require.php floor, or the platform PHP it pins; PHP 8.1 when it names none), on the PCRE2 that PHP bundles, and each finding opens in the playground with the code it lives in.
 

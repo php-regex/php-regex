@@ -60,7 +60,7 @@ final class FindingsLayoutTest extends TestCase
             $this->assertSame(0 === $index ? 'true' : 'false', $option->getAttribute('aria-checked'));
             $this->assertSame(0 === $index ? '' : '-1', $option->getAttribute('tabindex'), 'One stop in the tab order; the arrows move inside.');
         }
-        $this->assertSame(['examples' => 'Examples', 'findings' => 'Findings'], $seen);
+        $this->assertSame(['examples' => 'Examples', 'findings' => 'Projects'], $seen, 'The list is named for what it holds: projects, real ones.');
         $this->assertSame(1, preg_match('/function setSource\(source, persist\)/', self::source(self::SCRIPT)), 'One function moves the column between its two lists.');
     }
 
@@ -78,7 +78,7 @@ final class FindingsLayoutTest extends TestCase
 
         $this->assertSame(1, self::nodes($xpath, './details'.self::has('pg-findings-browse').'/summary[contains(., "Browse")]/*'.self::has('pg-findings-count'), $panel), 'Below 1280px, a folded block says how many projects it holds.');
         $this->assertSame(1, self::nodes($xpath, './/input[@type="search"]'.self::has('pg-findings-filter').'[@aria-label="Filter by owner, repository or rule"]', $panel));
-        $this->assertSame(1, self::nodes($xpath, './/ul'.self::has('pg-findings-tree').'[@role="tree"][@aria-label="Findings"]', $panel));
+        $this->assertSame(1, self::nodes($xpath, './/ul'.self::has('pg-findings-tree').'[@role="tree"][@aria-label="Projects"]', $panel));
         $this->assertSame(1, self::nodes($xpath, './/a[@href="/findings/"]', $panel), 'The index is one link away, without the header.');
         $this->assertSame(1, self::nodes($xpath, './/a[@href="https://github.com/php-regex/php-regex/issues/new?template=propose-project.yml"]', $panel));
 
@@ -94,7 +94,7 @@ final class FindingsLayoutTest extends TestCase
         }
         $filter = self::between($script, 'function filterTree() {', "\n  }\n");
         $this->assertStringContainsString('keepTabStop();', $filter, 'Filtering never hides the tree\'s one tab stop.');
-        $this->assertStringContainsString("el.examplesList.setAttribute('aria-label', findings ? 'Findings' : 'Examples');", $script, 'The list is named for what it shows.');
+        $this->assertStringContainsString("el.examplesList.setAttribute('aria-label', findings ? 'Projects' : 'Examples');", $script, 'The list is named for what it shows.');
         $this->assertStringContainsString('repo.repo', $filter);
         $this->assertStringContainsString('repo.rules', $filter, 'A rule filters without opening every repository.');
         $row = self::between($script, 'function repoRow(repo) {', "\n  }\n");
