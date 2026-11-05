@@ -6649,7 +6649,9 @@ body.search-open {
 }
 /* The fold tab lives on the stacked layouts' edge only as a hidden
    thing: below the widest screens the list is a row, not a column. */
-.pg-listing-tab {
+.pg-listing-tab,
+.pg-listing-rail,
+.pg-splitter {
   display: none;
 }
 
@@ -6686,20 +6688,22 @@ body.search-open {
 
   .pg-listing-tab {
     position: absolute;
-    top: .45rem;
+    top: 0;
+    bottom: 0;
     left: 0;
-    z-index: 1;
-    display: block;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 1.05rem;
-    height: 2.3rem;
     padding: 0;
     font-family: var(--font-mono);
     font-size: .85rem;
     line-height: 1;
     color: var(--ink-soft);
     background: var(--panel);
-    border: 1px solid var(--line-soft);
-    border-left: 0;
+    border: 0;
+    border-right: 1px solid var(--line-soft);
     border-radius: 0 var(--radius-s) var(--radius-s) 0;
     cursor: pointer;
   }
@@ -6708,10 +6712,76 @@ body.search-open {
     color: var(--ink);
     border-color: var(--amber);
   }
-  /* Folded, the window is two columns — the finding and the tools — and
-     the tab turns to say which way the list went. */
+  /* The separators ride the boundaries: a hairline the pointer thickens,
+    a notch the arrow keys walk. The last column gives what is left. */
+  .pg-splitter {
+    position: absolute;
+    top: 1rem;
+    bottom: 1.1rem;
+    z-index: 2;
+    display: block;
+    width: .5rem;
+    cursor: col-resize;
+  }
+  .pg-splitter::after {
+    content: '';
+    display: block;
+    width: 1px;
+    height: 100%;
+    margin: 0 auto;
+    background: var(--line-soft);
+  }
+  .pg-splitter:hover::after,
+  .pg-splitter:focus-visible::after {
+    background: var(--amber);
+  }
+  .pg-splitter:focus-visible {
+    outline: none;
+  }
+  .pg-splitter:focus-visible::after {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 35%, transparent);
+  }
+  /* Folded, the window is two columns — the finding and the tools — the
+     tab turns to say which way the list went, and the rail of owners
+     keeps the ecosystem a hover away. */
   .playground.is-listing-hidden .pg-body {
     grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    padding-left: 2.95rem;
+  }
+  .pg-listing-rail {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    display: grid;
+    align-content: start;
+    justify-items: center;
+    gap: .3rem;
+    width: 2.4rem;
+    padding: .55rem .3rem;
+    overflow-y: auto;
+    background: var(--panel);
+    border-right: 1px solid var(--line-soft);
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  .pg-listing-rail[hidden] {
+    display: none;
+  }
+  .pg-listing-rail-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .pg-listing-rail-avatar:hover,
+  .pg-listing-rail-avatar:focus-visible {
+    border-color: var(--amber);
   }
   /* The columns carry their places from the three-column layout; folded,
      they take the two that remain. */

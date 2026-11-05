@@ -115,6 +115,8 @@
     findingsCount: root.querySelector('.pg-findings-count'),
     findingsFilter: root.querySelector('.pg-findings-filter'),
     listingTab: root.querySelector('.pg-listing-tab'),
+    listingRail: root.querySelector('.pg-listing-rail'),
+    body: root.querySelector('.pg-body'),
     findingsTree: root.querySelector('.pg-findings-tree'),
     findingsEmpty: root.querySelector('.pg-findings-empty'),
     textField: root.querySelector('.pg-field-text'),
@@ -3666,6 +3668,7 @@
           el.findingsFilter.hidden = true;
         }
         buildTree();
+        buildRail();
         return index;
       });
       findingsLoading.catch(function () {
@@ -4246,8 +4249,206 @@
       var hidden = root.classList.toggle('is-listing-hidden');
       el.listingTab.setAttribute('aria-expanded', hidden ? 'false' : 'true');
       el.listingTab.title = hidden ? 'Unfold the list column' : 'Fold the list column';
+      el.listingRail.hidden = !hidden || !el.listingRail.firstChild;
+      applyColumnWidths();
     });
   }
+
+  // Folded, the list leaves its avatars behind: a rail of owners on the
+  // window's edge, each picturing its project, each unfolding the column
+  // onto that project — the ecosystem stays in reach while the finding
+  // reads wide.
+  function buildRail() {
+    clear(el.listingRail);
+    Object.keys(findingsIndex.owners).forEach(function (login) {
+      var owner = findingsIndex.owners[login];
+      var avatar = document.createElement('button');
+      avatar.type = 'button';
+      avatar.className = 'pg-listing-rail-avatar';
+      avatar.setAttribute('aria-label', login);
+      var image = document.createElement('img');
+      image.src = owner.avatar;
+      image.alt = '';
+      image.width = 20;
+      image.height = 20;
+      image.loading = 'lazy';
+      avatar.appendChild(image);
+      avatar.title = login;
+      avatar.addEventListener('click', function () { openOwnerFromRail(login); });
+      el.listingRail.appendChild(avatar);
+    });
+  }
+
+  function openOwnerFromRail(login) {
+    if (root.classList.contains('is-listing-hidden') && el.listingTab) {
+      el.listingTab.click();
+    }
+    setSource('findings', false);
+    return loadIndex().then(function () {
+      var item = el.findingsTree.querySelector('[data-owner="' + login.replace(/"/g, '') + '"]');
+      if (item) {
+        openGroup(item);
+      }
+    });
+  }
+
+  // --- the column separators ---------------------------------------------
+
+  // The columns answer the hand: a separator on each boundary, dragged by
+  // the pointer, walked by the arrow keys, doubled back to its default by
+  // a double click, the chosen widths persisting between visits. The last
+  // column gives what is left; nothing ever disappears below its floor.
+  var COLUMNS_STORAGE_KEY = 'playground-columns';
+  var SPLIT_MIN = 144;      // a column nobody can read
+  var SPLIT_LAST_MIN = 320; // the answers never disappear
+  var SPLIT_STEP = 16;      // one key press, one notch
+  var columnWidths = null;  // { list, fields } in px, null = the stylesheet's word
+  var columnsMedia = window.matchMedia ? window.matchMedia('(min-width: 1280px)') : null;
+
+  function columnBounds() {
+    var total = el.body.getBoundingClientRect().width;
+    return { total: total, listMax: Math.max(SPLIT_MIN, total - SPLIT_LAST_MIN - SPLIT_MIN), fieldsMax: Math.max(SPLIT_MIN, total - SPLIT_LAST_MIN) };
+  }
+
+  function clampColumnWidths() {
+    var bounds = columnBounds();
+    columnWidths.list = Math.min(Math.max(columnWidths.list, SPLIT_MIN), bounds.listMax);
+    columnWidths.fields = Math.min(Math.max(columnWidths.fields, SPLIT_MIN), bounds.fieldsMax);
+  }
+
+  function applyColumnWidths() {
+    if (!columnsMedia || !columnsMedia.matches || !columnWidths) {
+      el.body.style.gridTemplateColumns = '';
+      positionSplitters();
+      return;
+    }
+    clampColumnWidths();
+    var folded = root.classList.contains('is-listing-hidden');
+    el.body.style.gridTemplateColumns = folded
+      ? columnWidths.fields + 'px minmax(0, 1fr)'
+      : columnWidths.list + 'px ' + columnWidths.fields + 'px minmax(0, 1fr)';
+    positionSplitters();
+  }
+
+  function storeColumnWidths() {
+    try {
+      localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(columnWidths));
+    } catch (error) {/* the widths simply do not persist */}
+  }
+
+  function readColumnWidths() {
+    try {
+      var stored = JSON.parse(localStorage.getItem(COLUMNS_STORAGE_KEY) || 'null');
+      if (stored && typeof stored.list === 'number' && typeof stored.fields === 'number') {
+        columnWidths = stored;
+      }
+    } catch (error) {/* the stylesheet's widths stand */}
+  }
+
+  function measureColumnWidths() {
+    var tracks = getComputedStyle(el.body).gridTemplateColumns.split(' ').map(parseFloat);
+    var folded = root.classList.contains('is-listing-hidden');
+    if (folded && tracks.length >= 2) {
+      columnWidths = columnWidths || { list: 208, fields: tracks[0] };
+      columnWidths.fields = tracks[0];
+    } else if (tracks.length >= 3) {
+      columnWidths = { list: tracks[0], fields: tracks[1] };
+    }
+  }
+
+  function nudgeColumn(which, delta) {
+    if (!columnWidths) {
+      measureColumnWidths();
+    }
+    clampColumnWidths();
+    var before = columnWidths[which];
+    columnWidths[which] = columnWidths[which] + delta;
+    applyColumnWidths();
+    if (columnWidths[which] !== before) {
+      storeColumnWidths();
+    }
+  }
+
+  function dragSplitter(handle, which) {
+    handle.addEventListener('pointerdown', function (down) {
+      if (!columnWidths) {
+        measureColumnWidths();
+      }
+      down.preventDefault();
+      try {
+        handle.setPointerCapture(down.pointerId);
+      } catch (error) {/* the drag simply follows the pointer */}
+      var start = columnWidths[which];
+      var move = function (moveEvent) {
+        columnWidths[which] = start + (moveEvent.clientX - down.clientX);
+        applyColumnWidths();
+      };
+      var up = function () {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+        clampColumnWidths();
+        applyColumnWidths();
+        storeColumnWidths();
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+    });
+    handle.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        nudgeColumn(which, -SPLIT_STEP);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        nudgeColumn(which, SPLIT_STEP);
+      }
+    });
+    handle.addEventListener('dblclick', function () {
+      columnWidths = null;
+      el.body.style.gridTemplateColumns = '';
+      try {
+        localStorage.removeItem(COLUMNS_STORAGE_KEY);
+      } catch (error) {/* the default widths stand */}
+      positionSplitters();
+    });
+  }
+
+  // The handles ride the boundaries; where a boundary sits, the computed
+  // tracks say, whatever set them — the stylesheet or the hand.
+  function positionSplitters() {
+    if (!columnsMedia || !columnsMedia.matches) {
+      return;
+    }
+    var handles = el.body.querySelectorAll('.pg-splitter');
+    var folded = root.classList.contains('is-listing-hidden');
+    var tracks = getComputedStyle(el.body).gridTemplateColumns.split(' ').map(parseFloat);
+    if (tracks.length < 2) {
+      return;
+    }
+    var gap = parseFloat(getComputedStyle(el.body).columnGap) || 0;
+    handles.forEach(function (handle) {
+      var which = handle.getAttribute('data-column');
+      var hiddenByFold = folded && which === 'list';
+      handle.hidden = hiddenByFold;
+      var edge = which === 'list' ? tracks[0] : (folded ? tracks[0] : tracks[0] + gap + tracks[1]);
+      handle.style.left = Math.round(edge + gap / 2 - handle.offsetWidth / 2) + 'px';
+    });
+  }
+
+  function buildSplitters() {
+    [['list', 'Projects list width'], ['fields', 'Answers width']].forEach(function (pair) {
+      var handle = document.createElement('div');
+      handle.className = 'pg-splitter';
+      handle.setAttribute('role', 'separator');
+      handle.setAttribute('aria-orientation', 'vertical');
+      handle.setAttribute('aria-label', pair[1]);
+      handle.setAttribute('data-column', pair[0]);
+      handle.tabIndex = 0;
+      handle.title = pair[1] + ' — drag, or press the arrow keys';
+      el.body.appendChild(handle);
+      dragSplitter(handle, pair[0]);
+    });
+  }
+
   // The widest screens show the list whole; below, a fold above the
   // fields keeps them near.
   var wideScreen = window.matchMedia ? window.matchMedia('(min-width: 1280px)') : null;
@@ -4270,6 +4471,14 @@
       wideScreen.addEventListener('change', syncBrowse);
     }
   }
+  buildSplitters();
+  readColumnWidths();
+  applyColumnWidths();
+  if (columnsMedia && columnsMedia.addEventListener) {
+    columnsMedia.addEventListener('change', applyColumnWidths);
+  }
+  window.addEventListener('resize', positionSplitters);
+
   el.findingCopy.addEventListener('click', editCopy);
   el.findingBack.addEventListener('click', function () {
     if (lastFinding) {

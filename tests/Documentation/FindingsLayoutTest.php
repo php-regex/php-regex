@@ -245,6 +245,52 @@ final class FindingsLayoutTest extends TestCase
     }
 
     /**
+     * Folded, the list leaves its avatars behind: a rail of owners on the
+     * window's edge, each picturing its project, each unfolding the column
+     * onto that project. The visitor keeps the ecosystem in reach while
+     * the finding reads wide.
+     */
+    #[Test]
+    public function test_the_fold_leaves_a_rail_of_owners(): void
+    {
+        $xpath = self::include();
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/*'.self::has('pg-listing-rail').'[@hidden]'), 'The rail waits, hidden, inside the body.');
+
+        $script = self::source(self::SCRIPT);
+        $rail = self::between($script, 'function buildRail() {', "\n  }\n");
+        $this->assertStringContainsString('findingsIndex.owners', $rail, 'The rail is built from the index, as the tree is.');
+        $this->assertStringContainsString("'pg-listing-rail-avatar'", $rail);
+        $this->assertStringContainsString('avatar.title = login;', $rail, 'An avatar says its project\'s name to a hovering pointer.');
+        $this->assertStringContainsString('openOwnerFromRail(login)', $rail, 'A click unfolds the column onto that project.');
+    }
+
+    /**
+     * The columns answer the hand: a separator on each boundary, dragged
+     * by the pointer, walked by the arrow keys, doubled back to its
+     * default by a double click, and the chosen widths persist between
+     * visits. The last column gives what is left; nothing ever disappears.
+     */
+    #[Test]
+    public function test_the_columns_answer_a_separator(): void
+    {
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString("var COLUMNS_STORAGE_KEY = 'playground-columns';", $script);
+        $split = self::between($script, 'function buildSplitters() {', "\n  }\n");
+        $this->assertStringContainsString("setAttribute('role', 'separator')", $split);
+        $this->assertStringContainsString("setAttribute('aria-orientation', 'vertical')", $split);
+        $this->assertStringContainsString("'Projects list width'", $split);
+        $this->assertStringContainsString("'Answers width'", $split);
+        $drag = self::between($script, 'function dragSplitter(handle', "\n  }\n");
+        $this->assertStringContainsString('pointermove', $drag);
+        $this->assertStringContainsString('applyColumnWidths();', $drag, 'Every drag step runs through the clamp.');
+        $clamp = self::between($script, 'function clampColumnWidths() {', "\n  }\n");
+        $this->assertStringContainsString('Math.min(Math.max(', $clamp, 'A column never drags past its floor or its ceiling.');
+        $this->assertStringContainsString('dblclick', $script, 'A double click gives the default widths back.');
+        $this->assertStringContainsString('ArrowRight', $script, 'The keys walk a separator as the pointer drags it.');
+        $this->assertStringContainsString('applyColumnWidths()', $script, 'Stored widths come back on the next visit.');
+    }
+
+    /**
      * Back to the finding, after the accordion closed its group, opens
      * the finding's project and repository again: the row it shows is in
      * view, not inside a closed group. A row the visitor clicks is in an
