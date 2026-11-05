@@ -381,6 +381,43 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringContainsString("matchMedia('(min-width: 1280px)').matches", $script, 'The auto-size yields to the stylesheet exactly where the fill begins.');
     }
 
+    /**
+     * A mark alone says neither an empty match (it underlines nothing) nor
+     * a capped list (the marks stop at the engine's cap): the line right
+     * after the field's label counts the matches in sight, and says how
+     * many of them the marks show when the sets were capped. The mirror is
+     * aria-hidden, so a list kept for a screen reader says each match's
+     * text and where it sits. Neither is live: the live line keeps to the
+     * count.
+     */
+    #[Test]
+    public function test_the_matches_are_counted_in_sight_and_listed_for_a_screen_reader(): void
+    {
+        $xpath = self::include();
+        $field = self::byClass('pg-field-text');
+
+        $this->assertSame(1, self::nodes($xpath, $field.'/'.self::self('pg-match-summary').'[@id="pg-match-summary"][not(@aria-live)]'), 'The count sits in the field, and is not live.');
+        $this->assertSame(0, self::nodes($xpath, $field.'/'.self::self('pg-match-summary').self::has('visually-hidden')), 'The count is in sight.');
+        $this->assertSame(1, self::nodes($xpath, $field.'/label/following-sibling::*[1]'.self::has('pg-match-summary')), 'The count reads right after the label.');
+        $this->assertSame(1, self::nodes($xpath, $field.'/ol'.self::has('pg-subject-matches').self::has('visually-hidden').'[@aria-labelledby="pg-match-summary"][not(@aria-live)]'), 'The list is a screen reader\'s, named by the count.');
+
+        $script = self::source(self::SCRIPT);
+        $marks = self::between($script, 'function renderSubjectMarks(payload, subject) {', "\n  }\n");
+        $this->assertStringContainsString('el.matchSummary.textContent = ', $marks);
+        $this->assertStringContainsString('el.subjectMatches.appendChild(', $marks, 'One item per match set.');
+        $this->assertStringContainsString("announce(matches.count === 1 ? '1 match' : matches.count + ' matches');", $marks, 'The live line keeps to the count.');
+
+        $summary = self::between($script, 'function matchSummary(matches) {', "\n  }\n");
+        $this->assertStringContainsString('matches.shown < matches.count', $summary, 'A capped list says how many the marks show.');
+        $this->assertStringContainsString("[0] === ''", $summary, 'An empty match is counted in words.');
+
+        $item = self::between($script, 'function matchItem(whole, i) {', "\n  }\n");
+        $this->assertStringContainsString('whole[2] + whole[0].length', $item, 'Each item says where the match ends, as well as where it starts.');
+
+        $this->assertSame(1, preg_match('/\n\.pg-field-text \{([^}]*)\}/', self::source(self::STYLESHEET), $columns), 'The text field reads its label, its count and its bytes on one line.');
+        $this->assertStringContainsString('grid-template-columns: auto minmax(0, 1fr) auto;', $columns[1]);
+    }
+
     #[Test]
     public function test_the_deep_link_still_runs_on_boot_and_nothing_downloads_before_a_gesture(): void
     {

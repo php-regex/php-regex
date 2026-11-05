@@ -80,11 +80,13 @@
       </div>
       <div class="pg-field pg-field-text">
         <label class="pg-label" for="pg-subject">Text</label>
+        <span class="pg-match-summary" id="pg-match-summary"></span>
         <span class="pg-count" id="pg-subject-count"></span>
         <div class="pg-editor pg-editor-subject">
           <pre class="pg-mirror" aria-hidden="true"></pre>
           <textarea id="pg-subject" class="pg-input" rows="8" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="pg-subject-count" placeholder="the text to test against"></textarea>
         </div>
+        <ol class="pg-subject-matches visually-hidden" aria-labelledby="pg-match-summary"></ol>
       </div>
       <p class="pg-status" role="status" aria-live="polite"></p>
     </div>

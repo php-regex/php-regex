@@ -4904,6 +4904,18 @@ body.search-open {
   font-weight: 600;
 }
 
+/* The text field's header reads its label, how many matches, then its
+   bytes: an empty match underlines nothing, and capped marks stop short,
+   so the count says what the marks cannot. */
+.pg-field-text {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.pg-match-summary {
+  min-width: 0;
+  font-size: .78rem;
+  color: var(--ink-soft);
+}
+
 /* The editor: a textarea over a mirror that paints the marks. The two share
    every metric that moves a glyph (font, size, line height, padding,
    wrapping), so a mark lands under the character it names. */

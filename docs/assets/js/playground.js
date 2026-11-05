@@ -75,6 +75,8 @@
     subject: root.querySelector('#pg-subject'),
     subjectMirror: root.querySelector('.pg-editor-subject .pg-mirror'),
     subjectCount: root.querySelector('#pg-subject-count'),
+    matchSummary: root.querySelector('#pg-match-summary'),
+    subjectMatches: root.querySelector('.pg-subject-matches'),
     version: root.querySelector('#pg-version'),
     run: root.querySelector('.pg-run'),
     examples: root.querySelectorAll('.pg-example'),
@@ -975,18 +977,25 @@
 
   // The matches are read in the text field: each one underlined where it
   // lands, one mark per set, alternating tints so neighbours tell apart.
-  // The count is spoken by the live line; the field is the list.
+  // The line after the field's label counts them, in sight: an empty match
+  // underlines nothing, and the marks stop at the engine's cap. The mirror
+  // is hidden from a screen reader, which reads a list of its own: each
+  // match, its text and where it sits. The live line speaks the count.
   function renderSubjectMarks(payload, subject) {
     var matches = payload.matches;
     var ranges = [];
-    if (matches && !matches.pending && matches.sets) {
+    var done = !!(matches && !matches.pending && matches.sets);
+    clear(el.subjectMatches);
+    if (done) {
       matches.sets.forEach(function (set, i) {
         var whole = set['0'];
         if (whole) {
           ranges.push({ start: whole[2], end: whole[2] + whole[0].length, className: 'pg-mark-match' + (i % 2 ? ' is-alt' : ''), index: i });
+          el.subjectMatches.appendChild(matchItem(whole, i));
         }
       });
     }
+    el.matchSummary.textContent = done ? matchSummary(matches) : '';
     clear(el.subjectMirror);
     el.subjectMirror.appendChild(markRanges(subject, ranges));
     updateBadges();
@@ -1002,6 +1011,32 @@
     } else if (!matches && payload.engineError) {
       announce('The engine refused the pattern: ' + payload.engineError);
     }
+  }
+
+  // How many matches, in words: the empty ones named, since no mark shows
+  // them, and the marks' share when the engine capped the sets.
+  function matchSummary(matches) {
+    if (matches.count === 0) {
+      return matches.error && matches.error !== 'No error' ? 'No match: ' + matches.error + '.' : 'No match';
+    }
+    var empty = matches.sets.filter(function (set) {
+      return set['0'] && set['0'][0] === '';
+    }).length;
+    var line = matches.count === 1 ? '1 match' : matches.count + ' matches';
+    if (empty) {
+      line += matches.count === 1 ? ', empty' : ', ' + empty + ' empty';
+    }
+    if (matches.shown < matches.count) {
+      line += ', the first ' + matches.shown + ' underlined';
+    }
+    return line;
+  }
+
+  // One match for a screen reader: its number, its text, and where it
+  // starts and ends in the field, by character.
+  function matchItem(whole, i) {
+    var said = whole[0] === '' ? 'empty' : '“' + whole[0] + '”';
+    return text('li', null, '#' + (i + 1) + ' ' + said + ', characters ' + whole[2] + ' to ' + (whole[2] + whole[0].length));
   }
 
   // The explanation, one line per construct, indented two spaces per level,
