@@ -158,18 +158,23 @@ final class FindingsDataTest extends TestCase
     {
         $this->requiresPcre2Release($pcre, 'The witness of '.$pattern);
         $this->assertLessThanOrEqual(self::SUBJECT_CAP, \strlen($subject), 'The text field takes it whole.');
-        $jit = (string) \ini_get('pcre.jit');
-        $limit = (string) \ini_get('pcre.backtrack_limit');
-        ini_set('pcre.jit', '0');
-        ini_set('pcre.backtrack_limit', '1000000');
 
-        try {
-            $this->assertFalse(@preg_match($pattern, $subject));
-            $this->assertContains(preg_last_error(), [\PREG_BACKTRACK_LIMIT_ERROR, \PREG_RECURSION_LIMIT_ERROR], preg_last_error_msg());
-        } finally {
-            ini_set('pcre.jit', $jit);
-            ini_set('pcre.backtrack_limit', $limit);
-        }
+        // A process of its own: PHP keeps a pattern compiled with the JIT
+        // an earlier test may have used, and turning pcre.jit off then
+        // does not recompile it.
+        $process = proc_open(
+            [\PHP_BINARY, '-n', '-d', 'pcre.jit=0', '-d', 'pcre.backtrack_limit=1000000', '-r', 'var_export(@preg_match(base64_decode($argv[1]), base64_decode($argv[2]))); echo " ", preg_last_error();', base64_encode($pattern), base64_encode($subject)],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+        );
+        $this->assertIsResource($process);
+        $output = trim((string) stream_get_contents($pipes[1]));
+        stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+
+        $this->assertContains($output, ['false '.\PREG_BACKTRACK_LIMIT_ERROR, 'false '.\PREG_RECURSION_LIMIT_ERROR], 'PHP gives up on the witness, JIT off, under its default backtrack limit.');
     }
 
     #[Test]
