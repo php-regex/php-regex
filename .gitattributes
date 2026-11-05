@@ -14,6 +14,7 @@
 # Export-ignore patterns (for composer archive)
 # Development and CI/CD files
 /.github                export-ignore
+/.coderabbit.yaml       export-ignore
 
 # Configuration files
 /.editorconfig          export-ignore

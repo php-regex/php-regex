@@ -1,0 +1,9 @@
+# Review settings read from the branch under review.
+#
+# The findings under docs/ are written by bin/findings-report from the
+# corpus run: hundreds of generated files a day, never edited by hand.
+# Their generator and its tests are reviewed; their output is not.
+reviews:
+  path_filters:
+    - "!docs/assets/findings/**"
+    - "!docs/_findings/**"
