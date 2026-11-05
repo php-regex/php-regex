@@ -23,10 +23,12 @@ use PHPUnit\Framework\TestCase;
  * request runs what its changes can affect: the prose (the site under docs/,
  * the READMEs, the changelogs, the upgrade guide, the community files) is
  * read by the spelling check and the documentation tests, by the link check
- * when the site changes, and by nothing else, so the workflows that judge
- * the code stay out of a
- * pull request that changes the prose alone. The prose is one list, copied
- * as is into every workflow that names it.
+ * when the site changes, and by nothing else; the tools' settings (the
+ * review bot, Dependabot, the workflow audit, the dictionary, the editor and
+ * the commit template) are read by those tools alone. The workflows that
+ * judge the code stay out of a pull request that changes the prose or those
+ * settings alone. Each is one list, copied as is into every workflow that
+ * names it.
  */
 #[Group('documentation')]
 final class PullRequestScopeTest extends TestCase
@@ -55,8 +57,23 @@ final class PullRequestScopeTest extends TestCase
     ];
 
     /**
+     * The tools' settings no code workflow reads: the review bot's, the
+     * dependency updates', the workflow audit's (its own workflow reads it),
+     * the dictionary (the spelling check runs on every pull request), the
+     * editor's and the commit template.
+     */
+    private const SETTINGS = [
+        '.github/dependabot.yml',
+        '.github/zizmor.yml',
+        '.coderabbit.yaml',
+        '.editorconfig',
+        '.gitmessage',
+        '_typos.toml',
+    ];
+
+    /**
      * The workflows that judge the code: each stays out of a pull request
-     * that changes the prose alone.
+     * that changes the prose or the tools' settings alone.
      */
     private const CODE = [
         'tests.yml',
@@ -120,12 +137,12 @@ final class PullRequestScopeTest extends TestCase
 
     #[Test]
     #[DataProvider('provideCodeWorkflows')]
-    public function test_a_code_workflow_stays_out_of_a_pull_request_changing_the_prose_alone(string $workflow): void
+    public function test_a_code_workflow_stays_out_of_a_pull_request_changing_the_prose_or_the_settings_alone(string $workflow): void
     {
         $block = self::pullRequestBlock($workflow);
 
         $this->assertMatchesRegularExpression('~^    branches: \[ 2\.x \]$~m', $block, $workflow);
-        $this->assertSame(self::PROSE, self::listUnder('paths-ignore', $block), $workflow.' ignores the prose, the one list as is.');
+        $this->assertSame([...self::PROSE, ...self::SETTINGS], self::listUnder('paths-ignore', $block), $workflow.' ignores the prose, then the settings, each list as is.');
         $this->assertStringNotContainsString("\n    paths:", $block, $workflow.' names what it ignores, not what it reads.');
     }
 
@@ -213,6 +230,27 @@ final class PullRequestScopeTest extends TestCase
             // A manifest is a file named composer.json, not a file whose name
             // ends so (the findings of composer/composer).
             $this->assertDoesNotMatchRegularExpression('~^(tests|bin|tools|phar|build|demo)/|(?:^|/)composer\.json(?:/|$)|\.neon$|\.dist$~', $path, $path.' is code, not prose.');
+        }
+    }
+
+    /**
+     * A setting the code workflows ignore is a tracked file no package
+     * ships: a test or an install that reads it would read a file the
+     * archive leaves out.
+     */
+    #[Test]
+    public function test_the_settings_are_tracked_and_no_package_ships_them(): void
+    {
+        exec('git -C '.escapeshellarg(self::root()).' ls-files', $tracked, $code);
+        $this->assertSame(0, $code);
+        $attributes = (string) file_get_contents(self::root().'/.gitattributes');
+
+        foreach (self::SETTINGS as $path) {
+            $this->assertContains($path, $tracked, $path.' is a tracked file.');
+            $this->assertStringNotContainsString('.php', $path, $path.' is code, not a setting.');
+            $exported = 1 === preg_match('~^/'.preg_quote($path, '~').'\s+export-ignore$~m', $attributes)
+                || (str_starts_with($path, '.github/') && 1 === preg_match('~^/\.github\s+export-ignore$~m', $attributes));
+            $this->assertTrue($exported, $path.' is left out of the archive.');
         }
     }
 
