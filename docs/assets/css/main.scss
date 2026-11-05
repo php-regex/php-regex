@@ -5177,7 +5177,8 @@ body.search-open {
 .pg-example-pattern {
   display: none;
 }
-/* A phone: the list is one row the thumb scrolls — a column of chips
+/* Below the side-by-side layout, phones and tablets alike, the examples
+   stand above the fields: the list is one row that scrolls — ten chips
    wrapped would push the fields a screen down. */
 @media (max-width: 1023px) {
   .pg-examples {

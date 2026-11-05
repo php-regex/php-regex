@@ -352,7 +352,7 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(1, preg_match('/grid-template-columns:\s*minmax\([^;]*\)\s+minmax\(0, 2fr\)\s+minmax\(0, 3fr\);/', $wide[1]), 'Examples, fields, answers — three tracks.');
         $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-example \{([^}]*)\}/', $stylesheet, $box), 'One column, one size of box.');
         $this->assertStringContainsString('width: 100%;', $box[1], 'A box fills its item: no example shrinks to its name.');
-        $this->assertSame(1, preg_match('/@media \(max-width: 1023px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \{([^}]*)\}/', $stylesheet, $narrow), 'A phone keeps one row: the list scrolls, the fields stay near.');
+        $this->assertSame(1, preg_match('/@media \(max-width: 1023px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \{([^}]*)\}/', $stylesheet, $narrow), 'Below the side-by-side layout, phones and tablets keep one row: the list scrolls, the fields stay near.');
         $this->assertStringContainsString('overflow-x: auto;', $narrow[1]);
     }
 
@@ -421,6 +421,14 @@ final class PlaygroundLayoutTest extends TestCase
         // answer to the new input.
         $typed = self::between($script, "area.addEventListener('input', function () {", "\n    });\n");
         $this->assertSame(1, preg_match('/refreshFields\(\);\s*dropSubjectMarks\(\);\s*schedule\(\);/', $typed), 'The stale answer goes before the next one is asked for.');
+        // An example replaces both fields without an input event: it drops
+        // them the same way, before it asks.
+        $example = self::between($script, "Array.prototype.forEach.call(el.examples, function (chip) {\n    chip.addEventListener('click', function () {", "\n    });\n");
+        $this->assertSame(1, preg_match('/refreshFields\(\);\s*dropSubjectMarks\(\);\s*analyzeNow\(\);/', $example), 'An example drops the old marks too.');
+        // A match answer that lands after a keystroke belongs to the old
+        // text: it is kept, not drawn, so the dropped marks stay dropped.
+        $answered = self::between($script, "} else if (request.type === 'match') {", "} else if (request.type === 'lint') {");
+        $this->assertSame(1, preg_match('/if \(el\.pattern\.value === request\.regex && el\.subject\.value === request\.subject\) \{\s*renderSubjectMarks\(current\.payload, request\.subject\);\s*\}/', $answered), 'A late answer does not draw the marks back over a newer text.');
         $drop = self::between($script, 'function dropSubjectMarks() {', "\n  }\n");
         $this->assertStringContainsString("el.matchSummary.textContent = '';", $drop);
         $this->assertStringContainsString('clear(el.subjectMatches);', $drop);

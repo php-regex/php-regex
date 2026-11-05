@@ -631,7 +631,11 @@
         current.payload.matches = payload.matches;
         current.payload.input = payload.input || current.payload.input;
         renderCaption(current.payload, false);
-        renderSubjectMarks(current.payload, request.subject);
+        // A keystroke since the request dropped the marks: the answer to
+        // the old text is kept, not drawn; the new input's answer draws.
+        if (el.pattern.value === request.regex && el.subject.value === request.subject) {
+          renderSubjectMarks(current.payload, request.subject);
+        }
         renderErrors(current.payload);
         renderTreeError(current.payload);
         if (lastLint) {
@@ -3613,6 +3617,7 @@
       el.pattern.value = chip.getAttribute('data-regex') || '';
       el.subject.value = chip.getAttribute('data-subject') || '';
       refreshFields();
+      dropSubjectMarks();
       analyzeNow();
     });
   });
