@@ -312,6 +312,30 @@ final class FindingsReportTest extends TestCase
         $this->assertFileExists($this->dir.'/out/assets/findings/repos/acme__tool.json');
     }
 
+    /**
+     * On Windows the linter names files with backslashes: the report reads
+     * them as the same files.
+     */
+    #[Test]
+    public function test_a_part_naming_its_files_with_backslashes_is_read(): void
+    {
+        $part = $this->dir.'/parts/acme__tool.json';
+        $report = json_decode((string) file_get_contents($part), true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($report);
+        $this->assertIsArray($report['results']);
+        foreach ($report['results'] as $i => $result) {
+            $this->assertIsArray($result);
+            $this->assertIsString($result['file']);
+            $report['results'][$i]['file'] = str_replace('/', '\\', $result['file']);
+        }
+        file_put_contents($part, json_encode($report, \JSON_THROW_ON_ERROR));
+
+        [$exit, $output] = $this->report();
+
+        $this->assertSame(0, $exit, $output);
+        $this->assertSame('src/Check.php', $this->finding('/^(a+)+$/')['file'], 'A path from the repository, with forward slashes: the permalink needs them.');
+    }
+
     #[Test]
     public function test_a_symlinked_corpus_reads_parts_relative_to_the_checkout(): void
     {

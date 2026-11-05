@@ -224,6 +224,11 @@ function siteSlug(string $repo): string
     return str_replace(['/', '.'], ['__', '~'], $repo);
 }
 
+function slashes(string $path): string
+{
+    return str_replace('\\', '/', $path);
+}
+
 /**
  * The vendor/name a part is named after, when its clone is still there.
  */
@@ -246,7 +251,7 @@ function repositoryOf(string $slug, string $corpus): ?string
  */
 function findings(string $repo, string $corpus, string $clone, string $sha, array $target, array $results): array
 {
-    $root = (string) realpath($clone);
+    $root = slashes((string) realpath($clone));
     $findings = [];
     foreach ($results as $result) {
         if (!\is_array($result) || !\is_string($result['pattern'] ?? null) || !\is_string($result['file'] ?? null)) {
@@ -278,12 +283,15 @@ function findings(string $repo, string $corpus, string $clone, string $sha, arra
         // bin/corpus-lint runs from the checkout: a part names its files
         // as corpus/<vendor>/<repo>/…, read here under the corpus given,
         // wherever its clones really live.
-        $named = $result['file'];
+        // Paths are compared with forward slashes: Windows answers with
+        // backslashes and a drive letter.
+        $named = slashes($result['file']);
         $path = realpath(match (true) {
-            str_starts_with($named, '/') => $named,
+            1 === preg_match('~^(?:/|[A-Za-z]:/)~', $named) => $named,
             str_starts_with($named, 'corpus/') => $corpus.'/'.substr($named, \strlen('corpus/')),
             default => \dirname($corpus).'/'.$named,
         });
+        $path = false === $path ? false : slashes($path);
         if (false === $path || !str_starts_with($path, $root.'/')) {
             continue;
         }
