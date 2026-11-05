@@ -213,7 +213,16 @@ function stampHead(string $jsonFile, string $repoDir): void
     if (!is_file($jsonFile) || !is_dir($repoDir.'/.git')) {
         return;
     }
-    $head = trim((string) shell_exec('git -C '.escapeshellarg($repoDir).' rev-parse HEAD 2>/dev/null'));
+    // No shell between: cmd.exe reads no /dev/null.
+    $process = proc_open(['git', '-C', $repoDir, 'rev-parse', 'HEAD'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+    if (!\is_resource($process)) {
+        return;
+    }
+    $head = trim((string) stream_get_contents($pipes[1]));
+    stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    proc_close($process);
     $part = json_decode((string) file_get_contents($jsonFile), true);
     if (1 !== preg_match('/^[0-9a-f]{40}$/D', $head) || !\is_array($part)) {
         return;
