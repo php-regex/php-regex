@@ -1022,8 +1022,10 @@
     }
   }
 
-  // How many matches, in words: the empty ones named, since no mark shows
-  // them, and the marks' share when the engine capped the sets.
+  // How many matches, in words: the marks' share when the engine capped the
+  // sets, and the empty ones named, since no mark shows them. The empty
+  // ones are counted in the sets returned: capped, they are counted among
+  // the underlined, and the line says "of them".
   function matchSummary(matches) {
     if (matches.count === 0) {
       return matches.error && matches.error !== 'No error' ? 'No match: ' + matches.error + '.' : 'No match';
@@ -1031,12 +1033,13 @@
     var empty = matches.sets.filter(function (set) {
       return set['0'] && set['0'][0] === '';
     }).length;
+    var capped = matches.shown < matches.count;
     var line = matches.count === 1 ? '1 match' : matches.count + ' matches';
-    if (empty) {
-      line += matches.count === 1 ? ', empty' : ', ' + empty + ' empty';
-    }
-    if (matches.shown < matches.count) {
+    if (capped) {
       line += ', the first ' + matches.shown + ' underlined';
+    }
+    if (empty) {
+      line += matches.count === 1 ? ', empty' : ', ' + empty + (capped ? ' of them empty' : ' empty');
     }
     return line;
   }

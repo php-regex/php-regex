@@ -415,6 +415,7 @@ final class PlaygroundLayoutTest extends TestCase
         $summary = self::between($script, 'function matchSummary(matches) {', "\n  }\n");
         $this->assertStringContainsString('matches.shown < matches.count', $summary, 'A capped list says how many the marks show.');
         $this->assertStringContainsString("[0] === ''", $summary, 'An empty match is counted in words.');
+        $this->assertStringContainsString("' of them empty'", $summary, 'Capped, the empty ones are counted among the underlined only, and say so.');
 
         $item = self::between($script, 'function matchItem(set, i, subject, names) {', "\n  }\n");
         $this->assertStringContainsString('Array.from(subject.slice(0, whole[2])).length', $item, 'The driver gives UTF-16 offsets; the item counts characters, so "😀a" puts the a at 1.');
