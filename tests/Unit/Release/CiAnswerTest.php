@@ -84,6 +84,31 @@ final class CiAnswerTest extends TestCase
           workflow_dispatch:
         YAML;
 
+    /**
+     * A workflow whose filter names a character outside ASCII before "?".
+     */
+    private const ACCENTED = <<<'YAML'
+        name: Accented
+
+        on:
+          pull_request:
+            paths:
+              - 'src/café?.php'
+        YAML;
+
+    /**
+     * A workflow whose filter leaves one ASCII letter out by range.
+     */
+    private const RANGED = <<<'YAML'
+        name: Ranged
+
+        on:
+          pull_request:
+            paths:
+              - 'src/**'
+              - '!src/[a-z].php'
+        YAML;
+
     private string $root = '';
 
     /**
@@ -99,22 +124,27 @@ final class CiAnswerTest extends TestCase
         file_put_contents($this->root.'/fake/gh', <<<'BASH'
             #!/usr/bin/env bash
             # gh run list --commit <sha> --workflow <file> …: the run the list holds.
-            sha=""; workflow=""
+            # A run is "<sha> <workflow> <status> <conclusion> [<event>]", a
+            # pull request's by default.
+            sha=""; workflow=""; event=""
             while [ $# -gt 0 ]; do
                 case "$1" in
                     --commit) sha=$2; shift ;;
                     --workflow) workflow=$2; shift ;;
+                    --event) event=$2; shift ;;
                 esac
                 shift
             done
-            echo "$sha $workflow" >> "$GH_LOG"
-            awk -v sha="$sha" -v workflow="$workflow" '$1 == sha && $2 == workflow { print $3 " " $4; exit }' "$GH_RUNS"
+            echo "$sha $workflow${event:+ $event}" >> "$GH_LOG"
+            awk -v sha="$sha" -v workflow="$workflow" -v event="$event" '$1 == sha && $2 == workflow && (event == "" || event == ($5 == "" ? "pull_request" : $5)) { print $3 " " $4; exit }' "$GH_RUNS"
 
             BASH);
         chmod($this->root.'/fake/gh', 0o755);
         file_put_contents($this->root.'/repository/.github/workflows/tests.yml', self::CODE."\n");
         file_put_contents($this->root.'/repository/.github/workflows/demo.yml', self::SCOPED."\n");
         file_put_contents($this->root.'/repository/.github/workflows/spelling.yml', self::EVERYTHING."\n");
+        file_put_contents($this->root.'/repository/.github/workflows/accented.yml', self::ACCENTED."\n");
+        file_put_contents($this->root.'/repository/.github/workflows/ranged.yml', self::RANGED."\n");
         $this->git('init', '-q', '-b', '2.x');
     }
 
@@ -258,7 +288,7 @@ final class CiAnswerTest extends TestCase
         $this->commitFiles(['docs/guide.md' => 'prose']);
 
         // The first commit adds every file, the workflows first in tree order.
-        $this->assertSame('unread '.$this->short($root).' .github/workflows/demo.yml', $this->answer('tests.yml'));
+        $this->assertSame('unread '.$this->short($root).' .github/workflows/accented.yml', $this->answer('tests.yml'));
     }
 
     #[Test]
@@ -292,6 +322,70 @@ final class CiAnswerTest extends TestCase
 
         $asked = file($this->root.'/gh.log', \FILE_IGNORE_NEW_LINES) ?: [];
         $this->assertSame([$prose.' tests.yml', $code.' tests.yml'], $asked);
+    }
+
+    #[Test]
+    public function test_a_merge_resolved_by_hand_is_not_answered_by_the_run_on_its_pull_request(): void
+    {
+        $code = $this->commitFiles(['src/A.php' => 'a']);
+        $this->ranOn($code, 'tests.yml', 'completed success');
+        $pullRequest = $this->branchCommit('feature', ['src/B.php' => 'b']);
+        $this->ranOn($pullRequest, 'tests.yml', 'completed success');
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'merge', '-q', '--no-ff', '--no-commit', 'feature');
+        file_put_contents($this->root.'/repository/src/B.php', 'b, then changed in the merge');
+        $merge = $this->commitFiles([], 'Merge feature');
+
+        $this->assertSame('unread '.$this->short($merge).' src/B.php', $this->answer('tests.yml'));
+    }
+
+    #[Test]
+    public function test_a_merge_is_answered_by_a_pull_request_run_alone(): void
+    {
+        $code = $this->commitFiles(['src/A.php' => 'a']);
+        $this->ranOn($code, 'tests.yml', 'completed success');
+        $branch = $this->branchCommit('feature', ['src/B.php' => 'b']);
+        $this->ranOn($branch, 'tests.yml', 'completed success', 'workflow_dispatch');
+        $merge = $this->merge('feature');
+
+        $this->assertSame('unread '.$this->short($merge).' src/B.php', $this->answer('tests.yml'));
+    }
+
+    /**
+     * Matching runs in the C locale whatever the caller's: a filter that
+     * holds a character outside ASCII cannot be read byte by byte as GitHub
+     * reads it, so the workflow is taken to read every change.
+     *
+     * @return iterable<string, array{path: string}>
+     */
+    public static function provideChangesUnderAnAccentedFilter(): iterable
+    {
+        yield 'the name without the optional character' => ['path' => 'src/caf.php'];
+        yield 'a file the filter does not name' => ['path' => 'docs/guide.md'];
+    }
+
+    #[Test]
+    #[DataProvider('provideChangesUnderAnAccentedFilter')]
+    public function test_a_filter_outside_ascii_reads_every_change(string $path): void
+    {
+        $code = $this->commitFiles(['src/A.php' => 'a']);
+        $this->ranOn($code, 'accented.yml', 'completed success');
+        $change = $this->commitFiles([$path => 'changed']);
+
+        $this->assertSame('unread '.$this->short($change).' '.$path, $this->answer('accented.yml'));
+    }
+
+    #[Test]
+    public function test_a_range_is_ascii_whatever_the_callers_locale(): void
+    {
+        $code = $this->commitFiles(['src/A.php' => 'a']);
+        $this->ranOn($code, 'ranged.yml', 'completed success');
+        $change = $this->commitFiles(['src/dzs.php' => 'changed']);
+
+        // In a Hungarian locale "dzs" is one letter between "a" and "z".
+        [$exit, $output] = $this->ciAnswer(['ranged.yml'], ['LC_ALL' => 'hu_HU.UTF-8', 'LANG' => 'hu_HU.UTF-8']);
+
+        $this->assertSame(0, $exit, $output);
+        $this->assertSame('unread '.$this->short($change).' src/dzs.php', rtrim($output, "\n"));
     }
 
     #[Test]
@@ -340,9 +434,9 @@ final class CiAnswerTest extends TestCase
         return $this->git('rev-parse', 'HEAD');
     }
 
-    private function ranOn(string $sha, string $workflow, string $state): void
+    private function ranOn(string $sha, string $workflow, string $state, string $event = 'pull_request'): void
     {
-        $this->runs[] = $sha.' '.$workflow.' '.$state;
+        $this->runs[] = $sha.' '.$workflow.' '.$state.' '.$event;
     }
 
     private function short(string $sha): string
@@ -359,14 +453,15 @@ final class CiAnswerTest extends TestCase
     }
 
     /**
-     * @param list<string> $arguments
+     * @param list<string>          $arguments
+     * @param array<string, string> $locale
      *
      * @return array{int, string}
      */
-    private function ciAnswer(array $arguments): array
+    private function ciAnswer(array $arguments, array $locale = []): array
     {
         file_put_contents($this->root.'/runs', implode("\n", $this->runs)."\n");
-        $env = [
+        $env = $locale + [
             'PATH' => $this->root.'/fake:'.getenv('PATH'),
             'HOME' => (string) getenv('HOME'),
             'GH_RUNS' => $this->root.'/runs',

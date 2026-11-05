@@ -9,8 +9,9 @@
 #
 # Says which CI run answers for HEAD in one workflow. A pull request runs the
 # workflows its changes can affect, and a merge into 2.x runs nothing, so a
-# commit is answered by the run on itself or, for a merge, by the run on the
-# head of its pull request; when there is none and nothing the commit changed
+# commit is answered by the run on itself or, for a merge Git made on its own
+# (no conflict resolved by hand), by the pull request run on the head of its
+# pull request; when there is none and nothing the commit changed
 # is read by the workflow (its pull_request paths or paths-ignore, as the
 # commit holds them), by the commit before it, along the first parents.
 #
@@ -44,6 +45,10 @@ if [ -z "$workflow" ]; then
     exit 2
 fi
 cd "$root"
+
+# Byte semantics whatever the caller's locale: a range such as "[a-z]" is
+# the ASCII letters, as GitHub reads it, and not a locale's collation.
+export LC_ALL=C
 
 # A workflow path pattern as an anchored extended regular expression, as
 # GitHub reads its filters: "**/" is any directory or none, "**" crosses
@@ -87,17 +92,25 @@ pull_request_filter() {
 }
 
 # The filter of the workflow as one commit holds it, parsed once per version.
+# A pattern holding a byte outside ASCII cannot be matched byte by byte as
+# GitHub matches it ("é?" would repeat half of "é"): the workflow is then
+# taken to read every change.
 parsed=""
 triggered=0
+exact=1
 paths=()
 ignores=()
 read_filter() {
     local line
     parsed=$1
     triggered=0
+    exact=1
     paths=()
     ignores=()
     while IFS= read -r line; do
+        case "$line" in
+            *[!\ -~]*) exact=0 ;;
+        esac
         case "$line" in
             pull_request) triggered=1 ;;
             'paths !'*) paths+=("!$(glob_regex "${line#paths !}")") ;;
@@ -112,6 +125,7 @@ read_filter() {
 reads() {
     local file=$1 pattern read=0
     [ "$triggered" -eq 1 ] || return 1
+    [ "$exact" -eq 1 ] || return 0
     if [ "${#paths[@]}" -gt 0 ]; then
         for pattern in "${paths[@]}"; do
             if [ "${pattern:0:1}" = '!' ]; then
@@ -131,18 +145,32 @@ reads() {
     return 0
 }
 
+# Whether a merge holds the tree Git builds from its two parents with no
+# conflict, which the pull request run tested; a conflict resolved by hand,
+# or a change made in the merge itself, is a tree no such run has seen.
+merged_on_its_own() {
+    local tree
+    tree=$(git merge-tree --write-tree "$1^1" "$1^2" 2>/dev/null) || return 1
+    [ "${tree%%$'\n'*}" = "$(git rev-parse "$1^{tree}")" ]
+}
+
 sha=$(git rev-parse HEAD)
 count=0
 while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
     count=$((count + 1))
+    answer=$(gh run list --commit "$sha" --workflow "$workflow" --json conclusion,status --jq '.[0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null || true)
+    if [ -n "$answer" ]; then
+        echo "run $(git rev-parse --short "$sha") $answer"
+        exit 0
+    fi
     pull_request_head=$(git rev-parse -q --verify "$sha^2" 2>/dev/null || true)
-    for candidate in $sha $pull_request_head; do
-        answer=$(gh run list --commit "$candidate" --workflow "$workflow" --json conclusion,status --jq '.[0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null || true)
+    if [ -n "$pull_request_head" ] && merged_on_its_own "$sha"; then
+        answer=$(gh run list --commit "$pull_request_head" --workflow "$workflow" --event pull_request --json conclusion,status --jq '.[0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null || true)
         if [ -n "$answer" ]; then
-            echo "run $(git rev-parse --short "$candidate") $answer"
+            echo "run $(git rev-parse --short "$pull_request_head") $answer"
             exit 0
         fi
-    done
+    fi
 
     blob=$(git rev-parse -q --verify "$sha:.github/workflows/$workflow" 2>/dev/null || true)
     [ -n "$blob" ] || break

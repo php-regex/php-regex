@@ -102,7 +102,10 @@ tools/phpunit/vendor/bin/phpunit --group documentation
 
 A merge into 2.x runs nothing: its pull request already ran what the change
 could affect, and `bin/status` and `bin/release` read a merge commit's checks
-from the head of its pull request. A workflow a change did not start, because
+from the pull request run on the head of its pull request, as long as Git made
+the merge on its own: a conflict resolved by hand is a tree no run has seen,
+so the workflow runs again on 2.x (`gh workflow run tests.yml --ref 2.x`)
+before a release. A workflow a change did not start, because
 the change touched nothing the workflow reads, answers with its last run
 before that change; `bin/ci-answer tests.yml` names the run that answers for
 HEAD, or the commit that changed what the workflow reads and has no run. Every
