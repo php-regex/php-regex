@@ -23,7 +23,10 @@
   'use strict';
 
   var input = document.querySelector('.page-filter input');
-  if (!input) return;
+  /* The section filter is for pages whose unit is a heading block, named
+     by data-unit; a page that filters another unit (the projects
+     directory filters rows) owns its input alone. */
+  if (!input || !input.hasAttribute('data-unit')) return;
 
   var main = document.getElementById('main');
   var count = document.querySelector('.page-count');

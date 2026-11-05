@@ -2894,9 +2894,23 @@ a:focus-visible .article-nav-arrow {
 .projects-index {
   display: grid;
   gap: .3rem;
-  margin: 1.75rem 0;
+  margin: 1.25rem 0 1.75rem;
   padding: 0;
   list-style: none;
+}
+/* The directory's voice: one lead sentence, the promises as one quiet
+   line — the plumbing of how a manifest is read stays with the
+   maintainers. */
+.projects-lead {
+  margin: .9rem 0 .35rem;
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+.projects-facts {
+  margin: 0 0 1.1rem;
+  font-size: .85rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
 }
 .projects-index a {
   display: grid;

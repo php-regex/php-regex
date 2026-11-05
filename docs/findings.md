@@ -2,13 +2,21 @@
 title: Projects
 description: "What PHPRegex's linter reports on the regular expressions of real open-source PHP projects, each judged for the PHP and PCRE2 its own composer.json requires."
 permalink: /findings/
+projects_index: true
 ---
 
 # Projects
 
-What the linter reports on the regular expressions of real open-source PHP projects: proven catastrophic backtracking, useless flags, redundant quantifiers, overlapping classes. Each project is judged for the PHP its own composer.json asks for (its require.php floor, or the platform PHP it pins; PHP 8.1 when it names none), on the PCRE2 that PHP bundles, and each finding opens in the playground with the code it lives in.
+<p class="projects-lead">What the linter reports on the regular expressions of real open-source PHP projects.</p>
 
-The list is the latest run over the corpus: the repositories are cloned again, linted again, and the findings rewritten. A finding that is gone from a run is simply gone, whether its code changed, moved or was rewritten.
+<p class="projects-facts">Judged for each project's own PHP, on the PCRE2 that PHP bundles · every finding opens in the playground, on the code it lives in · the list is the latest corpus run: a finding that is gone is gone.</p>
+
+<div class="page-filter">
+  <label class="visually-hidden" for="projects-filter-input">Filter the projects</label>
+  <input type="search" id="projects-filter-input" placeholder="Filter by owner or repository — e.g. symfony, moodle" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status" hidden>No project matches — try a shorter fragment, or press Escape to see them all again.</p>
 
 {%- assign projects = site.findings | sort: "findings_rank" %}
 

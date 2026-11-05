@@ -93,6 +93,12 @@ final class FindingsPagesTest extends TestCase
         $this->assertStringContainsString('<a href="{{ finding.url }}">', $index, 'The row is the link.');
         $this->assertStringNotContainsString('| Project |', $index, 'A wall of pipes is not a directory: rows, avatars and chips.');
         $this->assertStringNotContainsString('|---', $index);
+        $this->assertStringContainsString('projects_index: true', $index, 'The page asks for its row filter.');
+        $this->assertStringContainsString('class="page-filter"', $index, 'Two hundred rows are narrowed in place, the deep pages\' filter dialect.');
+        $this->assertStringContainsString('class="page-empty"', $index);
+        $this->assertStringNotContainsStringIgnoringCase('require.php floor', $index, 'The lead says what the page holds, not how the pipeline reads a manifest.');
+        $scripts = self::source(self::DOCS.'/_includes/scripts.html');
+        $this->assertStringContainsString("page.projects_index", $scripts, 'The script list carries the row filter for this page alone.');
         $this->assertStringContainsString('bin/corpus-lint', self::source(self::DOCS.'/maintainers.md'), 'The daily run is written down for the maintainer.');
         foreach (['90 days', 'disclos', 'fixed', 'maintainers hear', 'privately'] as $promise) {
             $this->assertStringNotContainsStringIgnoringCase($promise, $index, 'The list is what the linter reports today, nothing more.');
