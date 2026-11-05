@@ -3865,7 +3865,19 @@
 
   function openGroup(item) {
     collapseSiblings(item);
-    expandItem(item, true);
+    return expandItem(item, true);
+  }
+
+  // A finding's project and repository, opened when closed: Back to the
+  // finding comes after the accordion may have folded them. An open group
+  // is left as it is, and so are the siblings the filter opened.
+  function revealRepo(repo) {
+    var ownerItem = el.findingsTree.querySelector('[data-owner="' + repo.owner.replace(/"/g, '') + '"]');
+    if (ownerItem && ownerItem.getAttribute('aria-expanded') === 'false') {
+      openGroup(ownerItem);
+    }
+    var repoItem = el.findingsTree.querySelector('[data-slug="' + repo.slug.replace(/"/g, '') + '"]');
+    return repoItem && repoItem.getAttribute('aria-expanded') === 'false' ? openGroup(repoItem) : Promise.resolve();
   }
 
   function activateItem(item) {
@@ -3961,11 +3973,24 @@
       item.setAttribute('aria-selected', shown ? 'true' : 'false');
       item.classList.toggle('is-last', !shown && ((key && key === lastFinding) || (!key && item.getAttribute('data-slug') === lastSlug)));
       if (shown) {
-        // The tree is a window of its own: the row the window shows is
-        // brought inside it, never left scrolling below the fold.
-        item.scrollIntoView({ block: 'nearest' });
+        revealRow(item);
       }
     });
+  }
+
+  // The tree is a window of its own: the row the window shows is brought
+  // inside it, never left scrolling below the fold. The tree scrolls, not
+  // the page — scrollIntoView would move every ancestor, and on a narrow
+  // screen pull the page from the card up to the list.
+  function revealRow(item) {
+    var tree = el.findingsTree;
+    var row = item.firstElementChild || item;
+    var top = row.getBoundingClientRect().top - tree.getBoundingClientRect().top + tree.scrollTop;
+    if (top < tree.scrollTop) {
+      tree.scrollTop = top;
+    } else if (top + row.offsetHeight > tree.scrollTop + tree.clientHeight) {
+      tree.scrollTop = top + row.offsetHeight - tree.clientHeight;
+    }
   }
 
   function openFindingKey(key) {
@@ -3974,7 +3999,9 @@
     var id = key.slice(cut + 1);
     return loadIndex().then(function () {
       var repo = repoNamed(slug);
-      return repo ? loadRepo(slug).then(function (file) {
+      return repo ? revealRepo(repo).then(function () {
+        return loadRepo(slug);
+      }).then(function (file) {
         var finding = file.findings.filter(function (candidate) {
           return candidate.id === id;
         })[0];
@@ -3999,12 +4026,7 @@
         setStatus('The latest run reports nothing on ' + name + '.', 'error');
         return null;
       }
-      var ownerItem = el.findingsTree.querySelector('[data-owner="' + repo.owner.replace(/"/g, '') + '"]');
-      if (ownerItem) {
-        expandItem(ownerItem, true);
-      }
-      var repoItem = el.findingsTree.querySelector('[data-slug="' + repo.slug.replace(/"/g, '') + '"]');
-      return (repoItem ? expandItem(repoItem, true) : Promise.resolve()).then(function () {
+      return revealRepo(repo).then(function () {
         return loadRepo(repo.slug);
       }).then(function (file) {
         if (pageTouched) {

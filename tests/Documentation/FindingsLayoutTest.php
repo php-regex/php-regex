@@ -138,7 +138,12 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringNotContainsString("'Judged for PHP ' + repo.target.php + ' · PCRE2 '", $card, 'No prose line: chips, then the date.');
 
         $markLast = self::between($script, 'function markLast() {', "\n  }\n");
-        $this->assertStringContainsString('scrollIntoView({ block: \'nearest\' })', $markLast, 'The shown row is brought into the tree\'s window.');
+        $this->assertStringContainsString('revealRow(item);', $markLast, 'The shown row is brought into the tree\'s window.');
+        $this->assertStringNotContainsString('scrollIntoView', $markLast, 'scrollIntoView scrolls every ancestor: on a narrow screen it would pull the page from the card up to the tree.');
+        $reveal = self::between($script, 'function revealRow(item) {', "\n  }\n");
+        $this->assertStringContainsString('var tree = el.findingsTree;', $reveal);
+        $this->assertStringContainsString('tree.scrollTop = ', $reveal, 'The tree scrolls, the page stays where it is.');
+        $this->assertStringNotContainsString('scrollIntoView', $reveal);
 
         $stylesheet = self::source(self::STYLESHEET);
         $this->assertSame(1, preg_match('/\.pg-tree-item\[aria-selected="true"\] > \.pg-tree-row \{([^}]*)\}/', $stylesheet, $rail));
@@ -170,6 +175,29 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringContainsString('openGroup(item);', $activate, 'A click that opens runs the accordion.');
         $keys = self::between($script, 'function onTreeKey(event) {', "\n  }\n");
         $this->assertStringContainsString('openGroup(item);', $keys, 'The arrow key opens as the pointer does.');
+        $this->assertStringContainsString('return expandItem(item, true);', $open, 'The rows of a repository arrive with its data: the caller waits for them.');
+    }
+
+    /**
+     * Back to the finding, after the accordion closed its group, opens
+     * the finding's project and repository again: the row it shows is in
+     * view, not inside a closed group. A row the visitor clicks is in an
+     * open group already, and the groups the filter opened stay open.
+     */
+    #[Test]
+    public function test_restoring_a_finding_reopens_its_group(): void
+    {
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString('function revealRepo(repo) {', $script);
+        $reveal = self::between($script, 'function revealRepo(repo) {', "\n  }\n");
+        $this->assertStringContainsString('[data-owner="', $reveal);
+        $this->assertStringContainsString('[data-slug="', $reveal);
+        $this->assertStringContainsString("getAttribute('aria-expanded') === 'false'", $reveal, 'Only a closed group is opened: an open one, and its siblings, are left as they are.');
+        $this->assertSame(2, substr_count($reveal, 'openGroup('), 'The project, then the repository, through the accordion.');
+
+        $restore = self::between($script, 'function openFindingKey(key) {', "\n  }\n");
+        $this->assertStringContainsString('revealRepo(repo)', $restore, 'Back to the finding reopens its group.');
+        $this->assertStringContainsString('revealRepo(repo)', self::between($script, 'function openRepoPage(name) {', "\n  }\n"), 'A repository\'s page opens its group the same way.');
     }
 
     #[Test]
