@@ -27,7 +27,8 @@ set -euo pipefail
 dry_run=0
 skip_ci=0
 branch=2.x
-root="$(cd "$(dirname "$0")/.." && pwd)"
+bin="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$bin/.." && pwd)"
 version=""
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -90,23 +91,30 @@ fi
 
 # CI on the commit to release.
 if [ "$skip_ci" -eq 0 ]; then
-    head=$(git rev-parse HEAD)
     if ! command -v gh >/dev/null 2>&1; then
         problems+=("gh is not installed: it checks CI and publishes the release (or pass --skip-ci).")
     else
         # The workflows that gate a release, each run on the pull request a
-        # commit of the branch came from: a merge commit answers for the
-        # head of its pull request. The experimental and scheduled ones do
-        # not gate. demo.yml installs HEAD itself into a Symfony and a
-        # Laravel application.
-        merged=$(git rev-parse -q --verify HEAD^2 2>/dev/null || true)
+        # commit of the branch came from, and only when it changed what the
+        # workflow reads: bin/ci-answer finds the run that answers for HEAD,
+        # walking back past the commits the workflow ignores. The
+        # experimental and scheduled ones do not gate. demo.yml installs
+        # HEAD itself into a Symfony and a Laravel application.
         for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml spelling.yml backward-compatibility.yml demo.yml; do
-            conclusion=""
-            for sha in $head $merged; do
-                conclusion=$(gh run list --commit "$sha" --workflow "$workflow" --json conclusion --jq '.[0].conclusion' 2>/dev/null || echo "")
-                [ -z "$conclusion" ] || break
-            done
-            [ "$conclusion" = "success" ] || problems+=("$workflow on $(git rev-parse --short HEAD) is \"${conclusion:-not found}\", not \"success\".")
+            answer=$("$bin/ci-answer" --root "$root" "$workflow" 2>/dev/null || echo "none 0")
+            kind=${answer%% *}
+            rest=${answer#* }
+            at=${rest%% *}
+            detail=${rest#* }
+            case "$kind" in
+                run)
+                    status=${detail%% *}
+                    conclusion=${detail#* }
+                    [ "$detail" = "completed success" ] || problems+=("$workflow on $at is \"${conclusion:-$status}\", not \"success\".")
+                    ;;
+                unread) problems+=("$workflow has no run for $at, which changed $detail: run it there (gh workflow run $workflow --ref $branch) or on the pull request.") ;;
+                *) problems+=("$workflow has no run within the last $at commits of $branch.") ;;
+            esac
         done
     fi
 fi

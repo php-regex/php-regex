@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+#
+# This file is part of the PHPRegex package.
+#
+# (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+#
+# For the full copyright and license information, please view the LICENSE
+# file that was distributed with this source code.
+#
+# Says which CI run answers for HEAD in one workflow. A pull request runs the
+# workflows its changes can affect, and a merge into 2.x runs nothing, so a
+# commit is answered by the run on itself or, for a merge, by the run on the
+# head of its pull request; when there is none and nothing the commit changed
+# is read by the workflow (its pull_request paths or paths-ignore, as the
+# commit holds them), by the commit before it, along the first parents.
+#
+# Usage:
+#   bin/ci-answer [--root <dir>] [--limit <n>] <workflow>
+#
+#   --root    the checkout to read (default: the one holding this script)
+#   --limit   the most commits to walk back (default: 200)
+#
+# Prints one line:
+#   run <sha> <status> <conclusion>   the run on <sha> answers
+#   unread <sha> <path>               <sha> changed <path>, which the workflow reads, and no run answers for it
+#   none <n>                          no run within <n> commits, or the workflow is not there
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+limit=200
+workflow=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --root) root=${2:?--root needs a directory}; shift ;;
+        --limit) limit=${2:?--limit needs a number}; shift ;;
+        -h|--help) sed -n '10,/^set -/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -*) echo "Unknown option: $1" >&2; exit 2 ;;
+        *) workflow=$1 ;;
+    esac
+    shift
+done
+if [ -z "$workflow" ]; then
+    echo "Usage: bin/ci-answer [--root <dir>] [--limit <n>] <workflow>" >&2
+    exit 2
+fi
+cd "$root"
+
+# A workflow path pattern as an anchored extended regular expression: "**/"
+# is any directory or none, "**" crosses directories, "*" and "?" stay in one.
+glob_regex() {
+    local glob=$1 out='' i=0 c
+    while [ "$i" -lt "${#glob}" ]; do
+        c=${glob:i:1}
+        if [ "$c" = '*' ] && [ "${glob:i+1:1}" = '*' ]; then
+            if [ "${glob:i+2:1}" = '/' ]; then out+='(.*/)?'; i=$((i + 3)); else out+='.*'; i=$((i + 2)); fi
+            continue
+        fi
+        case "$c" in
+            '*') out+='[^/]*' ;;
+            '?') out+='[^/]' ;;
+            '.'|'+'|'^'|'$'|'('|')'|'{'|'}'|'|'|'['|']'|"\\") out+="\\$c" ;;
+            *) out+=$c ;;
+        esac
+        i=$((i + 1))
+    done
+    printf '^%s$' "$out"
+}
+
+# The filter of the workflow's pull_request trigger, one "paths <pattern>" or
+# "ignore <pattern>" line each, after a "pull_request" line when it has one.
+pull_request_filter() {
+    awk '
+        /^[^ #]/ { on = ($0 ~ /^on:/); request = 0; key = ""; next }
+        on && /^  [^ #]/ { request = ($0 ~ /^  pull_request:/); key = ""; if (request) print "pull_request"; next }
+        request && /^    [^ #-]/ { key = ""; if ($0 ~ /^    paths:/) key = "paths"; else if ($0 ~ /^    paths-ignore:/) key = "ignore"; next }
+        request && key != "" && /^      - / {
+            value = $0
+            sub(/^      - /, "", value)
+            sub(/[ \t]+#.*$/, "", value)
+            sub(/[ \t]+$/, "", value)
+            if (value ~ /^\047.*\047$/ || value ~ /^".*"$/) value = substr(value, 2, length(value) - 2)
+            print key " " value
+        }
+    '
+}
+
+# The filter of the workflow as one commit holds it, parsed once per version.
+parsed=""
+triggered=0
+paths=()
+ignores=()
+read_filter() {
+    local line
+    parsed=$1
+    triggered=0
+    paths=()
+    ignores=()
+    while IFS= read -r line; do
+        case "$line" in
+            pull_request) triggered=1 ;;
+            'paths !'*) paths+=("!$(glob_regex "${line#paths !}")") ;;
+            'paths '*) paths+=("$(glob_regex "${line#paths }")") ;;
+            'ignore '*) ignores+=("$(glob_regex "${line#ignore }")") ;;
+        esac
+    done < <(git cat-file blob "$1" | pull_request_filter)
+}
+
+# Whether a change to the file starts the workflow on a pull request: the
+# last of its paths the file matches decides, or none of its paths-ignore.
+reads() {
+    local file=$1 pattern read=0
+    [ "$triggered" -eq 1 ] || return 1
+    if [ "${#paths[@]}" -gt 0 ]; then
+        for pattern in "${paths[@]}"; do
+            if [ "${pattern:0:1}" = '!' ]; then
+                if [[ $file =~ ${pattern:1} ]]; then read=0; fi
+            elif [[ $file =~ $pattern ]]; then
+                read=1
+            fi
+        done
+        [ "$read" -eq 1 ]
+        return
+    fi
+    if [ "${#ignores[@]}" -gt 0 ]; then
+        for pattern in "${ignores[@]}"; do
+            if [[ $file =~ $pattern ]]; then return 1; fi
+        done
+    fi
+    return 0
+}
+
+sha=$(git rev-parse HEAD)
+count=0
+while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
+    count=$((count + 1))
+    pull_request_head=$(git rev-parse -q --verify "$sha^2" 2>/dev/null || true)
+    for candidate in $sha $pull_request_head; do
+        answer=$(gh run list --commit "$candidate" --workflow "$workflow" --json conclusion,status --jq '.[0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null || true)
+        if [ -n "$answer" ]; then
+            echo "run $(git rev-parse --short "$candidate") $answer"
+            exit 0
+        fi
+    done
+
+    blob=$(git rev-parse -q --verify "$sha:.github/workflows/$workflow" 2>/dev/null || true)
+    [ -n "$blob" ] || break
+    [ "$blob" = "$parsed" ] || read_filter "$blob"
+
+    parent=$(git rev-parse -q --verify "$sha^1" 2>/dev/null || true)
+    if [ -n "$parent" ]; then
+        changed=$(git diff --name-only --no-renames "$parent" "$sha")
+    else
+        changed=$(git ls-tree -r --name-only "$sha")
+    fi
+    while IFS= read -r file; do
+        if [ -n "$file" ] && reads "$file"; then
+            echo "unread $(git rev-parse --short "$sha") $file"
+            exit 0
+        fi
+    done <<< "$changed"
+    sha=$parent
+done
+echo "none $count"

@@ -605,6 +605,62 @@ exit 1
     }
 
     #[Test]
+    public function test_release_reads_a_workflow_a_change_did_not_start_from_the_run_before_it(): void
+    {
+        $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+
+        [$code, $output] = $this->runScript('release', ['--dry-run', '2.0.0'], $this->fakeGitHub());
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('would tag v2.0.0', $output);
+    }
+
+    #[Test]
+    public function test_release_refuses_a_change_no_run_has_read(): void
+    {
+        $this->publishedWithRuns(['src/Other.php' => '<?php']);
+
+        [$code, $output] = $this->runScript('release', ['--dry-run', '2.0.0'], $this->fakeGitHub());
+
+        $this->assertSame(1, $code, $output);
+        $short = $this->git('rev-parse', '--short', 'HEAD');
+        foreach (self::gatedWorkflows('release') as $workflow) {
+            $this->assertStringContainsString($workflow.' has no run for '.$short.', which changed src/Other.php', $output);
+        }
+    }
+
+    #[Test]
+    public function test_release_refuses_a_run_that_did_not_pass(): void
+    {
+        $runs = $this->publishedWithRuns(['docs/guides/new.md' => 'prose'], 'completed failure');
+
+        [$code, $output] = $this->runScript('release', ['--dry-run', '2.0.0'], $this->fakeGitHub());
+
+        $this->assertSame(1, $code, $output);
+        $this->assertStringContainsString('tests.yml on '.$this->git('rev-parse', '--short', $runs).' is "failure", not "success".', $output);
+    }
+
+    #[Test]
+    public function test_status_names_the_run_that_answers_for_head(): void
+    {
+        $runs = $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+
+        [, $output] = $this->runScript('status', [], $this->fakeGitHub());
+
+        $this->assertStringContainsString('tests.yml passed on '.$this->git('rev-parse', '--short', $runs).', and nothing it reads changed since', $output);
+    }
+
+    #[Test]
+    public function test_status_names_the_change_no_run_has_read(): void
+    {
+        $this->publishedWithRuns(['src/Other.php' => '<?php']);
+
+        [, $output] = $this->runScript('status', [], $this->fakeGitHub());
+
+        $this->assertStringContainsString('no tests.yml run for '.$this->git('rev-parse', '--short', 'HEAD').', which changed src/Other.php', $output);
+    }
+
+    #[Test]
     public function test_release_and_status_check_the_same_workflows(): void
     {
         $release = self::gatedWorkflows('release');
@@ -1013,6 +1069,73 @@ exit 1
         $this->git('init', '-q', '-b', '2.x');
         $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'add', '-A');
         $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--no-verify', '-m', 'state');
+    }
+
+    /**
+     * A release-ready 2.x on origin whose gating workflows each ignore the
+     * site, with a run of each on its first commit, then a second commit
+     * making the change given, pushed too.
+     *
+     * @param array<string, string> $change
+     *
+     * @return string the commit the runs are on
+     */
+    private function publishedWithRuns(array $change, string $state = 'completed success'): string
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        mkdir($this->root.'/.github/workflows', 0o777, true);
+        foreach (self::gatedWorkflows('release') as $workflow) {
+            file_put_contents($this->root.'/.github/workflows/'.$workflow, "on:\n  pull_request:\n    branches: [ 2.x ]\n    paths-ignore:\n      - 'docs/**'\n  workflow_dispatch:\n");
+        }
+        file_put_contents($this->root.'/.gitignore', "/fake/\n/runs\n");
+        $this->commit();
+        $this->publish();
+        $runs = $this->git('rev-parse', 'HEAD');
+        $lines = array_map(static fn (string $workflow): string => $runs.' '.$workflow.' '.$state, self::gatedWorkflows('release'));
+        file_put_contents($this->root.'/runs', implode("\n", $lines)."\n");
+
+        foreach ($change as $path => $content) {
+            if (!is_dir(\dirname($this->root.'/'.$path))) {
+                mkdir(\dirname($this->root.'/'.$path), 0o777, true);
+            }
+            file_put_contents($this->root.'/'.$path, $content);
+        }
+        $this->git('add', '-A');
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--no-verify', '-m', 'change');
+        $this->git('push', '-q', 'origin', 'HEAD:refs/heads/2.x');
+
+        return $runs;
+    }
+
+    /**
+     * A gh first on the PATH that answers "gh run list --commit <sha>
+     * --workflow <file>" from the runs file and every other call with
+     * nothing.
+     *
+     * @return array<string, string>
+     */
+    private function fakeGitHub(): array
+    {
+        if (!is_dir($this->root.'/fake')) {
+            mkdir($this->root.'/fake');
+        }
+        file_put_contents($this->root.'/fake/gh', <<<'BASH'
+            #!/usr/bin/env bash
+            sha=""; workflow=""
+            while [ $# -gt 0 ]; do
+                case "$1" in
+                    --commit) sha=$2; shift ;;
+                    --workflow) workflow=$2; shift ;;
+                esac
+                shift
+            done
+            [ -n "$sha" ] || exit 0
+            awk -v sha="$sha" -v workflow="$workflow" '$1 == sha && $2 == workflow { print $3 " " $4; exit }' "$GH_RUNS"
+
+            BASH);
+        chmod($this->root.'/fake/gh', 0o755);
+
+        return ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'GH_RUNS' => $this->root.'/runs'];
     }
 
     private function version(): string
