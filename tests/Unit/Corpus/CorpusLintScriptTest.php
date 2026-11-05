@@ -355,6 +355,24 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertArrayNotHasKey('head', $this->jsonPart('ownerC__repoBare', $output), 'A directory that is no clone names no commit.');
     }
 
+    /**
+     * The JSON run judges what the console run judged: when it writes no
+     * part, the sweep says so and is not clean, rather than letting the
+     * repository fall silently out of the site's findings.
+     */
+    #[Test]
+    public function test_a_json_run_that_writes_no_part_is_reported(): void
+    {
+        // A directory where the part should go: the linter cannot write it.
+        mkdir($this->root.'/parts/ownerA__repoNew.json', 0o777, true);
+
+        [$code, $output] = $this->script(['--only', 'ownerA']);
+
+        $this->assertSame(1, $code, $output);
+        $this->assertStringContainsString('ownerA/repoNew', $output);
+        $this->assertStringContainsString('JSON part', $output);
+    }
+
     #[Test]
     public function test_no_json_skips_the_json_parts(): void
     {

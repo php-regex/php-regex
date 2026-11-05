@@ -680,8 +680,17 @@ function corpusLintMain(array $argv): int
             if (is_file($jsonFile)) {
                 unlink($jsonFile);
             }
-            runLint(jsonPlan($plan, $jsonFile));
-            stampHead($jsonFile, $repoDir);
+            // Both runs judge the same target with the same analysis: a JSON
+            // run that answers otherwise, or writes no part for a repository
+            // the console run judged, would let it fall silently out of the
+            // site's findings.
+            [$jsonExit] = runLint(jsonPlan($plan, $jsonFile));
+            if ($jsonExit !== $exitCode || (\in_array($exitCode, [0, 1], true) && !is_file($jsonFile))) {
+                $notClean = true;
+                $io->error(sprintf('%s: the JSON part was not written as the log part was (JSON run exit %d, console run exit %d).', $repo, $jsonExit, $exitCode));
+            } else {
+                stampHead($jsonFile, $repoDir);
+            }
         }
 
         $targetLine = extractTargetLine($console);
