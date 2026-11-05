@@ -240,8 +240,13 @@ final class FindingsLayoutTest extends TestCase
 
         $xpath = self::include();
         $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/*[1]'.self::has('pg-listing-tab').'[@aria-expanded="true"][@aria-controls="pg-listing"]'), 'A tab on the window\'s edge folds the column.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-listing-tab').'[@aria-label="List column"]/span[@aria-hidden="true"]'), 'The tab is named, its glyph silent: a screen reader says "List column, expanded", never "single left-pointing angle quotation mark".');
         $script = self::source(self::SCRIPT);
         $this->assertStringContainsString("classList.toggle('is-listing-hidden')", $script, 'The tab toggles the fold.');
+        $fold = self::between($script, "el.listingTab.addEventListener('click', function () {", "\n    });\n");
+        $this->assertStringContainsString('el.listingRail.hidden = !hidden;', $fold, 'Folded, the rail shows, whether the index has loaded or not: the column can always come back.');
+        $this->assertStringNotContainsString('firstChild', $fold);
+        $this->assertStringContainsString('.focus()', $fold, 'The control the hand was on disappears with the fold: focus moves to the one that undoes it.');
         $stylesheet = self::source(self::STYLESHEET);
         $this->assertSame(1, preg_match('/\.playground\.is-listing-hidden \.pg-listing-tab \{([^}]*)\}/', $stylesheet, $tabfold), 'Folded, the tab gives its edge to the rail.');
         $this->assertStringContainsString('display: none;', $tabfold[1], 'The tab never sits over the avatars, cutting them.');
@@ -267,7 +272,10 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringContainsString("'pg-listing-rail-avatar'", $rail);
         $this->assertStringContainsString('avatar.title = login;', $rail, 'An avatar says its project\'s name to a hovering pointer.');
         $this->assertStringContainsString('openOwnerFromRail(login)', $rail, 'A click unfolds the column onto that project.');
-        $this->assertStringContainsString("'pg-listing-rail-open'", $rail, 'The rail carries the unfold control of its own, at its head.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-listing-rail').'/*[1]'.self::has('pg-listing-rail-open').'[@type="button"][@aria-label="Unfold the list column"]'), 'The rail carries the unfold control of its own, at its head, from the first paint: a fold made before the index loads can be undone.');
+        $this->assertStringNotContainsString('clear(el.listingRail)', $rail, 'Rebuilding the avatars leaves the unfold control in place.');
+        $this->assertStringContainsString('[data-owner]', $rail, 'The rail pictures the owners the tree shows: on a repository\'s page, that project alone.');
+        $this->assertStringNotContainsString('Object.keys(findingsIndex.owners)', $rail);
     }
 
     /**
@@ -294,6 +302,37 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringContainsString('dblclick', $script, 'A double click gives the default widths back.');
         $this->assertStringContainsString('ArrowRight', $script, 'The keys walk a separator as the pointer drags it.');
         $this->assertStringContainsString('applyColumnWidths()', $script, 'Stored widths come back on the next visit.');
+    }
+
+    /**
+     * The separators sit on the gaps the grid draws, folded or not: the
+     * body's padding (wider when the rail takes the edge) and its gaps
+     * are counted, never taken for column. The clamp holds the sum, not
+     * each width alone, so the answers keep their floor whatever the hand
+     * did; a smaller window clamps again, and a folded separator is gone,
+     * not a focusable ghost under the other one.
+     */
+    #[Test]
+    public function test_the_separators_ride_the_tracks_and_the_last_column_keeps_its_floor(): void
+    {
+        $script = self::source(self::SCRIPT);
+        $bounds = self::between($script, 'function columnBounds() {', "\n  }\n");
+        $this->assertStringContainsString('paddingLeft', $bounds, 'The padding is not a column.');
+        $this->assertStringContainsString('paddingRight', $bounds);
+        $this->assertStringContainsString('gap * (folded ? 1 : 2)', $bounds, 'Two gaps between three columns, one between two.');
+        $clamp = self::between($script, 'function clampColumnWidths() {', "\n  }\n");
+        $this->assertStringContainsString('bounds.total - columnWidths.list - SPLIT_LAST_MIN', $clamp, 'The answers width is bounded by what the list leaves: the two never add up past the floor of the last column.');
+        $place = self::between($script, 'function positionSplitters() {', "\n  }\n");
+        $this->assertStringContainsString('inset + edge', $place, 'A handle is placed from the padding edge, where an absolute box starts.');
+        $this->assertStringContainsString("window.addEventListener('resize', applyColumnWidths);", $script, 'A smaller window clamps the stored widths again.');
+        $this->assertStringNotContainsString("window.addEventListener('resize', positionSplitters);", $script);
+
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/\.pg-splitter\[hidden\] \{([^}]*)\}/', $stylesheet, $gone), 'The author rule giving the handle a box would beat the hidden attribute.');
+        $this->assertStringContainsString('display: none;', $gone[1]);
+
+        $reveal = self::between($script, 'function revealRow(item) {', "\n  }\n");
+        $this->assertStringContainsString('if (!item.offsetParent) {', $reveal, 'A row inside a closed group has no box: measuring it would throw the tree to its top.');
     }
 
     /**

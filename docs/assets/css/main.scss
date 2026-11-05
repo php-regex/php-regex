@@ -6762,6 +6762,9 @@ body.search-open {
     background: repeating-linear-gradient(to bottom, var(--amber) 0 4px, transparent 4px 9px);
     opacity: 1;
   }
+  .pg-splitter[hidden] {
+    display: none;
+  }
   .pg-splitter:focus-visible {
     outline: none;
   }

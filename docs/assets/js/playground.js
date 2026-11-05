@@ -116,6 +116,7 @@
     findingsFilter: root.querySelector('.pg-findings-filter'),
     listingTab: root.querySelector('.pg-listing-tab'),
     listingRail: root.querySelector('.pg-listing-rail'),
+    listingRailOpen: root.querySelector('.pg-listing-rail-open'),
     body: root.querySelector('.pg-body'),
     findingsTree: root.querySelector('.pg-findings-tree'),
     findingsEmpty: root.querySelector('.pg-findings-empty'),
@@ -4008,6 +4009,11 @@
   // the page — scrollIntoView would move every ancestor, and on a narrow
   // screen pull the page from the card up to the list.
   function revealRow(item) {
+    // A row inside a closed group has no box: measured, it would throw
+    // the tree to its top.
+    if (!item.offsetParent) {
+      return;
+    }
     var tree = el.findingsTree;
     var row = item.firstElementChild || item;
     var top = row.getBoundingClientRect().top - tree.getBoundingClientRect().top + tree.scrollTop;
@@ -4256,32 +4262,35 @@
       var hidden = root.classList.toggle('is-listing-hidden');
       el.listingTab.setAttribute('aria-expanded', hidden ? 'false' : 'true');
       el.listingTab.title = hidden ? 'Unfold the list column' : 'Fold the list column';
-      el.listingRail.hidden = !hidden || !el.listingRail.firstChild;
+      // The rail and its unfold control are in the page from the first
+      // paint, so a fold made before the index loads can be undone.
+      el.listingRail.hidden = !hidden;
       applyColumnWidths();
+      // The control under the hand disappears with the fold: the focus
+      // moves to the one that undoes it.
+      var focused = document.activeElement;
+      if (focused === el.listingTab || focused === el.listingRailOpen) {
+        (hidden ? el.listingRailOpen : el.listingTab).focus();
+      }
+    });
+    // The rail carries the unfold control of its own, at its head: the tab
+    // gives its edge to the avatars when the column folds.
+    el.listingRailOpen.addEventListener('click', function () {
+      el.listingTab.click();
     });
   }
 
   // Folded, the list leaves its avatars behind: a rail of owners on the
   // window's edge, each picturing its project, each unfolding the column
   // onto that project — the ecosystem stays in reach while the finding
-  // reads wide.
+  // reads wide. The rail pictures the owners the tree shows: on a
+  // repository's page, that project alone.
   function buildRail() {
-    clear(el.listingRail);
-    // The rail carries the unfold control of its own, at its head: the tab
-    // gives its edge to the avatars when the column folds.
-    var open = document.createElement('button');
-    open.type = 'button';
-    open.className = 'pg-listing-rail-open';
-    open.setAttribute('aria-label', 'Unfold the list column');
-    open.title = 'Unfold the list column';
-    open.textContent = '›';
-    open.addEventListener('click', function () {
-      if (el.listingTab) {
-        el.listingTab.click();
-      }
+    Array.prototype.forEach.call(el.listingRail.querySelectorAll('.pg-listing-rail-avatar'), function (avatar) {
+      avatar.remove();
     });
-    el.listingRail.appendChild(open);
-    Object.keys(findingsIndex.owners).forEach(function (login) {
+    Array.prototype.forEach.call(el.findingsTree.querySelectorAll('[data-owner]'), function (ownerItem) {
+      var login = ownerItem.getAttribute('data-owner');
       var owner = findingsIndex.owners[login];
       var avatar = document.createElement('button');
       avatar.type = 'button';
@@ -4326,15 +4335,27 @@
   var columnWidths = null;  // { list, fields } in px, null = the stylesheet's word
   var columnsMedia = window.matchMedia ? window.matchMedia('(min-width: 1280px)') : null;
 
+  // The columns share the body's content box: its padding (wider when
+  // the rail takes the edge) and its gaps are not column.
   function columnBounds() {
-    var total = el.body.getBoundingClientRect().width;
+    var style = getComputedStyle(el.body);
+    var folded = root.classList.contains('is-listing-hidden');
+    var gap = parseFloat(style.columnGap) || 0;
+    var total = el.body.clientWidth
+      - (parseFloat(style.paddingLeft) || 0)
+      - (parseFloat(style.paddingRight) || 0)
+      - gap * (folded ? 1 : 2);
     return { total: total, listMax: Math.max(SPLIT_MIN, total - SPLIT_LAST_MIN - SPLIT_MIN), fieldsMax: Math.max(SPLIT_MIN, total - SPLIT_LAST_MIN) };
   }
 
   function clampColumnWidths() {
     var bounds = columnBounds();
+    var folded = root.classList.contains('is-listing-hidden');
     columnWidths.list = Math.min(Math.max(columnWidths.list, SPLIT_MIN), bounds.listMax);
-    columnWidths.fields = Math.min(Math.max(columnWidths.fields, SPLIT_MIN), bounds.fieldsMax);
+    // The answers width is bounded by what the list leaves: the two never
+    // add up past the last column's floor.
+    var fieldsMax = folded ? bounds.fieldsMax : Math.max(SPLIT_MIN, bounds.total - columnWidths.list - SPLIT_LAST_MIN);
+    columnWidths.fields = Math.min(Math.max(columnWidths.fields, SPLIT_MIN), fieldsMax);
   }
 
   function applyColumnWidths() {
@@ -4445,13 +4466,16 @@
     if (tracks.length < 2) {
       return;
     }
-    var gap = parseFloat(getComputedStyle(el.body).columnGap) || 0;
+    var style = getComputedStyle(el.body);
+    var gap = parseFloat(style.columnGap) || 0;
+    // An absolute box starts at the padding edge; the tracks, after it.
+    var inset = parseFloat(style.paddingLeft) || 0;
     handles.forEach(function (handle) {
       var which = handle.getAttribute('data-column');
       var hiddenByFold = folded && which === 'list';
       handle.hidden = hiddenByFold;
       var edge = which === 'list' ? tracks[0] : (folded ? tracks[0] : tracks[0] + gap + tracks[1]);
-      handle.style.left = Math.round(edge + gap / 2 - handle.offsetWidth / 2) + 'px';
+      handle.style.left = Math.round(inset + edge + gap / 2 - handle.offsetWidth / 2) + 'px';
     });
   }
 
@@ -4498,7 +4522,9 @@
   if (columnsMedia && columnsMedia.addEventListener) {
     columnsMedia.addEventListener('change', applyColumnWidths);
   }
-  window.addEventListener('resize', positionSplitters);
+  // A smaller window clamps the stored widths again, then places the
+  // handles.
+  window.addEventListener('resize', applyColumnWidths);
 
   el.findingCopy.addEventListener('click', editCopy);
   el.findingBack.addEventListener('click', function () {
