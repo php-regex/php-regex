@@ -81,6 +81,44 @@ final class PlaygroundTraceInputTest extends TestCase
     }
 
     /**
+     * The rows named "Examples: …" are the page's buttons, both ways: a
+     * button whose pattern or text moves on the page fails here, as does a
+     * row left behind by a button that is gone.
+     */
+    #[Test]
+    public function test_the_example_rows_are_the_page_examples(): void
+    {
+        $document = new \DOMDocument();
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML('<?xml encoding="UTF-8"?><body>'.file_get_contents(PlaygroundDriver::ROOT.'/docs/_includes/playground.html').'</body>', \LIBXML_NOERROR | \LIBXML_NOWARNING);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        $xpath = new \DOMXPath($document);
+        $buttons = $xpath->query('//button[contains(concat(" ", normalize-space(@class), " "), " pg-example ")]');
+        $this->assertNotFalse($buttons);
+
+        $page = [];
+        foreach ($buttons as $button) {
+            $this->assertInstanceOf(\DOMElement::class, $button);
+            $name = $xpath->evaluate('string(.//*[contains(concat(" ", normalize-space(@class), " "), " pg-example-name ")])', $button);
+            $this->assertIsString($name);
+            $page['Examples: '.trim($name)] = ['regex' => $button->getAttribute('data-regex'), 'subject' => $button->getAttribute('data-subject')];
+        }
+
+        $rows = [];
+        foreach (self::provideDelimitedPatterns() as $label => $row) {
+            if (str_starts_with($label, 'Examples: ')) {
+                $rows[$label] = ['regex' => $row['regex'], 'subject' => $row['subject']];
+            }
+        }
+
+        $this->assertNotSame([], $page, 'The page holds its examples.');
+        ksort($page);
+        ksort($rows);
+        $this->assertSame($page, $rows, 'Attributes are read decoded: &quot; and &#10; are the characters the button loads.');
+    }
+
+    /**
      * @return iterable<string, array{driver: string, root: string, regex: string, subject: string, body: string, modifiers: string, bodyStart: int}>
      */
     public static function provideDelimitedPatternsOnDrivers(): iterable
