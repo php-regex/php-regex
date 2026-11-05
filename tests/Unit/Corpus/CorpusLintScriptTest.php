@@ -270,6 +270,67 @@ final class CorpusLintScriptTest extends TestCase
         );
     }
 
+    /**
+     * A repository that pins its platform PHP and declares no require.php
+     * is judged for the PHP it pins, as a single lint run reads it, never
+     * for the fallback.
+     */
+    #[Test]
+    public function test_a_repository_pinning_its_platform_php_is_judged_for_it(): void
+    {
+        mkdir($this->root.'/corpus/ownerF/repoPinned', 0o777, true);
+        file_put_contents($this->root.'/corpus/ownerF/repoPinned/composer.json', '{"config": {"platform": {"php": "8.3.0"}}}');
+        file_put_contents($this->root.'/corpus/ownerF/repoPinned/patterns.php', "<?php\n\npreg_match('/ab{1}c/', \$x);\n");
+
+        $this->loadScriptFunctions();
+        $plan = planRepositoryLint($this->root.'/corpus/ownerF/repoPinned', '8.1', '/tmp/ownerF__repoPinned.log');
+        $this->assertFalse($plan['fallback'], 'The pinned platform is the repository\'s own target.');
+        $this->assertNotContains('--php-version', $plan['args']);
+
+        [, $output] = $this->script(['--only', 'ownerF']);
+        $log = (string) file_get_contents($this->root.'/corpus.log');
+        $this->assertStringContainsString('(composer.json config.platform.php)', $this->line($log, '### corpus/ownerF/repoPinned'), $output.$log);
+    }
+
+    /**
+     * A pin the linter's own reading of composer.json does not take
+     * ("8.3.0 ", a constraint rather than a version) is no target: the
+     * repository falls back, as one without a pin does.
+     */
+    #[Test]
+    public function test_a_platform_pin_the_linter_does_not_read_falls_back(): void
+    {
+        mkdir($this->root.'/corpus/ownerG/repoLoose', 0o777, true);
+        file_put_contents($this->root.'/corpus/ownerG/repoLoose/composer.json', '{"config": {"platform": {"php": "8.3.0 "}}}');
+
+        $this->loadScriptFunctions();
+        $plan = planRepositoryLint($this->root.'/corpus/ownerG/repoLoose', '8.1', '/tmp/ownerG__repoLoose.log');
+
+        $this->assertTrue($plan['fallback']);
+        $this->assertContains('--php-version', $plan['args']);
+    }
+
+    /**
+     * A pin on PCRE1 is a target the linter refuses, not an absent one: the
+     * repository runs under its own composer.json, is recorded as refused,
+     * and publishes nothing, never judged for the fallback.
+     */
+    #[Test]
+    public function test_a_platform_pin_on_pcre1_is_refused_not_judged_for_the_fallback(): void
+    {
+        mkdir($this->root.'/corpus/ownerH/repoPinnedOld', 0o777, true);
+        file_put_contents($this->root.'/corpus/ownerH/repoPinnedOld/composer.json', '{"config": {"platform": {"php": "7.2.0"}}}');
+        file_put_contents($this->root.'/corpus/ownerH/repoPinnedOld/patterns.php', "<?php\n\npreg_match('/ab{1}c/', \$x);\n");
+
+        $this->loadScriptFunctions();
+        $this->assertFalse(planRepositoryLint($this->root.'/corpus/ownerH/repoPinnedOld', '8.1', '/tmp/ownerH__repoPinnedOld.log')['fallback']);
+
+        [, $output] = $this->script(['--only', 'ownerH']);
+        $log = (string) file_get_contents($this->root.'/corpus.log');
+        $this->assertSame('### corpus/ownerH/repoPinnedOld — Target: none — exit 2', $this->line($log, '### corpus/ownerH/repoPinnedOld'), $output.$log);
+        $this->assertFileDoesNotExist($this->root.'/parts/ownerH__repoPinnedOld.json');
+    }
+
     #[Test]
     public function test_require_php_constraint_reads_the_repository_floor(): void
     {
@@ -296,6 +357,104 @@ final class CorpusLintScriptTest extends TestCase
 
         $this->assertSame(0, $exitCode);
         $this->assertSame('120', $output);
+    }
+
+    /**
+     * Beside each console part, the same judgement as JSON: what the
+     * site's findings are written from, never parsed out of console text.
+     */
+    #[Test]
+    public function test_each_repository_also_gets_a_json_part(): void
+    {
+        [, $output] = $this->script([]);
+
+        $new = $this->jsonPart('ownerA__repoNew', $output);
+        $this->assertSame('8.2', $new['target']['php'], 'The JSON part is judged under the same target as the log part.');
+        $this->assertSame('regex.lint.quantifier.useless', $new['results'][0]['issues'][0]['issue_id']);
+        $this->assertSame(3, $new['results'][0]['line']);
+
+        $bare = $this->jsonPart('ownerC__repoBare', $output);
+        $this->assertSame('8.1', $bare['target']['php'], 'The fallback target reaches the JSON part too.');
+
+        $this->assertStringNotContainsString('"results"', (string) file_get_contents($this->root.'/corpus.log'), 'The merged log is built from the console parts alone.');
+    }
+
+    /**
+     * A repository the linter refuses writes no JSON: yesterday's part goes,
+     * or the site would publish findings judged on yesterday's code.
+     */
+    #[Test]
+    public function test_a_refused_repository_leaves_no_json_part_of_an_earlier_day(): void
+    {
+        mkdir($this->root.'/corpus/ownerE/repoAncient', 0o777, true);
+        file_put_contents($this->root.'/corpus/ownerE/repoAncient/composer.json', '{"require": {"php": ">=5.4 <7.3"}}');
+        file_put_contents($this->root.'/corpus/ownerE/repoAncient/patterns.php', "<?php\n\npreg_match('/a/', \$x);\n");
+        mkdir($this->root.'/parts', 0o777, true);
+        file_put_contents($this->root.'/parts/ownerE__repoAncient.json', '{"old": 1}');
+
+        [, $output] = $this->script(['--only', 'ownerE']);
+
+        $this->assertFileDoesNotExist($this->root.'/parts/ownerE__repoAncient.json', $output);
+    }
+
+    /**
+     * The JSON part names the commit it judged, so the report can tell a
+     * part of today's code from yesterday's whatever touched the clone.
+     */
+    #[Test]
+    public function test_the_json_part_names_the_commit_it_judged(): void
+    {
+        $repo = $this->root.'/corpus/ownerA/repoNew';
+        $git = 'git -C '.escapeshellarg($repo).' ';
+        shell_exec($git.'init -q && '.$git.'add -A && '.$git.'-c user.email=t@e.st -c user.name=t commit -q -m one 2>&1');
+        $head = trim((string) shell_exec($git.'rev-parse HEAD'));
+
+        [, $output] = $this->script(['--only', 'owner']);
+
+        $this->assertMatchesRegularExpression('~^[0-9a-f]{40}$~D', $head);
+        $this->assertSame($head, $this->jsonPart('ownerA__repoNew', $output)['head'] ?? null);
+        $this->assertArrayNotHasKey('head', $this->jsonPart('ownerC__repoBare', $output), 'A directory that is no clone names no commit.');
+    }
+
+    /**
+     * The JSON run judges what the console run judged: when it writes no
+     * part, the sweep says so and is not clean, rather than letting the
+     * repository fall silently out of the site's findings.
+     */
+    #[Test]
+    public function test_a_json_run_that_writes_no_part_is_reported(): void
+    {
+        // A directory where the part should go: the linter cannot write it.
+        mkdir($this->root.'/parts/ownerA__repoNew.json', 0o777, true);
+
+        [$code, $output] = $this->script(['--only', 'ownerA']);
+
+        $this->assertSame(1, $code, $output);
+        $this->assertStringContainsString('ownerA/repoNew', $output);
+        $this->assertStringContainsString('JSON part', $output);
+    }
+
+    #[Test]
+    public function test_no_json_skips_the_json_parts(): void
+    {
+        [, $output] = $this->script(['--no-json']);
+
+        $this->assertFileExists($this->root.'/parts/ownerA__repoNew.log', $output);
+        $this->assertFileDoesNotExist($this->root.'/parts/ownerA__repoNew.json');
+    }
+
+    #[Test]
+    public function test_the_json_plan_is_the_console_plan_written_as_json(): void
+    {
+        $this->loadScriptFunctions();
+
+        $plan = jsonPlan(planRepositoryLint($this->root.'/corpus/ownerC/repoBare', '8.1', '/tmp/ownerC__repoBare.log'), '/tmp/ownerC__repoBare.json');
+        $this->assertNull($plan['env']);
+        $this->assertSame(
+            ['lint', $this->root.'/corpus/ownerC/repoBare', '--php-version', '8.1', '--redos', '--redos-mode=confirmed', '--output', '/tmp/ownerC__repoBare.json', '--format=json'],
+            $plan['args'],
+            'Same target, same analysis, no colors, another file.',
+        );
     }
 
     #[Test]
@@ -411,6 +570,18 @@ final class CorpusLintScriptTest extends TestCase
         fclose($pipes[2]);
 
         return [proc_close($process), $output];
+    }
+
+    /**
+     * @return array{target: array{php: string}, results: list<array{line: int, issues: list<array{issue_id: string}>}>, head?: string}
+     */
+    private function jsonPart(string $name, string $output): array
+    {
+        $this->assertFileExists($this->root.'/parts/'.$name.'.json', $output);
+        /** @var array{target: array{php: string}, results: list<array{line: int, issues: list<array{issue_id: string}>}>, head?: string} $part */
+        $part = json_decode((string) file_get_contents($this->root.'/parts/'.$name.'.json'), true, 512, \JSON_THROW_ON_ERROR);
+
+        return $part;
     }
 
     private function loadScriptFunctions(): void

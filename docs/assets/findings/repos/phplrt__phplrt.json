@@ -1,0 +1,166 @@
+{
+    "repo": "phplrt/phplrt",
+    "sha": "6fe59ff63385147701afb09267e0639483ea554c",
+    "target": {
+        "php": "8.2",
+        "pcre": "10.40",
+        "source": "composer.json config.platform.php"
+    },
+    "findings": [
+        {
+            "id": "f-fa5a2a608c",
+            "file": "libs/components/lexer-builder/src/Compiler/RegexValidationLexerCompilerPass.php",
+            "line": 83,
+            "column": 43,
+            "pattern": "/([\\w_]+\\(\\):\\h+)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phplrt/phplrt/blob/6fe59ff63385147701afb09267e0639483ea554c/libs/components/lexer-builder/src/Compiler/RegexValidationLexerCompilerPass.php#L80-L86",
+            "snippet": [
+                {
+                    "number": 80,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $suffix = \\sprintf(' in %s token definition', $name);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 81,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 82,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $message = \\str_replace('Compilation failed: ', '', $message);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 83,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $message = (string) \\preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "_",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\(\\):",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\h",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $message);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 84,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $message = (string) \\preg_replace('/\\h*at\\h+offset\\h+\\d+/', '', $message);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 85,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 86,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return \\ucfirst($message) . $suffix;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

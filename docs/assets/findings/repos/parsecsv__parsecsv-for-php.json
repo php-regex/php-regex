@@ -1,0 +1,167 @@
+{
+    "repo": "parsecsv/parsecsv-for-php",
+    "sha": "6c0e74c89e2087ee96c94e1cb4c4e9b34df363a2",
+    "target": {
+        "php": "7.3",
+        "pcre": "10.32",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-362862dd6b",
+            "file": "src/Csv.php",
+            "line": 1296,
+            "column": 66,
+            "pattern": "/<\\?.*?\\?>(.*)/ms",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<\\?.*?\\?>(.*)/s",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/parsecsv/parsecsv-for-php/blob/6c0e74c89e2087ee96c94e1cb4c4e9b34df363a2/src/Csv.php#L1293-L1299",
+            "snippet": [
+                {
+                    "number": 1293,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                return false;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1294,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1295,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1296,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match('/\\.php$/i', $filePath) && preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<\\?",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\?>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "ms",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $data, $strip)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1297,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // Return section behind closing tags.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1298,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // This parsing is deprecated and will be removed in v2.0.0.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1299,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $data = ltrim($strip[1]);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

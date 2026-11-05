@@ -1,0 +1,28 @@
+name: Propose a project
+description: A public PHP project whose regular expressions you would like PHPRegex to scan for the findings page.
+labels: [ findings ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The corpus is run by hand, best effort: a proposed project joins it
+        at a next run, not on a schedule. Only public repositories with PHP
+        code are scanned. What the linter reports on them is listed on
+        php-regex.com/findings, as it is.
+
+  - type: input
+    id: repository
+    attributes:
+      label: Repository
+      description: The public GitHub repository, as vendor/name or its URL.
+      placeholder: vendor/name
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Why this project
+      description: What makes its patterns worth a look (heavy regex use, user input, a parser…).
+    validations:
+      required: true

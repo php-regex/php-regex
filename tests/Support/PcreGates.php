@@ -40,6 +40,18 @@ trait PcreGates
     }
 
     /**
+     * Skip unless the running PCRE2 is the very release a measurement was
+     * taken on: a length, a count of steps, read on one release, may differ
+     * on another.
+     */
+    private function requiresPcre2Release(string $release, string $subject): void
+    {
+        if (!str_starts_with(\PCRE_VERSION, $release.' ')) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 %s; PCRE2 %s may answer otherwise.', $subject, $release, \PCRE_VERSION));
+        }
+    }
+
+    /**
      * The gate above for a data-provided pattern, read from the map the test
      * keeps of the rows verified against a newer release than the floor:
      * each release lists its patterns, and a pattern no release lists runs

@@ -1,0 +1,1449 @@
+{
+    "repo": "laminas/laminas-code",
+    "sha": "d1ec5de6a87971446cfcc2acbc340c65ca56cee3",
+    "target": {
+        "php": "8.2.99",
+        "pcre": "10.40",
+        "source": "composer.json config.platform.php"
+    },
+    "findings": [
+        {
+            "id": "f-3d52f5687a",
+            "file": "src/Generator/FileGenerator.php",
+            "line": 437,
+            "column": 24,
+            "pattern": "#/\\* Laminas_Code_Generator_Php_File-(.*?)Marker:#m",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#/\\* Laminas_Code_Generator_Php_File-(.*?)Marker:#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laminas/laminas-code/blob/d1ec5de6a87971446cfcc2acbc340c65ca56cee3/src/Generator/FileGenerator.php#L434-L440",
+            "snippet": [
+                {
+                    "number": 434,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 435,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 436,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // if there are markers, put the body into the output",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 437,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\* Laminas_Code_Generator_Php_File-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "Marker:",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $body)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 438,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $tokens = token_get_all($body);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 439,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            foreach ($tokens as $token) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 440,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                if (is_array($token) && in_array($token[0], [T_OPEN_TAG, T_COMMENT, T_DOC_COMMENT, T_WHITESPACE])) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4cd6dec1cd",
+            "file": "src/Generator/FileGenerator.php",
+            "line": 451,
+            "column": 28,
+            "pattern": "#/\\* Laminas_Code_Generator_FileGenerator-DocBlockMarker \\*/#m",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#/\\* Laminas_Code_Generator_FileGenerator-DocBlockMarker \\*/#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laminas/laminas-code/blob/d1ec5de6a87971446cfcc2acbc340c65ca56cee3/src/Generator/FileGenerator.php#L448-L454",
+            "snippet": [
+                {
+                    "number": 448,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (null !== ($docBlock = $this->getDocBlock())) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 449,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $docBlock->setIndentation('');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 450,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 451,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\* Laminas_Code_Generator_FileGenerator-DocBlockMarker \\*/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $output)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 452,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // @codingStandardsIgnoreStart",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 453,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $output = preg_replace('#/\\* Laminas_Code_Generator_FileGenerator-DocBlockMarker \\*/#m', $docBlock->generate(), $output, 1);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 454,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // @codingStandardsIgnoreEnd",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4cd6dec1cd-2",
+            "file": "src/Generator/FileGenerator.php",
+            "line": 453,
+            "column": 40,
+            "pattern": "#/\\* Laminas_Code_Generator_FileGenerator-DocBlockMarker \\*/#m",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#/\\* Laminas_Code_Generator_FileGenerator-DocBlockMarker \\*/#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laminas/laminas-code/blob/d1ec5de6a87971446cfcc2acbc340c65ca56cee3/src/Generator/FileGenerator.php#L450-L456",
+            "snippet": [
+                {
+                    "number": 450,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 451,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (preg_match('#/\\* Laminas_Code_Generator_FileGenerator-DocBlockMarker \\*/#m', $output)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 452,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // @codingStandardsIgnoreStart",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 453,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                $output = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\* Laminas_Code_Generator_FileGenerator-DocBlockMarker \\*/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $docBlock->generate(), $output, 1);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 454,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // @codingStandardsIgnoreEnd",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 455,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 456,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $output .= $docBlock->generate() . self::LINE_FEED;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-7e5bdb6279",
+            "file": "src/Generator/FileGenerator.php",
+            "line": 471,
+            "column": 28,
+            "pattern": "#/\\* Laminas_Code_Generator_FileGenerator-DeclaresMarker \\*/#m",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#/\\* Laminas_Code_Generator_FileGenerator-DeclaresMarker \\*/#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laminas/laminas-code/blob/d1ec5de6a87971446cfcc2acbc340c65ca56cee3/src/Generator/FileGenerator.php#L468-L474",
+            "snippet": [
+                {
+                    "number": 468,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $declareStatements .= $declare->getStatement() . self::LINE_FEED;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 469,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 470,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 471,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\* Laminas_Code_Generator_FileGenerator-DeclaresMarker \\*/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $output)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 472,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $output = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 473,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '#/\\* Laminas_Code_Generator_FileGenerator-DeclaresMarker \\*/#m',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 474,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $declareStatements,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-7e5bdb6279-2",
+            "file": "src/Generator/FileGenerator.php",
+            "line": 473,
+            "column": 21,
+            "pattern": "#/\\* Laminas_Code_Generator_FileGenerator-DeclaresMarker \\*/#m",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#/\\* Laminas_Code_Generator_FileGenerator-DeclaresMarker \\*/#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laminas/laminas-code/blob/d1ec5de6a87971446cfcc2acbc340c65ca56cee3/src/Generator/FileGenerator.php#L470-L476",
+            "snippet": [
+                {
+                    "number": 470,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 471,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (preg_match('#/\\* Laminas_Code_Generator_FileGenerator-DeclaresMarker \\*/#m', $output)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 472,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $output = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 473,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\* Laminas_Code_Generator_FileGenerator-DeclaresMarker \\*/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 474,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $declareStatements,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 475,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $output,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 476,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    1",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-9250fc59e3",
+            "file": "src/Generator/FileGenerator.php",
+            "line": 489,
+            "column": 28,
+            "pattern": "#/\\* Laminas_Code_Generator_FileGenerator-NamespaceMarker \\*/#m",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#/\\* Laminas_Code_Generator_FileGenerator-NamespaceMarker \\*/#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laminas/laminas-code/blob/d1ec5de6a87971446cfcc2acbc340c65ca56cee3/src/Generator/FileGenerator.php#L486-L492",
+            "snippet": [
+                {
+                    "number": 486,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $namespace = $this->getNamespace();",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 487,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($namespace) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 488,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $namespace = sprintf('namespace %s;%s', $namespace, str_repeat(self::LINE_FEED, 2));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 489,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\* Laminas_Code_Generator_FileGenerator-NamespaceMarker \\*/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $output)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 490,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $output = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 491,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '#/\\* Laminas_Code_Generator_FileGenerator-NamespaceMarker \\*/#m',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 492,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $namespace,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-9250fc59e3-2",
+            "file": "src/Generator/FileGenerator.php",
+            "line": 491,
+            "column": 21,
+            "pattern": "#/\\* Laminas_Code_Generator_FileGenerator-NamespaceMarker \\*/#m",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#/\\* Laminas_Code_Generator_FileGenerator-NamespaceMarker \\*/#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laminas/laminas-code/blob/d1ec5de6a87971446cfcc2acbc340c65ca56cee3/src/Generator/FileGenerator.php#L488-L494",
+            "snippet": [
+                {
+                    "number": 488,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $namespace = sprintf('namespace %s;%s', $namespace, str_repeat(self::LINE_FEED, 2));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 489,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (preg_match('#/\\* Laminas_Code_Generator_FileGenerator-NamespaceMarker \\*/#m', $output)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 490,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $output = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 491,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\* Laminas_Code_Generator_FileGenerator-NamespaceMarker \\*/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 492,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $namespace,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 493,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $output,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 494,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    1",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-33447b9b88",
+            "file": "src/Generator/FileGenerator.php",
+            "line": 541,
+            "column": 28,
+            "pattern": "#/\\* Laminas_Code_Generator_FileGenerator-UseMarker \\*/#m",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#/\\* Laminas_Code_Generator_FileGenerator-UseMarker \\*/#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laminas/laminas-code/blob/d1ec5de6a87971446cfcc2acbc340c65ca56cee3/src/Generator/FileGenerator.php#L538-L544",
+            "snippet": [
+                {
+                    "number": 538,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 539,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $useOutput .= self::LINE_FEED;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 540,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 541,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\* Laminas_Code_Generator_FileGenerator-UseMarker \\*/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $output)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 542,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $output = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 543,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '#/\\* Laminas_Code_Generator_FileGenerator-UseMarker \\*/#m',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 544,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $useOutput,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-33447b9b88-2",
+            "file": "src/Generator/FileGenerator.php",
+            "line": 543,
+            "column": 21,
+            "pattern": "#/\\* Laminas_Code_Generator_FileGenerator-UseMarker \\*/#m",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#/\\* Laminas_Code_Generator_FileGenerator-UseMarker \\*/#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laminas/laminas-code/blob/d1ec5de6a87971446cfcc2acbc340c65ca56cee3/src/Generator/FileGenerator.php#L540-L546",
+            "snippet": [
+                {
+                    "number": 540,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 541,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (preg_match('#/\\* Laminas_Code_Generator_FileGenerator-UseMarker \\*/#m', $output)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 542,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $output = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 543,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\* Laminas_Code_Generator_FileGenerator-UseMarker \\*/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 544,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $useOutput,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 545,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $output,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 546,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    1",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-fbbe234e46",
+            "file": "src/Generator/TypeGenerator/CompositeType.php",
+            "line": 36,
+            "column": 34,
+            "pattern": "/^(([|]|[^()&]+)+|(\\(([&]|[^|()]+)\\))+)+$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"|\" x n . \"&\" Replayed on PCRE2 10.49: preg_match fails from length 8 (backtrack_limit 100000, JIT off). The risky part is: ([|]|[^()&]+)+ Hotspot offsets: 2-16 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"[|]\" and \"[^()&]+\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"[&]\" and \"[^|()]+\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": "",
+                "pump": "|",
+                "suffix": "&",
+                "n": 28,
+                "length": 8,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "||||||||||||||||||||||||||||&",
+            "permalink": "https://github.com/laminas/laminas-code/blob/d1ec5de6a87971446cfcc2acbc340c65ca56cee3/src/Generator/TypeGenerator/CompositeType.php#L33-L39",
+            "snippet": [
+                {
+                    "number": 33,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // and it will crash with very large broken types, but that's sufficient for our **current**",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 34,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // use-case.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 35,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // If this becomes more problematic, an actual parser is a better (although slower) alternative.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 36,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (1 !== preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "((",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]|[^",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "()&",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "\\(",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "&",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]|[^",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "|()",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $type)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 37,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                throw new InvalidArgumentException(sprintf(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 38,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    'Invalid type syntax \"%s\": intersections in a union must be surrounded by \"(\" and \")\"',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 39,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $type",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

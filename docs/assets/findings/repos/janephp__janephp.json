@@ -1,0 +1,644 @@
+{
+    "repo": "janephp/janephp",
+    "sha": "35b0c055d2aada76f60bbcd3ab49794ac359da66",
+    "target": {
+        "php": "8.3",
+        "pcre": "10.42",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-8ca6ffe9e7",
+            "file": "src/Component/JsonSchema/Generator/Naming.php",
+            "line": 14,
+            "column": 41,
+            "pattern": "/^\n        ([0-9])|\n        \\b(\n            (a(bstract|nd|rray|s))|\n            (c(a(llable|se|tch)|l(ass|one)|on(st|tinue)))|\n            (d(e(clare|fault)|ie|o))|\n            (e(cho|lse(if)?|mpty|nd(declare|for(each)?|if|switch|while)|val|x(it|tends)))|\n            (f(inal|or(each)?|unction))|\n            (g(lobal|oto))|\n            (i(f|mplements|n(clude(_once)?|st(anceof|eadof)|terface)|sset))|\n            (n(amespace|ew))|\n            (p(arent|r(i(nt|vate)|otected)|ublic))|\n            (re(quire(_once)?|turn))|\n            (s(elf|tatic|witch))|\n            (t(hrow|r(ait|y)))|\n            (u(nset|se))|\n            (__halt_compiler|break|list|(x)?or|var|while)\n        )\\b\n    /ix",
+            "source": "preg_match()",
+            "location": "via self::BAD_CLASS_NAME_REGEX",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"\\b(\n            (a(bstract|nd|rray|s))|\n            (c(a(llable|se|tch)|l(ass|one)|on(st|tinue)))|\n            (d(e(clare|fault)|ie|o))|\n            (e(cho|lse(if)?|mpty|nd(declare|for(each)?|if|switch|while)|val|x(it|tends)))|\n            (f(inal|or(each)?|unction))|\n            (g(lobal|oto))|\n            (i(f|mplements|n(clude(_once)?|st(anceof|eadof)|terface)|sset))|\n            (n(amespace|ew))|\n            (p(arent|r(i(nt|vate)|otected)|ublic))|\n            (re(quire(_once)?|turn))|\n            (s(elf|tatic|witch))|\n            (t(hrow|r(ait|y)))|\n            (u(nset|se))|\n            (__halt_compiler|break|list|(x)?or|var|while)\n        )\\b\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"^(?:([0-9])|\\b(\n            (a(bstract|nd|rray|s))|\n            (c(a(llable|se|tch)|l(ass|one)|on(st|tinue)))|\n            (d(e(clare|fault)|ie|o))|\n            (e(cho|lse(if)?|mpty|nd(declare|for(each)?|if|switch|while)|val|x(it|tends)))|\n            (f(inal|or(each)?|unction))|\n            (g(lobal|oto))|\n            (i(f|mplements|n(clude(_once)?|st(anceof|eadof)|terface)|sset))|\n            (n(amespace|ew))|\n            (p(arent|r(i(nt|vate)|otected)|ublic))|\n            (re(quire(_once)?|turn))|\n            (s(elf|tatic|witch))|\n            (t(hrow|r(ait|y)))|\n            (u(nset|se))|\n            (__halt_compiler|break|list|(x)?or|var|while)\n        )\\b)\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/janephp/janephp/blob/35b0c055d2aada76f60bbcd3ab49794ac359da66/src/Component/JsonSchema/Generator/Naming.php#L11-L17",
+            "snippet": [
+                {
+                    "number": 11,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 12,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    use InflectorTrait;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 13,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 14,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    public const BAD_CLASS_NAME_REGEX = '/^",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 15,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ([0-9])|",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 16,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        \\b(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 17,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            (a(bstract|nd|rray|s))|",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-f0db6b7044",
+            "file": "src/Component/JsonSchema/Registry/Schema.php",
+            "line": 231,
+            "column": 30,
+            "pattern": "#([^:]){1}/{2,}#",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.useless",
+                    "message": "Quantifier is redundant; it matches exactly once.",
+                    "hint": "Remove the {1} quantifier; it does not change the match.",
+                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#([^:])/{2,}#",
+                "changes": [
+                    "Removed a quantifier that repeats once."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/janephp/janephp/blob/35b0c055d2aada76f60bbcd3ab49794ac359da66/src/Component/JsonSchema/Registry/Schema.php#L228-L234",
+            "snippet": [
+                {
+                    "number": 228,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ('\\\\' === \\DIRECTORY_SEPARATOR) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 229,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $path = lcfirst(str_replace(\\DIRECTORY_SEPARATOR, '/', $path));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 230,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 231,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $path = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "{1}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "{2,}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '$1/', $path);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 232,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 233,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ('/' === $path) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 234,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return '/';",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-f7ef257433",
+            "file": "src/Component/OpenApiCommon/Naming/OperationUrlNaming.php",
+            "line": 56,
+            "column": 24,
+            "pattern": "/(?<separator>[^a-zA-Z0-9_{}])+(?<part>[a-zA-Z0-9_{}]*)/",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.quantifiedCapture",
+                    "message": "Quantified named group \"(?<separator>...)\" with \"+\": only the last iteration's capture is retained.",
+                    "hint": "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.",
+                    "docs": "https://php-regex.com/reference/rules/#quantified-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/janephp/janephp/blob/35b0c055d2aada76f60bbcd3ab49794ac359da66/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php#L53-L59",
+            "snippet": [
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $matches = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        preg_match_all(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "separator",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9_{}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "part",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9_{}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $operation->getPath(), $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 58,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $methodNameParts = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 59,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $lastNonParameterPartIndex = 0;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6dc2a99486",
+            "file": "src/Component/OpenApiCommon/Naming/OperationUrlNaming.php",
+            "line": 71,
+            "column": 25,
+            "pattern": "/(^|_|\\.)+(.)/",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.emptyRepeat",
+                    "message": "Quantifier \"+\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/janephp/janephp/blob/35b0c055d2aada76f60bbcd3ab49794ac359da66/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php#L68-L74",
+            "snippet": [
+                {
+                    "number": 68,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (preg_match_all('/{(?P<parameter>[^{}]+)}/', $part, $parameterMatches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 69,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                foreach ($parameterMatches[0] as $parameterIndex => $parameterMatch) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 70,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $withoutSnakes = preg_replace_callback(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 71,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                        ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "_",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 72,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        function ($match) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 73,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            return ('.' === $match[1] ? '_' : '') . strtoupper($match[2]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 74,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        },",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

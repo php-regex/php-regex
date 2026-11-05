@@ -1,0 +1,158 @@
+{
+    "repo": "nikic/PHP-Parser",
+    "sha": "1ee86c89e58a23810602e78ca445784bb7b2ad3e",
+    "target": {
+        "php": "7.4",
+        "pcre": "10.33",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-d17c3a1eee",
+            "file": "lib/PhpParser/ParserAbstract.php",
+            "line": 721,
+            "column": 81,
+            "pattern": "/\\A#!.*\\r?\\n\\z/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/nikic/PHP-Parser/blob/1ee86c89e58a23810602e78ca445784bb7b2ad3e/lib/PhpParser/ParserAbstract.php#L718-L724",
+            "snippet": [
+                {
+                    "number": 718,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 719,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 720,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            /* There may be a hashbang line at the very start of the file */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 721,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if ($i === 0 && $stmt instanceof Node\\Stmt\\InlineHTML && preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\A",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "#!",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\r",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\z",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $stmt->value)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 722,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                continue;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 723,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 724,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

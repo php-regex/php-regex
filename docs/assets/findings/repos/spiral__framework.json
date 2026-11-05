@@ -1,0 +1,106 @@
+{
+    "repo": "spiral/framework",
+    "sha": "f8082a261fadc86d39761ac8f32428ff07dca306",
+    "target": {
+        "php": "8.1",
+        "pcre": "10.39",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-2539da1eab",
+            "file": "src/SendIt/src/Renderer/ViewRenderer.php",
+            "line": 55,
+            "column": 13,
+            "pattern": "~<(style|script|textarea|title)\\b[^>]*+>(?>[^<]++|<(?!/\\1\\s*>))*+</\\1\\s*>(*SKIP)(*FAIL)|(?<!\\]>)<!--(?!\\[if\\b|<!|>)(?>[^-]++|-(?!->))*+-->~is",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/spiral/framework/blob/f8082a261fadc86d39761ac8f32428ff07dca306/src/SendIt/src/Renderer/ViewRenderer.php#L52-L58",
+            "snippet": [
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function stripHtmlComments(string $html): string",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return \\preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            '~<(style|script|textarea|title)\\b[^>]*+>(?>[^<]++|<(?!/\\1\\s*>))*+</\\1\\s*>(*SKIP)(*FAIL)'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            . '|(?<!\\]>)<!--(?!\\[if\\b|<!|>)(?>[^-]++|-(?!->))*+-->~is',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 58,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $html,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

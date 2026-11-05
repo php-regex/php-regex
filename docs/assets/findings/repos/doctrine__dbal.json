@@ -1,0 +1,663 @@
+{
+    "repo": "doctrine/dbal",
+    "sha": "094a0195b0567167a7b49c6eadbd88e40f82d58c",
+    "target": {
+        "php": "8.2",
+        "pcre": "10.40",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-4e61544926",
+            "file": "src/Platforms/SQLServerPlatform.php",
+            "line": 1308,
+            "column": 40,
+            "pattern": "/[\\s]+order\\s+by\\s/im",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/[\\s]+order\\s+by\\s/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/doctrine/dbal/blob/094a0195b0567167a7b49c6eadbd88e40f82d58c/src/Platforms/SQLServerPlatform.php#L1305-L1311",
+            "snippet": [
+                {
+                    "number": 1305,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Find the position of the last instance of ORDER BY and ensure it is not within a parenthetical statement",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1306,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // but can be in a newline",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1307,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $matches      = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1308,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $matchesCount = preg_match_all(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "order",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "by",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "im",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $query, $matches, PREG_OFFSET_CAPTURE);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1309,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($matchesCount === 0) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1310,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return true;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1311,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6eee96ef3d",
+            "file": "src/Platforms/SQLite/SQLiteMetadataProvider.php",
+            "line": 635,
+            "column": 17,
+            "pattern": "#\n                    (?:CONSTRAINT\\s+(\\S+)\\s+)?\n                    (?:FOREIGN\\s+KEY[^)]+\\)\\s*)?\n                    REFERENCES\\s+\\S+\\s*(?:\\([^)]+\\))?\n                    (?:\n                        [^,]*?\n                        (NOT\\s+DEFERRABLE|DEFERRABLE)\n                        (?:\\s+INITIALLY\\s+(DEFERRED|IMMEDIATE))?\n                    )?#isx",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#\n                    (?:CONSTRAINT\\s+(\\S+)\\s+)?\n                    (?:FOREIGN\\s+KEY[^)]+\\)\\s*)?\n                    REFERENCES\\s+\\S+\\s*(?:\\([^)]+\\))?\n                    (?:\n                        [^,]*?\n                        (NOT\\s+DEFERRABLE|DEFERRABLE)\n                        (?:\\s+INITIALLY\\s+(DEFERRED|IMMEDIATE))?\n                    )?#ix",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/doctrine/dbal/blob/094a0195b0567167a7b49c6eadbd88e40f82d58c/src/Platforms/SQLite/SQLiteMetadataProvider.php#L632-L638",
+            "snippet": [
+                {
+                    "number": 632,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 633,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 634,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            preg_match_all(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 635,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                '#",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 636,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    (?:CONSTRAINT\\s+(\\S+)\\s+)?",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 637,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    (?:FOREIGN\\s+KEY[^)]+\\)\\s*)?",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 638,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    REFERENCES\\s+\\S+\\s*(?:\\([^)]+\\))?",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-c0d8165fd2",
+            "file": "src/Platforms/SQLite/SQLiteMetadataProvider.php",
+            "line": 783,
+            "column": 24,
+            "pattern": "/\\)[^)]*$/s",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\)[^)]*$/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/doctrine/dbal/blob/094a0195b0567167a7b49c6eadbd88e40f82d58c/src/Platforms/SQLite/SQLiteMetadataProvider.php#L780-L786",
+            "snippet": [
+                {
+                    "number": 780,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 781,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function parseWithoutRowidFromSQL(string $sql): bool",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 782,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 783,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $sql, $match) !== 1) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 784,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return false;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 785,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 786,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-d8cc50ebc2",
+            "file": "src/Schema/SQLiteSchemaManager.php",
+            "line": 261,
+            "column": 24,
+            "pattern": "/\\)[^)]*$/s",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\)[^)]*$/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/doctrine/dbal/blob/094a0195b0567167a7b49c6eadbd88e40f82d58c/src/Schema/SQLiteSchemaManager.php#L258-L264",
+            "snippet": [
+                {
+                    "number": 258,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 259,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function parseWithoutRowidFromSQL(string $sql): bool",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 260,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 261,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $sql, $match) !== 1) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 262,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return false;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 263,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 264,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-639906eda6",
+            "file": "src/Schema/SQLiteSchemaManager.php",
+            "line": 337,
+            "column": 17,
+            "pattern": "#\n                    (?:CONSTRAINT\\s+(\\S+)\\s+)?\n                    (?:FOREIGN\\s+KEY[^)]+\\)\\s*)?\n                    REFERENCES\\s+\\S+\\s*(?:\\([^)]+\\))?\n                    (?:\n                        [^,]*?\n                        (NOT\\s+DEFERRABLE|DEFERRABLE)\n                        (?:\\s+INITIALLY\\s+(DEFERRED|IMMEDIATE))?\n                    )?#isx",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#\n                    (?:CONSTRAINT\\s+(\\S+)\\s+)?\n                    (?:FOREIGN\\s+KEY[^)]+\\)\\s*)?\n                    REFERENCES\\s+\\S+\\s*(?:\\([^)]+\\))?\n                    (?:\n                        [^,]*?\n                        (NOT\\s+DEFERRABLE|DEFERRABLE)\n                        (?:\\s+INITIALLY\\s+(DEFERRED|IMMEDIATE))?\n                    )?#ix",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/doctrine/dbal/blob/094a0195b0567167a7b49c6eadbd88e40f82d58c/src/Schema/SQLiteSchemaManager.php#L334-L340",
+            "snippet": [
+                {
+                    "number": 334,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 335,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 336,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            preg_match_all(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 337,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                '#",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 338,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    (?:CONSTRAINT\\s+(\\S+)\\s+)?",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 339,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    (?:FOREIGN\\s+KEY[^)]+\\)\\s*)?",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 340,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    REFERENCES\\s+\\S+\\s*(?:\\([^)]+\\))?",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

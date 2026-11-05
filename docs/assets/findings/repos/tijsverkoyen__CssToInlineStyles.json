@@ -1,0 +1,134 @@
+{
+    "repo": "tijsverkoyen/CssToInlineStyles",
+    "sha": "a0aef6022b3d84b8c72855ded8581458d82d5013",
+    "target": {
+        "php": "7.4",
+        "pcre": "10.33",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-faf8531bb8",
+            "file": "src/Css/Rule/Processor.php",
+            "line": 91,
+            "column": 43,
+            "pattern": "/  \\#/ix",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/tijsverkoyen/CssToInlineStyles/blob/a0aef6022b3d84b8c72855ded8581458d82d5013/src/Css/Rule/Processor.php#L88-L94",
+            "snippet": [
+                {
+                    "number": 88,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 89,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public function calculateSpecificityBasedOnASelector($selector)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 90,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 91,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $idSelectorCount = preg_match_all(",
+                            ""
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/  ",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\#",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "ix",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $selector, $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 92,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $classAttributesPseudoClassesSelectorsPattern = \"  (\\.[\\w]+)                     # classes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 93,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        |",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 94,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        \\[(\\w+)                       # attributes",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

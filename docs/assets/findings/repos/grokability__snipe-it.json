@@ -1,0 +1,398 @@
+{
+    "repo": "grokability/snipe-it",
+    "sha": "e60095bdac4c7617412b351321aac146997adb42",
+    "target": {
+        "php": "8.2",
+        "pcre": "10.40",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-94059a04a4",
+            "file": "app/Providers/ValidationServiceProvider.php",
+            "line": 430,
+            "column": 31,
+            "pattern": "/\\pL/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\pL\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/grokability/snipe-it/blob/e60095bdac4c7617412b351321aac146997adb42/app/Providers/ValidationServiceProvider.php#L427-L433",
+            "snippet": [
+                {
+                    "number": 427,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        });",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 428,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 429,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        Validator::extend('letters', function ($attribute, $value, $parameters) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 430,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            return preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\pL",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 431,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        });",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 432,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 433,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        Validator::extend('numbers', function ($attribute, $value, $parameters) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-137f7701bf",
+            "file": "app/Providers/ValidationServiceProvider.php",
+            "line": 434,
+            "column": 31,
+            "pattern": "/\\pN/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\pN\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/grokability/snipe-it/blob/e60095bdac4c7617412b351321aac146997adb42/app/Providers/ValidationServiceProvider.php#L431-L437",
+            "snippet": [
+                {
+                    "number": 431,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        });",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 432,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 433,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        Validator::extend('numbers', function ($attribute, $value, $parameters) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 434,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            return preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\pN",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 435,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        });",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 436,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 437,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        Validator::extend('case_diff', function ($attribute, $value, $parameters) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-5a91670690",
+            "file": "app/Providers/ValidationServiceProvider.php",
+            "line": 442,
+            "column": 31,
+            "pattern": "/\\p{Z}|\\p{S}|\\p{P}/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{Z}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                },
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{S}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                },
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.propertyWithoutU",
+                    "message": "Without the /u flag, Unicode property \"\\p{P}\" only covers the first 256 code points.",
+                    "hint": "Add the /u flag to match beyond the first 256 code points.",
+                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/grokability/snipe-it/blob/e60095bdac4c7617412b351321aac146997adb42/app/Providers/ValidationServiceProvider.php#L439-L445",
+            "snippet": [
+                {
+                    "number": 439,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        });",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 440,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 441,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        Validator::extend('symbols', function ($attribute, $value, $parameters) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 442,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            return preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\p{Z}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\p{S}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\p{P}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 443,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        });",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 444,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 445,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        Validator::extend('cant_manage_self', function ($attribute, $value, $parameters, $validator) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

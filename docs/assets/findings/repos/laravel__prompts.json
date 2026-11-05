@@ -1,0 +1,155 @@
+{
+    "repo": "laravel/prompts",
+    "sha": "d649ea63640598001e9183fdbcf4be425274f910",
+    "target": {
+        "php": "8.1",
+        "pcre": "10.39",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-8f455449d3",
+            "file": "src/Task.php",
+            "line": 243,
+            "column": 34,
+            "pattern": "/\\e\\[(?:1)?G\\e\\[2K/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:1)\" at offset 4; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\e\\[1?G\\e\\[2K/",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laravel/prompts/blob/d649ea63640598001e9183fdbcf4be425274f910/src/Task.php#L240-L246",
+            "snippet": [
+                {
+                    "number": 240,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 241,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 242,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // Regular log line — strip cursor-reset control sequences.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 243,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            $line = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\e\\[",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "1",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "G\\e\\[2K",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $line);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 244,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 245,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // Wrap and add to ring buffer.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 246,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->addLogLines($line);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

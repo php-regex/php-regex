@@ -12,6 +12,7 @@ extend-exclude = [
     "art/",
     "phar/",
     "docs/assets/",
+    "docs/_findings/",
     "docs/_site/",
     "docs/_data/",
     "src/Parser/Syntax/NameCharacters.php",

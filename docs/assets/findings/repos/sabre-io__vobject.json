@@ -1,0 +1,519 @@
+{
+    "repo": "sabre-io/vobject",
+    "sha": "5e2f338811916c03927398bb24e527989de63194",
+    "target": {
+        "php": "8.2",
+        "pcre": "10.40",
+        "source": "composer.json config.platform.php"
+    },
+    "findings": [
+        {
+            "id": "f-2a3c517443",
+            "file": "lib/DateTimeParser.php",
+            "line": 267,
+            "column": 18,
+            "pattern": "/^\n            (?:  # date part\n                (?:\n                    (?: (?<year> [0-9]{4}) (?: -)?| --)\n                    (?<month> [0-9]{2})?\n                |---)\n                (?<date> [0-9]{2})?\n            )?\n            (?:T  # time part\n                (?<hour> [0-9]{2} | -)\n                (?<minute> [0-9]{2} | -)?\n                (?<second> [0-9]{2})?\n\n                (?: \\.[0-9]{3})? # milliseconds\n                (?P<timezone> # timezone offset\n\n                    Z | (?: \\+|-)(?: [0-9]{4})\n\n                )?\n\n            )?\n            $/x",
+            "source": "preg_match()",
+            "location": "via $regex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: -)\" at offset 94; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^\n            (?:  # date part\n                (?:\n                    (?: (?<year> [0-9]{4}) -?| --)\n                    (?<month> [0-9]{2})?\n                |---)\n                (?<date> [0-9]{2})?\n            )?\n            (?:T  # time part\n                (?<hour> [0-9]{2} | -)\n                (?<minute> [0-9]{2} | -)?\n                (?<second> [0-9]{2})?\n\n                (?: \\.[0-9]{3})? # milliseconds\n                (?P<timezone> # timezone offset\n\n                    Z | (?: \\+|-)(?: [0-9]{4})\n\n                )?\n\n            )?\n            $/x",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/sabre-io/vobject/blob/5e2f338811916c03927398bb24e527989de63194/lib/DateTimeParser.php#L264-L270",
+            "snippet": [
+                {
+                    "number": 264,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 265,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function parseVCardDateTime(string $date): array",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 266,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 267,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $regex = '/^",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 268,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            (?:  # date part",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 269,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                (?:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 270,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    (?: (?<year> [0-9]{4}) (?: -)?| --)",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-dcce350c21",
+            "file": "lib/Parameter.php",
+            "line": 209,
+            "column": 33,
+            "pattern": "#(?: [\\n\":;\\^,\\+] )#x",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: [\\n\":;\\^,\\+] )\" at offset 0; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#[\\n\":;\\^,+]#x",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/sabre-io/vobject/blob/5e2f338811916c03927398bb24e527989de63194/lib/Parameter.php#L206-L212",
+            "snippet": [
+                {
+                    "number": 206,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // But we've found that iCal (7.0, shipped with OSX 10.9)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 207,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // severely trips on + characters not being quoted, so we",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 208,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // added + as well.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 209,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                if (!preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?: ",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\n\":;\\^,\\+",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            " )",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "x",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $item)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 210,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    return $out.$item;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 211,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 212,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // Enclosing in double-quotes, and using RFC6868 for encoding any",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-34762d7801",
+            "file": "lib/Parser/MimeDir.php",
+            "line": 667,
+            "column": 18,
+            "pattern": "/^\n            (?: [^:])+ # Anything but a colon\n            (?: \"[^\"]\")* # A parameter in double quotes\n            : # start of the value we really care about\n            (.*)$\n        /xs",
+            "source": "preg_match()",
+            "location": "via $regex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: [^:])\" at offset 14; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^\n            [^:]+ # Anything but a colon\n            (?: \"[^\"]\")* # A parameter in double quotes\n            : # start of the value we really care about\n            (.*)$\n        /xs",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/sabre-io/vobject/blob/5e2f338811916c03927398bb24e527989de63194/lib/Parser/MimeDir.php#L664-L670",
+            "snippet": [
+                {
+                    "number": 664,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        //",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 665,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // We are basically looking for the first colon (:), but we need to",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 666,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // skip over the parameters first, as they may contain one.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 667,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $regex = '/^",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 668,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            (?: [^:])+ # Anything but a colon",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 669,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            (?: \"[^\"]\")* # A parameter in double quotes",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 670,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            : # start of the value we really care about",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-e34383c909",
+            "file": "lib/StringUtil.php",
+            "line": 40,
+            "column": 29,
+            "pattern": "%(?:[\\x00-\\x08\\x0B-\\x0C\\x0E-\\x1F\\x7F])%",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[\\x00-\\x08\\x0B-\\x0C\\x0E-\\x1F\\x7F])\" at offset 0; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "%[\\x00-\\x08\\x0B-\\x0C\\x0E-\\x1F\\x7F]%",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/sabre-io/vobject/blob/5e2f338811916c03927398bb24e527989de63194/lib/StringUtil.php#L37-L43",
+            "snippet": [
+                {
+                    "number": 37,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 38,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 39,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Removing any control characters",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 40,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "%",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x00",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x08\\x0B",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x0C\\x0E",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x1F\\x7F",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "%",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $str);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 41,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 42,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 43,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

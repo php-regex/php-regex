@@ -41,8 +41,21 @@
   rather than guessed. The status bar frames the window from the first
   paint: what stays on the visitor's machine, then the engine that
   answered. The notes and the credits sit under the window.
+
+  The column has two lists, chosen by a segmented control in the voice
+  toggle's dialect: the examples, and the findings, what the linter
+  reports on the corpus of open-source projects (written daily by
+  bin/findings-report under /assets/findings/, fetched when the list
+  opens): a filter and a tree, owner, repository, finding, folded in a
+  block below 1280px. Opening a finding is a run gesture: the engine
+  answers it. In a finding the text field gives its place to a card that
+  cannot be typed into: the code at the clone's commit, the literal in
+  the field's token colors, the linter's words and rule links, the
+  optimizer's rewrite, the witness of a proven ReDoS. Editing the pattern,
+  or Edit a copy, leaves the card for the sandbox. A repository's page
+  passes its name as `findings_repo`.
 {% endcomment %}
-<div class="playground" id="playground" data-bundle="/assets/playground/bundle.json?v={{ site.time | date: '%s' }}">
+<div class="playground" id="playground" data-bundle="/assets/playground/bundle.json?v={{ site.time | date: '%s' }}"{% if include.findings_repo %} data-findings-repo="{{ include.findings_repo }}"{% endif %}>
   <script type="application/json" id="playground-data">{{ site.data.playground | jsonify | replace: '<', '\u003C' }}</script>
   <div class="pg-titlebar">
     <span class="pg-lights" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -56,7 +69,12 @@
   </div>
   <div class="pg-body">
     <ul class="pg-examples" aria-label="Examples">
-      <li><span class="pg-examples-label">Examples</span></li>
+      <li>
+        <div class="pg-source" role="radiogroup" aria-label="Source">
+          <button type="button" class="pg-source-option" role="radio" aria-checked="true" data-source="examples">Examples</button>
+          <button type="button" class="pg-source-option" role="radio" aria-checked="false" tabindex="-1" data-source="findings">Findings</button>
+        </div>
+      </li>
       <li><button type="button" class="pg-example" data-regex="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m" data-subject="2026-11-02&#10;2026-11-19&#10;not a date" title="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m"><span class="pg-example-name">named groups</span><span class="pg-example-pattern">/^(?&lt;year&gt;\d{4})-(?&lt;month&gt;\d{2})-(?&lt;day&gt;\d{2})$/m</span></button></li>
       <li><button type="button" class="pg-example" data-regex="/[\w.+-]+@[\w-]+\.[\w.-]+/i" data-subject="Write to hello@php-regex.com or to noreply@example.org." title="/[\w.+-]+@[\w-]+\.[\w.-]+/i"><span class="pg-example-name">e-mail addresses</span><span class="pg-example-pattern">/[\w.+-]+@[\w-]+\.[\w.-]+/i</span></button></li>
       <li><button type="button" class="pg-example" data-regex="/(?<=@)[\w.-]+(?=\.)/" data-subject="Write to hello@php-regex.com or noreply@example.org" title="/(?<=@)[\w.-]+(?=\.)/"><span class="pg-example-name">lookaround</span><span class="pg-example-pattern">/(?&lt;=@)[\w.-]+(?=\.)/</span></button></li>
@@ -67,6 +85,15 @@
       <li><button type="button" class="pg-example" data-regex="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/" data-subject="IPs: 192.168.1.10, 8.8.8.8, 256.1.1.1 and 10.0.0.255." title="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/"><span class="pg-example-name">IPv4 addresses</span><span class="pg-example-pattern">/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/</span></button></li>
       <li><button type="button" class="pg-example" data-regex="/^(a+)+$/" data-subject="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab" title="/^(a+)+$/"><span class="pg-example-name">catastrophic backtracking</span><span class="pg-example-pattern">/^(a+)+$/</span></button></li>
       <li><button type="button" class="pg-example" data-regex="/\p{Lu}\p{Ll}+/u" data-subject="Ünïcode Straße Ωmega" title="/\p{Lu}\p{Ll}+/u"><span class="pg-example-name">Unicode properties</span><span class="pg-example-pattern">/\p{Lu}\p{Ll}+/u</span></button></li>
+      <li class="pg-findings-panel" hidden>
+        <details class="pg-findings-browse">
+          <summary>Browse <span class="pg-findings-count">the</span> projects</summary>
+          <input type="search" class="pg-findings-filter" placeholder="owner, repository or rule" aria-label="Filter by owner, repository or rule" spellcheck="false" autocapitalize="off" autocomplete="off">
+          <ul class="pg-findings-tree" role="tree" aria-label="Findings"></ul>
+          <p class="pg-findings-empty" hidden>No project matches.</p>
+          <p class="pg-findings-links"><a href="/findings/">All findings</a> <a href="https://github.com/php-regex/php-regex/issues/new?template=propose-project.yml">Propose a project</a></p>
+        </details>
+      </li>
     </ul>
     <div class="pg-main">
       <div class="pg-field">
@@ -91,6 +118,30 @@
           <ol class="pg-subject-matches" aria-labelledby="pg-match-summary"></ol>
         </details>
       </div>
+      <div class="pg-finding-card" hidden>
+        <p class="pg-finding-notice" role="status" hidden></p>
+        <div class="pg-finding-head">
+          <a class="pg-finding-avatar" href=""></a>
+          <span class="pg-finding-repo"></span>
+          <a class="pg-snippet-permalink" href="">View on GitHub</a>
+        </div>
+        <p class="pg-finding-target"></p>
+        <p class="pg-snippet-file"></p>
+        <pre class="pg-snippet" aria-label="The code at the clone's commit"></pre>
+        <ul class="pg-finding-issues"></ul>
+        <div class="pg-rewrite" hidden>
+          <p class="pg-rewrite-title">Suggested rewrite, by the optimizer</p>
+          <pre class="pg-rewrite-diff"></pre>
+        </div>
+        <p class="pg-witness" hidden></p>
+        <p class="pg-finding-outcome" hidden></p>
+        <div class="pg-finding-actions">
+          <button type="button" class="pg-finding-copy">Edit a copy</button>
+          <button type="button" class="pg-share-copy">Copy link</button>
+          <button type="button" class="pg-share-native" hidden>Share</button>
+        </div>
+      </div>
+      <p class="pg-finding-left" hidden><span class="pg-finding-left-text"></span> <button type="button" class="pg-finding-back">Back to the finding</button></p>
       <p class="pg-status" role="status" aria-live="polite"></p>
     </div>
     <div class="pg-results">

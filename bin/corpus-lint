@@ -27,12 +27,18 @@ declare(strict_types=1);
  * this checkout's floor instead. This script runs the linter once per
  * repository with the COMPOSER environment variable pointing at that
  * repository's composer.json, so each one is judged under its own floor and
- * the PCRE2 release bundled with it. A repository whose composer.json
- * declares no require.php falls back to --php of this script. A require.php
+ * the PCRE2 release bundled with it: the platform PHP it pins
+ * (config.platform.php), else its require.php. A repository whose
+ * composer.json declares neither falls back to --php of this script. A require.php
  * that starts below PHP 7.3 but also allows 7.3 or later is judged from the
  * lowest such PHP, exactly as a single lint run would judge it, and the
  * notice the linter prints is carried into the merged log; one that allows
  * nothing from 7.3 on is recorded as refused.
+ *
+ * Each repository is linted a second time with --format=json, into a JSON
+ * part beside its log part ({vendor}__{repo}.json): the same target, the
+ * same analysis, read by bin/findings-report for the site's findings.
+ * --no-json skips it.
  *
  * Every run carries the ReDoS analysis in confirmed mode: a pattern the
  * analysis proves linear loses the lint warnings that only guess at
@@ -50,11 +56,19 @@ declare(strict_types=1);
  *                   (default: 8.1, the oldest PHP the library supports)
  *   --only <text>   sweep only the repositories whose path contains <text>
  *   --limit <n>     sweep at most <n> repositories, after --only
+ *   --no-json       write the console parts only, not the JSON parts
  *   --help          this message
  *
  * Exit codes: 0 every repository was judged clean, 1 findings were reported
  * or a repository could not be judged.
  */
+
+// The library reads a repository's target as a single lint run would: the
+// sweep asks it rather than copying its rules.
+require_once __DIR__.'/../vendor/autoload.php';
+
+use PHPRegex\Linter\Config\ComposerPlatform;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
 
 // ---------------------------------------------------------------------------
 // Console output, in the same shape as bin/corpus
@@ -144,6 +158,27 @@ function requirePhpConstraint(string $repoDir): ?string
 }
 
 /**
+ * Where the linter reads a repository's target when it pins its platform
+ * PHP (config.platform.php), or null when it pins none it reads: the
+ * linter's own reading decides, so the sweep and a single run agree on a
+ * pin like "8.3.0 " or "^8.3". A pin the linter refuses (PCRE1) is still
+ * a pin: the linter refuses it under the repository's composer.json.
+ */
+function pinnedPlatformPhp(string $repoDir): ?string
+{
+    $notices = [];
+    try {
+        $read = ComposerPlatform::read($repoDir, ['COMPOSER' => $repoDir.'/composer.json'], $notices);
+    } catch (UnsupportedTargetException) {
+        // A pin on PCRE1 is a target the linter refuses, not an absent one:
+        // run under the repository's composer.json, the linter says so.
+        return 'composer.json config.platform.php (refused)';
+    }
+
+    return null !== $read && str_ends_with($read[1], 'config.platform.php') ? $read[1] : null;
+}
+
+/**
  * The environment every lint run gets on top of the shell's: the width the
  * console folds at, so the log is the same whatever COLUMNS the shell
  * exports.
@@ -152,15 +187,15 @@ const PINNED_ENVIRONMENT = ['COLUMNS' => '120'];
 
 /**
  * How one repository is linted: under its own composer.json through the
- * COMPOSER environment variable, or under the fallback flag when it declares
- * no require.php of its own.
+ * COMPOSER environment variable, or under the fallback flag when it pins no
+ * platform PHP and declares no require.php of its own.
  *
  * @return array{env: ?string, environment: array<string, string>, args: list<string>, fallback: bool}
  */
 function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFile): array
 {
     $composer = $repoDir.'/composer.json';
-    if (null !== requirePhpConstraint($repoDir)) {
+    if (null !== requirePhpConstraint($repoDir) || null !== pinnedPlatformPhp($repoDir)) {
         return [
             'env' => $composer,
             'environment' => PINNED_ENVIRONMENT,
@@ -175,6 +210,54 @@ function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFi
         'args' => ['--ansi', 'lint', $repoDir, '--php-version', $fallbackPhp, '--redos', '--redos-mode=confirmed', '--output', $partFile],
         'fallback' => true,
     ];
+}
+
+/**
+ * The same lint as $plan, written as JSON into $jsonFile: the colors go,
+ * the target and the analysis stay.
+ *
+ * @param array{env: ?string, environment: array<string, string>, args: list<string>, fallback: bool} $plan
+ *
+ * @return array{env: ?string, environment: array<string, string>, args: list<string>, fallback: bool}
+ */
+function jsonPlan(array $plan, string $jsonFile): array
+{
+    $args = array_values(array_filter($plan['args'], static fn (string $arg): bool => '--ansi' !== $arg));
+    $output = array_search('--output', $args, true);
+    if (false !== $output) {
+        $args[$output + 1] = $jsonFile;
+    }
+    $args[] = '--format=json';
+
+    return ['args' => $args] + $plan;
+}
+
+/**
+ * The commit a JSON part judged, written into it: the report tells a part
+ * of today's code from yesterday's by it, whatever else touched the clone.
+ * A directory that is no clone names none.
+ */
+function stampHead(string $jsonFile, string $repoDir): void
+{
+    if (!is_file($jsonFile) || !is_dir($repoDir.'/.git')) {
+        return;
+    }
+    // No shell between: cmd.exe reads no /dev/null.
+    $process = proc_open(['git', '-C', $repoDir, 'rev-parse', 'HEAD'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+    if (!\is_resource($process)) {
+        return;
+    }
+    $head = trim((string) stream_get_contents($pipes[1]));
+    stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    proc_close($process);
+    $part = json_decode((string) file_get_contents($jsonFile), true);
+    if (1 !== preg_match('/^[0-9a-f]{40}$/D', $head) || !\is_array($part)) {
+        return;
+    }
+    $part['head'] = $head;
+    file_put_contents($jsonFile, json_encode($part, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE)."\n");
 }
 
 function stripAnsi(string $text): string
@@ -368,6 +451,7 @@ function printCorpusLintUsage(): void
                           (default: 8.1, the oldest PHP the library supports)
           --only <text>   sweep only the repositories whose path contains <text>
           --limit <n>     sweep at most <n> repositories, after --only
+          --no-json       write the console parts only, not the JSON parts
           --help          this message
 
         Every repository under corpus/ is judged under the PHP its own
@@ -383,7 +467,7 @@ function printCorpusLintUsage(): void
 /**
  * @param list<string> $argv
  *
- * @return array{root: ?string, output: ?string, parts: ?string, php: string, only: ?string, limit: ?int, help: bool}
+ * @return array{root: ?string, output: ?string, parts: ?string, php: string, only: ?string, limit: ?int, json: bool, help: bool}
  */
 function parseCorpusLintArgs(array $argv): array
 {
@@ -393,6 +477,7 @@ function parseCorpusLintArgs(array $argv): array
     $php = '8.1';
     $only = null;
     $limit = null;
+    $json = true;
     $help = false;
 
     for ($i = 1, $count = \count($argv); $i < $count; $i++) {
@@ -400,6 +485,12 @@ function parseCorpusLintArgs(array $argv): array
 
         if ('--help' === $arg || '-h' === $arg) {
             $help = true;
+
+            continue;
+        }
+
+        if ('--no-json' === $arg) {
+            $json = false;
 
             continue;
         }
@@ -433,6 +524,7 @@ function parseCorpusLintArgs(array $argv): array
         'php' => $php,
         'only' => $only,
         'limit' => $limit,
+        'json' => $json,
         'help' => $help,
     ];
 }
@@ -610,6 +702,29 @@ function corpusLintMain(array $argv): int
 
         $plan = planRepositoryLint($repoDir, $options['php'], $partFile);
         [$exitCode, $console] = runLint($plan);
+        if ($options['json']) {
+            // A refused repository writes no JSON: yesterday's part goes
+            // first, so nothing judged on yesterday's code survives.
+            $jsonFile = $partsDir.'/'.str_replace('/', '__', $repo).'.json';
+            if (is_file($jsonFile)) {
+                unlink($jsonFile);
+            }
+            // Both runs judge the same target with the same analysis: a JSON
+            // run that answers otherwise, or writes no part for a repository
+            // the console run judged, would let it fall silently out of the
+            // site's findings.
+            [$jsonExit] = runLint(jsonPlan($plan, $jsonFile));
+            if ($jsonExit !== $exitCode || (\in_array($exitCode, [0, 1], true) && !is_file($jsonFile))) {
+                // A part the two runs disagree on is not published.
+                if (is_file($jsonFile)) {
+                    unlink($jsonFile);
+                }
+                $notClean = true;
+                $io->error(sprintf('%s: the JSON part was not written as the log part was (JSON run exit %d, console run exit %d).', $repo, $jsonExit, $exitCode));
+            } else {
+                stampHead($jsonFile, $repoDir);
+            }
+        }
 
         $targetLine = extractTargetLine($console);
         $notes = extractNotes($console, $plan['env'] ?? '');
