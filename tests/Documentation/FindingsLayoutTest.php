@@ -218,6 +218,33 @@ final class FindingsLayoutTest extends TestCase
     }
 
     /**
+     * A row that opens says so: a chevron before its name, pivoting when
+     * it stands open — the dialect every tree of this web speaks. And the
+     * list column folds on its window's edge when a finding is being
+     * read, giving its width to the card and the tools: one toggle,
+     * everywhere, reversible.
+     */
+    #[Test]
+    public function test_the_listing_column_folds_and_the_rows_say_they_open(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/\.pg-tree-item\[aria-expanded\] > \.pg-tree-row::before \{([^}]*)\}/', $stylesheet, $chevron), 'Every row that opens carries a chevron.');
+        $this->assertStringContainsString("content: '›'", $chevron[1]);
+        $this->assertSame(1, preg_match('/\.pg-tree-item\[aria-expanded="true"\] > \.pg-tree-row::before \{([^}]*)\}/', $stylesheet, $pivoted), 'The chevron pivots on the open row.');
+        $this->assertStringContainsString('rotate(90deg)', $pivoted[1]);
+        $this->assertSame(1, preg_match('/\.playground\.is-listing-hidden \.pg-body \{([^}]*)\}/', $stylesheet, $folded), 'The fold exists.');
+        $this->assertStringContainsString('grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);', $folded[1], 'Folded, the window is two columns: the finding and the tools.');
+        $this->assertStringContainsString('.playground.is-listing-hidden .pg-main', $stylesheet, 'Folded, the columns take the two places that remain.');
+        $this->assertSame(1, preg_match('/\.playground\.is-listing-hidden \.pg-examples \{([^}]*)\}/', $stylesheet, $hidden));
+        $this->assertStringContainsString('display: none;', $hidden[1]);
+
+        $xpath = self::include();
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/*[1]'.self::has('pg-listing-tab').'[@aria-expanded="true"][@aria-controls="pg-listing"]'), 'A tab on the window\'s edge folds the column.');
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString("classList.toggle('is-listing-hidden')", $script, 'The tab toggles the fold.');
+    }
+
+    /**
      * Back to the finding, after the accordion closed its group, opens
      * the finding's project and repository again: the row it shows is in
      * view, not inside a closed group. A row the visitor clicks is in an

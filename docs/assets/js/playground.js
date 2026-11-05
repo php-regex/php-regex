@@ -114,6 +114,7 @@
     findingsBrowse: root.querySelector('.pg-findings-browse'),
     findingsCount: root.querySelector('.pg-findings-count'),
     findingsFilter: root.querySelector('.pg-findings-filter'),
+    listingTab: root.querySelector('.pg-listing-tab'),
     findingsTree: root.querySelector('.pg-findings-tree'),
     findingsEmpty: root.querySelector('.pg-findings-empty'),
     textField: root.querySelector('.pg-field-text'),
@@ -4237,6 +4238,16 @@
     window.clearTimeout(filterTimer);
     filterTimer = window.setTimeout(filterTree, 120);
   });
+  // The list column folds on its window's edge: reading a finding wants
+  // the card and the tools wide, browsing wants the list back — the tab
+  // says which side of that the visitor is on.
+  if (el.listingTab) {
+    el.listingTab.addEventListener('click', function () {
+      var hidden = root.classList.toggle('is-listing-hidden');
+      el.listingTab.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+      el.listingTab.title = hidden ? 'Unfold the list column' : 'Fold the list column';
+    });
+  }
   // The widest screens show the list whole; below, a fold above the
   // fields keeps them near.
   var wideScreen = window.matchMedia ? window.matchMedia('(min-width: 1280px)') : null;

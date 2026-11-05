@@ -6573,11 +6573,24 @@ body.search-open {
   border: 1px solid var(--line-soft);
   border-radius: 50%;
 }
+/* A row that opens says so: a chevron before its name, pivoting on the
+   open row — the dialect every tree of this web speaks. A finding's row
+   opens nothing; it carries none. */
+.pg-tree-item[aria-expanded] > .pg-tree-row::before {
+  content: '›';
+  flex: none;
+  width: .9em;
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+}
+.pg-tree-item[aria-expanded="true"] > .pg-tree-row::before {
+  transform: rotate(90deg);
+}
 .pg-tree-item.is-repo > .pg-tree-row {
-  padding-left: 1.35rem;
+  padding-left: .95rem;
 }
 .pg-tree-item.is-finding > .pg-tree-row {
-  padding-left: 2.2rem;
+  padding-left: 1.9rem;
 }
 .pg-tree-name {
   overflow: hidden;
@@ -6634,6 +6647,12 @@ body.search-open {
 .pg-findings-links a:hover {
   color: var(--ink);
 }
+/* The fold tab lives on the stacked layouts' edge only as a hidden
+   thing: below the widest screens the list is a row, not a column. */
+.pg-listing-tab {
+  display: none;
+}
+
 /* The widest screens: the list stands in its column, a window of its
    own — never the page's longest column. A project with three hundred
    findings opens as a scroll inside a frame that answers the viewport,
@@ -6663,6 +6682,51 @@ body.search-open {
   .pg-findings-links {
     flex-direction: column;
     padding: .45rem .35rem 0;
+  }
+
+  .pg-listing-tab {
+    position: absolute;
+    top: .45rem;
+    left: 0;
+    z-index: 1;
+    display: block;
+    width: 1.05rem;
+    height: 2.3rem;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: .85rem;
+    line-height: 1;
+    color: var(--ink-soft);
+    background: var(--panel);
+    border: 1px solid var(--line-soft);
+    border-left: 0;
+    border-radius: 0 var(--radius-s) var(--radius-s) 0;
+    cursor: pointer;
+  }
+  .pg-listing-tab:hover,
+  .pg-listing-tab:focus-visible {
+    color: var(--ink);
+    border-color: var(--amber);
+  }
+  /* Folded, the window is two columns — the finding and the tools — and
+     the tab turns to say which way the list went. */
+  .playground.is-listing-hidden .pg-body {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  }
+  /* The columns carry their places from the three-column layout; folded,
+     they take the two that remain. */
+  .playground.is-listing-hidden .pg-main {
+    grid-column: 1;
+  }
+  .playground.is-listing-hidden .pg-body > .pg-results {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .playground.is-listing-hidden .pg-examples {
+    display: none;
+  }
+  .playground.is-listing-hidden .pg-listing-tab {
+    transform: rotate(180deg);
   }
 }
 
