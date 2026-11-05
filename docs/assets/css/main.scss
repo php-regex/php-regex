@@ -6776,7 +6776,9 @@ body.search-open {
 .pg-fix-add {
   display: block;
   padding: .05rem .3rem;
-  color: var(--ok);
+  /* --ok alone on its tint reads under 4.5:1 in the light theme; a fifth
+     of the ink keeps the line green and legible in both. */
+  color: color-mix(in srgb, var(--ok) 80%, var(--ink));
   background: color-mix(in srgb, var(--ok) 9%, transparent);
   border-radius: var(--radius-s);
 }

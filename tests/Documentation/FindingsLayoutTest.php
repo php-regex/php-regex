@@ -102,6 +102,24 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringNotContainsString('pg-tree-target', $row, 'A tree of hundreds of rows is one line per row.');
         $findingRow = self::between($script, 'function findingRow(repo, finding) {', "\n  }\n");
         $this->assertStringNotContainsString('pg-tree-message', $findingRow, 'The rule\'s message rides the row\'s tooltip and the card, not a second line.');
+        $this->assertStringContainsString("item.setAttribute('aria-description', finding.issues[0].message);", $findingRow, 'A tooltip shows to a pointer only: the message is read out on focus as well.');
+        $this->assertStringContainsString("item.setAttribute('aria-description', 'PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre);", $row, 'And the engine a project was judged for.');
+    }
+
+    /**
+     * Below 1280px the list sits in a fold that a finding's link leaves
+     * closed: a row in a closed fold has no geometry to scroll to, so
+     * opening the fold brings the shown row into the tree's window.
+     */
+    #[Test]
+    public function test_opening_the_fold_brings_the_shown_row_into_view(): void
+    {
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString("el.findingsBrowse.addEventListener('toggle', function () {", $script);
+        $toggle = self::between($script, "el.findingsBrowse.addEventListener('toggle', function () {", "\n  });\n");
+        $this->assertStringContainsString('el.findingsBrowse.open', $toggle, 'Only when it opens.');
+        $this->assertStringContainsString('[aria-selected="true"]', $toggle);
+        $this->assertStringContainsString('revealRow(', $toggle);
     }
 
     /**
@@ -150,6 +168,11 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringContainsString('inset 2px 0 0 var(--amber)', $rail[1], 'The shown row carries a rail on its edge.');
         $this->assertSame(1, preg_match('/\.hero-playground \.hero-inner \{([^}]*)\}/', $stylesheet, $wide), 'The playground home is wider than the docs column.');
         $this->assertStringContainsString('padding-inline: max(1.25rem, calc(50vw - 45rem))', $wide[1], 'A tool page: 90rem centered, the docs keep their 75rem.');
+        // On its own tint over --code-bg, --ok reads at 4.13:1 in the light
+        // theme, under the 4.5:1 small text needs; a fifth of --ink brings
+        // it to 5.06:1 there and 9.10:1 in the dark theme.
+        $this->assertSame(1, preg_match('/\.pg-fix-add \{([^}]*)\}/', $stylesheet, $added));
+        $this->assertStringContainsString('color: color-mix(in srgb, var(--ok) 80%, var(--ink));', $added[1], 'An added line keeps 4.5:1 in both themes.');
     }
 
     /**

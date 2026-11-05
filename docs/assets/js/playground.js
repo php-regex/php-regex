@@ -3773,6 +3773,9 @@
     // one line per row; the card says the engine in chips for the chosen
     // finding.
     item.title = 'PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre;
+    // A tooltip shows to a pointer only; the description is read out on
+    // focus too.
+    item.setAttribute('aria-description', 'PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre);
     var row = text('span', 'pg-tree-row');
     row.appendChild(text('span', 'pg-tree-name', repo.repo.split('/')[1]));
     row.appendChild(text('span', 'pg-tree-count' + (repo.fail ? ' is-fail' : ''), String(repo.findings)));
@@ -3792,6 +3795,7 @@
     // The rule's message rides the tooltip and the card; the row is one
     // line, scannable at three hundred siblings.
     item.title = finding.file + ':' + finding.line + ' · ' + finding.issues[0].message;
+    item.setAttribute('aria-description', finding.issues[0].message);
     return item;
   }
 
@@ -4226,6 +4230,14 @@
   // The widest screens show the list whole; below, a fold above the
   // fields keeps them near.
   var wideScreen = window.matchMedia ? window.matchMedia('(min-width: 1280px)') : null;
+  // A finding's link leaves the fold closed, and a row in a closed fold
+  // has nowhere to scroll to: opening it brings the shown row in.
+  el.findingsBrowse.addEventListener('toggle', function () {
+    var shown = el.findingsBrowse.open ? el.findingsTree.querySelector('[aria-selected="true"]') : null;
+    if (shown) {
+      revealRow(shown);
+    }
+  });
   function syncBrowse() {
     if (wideScreen && wideScreen.matches) {
       el.findingsBrowse.open = true;
