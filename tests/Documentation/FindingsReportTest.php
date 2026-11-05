@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Documentation;
 use PHPRegex\Tests\Support\PlaygroundDriver;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -336,6 +337,29 @@ final class FindingsReportTest extends TestCase
 
         $this->assertSame(0, $exit, $output);
         $this->assertSame('src/Check.php', $this->finding('/^(a+)+$/')['file'], 'A path from the repository, with forward slashes: the permalink needs them.');
+    }
+
+    /**
+     * Outside Windows a backslash is a character of a file name: the
+     * report reads that very file, and links it as it is named.
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_a_file_whose_name_holds_a_backslash_is_read_as_named(): void
+    {
+        $this->repository('acme/odd', ['src/we\\ird.php' => "<?php\n\nreturn preg_match('/^(a+)+\$/', \$x);\n"]);
+        $this->lint('acme/odd');
+
+        [$exit, $output] = $this->report();
+
+        $this->assertSame(0, $exit, $output);
+        $file = json_decode((string) file_get_contents($this->dir.'/out/assets/findings/repos/acme__odd.json'), true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($file);
+        $this->assertIsArray($file['findings']);
+        $this->assertIsArray($file['findings'][0]);
+        $this->assertSame('src/we\\ird.php', $file['findings'][0]['file']);
+        $this->assertIsString($file['findings'][0]['permalink']);
+        $this->assertStringContainsString('/src/we%5Cird.php#L', (string) $file['findings'][0]['permalink']);
     }
 
     #[Test]

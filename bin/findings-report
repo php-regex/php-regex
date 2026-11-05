@@ -283,19 +283,30 @@ function findings(string $repo, string $corpus, string $clone, string $sha, arra
         // bin/corpus-lint runs from the checkout: a part names its files
         // as corpus/<vendor>/<repo>/…, read here under the corpus given,
         // wherever its clones really live.
-        // Paths are compared with forward slashes: Windows answers with
-        // backslashes and a drive letter.
-        $named = slashes($result['file']);
-        $path = realpath(match (true) {
-            1 === preg_match('~^(?:/|[A-Za-z]:/)~', $named) => $named,
-            str_starts_with($named, 'corpus/') => $corpus.'/'.substr($named, \strlen('corpus/')),
-            default => \dirname($corpus).'/'.$named,
-        });
-        $path = false === $path ? false : slashes($path);
-        if (false === $path || !str_starts_with($path, $root.'/')) {
+        // Windows answers with backslashes and a drive letter; elsewhere a
+        // backslash is a character of a file name. The path is resolved as
+        // written first, then with forward slashes, and compared with
+        // forward slashes only.
+        $path = false;
+        foreach (array_unique([$result['file'], slashes($result['file'])]) as $named) {
+            $path = realpath(match (true) {
+                1 === preg_match('~^(?:/|[A-Za-z]:[\\\\/])~', $named) => $named,
+                str_starts_with(slashes($named), 'corpus/') => $corpus.'/'.substr($named, \strlen('corpus/')),
+                default => \dirname($corpus).'/'.$named,
+            });
+            if (false !== $path) {
+                break;
+            }
+        }
+        if (false === $path || !str_starts_with(slashes($path), $root.'/')) {
             continue;
         }
+        // The path as the repository names it: forward slashes on Windows,
+        // the name as it is elsewhere.
         $file = substr($path, \strlen($root) + 1);
+        if ('\\' === \DIRECTORY_SEPARATOR) {
+            $file = slashes($file);
+        }
         $pattern = $result['pattern'];
         $line = (int) ($result['line'] ?? 0);
         $rewrite = null;
