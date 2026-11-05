@@ -3891,10 +3891,17 @@
   // is left as it is, and so are the siblings the filter opened.
   function revealRepo(repo) {
     var ownerItem = el.findingsTree.querySelector('[data-owner="' + repo.owner.replace(/"/g, '') + '"]');
+    var repoItem = el.findingsTree.querySelector('[data-slug="' + repo.slug.replace(/"/g, '') + '"]');
+    // A filter typed since the finding was left may hide its row: cleared,
+    // the row the card stands for is in the list again. A row clicked is
+    // never hidden, so a search in use survives.
+    if (repoItem && repoItem.hidden && el.findingsFilter.value) {
+      el.findingsFilter.value = '';
+      filterTree();
+    }
     if (ownerItem && ownerItem.getAttribute('aria-expanded') === 'false') {
       openGroup(ownerItem);
     }
-    var repoItem = el.findingsTree.querySelector('[data-slug="' + repo.slug.replace(/"/g, '') + '"]');
     return repoItem && repoItem.getAttribute('aria-expanded') === 'false' ? openGroup(repoItem) : Promise.resolve();
   }
 

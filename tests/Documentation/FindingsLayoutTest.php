@@ -313,6 +313,12 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringContainsString("getAttribute('aria-expanded') === 'false'", $reveal, 'Only a closed group is opened: an open one, and its siblings, are left as they are.');
         $this->assertSame(2, substr_count($reveal, 'openGroup('), 'The project, then the repository, through the accordion.');
 
+        $clear = strpos($reveal, "el.findingsFilter.value = '';");
+        $this->assertNotFalse($clear, 'A filter that hides the restored repository is cleared: its row would stay hidden, nothing selected.');
+        $this->assertStringContainsString('repoItem.hidden && el.findingsFilter.value', $reveal, 'Only a filter that hides the row is cleared: a search in use survives a row click.');
+        $this->assertLessThan(strpos($reveal, 'openGroup('), $clear, 'The filter is cleared before the groups open, so they stay open.');
+        $this->assertStringContainsString('filterTree();', $reveal, 'Cleared, the tree is shown whole again.');
+
         $restore = self::between($script, 'function openFindingKey(key) {', "\n  }\n");
         $this->assertStringContainsString('revealRepo(repo)', $restore, 'Back to the finding reopens its group.');
         $this->assertStringContainsString('revealRepo(repo)', self::between($script, 'function openRepoPage(name) {', "\n  }\n"), 'A repository\'s page opens its group the same way.');
