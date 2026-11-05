@@ -409,7 +409,11 @@ final class PlaygroundLayoutTest extends TestCase
         $script = self::source(self::SCRIPT);
         $marks = self::between($script, 'function renderSubjectMarks(payload, subject) {', "\n  }\n");
         $this->assertStringContainsString('el.matchSummary.textContent = ', $marks);
-        $this->assertSame(1, preg_match("/!matches && payload\\.engineError \\? 'Not run: PHP refused the pattern'/", $marks), 'A pattern PHP refuses says beside the field that nothing was matched; the engine\'s words stay in the diagnostics.');
+        // PHP's warning is a refusal at compile time or a match it could not
+        // finish ("/(?=a\\K)/" on "a", PHP 8.4): the words fit both.
+        $this->assertSame(1, preg_match("/!matches && payload\\.engineError \\? 'PHP could not complete the match'/", $marks), 'A warning from PHP says beside the field that no match was completed; the engine\'s words stay in the diagnostics.');
+        $this->assertStringContainsString("announce('PHP could not complete the match: ' + payload.engineError);", $marks, 'The live line says the same, with the engine\'s words.');
+        $this->assertStringNotContainsString('refused the pattern', $marks, 'A match-time failure is no refusal of the pattern.');
         $this->assertStringContainsString('el.subjectMatches.appendChild(', $marks, 'One item per match set.');
         $this->assertStringContainsString("announce(matches.count === 1 ? '1 match' : matches.count + ' matches');", $marks, 'The live line keeps to the count.');
 

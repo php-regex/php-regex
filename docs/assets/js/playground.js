@@ -1007,10 +1007,11 @@
         }
       });
     }
-    // A pattern PHP refuses is never run: the line says so beside the field
-    // once the live line has spoken; the engine's words are in the
-    // diagnostics, where the pattern field's tint points.
-    el.matchSummary.textContent = done ? matchSummary(matches) : (!matches && payload.engineError ? 'Not run: PHP refused the pattern' : '');
+    // PHP's warning leaves no match: a pattern refused at compile time, or
+    // a match it could not finish (/(?=a\K)/ on "a"). The line says so
+    // beside the field once the live line has spoken; the engine's words
+    // are in the diagnostics, where the pattern field's tint points.
+    el.matchSummary.textContent = done ? matchSummary(matches) : (!matches && payload.engineError ? 'PHP could not complete the match' : '');
     el.matchDetails.hidden = !el.subjectMatches.firstChild;
     clear(el.subjectMirror);
     el.subjectMirror.appendChild(markRanges(subject, ranges));
@@ -1025,7 +1026,7 @@
       announceEngineError = false;
       announce(matches.count === 1 ? '1 match' : matches.count + ' matches');
     } else if (!matches && payload.engineError) {
-      announce('The engine refused the pattern: ' + payload.engineError);
+      announce('PHP could not complete the match: ' + payload.engineError);
     }
   }
 
