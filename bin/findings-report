@@ -251,7 +251,7 @@ function repositoryOf(string $slug, string $corpus): ?string
  */
 function findings(string $repo, string $corpus, string $clone, string $sha, array $target, array $results): array
 {
-    $root = slashes((string) realpath($clone));
+    $root = (string) realpath($clone);
     $findings = [];
     foreach ($results as $result) {
         if (!\is_array($result) || !\is_string($result['pattern'] ?? null) || !\is_string($result['file'] ?? null)) {
@@ -285,8 +285,9 @@ function findings(string $repo, string $corpus, string $clone, string $sha, arra
         // wherever its clones really live.
         // Windows answers with backslashes and a drive letter; elsewhere a
         // backslash is a character of a file name. The path is resolved as
-        // written first, then with forward slashes, and compared with
-        // forward slashes only.
+        // written first, then with forward slashes, and its containment is
+        // judged on the resolved path as the system spells it: a name that
+        // only looks like a path of the clone stays outside.
         $path = false;
         foreach (array_unique([$result['file'], slashes($result['file'])]) as $named) {
             $path = realpath(match (true) {
@@ -298,7 +299,7 @@ function findings(string $repo, string $corpus, string $clone, string $sha, arra
                 break;
             }
         }
-        if (false === $path || !str_starts_with(slashes($path), $root.'/')) {
+        if (false === $path || !str_starts_with($path, $root.\DIRECTORY_SEPARATOR)) {
             continue;
         }
         // The path as the repository names it: forward slashes on Windows,

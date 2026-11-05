@@ -362,6 +362,31 @@ final class FindingsReportTest extends TestCase
         $this->assertStringContainsString('/src/we%5Cird.php#L', (string) $file['findings'][0]['permalink']);
     }
 
+    /**
+     * A link inside a clone that leads out of it is not read, even when the
+     * file it leads to is named like a path of the clone ("tool\\secret.php"
+     * next to "tool/").
+     */
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_a_link_out_of_the_clone_is_not_read(): void
+    {
+        file_put_contents($this->dir.'/corpus/acme/tool\\secret.php', "<?php\n\nreturn preg_match('/^(b+)+\$/', \$x);\n");
+        symlink($this->dir.'/corpus/acme/tool\\secret.php', $this->dir.'/corpus/acme/tool/src/link.php');
+        $part = $this->dir.'/parts/acme__tool.json';
+        $report = json_decode((string) file_get_contents($part), true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($report);
+        $this->assertIsArray($report['results']);
+        $this->assertIsArray($report['results'][0]);
+        $report['results'][] = ['file' => $this->dir.'/corpus/acme/tool/src/link.php', 'line' => 3, 'column' => 19, 'pattern' => '/^(b+)+$/'] + $report['results'][0];
+        file_put_contents($part, json_encode($report, \JSON_THROW_ON_ERROR));
+
+        [$exit, $output] = $this->report();
+
+        $this->assertSame(0, $exit, $output);
+        $this->assertNotContains('/^(b+)+$/', array_column($this->repoFile()['findings'], 'pattern'), 'Nothing outside the clone reaches the site.');
+    }
+
     #[Test]
     public function test_a_symlinked_corpus_reads_parts_relative_to_the_checkout(): void
     {
