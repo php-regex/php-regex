@@ -4267,9 +4267,10 @@
       el.listingRail.hidden = !hidden;
       applyColumnWidths();
       // The control under the hand disappears with the fold: the focus
-      // moves to the one that undoes it.
+      // moves to the one that undoes it. An avatar that unfolds the list
+      // then hands the focus on to the project it named.
       var focused = document.activeElement;
-      if (focused === el.listingTab || focused === el.listingRailOpen) {
+      if (focused === el.listingTab || el.listingRail.contains(focused)) {
         (hidden ? el.listingRailOpen : el.listingTab).focus();
       }
     });
@@ -4316,9 +4317,16 @@
     setSource('findings', false);
     return loadIndex().then(function () {
       var item = el.findingsTree.querySelector('[data-owner="' + login.replace(/"/g, '') + '"]');
-      if (item) {
-        openGroup(item);
+      if (!item) {
+        return;
       }
+      // The avatar named a project: a filter that hides it gives way.
+      if (item.hidden && el.findingsFilter.value) {
+        el.findingsFilter.value = '';
+        filterTree();
+      }
+      openGroup(item);
+      focusItem(item);
     });
   }
 

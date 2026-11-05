@@ -276,6 +276,15 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringNotContainsString('clear(el.listingRail)', $rail, 'Rebuilding the avatars leaves the unfold control in place.');
         $this->assertStringContainsString('[data-owner]', $rail, 'The rail pictures the owners the tree shows: on a repository\'s page, that project alone.');
         $this->assertStringNotContainsString('Object.keys(findingsIndex.owners)', $rail);
+
+        $fold = self::between($script, "el.listingTab.addEventListener('click', function () {", "\n    });\n");
+        $this->assertStringContainsString('el.listingRail.contains(focused)', $fold, 'An avatar under the keyboard disappears with the unfold as the rail\'s button does: the focus is never left on a hidden control.');
+        $fromRail = self::between($script, 'function openOwnerFromRail(login) {', "\n  }\n");
+        $clear = strpos($fromRail, "el.findingsFilter.value = '';");
+        $this->assertNotFalse($clear, 'A filter that hides the chosen owner is cleared: the project the avatar named is shown.');
+        $this->assertStringContainsString('item.hidden && el.findingsFilter.value', $fromRail, 'Only a filter that hides it.');
+        $this->assertLessThan(strpos($fromRail, 'openGroup(item)'), $clear, 'Cleared before the group opens.');
+        $this->assertStringContainsString('focusItem(item)', $fromRail, 'The focus lands on the project the avatar named.');
     }
 
     /**
