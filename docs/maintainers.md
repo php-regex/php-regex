@@ -730,6 +730,55 @@ engine answer differently disables the tab on that engine with the witness
 named. Each is a sentence in the tab, never a trace of another release
 passed off as the engine's.
 
+## Findings
+
+The playground's second list, and the pages under `/findings/`, show what
+the linter reports on the corpus: every FAIL and WARN on the repositories
+under `corpus/`, each judged for the PHP its own composer.json asks for
+(its require.php floor, or the platform PHP it pins; PHP 8.1 when it names
+none).
+INFO-level advice is left out. Run daily:
+
+```bash
+php bin/corpus update --force    # clone or reset every repository
+php bin/corpus-lint              # the log, and one JSON part per repository
+php bin/findings-report          # the site's findings, from the JSON parts
+```
+
+`bin/corpus-lint` lints each repository twice under the same target: once
+for `var/log/corpus.log`, once with `--format=json` into
+`var/log/corpus-parts/<vendor>__<repo>.json` (`--no-json` skips it).
+`bin/findings-report` reads those parts and the clones, and writes:
+
+- `docs/assets/findings/index.json`: each repository with findings, its
+  owner, the PHP and PCRE2 it was judged for, its clone's commit, its
+  counts and the rules it met; fetched when the Findings list opens;
+- `docs/assets/findings/repos/<vendor>__<repo>.json`: its findings, each
+  with the linter's words and rule links, the optimizer's rewrite when it
+  printed one, the code around it at the clone's commit, and for a proven
+  ReDoS the witness and the length at which the replay gave up; fetched
+  when the repository opens;
+- `docs/_findings/<vendor>__<repo>.md`: its page, `/findings/<vendor>/<repo>/`;
+- `docs/assets/findings/avatars/<owner>.png`: the owner's avatar, downloaded
+  once (`--offline` refuses a missing one instead).
+
+Each JSON part names the commit it judged (`head`); the report refuses to
+publish a part whose commit is not the one its clone stands on (run
+`bin/corpus-lint` again), and refuses a `--corpus` that holds none of the
+parts' repositories, so a wrong directory never empties the site. A
+repository without a FAIL or a WARN, or gone from `corpus/`, gets nothing,
+and the files of the day before are removed, avatars of owners gone
+included. Avatars are kept at 48 pixels, rescaled when GitHub sends
+another size. A finding's id
+(`#f-…` on its repository's page) hashes its file and its pattern, so a
+shared link survives a line added above it. The output is sorted and
+dated by each clone's commit only: a day the corpus did not move writes
+the same bytes.
+
+A witness goes into the text field with four times the pumps the replay
+needed under the library's backtrack limit, so PHP's default limit gives
+up on it too; the suite runs each one through `preg_match()` to hold that.
+
 ## Benchmarks
 
 `tests/Benchmark/` measures time and memory with PHPBench, one group per

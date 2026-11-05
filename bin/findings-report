@@ -1,0 +1,653 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+/*
+ * Turns the corpus run into the findings the playground shows: every FAIL
+ * and WARN the linter reported on the repositories under corpus/, read from
+ * the JSON parts bin/corpus-lint writes beside its log parts.
+ *
+ *   docs/assets/findings/index.json        the repositories with findings:
+ *                                          owner, the PHP and PCRE2 each was
+ *                                          judged for, the clone's commit, the
+ *                                          counts and the rules met
+ *   docs/assets/findings/repos/<slug>.json one repository's findings: the
+ *                                          pattern, the linter's words and rule
+ *                                          links, the optimizer's rewrite, the
+ *                                          ReDoS witness, the code around it
+ *   docs/_findings/<slug>.md               one page per repository, at
+ *                                          /findings/<vendor>/<repo>/
+ *   docs/assets/findings/avatars/          the owners' avatars, served by the
+ *                                          site itself
+ *
+ * INFO-level advice is left out; a repository without a FAIL or a WARN, or
+ * gone from corpus/, gets nothing, and yesterday's files for it are removed.
+ * A finding's id hashes its file and its pattern, so a link to it survives
+ * a line added above it. The output is sorted and carries no date of its
+ * own: a day the corpus did not move writes the same bytes.
+ *
+ * Daily:
+ *   php bin/corpus update --force
+ *   php bin/corpus-lint
+ *   php bin/findings-report
+ *
+ * Options:
+ *   --offline         no avatar download: a missing avatar is an error
+ *   --parts=DIR       the JSON parts (default: var/log/corpus-parts)
+ *   --corpus=DIR      the clones (default: corpus)
+ *   --out=DIR         the site (default: docs)
+ */
+
+require __DIR__.'/../vendor/autoload.php';
+// The playground's own driver colors the snippet's pattern: the token spans
+// the pattern field draws.
+require __DIR__.'/../docs/assets/playground/driver.php';
+
+use PHPRegex\Toolkit\Regex;
+
+const ROOT = __DIR__.'/..';
+const CONTEXT = 3;
+const WITNESS_REPS = 30;
+const SUBJECT_FACTOR = 4;
+const SUBJECT_CAP = 10000; // bytes: what the playground's text field takes
+const SOCIAL = '/assets/img/findings-social.png';
+const SOCIAL_ALT = 'PHPRegex findings: what the linter reports on real open-source PHP.';
+const AVATAR = 48; // pixels: twice the size the list draws
+const LEVELS = ['error' => 'fail', 'warning' => 'warn'];
+
+$options = getopt('', ['offline', 'parts:', 'corpus:', 'out:']);
+$partsDir = \is_string($options['parts'] ?? null) ? $options['parts'] : ROOT.'/var/log/corpus-parts';
+$corpus = \is_string($options['corpus'] ?? null) ? $options['corpus'] : ROOT.'/corpus';
+$out = \is_string($options['out'] ?? null) ? $options['out'] : ROOT.'/docs';
+$offline = isset($options['offline']);
+
+$parts = glob($partsDir.'/*.json') ?: [];
+sort($parts, \SORT_STRING);
+if ([] === $parts) {
+    refuse('parts', \sprintf('no JSON part under %s: run bin/corpus-lint first.', $partsDir));
+}
+
+// Each part names a clone under the corpus, and judged the commit that
+// clone stands on: bin/corpus-lint writes that commit into the part. A part
+// without one is judged fresh when written after the clone last moved.
+$judged = [];
+$stale = [];
+foreach ($parts as $part) {
+    $slug = basename($part, '.json');
+    $repo = repositoryOf($slug, $corpus);
+    if (null === $repo) {
+        continue;
+    }
+    $judged[$slug] = [$part, $repo];
+    $head = json_decode((string) file_get_contents($part), true)['head'] ?? null;
+    if (\is_string($head)) {
+        if ($head !== git($corpus.'/'.$repo, 'rev-parse', 'HEAD')) {
+            $stale[] = $slug;
+        }
+
+        continue;
+    }
+    $moved = @filemtime($corpus.'/'.$repo.'/.git/index');
+    if (false !== $moved && (int) filemtime($part) < $moved) {
+        $stale[] = $slug;
+    }
+}
+if ([] === $judged) {
+    refuse('corpus', \sprintf('none of the %d parts names a repository under %s: is --corpus the directory bin/corpus-lint swept?', \count($parts), $corpus));
+}
+if ([] !== $stale) {
+    refuse(implode(', ', $stale), 'the part judged another commit than its clone stands on: run bin/corpus-lint again before publishing.');
+}
+
+$repos = [];
+$files = [];
+$owners = [];
+foreach ($judged as $slug => [$part, $repo]) {
+    $report = json_decode((string) file_get_contents($part), true);
+    if (!\is_array($report) || !\is_array($report['results'] ?? null) || !\is_array($report['target'] ?? null)) {
+        refuse($slug, 'the part is not a lint report in JSON.');
+    }
+    $clone = $corpus.'/'.$repo;
+    $sha = git($clone, 'rev-parse', 'HEAD');
+    $target = [
+        'php' => (string) $report['target']['php'],
+        'pcre' => (string) $report['target']['pcre'],
+        'source' => targetSource((string) ($report['target']['source'] ?? '')),
+    ];
+    $findings = findings($repo, $corpus, $clone, $sha, $target, $report['results']);
+    if ([] === $findings) {
+        continue;
+    }
+
+    $fail = \count(array_filter($findings, static fn (array $f): bool => 'fail' === $f['level']));
+    $rules = [];
+    foreach ($findings as $finding) {
+        foreach ($finding['issues'] as $issue) {
+            $rules[$issue['rule']] = true;
+        }
+    }
+    ksort($rules, \SORT_STRING);
+    $owner = explode('/', $repo)[0];
+    $repos[] = [
+        'repo' => $repo,
+        'owner' => $owner,
+        'slug' => $slug,
+        'target' => $target,
+        'sha' => $sha,
+        'committed' => git($clone, 'log', '-1', '--format=%cs', 'HEAD'),
+        'findings' => \count($findings),
+        'fail' => $fail,
+        'warn' => \count($findings) - $fail,
+        'rules' => array_keys($rules),
+    ];
+    $files[$slug] = ['repo' => $repo, 'sha' => $sha, 'target' => $target, 'findings' => $findings];
+    $owners[$owner] = owner($owner, $out, $offline);
+}
+ksort($owners, \SORT_STRING);
+// FAIL count first, then the name: the playground's list and /findings/
+// read in this order.
+usort($repos, static fn (array $a, array $b): int => [$b['fail'], strtolower($a['repo'])] <=> [$a['fail'], strtolower($b['repo'])]);
+
+$index = [
+    // The version, never a commit: a commit moves with every change to the
+    // library, and the index would change on days the corpus did not.
+    'library' => ['version' => Regex::VERSION],
+    'totals' => [
+        'repos' => \count($repos),
+        'findings' => array_sum(array_column($repos, 'findings')),
+        'fail' => array_sum(array_column($repos, 'fail')),
+        'warn' => array_sum(array_column($repos, 'warn')),
+    ],
+    'owners' => $owners,
+    'repos' => $repos,
+];
+
+foreach ([$out.'/assets/findings/repos', $out.'/_findings'] as $dir) {
+    if (!is_dir($dir)) {
+        mkdir($dir, 0o777, true);
+    }
+}
+file_put_contents($out.'/assets/findings/index.json', encode($index));
+foreach ($files as $slug => $file) {
+    file_put_contents($out.'/assets/findings/repos/'.$slug.'.json', encode($file));
+}
+foreach ($repos as $rank => $repo) {
+    file_put_contents($out.'/_findings/'.$repo['slug'].'.md', page($repo, $rank + 1));
+}
+// Yesterday's files of repositories, and avatars of owners, that have no
+// finding today; each directory read with its own extension, so a
+// repository named notes.md keeps its file.
+foreach (['/assets/findings/repos' => '.json', '/_findings' => '.md'] as $dir => $extension) {
+    foreach (glob($out.$dir.'/*'.$extension) ?: [] as $file) {
+        if (!isset($files[basename($file, $extension)])) {
+            unlink($file);
+        }
+    }
+}
+foreach (glob($out.'/assets/findings/avatars/*.png') ?: [] as $avatar) {
+    if (!isset($owners[basename($avatar, '.png')])) {
+        unlink($avatar);
+    }
+}
+printf("%d repositories, %d findings (%d fail, %d warn)\n", $index['totals']['repos'], $index['totals']['findings'], $index['totals']['fail'], $index['totals']['warn']);
+
+/**
+ * Where the target came from, in the log's words: composer.json (never its
+ * path on the machine that ran the linter), or the fallback.
+ */
+function targetSource(string $source): string
+{
+    if (str_contains($source, 'composer.json')) {
+        return (string) preg_replace('~^.*composer\.json~s', 'composer.json', $source);
+    }
+
+    return str_starts_with($source, '--php-version') ? 'fallback: no require.php' : $source;
+}
+
+/**
+ * The vendor/name a part is named after, when its clone is still there.
+ */
+function repositoryOf(string $slug, string $corpus): ?string
+{
+    $cut = strpos($slug, '__');
+    if (false === $cut) {
+        return null;
+    }
+    $repo = substr($slug, 0, $cut).'/'.substr($slug, $cut + 2);
+
+    return is_dir($corpus.'/'.$repo.'/.git') ? $repo : null;
+}
+
+/**
+ * @param array{php: string, pcre: string, source: string} $target
+ * @param array<mixed>                                     $results
+ *
+ * @return list<array<string, mixed>>
+ */
+function findings(string $repo, string $corpus, string $clone, string $sha, array $target, array $results): array
+{
+    $root = (string) realpath($clone);
+    $findings = [];
+    foreach ($results as $result) {
+        if (!\is_array($result) || !\is_string($result['pattern'] ?? null) || !\is_string($result['file'] ?? null)) {
+            continue;
+        }
+        $issues = [];
+        $analysis = null;
+        foreach ($result['issues'] ?? [] as $issue) {
+            $level = LEVELS[$issue['severity'] ?? ''] ?? null;
+            if (null === $level) {
+                continue;
+            }
+            $issues[] = [
+                'level' => $level,
+                'rule' => (string) ($issue['issue_id'] ?? ''),
+                'message' => (string) ($issue['message'] ?? ''),
+                'hint' => \is_string($issue['hint'] ?? null) ? $issue['hint'] : null,
+                'docs' => \is_string($issue['docs_url'] ?? null) ? $issue['docs_url'] : null,
+            ];
+            if ('regex.lint.redos' === ($issue['issue_id'] ?? null) && \is_array($issue['analysis'] ?? null)) {
+                $analysis = $issue['analysis'];
+            }
+        }
+        if ([] === $issues) {
+            continue;
+        }
+        usort($issues, static fn (array $a, array $b): int => ['fail' => 0, 'warn' => 1][$a['level']] <=> ['fail' => 0, 'warn' => 1][$b['level']]);
+
+        // bin/corpus-lint runs from the checkout: a part names its files
+        // as corpus/<vendor>/<repo>/…, read here under the corpus given,
+        // wherever its clones really live.
+        $named = $result['file'];
+        $path = realpath(match (true) {
+            str_starts_with($named, '/') => $named,
+            str_starts_with($named, 'corpus/') => $corpus.'/'.substr($named, \strlen('corpus/')),
+            default => \dirname($corpus).'/'.$named,
+        });
+        if (false === $path || !str_starts_with($path, $root.'/')) {
+            continue;
+        }
+        $file = substr($path, \strlen($root) + 1);
+        $pattern = $result['pattern'];
+        $line = (int) ($result['line'] ?? 0);
+        $rewrite = null;
+        foreach ($result['optimizations'] ?? [] as $optimization) {
+            if (\is_array($optimization['optimization'] ?? null) && \is_string($optimization['optimization']['optimized'] ?? null)) {
+                $rewrite = ['optimized' => $optimization['optimization']['optimized'], 'changes' => array_values(array_map('strval', $optimization['optimization']['changes'] ?? []))];
+
+                break;
+            }
+        }
+        $witness = null === $analysis ? null : witness($pattern, $analysis);
+        $findings[] = [
+            'file' => $file,
+            'line' => $line,
+            'column' => (int) ($result['column'] ?? 0),
+            'pattern' => $pattern,
+            'source' => \is_string($result['source'] ?? null) ? $result['source'] : null,
+            'location' => \is_string($result['location'] ?? null) ? $result['location'] : null,
+            'level' => $issues[0]['level'],
+            'issues' => $issues,
+            'rewrite' => $rewrite,
+            'witness' => $witness['shown'] ?? null,
+            'subject' => $witness['raw'] ?? '',
+        ] + snippet($repo, $sha, $path, $file, $line, (int) ($result['column'] ?? 0), $pattern, $target, $analysis);
+    }
+    usort($findings, static fn (array $a, array $b): int => [$a['file'], $a['line'], $a['column'], $a['pattern']] <=> [$b['file'], $b['line'], $b['column'], $b['pattern']]);
+
+    // The id hashes the file and the pattern: a line added above keeps the
+    // link. The same pattern twice in a file counts its occurrences.
+    $seen = [];
+    foreach ($findings as $i => $finding) {
+        $id = 'f-'.substr(sha1($finding['file']."\0".$finding['pattern']), 0, 10);
+        $seen[$id] = ($seen[$id] ?? 0) + 1;
+        $findings[$i] = ['id' => $seen[$id] > 1 ? $id.'-'.$seen[$id] : $id] + $finding;
+    }
+
+    return array_values($findings);
+}
+
+/**
+ * The witness of a proven ReDoS: as the analysis spells it, how many
+ * pumps, where the replay gave up, and the raw string the text field gets.
+ *
+ * @param array<mixed> $analysis
+ *
+ * @return array{shown: array<string, mixed>, raw: string}|null
+ */
+function witness(string $pattern, array $analysis): ?array
+{
+    $spelled = $analysis['witness'] ?? null;
+    if (!\is_array($spelled)) {
+        return null;
+    }
+    // The text field gets the witness the card spells: rebuilt raw here,
+    // and dropped when the two do not say the same string.
+    $built = Regex::create()->redos($pattern)->witness;
+    if (null === $built || $built->toArray() !== ['prefix' => $spelled['prefix'] ?? null, 'pump' => $spelled['pump'] ?? null, 'suffix' => $spelled['suffix'] ?? null]) {
+        return null;
+    }
+    $length = null;
+    foreach ($analysis['confirmation']['samples'] ?? [] as $sample) {
+        if (\is_array($sample) && \is_string($sample['preg_error'] ?? null)) {
+            $length = (int) $sample['input_length'];
+
+            break;
+        }
+    }
+
+    // The replay gave up under the library's own limit, lower than PHP's:
+    // the text field gets four times the pumps it needed, so a run in the
+    // playground, on PHP's default limit, gives up too. Without a replay,
+    // thirty pumps; never past what the text field takes.
+    $fixed = \strlen($built->prefix) + \strlen($built->suffix);
+    $pump = max(1, \strlen($built->pump));
+    $n = null === $length ? WITNESS_REPS : max(1, intdiv($length - $fixed, $pump)) * SUBJECT_FACTOR;
+    $n = min($n, intdiv(SUBJECT_CAP - $fixed, $pump));
+
+    return [
+        'shown' => [
+            'prefix' => (string) $spelled['prefix'],
+            'pump' => (string) $spelled['pump'],
+            'suffix' => (string) $spelled['suffix'],
+            'n' => $n,
+            'length' => $length,
+            'pcre' => explode(' ', (string) ($analysis['pcre_version'] ?? \PCRE_VERSION))[0],
+            'limit' => (int) ($analysis['confirmation']['backtrack_limit'] ?? 0),
+        ],
+        'raw' => $built->build($n),
+    ];
+}
+
+/**
+ * Three lines on each side of the finding, at the clone's commit, the
+ * pattern's literal in the token colors of the pattern field when it
+ * stands on the line as written.
+ *
+ * @param array{php: string, pcre: string, source: string} $target
+ * @param array<mixed>|null                                $analysis
+ *
+ * @return array{permalink: string, snippet: list<array{number: int, focus: bool, runs: list<array{string, string}>}>}
+ */
+function snippet(string $repo, string $sha, string $path, string $file, int $line, int $column, string $pattern, array $target, ?array $analysis): array
+{
+    $source = (string) file_get_contents($path);
+    $lines = explode("\n", $source);
+    $first = max(1, $line - CONTEXT);
+    $last = min(\count($lines), $line + CONTEXT);
+    $literal = locate($source, $line, $column, $pattern);
+    $snippet = [];
+    for ($number = $first; $number <= $last; ++$number) {
+        $text = rtrim($lines[$number - 1], "\r");
+        $focus = $number === $line;
+        $snippet[] = [
+            'number' => $number,
+            'focus' => $focus,
+            'runs' => $focus && null !== $literal ? literalRuns($text, $literal, $pattern, $target, $analysis['hotspots'] ?? []) : [[$text, '']],
+        ];
+    }
+
+    return [
+        'permalink' => \sprintf('https://github.com/%s/blob/%s/%s#L%d-L%d', $repo, $sha, implode('/', array_map('rawurlencode', explode('/', $file))), $first, $last),
+        'snippet' => $snippet,
+    ];
+}
+
+/**
+ * The PHP string literal on the line whose value is the pattern: its byte
+ * span in the line and, byte for byte, which byte of the pattern each byte
+ * of the literal spells. The literal at the column the linter names wins
+ * over another spelling the same pattern on the line (a str_contains()
+ * argument, a second call). Null when the pattern is not written there as
+ * one literal (a constant, a concatenation, a template).
+ *
+ * @return array{start: int, end: int, map: array<int, int>}|null
+ */
+function locate(string $source, int $line, int $column, string $pattern): ?array
+{
+    $offset = 0;
+    $lineStart = lineOffset($source, $line);
+    $found = null;
+    foreach (@token_get_all($source) as $token) {
+        $text = \is_array($token) ? $token[1] : $token;
+        if (\is_array($token) && \T_CONSTANT_ENCAPSED_STRING === $token[0] && $token[2] === $line && !str_contains($text, "\n")) {
+            $decoded = decodeLiteral($text);
+            if (null !== $decoded && $decoded['value'] === $pattern) {
+                $literal = ['start' => $offset - $lineStart, 'end' => $offset - $lineStart + \strlen($text), 'map' => $decoded['map']];
+                if ($literal['start'] + 1 === $column) {
+                    return $literal;
+                }
+                $found ??= $literal;
+            }
+        }
+        $offset += \strlen($text);
+    }
+
+    return $found;
+}
+
+function lineOffset(string $source, int $line): int
+{
+    $offset = 0;
+    for ($i = 1; $i < $line; ++$i) {
+        $next = strpos($source, "\n", $offset);
+        if (false === $next) {
+            return \strlen($source);
+        }
+        $offset = $next + 1;
+    }
+
+    return $offset;
+}
+
+/**
+ * A single- or double-quoted literal's value, and for each byte of the
+ * literal (quotes excluded) the byte of the value it spells. A literal
+ * that interpolates is not read.
+ *
+ * @return array{value: string, map: array<int, int>}|null
+ */
+function decodeLiteral(string $literal): ?array
+{
+    $quote = $literal[0];
+    $body = substr($literal, 1, -1);
+    $value = '';
+    $map = [];
+    $length = \strlen($body);
+    for ($i = 0; $i < $length; ++$i) {
+        $char = $body[$i];
+        $next = $body[$i + 1] ?? '';
+        if ("'" === $quote) {
+            if ('\\' === $char && ('\\' === $next || "'" === $next)) {
+                $map[$i + 1] = $map[$i + 2] = \strlen($value);
+                $value .= $next;
+                ++$i;
+
+                continue;
+            }
+        } else {
+            if ('$' === $char && 1 === preg_match('/[A-Za-z_{]/', $next)) {
+                return null;
+            }
+            if ('\\' === $char && 1 === preg_match('/^(?:[\\\\"$nrtvef]|[0-7]{1,3}|x[0-9A-Fa-f]{1,2})/', substr($body, $i + 1), $escape)) {
+                $spelled = match ($escape[0]) {
+                    '$', '"', '\\' => $escape[0],
+                    'e' => "\e",
+                    default => stripcslashes('\\'.$escape[0]),
+                };
+                for ($k = 0; $k <= \strlen($escape[0]); ++$k) {
+                    $map[$i + 1 + $k] = \strlen($value);
+                }
+                $value .= $spelled;
+                $i += \strlen($escape[0]);
+
+                continue;
+            }
+        }
+        $map[$i + 1] = \strlen($value);
+        $value .= $char;
+    }
+
+    return ['value' => $value, 'map' => $map];
+}
+
+/**
+ * The finding line as runs of text and classes: the code as it is, the
+ * literal marked, each byte of it in the token color of the pattern byte
+ * it spells, a ReDoS hotspot marked on top.
+ *
+ * @param array{start: int, end: int, map: array<int, int>} $literal
+ * @param array{php: string, pcre: string, source: string} $target
+ * @param array<mixed>                                      $hotspots
+ *
+ * @return list<array{string, string}>
+ */
+function literalRuns(string $line, array $literal, string $pattern, array $target, array $hotspots): array
+{
+    $analyze = phpregex_playground_analyze(['regex' => $pattern, 'subject' => '', 'target' => ['php' => $target['php'], 'pcre' => $target['pcre']]]);
+    $delimited = \is_array($analyze['delimited'] ?? null) ? $analyze['delimited'] : ['bodyStart' => 0, 'bodyEnd' => \strlen($pattern)];
+    $bodyStart = (int) $delimited['bodyStart'];
+    $bodyEnd = (int) $delimited['bodyEnd'];
+    $tokens = \is_array($analyze['tokens'] ?? null) ? $analyze['tokens'] : [];
+    $classOf = static function (int $byte) use ($tokens, $bodyStart, $bodyEnd, $hotspots): string {
+        $classes = ['pg-snippet-pattern'];
+        if ($byte < $bodyStart || $byte === $bodyEnd) {
+            $classes[] = 'pg-tok-meta';
+        } elseif ($byte > $bodyEnd) {
+            $classes[] = 'pg-tok-flag';
+        } else {
+            foreach ($tokens as [$start, $end, $type]) {
+                if ($byte - $bodyStart >= $start && $byte - $bodyStart < $end) {
+                    $classes[] = 'pg-tok-'.$type;
+
+                    break;
+                }
+            }
+            foreach ($hotspots as $hotspot) {
+                if (\is_array($hotspot) && $byte - $bodyStart >= (int) $hotspot['start'] && $byte - $bodyStart < (int) $hotspot['end']) {
+                    $classes[] = 'pg-snippet-hot';
+
+                    break;
+                }
+            }
+        }
+
+        return implode(' ', $classes);
+    };
+
+    $runs = [];
+    $push = static function (string $text, string $class) use (&$runs): void {
+        if ('' === $text) {
+            return;
+        }
+        $last = \count($runs) - 1;
+        if ($last >= 0 && $runs[$last][1] === $class) {
+            $runs[$last][0] .= $text;
+        } else {
+            $runs[] = [$text, $class];
+        }
+    };
+    $push(substr($line, 0, $literal['start']), '');
+    for ($i = $literal['start']; $i < $literal['end']; ++$i) {
+        $inner = $i - $literal['start'];
+        $push($line[$i], isset($literal['map'][$inner]) ? $classOf($literal['map'][$inner]) : 'pg-snippet-pattern pg-snippet-quote');
+    }
+    $push(substr($line, $literal['end']), '');
+
+    return $runs;
+}
+
+/**
+ * @return array{avatar: string, profile: string}
+ */
+function owner(string $login, string $out, bool $offline): array
+{
+    $path = '/assets/findings/avatars/'.$login.'.png';
+    $size = is_file($out.$path) ? @getimagesize($out.$path) : false;
+    if (false === $size || AVATAR !== $size[0] || AVATAR !== $size[1]) {
+        if (false === $size && $offline) {
+            refuse($login, \sprintf('the avatar %s is missing or unreadable: run the report online once.', $path));
+        }
+        // GitHub answers a JPEG or a PNG of the size it likes: the site
+        // keeps one format, a PNG at twice the size the list draws it.
+        $bytes = false === $size ? @file_get_contents('https://github.com/'.rawurlencode($login).'.png?size='.AVATAR) : file_get_contents($out.$path);
+        $image = false === $bytes || !\function_exists('imagecreatefromstring') ? false : @imagecreatefromstring($bytes);
+        $scaled = false === $image ? false : imagescale($image, AVATAR, AVATAR);
+        if (false === $scaled) {
+            refuse($login, 'the avatar could not be downloaded and read (the report needs GD).');
+        }
+        if (!is_dir(\dirname($out.$path))) {
+            mkdir(\dirname($out.$path), 0o777, true);
+        }
+        imagepng($scaled, $out.$path, 9);
+    }
+
+    return ['avatar' => $path, 'profile' => 'https://github.com/'.$login];
+}
+
+/**
+ * @param array<string, mixed> $repo
+ */
+function page(array $repo, int $rank): string
+{
+    $quote = static fn (string $text): string => '"'.addcslashes($text, '"\\').'"';
+    [$vendor, $name] = explode('/', (string) $repo['repo'], 2);
+    $count = (int) $repo['findings'];
+    $plural = static fn (int $n, string $word): string => $n.' '.$word.(1 === $n ? '' : 's');
+
+    return "---\nlayout: landing\n"
+        .'title: '.$quote($repo['repo'].': '.$plural($count, 'regex finding'))."\n"
+        .'description: '.$quote(\sprintf('PHPRegex on %s: %s and %s in its regular expressions, judged for PHP %s and PCRE2 %s.', $repo['repo'], $plural((int) $repo['fail'], 'failure'), $plural((int) $repo['warn'], 'warning'), $repo['target']['php'], $repo['target']['pcre']))."\n"
+        .'permalink: /findings/'.$vendor.'/'.$name."/\n"
+        .'findings_repo: '.$repo['repo']."\n"
+        .'findings_slug: '.$repo['slug']."\n"
+        .'findings_count: '.$count."\n"
+        .'findings_fail: '.$repo['fail']."\n"
+        .'findings_warn: '.$repo['warn']."\n"
+        .'findings_php: '.$quote((string) $repo['target']['php'])."\n"
+        .'findings_pcre: '.$quote((string) $repo['target']['pcre'])."\n"
+        .'findings_committed: '.$repo['committed']."\n"
+        .'findings_rank: '.$rank."\n"
+        .'image: '.SOCIAL."\n"
+        .'image_alt: '.$quote(SOCIAL_ALT)."\n"
+        ."---\n\n{% include finding.html %}\n";
+}
+
+function git(string $dir, string ...$arguments): string
+{
+    $process = proc_open(['git', '-C', $dir, ...$arguments], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+    \assert(\is_resource($process));
+    $stdout = (string) stream_get_contents($pipes[1]);
+    stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    if (0 !== proc_close($process)) {
+        refuse($dir, 'git '.implode(' ', $arguments).' failed.');
+    }
+
+    return trim($stdout);
+}
+
+/**
+ * @param array<string, mixed> $value
+ */
+function encode(array $value): string
+{
+    return json_encode($value, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_THROW_ON_ERROR)."\n";
+}
+
+function refuse(string $what, string $message): never
+{
+    fwrite(\STDERR, $what.': '.$message."\n");
+    exit(1);
+}
