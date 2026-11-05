@@ -46,6 +46,8 @@ final class PrivacyPageTest extends TestCase
         $this->assertStringContainsString('No cookie', $page);
         $this->assertStringContainsString('a cookieless request reaches Google with the page path, never what you type', $page);
         $this->assertStringContainsString('14 months', $page);
+        $this->assertStringContainsString('event-level data', $page, 'The retention setting covers event-level data, not the aggregated reports.');
+        $this->assertStringContainsString('the first time you ask it for an answer', $page, 'Typing asks for an answer as Run does: the engine may download then.');
         $this->assertStringContainsString('Google Signals', $page);
         $this->assertStringContainsString('Nothing you type leaves your browser', $page, 'The chip in the playground and the page say one thing.');
         $this->assertStringNotContainsString('by name only', $page, 'The events carry details: the page says which.');
