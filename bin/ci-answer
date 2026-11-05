@@ -178,7 +178,9 @@ while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
         # landing on it. When the base landed, GitHub's record of the
         # branch's pushes says (a commit's own date is when it was made, and
         # a commit pushed straight to the branch may land long after); past
-        # the record's ninety days nothing says, and no run answers.
+        # the record's ninety days nothing says, and no run answers. Both
+        # times are to the second, so a run created in the second the base
+        # landed may have started before it, and is no evidence either.
         if [ -z "$pushes_read" ]; then
             # Unread, the record is no evidence: the merge stays unanswered,
             # and stderr says why, so the refusal is not taken for the change.
@@ -193,7 +195,7 @@ while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
         landed=$(awk -v base="$base" '$1 == base { print $2; exit }' <<< "$pushes")
         answer=""
         if [ -n "$landed" ]; then
-            answer=$(gh run list --commit "$pull_request_head" --workflow "$workflow" --event pull_request --json conclusion,status,createdAt --jq "[.[] | select(.createdAt >= \"$landed\")][0] // empty | \"\\(.status) \\(.conclusion)\"" 2>/dev/null || true)
+            answer=$(gh run list --commit "$pull_request_head" --workflow "$workflow" --event pull_request --json conclusion,status,createdAt --jq "[.[] | select(.createdAt > \"$landed\")][0] // empty | \"\\(.status) \\(.conclusion)\"" 2>/dev/null || true)
         fi
         if [ -n "$answer" ]; then
             echo "run $(git rev-parse --short "$pull_request_head") $answer"

@@ -395,6 +395,24 @@ final class CiAnswerTest extends TestCase
     }
 
     /**
+     * Both times are to the second: a run created in the second the base
+     * was pushed may have started before it, so it is no evidence.
+     */
+    #[Test]
+    public function test_a_pull_request_run_created_in_the_second_its_base_landed_does_not_answer(): void
+    {
+        $code = $this->commitFiles(['src/A.php' => 'a']);
+        $this->ranOn($code, 'tests.yml', 'completed success');
+        $pullRequest = $this->branchCommit('feature', ['src/B.php' => 'b']);
+        $base = $this->commitFiles(['docs/guide.md' => 'prose']);
+        $this->pushes[$base] = '2999-01-01T00:00:00Z';
+        $this->ranOn($pullRequest, 'tests.yml', 'completed success', 'pull_request', '2999-01-01T00:00:00Z');
+        $merge = $this->merge('feature');
+
+        $this->assertSame('unread '.$this->short($merge).' src/B.php', $this->answer('tests.yml'));
+    }
+
+    /**
      * GitHub keeps the record of a branch's pushes ninety days: past it,
      * nothing says which base a pull request run merged, so the run does
      * not answer for the merge.
