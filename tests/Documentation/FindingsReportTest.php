@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Tests\Support\PlaygroundDriver;
+use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
@@ -85,7 +86,7 @@ final class FindingsReportTest extends TestCase
 
     protected function tearDown(): void
     {
-        shell_exec('rm -rf '.escapeshellarg($this->dir));
+        TemporaryDirectory::remove($this->dir);
     }
 
     #[Test]
