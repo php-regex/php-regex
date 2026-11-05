@@ -31,7 +31,10 @@
     var query = input.value.trim().toLowerCase();
     var shown = 0;
     rows.forEach(function (row) {
-      var match = !query || row.textContent.toLowerCase().indexOf(query) !== -1;
+      // The directory narrows by the project's name, not by the whole
+      // row: a PHP version is not a filter, and every row carries one.
+      var name = row.querySelector('.projects-index-name');
+      var match = !query || (name && name.textContent.toLowerCase().indexOf(query) !== -1);
       row.hidden = !match;
       shown += match ? 1 : 0;
     });

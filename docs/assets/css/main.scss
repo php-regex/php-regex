@@ -2958,13 +2958,35 @@ a:focus-visible .article-nav-arrow {
 .projects-index-fail.is-zero,
 .projects-index-warn.is-zero {
   color: var(--ink-soft);
-  opacity: .55;
 }
 .projects-index-engine {
   font-family: var(--font-mono);
   font-size: .74rem;
   color: var(--ink-soft);
   white-space: nowrap;
+}
+/* On a phone, a name wraps instead of ellipsizing into its neighbours:
+   the counts take their own line under it, and two projects of one owner
+   stay tellable apart. */
+@media (max-width: 479px) {
+  .projects-index a {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+  }
+  .projects-index-name {
+    grid-column: 2;
+    grid-row: 1;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .projects-index-avatar {
+    grid-row: 1 / 3;
+    align-self: start;
+  }
+  .projects-index-counts {
+    grid-column: 2;
+    grid-row: 2;
+  }
 }
 @media (max-width: 639px) {
   .projects-index a {

@@ -14,7 +14,7 @@ projects_index: true
 <div class="page-filter">
   <label class="visually-hidden" for="projects-filter-input">Filter the projects</label>
   <input type="search" id="projects-filter-input" placeholder="Filter by owner or repository — e.g. symfony, moodle" autocomplete="off" spellcheck="false">
-  <span class="page-count"></span>
+  <span class="page-count" role="status"></span>
 </div>
 <p class="page-empty" role="status" hidden>No project matches — try a shorter fragment, or press Escape to see them all again.</p>
 
