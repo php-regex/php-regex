@@ -1,0 +1,23 @@
+{% comment %}
+  One repository's page, /findings/<vendor>/<repo>/: what the linter
+  reports on its regular expressions, judged for the PHP its own
+  composer.json requires, then the playground opened on those findings.
+  The page is rewritten every day by bin/findings-report; its findings
+  are fetched from /assets/findings/repos/.
+{% endcomment %}
+<div class="hero hero-playground hero-finding">
+  <div class="hero-inner">
+    <header class="finding-head">
+      <p class="finding-kicker"><a href="/findings/">Findings</a></p>
+      <h1 class="finding-title">{{ page.findings_repo }}</h1>
+      <p class="finding-meta">
+        <span>{{ page.findings_count }} regex finding{% if page.findings_count != 1 %}s{% endif %}: {{ page.findings_fail }} FAIL, {{ page.findings_warn }} WARN</span>
+        <span class="finding-meta-sep" aria-hidden="true">·</span>
+        <span>judged for PHP {{ page.findings_php }} · PCRE2 {{ page.findings_pcre }}</span>
+        <span class="finding-meta-sep" aria-hidden="true">·</span>
+        <span>code as of {{ page.findings_committed }}</span>
+      </p>
+    </header>
+    {% include playground.html findings_repo=page.findings_repo %}
+  </div>
+</div>

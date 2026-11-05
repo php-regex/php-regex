@@ -41,7 +41,7 @@ final class SocialImageVersionTest extends TestCase
         preg_match_all('/<meta (?:property|name)="(og:image|twitter:image)" content="([^"]*)">/', $head, $images, \PREG_SET_ORDER);
         $this->assertCount(2, $images);
         foreach ($images as [, $name, $content]) {
-            $this->assertSame("{{ '/assets/img/social.png' | absolute_url }}?v={{ head_image_version }}", $content, $name);
+            $this->assertSame("{{ page.image | default: '/assets/img/social.png' | absolute_url }}?v={{ head_image_version }}", $content, $name.': a page may name its own card, the site\'s stays the default.');
         }
     }
 }

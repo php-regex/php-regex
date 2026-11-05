@@ -23,6 +23,12 @@ collections:
   articles:
     output: true
     permalink: /blog/:title/
+  # Findings: what the linter reports on the corpus of open-source
+  # projects, one page per repository at /findings/<vendor>/<repo>/ (each
+  # page names its own permalink), rewritten daily by bin/findings-report.
+  # No feed: pages rewritten every day would only be noise in a reader.
+  findings:
+    output: true
 
 feed:
   collections:

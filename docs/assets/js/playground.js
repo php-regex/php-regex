@@ -60,6 +60,8 @@
   } catch (error) {
     sample = null;
   }
+  // A repository's page of findings names that repository.
+  var pageRepo = root.getAttribute('data-findings-repo') || '';
 
   var encoder = new TextEncoder();
   function byteLength(text) {
@@ -105,6 +107,35 @@
       diagnostics: root.querySelector('#pg-tab-diagnostics .pg-tab-badge'),
       redos: root.querySelector('#pg-tab-redos .pg-tab-badge'),
     },
+    sources: root.querySelectorAll('.pg-source-option'),
+    examplesList: root.querySelector('.pg-examples'),
+    exampleItems: root.querySelectorAll('.pg-examples > li:not(:first-child):not(.pg-findings-panel)'),
+    findingsPanel: root.querySelector('.pg-findings-panel'),
+    findingsBrowse: root.querySelector('.pg-findings-browse'),
+    findingsCount: root.querySelector('.pg-findings-count'),
+    findingsFilter: root.querySelector('.pg-findings-filter'),
+    findingsTree: root.querySelector('.pg-findings-tree'),
+    findingsEmpty: root.querySelector('.pg-findings-empty'),
+    textField: root.querySelector('.pg-field-text'),
+    findingCard: root.querySelector('.pg-finding-card'),
+    findingNotice: root.querySelector('.pg-finding-notice'),
+    findingAvatar: root.querySelector('.pg-finding-avatar'),
+    findingRepo: root.querySelector('.pg-finding-repo'),
+    findingTarget: root.querySelector('.pg-finding-target'),
+    permalink: root.querySelector('.pg-snippet-permalink'),
+    snippetFile: root.querySelector('.pg-snippet-file'),
+    snippet: root.querySelector('.pg-snippet'),
+    findingIssues: root.querySelector('.pg-finding-issues'),
+    rewrite: root.querySelector('.pg-rewrite'),
+    rewriteDiff: root.querySelector('.pg-rewrite-diff'),
+    witness: root.querySelector('.pg-witness'),
+    outcome: root.querySelector('.pg-finding-outcome'),
+    findingCopy: root.querySelector('.pg-finding-copy'),
+    shareCopy: root.querySelector('.pg-share-copy'),
+    shareNative: root.querySelector('.pg-share-native'),
+    findingLeft: root.querySelector('.pg-finding-left'),
+    findingLeftText: root.querySelector('.pg-finding-left-text'),
+    findingBack: root.querySelector('.pg-finding-back'),
   };
 
   // --- state ---------------------------------------------------------------
@@ -118,6 +149,9 @@
   var failures = {};        // request key -> consecutive failures
   var booted = false;
   var current = null;       // the last payload rendered: { payload, regex, subject, version, prerendered }
+  var activeFinding = null; // the finding the window shows, read-only, or null in the sandbox
+  var lastFinding = null;   // "slug#id" of the last finding shown: lit in the list
+  var pageTouched = false;  // a gesture came before a repository page's finding arrived
   var lintFor = null;       // the regex the diagnostics panel's lint belongs to
   var lastLint = null;      // those findings, for the pattern mirror
   var notices = [];         // what the engine raised during this run (notices, warnings, deprecations), each once
@@ -3581,6 +3615,7 @@
     option.addEventListener('click', function () {
       stopStroll();
       setVoice(option.getAttribute('data-voice'), false, true);
+      track('voice_toggled', { voice: voice });
     });
     option.addEventListener('keydown', function (event) {
       if (event.altKey || event.ctrlKey || event.metaKey || ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].indexOf(event.key) === -1) {
@@ -3589,9 +3624,666 @@
       event.preventDefault();
       stopStroll();
       setVoice(voice === 'tree' ? 'prose' : 'tree', true, true);
+      track('voice_toggled', { voice: voice });
     });
   });
   var announceEngineError = false; // after "Try it": the engine's own words, once
+
+  // --- findings ------------------------------------------------------------
+
+  // What the linter reports on the corpus of open-source projects: an
+  // index of the repositories, fetched from the site itself when the list
+  // opens, and each repository's findings, fetched when it opens. All of
+  // it was written by bin/findings-report from the last corpus run;
+  // nothing here asks GitHub. In a finding the text field gives its place
+  // to a card that cannot be typed into. Opening a finding is a run
+  // gesture: the engine answers it, as it answers an example.
+
+  var findingsIndex = null;   // the index, once fetched
+  var findingsLoading = null; // the promise of the index
+  var repoFiles = {};         // slug -> the promise of that repository's findings
+  var activeRepo = null;      // the repository of the finding the window shows
+  var filterTimer = null;
+
+  function fetchJson(request) {
+    return request.then(function (response) {
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+      }
+      return response.json();
+    });
+  }
+
+  function loadIndex() {
+    if (!findingsLoading) {
+      findingsLoading = fetchJson(fetch('/assets/findings/index.json')).then(function (index) {
+        findingsIndex = index;
+        el.findingsCount.textContent = String(index.repos.length);
+        buildTree();
+        return index;
+      });
+      findingsLoading.catch(function () {
+        findingsLoading = null;
+        el.findingsEmpty.textContent = 'The findings could not be loaded; try again later.';
+        el.findingsEmpty.hidden = false;
+      });
+    }
+    return findingsLoading;
+  }
+
+  function loadRepo(slug) {
+    if (!repoFiles[slug]) {
+      repoFiles[slug] = fetchJson(fetch('/assets/findings/repos/' + slug + '.json'));
+      repoFiles[slug].catch(function () {
+        delete repoFiles[slug];
+      });
+    }
+    return repoFiles[slug];
+  }
+
+  function repoNamed(name) {
+    var repos = findingsIndex ? findingsIndex.repos : [];
+    for (var i = 0; i < repos.length; i += 1) {
+      if (repos[i].repo === name || repos[i].slug === name) {
+        return repos[i];
+      }
+    }
+    return null;
+  }
+
+  function findingUrl(repo, finding) {
+    return window.location.origin + '/findings/' + repo.repo + '/#' + finding.id;
+  }
+
+  // The analytics hear a gesture by its name, with a finding's id at
+  // most: never a pattern, never a text. Without the analytics (outside
+  // production, or blocked), nothing is said.
+  function track(name, params) {
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', name, params || {});
+    }
+  }
+
+  // The tree speaks the syntax tree's dialect: each item is the tree item
+  // itself, one tab stop for the whole tree, the arrow keys move between
+  // the items shown. Owners, then their repositories (the engine each was
+  // judged for under its name), then the findings, fetched on opening.
+  function treeItem(level, className) {
+    var item = text('li', 'pg-tree-item ' + className);
+    item.setAttribute('role', 'treeitem');
+    item.setAttribute('aria-level', String(level));
+    item.setAttribute('tabindex', '-1');
+    return item;
+  }
+
+  function treeGroup(item) {
+    var group = text('ul', 'pg-tree-group');
+    group.setAttribute('role', 'group');
+    group.hidden = true;
+    item.setAttribute('aria-expanded', 'false');
+    item.appendChild(group);
+    return group;
+  }
+
+  function buildTree() {
+    clear(el.findingsTree);
+    var owners = [];
+    var byOwner = {};
+    findingsIndex.repos.forEach(function (repo) {
+      if (!byOwner[repo.owner]) {
+        byOwner[repo.owner] = [];
+        owners.push(repo.owner);
+      }
+      byOwner[repo.owner].push(repo);
+    });
+    owners.forEach(function (login) {
+      var item = treeItem(1, 'is-owner');
+      item.setAttribute('data-owner', login);
+      var row = text('span', 'pg-tree-row');
+      var avatar = document.createElement('img');
+      avatar.src = findingsIndex.owners[login].avatar;
+      avatar.alt = '';
+      avatar.width = 20;
+      avatar.height = 20;
+      avatar.loading = 'lazy';
+      row.appendChild(avatar);
+      row.appendChild(text('span', 'pg-tree-name', login));
+      row.appendChild(text('span', 'pg-tree-count', String(byOwner[login].reduce(function (sum, repo) {
+        return sum + repo.findings;
+      }, 0))));
+      item.appendChild(row);
+      var group = treeGroup(item);
+      byOwner[login].forEach(function (repo) {
+        group.appendChild(repoRow(repo));
+      });
+      el.findingsTree.appendChild(item);
+    });
+    var first = el.findingsTree.querySelector('[role="treeitem"]');
+    if (first) {
+      first.setAttribute('tabindex', '0');
+    }
+    markLast();
+    filterTree();
+  }
+
+  function repoRow(repo) {
+    var item = treeItem(2, 'is-repo');
+    item.setAttribute('data-slug', repo.slug);
+    var row = text('span', 'pg-tree-row');
+    row.appendChild(text('span', 'pg-tree-name', repo.repo.split('/')[1]));
+    row.appendChild(text('span', 'pg-tree-count' + (repo.fail ? ' is-fail' : ''), String(repo.findings)));
+    item.appendChild(row);
+    item.appendChild(text('span', 'pg-tree-target', 'PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre));
+    treeGroup(item);
+    return item;
+  }
+
+  function findingRow(repo, finding) {
+    var item = treeItem(3, 'is-finding' + (finding.level === 'fail' ? ' is-fail' : ''));
+    item.setAttribute('data-key', repo.slug + '#' + finding.id);
+    var row = text('span', 'pg-tree-row');
+    row.appendChild(text('span', 'pg-tree-level', finding.level === 'fail' ? 'FAIL' : 'WARN'));
+    row.appendChild(text('span', 'pg-tree-name', finding.file.split('/').pop() + ':' + finding.line));
+    item.appendChild(row);
+    item.appendChild(text('span', 'pg-tree-message', finding.issues[0].message));
+    item.title = finding.file + ':' + finding.line + ' · ' + finding.issues[0].message;
+    return item;
+  }
+
+  function expandItem(item, open) {
+    var group = item.querySelector(':scope > .pg-tree-group');
+    if (!group) {
+      return Promise.resolve();
+    }
+    item.setAttribute('aria-expanded', open ? 'true' : 'false');
+    group.hidden = !open;
+    if (!open && group.querySelector('[tabindex="0"]')) {
+      group.querySelector('[tabindex="0"]').setAttribute('tabindex', '-1');
+      item.setAttribute('tabindex', '0');
+    }
+    var slug = item.getAttribute('data-slug');
+    if (!open || !slug || group.children.length) {
+      return Promise.resolve();
+    }
+    var repo = repoNamed(slug);
+    return loadRepo(slug).then(function (file) {
+      if (!group.children.length) {
+        file.findings.forEach(function (finding) {
+          group.appendChild(findingRow(repo, finding));
+        });
+        markLast();
+      }
+    });
+  }
+
+  // One tab stop for the whole tree, always on an item shown: a filter or
+  // a fold that hides it hands it to the first item left.
+  function keepTabStop() {
+    var stop = el.findingsTree.querySelector('[tabindex="0"]');
+    if (stop && !stop.closest('[hidden]')) {
+      return;
+    }
+    if (stop) {
+      stop.setAttribute('tabindex', '-1');
+    }
+    var first = visibleItems()[0];
+    if (first) {
+      first.setAttribute('tabindex', '0');
+    }
+  }
+
+  function visibleItems() {
+    return Array.prototype.filter.call(el.findingsTree.querySelectorAll('[role="treeitem"]'), function (item) {
+      return !item.closest('[hidden]');
+    });
+  }
+
+  function focusItem(item) {
+    Array.prototype.forEach.call(el.findingsTree.querySelectorAll('[tabindex="0"]'), function (other) {
+      other.setAttribute('tabindex', '-1');
+    });
+    item.setAttribute('tabindex', '0');
+    item.focus();
+  }
+
+  function activateItem(item) {
+    pageTouched = true;
+    var key = item.getAttribute('data-key');
+    if (key) {
+      openFindingKey(key);
+    } else {
+      expandItem(item, item.getAttribute('aria-expanded') !== 'true');
+    }
+  }
+
+  // The arrow keys walk the shown items: down and up in reading order,
+  // right opens an item or steps into it, left closes it or steps out to
+  // its parent, Home and End to the ends, Enter opens.
+  function onTreeKey(event) {
+    var item = event.target.closest('[role="treeitem"]');
+    if (!item || event.altKey || event.ctrlKey || event.metaKey) {
+      return;
+    }
+    var items = visibleItems();
+    var index = items.indexOf(item);
+    var target = null;
+    switch (event.key) {
+      case 'ArrowDown': target = items[Math.min(index + 1, items.length - 1)]; break;
+      case 'ArrowUp': target = items[Math.max(index - 1, 0)]; break;
+      case 'Home': target = items[0]; break;
+      case 'End': target = items[items.length - 1]; break;
+      case 'ArrowRight':
+        if (item.getAttribute('aria-expanded') === 'false') {
+          expandItem(item, true);
+        } else if (item.getAttribute('aria-expanded') === 'true') {
+          target = items[index + 1] || null;
+        }
+        break;
+      case 'ArrowLeft':
+        if (item.getAttribute('aria-expanded') === 'true') {
+          expandItem(item, false);
+        } else {
+          target = item.parentNode.closest('[role="treeitem"]');
+        }
+        break;
+      case 'Enter':
+      case ' ':
+        activateItem(item);
+        break;
+      default: return;
+    }
+    event.preventDefault();
+    if (target) {
+      focusItem(target);
+    }
+  }
+
+  // The filter reads the index alone: an owner, a repository, or a rule
+  // a repository met, without opening any.
+  function filterTree() {
+    if (!findingsIndex) {
+      return;
+    }
+    var query = el.findingsFilter.value.trim().toLowerCase();
+    var shown = 0;
+    Array.prototype.forEach.call(el.findingsTree.children, function (ownerItem) {
+      var any = false;
+      Array.prototype.forEach.call(ownerItem.querySelectorAll('.is-repo'), function (repoItem) {
+        var repo = repoNamed(repoItem.getAttribute('data-slug'));
+        var match = !query || repo.repo.toLowerCase().indexOf(query) !== -1 || repo.rules.some(function (rule) {
+          return rule.toLowerCase().indexOf(query) !== -1;
+        });
+        repoItem.hidden = !match;
+        any = any || match;
+        shown += match ? 1 : 0;
+      });
+      ownerItem.hidden = !any;
+      if (query && any) {
+        expandItem(ownerItem, true);
+      }
+    });
+    el.findingsEmpty.textContent = 'No project matches.';
+    el.findingsEmpty.hidden = shown !== 0;
+    keepTabStop();
+  }
+
+  // The finding the window shows is pressed; the one shown last, outlined:
+  // one click away. Its repository too, while it is closed.
+  function markLast() {
+    var lastSlug = lastFinding ? lastFinding.split('#')[0] : null;
+    Array.prototype.forEach.call(el.findingsTree.querySelectorAll('[role="treeitem"]'), function (item) {
+      var key = item.getAttribute('data-key');
+      var shown = !!activeFinding && key === activeFinding.key;
+      item.setAttribute('aria-selected', shown ? 'true' : 'false');
+      item.classList.toggle('is-last', !shown && ((key && key === lastFinding) || (!key && item.getAttribute('data-slug') === lastSlug)));
+    });
+  }
+
+  function openFindingKey(key) {
+    var cut = key.indexOf('#');
+    var slug = key.slice(0, cut);
+    var id = key.slice(cut + 1);
+    return loadIndex().then(function () {
+      var repo = repoNamed(slug);
+      return repo ? loadRepo(slug).then(function (file) {
+        var finding = file.findings.filter(function (candidate) {
+          return candidate.id === id;
+        })[0];
+        if (finding) {
+          enterFinding(repo, finding, true);
+        }
+      }) : null;
+    });
+  }
+
+  // A repository's own page: its finding from the address, else its
+  // first. The link was the gesture, as a link carrying a pattern is.
+  function openRepoPage(name) {
+    // The finding the link names, read before anything can rewrite the
+    // address; and a gesture made while the data travels wins over it.
+    var wanted = window.location.hash.replace(/^#/, '');
+    setSource('findings', false);
+    setStatus('Loading the findings of ' + name + '…', 'busy');
+    loadIndex().then(function () {
+      var repo = repoNamed(name);
+      if (!repo) {
+        setStatus('The latest run reports nothing on ' + name + '.', 'error');
+        return null;
+      }
+      var ownerItem = el.findingsTree.querySelector('[data-owner="' + repo.owner.replace(/"/g, '') + '"]');
+      if (ownerItem) {
+        expandItem(ownerItem, true);
+      }
+      var repoItem = el.findingsTree.querySelector('[data-slug="' + repo.slug.replace(/"/g, '') + '"]');
+      return (repoItem ? expandItem(repoItem, true) : Promise.resolve()).then(function () {
+        return loadRepo(repo.slug);
+      }).then(function (file) {
+        if (pageTouched) {
+          // The visitor acted first: the window is theirs, at the home's
+          // address, where a pattern may be written.
+          setStatus('', '');
+          try {
+            window.history.replaceState(null, '', '/');
+          } catch (error) {/* the address stays as it was */}
+          return;
+        }
+        var finding = file.findings.filter(function (candidate) {
+          return candidate.id === wanted;
+        })[0];
+        enterFinding(repo, finding || file.findings[0], true);
+        // A link to a finding the latest run no longer reports says so on
+        // the card, which the engine's answers never overwrite.
+        if (wanted && !finding) {
+          el.findingNotice.textContent = 'The finding ' + wanted + ' is not in the latest run; ' + repo.repo + '\'s first finding is shown.';
+          el.findingNotice.hidden = false;
+        }
+      });
+    }).catch(function () {
+      setStatus('The findings could not be loaded; try again later.', 'error');
+    });
+  }
+
+  function enterFinding(repo, finding, run) {
+    stopStroll();
+    activeRepo = repo;
+    activeFinding = finding;
+    finding.key = repo.slug + '#' + finding.id;
+    lastFinding = finding.key;
+    // The project's PHP when the playground offers it; the visitor's own
+    // choice otherwise, left stored as it was.
+    var judged = repo.target.php.split('.').slice(0, 2).join('.');
+    if (VERSIONS.indexOf(judged) !== -1) {
+      chosen = judged;
+      el.version.value = chosen;
+    }
+    el.pattern.value = finding.pattern;
+    el.subject.value = finding.subject;
+    el.textField.hidden = true;
+    el.findingCard.hidden = false;
+    el.findingLeft.hidden = true;
+    el.findingNotice.hidden = true;
+    renderFindingCard(repo, finding);
+    refreshFields();
+    dropSubjectMarks();
+    storeFinding(finding.key);
+    markLast();
+    try {
+      window.history.replaceState(null, '', '/findings/' + repo.repo + '/#' + finding.id);
+    } catch (error) {/* the address stays as it was */}
+    track('finding_opened', { finding_id: finding.id });
+    if (run) {
+      analyzeNow();
+    }
+  }
+
+  function leaveFinding(reason) {
+    if (!activeFinding) {
+      return;
+    }
+    lastFinding = activeFinding.key;
+    activeFinding = null;
+    el.findingCard.hidden = true;
+    el.textField.hidden = false;
+    el.findingLeft.hidden = reason === 'source';
+    el.findingLeftText.textContent = reason === 'edit' ? 'Edited copy, no longer the finding.' : 'A copy of the finding, yours to edit.';
+    try {
+      window.history.replaceState(null, '', '/');
+    } catch (error) {/* the address stays as it was */}
+    markLast();
+  }
+
+  function editCopy() {
+    if (!activeFinding) {
+      return;
+    }
+    el.subject.value = activeFinding.subject;
+    leaveFinding('copy');
+    refreshFields();
+    el.subject.focus();
+    analyzeNow();
+  }
+
+  function renderFindingCard(repo, finding) {
+    var owner = findingsIndex.owners[repo.owner];
+    clear(el.findingAvatar);
+    el.findingAvatar.href = owner.profile;
+    var avatar = document.createElement('img');
+    avatar.src = owner.avatar;
+    avatar.alt = repo.owner + ' on GitHub';
+    avatar.width = 24;
+    avatar.height = 24;
+    el.findingAvatar.appendChild(avatar);
+    el.findingRepo.textContent = repo.repo;
+    el.permalink.href = finding.permalink;
+    el.permalink.textContent = 'View on GitHub at ' + repo.sha.slice(0, 7);
+    el.findingTarget.textContent = 'Judged for PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre
+      + (repo.target.source ? ' (' + repo.target.source + ')' : '') + ' · code as of ' + repo.committed;
+    el.snippetFile.textContent = finding.file + ':' + finding.line + (finding.source ? ' · ' + finding.source : '') + (finding.location ? ' · ' + finding.location : '');
+
+    clear(el.snippet);
+    finding.snippet.forEach(function (line) {
+      var row = text('span', 'pg-snippet-line' + (line.focus ? ' is-focus' : ''));
+      row.appendChild(text('span', 'pg-snippet-number', String(line.number)));
+      line.runs.forEach(function (run) {
+        row.appendChild(run[1] ? text('span', run[1], run[0]) : document.createTextNode(run[0]));
+      });
+      el.snippet.appendChild(row);
+    });
+
+    renderIssues(finding);
+
+    el.rewrite.hidden = !finding.rewrite;
+    clear(el.rewriteDiff);
+    if (finding.rewrite) {
+      el.rewriteDiff.appendChild(text('span', 'pg-fix-del', '- ' + finding.pattern));
+      el.rewriteDiff.appendChild(document.createTextNode('\n'));
+      el.rewriteDiff.appendChild(text('span', 'pg-fix-add', '+ ' + finding.rewrite.optimized));
+      finding.rewrite.changes.forEach(function (change) {
+        el.rewriteDiff.appendChild(document.createTextNode('\n'));
+        el.rewriteDiff.appendChild(text('span', 'pg-rewrite-change', change));
+      });
+    }
+
+    renderWitness(finding);
+    el.shareNative.hidden = typeof navigator.share !== 'function';
+  }
+
+  // The linter's own words, worst first, each with its rule's page on
+  // this site.
+  function renderIssues(finding) {
+    clear(el.findingIssues);
+    finding.issues.forEach(function (issue) {
+      var item = text('li', 'pg-finding-issue-row is-' + issue.level);
+      item.appendChild(text('span', 'pg-finding-level', issue.level === 'fail' ? 'FAIL' : 'WARN'));
+      item.appendChild(text('span', 'pg-finding-message', issue.message));
+      if (issue.hint) {
+        item.appendChild(text('span', 'pg-finding-hint', issue.hint));
+      }
+      if (issue.docs) {
+        var link = text('a', 'pg-finding-rule', issue.rule);
+        link.href = issue.docs;
+        item.appendChild(link);
+      }
+      el.findingIssues.appendChild(item);
+    });
+  }
+
+  // A proven ReDoS: the string that breaks the pattern, as the ReDoS tab
+  // spells it, the repeated part marked; then where the corpus run's
+  // replay gave up, in the log's own sentence.
+  function renderWitness(finding) {
+    clear(el.witness);
+    el.witness.hidden = !finding.witness;
+    el.outcome.hidden = !finding.witness || !finding.witness.length;
+    if (!finding.witness) {
+      return;
+    }
+    el.witness.appendChild(text('span', 'pg-witness-label', 'Witness: '));
+    if (finding.witness.prefix) {
+      el.witness.appendChild(text('code', null, '"' + finding.witness.prefix + '"'));
+      el.witness.appendChild(document.createTextNode(' + '));
+    }
+    el.witness.appendChild(text('code', 'pg-witness-pump', '"' + finding.witness.pump + '"'));
+    el.witness.appendChild(document.createTextNode(' × ' + finding.witness.n));
+    if (finding.witness.suffix) {
+      el.witness.appendChild(document.createTextNode(' + '));
+      el.witness.appendChild(text('code', null, '"' + finding.witness.suffix + '"'));
+    }
+    el.outcome.textContent = 'Replayed on PCRE2 ' + finding.witness.pcre + ' (JIT off, backtrack limit ' + finding.witness.limit + '): preg_match() gives up from length ' + finding.witness.length + '.';
+  }
+
+  el.findingsTree.addEventListener('click', function (event) {
+    var item = event.target.closest('[role="treeitem"]');
+    if (item) {
+      focusItem(item);
+      activateItem(item);
+    }
+  });
+  el.findingsTree.addEventListener('keydown', onTreeKey);
+  el.findingsFilter.addEventListener('input', function () {
+    window.clearTimeout(filterTimer);
+    filterTimer = window.setTimeout(filterTree, 120);
+  });
+  // The widest screens show the list whole; below, a fold above the
+  // fields keeps them near.
+  var wideScreen = window.matchMedia ? window.matchMedia('(min-width: 1280px)') : null;
+  function syncBrowse() {
+    if (wideScreen && wideScreen.matches) {
+      el.findingsBrowse.open = true;
+    }
+  }
+  if (wideScreen) {
+    syncBrowse();
+    if (wideScreen.addEventListener) {
+      wideScreen.addEventListener('change', syncBrowse);
+    }
+  }
+  el.findingCopy.addEventListener('click', editCopy);
+  el.findingBack.addEventListener('click', function () {
+    if (lastFinding) {
+      openFindingKey(lastFinding);
+    }
+  });
+  el.shareCopy.addEventListener('click', function () {
+    if (!activeFinding) {
+      return;
+    }
+    track('share_clicked', { finding_id: activeFinding.id, method: 'copy' });
+    var url = findingUrl(activeRepo, activeFinding);
+    var said = function (words) {
+      el.shareCopy.textContent = words;
+      window.setTimeout(function () {
+        el.shareCopy.textContent = 'Copy link';
+      }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () {
+        said('Copied');
+      }, function () {
+        said(url);
+      });
+    } else {
+      said(url);
+    }
+  });
+  el.shareNative.addEventListener('click', function () {
+    if (!activeFinding || typeof navigator.share !== 'function') {
+      return;
+    }
+    track('share_clicked', { finding_id: activeFinding.id, method: 'native' });
+    navigator.share({ title: activeRepo.repo + ': ' + activeFinding.issues[0].message, url: findingUrl(activeRepo, activeFinding) }).catch(function () {/* the visitor closed the sheet */});
+  });
+
+  // --- the source ----------------------------------------------------------
+
+  // The column shows the examples or the findings: two radios, the arrow
+  // keys move between them. The choice is remembered, and so is the last
+  // finding opened, which the home lights in its list without opening it:
+  // the home stays the tool's face, a repository's page opens its finding.
+  var SOURCE_STORAGE_KEY = 'playground-source';
+  var FINDING_STORAGE_KEY = 'playground-finding';
+  var shownSource = 'examples';
+  var storedSource = null;
+  var storedFinding = null;
+  try { storedSource = localStorage.getItem(SOURCE_STORAGE_KEY); } catch (error) {/* private mode keeps the default */}
+  try { storedFinding = localStorage.getItem(FINDING_STORAGE_KEY); } catch (error) {/* private mode keeps the default */}
+  if (storedSource !== 'findings') {
+    storedSource = 'examples';
+  }
+  if (/^[\w.-]+__[\w.-]+#f-[0-9a-f]{10}(?:-\d+)?$/.test(storedFinding || '')) {
+    lastFinding = storedFinding;
+  } else if (storedFinding !== null) {
+    storedFinding = null;
+    try { localStorage.removeItem(FINDING_STORAGE_KEY); } catch (error) {/* nothing to drop */}
+  }
+
+  function setSource(source, persist) {
+    shownSource = source === 'findings' ? 'findings' : 'examples';
+    var findings = shownSource === 'findings';
+    Array.prototype.forEach.call(el.sources, function (option) {
+      var on = option.getAttribute('data-source') === shownSource;
+      option.setAttribute('aria-checked', on ? 'true' : 'false');
+      option.tabIndex = on ? 0 : -1;
+    });
+    Array.prototype.forEach.call(el.exampleItems, function (item) {
+      item.hidden = findings;
+    });
+    el.findingsPanel.hidden = !findings;
+    el.examplesList.classList.toggle('is-findings', findings);
+    el.examplesList.setAttribute('aria-label', findings ? 'Findings' : 'Examples');
+    if (findings) {
+      loadIndex();
+    }
+    if (persist) {
+      try { localStorage.setItem(SOURCE_STORAGE_KEY, shownSource); } catch (error) {/* the choice simply does not persist */}
+    }
+  }
+
+  function storeFinding(key) {
+    try { localStorage.setItem(FINDING_STORAGE_KEY, key); } catch (error) {/* the choice simply does not persist */}
+  }
+
+  Array.prototype.forEach.call(el.sources, function (option) {
+    option.addEventListener('click', function () {
+      pageTouched = true;
+      setSource(option.getAttribute('data-source'), true);
+      if (shownSource === 'examples') {
+        leaveFinding('source');
+      }
+    });
+    option.addEventListener('keydown', function (event) {
+      if (event.altKey || event.ctrlKey || event.metaKey || ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].indexOf(event.key) === -1) {
+        return;
+      }
+      event.preventDefault();
+      setSource(shownSource === 'examples' ? 'findings' : 'examples', true);
+      Array.prototype.forEach.call(el.sources, function (other) {
+        if (other.getAttribute('data-source') === shownSource) {
+          other.focus();
+        }
+      });
+    });
+  });
 
   // --- the URL hash --------------------------------------------------------
 
@@ -3619,6 +4311,11 @@
   }
 
   function writeHash(request) {
+    // A finding's address never carries a pattern: a link that shows one
+    // pattern under another's card cannot be built.
+    if (activeFinding || window.location.pathname.indexOf('/findings/') === 0) {
+      return;
+    }
     var params = new URLSearchParams();
     params.set('pattern', request.regex);
     params.set('subject', request.subject);
@@ -3639,6 +4336,8 @@
   });
   el.version.addEventListener('change', function () {
     chosen = el.version.value;
+    track('version_changed', { php_version: chosen });
+    pageTouched = true;
     try {
       localStorage.setItem(STORAGE_KEY, chosen);
     } catch (error) {/* the choice simply does not persist */}
@@ -3655,6 +4354,12 @@
     });
     area.addEventListener('input', function () {
       stopStroll();
+      // Editing a finding's pattern leaves the exhibit: what follows is a
+      // copy, back in the sandbox, and its address is the home's.
+      pageTouched = true;
+      if (area === el.pattern && activeFinding) {
+        leaveFinding('edit');
+      }
       // Before the debounce fires: the field must read as it is typed,
       // and a keystroke ends the caret that said it could be.
       if (area === el.pattern) {
@@ -3670,17 +4375,27 @@
       area.previousElementSibling.scrollLeft = area.scrollLeft;
     });
   });
-  el.run.addEventListener('click', analyzeNow);
+  el.run.addEventListener('click', function () {
+    track('run', { trigger: 'button' });
+    pageTouched = true;
+    analyzeNow();
+  });
   // Ctrl/⌘+Enter runs from anywhere in the window, the fields included.
   root.addEventListener('keydown', function (event) {
     if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
       event.preventDefault();
+      track('run', { trigger: 'keyboard' });
+      pageTouched = true;
       analyzeNow();
     }
   });
 
   Array.prototype.forEach.call(el.examples, function (chip) {
     chip.addEventListener('click', function () {
+      var exampleName = chip.querySelector('.pg-example-name');
+      track('example_loaded', { example_name: exampleName ? exampleName.textContent : '' });
+      pageTouched = true;
+      leaveFinding('source');
       el.pattern.value = chip.getAttribute('data-regex') || '';
       el.subject.value = chip.getAttribute('data-subject') || '';
       refreshFields();
@@ -3863,7 +4578,11 @@
   // --- first paint ---------------------------------------------------------
 
   var fromHash = readHash();
-  if (fromHash) {
+  // A findings page reached with a pattern in its hash is a sandbox link:
+  // it opens at home, never under a finding's card.
+  if (pageRepo && readHash()) {
+    window.location.replace('/' + window.location.hash);
+  } else if (fromHash) {
     el.pattern.value = fromHash.regex;
     el.subject.value = fromHash.subject;
     chosen = fromHash.version;
@@ -3873,12 +4592,17 @@
     el.diagnostics.appendChild(text('li', 'pg-diag is-empty', 'Loading…'));
     setState('Loading…', 'busy');
     analyzeNow();
+  } else if (pageRepo) {
+    openRepoPage(pageRepo);
   } else if (sample && sample.analyze && sample.default) {
     el.pattern.value = sample.default.regex;
     el.subject.value = sample.default.subject;
     refreshFields();
     render(sample.analyze, { regex: sample.default.regex, subject: sample.default.subject, version: chosen }, true);
     renderLint(sample.lint ? sample.lint.lint : null);
+    // The home comes back to the list the visitor chose, the last finding
+    // lit in it: one click away, never opened unasked.
+    setSource(storedSource, false);
     startStroll();
   } else {
     refreshFields();

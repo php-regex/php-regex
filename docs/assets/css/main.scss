@@ -6356,3 +6356,476 @@ body.search-open {
     background: CanvasText;
   }
 }
+
+/* --- Findings: the column's second list, what the linter reports on the
+   corpus of open-source projects, filtered and walked as a tree; the card
+   that takes the text field's place in a finding; the head of a
+   repository's page. The voice toggle's dialect, the syntax tree's rows,
+   the field's marks, the house tokens: nothing new to learn. --- */
+.pg-source {
+  display: inline-flex;
+  padding: .15rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+}
+.pg-source-option {
+  min-height: 1.6rem;
+  padding: .2rem .7rem;
+  font-family: var(--font-body);
+  font-size: .76rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+.pg-source-option:hover {
+  color: var(--ink);
+}
+.pg-source-option:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+.pg-source-option[aria-checked="true"] {
+  color: var(--ink);
+  background: var(--amber-tint);
+  box-shadow: inset 0 0 0 1px var(--amber);
+}
+/* In Findings, the row of examples gives its width to the list: it
+   wraps under the control instead of scrolling sideways. */
+.pg-examples.is-findings {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+.pg-findings-panel {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.pg-findings-panel[hidden] {
+  display: none;
+}
+.pg-findings-browse {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+}
+.pg-findings-browse > summary {
+  padding: .45rem .65rem;
+  font-size: .8rem;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+}
+.pg-findings-browse[open] > summary {
+  border-bottom: 1px solid var(--line-soft);
+}
+.pg-findings-filter {
+  box-sizing: border-box;
+  width: calc(100% - 1rem);
+  margin: .5rem;
+  padding: .35rem .55rem;
+  font-family: var(--font-mono);
+  font-size: .76rem;
+  color: var(--ink);
+  background: var(--code-bg);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+}
+.pg-findings-filter:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+.pg-findings-tree,
+.pg-tree-group {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pg-findings-tree {
+  max-height: 22rem;
+  overflow-y: auto;
+  padding: 0 .3rem .3rem;
+}
+.pg-tree-group[hidden],
+.pg-tree-item[hidden] {
+  display: none;
+}
+.pg-tree-item {
+  margin: 0;
+  font-size: .78rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.pg-tree-item:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: -2px;
+}
+.pg-tree-row {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .25rem .35rem;
+  border-radius: var(--radius-s);
+}
+.pg-tree-item > .pg-tree-row:hover {
+  color: var(--ink);
+  background: var(--code-bg);
+}
+.pg-tree-row img {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--line-soft);
+  border-radius: 50%;
+}
+.pg-tree-item.is-repo > .pg-tree-row,
+.pg-tree-item.is-repo > .pg-tree-target {
+  padding-left: 1.35rem;
+}
+.pg-tree-item.is-finding > .pg-tree-row,
+.pg-tree-item.is-finding > .pg-tree-message {
+  padding-left: 2.2rem;
+}
+.pg-tree-name {
+  overflow: hidden;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pg-tree-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: .7rem;
+}
+.pg-tree-count.is-fail,
+.pg-tree-item.is-fail .pg-tree-level {
+  color: var(--danger);
+}
+.pg-tree-target,
+.pg-tree-message {
+  display: block;
+  overflow: hidden;
+  padding: 0 .35rem .25rem;
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pg-tree-level {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: .66rem;
+  font-weight: 600;
+}
+/* The finding the window shows, as a pressed example; the one shown
+   last, outlined: one click away. */
+.pg-tree-item[aria-selected="true"] > .pg-tree-row {
+  color: var(--ink);
+  background: var(--amber-tint);
+  box-shadow: inset 0 0 0 1px var(--amber);
+}
+.pg-tree-item.is-last > .pg-tree-row {
+  box-shadow: inset 0 0 0 1px var(--amber);
+}
+.pg-findings-empty {
+  margin: .5rem .75rem;
+  font-size: .78rem;
+  color: var(--ink-soft);
+}
+.pg-findings-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem .75rem;
+  margin: 0;
+  padding: .45rem .75rem .55rem;
+  font-size: .74rem;
+  border-top: 1px solid var(--line-soft);
+}
+.pg-findings-links a {
+  color: var(--ink-soft);
+}
+.pg-findings-links a:hover {
+  color: var(--ink);
+}
+/* The widest screens: the list stands whole in its column, no fold. */
+@media (min-width: 1280px) {
+  .pg-findings-browse > summary {
+    display: none;
+  }
+  /* A column does not wrap: a wrapped column would size the list to its
+     longest line. */
+  .pg-examples.is-findings {
+    flex-wrap: nowrap;
+  }
+  .pg-findings-browse {
+    border: 0;
+  }
+  .pg-findings-filter {
+    width: 100%;
+    margin: 0 0 .4rem;
+  }
+  .pg-findings-tree {
+    max-height: none;
+    padding: 0;
+  }
+  .pg-findings-links {
+    flex-direction: column;
+    padding: .45rem .35rem 0;
+  }
+}
+
+/* The card: where the pattern lives (the code at the pinned commit, the
+   line lit, the literal in the field's token colors, the hotspot marked
+   as the field marks it), what breaks it, what PHP did with it, and the
+   fix when one was measured. Read, not typed. */
+.pg-finding-card {
+  display: grid;
+  align-content: start;
+  gap: .6rem;
+  min-width: 0;
+  padding: .75rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+}
+.pg-finding-card[hidden],
+.pg-finding-notice[hidden] {
+  display: none;
+}
+.pg-finding-notice {
+  margin: 0;
+  padding: .4rem .6rem;
+  font-size: .8rem;
+  color: var(--ink);
+  background: var(--amber-tint);
+  border-left: 3px solid var(--amber);
+}
+/* In a finding, the text field gives its place to the card: a field the
+   grid displays would show through the hidden attribute. */
+.pg-field-text[hidden] {
+  display: none;
+}
+.pg-finding-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  font-size: .82rem;
+}
+.pg-finding-repo {
+  font-weight: 600;
+  color: var(--ink);
+}
+.pg-snippet-permalink {
+  margin-left: auto;
+  font-size: .76rem;
+}
+.pg-snippet-file {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+.pg-snippet {
+  margin: 0;
+  padding: .5rem 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: .74rem;
+  line-height: 1.6;
+  background: var(--code-bg);
+  border-radius: var(--radius-s);
+}
+/* A long line wraps under itself, past its number: the literal the card
+   is about must be in view, not behind a scroll. */
+.pg-snippet-line {
+  display: block;
+  padding: 0 .65rem 0 3.4em;
+  color: var(--ink-soft);
+  text-indent: -3.4em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.pg-snippet-line.is-focus {
+  color: var(--ink);
+  background: var(--amber-tint);
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+.pg-snippet-number {
+  display: inline-block;
+  width: 3.4em;
+  padding-right: .8em;
+  text-indent: 0;
+  color: var(--ink-soft);
+  text-align: right;
+  user-select: none;
+}
+.pg-snippet-hot,
+.pg-witness-pump {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  box-shadow: inset 0 -2px 0 var(--danger);
+}
+.pg-witness,
+.pg-finding-outcome,
+.pg-finding-target {
+  margin: 0;
+  font-size: .8rem;
+}
+.pg-witness[hidden],
+.pg-finding-outcome[hidden],
+.pg-rewrite[hidden] {
+  display: none;
+}
+.pg-witness code {
+  font-family: var(--font-mono);
+  font-size: .76rem;
+}
+.pg-witness-label {
+  color: var(--ink-soft);
+}
+.pg-finding-outcome {
+  font-weight: 500;
+  color: var(--danger);
+}
+.pg-finding-target {
+  color: var(--ink-soft);
+}
+/* The linter's own words, worst first, each with its rule's page. */
+.pg-finding-issues {
+  display: grid;
+  gap: .4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pg-finding-issue-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: .1rem .5rem;
+  font-size: .8rem;
+}
+.pg-finding-level {
+  grid-row: span 3;
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  font-weight: 600;
+  color: var(--amber-deep);
+}
+.pg-finding-issue-row.is-fail .pg-finding-level {
+  color: var(--danger);
+}
+.pg-finding-message {
+  color: var(--ink);
+}
+.pg-finding-hint {
+  color: var(--ink-soft);
+}
+.pg-finding-rule {
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  justify-self: start;
+}
+.pg-rewrite {
+  display: grid;
+  gap: .35rem;
+}
+.pg-rewrite-title {
+  margin: 0;
+  font-size: .8rem;
+  font-weight: 600;
+}
+.pg-rewrite-change {
+  color: var(--ink-soft);
+}
+.pg-rewrite-diff {
+  margin: 0;
+  padding: .5rem .65rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: .74rem;
+  background: var(--code-bg);
+  border-radius: var(--radius-s);
+}
+.pg-fix-del {
+  color: var(--danger);
+}
+.pg-fix-add {
+  color: var(--ok);
+}
+.pg-finding-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem .7rem;
+}
+.pg-finding-actions button {
+  min-height: 1.75rem;
+  padding: .3rem .65rem;
+  font-family: var(--font-body);
+  font-size: .78rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.pg-finding-actions button:hover,
+.pg-finding-actions button:focus-visible {
+  border-color: var(--amber);
+}
+.pg-finding-actions .pg-finding-copy {
+  background: var(--amber-tint);
+  border-color: var(--amber);
+}
+.pg-finding-actions a {
+  font-size: .78rem;
+}
+.pg-finding-left {
+  margin: 0;
+  font-size: .8rem;
+  color: var(--ink-soft);
+}
+.pg-finding-left[hidden] {
+  display: none;
+}
+.pg-finding-back {
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: .8rem;
+  color: var(--amber-deep);
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+@media (min-width: 1280px) {
+  .pg-finding-card {
+    overflow: auto;
+  }
+}
+
+/* A finding's own page: the kicker back to the list, the finding in one
+   line, how fresh its status is and where to dispute it. */
+.finding-head {
+  margin: 0 0 1rem;
+}
+.finding-kicker {
+  margin: 0 0 .25rem;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.finding-title {
+  margin: 0 0 .35rem;
+  font-size: clamp(1.3rem, 2.4vw, 1.75rem);
+}
+.finding-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem .5rem;
+  margin: 0;
+  font-size: .82rem;
+  color: var(--ink-soft);
+}
+/* --- end of Findings */
