@@ -102,7 +102,8 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringNotContainsString('pg-tree-target', $row, 'A tree of hundreds of rows is one line per row.');
         $findingRow = self::between($script, 'function findingRow(repo, finding) {', "\n  }\n");
         $this->assertStringNotContainsString('pg-tree-message', $findingRow, 'The rule\'s message rides the row\'s tooltip and the card, not a second line.');
-        $this->assertStringContainsString("item.setAttribute('aria-description', finding.issues[0].message);", $findingRow, 'A tooltip shows to a pointer only: the message is read out on focus as well.');
+        $this->assertStringContainsString("item.setAttribute('aria-description', item.title);", $findingRow, 'A tooltip shows to a pointer only: the full path and the message are read out on focus as well — the description replaces the title for a screen reader, so it says all the title does.');
+        $this->assertLessThan(strpos($findingRow, "item.setAttribute('aria-description', item.title);"), strpos($findingRow, 'item.title = '), 'The title is written first.');
         $this->assertStringContainsString("item.setAttribute('aria-description', 'PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre);", $row, 'And the engine a project was judged for.');
     }
 

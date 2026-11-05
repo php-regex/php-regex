@@ -3795,7 +3795,7 @@
     // The rule's message rides the tooltip and the card; the row is one
     // line, scannable at three hundred siblings.
     item.title = finding.file + ':' + finding.line + ' · ' + finding.issues[0].message;
-    item.setAttribute('aria-description', finding.issues[0].message);
+    item.setAttribute('aria-description', item.title);
     return item;
   }
 
