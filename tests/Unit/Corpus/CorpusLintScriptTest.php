@@ -310,6 +310,27 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertContains('--php-version', $plan['args']);
     }
 
+    /**
+     * A pin on PCRE1 is a target the linter refuses, not an absent one: the
+     * repository runs under its own composer.json, is recorded as refused,
+     * and publishes nothing, never judged for the fallback.
+     */
+    #[Test]
+    public function test_a_platform_pin_on_pcre1_is_refused_not_judged_for_the_fallback(): void
+    {
+        mkdir($this->root.'/corpus/ownerH/repoPinnedOld', 0o777, true);
+        file_put_contents($this->root.'/corpus/ownerH/repoPinnedOld/composer.json', '{"config": {"platform": {"php": "7.2.0"}}}');
+        file_put_contents($this->root.'/corpus/ownerH/repoPinnedOld/patterns.php', "<?php\n\npreg_match('/ab{1}c/', \$x);\n");
+
+        $this->loadScriptFunctions();
+        $this->assertFalse(planRepositoryLint($this->root.'/corpus/ownerH/repoPinnedOld', '8.1', '/tmp/ownerH__repoPinnedOld.log')['fallback']);
+
+        [, $output] = $this->script(['--only', 'ownerH']);
+        $log = (string) file_get_contents($this->root.'/corpus.log');
+        $this->assertSame('### corpus/ownerH/repoPinnedOld — Target: none — exit 2', $this->line($log, '### corpus/ownerH/repoPinnedOld'), $output.$log);
+        $this->assertFileDoesNotExist($this->root.'/parts/ownerH__repoPinnedOld.json');
+    }
+
     #[Test]
     public function test_require_php_constraint_reads_the_repository_floor(): void
     {

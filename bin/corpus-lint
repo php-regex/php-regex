@@ -161,7 +161,8 @@ function requirePhpConstraint(string $repoDir): ?string
  * Where the linter reads a repository's target when it pins its platform
  * PHP (config.platform.php), or null when it pins none it reads: the
  * linter's own reading decides, so the sweep and a single run agree on a
- * pin like "8.3.0 " or "^8.3".
+ * pin like "8.3.0 " or "^8.3". A pin the linter refuses (PCRE1) is still
+ * a pin: the linter refuses it under the repository's composer.json.
  */
 function pinnedPlatformPhp(string $repoDir): ?string
 {
@@ -169,7 +170,9 @@ function pinnedPlatformPhp(string $repoDir): ?string
     try {
         $read = ComposerPlatform::read($repoDir, ['COMPOSER' => $repoDir.'/composer.json'], $notices);
     } catch (UnsupportedTargetException) {
-        return null;
+        // A pin on PCRE1 is a target the linter refuses, not an absent one:
+        // run under the repository's composer.json, the linter says so.
+        return 'composer.json config.platform.php (refused)';
     }
 
     return null !== $read && str_ends_with($read[1], 'config.platform.php') ? $read[1] : null;
