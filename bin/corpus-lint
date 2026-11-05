@@ -34,6 +34,11 @@ declare(strict_types=1);
  * notice the linter prints is carried into the merged log; one that allows
  * nothing from 7.3 on is recorded as refused.
  *
+ * Each repository is linted a second time with --format=json, into a JSON
+ * part beside its log part ({vendor}__{repo}.json): the same target, the
+ * same analysis, read by bin/findings-report for the site's findings.
+ * --no-json skips it.
+ *
  * Every run carries the ReDoS analysis in confirmed mode: a pattern the
  * analysis proves linear loses the lint warnings that only guess at
  * backtracking, and a proven verdict is replayed on the running PCRE so
@@ -50,6 +55,7 @@ declare(strict_types=1);
  *                   (default: 8.1, the oldest PHP the library supports)
  *   --only <text>   sweep only the repositories whose path contains <text>
  *   --limit <n>     sweep at most <n> repositories, after --only
+ *   --no-json       write the console parts only, not the JSON parts
  *   --help          this message
  *
  * Exit codes: 0 every repository was judged clean, 1 findings were reported
@@ -175,6 +181,45 @@ function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFi
         'args' => ['--ansi', 'lint', $repoDir, '--php-version', $fallbackPhp, '--redos', '--redos-mode=confirmed', '--output', $partFile],
         'fallback' => true,
     ];
+}
+
+/**
+ * The same lint as $plan, written as JSON into $jsonFile: the colors go,
+ * the target and the analysis stay.
+ *
+ * @param array{env: ?string, environment: array<string, string>, args: list<string>, fallback: bool} $plan
+ *
+ * @return array{env: ?string, environment: array<string, string>, args: list<string>, fallback: bool}
+ */
+function jsonPlan(array $plan, string $jsonFile): array
+{
+    $args = array_values(array_filter($plan['args'], static fn (string $arg): bool => '--ansi' !== $arg));
+    $output = array_search('--output', $args, true);
+    if (false !== $output) {
+        $args[$output + 1] = $jsonFile;
+    }
+    $args[] = '--format=json';
+
+    return ['args' => $args] + $plan;
+}
+
+/**
+ * The commit a JSON part judged, written into it: the report tells a part
+ * of today's code from yesterday's by it, whatever else touched the clone.
+ * A directory that is no clone names none.
+ */
+function stampHead(string $jsonFile, string $repoDir): void
+{
+    if (!is_file($jsonFile) || !is_dir($repoDir.'/.git')) {
+        return;
+    }
+    $head = trim((string) shell_exec('git -C '.escapeshellarg($repoDir).' rev-parse HEAD 2>/dev/null'));
+    $part = json_decode((string) file_get_contents($jsonFile), true);
+    if (1 !== preg_match('/^[0-9a-f]{40}$/D', $head) || !\is_array($part)) {
+        return;
+    }
+    $part['head'] = $head;
+    file_put_contents($jsonFile, json_encode($part, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE)."\n");
 }
 
 function stripAnsi(string $text): string
@@ -368,6 +413,7 @@ function printCorpusLintUsage(): void
                           (default: 8.1, the oldest PHP the library supports)
           --only <text>   sweep only the repositories whose path contains <text>
           --limit <n>     sweep at most <n> repositories, after --only
+          --no-json       write the console parts only, not the JSON parts
           --help          this message
 
         Every repository under corpus/ is judged under the PHP its own
@@ -383,7 +429,7 @@ function printCorpusLintUsage(): void
 /**
  * @param list<string> $argv
  *
- * @return array{root: ?string, output: ?string, parts: ?string, php: string, only: ?string, limit: ?int, help: bool}
+ * @return array{root: ?string, output: ?string, parts: ?string, php: string, only: ?string, limit: ?int, json: bool, help: bool}
  */
 function parseCorpusLintArgs(array $argv): array
 {
@@ -393,6 +439,7 @@ function parseCorpusLintArgs(array $argv): array
     $php = '8.1';
     $only = null;
     $limit = null;
+    $json = true;
     $help = false;
 
     for ($i = 1, $count = \count($argv); $i < $count; $i++) {
@@ -400,6 +447,12 @@ function parseCorpusLintArgs(array $argv): array
 
         if ('--help' === $arg || '-h' === $arg) {
             $help = true;
+
+            continue;
+        }
+
+        if ('--no-json' === $arg) {
+            $json = false;
 
             continue;
         }
@@ -433,6 +486,7 @@ function parseCorpusLintArgs(array $argv): array
         'php' => $php,
         'only' => $only,
         'limit' => $limit,
+        'json' => $json,
         'help' => $help,
     ];
 }
@@ -610,6 +664,16 @@ function corpusLintMain(array $argv): int
 
         $plan = planRepositoryLint($repoDir, $options['php'], $partFile);
         [$exitCode, $console] = runLint($plan);
+        if ($options['json']) {
+            // A refused repository writes no JSON: yesterday's part goes
+            // first, so nothing judged on yesterday's code survives.
+            $jsonFile = $partsDir.'/'.str_replace('/', '__', $repo).'.json';
+            if (is_file($jsonFile)) {
+                unlink($jsonFile);
+            }
+            runLint(jsonPlan($plan, $jsonFile));
+            stampHead($jsonFile, $repoDir);
+        }
 
         $targetLine = extractTargetLine($console);
         $notes = extractNotes($console, $plan['env'] ?? '');

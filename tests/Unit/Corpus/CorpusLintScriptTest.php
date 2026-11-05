@@ -298,6 +298,86 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertSame('120', $output);
     }
 
+    /**
+     * Beside each console part, the same judgement as JSON: what the
+     * site's findings are written from, never parsed out of console text.
+     */
+    #[Test]
+    public function test_each_repository_also_gets_a_json_part(): void
+    {
+        [, $output] = $this->script([]);
+
+        $new = $this->jsonPart('ownerA__repoNew', $output);
+        $this->assertSame('8.2', $new['target']['php'], 'The JSON part is judged under the same target as the log part.');
+        $this->assertSame('regex.lint.quantifier.useless', $new['results'][0]['issues'][0]['issue_id']);
+        $this->assertSame(3, $new['results'][0]['line']);
+
+        $bare = $this->jsonPart('ownerC__repoBare', $output);
+        $this->assertSame('8.1', $bare['target']['php'], 'The fallback target reaches the JSON part too.');
+
+        $this->assertStringNotContainsString('"results"', (string) file_get_contents($this->root.'/corpus.log'), 'The merged log is built from the console parts alone.');
+    }
+
+    /**
+     * A repository the linter refuses writes no JSON: yesterday's part goes,
+     * or the site would publish findings judged on yesterday's code.
+     */
+    #[Test]
+    public function test_a_refused_repository_leaves_no_json_part_of_an_earlier_day(): void
+    {
+        mkdir($this->root.'/corpus/ownerE/repoAncient', 0o777, true);
+        file_put_contents($this->root.'/corpus/ownerE/repoAncient/composer.json', '{"require": {"php": ">=5.4 <7.3"}}');
+        file_put_contents($this->root.'/corpus/ownerE/repoAncient/patterns.php', "<?php\n\npreg_match('/a/', \$x);\n");
+        mkdir($this->root.'/parts', 0o777, true);
+        file_put_contents($this->root.'/parts/ownerE__repoAncient.json', '{"old": 1}');
+
+        [, $output] = $this->script(['--only', 'ownerE']);
+
+        $this->assertFileDoesNotExist($this->root.'/parts/ownerE__repoAncient.json', $output);
+    }
+
+    /**
+     * The JSON part names the commit it judged, so the report can tell a
+     * part of today's code from yesterday's whatever touched the clone.
+     */
+    #[Test]
+    public function test_the_json_part_names_the_commit_it_judged(): void
+    {
+        $repo = $this->root.'/corpus/ownerA/repoNew';
+        $git = 'git -C '.escapeshellarg($repo).' ';
+        shell_exec($git.'init -q && '.$git.'add -A && '.$git.'-c user.email=t@e.st -c user.name=t commit -q -m one 2>&1');
+        $head = trim((string) shell_exec($git.'rev-parse HEAD'));
+
+        [, $output] = $this->script(['--only', 'owner']);
+
+        $this->assertMatchesRegularExpression('~^[0-9a-f]{40}$~D', $head);
+        $this->assertSame($head, $this->jsonPart('ownerA__repoNew', $output)['head'] ?? null);
+        $this->assertArrayNotHasKey('head', $this->jsonPart('ownerC__repoBare', $output), 'A directory that is no clone names no commit.');
+    }
+
+    #[Test]
+    public function test_no_json_skips_the_json_parts(): void
+    {
+        [, $output] = $this->script(['--no-json']);
+
+        $this->assertFileExists($this->root.'/parts/ownerA__repoNew.log', $output);
+        $this->assertFileDoesNotExist($this->root.'/parts/ownerA__repoNew.json');
+    }
+
+    #[Test]
+    public function test_the_json_plan_is_the_console_plan_written_as_json(): void
+    {
+        $this->loadScriptFunctions();
+
+        $plan = jsonPlan(planRepositoryLint($this->root.'/corpus/ownerC/repoBare', '8.1', '/tmp/ownerC__repoBare.log'), '/tmp/ownerC__repoBare.json');
+        $this->assertNull($plan['env']);
+        $this->assertSame(
+            ['lint', $this->root.'/corpus/ownerC/repoBare', '--php-version', '8.1', '--redos', '--redos-mode=confirmed', '--output', '/tmp/ownerC__repoBare.json', '--format=json'],
+            $plan['args'],
+            'Same target, same analysis, no colors, another file.',
+        );
+    }
+
     #[Test]
     public function test_plan_uses_composer_env_or_the_fallback_flag(): void
     {
@@ -411,6 +491,18 @@ final class CorpusLintScriptTest extends TestCase
         fclose($pipes[2]);
 
         return [proc_close($process), $output];
+    }
+
+    /**
+     * @return array{target: array{php: string}, results: list<array{line: int, issues: list<array{issue_id: string}>}>, head?: string}
+     */
+    private function jsonPart(string $name, string $output): array
+    {
+        $this->assertFileExists($this->root.'/parts/'.$name.'.json', $output);
+        /** @var array{target: array{php: string}, results: list<array{line: int, issues: list<array{issue_id: string}>}>, head?: string} $part */
+        $part = json_decode((string) file_get_contents($this->root.'/parts/'.$name.'.json'), true, 512, \JSON_THROW_ON_ERROR);
+
+        return $part;
     }
 
     private function loadScriptFunctions(): void
