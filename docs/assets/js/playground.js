@@ -991,7 +991,7 @@
         var whole = set['0'];
         if (whole) {
           ranges.push({ start: whole[2], end: whole[2] + whole[0].length, className: 'pg-mark-match' + (i % 2 ? ' is-alt' : ''), index: i });
-          el.subjectMatches.appendChild(matchItem(whole, i));
+          el.subjectMatches.appendChild(matchItem(whole, i, subject));
         }
       });
     }
@@ -1033,10 +1033,22 @@
   }
 
   // One match for a screen reader: its number, its text, and where it
-  // starts and ends in the field, by character.
-  function matchItem(whole, i) {
+  // starts and ends in the field, by character. The driver's offsets are
+  // UTF-16 units, the marks' measure; a reader counts an emoji as one.
+  function matchItem(whole, i, subject) {
     var said = whole[0] === '' ? 'empty' : '“' + whole[0] + '”';
-    return text('li', null, '#' + (i + 1) + ' ' + said + ', characters ' + whole[2] + ' to ' + (whole[2] + whole[0].length));
+    var start = Array.from(subject.slice(0, whole[2])).length;
+    return text('li', null, '#' + (i + 1) + ' ' + said + ', characters ' + start + ' to ' + (start + Array.from(whole[0]).length));
+  }
+
+  // A keystroke makes the answer stale: the count, the list and the marks
+  // go at once, the text stays in the mirror, and the answer to the new
+  // input draws them again.
+  function dropSubjectMarks() {
+    el.matchSummary.textContent = '';
+    clear(el.subjectMatches);
+    clear(el.subjectMirror);
+    el.subjectMirror.appendChild(markRanges(el.subject.value, []));
   }
 
   // The explanation, one line per construct, indented two spaces per level,
@@ -3579,6 +3591,7 @@
         el.patternEditor.classList.remove('is-untouched');
       }
       refreshFields();
+      dropSubjectMarks();
       schedule();
     });
     area.addEventListener('scroll', function () {

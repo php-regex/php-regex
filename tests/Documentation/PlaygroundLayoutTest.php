@@ -411,8 +411,20 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringContainsString('matches.shown < matches.count', $summary, 'A capped list says how many the marks show.');
         $this->assertStringContainsString("[0] === ''", $summary, 'An empty match is counted in words.');
 
-        $item = self::between($script, 'function matchItem(whole, i) {', "\n  }\n");
-        $this->assertStringContainsString('whole[2] + whole[0].length', $item, 'Each item says where the match ends, as well as where it starts.');
+        $item = self::between($script, 'function matchItem(whole, i, subject) {', "\n  }\n");
+        $this->assertStringContainsString('Array.from(subject.slice(0, whole[2])).length', $item, 'The driver gives UTF-16 offsets; the item counts characters, so "😀a" puts the a at 1.');
+        $this->assertStringContainsString('Array.from(whole[0]).length', $item, 'Each item says where the match ends, in characters too.');
+        $this->assertStringContainsString('el.subjectMatches.appendChild(matchItem(whole, i, subject));', $marks);
+
+        // A keystroke in either field makes the answer stale: the count, the
+        // list and the marks go before the debounce, and come back with the
+        // answer to the new input.
+        $typed = self::between($script, "area.addEventListener('input', function () {", "\n    });\n");
+        $this->assertSame(1, preg_match('/refreshFields\(\);\s*dropSubjectMarks\(\);\s*schedule\(\);/', $typed), 'The stale answer goes before the next one is asked for.');
+        $drop = self::between($script, 'function dropSubjectMarks() {', "\n  }\n");
+        $this->assertStringContainsString("el.matchSummary.textContent = '';", $drop);
+        $this->assertStringContainsString('clear(el.subjectMatches);', $drop);
+        $this->assertStringContainsString('el.subjectMirror.appendChild(markRanges(el.subject.value, []));', $drop, 'The mirror keeps the text, without a mark.');
 
         $this->assertSame(1, preg_match('/\n\.pg-field-text \{([^}]*)\}/', self::source(self::STYLESHEET), $columns), 'The text field reads its label, its count and its bytes on one line.');
         $this->assertStringContainsString('grid-template-columns: auto minmax(0, 1fr) auto;', $columns[1]);
