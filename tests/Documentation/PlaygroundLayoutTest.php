@@ -21,12 +21,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The playground's window: what the visitor writes on the left (the title
- * bar, the examples, the pattern, the subject), what the engine answers on
- * the right, behind one strip of tabs. The tree is the first tab, the one
- * the home's title promises; the explanation is the tree's other voice.
- * The tests read the include, the script and the stylesheet as the page
- * ships them.
+ * The playground's window: a column of examples, then what the visitor
+ * writes (the pattern, the text), then what the engine answers, behind
+ * one strip of tabs. The tree is the first tab, the one the home's title
+ * promises; the explanation is the tree's other voice. The tests read the
+ * include, the script and the stylesheet as the page ships them.
  */
 #[Group('documentation')]
 final class PlaygroundLayoutTest extends TestCase
@@ -39,11 +38,9 @@ final class PlaygroundLayoutTest extends TestCase
     private const TABS = [
         'tree' => 'Tree',
         'diagnostics' => 'Diagnostics',
-        'matches' => 'Matches',
         'redos' => 'ReDoS',
         'transpile' => 'Translate',
         'samples' => 'Samples',
-        'export' => 'Test',
         'format' => 'Format',
         'trace' => 'Step through',
     ];
@@ -67,11 +64,14 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     #[Test]
-    public function test_the_nine_tabs_come_in_order(): void
+    public function test_the_seven_tabs_come_in_order(): void
     {
         $xpath = self::include();
         $tabs = $xpath->query('//*[@role="tab"]');
         $this->assertNotFalse($tabs);
+        $panels = $xpath->query('//*[@role="tabpanel"]');
+        $this->assertNotFalse($panels);
+        $this->assertCount(\count($tabs), $panels, 'Every panel is named by a tab; no answer without its strip.');
 
         $seen = [];
         foreach ($tabs as $i => $tab) {
@@ -116,8 +116,11 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(0, self::nodes($xpath, $main.'//'.self::self('pg-match-list').' | '.$main.'//'.self::self('pg-explain').' | '.$main.'//'.self::self('pg-diagnostics')));
         $this->assertStringNotContainsString('pg-tools-note', self::source(self::INCLUDE), 'A note nothing writes.');
 
-        // What stays on the left: the examples and the two fields.
-        $this->assertSame(1, self::nodes($xpath, $main.'//'.self::self('pg-examples')));
+        // What stays in the writing column: the two fields. The examples
+        // stand in a column of their own, before it.
+        $this->assertSame(0, self::nodes($xpath, $main.'//'.self::self('pg-examples')), 'The examples are a column of the window, not a row of the fields.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/'.self::self('pg-examples')), 'The examples are the body\'s first column.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-body').'/'.self::self('pg-examples').'/following-sibling::*'.self::has('pg-main')), 'The fields follow the examples.');
         $this->assertSame(1, self::nodes($xpath, $main.'//textarea[@id="pg-pattern"]'));
         $this->assertSame(1, self::nodes($xpath, $main.'//textarea[@id="pg-subject"]'));
     }
@@ -226,7 +229,7 @@ final class PlaygroundLayoutTest extends TestCase
             $tools[] = $tab->getAttribute('data-tool');
         }
 
-        $this->assertSame(['diagnostics', 'matches', 'redos'], $tools, 'The state of the product reads on the closed tabs.');
+        $this->assertSame(['diagnostics', 'redos'], $tools, 'The state of the product reads on the closed tabs; the matches are said by the text field itself.');
 
         // On a phone the counts go before the labels: a badge with a count
         // and no dot of its own shows a dot in its color instead.
@@ -240,7 +243,7 @@ final class PlaygroundLayoutTest extends TestCase
     {
         $script = self::source(self::SCRIPT);
 
-        $this->assertStringContainsString("var TABS = ['tree', 'diagnostics', 'matches', 'redos', 'transpile', 'samples', 'export', 'format', 'trace'];", $script);
+        $this->assertStringContainsString("var TABS = ['tree', 'diagnostics', 'redos', 'transpile', 'samples', 'format', 'trace'];", $script);
         $this->assertStringContainsString("var activeTool = 'tree';", $script, 'A first visit opens on the tree.');
         $this->assertStringContainsString("'playground-tool'", $script, 'The chosen tab is remembered under the key it always had.');
     }
@@ -304,7 +307,7 @@ final class PlaygroundLayoutTest extends TestCase
         $stylesheet = self::source(self::STYLESHEET);
         $section = substr($stylesheet, (int) strpos($stylesheet, '.hero-playground {'));
 
-        $this->assertSame(0, preg_match('/^\s*order:/m', $section), 'One column reads in the order of the markup: the answers after the subject.');
+        $this->assertSame(0, preg_match('/^\s*order:/m', $section), 'One column reads in the order of the markup: the examples, the fields, the answers.');
 
         $xpath = self::include();
         $columns = $xpath->query(self::byClass('pg-body').'/*');
@@ -314,7 +317,149 @@ final class PlaygroundLayoutTest extends TestCase
             $this->assertInstanceOf(\DOMElement::class, $column);
             $classes[] = explode(' ', $column->getAttribute('class'))[0];
         }
-        $this->assertSame(['pg-main', 'pg-results', 'pg-loader'], $classes);
+        $this->assertSame(['pg-examples', 'pg-main', 'pg-results', 'pg-loader'], $classes);
+    }
+
+    /**
+     * A column of examples beside the fields: one click loads a pattern
+     * and its text. The pattern rides under the name — spelled in the
+     * mono voice, hidden where the column folds back into a row — and the
+     * window holds its three columns only where they fit; below that the
+     * list wraps above the fields (a phone scrolls it as one row).
+     */
+    #[Test]
+    public function test_the_examples_stand_in_their_own_column(): void
+    {
+        $xpath = self::include();
+
+        $examples = $xpath->query(self::byClass('pg-examples').'/li/'.self::self('pg-example'));
+        $this->assertNotFalse($examples);
+        $this->assertGreaterThanOrEqual(10, $examples->length, 'A column is worth a list: the examples are many.');
+        foreach ($examples as $example) {
+            $this->assertInstanceOf(\DOMElement::class, $example);
+            $name = $xpath->evaluate('string(.//*[contains(concat(" ", normalize-space(@class), " "), " pg-example-name ")])', $example);
+            $this->assertNotSame('', $name, 'Every example is named.');
+            $pattern = $xpath->evaluate('string(.//*[contains(concat(" ", normalize-space(@class), " "), " pg-example-pattern ")])', $example);
+            $this->assertSame($example->getAttribute('data-regex'), $pattern, 'The line under the name is the pattern the click loads.');
+            $this->assertNotSame('', $example->getAttribute('data-regex'));
+            $this->assertNotSame('', $example->getAttribute('data-subject'), 'An example carries its own text to match against.');
+            $this->assertSame($example->getAttribute('data-regex'), $example->getAttribute('title'), 'The tooltip says the whole pattern.');
+        }
+
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/\.pg-example-pattern \{\s*display: none;/', $stylesheet), 'The pattern line waits for the column to have room.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-body \{([^}]*)\}/', $stylesheet, $wide), 'The widest screens give the body its three columns.');
+        $this->assertSame(1, preg_match('/grid-template-columns:\s*minmax\([^;]*\)\s+minmax\(0, 2fr\)\s+minmax\(0, 3fr\);/', $wide[1]), 'Examples, fields, answers — three tracks.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-example \{([^}]*)\}/', $stylesheet, $box), 'One column, one size of box.');
+        $this->assertStringContainsString('width: 100%;', $box[1], 'A box fills its item: no example shrinks to its name.');
+        $this->assertSame(1, preg_match('/@media \(max-width: 1023px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \{([^}]*)\}/', $stylesheet, $narrow), 'Below the side-by-side layout, phones and tablets keep one row: the list scrolls, the fields stay near.');
+        $this->assertStringContainsString('overflow-x: auto;', $narrow[1]);
+    }
+
+    /**
+     * The text field is where the matches are read: it stands as tall as
+     * the answers beside it on a wide screen, and scrolls inside for a
+     * longer text — the stylesheet owns its height there, the script's
+     * auto-size keeps to the narrower layouts.
+     */
+    #[Test]
+    public function test_the_text_field_stands_as_tall_as_the_answers(): void
+    {
+        $xpath = self::include();
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-main').'//'.self::self('pg-field-text')), 'The text field carries its own class.');
+        $this->assertStringNotContainsString('pg-tool-matches', self::source(self::INCLUDE), 'The matches live in the text field; no tab holds them anymore.');
+
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-main \{([^}]*)\}/', $stylesheet, $main), 'The writing column stretches on a wide screen.');
+        $this->assertStringContainsString('align-self: stretch;', $main[1]);
+        $this->assertStringContainsString('grid-template-rows: auto minmax(0, 1fr) auto;', $main[1], 'The text field takes whatever height the answers leave.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-editor-subject \.pg-input \{([^}]*)\}/', $stylesheet, $input), 'The text input fills its editor on a wide screen.');
+        $this->assertStringContainsString('height: 100%;', $input[1]);
+        $this->assertStringContainsString('max-height: none;', $input[1], 'No cap cuts the fill short.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-editor-subject \.pg-mirror \{([^}]*)\}/', $stylesheet, $mirror), 'The mirror drops its floor with the input: an opened match list shrinks both.');
+        $this->assertStringContainsString('min-height: 0;', $mirror[1]);
+
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString("matchMedia('(min-width: 1280px)').matches", $script, 'The auto-size yields to the stylesheet exactly where the fill begins.');
+    }
+
+    /**
+     * A mark alone says neither an empty match (it underlines nothing) nor
+     * a capped list (the marks stop at the engine's cap): the line right
+     * after the field's label counts the matches in sight, and says how
+     * many of them the marks show when the sets were capped. Under the
+     * field, a folded disclosure holds every match one by one — its text,
+     * where it sits, and each group's name or number, value and position —
+     * in sight once opened, and in reach of a screen reader the aria-hidden
+     * mirror cannot serve. Neither is live: the live line keeps to the
+     * count.
+     */
+    #[Test]
+    public function test_the_matches_are_counted_and_detailed_beside_the_text_field(): void
+    {
+        $xpath = self::include();
+        $field = self::byClass('pg-field-text');
+
+        $this->assertSame(1, self::nodes($xpath, $field.'/'.self::self('pg-match-summary').'[@id="pg-match-summary"][not(@aria-live)]'), 'The count sits in the field, and is not live.');
+        $this->assertSame(0, self::nodes($xpath, $field.'/'.self::self('pg-match-summary').self::has('visually-hidden')), 'The count is in sight.');
+        $this->assertSame(1, self::nodes($xpath, $field.'/label/following-sibling::*[1]'.self::has('pg-match-summary')), 'The count reads right after the label.');
+        $this->assertSame(1, self::nodes($xpath, $field.'/details'.self::has('pg-match-details').'[@hidden][not(@open)]/summary/following-sibling::ol'.self::has('pg-subject-matches').'[@aria-labelledby="pg-match-summary"][not(@aria-live)]'), 'The list sits in a folded disclosure under the field, named by the count.');
+        $this->assertSame(0, self::nodes($xpath, $field.'//'.self::self('pg-subject-matches').self::has('visually-hidden')), 'Opened, the list is in sight.');
+
+        $script = self::source(self::SCRIPT);
+        $marks = self::between($script, 'function renderSubjectMarks(payload, subject) {', "\n  }\n");
+        $this->assertStringContainsString('el.matchSummary.textContent = ', $marks);
+        // PHP's warning is a refusal at compile time or a match it could not
+        // finish ("/(?=a\\K)/" on "a", PHP 8.4): the words fit both.
+        $this->assertSame(1, preg_match("/!matches && payload\\.engineError \\? 'PHP could not complete the match'/", $marks), 'A warning from PHP says beside the field that no match was completed; the engine\'s words stay in the diagnostics.');
+        $this->assertStringContainsString("announce('PHP could not complete the match: ' + payload.engineError);", $marks, 'The live line says the same, with the engine\'s words.');
+        $this->assertStringNotContainsString('refused the pattern', $marks, 'A match-time failure is no refusal of the pattern.');
+        $this->assertStringContainsString('el.subjectMatches.appendChild(', $marks, 'One item per match set.');
+        $this->assertStringContainsString("announce(matches.count === 1 ? '1 match' : matches.count + ' matches');", $marks, 'The live line keeps to the count.');
+
+        $summary = self::between($script, 'function matchSummary(matches) {', "\n  }\n");
+        $this->assertStringContainsString('matches.shown < matches.count', $summary, 'A capped list says how many the marks show.');
+        $this->assertStringContainsString("[0] === ''", $summary, 'An empty match is counted in words.');
+        $this->assertStringContainsString("' of them empty'", $summary, 'Capped, the empty ones are counted among the underlined only, and say so.');
+
+        $item = self::between($script, 'function matchItem(set, i, subject, names) {', "\n  }\n");
+        $this->assertStringContainsString('Array.from(subject.slice(0, whole[2])).length', $item, 'The driver gives UTF-16 offsets; the item counts characters, so "😀a" puts the a at 1.');
+        $this->assertStringContainsString('Array.from(whole[0]).length', $item, 'Each item says where the match ends, in characters too.');
+        $this->assertStringContainsString("names[key] ? names[key] + ' (#' + key + ')' : '#' + key", $item, 'A group reads by its name and its number, or by its number alone.');
+        $this->assertStringContainsString('Array.from(subject.slice(0, capture[2])).length', $item, 'A group says where it sits, in characters.');
+        $this->assertStringContainsString("text('dl', 'pg-groups')", $item, 'The groups of a match are listed under it.');
+        $this->assertStringContainsString('el.subjectMatches.appendChild(matchItem(set, i, subject, names));', $marks);
+        $this->assertStringContainsString('el.matchDetails.hidden = ', $marks, 'No match, no disclosure.');
+
+        // A keystroke in either field makes the answer stale: the count, the
+        // list and the marks go before the debounce, and come back with the
+        // answer to the new input.
+        $typed = self::between($script, "area.addEventListener('input', function () {", "\n    });\n");
+        $this->assertSame(1, preg_match('/refreshFields\(\);\s*dropSubjectMarks\(\);\s*schedule\(\);/', $typed), 'The stale answer goes before the next one is asked for.');
+        // An example replaces both fields without an input event: it drops
+        // them the same way, before it asks.
+        $example = self::between($script, "Array.prototype.forEach.call(el.examples, function (chip) {\n    chip.addEventListener('click', function () {", "\n    });\n");
+        $this->assertSame(1, preg_match('/refreshFields\(\);\s*dropSubjectMarks\(\);\s*analyzeNow\(\);/', $example), 'An example drops the old marks too.');
+        // A match answer that lands after a keystroke belongs to the old
+        // text: it is kept, not drawn, so the dropped marks stay dropped.
+        $answered = self::between($script, "} else if (request.type === 'match') {", "} else if (request.type === 'lint') {");
+        $this->assertSame(1, preg_match('/if \(fieldsRead\(request\)\) \{\s*renderSubjectMarks\(current\.payload, request\.subject\);\s*\}/', $answered), 'A late answer does not draw the marks back over a newer text, nor over another PHP version.');
+        // An analysis carries match sets of its own: the same guard holds.
+        $rendered = self::between($script, 'function render(payload, request, prerendered) {', "\n  }\n");
+        $this->assertSame(1, preg_match('/if \(fieldsRead\(request\)\) \{\s*renderSubjectMarks\(payload, request\.subject\);\s*\}/', $rendered), 'A late analysis does not draw the marks back either.');
+        $read = self::between($script, 'function fieldsRead(request) {', "\n  }\n");
+        $this->assertStringContainsString('return el.pattern.value === request.regex && el.subject.value === request.subject && request.version === chosen;', $read, 'The fields, and the PHP version, still say what was asked.');
+        // Another PHP version is another answer: the marks go at once.
+        $version = self::between($script, "el.version.addEventListener('change', function () {", "\n  });\n");
+        $this->assertSame(1, preg_match('/dropSubjectMarks\(\);\s*analyzeNow\(\);/', $version), 'A version change drops the old marks before it asks.');
+        $drop = self::between($script, 'function dropSubjectMarks() {', "\n  }\n");
+        $this->assertStringContainsString("el.matchSummary.textContent = '';", $drop);
+        $this->assertStringContainsString('clear(el.subjectMatches);', $drop);
+        $this->assertStringContainsString('el.matchDetails.hidden = true;', $drop);
+        $this->assertStringContainsString('el.subjectMirror.appendChild(markRanges(el.subject.value, []));', $drop, 'The mirror keeps the text, without a mark.');
+
+        $this->assertSame(1, preg_match('/\n\.pg-field-text \{([^}]*)\}/', self::source(self::STYLESHEET), $columns), 'The text field reads its label, its count and its bytes on one line.');
+        $this->assertStringContainsString('grid-template-columns: auto minmax(0, 1fr) auto;', $columns[1]);
     }
 
     #[Test]
@@ -450,15 +595,19 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     /**
-     * The test asserts every subject, whatever its text: a subject named
-     * after a property every object has ("constructor") is a subject too.
+     * The window answers what the engine says; a test to paste into a test
+     * class is the console's business, not a tab's. The driver keeps the op
+     * (the bundle and its own tests answer it); the page never asks for it,
+     * and a stored choice of the removed tab falls back to the tree.
      */
     #[Test]
-    public function test_the_test_keeps_a_subject_named_like_an_object_property(): void
+    public function test_the_page_offers_no_export_tool(): void
     {
-        $subjects = self::between(self::source(self::SCRIPT), 'function exportSubjects() {', "\n  }\n");
+        $script = self::source(self::SCRIPT);
 
-        $this->assertStringContainsString('var seen = Object.create(null);', $subjects);
+        $this->assertStringNotContainsString("'export'", $script, 'No tool, no label, no seeded answer of the export op on the page.');
+        $this->assertStringNotContainsString('exportSubjects', $script);
+        $this->assertStringContainsString('if (storedTool && TABS.indexOf(storedTool) !== -1) {', $script, 'A stored tab the strip no longer holds opens on the tree.');
     }
 
     /**

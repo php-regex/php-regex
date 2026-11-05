@@ -57,7 +57,7 @@ final class PlaygroundTraceInputTest extends TestCase
     }
 
     /**
-     * The four Try examples of the playground (docs/_includes/playground.html)
+     * Every example of the playground (docs/_includes/playground.html)
      * and the delimiter spellings PHP reads: leading whitespace skipped, a
      * bracket pair, a non-slash delimiter.
      *
@@ -65,13 +65,57 @@ final class PlaygroundTraceInputTest extends TestCase
      */
     public static function provideDelimitedPatterns(): iterable
     {
-        yield 'Try: named groups' => ['regex' => '/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m', 'subject' => "2026-11-02\n2026-11-19\nnot a date", 'body' => '^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$', 'modifiers' => 'm', 'bodyStart' => 1];
-        yield 'Try: e-mail addresses' => ['regex' => '/[\w.+-]+@[\w-]+\.[\w.-]+/i', 'subject' => 'Write to hello@php-regex.com or to noreply@example.org.', 'body' => '[\w.+-]+@[\w-]+\.[\w.-]+', 'modifiers' => 'i', 'bodyStart' => 1];
-        yield 'Try: catastrophic backtracking' => ['regex' => '/^(a+)+$/', 'subject' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab', 'body' => '^(a+)+$', 'modifiers' => '', 'bodyStart' => 1];
-        yield 'Try: Unicode properties' => ['regex' => '/\p{Lu}\p{Ll}+/u', 'subject' => 'Ünïcode Straße Ωmega', 'body' => '\p{Lu}\p{Ll}+', 'modifiers' => 'u', 'bodyStart' => 1];
+        yield 'Examples: named groups' => ['regex' => '/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m', 'subject' => "2026-11-02\n2026-11-19\nnot a date", 'body' => '^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$', 'modifiers' => 'm', 'bodyStart' => 1];
+        yield 'Examples: e-mail addresses' => ['regex' => '/[\w.+-]+@[\w-]+\.[\w.-]+/i', 'subject' => 'Write to hello@php-regex.com or to noreply@example.org.', 'body' => '[\w.+-]+@[\w-]+\.[\w.-]+', 'modifiers' => 'i', 'bodyStart' => 1];
+        yield 'Examples: catastrophic backtracking' => ['regex' => '/^(a+)+$/', 'subject' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab', 'body' => '^(a+)+$', 'modifiers' => '', 'bodyStart' => 1];
+        yield 'Examples: Unicode properties' => ['regex' => '/\p{Lu}\p{Ll}+/u', 'subject' => 'Ünïcode Straße Ωmega', 'body' => '\p{Lu}\p{Ll}+', 'modifiers' => 'u', 'bodyStart' => 1];
+        yield 'Examples: lookaround' => ['regex' => '/(?<=@)[\w.-]+(?=\.)/', 'subject' => 'Write to hello@php-regex.com or noreply@example.org', 'body' => '(?<=@)[\w.-]+(?=\.)', 'modifiers' => '', 'bodyStart' => 1];
+        yield 'Examples: repeated words' => ['regex' => '/\b(\w+) \1\b/i', 'subject' => 'This this is a a duplicated word test, very very nice.', 'body' => '\b(\w+) \1\b', 'modifiers' => 'i', 'bodyStart' => 1];
+        yield 'Examples: hex colors' => ['regex' => '/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i', 'subject' => 'Colors: #fff, #B14E06, #12ab34 and #12345.', 'body' => '#(?:[0-9a-f]{3}|[0-9a-f]{6})\b', 'modifiers' => 'i', 'bodyStart' => 1];
+        yield 'Examples: possessive quotes' => ['regex' => '/"\w++"/', 'subject' => 'Say "hello" and "a b", not "unclosed.', 'body' => '"\w++"', 'modifiers' => '', 'bodyStart' => 1];
+        yield 'Examples: balanced parentheses' => ['regex' => '/\((?:[^()]++|(?R))*\)/', 'subject' => '(a(b)c) and ((x)) but (broken', 'body' => '\((?:[^()]++|(?R))*\)', 'modifiers' => '', 'bodyStart' => 1];
+        yield 'Examples: IPv4 addresses' => ['regex' => '/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/', 'subject' => 'IPs: 192.168.1.10, 8.8.8.8, 256.1.1.1 and 10.0.0.255.', 'body' => '\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b', 'modifiers' => '', 'bodyStart' => 1];
         yield 'leading whitespace before the delimiter' => ['regex' => '  /a b/x', 'subject' => 'ab', 'body' => 'a b', 'modifiers' => 'x', 'bodyStart' => 3];
         yield 'bracket delimiter' => ['regex' => '{a{1,2}}i', 'subject' => 'A', 'body' => 'a{1,2}', 'modifiers' => 'i', 'bodyStart' => 1];
         yield 'hash delimiter' => ['regex' => '#a#', 'subject' => 'a', 'body' => 'a', 'modifiers' => '', 'bodyStart' => 1];
+    }
+
+    /**
+     * The rows named "Examples: …" are the page's buttons, both ways: a
+     * button whose pattern or text moves on the page fails here, as does a
+     * row left behind by a button that is gone.
+     */
+    #[Test]
+    public function test_the_example_rows_are_the_page_examples(): void
+    {
+        $document = new \DOMDocument();
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML('<?xml encoding="UTF-8"?><body>'.file_get_contents(PlaygroundDriver::ROOT.'/docs/_includes/playground.html').'</body>', \LIBXML_NOERROR | \LIBXML_NOWARNING);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        $xpath = new \DOMXPath($document);
+        $buttons = $xpath->query('//button[contains(concat(" ", normalize-space(@class), " "), " pg-example ")]');
+        $this->assertNotFalse($buttons);
+
+        $page = [];
+        foreach ($buttons as $button) {
+            $this->assertInstanceOf(\DOMElement::class, $button);
+            $name = $xpath->evaluate('string(.//*[contains(concat(" ", normalize-space(@class), " "), " pg-example-name ")])', $button);
+            $this->assertIsString($name);
+            $page['Examples: '.trim($name)] = ['regex' => $button->getAttribute('data-regex'), 'subject' => $button->getAttribute('data-subject')];
+        }
+
+        $rows = [];
+        foreach (self::provideDelimitedPatterns() as $label => $row) {
+            if (str_starts_with($label, 'Examples: ')) {
+                $rows[$label] = ['regex' => $row['regex'], 'subject' => $row['subject']];
+            }
+        }
+
+        $this->assertNotSame([], $page, 'The page holds its examples.');
+        ksort($page);
+        ksort($rows);
+        $this->assertSame($page, $rows, 'Attributes are read decoded: &quot; and &#10; are the characters the button loads.');
     }
 
     /**

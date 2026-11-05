@@ -75,14 +75,13 @@
     subject: root.querySelector('#pg-subject'),
     subjectMirror: root.querySelector('.pg-editor-subject .pg-mirror'),
     subjectCount: root.querySelector('#pg-subject-count'),
+    matchSummary: root.querySelector('#pg-match-summary'),
+    subjectMatches: root.querySelector('.pg-subject-matches'),
+    matchDetails: root.querySelector('.pg-match-details'),
     version: root.querySelector('#pg-version'),
     run: root.querySelector('.pg-run'),
     examples: root.querySelectorAll('.pg-example'),
     status: root.querySelector('.pg-status'),
-    matchList: root.querySelector('.pg-match-list'),
-    matchesNote: root.querySelector('.pg-matches-note'),
-    matchesEmpty: root.querySelector('.pg-matches-empty'),
-    matchesError: root.querySelector('#pg-tool-matches .pg-error-slot'),
     explain: root.querySelector('.pg-explain'),
     diagnostics: root.querySelector('.pg-diagnostics'),
     lintNote: root.querySelector('.pg-lint-note'),
@@ -104,7 +103,6 @@
     toolTabs: root.querySelectorAll('.pg-tab'),
     badges: {
       diagnostics: root.querySelector('#pg-tab-diagnostics .pg-tab-badge'),
-      matches: root.querySelector('#pg-tab-matches .pg-tab-badge'),
       redos: root.querySelector('#pg-tab-redos .pg-tab-badge'),
     },
   };
@@ -271,11 +269,19 @@
   // --- the fields ----------------------------------------------------------
 
   function autosize(area) {
-    area.style.height = 'auto';
-    area.style.height = area.scrollHeight + 'px';
+    // The text field keeps the height the stylesheet gives it on a wide
+    // screen — as tall as the answers beside it — and scrolls inside for
+    // a longer text; the mirror follows by its own insets.
+    var filled = area === el.subject && window.matchMedia('(min-width: 1280px)').matches;
+    if (filled) {
+      area.style.height = '';
+    } else {
+      area.style.height = 'auto';
+      area.style.height = area.scrollHeight + 'px';
+    }
     var mirror = area.previousElementSibling;
     if (mirror) {
-      mirror.style.height = area.style.height;
+      mirror.style.height = filled ? '' : area.style.height;
       mirror.scrollTop = area.scrollTop;
     }
   }
@@ -416,8 +422,6 @@
       setStatus(reason + ' The linter could not finish on this pattern; the rest of the answer stands.', 'warn');
     } else if (request.type === 'match' && current) {
       matchFor = key;
-      el.matchesEmpty.hidden = false;
-      el.matchesEmpty.textContent = 'The engine did not finish the match within ' + REQUEST_TIMEOUT_MS / 1000 + ' s. The analysis above stands.';
       setStatus(reason + ' The match could not finish on this input; the analysis stands.', 'warn');
     } else if (request.type === 'describe') {
       describeWanted = -1;
@@ -628,7 +632,12 @@
         current.payload.matches = payload.matches;
         current.payload.input = payload.input || current.payload.input;
         renderCaption(current.payload, false);
-        renderMatches(current.payload, request.subject);
+        // A keystroke or another PHP version since the request dropped the
+        // marks: the answer to the old input is kept, not drawn; the new
+        // input's answer draws.
+        if (fieldsRead(request)) {
+          renderSubjectMarks(current.payload, request.subject);
+        }
         renderErrors(current.payload);
         renderTreeError(current.payload);
         if (lastLint) {
@@ -750,7 +759,11 @@
     }
     renderCaption(payload, prerendered);
     renderPatternMirror(payload, request.regex, null);
-    renderMatches(payload, request.subject);
+    // An analysis may carry its match sets: drawn only while the fields
+    // still say what was asked, like a match answer.
+    if (fieldsRead(request)) {
+      renderSubjectMarks(payload, request.subject);
+    }
     renderExplain(payload.explain);
     renderErrors(payload);
     if (prerendered) {
@@ -972,71 +985,34 @@
     return kept;
   }
 
-  function renderMatches(payload, subject) {
-    clear(el.matchList);
-    clear(el.matchesError);
-    el.matchesNote.textContent = '';
-    el.matchesEmpty.hidden = true;
+  // The matches are read in the text field: each one underlined where it
+  // lands, one mark per set, alternating tints so neighbours tell apart.
+  // The line after the field's label counts them, in sight: an empty match
+  // underlines nothing, and the marks stop at the engine's cap. Under the
+  // field, a folded disclosure holds each match one by one, its groups
+  // under it — read in sight once opened, and by a screen reader, which
+  // the hidden mirror does not serve. The live line speaks the count.
+  function renderSubjectMarks(payload, subject) {
     var matches = payload.matches;
     var ranges = [];
-
-    if (!matches) {
-      var refusal = errorBlock(payload);
-      if (refusal) {
-        el.matchesError.appendChild(refusal);
-      } else {
-        el.matchesEmpty.hidden = false;
-        el.matchesEmpty.textContent = 'Nothing to match: the pattern does not compile.';
-      }
-    } else if (matches.pending) {
-      el.matchesEmpty.hidden = false;
-      el.matchesEmpty.textContent = 'Matching on PHP ' + (current ? current.version : '') + '…';
-    } else if (matches.count === 0) {
-      el.matchesEmpty.hidden = false;
-      el.matchesEmpty.textContent = matches.error && matches.error !== 'No error' ? 'No match: ' + matches.error + '.' : 'No match.';
-    } else {
-      // The count is the tab's badge; a capped list says what it shows.
-      el.matchesNote.textContent = matches.shown < matches.count ? 'The first ' + matches.shown + ' of ' + matches.count + ' matches.' : '';
+    var done = !!(matches && !matches.pending && matches.sets);
+    clear(el.subjectMatches);
+    if (done) {
       var names = Object.assign({}, matches.names || {}, payload.groupNames || {});
       matches.sets.forEach(function (set, i) {
         var whole = set['0'];
-        var item = text('li', 'pg-match');
-        var head = text('div', 'pg-match-head');
-        head.appendChild(text('span', 'pg-match-n', '#' + (i + 1)));
-        var value = text('code', 'pg-match-value', whole ? whole[0] : '');
-        head.appendChild(value);
         if (whole) {
-          head.appendChild(text('span', 'pg-match-at', 'at ' + whole[1] + (whole[1] !== whole[2] ? ' (byte) · ' + whole[2] + ' (char)' : '')));
           ranges.push({ start: whole[2], end: whole[2] + whole[0].length, className: 'pg-mark-match' + (i % 2 ? ' is-alt' : ''), index: i });
+          el.subjectMatches.appendChild(matchItem(set, i, subject, names));
         }
-        item.appendChild(head);
-        var groups = Object.keys(set).filter(function (key) {
-          return key !== '0';
-        });
-        if (groups.length) {
-          var list = text('dl', 'pg-groups');
-          // One row per group, three columns: the group, what it caught,
-          // where. A number reads as one (#2), a name keeps its own.
-          groups.forEach(function (key) {
-            var capture = set[key];
-            var label = names[key] ? names[key] + ' (#' + key + ')' : '#' + key;
-            list.appendChild(text('dt', 'pg-group-name', label));
-            var dd = text('dd', 'pg-group-value');
-            dd.appendChild(text('code', null, capture[0]));
-            list.appendChild(dd);
-            list.appendChild(text('dd', 'pg-group-at pg-match-at', 'at ' + capture[2]));
-          });
-          item.appendChild(list);
-        }
-        item.addEventListener('mouseenter', function () {
-          highlightMatch(i, true);
-        });
-        item.addEventListener('mouseleave', function () {
-          highlightMatch(i, false);
-        });
-        el.matchList.appendChild(item);
       });
     }
+    // PHP's warning leaves no match: a pattern refused at compile time, or
+    // a match it could not finish (/(?=a\K)/ on "a"). The line says so
+    // beside the field once the live line has spoken; the engine's words
+    // are in the diagnostics, where the pattern field's tint points.
+    el.matchSummary.textContent = done ? matchSummary(matches) : (!matches && payload.engineError ? 'PHP could not complete the match' : '');
+    el.matchDetails.hidden = !el.subjectMatches.firstChild;
     clear(el.subjectMirror);
     el.subjectMirror.appendChild(markRanges(subject, ranges));
     updateBadges();
@@ -1050,15 +1026,99 @@
       announceEngineError = false;
       announce(matches.count === 1 ? '1 match' : matches.count + ' matches');
     } else if (!matches && payload.engineError) {
-      announce('The engine refused the pattern: ' + payload.engineError);
+      announce('PHP could not complete the match: ' + payload.engineError);
     }
   }
 
-  function highlightMatch(index, on) {
+  // How many matches, in words: the marks' share when the engine capped the
+  // sets, and the empty ones named, since no mark shows them. The empty
+  // ones are counted in the sets returned: capped, they are counted among
+  // the underlined, and the line says "of them".
+  function matchSummary(matches) {
+    if (matches.count === 0) {
+      return matches.error && matches.error !== 'No error' ? 'No match: ' + matches.error + '.' : 'No match';
+    }
+    var empty = matches.sets.filter(function (set) {
+      return set['0'] && set['0'][0] === '';
+    }).length;
+    var capped = matches.shown < matches.count;
+    var line = matches.count === 1 ? '1 match' : matches.count + ' matches';
+    if (capped) {
+      line += ', the first ' + matches.shown + ' underlined';
+    }
+    if (empty) {
+      line += matches.count === 1 ? ', empty' : ', ' + empty + (capped ? ' of them empty' : ' empty');
+    }
+    return line;
+  }
+
+  // One match: its number, its text, where it starts and ends in the field,
+  // then one row per group that took part — the group by its name and its
+  // number (or its number alone), what it caught, where. Positions count
+  // characters: the driver's offsets are UTF-16 units, the marks' measure,
+  // and a reader counts an emoji as one. Pointing at a match lights its
+  // mark in the field.
+  function matchItem(set, i, subject, names) {
+    var whole = set['0'];
+    var item = text('li', 'pg-match');
+    var head = text('div', 'pg-match-head');
+    head.appendChild(text('span', 'pg-match-n', '#' + (i + 1)));
+    head.appendChild(caught(whole[0]));
+    var start = Array.from(subject.slice(0, whole[2])).length;
+    head.appendChild(text('span', 'pg-match-at', 'characters ' + start + ' to ' + (start + Array.from(whole[0]).length)));
+    item.appendChild(head);
+    var groups = Object.keys(set).filter(function (key) {
+      return key !== '0';
+    });
+    if (groups.length) {
+      var list = text('dl', 'pg-groups');
+      groups.forEach(function (key) {
+        var capture = set[key];
+        list.appendChild(text('dt', 'pg-group-name', names[key] ? names[key] + ' (#' + key + ')' : '#' + key));
+        var value = text('dd', 'pg-group-value');
+        value.appendChild(caught(capture[0]));
+        list.appendChild(value);
+        list.appendChild(text('dd', 'pg-group-at pg-match-at', 'at ' + Array.from(subject.slice(0, capture[2])).length));
+      });
+      item.appendChild(list);
+    }
+    item.addEventListener('mouseenter', function () {
+      lightMatch(i, true);
+    });
+    item.addEventListener('mouseleave', function () {
+      lightMatch(i, false);
+    });
+    return item;
+  }
+
+  // What a match or a group caught: the text in the mono voice, or the
+  // word "empty" where it caught nothing, since an empty code reads blank.
+  function caught(value) {
+    return value === '' ? text('span', 'pg-match-empty', 'empty') : text('code', 'pg-match-value', value);
+  }
+
+  function lightMatch(index, on) {
     var marks = el.subjectMirror.querySelectorAll('mark[data-index="' + index + '"]');
     Array.prototype.forEach.call(marks, function (mark) {
       mark.classList.toggle('is-current', on);
     });
+  }
+
+  // Whether the fields, and the PHP version, still say what a request
+  // asked: an answer to anything else has nothing to draw in the field.
+  function fieldsRead(request) {
+    return el.pattern.value === request.regex && el.subject.value === request.subject && request.version === chosen;
+  }
+
+  // A keystroke makes the answer stale: the count, the list and the marks
+  // go at once, the text stays in the mirror, and the answer to the new
+  // input draws them again.
+  function dropSubjectMarks() {
+    el.matchSummary.textContent = '';
+    clear(el.subjectMatches);
+    el.matchDetails.hidden = true;
+    clear(el.subjectMirror);
+    el.subjectMirror.appendChild(markRanges(el.subject.value, []));
   }
 
   // The explanation, one line per construct, indented two spaces per level,
@@ -1549,25 +1609,25 @@
 
   // --- the tabs and the tools ----------------------------------------------
 
-  // One strip of tabs over the answers. The first three are views of the
-  // analysis (the tree, the diagnostics, the matches), drawn whenever an
+  // One strip of tabs over the answers. The first two are views of the
+  // analysis (the tree, the diagnostics), drawn whenever an
   // answer lands; the others are what the console does with a pattern,
-  // one tool each: the ReDoS verdict, the translation, sample subjects, a
-  // test to paste, the layout, the match stepped through on PCRE2 itself.
+  // one tool each: the ReDoS verdict, the translation, sample subjects,
+  // the layout, the match stepped through on PCRE2 itself. The matches
+  // are no tab: the text field underlines them where they land.
   // A tool asks the engine when its tab is opened, or when the input moved
   // under it, never on every keystroke (the verdict alone is asked on
   // every run, for its badge); the answer of each belongs to the input it
   // was asked for, like the lint belongs to its pattern.
-  var TABS = ['tree', 'diagnostics', 'matches', 'redos', 'transpile', 'samples', 'export', 'format', 'trace'];
-  var TOOLS = ['redos', 'transpile', 'samples', 'export', 'format', 'trace'];
-  var TAB_LABELS = { tree: 'Tree', diagnostics: 'Diagnostics', matches: 'Matches', redos: 'ReDoS', transpile: 'Translate', samples: 'Samples', export: 'Test', format: 'Format', trace: 'Step through' };
+  var TABS = ['tree', 'diagnostics', 'redos', 'transpile', 'samples', 'format', 'trace'];
+  var TOOLS = ['redos', 'transpile', 'samples', 'format', 'trace'];
+  var TAB_LABELS = { tree: 'Tree', diagnostics: 'Diagnostics', redos: 'ReDoS', transpile: 'Translate', samples: 'Samples', format: 'Format', trace: 'Step through' };
   var TOOL_STORAGE_KEY = 'playground-tool';
   var TOOL_STATUS = {
     redos: 'Judging the pattern for backtracking…',
     transpile: 'Translating…',
     samples: 'Drawing subjects…',
     check: 'Asking the engine…',
-    export: 'Writing the test…',
     format: 'Laying the pattern out…',
     'trace-input': 'Reading the pattern for the trace…',
   };
@@ -1580,7 +1640,6 @@
   var SEVERITY_WORDS = { safe: 'safe', low: 'low risk', medium: 'medium risk', high: 'high risk', critical: 'critical', unknown: 'no verdict' };
   var TARGET_LABELS = { js: 'JavaScript', html: 'HTML pattern', python: 'Python' };
   var PYTHON_VERSIONS = ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13'];
-  var SUBJECTS_CAP = 50;
 
   // A first visit opens on the tree; a tab the visitor chose is opened
   // again, and anything else the key holds falls back to the tree.
@@ -1596,7 +1655,6 @@
     redos: { mode: 'theoretical' },
     transpile: { target: 'js', pythonVersion: '3.11' },
     format: { width: 80, fit: false, compact: false }, // the driver's own width, unless the field's is asked for
-    export: { full: false },
   };
   var lastHotspots = null; // the verdict's hotspots lit in the pattern field, for the current regex
 
@@ -1608,8 +1666,8 @@
     if (!current) {
       return null;
     }
-    // The subject is the export's business alone (through its subject
-    // list): a subject-only edit leaves the other tabs' answers current.
+    // The subject is the trace's business alone (through its subject
+    // cut): a subject-only edit leaves the other tabs' answers current.
     var request = { type: tool, regex: current.regex, version: current.version };
     switch (tool) {
       case 'redos':
@@ -1623,14 +1681,6 @@
       case 'format':
         request.width = formatWidth();
         request.compact = toolSettings.format.compact;
-        break;
-      case 'export':
-        // The engine the page shows answers first; the test is written
-        // from its answers. Two steps, the first one an engine-only check.
-        request.type = 'check';
-        request.purpose = 'export';
-        request.subject = current.subject;
-        request.subjects = exportSubjects();
         break;
       case 'samples':
         break;
@@ -1667,26 +1717,6 @@
     return Math.max(24, Math.min(120, width || 80));
   }
 
-  // The subjects a test asserts: the field's text, then every sample chip
-  // the Samples tab holds for this very input, without a duplicate.
-  function exportSubjects() {
-    var subjects = [];
-    var seen = Object.create(null); // "constructor" is a subject like any other
-    var add = function (subject) {
-      if (typeof subject === 'string' && !seen[subject] && subjects.length < SUBJECTS_CAP && byteLength(subject) <= SUBJECT_CAP) {
-        seen[subject] = true;
-        subjects.push(subject);
-      }
-    };
-    add(current ? current.subject : '');
-    var samples = toolAnswers.samples;
-    if (samples && current && samples.request.regex === current.regex && samples.request.version === current.version && samples.payload.samples) {
-      samples.payload.samples.matching.forEach(add);
-      samples.payload.samples.nonMatching.forEach(add);
-    }
-    return subjects;
-  }
-
   // The sample's answers, one per tool, each keyed by the request stored
   // beside it: the tab holds it while its own request is that one. The
   // controls start from what the stored request asked for.
@@ -1704,9 +1734,7 @@
     if (stored.format) {
       toolSettings.format = { width: stored.format.width, fit: false, compact: stored.format.compact };
     }
-    // The samples before the test: the test asserts them, and its request
-    // lists them.
-    ['redos', 'transpile', 'samples', 'format', 'export'].forEach(function (tool) {
+    ['redos', 'transpile', 'samples', 'format'].forEach(function (tool) {
       if (!stored[tool] || !sample[tool]) {
         return;
       }
@@ -1772,11 +1800,6 @@
     } else {
       setBadge(el.badges.diagnostics, '', null, '');
     }
-    if (matches && !matches.pending && !engineGaveUp && matches.count > 0) {
-      setBadge(el.badges.matches, 'count', matches.count, matches.count === 1 ? 'match' : 'matches');
-    } else {
-      setBadge(el.badges.matches, '', null, '');
-    }
     var held = toolAnswers.redos;
     var verdict = held && held.request && held.request.regex === current.regex && held.request.version === current.version && held.payload && !held.payload.error && held.payload.redos && !held.payload.redos.error ? held.payload.redos : null;
     var tone = verdict ? BADGE_TONES[verdict.severity] : '';
@@ -1801,9 +1824,6 @@
     }
     var request = toolRequest(tool);
     if (!request || exhausted(request)) {
-      return null;
-    }
-    if (tool === 'export' && !current.payload.ast) {
       return null;
     }
     // The trace is offered on a pattern the tree can show, on a Run
@@ -1839,13 +1859,6 @@
       }
       return;
     }
-    if (request.type === 'check' && request.purpose === 'export') {
-      // Step two: the test, written from the engine's answers.
-      var exportRequest = { type: 'export', regex: request.regex, subject: request.subject, version: request.version, subjects: request.subjects, checks: payload.checks || [], purpose: 'export' };
-      exportRequest.chainKey = requestKey(request);
-      pendingTool = exportRequest;
-      return;
-    }
     if (request.type === 'check' && request.purpose === 'samples') {
       // The engine the page shows had the last word on each sample.
       var drawn = toolAnswers.samples;
@@ -1871,7 +1884,7 @@
       return;
     }
     var tool = request.type;
-    var key = request.type === 'export' ? request.chainKey : requestKey(request);
+    var key = requestKey(request);
     toolAnswers[tool] = { key: key, payload: payload, request: request, checked: false };
     if (tool === 'samples' && current.version < ANALYSIS_FLOOR_VERSION && payload.samples) {
       // Drawn by the analysing engine, judged for this one: the engine the
@@ -2002,8 +2015,6 @@
     if (!fresh) {
       if (current.prerendered) {
         panel.appendChild(text('p', 'pg-tool-hint', tool === 'trace' ? 'Press Run to step through this pattern on PCRE2.' : 'The engine answers this setting once it runs.'));
-      } else if (tool === 'export' && !current.payload.ast) {
-        panel.appendChild(text('p', 'pg-tool-hint', 'A pattern that does not parse has no test to write.'));
       } else if (tool === 'trace' && !current.payload.ast) {
         panel.appendChild(text('p', 'pg-tool-hint', 'A pattern the parser does not read has no trace: the syntax tree could not show its steps.'));
       } else if (tool === 'trace' && !traceWanted) {
@@ -2018,7 +2029,6 @@
       case 'redos': renderRedos(panel, answer.payload); break;
       case 'transpile': renderTranspile(panel, answer.payload, announceResult); break;
       case 'samples': renderSamples(panel, answer, announceResult); break;
-      case 'export': renderExport(panel, answer.payload, announceResult); break;
       case 'format': renderFormat(panel, answer.payload, announceResult); break;
       case 'trace': renderTrace(panel, answer, announceResult); break;
       default: break;
@@ -2319,35 +2329,6 @@
     }
     panel.appendChild(row);
     if (announceResult) announce(samples.matching.length + ' matching sample' + (samples.matching.length === 1 ? '' : 's') + ', ' + samples.nonMatching.length + ' that do' + (samples.nonMatching.length === 1 ? 'es' : '') + ' not match.');
-  }
-
-  // --- test ------------------------------------------------------------------
-
-  function renderExport(panel, payload, announceResult) {
-    if (payload.error) {
-      faultLine(panel, payload.error, 'No test: ');
-      return;
-    }
-    var result = payload.export;
-    if (!result) {
-      return;
-    }
-    var full = toolSettings.export.full;
-    var code = text('pre', 'pg-tool-code', full ? result.class : result.method);
-    code.tabIndex = 0;
-    code.setAttribute('aria-label', full ? 'The test class' : 'The test method and its data provider');
-    panel.appendChild(code);
-    var row = text('div', 'pg-tool-row');
-    row.appendChild(toolButton('Copy', function () {
-      copyText(full ? result.class : result.method, full ? 'the test class' : 'the test method', panel);
-    }));
-    row.appendChild(toolButton('Full class', function () {
-      toolSettings.export.full = !toolSettings.export.full;
-      renderTool('export', true);
-    }, full));
-    row.appendChild(text('span', 'pg-tool-line', result.assertions + ' assertion' + (result.assertions === 1 ? '' : 's') + (result.linear ? ', linear proven' : '') + (result.refused ? ', ' + result.refused + ' subject' + (result.refused === 1 ? '' : 's') + ' the engine refused (commented)' : '') + '. Needs php-regex/regex-phpunit.'));
-    panel.appendChild(row);
-    if (announceResult) announce('Test written: ' + result.assertions + ' assertion' + (result.assertions === 1 ? '' : 's') + '.');
   }
 
   // --- format ---------------------------------------------------------------
@@ -3661,6 +3642,7 @@
     try {
       localStorage.setItem(STORAGE_KEY, chosen);
     } catch (error) {/* the choice simply does not persist */}
+    dropSubjectMarks();
     analyzeNow();
   });
 
@@ -3680,6 +3662,7 @@
         el.patternEditor.classList.remove('is-untouched');
       }
       refreshFields();
+      dropSubjectMarks();
       schedule();
     });
     area.addEventListener('scroll', function () {
@@ -3701,6 +3684,7 @@
       el.pattern.value = chip.getAttribute('data-regex') || '';
       el.subject.value = chip.getAttribute('data-subject') || '';
       refreshFields();
+      dropSubjectMarks();
       analyzeNow();
     });
   });
@@ -3886,8 +3870,6 @@
     el.version.value = chosen;
     refreshFields();
     setStatus(fromHash.cut ? 'The subject in this link was cut at ' + SUBJECT_CAP + ' bytes. Loading the engine…' : 'Loading the engine for the pattern in this link…', 'busy');
-    el.matchesEmpty.hidden = false;
-    el.matchesEmpty.textContent = 'Loading PHP ' + chosen + '…';
     el.diagnostics.appendChild(text('li', 'pg-diag is-empty', 'Loading…'));
     setState('Loading…', 'busy');
     analyzeNow();

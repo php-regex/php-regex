@@ -9,19 +9,24 @@
   The data is embedded as JSON. Liquid writes "<" back when it re-encodes,
   so the include escapes it: a "<" could otherwise close the script element.
 
-  A window: the title bar holds the PHP version, Run and the state; on the
-  left, what the visitor writes (the examples, the pattern, the subject);
-  on the right, what the engine answers, behind one strip of tabs (one
-  column under 1024px, the answers after the subject). The tree is the
+  A window: the title bar holds the PHP version, Run and the state; the
+  examples stand in a column of their own, each carrying its pattern
+  under its name, then what the visitor writes (the pattern, the text);
+  on the right, what the engine answers, behind one strip of tabs. Under
+  1280px the column folds back into a row above the fields, one a phone
+  scrolls; under 1024px the window runs on one column, the answers after
+  the text. The tree is the
   first tab, the one the home's title promises, and the explanation its
-  other voice; then the diagnostics, the matches, and what the console
-  does with a pattern: the ReDoS verdict with its attack string, the
-  translation to JavaScript, HTML or Python, sample subjects, a
-  regex-phpunit test to paste, the pattern laid out over lines, and the
+  other voice; then the diagnostics, and what the console does with a
+  pattern: the ReDoS verdict with its attack string, the
+  translation to JavaScript, HTML or Python, sample subjects, the
+  pattern laid out over lines, and the
   match stepped through as PCRE2 itself ran it (the real PCRE2, compiled
-  to WebAssembly, in a worker of its own). Three tabs
+  to WebAssembly, in a worker of its own). The matches are said by the
+  text field itself, underlined where they land, their count spoken by
+  the live line; no tab holds them. Two tabs
   carry a badge, so the state of the answer reads on a closed tab: the
-  errors and the lint findings, the match count, the verdict. A tool asks
+  errors and the lint findings, the verdict. A tool asks
   the engine when its tab is opened, the verdict on every run; never on
   every keystroke. The pattern field is colored by the same answer: the
   engine's token spans, drawn in a mirror under the field, the code
@@ -50,14 +55,20 @@
     </div>
   </div>
   <div class="pg-body">
+    <ul class="pg-examples" aria-label="Examples">
+      <li><span class="pg-examples-label">Examples</span></li>
+      <li><button type="button" class="pg-example" data-regex="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m" data-subject="2026-11-02&#10;2026-11-19&#10;not a date" title="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m"><span class="pg-example-name">named groups</span><span class="pg-example-pattern">/^(?&lt;year&gt;\d{4})-(?&lt;month&gt;\d{2})-(?&lt;day&gt;\d{2})$/m</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/[\w.+-]+@[\w-]+\.[\w.-]+/i" data-subject="Write to hello@php-regex.com or to noreply@example.org." title="/[\w.+-]+@[\w-]+\.[\w.-]+/i"><span class="pg-example-name">e-mail addresses</span><span class="pg-example-pattern">/[\w.+-]+@[\w-]+\.[\w.-]+/i</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/(?<=@)[\w.-]+(?=\.)/" data-subject="Write to hello@php-regex.com or noreply@example.org" title="/(?<=@)[\w.-]+(?=\.)/"><span class="pg-example-name">lookaround</span><span class="pg-example-pattern">/(?&lt;=@)[\w.-]+(?=\.)/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\b(\w+) \1\b/i" data-subject="This this is a a duplicated word test, very very nice." title="/\b(\w+) \1\b/i"><span class="pg-example-name">repeated words</span><span class="pg-example-pattern">/\b(\w+) \1\b/i</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i" data-subject="Colors: #fff, #B14E06, #12ab34 and #12345." title="/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i"><span class="pg-example-name">hex colors</span><span class="pg-example-pattern">/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/&quot;\w++&quot;/" data-subject="Say &quot;hello&quot; and &quot;a b&quot;, not &quot;unclosed." title="/&quot;\w++&quot;/"><span class="pg-example-name">possessive quotes</span><span class="pg-example-pattern">/&quot;\w++&quot;/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\((?:[^()]++|(?R))*\)/" data-subject="(a(b)c) and ((x)) but (broken" title="/\((?:[^()]++|(?R))*\)/"><span class="pg-example-name">balanced parentheses</span><span class="pg-example-pattern">/\((?:[^()]++|(?R))*\)/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/" data-subject="IPs: 192.168.1.10, 8.8.8.8, 256.1.1.1 and 10.0.0.255." title="/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/"><span class="pg-example-name">IPv4 addresses</span><span class="pg-example-pattern">/\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/^(a+)+$/" data-subject="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab" title="/^(a+)+$/"><span class="pg-example-name">catastrophic backtracking</span><span class="pg-example-pattern">/^(a+)+$/</span></button></li>
+      <li><button type="button" class="pg-example" data-regex="/\p{Lu}\p{Ll}+/u" data-subject="Ünïcode Straße Ωmega" title="/\p{Lu}\p{Ll}+/u"><span class="pg-example-name">Unicode properties</span><span class="pg-example-pattern">/\p{Lu}\p{Ll}+/u</span></button></li>
+    </ul>
     <div class="pg-main">
-      <ul class="pg-examples" aria-label="Try">
-        <li><span class="pg-examples-label">Try</span></li>
-        <li><button type="button" class="pg-example" data-regex="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m" data-subject="2026-11-02&#10;2026-11-19&#10;not a date" title="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m">named groups</button></li>
-        <li><button type="button" class="pg-example" data-regex="/[\w.+-]+@[\w-]+\.[\w.-]+/i" data-subject="Write to hello@php-regex.com or to noreply@example.org." title="/[\w.+-]+@[\w-]+\.[\w.-]+/i">e-mail addresses</button></li>
-        <li><button type="button" class="pg-example" data-regex="/^(a+)+$/" data-subject="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaab" title="/^(a+)+$/">catastrophic backtracking</button></li>
-        <li><button type="button" class="pg-example" data-regex="/\p{Lu}\p{Ll}+/u" data-subject="Ünïcode Straße Ωmega" title="/\p{Lu}\p{Ll}+/u">Unicode properties</button></li>
-      </ul>
       <div class="pg-field">
         <label class="pg-label" for="pg-pattern">Pattern</label>
         <span class="pg-count" id="pg-pattern-count"></span>
@@ -67,13 +78,18 @@
         </div>
         <span class="visually-hidden" id="pg-pattern-error"></span>
       </div>
-      <div class="pg-field">
-        <label class="pg-label" for="pg-subject">Subject</label>
+      <div class="pg-field pg-field-text">
+        <label class="pg-label" for="pg-subject">Text</label>
+        <span class="pg-match-summary" id="pg-match-summary"></span>
         <span class="pg-count" id="pg-subject-count"></span>
         <div class="pg-editor pg-editor-subject">
           <pre class="pg-mirror" aria-hidden="true"></pre>
-          <textarea id="pg-subject" class="pg-input" rows="3" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="pg-subject-count" placeholder="the text to test against"></textarea>
+          <textarea id="pg-subject" class="pg-input" rows="8" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="pg-subject-count" placeholder="the text to test against"></textarea>
         </div>
+        <details class="pg-match-details" hidden>
+          <summary>Match details</summary>
+          <ol class="pg-subject-matches" aria-labelledby="pg-match-summary"></ol>
+        </details>
       </div>
       <p class="pg-status" role="status" aria-live="polite"></p>
     </div>
@@ -81,11 +97,9 @@
       <div class="pg-tabs" role="tablist" aria-label="Results">
         <button type="button" class="pg-tab" role="tab" id="pg-tab-tree" aria-controls="pg-tool-tree" aria-selected="true" data-tool="tree">Tree</button>
         <button type="button" class="pg-tab" role="tab" id="pg-tab-diagnostics" aria-controls="pg-tool-diagnostics" aria-selected="false" tabindex="-1" data-tool="diagnostics">Diagnostics<span class="pg-tab-badge"></span></button>
-        <button type="button" class="pg-tab" role="tab" id="pg-tab-matches" aria-controls="pg-tool-matches" aria-selected="false" tabindex="-1" data-tool="matches">Matches<span class="pg-tab-badge"></span></button>
         <button type="button" class="pg-tab" role="tab" id="pg-tab-redos" aria-controls="pg-tool-redos" aria-selected="false" tabindex="-1" data-tool="redos">ReDoS<span class="pg-tab-badge"></span></button>
         <button type="button" class="pg-tab" role="tab" id="pg-tab-transpile" aria-controls="pg-tool-transpile" aria-selected="false" tabindex="-1" data-tool="transpile">Translate</button>
         <button type="button" class="pg-tab" role="tab" id="pg-tab-samples" aria-controls="pg-tool-samples" aria-selected="false" tabindex="-1" data-tool="samples">Samples</button>
-        <button type="button" class="pg-tab" role="tab" id="pg-tab-export" aria-controls="pg-tool-export" aria-selected="false" tabindex="-1" data-tool="export">Test</button>
         <button type="button" class="pg-tab" role="tab" id="pg-tab-format" aria-controls="pg-tool-format" aria-selected="false" tabindex="-1" data-tool="format">Format</button>
         <button type="button" class="pg-tab" role="tab" id="pg-tab-trace" aria-controls="pg-tool-trace" aria-selected="false" tabindex="-1" data-tool="trace">Step through</button>
       </div>
@@ -109,16 +123,9 @@
         <p class="pg-tool-note pg-lint-note"></p>
         <ul class="pg-diagnostics"></ul>
       </div>
-      <div class="pg-tool" role="tabpanel" id="pg-tool-matches" aria-labelledby="pg-tab-matches" tabindex="0" hidden>
-        <p class="pg-tool-note pg-matches-note"></p>
-        <div class="pg-error-slot"></div>
-        <ol class="pg-match-list"></ol>
-        <p class="pg-empty pg-matches-empty" hidden></p>
-      </div>
       <div class="pg-tool" role="tabpanel" id="pg-tool-redos" aria-labelledby="pg-tab-redos" tabindex="0" hidden></div>
       <div class="pg-tool" role="tabpanel" id="pg-tool-transpile" aria-labelledby="pg-tab-transpile" tabindex="0" hidden></div>
       <div class="pg-tool" role="tabpanel" id="pg-tool-samples" aria-labelledby="pg-tab-samples" tabindex="0" hidden></div>
-      <div class="pg-tool" role="tabpanel" id="pg-tool-export" aria-labelledby="pg-tab-export" tabindex="0" hidden></div>
       <div class="pg-tool" role="tabpanel" id="pg-tool-format" aria-labelledby="pg-tab-format" tabindex="0" hidden></div>
       <div class="pg-tool" role="tabpanel" id="pg-tool-trace" aria-labelledby="pg-tab-trace" tabindex="0" hidden></div>
     </div>
