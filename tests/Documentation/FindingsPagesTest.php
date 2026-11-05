@@ -89,6 +89,10 @@ final class FindingsPagesTest extends TestCase
         $this->assertStringContainsString("permalink: /findings/\n", $index);
         $this->assertStringContainsString('site.findings | sort: "findings_rank"', $index);
         $this->assertStringContainsString('finding.findings_php', $index, 'Each project with the PHP and PCRE2 it was judged for.');
+        $this->assertStringContainsString('/assets/findings/avatars/{{ owner }}.png', $index, 'Each row carries the project\'s owner, pictured as the tree pictures it.');
+        $this->assertStringContainsString('<a href="{{ finding.url }}">', $index, 'The row is the link.');
+        $this->assertStringNotContainsString('| Project |', $index, 'A wall of pipes is not a directory: rows, avatars and chips.');
+        $this->assertStringNotContainsString('|---', $index);
         $this->assertStringContainsString('bin/corpus-lint', self::source(self::DOCS.'/maintainers.md'), 'The daily run is written down for the maintainer.');
         foreach (['90 days', 'disclos', 'fixed', 'maintainers hear', 'privately'] as $promise) {
             $this->assertStringNotContainsStringIgnoringCase($promise, $index, 'The list is what the linter reports today, nothing more.');

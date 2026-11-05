@@ -2883,6 +2883,84 @@ a:focus-visible .article-nav-arrow {
   transform: translateX(.25em);
 }
 
+/* ---- The projects directory -----------------------------------------------
+ * The findings index: one row per repository, the whole row a link —
+ * the owner pictured as the playground's tree pictures it, the counts
+ * as chips in the state colors (a zero keeps its word but not its
+ * voice), the engine quiet on the right. Rows breathe; a wall of pipes
+ * never breathed.
+   -------------------------------------------------------------------------- */
+
+.projects-index {
+  display: grid;
+  gap: .3rem;
+  margin: 1.75rem 0;
+  padding: 0;
+  list-style: none;
+}
+.projects-index a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: .4rem .8rem;
+  padding: .55rem .7rem;
+  color: inherit;
+  text-decoration: none;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-m);
+}
+.projects-index a:hover,
+.projects-index a:focus-visible {
+  border-color: var(--amber);
+  background: var(--amber-tint);
+}
+.projects-index-avatar {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line-soft);
+  border-radius: 50%;
+}
+.projects-index-name {
+  overflow: hidden;
+  font-weight: 600;
+  font-size: .92rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.projects-index-counts {
+  display: inline-flex;
+  gap: .5rem;
+  font-family: var(--font-mono);
+  font-size: .74rem;
+  white-space: nowrap;
+}
+.projects-index-fail {
+  color: var(--danger);
+}
+.projects-index-warn {
+  color: var(--amber-deep);
+}
+.projects-index-fail.is-zero,
+.projects-index-warn.is-zero {
+  color: var(--ink-soft);
+  opacity: .55;
+}
+.projects-index-engine {
+  font-family: var(--font-mono);
+  font-size: .74rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+@media (max-width: 639px) {
+  .projects-index a {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .projects-index-engine {
+    display: none;
+  }
+}
+
 /* ---- Guide grids -----------------------------------------------------------
  * The guides index lists seven integrations, each a heading and one
  * sentence: a single column of those is a page of air. From 1100px the

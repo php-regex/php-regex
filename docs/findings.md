@@ -12,10 +12,18 @@ The list is the latest run over the corpus: the repositories are cloned again, l
 
 {%- assign projects = site.findings | sort: "findings_rank" %}
 
-| Project | Findings | FAIL | WARN | Judged for |
-|---|---:|---:|---:|---|
+<ul class="projects-index">
 {% for finding in projects -%}
-| [{{ finding.findings_repo }}]({{ finding.url }}) | {{ finding.findings_count }} | {{ finding.findings_fail }} | {{ finding.findings_warn }} | PHP {{ finding.findings_php }} · PCRE2 {{ finding.findings_pcre }} |
+{%- assign owner = finding.findings_repo | split: '/' | first %}
+  <li>
+    <a href="{{ finding.url }}">
+      <img class="projects-index-avatar" src="/assets/findings/avatars/{{ owner }}.png" alt="" width="28" height="28" loading="lazy">
+      <span class="projects-index-name">{{ finding.findings_repo }}</span>
+      <span class="projects-index-counts"><span class="projects-index-fail{% if finding.findings_fail == 0 %} is-zero{% endif %}">{{ finding.findings_fail }} FAIL</span><span class="projects-index-warn{% if finding.findings_warn == 0 %} is-zero{% endif %}">{{ finding.findings_warn }} WARN</span></span>
+      <span class="projects-index-engine">PHP {{ finding.findings_php }} · PCRE2 {{ finding.findings_pcre }}</span>
+    </a>
+  </li>
 {% endfor %}
+</ul>
 
 Want a project in the corpus? [Propose a project](https://github.com/php-regex/php-regex/issues/new?template=propose-project.yml).
