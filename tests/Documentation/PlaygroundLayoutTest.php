@@ -439,7 +439,12 @@ final class PlaygroundLayoutTest extends TestCase
         // A match answer that lands after a keystroke belongs to the old
         // text: it is kept, not drawn, so the dropped marks stay dropped.
         $answered = self::between($script, "} else if (request.type === 'match') {", "} else if (request.type === 'lint') {");
-        $this->assertSame(1, preg_match('/if \(el\.pattern\.value === request\.regex && el\.subject\.value === request\.subject && request\.version === chosen\) \{\s*renderSubjectMarks\(current\.payload, request\.subject\);\s*\}/', $answered), 'A late answer does not draw the marks back over a newer text, nor over another PHP version.');
+        $this->assertSame(1, preg_match('/if \(fieldsRead\(request\)\) \{\s*renderSubjectMarks\(current\.payload, request\.subject\);\s*\}/', $answered), 'A late answer does not draw the marks back over a newer text, nor over another PHP version.');
+        // An analysis carries match sets of its own: the same guard holds.
+        $rendered = self::between($script, 'function render(payload, request, prerendered) {', "\n  }\n");
+        $this->assertSame(1, preg_match('/if \(fieldsRead\(request\)\) \{\s*renderSubjectMarks\(payload, request\.subject\);\s*\}/', $rendered), 'A late analysis does not draw the marks back either.');
+        $read = self::between($script, 'function fieldsRead(request) {', "\n  }\n");
+        $this->assertStringContainsString('return el.pattern.value === request.regex && el.subject.value === request.subject && request.version === chosen;', $read, 'The fields, and the PHP version, still say what was asked.');
         // Another PHP version is another answer: the marks go at once.
         $version = self::between($script, "el.version.addEventListener('change', function () {", "\n  });\n");
         $this->assertSame(1, preg_match('/dropSubjectMarks\(\);\s*analyzeNow\(\);/', $version), 'A version change drops the old marks before it asks.');

@@ -635,7 +635,7 @@
         // A keystroke or another PHP version since the request dropped the
         // marks: the answer to the old input is kept, not drawn; the new
         // input's answer draws.
-        if (el.pattern.value === request.regex && el.subject.value === request.subject && request.version === chosen) {
+        if (fieldsRead(request)) {
           renderSubjectMarks(current.payload, request.subject);
         }
         renderErrors(current.payload);
@@ -759,7 +759,11 @@
     }
     renderCaption(payload, prerendered);
     renderPatternMirror(payload, request.regex, null);
-    renderSubjectMarks(payload, request.subject);
+    // An analysis may carry its match sets: drawn only while the fields
+    // still say what was asked, like a match answer.
+    if (fieldsRead(request)) {
+      renderSubjectMarks(payload, request.subject);
+    }
     renderExplain(payload.explain);
     renderErrors(payload);
     if (prerendered) {
@@ -1097,6 +1101,12 @@
     Array.prototype.forEach.call(marks, function (mark) {
       mark.classList.toggle('is-current', on);
     });
+  }
+
+  // Whether the fields, and the PHP version, still say what a request
+  // asked: an answer to anything else has nothing to draw in the field.
+  function fieldsRead(request) {
+    return el.pattern.value === request.regex && el.subject.value === request.subject && request.version === chosen;
   }
 
   // A keystroke makes the answer stale: the count, the list and the marks
