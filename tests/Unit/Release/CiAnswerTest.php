@@ -157,7 +157,7 @@ final class CiAnswerTest extends TestCase
                 shift
             done
             echo "$sha $workflow${event:+ $event}" >> "$GH_LOG"
-            awk -v sha="$sha" -v workflow="$workflow" -v event="$event" '$1 == sha && $2 == workflow && (event == "" || event == $5) { printf "{\"status\":\"%s\",\"conclusion\":\"%s\",\"createdAt\":\"%s\"}\n", $3, $4, $6 }' "$GH_RUNS" | jq -rs "$filter"
+            awk -v sha="$sha" -v workflow="$workflow" -v event="$event" '$1 == sha && $2 == workflow && (event == "" || event == $5) { printf "{\"status\":\"%s\",\"conclusion\":\"%s\",\"event\":\"%s\",\"createdAt\":\"%s\"}\n", $3, $4, $5, $6 }' "$GH_RUNS" | jq -rs "$filter"
 
             BASH);
         chmod($this->root.'/fake/gh', 0o755);
@@ -189,9 +189,25 @@ final class CiAnswerTest extends TestCase
         $this->commitFiles(['src/A.php' => 'a']);
         $pullRequest = $this->branchCommit('feature', ['src/B.php' => 'b']);
         $this->merge('feature');
-        $this->ranOn($pullRequest, 'tests.yml', 'completed success');
+        $this->ranOn($pullRequest, 'tests.yml', 'completed success', 'pull_request');
 
         $this->assertSame('run '.$this->short($pullRequest).' completed success', $this->answer('tests.yml'));
+    }
+
+    /**
+     * A pull request run tests its head merged into the branch as it stood:
+     * on a commit of the branch itself (a pull request's head forced onto
+     * it), that is a tree the commit does not hold, so it answers nothing.
+     */
+    #[Test]
+    public function test_a_pull_request_run_on_a_commit_of_the_branch_does_not_answer_for_it(): void
+    {
+        $code = $this->commitFiles(['src/A.php' => 'a']);
+        $this->ranOn($code, 'tests.yml', 'completed success');
+        $head = $this->commitFiles(['src/B.php' => 'b']);
+        $this->ranOn($head, 'tests.yml', 'completed success', 'pull_request');
+
+        $this->assertSame('unread '.$this->short($head).' src/B.php', $this->answer('tests.yml'));
     }
 
     #[Test]
@@ -351,7 +367,7 @@ final class CiAnswerTest extends TestCase
         $code = $this->commitFiles(['src/A.php' => 'a']);
         $this->ranOn($code, 'tests.yml', 'completed success');
         $pullRequest = $this->branchCommit('feature', ['src/B.php' => 'b']);
-        $this->ranOn($pullRequest, 'tests.yml', 'completed success');
+        $this->ranOn($pullRequest, 'tests.yml', 'completed success', 'pull_request');
         $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'merge', '-q', '--no-ff', '--no-commit', 'feature');
         file_put_contents($this->root.'/repository/src/B.php', 'b, then changed in the merge');
         $merge = $this->commitFiles([], 'Merge feature');
@@ -423,7 +439,7 @@ final class CiAnswerTest extends TestCase
         $code = $this->commitFiles(['src/A.php' => 'a']);
         $this->ranOn($code, 'tests.yml', 'completed success');
         $pullRequest = $this->branchCommit('feature', ['src/B.php' => 'b']);
-        $this->ranOn($pullRequest, 'tests.yml', 'completed success');
+        $this->ranOn($pullRequest, 'tests.yml', 'completed success', 'pull_request');
         unset($this->pushes[$code]);
         $merge = $this->merge('feature');
 
@@ -441,7 +457,7 @@ final class CiAnswerTest extends TestCase
         $code = $this->commitFiles(['src/A.php' => 'a']);
         $this->ranOn($code, 'tests.yml', 'completed success');
         $pullRequest = $this->branchCommit('feature', ['src/B.php' => 'b']);
-        $this->ranOn($pullRequest, 'tests.yml', 'completed success');
+        $this->ranOn($pullRequest, 'tests.yml', 'completed success', 'pull_request');
         $merge = $this->merge('feature');
 
         [$exit, $output, $answer] = $this->ciAnswer(['tests.yml'], ['GH_ACTIVITY_FAILS' => '1']);
@@ -575,10 +591,11 @@ final class CiAnswerTest extends TestCase
     }
 
     /**
-     * A run of the workflow on the commit; by default a pull request's,
-     * started after every commit of the scratch repository.
+     * A run of the workflow on the commit, started after every commit of
+     * the scratch repository; by default one started by hand on the branch,
+     * as runs on 2.x are. A pull request's run names its event.
      */
-    private function ranOn(string $sha, string $workflow, string $state, string $event = 'pull_request', string $createdAt = '2999-01-01T00:00:00Z'): void
+    private function ranOn(string $sha, string $workflow, string $state, string $event = 'workflow_dispatch', string $createdAt = '2999-01-01T00:00:00Z'): void
     {
         $this->runs[] = $sha.' '.$workflow.' '.$state.' '.$event.' '.$createdAt;
     }

@@ -9,12 +9,13 @@
 #
 # Says which CI run answers for HEAD in one workflow. A pull request runs the
 # workflows its changes can affect, and a merge into 2.x runs nothing, so a
-# commit is answered by the run on itself or, for a merge Git made on its own
-# (no conflict resolved by hand), by a pull request run on the head of its
-# pull request that started once the merge's base was on the branch, as the
-# branch's record of its pushes dates it, so that it tested that very base; when there is none and nothing the commit changed
-# is read by the workflow (its pull_request paths or paths-ignore, as the
-# commit holds them), by the commit before it, along the first parents.
+# commit is answered by a run started on itself on the branch or, for a merge
+# Git made on its own (no conflict resolved by hand), by a pull request run on
+# the head of its pull request that started once the merge's base was on the
+# branch, as the branch's record of its pushes dates it, so that it tested
+# that very base; when there is none and nothing the commit changed is read by
+# the workflow (its pull_request paths or paths-ignore, as the commit holds
+# them), by the commit before it, along the first parents.
 #
 # Usage:
 #   bin/ci-answer [--root <dir>] [--limit <n>] [--branch <name>] <workflow>
@@ -164,7 +165,12 @@ pushes=""
 pushes_read=""
 while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
     count=$((count + 1))
-    answer=$(gh run list --commit "$sha" --workflow "$workflow" --json conclusion,status --jq '.[0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null || true)
+    # A run on the commit itself, started on the branch (by hand, on a
+    # schedule, by a push): it checked out that very tree. A pull request
+    # run on the same commit tested it merged into the branch as it stood,
+    # a tree the commit does not hold once the branch moved or was forced
+    # over; a pull request run answers only through a merge, below.
+    answer=$(gh run list --commit "$sha" --workflow "$workflow" --json conclusion,status,event --jq '[.[] | select(.event != "pull_request")][0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null || true)
     if [ -n "$answer" ]; then
         echo "run $(git rev-parse --short "$sha") $answer"
         exit 0
