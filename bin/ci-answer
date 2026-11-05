@@ -10,8 +10,9 @@
 # Says which CI run answers for HEAD in one workflow. A pull request runs the
 # workflows its changes can affect, and a merge into 2.x runs nothing, so a
 # commit is answered by the run on itself or, for a merge Git made on its own
-# (no conflict resolved by hand), by the pull request run on the head of its
-# pull request; when there is none and nothing the commit changed
+# (no conflict resolved by hand), by a pull request run on the head of its
+# pull request that started once the merge's base was on the branch, so that
+# it tested that very base; when there is none and nothing the commit changed
 # is read by the workflow (its pull_request paths or paths-ignore, as the
 # commit holds them), by the commit before it, along the first parents.
 #
@@ -165,7 +166,11 @@ while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
     fi
     pull_request_head=$(git rev-parse -q --verify "$sha^2" 2>/dev/null || true)
     if [ -n "$pull_request_head" ] && merged_on_its_own "$sha"; then
-        answer=$(gh run list --commit "$pull_request_head" --workflow "$workflow" --event pull_request --json conclusion,status --jq '.[0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null || true)
+        # A pull request run merges its head into the branch as it stands
+        # when the run starts, and is not run again when the branch moves:
+        # only a run that started after the base landed tested this merge.
+        landed=$(TZ=UTC0 git show -s --format=%cd --date=format-local:%Y-%m-%dT%H:%M:%SZ "$sha^1")
+        answer=$(gh run list --commit "$pull_request_head" --workflow "$workflow" --event pull_request --json conclusion,status,createdAt --jq "[.[] | select(.createdAt >= \"$landed\")][0] // empty | \"\\(.status) \\(.conclusion)\"" 2>/dev/null || true)
         if [ -n "$answer" ]; then
             echo "run $(git rev-parse --short "$pull_request_head") $answer"
             exit 0

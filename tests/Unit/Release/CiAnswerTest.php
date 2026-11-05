@@ -124,19 +124,20 @@ final class CiAnswerTest extends TestCase
         file_put_contents($this->root.'/fake/gh', <<<'BASH'
             #!/usr/bin/env bash
             # gh run list --commit <sha> --workflow <file> …: the run the list holds.
-            # A run is "<sha> <workflow> <status> <conclusion> [<event>]", a
-            # pull request's by default.
-            sha=""; workflow=""; event=""
+            # A run is "<sha> <workflow> <status> <conclusion> <event> <created at>";
+            # the matching runs go through --jq as a JSON list, as gh's do.
+            sha=""; workflow=""; event=""; filter="."
             while [ $# -gt 0 ]; do
                 case "$1" in
                     --commit) sha=$2; shift ;;
                     --workflow) workflow=$2; shift ;;
                     --event) event=$2; shift ;;
+                    --jq) filter=$2; shift ;;
                 esac
                 shift
             done
             echo "$sha $workflow${event:+ $event}" >> "$GH_LOG"
-            awk -v sha="$sha" -v workflow="$workflow" -v event="$event" '$1 == sha && $2 == workflow && (event == "" || event == ($5 == "" ? "pull_request" : $5)) { print $3 " " $4; exit }' "$GH_RUNS"
+            awk -v sha="$sha" -v workflow="$workflow" -v event="$event" '$1 == sha && $2 == workflow && (event == "" || event == $5) { printf "{\"status\":\"%s\",\"conclusion\":\"%s\",\"createdAt\":\"%s\"}\n", $3, $4, $6 }' "$GH_RUNS" | jq -rs "$filter"
 
             BASH);
         chmod($this->root.'/fake/gh', 0o755);
@@ -339,6 +340,21 @@ final class CiAnswerTest extends TestCase
     }
 
     #[Test]
+    public function test_a_merge_whose_base_moved_after_the_pull_request_run_is_not_answered_by_it(): void
+    {
+        $code = $this->commitFiles(['src/A.php' => 'a']);
+        $this->ranOn($code, 'tests.yml', 'completed success');
+        $pullRequest = $this->branchCommit('feature', ['src/B.php' => 'b']);
+        // The pull request ran before the base moved: the merge it tested
+        // held the base before docs/guide.md, not the one the merge holds.
+        $this->ranOn($pullRequest, 'tests.yml', 'completed success', 'pull_request', '2000-01-01T00:00:00Z');
+        $this->commitFiles(['docs/guide.md' => 'prose']);
+        $merge = $this->merge('feature');
+
+        $this->assertSame('unread '.$this->short($merge).' src/B.php', $this->answer('tests.yml'));
+    }
+
+    #[Test]
     public function test_a_merge_is_answered_by_a_pull_request_run_alone(): void
     {
         $code = $this->commitFiles(['src/A.php' => 'a']);
@@ -434,9 +450,13 @@ final class CiAnswerTest extends TestCase
         return $this->git('rev-parse', 'HEAD');
     }
 
-    private function ranOn(string $sha, string $workflow, string $state, string $event = 'pull_request'): void
+    /**
+     * A run of the workflow on the commit; by default a pull request's,
+     * started after every commit of the scratch repository.
+     */
+    private function ranOn(string $sha, string $workflow, string $state, string $event = 'pull_request', string $createdAt = '2999-01-01T00:00:00Z'): void
     {
-        $this->runs[] = $sha.' '.$workflow.' '.$state.' '.$event;
+        $this->runs[] = $sha.' '.$workflow.' '.$state.' '.$event.' '.$createdAt;
     }
 
     private function short(string $sha): string
