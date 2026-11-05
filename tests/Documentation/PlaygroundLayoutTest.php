@@ -409,6 +409,7 @@ final class PlaygroundLayoutTest extends TestCase
         $script = self::source(self::SCRIPT);
         $marks = self::between($script, 'function renderSubjectMarks(payload, subject) {', "\n  }\n");
         $this->assertStringContainsString('el.matchSummary.textContent = ', $marks);
+        $this->assertSame(1, preg_match("/!matches && payload\\.engineError \\? 'Not run: PHP refused the pattern'/", $marks), 'A pattern PHP refuses says beside the field that nothing was matched; the engine\'s words stay in the diagnostics.');
         $this->assertStringContainsString('el.subjectMatches.appendChild(', $marks, 'One item per match set.');
         $this->assertStringContainsString("announce(matches.count === 1 ? '1 match' : matches.count + ' matches');", $marks, 'The live line keeps to the count.');
 

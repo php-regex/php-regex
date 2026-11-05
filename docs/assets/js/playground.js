@@ -1003,7 +1003,10 @@
         }
       });
     }
-    el.matchSummary.textContent = done ? matchSummary(matches) : '';
+    // A pattern PHP refuses is never run: the line says so beside the field
+    // once the live line has spoken; the engine's words are in the
+    // diagnostics, where the pattern field's tint points.
+    el.matchSummary.textContent = done ? matchSummary(matches) : (!matches && payload.engineError ? 'Not run: PHP refused the pattern' : '');
     el.matchDetails.hidden = !el.subjectMatches.firstChild;
     clear(el.subjectMirror);
     el.subjectMirror.appendChild(markRanges(subject, ranges));
