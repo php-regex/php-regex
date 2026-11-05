@@ -3658,7 +3658,12 @@
     if (!findingsLoading) {
       findingsLoading = fetchJson(fetch('/assets/findings/index.json')).then(function (index) {
         findingsIndex = index;
-        el.findingsCount.textContent = String(index.repos.length);
+        // The fold names the project on its page, the corpus on the home;
+        // one project needs no filter.
+        el.findingsCount.textContent = pageRepo ? pageRepo : String(index.repos.length);
+        if (pageRepo) {
+          el.findingsFilter.hidden = true;
+        }
         buildTree();
         return index;
       });
@@ -3730,6 +3735,11 @@
     var owners = [];
     var byOwner = {};
     findingsIndex.repos.forEach(function (repo) {
+      // A repository's page speaks of that repository alone: the tree
+      // shows its project, the other two hundred stay on the home.
+      if (pageRepo && repo.repo !== pageRepo) {
+        return;
+      }
       if (!byOwner[repo.owner]) {
         byOwner[repo.owner] = [];
         owners.push(repo.owner);

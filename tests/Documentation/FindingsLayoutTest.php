@@ -203,6 +203,21 @@ final class FindingsLayoutTest extends TestCase
     }
 
     /**
+     * A repository's page speaks of that repository alone: the tree shows
+     * its project and its findings, the other two hundred stay on the
+     * home, and the filter — with one project to narrow — rests.
+     */
+    #[Test]
+    public function test_a_repository_page_shows_only_its_project_in_the_tree(): void
+    {
+        $script = self::source(self::SCRIPT);
+        $build = self::between($script, 'function buildTree() {', "\n  }\n");
+        $this->assertStringContainsString('if (pageRepo && repo.repo !== pageRepo) {', $build, 'The tree is scoped to the page\'s repository.');
+        $this->assertStringContainsString('pageRepo ? pageRepo : String(index.repos.length)', $script, 'The fold names the project, not the corpus.');
+        $this->assertStringContainsString('el.findingsFilter.hidden = true', $script, 'One project needs no filter.');
+    }
+
+    /**
      * Back to the finding, after the accordion closed its group, opens
      * the finding's project and repository again: the row it shows is in
      * view, not inside a closed group. A row the visitor clicks is in an
