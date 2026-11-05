@@ -1,0 +1,186 @@
+{
+    "repo": "laminas/laminas-filter",
+    "sha": "2a68a031310cebcba7dc114c10a91e98149eff93",
+    "target": {
+        "php": "8.2.99",
+        "pcre": "10.40",
+        "source": "composer.json config.platform.php"
+    },
+    "findings": [
+        {
+            "id": "f-f627626267",
+            "file": "src/StripTags.php",
+            "line": 122,
+            "column": 24,
+            "pattern": "/([^<]*)(<?[^>]*>?)/",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/laminas/laminas-filter/blob/2a68a031310cebcba7dc114c10a91e98149eff93/src/StripTags.php#L119-L125",
+            "snippet": [
+                {
+                    "number": 119,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $dataFiltered = '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 120,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Parse the input data iteratively as regular pre-tag text followed by a",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 121,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // tag; either may be empty strings",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 122,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        preg_match_all(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $value, $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 123,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 124,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Iterate over each set of matches",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 125,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($matches[1] as $index => $preTag) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

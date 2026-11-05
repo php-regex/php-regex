@@ -1,0 +1,347 @@
+{
+    "repo": "NativePHP/desktop",
+    "sha": "7b055a8129673aec0fe33883e9618d3599c4d08e",
+    "target": {
+        "php": "8.3",
+        "pcre": "10.42",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-45166c4375",
+            "file": "src/Drivers/Electron/Commands/RunCommand.php",
+            "line": 79,
+            "column": 20,
+            "pattern": "/(<key>CFBundleName<\\/key>\\s+<string>)(.*?)(<\\/string>)/m",
+            "source": "preg_replace()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(<key>CFBundleName<\\/key>\\s+<string>)(.*?)(<\\/string>)/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/NativePHP/desktop/blob/7b055a8129673aec0fe33883e9618d3599c4d08e/src/Drivers/Electron/Commands/RunCommand.php#L76-L82",
+            "snippet": [
+                {
+                    "number": 76,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $pList = file_get_contents(ElectronServiceProvider::electronPath('node_modules/electron/dist/Electron.app/Contents/Info.plist'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 77,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 78,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Change the CFBundleName to the correct app name",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 79,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $pattern = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<key>CFBundleName<\\/key>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "<string>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<\\/string>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 80,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $pList = preg_replace($pattern, '$1'.config('app.name').'$3', $pList);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 81,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 82,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $pattern = '/(<key>CFBundleDisplayName<\\/key>\\s+<string>)(.*?)(<\\/string>)/m';",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-02d2c52cf3",
+            "file": "src/Drivers/Electron/Commands/RunCommand.php",
+            "line": 82,
+            "column": 20,
+            "pattern": "/(<key>CFBundleDisplayName<\\/key>\\s+<string>)(.*?)(<\\/string>)/m",
+            "source": "preg_replace()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(<key>CFBundleDisplayName<\\/key>\\s+<string>)(.*?)(<\\/string>)/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/NativePHP/desktop/blob/7b055a8129673aec0fe33883e9618d3599c4d08e/src/Drivers/Electron/Commands/RunCommand.php#L79-L85",
+            "snippet": [
+                {
+                    "number": 79,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $pattern = '/(<key>CFBundleName<\\/key>\\s+<string>)(.*?)(<\\/string>)/m';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 80,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $pList = preg_replace($pattern, '$1'.config('app.name').'$3', $pList);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 81,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 82,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $pattern = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<key>CFBundleDisplayName<\\/key>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "<string>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<\\/string>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 83,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $pList = preg_replace($pattern, '$1'.config('app.name').'$3', $pList);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 84,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 85,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        file_put_contents(ElectronServiceProvider::electronPath('node_modules/electron/dist/Electron.app/Contents/Info.plist'), $pList);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

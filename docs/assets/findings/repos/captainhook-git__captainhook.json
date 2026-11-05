@@ -1,0 +1,162 @@
+{
+    "repo": "captainhook-git/captainhook",
+    "sha": "372b40c1925abec17977717b862cb7d37bdfd1f5",
+    "target": {
+        "php": "8.0",
+        "pcre": "10.35",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-24e6bcdde0",
+            "file": "src/Runner/Action/PHP.php",
+            "line": 159,
+            "column": 33,
+            "pattern": "#^\\\\.+::.+$#i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/captainhook-git/captainhook/blob/372b40c1925abec17977717b862cb7d37bdfd1f5/src/Runner/Action/PHP.php#L156-L162",
+            "snippet": [
+                {
+                    "number": 156,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 157,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function isStaticMethodCall(string $class): bool",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 158,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 159,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return (bool)preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "::",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $class);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 160,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 161,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 162,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

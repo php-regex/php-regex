@@ -1,0 +1,1004 @@
+{
+    "repo": "google/google-cloud-php",
+    "sha": "10073bf3f672d23e60a5f558a1b714f83ada5a39",
+    "target": {
+        "php": "8.2",
+        "pcre": "10.40",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-bc5317268a",
+            "file": "dev/src/Command/ComponentUpdateReadmeSampleCommand.php",
+            "line": 88,
+            "column": 28,
+            "pattern": "/### Sample\\n\\n(```(.|\\n)*```)/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.alternation.dotNewline",
+                    "message": "Alternation (.|\\n) is an anti-pattern for matching any character including newlines.",
+                    "hint": "Use the \"s\" (PCRE_DOTALL) flag to make \".\" match newlines, or use [\\s\\S] instead of (.|\\n).",
+                    "docs": "https://php-regex.com/reference/rules/#dot-or-newline-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/google/google-cloud-php/blob/10073bf3f672d23e60a5f558a1b714f83ada5a39/dev/src/Command/ComponentUpdateReadmeSampleCommand.php#L85-L91",
+            "snippet": [
+                {
+                    "number": 85,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 86,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 87,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $sample = \"```php\\n\" . $sample . \"\\n```\";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 88,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "### Sample\\n\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "```",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "```",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $readme, $matches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 89,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $output->writeln('Sample already exists in <info>' . $component->getName() . '</> README.md');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 90,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                if (!$input->getOption('force')) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 91,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    continue;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-c298421b3a",
+            "file": "dev/src/ComponentPackage.php",
+            "line": 30,
+            "column": 33,
+            "pattern": "#\\* GENERATED CODE WARNING\n \\* Generated by gapic-generator-php from the file\n \\* https:\\/\\/github.com\\/googleapis\\/googleapis\\/blob\\/master\\/(.*.proto)\n \\* Updates to the above are reflected here through a refresh process#",
+            "source": "preg_match()",
+            "location": "via self::PROTO_REGEX",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.literal.invisible",
+                    "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
+                    "hint": "Write \"\\n\".",
+                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.literal.invisible",
+                    "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
+                    "hint": "Write \"\\n\".",
+                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.literal.invisible",
+                    "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
+                    "hint": "Write \"\\n\".",
+                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/google/google-cloud-php/blob/10073bf3f672d23e60a5f558a1b714f83ada5a39/dev/src/ComponentPackage.php#L27-L33",
+            "snippet": [
+                {
+                    "number": 27,
+                    "focus": false,
+                    "runs": [
+                        [
+                            " */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 28,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "class ComponentPackage",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 29,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 30,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    private const PROTO_REGEX = '#\\* GENERATED CODE WARNING",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 31,
+                    "focus": false,
+                    "runs": [
+                        [
+                            " \\* Generated by gapic-generator-php from the file",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 32,
+                    "focus": false,
+                    "runs": [
+                        [
+                            " \\* https:\\/\\/github.com\\/googleapis\\/googleapis\\/blob\\/master\\/(.*.proto)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 33,
+                    "focus": false,
+                    "runs": [
+                        [
+                            " \\* Updates to the above are reflected here through a refresh process#';",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-e1489600aa",
+            "file": "dev/src/ComponentPackage.php",
+            "line": 215,
+            "column": 52,
+            "pattern": "/^{(.|\\n)*?(^})/m",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.alternation.dotNewline",
+                    "message": "Alternation (.|\\n) is an anti-pattern for matching any character including newlines.",
+                    "hint": "Use the \"s\" (PCRE_DOTALL) flag to make \".\" match newlines, or use [\\s\\S] instead of (.|\\n).",
+                    "docs": "https://php-regex.com/reference/rules/#dot-or-newline-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/google/google-cloud-php/blob/10073bf3f672d23e60a5f558a1b714f83ada5a39/dev/src/ComponentPackage.php#L212-L218",
+            "snippet": [
+                {
+                    "number": 212,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 213,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 214,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 215,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if ($preferredFile === null || !preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "{",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $preferredFile->getContents(), $matches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 216,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 217,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 218,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ea6dce807e",
+            "file": "dev/src/DocFx/Node/DocblockTrait.php",
+            "line": 86,
+            "column": 18,
+            "pattern": "/Generated from protobuf field <code>.*<\\/code>\\Z/m",
+            "source": "preg_replace()",
+            "location": "via $regex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/Generated from protobuf field <code>.*<\\/code>\\Z/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/google/google-cloud-php/blob/10073bf3f672d23e60a5f558a1b714f83ada5a39/dev/src/DocFx/Node/DocblockTrait.php#L83-L89",
+            "snippet": [
+                {
+                    "number": 83,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 84,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function stripProtobufGeneratedField(string $content): string",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 85,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 86,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $regex = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Generated from protobuf field <code>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "<\\/code>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\Z",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 87,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return rtrim(preg_replace($regex, '', $content));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 88,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 89,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-f9b6226a93",
+            "file": "dev/src/DocFx/Node/FencedCodeBlockTrait.php",
+            "line": 32,
+            "column": 13,
+            "pattern": "/^(\\s+)?```(\\w+)?\\n((.|\\n)*)\\n^(\\s+)?```$/mU",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.alternation.dotNewline",
+                    "message": "Alternation (.|\\n) is an anti-pattern for matching any character including newlines.",
+                    "hint": "Use the \"s\" (PCRE_DOTALL) flag to make \".\" match newlines, or use [\\s\\S] instead of (.|\\n).",
+                    "docs": "https://php-regex.com/reference/rules/#dot-or-newline-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/google/google-cloud-php/blob/10073bf3f672d23e60a5f558a1b714f83ada5a39/dev/src/DocFx/Node/FencedCodeBlockTrait.php#L29-L35",
+            "snippet": [
+                {
+                    "number": 29,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function addPhpLanguageHintToFencedCodeBlock(string $description): string",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 30,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 31,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return preg_replace_callback(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 32,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "```",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "((",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "```",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "mU",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 33,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            function ($matches) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 34,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                list($codeblock, $leadingWhitespace, $existingTypehint, $contents, $_, $trailingWhitespace) = $matches + [5 => ''];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 35,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                if ($existingTypehint) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-7f403881ee",
+            "file": "dev/src/NewComponent.php",
+            "line": 196,
+            "column": 13,
+            "pattern": "/option \\(google.api.default_host\\) =[\\n\\r\\s]+\"(.*).googleapis.com\";/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/google/google-cloud-php/blob/10073bf3f672d23e60a5f558a1b714f83ada5a39/dev/src/NewComponent.php#L193-L199",
+            "snippet": [
+                {
+                    "number": 193,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        bool $isCommonProtos = false",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 194,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    ): string {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 195,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!preg_match(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 196,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "option \\(google",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "api",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "default_host\\) =",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\n\\r",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "googleapis",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "com\";",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 197,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $protoContents,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 198,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $matches",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 199,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        )) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

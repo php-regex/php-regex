@@ -1,0 +1,3957 @@
+{
+    "repo": "voku/urlify",
+    "sha": "a48104e2b3f436b6c084498f3f7addf0ff039aad",
+    "target": {
+        "php": "7.3",
+        "pcre": "10.32",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-7202484ff8",
+            "file": "src/voku/helper/URLify.php",
+            "line": 538,
+            "column": 21,
+            "pattern": "/(?:\\s|^)(\\d+)(?: )*€(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 13; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L535-L541",
+            "snippet": [
+                {
+                    "number": 535,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($language === 'de') {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 536,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return (string) \\preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 537,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 538,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "€",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 539,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)\\$(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 540,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 541,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6c20886c1d",
+            "file": "src/voku/helper/URLify.php",
+            "line": 539,
+            "column": 21,
+            "pattern": "/(?:\\s|^)\\$(?: )*(\\d+)(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(?:\\s|^)\\$ *(\\d+)(?:\\s|$)/",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L536-L542",
+            "snippet": [
+                {
+                    "number": 536,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return (string) \\preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 537,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 538,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)(\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 539,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\$",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 540,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 541,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 542,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ac4050aa2c",
+            "file": "src/voku/helper/URLify.php",
+            "line": 540,
+            "column": 21,
+            "pattern": "/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L537-L543",
+            "snippet": [
+                {
+                    "number": 537,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 538,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)(\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 539,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)\\$(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 540,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "£",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 541,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 542,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 543,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)\\$(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-2424a68756",
+            "file": "src/voku/helper/URLify.php",
+            "line": 541,
+            "column": 21,
+            "pattern": "/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L538-L544",
+            "snippet": [
+                {
+                    "number": 538,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)(\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 539,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)\\$(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 540,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 541,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "¥",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 542,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 543,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)\\$(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 544,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)£(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-e46e60e55f",
+            "file": "src/voku/helper/URLify.php",
+            "line": 542,
+            "column": 21,
+            "pattern": "/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 23; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L539-L545",
+            "snippet": [
+                {
+                    "number": 539,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)\\$(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 540,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 541,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 542,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".|,",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "€",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 543,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)\\$(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 544,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)£(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 545,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                ],",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-7d46b09b31",
+            "file": "src/voku/helper/URLify.php",
+            "line": 543,
+            "column": 21,
+            "pattern": "/(?:\\s|^)\\$(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(?:\\s|^)\\$ *(\\d+)[.|,](\\d+)(?:\\s|$)/",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L540-L546",
+            "snippet": [
+                {
+                    "number": 540,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 541,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 542,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 543,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\$",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".|,",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 544,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)£(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 545,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                ],",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 546,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                [",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-2633445fd2",
+            "file": "src/voku/helper/URLify.php",
+            "line": 544,
+            "column": 21,
+            "pattern": "/(?:\\s|^)£(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L541-L547",
+            "snippet": [
+                {
+                    "number": 541,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 542,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 543,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '/(?:\\s|^)\\$(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 544,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "£",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".|,",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 545,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                ],",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 546,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 547,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    ' \\1 Euro ',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-3246da7fda",
+            "file": "src/voku/helper/URLify.php",
+            "line": 561,
+            "column": 17,
+            "pattern": "/(?:\\s|^)1(?: )*€(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 9; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L558-L564",
+            "snippet": [
+                {
+                    "number": 558,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 559,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return (string) \\preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 560,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 561,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "1",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "€",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 562,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)(\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 563,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*1(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 564,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-7202484ff8-2",
+            "file": "src/voku/helper/URLify.php",
+            "line": 562,
+            "column": 17,
+            "pattern": "/(?:\\s|^)(\\d+)(?: )*€(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 13; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L559-L565",
+            "snippet": [
+                {
+                    "number": 559,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return (string) \\preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 560,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 561,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 562,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "€",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 563,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*1(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 564,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 565,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*1(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-d142c895fd",
+            "file": "src/voku/helper/URLify.php",
+            "line": 563,
+            "column": 17,
+            "pattern": "/(?:\\s|^)\\$(?: )*1(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(?:\\s|^)\\$ *1(?:\\s|$)/",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L560-L566",
+            "snippet": [
+                {
+                    "number": 560,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 561,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 562,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)(\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 563,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\$",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "1",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 564,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 565,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*1(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 566,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6c20886c1d-2",
+            "file": "src/voku/helper/URLify.php",
+            "line": 564,
+            "column": 17,
+            "pattern": "/(?:\\s|^)\\$(?: )*(\\d+)(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(?:\\s|^)\\$ *(\\d+)(?:\\s|$)/",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L561-L567",
+            "snippet": [
+                {
+                    "number": 561,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 562,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)(\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 563,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*1(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 564,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\$",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 565,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*1(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 566,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 567,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-148f5e1ef0",
+            "file": "src/voku/helper/URLify.php",
+            "line": 565,
+            "column": 17,
+            "pattern": "/(?:\\s|^)£(?: )*1(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L562-L568",
+            "snippet": [
+                {
+                    "number": 562,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)(\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 563,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*1(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 564,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 565,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "£",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "1",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 566,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 567,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 568,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ac4050aa2c-2",
+            "file": "src/voku/helper/URLify.php",
+            "line": 566,
+            "column": 17,
+            "pattern": "/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L563-L569",
+            "snippet": [
+                {
+                    "number": 563,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*1(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 564,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 565,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*1(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 566,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "£",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 567,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 568,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 569,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-2424a68756-2",
+            "file": "src/voku/helper/URLify.php",
+            "line": 567,
+            "column": 17,
+            "pattern": "/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L564-L570",
+            "snippet": [
+                {
+                    "number": 564,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 565,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*1(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 566,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 567,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "¥",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 568,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 569,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 570,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*$(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-dae0f71a39",
+            "file": "src/voku/helper/URLify.php",
+            "line": 568,
+            "column": 17,
+            "pattern": "/(?:\\s|^)1[.|,](\\d+)(?: )*€(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 19; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L565-L571",
+            "snippet": [
+                {
+                    "number": 565,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*1(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 566,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 567,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 568,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "1",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".|,",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "€",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 569,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 570,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*$(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 571,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-e46e60e55f-2",
+            "file": "src/voku/helper/URLify.php",
+            "line": 569,
+            "column": 17,
+            "pattern": "/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 23; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L566-L572",
+            "snippet": [
+                {
+                    "number": 566,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 567,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 568,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 569,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".|,",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "€",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 570,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*$(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 571,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 572,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*£(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6de9727957",
+            "file": "src/voku/helper/URLify.php",
+            "line": 570,
+            "column": 17,
+            "pattern": "/(?:\\s|^)1[.|,](\\d+)(?: )*$(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 19; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(?:\\s|^)1[.|,](\\d+) *$(?:\\s|$)/",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L567-L573",
+            "snippet": [
+                {
+                    "number": 567,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)¥(?: )*(\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 568,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 569,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 570,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "1",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".|,",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 571,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 572,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*£(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 573,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-7d46b09b31-2",
+            "file": "src/voku/helper/URLify.php",
+            "line": 571,
+            "column": 17,
+            "pattern": "/(?:\\s|^)\\$(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(?:\\s|^)\\$ *(\\d+)[.|,](\\d+)(?:\\s|$)/",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L568-L574",
+            "snippet": [
+                {
+                    "number": 568,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 569,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 570,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*$(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 571,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\$",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".|,",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 572,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*£(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 573,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 574,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            ],",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ed4678ea3a",
+            "file": "src/voku/helper/URLify.php",
+            "line": 572,
+            "column": 17,
+            "pattern": "/(?:\\s|^)1[.|,](\\d+)(?: )*£(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 19; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L569-L575",
+            "snippet": [
+                {
+                    "number": 569,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)(\\d+)[.|,](\\d+)(?: )*€(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 570,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*$(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 571,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 572,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "1",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".|,",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "£",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 573,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)£(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 574,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            ],",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 575,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            [",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-2633445fd2-2",
+            "file": "src/voku/helper/URLify.php",
+            "line": 573,
+            "column": 17,
+            "pattern": "/(?:\\s|^)£(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/voku/urlify/blob/a48104e2b3f436b6c084498f3f7addf0ff039aad/src/voku/helper/URLify.php#L570-L576",
+            "snippet": [
+                {
+                    "number": 570,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*$(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 571,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)\\$(?: )*(\\d+)[.|,](\\d+)(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 572,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                '/(?:\\s|^)1[.|,](\\d+)(?: )*£(?:\\s|$)/',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 573,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "£",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".|,",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 574,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            ],",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 575,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 576,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                ' 1 Euro ',",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

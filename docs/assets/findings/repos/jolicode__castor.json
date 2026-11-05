@@ -1,0 +1,167 @@
+{
+    "repo": "jolicode/castor",
+    "sha": "d95732408d49d88d497fb73936d711119fea0c0e",
+    "target": {
+        "php": "8.4.1",
+        "pcre": "10.49",
+        "source": "composer.json config.platform.php"
+    },
+    "findings": [
+        {
+            "id": "f-895159202e",
+            "file": "tools/doc/castor.php",
+            "line": 134,
+            "column": 37,
+            "pattern": "/### Usage\\n([^#]*)\\n\\n###/s",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/### Usage\\n([^#]*)\\n\\n###/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/jolicode/castor/blob/d95732408d49d88d497fb73936d711119fea0c0e/tools/doc/castor.php#L131-L137",
+            "snippet": [
+                {
+                    "number": 131,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 132,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    // Clean usage chapter to only keep the real command with arguments/options and ignore aliases",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 133,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    // Also, wrap it in a bash code block",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 134,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    $commandMarkdown = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "### Usage\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\n\\n###",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", \\sprintf(\"### Usage\\n\\n```bash\\n%s\\n```\\n\\n###\", $usage), $commandMarkdown);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 135,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 136,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    // Remove options that are global to all commands",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 137,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    preg_match_all('/#### `([^`]*)`/', $commandMarkdown, $matches);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

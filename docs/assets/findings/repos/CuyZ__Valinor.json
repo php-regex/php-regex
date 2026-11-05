@@ -1,0 +1,360 @@
+{
+    "repo": "CuyZ/Valinor",
+    "sha": "b06c3145cc547e3e5f972e4462c275b14b38371d",
+    "target": {
+        "php": "8.2",
+        "pcre": "10.40",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-74e3c8d9e4",
+            "file": "src/Utility/Reflection/Annotations.php",
+            "line": 198,
+            "column": 29,
+            "pattern": "/^\\s*\\*\\s*(\\S*)/mU",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.lazyEnd",
+                    "message": "Quantifier \"*\" is lazy under the U flag and is followed only by what may match nothing, so it always matches its minimum.",
+                    "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
+                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.lazyEnd",
+                    "message": "Quantifier \"*\" is lazy under the U flag and ends the pattern, so it always matches its minimum.",
+                    "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
+                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/CuyZ/Valinor/blob/b06c3145cc547e3e5f972e4462c275b14b38371d/src/Utility/Reflection/Annotations.php#L195-L201",
+            "snippet": [
+                {
+                    "number": 195,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 196,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $value = preg_replace('#^\\s*/\\*\\*([^/]+)\\*/\\s*$#', '$1', $value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 197,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 198,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\*",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\S",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "mU",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '$1', $value); // @phpstan-ignore-line / We know the regex is correct",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 199,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 200,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 201,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ef44ae7a36",
+            "file": "src/Utility/String/StringFormatter.php",
+            "line": 56,
+            "column": 24,
+            "pattern": "/{\\s*[^}]*[^}a-z_]+\\s*}?/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/CuyZ/Valinor/blob/b06c3145cc547e3e5f972e4462c275b14b38371d/src/Utility/String/StringFormatter.php#L53-L59",
+            "snippet": [
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $message = $body;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "{",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "}a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "z_",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $body)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            throw new StringFormatterError($body);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 58,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 59,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

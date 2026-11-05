@@ -1,0 +1,202 @@
+{
+    "repo": "PHP-FFMpeg/PHP-FFMpeg",
+    "sha": "41fa00949ea2758cd34f076a8030df7198d57759",
+    "target": {
+        "php": "8.0",
+        "pcre": "10.35",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-2a8d7f8dcc",
+            "file": "src/FFMpeg/Media/AbstractVideo.php",
+            "line": 236,
+            "column": 40,
+            "pattern": "/^\\[[^\\]]+\\](.*?)\\[[^\\]]+\\]$/is",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PHP-FFMpeg/PHP-FFMpeg/blob/41fa00949ea2758cd34f076a8030df7198d57759/src/FFMpeg/Media/AbstractVideo.php#L233-L239",
+            "snippet": [
+                {
+                    "number": 233,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 234,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    foreach ($commandSplits as $commandSplit) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 235,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $command = trim($commandSplit);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 236,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\[",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\]",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\]",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\[",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\]",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\]",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $command, $match)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 237,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $videoFilterProcesses[] = $match[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 238,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 239,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $videoFilterVars[] = $command;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

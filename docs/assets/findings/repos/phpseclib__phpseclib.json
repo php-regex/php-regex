@@ -1,0 +1,1138 @@
+{
+    "repo": "phpseclib/phpseclib",
+    "sha": "694f9b2336a4923f86ce7c69ad5ab480ff97728b",
+    "target": {
+        "php": "8.1",
+        "pcre": "10.39",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-ef11c5fb94",
+            "file": "phpseclib/Crypt/EC/Formats/Keys/PKCS1.php",
+            "line": 65,
+            "column": 24,
+            "pattern": "#-*BEGIN EC PRIVATE KEY-*[^-]*-*END EC PRIVATE KEY-*#s",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#-*BEGIN EC PRIVATE KEY-*[^-]*-*END EC PRIVATE KEY-*#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/694f9b2336a4923f86ce7c69ad5ab480ff97728b/phpseclib/Crypt/EC/Formats/Keys/PKCS1.php#L62-L68",
+            "snippet": [
+                {
+                    "number": 62,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (str_contains($key, 'BEGIN EC PARAMETERS') && str_contains($key, 'BEGIN EC PRIVATE KEY')) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 63,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $components = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 64,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 65,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "BEGIN EC PRIVATE KEY-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "END EC PRIVATE KEY-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $key, $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 66,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $decoded = parent::loadHelper($matches[0], $password);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 67,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $decoded = ASN1::decodeBER($decoded);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 68,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $ecPrivate = ASN1::map($decoded, Maps\\ECPrivateKey::MAP)->toArray();",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ad778b6f94",
+            "file": "phpseclib/Crypt/EC/Formats/Keys/PKCS1.php",
+            "line": 74,
+            "column": 24,
+            "pattern": "#-*BEGIN EC PARAMETERS-*[^-]*-*END EC PARAMETERS-*#s",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#-*BEGIN EC PARAMETERS-*[^-]*-*END EC PARAMETERS-*#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/694f9b2336a4923f86ce7c69ad5ab480ff97728b/phpseclib/Crypt/EC/Formats/Keys/PKCS1.php#L71-L77",
+            "snippet": [
+                {
+                    "number": 71,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $components['curve'] = self::loadCurveByParam($ecPrivate['parameters']);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 72,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 73,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 74,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "BEGIN EC PARAMETERS-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "END EC PARAMETERS-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $key, $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 75,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $decoded = parent::loadHelper($matches[0], '');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 76,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $decoded = ASN1::decodeBER($decoded);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 77,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $ecParams = ASN1::map($decoded, Maps\\ECParameters::MAP)->toArray();",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-033afcbec9",
+            "file": "phpseclib/File/ASN1.php",
+            "line": 1412,
+            "column": 34,
+            "pattern": "#-+END.*[\\r\\n ]*.*#ms",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#-+END.*[\\r\\n ]*.*#s",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/694f9b2336a4923f86ce7c69ad5ab480ff97728b/phpseclib/File/ASN1.php#L1409-L1415",
+            "snippet": [
+                {
+                    "number": 1409,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $temp = $str;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1410,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1411,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $temp = preg_replace('#.*?^-+[^-]+-+[\\r\\n ]*$#ms', '', $str, 1);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1412,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            $temp = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "END",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "ms",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $temp, 1);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1413,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1414,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // remove new lines",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1415,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $temp = str_replace([\"\\r\", \"\\n\", ' '], '', $temp);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-d1e9c977b2",
+            "file": "phpseclib/Net/SFTP.php",
+            "line": 1045,
+            "column": 43,
+            "pattern": "#^/|/(?=/)|/$#",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"/(?=/)\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"^(?:/|/(?=/)|/)$\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/694f9b2336a4923f86ce7c69ad5ab480ff97728b/phpseclib/Net/SFTP.php#L1042-L1048",
+            "snippet": [
+                {
+                    "number": 1042,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1043,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1044,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // preg_replace('#^/|/(?=/)|/$#', '', $dir) == str_replace('//', '/', trim($path, '/'))",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1045,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $dirs = explode('/', preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?=",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $path));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1046,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1047,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $temp = &$this->stat_cache;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1048,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $max = count($dirs) - 1;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-d1e9c977b2-2",
+            "file": "phpseclib/Net/SFTP.php",
+            "line": 1080,
+            "column": 43,
+            "pattern": "#^/|/(?=/)|/$#",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"/(?=/)\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"^(?:/|/(?=/)|/)$\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/694f9b2336a4923f86ce7c69ad5ab480ff97728b/phpseclib/Net/SFTP.php#L1077-L1083",
+            "snippet": [
+                {
+                    "number": 1077,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1078,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function remove_from_stat_cache(string $path): void",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1079,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1080,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $dirs = explode('/', preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?=",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $path));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1081,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1082,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $temp = &$this->stat_cache;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1083,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $max = count($dirs) - 1;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-d1e9c977b2-3",
+            "file": "phpseclib/Net/SFTP.php",
+            "line": 1106,
+            "column": 43,
+            "pattern": "#^/|/(?=/)|/$#",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"/(?=/)\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"^(?:/|/(?=/)|/)$\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/694f9b2336a4923f86ce7c69ad5ab480ff97728b/phpseclib/Net/SFTP.php#L1103-L1109",
+            "snippet": [
+                {
+                    "number": 1103,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1104,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function query_stat_cache(string $path): object|array|null",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1105,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1106,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $dirs = explode('/', preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?=",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $path));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1107,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1108,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $temp = &$this->stat_cache;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1109,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($dirs as $dir) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-c66bae982f",
+            "file": "phpseclib/Net/SFTP.php",
+            "line": 1541,
+            "column": 47,
+            "pattern": "#/(?=/)|/$#",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"/(?=/)\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"(?:/(?=/)|/)$\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phpseclib/phpseclib/blob/694f9b2336a4923f86ce7c69ad5ab480ff97728b/phpseclib/Net/SFTP.php#L1538-L1544",
+            "snippet": [
+                {
+                    "number": 1538,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1539,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1540,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($recursive) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1541,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            $dirs = explode('/', preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?=",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $dir));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1542,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (empty($dirs[0])) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1543,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                array_shift($dirs);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1544,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $dirs[0] = '/' . $dirs[0];",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

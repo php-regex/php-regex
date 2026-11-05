@@ -1,0 +1,1036 @@
+{
+    "repo": "PhpCodeArcheology/PhpCodeArcheology",
+    "sha": "0d2484fdfaa2ac81c5c3355b1a54d7498fba28b1",
+    "target": {
+        "php": "8.2",
+        "pcre": "10.40",
+        "source": "composer.json config.platform.php"
+    },
+    "findings": [
+        {
+            "id": "f-c54a52eaf1",
+            "file": "src/Analysis/Helper/ClassMemberAnalyzer.php",
+            "line": 210,
+            "column": 20,
+            "pattern": "/@var\\s+([^\\s]+)(?:\\s+(.*))?/ms",
+            "source": "preg_match()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/@var\\s+([^\\s]+)(?:\\s+(.*))?/s",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PhpCodeArcheology/PhpCodeArcheology/blob/0d2484fdfaa2ac81c5c3355b1a54d7498fba28b1/src/Analysis/Helper/ClassMemberAnalyzer.php#L207-L213",
+            "snippet": [
+                {
+                    "number": 207,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $docBlockText = str_replace('*/', '', $docBlockText);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 208,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $docBlockText = preg_replace('/^\\s*\\*\\s?/m', '', $docBlockText);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 209,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 210,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $pattern = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "@var",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "ms",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 211,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 212,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $docBlockVar = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 213,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (preg_match($pattern, (string) $docBlockText, $matches)) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-85d079d6dc",
+            "file": "src/Analysis/Helper/ParameterAnalyzer.php",
+            "line": 39,
+            "column": 20,
+            "pattern": "/@param\\s+([^\\s]+)\\s+(\\$[^\\s]+)(?:\\s+([^@]*))?/ms",
+            "source": "preg_match_all()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/@param\\s+([^\\s]+)\\s+(\\$[^\\s]+)(?:\\s+([^@]*))?/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PhpCodeArcheology/PhpCodeArcheology/blob/0d2484fdfaa2ac81c5c3355b1a54d7498fba28b1/src/Analysis/Helper/ParameterAnalyzer.php#L36-L42",
+            "snippet": [
+                {
+                    "number": 36,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $docBlockText = str_replace('*/', '', $docBlockText);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 37,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $docBlockText = preg_replace('/^\\s*\\*\\s?/m', '', $docBlockText);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 38,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 39,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $pattern = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "@param",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\$",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "@",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "ms",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 40,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        preg_match_all($pattern, (string) $docBlockText, $matches, PREG_SET_ORDER);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 41,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 42,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $paramDetails = [];",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-e111ef4cdb",
+            "file": "src/Analysis/LocVisitor.php",
+            "line": 306,
+            "column": 39,
+            "pattern": "!('[^']*'|\"[^\"]*\")|((?:#|//).*$)!m",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"('[^']*'|\"[^\"]*\")\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"(?:('[^']*'|\"[^\"]*\")|((?:#|//).*))$\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PhpCodeArcheology/PhpCodeArcheology/blob/0d2484fdfaa2ac81c5c3355b1a54d7498fba28b1/src/Analysis/LocVisitor.php#L303-L309",
+            "snippet": [
+                {
+                    "number": 303,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $code = preg_replace('!/\\*.*?\\*/!s', '', $code);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 304,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 305,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // count and remove single line comments",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 306,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $code = preg_replace_callback(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "!",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "((?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "//",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "!",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", function (array $matches) use (&$cloc): string {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 307,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (isset($matches[2])) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 308,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                ++$cloc;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 309,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-a86f410f17",
+            "file": "src/Analysis/LocVisitor.php",
+            "line": 314,
+            "column": 44,
+            "pattern": "!(^\\s*[\\r\\n])!sm",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "!(^\\s*[\\r\\n])!m",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PhpCodeArcheology/PhpCodeArcheology/blob/0d2484fdfaa2ac81c5c3355b1a54d7498fba28b1/src/Analysis/LocVisitor.php#L311-L317",
+            "snippet": [
+                {
+                    "number": 311,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 312,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }, (string) $code, -1);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 313,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 314,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $code = trim((string) preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "!",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "!",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "sm",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', (string) $code));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 315,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 316,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $parts = preg_split('/\\r\\n|\\r|\\n/', $code);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 317,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $lloc = is_array($parts) ? count($parts) : 0;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ac60433004",
+            "file": "src/Application/Service/TestCoversVisitor.php",
+            "line": 64,
+            "column": 28,
+            "pattern": "/@covers(?:Class)?\\s+(\\\\?[\\w\\\\]+)(?:::[\\w]+)?/m",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/@covers(?:Class)?\\s+(\\\\?[\\w\\\\]+)(?:::[\\w]+)?/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PhpCodeArcheology/PhpCodeArcheology/blob/0d2484fdfaa2ac81c5c3355b1a54d7498fba28b1/src/Application/Service/TestCoversVisitor.php#L61-L67",
+            "snippet": [
+                {
+                    "number": 61,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 62,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Match @covers ClassName, @covers \\Full\\Name, @covers ClassName::method",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 63,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Also matches @coversClass",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 64,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match_all(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "@covers",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "Class",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "::",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $docblock, $matches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 65,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            foreach ($matches[1] as $name) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 66,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $name = ltrim($name, '\\\\');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 67,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $this->covers[] = $this->resolveName($name);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

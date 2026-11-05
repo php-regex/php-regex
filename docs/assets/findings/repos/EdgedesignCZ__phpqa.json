@@ -1,0 +1,143 @@
+{
+    "repo": "EdgedesignCZ/phpqa",
+    "sha": "ad97e48c8dfe406f3fab5f6a6fb0604035f7a3ea",
+    "target": {
+        "php": "7.3",
+        "pcre": "10.32",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-aedab6225a",
+            "file": "src/Tools/GetVersions.php",
+            "line": 173,
+            "column": 29,
+            "pattern": "/\\.0$/s",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\.0$/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/EdgedesignCZ/phpqa/blob/ad97e48c8dfe406f3fab5f6a6fb0604035f7a3ea/src/Tools/GetVersions.php#L170-L176",
+            "snippet": [
+                {
+                    "number": 170,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 171,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function normalizeSemver($semver)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 172,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 173,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\.0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $semver);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 174,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 175,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 176,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function compareVersions($toolVersion, $operator, $version)",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,2666 @@
+{
+    "repo": "wp-cli/wp-cli",
+    "sha": "aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2",
+    "target": {
+        "php": "7.3",
+        "pcre": "10.32",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-f251eb203c",
+            "file": "bundle/rmccue/requests/src/IdnaEncoder.php",
+            "line": 144,
+            "column": 22,
+            "pattern": "/(?:[^\\x00-\\x7F])/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[^\\x00-\\x7F])\" at offset 0; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/[^\\x00-\\x7F]/",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/bundle/rmccue/requests/src/IdnaEncoder.php#L141-L147",
+            "snippet": [
+                {
+                    "number": 141,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * @return bool Is the text string ASCII-only?",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 142,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 143,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\tprotected static function is_ascii($text) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 144,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\treturn (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x00",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x7F",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $text) !== 1);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 145,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 146,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 147,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t/**",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-b4d9552a30",
+            "file": "bundle/rmccue/requests/src/Requests.php",
+            "line": 768,
+            "column": 17,
+            "pattern": "#(\\s+)#i",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/bundle/rmccue/requests/src/Requests.php#L765-L771",
+            "snippet": [
+                {
+                    "number": 765,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tforeach ($headers as $header) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 766,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tlist($key, $value) = explode(':', $header, 2);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 767,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$value             = trim($value, Trim::WHITESPACE_CHARS_NO_FF);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 768,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\tpreg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", ' ', $value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 769,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$return->headers[$key] = $value;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 770,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 771,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-cf6fde674b",
+            "file": "bundle/rmccue/requests/src/Requests.php",
+            "line": 856,
+            "column": 19,
+            "pattern": "/^([0-9a-f]+)(?:;(?:[\\w-]*)(?:=(?:(?:[\\w-]*)*|\"(?:[^\\r\\n])*\"))?)*\\r\\n/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"0\" . \";=\" x n . \"!\\x0D\\n\" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). The risky part is: [\\w\\-]* Hotspot offsets: 19-25 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[^\\r\\n])\" at offset 46; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^([0-9a-f]+)(?:;(?:[\\w\\-]*)(?:=(?:(?:[\\w\\-]*)*|\"[^\\r\\n]*\"))?)*\\r\\n/i",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": {
+                "prefix": "0",
+                "pump": ";=",
+                "suffix": "!\\x0D\\n",
+                "n": 56,
+                "length": 32,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/bundle/rmccue/requests/src/Requests.php#L853-L859",
+            "snippet": [
+                {
+                    "number": 853,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * @return string Decoded body",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 854,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 855,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\tprotected static function decode_chunked($data) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 856,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tif (!preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "9a",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "f",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ";",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", trim($data, Trim::WHITESPACE_CHARS_NO_FF))) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 857,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\treturn $data;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 858,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 859,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-cf6fde674b-2",
+            "file": "bundle/rmccue/requests/src/Requests.php",
+            "line": 864,
+            "column": 36,
+            "pattern": "/^([0-9a-f]+)(?:;(?:[\\w-]*)(?:=(?:(?:[\\w-]*)*|\"(?:[^\\r\\n])*\"))?)*\\r\\n/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"0\" . \";=\" x n . \"!\\x0D\\n\" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). The risky part is: [\\w\\-]* Hotspot offsets: 19-25 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[^\\r\\n])\" at offset 46; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^([0-9a-f]+)(?:;(?:[\\w\\-]*)(?:=(?:(?:[\\w\\-]*)*|\"[^\\r\\n]*\"))?)*\\r\\n/i",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": {
+                "prefix": "0",
+                "pump": ";=",
+                "suffix": "!\\x0D\\n",
+                "n": 56,
+                "length": 32,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/bundle/rmccue/requests/src/Requests.php#L861-L867",
+            "snippet": [
+                {
+                    "number": 861,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$encoded = $data;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 862,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 863,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\twhile (true) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 864,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t$is_chunked = (bool) preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "9a",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "f",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ";",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $encoded, $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 865,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tif (!$is_chunked) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 866,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t// Looks like it's not chunked after all",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 867,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\treturn $data;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-aefd45d43e",
+            "file": "php/WP_CLI/Configurator.php",
+            "line": 158,
+            "column": 20,
+            "pattern": "#^@[A-Za-z0-9-_\\.\\-]+$#",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '-' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Configurator.php#L155-L161",
+            "snippet": [
+                {
+                    "number": 155,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * @return void",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 156,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 157,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\tprivate function add_alias( $key, $value, $yml_file_dir, $yaml = [] ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 158,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tif ( preg_match( '#' . self::ALIAS_REGEX . '#', $key ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 159,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t// Remove the @ character from the alias name",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 160,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$key = substr( $key, 1 );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 161,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-aefd45d43e-2",
+            "file": "php/WP_CLI/Configurator.php",
+            "line": 199,
+            "column": 22,
+            "pattern": "#^@[A-Za-z0-9-_\\.\\-]+$#",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '-' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Configurator.php#L196-L202",
+            "snippet": [
+                {
+                    "number": 196,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 197,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$alias_group = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 198,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tforeach ( $value as $k ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 199,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\tif ( preg_match( '#' . self::ALIAS_REGEX . '#', $k ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 200,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t// Remove the @ character from the alias name",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 201,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t$alias_group[] = substr( $k, 1 );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 202,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t} elseif ( array_key_exists( $k, $this->aliases ) ) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-aefd45d43e-3",
+            "file": "php/WP_CLI/Configurator.php",
+            "line": 279,
+            "column": 21,
+            "pattern": "#^@[A-Za-z0-9-_\\.\\-]+$#",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '-' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Configurator.php#L276-L282",
+            "snippet": [
+                {
+                    "number": 276,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t * @var array<string, string> $value",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 277,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 278,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tforeach ( (array) json_decode( $runtime_alias, true ) as $key => $value ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 279,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\tif ( preg_match( '#' . self::ALIAS_REGEX . '#', $key ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 280,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$normalized_key                      = substr( $key, 1 );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 281,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$returned_aliases[ $normalized_key ] = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 282,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tforeach ( self::$alias_spec as $i ) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-aefd45d43e-4",
+            "file": "php/WP_CLI/Configurator.php",
+            "line": 486,
+            "column": 21,
+            "pattern": "#^@[A-Za-z0-9-_\\.\\-]+$#",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '-' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Configurator.php#L483-L489",
+            "snippet": [
+                {
+                    "number": 483,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// Prepare the base path for absolutized alias paths.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 484,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$yml_file_dir = $path ? dirname( $path ) : '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 485,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tforeach ( $yaml as $key => $value ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 486,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\tif ( preg_match( '#' . self::ALIAS_REGEX . '#', $key ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 487,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tif ( is_array( $value ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 488,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t$this->add_alias( $key, $value, $yml_file_dir, $yaml );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 489,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t}",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-86bb278a8d",
+            "file": "php/WP_CLI/Path.php",
+            "line": 35,
+            "column": 27,
+            "pattern": "%(?>#.*?$)|(?>//.*?$)|(?>/\\*.*?\\*/)|(?>'(?:(?=(\\\\?))\\1.)*?')|(?>\"(?:(?=(\\\\?))\\2.)*?\")|(?<file>\\b__FILE__\\b)|(?<dir>\\b__DIR__\\b)%msi",
+            "source": "preg_replace_callback()",
+            "location": "via self::FILE_DIR_PATTERN",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Path.php#L32-L38",
+            "snippet": [
+                {
+                    "number": 32,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t *",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 33,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * @var string",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 34,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 35,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\tconst FILE_DIR_PATTERN = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "%",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?>",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?>",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "//",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?>",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/\\*",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\*/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?>",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:(?=(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\1",
+                            "pg-snippet-pattern pg-tok-backref"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?>",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:(?=(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\2",
+                            "pg-snippet-pattern pg-tok-backref"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "file",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\b",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "__FILE__",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\b",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "dir",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\b",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "__DIR__",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\b",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "%",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "msi",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 36,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 37,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t/**",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 38,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * Check if a certain path is within a Phar archive.",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-404f9f9def",
+            "file": "php/WP_CLI/Runner.php",
+            "line": 1046,
+            "column": 18,
+            "pattern": "#^@[A-Za-z0-9-_\\.\\-]+$#",
+            "source": "preg_match()",
+            "location": "via $alias_regex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '-' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Runner.php#L1043-L1049",
+            "snippet": [
+                {
+                    "number": 1043,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1044,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1045,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1046,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$alias_regex = '#' . Configurator::ALIAS_REGEX . '#';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1047,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t/** @var string $v */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1048,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tforeach ( $wp_args as $k => $v ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1049,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tif ( preg_match( '#^--ssh(?:-args)?(?:=|$)|--alias=#', $v ) || preg_match( $alias_regex, $v ) ) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-d9f175e288",
+            "file": "php/WP_CLI/Runner.php",
+            "line": 1049,
+            "column": 21,
+            "pattern": "#^--ssh(?:-args)?(?:=|$)|--alias=#",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"--alias=\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"^(?:--ssh(?:-args)?(?:=|$)|--alias=)\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Runner.php#L1046-L1052",
+            "snippet": [
+                {
+                    "number": 1046,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$alias_regex = '#' . Configurator::ALIAS_REGEX . '#';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1047,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t/** @var string $v */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1048,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tforeach ( $wp_args as $k => $v ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1049,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\tif ( preg_match( ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "--ssh",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "-args",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "--alias=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $v ) || preg_match( $alias_regex, $v ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1050,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tunset( $wp_args[ $k ] );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1051,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1052,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-404f9f9def-2",
+            "file": "php/WP_CLI/Runner.php",
+            "line": 1789,
+            "column": 43,
+            "pattern": "#^@[A-Za-z0-9-_\\.\\-]+$#",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '-' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/Runner.php#L1786-L1792",
+            "snippet": [
+                {
+                    "number": 1786,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1787,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// Check if we use an alias with @foo syntax (must be done before parsing args)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1788,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$this->alias = null;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1789,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tif ( ! empty( $argv[0] ) && preg_match( '#' . Configurator::ALIAS_REGEX . '#', $argv[0], $matches ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1790,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$this->alias = substr( array_shift( $argv ), 1 ); // Remove the @ prefix and shift from argv",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1791,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1792,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-50e1813623",
+            "file": "php/WP_CLI/SynopsisParser.php",
+            "line": 24,
+            "column": 47,
+            "pattern": "/[\\s\\t]+/",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/WP_CLI/SynopsisParser.php#L21-L27",
+            "snippet": [
+                {
+                    "number": 21,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * @return array<int, array<string, mixed>> List of parameters",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 22,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 23,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\tpublic static function parse( $synopsis ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 24,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$tokens = array_filter( (array) preg_split( ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "\\t",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $synopsis ) );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 25,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 26,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$params = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 27,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tforeach ( $tokens as $token ) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-9abca4389b",
+            "file": "php/utils.php",
+            "line": 1540,
+            "column": 18,
+            "pattern": "/(?:--[^\\s=]+=([\"'])((\\{2})*|[^\\\\](?:\\{2})*|(?:[^\\1]+?[^\\\\](\\{2})*))\\1|--[^\\s=]+=[^\\s]+|--[^\\s=]+|([\"'])((\\{2})*|[^\\\\](?:\\{2})*|(?:[^\\5]+?[^\\\\](\\{2})*))\\5|[^\\s]+)/",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.backrefAsOctal",
+                    "message": "Suspicious \\1 inside character class: this is octal (\\x01), not a backreference to group 1.",
+                    "hint": "Backreferences do not work inside character classes. If you intended to match the same text as group 1, move the check outside the class.",
+                    "docs": "https://php-regex.com/reference/rules/#backreference-written-inside-a-character-class"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.backrefAsOctal",
+                    "message": "Suspicious \\5 inside character class: this is octal (\\x05), not a backreference to group 5.",
+                    "hint": "Backreferences do not work inside character classes. If you intended to match the same text as group 5, move the check outside the class.",
+                    "docs": "https://php-regex.com/reference/rules/#backreference-written-inside-a-character-class"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/aafc2a845cc8d9a6c2bd17bca9c81be10f376ae2/php/utils.php#L1537-L1543",
+            "snippet": [
+                {
+                    "number": 1537,
+                    "focus": false,
+                    "runs": [
+                        [
+                            " * @return array<string>",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1538,
+                    "focus": false,
+                    "runs": [
+                        [
+                            " */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1539,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "function parse_str_to_argv( $arguments ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1540,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\tpreg_match_all( ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "--",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\"\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")((",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\\\{2}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\\\{2}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\1",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\\\{2}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\1",
+                            "pg-snippet-pattern pg-tok-backref"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "--",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "--",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\"\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")((",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\\\{2}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\\\{2}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\5",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\\\{2}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\5",
+                            "pg-snippet-pattern pg-tok-backref"
+                        ],
+                        [
+                            "|[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $arguments, $matches, PREG_SET_ORDER );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1541,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t$argv = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1542,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\tforeach ( $matches as $match ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1543,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// Check if this is a quoted associative argument (--key=\"value\" or --key='value').",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

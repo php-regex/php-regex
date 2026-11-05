@@ -1,0 +1,234 @@
+{
+    "repo": "exussum12/coverageChecker",
+    "sha": "0a0350772ca3077d18e87118ffb1d9338b10c63c",
+    "target": {
+        "php": "8.1",
+        "pcre": "10.39",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-f4ea34e264",
+            "file": "src/Loaders/Infection.php",
+            "line": 107,
+            "column": 24,
+            "pattern": "/^[0-9]+\\) (.*?):([0-9]+) (.*)/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/exussum12/coverageChecker/blob/0a0350772ca3077d18e87118ffb1d9338b10c63c/src/Loaders/Infection.php#L104-L110",
+            "snippet": [
+                {
+                    "number": 104,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    protected function updateFile($line)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 105,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 106,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $matches = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 107,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\) ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $line, $matches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 108,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->addError();",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 109,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->currentFile = $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 110,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->currentLine = $matches[2];",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

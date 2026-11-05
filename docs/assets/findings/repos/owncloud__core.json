@@ -1,0 +1,1020 @@
+{
+    "repo": "owncloud/core",
+    "sha": "e046ae8748eea36c6d41a114af7cbab2f16ad907",
+    "target": {
+        "php": "8.3",
+        "pcre": "10.42",
+        "source": "composer.json config.platform.php"
+    },
+    "findings": [
+        {
+            "id": "f-8041a4a1af",
+            "file": "lib/private/AppConfig.php",
+            "line": 324,
+            "column": 20,
+            "pattern": "/\\d+\\.\\d+.*$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/owncloud/core/blob/e046ae8748eea36c6d41a114af7cbab2f16ad907/lib/private/AppConfig.php#L321-L327",
+            "snippet": [
+                {
+                    "number": 321,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t// check if installed_version matches the pattern",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 322,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t// one_or_more_digits-dot-one_or_more_digits-any-other-characters",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 323,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tif ($row['configkey'] === 'installed_version'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 324,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t&& \\preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $row['configvalue']) !== 1",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 325,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 326,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$row['configvalue'] = '0.0.1';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 327,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t}",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-3ab15d02e4",
+            "file": "lib/private/Files/Type/Detection.php",
+            "line": 165,
+            "column": 15,
+            "pattern": "/(.*?)(\\.so)([\\.]*?.*)/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.lazyEnd",
+                    "message": "Lazy quantifier \"*?\" is followed only by what may match nothing, so it always matches its minimum.",
+                    "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
+                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/owncloud/core/blob/e046ae8748eea36c6d41a114af7cbab2f16ad907/lib/private/Files/Type/Detection.php#L162-L168",
+            "snippet": [
+                {
+                    "number": 162,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * @return bool true if file is a shared object else false",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 163,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 164,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\tprivate function detectSharedObjFileName($fileName) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 165,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\\preg_match(",
+                            ""
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\.so",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $fileName, $match);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 166,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t/**",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 167,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t * 1. Exactly 4 indexes to match ( check the regex grouping above preg_match )",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 168,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t * 2. Check if the filename has '.so'",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-cd785073dd",
+            "file": "lib/private/Files/View.php",
+            "line": 1946,
+            "column": 20,
+            "pattern": "%(?:\n      \\xF0[\\x90-\\xBF][\\x80-\\xBF]{2}      # planes 1-3\n    | [\\xF1-\\xF3][\\x80-\\xBF]{3}          # planes 4-15\n    | \\xF4[\\x80-\\x8F][\\x80-\\xBF]{2}      # plane 16\n)%xs",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "%(?:\n      \\xF0[\\x90-\\xBF][\\x80-\\xBF]{2}      # planes 1-3\n    | [\\xF1-\\xF3][\\x80-\\xBF]{3}          # planes 4-15\n    | \\xF4[\\x80-\\x8F][\\x80-\\xBF]{2}      # plane 16\n)%x",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/owncloud/core/blob/e046ae8748eea36c6d41a114af7cbab2f16ad907/lib/private/Files/View.php#L1943-L1949",
+            "snippet": [
+                {
+                    "number": 1943,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1944,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tif (!\\OC::$server->getDatabaseConnection()->allows4ByteCharacters()) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1945,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t// verify database - e.g. mysql only 3-byte chars",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1946,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\tif (\\preg_match('%(?:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1947,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "      \\xF0[\\x90-\\xBF][\\x80-\\xBF]{2}      # planes 1-3",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1948,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    | [\\xF1-\\xF3][\\x80-\\xBF]{3}          # planes 4-15",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1949,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    | \\xF4[\\x80-\\x8F][\\x80-\\xBF]{2}      # plane 16",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-a4fb2d0f0e",
+            "file": "lib/private/legacy/app.php",
+            "line": 1241,
+            "column": 31,
+            "pattern": "!\n[[:space:]]*\n!mu",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "!\n[[:space:]]*\n!u",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/owncloud/core/blob/e046ae8748eea36c6d41a114af7cbab2f16ad907/lib/private/legacy/app.php#L1238-L1244",
+            "snippet": [
+                {
+                    "number": 1238,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t// manages line breaks itself",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1239,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1240,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t// first of all we split on empty lines",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1241,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t$paragraphs = \\preg_split(",
+                            ""
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "!",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "[:space:]",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "!",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "mu",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $data['description']);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1242,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1243,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$result = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1244,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tforeach ($paragraphs as $value) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-bd533be0cb",
+            "file": "lib/private/legacy/app.php",
+            "line": 1247,
+            "column": 38,
+            "pattern": "![[:space:]]+!mu",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "![[:space:]]+!u",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/owncloud/core/blob/e046ae8748eea36c6d41a114af7cbab2f16ad907/lib/private/legacy/app.php#L1244-L1250",
+            "snippet": [
+                {
+                    "number": 1244,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tforeach ($paragraphs as $value) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1245,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t// replace multiple whitespace (tabs, space, newlines) inside a paragraph",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1246,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t// with a single space - also trims whitespace",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1247,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t$result[] = \\trim(\\preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "![",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "[:space:]",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "!",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "mu",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", ' ', $value));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1248,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1249,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1250,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t// join the single paragraphs with a empty line in between",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-51750a200a",
+            "file": "lib/private/legacy/helper.php",
+            "line": 163,
+            "column": 19,
+            "pattern": "#([kmgtp]?b?)$#si",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#([kmgtp]?b?)$#i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/owncloud/core/blob/e046ae8748eea36c6d41a114af7cbab2f16ad907/lib/private/legacy/helper.php#L160-L166",
+            "snippet": [
+                {
+                    "number": 160,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 161,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$bytes = \\floatval($str);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 162,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 163,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tif (\\preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "kmgtp",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "b",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "si",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $str, $matches) && !empty($bytes_array[$matches[1]])) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 164,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$bytes *= $bytes_array[$matches[1]];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 165,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t} else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 166,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\treturn false;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-0f7bd2da1a",
+            "file": "lib/private/legacy/helper.php",
+            "line": 611,
+            "column": 14,
+            "pattern": "((\\/[\\w\\d]*)+)",
+            "source": "preg_match_all()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/owncloud/core/blob/e046ae8748eea36c6d41a114af7cbab2f16ad907/lib/private/legacy/helper.php#L608-L614",
+            "snippet": [
+                {
+                    "number": 608,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * @return string|null",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 609,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 610,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\tpublic static function getCleanedPath(string $path = ''): ?string {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 611,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$pattern = ",
+                            ""
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\w\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 612,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 613,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tif (\\preg_match_all($pattern, $path, $matches) > 0) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 614,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\treturn \\implode(' ', $matches[0]);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

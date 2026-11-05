@@ -1,0 +1,210 @@
+{
+    "repo": "zircote/swagger-php",
+    "sha": "ffa5dfe95e7c9d67dafdeb501e9abc758f3e2af3",
+    "target": {
+        "php": "8.2",
+        "pcre": "10.40",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-a818b85317",
+            "file": "src/Annotations/Operation.php",
+            "line": 221,
+            "column": 115,
+            "pattern": "/^([12345]{1}\\d{2})|([12345]{1}XX)$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.useless",
+                    "message": "Quantifier is redundant; it matches exactly once.",
+                    "hint": "Remove the {1} quantifier; it does not change the match.",
+                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.useless",
+                    "message": "Quantifier is redundant; it matches exactly once.",
+                    "hint": "Remove the {1} quantifier; it does not change the match.",
+                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^([12345]\\d{2})|([12345]XX)$/",
+                "changes": [
+                    "Removed a quantifier that repeats once."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/zircote/swagger-php/blob/ffa5dfe95e7c9d67dafdeb501e9abc758f3e2af3/src/Annotations/Operation.php#L218-L224",
+            "snippet": [
+                {
+                    "number": 218,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 219,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!Undefined::isDefault($this->responses)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 220,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            foreach ($this->responses as $response) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 221,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                if (!Undefined::isDefault($response->response) && $response->response !== 'default' && preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "12345",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "{1}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "{2}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "12345",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "{1}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "XX",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", (string) $response->response) === 0) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 222,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $this->_context->logger->warning('Invalid value \"' . $response->response . '\" for ' . $response->identity([]) . '->response, expecting \"default\", a HTTP Status Code or HTTP Status Code range definition in ' . $response->_context);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 223,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $isValid = false;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 224,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

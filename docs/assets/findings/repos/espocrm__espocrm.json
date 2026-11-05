@@ -1,0 +1,729 @@
+{
+    "repo": "espocrm/espocrm",
+    "sha": "23f49d926eb84610cff724acd16862d3b764adaa",
+    "target": {
+        "php": "8.3",
+        "pcre": "10.42",
+        "source": "composer.json config.platform.php"
+    },
+    "findings": [
+        {
+            "id": "f-f125a6aed9",
+            "file": "application/Espo/Core/Mail/Account/GroupAccount/BouncedRecognizer.php",
+            "line": 89,
+            "column": 24,
+            "pattern": "/permanent[ ]*[error|failure]/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: 'r' (duplicate), 'e' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.suspiciousPipe",
+                    "message": "Character class contains \"|\" which is literal inside []. It looks like an alternation typo.",
+                    "hint": "Did you mean an alternation like \"(error|failure)\" instead of a character class?",
+                    "docs": "https://php-regex.com/reference/rules/#alternation-like-character-classes"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/espocrm/espocrm/blob/23f49d926eb84610cff724acd16862d3b764adaa/application/Espo/Core/Mail/Account/GroupAccount/BouncedRecognizer.php#L86-L92",
+            "snippet": [
+                {
+                    "number": 86,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 87,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        /** @noinspection RegExpSimplifiable */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 88,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        /** @noinspection RegExpDuplicateCharacterInClass */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 89,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "permanent",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "error|failure",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 90,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return true;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 91,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 92,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-9fe22221fb",
+            "file": "application/Espo/Core/Utils/File/Manager.php",
+            "line": 981,
+            "column": 33,
+            "pattern": "/\\/$/i",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/espocrm/espocrm/blob/23f49d926eb84610cff724acd16862d3b764adaa/application/Espo/Core/Utils/File/Manager.php#L978-L984",
+            "snippet": [
+                {
+                    "number": 978,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public function getDirName(string $path, bool $isFullPath = true, bool $useIsDir = true): string",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 979,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 980,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        /** @var string $dirName */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 981,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $dirName = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $path);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 982,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 983,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $dirName = ($useIsDir && is_dir($dirName)) ?",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 984,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $dirName :",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-a856a5ea1c",
+            "file": "application/Espo/Core/Utils/Preload.php",
+            "line": 80,
+            "column": 50,
+            "pattern": "/.+((?<!Test)+\\.php$)/i",
+            "source": "new RegexIterator()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.assertion",
+                    "message": "Quantifier \"+\" on an assertion changes nothing: PCRE checks it once.",
+                    "hint": "Remove the quantifier.",
+                    "docs": "https://php-regex.com/reference/rules/#quantified-assertion"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/espocrm/espocrm/blob/23f49d926eb84610cff724acd16862d3b764adaa/application/Espo/Core/Utils/Preload.php#L77-L83",
+            "snippet": [
+                {
+                    "number": 77,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 78,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $directory = new RecursiveDirectoryIterator($dir);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 79,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $fullTree = new RecursiveIteratorIterator($directory);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 80,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $phpFiles = new RegexIterator($fullTree, ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/.",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "((?<!",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "Test",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\.php",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", RecursiveRegexIterator::GET_MATCH);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 81,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 82,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($phpFiles as $key => $file) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 83,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->processFile($file[0]);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-e518d57385",
+            "file": "application/Espo/Core/Utils/System.php",
+            "line": 45,
+            "column": 20,
+            "pattern": "/^(.*?)\\//i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/espocrm/espocrm/blob/23f49d926eb84610cff724acd16862d3b764adaa/application/Espo/Core/Utils/System.php#L42-L48",
+            "snippet": [
+                {
+                    "number": 42,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 43,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $serverSoft = $_SERVER['SERVER_SOFTWARE'];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 44,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 45,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $serverSoft, $match);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 46,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 47,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (empty($match[1])) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 48,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            preg_match('/^(.*)\\/?/i', $serverSoft, $match);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-d7435ca74a",
+            "file": "application/Espo/Core/Utils/System.php",
+            "line": 48,
+            "column": 24,
+            "pattern": "/^(.*)\\/?/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/espocrm/espocrm/blob/23f49d926eb84610cff724acd16862d3b764adaa/application/Espo/Core/Utils/System.php#L45-L51",
+            "snippet": [
+                {
+                    "number": 45,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        preg_match('/^(.*?)\\//i', $serverSoft, $match);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 46,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 47,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (empty($match[1])) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 48,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $serverSoft, $match);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 49,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 50,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return strtolower(",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

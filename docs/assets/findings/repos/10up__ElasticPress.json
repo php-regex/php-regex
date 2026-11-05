@@ -1,0 +1,163 @@
+{
+    "repo": "10up/ElasticPress",
+    "sha": "7a0651503ced12390a269cd6795c733eb135cc5a",
+    "target": {
+        "php": "7.4",
+        "pcre": "10.33",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-0e8fc57232",
+            "file": "includes/compat.php",
+            "line": 139,
+            "column": 44,
+            "pattern": "#[^a-zA-Z0-9\\-\\_]#is",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#[^a-zA-Z0-9\\-\\_]#i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/10up/ElasticPress/blob/7a0651503ced12390a269cd6795c733eb135cc5a/includes/compat.php#L136-L142",
+            "snippet": [
+                {
+                    "number": 136,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 137,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 138,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 139,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t$slug                     = preg_replace( ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9\\-\\_",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $slug );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 140,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t$title                    = ( ! empty( $args['title'] ) ) ? addcslashes( $args['title'], \"'\" ) : false;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 141,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t$requires_install_reindex = ( ! empty( $requires_install_reindex ) ) ? 'true' : 'false';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 142,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

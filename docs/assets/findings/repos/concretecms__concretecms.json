@@ -1,0 +1,3872 @@
+{
+    "repo": "concretecms/concretecms",
+    "sha": "310490605b78d5379618874622812dac5584c880",
+    "target": {
+        "php": "8.1",
+        "pcre": "10.39",
+        "source": "fallback: no require.php"
+    },
+    "findings": [
+        {
+            "id": "f-75e835bc85",
+            "file": "concrete/blocks/document_library/controller.php",
+            "line": 685,
+            "column": 40,
+            "pattern": "/^(.+\\d+:\\d+):00$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the second quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/blocks/document_library/controller.php#L682-L688",
+            "snippet": [
+                {
+                    "number": 682,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $dateTo = $wdt->translate('date_to', $allQueries);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 683,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    if ($dateTo) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 684,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $this->enableSubFolderSearch($list);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 685,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ":00",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $dateTo, $m)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 686,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $dateTo = $m[1] . ':59';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 687,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 688,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $query->andWhere('fv.fvDateAdded >= :dateTo');",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4383b4dd5e",
+            "file": "concrete/controllers/single_page/dashboard/pages/templates.php",
+            "line": 101,
+            "column": 30,
+            "pattern": "/[<>;{}?\"`]/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/controllers/single_page/dashboard/pages/templates.php#L98-L104",
+            "snippet": [
+                {
+                    "number": 98,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 99,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!$pTemplateName) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 100,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->error->add(t('Name required.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 101,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        } elseif (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<>;{}?\"`",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $pTemplateName)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 102,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->error->add(t('Invalid characters in page template name.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 103,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 104,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4383b4dd5e-2",
+            "file": "concrete/controllers/single_page/dashboard/pages/templates.php",
+            "line": 107,
+            "column": 30,
+            "pattern": "/[<>;{}?\"`]/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/controllers/single_page/dashboard/pages/templates.php#L104-L110",
+            "snippet": [
+                {
+                    "number": 104,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 105,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!$pTemplateIcon) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 106,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->error->add(t('Icon required.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 107,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        } elseif (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<>;{}?\"`",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $pTemplateIcon)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 108,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->error->add(t('Invalid characters in icon template name.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 109,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 110,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-0b13cc418b",
+            "file": "concrete/controllers/single_page/dashboard/pages/templates/add.php",
+            "line": 34,
+            "column": 30,
+            "pattern": "/[<>{};?\"`]/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/controllers/single_page/dashboard/pages/templates/add.php#L31-L37",
+            "snippet": [
+                {
+                    "number": 31,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 32,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!$pTemplateName) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 33,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->error->add(t('Name required.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 34,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        } elseif (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<>{};?\"`",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $pTemplateName)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 35,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->error->add(t('Invalid characters in page template name.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 36,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 37,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-a393fd8d03",
+            "file": "concrete/controllers/single_page/dashboard/pages/templates/add.php",
+            "line": 40,
+            "column": 30,
+            "pattern": "/[<>;{}?\"`]/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/controllers/single_page/dashboard/pages/templates/add.php#L37-L43",
+            "snippet": [
+                {
+                    "number": 37,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 38,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!$pTemplateIcon) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 39,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->error->add(t('Icon required.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 40,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        } elseif (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<>;{}?\"`",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $pTemplateIcon)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 41,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->error->add(t('Invalid characters in icon template name.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 42,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 43,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-0622bbb4a3",
+            "file": "concrete/controllers/single_page/dashboard/system/environment/security.php",
+            "line": 27,
+            "column": 51,
+            "pattern": "/[\\r\\n]+/ms",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/[\\r\\n]+/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/controllers/single_page/dashboard/system/environment/security.php#L24-L30",
+            "snippet": [
+                {
+                    "number": 24,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 25,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 26,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!$this->error->has()) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 27,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            $content_security_policy = preg_split(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "ms",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", (string) $this->post('content_security_policy'), -1, PREG_SPLIT_NO_EMPTY);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 28,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (count($content_security_policy) === 1) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 29,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $content_security_policy = $content_security_policy[0];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 30,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            } elseif (count($content_security_policy) === 0) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6d8dbb407e",
+            "file": "concrete/controllers/single_page/dashboard/system/permissions/workflows.php",
+            "line": 46,
+            "column": 30,
+            "pattern": "/[<>{};?\"`]/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/controllers/single_page/dashboard/system/permissions/workflows.php#L43-L49",
+            "snippet": [
+                {
+                    "number": 43,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $wfName = trim($this->post('wfName'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 44,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!$wfName) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 45,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->error->add(t('You must give the workflow a name.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 46,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        } elseif (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<>{};?\"`",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $wfName)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 47,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->error->add(t('Invalid characters in workflow name.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 48,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 49,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!$this->error->has()) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6d8dbb407e-2",
+            "file": "concrete/controllers/single_page/dashboard/system/permissions/workflows.php",
+            "line": 90,
+            "column": 30,
+            "pattern": "/[<>{};?\"`]/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/controllers/single_page/dashboard/system/permissions/workflows.php#L87-L93",
+            "snippet": [
+                {
+                    "number": 87,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $wfName = trim($this->post('wfName'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 88,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!$wfName) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 89,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->error->add(t('You must give the workflow a name.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 90,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        } elseif (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<>{};?\"`",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $wfName)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 91,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->error->add(t('Invalid characters in workflow name.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 92,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 93,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $db = Loader::db();",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-0e56c216e2",
+            "file": "concrete/controllers/single_page/dashboard/users/group_sets.php",
+            "line": 28,
+            "column": 34,
+            "pattern": "/[<>{};?\"`]/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/controllers/single_page/dashboard/users/group_sets.php#L25-L31",
+            "snippet": [
+                {
+                    "number": 25,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $gsName = trim($this->post('gsName'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 26,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (!$gsName) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 27,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $this->error->add(t(\"Specify a name for your group set.\"));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 28,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            } elseif (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<>{};?\"`",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $gsName)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 29,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $this->error->add(t('Invalid characters in group set name.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 30,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 31,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (!$this->error->has()) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-0e56c216e2-2",
+            "file": "concrete/controllers/single_page/dashboard/users/group_sets.php",
+            "line": 77,
+            "column": 28,
+            "pattern": "/[<>{};?\"`]/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/controllers/single_page/dashboard/users/group_sets.php#L74-L80",
+            "snippet": [
+                {
+                    "number": 74,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 75,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 76,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $gsName = trim($this->post('gsName'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 77,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<>{};?\"`",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $gsName)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 78,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $this->error->add(t('Invalid characters in group set name.'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 79,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 80,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (!$this->error->has()) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-7cd1699012",
+            "file": "concrete/src/Express/Formatter/LabelFormatter.php",
+            "line": 32,
+            "column": 42,
+            "pattern": "/%(.*?)%/i",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/Express/Formatter/LabelFormatter.php#L29-L35",
+            "snippet": [
+                {
+                    "number": 29,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 30,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        try {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 31,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // Run a regular expression to match the mask",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 32,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            return preg_replace_callback(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "%",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "%",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", function ($matches) use ($matchHandler) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 33,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // Return the result returned from the matchHandler",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 34,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                return $this->getResult($matches[1], $matchHandler) ?: '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 35,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }, $mask);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-301fa8dd58",
+            "file": "concrete/src/File/Search/Field/Field/DateAddedField.php",
+            "line": 54,
+            "column": 28,
+            "pattern": "/^(.+\\d+:\\d+):00$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the second quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/File/Search/Field/Field/DateAddedField.php#L51-L57",
+            "snippet": [
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $dateTo = $wdt->translate('date_added_to', $this->data);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($dateTo) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ":00",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $dateTo, $m)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $dateTo = $m[1] . ':59';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $list->filterByDateAdded($dateTo, '<=');",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-9b5ee6cd7a",
+            "file": "concrete/src/File/Service/File.php",
+            "line": 53,
+            "column": 48,
+            "pattern": "/\\/\\//si",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\/\\//i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/File/Service/File.php#L50-L56",
+            "snippet": [
+                {
+                    "number": 50,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $aDir = array_merge($aDir, $this->getDirectoryContents($dir . '/' . $file, $ignoreFiles, $recursive));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $file = $dir . '/' . $file;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                        $aDir[] = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\/\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "si",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '/', $file);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        if ($recursive) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $file = $dir . '/' . $file;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-9b5ee6cd7a-2",
+            "file": "concrete/src/File/Service/File.php",
+            "line": 58,
+            "column": 48,
+            "pattern": "/\\/\\//si",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\/\\//i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/File/Service/File.php#L55-L61",
+            "snippet": [
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        if ($recursive) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $file = $dir . '/' . $file;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 58,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                        $aDir[] = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\/\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "si",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '/', $file);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 59,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 60,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 61,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-3ed5cb16d7",
+            "file": "concrete/src/Logging/Search/Field/Field/DateField.php",
+            "line": 52,
+            "column": 28,
+            "pattern": "/^(.+\\d+:\\d+):00$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the second quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/Logging/Search/Field/Field/DateField.php#L49-L55",
+            "snippet": [
+                {
+                    "number": 49,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 50,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $dateTo = $wdt->translate('date_to', $this->data);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($dateTo) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 52,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ":00",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $dateTo, $m)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $dateTo = $m[1] . ':59';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $list->filterByEndTime($dateTo);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ce6e3a9a20",
+            "file": "concrete/src/Mail/Importer/MailImportedMessage.php",
+            "line": 197,
+            "column": 13,
+            "pattern": "/[\\n\\r\\s\\>]*\\Z/i",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/Mail/Importer/MailImportedMessage.php#L194-L200",
+            "snippet": [
+                {
+                    "number": 194,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $message = $r[0];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 195,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $r = preg_replace(array(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 196,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            '/^On (.*) at (.*), (.*) wrote:/sm',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 197,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\n\\r",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "\\>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\Z",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 198,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ), '', $message);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 199,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 200,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return $r;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-455268b10c",
+            "file": "concrete/src/Package/Packer/PackerFile.php",
+            "line": 279,
+            "column": 34,
+            "pattern": "/^languages\\/[\\w+\\-]+\\/LC_MESSAGES\\/messages\\.po$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.literalMetachar",
+                    "message": "\"+\" is a literal character inside a character class, not a quantifier.",
+                    "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
+                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/Package/Packer/PackerFile.php#L276-L282",
+            "snippet": [
+                {
+                    "number": 276,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($this->type === null) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 277,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (preg_match('/^languages\\/messages\\.pot$/', $this->relativePath)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 278,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $this->type = static::TYPE_TRANSLATIONS_POT;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 279,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            } elseif (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "languages\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+\\-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\/LC_MESSAGES\\/messages\\.po",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $this->relativePath)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 280,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $this->type = static::TYPE_TRANSLATIONS_PO;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 281,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            } elseif (preg_match('/^icon.svg$/', $this->relativePath)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 282,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $this->type = static::TYPE_SVGICON_PACKAGE;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-9da1847c62",
+            "file": "concrete/src/Page/Search/Field/Field/DateAddedField.php",
+            "line": 54,
+            "column": 28,
+            "pattern": "/^(.+\\d+:\\d+):00$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the second quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/Page/Search/Field/Field/DateAddedField.php#L51-L57",
+            "snippet": [
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $dateTo = $wdt->translate('date_added_to', $this->data);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($dateTo) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ":00",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $dateTo, $m)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $dateTo = $m[1] . ':59';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $list->filterByDateAdded($dateTo, '<=');",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-29d5b1055c",
+            "file": "concrete/src/Page/Search/Field/Field/DateLastModifiedField.php",
+            "line": 54,
+            "column": 28,
+            "pattern": "/^(.+\\d+:\\d+):00$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the second quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/Page/Search/Field/Field/DateLastModifiedField.php#L51-L57",
+            "snippet": [
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $dateTo = $wdt->translate('date_last_modified_to', $this->data);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($dateTo) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ":00",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $dateTo, $m)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $dateTo = $m[1] . ':59';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $list->filterByDateLastModified($dateTo, '<=');",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-5c1899e8d6",
+            "file": "concrete/src/Page/Search/Field/Field/DatePublicField.php",
+            "line": 54,
+            "column": 28,
+            "pattern": "/^(.+\\d+:\\d+):00$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the second quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/Page/Search/Field/Field/DatePublicField.php#L51-L57",
+            "snippet": [
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $dateTo = $wdt->translate('date_public_to', $this->data);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($dateTo) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ":00",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $dateTo, $m)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $dateTo = $m[1] . ':59';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $list->filterByPublicDate($dateTo, '<=');",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-1ef3006dd4",
+            "file": "concrete/src/User/Search/Field/Field/DateAddedField.php",
+            "line": 55,
+            "column": 28,
+            "pattern": "/^(.+\\d+:\\d+):00$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the second quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/User/Search/Field/Field/DateAddedField.php#L52-L58",
+            "snippet": [
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $dateTo = $wdt->translate('date_added_to', $this->data);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($dateTo) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ":00",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $dateTo, $m)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $dateTo = $m[1] . ':59';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 58,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $list->filterByDateAdded($dateTo, '<=');",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-14f02dbc50",
+            "file": "concrete/src/Utility/Service/Text.php",
+            "line": 120,
+            "column": 18,
+            "pattern": "/[^a-zA-Z0-9_\\.!#\\$\\&'\\*\\+-?^`{|}~@]/i",
+            "source": "preg_replace()",
+            "location": "via $regex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: range '0'-'9' (covered by range '+'-'?'), '.' (covered by range '+'-'?')",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/Utility/Service/Text.php#L117-L123",
+            "snippet": [
+                {
+                    "number": 117,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 118,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public function email($email)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 119,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 120,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $regex = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9_\\.!#\\$\\&\\'\\*\\+",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?^`{|}~@",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 121,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 122,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return preg_replace($regex, '', $email);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 123,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-8db55907a3",
+            "file": "concrete/src/Utility/Service/Text.php",
+            "line": 240,
+            "column": 13,
+            "pattern": "/([\\.|\\,|\\:|\\¡|\\¿|\\>|\\{|\\(]?)@{1}(\\w*)([\\.|\\,|\\:|\\!|\\?|\\>|\\}|\\)]?)\\s/i",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.multibyteInClassWithoutU",
+                    "message": "Character class holds \"¡\", which without /u is the bytes \\xC2 \\xA1: the class matches each byte on its own.",
+                    "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
+                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '|' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.useless",
+                    "message": "Quantifier is redundant; it matches exactly once.",
+                    "hint": "Remove the {1} quantifier; it does not change the match.",
+                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '|' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/([.|,|:|\\xC2\\xA1|\\xC2\\xBF|>|{|(]?)@(\\w*)([.|,|:|!|?|>|}|)]?)\\s/i",
+                "changes": [
+                    "Removed a quantifier that repeats once."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/Utility/Service/Text.php#L237-L243",
+            "snippet": [
+                {
+                    "number": 237,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 238,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $target = ($newWindow) ? ' target=\"_blank\" ' : '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 239,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $output = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 240,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\.|\\,|\\:|\\¡|\\¿|\\>|\\{|\\(",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "@",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "{1}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\.|\\,|\\:|\\!|\\?|\\>|\\}|\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 241,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \"$1<a href=\\\"https://twitter.com/$2\\\" \" . $target . \" class=\\\"twitter-username\\\">@$2</a>$3 \",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 242,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $input);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 243,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($withSearch) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-440d89f59d",
+            "file": "concrete/src/Utility/Service/Text.php",
+            "line": 245,
+            "column": 17,
+            "pattern": "/([\\.|\\,|\\:|\\¡|\\¿|\\>|\\{|\\(]?)#{1}(\\w*)([\\.|\\,|\\:|\\!|\\?|\\>|\\}|\\)]?)\\s/i",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.unicode.multibyteInClassWithoutU",
+                    "message": "Character class holds \"¡\", which without /u is the bytes \\xC2 \\xA1: the class matches each byte on its own.",
+                    "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
+                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '|' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.useless",
+                    "message": "Quantifier is redundant; it matches exactly once.",
+                    "hint": "Remove the {1} quantifier; it does not change the match.",
+                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '|' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/([.|,|:|\\xC2\\xA1|\\xC2\\xBF|>|{|(]?)#(\\w*)([.|,|:|!|?|>|}|)]?)\\s/i",
+                "changes": [
+                    "Removed a quantifier that repeats once."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/Utility/Service/Text.php#L242-L248",
+            "snippet": [
+                {
+                    "number": 242,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $input);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 243,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($withSearch) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 244,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $output = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 245,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\.|\\,|\\:|\\¡|\\¿|\\>|\\{|\\(",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "{1}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\.|\\,|\\:|\\!|\\?|\\>|\\}|\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 246,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                \"$1<a href=\\\"https://twitter.com/search?q=%23$2\\\" \" . $target . \" class=\\\"twitter-search\\\">#$2</a>$3 \",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 247,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $input);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 248,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-a27cecbc8e",
+            "file": "concrete/src/Validation/SanitizeService.php",
+            "line": 36,
+            "column": 32,
+            "pattern": "/<.*?>/ms",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<.*?>/s",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/Validation/SanitizeService.php#L33-L39",
+            "snippet": [
+                {
+                    "number": 33,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 34,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return false;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 35,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 36,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $string = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "ms",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $string);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 37,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $string = preg_replace('/<.*/ms', '', $string);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 38,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 39,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return $string;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-25c5c51df6",
+            "file": "concrete/src/Validation/SanitizeService.php",
+            "line": 37,
+            "column": 32,
+            "pattern": "/<.*/ms",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<.*/s",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/310490605b78d5379618874622812dac5584c880/concrete/src/Validation/SanitizeService.php#L34-L40",
+            "snippet": [
+                {
+                    "number": 34,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return false;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 35,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 36,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $string = preg_replace('/<.*?>/ms', '', $string);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 37,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $string = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "ms",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $string);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 38,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 39,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return $string;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 40,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

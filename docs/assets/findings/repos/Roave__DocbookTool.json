@@ -1,0 +1,206 @@
+{
+    "repo": "Roave/DocbookTool",
+    "sha": "6def805472f901054c70f541868226248d7e52b8",
+    "target": {
+        "php": "8.3.3",
+        "pcre": "10.42",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-a5e4c13085",
+            "file": "src/Writer/ConfluenceWriter.php",
+            "line": 317,
+            "column": 13,
+            "pattern": "/<pre><code(?: class=\"lang-([^\"]+)\"|)>([^<]+)<\\/code><\\/pre>/",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.alternation.empty",
+                    "message": "Alternation contains an empty alternative.",
+                    "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
+                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Roave/DocbookTool/blob/6def805472f901054c70f541868226248d7e52b8/src/Writer/ConfluenceWriter.php#L314-L320",
+            "snippet": [
+                {
+                    "number": 314,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function replaceCodeBlocks(string $renderedContent): string",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 315,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 316,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return (string) preg_replace_callback(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 317,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<pre><code",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " class=\"lang-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<\\/code><\\/pre>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 318,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            static function (array $m): string {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 319,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                /** @var array{1: string, 2: string} $m */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 320,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $confluenceCodeLanguage = match ($m[1]) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,594 @@
+{
+    "repo": "browscap/browscap-php",
+    "sha": "248aac66210badb336cbfb84692105c29cd3c0de",
+    "target": {
+        "php": "8.1",
+        "pcre": "10.39",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-1cd9c4207f",
+            "file": "src/IniParser/IniParser.php",
+            "line": 70,
+            "column": 24,
+            "pattern": "/(?<=\\[)(?:[^\\r\\n]+)(?=\\])/m",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(?<=\\[)(?:[^\\r\\n]+)(?=\\])/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/browscap/browscap-php/blob/248aac66210badb336cbfb84692105c29cd3c0de/src/IniParser/IniParser.php#L67-L73",
+            "snippet": [
+                {
+                    "number": 67,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // get all patterns from the ini file in the correct order,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 68,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // so that we can calculate with index number of the resulting array,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 69,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // which part to use when the ini file is splitted into its sections.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 70,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        preg_match_all(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?<=",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\[",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?=",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\]",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, $patternPositions);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 71,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $patternPositions = $patternPositions[0];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 72,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 73,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // split the ini file into sections and save the data in one line with a hash of the beloging",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6db7329ebb",
+            "file": "src/IniParser/IniParser.php",
+            "line": 149,
+            "column": 13,
+            "pattern": "/(?<=\\[)(?:[^\\r\\n]*[?*][^\\r\\n]*)(?=\\])|(?<=\\[)(?:[^\\r\\n*?]+)(?=\\])(?![^\\[]*Comment=)/m",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(?<=\\[)(?:[^\\r\\n]*[?*][^\\r\\n]*)(?=\\])|(?<=\\[)(?:[^\\r\\n*?]+)(?=\\])(?![^\\[]*Comment=)/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/browscap/browscap-php/blob/248aac66210badb336cbfb84692105c29cd3c0de/src/IniParser/IniParser.php#L146-L152",
+            "snippet": [
+                {
+                    "number": 146,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // - containing \"*\" or \"?\"",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 147,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // - not containing \"*\" or \"?\", but not having a comment",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 148,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        preg_match_all(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 149,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?<=",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\[",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?*",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "][^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?=",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\]",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?<=",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\[",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n*?",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?=",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\]",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")(?!",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\[",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "Comment=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 150,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $content,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 151,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $matches,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 152,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ed7f92cd0b",
+            "file": "src/Parser/Helper/Pattern.php",
+            "line": 48,
+            "column": 20,
+            "pattern": "/^([^\\.\\*\\?\\s\\r\\n\\\\]+).*$/",
+            "source": "preg_match()",
+            "location": "via $regex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/browscap/browscap-php/blob/248aac66210badb336cbfb84692105c29cd3c0de/src/Parser/Helper/Pattern.php#L45-L51",
+            "snippet": [
+                {
+                    "number": 45,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 46,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function getHashForPattern(string $pattern, bool $variants = false): array",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 47,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 48,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $regex   = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\.\\*\\?",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "\\r\\n\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 49,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $pattern = substr($pattern, 0, 32);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 50,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $matches = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

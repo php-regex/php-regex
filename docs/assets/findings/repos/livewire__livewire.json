@@ -1,0 +1,909 @@
+{
+    "repo": "livewire/livewire",
+    "sha": "822a4fa9b1e1123691133a2e2eb379a3dab11191",
+    "target": {
+        "php": "8.1",
+        "pcre": "10.39",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-a363a359b7",
+            "file": ".github/scripts/get-browser-test-shard.php",
+            "line": 21,
+            "column": 24,
+            "pattern": "/function\\s+test_/m",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/function\\s+test_/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/livewire/livewire/blob/822a4fa9b1e1123691133a2e2eb379a3dab11191/.github/scripts/get-browser-test-shard.php#L18-L24",
+            "snippet": [
+                {
+                    "number": 18,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "foreach ($iterator as $file) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 19,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    if ($file->isFile() && preg_match('/BrowserTest\\.php$/', $file->getFilename())) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 20,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $content = file_get_contents($file->getPathname());",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 21,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        preg_match_all(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "function",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "test_",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 22,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $files[] = ['path' => $file->getRealPath(), 'tests' => count($matches[0])];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 23,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 24,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "}",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-e328947ce0",
+            "file": "src/Compiler/Parser/MultiFileParser.php",
+            "line": 156,
+            "column": 39,
+            "pattern": "/return\\s+new\\s+class\\s*\\(/s",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/return\\s+new\\s+class\\s*\\(/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/livewire/livewire/blob/822a4fa9b1e1123691133a2e2eb379a3dab11191/src/Compiler/Parser/MultiFileParser.php#L153-L159",
+            "snippet": [
+                {
+                    "number": 153,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $classContents = trim($this->classPortion);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 154,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 155,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Remove the return statement if present",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 156,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $classContents = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "return",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "new",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "class",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\(",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", 'new class(', $classContents);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 157,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 158,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Ensure trailing semicolon is present",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 159,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (! str_ends_with($classContents, ';')) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ee0d00ea2f",
+            "file": "src/Features/SupportCompiledWireKeys/SupportCompiledWireKeys.php",
+            "line": 50,
+            "column": 41,
+            "pattern": "/<livewire:[^>]+?\\/>/is",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<livewire:[^>]+?\\/>/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/livewire/livewire/blob/822a4fa9b1e1123691133a2e2eb379a3dab11191/src/Features/SupportCompiledWireKeys/SupportCompiledWireKeys.php#L47-L53",
+            "snippet": [
+                {
+                    "number": 47,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 48,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Strip out all livewire tag components as we don't want to match any of them...",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 49,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $placeholder = '<__livewire-component-placeholder__>';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 50,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $cleanedContents = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<livewire:",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\/>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $placeholder, $contents);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Handle `wire:key` attributes on elements...",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        preg_match_all('/(?<=\\s)wire:key\\s*=\\s*(?:\"([^\"\\\\\\\\]*(?:\\\\\\\\.[^\"\\\\\\\\]*)*)\"|\\'([^\\'\\\\\\\\]*(?:\\\\\\\\.[^\\'\\\\\\\\]*)*)\\')/', $cleanedContents, $keys);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-7d0781302a",
+            "file": "src/Features/SupportMorphAwareBladeCompilation/SupportMorphAwareBladeCompilation.php",
+            "line": 78,
+            "column": 38,
+            "pattern": "/@empty(?!\\s*\\()/mUxi",
+            "source": "preg_match()",
+            "location": "via $loopEmptyDirectivePattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.x",
+                    "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/@empty(?!\\s*\\()/Uxi",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/livewire/livewire/blob/822a4fa9b1e1123691133a2e2eb379a3dab11191/src/Features/SupportMorphAwareBladeCompilation/SupportMorphAwareBladeCompilation.php#L75-L81",
+            "snippet": [
+                {
+                    "number": 75,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $openingDirectivesPattern = static::directivesPattern($openings);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 76,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $closingDirectivesPattern = static::directivesPattern($closings);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 77,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // This is for an `@empty` inside a `@forelse` loop, not `@empty()` conditional directive...",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 78,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $loopEmptyDirectivePattern = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "@empty",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?!",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\(",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "mUxi",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 79,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 80,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // First, let's match ALL blade directives on the page, not just conditionals...",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 81,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        preg_match_all(",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-7d9b734414",
+            "file": "src/Mechanisms/ExtendBlade/UnitTest.php",
+            "line": 75,
+            "column": 42,
+            "pattern": "/@foo/sm",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/@foo/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/livewire/livewire/blob/822a4fa9b1e1123691133a2e2eb379a3dab11191/src/Mechanisms/ExtendBlade/UnitTest.php#L72-L78",
+            "snippet": [
+                {
+                    "number": 72,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public function test_livewire_only_precompilers_apply_to_livewire_components_and_not_normal_blade()",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 73,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 74,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        Livewire::precompiler(function ($string) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 75,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            return preg_replace_callback(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "@foo",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "sm",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",  function ($matches) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 76,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                return 'bar';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 77,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }, $string);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 78,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        });",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-5d47f462dd",
+            "file": "src/Mechanisms/FrontendAssets/FrontendAssets.php",
+            "line": 307,
+            "column": 29,
+            "pattern": "~(\\v|\\t|\\s{2,})~m",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "~(\\v|\\t|\\s{2,})~",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/livewire/livewire/blob/822a4fa9b1e1123691133a2e2eb379a3dab11191/src/Mechanisms/FrontendAssets/FrontendAssets.php#L304-L310",
+            "snippet": [
+                {
+                    "number": 304,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 305,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    protected static function minify($subject)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 306,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 307,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\v",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\t",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "{2,}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $subject);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 308,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 309,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 310,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    protected static function nonce($options = [])",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,5220 @@
+{
+    "repo": "smalot/pdfparser",
+    "sha": "a71c6dd38e60a995fdb4d36e4433b8b3557c65dc",
+    "target": {
+        "php": "7.3",
+        "pcre": "10.32",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-8beb6c401c",
+            "file": "src/Smalot/PdfParser/Element/ElementArray.php",
+            "line": 112,
+            "column": 24,
+            "pattern": "/^\\s*\\[(?P<array>.*)/is",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementArray.php#L109-L115",
+            "snippet": [
+                {
+                    "number": 109,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 110,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function parse(string $content, ?Document $document = null, int &$offset = 0)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 111,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 112,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\[",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "array",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, $match)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 113,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            preg_match_all('/(.*?)(\\[|\\])/s', trim($content), $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 114,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 115,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $level = 0;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-317b129475",
+            "file": "src/Smalot/PdfParser/Element/ElementBoolean.php",
+            "line": 66,
+            "column": 24,
+            "pattern": "/^\\s*(?P<value>true|false)/is",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^\\s*(?P<value>true|false)/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementBoolean.php#L63-L69",
+            "snippet": [
+                {
+                    "number": 63,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 64,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function parse(string $content, ?Document $document = null, int &$offset = 0)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 65,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 66,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "value",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "true",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "false",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, $match)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 67,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $value = $match['value'];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 68,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $offset += strpos($content, $value) + \\strlen($value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 69,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-b9cda47e47",
+            "file": "src/Smalot/PdfParser/Element/ElementHexa.php",
+            "line": 47,
+            "column": 24,
+            "pattern": "/^\\s*\\<(?P<name>[A-F0-9]+)\\>/is",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^\\s*\\<(?P<name>[A-F0-9]+)\\>/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementHexa.php#L44-L50",
+            "snippet": [
+                {
+                    "number": 44,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 45,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function parse(string $content, ?Document $document = null, int &$offset = 0)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 46,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 47,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "name",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "F0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, $match)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 48,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $name = $match['name'];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 49,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $offset += strpos($content, '<'.$name) + \\strlen($name) + 2; // 1 for '>'",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 50,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // repackage string as standard",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-2142784b7c",
+            "file": "src/Smalot/PdfParser/Element/ElementName.php",
+            "line": 59,
+            "column": 24,
+            "pattern": "/^\\s*\\/([A-Z0-9\\-\\+,#\\.]+)/is",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^\\s*\\/([A-Z0-9\\-\\+,#\\.]+)/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementName.php#L56-L62",
+            "snippet": [
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function parse(string $content, ?Document $document = null, int &$offset = 0)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 58,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 59,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9\\-\\+,#\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, $match)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 60,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $name = $match[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 61,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $offset += strpos($content, $name) + \\strlen($name);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 62,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $name = Font::decodeEntities($name);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-2d2506efd4",
+            "file": "src/Smalot/PdfParser/Element/ElementNull.php",
+            "line": 63,
+            "column": 24,
+            "pattern": "/^\\s*(null)/s",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^\\s*(null)/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementNull.php#L60-L66",
+            "snippet": [
+                {
+                    "number": 60,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 61,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function parse(string $content, ?Document $document = null, int &$offset = 0)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 62,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 63,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "null",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, $match)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 64,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $offset += strpos($content, 'null') + \\strlen('null');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 65,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 66,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return new self();",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-508b5e2793",
+            "file": "src/Smalot/PdfParser/Element/ElementNumeric.php",
+            "line": 53,
+            "column": 24,
+            "pattern": "/^\\s*(?P<value>\\-?[0-9\\.]+)/s",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^\\s*(?P<value>\\-?[0-9\\.]+)/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementNumeric.php#L50-L56",
+            "snippet": [
+                {
+                    "number": 50,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function parse(string $content, ?Document $document = null, int &$offset = 0)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "value",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, $match)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $value = $match['value'];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $offset += strpos($content, $value) + \\strlen($value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-5ee00df6f4",
+            "file": "src/Smalot/PdfParser/Element/ElementString.php",
+            "line": 66,
+            "column": 28,
+            "pattern": "/(?P<escape>[\\\\]*)$/s",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(?P<escape>[\\\\]*)$/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementString.php#L63-L69",
+            "snippet": [
+                {
+                    "number": 63,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $cur_start_text = $start_search_end = 0;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 64,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            while (false !== ($cur_start_pos = strpos($name, ')', $start_search_end))) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 65,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $cur_extract = substr($name, $cur_start_text, $cur_start_pos - $cur_start_text);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 66,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "escape",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $cur_extract, $match);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 67,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                if (!(\\strlen($match['escape']) % 2)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 68,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    break;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 69,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-23ea634ca9",
+            "file": "src/Smalot/PdfParser/Element/ElementStruct.php",
+            "line": 49,
+            "column": 24,
+            "pattern": "/^\\s*<<(?P<struct>.*)/is",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementStruct.php#L46-L52",
+            "snippet": [
+                {
+                    "number": 46,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 47,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function parse(string $content, ?Document $document = null, int &$offset = 0)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 48,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 49,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "<<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "struct",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 50,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            preg_match_all('/(.*?)(<<|>>)/s', trim($content), $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 51,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $level = 0;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-b26ad1e7f2",
+            "file": "src/Smalot/PdfParser/Element/ElementXRef.php",
+            "line": 88,
+            "column": 24,
+            "pattern": "/^\\s*(?P<id>[0-9]+\\s+[0-9]+\\s+R)/s",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^\\s*(?P<id>[0-9]+\\s+[0-9]+\\s+R)/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementXRef.php#L85-L91",
+            "snippet": [
+                {
+                    "number": 85,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 86,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function parse(string $content, ?Document $document = null, int &$offset = 0)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 87,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 88,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "id",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "R",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, $match)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 89,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $id = $match['id'];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 90,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $offset += strpos($content, $id) + \\strlen($id);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 91,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $id = str_replace(' ', '_', rtrim($id, ' R'));",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-414e24511d",
+            "file": "src/Smalot/PdfParser/Encoding.php",
+            "line": 147,
+            "column": 38,
+            "pattern": "/[^A-Z0-9]/is",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/[^A-Z0-9]/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Encoding.php#L144-L150",
+            "snippet": [
+                {
+                    "number": 144,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    protected function getEncodingClass(): string",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 145,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 146,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Load reference table charset.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 147,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $baseEncoding = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $this->get('BaseEncoding')->getContent());",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 148,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 149,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Check for empty BaseEncoding field value",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 150,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!\\is_string($baseEncoding) || 0 == \\strlen($baseEncoding)) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-1ebf4ed4f3",
+            "file": "src/Smalot/PdfParser/Font.php",
+            "line": 216,
+            "column": 31,
+            "pattern": "/<(?P<from>[0-9A-F]+)> *<(?P<to>[0-9A-F]+)>[ \\r\\n]+/is",
+            "source": "preg_match_all()",
+            "location": "via $regexp",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<(?P<from>[0-9A-F]+)> *<(?P<to>[0-9A-F]+)>[ \\r\\n]+/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L213-L219",
+            "snippet": [
+                {
+                    "number": 213,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // Support for multiple spacerange sections",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 214,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (preg_match_all('/begincodespacerange(?P<sections>.*?)endcodespacerange/s', $content, $matches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 215,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                foreach ($matches['sections'] as $section) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 216,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    $regexp = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "from",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "F",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "> ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "to",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "F",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            " \\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 217,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 218,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    preg_match_all($regexp, $section, $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 219,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-1ebf4ed4f3-2",
+            "file": "src/Smalot/PdfParser/Font.php",
+            "line": 232,
+            "column": 31,
+            "pattern": "/<(?P<from>[0-9A-F]+)> *<(?P<to>[0-9A-F]+)>[ \\r\\n]+/is",
+            "source": "preg_match_all()",
+            "location": "via $regexp",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<(?P<from>[0-9A-F]+)> *<(?P<to>[0-9A-F]+)>[ \\r\\n]+/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L229-L235",
+            "snippet": [
+                {
+                    "number": 229,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            // Support for multiple bfchar sections",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 230,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (preg_match_all('/beginbfchar(?P<sections>.*?)endbfchar/s', $content, $matches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 231,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                foreach ($matches['sections'] as $section) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 232,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    $regexp = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "from",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "F",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "> ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "to",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "F",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            " \\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 233,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 234,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    preg_match_all($regexp, $section, $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 235,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-af759448a6",
+            "file": "src/Smalot/PdfParser/Font.php",
+            "line": 264,
+            "column": 31,
+            "pattern": "/<(?P<from>[0-9A-F]+)> *<(?P<to>[0-9A-F]+)> *(?P<dest><[0-9A-F]+>|\\[[\\r\\n<>0-9A-F ]+\\])[ \\r\\n]+/is",
+            "source": "preg_match_all()",
+            "location": "via $regexp",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<(?P<from>[0-9A-F]+)> *<(?P<to>[0-9A-F]+)> *(?P<dest><[0-9A-F]+>|\\[[\\r\\n<>0-9A-F ]+\\])[ \\r\\n]+/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L261-L267",
+            "snippet": [
+                {
+                    "number": 261,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                     * - (?P<dest>...) Destination range's offset or each char code",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 262,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                     *                 Some PDF file has 2-byte Unicode values on new lines > added \\r\\n",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 263,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 264,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    $regexp = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "from",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "F",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "> ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "to",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "F",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "> ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "dest",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "F",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\[",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n<>0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "F ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\]",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            " \\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 265,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 266,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    preg_match_all($regexp, $section, $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 267,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-060873cf2a",
+            "file": "src/Smalot/PdfParser/Font.php",
+            "line": 306,
+            "column": 55,
+            "pattern": "/<(?P<string>[0-9A-F]+)> */is",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/<(?P<string>[0-9A-F]+)> */i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L303-L309",
+            "snippet": [
+                {
+                    "number": 303,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 304,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            // Support for : <srcCode1> <srcCodeN> [<dstString1> <dstString2> ... <dstStringN>]",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 305,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $strings = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 306,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                            $matched = preg_match_all(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "string",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "F",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "> ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "is",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $dest, $strings);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 307,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            if (false === $matched || 0 === $matched) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 308,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                                continue;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 309,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-d5e52f27c2",
+            "file": "src/Smalot/PdfParser/Font.php",
+            "line": 398,
+            "column": 29,
+            "pattern": "/(<[a-f0-9\\s]+>)/si",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(<[a-f0-9\\s]+>)/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L395-L401",
+            "snippet": [
+                {
+                    "number": 395,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 396,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 397,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $text = '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 398,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $parts = preg_split(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "f0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "si",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $hexa, -1, \\PREG_SPLIT_NO_EMPTY | \\PREG_SPLIT_DELIM_CAPTURE);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 399,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 400,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($parts as $part) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 401,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (preg_match('/^<[a-f0-9\\s]+>$/si', $part)) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4a1c2d48ed",
+            "file": "src/Smalot/PdfParser/Font.php",
+            "line": 401,
+            "column": 28,
+            "pattern": "/^<[a-f0-9\\s]+>$/si",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^<[a-f0-9\\s]+>$/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L398-L404",
+            "snippet": [
+                {
+                    "number": 398,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $parts = preg_split('/(<[a-f0-9\\s]+>)/si', $hexa, -1, \\PREG_SPLIT_NO_EMPTY | \\PREG_SPLIT_DELIM_CAPTURE);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 399,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 400,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($parts as $part) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 401,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "f0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "si",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $part)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 402,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // strip whitespace",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 403,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $part = preg_replace(\"/\\s/\", '', $part);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 404,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $part = trim($part, '<>');",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-c76ab0731c",
+            "file": "src/Smalot/PdfParser/Font.php",
+            "line": 410,
+            "column": 54,
+            "pattern": "/\\\\/s",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\\\/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L407-L413",
+            "snippet": [
+                {
+                    "number": 407,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 408,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 409,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $part = pack('H*', $part);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 410,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                $text .= ($add_braces ? preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '\\\\\\\\\\\\', $part) : $part);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 411,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 412,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                if ($add_braces) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 413,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $text .= ')';",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-fa75ab907b",
+            "file": "src/Smalot/PdfParser/PDFObject.php",
+            "line": 164,
+            "column": 24,
+            "pattern": "/\\[((\\(.*?\\)|[0-9\\.\\-\\s]*)*)\\]/s",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"[\" . \"()--\" x n . \"!]\" Replayed on PCRE2 10.49: preg_match fails from length 39 (backtrack_limit 100000, JIT off). The risky part is: .*? Hotspot offsets: 6-9 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.dotstar.nested",
+                    "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
+                    "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": "[",
+                "pump": "()--",
+                "suffix": "!]",
+                "n": 36,
+                "length": 39,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "[()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--!]",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L161-L167",
+            "snippet": [
+                {
+                    "number": 161,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 162,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 163,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Clean content in square brackets [.....]",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 164,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        preg_match_all(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\[",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "\\(",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "|[",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "9\\.\\-",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\]",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, $matches, \\PREG_OFFSET_CAPTURE);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 165,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($matches[1] as $part) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 166,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $content = substr_replace($content, str_repeat($char, \\strlen($part[0])), $part[1], \\strlen($part[0]));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 167,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-efa4dac8f5",
+            "file": "src/Smalot/PdfParser/PDFObject.php",
+            "line": 176,
+            "column": 33,
+            "pattern": "/(<|>)/s",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L173-L179",
+            "snippet": [
+                {
+                    "number": 173,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 174,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 175,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Clean structure",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 176,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if ($parts = preg_split(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, -1, \\PREG_SPLIT_NO_EMPTY | \\PREG_SPLIT_DELIM_CAPTURE)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 177,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $content = '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 178,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $level = 0;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 179,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            foreach ($parts as $part) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-dcb3304fd9",
+            "file": "src/Smalot/PdfParser/PDFObject.php",
+            "line": 203,
+            "column": 24,
+            "pattern": "/\\s(EMC)\\s/s",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\s(EMC)\\s/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L200-L206",
+            "snippet": [
+                {
+                    "number": 200,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $content = substr_replace($content, str_repeat($char, \\strlen($part[0])), $part[1], \\strlen($part[0]));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 201,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 202,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 203,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        preg_match_all(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "EMC",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $content, $matches, \\PREG_OFFSET_CAPTURE);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 204,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($matches[1] as $part) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 205,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $content = substr_replace($content, str_repeat($char, \\strlen($part[0])), $part[1], \\strlen($part[0]));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 206,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-72feecb7fb",
+            "file": "src/Smalot/PdfParser/PDFObject.php",
+            "line": 241,
+            "column": 36,
+            "pattern": "/(\n            [\\x09\\x0A\\x0D\\x20-\\x7E] |            # ASCII\n            [\\xC2-\\xDF][\\x80-\\xBF] |             # non-overlong 2-byte\n            \\xE0[\\xA0-\\xBF][\\x80-\\xBF] |         # excluding overlongs\n            [\\xE1-\\xEC\\xEE\\xEF][\\x80-\\xBF]{2} |  # straight 3-byte\n            \\xED[\\x80-\\x9F][\\x80-\\xBF] |         # excluding surrogates\n            \\xF0[\\x90-\\xBF][\\x80-\\xBF]{2} |      # planes 1-3\n            [\\xF1-\\xF3][\\x80-\\xBF]{3} |          # planes 4-15\n            \\xF4[\\x80-\\x8F][\\x80-\\xBF]{2}        # plane 16\n        )/xs",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(\n            [\\x09\\x0A\\x0D\\x20-\\x7E] |            # ASCII\n            [\\xC2-\\xDF][\\x80-\\xBF] |             # non-overlong 2-byte\n            \\xE0[\\xA0-\\xBF][\\x80-\\xBF] |         # excluding overlongs\n            [\\xE1-\\xEC\\xEE\\xEF][\\x80-\\xBF]{2} |  # straight 3-byte\n            \\xED[\\x80-\\x9F][\\x80-\\xBF] |         # excluding surrogates\n            \\xF0[\\x90-\\xBF][\\x80-\\xBF]{2} |      # planes 1-3\n            [\\xF1-\\xF3][\\x80-\\xBF]{3} |          # planes 4-15\n            \\xF4[\\x80-\\x8F][\\x80-\\xBF]{2}        # plane 16\n        )/x",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L238-L244",
+            "snippet": [
+                {
+                    "number": 238,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // https://www.w3.org/International/questions/qa-forms-utf-8.en",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 239,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // We use preg_replace() instead of preg_match() to avoid \"JIT",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 240,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // stack limit exhausted\" errors on larger files.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 241,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $utf8Filter = preg_replace('/(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 242,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            [\\x09\\x0A\\x0D\\x20-\\x7E] |            # ASCII",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 243,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            [\\xC2-\\xDF][\\x80-\\xBF] |             # non-overlong 2-byte",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 244,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \\xE0[\\xA0-\\xBF][\\x80-\\xBF] |         # excluding overlongs",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-33c919b581",
+            "file": "src/Smalot/PdfParser/PDFObject.php",
+            "line": 822,
+            "column": 44,
+            "pattern": "/\\s+/s",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\s+/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L819-L825",
+            "snippet": [
+                {
+                    "number": 819,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 820,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        // set graphics position matrix",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 821,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    case 'cm':",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 822,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                        $args = preg_split(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $command[self::COMMAND]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 823,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $current_position_cm = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 824,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            'a' => (float) $args[0], 'b' => (float) $args[1], 'c' => 0,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 825,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            'i' => (float) $args[2], 'j' => (float) $args[3], 'k' => 0,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-751a8b0794",
+            "file": "src/Smalot/PdfParser/PDFObject.php",
+            "line": 835,
+            "column": 44,
+            "pattern": "/\\s/s",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\s/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L832-L838",
+            "snippet": [
+                {
+                    "number": 832,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            break;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 833,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 834,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 835,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                        $args = preg_split(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $command[self::COMMAND]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 836,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $id = trim(array_pop($args), '/ ');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 837,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $xobject = $page->getXObject($id);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 838,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-33c919b581-2",
+            "file": "src/Smalot/PdfParser/PDFObject.php",
+            "line": 1050,
+            "column": 44,
+            "pattern": "/\\s+/s",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\s+/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L1047-L1053",
+            "snippet": [
+                {
+                    "number": 1047,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    case 'Td':",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1048,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    case 'TD':",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1049,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        // move text current point",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1050,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                        $args = preg_split(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $command[self::COMMAND]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1051,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $y = (float) array_pop($args);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1052,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $x = (float) array_pop($args);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1053,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-751a8b0794-2",
+            "file": "src/Smalot/PdfParser/PDFObject.php",
+            "line": 1065,
+            "column": 44,
+            "pattern": "/\\s/s",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\s/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L1062-L1068",
+            "snippet": [
+                {
+                    "number": 1062,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        break;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1063,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1064,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    case 'Tf':",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1065,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                        $args = preg_split(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $command[self::COMMAND]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1066,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $size = (float) array_pop($args);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1067,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $id = trim(array_pop($args), '/');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1068,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        if (null !== $page) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-33c919b581-3",
+            "file": "src/Smalot/PdfParser/PDFObject.php",
+            "line": 1090,
+            "column": 44,
+            "pattern": "/\\s+/s",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\s+/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L1087-L1093",
+            "snippet": [
+                {
+                    "number": 1087,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1088,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        // set text position matrix",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1089,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    case 'Tm':",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1090,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                        $args = preg_split(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $command[self::COMMAND]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1091,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $current_position_tm = [",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1092,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            'a' => (float) $args[0], 'b' => (float) $args[1], 'c' => 0,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1093,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            'i' => (float) $args[2], 'j' => (float) $args[3], 'k' => 0,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-d1822ff5b8",
+            "file": "src/Smalot/PdfParser/RawData/FilterHelper.php",
+            "line": 169,
+            "column": 24,
+            "pattern": "/[^\\x21-\\x75,\\x74]/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: ',' (covered by range '!'-'u'), 't' (covered by range '!'-'u')",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/RawData/FilterHelper.php#L166-L172",
+            "snippet": [
+                {
+                    "number": 166,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // data length",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 167,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $data_length = \\strlen($data);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 168,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // check for invalid characters",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 169,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x21",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x75",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            ",",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\x74",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $data) > 0) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 170,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            throw new \\Exception('decodeFilterASCII85Decode: invalid code');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 171,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 172,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // z sequence",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-199ec23693",
+            "file": "src/Smalot/PdfParser/RawData/RawDataParser.php",
+            "line": 838,
+            "column": 41,
+            "pattern": "/^( *[\\r]?[\\n])/isU",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^( *[\\r]?[\\n])/iU",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/RawData/RawDataParser.php#L835-L841",
+            "snippet": [
+                {
+                    "number": 835,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    // start stream object",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 836,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $objtype = 'stream';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 837,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $offset += 6;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 838,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    if (1 == preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "isU",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", substr($pdfData, $offset, 4), $matches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 839,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $offset += \\strlen($matches[0]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 840,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 841,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        // we get stream length here to later help preg_match test less data",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-6217c76619",
+            "file": "src/Smalot/PdfParser/RawData/RawDataParser.php",
+            "line": 846,
+            "column": 29,
+            "pattern": "/(endstream)[\\x09\\x0a\\x0c\\x0d\\x20]/isU",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(endstream)[\\x09\\x0a\\x0c\\x0d\\x20]/iU",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/RawData/RawDataParser.php#L843-L849",
+            "snippet": [
+                {
+                    "number": 843,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $skip = false === $this->config->getRetainImageContent() && 'XObject' == $this->getHeaderValue($headerDic, 'Type', '/') && 'Image' == $this->getHeaderValue($headerDic, 'Subtype', '/');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 844,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 845,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        $pregResult = preg_match(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 846,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "endstream",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x09\\x0a\\x0c\\x0d\\x20",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "isU",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 847,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $pdfData,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 848,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $matches,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 849,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            \\PREG_OFFSET_CAPTURE,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-06f020440d",
+            "file": "src/Smalot/PdfParser/RawData/RawDataParser.php",
+            "line": 959,
+            "column": 13,
+            "pattern": "/(?<=[\\r\\n])startxref[\\s]*[\\r\\n]+([0-9]+)[\\s]*[\\r\\n]+%%EOF/i",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the second quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the second quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/RawData/RawDataParser.php#L956-L962",
+            "snippet": [
+                {
+                    "number": 956,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 957,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Find all startxref tables from this $offset forward",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 958,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $startxrefPreg = preg_match_all(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 959,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?<=",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "startxref",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "%%EOF",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 960,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $pdfData,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 961,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $startxrefMatches,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 962,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            \\PREG_SET_ORDER,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

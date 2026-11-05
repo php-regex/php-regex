@@ -1,0 +1,946 @@
+{
+    "repo": "CarbonPHP/carbon",
+    "sha": "0aeffe96b86f9f837bfac706f65d6cd4fce92da9",
+    "target": {
+        "php": "8.1",
+        "pcre": "10.39",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-b5076317fb",
+            "file": "phpdoc.php",
+            "line": 47,
+            "column": 44,
+            "pattern": "/(\\/\\/ <methods[\\s\\S]*>)([\\s\\S]+)(<\\/methods>)/mU",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(\\/\\/ <methods[\\s\\S]*>)([\\s\\S]+)(<\\/methods>)/U",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/CarbonPHP/carbon/blob/0aeffe96b86f9f837bfac706f65d6cd4fce92da9/phpdoc.php#L44-L50",
+            "snippet": [
+                {
+                    "number": 44,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "$immutable = __DIR__.'/src/Carbon/CarbonImmutable.php';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 45,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "$interface = __DIR__.'/src/Carbon/CarbonInterface.php';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 46,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "$phpLevel = 7.1;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 47,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "file_put_contents($interface, preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\/\\/ <methods",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s\\S",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s\\S",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<\\/methods>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "mU",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", \"$1\\n\\n    // $3\", file_get_contents($interface), 1));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 48,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "require_once __DIR__.'/vendor/autoload.php';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 49,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "$trait = __DIR__.'/src/Carbon/Traits/Date.php';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 50,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "$code = '';",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-03be05d7f2",
+            "file": "phpdoc.php",
+            "line": 763,
+            "column": 43,
+            "pattern": "/(<autodoc[\\s\\S]*>)([\\s\\S]+)(<\\/autodoc>)/mU",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(<autodoc[\\s\\S]*>)([\\s\\S]+)(<\\/autodoc>)/U",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/CarbonPHP/carbon/blob/0aeffe96b86f9f837bfac706f65d6cd4fce92da9/phpdoc.php#L760-L766",
+            "snippet": [
+                {
+                    "number": 760,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 761,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "foreach ([$trait, $carbon, $immutable, $interface] as $file) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 762,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    $content = file_get_contents($file);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 763,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    $files->$file = preg_replace_callback(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<autodoc",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s\\S",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s\\S",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<\\/autodoc>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "mU",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", function ($matches) use ($file, $autoDocLines, $overrideTyping) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 764,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach (($overrideTyping[$file] ?? []) as $method => $line) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 765,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $line[1] = $method.'('.$line[1].')';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 766,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            array_unshift($line, '@method');",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-b5076317fb-2",
+            "file": "phpdoc.php",
+            "line": 882,
+            "column": 5,
+            "pattern": "/(\\/\\/ <methods[\\s\\S]*>)([\\s\\S]+)(<\\/methods>)/mU",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(\\/\\/ <methods[\\s\\S]*>)([\\s\\S]+)(<\\/methods>)/U",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/CarbonPHP/carbon/blob/0aeffe96b86f9f837bfac706f65d6cd4fce92da9/phpdoc.php#L879-L885",
+            "snippet": [
+                {
+                    "number": 879,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 880,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 881,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "$files->$interface = strtr(preg_replace_callback(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 882,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\/\\/ <methods",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s\\S",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s\\S",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<\\/methods>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "mU",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 883,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    static fn ($matches) => \"{$matches[1]}$methods\\n\\n    // {$matches[3]}\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 884,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    $files->$interface,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 885,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    1,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-03be05d7f2-2",
+            "file": "phpdoc.php",
+            "line": 900,
+            "column": 9,
+            "pattern": "/(<autodoc[\\s\\S]*>)([\\s\\S]+)(<\\/autodoc>)/mU",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(<autodoc[\\s\\S]*>)([\\s\\S]+)(<\\/autodoc>)/U",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/CarbonPHP/carbon/blob/0aeffe96b86f9f837bfac706f65d6cd4fce92da9/phpdoc.php#L897-L903",
+            "snippet": [
+                {
+                    "number": 897,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    $autoDoc = compileDoc($methods, $file);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 898,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    $content = file_get_contents($file);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 899,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    $files->$file = preg_replace_callback(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 900,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<autodoc",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s\\S",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s\\S",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "<\\/autodoc>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "mU",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 901,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        static fn ($matches) => \"{$matches[1]}\\n *$autoDoc\\n *\\n * {$matches[3]}\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 902,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $content,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 903,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        1,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-20b5ba7b74",
+            "file": "src/Carbon/CarbonInterval.php",
+            "line": 1011,
+            "column": 20,
+            "pattern": "/(-?\\d+(?:\\.\\d+)?)\\h*([^\\d\\h]*)/i",
+            "source": "preg_match_all()",
+            "location": "via $pattern",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/CarbonPHP/carbon/blob/0aeffe96b86f9f837bfac706f65d6cd4fce92da9/src/Carbon/CarbonInterval.php#L1008-L1014",
+            "snippet": [
+                {
+                    "number": 1008,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $milliseconds = 0;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1009,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $microseconds = 0;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1010,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1011,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $pattern = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\h",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\d\\h",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1012,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        preg_match_all($pattern, $intervalDefinition, $parts, PREG_SET_ORDER);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1013,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1014,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        while ([$part, $value, $unit] = array_shift($parts)) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

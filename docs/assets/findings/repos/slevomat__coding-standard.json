@@ -1,0 +1,645 @@
+{
+    "repo": "slevomat/coding-standard",
+    "sha": "50b8fb122b8d88021ca5172708519e887c3d331e",
+    "target": {
+        "php": "7.4",
+        "pcre": "10.33",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-e395121782",
+            "file": "SlevomatCodingStandard/Sniffs/Commenting/InlineDocCommentDeclarationSniff.php",
+            "line": 173,
+            "column": 19,
+            "pattern": "~(\\$\\w+)(?:\\s+(.+))?$~i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/slevomat/coding-standard/blob/50b8fb122b8d88021ca5172708519e887c3d331e/SlevomatCodingStandard/Sniffs/Commenting/InlineDocCommentDeclarationSniff.php#L170-L176",
+            "snippet": [
+                {
+                    "number": 170,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 171,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tif (",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 172,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$annotationContent !== ''",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 173,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\t&& preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\$",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $annotationContent, $matches) === 1",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 174,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 175,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$variableName = $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 176,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$type = $matches[2] ?? null;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4b6769d5c1",
+            "file": "SlevomatCodingStandard/Sniffs/Commenting/RequireOneDocCommentSniff.php",
+            "line": 76,
+            "column": 23,
+            "pattern": "#\\A\\s*/\\*\\*\\s*#s",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#\\A\\s*/\\*\\*\\s*#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/slevomat/coding-standard/blob/50b8fb122b8d88021ca5172708519e887c3d331e/SlevomatCodingStandard/Sniffs/Commenting/RequireOneDocCommentSniff.php#L73-L79",
+            "snippet": [
+                {
+                    "number": 73,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 74,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\tprivate function getDocInner(string $doc): string",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 75,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 76,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$doc = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\A",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/\\*\\*",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $doc);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 77,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$doc = preg_replace('#\\s*\\*/\\s*\\z#s', '', $doc);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 78,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 79,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t/** @var list<string> $lines */",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-b6c399db4a",
+            "file": "SlevomatCodingStandard/Sniffs/Commenting/RequireOneDocCommentSniff.php",
+            "line": 77,
+            "column": 23,
+            "pattern": "#\\s*\\*/\\s*\\z#s",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#\\s*\\*/\\s*\\z#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/slevomat/coding-standard/blob/50b8fb122b8d88021ca5172708519e887c3d331e/SlevomatCodingStandard/Sniffs/Commenting/RequireOneDocCommentSniff.php#L74-L80",
+            "snippet": [
+                {
+                    "number": 74,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\tprivate function getDocInner(string $doc): string",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 75,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 76,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$doc = preg_replace('#\\A\\s*/\\*\\*\\s*#s', '', $doc);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 77,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$doc = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\*/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\z",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $doc);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 78,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 79,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t/** @var list<string> $lines */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 80,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$lines = preg_split(\"/\\r\\n|\\n|\\r/\", $doc);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-1c7518a9be",
+            "file": "SlevomatCodingStandard/Sniffs/PHP/TypeCastSniff.php",
+            "line": 55,
+            "column": 14,
+            "pattern": "~^\\(\\s*(\\S+)\\s*\\)\\z~i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/slevomat/coding-standard/blob/50b8fb122b8d88021ca5172708519e887c3d331e/SlevomatCodingStandard/Sniffs/PHP/TypeCastSniff.php#L52-L58",
+            "snippet": [
+                {
+                    "number": 52,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$tokens = $phpcsFile->getTokens();",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 53,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$cast = $tokens[$pointer]['content'];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 54,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 55,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tpreg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\(",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\S",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\z",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "~",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $cast, $matches);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tif (!array_key_exists(1, $matches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 58,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\treturn;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

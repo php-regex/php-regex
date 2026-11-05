@@ -1,0 +1,556 @@
+{
+    "repo": "FakerPHP/Faker",
+    "sha": "82f77b19dbbddda50317ffc36f8ea152cb0f50a0",
+    "target": {
+        "php": "7.4",
+        "pcre": "10.33",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-593358ef23",
+            "file": "src/Provider/Text.php",
+            "line": 200,
+            "column": 29,
+            "pattern": "/([ ,-:;\\x{2013}\\x{2014}]+$)/us",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/([ ,-:;\\x{2013}\\x{2014}]+$)/u",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/FakerPHP/Faker/blob/82f77b19dbbddda50317ffc36f8ea152cb0f50a0/src/Provider/Text.php#L197-L203",
+            "snippet": [
+                {
+                    "number": 197,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 198,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    protected static function appendEnd($text)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 199,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 200,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return preg_replace(",
+                            ""
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            " ,",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ":;",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\x{2013}\\x{2014}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "us",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $text) . '.';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 201,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 202,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 203,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-99e2492766",
+            "file": "src/Provider/ar_EG/Text.php",
+            "line": 9,
+            "column": 27,
+            "pattern": "/^\\p{Arabic}/u",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.compat.meaningChanges",
+                    "message": "From PHP 8.2 (PCRE2 10.40) \\p{Arabic} holds the characters whose script extensions name the script, not only those of the script, as U+30FB for \\p{Katakana}, which PHP 8.2 matches and PHP 8.1 does not.",
+                    "hint": "No spelling reads alike on both: \"\\p{sc:Arabic}\" keeps the script alone from PHP 8.2 on, and PHP 8.1 refuses it.",
+                    "docs": "https://php-regex.com/reference/rules/#meaning-that-changes-across-php-versions"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/FakerPHP/Faker/blob/82f77b19dbbddda50317ffc36f8ea152cb0f50a0/src/Provider/ar_EG/Text.php#L6-L12",
+            "snippet": [
+                {
+                    "number": 6,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 7,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    protected static function validStart($word)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 8,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 9,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\p{Arabic}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "u",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $word);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 10,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 11,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 12,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4e6f2a255e",
+            "file": "src/Provider/ar_JO/Text.php",
+            "line": 9,
+            "column": 27,
+            "pattern": "/^\\p{Arabic}/u",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.compat.meaningChanges",
+                    "message": "From PHP 8.2 (PCRE2 10.40) \\p{Arabic} holds the characters whose script extensions name the script, not only those of the script, as U+30FB for \\p{Katakana}, which PHP 8.2 matches and PHP 8.1 does not.",
+                    "hint": "No spelling reads alike on both: \"\\p{sc:Arabic}\" keeps the script alone from PHP 8.2 on, and PHP 8.1 refuses it.",
+                    "docs": "https://php-regex.com/reference/rules/#meaning-that-changes-across-php-versions"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/FakerPHP/Faker/blob/82f77b19dbbddda50317ffc36f8ea152cb0f50a0/src/Provider/ar_JO/Text.php#L6-L12",
+            "snippet": [
+                {
+                    "number": 6,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 7,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    protected static function validStart($word)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 8,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 9,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\p{Arabic}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "u",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $word);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 10,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 11,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 12,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-1b13ce7948",
+            "file": "src/Provider/ar_SA/Text.php",
+            "line": 9,
+            "column": 27,
+            "pattern": "/^\\p{Arabic}/u",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.compat.meaningChanges",
+                    "message": "From PHP 8.2 (PCRE2 10.40) \\p{Arabic} holds the characters whose script extensions name the script, not only those of the script, as U+30FB for \\p{Katakana}, which PHP 8.2 matches and PHP 8.1 does not.",
+                    "hint": "No spelling reads alike on both: \"\\p{sc:Arabic}\" keeps the script alone from PHP 8.2 on, and PHP 8.1 refuses it.",
+                    "docs": "https://php-regex.com/reference/rules/#meaning-that-changes-across-php-versions"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/FakerPHP/Faker/blob/82f77b19dbbddda50317ffc36f8ea152cb0f50a0/src/Provider/ar_SA/Text.php#L6-L12",
+            "snippet": [
+                {
+                    "number": 6,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 7,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    protected static function validStart($word)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 8,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 9,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\p{Arabic}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "u",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $word);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 10,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 11,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 12,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

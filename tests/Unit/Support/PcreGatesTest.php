@@ -177,6 +177,30 @@ final class PcreGatesTest extends TestCase
     }
 
     #[Test]
+    public function test_another_release_than_the_one_measured_skips_with_the_verbatim_message(): void
+    {
+        $subject = 'The witness of /^(a+)+$/';
+
+        try {
+            $this->requiresPcre2Release('10.99', $subject);
+            $this->fail('A release no engine runs did not skip.');
+        } catch (SkippedWithMessageException $skip) {
+            $this->assertSame(
+                \sprintf('%s is verified against PCRE2 %s; PCRE2 %s may answer otherwise.', $subject, '10.99', \PCRE_VERSION),
+                $skip->getMessage(),
+            );
+        }
+    }
+
+    #[Test]
+    public function test_the_release_the_engine_runs_does_not_skip(): void
+    {
+        $this->requiresPcre2Release(explode(' ', \PCRE_VERSION)[0], 'The witness of /^(a+)+$/');
+
+        $this->assertStringStartsWith(explode(' ', \PCRE_VERSION)[0].' ', \PCRE_VERSION);
+    }
+
+    #[Test]
     public function test_a_release_the_engine_has_does_not_skip(): void
     {
         $this->requiresPcre2('10.40', '/(?-r)k*+\x{212A}/iur/');

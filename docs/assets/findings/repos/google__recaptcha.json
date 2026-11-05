@@ -1,0 +1,158 @@
+{
+    "repo": "google/recaptcha",
+    "sha": "7d35508fe5060b61955cce30af491e48f9b50f57",
+    "target": {
+        "php": "8.4",
+        "pcre": "10.49",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-b173bde08a",
+            "file": "src/ReCaptcha/RequestMethod/SocketPost.php",
+            "line": 134,
+            "column": 29,
+            "pattern": "#\n\\s*\n#Uis",
+            "source": "preg_split()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#\n\\s*\n#Ui",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/google/recaptcha/blob/7d35508fe5060b61955cce30af491e48f9b50f57/src/ReCaptcha/RequestMethod/SocketPost.php#L131-L137",
+            "snippet": [
+                {
+                    "number": 131,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return '{\"success\": false, \"error-codes\": [\"'.ReCaptcha::E_BAD_RESPONSE.'\"]}';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 132,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 133,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 134,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $parts = preg_split(",
+                            ""
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Uis",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "\"",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $response, 2);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 135,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 136,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!is_array($parts) || !isset($parts[1])) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 137,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return '{\"success\": false, \"error-codes\": [\"'.ReCaptcha::E_BAD_RESPONSE.'\"]}';",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

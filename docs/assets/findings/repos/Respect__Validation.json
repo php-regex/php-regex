@@ -1,0 +1,531 @@
+{
+    "repo": "Respect/Validation",
+    "sha": "10f7787d752576bedc80a654d66d17879a5e73d2",
+    "target": {
+        "php": "8.5",
+        "pcre": "10.44",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-9d01364da5",
+            "file": "src-dev/Markdown/Linters/ValidatorHeaderLinter.php",
+            "line": 61,
+            "column": 28,
+            "pattern": "/^(# .+|- .+|<!--+|-->|SPDX-.+|)$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.alternation.empty",
+                    "message": "Alternation contains an empty alternative.",
+                    "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
+                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Respect/Validation/blob/10f7787d752576bedc80a654d66d17879a5e73d2/src-dev/Markdown/Linters/ValidatorHeaderLinter.php#L58-L64",
+            "snippet": [
+                {
+                    "number": 58,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $lines = $file->content->toArray();",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 59,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 60,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        while (($line = array_shift($lines)) !== false) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 61,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "# ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "- ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "<!--",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "-->",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "SPDX-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $line) === 0) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 62,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                array_unshift($lines, $line);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 63,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                break;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 64,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-4f0e0d789e",
+            "file": "src-dev/Spdx/ContributorExtractor/HeaderContributorExtractor.php",
+            "line": 41,
+            "column": 24,
+            "pattern": "/^(.+)( <(.+)>)?$/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.alwaysEmptyCapture",
+                    "message": "Capturing group \"(.+)\" never captures any text: it is empty or unset wherever the pattern matches.",
+                    "hint": "Remove the group, or check what precedes it: a greedy repeat may take everything the group could read.",
+                    "docs": "https://php-regex.com/reference/rules/#capture-that-never-captures-text"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/Respect/Validation/blob/10f7787d752576bedc80a654d66d17879a5e73d2/src-dev/Spdx/ContributorExtractor/HeaderContributorExtractor.php#L38-L44",
+            "snippet": [
+                {
+                    "number": 38,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 39,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 40,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($matches[1] as $contributor) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 41,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " <",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $contributor, $parts);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 42,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $name = $parts[1] ?? '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 43,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $email = $parts[3] ?? null;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 44,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if ($name === '') {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-8be6ad1ddb",
+            "file": "src/Validators/Emoji.php",
+            "line": 64,
+            "column": 27,
+            "pattern": "/^(?:\n    # Tag sequence for country flags\n    [\\x{1F1E6}-\\x{1F1FF}]{2}\n    |\n    # Tag sequence for subdivision flags\n    \\x{1F3F4}[\\x{E0020}-\\x{E007E}]+\\x{E007F}\n    |\n    # Keycap sequences\n    [0-9#*](?:\\x{FE0F})?\\x{20E3}\n    |\n    # Standard emoji cluster:\n    \\p{Extended_Pictographic}               # base emoji\n    (?:\\x{FE0F})?                           # optional emoji variant selector\n    (?:[\\x{1F3FB}-\\x{1F3FF}])?              # optional skin tone modifier\n    (?:                                     # optionally repeat ZWJ sequences:\n        \\x{200D}                            #   ZWJ\n        (?:                                 #   joined element:\n            \\p{Extended_Pictographic}       #     another emoji\n            |\n            [\\x{2640}\\x{2642}\\x{26A7}]      #     or gender symbol\n        )\n        (?:\\x{FE0F})?                       #   optional variant selector\n        (?:[\\x{1F3FB}-\\x{1F3FF}])?          #   optional skin tone modifier\n    )*                                      # ...zero or more times\n)+$/ux",
+            "source": "preg_match()",
+            "location": null,
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"\\u{1F1E6}\\u{1F1E6}\\u{A9}\\u{200D}\\u{2640}\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 193 (backtrack_limit 100000, JIT off). The risky part is: [\\x{E0020}-\\x{E007E}]+ Hotspot offsets: 131-153 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:\\x{FE0F})\" at offset 203; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:\\x{FE0F})\" at offset 322; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[\\x{1F3FB}-\\x{1F3FF}])\" at offset 400; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:\\x{FE0F})\" at offset 828; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[\\x{1F3FB}-\\x{1F3FF}])\" at offset 902; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^(?:\n    # Tag sequence for country flags\n    [\\x{1F1E6}-\\x{1F1FF}]{2}\n    |\n    # Tag sequence for subdivision flags\n    \\x{1F3F4}[\\x{E0020}-\\x{E007E}]+\\x{E007F}\n    |\n    # Keycap sequences\n    [0-9#*]\\x{FE0F}?\\x{20E3}\n    |\n    # Standard emoji cluster:\n    \\p{Extended_Pictographic}               # base emoji\n    \\x{FE0F}?                           # optional emoji variant selector\n    [\\x{1F3FB}-\\x{1F3FF}]?              # optional skin tone modifier\n    (?:                                     # optionally repeat ZWJ sequences:\n        \\x{200D}                            #   ZWJ\n        (?:                                 #   joined element:\n            \\p{Extended_Pictographic}       #     another emoji\n            |\n            [\\x{2640}\\x{2642}\\x{26A7}]      #     or gender symbol\n        )\n        \\x{FE0F}?                       #   optional variant selector\n        [\\x{1F3FB}-\\x{1F3FF}]?          #   optional skin tone modifier\n    )*                                      # ...zero or more times\n)+$/ux",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": {
+                "prefix": "",
+                "pump": "\\u{1F1E6}\\u{1F1E6}\\u{A9}\\u{200D}\\u{2640}",
+                "suffix": "!",
+                "n": 48,
+                "length": 193,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀🇦🇦©‍♀!",
+            "permalink": "https://github.com/Respect/Validation/blob/10f7787d752576bedc80a654d66d17879a5e73d2/src/Validators/Emoji.php#L61-L67",
+            "snippet": [
+                {
+                    "number": 61,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return false;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 62,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 63,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 64,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        return preg_match('/^' . self::REGEX . '+$/ux', $input) === 1;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 65,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 66,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 67,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

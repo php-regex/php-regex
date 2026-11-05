@@ -1,0 +1,488 @@
+{
+    "repo": "facebook/open-graph-protocol",
+    "sha": "718f79b0806ec0270d19d6943a01fa733fe9b898",
+    "target": {
+        "php": "8.1",
+        "pcre": "10.39",
+        "source": "fallback: no require.php"
+    },
+    "findings": [
+        {
+            "id": "f-2a25a6b87c",
+            "file": "lib/Michelf/Markdown.php",
+            "line": 226,
+            "column": 24,
+            "pattern": "{^\\xEF\\xBB\\xBF|\\x1A}",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"\\x1A\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"^(?:\\xEF\\xBB\\xBF|\\x1A)\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/facebook/open-graph-protocol/blob/718f79b0806ec0270d19d6943a01fa733fe9b898/lib/Michelf/Markdown.php#L223-L229",
+            "snippet": [
+                {
+                    "number": 223,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$this->setup();",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 224,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 225,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t# Remove UTF-8 BOM and marker character in input, if present.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 226,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$text = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "{",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\xEF\\xBB\\xBF",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x1A",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "}",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $text);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 227,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 228,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t# Standardize line endings:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 229,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t#   DOS to Unix and Mac to Unix",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-32641a791e",
+            "file": "lib/Michelf/Markdown.php",
+            "line": 705,
+            "column": 33,
+            "pattern": "{\n\t\t\t(\t\t\t\t\t# wrap whole match in $1\n\t\t\t  \\[\n\t\t\t\t([^\\[\\]]+)\t\t# link text = $2; can't contain [ or ]\n\t\t\t  \\]\n\t\t\t)\n\t\t\t}xs",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "{\n\t\t\t(\t\t\t\t\t# wrap whole match in $1\n\t\t\t  \\[\n\t\t\t\t([^\\[\\]]+)\t\t# link text = $2; can't contain [ or ]\n\t\t\t  \\]\n\t\t\t)\n\t\t\t}x",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/facebook/open-graph-protocol/blob/718f79b0806ec0270d19d6943a01fa733fe9b898/lib/Michelf/Markdown.php#L702-L708",
+            "snippet": [
+                {
+                    "number": 702,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// Last, handle reference-style shortcuts: [link text]",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 703,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// These must come last in case you've also got [link text][1]",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 704,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// or [link text](/foo)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 705,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$text = preg_replace_callback('{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 706,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t(\t\t\t\t\t# wrap whole match in $1",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 707,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t  \\[",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 708,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t([^\\[\\]]+)\t\t# link text = $2; can\\'t contain [ or ]",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-1a7c403c5e",
+            "file": "lib/Michelf/Markdown.php",
+            "line": 1458,
+            "column": 31,
+            "pattern": "{(\\s*<pre>.+?</pre>)}sx",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.x",
+                    "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/facebook/open-graph-protocol/blob/718f79b0806ec0270d19d6943a01fa733fe9b898/lib/Michelf/Markdown.php#L1455-L1461",
+            "snippet": [
+                {
+                    "number": 1455,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$bq = preg_replace('/^/m', \"  \", $bq);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1456,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// These leading spaces cause problem with <pre> content, ",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1457,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// so we need to fix that:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1458,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$bq = preg_replace_callback(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "{",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "<pre>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "</pre>",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "}",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "sx",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", ",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1459,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tarray($this, '_doBlockQuotes_callback2'), $bq);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1460,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1461,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\treturn \"\\n\" . $this->hashBlock(\"<blockquote>\\n$bq\\n</blockquote>\") . \"\\n\\n\";",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-0aae512485",
+            "file": "lib/Michelf/Markdown.php",
+            "line": 1618,
+            "column": 33,
+            "pattern": "{\n\t\t\t<\n\t\t\t(?:mailto:)?\n\t\t\t(\n\t\t\t\t(?:\n\t\t\t\t\t[-!#$%&'*+/=?^_`.{|}~\\w\\x80-\\xFF]+\n\t\t\t\t|\n\t\t\t\t\t\".*?\"\n\t\t\t\t)\n\t\t\t\t\\@\n\t\t\t\t(?:\n\t\t\t\t\t[-a-z0-9\\x80-\\xFF]+(\\.[-a-z0-9\\x80-\\xFF]+)*\\.[a-z]+\n\t\t\t\t|\n\t\t\t\t\t\\[[\\d.a-fA-F:]+\\]\t# IPv4 & IPv6\n\t\t\t\t)\n\t\t\t)\n\t\t\t>\n\t\t\t}xi",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.duplicateChars",
+                    "message": "Character class contains duplicate elements that do not add new matches.",
+                    "hint": "Remove the redundant character class element.",
+                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/facebook/open-graph-protocol/blob/718f79b0806ec0270d19d6943a01fa733fe9b898/lib/Michelf/Markdown.php#L1615-L1621",
+            "snippet": [
+                {
+                    "number": 1615,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tarray($this, '_doAutoLinks_url_callback'), $text);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1616,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1617,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// Email addresses: <address@domain.foo>",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1618,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$text = preg_replace_callback('{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1619,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t<",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1620,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t(?:mailto:)?",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1621,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t(",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

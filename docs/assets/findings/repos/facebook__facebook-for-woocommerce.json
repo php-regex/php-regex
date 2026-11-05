@@ -1,0 +1,138 @@
+{
+    "repo": "facebook/facebook-for-woocommerce",
+    "sha": "f3ac31b0234792276cbb8db8193f6ec7a7523fe2",
+    "target": {
+        "php": "7.4",
+        "pcre": "10.33",
+        "source": "composer.json config.platform.php"
+    },
+    "findings": [
+        {
+            "id": "f-1b4dcf5c80",
+            "file": "includes/Events/Normalizer.php",
+            "line": 197,
+            "column": 28,
+            "pattern": "/[\\-\\s+]/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.literalMetachar",
+                    "message": "\"+\" is a literal character inside a character class, not a quantifier.",
+                    "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
+                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/f3ac31b0234792276cbb8db8193f6ec7a7523fe2/includes/Events/Normalizer.php#L194-L200",
+            "snippet": [
+                {
+                    "number": 194,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$result = trim( preg_replace( '/[a-z()-]/', '', $phone ) );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 195,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 196,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\tif ( self::is_international_number( $result ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 197,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t$result = preg_replace( ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $result );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 198,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 199,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 200,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\treturn $result;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

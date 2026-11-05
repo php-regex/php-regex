@@ -1,0 +1,409 @@
+{
+    "repo": "nette/latte",
+    "sha": "ed4e5b88dbe65907bf693be3396f534a3145f774",
+    "target": {
+        "php": "8.2",
+        "pcre": "10.40",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-e0da99428f",
+            "file": "src/Latte/Compiler/PrintContext.php",
+            "line": 58,
+            "column": 4,
+            "pattern": "#% (\\d+) \\. (escape|modify(?:Content)?) ( \\( ([^()]*+|(?-2))+ \\) )#xi",
+            "source": "preg_replace_callback()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.emptyRepeat",
+                    "message": "Quantifier \"+\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/nette/latte/blob/ed4e5b88dbe65907bf693be3396f534a3145f774/src/Latte/Compiler/PrintContext.php#L55-L61",
+            "snippet": [
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$mask = preg_replace_callback(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 58,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "%",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "escape",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "modify",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "Content",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\(",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "()",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?-2)",
+                            "pg-snippet-pattern pg-tok-keyword"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\)",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            " )",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "xi",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 59,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tfunction ($m) use ($args) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 60,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t[, $pos, $fn, $var] = $m;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 61,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$var = substr($var, 1, -1);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-1261bae5bc",
+            "file": "src/Latte/Compiler/TemplateParser.php",
+            "line": 446,
+            "column": 42,
+            "pattern": "#^[a-z]#iD",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.D",
+                    "message": "Flag 'D' is useless: the pattern contains no $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-d-dollar-end-only"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/nette/latte/blob/ed4e5b88dbe65907bf693be3396f534a3145f774/src/Latte/Compiler/TemplateParser.php#L443-L449",
+            "snippet": [
+                {
+                    "number": 443,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 444,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\tpublic function checkBlockIsUnique(Block $block): void",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 445,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 446,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tif ($block->isDynamic() || !preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "z",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "iD",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $name = (string) $block->name->value)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 447,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tthrow new CompileException(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 448,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tucfirst($block->tag->name) . \" name must start with letter a-z, '$name' given.\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 449,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$block->tag->position,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,158 @@
+{
+    "repo": "twigstan/twigstan",
+    "sha": "ec485cf8d41f9c031469e45ba67f4c5505e794fb",
+    "target": {
+        "php": "8.3",
+        "pcre": "10.42",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-1a9e37ee39",
+            "file": "src/Processing/Compilation/PhpVisitor/AppendFilePathToLineCommentVisitor.php",
+            "line": 29,
+            "column": 28,
+            "pattern": "#// line (?<line_number>\\d+)+#",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.quantifiedCapture",
+                    "message": "Quantified named group \"(?<line_number>...)\" with \"+\": only the last iteration's capture is retained.",
+                    "hint": "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.",
+                    "docs": "https://php-regex.com/reference/rules/#quantified-capturing-group"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/twigstan/twigstan/blob/ec485cf8d41f9c031469e45ba67f4c5505e794fb/src/Processing/Compilation/PhpVisitor/AppendFilePathToLineCommentVisitor.php#L26-L32",
+            "snippet": [
+                {
+                    "number": 26,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 27,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $comments = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 28,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        foreach ($node->getComments() as $comment) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 29,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "// line ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "line_number",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $comment->getText(), $matches) !== 1) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 30,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $comments[] = $comment;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 31,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 32,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                continue;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

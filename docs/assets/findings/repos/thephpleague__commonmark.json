@@ -1,0 +1,274 @@
+{
+    "repo": "thephpleague/commonmark",
+    "sha": "5e9529359d76fa6811dc988671d3ac85bdc3e215",
+    "target": {
+        "php": "7.4",
+        "pcre": "10.33",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-d5daf01f73",
+            "file": "src/Extension/CommonMark/Parser/Inline/BacktickParser.php",
+            "line": 59,
+            "column": 32,
+            "pattern": "/\\n/m",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\n/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/thephpleague/commonmark/blob/5e9529359d76fa6811dc988671d3ac85bdc3e215/src/Extension/CommonMark/Parser/Inline/BacktickParser.php#L56-L62",
+            "snippet": [
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if ($this->findMatchingTicks(\\strlen($ticks), $cursor)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $code = $cursor->getSubstring($currentPosition, $cursor->getPosition() - $currentPosition - \\strlen($ticks));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 58,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 59,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            $c = \\preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", ' ', $code) ?? '';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 60,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 61,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 62,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $c !== '' &&",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-c257a1a74f",
+            "file": "src/Util/RegexHelper.php",
+            "line": 74,
+            "column": 50,
+            "pattern": "/^\\pZ|\\s/u",
+            "source": "preg_match()",
+            "location": "via RegexHelper::REGEX_UNICODE_WHITESPACE_CHAR",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.anchor.alternationPrecedence",
+                    "message": "An anchor holds for its own alternative only: \"\\s\" matches anywhere in the subject.",
+                    "hint": "If the anchors are meant for every alternative, group them: \"^(?:\\pZ|\\s)\".",
+                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/thephpleague/commonmark/blob/5e9529359d76fa6811dc988671d3ac85bdc3e215/src/Util/RegexHelper.php#L71-L77",
+            "snippet": [
+                {
+                    "number": 71,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public const REGEX_NON_SPACE          = '/[^ \\t\\f\\v\\r\\n]/';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 72,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 73,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public const REGEX_WHITESPACE_CHAR         = '/^[ \\t\\n\\x0b\\x0c\\x0d]/';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 74,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    public const REGEX_UNICODE_WHITESPACE_CHAR = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\pZ",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "u",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 75,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public const REGEX_THEMATIC_BREAK          = '/^(?:(?:\\*[ \\t]*){3,}|(?:_[ \\t]*){3,}|(?:-[ \\t]*){3,})$/';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 76,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public const REGEX_LINK_DESTINATION_BRACES = '/^(?:<(?:[^<>\\\\n\\\\\\\\\\\\x00]|\\\\\\\\.)*>)/';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 77,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

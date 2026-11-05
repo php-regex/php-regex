@@ -1,0 +1,752 @@
+{
+    "repo": "infection/infection",
+    "sha": "3ca3e072dbb578257c636e81b947fe050bc61c69",
+    "target": {
+        "php": "8.3",
+        "pcre": "10.42",
+        "source": "composer.json config.platform.php"
+    },
+    "findings": [
+        {
+            "id": "f-4cbe5362ea",
+            "file": "src/TestFramework/Coverage/CoverageChecker.php",
+            "line": 171,
+            "column": 13,
+            "pattern": "/(zend_extension\\s*=.*xdebug.*)/mi",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(zend_extension\\s*=.*xdebug.*)/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/infection/infection/blob/3ca3e072dbb578257c636e81b947fe050bc61c69/src/TestFramework/Coverage/CoverageChecker.php#L168-L174",
+            "snippet": [
+                {
+                    "number": 168,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function isXdebugIncludedInInitialTestPhpOptions(): bool",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 169,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 170,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return (bool) preg_match(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 171,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "zend_extension",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "xdebug",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "mi",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 172,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->initialTestPhpOptions,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 173,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 174,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-f2824e3cea",
+            "file": "src/TestFramework/Coverage/CoverageChecker.php",
+            "line": 179,
+            "column": 13,
+            "pattern": "/(extension\\s*=.*pcov.*)/mi",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(extension\\s*=.*pcov.*)/i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/infection/infection/blob/3ca3e072dbb578257c636e81b947fe050bc61c69/src/TestFramework/Coverage/CoverageChecker.php#L176-L182",
+            "snippet": [
+                {
+                    "number": 176,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function isPcovIncludedInInitialTestPhpOptions(): bool",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 177,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 178,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        return (bool) preg_match(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 179,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "extension",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "pcov",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "mi",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 180,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $this->initialTestPhpOptions,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 181,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 182,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-3553874c5a",
+            "file": "src/TestFramework/Coverage/JUnit/JUnitTestFileDataProvider.php",
+            "line": 100,
+            "column": 70,
+            "pattern": "/^(.*):+.*$/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/infection/infection/blob/3ca3e072dbb578257c636e81b947fe050bc61c69/src/TestFramework/Coverage/JUnit/JUnitTestFileDataProvider.php#L97-L103",
+            "snippet": [
+                {
+                    "number": 97,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        yield '//testcase[@class=\"%s\"][1]' => $testId;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 98,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 99,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // A format where the class name is inside `file` attribute of `testcase` tag",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 100,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        yield '//testcase[contains(@file, \"%s\")][1]' => preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '$1.feature', $testId);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 101,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 102,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // A format where the class name parsed from feature and is inside `class` attribute of `testcase` tag",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 103,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        yield '//testcase[@class=\"%s\"][1]' => preg_replace('/^(.*):+.*$/', '$1', $testId);",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-3553874c5a-2",
+            "file": "src/TestFramework/Coverage/JUnit/JUnitTestFileDataProvider.php",
+            "line": 103,
+            "column": 60,
+            "pattern": "/^(.*):+.*$/",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.concatenation",
+                    "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
+                    "hint": "Consider tightening the first quantifier to its minimum.",
+                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/infection/infection/blob/3ca3e072dbb578257c636e81b947fe050bc61c69/src/TestFramework/Coverage/JUnit/JUnitTestFileDataProvider.php#L100-L106",
+            "snippet": [
+                {
+                    "number": 100,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        yield '//testcase[contains(@file, \"%s\")][1]' => preg_replace('/^(.*):+.*$/', '$1.feature', $testId);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 101,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 102,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // A format where the class name parsed from feature and is inside `class` attribute of `testcase` tag",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 103,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        yield '//testcase[@class=\"%s\"][1]' => preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '$1', $testId);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 104,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 105,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 106,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function getXPath(): SafeDOMXPath",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-380d526509",
+            "file": "src/TestFramework/PhpUnit/CommandLine/TestFrameworkExtraArgs.php",
+            "line": 135,
+            "column": 34,
+            "pattern": "/([^\\s\\\\]+?)/A",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.lazyEnd",
+                    "message": "Lazy quantifier \"+?\" ends the pattern, so it always matches its minimum.",
+                    "hint": "Write the minimum count, make the quantifier greedy, or anchor what must follow it.",
+                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/infection/infection/blob/3ca3e072dbb578257c636e81b947fe050bc61c69/src/TestFramework/PhpUnit/CommandLine/TestFrameworkExtraArgs.php#L132-L138",
+            "snippet": [
+                {
+                    "number": 132,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $token .= stripcslashes(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 133,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    substr($match[0], 1, -1),",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 134,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 135,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            } elseif (preg_match('/' . self::REGEX_UNQUOTED_STRING . '/A', $input, $match, 0, $cursor) === 1) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 136,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $token .= $match[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 137,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            } else {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 138,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                throw new InvalidArgumentException(",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

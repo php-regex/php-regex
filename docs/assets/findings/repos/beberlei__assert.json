@@ -1,0 +1,462 @@
+{
+    "repo": "beberlei/assert",
+    "sha": "f193f4613c7d7fbcee2c05e4daff4061d49c040e",
+    "target": {
+        "php": "7.3",
+        "pcre": "10.32",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-fbbf7ffa3d",
+            "file": "bin/MethodDocGenerator.php",
+            "line": 58,
+            "column": 28,
+            "pattern": "`\\* This is an alias of {@see (?P<aliasOf>[^\\s\\}]++)`sim",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "`\\* This is an alias of {@see (?P<aliasOf>[^\\s\\}]++)`i",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/beberlei/assert/blob/f193f4613c7d7fbcee2c05e4daff4061d49c040e/bin/MethodDocGenerator.php#L55-L61",
+            "snippet": [
+                {
+                    "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $shortDescription = trim(substr($descriptionLine, 7), '.');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $methodName = $prefix.($prefix ? ucfirst($method->getName()) : $method->getName());",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 57,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 58,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "`",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\* This is an alias of {@see ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "aliasOf",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "\\}",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "++",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "`",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "sim",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $doc, $aliasMatch)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 59,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $shortDescription .= sprintf('. This is an alias of Assertion::%s()', trim($aliasMatch['aliasOf'], '(){}'));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 60,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 61,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-b74ae98ffa",
+            "file": "bin/MethodDocGenerator.php",
+            "line": 156,
+            "column": 21,
+            "pattern": "`\\* @method.*? \\*/\\nclass `sim",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "`\\* @method.*? \\*/\\nclass `si",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/beberlei/assert/blob/f193f4613c7d7fbcee2c05e4daff4061d49c040e/bin/MethodDocGenerator.php#L153-L159",
+            "snippet": [
+                {
+                    "number": 153,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        switch ($fileType) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 154,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            case 'class':",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 155,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $fileContent = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 156,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "`",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\* @method",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            " \\*/\\nclass ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "`",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "sim",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 157,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    sprintf(\"%s\\n */\\nclass \", trim(implode(\"\\n\", $lines))),",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 158,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $fileContent",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 159,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-3f6b9cbfe5",
+            "file": "bin/MethodDocGenerator.php",
+            "line": 163,
+            "column": 21,
+            "pattern": "/```php\\n<\\?php\\nuse Assert\\\\Assertion;\\n\\nAssertion::.*?```/sim",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/```php\\n<\\?php\\nuse Assert\\\\Assertion;\\n\\nAssertion::.*?```/si",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/beberlei/assert/blob/f193f4613c7d7fbcee2c05e4daff4061d49c040e/bin/MethodDocGenerator.php#L160-L166",
+            "snippet": [
+                {
+                    "number": 160,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                break;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 161,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            case 'readme':",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 162,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $fileContent = preg_replace(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 163,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "```php\\n<\\?php\\nuse Assert\\\\\\Assertion;\\n\\nAssertion::",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "```",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "sim",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 164,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    sprintf(\"```php\\n<?php\\nuse Assert\\\\Assertion;\\n\\n%s\\n\\n```\", implode(\"\\n\", $lines)),",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 165,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $fileContent",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 166,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

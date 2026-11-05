@@ -1,0 +1,1310 @@
+{
+    "repo": "PHPMailer/PHPMailer",
+    "sha": "a2b38e59301e298c9d55b4bb6affe325c73d4e6c",
+    "target": {
+        "php": "7.3",
+        "pcre": "10.32",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-072341284c",
+            "file": "src/PHPMailer.php",
+            "line": 946,
+            "column": 37,
+            "pattern": "/\\r\\n|\\r/m",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\r\\n|\\r/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/PHPMailer.php#L943-L949",
+            "snippet": [
+                {
+                    "number": 943,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            case 'echo':",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 944,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            default:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 945,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                //Normalize line breaks",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 946,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                $str = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", \"\\n\", $str);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 947,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                echo gmdate('Y-m-d H:i:s'),",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 948,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                \"\\t\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 949,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    //Trim trailing space",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-a301ea95c8",
+            "file": "src/PHPMailer.php",
+            "line": 1544,
+            "column": 21,
+            "pattern": "/^(?!(?>(?1)\"?(?>\\\\[ -~]|[^\"])\"?(?1)){255,})(?!(?>(?1)\"?(?>\\\\[ -~]|[^\"])\"?(?1)){65,}@)((?>(?>(?>((?>(?>(?>\\x0D\\x0A)?[\\t ])+|(?>[\\t ]*\\x0D\\x0A)?[\\t ]+)?)(\\((?>(?2)(?>[\\x01-\\x08\\x0B\\x0C\\x0E-'*-\\[\\]-\\x7F]|\\\\[\\x00-\\x7F]|(?3)))*(?2)\\)))+(?2))|(?2))?)([!#-'*+\\/-9=?^-~-]+|\"(?>(?2)(?>[\\x01-\\x08\\x0B\\x0C\\x0E-!#-\\[\\]-\\x7F]|\\\\[\\x00-\\x7F]))*(?2)\")(?>(?1)\\.(?1)(?4))*(?1)@(?!(?1)[a-z0-9-]{64,})(?1)(?>([a-z0-9](?>[a-z0-9-]*[a-z0-9])?)(?>(?1)\\.(?!(?1)[a-z0-9-]{64,})(?1)(?5)){0,126}|\\[(?:(?>IPv6:(?>([a-f0-9]{1,4})(?>:(?6)){7}|(?!(?:.*[a-f0-9][:\\]]){8,})((?6)(?>:(?6)){0,6})?::(?7)?))|(?>(?>IPv6:(?>(?6)(?>:(?6)){5}:|(?!(?:.*[a-f0-9]:){6,})(?8)?::(?>((?6)(?>:(?6)){0,4}):)?))?(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?>\\.(?9)){3}))\\])(?1)$/isD",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.dotstar.nested",
+                    "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
+                    "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.dotstar.nested",
+                    "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
+                    "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/PHPMailer.php#L1541-L1547",
+            "snippet": [
+                {
+                    "number": 1541,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                 * Feel free to use and redistribute this code. But please keep this copyright notice.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1542,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                 */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1543,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                return (bool) preg_match(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1544,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    '/^(?!(?>(?1)\"?(?>\\\\\\[ -~]|[^\"])\"?(?1)){255,})(?!(?>(?1)\"?(?>\\\\\\[ -~]|[^\"])\"?(?1)){65,}@)' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1545,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '((?>(?>(?>((?>(?>(?>\\x0D\\x0A)?[\\t ])+|(?>[\\t ]*\\x0D\\x0A)?[\\t ]+)?)(\\((?>(?2)' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1546,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '(?>[\\x01-\\x08\\x0B\\x0C\\x0E-\\'*-\\[\\]-\\x7F]|\\\\\\[\\x00-\\x7F]|(?3)))*(?2)\\)))+(?2))|(?2))?)' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1547,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '([!#-\\'*+\\/-9=?^-~-]+|\"(?>(?2)(?>[\\x01-\\x08\\x0B\\x0C\\x0E-!#-\\[\\]-\\x7F]|\\\\\\[\\x00-\\x7F]))*' .",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-9c64b92e6d",
+            "file": "src/PHPMailer.php",
+            "line": 1562,
+            "column": 21,
+            "pattern": "/^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/sD",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/D",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/PHPMailer.php#L1559-L1565",
+            "snippet": [
+                {
+                    "number": 1559,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                 * @see https://html.spec.whatwg.org/#e-mail-state-(type=email)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1560,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                 */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1561,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                return (bool) preg_match(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1562,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    '/^[a-zA-Z0-9.!#$%&\\'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1563,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/sD',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1564,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $address",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1565,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ca2b6173d7",
+            "file": "src/PHPMailer.php",
+            "line": 1579,
+            "column": 21,
+            "pattern": "/^[-\\p{L}\\p{N}\\p{M}.!#$%&'*+\\/=?^_`{|}~]+@[\\p{L}\\p{N}\\p{M}](?:[\\p{L}\\p{N}\\p{M}-]{0,61}[\\p{L}\\p{N}\\p{M}])?(?:\\.[\\p{L}\\p{N}\\p{M}](?:[-\\p{L}\\p{N}\\p{M}]{0,61}[\\p{L}\\p{N}\\p{M}])?)*$/usD",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/^[-\\p{L}\\p{N}\\p{M}.!#$%&'*+\\/=?^_`{|}~]+@[\\p{L}\\p{N}\\p{M}](?:[\\p{L}\\p{N}\\p{M}-]{0,61}[\\p{L}\\p{N}\\p{M}])?(?:\\.[\\p{L}\\p{N}\\p{M}](?:[-\\p{L}\\p{N}\\p{M}]{0,61}[\\p{L}\\p{N}\\p{M}])?)*$/uD",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/PHPMailer.php#L1576-L1582",
+            "snippet": [
+                {
+                    "number": 1576,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                 * @see https://en.wikipedia.org/wiki/International_email",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1577,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                 */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1578,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                return (bool) preg_match(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1579,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                    '/^[-\\p{L}\\p{N}\\p{M}.!#$%&\\'*+\\/=?^_`{|}~]+@[\\p{L}\\p{N}\\p{M}](?:[\\p{L}\\p{N}\\p{M}-]{0,61}' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1580,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '[\\p{L}\\p{N}\\p{M}])?(?:\\.[\\p{L}\\p{N}\\p{M}]' .",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1581,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    '(?:[-\\p{L}\\p{N}\\p{M}]{0,61}[\\p{L}\\p{N}\\p{M}])?)*$/usD',",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1582,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $address",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-301be2833b",
+            "file": "src/PHPMailer.php",
+            "line": 2601,
+            "column": 29,
+            "pattern": "/^\\$PHPMAILER_LANG\\['([a-z\\d_]+)'\\]\\s*=\\s*([\"'])(.+)*?\\2;/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.dotstar.nested",
+                    "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
+                    "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/PHPMailer.php#L2598-L2604",
+            "snippet": [
+                {
+                    "number": 2598,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $matches = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2599,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    if (",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2600,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        preg_match(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2601,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\$PHPMAILER_LANG\\[\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "z",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "_",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\'\\]",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\"\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\2",
+                            "pg-snippet-pattern pg-tok-backref"
+                        ],
+                        [
+                            ";",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2602,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $line,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2603,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $matches",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 2604,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        ) &&",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-2608a1eb17",
+            "file": "src/PHPMailer.php",
+            "line": 5044,
+            "column": 24,
+            "pattern": "#^(.*?)[\\\\/]*(([^/\\\\]*?)(\\.([^.\\\\/]+?)|))[\\\\/.]*$#m",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.alternation.empty",
+                    "message": "Alternation contains an empty alternative.",
+                    "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
+                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/PHPMailer.php#L5041-L5047",
+            "snippet": [
+                {
+                    "number": 5041,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 5042,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $ret = ['dirname' => '', 'basename' => '', 'extension' => '', 'filename' => ''];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 5043,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $pathinfo = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 5044,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\\\\\\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "((",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ".\\\\\\\\/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\\\\\\\/.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $path, $pathinfo)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 5045,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            if (array_key_exists(1, $pathinfo)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 5046,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $ret['dirname'] = $pathinfo[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 5047,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-084ec1f68a",
+            "file": "src/SMTP.php",
+            "line": 330,
+            "column": 37,
+            "pattern": "/\\r\\n|\\r/m",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/\\r\\n|\\r/",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/src/SMTP.php#L327-L333",
+            "snippet": [
+                {
+                    "number": 327,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            case 'echo':",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 328,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            default:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 329,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                //Normalize line breaks",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 330,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                $str = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r\\n",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\r",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "m",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", \"\\n\", $str);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 331,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                echo gmdate('Y-m-d H:i:s'),",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 332,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                \"\\t\",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 333,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    //Trim trailing space",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-251bc712c5",
+            "file": "test/Language/TranslationCompletenessTest.php",
+            "line": 71,
+            "column": 29,
+            "pattern": "/^\\$PHPMAILER_LANG\\['([a-z\\d_]+)'\\]\\s*=\\s*([\"'])(.+)*?\\2;/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.dotstar.nested",
+                    "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
+                    "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/a2b38e59301e298c9d55b4bb6affe325c73d4e6c/test/Language/TranslationCompletenessTest.php#L68-L74",
+            "snippet": [
+                {
+                    "number": 68,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $matches = [];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 69,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    if (",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 70,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        preg_match(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 71,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                            ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "\\$PHPMAILER_LANG\\[\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "z",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "_",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\'\\]",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "=",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\"\\'",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\2",
+                            "pg-snippet-pattern pg-tok-backref"
+                        ],
+                        [
+                            ";",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ",",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 72,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $line,",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 73,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $matches",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 74,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        )",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

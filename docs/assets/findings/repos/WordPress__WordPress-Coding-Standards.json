@@ -1,0 +1,511 @@
+{
+    "repo": "WordPress/WordPress-Coding-Standards",
+    "sha": "47ebdf13b0ea49e6b657d797b9779fb62c46da5e",
+    "target": {
+        "php": "7.3",
+        "pcre": "10.32",
+        "source": "composer.json require.php"
+    },
+    "findings": [
+        {
+            "id": "f-70a12098be",
+            "file": "WordPress/Sniffs/DB/PreparedSQLPlaceholdersSniff.php",
+            "line": 101,
+            "column": 40,
+            "pattern": "`(?:\n\t\t(?<!%)                     # Don't match a literal % (%%).\n\t\t(\n\t\t\t%                          # Start of placeholder.\n\t\t\t(?!                        # Negative look ahead.\n\t\t\t\t%[^%]                       # Not a correct literal % (%%).\n\t\t\t\t|\n\t\t\t\t%%[dfFsi]                   # Nor a correct literal % (%%), followed by a simple placeholder.\n\t\t\t)\n\t\t\t(?:[0-9]+\\\\??\\$)?+       # Optional ordering of the placeholders.\n\t\t\t[+-]?+                     # Optional sign specifier.\n\t\t\t(?:\n\t\t\t\t(?:0|'.)?+                 # Optional padding specifier - excluding the space.\n\t\t\t\t-?+                         # Optional alignment specifier.\n\t\t\t\t[0-9]*+                     # Optional width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)?+ # Optional precision specifier with optional padding character.\n\t\t\t\t|                      # Only recognize the space as padding in combination with a width specifier.\n\t\t\t\t(?:[ ])?+                   # Optional space padding specifier.\n\t\t\t\t-?+                         # Optional alignment specifier.\n\t\t\t\t[0-9]++                     # Width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)?+ # Optional precision specifier with optional padding character.\n\t\t\t)\n\t\t\t(?![dfFsi])                # Negative look ahead: not one of the supported placeholders.\n\t\t\t(?:[^ '\"]*|$)             # but something else instead.\n\t\t)\n\t)`x",
+            "source": "preg_match_all()",
+            "location": "via self::UNSUPPORTED_PLACEHOLDER_REGEX",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[ ])\" at offset 892; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "`(?:\n\t\t(?<!%)                     # Don't match a literal % (%%).\n\t\t(\n\t\t\t%                          # Start of placeholder.\n\t\t\t(?!                        # Negative look ahead.\n\t\t\t\t%[^%]                       # Not a correct literal % (%%).\n\t\t\t\t|\n\t\t\t\t%%[dfFsi]                   # Nor a correct literal % (%%), followed by a simple placeholder.\n\t\t\t)\n\t\t\t(?:[0-9]+\\\\??\\$)?+       # Optional ordering of the placeholders.\n\t\t\t[+-]?+                     # Optional sign specifier.\n\t\t\t(?:\n\t\t\t\t(?:0|'.)?+                 # Optional padding specifier - excluding the space.\n\t\t\t\t-?+                         # Optional alignment specifier.\n\t\t\t\t[0-9]*+                     # Optional width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)?+ # Optional precision specifier with optional padding character.\n\t\t\t\t|                      # Only recognize the space as padding in combination with a width specifier.\n\t\t\t\t[ ]?+                   # Optional space padding specifier.\n\t\t\t\t-?+                         # Optional alignment specifier.\n\t\t\t\t[0-9]++                     # Width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)?+ # Optional precision specifier with optional padding character.\n\t\t\t)\n\t\t\t(?![dfFsi])                # Negative look ahead: not one of the supported placeholders.\n\t\t\t(?:[^ '\"]*|$)             # but something else instead.\n\t\t)\n\t)`x",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/WordPress/WordPress-Coding-Standards/blob/47ebdf13b0ea49e6b657d797b9779fb62c46da5e/WordPress/Sniffs/DB/PreparedSQLPlaceholdersSniff.php#L98-L104",
+            "snippet": [
+                {
+                    "number": 98,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t *",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 99,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * @var string",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 100,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 101,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\tconst UNSUPPORTED_PLACEHOLDER_REGEX = '`(?:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 102,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t(?<!%)                     # Don\\'t match a literal % (%%).",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 103,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 104,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t%                          # Start of placeholder.",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-18254195fc",
+            "file": "WordPress/Sniffs/DB/PreparedSQLPlaceholdersSniff.php",
+            "line": 349,
+            "column": 36,
+            "pattern": "`(?:\n\t\t(?<![^%]%)                     # Don't match a literal % (%%), including when it could overlap with a placeholder.\n\t\t(?:\n\t\t\t%                          # Start of placeholder.\n\t\t\t(?:[0-9]+\\\\?\\$)?         # Optional ordering of the placeholders.\n\t\t\t[+-]?                      # Optional sign specifier.\n\t\t\t(?:\n\t\t\t\t(?:0|'.)?                 # Optional padding specifier - excluding the space.\n\t\t\t\t-?                         # Optional alignment specifier.\n\t\t\t\t[0-9]*                     # Optional width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t\t|                      # Only recognize the space as padding in combination with a width specifier.\n\t\t\t\t(?:[ ])?                   # Optional space padding specifier.\n\t\t\t\t-?                         # Optional alignment specifier.\n\t\t\t\t[0-9]+                     # Width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t)\n\t\t\t[dfFsi]                    # Type specifier.\n\t\t)\n\t)`x",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[ ])\" at offset 720; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "`(?:\n\t\t(?<![^%]%)                     # Don't match a literal % (%%), including when it could overlap with a placeholder.\n\t\t(?:\n\t\t\t%                          # Start of placeholder.\n\t\t\t(?:[0-9]+\\\\?\\$)?         # Optional ordering of the placeholders.\n\t\t\t[+-]?                      # Optional sign specifier.\n\t\t\t(?:\n\t\t\t\t(?:0|'.)?                 # Optional padding specifier - excluding the space.\n\t\t\t\t-?                         # Optional alignment specifier.\n\t\t\t\t[0-9]*                     # Optional width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t\t|                      # Only recognize the space as padding in combination with a width specifier.\n\t\t\t\t[ ]?                   # Optional space padding specifier.\n\t\t\t\t-?                         # Optional alignment specifier.\n\t\t\t\t[0-9]+                     # Width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t)\n\t\t\t[dfFsi]                    # Type specifier.\n\t\t)\n\t)`x",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/WordPress/WordPress-Coding-Standards/blob/47ebdf13b0ea49e6b657d797b9779fb62c46da5e/WordPress/Sniffs/DB/PreparedSQLPlaceholdersSniff.php#L346-L352",
+            "snippet": [
+                {
+                    "number": 346,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\tunset( $stripped_content, $vars_without_wpdb );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 347,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 348,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 349,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t$placeholders = preg_match_all( '`' . self::PREPARE_PLACEHOLDER_REGEX . '`x', $content, $matches );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 350,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tif ( $placeholders > 0 ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 351,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t$total_placeholders += $placeholders;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 352,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t}",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-18254195fc-2",
+            "file": "WordPress/Sniffs/DB/PreparedSQLPlaceholdersSniff.php",
+            "line": 453,
+            "column": 26,
+            "pattern": "`(?:\n\t\t(?<![^%]%)                     # Don't match a literal % (%%), including when it could overlap with a placeholder.\n\t\t(?:\n\t\t\t%                          # Start of placeholder.\n\t\t\t(?:[0-9]+\\\\?\\$)?         # Optional ordering of the placeholders.\n\t\t\t[+-]?                      # Optional sign specifier.\n\t\t\t(?:\n\t\t\t\t(?:0|'.)?                 # Optional padding specifier - excluding the space.\n\t\t\t\t-?                         # Optional alignment specifier.\n\t\t\t\t[0-9]*                     # Optional width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t\t|                      # Only recognize the space as padding in combination with a width specifier.\n\t\t\t\t(?:[ ])?                   # Optional space padding specifier.\n\t\t\t\t-?                         # Optional alignment specifier.\n\t\t\t\t[0-9]+                     # Width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t)\n\t\t\t[dfFsi]                    # Type specifier.\n\t\t)\n\t)`x",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[ ])\" at offset 720; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "`(?:\n\t\t(?<![^%]%)                     # Don't match a literal % (%%), including when it could overlap with a placeholder.\n\t\t(?:\n\t\t\t%                          # Start of placeholder.\n\t\t\t(?:[0-9]+\\\\?\\$)?         # Optional ordering of the placeholders.\n\t\t\t[+-]?                      # Optional sign specifier.\n\t\t\t(?:\n\t\t\t\t(?:0|'.)?                 # Optional padding specifier - excluding the space.\n\t\t\t\t-?                         # Optional alignment specifier.\n\t\t\t\t[0-9]*                     # Optional width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t\t|                      # Only recognize the space as padding in combination with a width specifier.\n\t\t\t\t[ ]?                   # Optional space padding specifier.\n\t\t\t\t-?                         # Optional alignment specifier.\n\t\t\t\t[0-9]+                     # Width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t)\n\t\t\t[dfFsi]                    # Type specifier.\n\t\t)\n\t)`x",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/WordPress/WordPress-Coding-Standards/blob/47ebdf13b0ea49e6b657d797b9779fb62c46da5e/WordPress/Sniffs/DB/PreparedSQLPlaceholdersSniff.php#L450-L456",
+            "snippet": [
+                {
+                    "number": 450,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 451,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 452,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tif ( $this->wp_version_compare( $this->minimum_wp_version, '6.2', '<' ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 453,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t\t\tif ( preg_match_all( '`' . self::PREPARE_PLACEHOLDER_REGEX . '`x', $content, $matches ) > 0 ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 454,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\tif ( ! empty( $matches[0] ) ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 455,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\tforeach ( $matches[0] as $match ) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 456,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t\t\tif ( 'i' === substr( $match, -1 ) ) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-bc566c1528",
+            "file": "WordPress/Sniffs/WP/I18nSniff.php",
+            "line": 47,
+            "column": 36,
+            "pattern": "/(?:\n\t\t(?<!%)                     # Don't match a literal % (%%).\n\t\t(\n\t\t\t%                          # Start of placeholder.\n\t\t\t(?:[0-9]+\\$)?              # Optional ordering of the placeholders.\n\t\t\t[+-]?                      # Optional sign specifier.\n\t\t\t(?:\n\t\t\t\t(?:0|'.)?                 # Optional padding specifier - excluding the space.\n\t\t\t\t-?                         # Optional alignment specifier.\n\t\t\t\t[0-9]*                     # Optional width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t\t|                      # Only recognize the space as padding in combination with a width specifier.\n\t\t\t\t(?:[ ])?                   # Optional space padding specifier.\n\t\t\t\t-?                         # Optional alignment specifier.\n\t\t\t\t[0-9]+                     # Width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t)\n\t\t\t[bcdeEfFgGhHosuxX]           # Type specifier.\n\t\t)\n\t)/x",
+            "source": "preg_match_all()",
+            "location": "via self::SPRINTF_PLACEHOLDER_REGEX",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[ ])\" at offset 664; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(?:\n\t\t(?<!%)                     # Don't match a literal % (%%).\n\t\t(\n\t\t\t%                          # Start of placeholder.\n\t\t\t(?:[0-9]+\\$)?              # Optional ordering of the placeholders.\n\t\t\t[+-]?                      # Optional sign specifier.\n\t\t\t(?:\n\t\t\t\t(?:0|'.)?                 # Optional padding specifier - excluding the space.\n\t\t\t\t-?                         # Optional alignment specifier.\n\t\t\t\t[0-9]*                     # Optional width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t\t|                      # Only recognize the space as padding in combination with a width specifier.\n\t\t\t\t[ ]?                   # Optional space padding specifier.\n\t\t\t\t-?                         # Optional alignment specifier.\n\t\t\t\t[0-9]+                     # Width specifier.\n\t\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t)\n\t\t\t[bcdeEfFgGhHosuxX]           # Type specifier.\n\t\t)\n\t)/x",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/WordPress/WordPress-Coding-Standards/blob/47ebdf13b0ea49e6b657d797b9779fb62c46da5e/WordPress/Sniffs/WP/I18nSniff.php#L44-L50",
+            "snippet": [
+                {
+                    "number": 44,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * These Regexes were originally copied from https://www.php.net/function.sprintf#93552",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 45,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * and adjusted for better precision and updated specs.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 46,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 47,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\tconst SPRINTF_PLACEHOLDER_REGEX = '/(?:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 48,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t(?<!%)                     # Don\\'t match a literal % (%%).",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 49,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 50,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t%                          # Start of placeholder.",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-e0d94ed7bf",
+            "file": "WordPress/Sniffs/WP/I18nSniff.php",
+            "line": 71,
+            "column": 46,
+            "pattern": "/(?:\n\t\t(?<!%)                     # Don't match a literal % (%%).\n\t\t%                          # Start of placeholder.\n\t\t[+-]?                      # Optional sign specifier.\n\t\t(?:\n\t\t\t(?:0|'.)?                 # Optional padding specifier - excluding the space.\n\t\t\t-?                         # Optional alignment specifier.\n\t\t\t[0-9]*                     # Optional width specifier.\n\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t|                      # Only recognize the space as padding in combination with a width specifier.\n\t\t\t(?:[ ])?                   # Optional space padding specifier.\n\t\t\t-?                         # Optional alignment specifier.\n\t\t\t[0-9]+                     # Width specifier.\n\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t)\n\t\t[bcdeEfFgGhHosuxX]           # Type specifier.\n\t)/x",
+            "source": "preg_match_all()",
+            "location": "via self::UNORDERED_SPRINTF_PLACEHOLDER_REGEX",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:[ ])\" at offset 580; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(?:\n\t\t(?<!%)                     # Don't match a literal % (%%).\n\t\t%                          # Start of placeholder.\n\t\t[+-]?                      # Optional sign specifier.\n\t\t(?:\n\t\t\t(?:0|'.)?                 # Optional padding specifier - excluding the space.\n\t\t\t-?                         # Optional alignment specifier.\n\t\t\t[0-9]*                     # Optional width specifier.\n\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t\t|                      # Only recognize the space as padding in combination with a width specifier.\n\t\t\t[ ]?                   # Optional space padding specifier.\n\t\t\t-?                         # Optional alignment specifier.\n\t\t\t[0-9]+                     # Width specifier.\n\t\t\t(?:\\.(?:[ 0]|'.)?[0-9]+)? # Optional precision specifier with optional padding character.\n\t\t)\n\t\t[bcdeEfFgGhHosuxX]           # Type specifier.\n\t)/x",
+                "changes": [
+                    "Removed a group that changes nothing."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/WordPress/WordPress-Coding-Standards/blob/47ebdf13b0ea49e6b657d797b9779fb62c46da5e/WordPress/Sniffs/WP/I18nSniff.php#L68-L74",
+            "snippet": [
+                {
+                    "number": 68,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t/**",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 69,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t * \"Unordered\" means there's no position specifier: '%s', not '%2$s'.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 70,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 71,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\tconst UNORDERED_SPRINTF_PLACEHOLDER_REGEX = '/(?:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 72,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t(?<!%)                     # Don\\'t match a literal % (%%).",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 73,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t%                          # Start of placeholder.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 74,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t[+-]?                      # Optional sign specifier.",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}
