@@ -100,8 +100,11 @@ if [ "$skip_ci" -eq 0 ]; then
         # walking back past the commits the workflow ignores. The
         # experimental and scheduled ones do not gate. demo.yml installs
         # HEAD itself into a Symfony and a Laravel application.
+        # What bin/ci-answer says on stderr (a record GitHub would not give)
+        # explains a refusal: kept, and said once, not once a workflow.
+        ci_said=$(mktemp)
         for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml spelling.yml backward-compatibility.yml demo.yml; do
-            answer=$("$bin/ci-answer" --root "$root" "$workflow" 2>/dev/null || echo "none 0")
+            answer=$("$bin/ci-answer" --root "$root" "$workflow" 2>>"$ci_said" || echo "none 0")
             kind=${answer%% *}
             rest=${answer#* }
             at=${rest%% *}
@@ -116,6 +119,10 @@ if [ "$skip_ci" -eq 0 ]; then
                 *) problems+=("$workflow has no run within the last $at commits of $branch.") ;;
             esac
         done
+        while IFS= read -r said; do
+            problems+=("${said#ci-answer: }.")
+        done < <(grep '^ci-answer: ' "$ci_said" | awk '!seen[$0]++')
+        rm -f "$ci_said"
     fi
 fi
 

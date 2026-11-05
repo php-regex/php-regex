@@ -180,8 +180,13 @@ while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
         # a commit pushed straight to the branch may land long after); past
         # the record's ninety days nothing says, and no run answers.
         if [ -z "$pushes_read" ]; then
-            pushes=$(gh api "repos/{owner}/{repo}/activity?ref=refs/heads/$branch&per_page=100" --paginate \
-                --jq '.[] | "\(.after) \(.timestamp)"' 2>/dev/null || true)
+            # Unread, the record is no evidence: the merge stays unanswered,
+            # and stderr says why, so the refusal is not taken for the change.
+            if ! pushes=$(gh api "repos/{owner}/{repo}/activity?ref=refs/heads/$branch&per_page=100" --paginate \
+                --jq '.[] | "\(.after) \(.timestamp)"' 2>/dev/null); then
+                pushes=""
+                echo "ci-answer: the pushes to $branch could not be read from GitHub, so no pull request run answers for a merge" >&2
+            fi
             pushes_read=1
         fi
         base=$(git rev-parse "$sha^1")

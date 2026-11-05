@@ -98,8 +98,11 @@ fi
 # changed what the workflow reads: bin/ci-answer finds the run that answers
 # for HEAD, walking back past the commits the workflow ignores.
 short=$(git -C "$root" rev-parse --short HEAD)
+# What bin/ci-answer says on stderr (a record GitHub would not give)
+# explains a refusal: kept, and said once, not once a workflow.
+ci_said=$(mktemp)
 for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml spelling.yml backward-compatibility.yml demo.yml; do
-    answer=$("$here/ci-answer" --root "$root" "$workflow" 2>/dev/null || echo "none 0")
+    answer=$("$here/ci-answer" --root "$root" "$workflow" 2>>"$ci_said" || echo "none 0")
     kind=${answer%% *}
     rest=${answer#* }
     at=${rest%% *}
@@ -113,6 +116,10 @@ for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.
         *) ko "no $workflow run within the last $at commits" ;;
     esac
 done
+while IFS= read -r said; do
+    ko "${said#ci-answer: }"
+done < <(grep '^ci-answer: ' "$ci_said" | awk '!seen[$0]++')
+rm -f "$ci_said"
 
 echo
 echo "Monorepo"

@@ -133,6 +133,7 @@ final class CiAnswerTest extends TestCase
             # gh api repos/…/activity…: the pushes to 2.x the list holds, each
             # "<after> <timestamp>", through --jq as GitHub's activity entries.
             if [ "$1" = api ]; then
+                [ -n "${GH_ACTIVITY_FAILS:-}" ] && { echo "HTTP 403: Resource not accessible" >&2; exit 1; }
                 filter="."
                 while [ $# -gt 0 ]; do
                     [ "$1" = --jq ] && { filter=$2; shift; }
@@ -411,6 +412,27 @@ final class CiAnswerTest extends TestCase
         $this->assertSame('unread '.$this->short($merge).' src/B.php', $this->answer('tests.yml'));
     }
 
+    /**
+     * A record of the pushes that cannot be read is no evidence: the merge
+     * stays unanswered, and stderr says why, so the refusal is not taken
+     * for the change alone.
+     */
+    #[Test]
+    public function test_a_record_of_the_pushes_that_cannot_be_read_is_said_and_answers_nothing(): void
+    {
+        $code = $this->commitFiles(['src/A.php' => 'a']);
+        $this->ranOn($code, 'tests.yml', 'completed success');
+        $pullRequest = $this->branchCommit('feature', ['src/B.php' => 'b']);
+        $this->ranOn($pullRequest, 'tests.yml', 'completed success');
+        $merge = $this->merge('feature');
+
+        [$exit, $output, $answer] = $this->ciAnswer(['tests.yml'], ['GH_ACTIVITY_FAILS' => '1']);
+
+        $this->assertSame(0, $exit, $output);
+        $this->assertSame('unread '.$this->short($merge).' src/B.php', rtrim($answer, "\n"));
+        $this->assertStringContainsString('ci-answer: the pushes to 2.x could not be read from GitHub, so no pull request run answers for a merge', $output);
+    }
+
     #[Test]
     public function test_a_merge_is_answered_by_a_pull_request_run_alone(): void
     {
@@ -447,18 +469,31 @@ final class CiAnswerTest extends TestCase
         $this->assertSame('unread '.$this->short($change).' '.$path, $this->answer('accented.yml'));
     }
 
+    /**
+     * In a Hungarian locale "dzs" is one letter between "a" and "z"; a
+     * locale the machine does not have makes bash warn on stderr. Either
+     * way the answer is the ASCII one.
+     *
+     * @return iterable<string, array{locale: string}>
+     */
+    public static function provideCallerLocales(): iterable
+    {
+        yield 'a locale whose collation reorders letters' => ['locale' => 'hu_HU.UTF-8'];
+        yield 'a locale the machine does not have' => ['locale' => 'xx_XX.UTF-8'];
+    }
+
     #[Test]
-    public function test_a_range_is_ascii_whatever_the_callers_locale(): void
+    #[DataProvider('provideCallerLocales')]
+    public function test_a_range_is_ascii_whatever_the_callers_locale(string $locale): void
     {
         $code = $this->commitFiles(['src/A.php' => 'a']);
         $this->ranOn($code, 'ranged.yml', 'completed success');
         $change = $this->commitFiles(['src/dzs.php' => 'changed']);
 
-        // In a Hungarian locale "dzs" is one letter between "a" and "z".
-        [$exit, $output] = $this->ciAnswer(['ranged.yml'], ['LC_ALL' => 'hu_HU.UTF-8', 'LANG' => 'hu_HU.UTF-8']);
+        [$exit, $output, $answer] = $this->ciAnswer(['ranged.yml'], ['LC_ALL' => $locale, 'LANG' => $locale]);
 
         $this->assertSame(0, $exit, $output);
-        $this->assertSame('unread '.$this->short($change).' src/dzs.php', rtrim($output, "\n"));
+        $this->assertSame('unread '.$this->short($change).' src/dzs.php', rtrim($answer, "\n"), $output);
     }
 
     #[Test]
@@ -535,19 +570,23 @@ final class CiAnswerTest extends TestCase
         return $this->git('rev-parse', '--short', $sha);
     }
 
+    /**
+     * The answer as bin/release and bin/status read it: the one line on
+     * stdout, whatever bash says on stderr.
+     */
     private function answer(string ...$arguments): string
     {
-        [$code, $output] = $this->ciAnswer(array_values($arguments));
+        [$code, $output, $answer] = $this->ciAnswer(array_values($arguments));
         $this->assertSame(0, $code, $output);
 
-        return rtrim($output, "\n");
+        return rtrim($answer, "\n");
     }
 
     /**
      * @param list<string>          $arguments
      * @param array<string, string> $locale
      *
-     * @return array{int, string}
+     * @return array{int, string, string} the exit code, stdout and stderr together, stdout alone
      */
     private function ciAnswer(array $arguments, array $locale = []): array
     {
@@ -563,11 +602,12 @@ final class CiAnswerTest extends TestCase
         $command = [\dirname(__DIR__, 3).'/bin/ci-answer', '--root', $this->root.'/repository', ...$arguments];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, $env);
         $this->assertIsResource($process);
-        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        $stdout = (string) stream_get_contents($pipes[1]);
+        $output = $stdout.(string) stream_get_contents($pipes[2]);
         fclose($pipes[1]);
         fclose($pipes[2]);
 
-        return [proc_close($process), $output];
+        return [proc_close($process), $output, $stdout];
     }
 
     private function git(string ...$arguments): string

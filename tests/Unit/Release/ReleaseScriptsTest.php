@@ -661,6 +661,45 @@ exit 1
         $this->assertStringContainsString('no tests.yml run for '.$this->git('rev-parse', '--short', 'HEAD').', which changed src/Other.php', $output);
     }
 
+    /**
+     * When GitHub will not give the record of the branch's pushes, the
+     * merge is refused, and both scripts say why, once, not once a
+     * workflow.
+     *
+     * @return iterable<string, array{script: string, arguments: list<string>}>
+     */
+    public static function provideScriptsReadingTheRuns(): iterable
+    {
+        yield 'release' => ['script' => 'release', 'arguments' => ['--dry-run', '2.0.0']];
+        yield 'status' => ['script' => 'status', 'arguments' => []];
+    }
+
+    /**
+     * @param list<string> $arguments
+     */
+    #[Test]
+    #[DataProvider('provideScriptsReadingTheRuns')]
+    public function test_a_record_of_the_pushes_that_cannot_be_read_is_said_once(string $script, array $arguments): void
+    {
+        $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+        $branch = $this->git('rev-parse', '--abbrev-ref', 'HEAD');
+        $this->git('checkout', '-q', '-b', 'feature');
+        file_put_contents($this->root.'/src/Merged.php', '<?php');
+        $this->git('add', '-A');
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--no-verify', '-m', 'feature');
+        $this->git('checkout', '-q', $branch);
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'merge', '-q', '--no-ff', '--no-verify', '-m', 'Merge feature', 'feature');
+        $this->git('push', '-q', 'origin', 'HEAD:refs/heads/2.x');
+        $env = $this->fakeGitHub();
+        $fake = (string) file_get_contents($this->root.'/fake/gh');
+        file_put_contents($this->root.'/fake/gh', str_replace("#!/usr/bin/env bash\n", "#!/usr/bin/env bash\n[ \"\$1\" = api ] && { echo 'HTTP 403' >&2; exit 1; }\n", $fake));
+
+        [, $output] = $this->runScript($script, $arguments, $env);
+
+        $this->assertSame(1, substr_count($output, 'the pushes to 2.x could not be read from GitHub, so no pull request run answers for a merge'), $output);
+        $this->assertStringContainsString('src/Merged.php', $output, 'The merge is still refused for what it changed.');
+    }
+
     #[Test]
     public function test_release_and_status_check_the_same_workflows(): void
     {
