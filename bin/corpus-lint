@@ -686,6 +686,10 @@ function corpusLintMain(array $argv): int
             // site's findings.
             [$jsonExit] = runLint(jsonPlan($plan, $jsonFile));
             if ($jsonExit !== $exitCode || (\in_array($exitCode, [0, 1], true) && !is_file($jsonFile))) {
+                // A part the two runs disagree on is not published.
+                if (is_file($jsonFile)) {
+                    unlink($jsonFile);
+                }
                 $notClean = true;
                 $io->error(sprintf('%s: the JSON part was not written as the log part was (JSON run exit %d, console run exit %d).', $repo, $jsonExit, $exitCode));
             } else {
