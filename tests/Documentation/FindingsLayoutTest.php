@@ -98,7 +98,53 @@ final class FindingsLayoutTest extends TestCase
         $this->assertStringContainsString('repo.repo', $filter);
         $this->assertStringContainsString('repo.rules', $filter, 'A rule filters without opening every repository.');
         $row = self::between($script, 'function repoRow(repo) {', "\n  }\n");
-        $this->assertStringContainsString("'PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre", $row, 'Each project says the engine it was judged for.');
+        $this->assertStringContainsString("item.title = 'PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre", $row, 'Each project says the engine it was judged for, on its row, without a second line of chrome.');
+        $this->assertStringNotContainsString('pg-tree-target', $row, 'A tree of hundreds of rows is one line per row.');
+        $findingRow = self::between($script, 'function findingRow(repo, finding) {', "\n  }\n");
+        $this->assertStringNotContainsString('pg-tree-message', $findingRow, 'The rule\'s message rides the row\'s tooltip and the card, not a second line.');
+    }
+
+    /**
+     * The list is a window of its own, not the page's longest column: at
+     * every width the tree scrolls inside a frame tall as the answers
+     * panel beside it — a project with three hundred findings opens as a
+     * scroll, never as a page twenty screens deep.
+     */
+    #[Test]
+    public function test_the_tree_scrolls_inside_its_column_at_every_width(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+
+        $this->assertSame(1, preg_match('/\.pg-findings-tree \{([^}]*)\}/', $stylesheet, $base), 'The base tree rule exists.');
+        $this->assertStringContainsString('max-height:', $base[1], 'Below the widest screens the tree scrolls.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-findings-tree \{([^}]*)\}/', $stylesheet, $wide), 'The widest screens keep the tree a window.');
+        $this->assertStringNotContainsString('max-height: none', $wide[1], 'No width lets the list stretch the page.');
+        $this->assertStringContainsString('clamp(', $wide[1], 'The window\'s height answers the viewport, as the answers panel does.');
+    }
+
+    /**
+     * The engine a finding was judged for is two mono chips and a quiet
+     * date — not a sentence wrapped over two lines; and the row the window
+     * shows carries a rail, visible among three hundred siblings.
+     */
+    #[Test]
+    public function test_the_card_names_the_engine_in_chips_and_the_shown_row_carries_a_rail(): void
+    {
+        $script = self::source(self::SCRIPT);
+        $card = self::between($script, 'function renderFindingCard(repo, finding) {', "\n  }\n");
+        $this->assertStringContainsString("'pg-finding-engine', 'PHP ' + repo.target.php", $card);
+        $this->assertStringContainsString("'pg-finding-engine', 'PCRE2 ' + repo.target.pcre", $card);
+        $this->assertStringContainsString('code as of \' + repo.committed', $card);
+        $this->assertStringNotContainsString("'Judged for PHP ' + repo.target.php + ' · PCRE2 '", $card, 'No prose line: chips, then the date.');
+
+        $markLast = self::between($script, 'function markLast() {', "\n  }\n");
+        $this->assertStringContainsString('scrollIntoView({ block: \'nearest\' })', $markLast, 'The shown row is brought into the tree\'s window.');
+
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/\.pg-tree-item\[aria-selected="true"\] > \.pg-tree-row \{([^}]*)\}/', $stylesheet, $rail));
+        $this->assertStringContainsString('inset 2px 0 0 var(--amber)', $rail[1], 'The shown row carries a rail on its edge.');
+        $this->assertSame(1, preg_match('/\.hero-playground \.hero-inner \{([^}]*)\}/', $stylesheet, $wide), 'The playground home is wider than the docs column.');
+        $this->assertStringContainsString('padding-inline: max(1.25rem, calc(50vw - 45rem))', $wide[1], 'A tool page: 90rem centered, the docs keep their 75rem.');
     }
 
     #[Test]

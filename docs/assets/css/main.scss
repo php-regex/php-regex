@@ -4609,6 +4609,10 @@ body.search-open {
 .hero-playground .hero-inner {
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
+  /* A tool page, not a reading one: the window breathes to 90rem while
+     the docs keep their 75rem column — three columns need the room the
+     prose never did. */
+  padding-inline: max(1.25rem, calc(50vw - 45rem));
 }
 
 /* The window: a title bar, a body, a status bar. It floats one step
@@ -6477,12 +6481,10 @@ body.search-open {
   border: 1px solid var(--line-soft);
   border-radius: 50%;
 }
-.pg-tree-item.is-repo > .pg-tree-row,
-.pg-tree-item.is-repo > .pg-tree-target {
+.pg-tree-item.is-repo > .pg-tree-row {
   padding-left: 1.35rem;
 }
-.pg-tree-item.is-finding > .pg-tree-row,
-.pg-tree-item.is-finding > .pg-tree-message {
+.pg-tree-item.is-finding > .pg-tree-row {
   padding-left: 2.2rem;
 }
 .pg-tree-name {
@@ -6500,29 +6502,22 @@ body.search-open {
 .pg-tree-item.is-fail .pg-tree-level {
   color: var(--danger);
 }
-.pg-tree-target,
-.pg-tree-message {
-  display: block;
-  overflow: hidden;
-  padding: 0 .35rem .25rem;
-  font-family: var(--font-mono);
-  font-size: .68rem;
-  color: var(--ink-soft);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .pg-tree-level {
   flex: none;
   font-family: var(--font-mono);
   font-size: .66rem;
   font-weight: 600;
 }
-/* The finding the window shows, as a pressed example; the one shown
-   last, outlined: one click away. */
+/* The finding the window shows: a rail on the row's edge, visible among
+   three hundred siblings. The one shown last stays outlined: one click
+   away. */
 .pg-tree-item[aria-selected="true"] > .pg-tree-row {
   color: var(--ink);
   background: var(--amber-tint);
-  box-shadow: inset 0 0 0 1px var(--amber);
+  box-shadow: inset 2px 0 0 var(--amber);
+}
+.pg-tree-item[aria-selected="true"] > .pg-tree-row .pg-tree-name {
+  font-weight: 600;
 }
 .pg-tree-item.is-last > .pg-tree-row {
   box-shadow: inset 0 0 0 1px var(--amber);
@@ -6547,7 +6542,10 @@ body.search-open {
 .pg-findings-links a:hover {
   color: var(--ink);
 }
-/* The widest screens: the list stands whole in its column, no fold. */
+/* The widest screens: the list stands in its column, a window of its
+   own — never the page's longest column. A project with three hundred
+   findings opens as a scroll inside a frame that answers the viewport,
+   the way the answers panel beside it does. */
 @media (min-width: 1280px) {
   .pg-findings-browse > summary {
     display: none;
@@ -6565,8 +6563,10 @@ body.search-open {
     margin: 0 0 .4rem;
   }
   .pg-findings-tree {
-    max-height: none;
+    max-height: clamp(19rem, calc(100vh - var(--header-h) - 15rem), 39rem);
     padding: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
   }
   .pg-findings-links {
     flex-direction: column;
@@ -6687,8 +6687,25 @@ body.search-open {
   font-weight: 500;
   color: var(--danger);
 }
+/* The engine a finding was judged for: two mono chips and a quiet date,
+   one line — not a sentence wrapped over two. */
 .pg-finding-target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .25rem .4rem;
   color: var(--ink-soft);
+}
+.pg-finding-engine {
+  padding: .08rem .38rem;
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  color: var(--ink);
+  background: var(--code-bg);
+  border-radius: var(--radius-s);
+}
+.pg-finding-asof {
+  font-size: .72rem;
 }
 /* The linter's own words, worst first, each with its rule's page. */
 .pg-finding-issues {

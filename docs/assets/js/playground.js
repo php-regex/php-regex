@@ -3769,11 +3769,14 @@
   function repoRow(repo) {
     var item = treeItem(2, 'is-repo');
     item.setAttribute('data-slug', repo.slug);
+    // The engine rides the row's tooltip: a tree of hundreds of rows is
+    // one line per row; the card says the engine in chips for the chosen
+    // finding.
+    item.title = 'PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre;
     var row = text('span', 'pg-tree-row');
     row.appendChild(text('span', 'pg-tree-name', repo.repo.split('/')[1]));
     row.appendChild(text('span', 'pg-tree-count' + (repo.fail ? ' is-fail' : ''), String(repo.findings)));
     item.appendChild(row);
-    item.appendChild(text('span', 'pg-tree-target', 'PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre));
     treeGroup(item);
     return item;
   }
@@ -3784,8 +3787,10 @@
     var row = text('span', 'pg-tree-row');
     row.appendChild(text('span', 'pg-tree-level', finding.level === 'fail' ? 'FAIL' : 'WARN'));
     row.appendChild(text('span', 'pg-tree-name', finding.file.split('/').pop() + ':' + finding.line));
+    row.appendChild(text('span', 'pg-tree-count', String(finding.issues.length)));
     item.appendChild(row);
-    item.appendChild(text('span', 'pg-tree-message', finding.issues[0].message));
+    // The rule's message rides the tooltip and the card; the row is one
+    // line, scannable at three hundred siblings.
     item.title = finding.file + ':' + finding.line + ' · ' + finding.issues[0].message;
     return item;
   }
@@ -3936,6 +3941,11 @@
       var shown = !!activeFinding && key === activeFinding.key;
       item.setAttribute('aria-selected', shown ? 'true' : 'false');
       item.classList.toggle('is-last', !shown && ((key && key === lastFinding) || (!key && item.getAttribute('data-slug') === lastSlug)));
+      if (shown) {
+        // The tree is a window of its own: the row the window shows is
+        // brought inside it, never left scrolling below the fold.
+        item.scrollIntoView({ block: 'nearest' });
+      }
     });
   }
 
@@ -4076,8 +4086,13 @@
     el.findingRepo.textContent = repo.repo;
     el.permalink.href = finding.permalink;
     el.permalink.textContent = 'View on GitHub at ' + repo.sha.slice(0, 7);
-    el.findingTarget.textContent = 'Judged for PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre
-      + (repo.target.source ? ' (' + repo.target.source + ')' : '') + ' · code as of ' + repo.committed;
+    // The engine as two mono chips and a quiet date: three natures of
+    // information, not one sentence wrapped over two lines.
+    clear(el.findingTarget);
+    el.findingTarget.appendChild(text('span', 'visually-hidden', 'Judged for '));
+    el.findingTarget.appendChild(text('span', 'pg-finding-engine', 'PHP ' + repo.target.php));
+    el.findingTarget.appendChild(text('span', 'pg-finding-engine', 'PCRE2 ' + repo.target.pcre));
+    el.findingTarget.appendChild(text('span', 'pg-finding-asof', (repo.target.source ? repo.target.source + ' · ' : '') + 'code as of ' + repo.committed));
     el.snippetFile.textContent = finding.file + ':' + finding.line + (finding.source ? ' · ' + finding.source : '') + (finding.location ? ' · ' + finding.location : '');
 
     clear(el.snippet);
