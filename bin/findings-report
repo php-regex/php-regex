@@ -382,6 +382,11 @@ function witness(string $pattern, array $analysis): ?array
     // thirty pumps; never past what the text field takes.
     $fixed = \strlen($built->prefix) + \strlen($built->suffix);
     $pump = max(1, \strlen($built->pump));
+    // A replay that gave up only past what the text field takes would be
+    // published cut, and the cut string may not give up.
+    if (null !== $length && $length > SUBJECT_CAP) {
+        return null;
+    }
     $n = null === $length ? WITNESS_REPS : max(1, intdiv($length - $fixed, $pump)) * SUBJECT_FACTOR;
     $n = min($n, intdiv(SUBJECT_CAP - $fixed, $pump));
 

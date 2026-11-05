@@ -168,6 +168,26 @@ final class FindingsReportTest extends TestCase
         $this->assertMatchesRegularExpression('~^10\.\d+$~D', $witness['pcre']);
     }
 
+    /**
+     * A replay that gave up only past what the text field takes would be
+     * published cut, and the cut string may not give up: no witness then.
+     */
+    #[Test]
+    public function test_a_replay_longer_than_the_text_field_publishes_no_witness(): void
+    {
+        $part = $this->dir.'/parts/acme__tool.json';
+        $replayed = (string) preg_replace('/"input_length": \d+/', '"input_length": 12000', (string) file_get_contents($part));
+        $this->assertStringContainsString('"input_length": 12000', $replayed);
+        file_put_contents($part, $replayed);
+
+        [$exit, $output] = $this->report();
+
+        $this->assertSame(0, $exit, $output);
+        $finding = $this->finding('/^(a+)+$/');
+        $this->assertNull($finding['witness']);
+        $this->assertSame('', $finding['subject']);
+    }
+
     #[Test]
     public function test_the_snippet_is_cut_from_the_clone_at_its_commit(): void
     {
