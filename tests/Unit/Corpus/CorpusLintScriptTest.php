@@ -292,6 +292,24 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertStringContainsString('(composer.json config.platform.php)', $this->line($log, '### corpus/ownerF/repoPinned'), $output.$log);
     }
 
+    /**
+     * A pin the linter's own reading of composer.json does not take
+     * ("8.3.0 ", a constraint rather than a version) is no target: the
+     * repository falls back, as one without a pin does.
+     */
+    #[Test]
+    public function test_a_platform_pin_the_linter_does_not_read_falls_back(): void
+    {
+        mkdir($this->root.'/corpus/ownerG/repoLoose', 0o777, true);
+        file_put_contents($this->root.'/corpus/ownerG/repoLoose/composer.json', '{"config": {"platform": {"php": "8.3.0 "}}}');
+
+        $this->loadScriptFunctions();
+        $plan = planRepositoryLint($this->root.'/corpus/ownerG/repoLoose', '8.1', '/tmp/ownerG__repoLoose.log');
+
+        $this->assertTrue($plan['fallback']);
+        $this->assertContains('--php-version', $plan['args']);
+    }
+
     #[Test]
     public function test_require_php_constraint_reads_the_repository_floor(): void
     {

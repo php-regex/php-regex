@@ -63,6 +63,13 @@ declare(strict_types=1);
  * or a repository could not be judged.
  */
 
+// The library reads a repository's target as a single lint run would: the
+// sweep asks it rather than copying its rules.
+require_once __DIR__.'/../vendor/autoload.php';
+
+use PHPRegex\Linter\Config\ComposerPlatform;
+use PHPRegex\Linter\Exception\UnsupportedTargetException;
+
 // ---------------------------------------------------------------------------
 // Console output, in the same shape as bin/corpus
 // ---------------------------------------------------------------------------
@@ -151,17 +158,21 @@ function requirePhpConstraint(string $repoDir): ?string
 }
 
 /**
- * The platform PHP a repository pins (config.platform.php), or null: the
- * linter reads it as the repository's target, before require.php.
+ * Where the linter reads a repository's target when it pins its platform
+ * PHP (config.platform.php), or null when it pins none it reads: the
+ * linter's own reading decides, so the sweep and a single run agree on a
+ * pin like "8.3.0 " or "^8.3".
  */
 function pinnedPlatformPhp(string $repoDir): ?string
 {
-    $composer = is_file($repoDir.'/composer.json') ? json_decode((string) file_get_contents($repoDir.'/composer.json'), true) : null;
-    $config = \is_array($composer) ? ($composer['config'] ?? null) : null;
-    $platform = \is_array($config) ? ($config['platform'] ?? null) : null;
-    $php = \is_array($platform) ? ($platform['php'] ?? null) : null;
+    $notices = [];
+    try {
+        $read = ComposerPlatform::read($repoDir, ['COMPOSER' => $repoDir.'/composer.json'], $notices);
+    } catch (UnsupportedTargetException) {
+        return null;
+    }
 
-    return \is_string($php) && '' !== $php ? $php : null;
+    return null !== $read && str_ends_with($read[1], 'config.platform.php') ? $read[1] : null;
 }
 
 /**
