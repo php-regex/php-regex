@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Tests\Support\PlaygroundDriver;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -39,6 +40,7 @@ final class FindingsReportTest extends TestCase
 {
     private const REPORT = PlaygroundDriver::ROOT.'/bin/findings-report';
     private const LINTER = PlaygroundDriver::ROOT.'/bin/regex';
+    private const AVATARS = __DIR__.'/Fixtures/findings';
 
     private const SOURCE = <<<'PHP'
         <?php
@@ -68,11 +70,9 @@ final class FindingsReportTest extends TestCase
         mkdir($this->dir.'/parts', 0o777, true);
         mkdir($this->dir.'/out/assets/findings/avatars', 0o777, true);
         // Offline, the report keeps the avatars already on disk, at the
-        // size the list draws them twice over.
-        foreach (['acme' => 100, 'calm' => 48, 'gone' => 48] as $owner => $size) {
-            $image = imagecreatetruecolor($size, $size);
-            $this->assertNotFalse($image);
-            imagepng($image, $this->dir.'/out/assets/findings/avatars/'.$owner.'.png');
+        // size the list draws them twice over: no image library needed.
+        foreach (['acme', 'calm', 'gone'] as $owner) {
+            copy(self::AVATARS.'/avatar-48.png', $this->dir.'/out/assets/findings/avatars/'.$owner.'.png');
         }
 
         $this->repository('acme/tool', ['src/Check.php' => self::SOURCE."\n"]);
@@ -249,8 +249,11 @@ final class FindingsReportTest extends TestCase
     }
 
     #[Test]
+    #[RequiresPhpExtension('gd')]
     public function test_avatars_are_48_pixels_and_those_of_owners_gone_go(): void
     {
+        copy(self::AVATARS.'/avatar-100.png', $this->dir.'/out/assets/findings/avatars/acme.png');
+
         [$exit, $output] = $this->report();
 
         $this->assertSame(0, $exit, $output);
