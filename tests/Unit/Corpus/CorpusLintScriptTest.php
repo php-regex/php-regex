@@ -270,6 +270,28 @@ final class CorpusLintScriptTest extends TestCase
         );
     }
 
+    /**
+     * A repository that pins its platform PHP and declares no require.php
+     * is judged for the PHP it pins, as a single lint run reads it, never
+     * for the fallback.
+     */
+    #[Test]
+    public function test_a_repository_pinning_its_platform_php_is_judged_for_it(): void
+    {
+        mkdir($this->root.'/corpus/ownerF/repoPinned', 0o777, true);
+        file_put_contents($this->root.'/corpus/ownerF/repoPinned/composer.json', '{"config": {"platform": {"php": "8.3.0"}}}');
+        file_put_contents($this->root.'/corpus/ownerF/repoPinned/patterns.php', "<?php\n\npreg_match('/ab{1}c/', \$x);\n");
+
+        $this->loadScriptFunctions();
+        $plan = planRepositoryLint($this->root.'/corpus/ownerF/repoPinned', '8.1', '/tmp/ownerF__repoPinned.log');
+        $this->assertFalse($plan['fallback'], 'The pinned platform is the repository\'s own target.');
+        $this->assertNotContains('--php-version', $plan['args']);
+
+        [, $output] = $this->script(['--only', 'ownerF']);
+        $log = (string) file_get_contents($this->root.'/corpus.log');
+        $this->assertStringContainsString('(composer.json config.platform.php)', $this->line($log, '### corpus/ownerF/repoPinned'), $output.$log);
+    }
+
     #[Test]
     public function test_require_php_constraint_reads_the_repository_floor(): void
     {

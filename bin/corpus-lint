@@ -27,8 +27,9 @@ declare(strict_types=1);
  * this checkout's floor instead. This script runs the linter once per
  * repository with the COMPOSER environment variable pointing at that
  * repository's composer.json, so each one is judged under its own floor and
- * the PCRE2 release bundled with it. A repository whose composer.json
- * declares no require.php falls back to --php of this script. A require.php
+ * the PCRE2 release bundled with it: the platform PHP it pins
+ * (config.platform.php), else its require.php. A repository whose
+ * composer.json declares neither falls back to --php of this script. A require.php
  * that starts below PHP 7.3 but also allows 7.3 or later is judged from the
  * lowest such PHP, exactly as a single lint run would judge it, and the
  * notice the linter prints is carried into the merged log; one that allows
@@ -150,6 +151,20 @@ function requirePhpConstraint(string $repoDir): ?string
 }
 
 /**
+ * The platform PHP a repository pins (config.platform.php), or null: the
+ * linter reads it as the repository's target, before require.php.
+ */
+function pinnedPlatformPhp(string $repoDir): ?string
+{
+    $composer = is_file($repoDir.'/composer.json') ? json_decode((string) file_get_contents($repoDir.'/composer.json'), true) : null;
+    $config = \is_array($composer) ? ($composer['config'] ?? null) : null;
+    $platform = \is_array($config) ? ($config['platform'] ?? null) : null;
+    $php = \is_array($platform) ? ($platform['php'] ?? null) : null;
+
+    return \is_string($php) && '' !== $php ? $php : null;
+}
+
+/**
  * The environment every lint run gets on top of the shell's: the width the
  * console folds at, so the log is the same whatever COLUMNS the shell
  * exports.
@@ -158,15 +173,15 @@ const PINNED_ENVIRONMENT = ['COLUMNS' => '120'];
 
 /**
  * How one repository is linted: under its own composer.json through the
- * COMPOSER environment variable, or under the fallback flag when it declares
- * no require.php of its own.
+ * COMPOSER environment variable, or under the fallback flag when it pins no
+ * platform PHP and declares no require.php of its own.
  *
  * @return array{env: ?string, environment: array<string, string>, args: list<string>, fallback: bool}
  */
 function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFile): array
 {
     $composer = $repoDir.'/composer.json';
-    if (null !== requirePhpConstraint($repoDir)) {
+    if (null !== requirePhpConstraint($repoDir) || null !== pinnedPlatformPhp($repoDir)) {
         return [
             'env' => $composer,
             'environment' => PINNED_ENVIRONMENT,
