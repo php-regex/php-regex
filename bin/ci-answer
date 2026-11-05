@@ -11,16 +11,17 @@
 # workflows its changes can affect, and a merge into 2.x runs nothing, so a
 # commit is answered by the run on itself or, for a merge Git made on its own
 # (no conflict resolved by hand), by a pull request run on the head of its
-# pull request that started once the merge's base was on the branch, so that
-# it tested that very base; when there is none and nothing the commit changed
+# pull request that started once the merge's base was on the branch, as the
+# branch's record of its pushes dates it, so that it tested that very base; when there is none and nothing the commit changed
 # is read by the workflow (its pull_request paths or paths-ignore, as the
 # commit holds them), by the commit before it, along the first parents.
 #
 # Usage:
-#   bin/ci-answer [--root <dir>] [--limit <n>] <workflow>
+#   bin/ci-answer [--root <dir>] [--limit <n>] [--branch <name>] <workflow>
 #
 #   --root    the checkout to read (default: the one holding this script)
 #   --limit   the most commits to walk back (default: 200)
+#   --branch  the branch the merges landed on (default: 2.x)
 #
 # Prints one line:
 #   run <sha> <status> <conclusion>   the run on <sha> answers
@@ -30,11 +31,13 @@ set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 limit=200
+branch=2.x
 workflow=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --root) root=${2:?--root needs a directory}; shift ;;
         --limit) limit=${2:?--limit needs a number}; shift ;;
+        --branch) branch=${2:?--branch needs a branch}; shift ;;
         -h|--help) sed -n '10,/^set -/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
         -*) echo "Unknown option: $1" >&2; exit 2 ;;
         *) workflow=$1 ;;
@@ -42,7 +45,7 @@ while [ $# -gt 0 ]; do
     shift
 done
 if [ -z "$workflow" ]; then
-    echo "Usage: bin/ci-answer [--root <dir>] [--limit <n>] <workflow>" >&2
+    echo "Usage: bin/ci-answer [--root <dir>] [--limit <n>] [--branch <name>] <workflow>" >&2
     exit 2
 fi
 cd "$root"
@@ -157,6 +160,8 @@ merged_on_its_own() {
 
 sha=$(git rev-parse HEAD)
 count=0
+pushes=""
+pushes_read=""
 while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
     count=$((count + 1))
     answer=$(gh run list --commit "$sha" --workflow "$workflow" --json conclusion,status --jq '.[0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null || true)
@@ -168,9 +173,23 @@ while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
     if [ -n "$pull_request_head" ] && merged_on_its_own "$sha"; then
         # A pull request run merges its head into the branch as it stands
         # when the run starts, and is not run again when the branch moves:
-        # only a run that started after the base landed tested this merge.
-        landed=$(TZ=UTC0 git show -s --format=%cd --date=format-local:%Y-%m-%dT%H:%M:%SZ "$sha^1")
-        answer=$(gh run list --commit "$pull_request_head" --workflow "$workflow" --event pull_request --json conclusion,status,createdAt --jq "[.[] | select(.createdAt >= \"$landed\")][0] // empty | \"\\(.status) \\(.conclusion)\"" 2>/dev/null || true)
+        # only a run that started after the base landed tested this merge,
+        # and the branch cannot move between the base landing and the merge
+        # landing on it. When the base landed, GitHub's record of the
+        # branch's pushes says (a commit's own date is when it was made, and
+        # a commit pushed straight to the branch may land long after); past
+        # the record's ninety days nothing says, and no run answers.
+        if [ -z "$pushes_read" ]; then
+            pushes=$(gh api "repos/{owner}/{repo}/activity?ref=refs/heads/$branch&per_page=100" --paginate \
+                --jq '.[] | "\(.after) \(.timestamp)"' 2>/dev/null || true)
+            pushes_read=1
+        fi
+        base=$(git rev-parse "$sha^1")
+        landed=$(awk -v base="$base" '$1 == base { print $2; exit }' <<< "$pushes")
+        answer=""
+        if [ -n "$landed" ]; then
+            answer=$(gh run list --commit "$pull_request_head" --workflow "$workflow" --event pull_request --json conclusion,status,createdAt --jq "[.[] | select(.createdAt >= \"$landed\")][0] // empty | \"\\(.status) \\(.conclusion)\"" 2>/dev/null || true)
+        fi
         if [ -n "$answer" ]; then
             echo "run $(git rev-parse --short "$pull_request_head") $answer"
             exit 0

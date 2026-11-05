@@ -116,6 +116,13 @@ final class CiAnswerTest extends TestCase
      */
     private array $runs = [];
 
+    /**
+     * When each commit became the tip of 2.x, as GitHub records the pushes.
+     *
+     * @var array<string, string>
+     */
+    private array $pushes = [];
+
     protected function setUp(): void
     {
         $this->root = sys_get_temp_dir().'/php-regex-ci-answer-'.bin2hex(random_bytes(6));
@@ -123,6 +130,18 @@ final class CiAnswerTest extends TestCase
         mkdir($this->root.'/fake');
         file_put_contents($this->root.'/fake/gh', <<<'BASH'
             #!/usr/bin/env bash
+            # gh api repos/…/activity…: the pushes to 2.x the list holds, each
+            # "<after> <timestamp>", through --jq as GitHub's activity entries.
+            if [ "$1" = api ]; then
+                filter="."
+                while [ $# -gt 0 ]; do
+                    [ "$1" = --jq ] && { filter=$2; shift; }
+                    shift
+                done
+                echo "activity" >> "$GH_LOG"
+                awk '{ printf "{\"after\":\"%s\",\"timestamp\":\"%s\",\"ref\":\"refs/heads/2.x\"}\n", $1, $2 }' "$GH_PUSHES" | jq -rs "$filter"
+                exit 0
+            fi
             # gh run list --commit <sha> --workflow <file> …: the run the list holds.
             # A run is "<sha> <workflow> <status> <conclusion> <event> <created at>";
             # the matching runs go through --jq as a JSON list, as gh's do.
@@ -354,6 +373,44 @@ final class CiAnswerTest extends TestCase
         $this->assertSame('unread '.$this->short($merge).' src/B.php', $this->answer('tests.yml'));
     }
 
+    /**
+     * A commit pushed straight to 2.x carries the date it was made, not the
+     * date it landed: a run that started between the two merged the base
+     * before it. The branch's record of its pushes says when it landed.
+     */
+    #[Test]
+    public function test_a_merge_whose_base_landed_after_the_pull_request_run_is_not_answered_by_it(): void
+    {
+        $code = $this->commitFiles(['src/A.php' => 'a']);
+        $this->ranOn($code, 'tests.yml', 'completed success');
+        $pullRequest = $this->branchCommit('feature', ['src/B.php' => 'b']);
+        $base = $this->commitFiles(['docs/guide.md' => 'prose']);
+        // Made now, pushed long after the pull request run started.
+        $this->pushes[$base] = '2999-06-01T00:00:00Z';
+        $this->ranOn($pullRequest, 'tests.yml', 'completed success', 'pull_request', '2999-01-01T00:00:00Z');
+        $merge = $this->merge('feature');
+
+        $this->assertSame('unread '.$this->short($merge).' src/B.php', $this->answer('tests.yml'));
+    }
+
+    /**
+     * GitHub keeps the record of a branch's pushes ninety days: past it,
+     * nothing says which base a pull request run merged, so the run does
+     * not answer for the merge.
+     */
+    #[Test]
+    public function test_a_merge_whose_base_has_no_record_of_its_push_is_not_answered_by_the_pull_request_run(): void
+    {
+        $code = $this->commitFiles(['src/A.php' => 'a']);
+        $this->ranOn($code, 'tests.yml', 'completed success');
+        $pullRequest = $this->branchCommit('feature', ['src/B.php' => 'b']);
+        $this->ranOn($pullRequest, 'tests.yml', 'completed success');
+        unset($this->pushes[$code]);
+        $merge = $this->merge('feature');
+
+        $this->assertSame('unread '.$this->short($merge).' src/B.php', $this->answer('tests.yml'));
+    }
+
     #[Test]
     public function test_a_merge_is_answered_by_a_pull_request_run_alone(): void
     {
@@ -428,7 +485,21 @@ final class CiAnswerTest extends TestCase
         $this->git('add', '-A');
         $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--no-verify', '-m', $message);
 
-        return $this->git('rev-parse', 'HEAD');
+        return $this->pushed();
+    }
+
+    /**
+     * HEAD, recorded as pushed when it is the tip of 2.x: a commit lands
+     * when it is made, unless a test says otherwise.
+     */
+    private function pushed(): string
+    {
+        $head = $this->git('rev-parse', 'HEAD');
+        if ('2.x' === $this->git('symbolic-ref', '--short', 'HEAD')) {
+            $this->pushes[$head] = $this->git('-c', 'log.showSignature=false', 'show', '-s', '--date=format-local:%Y-%m-%dT%H:%M:%SZ', '--format=%cd', 'HEAD');
+        }
+
+        return $head;
     }
 
     /**
@@ -447,7 +518,7 @@ final class CiAnswerTest extends TestCase
     {
         $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'merge', '-q', '--no-ff', '--no-verify', '-m', 'Merge '.$branch, $branch);
 
-        return $this->git('rev-parse', 'HEAD');
+        return $this->pushed();
     }
 
     /**
@@ -481,11 +552,13 @@ final class CiAnswerTest extends TestCase
     private function ciAnswer(array $arguments, array $locale = []): array
     {
         file_put_contents($this->root.'/runs', implode("\n", $this->runs)."\n");
+        file_put_contents($this->root.'/pushes', implode("\n", array_map(static fn (string $sha, string $at): string => $sha.' '.$at, array_keys($this->pushes), $this->pushes))."\n");
         $env = $locale + [
             'PATH' => $this->root.'/fake:'.getenv('PATH'),
             'HOME' => (string) getenv('HOME'),
             'GH_RUNS' => $this->root.'/runs',
             'GH_LOG' => $this->root.'/gh.log',
+            'GH_PUSHES' => $this->root.'/pushes',
         ];
         $command = [\dirname(__DIR__, 3).'/bin/ci-answer', '--root', $this->root.'/repository', ...$arguments];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, $env);
