@@ -172,17 +172,17 @@ $index = [
     'repos' => $repos,
 ];
 
+// Every write is checked: a run that cannot write stops, rather than
+// leave the site half today's and half yesterday's without a word.
 foreach ([$out.'/assets/findings/repos', $out.'/_findings'] as $dir) {
-    if (!is_dir($dir)) {
-        mkdir($dir, 0o777, true);
-    }
+    directory($dir);
 }
-file_put_contents($out.'/assets/findings/index.json', encode($index));
+write($out.'/assets/findings/index.json', encode($index));
 foreach ($files as $slug => $file) {
-    file_put_contents($out.'/assets/findings/repos/'.$slug.'.json', encode($file));
+    write($out.'/assets/findings/repos/'.$slug.'.json', encode($file));
 }
 foreach ($repos as $rank => $repo) {
-    file_put_contents($out.'/_findings/'.$repo['slug'].'.md', page($repo, $rank + 1));
+    write($out.'/_findings/'.$repo['slug'].'.md', page($repo, $rank + 1));
 }
 // Yesterday's files of repositories, and avatars of owners, that have no
 // finding today; each directory read with its own extension, so a
@@ -190,13 +190,13 @@ foreach ($repos as $rank => $repo) {
 foreach (['/assets/findings/repos' => '.json', '/_findings' => '.md'] as $dir => $extension) {
     foreach (glob($out.$dir.'/*'.$extension) ?: [] as $file) {
         if (!isset($files[basename($file, $extension)])) {
-            unlink($file);
+            remove($file);
         }
     }
 }
 foreach (glob($out.'/assets/findings/avatars/*.png') ?: [] as $avatar) {
     if (!isset($owners[basename($avatar, '.png')])) {
-        unlink($avatar);
+        remove($avatar);
     }
 }
 printf("%d repositories, %d findings (%d fail, %d warn)\n", $index['totals']['repos'], $index['totals']['findings'], $index['totals']['fail'], $index['totals']['warn']);
@@ -621,10 +621,10 @@ function owner(string $login, string $out, bool $offline): array
         if (false === $scaled) {
             refuse($login, 'the avatar could not be downloaded and read (the report needs GD).');
         }
-        if (!is_dir(\dirname($out.$path))) {
-            mkdir(\dirname($out.$path), 0o777, true);
+        directory(\dirname($out.$path));
+        if (!@imagepng($scaled, $out.$path, 9)) {
+            refuse($out.$path, 'the avatar cannot be written.');
         }
-        imagepng($scaled, $out.$path, 9);
     }
 
     return ['avatar' => $path, 'profile' => 'https://github.com/'.$login];
@@ -679,6 +679,27 @@ function git(string $dir, string ...$arguments): string
 function encode(array $value): string
 {
     return json_encode($value, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_THROW_ON_ERROR)."\n";
+}
+
+function directory(string $dir): void
+{
+    if (!is_dir($dir) && !@mkdir($dir, 0o777, true) && !is_dir($dir)) {
+        refuse($dir, 'the directory cannot be created.');
+    }
+}
+
+function write(string $path, string $contents): void
+{
+    if (false === @file_put_contents($path, $contents)) {
+        refuse($path, 'the file cannot be written.');
+    }
+}
+
+function remove(string $path): void
+{
+    if (!@unlink($path)) {
+        refuse($path, 'the file of an earlier run cannot be removed.');
+    }
 }
 
 function refuse(string $what, string $message): never

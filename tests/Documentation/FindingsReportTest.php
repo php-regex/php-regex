@@ -527,6 +527,18 @@ final class FindingsReportTest extends TestCase
     }
 
     #[Test]
+    public function test_a_write_that_fails_stops_the_report(): void
+    {
+        // A file where the findings' directory should be.
+        file_put_contents($this->dir.'/out/assets/findings/repos', 'not a directory');
+
+        [$exit, $output] = $this->report();
+
+        $this->assertSame(1, $exit, $output);
+        $this->assertStringContainsString('cannot', $output);
+    }
+
+    #[Test]
     public function test_a_missing_avatar_offline_is_refused(): void
     {
         unlink($this->dir.'/out/assets/findings/avatars/acme.png');
