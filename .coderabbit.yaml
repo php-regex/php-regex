@@ -16,7 +16,6 @@ reviews:
   # Balanced: correctness, BC and PCRE fidelity get reported; formatting is
   # left to PHP CS Fixer and Rector, which the CI runs.
   profile: chill
-  request_changes_workflow: false
   high_level_summary: true
   high_level_summary_in_walkthrough: true
   review_status: true
@@ -32,13 +31,36 @@ reviews:
   poem: false
   in_progress_fortune: false
   enable_prompt_for_ai_agents: false
+  # Applies to outside contributors only; maintainers' pull requests are
+  # never classified.
   slop_detection:
-    enabled: false
+    enabled: true
+    label: low-quality
+
+  # A security verdict and a cache key are what a regex library can get
+  # dangerously wrong; the risk notes say where they live.
+  security_risk_instructions: >-
+    The library's verdicts are security claims made to its users. A ReDoS
+    verdict that calls an exponential or polynomial pattern safe (src/Redos),
+    a replay that runs without its backtrack or time caps, a cache key that
+    lets two different patterns or targets share one AST, unbounded recursion
+    or memory on a hostile pattern, and engine or pattern text reaching the
+    playground through innerHTML (docs/assets/js) are high security risk.
+    Documentation, fixtures and the demo applications are low.
+  merge_risk_instructions: >-
+    High: src/Parser (every accept, refusal and error offset is a PCRE claim),
+    a change to RegexParser::CACHE_VERSION or to what the cache key reads,
+    src/Redos and src/Automata verdicts, the CLI's exit codes and JSON output,
+    and public API renames without an UPGRADE-2.0.md entry. Medium: a new or
+    changed lint rule, an optimizer rewrite, a transpiler target. Low: docs/,
+    tests that only add cases, demo/, CI configuration.
 
   auto_review:
     enabled: true
     drafts: false
     auto_incremental_review: true
+    # Every review comment is answered, however many commits a branch takes.
+    auto_pause_after_reviewed_commits: 0
     base_branches:
       - "1\\.x"
 
@@ -55,14 +77,15 @@ reviews:
     - "!art/**/*.png"
     - "!**/*.lock"
     - "!tests/Fixtures/Pcre2/testdata/**"
-    - "!tests/Fixtures/Pcre2/conformance-baseline.json"
+    - "!tests/Fixtures/Pcre2/*.json"
     - "!tests/Benchmark/data/**"
+    - "!var/**"
 
   path_instructions:
     - path: "**/*.php"
       instructions: |
         - Every PHP file opens with `declare(strict_types=1);` and the PHPRegex license header ("This file is part of the PHPRegex package.").
-        - The packages run on PHP 8.1: flag syntax or functions newer than 8.1 in src/ (readonly classes, typed class constants, `#[\Override]`, `json_validate()`, dynamic class constant fetch, …).
+        - The packages run on PHP 8.1: flag syntax or functions newer than 8.1 in src/ (readonly classes, typed class constants, `json_validate()`, dynamic class constant fetch, …). Attributes are not syntax: `#[\Override]` is ignored on 8.1 and is welcome.
         - Never an inline `@phpstan-ignore`: a real false positive belongs in phpstan.dist.neon. A baseline count that grows needs a reason.
         - Catch the specific exception type; `\Throwable` only at a boundary that must not fail.
         - Do not comment on formatting, import order or spacing: PHP CS Fixer and Rector own them.
@@ -73,7 +96,7 @@ reviews:
         - AST nodes are readonly value objects; a visitor never mutates a node.
         - Each package throws its own exceptions, implementing its `Exception\ExceptionInterface`.
         - 2.x is unreleased: renaming a public class, method, option or JSON field is allowed, but it must be written in UPGRADE-2.0.md and CHANGELOG.md in the same change. Flag a public change that is not.
-        - A change to the lexer, the parser, a node or what they read must update `Regex::CACHE_VERSION` (the cached ASTs would otherwise be stale).
+        - A change to the lexer, the parser, a node or what they read must update `RegexParser::CACHE_VERSION` (the cached ASTs would otherwise be stale).
         - Documentation URLs are written out in full, never built from a base-URL constant.
         - A new `mixed` type in src/ needs a reason; prefer a precise type.
         - Hot paths (lexing, parsing, linting thousands of patterns): flag work repeated per call that could be done once, regexes compiled in loops, and unbounded recursion or memory on hostile input.
@@ -103,6 +126,16 @@ reviews:
       instructions: |
         - A translation either keeps the pattern's meaning in the target dialect (JavaScript, Python, …) or refuses with a message. Flag any construct translated with a silently different meaning (Unicode classes, `\b` under `u`, lookbehind support, flags).
 
+    - path: "src/Generator/**"
+      instructions: |
+        - Every generated sample must match its pattern under preg_match() for the target, and a non-matching sample must not; the tests check each one against the real engine.
+        - Generation is bounded (length, repetitions, recursion) and deterministic under a seed; flag a path that can run unbounded on a hostile pattern.
+
+    - path: "src/Explain/**"
+      instructions: |
+        - An explanation, a diagram or a highlight says what the pattern does under its flags and target; flag a description that is true of PCRE in general but wrong for this pattern (flags such as `i`, `x`, `s`, `u`, inline flag groups, the target release).
+        - Pattern text written into SVG, HTML or Mermaid output is escaped.
+
     - path: "src/{Linter,Optimizer}/**"
       instructions: |
         - A lint rule must not fire on a pattern it cannot prove wrong or wasteful: flag false-positive risks with a concrete counter-example.
@@ -124,7 +157,7 @@ reviews:
     - path: "tests/**/*.php"
       instructions: |
         - Test classes are `final`; each test is `#[Test]` and named `test_{feature}_{scenario}` in snake case; data providers are static, return iterable and yield keyed rows (`yield 'a reversed range' => ['pattern' => '/a{2,1}/', 'valid' => false];`).
-        - Strict assertions (`assertSame`), never `assertEquals`.
+        - Strict assertions (`assertSame`) in new or changed code, never `assertEquals`; leave older lines a change does not touch alone.
         - What a pattern means is checked against the real engine in the test itself, not assumed.
         - A test may be skipped only through the engine gates of tests/Support/PcreGates.php (message "is verified against PCRE2 …") or a `#[RequiresPhpExtension]`; flag any other markTestSkipped/markTestIncomplete, and any change that removes assertions.
         - The suite runs in random order, on Linux, macOS and Windows: flag shared static state, cache bleed between tests, shell strings that assume a POSIX shell, and hard-coded path separators.
