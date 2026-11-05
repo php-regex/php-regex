@@ -1,9 +1,274 @@
-# Review settings read from the branch under review.
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 #
-# The findings under docs/ are written by bin/findings-report from the
-# corpus run: hundreds of generated files a day, never edited by hand.
-# Their generator and its tests are reviewed; their output is not.
+# Code review for PHPRegex: a PCRE parser whose every verdict (valid,
+# invalid, ReDoS, equivalent) is a claim about what PHP's engine does. The
+# review is asked to hunt what breaks that claim, and to leave alone what
+# the style tools and the CI already settle.
+
+language: en-US
+tone_instructions: >-
+  Terse, factual, no praise or emoji. Lead with the failure: the input
+  (a pattern, a subject, a target PHP/PCRE2), what PCRE does, what the code
+  does. One precise finding beats several vague ones.
+early_access: false
+
 reviews:
+  # Balanced: correctness, BC and PCRE fidelity get reported; formatting is
+  # left to PHP CS Fixer and Rector, which the CI runs.
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+  review_status: true
+  collapse_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: false
+  estimate_code_review_effort: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: false
+  suggested_reviewers: false
+  poem: false
+  in_progress_fortune: false
+  enable_prompt_for_ai_agents: false
+  slop_detection:
+    enabled: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    base_branches:
+      - "1\\.x"
+
+  # Generated, vendored or binary: their generators and their tests are
+  # reviewed, not their output.
   path_filters:
     - "!docs/assets/findings/**"
     - "!docs/_findings/**"
+    - "!docs/assets/playground/bundle.json"
+    - "!docs/_data/playground.json"
+    - "!docs/assets/js/minisearch.min.js"
+    - "!docs/assets/fonts/**"
+    - "!docs/assets/img/**"
+    - "!art/**/*.png"
+    - "!**/*.lock"
+    - "!tests/Fixtures/Pcre2/testdata/**"
+    - "!tests/Fixtures/Pcre2/conformance-baseline.json"
+    - "!tests/Benchmark/data/**"
+
+  path_instructions:
+    - path: "**/*.php"
+      instructions: |
+        - Every PHP file opens with `declare(strict_types=1);` and the PHPRegex license header ("This file is part of the PHPRegex package.").
+        - The packages run on PHP 8.1: flag syntax or functions newer than 8.1 in src/ (readonly classes, typed class constants, `#[\Override]`, `json_validate()`, dynamic class constant fetch, …).
+        - Never an inline `@phpstan-ignore`: a real false positive belongs in phpstan.dist.neon. A baseline count that grows needs a reason.
+        - Catch the specific exception type; `\Throwable` only at a boundary that must not fail.
+        - Do not comment on formatting, import order or spacing: PHP CS Fixer and Rector own them.
+
+    - path: "src/**/*.php"
+      instructions: |
+        This is the library. Review it as a claim about PCRE2 as PHP bundles it, for the target PHP/PCRE2 the caller names.
+        - AST nodes are readonly value objects; a visitor never mutates a node.
+        - Each package throws its own exceptions, implementing its `Exception\ExceptionInterface`.
+        - 2.x is unreleased: renaming a public class, method, option or JSON field is allowed, but it must be written in UPGRADE-2.0.md and CHANGELOG.md in the same change. Flag a public change that is not.
+        - A change to the lexer, the parser, a node or what they read must update `Regex::CACHE_VERSION` (the cached ASTs would otherwise be stale).
+        - Documentation URLs are written out in full, never built from a base-URL constant.
+        - A new `mixed` type in src/ needs a reason; prefer a precise type.
+        - Hot paths (lexing, parsing, linting thousands of patterns): flag work repeated per call that could be done once, regexes compiled in loops, and unbounded recursion or memory on hostile input.
+        - User-facing behaviour that moves (a message, an option, a CLI flag, an output field) should move docs/ and the README examples with it.
+
+    - path: "src/Parser/**"
+      instructions: |
+        PCRE fidelity is the contract.
+        - Every accept, refuse and error offset must match what preg_match() does for the target release; ask for a test that checks the pattern against the real engine (`@preg_match($pattern, '')`) in the test itself.
+        - Behaviour that differs between PCRE2 releases (10.32 to 10.49) must follow the target, not the PHP running the code.
+        - Offsets are bytes of the pattern; watch UTF-8 (the `u` flag) versus byte mode, and the `x`/`xx`/`n` flags.
+        - Tolerant parsing must always make progress: flag any recovery path that can loop or re-read the same input.
+
+    - path: "src/Redos/**"
+      instructions: |
+        A ReDoS verdict is a security claim.
+        - A "safe" or "linear" verdict must be sound: a false negative (calling an exponential pattern safe) is a defect; a false positive is a lesser one.
+        - "Proven" must mean proven: a witness must make preg_match() exhaust the backtrack limit when replayed; flag any path that reports proven without that.
+        - Replays run under explicit caps (backtrack limit, time); flag an unbounded replay.
+
+    - path: "src/Automata/**"
+      instructions: |
+        - The solver answers only for the regular subset it can model. Lookarounds, backreferences, possessive quantifiers, atomic groups and recursion must make it refuse (ComplexityException), never return an approximate "equivalent" or "subset".
+        - DFA construction must stay under its state limits on hostile input.
+
+    - path: "src/Transpiler/**"
+      instructions: |
+        - A translation either keeps the pattern's meaning in the target dialect (JavaScript, Python, …) or refuses with a message. Flag any construct translated with a silently different meaning (Unicode classes, `\b` under `u`, lookbehind support, flags).
+
+    - path: "src/{Linter,Optimizer}/**"
+      instructions: |
+        - A lint rule must not fire on a pattern it cannot prove wrong or wasteful: flag false-positive risks with a concrete counter-example.
+        - An optimizer rewrite must keep the matched language, the capture groups (numbering and names) and the flags; check byte versus UTF-8 mode.
+        - A new rule has an id, a `docs_url` to https://php-regex.com/reference/rules/#…, an entry in docs/reference, and tests.
+
+    - path: "src/{Symfony,Laravel,PHPStan,Psalm,Rector,PHPUnit,LanguageServer,Mcp,Cli}/**"
+      instructions: |
+        These are the integrations.
+        - An optional dependency is checked before use; the bridge must not fatal when the framework piece is absent.
+        - The CLI's exit codes and its JSON output are a contract (docs/reference/json-output.md): flag an unannounced change.
+        - The language server counts positions in UTF-16 code units; flag byte offsets leaking into LSP positions.
+
+    - path: "**/composer.json"
+      instructions: |
+        - Version constraints use a single pipe, Symfony style: `^6.4|^7.4`, never `||`.
+        - Packages require `php: >=8.1`; the monorepo `replace`s its split packages at `self.version`.
+
+    - path: "tests/**/*.php"
+      instructions: |
+        - Test classes are `final`; each test is `#[Test]` and named `test_{feature}_{scenario}` in snake case; data providers are static, return iterable and yield keyed rows (`yield 'a reversed range' => ['pattern' => '/a{2,1}/', 'valid' => false];`).
+        - Strict assertions (`assertSame`), never `assertEquals`.
+        - What a pattern means is checked against the real engine in the test itself, not assumed.
+        - A test may be skipped only through the engine gates of tests/Support/PcreGates.php (message "is verified against PCRE2 …") or a `#[RequiresPhpExtension]`; flag any other markTestSkipped/markTestIncomplete, and any change that removes assertions.
+        - The suite runs in random order, on Linux, macOS and Windows: flag shared static state, cache bleed between tests, shell strings that assume a POSIX shell, and hard-coded path separators.
+
+    - path: "docs/**/*.md"
+      instructions: |
+        - Every example must run as shown and print what the page says; flag an example whose output looks invented.
+        - The brand is "PHPRegex"; counts in prose are approximate ("about 2,300"), exact only when measured and dated.
+        - The site builds on GitHub Pages' own Jekyll 3.10: only its whitelisted plugins; `where: "x", nil` filters nothing (use `where_exp`).
+
+    - path: "docs/assets/js/**"
+      instructions: |
+        The playground and the site scripts.
+        - Every string that comes from the engine, a pattern, a subject or generated data reaches the page through `textContent`, never `innerHTML`.
+        - The PHP engine (WebAssembly) loads only after a visitor's gesture; no request to a third-party host otherwise.
+        - localStorage access sits in try/catch; analytics events carry a gesture name and an id at most, never what the visitor typed.
+        - Keep the files' existing style (`var`, function expressions, no build step).
+
+    - path: "docs/assets/css/**"
+      instructions: |
+        - Colours come from the design tokens (CSS custom properties), never a new literal; both themes must keep their contrast.
+        - A control sets its `font-family` explicitly (a browser default is not the site's font).
+
+    - path: "docs/{_includes,_layouts}/**"
+      instructions: |
+        - Liquid output inside an HTML attribute is escaped (`| escape`); data embedded in a `<script>` escapes `<`.
+
+    - path: "bin/**"
+      instructions: |
+        Maintainer scripts.
+        - Run commands with argument arrays (proc_open), never shell strings: they also run on Windows.
+        - Generators write deterministic output and refuse before writing anything when their input is wrong.
+
+    - path: ".github/workflows/**"
+      instructions: |
+        - Actions are pinned; `permissions` are the least each job needs.
+        - A workflow a pull request starts declares its scope (code workflows stay out of prose-only changes); schedules run weekly, off the hour, at least twenty minutes apart.
+
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: warning
+      requirements: >-
+        `[Component] Imperative sentence`. The component is a package
+        directory under src/ (Parser, Linter, Cli, Symfony, Laravel, PHPStan,
+        Psalm, Rector, PHPUnit, LanguageServer, Mcp, Redos, Transpiler,
+        Optimizer, Automata, Explain, Generator, Toolkit) or Docs, CI,
+        Release, Corpus; several components are chained: `[Linter][Cli] …`.
+    description:
+      mode: "off"
+    custom_checks:
+      - name: Pull request template
+        mode: warning
+        instructions: >-
+          The description fills .github/PULL_REQUEST_TEMPLATE.md: the
+          question table (Bug fix, New feature, BC Break, Deprecations,
+          Fixed tickets, License), one paragraph on the change, and, when
+          the change touches what a pattern means, compiles to or matches,
+          the PHP and PCRE2 it was checked on.
+      - name: Engine-checked semantics
+        mode: warning
+        instructions: >-
+          When the change alters what the library says a pattern means
+          (validity, error offsets, ReDoS verdicts, equivalence, lint
+          findings, translations), the tests it adds or changes check the
+          pattern against the real engine (preg_match) rather than asserting
+          an expected value alone. Pass when no such behaviour changes.
+      - name: Docs move with behaviour
+        mode: warning
+        instructions: >-
+          A user-facing change under src/ (a message, an option, a CLI flag,
+          an output field, a public method) comes with the matching change
+          in docs/, README.md, CHANGELOG.md or UPGRADE-2.0.md. Pass when the
+          change is internal.
+
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+    simplify:
+      enabled: false
+    autofix:
+      enabled: false
+    fix_ci:
+      enabled: false
+    resolve_merge_conflict:
+      enabled: false
+
+  tools:
+    # PHPStan (level max, with the repository's own extensions), PHP CS
+    # Fixer, Rector, typos, actionlint and zizmor already run in the CI with
+    # this repository's configuration; a second run without it would only
+    # add noise. ShellCheck and gitleaks read what the CI does not.
+    phpstan:
+      enabled: false
+    phpcs:
+      enabled: false
+    phpmd:
+      enabled: false
+    github-checks:
+      enabled: true
+    actionlint:
+      enabled: false
+    shellcheck:
+      enabled: true
+    gitleaks:
+      enabled: true
+    zizmor:
+      enabled: false
+    markdownlint:
+      enabled: false
+    languagetool:
+      enabled: false
+    yamllint:
+      enabled: false
+    biome:
+      enabled: false
+    eslint:
+      enabled: false
+    htmlhint:
+      enabled: false
+    stylelint:
+      enabled: false
+    ast-grep:
+      enabled: false
+
+chat:
+  auto_reply: true
+  art: false
+
+knowledge_base:
+  opt_out: false
+  web_search:
+    enabled: true
+  learnings:
+    scope: local
+  pull_requests:
+    scope: local
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "CONTRIBUTING.md"
+      - "tests/README.md"
+      - "docs/extending.md"
+      - "docs/adding-a-lint-rule.md"
