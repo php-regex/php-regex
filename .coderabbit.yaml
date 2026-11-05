@@ -91,7 +91,7 @@ reviews:
       instructions: |
         A ReDoS verdict is a security claim.
         - A "safe" or "linear" verdict must be sound: a false negative (calling an exponential pattern safe) is a defect; a false positive is a lesser one.
-        - "Proven" must mean proven: a witness must make preg_match() exhaust the backtrack limit when replayed; flag any path that reports proven without that.
+        - "Proven" is a proof of the analysis, not a run: in theoretical mode nothing is replayed. "Confirmed" is the run: in confirmed mode an exponential witness is replayed and must make preg_match() exhaust the backtrack limit; a polynomial verdict is reported as it stands, `replayed` null. Flag a verdict reported as confirmed, or a replay length, without such a replay.
         - Replays run under explicit caps (backtrack limit, time); flag an unbounded replay.
 
     - path: "src/Automata/**"
