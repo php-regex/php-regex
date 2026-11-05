@@ -45,8 +45,11 @@ if [ -z "$workflow" ]; then
 fi
 cd "$root"
 
-# A workflow path pattern as an anchored extended regular expression: "**/"
-# is any directory or none, "**" crosses directories, "*" and "?" stay in one.
+# A workflow path pattern as an anchored extended regular expression, as
+# GitHub reads its filters: "**/" is any directory or none, "**" crosses
+# directories, "*" stays in one, "?" and "+" repeat the character before
+# them zero or one and one or more times, "[...]" is one character of a set
+# or range; every other character is itself.
 glob_regex() {
     local glob=$1 out='' i=0 c
     while [ "$i" -lt "${#glob}" ]; do
@@ -57,8 +60,7 @@ glob_regex() {
         fi
         case "$c" in
             '*') out+='[^/]*' ;;
-            '?') out+='[^/]' ;;
-            '.'|'+'|'^'|'$'|'('|')'|'{'|'}'|'|'|'['|']'|"\\") out+="\\$c" ;;
+            '.'|'^'|'$'|'('|')'|'{'|'}'|'|'|"\\") out+="\\$c" ;;
             *) out+=$c ;;
         esac
         i=$((i + 1))
@@ -148,9 +150,9 @@ while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
 
     parent=$(git rev-parse -q --verify "$sha^1" 2>/dev/null || true)
     if [ -n "$parent" ]; then
-        changed=$(git diff --name-only --no-renames "$parent" "$sha")
+        changed=$(git -c core.quotepath=off diff --name-only --no-renames "$parent" "$sha")
     else
-        changed=$(git ls-tree -r --name-only "$sha")
+        changed=$(git -c core.quotepath=off ls-tree -r --name-only "$sha")
     fi
     while IFS= read -r file; do
         if [ -n "$file" ] && reads "$file"; then

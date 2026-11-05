@@ -648,6 +648,7 @@ exit 1
         [, $output] = $this->runScript('status', [], $this->fakeGitHub());
 
         $this->assertStringContainsString('tests.yml passed on '.$this->git('rev-parse', '--short', $runs).', and nothing it reads changed since', $output);
+        $this->assertFileExists($this->root.'/fake/curl.log', 'The package channels are read through the stub, never the network.');
     }
 
     #[Test]
@@ -1134,8 +1135,12 @@ exit 1
 
             BASH);
         chmod($this->root.'/fake/gh', 0o755);
+        // No request leaves the test: Packagist and the package channels
+        // bin/status reads answer as if offline.
+        file_put_contents($this->root.'/fake/curl', "#!/usr/bin/env bash\necho \"curl \$*\" >> \"\$CURL_LOG\"\nexit 7\n");
+        chmod($this->root.'/fake/curl', 0o755);
 
-        return ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'GH_RUNS' => $this->root.'/runs'];
+        return ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'GH_RUNS' => $this->root.'/runs', 'CURL_LOG' => $this->root.'/fake/curl.log'];
     }
 
     private function version(): string

@@ -66,6 +66,8 @@ final class CiAnswerTest extends TestCase
               - 'src/**'
               - '!src/*/README.md'
               - "composer.json"
+              - 'bin/[a-z]+-check'
+              - 'tools/colou?r.txt'
           schedule:
             - cron: '47 6 * * 1'
         YAML;
@@ -215,6 +217,16 @@ final class CiAnswerTest extends TestCase
         yield 'a package README, negated' => ['path' => 'src/Parser/README.md', 'read' => false];
         yield 'a nested README, which the negation does not reach' => ['path' => 'src/Parser/Doc/README.md', 'read' => true];
         yield 'the prose' => ['path' => 'docs/guide.md', 'read' => false];
+        yield 'a source file named outside ASCII' => ['path' => 'src/Parser/é.php', 'read' => true];
+        // GitHub's filter syntax: "[]" is one character of a set or range,
+        // "+" one or more of the character before it, "?" zero or one.
+        yield 'a set repeated by +' => ['path' => 'bin/playground-check', 'read' => true];
+        yield 'a character the set leaves out' => ['path' => 'bin/Playground-check', 'read' => false];
+        yield 'an empty repetition' => ['path' => 'bin/-check', 'read' => false];
+        yield 'the optional character left out' => ['path' => 'tools/color.txt', 'read' => true];
+        yield 'the optional character once' => ['path' => 'tools/colour.txt', 'read' => true];
+        yield 'the optional character twice' => ['path' => 'tools/colouur.txt', 'read' => false];
+        yield 'any character where ? stands' => ['path' => 'tools/colo-r.txt', 'read' => false];
     }
 
     #[Test]
