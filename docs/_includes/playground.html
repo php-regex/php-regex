@@ -86,7 +86,10 @@
           <pre class="pg-mirror" aria-hidden="true"></pre>
           <textarea id="pg-subject" class="pg-input" rows="8" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="pg-subject-count" placeholder="the text to test against"></textarea>
         </div>
-        <ol class="pg-subject-matches visually-hidden" aria-labelledby="pg-match-summary"></ol>
+        <details class="pg-match-details" hidden>
+          <summary>Match details</summary>
+          <ol class="pg-subject-matches" aria-labelledby="pg-match-summary"></ol>
+        </details>
       </div>
       <p class="pg-status" role="status" aria-live="polite"></p>
     </div>

@@ -77,6 +77,7 @@
     subjectCount: root.querySelector('#pg-subject-count'),
     matchSummary: root.querySelector('#pg-match-summary'),
     subjectMatches: root.querySelector('.pg-subject-matches'),
+    matchDetails: root.querySelector('.pg-match-details'),
     version: root.querySelector('#pg-version'),
     run: root.querySelector('.pg-run'),
     examples: root.querySelectorAll('.pg-example'),
@@ -982,24 +983,27 @@
   // The matches are read in the text field: each one underlined where it
   // lands, one mark per set, alternating tints so neighbours tell apart.
   // The line after the field's label counts them, in sight: an empty match
-  // underlines nothing, and the marks stop at the engine's cap. The mirror
-  // is hidden from a screen reader, which reads a list of its own: each
-  // match, its text and where it sits. The live line speaks the count.
+  // underlines nothing, and the marks stop at the engine's cap. Under the
+  // field, a folded disclosure holds each match one by one, its groups
+  // under it — read in sight once opened, and by a screen reader, which
+  // the hidden mirror does not serve. The live line speaks the count.
   function renderSubjectMarks(payload, subject) {
     var matches = payload.matches;
     var ranges = [];
     var done = !!(matches && !matches.pending && matches.sets);
     clear(el.subjectMatches);
     if (done) {
+      var names = Object.assign({}, matches.names || {}, payload.groupNames || {});
       matches.sets.forEach(function (set, i) {
         var whole = set['0'];
         if (whole) {
           ranges.push({ start: whole[2], end: whole[2] + whole[0].length, className: 'pg-mark-match' + (i % 2 ? ' is-alt' : ''), index: i });
-          el.subjectMatches.appendChild(matchItem(whole, i, subject));
+          el.subjectMatches.appendChild(matchItem(set, i, subject, names));
         }
       });
     }
     el.matchSummary.textContent = done ? matchSummary(matches) : '';
+    el.matchDetails.hidden = !el.subjectMatches.firstChild;
     clear(el.subjectMirror);
     el.subjectMirror.appendChild(markRanges(subject, ranges));
     updateBadges();
@@ -1036,13 +1040,56 @@
     return line;
   }
 
-  // One match for a screen reader: its number, its text, and where it
-  // starts and ends in the field, by character. The driver's offsets are
-  // UTF-16 units, the marks' measure; a reader counts an emoji as one.
-  function matchItem(whole, i, subject) {
-    var said = whole[0] === '' ? 'empty' : '“' + whole[0] + '”';
+  // One match: its number, its text, where it starts and ends in the field,
+  // then one row per group that took part — the group by its name and its
+  // number (or its number alone), what it caught, where. Positions count
+  // characters: the driver's offsets are UTF-16 units, the marks' measure,
+  // and a reader counts an emoji as one. Pointing at a match lights its
+  // mark in the field.
+  function matchItem(set, i, subject, names) {
+    var whole = set['0'];
+    var item = text('li', 'pg-match');
+    var head = text('div', 'pg-match-head');
+    head.appendChild(text('span', 'pg-match-n', '#' + (i + 1)));
+    head.appendChild(caught(whole[0]));
     var start = Array.from(subject.slice(0, whole[2])).length;
-    return text('li', null, '#' + (i + 1) + ' ' + said + ', characters ' + start + ' to ' + (start + Array.from(whole[0]).length));
+    head.appendChild(text('span', 'pg-match-at', 'characters ' + start + ' to ' + (start + Array.from(whole[0]).length)));
+    item.appendChild(head);
+    var groups = Object.keys(set).filter(function (key) {
+      return key !== '0';
+    });
+    if (groups.length) {
+      var list = text('dl', 'pg-groups');
+      groups.forEach(function (key) {
+        var capture = set[key];
+        list.appendChild(text('dt', 'pg-group-name', names[key] ? names[key] + ' (#' + key + ')' : '#' + key));
+        var value = text('dd', 'pg-group-value');
+        value.appendChild(caught(capture[0]));
+        list.appendChild(value);
+        list.appendChild(text('dd', 'pg-group-at pg-match-at', 'at ' + Array.from(subject.slice(0, capture[2])).length));
+      });
+      item.appendChild(list);
+    }
+    item.addEventListener('mouseenter', function () {
+      lightMatch(i, true);
+    });
+    item.addEventListener('mouseleave', function () {
+      lightMatch(i, false);
+    });
+    return item;
+  }
+
+  // What a match or a group caught: the text in the mono voice, or the
+  // word "empty" where it caught nothing, since an empty code reads blank.
+  function caught(value) {
+    return value === '' ? text('span', 'pg-match-empty', 'empty') : text('code', 'pg-match-value', value);
+  }
+
+  function lightMatch(index, on) {
+    var marks = el.subjectMirror.querySelectorAll('mark[data-index="' + index + '"]');
+    Array.prototype.forEach.call(marks, function (mark) {
+      mark.classList.toggle('is-current', on);
+    });
   }
 
   // A keystroke makes the answer stale: the count, the list and the marks
@@ -1051,6 +1098,7 @@
   function dropSubjectMarks() {
     el.matchSummary.textContent = '';
     clear(el.subjectMatches);
+    el.matchDetails.hidden = true;
     clear(el.subjectMirror);
     el.subjectMirror.appendChild(markRanges(el.subject.value, []));
   }

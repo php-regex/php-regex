@@ -4916,6 +4916,90 @@ body.search-open {
   color: var(--ink-soft);
 }
 
+/* Every match, one by one, its groups under it: folded under the field,
+   which stays where the matches are read; opened, it scrolls inside its
+   own height and leaves the field its room. */
+.pg-match-details {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.pg-match-details > summary {
+  width: max-content;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.pg-match-details > summary:hover {
+  color: var(--ink);
+}
+.pg-match-details[open] > summary {
+  margin-bottom: .4rem;
+}
+.pg-subject-matches {
+  display: grid;
+  gap: .5rem;
+  max-height: 14rem;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.pg-match {
+  padding: .4rem .55rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+}
+.pg-match:hover {
+  border-color: var(--amber);
+}
+.pg-match-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .3rem .6rem;
+  font-size: .85rem;
+}
+.pg-match-n,
+.pg-match-at,
+.pg-group-name {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--ink-soft);
+}
+.pg-match-value {
+  padding: .05rem .3rem;
+  font-size: .85rem;
+  background: var(--amber-tint);
+  border-radius: var(--radius-s);
+  overflow-wrap: anywhere;
+}
+.pg-match-empty {
+  font-size: .78rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.pg-groups {
+  display: grid;
+  /* The group, what it caught, where: the offsets align in a column. */
+  grid-template-columns: minmax(4.5rem, max-content) minmax(0, 1fr) max-content;
+  gap: .15rem .6rem;
+  align-items: baseline;
+  margin: .35rem 0 0;
+  font-size: .8rem;
+}
+.pg-group-value {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.pg-group-at {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* The editor: a textarea over a mirror that paints the marks. The two share
    every metric that moves a glyph (font, size, line height, padding,
    wrapping), so a mark lands under the character it names. */
@@ -5220,7 +5304,7 @@ body.search-open {
     grid-template-rows: auto minmax(0, 1fr) auto;
   }
   .pg-field-text {
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
   }
   /* The field's items align by baseline, for its label and its count
      read on one line; the editor alone stretches into the row the
@@ -5255,6 +5339,11 @@ body.search-open {
     height: 100%;
     min-height: 0;
     max-height: none;
+  }
+  /* The mirror follows the input down: an opened list of matches takes
+     its height from the field, never from under it. */
+  .pg-editor-subject .pg-mirror {
+    min-height: 0;
   }
 }
 

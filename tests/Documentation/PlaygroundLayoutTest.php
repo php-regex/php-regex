@@ -376,6 +376,8 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-editor-subject \.pg-input \{([^}]*)\}/', $stylesheet, $input), 'The text input fills its editor on a wide screen.');
         $this->assertStringContainsString('height: 100%;', $input[1]);
         $this->assertStringContainsString('max-height: none;', $input[1], 'No cap cuts the fill short.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-editor-subject \.pg-mirror \{([^}]*)\}/', $stylesheet, $mirror), 'The mirror drops its floor with the input: an opened match list shrinks both.');
+        $this->assertStringContainsString('min-height: 0;', $mirror[1]);
 
         $script = self::source(self::SCRIPT);
         $this->assertStringContainsString("matchMedia('(min-width: 1280px)').matches", $script, 'The auto-size yields to the stylesheet exactly where the fill begins.');
@@ -385,13 +387,15 @@ final class PlaygroundLayoutTest extends TestCase
      * A mark alone says neither an empty match (it underlines nothing) nor
      * a capped list (the marks stop at the engine's cap): the line right
      * after the field's label counts the matches in sight, and says how
-     * many of them the marks show when the sets were capped. The mirror is
-     * aria-hidden, so a list kept for a screen reader says each match's
-     * text and where it sits. Neither is live: the live line keeps to the
+     * many of them the marks show when the sets were capped. Under the
+     * field, a folded disclosure holds every match one by one — its text,
+     * where it sits, and each group's name or number, value and position —
+     * in sight once opened, and in reach of a screen reader the aria-hidden
+     * mirror cannot serve. Neither is live: the live line keeps to the
      * count.
      */
     #[Test]
-    public function test_the_matches_are_counted_in_sight_and_listed_for_a_screen_reader(): void
+    public function test_the_matches_are_counted_and_detailed_beside_the_text_field(): void
     {
         $xpath = self::include();
         $field = self::byClass('pg-field-text');
@@ -399,7 +403,8 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(1, self::nodes($xpath, $field.'/'.self::self('pg-match-summary').'[@id="pg-match-summary"][not(@aria-live)]'), 'The count sits in the field, and is not live.');
         $this->assertSame(0, self::nodes($xpath, $field.'/'.self::self('pg-match-summary').self::has('visually-hidden')), 'The count is in sight.');
         $this->assertSame(1, self::nodes($xpath, $field.'/label/following-sibling::*[1]'.self::has('pg-match-summary')), 'The count reads right after the label.');
-        $this->assertSame(1, self::nodes($xpath, $field.'/ol'.self::has('pg-subject-matches').self::has('visually-hidden').'[@aria-labelledby="pg-match-summary"][not(@aria-live)]'), 'The list is a screen reader\'s, named by the count.');
+        $this->assertSame(1, self::nodes($xpath, $field.'/details'.self::has('pg-match-details').'[@hidden][not(@open)]/summary/following-sibling::ol'.self::has('pg-subject-matches').'[@aria-labelledby="pg-match-summary"][not(@aria-live)]'), 'The list sits in a folded disclosure under the field, named by the count.');
+        $this->assertSame(0, self::nodes($xpath, $field.'//'.self::self('pg-subject-matches').self::has('visually-hidden')), 'Opened, the list is in sight.');
 
         $script = self::source(self::SCRIPT);
         $marks = self::between($script, 'function renderSubjectMarks(payload, subject) {', "\n  }\n");
@@ -411,10 +416,14 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringContainsString('matches.shown < matches.count', $summary, 'A capped list says how many the marks show.');
         $this->assertStringContainsString("[0] === ''", $summary, 'An empty match is counted in words.');
 
-        $item = self::between($script, 'function matchItem(whole, i, subject) {', "\n  }\n");
+        $item = self::between($script, 'function matchItem(set, i, subject, names) {', "\n  }\n");
         $this->assertStringContainsString('Array.from(subject.slice(0, whole[2])).length', $item, 'The driver gives UTF-16 offsets; the item counts characters, so "😀a" puts the a at 1.');
         $this->assertStringContainsString('Array.from(whole[0]).length', $item, 'Each item says where the match ends, in characters too.');
-        $this->assertStringContainsString('el.subjectMatches.appendChild(matchItem(whole, i, subject));', $marks);
+        $this->assertStringContainsString("names[key] ? names[key] + ' (#' + key + ')' : '#' + key", $item, 'A group reads by its name and its number, or by its number alone.');
+        $this->assertStringContainsString('Array.from(subject.slice(0, capture[2])).length', $item, 'A group says where it sits, in characters.');
+        $this->assertStringContainsString("text('dl', 'pg-groups')", $item, 'The groups of a match are listed under it.');
+        $this->assertStringContainsString('el.subjectMatches.appendChild(matchItem(set, i, subject, names));', $marks);
+        $this->assertStringContainsString('el.matchDetails.hidden = ', $marks, 'No match, no disclosure.');
 
         // A keystroke in either field makes the answer stale: the count, the
         // list and the marks go before the debounce, and come back with the
@@ -432,6 +441,7 @@ final class PlaygroundLayoutTest extends TestCase
         $drop = self::between($script, 'function dropSubjectMarks() {', "\n  }\n");
         $this->assertStringContainsString("el.matchSummary.textContent = '';", $drop);
         $this->assertStringContainsString('clear(el.subjectMatches);', $drop);
+        $this->assertStringContainsString('el.matchDetails.hidden = true;', $drop);
         $this->assertStringContainsString('el.subjectMirror.appendChild(markRanges(el.subject.value, []));', $drop, 'The mirror keeps the text, without a mark.');
 
         $this->assertSame(1, preg_match('/\n\.pg-field-text \{([^}]*)\}/', self::source(self::STYLESHEET), $columns), 'The text field reads its label, its count and its bytes on one line.');
