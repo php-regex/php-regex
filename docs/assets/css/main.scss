@@ -5456,10 +5456,10 @@ body.search-open {
 .pg-example-pattern {
   display: none;
 }
-/* Below the side-by-side layout, phones and tablets alike, the examples
-   stand above the fields: the list is one row that scrolls — ten chips
-   wrapped would push the fields a screen down. */
-@media (max-width: 1023px) {
+/* Wherever the column folds back — phones, tablets and laptops alike —
+   the examples stand above the fields: the list is one row that scrolls
+   under its fade; ten chips wrapped would push the fields a hand down. */
+@media (max-width: 1279px) {
   .pg-examples {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -6664,7 +6664,9 @@ body.search-open {
   flex-wrap: wrap;
   overflow-x: visible;
 }
-.pg-findings-panel {
+/* Scoped to the list, so it outranks the item rule that holds every
+   other item to its own width: the panel takes a row of its own. */
+.pg-examples .pg-findings-panel {
   flex: 1 1 100%;
   min-width: 0;
 }

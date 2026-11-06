@@ -281,6 +281,8 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringContainsString('white-space: nowrap;', $chip[1], 'A name never wraps at its space.');
         $this->assertSame(1, preg_match('/^\.pg-examples li \{([^}]*)\}/m', $stylesheet, $item));
         $this->assertStringContainsString('flex: none;', $item[1], 'A chip never shrinks below its name.');
+        $this->assertSame(1, preg_match('/^\.pg-examples \.pg-findings-panel \{([^}]*)\}/m', $stylesheet, $panel), 'The projects list outranks the item rule, which would hold it beside the control.');
+        $this->assertStringContainsString('flex: 1 1 100%;', $panel[1], 'It takes a row of its own under the control.');
         $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \.pg-example-name \{([^}]*)\}/', $stylesheet, $name), 'In the column, a long name is cut, never pushed past the box.');
         $this->assertStringContainsString('text-overflow: ellipsis;', $name[1]);
 
@@ -582,7 +584,7 @@ final class PlaygroundLayoutTest extends TestCase
      * and its text. The pattern rides under the name — spelled in the
      * mono voice, hidden where the column folds back into a row — and the
      * window holds its three columns only where they fit; below that the
-     * list wraps above the fields (a phone scrolls it as one row).
+     * list is one row above the fields, which scrolls under its fade.
      */
     #[Test]
     public function test_the_examples_stand_in_their_own_column(): void
@@ -609,7 +611,8 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(1, preg_match('/grid-template-columns:\s*minmax\([^;]*\)\s+minmax\(0, 2fr\)\s+minmax\(0, 3fr\);/', $wide[1]), 'Examples, fields, answers — three tracks.');
         $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-example \{([^}]*)\}/', $stylesheet, $box), 'One column, one size of box.');
         $this->assertStringContainsString('width: 100%;', $box[1], 'A box fills its item: no example shrinks to its name.');
-        $this->assertSame(1, preg_match('/@media \(max-width: 1023px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \{([^}]*)\}/', $stylesheet, $narrow), 'Below the side-by-side layout, phones and tablets keep one row: the list scrolls, the fields stay near.');
+        $this->assertSame(1, preg_match('/@media \(max-width: 1279px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \{([^}]*)\}/', $stylesheet, $narrow), 'Wherever the column folds back, phones, tablets and laptops keep one row: the list scrolls under its fade, the fields stay near — five wrapped rows pushed the pattern a hand down.');
+        $this->assertStringContainsString('flex-wrap: nowrap;', $narrow[1]);
         $this->assertStringContainsString('overflow-x: auto;', $narrow[1]);
     }
 
