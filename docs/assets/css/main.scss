@@ -5920,14 +5920,35 @@ body.search-open {
    underline that lands on the strip's own edge, a closed one shows a
    hairline under the pointer. Two tabs carry a badge: a dot in a state
    color, a count, a word for a voice. */
+/* One line, at every width: a narrow answers panel — a phone, or a
+   column the visitor squeezed — scrolls its tabs, and a fade on the
+   travelled edge says more of them wait. No second row: a wrapped strip
+   never said which tab is open. */
 .pg-tabs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: .1rem;
   margin: 0;
   padding: .3rem .55rem 0;
+  overflow-x: auto;
   border-bottom: 1px solid var(--line-soft);
   border-radius: var(--radius-m) var(--radius-m) 0 0;
+  scrollbar-width: none;
+}
+.pg-tabs::-webkit-scrollbar {
+  display: none;
+}
+.pg-tabs.has-more-right {
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 1.25rem), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - 1.25rem), transparent);
+}
+.pg-tabs.has-more-left {
+  -webkit-mask-image: linear-gradient(to left, black calc(100% - 1.25rem), transparent);
+  mask-image: linear-gradient(to left, black calc(100% - 1.25rem), transparent);
+}
+.pg-tabs.has-more-left.has-more-right {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 1.25rem, black calc(100% - 1.25rem), transparent);
+  mask-image: linear-gradient(to right, transparent, black 1.25rem, black calc(100% - 1.25rem), transparent);
 }
 .pg-tabs.is-scrolled {
   box-shadow: 0 1px 0 var(--line-soft), 0 4px 10px -6px var(--line);
@@ -6131,10 +6152,10 @@ body.search-open {
   font-style: italic;
   color: var(--ink-soft);
 }
-/* A phone: the strip wraps, and tighter tabs keep the tree, the
-   diagnostics and the verdict on its first row. A count is
-   the first thing to go, before any label: the dot still carries the
-   state, and the count stays in the tab's name for a voice. */
+/* A phone: tighter tabs, and a count is the first thing to go, before
+   any label — the dot still carries the state, and the count stays in
+   the tab's name for a voice. The strip stays one line under the hand's
+   scroll; the underline speaks here as everywhere. */
 @media (max-width: 639px) {
   .pg-tabs {
     gap: .15rem;
@@ -6143,14 +6164,6 @@ body.search-open {
   .pg-tab {
     gap: .25rem;
     padding: .3rem .4rem;
-  }
-  /* The strip wraps here, and an open tab of the first row would draw its
-     underline between the rows: the open tab says itself the way a pressed
-     chip does — tinted, ringed in amber — and the underline stays a wide
-     screen's dialect. */
-  .pg-tab[aria-selected="true"] {
-    background: var(--amber-tint);
-    box-shadow: inset 0 0 0 1px var(--amber);
   }
   .pg-tab-count {
     position: absolute;

@@ -280,6 +280,28 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertGreaterThanOrEqual(4.5, self::contrast($danger[1], $navy[1]), 'The Stopped pill is text: 4.5:1 on the navy.');
     }
 
+    /**
+     * The strip of tabs is one line, always: when the answers panel is
+     * narrow — a phone, or a column the visitor squeezed — the tabs scroll
+     * under fades that appear only where more of them wait, and the open
+     * tab, or the one the arrows land on, is carried to the strip's
+     * middle. No second row at any width: a wrapped strip never said
+     * which tab is open.
+     */
+    #[Test]
+    public function test_the_strip_stays_one_line_and_carries_the_open_tab(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-tabs \{([^}]*)\}/m', $stylesheet, $strip), 'The base strip rule exists.');
+        $this->assertStringContainsString('flex-wrap: nowrap;', $strip[1], 'One line, at every width.');
+        $this->assertStringContainsString('overflow-x: auto;', $strip[1], 'The tabs scroll, never stack.');
+        $this->assertStringContainsString('.pg-tabs.has-more-right', $stylesheet, 'A fade on the right edge says more tabs wait.');
+        $this->assertStringContainsString('.pg-tabs.has-more-left', $stylesheet, 'And on the left, when the strip has travelled.');
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString('function scrollTabIntoView(tab) {', $script, 'The open tab is carried to the middle of the strip.');
+        $this->assertStringContainsString('function syncTabFades() {', $script, 'The fades say themselves, only where there is more.');
+    }
+
     #[Test]
     public function test_the_strip_is_pinned_inside_the_panel(): void
     {

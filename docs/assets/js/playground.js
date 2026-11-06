@@ -1977,6 +1977,9 @@
       var on = tab.getAttribute('data-tool') === tool;
       tab.setAttribute('aria-selected', on ? 'true' : 'false');
       tab.tabIndex = on ? 0 : -1;
+      if (on) {
+        scrollTabIntoView(tab);
+      }
       if (on && focus) {
         tab.focus();
       }
@@ -3570,7 +3573,33 @@
   }, { passive: true });
   function measureStrip() {
     el.results.style.setProperty('--pg-strip-h', el.tabStrip.offsetHeight + 'px');
+    syncTabFades();
   }
+  // The fades say themselves, only where more tabs wait — the strip is
+  // one line, and a travelled edge is the whole affordance it needs.
+  function syncTabFades() {
+    var max = el.tabStrip.scrollWidth - el.tabStrip.clientWidth;
+    el.tabStrip.classList.toggle('has-more-right', el.tabStrip.scrollLeft < max - 4);
+    el.tabStrip.classList.toggle('has-more-left', el.tabStrip.scrollLeft > 4);
+  }
+  // The open tab, or the one the arrows land on, is carried to the
+  // middle of the strip: a tab reached by keyboard is a tab opened, and
+  // a hidden one opens to its own name.
+  function scrollTabIntoView(tab) {
+    var left = Math.max(0, tab.offsetLeft - (el.tabStrip.clientWidth - tab.offsetWidth) / 2);
+    try {
+      el.tabStrip.scrollTo({ left: left, behavior: 'smooth' });
+    } catch (error) {
+      el.tabStrip.scrollLeft = left;
+    }
+  }
+  el.tabStrip.addEventListener('scroll', syncTabFades, { passive: true });
+  el.tabStrip.addEventListener('focusin', function (event) {
+    var tab = event.target.closest('.pg-tab');
+    if (tab) {
+      scrollTabIntoView(tab);
+    }
+  });
   window.addEventListener('resize', measureStrip);
   if (window.ResizeObserver) {
     // A badge, or a font that arrives late, can wrap the strip on its own.
