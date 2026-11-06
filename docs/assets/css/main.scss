@@ -2883,6 +2883,120 @@ a:focus-visible .article-nav-arrow {
   transform: translateX(.25em);
 }
 
+/* ---- The projects directory -----------------------------------------------
+ * The findings index: one row per repository, the whole row a link —
+ * the owner pictured as the playground's tree pictures it, the counts
+ * as chips in the state colors (a zero keeps its word but not its
+ * voice), the engine quiet on the right. Rows breathe; a wall of pipes
+ * never breathed.
+   -------------------------------------------------------------------------- */
+
+.projects-index {
+  display: grid;
+  gap: .3rem;
+  margin: 1.25rem 0 1.75rem;
+  padding: 0;
+  list-style: none;
+}
+/* The directory's voice: one lead sentence, the promises as one quiet
+   line — the plumbing of how a manifest is read stays with the
+   maintainers. */
+.projects-lead {
+  margin: .9rem 0 .35rem;
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+.projects-facts {
+  margin: 0 0 1.1rem;
+  font-size: .85rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.projects-index a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: .4rem .8rem;
+  padding: .55rem .7rem;
+  color: inherit;
+  text-decoration: none;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-m);
+}
+.projects-index a:hover,
+.projects-index a:focus-visible {
+  border-color: var(--amber);
+  background: var(--amber-tint);
+}
+.projects-index-avatar {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line-soft);
+  border-radius: 50%;
+}
+.projects-index-name {
+  overflow: hidden;
+  font-weight: 600;
+  font-size: .92rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.projects-index-counts {
+  display: inline-flex;
+  gap: .5rem;
+  font-family: var(--font-mono);
+  font-size: .74rem;
+  white-space: nowrap;
+}
+.projects-index-fail {
+  color: var(--danger);
+}
+.projects-index-warn {
+  color: var(--amber-deep);
+}
+.projects-index-fail.is-zero,
+.projects-index-warn.is-zero {
+  color: var(--ink-soft);
+}
+.projects-index-engine {
+  font-family: var(--font-mono);
+  font-size: .74rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+/* On a phone, a name wraps instead of ellipsizing into its neighbours:
+   the counts take their own line under it, and two projects of one owner
+   stay tellable apart. */
+@media (max-width: 479px) {
+  .projects-index a {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+  }
+  .projects-index-name {
+    grid-column: 2;
+    grid-row: 1;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .projects-index-avatar {
+    grid-row: 1 / 3;
+    align-self: start;
+  }
+  .projects-index-counts {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+@media (max-width: 639px) {
+  .projects-index a {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .projects-index-engine {
+    display: none;
+  }
+}
+
 /* ---- Guide grids -----------------------------------------------------------
  * The guides index lists seven integrations, each a heading and one
  * sentence: a single column of those is a page of air. From 1100px the
@@ -4609,6 +4723,10 @@ body.search-open {
 .hero-playground .hero-inner {
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
+  /* A tool page, not a reading one: the window breathes to 90rem while
+     the docs keep their 75rem column — three columns need the room the
+     prose never did. */
+  padding-inline: max(1.25rem, calc(50vw - 45rem));
 }
 
 /* The window: a title bar, a body, a status bar. It floats one step
@@ -6477,13 +6595,24 @@ body.search-open {
   border: 1px solid var(--line-soft);
   border-radius: 50%;
 }
-.pg-tree-item.is-repo > .pg-tree-row,
-.pg-tree-item.is-repo > .pg-tree-target {
-  padding-left: 1.35rem;
+/* A row that opens says so: a chevron before its name, pivoting on the
+   open row — the dialect every tree of this web speaks. A finding's row
+   opens nothing; it carries none. */
+.pg-tree-item[aria-expanded] > .pg-tree-row::before {
+  content: '›';
+  flex: none;
+  width: .9em;
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
 }
-.pg-tree-item.is-finding > .pg-tree-row,
-.pg-tree-item.is-finding > .pg-tree-message {
-  padding-left: 2.2rem;
+.pg-tree-item[aria-expanded="true"] > .pg-tree-row::before {
+  transform: rotate(90deg);
+}
+.pg-tree-item.is-repo > .pg-tree-row {
+  padding-left: .95rem;
+}
+.pg-tree-item.is-finding > .pg-tree-row {
+  padding-left: 1.9rem;
 }
 .pg-tree-name {
   overflow: hidden;
@@ -6500,29 +6629,22 @@ body.search-open {
 .pg-tree-item.is-fail .pg-tree-level {
   color: var(--danger);
 }
-.pg-tree-target,
-.pg-tree-message {
-  display: block;
-  overflow: hidden;
-  padding: 0 .35rem .25rem;
-  font-family: var(--font-mono);
-  font-size: .68rem;
-  color: var(--ink-soft);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .pg-tree-level {
   flex: none;
   font-family: var(--font-mono);
   font-size: .66rem;
   font-weight: 600;
 }
-/* The finding the window shows, as a pressed example; the one shown
-   last, outlined: one click away. */
+/* The finding the window shows: a rail on the row's edge, visible among
+   three hundred siblings. The one shown last stays outlined: one click
+   away. */
 .pg-tree-item[aria-selected="true"] > .pg-tree-row {
   color: var(--ink);
   background: var(--amber-tint);
-  box-shadow: inset 0 0 0 1px var(--amber);
+  box-shadow: inset 2px 0 0 var(--amber);
+}
+.pg-tree-item[aria-selected="true"] > .pg-tree-row .pg-tree-name {
+  font-weight: 600;
 }
 .pg-tree-item.is-last > .pg-tree-row {
   box-shadow: inset 0 0 0 1px var(--amber);
@@ -6547,7 +6669,18 @@ body.search-open {
 .pg-findings-links a:hover {
   color: var(--ink);
 }
-/* The widest screens: the list stands whole in its column, no fold. */
+/* The fold tab lives on the stacked layouts' edge only as a hidden
+   thing: below the widest screens the list is a row, not a column. */
+.pg-listing-tab,
+.pg-listing-rail,
+.pg-splitter {
+  display: none;
+}
+
+/* The widest screens: the list stands in its column, a window of its
+   own — never the page's longest column. A project with three hundred
+   findings opens as a scroll inside a frame that answers the viewport,
+   the way the answers panel beside it does. */
 @media (min-width: 1280px) {
   .pg-findings-browse > summary {
     display: none;
@@ -6565,12 +6698,148 @@ body.search-open {
     margin: 0 0 .4rem;
   }
   .pg-findings-tree {
-    max-height: none;
+    max-height: clamp(19rem, calc(100vh - var(--header-h) - 15rem), 39rem);
     padding: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
   }
   .pg-findings-links {
     flex-direction: column;
     padding: .45rem .35rem 0;
+  }
+
+  .pg-listing-tab {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.05rem;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: .85rem;
+    line-height: 1;
+    color: var(--ink-soft);
+    background: var(--panel);
+    border: 0;
+    border-right: 1px solid var(--line-soft);
+    border-radius: 0 var(--radius-s) var(--radius-s) 0;
+    cursor: pointer;
+  }
+  .pg-listing-tab:hover,
+  .pg-listing-tab:focus-visible {
+    color: var(--ink);
+    border-color: var(--amber);
+  }
+  /* The separators ride the boundaries: a hairline the pointer thickens,
+    a notch the arrow keys walk. The last column gives what is left. */
+  .pg-splitter {
+    position: absolute;
+    top: 1rem;
+    bottom: 1.1rem;
+    z-index: 2;
+    display: block;
+    width: .5rem;
+    cursor: col-resize;
+  }
+  .pg-splitter::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 1.7rem;
+    border-radius: var(--radius-pill);
+    transform: translate(-50%, -50%);
+    background: repeating-linear-gradient(to bottom, var(--line) 0 4px, transparent 4px 9px);
+    opacity: .45;
+  }
+  .pg-splitter:hover::after,
+  .pg-splitter:focus-visible::after {
+    background: repeating-linear-gradient(to bottom, var(--amber) 0 4px, transparent 4px 9px);
+    opacity: 1;
+  }
+  .pg-splitter[hidden] {
+    display: none;
+  }
+  .pg-splitter:focus-visible {
+    outline: none;
+  }
+  .pg-splitter:focus-visible::after {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 35%, transparent);
+  }
+  /* Folded, the window is two columns — the finding and the tools — the
+     tab turns to say which way the list went, and the rail of owners
+     keeps the ecosystem a hover away. */
+  .playground.is-listing-hidden .pg-body {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    padding-left: 2.95rem;
+  }
+  .pg-listing-rail {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    display: grid;
+    align-content: start;
+    justify-items: center;
+    gap: .35rem;
+    width: 2.6rem;
+    padding: 1rem .35rem 1.1rem;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    background: var(--panel);
+    border-right: 1px solid var(--line-soft);
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  .pg-listing-rail[hidden] {
+    display: none;
+  }
+  .pg-listing-rail-avatar,
+  .pg-listing-rail-open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .pg-listing-rail-open {
+    margin-bottom: .25rem;
+    font-family: var(--font-mono);
+    font-size: .95rem;
+    line-height: 1;
+    color: var(--ink-soft);
+  }
+  .pg-listing-rail-avatar:hover,
+  .pg-listing-rail-avatar:focus-visible,
+  .pg-listing-rail-open:hover,
+  .pg-listing-rail-open:focus-visible {
+    border-color: var(--amber);
+  }
+  /* The columns carry their places from the three-column layout; folded,
+     they take the two that remain. */
+  .playground.is-listing-hidden .pg-main {
+    grid-column: 1;
+  }
+  .playground.is-listing-hidden .pg-body > .pg-results {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .playground.is-listing-hidden .pg-examples {
+    display: none;
+  }
+  .playground.is-listing-hidden .pg-listing-tab {
+    display: none;
   }
 }
 
@@ -6687,8 +6956,25 @@ body.search-open {
   font-weight: 500;
   color: var(--danger);
 }
+/* The engine a finding was judged for: two mono chips and a quiet date,
+   one line — not a sentence wrapped over two. */
 .pg-finding-target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .25rem .4rem;
   color: var(--ink-soft);
+}
+.pg-finding-engine {
+  padding: .08rem .38rem;
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  color: var(--ink);
+  background: var(--code-bg);
+  border-radius: var(--radius-s);
+}
+.pg-finding-asof {
+  font-size: .72rem;
 }
 /* The linter's own words, worst first, each with its rule's page. */
 .pg-finding-issues {
@@ -6747,11 +7033,23 @@ body.search-open {
   background: var(--code-bg);
   border-radius: var(--radius-s);
 }
+/* A diff reads as a diff: the removed and the added carry their tint on
+   the whole line, the way a review does, not only their glyphs. */
 .pg-fix-del {
+  display: block;
+  padding: .05rem .3rem;
   color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border-radius: var(--radius-s);
 }
 .pg-fix-add {
-  color: var(--ok);
+  display: block;
+  padding: .05rem .3rem;
+  /* --ok alone on its tint reads under 4.5:1 in the light theme; a fifth
+     of the ink keeps the line green and legible in both. */
+  color: color-mix(in srgb, var(--ok) 80%, var(--ink));
+  background: color-mix(in srgb, var(--ok) 9%, transparent);
+  border-radius: var(--radius-s);
 }
 .pg-finding-actions {
   display: flex;
@@ -6774,9 +7072,17 @@ body.search-open {
 .pg-finding-actions button:focus-visible {
   border-color: var(--amber);
 }
+/* The card's one action: filled like Run, for it is the card's Run. */
 .pg-finding-actions .pg-finding-copy {
-  background: var(--amber-tint);
+  font-weight: 600;
+  color: var(--paper);
+  background: var(--amber);
   border-color: var(--amber);
+}
+.pg-finding-actions .pg-finding-copy:hover,
+.pg-finding-actions .pg-finding-copy:focus-visible {
+  background: var(--amber-deep);
+  border-color: var(--amber-deep);
 }
 .pg-finding-actions a {
   font-size: .78rem;

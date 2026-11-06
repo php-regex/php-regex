@@ -317,7 +317,7 @@ final class PlaygroundLayoutTest extends TestCase
             $this->assertInstanceOf(\DOMElement::class, $column);
             $classes[] = explode(' ', $column->getAttribute('class'))[0];
         }
-        $this->assertSame(['pg-examples', 'pg-main', 'pg-results', 'pg-loader'], $classes);
+        $this->assertSame(['pg-listing-tab', 'pg-listing-rail', 'pg-examples', 'pg-main', 'pg-results', 'pg-loader'], $classes, 'The fold tab and its rail of avatars ride the body\'s edge; the columns read in the order of the markup: the examples, the fields, the answers.');
     }
 
     /**

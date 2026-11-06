@@ -89,13 +89,33 @@ final class FindingsPagesTest extends TestCase
         $this->assertStringContainsString("permalink: /findings/\n", $index);
         $this->assertStringContainsString('site.findings | sort: "findings_rank"', $index);
         $this->assertStringContainsString('finding.findings_php', $index, 'Each project with the PHP and PCRE2 it was judged for.');
+        $this->assertStringContainsString('/assets/findings/avatars/{{ owner }}.png', $index, 'Each row carries the project\'s owner, pictured as the tree pictures it.');
+        $this->assertStringContainsString('<a href="{{ finding.url }}">', $index, 'The row is the link.');
+        $this->assertStringNotContainsString('| Project |', $index, 'A wall of pipes is not a directory: rows, avatars and chips.');
+        $this->assertStringNotContainsString('|---', $index);
+        $this->assertStringContainsString('projects_index: true', $index, 'The page asks for its row filter.');
+        $this->assertStringContainsString('class="page-filter"', $index, 'Two hundred rows are narrowed in place, the deep pages\' filter dialect.');
+        $this->assertStringContainsString('class="page-empty"', $index);
+        $this->assertStringNotContainsStringIgnoringCase('require.php floor', $index, 'The lead says what the page holds, not how the pipeline reads a manifest.');
+        $scripts = self::source(self::DOCS.'/_includes/scripts.html');
+        $this->assertStringContainsString('page.projects_index', $scripts, 'The script list carries the row filter for this page alone.');
+
+        $filter = self::source(self::DOCS.'/assets/js/projects.js');
+        $this->assertStringContainsString("querySelector('.projects-index-name')", $filter, 'The directory narrows by the project\'s name, not by the whole row: a PHP version is not a filter.');
+        $this->assertStringNotContainsString('row.textContent.toLowerCase()', $filter);
+        $this->assertStringContainsString('<span class="page-count" role="status"></span>', $index, 'The count says itself to a screen reader as it changes.');
+        $stylesheet = self::source(self::DOCS.'/assets/css/main.scss');
+        $this->assertSame(1, preg_match('/\.projects-index-fail\.is-zero,\s*\.projects-index-warn\.is-zero \{([^}]*)\}/', $stylesheet, $zero), 'A zero count keeps a quieter voice.');
+        $this->assertStringNotContainsString('opacity', $zero[1], 'Quieter, never dimmer: the contrast holds in both themes.');
+        $this->assertSame(1, preg_match('/@media \(max-width: 479px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.projects-index-name \{([^}]*)\}/', $stylesheet, $narrow), 'On a phone, a name wraps instead of ellipsizing into its neighbours.');
+        $this->assertStringContainsString('white-space: normal', $narrow[1]);
         $this->assertStringContainsString('bin/corpus-lint', self::source(self::DOCS.'/maintainers.md'), 'The daily run is written down for the maintainer.');
         foreach (['90 days', 'disclos', 'fixed', 'maintainers hear', 'privately'] as $promise) {
             $this->assertStringNotContainsStringIgnoringCase($promise, $index, 'The list is what the linter reports today, nothing more.');
         }
 
         $footer = self::source(self::DOCS.'/_includes/footer.html');
-        $this->assertStringContainsString('<li><a href="/findings/">Findings</a></li>', $footer);
+        $this->assertStringContainsString('<li><a href="/findings/">Projects</a></li>', $footer);
         $this->assertStringNotContainsString('/findings/', self::source(self::DOCS.'/_includes/header.html'), 'Not in the header.');
     }
 

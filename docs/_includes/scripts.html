@@ -28,4 +28,7 @@
 <script defer src="/assets/js/php-pcre-options.js?v={{ site.time | date: '%s' }}"></script>
 {% endif %}
 <script defer src="/assets/js/filter.js?v={{ site.time | date: '%s' }}"></script>
+{% if page.projects_index %}
+<script defer src="/assets/js/projects.js?v={{ site.time | date: '%s' }}"></script>
+{% endif %}
 <script defer src="/assets/js/search.js?v={{ site.time | date: '%s' }}"></script>

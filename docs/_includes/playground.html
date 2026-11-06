@@ -68,11 +68,13 @@
     </div>
   </div>
   <div class="pg-body">
-    <ul class="pg-examples" aria-label="Examples">
+    <button type="button" class="pg-listing-tab" aria-expanded="true" aria-controls="pg-listing" aria-label="List column" title="Fold the list column"><span aria-hidden="true">‹</span></button>
+    <nav class="pg-listing-rail" hidden aria-label="Projects"><button type="button" class="pg-listing-rail-open" aria-label="Unfold the list column" title="Unfold the list column"><span aria-hidden="true">›</span></button></nav>
+    <ul class="pg-examples" id="pg-listing" aria-label="Examples">
       <li>
         <div class="pg-source" role="radiogroup" aria-label="Source">
           <button type="button" class="pg-source-option" role="radio" aria-checked="true" data-source="examples">Examples</button>
-          <button type="button" class="pg-source-option" role="radio" aria-checked="false" tabindex="-1" data-source="findings">Findings</button>
+          <button type="button" class="pg-source-option" role="radio" aria-checked="false" tabindex="-1" data-source="findings">Projects</button>
         </div>
       </li>
       <li><button type="button" class="pg-example" data-regex="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m" data-subject="2026-11-02&#10;2026-11-19&#10;not a date" title="/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/m"><span class="pg-example-name">named groups</span><span class="pg-example-pattern">/^(?&lt;year&gt;\d{4})-(?&lt;month&gt;\d{2})-(?&lt;day&gt;\d{2})$/m</span></button></li>
@@ -89,9 +91,9 @@
         <details class="pg-findings-browse">
           <summary>Browse <span class="pg-findings-count">the</span> projects</summary>
           <input type="search" class="pg-findings-filter" placeholder="owner, repository or rule" aria-label="Filter by owner, repository or rule" spellcheck="false" autocapitalize="off" autocomplete="off">
-          <ul class="pg-findings-tree" role="tree" aria-label="Findings"></ul>
+          <ul class="pg-findings-tree" role="tree" aria-label="Projects"></ul>
           <p class="pg-findings-empty" hidden>No project matches.</p>
-          <p class="pg-findings-links"><a href="/findings/">All findings</a> <a href="https://github.com/php-regex/php-regex/issues/new?template=propose-project.yml">Propose a project</a></p>
+          <p class="pg-findings-links"><a href="/findings/">All projects</a> <a href="https://github.com/php-regex/php-regex/issues/new?template=propose-project.yml">Propose a project</a></p>
         </details>
       </li>
     </ul>

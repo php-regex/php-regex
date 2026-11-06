@@ -114,6 +114,10 @@
     findingsBrowse: root.querySelector('.pg-findings-browse'),
     findingsCount: root.querySelector('.pg-findings-count'),
     findingsFilter: root.querySelector('.pg-findings-filter'),
+    listingTab: root.querySelector('.pg-listing-tab'),
+    listingRail: root.querySelector('.pg-listing-rail'),
+    listingRailOpen: root.querySelector('.pg-listing-rail-open'),
+    body: root.querySelector('.pg-body'),
     findingsTree: root.querySelector('.pg-findings-tree'),
     findingsEmpty: root.querySelector('.pg-findings-empty'),
     textField: root.querySelector('.pg-field-text'),
@@ -3658,8 +3662,14 @@
     if (!findingsLoading) {
       findingsLoading = fetchJson(fetch('/assets/findings/index.json')).then(function (index) {
         findingsIndex = index;
-        el.findingsCount.textContent = String(index.repos.length);
+        // The fold names the project on its page, the corpus on the home;
+        // one project needs no filter.
+        el.findingsCount.textContent = pageRepo ? pageRepo : String(index.repos.length);
+        if (pageRepo) {
+          el.findingsFilter.hidden = true;
+        }
         buildTree();
+        buildRail();
         return index;
       });
       findingsLoading.catch(function () {
@@ -3730,6 +3740,11 @@
     var owners = [];
     var byOwner = {};
     findingsIndex.repos.forEach(function (repo) {
+      // A repository's page speaks of that repository alone: the tree
+      // shows its project, the other two hundred stay on the home.
+      if (pageRepo && repo.repo !== pageRepo) {
+        return;
+      }
       if (!byOwner[repo.owner]) {
         byOwner[repo.owner] = [];
         owners.push(repo.owner);
@@ -3769,11 +3784,17 @@
   function repoRow(repo) {
     var item = treeItem(2, 'is-repo');
     item.setAttribute('data-slug', repo.slug);
+    // The engine rides the row's tooltip: a tree of hundreds of rows is
+    // one line per row; the card says the engine in chips for the chosen
+    // finding.
+    item.title = 'PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre;
+    // A tooltip shows to a pointer only; the description is read out on
+    // focus too.
+    item.setAttribute('aria-description', 'PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre);
     var row = text('span', 'pg-tree-row');
     row.appendChild(text('span', 'pg-tree-name', repo.repo.split('/')[1]));
     row.appendChild(text('span', 'pg-tree-count' + (repo.fail ? ' is-fail' : ''), String(repo.findings)));
     item.appendChild(row);
-    item.appendChild(text('span', 'pg-tree-target', 'PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre));
     treeGroup(item);
     return item;
   }
@@ -3784,9 +3805,12 @@
     var row = text('span', 'pg-tree-row');
     row.appendChild(text('span', 'pg-tree-level', finding.level === 'fail' ? 'FAIL' : 'WARN'));
     row.appendChild(text('span', 'pg-tree-name', finding.file.split('/').pop() + ':' + finding.line));
+    row.appendChild(text('span', 'pg-tree-count', String(finding.issues.length)));
     item.appendChild(row);
-    item.appendChild(text('span', 'pg-tree-message', finding.issues[0].message));
+    // The rule's message rides the tooltip and the card; the row is one
+    // line, scannable at three hundred siblings.
     item.title = finding.file + ':' + finding.line + ' · ' + finding.issues[0].message;
+    item.setAttribute('aria-description', item.title);
     return item;
   }
 
@@ -3846,13 +3870,51 @@
     item.focus();
   }
 
+  // One group stands open at a time, at each level: opening a project
+  // closes the others, opening a repository closes its siblings — the
+  // list stays a window, never a wall. A link or the filter still opens
+  // what they name: they speak outside the accordion.
+  function collapseSiblings(item) {
+    Array.prototype.forEach.call(item.parentElement.children, function (sibling) {
+      if (sibling !== item && sibling.getAttribute && sibling.getAttribute('aria-expanded') === 'true') {
+        expandItem(sibling, false);
+      }
+    });
+  }
+
+  function openGroup(item) {
+    collapseSiblings(item);
+    return expandItem(item, true);
+  }
+
+  // A finding's project and repository, opened when closed: Back to the
+  // finding comes after the accordion may have folded them. An open group
+  // is left as it is, and so are the siblings the filter opened.
+  function revealRepo(repo) {
+    var ownerItem = el.findingsTree.querySelector('[data-owner="' + repo.owner.replace(/"/g, '') + '"]');
+    var repoItem = el.findingsTree.querySelector('[data-slug="' + repo.slug.replace(/"/g, '') + '"]');
+    // A filter typed since the finding was left may hide its row: cleared,
+    // the row the card stands for is in the list again. A row clicked is
+    // never hidden, so a search in use survives.
+    if (repoItem && repoItem.hidden && el.findingsFilter.value) {
+      el.findingsFilter.value = '';
+      filterTree();
+    }
+    if (ownerItem && ownerItem.getAttribute('aria-expanded') === 'false') {
+      openGroup(ownerItem);
+    }
+    return repoItem && repoItem.getAttribute('aria-expanded') === 'false' ? openGroup(repoItem) : Promise.resolve();
+  }
+
   function activateItem(item) {
     pageTouched = true;
     var key = item.getAttribute('data-key');
     if (key) {
       openFindingKey(key);
+    } else if (item.getAttribute('aria-expanded') === 'true') {
+      expandItem(item, false);
     } else {
-      expandItem(item, item.getAttribute('aria-expanded') !== 'true');
+      openGroup(item);
     }
   }
 
@@ -3874,7 +3936,7 @@
       case 'End': target = items[items.length - 1]; break;
       case 'ArrowRight':
         if (item.getAttribute('aria-expanded') === 'false') {
-          expandItem(item, true);
+          openGroup(item);
         } else if (item.getAttribute('aria-expanded') === 'true') {
           target = items[index + 1] || null;
         }
@@ -3936,7 +3998,30 @@
       var shown = !!activeFinding && key === activeFinding.key;
       item.setAttribute('aria-selected', shown ? 'true' : 'false');
       item.classList.toggle('is-last', !shown && ((key && key === lastFinding) || (!key && item.getAttribute('data-slug') === lastSlug)));
+      if (shown) {
+        revealRow(item);
+      }
     });
+  }
+
+  // The tree is a window of its own: the row the window shows is brought
+  // inside it, never left scrolling below the fold. The tree scrolls, not
+  // the page — scrollIntoView would move every ancestor, and on a narrow
+  // screen pull the page from the card up to the list.
+  function revealRow(item) {
+    // A row inside a closed group has no box: measured, it would throw
+    // the tree to its top.
+    if (!item.offsetParent) {
+      return;
+    }
+    var tree = el.findingsTree;
+    var row = item.firstElementChild || item;
+    var top = row.getBoundingClientRect().top - tree.getBoundingClientRect().top + tree.scrollTop;
+    if (top < tree.scrollTop) {
+      tree.scrollTop = top;
+    } else if (top + row.offsetHeight > tree.scrollTop + tree.clientHeight) {
+      tree.scrollTop = top + row.offsetHeight - tree.clientHeight;
+    }
   }
 
   function openFindingKey(key) {
@@ -3945,7 +4030,9 @@
     var id = key.slice(cut + 1);
     return loadIndex().then(function () {
       var repo = repoNamed(slug);
-      return repo ? loadRepo(slug).then(function (file) {
+      return repo ? revealRepo(repo).then(function () {
+        return loadRepo(slug);
+      }).then(function (file) {
         var finding = file.findings.filter(function (candidate) {
           return candidate.id === id;
         })[0];
@@ -3970,12 +4057,7 @@
         setStatus('The latest run reports nothing on ' + name + '.', 'error');
         return null;
       }
-      var ownerItem = el.findingsTree.querySelector('[data-owner="' + repo.owner.replace(/"/g, '') + '"]');
-      if (ownerItem) {
-        expandItem(ownerItem, true);
-      }
-      var repoItem = el.findingsTree.querySelector('[data-slug="' + repo.slug.replace(/"/g, '') + '"]');
-      return (repoItem ? expandItem(repoItem, true) : Promise.resolve()).then(function () {
+      return revealRepo(repo).then(function () {
         return loadRepo(repo.slug);
       }).then(function (file) {
         if (pageTouched) {
@@ -4076,8 +4158,16 @@
     el.findingRepo.textContent = repo.repo;
     el.permalink.href = finding.permalink;
     el.permalink.textContent = 'View on GitHub at ' + repo.sha.slice(0, 7);
-    el.findingTarget.textContent = 'Judged for PHP ' + repo.target.php + ' · PCRE2 ' + repo.target.pcre
-      + (repo.target.source ? ' (' + repo.target.source + ')' : '') + ' · code as of ' + repo.committed;
+    // The engine as two mono chips and a quiet date: three natures of
+    // information, not one sentence wrapped over two lines.
+    clear(el.findingTarget);
+    el.findingTarget.appendChild(text('span', 'visually-hidden', 'Judged for '));
+    el.findingTarget.appendChild(text('span', 'pg-finding-engine', 'PHP ' + repo.target.php));
+    el.findingTarget.appendChild(text('span', 'pg-finding-engine', 'PCRE2 ' + repo.target.pcre));
+    // The source says itself only when it is one: a fallback notice is
+    // the pipeline's business, not the visitor's.
+    var targetSource = repo.target.source && repo.target.source.indexOf('fallback') !== 0 ? repo.target.source + ' · ' : '';
+    el.findingTarget.appendChild(text('span', 'pg-finding-asof', targetSource + 'code as of ' + repo.committed));
     el.snippetFile.textContent = finding.file + ':' + finding.line + (finding.source ? ' · ' + finding.source : '') + (finding.location ? ' · ' + finding.location : '');
 
     clear(el.snippet);
@@ -4164,9 +4254,265 @@
     window.clearTimeout(filterTimer);
     filterTimer = window.setTimeout(filterTree, 120);
   });
+  // The list column folds on its window's edge: reading a finding wants
+  // the card and the tools wide, browsing wants the list back — the tab
+  // says which side of that the visitor is on.
+  if (el.listingTab) {
+    el.listingTab.addEventListener('click', function () {
+      var hidden = root.classList.toggle('is-listing-hidden');
+      el.listingTab.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+      el.listingTab.title = hidden ? 'Unfold the list column' : 'Fold the list column';
+      // The rail and its unfold control are in the page from the first
+      // paint, so a fold made before the index loads can be undone.
+      el.listingRail.hidden = !hidden;
+      applyColumnWidths();
+      // The control under the hand disappears with the fold: the focus
+      // moves to the one that undoes it. An avatar that unfolds the list
+      // then hands the focus on to the project it named.
+      var focused = document.activeElement;
+      if (focused === el.listingTab || el.listingRail.contains(focused)) {
+        (hidden ? el.listingRailOpen : el.listingTab).focus();
+      }
+    });
+    // The rail carries the unfold control of its own, at its head: the tab
+    // gives its edge to the avatars when the column folds.
+    el.listingRailOpen.addEventListener('click', function () {
+      el.listingTab.click();
+    });
+  }
+
+  // Folded, the list leaves its avatars behind: a rail of owners on the
+  // window's edge, each picturing its project, each unfolding the column
+  // onto that project — the ecosystem stays in reach while the finding
+  // reads wide. The rail pictures the owners the tree shows: on a
+  // repository's page, that project alone.
+  function buildRail() {
+    Array.prototype.forEach.call(el.listingRail.querySelectorAll('.pg-listing-rail-avatar'), function (avatar) {
+      avatar.remove();
+    });
+    Array.prototype.forEach.call(el.findingsTree.querySelectorAll('[data-owner]'), function (ownerItem) {
+      var login = ownerItem.getAttribute('data-owner');
+      var owner = findingsIndex.owners[login];
+      var avatar = document.createElement('button');
+      avatar.type = 'button';
+      avatar.className = 'pg-listing-rail-avatar';
+      avatar.setAttribute('aria-label', login);
+      var image = document.createElement('img');
+      image.src = owner.avatar;
+      image.alt = '';
+      image.width = 20;
+      image.height = 20;
+      image.loading = 'lazy';
+      avatar.appendChild(image);
+      avatar.title = login;
+      avatar.addEventListener('click', function () { openOwnerFromRail(login); });
+      el.listingRail.appendChild(avatar);
+    });
+  }
+
+  function openOwnerFromRail(login) {
+    if (root.classList.contains('is-listing-hidden') && el.listingTab) {
+      el.listingTab.click();
+    }
+    setSource('findings', false);
+    return loadIndex().then(function () {
+      var item = el.findingsTree.querySelector('[data-owner="' + login.replace(/"/g, '') + '"]');
+      if (!item) {
+        return;
+      }
+      // The avatar named a project: a filter that hides it gives way.
+      if (item.hidden && el.findingsFilter.value) {
+        el.findingsFilter.value = '';
+        filterTree();
+      }
+      openGroup(item);
+      focusItem(item);
+    });
+  }
+
+  // --- the column separators ---------------------------------------------
+
+  // The columns answer the hand: a separator on each boundary, dragged by
+  // the pointer, walked by the arrow keys, doubled back to its default by
+  // a double click, the chosen widths persisting between visits. The last
+  // column gives what is left; nothing ever disappears below its floor.
+  var COLUMNS_STORAGE_KEY = 'playground-columns';
+  var SPLIT_MIN = 144;      // a column nobody can read
+  var SPLIT_LAST_MIN = 320; // the answers never disappear
+  var SPLIT_STEP = 16;      // one key press, one notch
+  var columnWidths = null;  // { list, fields } in px, null = the stylesheet's word
+  var columnsMedia = window.matchMedia ? window.matchMedia('(min-width: 1280px)') : null;
+
+  // The columns share the body's content box: its padding (wider when
+  // the rail takes the edge) and its gaps are not column.
+  function columnBounds() {
+    var style = getComputedStyle(el.body);
+    var folded = root.classList.contains('is-listing-hidden');
+    var gap = parseFloat(style.columnGap) || 0;
+    var total = el.body.clientWidth
+      - (parseFloat(style.paddingLeft) || 0)
+      - (parseFloat(style.paddingRight) || 0)
+      - gap * (folded ? 1 : 2);
+    return { total: total, listMax: Math.max(SPLIT_MIN, total - SPLIT_LAST_MIN - SPLIT_MIN), fieldsMax: Math.max(SPLIT_MIN, total - SPLIT_LAST_MIN) };
+  }
+
+  function clampColumnWidths() {
+    var bounds = columnBounds();
+    var folded = root.classList.contains('is-listing-hidden');
+    columnWidths.list = Math.min(Math.max(columnWidths.list, SPLIT_MIN), bounds.listMax);
+    // The answers width is bounded by what the list leaves: the two never
+    // add up past the last column's floor.
+    var fieldsMax = folded ? bounds.fieldsMax : Math.max(SPLIT_MIN, bounds.total - columnWidths.list - SPLIT_LAST_MIN);
+    columnWidths.fields = Math.min(Math.max(columnWidths.fields, SPLIT_MIN), fieldsMax);
+  }
+
+  function applyColumnWidths() {
+    if (!columnsMedia || !columnsMedia.matches || !columnWidths) {
+      el.body.style.gridTemplateColumns = '';
+      positionSplitters();
+      return;
+    }
+    clampColumnWidths();
+    var folded = root.classList.contains('is-listing-hidden');
+    el.body.style.gridTemplateColumns = folded
+      ? columnWidths.fields + 'px minmax(0, 1fr)'
+      : columnWidths.list + 'px ' + columnWidths.fields + 'px minmax(0, 1fr)';
+    positionSplitters();
+  }
+
+  function storeColumnWidths() {
+    try {
+      localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(columnWidths));
+    } catch (error) {/* the widths simply do not persist */}
+  }
+
+  function readColumnWidths() {
+    try {
+      var stored = JSON.parse(localStorage.getItem(COLUMNS_STORAGE_KEY) || 'null');
+      if (stored && typeof stored.list === 'number' && typeof stored.fields === 'number') {
+        columnWidths = stored;
+      }
+    } catch (error) {/* the stylesheet's widths stand */}
+  }
+
+  function measureColumnWidths() {
+    var tracks = getComputedStyle(el.body).gridTemplateColumns.split(' ').map(parseFloat);
+    var folded = root.classList.contains('is-listing-hidden');
+    if (folded && tracks.length >= 2) {
+      columnWidths = columnWidths || { list: 208, fields: tracks[0] };
+      columnWidths.fields = tracks[0];
+    } else if (tracks.length >= 3) {
+      columnWidths = { list: tracks[0], fields: tracks[1] };
+    }
+  }
+
+  function nudgeColumn(which, delta) {
+    if (!columnWidths) {
+      measureColumnWidths();
+    }
+    clampColumnWidths();
+    var before = columnWidths[which];
+    columnWidths[which] = columnWidths[which] + delta;
+    applyColumnWidths();
+    if (columnWidths[which] !== before) {
+      storeColumnWidths();
+    }
+  }
+
+  function dragSplitter(handle, which) {
+    handle.addEventListener('pointerdown', function (down) {
+      if (!columnWidths) {
+        measureColumnWidths();
+      }
+      down.preventDefault();
+      try {
+        handle.setPointerCapture(down.pointerId);
+      } catch (error) {/* the drag simply follows the pointer */}
+      var start = columnWidths[which];
+      var move = function (moveEvent) {
+        columnWidths[which] = start + (moveEvent.clientX - down.clientX);
+        applyColumnWidths();
+      };
+      var up = function () {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+        clampColumnWidths();
+        applyColumnWidths();
+        storeColumnWidths();
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+    });
+    handle.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        nudgeColumn(which, -SPLIT_STEP);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        nudgeColumn(which, SPLIT_STEP);
+      }
+    });
+    handle.addEventListener('dblclick', function () {
+      columnWidths = null;
+      el.body.style.gridTemplateColumns = '';
+      try {
+        localStorage.removeItem(COLUMNS_STORAGE_KEY);
+      } catch (error) {/* the default widths stand */}
+      positionSplitters();
+    });
+  }
+
+  // The handles ride the boundaries; where a boundary sits, the computed
+  // tracks say, whatever set them — the stylesheet or the hand.
+  function positionSplitters() {
+    if (!columnsMedia || !columnsMedia.matches) {
+      return;
+    }
+    var handles = el.body.querySelectorAll('.pg-splitter');
+    var folded = root.classList.contains('is-listing-hidden');
+    var tracks = getComputedStyle(el.body).gridTemplateColumns.split(' ').map(parseFloat);
+    if (tracks.length < 2) {
+      return;
+    }
+    var style = getComputedStyle(el.body);
+    var gap = parseFloat(style.columnGap) || 0;
+    // An absolute box starts at the padding edge; the tracks, after it.
+    var inset = parseFloat(style.paddingLeft) || 0;
+    handles.forEach(function (handle) {
+      var which = handle.getAttribute('data-column');
+      var hiddenByFold = folded && which === 'list';
+      handle.hidden = hiddenByFold;
+      var edge = which === 'list' ? tracks[0] : (folded ? tracks[0] : tracks[0] + gap + tracks[1]);
+      handle.style.left = Math.round(inset + edge + gap / 2 - handle.offsetWidth / 2) + 'px';
+    });
+  }
+
+  function buildSplitters() {
+    [['list', 'Projects list width'], ['fields', 'Answers width']].forEach(function (pair) {
+      var handle = document.createElement('div');
+      handle.className = 'pg-splitter';
+      handle.setAttribute('role', 'separator');
+      handle.setAttribute('aria-orientation', 'vertical');
+      handle.setAttribute('aria-label', pair[1]);
+      handle.setAttribute('data-column', pair[0]);
+      handle.tabIndex = 0;
+      handle.title = pair[1] + ' — drag, or press the arrow keys';
+      el.body.appendChild(handle);
+      dragSplitter(handle, pair[0]);
+    });
+  }
+
   // The widest screens show the list whole; below, a fold above the
   // fields keeps them near.
   var wideScreen = window.matchMedia ? window.matchMedia('(min-width: 1280px)') : null;
+  // A finding's link leaves the fold closed, and a row in a closed fold
+  // has nowhere to scroll to: opening it brings the shown row in.
+  el.findingsBrowse.addEventListener('toggle', function () {
+    var shown = el.findingsBrowse.open ? el.findingsTree.querySelector('[aria-selected="true"]') : null;
+    if (shown) {
+      revealRow(shown);
+    }
+  });
   function syncBrowse() {
     if (wideScreen && wideScreen.matches) {
       el.findingsBrowse.open = true;
@@ -4178,6 +4524,16 @@
       wideScreen.addEventListener('change', syncBrowse);
     }
   }
+  buildSplitters();
+  readColumnWidths();
+  applyColumnWidths();
+  if (columnsMedia && columnsMedia.addEventListener) {
+    columnsMedia.addEventListener('change', applyColumnWidths);
+  }
+  // A smaller window clamps the stored widths again, then places the
+  // handles.
+  window.addEventListener('resize', applyColumnWidths);
+
   el.findingCopy.addEventListener('click', editCopy);
   el.findingBack.addEventListener('click', function () {
     if (lastFinding) {
@@ -4250,7 +4606,7 @@
     });
     el.findingsPanel.hidden = !findings;
     el.examplesList.classList.toggle('is-findings', findings);
-    el.examplesList.setAttribute('aria-label', findings ? 'Findings' : 'Examples');
+    el.examplesList.setAttribute('aria-label', findings ? 'Projects' : 'Examples');
     if (findings) {
       loadIndex();
     }
