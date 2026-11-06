@@ -341,7 +341,7 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringContainsString('noteCutLink(fromHash);', $script, 'The link read at boot is the one noted.');
         $this->assertStringContainsString('return linkNotice && el.subject.value === linkNotice.subject ? linkNotice.text : \'\';', self::between($script, 'function linkWarning() {', "\n  }\n"));
         $set = self::between($script, 'function setStatus(message, tone) {', "\n  }\n");
-        $this->assertStringContainsString("if (!message && linkWarning()) {", $set, 'An empty line falls back to the link\'s warning.');
+        $this->assertStringContainsString('if (!message && linkWarning()) {', $set, 'An empty line falls back to the link\'s warning.');
     }
 
     /**
