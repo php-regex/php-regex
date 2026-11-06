@@ -102,8 +102,17 @@ tools/phpunit/vendor/bin/phpunit --group documentation
 
 A merge into 2.x runs nothing: its pull request already ran what the change
 could affect, and `bin/status` and `bin/release` read a merge commit's checks
-from the head of its pull request. Every Monday the scheduled runs read 2.x
-whole, and each workflow runs on any branch by hand (`workflow_dispatch`).
+from a pull request run on the head of its pull request, as long as Git made
+the merge on its own and the run started after the merge's base reached 2.x,
+as GitHub's record of the branch's pushes dates it (a record kept ninety
+days): a conflict resolved by hand, a branch that moved after the last run,
+or a base older than the record, is a tree no run is known to have seen, so the workflow runs again on 2.x
+(`gh workflow run tests.yml --ref 2.x`) before a release. A workflow a change did not start, because
+the change touched nothing the workflow reads, answers with its last run
+before that change; `bin/ci-answer tests.yml` names the run that answers for
+HEAD, or the commit that changed what the workflow reads and has no run. Every
+Monday the scheduled runs read 2.x whole, and each workflow runs on any branch
+by hand (`workflow_dispatch`).
 
 Two checks run only in CI. The spelling of the documentation and the
 sources is read by [typos](https://github.com/crate-ci/typos), scoped by
@@ -285,8 +294,8 @@ percentile is above 6 ms (`--max-p99=<ms>` sets another limit); a release
 waits until it passes. Run it on an idle machine: the times are wall-clock.
 
 `bin/release` releases only a HEAD that origin's branch holds, read from
-origin when it runs, and on which every workflow that runs on each push to
-2.x passed: the tests, the engines, static analysis, the packages (each
+origin when it runs, and for which every gating workflow passed, on HEAD or
+on the last commit it read before HEAD: the tests, the engines, static analysis, the packages (each
 installed alone, its manifest checked against what its sources use, which
 `php tests/Tools/package_dependency_check.php Parser <project>` runs on one
 package from a throwaway project that installs it, which the check adds to,

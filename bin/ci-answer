@@ -1,0 +1,230 @@
+#!/usr/bin/env bash
+#
+# This file is part of the PHPRegex package.
+#
+# (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+#
+# For the full copyright and license information, please view the LICENSE
+# file that was distributed with this source code.
+#
+# Says which CI run answers for HEAD in one workflow. A pull request runs the
+# workflows its changes can affect, and a merge into 2.x runs nothing, so a
+# commit is answered by a run started on itself on the branch or, for a merge
+# Git made on its own (no conflict resolved by hand), by a pull request run on
+# the head of its pull request that started once the merge's base was on the
+# branch, as the branch's record of its pushes dates it, so that it tested
+# that very base; when there is none and nothing the commit changed is read by
+# the workflow (its pull_request paths or paths-ignore, as the commit holds
+# them), by the commit before it, along the first parents.
+#
+# Usage:
+#   bin/ci-answer [--root <dir>] [--limit <n>] [--branch <name>] <workflow>
+#
+#   --root    the checkout to read (default: the one holding this script)
+#   --limit   the most commits to walk back (default: 200)
+#   --branch  the branch the merges landed on (default: 2.x)
+#
+# Prints one line:
+#   run <sha> <status> <conclusion>   the run on <sha> answers
+#   unread <sha> <path>               <sha> changed <path>, which the workflow reads, and no run answers for it
+#   none <n>                          no run within <n> commits, or the workflow is not there
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+limit=200
+branch=2.x
+workflow=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --root) root=${2:?--root needs a directory}; shift ;;
+        --limit) limit=${2:?--limit needs a number}; shift ;;
+        --branch) branch=${2:?--branch needs a branch}; shift ;;
+        -h|--help) sed -n '10,/^set -/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -*) echo "Unknown option: $1" >&2; exit 2 ;;
+        *) workflow=$1 ;;
+    esac
+    shift
+done
+if [ -z "$workflow" ]; then
+    echo "Usage: bin/ci-answer [--root <dir>] [--limit <n>] [--branch <name>] <workflow>" >&2
+    exit 2
+fi
+cd "$root"
+
+# Byte semantics whatever the caller's locale: a range such as "[a-z]" is
+# the ASCII letters, as GitHub reads it, and not a locale's collation.
+export LC_ALL=C
+
+# A workflow path pattern as an anchored extended regular expression, as
+# GitHub reads its filters: "**/" is any directory or none, "**" crosses
+# directories, "*" stays in one, "?" and "+" repeat the character before
+# them zero or one and one or more times, "[...]" is one character of a set
+# or range; every other character is itself.
+glob_regex() {
+    local glob=$1 out='' i=0 c
+    while [ "$i" -lt "${#glob}" ]; do
+        c=${glob:i:1}
+        if [ "$c" = '*' ] && [ "${glob:i+1:1}" = '*' ]; then
+            if [ "${glob:i+2:1}" = '/' ]; then out+='(.*/)?'; i=$((i + 3)); else out+='.*'; i=$((i + 2)); fi
+            continue
+        fi
+        case "$c" in
+            '*') out+='[^/]*' ;;
+            '.'|'^'|'$'|'('|')'|'{'|'}'|'|'|"\\") out+="\\$c" ;;
+            *) out+=$c ;;
+        esac
+        i=$((i + 1))
+    done
+    printf '^%s$' "$out"
+}
+
+# The filter of the workflow's pull_request trigger, one "paths <pattern>" or
+# "ignore <pattern>" line each, after a "pull_request" line when it has one.
+pull_request_filter() {
+    awk '
+        /^[^ #]/ { on = ($0 ~ /^on:/); request = 0; key = ""; next }
+        on && /^  [^ #]/ { request = ($0 ~ /^  pull_request:/); key = ""; if (request) print "pull_request"; next }
+        request && /^    [^ #-]/ { key = ""; if ($0 ~ /^    paths:/) key = "paths"; else if ($0 ~ /^    paths-ignore:/) key = "ignore"; next }
+        request && key != "" && /^      - / {
+            value = $0
+            sub(/^      - /, "", value)
+            sub(/[ \t]+#.*$/, "", value)
+            sub(/[ \t]+$/, "", value)
+            if (value ~ /^\047.*\047$/ || value ~ /^".*"$/) value = substr(value, 2, length(value) - 2)
+            print key " " value
+        }
+    '
+}
+
+# The filter of the workflow as one commit holds it, parsed once per version.
+# A pattern holding a byte outside ASCII cannot be matched byte by byte as
+# GitHub matches it ("é?" would repeat half of "é"): the workflow is then
+# taken to read every change.
+parsed=""
+triggered=0
+exact=1
+paths=()
+ignores=()
+read_filter() {
+    local line
+    parsed=$1
+    triggered=0
+    exact=1
+    paths=()
+    ignores=()
+    while IFS= read -r line; do
+        case "$line" in
+            *[!\ -~]*) exact=0 ;;
+        esac
+        case "$line" in
+            pull_request) triggered=1 ;;
+            'paths !'*) paths+=("!$(glob_regex "${line#paths !}")") ;;
+            'paths '*) paths+=("$(glob_regex "${line#paths }")") ;;
+            'ignore '*) ignores+=("$(glob_regex "${line#ignore }")") ;;
+        esac
+    done < <(git cat-file blob "$1" | pull_request_filter)
+}
+
+# Whether a change to the file starts the workflow on a pull request: the
+# last of its paths the file matches decides, or none of its paths-ignore.
+reads() {
+    local file=$1 pattern read=0
+    [ "$triggered" -eq 1 ] || return 1
+    [ "$exact" -eq 1 ] || return 0
+    if [ "${#paths[@]}" -gt 0 ]; then
+        for pattern in "${paths[@]}"; do
+            if [ "${pattern:0:1}" = '!' ]; then
+                if [[ $file =~ ${pattern:1} ]]; then read=0; fi
+            elif [[ $file =~ $pattern ]]; then
+                read=1
+            fi
+        done
+        [ "$read" -eq 1 ]
+        return
+    fi
+    if [ "${#ignores[@]}" -gt 0 ]; then
+        for pattern in "${ignores[@]}"; do
+            if [[ $file =~ $pattern ]]; then return 1; fi
+        done
+    fi
+    return 0
+}
+
+# Whether a merge holds the tree Git builds from its two parents with no
+# conflict, which the pull request run tested; a conflict resolved by hand,
+# or a change made in the merge itself, is a tree no such run has seen.
+merged_on_its_own() {
+    local tree
+    tree=$(git merge-tree --write-tree "$1^1" "$1^2" 2>/dev/null) || return 1
+    [ "${tree%%$'\n'*}" = "$(git rev-parse "$1^{tree}")" ]
+}
+
+sha=$(git rev-parse HEAD)
+count=0
+pushes=""
+pushes_read=""
+while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
+    count=$((count + 1))
+    # A run on the commit itself, started on the branch (by hand, on a
+    # schedule, by a push): it checked out that very tree. A pull request
+    # run on the same commit tested it merged into the branch as it stood,
+    # a tree the commit does not hold once the branch moved or was forced
+    # over; a pull request run answers only through a merge, below.
+    answer=$(gh run list --commit "$sha" --workflow "$workflow" --json conclusion,status,event --jq '[.[] | select(.event != "pull_request")][0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null || true)
+    if [ -n "$answer" ]; then
+        echo "run $(git rev-parse --short "$sha") $answer"
+        exit 0
+    fi
+    pull_request_head=$(git rev-parse -q --verify "$sha^2" 2>/dev/null || true)
+    if [ -n "$pull_request_head" ] && merged_on_its_own "$sha"; then
+        # A pull request run merges its head into the branch as it stands
+        # when the run starts, and is not run again when the branch moves:
+        # only a run that started after the base landed tested this merge,
+        # and the branch cannot move between the base landing and the merge
+        # landing on it. When the base landed, GitHub's record of the
+        # branch's pushes says (a commit's own date is when it was made, and
+        # a commit pushed straight to the branch may land long after); past
+        # the record's ninety days nothing says, and no run answers. Both
+        # times are to the second, so a run created in the second the base
+        # landed may have started before it, and is no evidence either.
+        if [ -z "$pushes_read" ]; then
+            # Unread, the record is no evidence: the merge stays unanswered,
+            # and stderr says why, so the refusal is not taken for the change.
+            if ! pushes=$(gh api "repos/{owner}/{repo}/activity?ref=refs/heads/$branch&per_page=100" --paginate \
+                --jq '.[] | "\(.after) \(.timestamp)"' 2>/dev/null); then
+                pushes=""
+                echo "ci-answer: the pushes to $branch could not be read from GitHub, so no pull request run answers for a merge" >&2
+            fi
+            pushes_read=1
+        fi
+        base=$(git rev-parse "$sha^1")
+        landed=$(awk -v base="$base" '$1 == base { print $2; exit }' <<< "$pushes")
+        answer=""
+        if [ -n "$landed" ]; then
+            answer=$(gh run list --commit "$pull_request_head" --workflow "$workflow" --event pull_request --json conclusion,status,createdAt --jq "[.[] | select(.createdAt > \"$landed\")][0] // empty | \"\\(.status) \\(.conclusion)\"" 2>/dev/null || true)
+        fi
+        if [ -n "$answer" ]; then
+            echo "run $(git rev-parse --short "$pull_request_head") $answer"
+            exit 0
+        fi
+    fi
+
+    blob=$(git rev-parse -q --verify "$sha:.github/workflows/$workflow" 2>/dev/null || true)
+    [ -n "$blob" ] || break
+    [ "$blob" = "$parsed" ] || read_filter "$blob"
+
+    parent=$(git rev-parse -q --verify "$sha^1" 2>/dev/null || true)
+    if [ -n "$parent" ]; then
+        changed=$(git -c core.quotepath=off diff --name-only --no-renames "$parent" "$sha")
+    else
+        changed=$(git -c core.quotepath=off ls-tree -r --name-only "$sha")
+    fi
+    while IFS= read -r file; do
+        if [ -n "$file" ] && reads "$file"; then
+            echo "unread $(git rev-parse --short "$sha") $file"
+            exit 0
+        fi
+    done <<< "$changed"
+    sha=$parent
+done
+echo "none $count"

@@ -605,6 +605,102 @@ exit 1
     }
 
     #[Test]
+    public function test_release_reads_a_workflow_a_change_did_not_start_from_the_run_before_it(): void
+    {
+        $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+
+        [$code, $output] = $this->runScript('release', ['--dry-run', '2.0.0'], $this->fakeGitHub());
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('would tag v2.0.0', $output);
+    }
+
+    #[Test]
+    public function test_release_refuses_a_change_no_run_has_read(): void
+    {
+        $this->publishedWithRuns(['src/Other.php' => '<?php']);
+
+        [$code, $output] = $this->runScript('release', ['--dry-run', '2.0.0'], $this->fakeGitHub());
+
+        $this->assertSame(1, $code, $output);
+        $short = $this->git('rev-parse', '--short', 'HEAD');
+        foreach (self::gatedWorkflows('release') as $workflow) {
+            $this->assertStringContainsString($workflow.' has no run for '.$short.', which changed src/Other.php', $output);
+        }
+    }
+
+    #[Test]
+    public function test_release_refuses_a_run_that_did_not_pass(): void
+    {
+        $runs = $this->publishedWithRuns(['docs/guides/new.md' => 'prose'], 'completed failure');
+
+        [$code, $output] = $this->runScript('release', ['--dry-run', '2.0.0'], $this->fakeGitHub());
+
+        $this->assertSame(1, $code, $output);
+        $this->assertStringContainsString('tests.yml on '.$this->git('rev-parse', '--short', $runs).' is "failure", not "success".', $output);
+    }
+
+    #[Test]
+    public function test_status_names_the_run_that_answers_for_head(): void
+    {
+        $runs = $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+
+        [, $output] = $this->runScript('status', [], $this->fakeGitHub());
+
+        $this->assertStringContainsString('tests.yml passed on '.$this->git('rev-parse', '--short', $runs).', and nothing it reads changed since', $output);
+        $this->assertFileExists($this->root.'/fake/curl.log', 'The package channels are read through the stub, never the network.');
+    }
+
+    #[Test]
+    public function test_status_names_the_change_no_run_has_read(): void
+    {
+        $this->publishedWithRuns(['src/Other.php' => '<?php']);
+
+        [, $output] = $this->runScript('status', [], $this->fakeGitHub());
+
+        $this->assertStringContainsString('no tests.yml run for '.$this->git('rev-parse', '--short', 'HEAD').', which changed src/Other.php', $output);
+    }
+
+    /**
+     * When GitHub will not give the record of the branch's pushes, the
+     * merge is refused, and both scripts say why, once, not once a
+     * workflow.
+     *
+     * @return iterable<string, array{script: string, arguments: list<string>}>
+     */
+    public static function provideScriptsReadingTheRuns(): iterable
+    {
+        yield 'release' => ['script' => 'release', 'arguments' => ['--dry-run', '2.0.0']];
+        yield 'status' => ['script' => 'status', 'arguments' => []];
+    }
+
+    /**
+     * @param list<string> $arguments
+     */
+    #[Test]
+    #[DataProvider('provideScriptsReadingTheRuns')]
+    public function test_a_record_of_the_pushes_that_cannot_be_read_is_said_once(string $script, array $arguments): void
+    {
+        $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+        $branch = $this->git('rev-parse', '--abbrev-ref', 'HEAD');
+        $this->git('checkout', '-q', '-b', 'feature');
+        file_put_contents($this->root.'/src/Merged.php', '<?php');
+        $this->git('add', '-A');
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--no-verify', '-m', 'feature');
+        $this->git('checkout', '-q', $branch);
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'merge', '-q', '--no-ff', '--no-verify', '-m', 'Merge feature', 'feature');
+        $this->git('push', '-q', 'origin', 'HEAD:refs/heads/2.x');
+        $env = $this->fakeGitHub();
+        $fake = (string) file_get_contents($this->root.'/fake/gh');
+        file_put_contents($this->root.'/fake/gh', str_replace("#!/usr/bin/env bash\n", "#!/usr/bin/env bash\n[ \"\$1\" = api ] && { echo 'HTTP 403' >&2; exit 1; }\n", $fake));
+
+        [, $output] = $this->runScript($script, $arguments, $env);
+
+        $this->assertSame(1, substr_count($output, 'the pushes to 2.x could not be read from GitHub, so no pull request run answers for a merge'), $output);
+        $this->assertStringContainsString('src/Merged.php', $output, 'The merge is still refused for what it changed.');
+    }
+
+    #[Test]
     public function test_release_and_status_check_the_same_workflows(): void
     {
         $release = self::gatedWorkflows('release');
@@ -1013,6 +1109,77 @@ exit 1
         $this->git('init', '-q', '-b', '2.x');
         $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'add', '-A');
         $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--no-verify', '-m', 'state');
+    }
+
+    /**
+     * A release-ready 2.x on origin whose gating workflows each ignore the
+     * site, with a run of each on its first commit, then a second commit
+     * making the change given, pushed too.
+     *
+     * @param array<string, string> $change
+     *
+     * @return string the commit the runs are on
+     */
+    private function publishedWithRuns(array $change, string $state = 'completed success'): string
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        mkdir($this->root.'/.github/workflows', 0o777, true);
+        foreach (self::gatedWorkflows('release') as $workflow) {
+            file_put_contents($this->root.'/.github/workflows/'.$workflow, "on:\n  pull_request:\n    branches: [ 2.x ]\n    paths-ignore:\n      - 'docs/**'\n  workflow_dispatch:\n");
+        }
+        file_put_contents($this->root.'/.gitignore', "/fake/\n/runs\n");
+        $this->commit();
+        $this->publish();
+        $runs = $this->git('rev-parse', 'HEAD');
+        $lines = array_map(static fn (string $workflow): string => $runs.' '.$workflow.' '.$state, self::gatedWorkflows('release'));
+        file_put_contents($this->root.'/runs', implode("\n", $lines)."\n");
+
+        foreach ($change as $path => $content) {
+            if (!is_dir(\dirname($this->root.'/'.$path))) {
+                mkdir(\dirname($this->root.'/'.$path), 0o777, true);
+            }
+            file_put_contents($this->root.'/'.$path, $content);
+        }
+        $this->git('add', '-A');
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--no-verify', '-m', 'change');
+        $this->git('push', '-q', 'origin', 'HEAD:refs/heads/2.x');
+
+        return $runs;
+    }
+
+    /**
+     * A gh first on the PATH that answers "gh run list --commit <sha>
+     * --workflow <file>" from the runs file and every other call with
+     * nothing.
+     *
+     * @return array<string, string>
+     */
+    private function fakeGitHub(): array
+    {
+        if (!is_dir($this->root.'/fake')) {
+            mkdir($this->root.'/fake');
+        }
+        file_put_contents($this->root.'/fake/gh', <<<'BASH'
+            #!/usr/bin/env bash
+            sha=""; workflow=""
+            while [ $# -gt 0 ]; do
+                case "$1" in
+                    --commit) sha=$2; shift ;;
+                    --workflow) workflow=$2; shift ;;
+                esac
+                shift
+            done
+            [ -n "$sha" ] || exit 0
+            awk -v sha="$sha" -v workflow="$workflow" '$1 == sha && $2 == workflow { print $3 " " $4; exit }' "$GH_RUNS"
+
+            BASH);
+        chmod($this->root.'/fake/gh', 0o755);
+        // No request leaves the test: Packagist and the package channels
+        // bin/status reads answer as if offline.
+        file_put_contents($this->root.'/fake/curl', "#!/usr/bin/env bash\necho \"curl \$*\" >> \"\$CURL_LOG\"\nexit 7\n");
+        chmod($this->root.'/fake/curl', 0o755);
+
+        return ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'GH_RUNS' => $this->root.'/runs', 'CURL_LOG' => $this->root.'/fake/curl.log'];
     }
 
     private function version(): string
