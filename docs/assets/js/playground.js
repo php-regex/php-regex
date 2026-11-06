@@ -82,6 +82,7 @@
     matchDetails: root.querySelector('.pg-match-details'),
     version: root.querySelector('#pg-version'),
     run: root.querySelector('.pg-run'),
+    runKey: root.querySelector('.pg-run-key'),
     examples: root.querySelectorAll('.pg-example'),
     status: root.querySelector('.pg-status'),
     explain: root.querySelector('.pg-explain'),
@@ -89,6 +90,7 @@
     lintNote: root.querySelector('.pg-lint-note'),
     facts: root.querySelector('.pg-facts'),
     state: root.querySelector('.pg-state'),
+    stateWord: root.querySelector('.pg-state-word'),
     caption: document.querySelector('.pg-caption'),
     live: root.querySelector('.pg-live'),
     treePattern: tree.querySelector('.tree-pattern'),
@@ -228,9 +230,11 @@
     }
   }
 
-  // The word in the title bar: what the window is doing right now.
+  // The light and the word in the title bar: what the window is doing
+  // right now. A phone shows the light alone; its title still names it.
   function setState(word, tone) {
-    el.state.textContent = word;
+    el.stateWord.textContent = word;
+    el.state.title = word;
     el.state.className = 'pg-state' + (tone ? ' is-' + tone : '');
   }
 
@@ -240,10 +244,12 @@
   function showLoader(stage) {
     el.loaderStage.textContent = stage;
     el.loader.hidden = false;
+    root.classList.add('is-booting');
   }
 
   function hideLoader() {
     el.loader.hidden = true;
+    root.classList.remove('is-booting');
   }
 
   function announce(message) {
@@ -432,7 +438,7 @@
       failures[key] = 2;
       toolAnswers.redos = { key: key, payload: { error: { message: reason, position: null } }, request: request, checked: true, failed: true };
       hideLoader();
-      setState('Ready');
+      setState('Ready', 'ok');
       setStatus(reason + ' The engine could not judge the pattern for backtracking; press Run to try again.', 'warn');
       updateBadges();
       drain();
@@ -574,7 +580,7 @@
       }
     }
     if (!inflight && !pending && booted) {
-      setState('Ready');
+      setState('Ready', 'ok');
     }
   }
 
@@ -660,7 +666,7 @@
     if (request.type === 'analyze') {
       render(payload, request, false);
       setStatus('', '');
-      setState('Ready');
+      setState('Ready', 'ok');
     } else if (request.type === 'match') {
       if (current && current.regex === request.regex && current.subject === request.subject) {
         matchFor = requestKey(request);
@@ -835,7 +841,11 @@
     clear(el.facts);
     clear(el.caption);
     if (prerendered) {
-      // The pill in the title bar says the sample: nothing ran yet.
+      // Nothing ran yet: the light in the title bar says the sample, the
+      // bar says what judged it.
+      if (payload.target) {
+        el.facts.appendChild(chip('sample judged for', 'PHP ' + payload.target.php + ' · PCRE2 ' + payload.target.pcre));
+      }
       el.caption.hidden = true;
       return;
     }
@@ -3574,13 +3584,22 @@
   function measureStrip() {
     el.results.style.setProperty('--pg-strip-h', el.tabStrip.offsetHeight + 'px');
     syncTabFades();
+    syncExampleFades();
   }
   // The fades say themselves, only where more tabs wait — the strip is
   // one line, and a travelled edge is the whole affordance it needs.
   function syncTabFades() {
-    var max = el.tabStrip.scrollWidth - el.tabStrip.clientWidth;
-    el.tabStrip.classList.toggle('has-more-right', el.tabStrip.scrollLeft < max - 4);
-    el.tabStrip.classList.toggle('has-more-left', el.tabStrip.scrollLeft > 4);
+    syncEdgeFades(el.tabStrip);
+  }
+  // The row of examples, where it scrolls under the fields, says the same
+  // of the examples past its edge; a column or a wrapped row never fades.
+  function syncExampleFades() {
+    syncEdgeFades(el.examplesList);
+  }
+  function syncEdgeFades(strip) {
+    var max = strip.scrollWidth - strip.clientWidth;
+    strip.classList.toggle('has-more-right', max > 4 && strip.scrollLeft < max - 4);
+    strip.classList.toggle('has-more-left', max > 4 && strip.scrollLeft > 4);
   }
   // The open tab, or the one the arrows land on, is carried to the
   // middle of the strip: a tab reached by keyboard is a tab opened, and
@@ -3596,6 +3615,7 @@
     }
   }
   el.tabStrip.addEventListener('scroll', syncTabFades, { passive: true });
+  el.examplesList.addEventListener('scroll', syncExampleFades, { passive: true });
   el.tabStrip.addEventListener('focusin', function (event) {
     var tab = event.target.closest('.pg-tab');
     if (tab) {
@@ -3608,6 +3628,7 @@
     // the strip's own box: the tabs are watched too, so the fades follow.
     var stripObserver = new ResizeObserver(measureStrip);
     stripObserver.observe(el.tabStrip);
+    stripObserver.observe(el.examplesList);
     Array.prototype.forEach.call(el.tabStrip.querySelectorAll('.pg-tab'), function (tab) {
       stripObserver.observe(tab);
     });
@@ -4767,6 +4788,9 @@
       area.previousElementSibling.scrollLeft = area.scrollLeft;
     });
   });
+  // Run says its shortcut in the platform's own words.
+  var onApple = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+  el.runKey.textContent = onApple ? '⌘↵' : 'Ctrl ↵';
   el.run.addEventListener('click', function () {
     track('run', { trigger: 'button' });
     pageTouched = true;
