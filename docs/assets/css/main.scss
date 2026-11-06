@@ -4937,8 +4937,9 @@ body.search-open {
 }
 /* While the card names the stage, the status line saying the same stage
    steps out of sight — its line kept, its live region still read. A
-   warning, such as a failed boot starting again, stays in sight. */
-.playground.is-booting .pg-status.is-busy {
+   warning the boot met, such as a subject cut out of a link or a failed
+   boot starting again, is said in its own tone and stays in sight. */
+.playground.is-booting .pg-status.is-stage {
   clip-path: inset(50%);
 }
 .pg-loader-card {
@@ -5573,7 +5574,8 @@ body.search-open {
 .pg-status:empty::before {
   content: '\200B';
 }
-.pg-status.is-busy {
+.pg-status.is-busy,
+.pg-status.is-stage {
   color: var(--amber-deep);
 }
 .pg-status.is-warn,

@@ -154,6 +154,8 @@
   var describeWanted = -1;  // the node index the tree wants described
   var failures = {};        // request key -> consecutive failures
   var booted = false;
+  var bootNotice = '';      // a warning met during the boot, kept over its stages
+  var linkNotice = null;    // { text, subject }: a warning about the text a link brought
   var current = null;       // the last payload rendered: { payload, regex, subject, version, prerendered }
   var activeFinding = null; // the finding the window shows, read-only, or null in the sandbox
   var lastFinding = null;   // "slug#id" of the last finding shown: lit in the list
@@ -201,8 +203,25 @@
       el.status.className = 'pg-status';
       return;
     }
+    if (!message && linkWarning()) {
+      message = linkWarning();
+      tone = 'warn';
+    }
     el.status.textContent = message || '';
     el.status.className = 'pg-status' + (tone ? ' is-' + tone : '');
+  }
+
+  // A link whose subject was cut warns about the text it brought.
+  function noteCutLink(link) {
+    if (link.cut) {
+      linkNotice = { text: 'The subject in this link was cut at ' + SUBJECT_CAP + ' bytes.', subject: link.subject };
+    }
+  }
+
+  // The link's warning holds while the text it is about is the one in the
+  // field: a keystroke, an example or a finding moves it on.
+  function linkWarning() {
+    return linkNotice && el.subject.value === linkNotice.subject ? linkNotice.text : '';
   }
 
   function noticeLine() {
@@ -250,6 +269,7 @@
   function hideLoader() {
     el.loader.hidden = true;
     root.classList.remove('is-booting');
+    bootNotice = '';
   }
 
   function announce(message) {
@@ -445,7 +465,8 @@
       return;
     }
     if (failures[key] < 2) {
-      setStatus(reason + ' Starting the engine again…', 'warn');
+      bootNotice = reason + ' Starting the engine again…';
+      setStatus(bootNotice, 'warn');
       setState('Restarting…', 'busy');
       send(request);
       return;
@@ -602,7 +623,10 @@
     var request = inflight.request;
     if (message.type === 'progress') {
       var stage = (STAGES[message.stage] || 'Loading…').replace('{v}', request.version);
-      setStatus(stage, 'busy');
+      // The card names the stage; the status line keeps a warning the
+      // boot met, and otherwise says the stage under the card's clip.
+      var notice = bootNotice || linkWarning();
+      setStatus(notice || stage, notice ? 'warn' : 'stage');
       setState('Loading…', 'busy');
       showLoader(stage);
       return;
@@ -5004,7 +5028,8 @@
     chosen = fromHash.version;
     el.version.value = chosen;
     refreshFields();
-    setStatus(fromHash.cut ? 'The subject in this link was cut at ' + SUBJECT_CAP + ' bytes. Loading the engine…' : 'Loading the engine for the pattern in this link…', 'busy');
+    noteCutLink(fromHash);
+    setStatus(linkWarning() || 'Loading the engine for the pattern in this link…', linkWarning() ? 'warn' : 'busy');
     el.diagnostics.appendChild(text('li', 'pg-diag is-empty', 'Loading…'));
     setState('Loading…', 'busy');
     analyzeNow();

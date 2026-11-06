@@ -307,22 +307,41 @@ final class PlaygroundLayoutTest extends TestCase
 
     /**
      * The engine's first boot is said once to the eye: the loader's card
-     * names the stage, so the status line steps aside while it says the
-     * same stage — still read by its live region — and comes back for a
-     * warning the card does not carry.
+     * names the stage, so the status line steps aside while it says that
+     * stage — still read by its live region. A warning the boot meets — a
+     * subject cut out of a link, a failed boot starting again — is the
+     * line's own: no stage overwrites it, and no clip hides it, until the
+     * engine answers.
      */
     #[Test]
     public function test_the_loader_says_the_stage_once(): void
     {
         $script = self::source(self::SCRIPT);
         $this->assertStringContainsString("root.classList.add('is-booting');", self::between($script, 'function showLoader(stage) {', "\n  }\n"));
-        $this->assertStringContainsString("root.classList.remove('is-booting');", self::between($script, 'function hideLoader() {', "\n  }\n"));
+        $hide = self::between($script, 'function hideLoader() {', "\n  }\n");
+        $this->assertStringContainsString("root.classList.remove('is-booting');", $hide);
+        $this->assertStringContainsString("bootNotice = '';", $hide, 'A notice lasts as long as the boot it was met in.');
+
         $stylesheet = self::source(self::STYLESHEET);
-        $this->assertSame(1, preg_match('/^\.playground\.is-booting \.pg-status\.is-busy \{([^}]*)\}/m', $stylesheet, $status), 'The stage the card repeats, and nothing else: a failed boot that retries warns on the status line while the card stays up.');
+        $this->assertSame(1, preg_match('/^\.playground\.is-booting \.pg-status\.is-stage \{([^}]*)\}/m', $stylesheet, $status), 'The stage the card repeats, and nothing else.');
         $this->assertStringContainsString('clip-path: inset(50%);', $status[1], 'Out of sight, never out of the accessibility tree.');
-        $this->assertSame(0, preg_match('/^\.playground\.is-booting \.pg-status \{/m', $stylesheet), 'A warning is never hidden behind the loader.');
-        $retry = self::between(self::source(self::SCRIPT), 'if (failures[key] < 2) {', "\n    }\n");
-        $this->assertStringContainsString("setStatus(reason + ' Starting the engine again…', 'warn');", $retry, 'The retry speaks as a warning, which the loader leaves in sight.');
+        $this->assertSame(0, preg_match('/^\.playground\.is-booting \.pg-status(?:\.is-busy)? \{/m', $stylesheet), 'A busy or a warning line is never hidden behind the loader.');
+
+        $progress = self::between($script, "if (message.type === 'progress') {", "\n    }\n");
+        $this->assertStringContainsString('var notice = bootNotice || linkWarning();', $progress);
+        $this->assertStringContainsString("setStatus(notice || stage, notice ? 'warn' : 'stage');", $progress, 'A stage never overwrites a warning.');
+        $retry = self::between($script, 'if (failures[key] < 2) {', "\n    }\n");
+        $this->assertStringContainsString("bootNotice = reason + ' Starting the engine again…';", $retry);
+        $this->assertStringContainsString("setStatus(bootNotice, 'warn');", $retry);
+
+        // A subject cut out of a link warns for as long as the cut text is
+        // the one in the field — through the boot, after the answer, until
+        // the visitor's own hand or an example changes it.
+        $this->assertStringContainsString("linkNotice = { text: 'The subject in this link was cut at ' + SUBJECT_CAP + ' bytes.', subject: link.subject };", self::between($script, 'function noteCutLink(link) {', "\n  }\n"));
+        $this->assertStringContainsString('noteCutLink(fromHash);', $script, 'The link read at boot is the one noted.');
+        $this->assertStringContainsString('return linkNotice && el.subject.value === linkNotice.subject ? linkNotice.text : \'\';', self::between($script, 'function linkWarning() {', "\n  }\n"));
+        $set = self::between($script, 'function setStatus(message, tone) {', "\n  }\n");
+        $this->assertStringContainsString("if (!message && linkWarning()) {", $set, 'An empty line falls back to the link\'s warning.');
     }
 
     /**
