@@ -5996,17 +5996,28 @@ body.search-open {
      the bar says "Playground" whole rather than the full name cut short;
      the state says itself by its light — its word still read by the live
      region, and named by the light's title. */
+  /* One row while it fits, never at the price of Run: the bar is a
+     wrapping row, so controls too wide for it (320px, text zoomed) drop
+     under the name and then wrap among themselves, inside the frame. */
   .pg-titlebar {
+    display: flex;
+    flex-wrap: wrap;
     gap: .5rem;
+  }
+  .pg-title {
+    flex: 1 0 auto;
+  }
+  .pg-controls {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .4rem;
+    margin-left: auto;
   }
   .pg-title-brand {
     display: none;
   }
   .pg-title::first-letter {
     text-transform: uppercase;
-  }
-  .pg-controls {
-    gap: .4rem;
   }
   .pg-state-word {
     position: absolute;

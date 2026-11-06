@@ -217,7 +217,21 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(1, preg_match($phone.'\.pg-state-word \{([^}]*)\}/', $stylesheet, $word));
         $this->assertStringContainsString('clip-path: inset(50%);', $word[1], 'Hidden from the eye, not from the live region.');
         $this->assertStringNotContainsString('display: none', $word[1]);
-        $this->assertSame(0, preg_match($phone.'\.pg-controls \{[^}]*grid-column: 1 \/ -1;/', $stylesheet), 'No second row for the controls.');
+        $this->assertSame(0, preg_match($phone.'\.pg-controls \{[^}]*grid-column: 1 \/ -1;/', $stylesheet), 'No second row for the controls while they fit.');
+
+        // One row while it fits, never at the price of Run: at 320px with
+        // the text zoomed, the controls outgrow the bar, and a grid track
+        // would push Run past the frame that clips it. The phone's bar is
+        // a wrapping row: the controls drop under the name, then wrap
+        // among themselves.
+        $this->assertSame(1, preg_match($phone.'\.pg-titlebar \{([^}]*)\}/', $stylesheet, $phoneBar));
+        $this->assertStringContainsString('display: flex;', $phoneBar[1]);
+        $this->assertStringContainsString('flex-wrap: wrap;', $phoneBar[1], 'The controls drop under the name rather than leave the frame.');
+        $this->assertSame(1, preg_match($phone.'\.pg-controls \{([^}]*)\}/', $stylesheet, $phoneControls));
+        $this->assertStringContainsString('flex-wrap: wrap;', $phoneControls[1], 'And wrap among themselves when one row of them is too wide.');
+        $this->assertStringContainsString('margin-left: auto;', $phoneControls[1], 'Kept to the far edge on either row.');
+        $this->assertSame(1, preg_match($phone.'\.pg-title \{([^}]*)\}/', $stylesheet, $phoneTitle));
+        $this->assertStringContainsString('flex: 1 0 auto;', $phoneTitle[1], 'The name never shrinks to nothing to keep the controls beside it.');
         // The header above already says the brand: a phone's bar says
         // "Playground" whole rather than the full name cut short.
         $xpath = self::include();
