@@ -4935,9 +4935,10 @@ body.search-open {
 .pg-loader[hidden] {
   display: none;
 }
-/* While the card names the stage, the status line under the fields
-   steps out of sight — its line kept, its live region still read. */
-.playground.is-booting .pg-status {
+/* While the card names the stage, the status line saying the same stage
+   steps out of sight — its line kept, its live region still read. A
+   warning, such as a failed boot starting again, stays in sight. */
+.playground.is-booting .pg-status.is-busy {
   clip-path: inset(50%);
 }
 .pg-loader-card {
@@ -5970,18 +5971,28 @@ body.search-open {
   font-weight: 600;
 }
 
-/* Where the controls outgrow half the bar, the name could no longer hold
-   its middle: the desktop's window lights give their room, and the name
-   keeps to the left, where no state can move it. */
-@media (max-width: 899px) {
+/* Below the side-by-side layout the bar has no room to hold its name in
+   the middle: the desktop's window lights give their room, and the bar
+   is a wrapping row. The name keeps to the left, where no state can move
+   it; controls too wide for one row — enlarged text, a narrow phone —
+   drop under the name and then wrap among themselves, inside the frame
+   that clips them. */
+@media (max-width: 1023px) {
   .pg-titlebar {
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
+    flex-wrap: wrap;
   }
   .pg-lights {
     display: none;
   }
   .pg-title {
+    flex: 1 0 auto;
     text-align: left;
+  }
+  .pg-controls {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-left: auto;
   }
 }
 
@@ -5992,26 +6003,15 @@ body.search-open {
   .pg-tool {
     padding: .75rem .75rem .85rem;
   }
-  /* One row on a phone: the header above already says the brand, so
-     the bar says "Playground" whole rather than the full name cut short;
-     the state says itself by its light — its word still read by the live
+  /* A phone's bar: the header above already says the brand, so the bar
+     says "Playground" whole rather than the full name cut short; the
+     state says itself by its light — its word still read by the live
      region, and named by the light's title. */
-  /* One row while it fits, never at the price of Run: the bar is a
-     wrapping row, so controls too wide for it (320px, text zoomed) drop
-     under the name and then wrap among themselves, inside the frame. */
   .pg-titlebar {
-    display: flex;
-    flex-wrap: wrap;
     gap: .5rem;
   }
-  .pg-title {
-    flex: 1 0 auto;
-  }
   .pg-controls {
-    flex-wrap: wrap;
-    justify-content: flex-end;
     gap: .4rem;
-    margin-left: auto;
   }
   .pg-title-brand {
     display: none;
