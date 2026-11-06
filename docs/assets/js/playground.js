@@ -3587,8 +3587,10 @@
   // a hidden one opens to its own name.
   function scrollTabIntoView(tab) {
     var left = Math.max(0, tab.offsetLeft - (el.tabStrip.clientWidth - tab.offsetWidth) / 2);
+    // Less motion asked for: the strip jumps to the tab, never glides.
+    var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     try {
-      el.tabStrip.scrollTo({ left: left, behavior: 'smooth' });
+      el.tabStrip.scrollTo({ left: left, behavior: still ? 'auto' : 'smooth' });
     } catch (error) {
       el.tabStrip.scrollLeft = left;
     }
@@ -3602,8 +3604,13 @@
   });
   window.addEventListener('resize', measureStrip);
   if (window.ResizeObserver) {
-    // A badge, or a font that arrives late, can wrap the strip on its own.
-    new ResizeObserver(measureStrip).observe(el.tabStrip);
+    // A badge, or a font that arrives late, widens a tab without moving
+    // the strip's own box: the tabs are watched too, so the fades follow.
+    var stripObserver = new ResizeObserver(measureStrip);
+    stripObserver.observe(el.tabStrip);
+    Array.prototype.forEach.call(el.tabStrip.querySelectorAll('.pg-tab'), function (tab) {
+      stripObserver.observe(tab);
+    });
   }
   measureStrip();
 

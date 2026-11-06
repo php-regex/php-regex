@@ -5955,6 +5955,7 @@ body.search-open {
 }
 .pg-tab {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: .35rem;
   min-height: 2.1rem;
@@ -5966,6 +5967,7 @@ body.search-open {
   background: transparent;
   border: 0;
   border-radius: var(--radius-s) var(--radius-s) 0 0;
+  white-space: nowrap;
   cursor: pointer;
 }
 .pg-tab:hover {
