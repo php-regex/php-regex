@@ -280,6 +280,67 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertGreaterThanOrEqual(4.5, self::contrast($danger[1], $navy[1]), 'The Stopped pill is text: 4.5:1 on the navy.');
     }
 
+    /**
+     * The strip of tabs is one line, always: when the answers panel is
+     * narrow — a phone, or a column the visitor squeezed — the tabs scroll
+     * under fades that appear only where more of them wait, and the open
+     * tab, or the one the arrows land on, is carried to the strip's
+     * middle. No second row at any width: a wrapped strip never said
+     * which tab is open.
+     */
+    #[Test]
+    public function test_the_strip_stays_one_line_and_carries_the_open_tab(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-tabs \{([^}]*)\}/m', $stylesheet, $strip), 'The base strip rule exists.');
+        $this->assertStringContainsString('flex-wrap: nowrap;', $strip[1], 'One line, at every width.');
+        $this->assertStringContainsString('overflow-x: auto;', $strip[1], 'The tabs scroll, never stack.');
+        $this->assertStringContainsString('.pg-tabs.has-more-right', $stylesheet, 'A fade on the right edge says more tabs wait.');
+        $this->assertStringContainsString('.pg-tabs.has-more-left', $stylesheet, 'And on the left, when the strip has travelled.');
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString('function scrollTabIntoView(tab) {', $script, 'The open tab is carried to the middle of the strip.');
+        $this->assertStringContainsString('function syncTabFades() {', $script, 'The fades say themselves, only where there is more.');
+    }
+
+    /**
+     * A tab never shrinks into two lines of text: "Step through" wrapped at
+     * its space would make the one-line strip two lines tall again. The
+     * whole tab scrolls instead.
+     */
+    #[Test]
+    public function test_a_tab_keeps_its_label_on_one_line(): void
+    {
+        $this->assertSame(1, preg_match('/^\.pg-tab \{([^}]*)\}/m', self::source(self::STYLESHEET), $tab), 'The base tab rule exists.');
+        $this->assertStringContainsString('flex: none;', $tab[1], 'A tab never shrinks below its label.');
+        $this->assertStringContainsString('white-space: nowrap;', $tab[1], 'Its label never wraps at a space.');
+    }
+
+    /**
+     * A badge, or a font that arrives late, widens a tab without changing
+     * the strip's own box: the tabs themselves are observed, so the fades
+     * follow the content and not only the strip's size.
+     */
+    #[Test]
+    public function test_the_fades_follow_a_tab_that_changes_width(): void
+    {
+        $script = self::source(self::SCRIPT);
+        $observer = self::between($script, 'if (window.ResizeObserver) {', 'measureStrip();');
+        $this->assertStringContainsString('stripObserver.observe(el.tabStrip);', $observer, 'The strip is observed.');
+        $this->assertStringContainsString('stripObserver.observe(tab);', $observer, 'And every tab in it, for a badge or a late font.');
+    }
+
+    /**
+     * A visitor who asked for less motion sees the strip jump to the open
+     * tab, never glide to it.
+     */
+    #[Test]
+    public function test_the_strip_jumps_under_reduced_motion(): void
+    {
+        $scroll = self::between(self::source(self::SCRIPT), 'function scrollTabIntoView(tab) {', "\n  }\n");
+        $this->assertStringContainsString("matchMedia('(prefers-reduced-motion: reduce)')", $scroll, 'The preference is read on every carry.');
+        $this->assertStringContainsString("? 'auto' : 'smooth'", $scroll, 'Reduced motion jumps; the rest glides.');
+    }
+
     #[Test]
     public function test_the_strip_is_pinned_inside_the_panel(): void
     {
@@ -292,7 +353,7 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringContainsString('overflow: auto;', $column[1]);
         $this->assertStringContainsString('scroll-padding-top: var(--pg-strip-h, 3rem);', $column[1], 'A row brought into view stops under the strip, one row of tabs or two.');
         $this->assertStringContainsString("el.results.style.setProperty('--pg-strip-h', el.tabStrip.offsetHeight + 'px');", self::source(self::SCRIPT), 'The strip measures itself.');
-        $this->assertStringContainsString('new ResizeObserver(measureStrip).observe(el.tabStrip);', self::source(self::SCRIPT), 'A badge or a late font wraps the strip without a window resize.');
+        $this->assertStringContainsString('var stripObserver = new ResizeObserver(measureStrip);', self::source(self::SCRIPT), 'A badge or a late font changes the strip without a window resize.');
         $this->assertSame(1, preg_match('/\.pg-results > \.pg-tabs \{([^}]*)\}/', $stylesheet, $strip));
         $this->assertStringContainsString('position: sticky;', $strip[1]);
         $this->assertStringContainsString('top: 0;', $strip[1]);
