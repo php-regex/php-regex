@@ -15,6 +15,7 @@ namespace PHPRegex\Infection\Judge;
 
 use PHPRegex\Infection\Site\PatternCall;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Engine\PcreLimits;
 
 /**
  * Runs the call as it is written on a subject, once with each pattern, on
@@ -27,10 +28,10 @@ use PHPRegex\Parser\Engine\PcreEngine;
  * which is all a test can tell apart without the callback; preg_grep() as
  * the one-element array it keeps.
  *
- * The runs are the user's patterns, never the library's own: they go
- * without the JIT, under backtracking and recursion limits of their own set
- * for the call and put back after it, a warning kept from the error log,
- * and the engine's last error cleared behind them.
+ * The runs are the user's patterns, never the library's own: the engine
+ * runs them, without the JIT, under backtracking and recursion limits of
+ * the replay's own, a warning kept from the error log, and the engine's
+ * last error is cleared behind them.
  *
  * @internal
  */
@@ -86,87 +87,36 @@ final class CallReplay
     }
 
     /**
-     * What the call answers, serialized, or null when it fails.
+     * What the call answers, as the engine runs the user's patterns, or null
+     * when it fails. preg_filter() answers null where preg_replace() answers
+     * the subject untouched, and preg_grep() keeps an element exactly where
+     * preg_match() finds a match, inverted or not: the same subjects tell two
+     * patterns apart, and preg_match() also fails where preg_grep() answers
+     * an empty array before PHP 8.6. The offsets PREG_SPLIT_OFFSET_CAPTURE
+     * adds tell nothing more apart: the same pieces sit at the same offsets.
      */
     private function answer(PatternCall $call, string $pattern, string $subject): ?string
     {
-        $prepared = $this->engine->prepare($pattern);
-        $limits = ['pcre.backtrack_limit' => self::BACKTRACK_LIMIT, 'pcre.recursion_limit' => self::RECURSION_LIMIT];
-        $previous = [];
-        foreach ($limits as $name => $value) {
-            $previous[$name] = ini_get($name);
-            ini_set($name, $value);
-        }
-        set_error_handler(static fn (): bool => true);
+        $function = match ($call->function) {
+            'preg_filter' => 'preg_replace',
+            'preg_grep' => 'preg_match',
+            'preg_match', 'preg_match_all', 'preg_replace', 'preg_replace_callback' => $call->function,
+            default => 'preg_split',
+        };
+        $arguments = [
+            'matches' => \in_array($call->function, ['preg_match', 'preg_match_all'], true) && $call->passes('matches'),
+            'flags' => 'preg_grep' === $call->function ? 0 : $call->integer('flags', 0) ?? 0,
+            'offset' => $call->integer('offset', 0) ?? 0,
+            'limit' => $call->integer('limit', -1) ?? -1,
+            'replacement' => $call->string('replacement') ?? '',
+        ];
 
-        try {
-            $answer = $this->run($call, $prepared, $subject);
-        } finally {
-            restore_error_handler();
-            foreach ($previous as $name => $value) {
-                if (false !== $value) {
-                    ini_set($name, $value);
-                }
-            }
-            if (\PREG_NO_ERROR !== preg_last_error()) {
-                // An empty pattern compiles and matches: no error is left
-                // behind.
-                $this->engine->compile('//');
-            }
+        $answer = $this->engine->answer($function, $pattern, $subject, $arguments, new PcreLimits(self::BACKTRACK_LIMIT, self::RECURSION_LIMIT));
+        if (null === $answer) {
+            // A pattern that compiles and matches leaves no error behind.
+            $this->engine->compile('//');
         }
 
         return $answer;
-    }
-
-    private function run(PatternCall $call, string $pattern, string $subject): ?string
-    {
-        $flags = $call->integer('flags', 0) ?? 0;
-        $offset = $call->integer('offset', 0) ?? 0;
-        $limit = $call->integer('limit', -1) ?? -1;
-        $captures = (0 !== ($flags & \PREG_OFFSET_CAPTURE) ? \PREG_OFFSET_CAPTURE : 0) | (0 !== ($flags & \PREG_UNMATCHED_AS_NULL) ? \PREG_UNMATCHED_AS_NULL : 0);
-
-        // Each call answers false, or null, when the engine gives up.
-        switch ($call->function) {
-            case 'preg_match':
-            case 'preg_match_all':
-                // Without $matches the call answers how many matches it
-                // found, nothing of what they hold.
-                $found = 'preg_match' === $call->function
-                    ? preg_match($pattern, $subject, $matches, $captures, $offset)
-                    : preg_match_all($pattern, $subject, $matches, $captures, $offset);
-                $answer = false === $found ? false : ($call->passes('matches') ? $matches : $found);
-
-                break;
-            case 'preg_replace':
-            case 'preg_filter':
-                // preg_filter() answers null where preg_replace() answers the
-                // subject untouched: the same subjects tell two patterns apart.
-                $answer = preg_replace($pattern, (string) $call->string('replacement'), $subject, $limit) ?? false;
-
-                break;
-            case 'preg_replace_callback':
-                // What the callback receives, under the call's own flags, and
-                // where each match it replaces stands.
-                $answer = false === preg_match_all($pattern, $subject, $matches, \PREG_SET_ORDER | $captures)
-                    || false === preg_match_all($pattern, $subject, $spans, \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE)
-                    ? false
-                    : \array_slice(array_map(static fn (array $match, array $span): array => [$match, $span[0][1]], $matches, $spans), 0, $limit < 0 ? null : $limit);
-
-                break;
-            case 'preg_split':
-                // The same pieces sit at the same offsets: PREG_SPLIT_OFFSET_CAPTURE
-                // tells nothing more apart.
-                $answer = preg_split($pattern, $subject, $limit, (0 !== ($flags & \PREG_SPLIT_NO_EMPTY) ? \PREG_SPLIT_NO_EMPTY : 0) | (0 !== ($flags & \PREG_SPLIT_DELIM_CAPTURE) ? \PREG_SPLIT_DELIM_CAPTURE : 0));
-
-                break;
-            default:
-                // preg_grep() keeps an element exactly where preg_match()
-                // finds a match, inverted or not: the same elements tell two
-                // patterns apart. preg_match() also fails where preg_grep()
-                // answers an empty array before PHP 8.6.
-                $answer = preg_match($pattern, $subject);
-        }
-
-        return false === $answer ? null : serialize($answer);
     }
 }
