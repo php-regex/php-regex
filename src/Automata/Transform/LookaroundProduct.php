@@ -21,6 +21,7 @@ use PHPRegex\Automata\Model\Nfa;
 use PHPRegex\Automata\Model\NfaFragment;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Support\WorkBudget;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\LookHir;
 use PHPRegex\Parser\Hir\LookKind;
@@ -91,17 +92,48 @@ final class LookaroundProduct
      */
     public function build(Nfa $nfa, array $marks): Nfa
     {
-        $bodyOptions = new SolverOptions(
-            matchMode: MatchMode::Full,
-            maxNfaStates: $this->options->maxNfaStates,
-            maxDfaStates: $this->options->maxDfaStates,
-        );
+        // Repetition expands marks but keeps their HIR object. Share the
+        // assertion index as well as its DFA, so promises and behind runs
+        // are not duplicated either.
+        $indexes = [];
+        $nfaStates = 0;
+        $dfaStates = 0;
+        $budget = new WorkBudget($this->options->maxTransitionsProcessed, 'lookaround bodies', 0, 0, 0);
 
         foreach ($marks as $state => $look) {
+            $key = $look->kind->name.':'.spl_object_id($look->body);
+            if (isset($indexes[$key])) {
+                $this->marks[$state] = $indexes[$key];
+
+                continue;
+            }
+
+            // Check the remaining aggregate allowance before allocating a body.
+            $budget->consume();
+            if ($nfaStates >= $this->options->maxNfaStates || $dfaStates >= $this->options->maxDfaStates) {
+                throw new ComplexityException('Lookaround body state limit exceeded.', 0, $this->pattern);
+            }
+            $bodyOptions = new SolverOptions(
+                matchMode: MatchMode::Full,
+                maxNfaStates: $this->options->maxNfaStates - $nfaStates,
+                maxDfaStates: $this->options->maxDfaStates - $dfaStates,
+                maxTransitionsProcessed: $this->options->maxTransitionsProcessed,
+            );
+            $body = (new HirToNfaTransformer($this->pattern, $this->unicode))->lookaroundBody($look, $bodyOptions);
+            $nfaStates += \count($body->states);
+            $budget->consume(\count($body->states));
+            $dfa = (new DfaBuilder())->determinize($body, $bodyOptions, $budget);
+            $dfaStates += \count($dfa->states);
+            // Charge stored transitions before retaining the DFA or building
+            // its reverse graph. Count both representations when both exist.
+            foreach ($dfa->states as $dfaState) {
+                $budget->consume(1 + \count($dfaState->byteTransitions()) + $dfaState->rangeCount());
+            }
+
             $index = \count($this->looks);
+            $indexes[$key] = $index;
             $this->looks[] = $look;
             $this->marks[$state] = $index;
-            $dfa = (new DfaBuilder())->determinize((new HirToNfaTransformer($this->pattern, $this->unicode))->lookaroundBody($look, $bodyOptions), $bodyOptions);
             $this->automata[] = $dfa;
             $this->live[] = self::liveStates($dfa);
             if (self::isBehind($look)) {

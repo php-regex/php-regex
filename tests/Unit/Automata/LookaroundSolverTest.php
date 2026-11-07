@@ -79,6 +79,54 @@ final class LookaroundSolverTest extends TestCase
         (new LanguageSolver())->compile($pattern);
     }
 
+    #[Test]
+    public function test_expanded_marks_reuse_the_assertion(): void
+    {
+        $dfa = (new LanguageSolver())->compile('/(?:(?=a{99})){100}a{99}/');
+
+        $this->assertTrue(self::accepts($dfa, str_repeat('a', 99)));
+        $this->assertFalse(self::accepts($dfa, str_repeat('a', 98)));
+    }
+
+    #[Test]
+    public function test_body_state_limits_are_shared(): void
+    {
+        $this->expectException(ComplexityException::class);
+
+        (new LanguageSolver())->compile('/(?=a{20})(?=b{20})/', new SolverOptions(maxNfaStates: 60));
+    }
+
+    #[Test]
+    public function test_body_work_limit_is_shared(): void
+    {
+        $solver = new LanguageSolver();
+        $options = new SolverOptions(maxTransitionsProcessed: 5000);
+        $solver->compile('/(?=a{10})/', $options);
+        $solver->compile('/(?=b{10})/', $options);
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessage('lookaround bodies');
+
+        $solver->compile('/(?=a{10})(?=b{10})/', $options);
+    }
+
+    #[Test]
+    public function test_body_dfa_state_limits_are_shared_even_without_a_work_limit(): void
+    {
+        $this->expectException(ComplexityException::class);
+
+        (new LanguageSolver())->compile('/(?=a{10})(?=b{10})/', new SolverOptions(maxDfaStates: 15, maxTransitionsProcessed: null));
+    }
+
+    #[Test]
+    public function test_zero_work_budget_applies_to_bodies(): void
+    {
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessage('lookaround bodies');
+
+        (new LanguageSolver())->compile('/(?=a{99})/', new SolverOptions(maxTransitionsProcessed: 0));
+    }
+
     /**
      * @return iterable<string, array{pattern: string, letters: string, length: int}>
      */

@@ -26,7 +26,7 @@ final class DfaMinimizer
 {
     public function __construct(private readonly ?MinimizationAlgorithmInterface $algorithm = null) {}
 
-    public function minimize(Dfa $dfa, ?SolverOptions $options = null): Dfa
+    public function minimize(Dfa $dfa, ?SolverOptions $options = null, ?WorkBudget $budget = null): Dfa
     {
         $states = $dfa->states;
 
@@ -36,8 +36,7 @@ final class DfaMinimizer
 
         $alphabet = $this->effectiveAlphabet($dfa);
         $algorithm = $this->algorithm ?? new HopcroftWorklist();
-        $budget = null;
-        if (null !== $options?->maxTransitionsProcessed) {
+        if (null === $budget && null !== $options?->maxTransitionsProcessed) {
             $budget = new WorkBudget(
                 $options->maxTransitionsProcessed,
                 'minimize',
