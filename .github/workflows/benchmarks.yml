@@ -51,6 +51,9 @@ jobs:
     # that throws, or one that runs for minutes, fails here before anyone
     # compares numbers. No timing is asserted: shared runners are too noisy.
     name: Benchmarks (one run of each)
+    permissions:
+      contents: read
+      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -68,6 +71,10 @@ jobs:
 
       - name: Run Every Subject Once
         run: tools/phpbench/vendor/bin/phpbench run --iterations=1 --revs=1 --progress=none --stop-on-error
+
+      - name: Stop the pull request's other runs
+        if: failure() && github.event_name == 'pull_request'
+        uses: ./.github/actions/stop-pull-request-runs
 
   table:
     # The corpus subjects, measured for the record. On a pull request that
