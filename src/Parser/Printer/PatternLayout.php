@@ -84,7 +84,7 @@ final class PatternLayout
     private const INDENT = '    ';
 
     /**
-     * Past this many indent levels the rest of a construct stays on one line:
+     * Past this many indent levels the rest of a construct uses inline printing:
      * a deep nest laid out one group per line would grow past the length the
      * parser reads back.
      */
@@ -692,8 +692,9 @@ final class PatternLayout
 
     /**
      * A node on one line, when it fits from the current indent, holds no
-     * "#" comment and nests at most two groups; past the indent cap, on one
-     * line whatever its width. Null when it has to break.
+     * "#" comment and nests at most two groups; past the indent cap, use
+     * inline printing whatever its width, retaining comment terminators.
+     * Null when it has to break.
      *
      * @phpstan-impure
      */
@@ -704,8 +705,11 @@ final class PatternLayout
         $this->sawLineComment = false;
         $text = $this->forceInline($node);
 
-        if (!$this->sawLineComment && (self::MAX_INDENT <= $this->indentLevel
-            || (false === strpbrk($text, "\n\r") && $this->fits($text) && self::isShallow($node)))) {
+        // Inline printing keeps the newlines terminating # comments. At the
+        // cap, retain those breaks without laying out the subtree again:
+        // comments must not allow indentation and subtree copying to grow.
+        if (self::MAX_INDENT <= $this->indentLevel
+            || (!$this->sawLineComment && false === strpbrk($text, "\n\r") && $this->fits($text) && self::isShallow($node))) {
             $this->sawLineComment = $sawLineComment;
 
             return $text;
