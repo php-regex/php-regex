@@ -33,6 +33,9 @@ concurrency:
 jobs:
   actionlint:
     name: actionlint
+    permissions:
+      contents: read
+      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -64,8 +67,15 @@ jobs:
       - name: Read the action at the root
         run: yq --exit-status '.runs.using == "composite"' action.yml
 
+      - name: Stop the pull request's other runs
+        if: failure() && github.event_name == 'pull_request'
+        uses: ./.github/actions/stop-pull-request-runs
+
   zizmor:
     name: zizmor
+    permissions:
+      contents: read
+      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -85,3 +95,7 @@ jobs:
           inputs: .github src/*/.github action.yml
           advanced-security: false
           annotations: true
+
+      - name: Stop the pull request's other runs
+        if: failure() && github.event_name == 'pull_request'
+        uses: ./.github/actions/stop-pull-request-runs
