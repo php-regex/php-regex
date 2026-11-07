@@ -17,6 +17,7 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LanguageTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     #[DataProvider('provideFiniteness')]
     public function test_a_language_knows_whether_it_is_finite(string $pattern, bool $finite, ?int $min, ?int $max, ?string $size): void
@@ -111,7 +114,7 @@ final class LanguageTest extends TestCase
         $this->assertSame('b', $strings->current());
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('Language enumeration');
+        $this->expectExceptionMessageIsOrContains('Language enumeration work budget exceeded.');
         $strings->next();
     }
 
