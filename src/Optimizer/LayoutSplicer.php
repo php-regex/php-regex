@@ -139,11 +139,17 @@ final class LayoutSplicer
         $after = array_values($after);
         $countBefore = \count($before);
         $countAfter = \count($after);
+        // Reverse positions let nextKept discard passed occurrences once,
+        // including when the same object appears more than once in a list.
+        $positions = [];
+        for ($index = $countBefore - 1; $index >= 0; $index--) {
+            $positions[spl_object_id($before[$index])][] = $index;
+        }
         $i = 0;
         $j = 0;
 
         while ($i < $countBefore || $j < $countAfter) {
-            [$nextI, $nextJ] = self::nextKept($before, $after, $i, $j);
+            [$nextI, $nextJ] = self::nextKept($positions, $countBefore, $after, $i, $j);
             $runBefore = \array_slice($before, $i, $nextI - $i);
             $runAfter = \array_slice($after, $j, $nextJ - $j);
 
@@ -232,22 +238,28 @@ final class LayoutSplicer
      * Where the next node of $after that the rewrite kept from $before
      * stands in both lists, or both ends when there is none.
      *
-     * @param list<NodeInterface> $before
-     * @param list<NodeInterface> $after
+     * @param array<int, list<int>> $positions Original positions, in descending order per identity
+     * @param list<NodeInterface>  $after
      *
      * @return array{int, int}
      */
-    private static function nextKept(array $before, array $after, int $i, int $j): array
+    private static function nextKept(array &$positions, int $countBefore, array $after, int $i, int $j): array
     {
         for ($countAfter = \count($after); $j < $countAfter; $j++) {
-            for ($k = $i, $countBefore = \count($before); $k < $countBefore; $k++) {
-                if ($before[$k] === $after[$j]) {
-                    return [$k, $j];
-                }
+            $id = spl_object_id($after[$j]);
+            if (!isset($positions[$id])) {
+                continue;
+            }
+
+            while ([] !== $positions[$id] && end($positions[$id]) < $i) {
+                array_pop($positions[$id]);
+            }
+            if ([] !== $positions[$id]) {
+                return [end($positions[$id]), $j];
             }
         }
 
-        return [\count($before), \count($after)];
+        return [$countBefore, \count($after)];
     }
 
     /**

@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -136,6 +137,37 @@ final class LayoutSplicerTest extends TestCase
         $this->assertInstanceOf(RegexNode::class, $rewritten);
 
         $this->assertSame($expected, (new LayoutSplicer($this->parser))->splice($original, $rewritten));
+    }
+
+    #[Test]
+    public function test_splice_matches_a_large_list_of_replaced_nodes_in_linear_work(): void
+    {
+        // 64 KB, within the default parser limit. Every class is rewritten,
+        // so a search through the original list per replacement finds none.
+        $original = $this->parser->parse('/'.str_repeat('[aa][bb]', 8000).'/x');
+        $rewritten = $original->accept(new Rewriter(factorize: false));
+        $this->assertInstanceOf(RegexNode::class, $rewritten);
+
+        $start = CpuClock::nanoseconds();
+        $spliced = (new LayoutSplicer($this->parser))->splice($original, $rewritten);
+        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
+
+        $this->assertSame('/'.str_repeat('[a][b]', 8000).'/x', $spliced);
+        $this->assertLessThan(2.0, $seconds, \sprintf('Layout matching took %.2f s.', $seconds));
+    }
+
+    #[Test]
+    public function test_matching_keeps_the_first_remaining_occurrence_of_a_shared_node(): void
+    {
+        $a = new LiteralNode('a', 0, 1);
+        $b = new LiteralNode('b', 1, 2);
+        $positions = [spl_object_id($a) => [2, 0], spl_object_id($b) => [1]];
+        $after = [$a, $b, $a, $b];
+        $match = new \ReflectionMethod(LayoutSplicer::class, 'nextKept');
+
+        $this->assertSame([0, 0], $match->invokeArgs(null, [&$positions, 3, $after, 0, 0]));
+        $this->assertSame([2, 2], $match->invokeArgs(null, [&$positions, 3, $after, 2, 1]));
+        $this->assertSame([3, 4], $match->invokeArgs(null, [&$positions, 3, $after, 3, 3]));
     }
 
     #[Test]
