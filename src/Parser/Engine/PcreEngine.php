@@ -36,6 +36,8 @@ final class PcreEngine
      */
     private const FRESH_CACHE_KEY = "\v";
 
+    private const MAX_REPLACEMENT_BYTES = 1_048_576;
+
     private const LIMITS_UNAVAILABLE = 'The PCRE limits could not be set: ini_set() is disabled';
 
     /**
@@ -141,7 +143,8 @@ final class PcreEngine
      * What a preg_*() call answers for the pattern and the subject, run as
      * every call of the engine runs, serialized so that two answers of the
      * same call compare as strings; null when the engine gives up or refuses
-     * the pattern.
+     * the pattern. Replacement replay also gives no answer when its
+     * conservative output bound exceeds one MiB.
      *
      * preg_match() and preg_match_all() answer the count, or the matches
      * when the call passes $matches, shaped by the flags; preg_match() with
@@ -183,6 +186,10 @@ final class PcreEngine
 
                         break;
                     case 'preg_replace':
+                        if (!self::replacementFits($subject, $arguments['replacement'] ?? '', $limit)) {
+                            break;
+                        }
+
                         $replaced = preg_replace($prepared, $arguments['replacement'] ?? '', $subject, $limit);
                         $answer = null === $replaced ? null : serialize($replaced);
 
@@ -207,6 +214,31 @@ final class PcreEngine
         );
 
         return $answer;
+    }
+
+    /**
+     * Bound the native allocation before replacement, including captures in
+     * lookarounds: each replacement byte can expand to the whole subject.
+     * PHP can replace an empty match then a nonempty retry at the same byte,
+     * so at most 2 * length + 1 replacements occur. Division avoids overflow
+     * even for a source literal or limit near the integer range's end.
+     */
+    private static function replacementFits(string $subject, string $replacement, int $limit): bool
+    {
+        $length = \strlen($subject);
+        if ($length > self::MAX_REPLACEMENT_BYTES) {
+            return false;
+        }
+
+        $count = 2 * $length + 1;
+        if ($limit >= 0) {
+            $count = min($count, $limit);
+        }
+        if (0 === $count) {
+            return true;
+        }
+
+        return \strlen($replacement) <= intdiv(intdiv(self::MAX_REPLACEMENT_BYTES - $length, $count), max(1, $length));
     }
 
     private function withVerb(string $pattern): ?string

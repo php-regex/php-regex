@@ -38,6 +38,15 @@ final class CallReplayTest extends TestCase
         $this->assertSame(\PREG_NO_ERROR, preg_last_error());
     }
 
+    #[Test]
+    public function test_subjects_too_long_for_a_hint_are_not_replayed(): void
+    {
+        $call = self::call("preg_replace('/a/', '_', \$s)");
+        $replay = new CallReplay();
+        $this->assertTrue($replay->differs($call, '/a/', '/b/', str_repeat('a', 120)));
+        $this->assertFalse($replay->differs($call, '/a/', '/b/', str_repeat('a', 121)));
+    }
+
     /**
      * @return iterable<string, array{code: string, original: string, mutant: string, subject: string, differs: bool}>
      */

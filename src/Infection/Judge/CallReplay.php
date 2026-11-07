@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Infection\Judge;
 
+use PHPRegex\Infection\Hint\KillString;
 use PHPRegex\Infection\Site\PatternCall;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreLimits;
@@ -77,7 +78,7 @@ final class CallReplay
      */
     public function differs(PatternCall $call, string $original, string $mutant, string $subject): bool
     {
-        if (!$this->replayable($call)) {
+        if (\strlen($subject) > KillString::MAX_BYTES || !$this->replayable($call)) {
             return false;
         }
 

@@ -134,6 +134,30 @@ final class PcreEngineAnswerTest extends TestCase
         $this->assertSame($before, ini_get('pcre.jit'));
     }
 
+    #[Test]
+    public function test_replacement_replay_refuses_unbounded_expansion(): void
+    {
+        $engine = new PcreEngine();
+        $this->assertNull($engine->answer('preg_replace', '/a/', str_repeat('a', 4096), ['replacement' => str_repeat('x', 4096)]));
+        $this->assertNull($engine->answer('preg_replace', '/(?=(a+))/', str_repeat('a', 120), ['replacement' => str_repeat('$1', 100)]));
+        $this->assertNull($engine->answer('preg_replace', '//', '', ['replacement' => str_repeat('x', 1_048_577)]));
+        $this->assertNull($engine->answer('preg_replace', '/a/', str_repeat('a', 1_048_577)));
+    }
+
+    #[Test]
+    public function test_bounded_replacements_preserve_native_answers(): void
+    {
+        $engine = new PcreEngine();
+        $subject = str_repeat('a', 120);
+        foreach (['$1', '${1}', '\\1', '\\\\1'] as $replacement) {
+            $this->assertSame(serialize(preg_replace('/(?=(a+))/', $replacement, $subject)), $engine->answer('preg_replace', '/(?=(a+))/', $subject, ['replacement' => $replacement]));
+        }
+        $replacement = str_repeat('x', 4096);
+        $this->assertSame(serialize(preg_replace('/a/', $replacement, $subject, 1)), $engine->answer('preg_replace', '/a/', $subject, ['replacement' => $replacement, 'limit' => 1]));
+        $this->assertSame(serialize($subject), $engine->answer('preg_replace', '/a/', $subject, ['replacement' => $replacement, 'limit' => 0]));
+        $this->assertSame(serialize('xxx'), $engine->answer('preg_replace', '/(?:|a)/', 'a', ['replacement' => 'x']));
+    }
+
     /**
      * What the callback of preg_replace_callback() receives for each match,
      * with where the match stands in the subject.
