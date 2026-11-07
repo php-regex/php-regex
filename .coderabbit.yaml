@@ -204,8 +204,8 @@ reviews:
       requirements: >-
         `[Component] Imperative sentence`. The component is a package
         directory under src/ (Parser, Linter, Cli, Symfony, Laravel, PHPStan,
-        Psalm, Rector, PHPUnit, LanguageServer, Mcp, Redos, Transpiler,
-        Optimizer, Automata, Explain, Generator, Toolkit) or Docs, CI,
+        Psalm, Rector, PHPUnit, Infection, LanguageServer, Mcp, Redos,
+        Transpiler, Optimizer, Automata, Explain, Generator, Toolkit) or Docs, CI,
         Release, Corpus; several components are chained: `[Linter][Cli] …`.
     description:
       mode: "off"
