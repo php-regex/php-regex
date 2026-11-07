@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Bridge\Infection;
 
 use PHPRegex\Infection\Mutation\CandidateGenerator;
 use PHPRegex\Infection\Mutation\Family;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -120,6 +121,9 @@ final class CandidateGeneratorTest extends TestCase
     {
         // PCRE2 10.39 reads "{ 2,3 }" as text: there is no repeat to mutate.
         $this->assertSame([], (new CandidateGenerator(RegexParser::create(['pcre_version' => '10.39'])))->candidates(Family::Quantifier, '/a{ 2,3 }/'));
+        // The running engine reads the braces as its release does: text
+        // before 10.43, a repeat from it.
+        $this->assertSame(PcreTarget::runtime()->pcreAtLeast('10.43') ? [1, 0] : [0, 1], [preg_match('/^a{ 2,3 }$/', 'aa'), preg_match('/^a{ 2,3 }$/', 'a{ 2,3 }')]);
     }
 
     #[Test]

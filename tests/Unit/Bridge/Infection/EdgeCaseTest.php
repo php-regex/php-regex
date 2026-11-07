@@ -32,6 +32,7 @@ use PHPRegex\Infection\Site\PatternCall;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreLimits;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -85,6 +86,9 @@ final class EdgeCaseTest extends TestCase
         $generator = new CandidateGenerator(RegexParser::create(['pcre_version' => '10.44']));
 
         $this->assertSame(['/a{3,3}/', '/a{1,3}/', '/a{2,2}/', '/a{2,4}/', '/a/', '/a{ 2,3 }?/'], $generator->candidates(Family::Quantifier, '/a{ 2,3 }/'));
+        // The running engine reads the braces as its release does: a repeat
+        // from 10.43, text before.
+        $this->assertSame(PcreTarget::runtime()->pcreAtLeast('10.43') ? [1, 0] : [0, 1], [preg_match('/^a{ 2,3 }$/', 'aa'), preg_match('/^a{ 2,3 }$/', 'a{ 2,3 }')]);
     }
 
     #[Test]
