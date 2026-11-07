@@ -321,7 +321,9 @@ final class Validator extends AbstractNodeVisitor
     /**
      * The error PCRE finds in a character class, parsed alone, that closes
      * at $closingAt: none unless PCRE reads the whole class before $limit,
-     * the offset where parsing failed.
+     * the offset where parsing failed. A class alone cannot make the pattern
+     * too large to compile, so the size of the whole pattern, which its
+     * source holds, is not measured once more for each class.
      */
     public function firstErrorInClassBefore(RegexNode $class, int $closingAt, int $limit): ?SemanticErrorException
     {
@@ -330,7 +332,8 @@ final class Validator extends AbstractNodeVisitor
         }
 
         try {
-            $class->accept($this);
+            $this->walkPattern($class);
+            $this->raiseFirstLateError();
         } catch (SemanticErrorException $error) {
             return $error;
         }
