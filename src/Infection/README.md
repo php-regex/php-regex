@@ -13,7 +13,7 @@ PHPRegex Infection
 
 Mutators for [Infection](https://infection.github.io) that mutate the regex literals your code passes to `preg_*()`: a `+` turns into `*`, an anchor goes, a class loses a member. The PHPRegex automata drop every mutant they prove behaves as the original for the call it sits in, so no run of your suite is spent on a mutant no test could kill — and each mutant that survives carries the subject that kills it, written into the pattern as `(?#kill: "…")`, ready to paste into a test.
 
-Requires Infection (which runs on PHP 8.3+) and nikic/php-parser 5. Works with Infection installed through Composer or as its PHAR.
+Requires Infection 0.29 or later and nikic/php-parser 5. Works with Infection installed through Composer or as its PHAR.
 
 Documentation: [php-regex.com](https://php-regex.com) — the [Infection guide](https://php-regex.com/guides/infection/) walks the mutators end to end.
 

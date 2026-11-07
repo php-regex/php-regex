@@ -489,6 +489,21 @@ final class PackageManifestTest extends TestCase
         $this->assertFileExists(self::root().'/src/Rector/config/sets/upgrade-2.0.php');
     }
 
+    /**
+     * Infection carried the mutator interface itself until 0.28: installed
+     * through Composer beside infection/mutator, two interfaces of one name
+     * would meet, and Infection's own mutators would no longer fit the one
+     * loaded first.
+     */
+    #[Test]
+    public function test_infection_package_refuses_the_infection_releases_that_carry_their_own_mutator_interface(): void
+    {
+        $manifest = self::manifest('Infection');
+
+        $this->assertSame('^0.4', self::dig($manifest, 'require', 'infection/mutator'));
+        $this->assertSame('<0.29', self::dig($manifest, 'conflict', 'infection/infection'));
+    }
+
     #[Test]
     public function test_psalm_package_is_a_psalm_plugin_on_psalm_6_and_7(): void
     {

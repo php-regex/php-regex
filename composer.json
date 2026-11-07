@@ -130,6 +130,7 @@
         "illuminate/contracts": "<10.37",
         "illuminate/routing": "<10.37",
         "illuminate/support": "<10.37",
+        "infection/infection": "<0.29",
         "infection/mutator": "<0.4",
         "nikic/php-parser": "<4.18",
         "phpstan/phpstan": "<2.0",

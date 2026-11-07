@@ -23,8 +23,10 @@ Two things set these mutators apart from mutating the pattern as text:
 
 {% include install.html package="php-regex/regex-infection" dev=true %}
 
-Infection runs on PHP 8.3 or later; the mutators work with Infection installed
-through Composer or as its PHAR, and need nikic/php-parser 5.
+The mutators work with Infection 0.29 or later, installed through Composer
+or as its PHAR, and need nikic/php-parser 5. Infection 0.28 and earlier carry
+a mutator interface of their own, which would meet the one the package
+installs: Composer refuses them beside it.
 
 ## Enable the mutators
 
@@ -220,8 +222,7 @@ Infection identifies a mutant by its mutator and its rank among that
 mutator's mutants, so the mutants a release produces are part of what it
 promises. A patch release keeps every mutator's operators and their order;
 new operators, new mutators and deliberate changes to what is dropped come
-in a minor release, listed in the
-[changelog](https://github.com/php-regex/php-regex/blob/2.x/src/Infection/CHANGELOG.md).
+in a minor release, listed in the package's `CHANGELOG.md`.
 A fix in the shared analysis that corrects a wrong verdict may ship in a
 patch, listed there as a behavioural fix. The text of a kill string may
 change in any release.

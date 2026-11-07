@@ -39,6 +39,9 @@
         "php-regex/regex-parser": "self.version",
         "php-regex/regex-redos": "self.version"
     },
+    "conflict": {
+        "infection/infection": "<0.29"
+    },
     "autoload": {
         "psr-4": {
             "PHPRegex\\Infection\\": ""
