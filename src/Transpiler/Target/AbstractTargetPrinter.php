@@ -308,14 +308,16 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     /**
      * Without u PCRE reads bytes, where the targets read characters: a
      * multibyte character written whole stays that character, the PHP
-     * string holding it as UTF-8 text, but a byte above 0x7F on its own, as
-     * an escape or as invalid UTF-8, has no equivalent there.
+     * string holding it as UTF-8 text. Inside a class its bytes are separate
+     * members, so even valid UTF-8 cannot be carried as characters. A
+     * byte above 0x7F on its own, as an escape or as invalid UTF-8, has
+     * no equivalent there.
      *
      * @throws TranspileException
      */
-    protected function refuseALoneByte(string $text, NodeInterface $node): void
+    protected function refuseALoneByte(string $text, NodeInterface $node, bool $inCharClass = false): void
     {
-        if (!str_contains($this->context->sourceFlags, 'u') && 1 === LibraryPcre::match('/[\x80-\xFF]/', $text) && !mb_check_encoding($text, 'UTF-8')) {
+        if (!str_contains($this->context->sourceFlags, 'u') && 1 === LibraryPcre::match('/[\x80-\xFF]/', $text) && ($inCharClass || !mb_check_encoding($text, 'UTF-8'))) {
             $this->refuseByte($node);
         }
     }
@@ -362,6 +364,6 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
      */
     private function refuseByte(NodeInterface $node): void
     {
-        $this->unsupported('A byte above 0x7F has no equivalent in this target, which reads characters, not bytes: without the u flag PCRE matches that byte alone. Add u, or write the character itself.', $node);
+        $this->unsupported('A byte above 0x7F has no equivalent in this target, which reads characters, not bytes: without the u flag PCRE matches that byte alone. Add u.', $node);
     }
 }

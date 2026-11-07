@@ -22,7 +22,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Without u, PCRE reads bytes; JavaScript and Python read characters. A
- * multibyte character written whole is the character the PHP string holds
+ * multibyte character written whole outside a class is the character held
  * as UTF-8 text, and stays that character. A byte above 0x7F on its own, as
  * an escape or as invalid UTF-8, has no equivalent in a target that reads
  * characters: "\xE9" in JavaScript matches U+00E9, which the UTF-8 "é" never
@@ -49,6 +49,40 @@ final class BytesWithoutUtfTest extends TestCase
         $this->expectExceptionMessageIsOrContains('reads characters, not bytes');
 
         Regex::create()->transpile($pattern, $target);
+    }
+
+    #[Test]
+    #[DataProvider('provideMultibyteClasses')]
+    public function test_byte_mode_multibyte_class_members_are_refused(string $pattern, string $target): void
+    {
+        // The leading byte of à is also a member of [é] in byte mode.
+        $this->assertSame(str_contains($pattern, '[^') ? 0 : 1, preg_match($pattern, 'à'));
+
+        $this->expectException(TranspileException::class);
+        $this->expectExceptionMessageIsOrContains('reads characters, not bytes');
+
+        Regex::create()->transpile($pattern, $target);
+    }
+
+    #[Test]
+    #[DataProvider('provideMultibyteClasses')]
+    public function test_unicode_multibyte_classes_keep_character_membership(string $pattern, string $target): void
+    {
+        $result = Regex::create()->transpile($pattern.'u', $target);
+
+        $this->assertStringContainsString(str_contains($pattern, '[^') ? '[^é]' : substr($pattern, 1, -1), $result->pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, target: string}>
+     */
+    public static function provideMultibyteClasses(): iterable
+    {
+        foreach (['javascript', 'python', 'html-pattern'] as $target) {
+            foreach (['/[é]/', '/^[^é]+$/', '/[aé]/'] as $pattern) {
+                yield $target.': '.$pattern => ['pattern' => $pattern, 'target' => $target];
+            }
+        }
     }
 
     /**
