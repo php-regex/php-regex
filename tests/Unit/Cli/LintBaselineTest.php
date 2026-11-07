@@ -552,6 +552,27 @@ final class LintBaselineTest extends TestCase
     }
 
     /**
+     * Stale entries use the same bounded alignment: with fewer issues,
+     * the last entries are taken and the first entries are reported.
+     */
+    #[Test]
+    public function test_filter_reports_stale_entries_when_the_alignment_is_too_large(): void
+    {
+        $baseline = $this->baselineFrom(['version' => 1, 'issues' => array_map(
+            static fn (int $line): array => self::entryFor('regex.lint.known', 'src/a.php', '/a+b/', $line),
+            range(1, 2000),
+        )]);
+        $found = array_map(self::issueOnLine(...), range(1, 1000));
+
+        $filtered = $baseline->filter(self::report([self::lintResult($found)]), ['src/a.php']);
+
+        $this->assertSame(range(1, 1000), array_column($filtered->results, 'line'));
+        foreach ($filtered->results as $result) {
+            $this->assertSame('regex.ignore.unmatched', $result['issues'][0]->issueId);
+        }
+    }
+
+    /**
      * @return iterable<string, array{entries: list<int>, issues: list<int>, left: list<int>, oneResultPerIssue: bool}>
      */
     public static function provideAlignments(): iterable
