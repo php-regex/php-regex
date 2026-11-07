@@ -108,6 +108,13 @@ the prose:
 tools/phpunit/vendor/bin/phpunit --group documentation
 ```
 
+The first job that fails on a pull request cancels every run of its head
+commit that has not finished, and its error names the job: the fix comes with
+the next push, and the shared runners go to the other pull requests in the
+meantime. The two jobs that never gate (the benchmark table and the
+next-PHP watch) and the external link check do not cancel anything. A pull
+request from a fork has a read-only token, so its runs go to the end.
+
 A merge into 2.x runs nothing: its pull request already ran what the change
 could affect, and `bin/status` and `bin/release` read a merge commit's checks
 from a pull request run on the head of its pull request, as long as Git made
