@@ -16,6 +16,7 @@ namespace PHPRegex\Parser\Analysis;
 use PHPRegex\Parser\BsrConvention;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
@@ -58,7 +59,8 @@ use PHPRegex\Parser\Syntax\StartOptions;
  *     $info->minMatchLength; // 7
  *
  * The tree is read as written: a pattern the validator refuses gets an
- * answer, not an error. The longest lookbehind is the one PCRE2 measures at
+ * answer, not a validation error. Analysis past its work budget raises a
+ * ResourceLimitException. The longest lookbehind is the one PCRE2 measures at
  * the target, the running PHP's PCRE2 unless one is named.
  *
  * analyzePattern() reads a pattern rather than a tree, and answers only for
@@ -102,6 +104,8 @@ final class PatternInfoAnalyzer
     private const PATH_KINDS = self::PATH_FREE | self::PATH_START | self::PATH_END;
     private const PATH_EATEN_SHIFT = 3;
 
+    private const MAX_LOOKBEHIND_MEASUREMENTS = 100_000;
+
     public function __construct(private readonly ?PcreTarget $target = null) {}
 
     /**
@@ -130,6 +134,9 @@ final class PatternInfoAnalyzer
         return (new self($parser->target()))->analyze($ast);
     }
 
+    /**
+     * @throws ResourceLimitException when lookbehind measurement exceeds its work budget
+     */
     public function analyze(RegexNode $ast): PatternInfo
     {
         $groups = GroupIndex::of($ast->pattern);
@@ -230,6 +237,7 @@ final class PatternInfoAnalyzer
             inLookaheads: $target->supports(PcreFeature::LookbehindInLookaheadMeasured),
             skipsDefine: $target->supports(PcreFeature::DefineSkippedInLookbehind),
             wrapsLengths: !$target->supports(PcreFeature::LookbehindLengthOverflowRefused),
+            measurementLimit: self::MAX_LOOKBEHIND_MEASUREMENTS,
         );
 
         $max = 0;

@@ -18,6 +18,7 @@ use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\BsrConvention;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\NewlineConvention;
 use PHPRegex\Parser\PcreTarget;
@@ -54,6 +55,27 @@ final class PatternInfoAnalyzerTest extends TestCase
      * byte, which "u" turns into false, outside the facts.
      */
     private const SUBJECTS = ['', 'a', "a\nb", "\n", "ab\n", ' DESC', '0', "\xff"];
+
+    #[Test]
+    public function test_direct_analysis_limits_repeated_empty_subroutine_expansion(): void
+    {
+        $definitions = '';
+        for ($group = 1; $group < 16; $group++) {
+            $call = '(?'.($group + 1).')';
+            $definitions .= '('.$call.$call.')';
+        }
+        $pattern = '/(?|)(?(DEFINE)'.$definitions.'())(?<=(?1))/';
+        $parser = RegexParser::create(self::TARGET);
+        $ast = $parser->parse($pattern);
+        $analyzer = new PatternInfoAnalyzer();
+
+        // Without a branch reset, memoization bounds the same call graph.
+        $this->assertSame(0, $analyzer->analyze($parser->parse(str_replace('(?|)', '', $pattern)))->maxLookbehind);
+
+        $this->expectException(ResourceLimitException::class);
+        $this->expectExceptionMessage('Lookbehind analysis exceeded');
+        $analyzer->analyze($ast);
+    }
 
     #[Test]
     public function test_analysis_version_is_3(): void

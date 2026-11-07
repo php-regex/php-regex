@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Analysis;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharClassNode;
@@ -112,6 +114,8 @@ final class LookbehindLength
      */
     private int $recursions = 0;
 
+    private int $measurements = 0;
+
     /**
      * Whether the measure in progress met an item of no fixed length where
      * the PCRE2 judged (up to 10.42) ends the measure there.
@@ -141,6 +145,7 @@ final class LookbehindLength
      * @param bool                                                               $skipsDefine    whether the PCRE2 judged (10.35+) skips a "(?(DEFINE)" group
      * @param bool                                                               $readsNesting   whether the PCRE2 judged reads an extended class that nests a class or a parenthesis whole (all but 10.45 to 10.47)
      * @param bool                                                               $wrapsLengths   whether the PCRE2 judged (before 10.34) adds lengths up in a 32-bit integer that wraps around
+     * @param int|null                                                           $measurementLimit maximum node measurements across all branches, null when the caller supplies its own budget
      */
     public function __construct(
         private readonly GroupIndex $groups,
@@ -153,6 +158,7 @@ final class LookbehindLength
         private readonly bool $skipsDefine = true,
         private readonly bool $readsNesting = true,
         private readonly bool $wrapsLengths = false,
+        private readonly ?int $measurementLimit = null,
     ) {}
 
     /**
@@ -245,6 +251,16 @@ final class LookbehindLength
      */
     public function of(NodeInterface $node, array $expanding = [], int $before = 0): array
     {
+        // Count work, not the resulting length: even empty subroutine bodies
+        // can be expanded exponentially when branch resets disable caching.
+        if (null !== $this->measurementLimit && ++$this->measurements > $this->measurementLimit) {
+            throw new ResourceLimitException(
+                'Lookbehind analysis exceeded its node measurement budget.',
+                ErrorCode::LookbehindTooComplex,
+                $node->getStartPosition(),
+            );
+        }
+
         $length = $this->measure($node, $expanding, $before);
 
         // Up to PCRE2 10.42 an item of more than one length ends the measure.
