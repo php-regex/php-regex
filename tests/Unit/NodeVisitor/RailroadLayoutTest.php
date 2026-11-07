@@ -15,7 +15,11 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Explain\RailroadLayoutVisitor;
 use PHPRegex\Explain\RailroadSvgRenderer;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -64,6 +68,40 @@ final class RailroadLayoutTest extends TestCase
         $this->assertInstanceOf(\DOMElement::class, $start);
         $this->assertSame('terminal start', $start->getAttribute('class'));
         $this->assertSame((string) (7 + self::CANVAS_PADDING), $start->getAttribute('cx'));
+    }
+
+    #[Test]
+    #[DataProvider('provideWideLayouts')]
+    public function test_wide_layout_composition_scales_with_its_geometry(bool $alternation): void
+    {
+        $times = [];
+        foreach ([4000, 32000] as $count) {
+            $children = array_fill(0, $count, new DotNode(0, 1));
+            $tree = $alternation
+                ? new AlternationNode($children, 0, $count)
+                : new SequenceNode($children, 0, $count);
+            $visitor = new RailroadLayoutVisitor();
+            $start = CpuClock::nanoseconds();
+            $layout = $tree->accept($visitor);
+            $times[] = CpuClock::nanoseconds() - $start;
+
+            $this->assertCount($count, $layout['nodes']);
+            $this->assertCount($alternation ? 2 * $count + 2 : $count - 1, $layout['paths']);
+            unset($layout);
+        }
+
+        // Eight times the geometry allows ample scheduling/allocation variance,
+        // but must not incur the roughly 64 times work of repeated merging.
+        $this->assertLessThan(24 * max($times[0], 1_000_000), $times[1]);
+    }
+
+    /**
+     * @return iterable<string, array{bool}>
+     */
+    public static function provideWideLayouts(): iterable
+    {
+        yield 'sequence' => [false];
+        yield 'alternation' => [true];
     }
 
     /**

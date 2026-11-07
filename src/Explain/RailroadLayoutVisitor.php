@@ -573,11 +573,21 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
             $offsetY = $baselineY - (int) $layout['entryY'];
 
             $offsetLayout = $this->offsetLayout($layout, $x, $offsetY);
-            $nodes = array_merge($nodes, $offsetLayout['nodes']);
-            $paths = array_merge($paths, $offsetLayout['paths']);
-            $texts = array_merge($texts, $offsetLayout['texts']);
-            $boxes = array_merge($boxes, $offsetLayout['boxes']);
-            $markers = array_merge($markers, $offsetLayout['markers']);
+            foreach ($offsetLayout['nodes'] as $node) {
+                $nodes[] = $node;
+            }
+            foreach ($offsetLayout['paths'] as $path) {
+                $paths[] = $path;
+            }
+            foreach ($offsetLayout['texts'] as $text) {
+                $texts[] = $text;
+            }
+            foreach ($offsetLayout['boxes'] as $box) {
+                $boxes[] = $box;
+            }
+            foreach ($offsetLayout['markers'] as $marker) {
+                $markers[] = $marker;
+            }
 
             if (null !== $prevLayout) {
                 $currEntryXAbs = $x + (int) $layout['entryX'];
@@ -644,11 +654,21 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         $bottomY = null;
         foreach ($layouts as $layout) {
             $offsetLayout = $this->offsetLayout($layout, self::BRANCH_GAP, $y);
-            $nodes = array_merge($nodes, $offsetLayout['nodes']);
-            $paths = array_merge($paths, $offsetLayout['paths']);
-            $texts = array_merge($texts, $offsetLayout['texts']);
-            $boxes = array_merge($boxes, $offsetLayout['boxes']);
-            $markers = array_merge($markers, $offsetLayout['markers']);
+            foreach ($offsetLayout['nodes'] as $node) {
+                $nodes[] = $node;
+            }
+            foreach ($offsetLayout['paths'] as $path) {
+                $paths[] = $path;
+            }
+            foreach ($offsetLayout['texts'] as $text) {
+                $texts[] = $text;
+            }
+            foreach ($offsetLayout['boxes'] as $box) {
+                $boxes[] = $box;
+            }
+            foreach ($offsetLayout['markers'] as $marker) {
+                $markers[] = $marker;
+            }
 
             $centerY = $y + (int) $layout['entryY'];
             $topY ??= $centerY;
