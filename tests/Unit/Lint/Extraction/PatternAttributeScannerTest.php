@@ -75,6 +75,33 @@ final class PatternAttributeScannerTest extends TestCase
         $this->assertSame(['App\grep#0'], PatternAttributeScanner::scan($content));
     }
 
+    #[Test]
+    public function test_unterminated_declarations_do_not_rescan_the_remaining_source(): void
+    {
+        $content = "<?php\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\n"
+            ."function first(#[RegexPattern] \$pattern) {}\n"
+            .str_repeat("function broken(\n", 20000)
+            ."function last(#[RegexPattern] \$pattern) {}";
+        $start = hrtime(true);
+
+        $this->assertSame(['first#0$pattern', 'last#0$pattern'], PatternAttributeScanner::scan($content));
+        $this->assertLessThan(5.0, (hrtime(true) - $start) / 1e9, 'Malformed declarations must not repeatedly traverse the suffix.');
+    }
+
+    #[Test]
+    public function test_malformed_attribute_lookaheads_share_the_work_limit(): void
+    {
+        $start = hrtime(true);
+        foreach (['#[\\PHPRegex\\Parser\\Attribute\\RegexPattern]', "#[\\JetBrains\\PhpStorm\\Language('SQL',"] as $attribute) {
+            $content = "<?php\n".str_repeat('function broken('.$attribute."\n", 20000);
+            // Incomplete parameters may be reported without a name.
+            foreach (PatternAttributeScanner::scan($content) as $spec) {
+                $this->assertSame('broken#0', $spec);
+            }
+        }
+        $this->assertLessThan(5.0, (hrtime(true) - $start) / 1e9, 'Attribute helpers must share the declaration work limit.');
+    }
+
     /**
      * What marks a parameter as a pattern, read the same way by the token
      * scanner and by the static analysis rule: #[RegexPattern], or
