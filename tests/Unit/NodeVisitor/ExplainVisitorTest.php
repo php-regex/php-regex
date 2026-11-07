@@ -68,15 +68,15 @@ final class ExplainVisitorTest extends TestCase
         $html = $ast->accept(new HtmlExplainer());
 
         $this->assertStringNotContainsString('Quantified group', $text); // Simple format
-        $this->assertStringContainsString('</span> (zero or more times)</li>', $html); // In the item of the literal
+        $this->assertStringContainsString('</span>, zero or more times</li>', $html); // In the item of the literal
 
         // Complex: (a|b)* -> multi line block
         $ast = $this->regex->parse('/(a|b)*/');
         $text = $ast->accept(new TextExplainer());
         $html = $ast->accept(new HtmlExplainer());
 
-        $this->assertStringContainsString('Quantified group (zero or more times)', $text);
-        $this->assertStringContainsString('<li><strong>Quantified group (zero or more times):', $html); // Wrapped
+        $this->assertStringContainsString('Quantified group, zero or more times', $text);
+        $this->assertStringContainsString('<li><strong>Quantified group, zero or more times:', $html); // Wrapped
     }
 
     #[Test]

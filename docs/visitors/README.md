@@ -523,9 +523,9 @@ $explanation = $ast->accept(new TextExplainer());
 echo $explanation;
 /*
 Regex matches
-  Character Type: A digit: [0-9] (exactly 3 times)
+  Character Type: A digit [0-9], exactly 3 times
   '-'
-  Character Type: A digit: [0-9] (exactly 4 times)
+  Character Type: A digit [0-9], exactly 4 times
 */
 ```
 
@@ -569,11 +569,11 @@ $html = $ast->accept(new HtmlExplainer());
 echo $html;
 // <div class="regex-explain">
 // <strong>Regex matches:</strong>
-// <ul><li><span title="Character Type: A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C (one or more times)">Character Type: <strong>\w</strong> (A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C)</span> (one or more times)</li>
+// <ul><li><span title="Character Type: A word character [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C, one or more times">Character Type: <strong>\w</strong> (A word character [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C)</span>, one or more times</li>
 // <li><span title="&#039;@&#039;"><strong>&#039;@&#039;</strong></span></li>
-// <li><span title="Character Type: A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C (one or more times)">Character Type: <strong>\w</strong> (A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C)</span> (one or more times)</li>
+// <li><span title="Character Type: A word character [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C, one or more times">Character Type: <strong>\w</strong> (A word character [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C)</span>, one or more times</li>
 // <li><span title="&#039;.&#039;"><strong>&#039;.&#039;</strong></span></li>
-// <li><span title="Character Type: A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C (one or more times)">Character Type: <strong>\w</strong> (A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C)</span> (one or more times)</li></ul>
+// <li><span title="Character Type: A word character [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C, one or more times">Character Type: <strong>\w</strong> (A word character [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C)</span>, one or more times</li></ul>
 // </div>
 ```
 

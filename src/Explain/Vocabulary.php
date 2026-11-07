@@ -37,16 +37,16 @@ use PHPRegex\Parser\Text\Bytes;
 final class Vocabulary
 {
     public const CHAR_TYPES = [
-        'd' => 'A digit: [0-9]',
-        'D' => 'A non-digit: [^0-9]',
-        'h' => 'A horizontal whitespace character: [ \\t\\xA0\\u1680\\u180e\\u2000-\\u200a\\u202f\\u205f\\u3000]',
-        'H' => 'A non-horizontal whitespace character: [^\\h]',
-        's' => 'A whitespace character: [ \\t\\n\\x0B\\f\\r]',
-        'S' => 'A non-whitespace character: [^\\s]',
-        'v' => 'A vertical whitespace character: [\\n\\x0B\\f\\r\\x85\\u2028\\u2029]',
-        'V' => 'A non-vertical whitespace character: [^\\v]',
-        'w' => 'A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C',
-        'W' => 'A non-word character: [^\\w]',
+        'd' => 'A digit [0-9]',
+        'D' => 'A non-digit [^0-9]',
+        'h' => 'A horizontal whitespace character [ \\t\\xA0\\u1680\\u180e\\u2000-\\u200a\\u202f\\u205f\\u3000]',
+        'H' => 'A non-horizontal whitespace character [^\\h]',
+        's' => 'A whitespace character [ \\t\\n\\x0B\\f\\r]',
+        'S' => 'A non-whitespace character [^\\s]',
+        'v' => 'A vertical whitespace character [\\n\\x0B\\f\\r\\x85\\u2028\\u2029]',
+        'V' => 'A non-vertical whitespace character [^\\v]',
+        'w' => 'A word character [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C',
+        'W' => 'A non-word character [^\\w]',
         'R' => 'Any Unicode linebreak sequence (\\u000D\\u000A|[\\u000A\\u000B\\u000C\\u000D\\u0085\\u2028\\u2029])',
         'X' => 'An extended grapheme cluster: a character with the marks that combine with it, or a \\r\\n pair',
         'C' => 'One code unit: a single byte, a newline included',
@@ -65,7 +65,7 @@ final class Vocabulary
         'uppercase' => 'An uppercase character (the Unicode Uppercase property)',
         'alpha' => 'An alphabetic character (the Unicode Alphabetic property)',
         'alphabetic' => 'An alphabetic character (the Unicode Alphabetic property)',
-        'ascii' => 'An ASCII character: [\\x00-\\x7F]',
+        'ascii' => 'An ASCII character [\\x00-\\x7F]',
         'space' => 'A whitespace character (the Unicode White_Space property)',
         'whitespace' => 'A whitespace character (the Unicode White_Space property)',
         'wspace' => 'A whitespace character (the Unicode White_Space property)',
@@ -81,9 +81,9 @@ final class Vocabulary
         'd' => 'A decimal digit: any Unicode decimal digit (\\p{Nd})',
         'D' => 'A non-digit: any character but a Unicode decimal digit (\\P{Nd})',
         's' => 'A whitespace character: a Unicode separator (\\p{Z}), or a horizontal or vertical whitespace character (\\h, \\v)',
-        'S' => 'A non-whitespace character: [^\\s]',
+        'S' => 'A non-whitespace character [^\\s]',
         'w' => 'A word character: a Unicode letter (\\p{L}) or number (\\p{N}), an underscore, and from PCRE2 10.43 a non-spacing mark (\\p{Mn}) or connector punctuation (\\p{Pc})',
-        'W' => 'A non-word character: [^\\w]',
+        'W' => 'A non-word character [^\\w]',
     ];
 
     /**
@@ -103,8 +103,8 @@ final class Vocabulary
      * for no other byte.
      */
     private const TABLE_CHAR_TYPES = [
-        's' => ['A whitespace character: [ \\t\\n\\x0B\\f\\r]', 'the whitespace characters'],
-        'w' => ['A word character: [a-zA-Z_0-9]', 'the letters'],
+        's' => ['A whitespace character [ \\t\\n\\x0B\\f\\r]', 'the whitespace characters'],
+        'w' => ['A word character [a-zA-Z_0-9]', 'the letters'],
     ];
 
     /**
@@ -112,8 +112,8 @@ final class Vocabulary
      * character past 0xFF.
      */
     private const BYTE_CHAR_TYPES = [
-        'h' => 'A horizontal whitespace character: [ \\t\\xA0]',
-        'v' => 'A vertical whitespace character: [\\n\\x0B\\f\\r\\x85]',
+        'h' => 'A horizontal whitespace character [ \\t\\xA0]',
+        'v' => 'A vertical whitespace character [\\n\\x0B\\f\\r\\x85]',
         'R' => 'Any linebreak sequence (\\r\\n|[\\n\\x0B\\f\\r\\x85])',
     ];
 

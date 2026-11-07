@@ -823,6 +823,23 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     /**
+     * The library writes the sentence the reflow reads: on its own output
+     * the reflow changes nothing, so a page running a bundle built before
+     * the wording moved and one built after show the same line.
+     */
+    #[Test]
+    public function test_the_library_writes_what_the_reflow_shows(): void
+    {
+        $rewrites = self::reflow();
+
+        foreach (['/\d{4}/', '/(?:[[:alpha:]\s]c)+?/u', '/\w*+\h{2,5}/', '/(?(1)\D{2}|[a-c]*)/'] as $pattern) {
+            foreach (explode("\n", Regex::create()->explain($pattern)) as $line) {
+                $this->assertSame($line, self::apply($rewrites, $line), $pattern);
+            }
+        }
+    }
+
+    /**
      * A comment, a verb's name, a callout's argument: the visitor's own
      * words, which the library quotes and the page must not rewrite. The
      * kinds the library gives those lines are the kinds the script keeps.

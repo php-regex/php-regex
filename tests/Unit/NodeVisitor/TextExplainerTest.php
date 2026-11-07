@@ -33,11 +33,29 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class TextExplainerTest extends TestCase
 {
+    /**
+     * One sentence per line: a type names its characters with no colon
+     * before them, and the count follows as a clause, not in brackets.
+     */
+    #[Test]
+    public function test_a_line_reads_as_one_sentence(): void
+    {
+        $this->assertSame(
+            "Regex matches\n  Character Type: A digit [0-9], exactly 4 times",
+            Regex::create()->explain('/\d{4}/'),
+        );
+        $this->assertSame(
+            "Regex matches\n  Quantified group, one or more times (as few as possible)\n    Non-capturing group\n      Character Class: any character in [ POSIX Class [[:alpha:]], 'b' ]\n      'c'\n    End group\n  End quantified group",
+            Regex::create()->explain('/(?:[[:alpha:]b]c)+?/'),
+        );
+    }
+
     #[Test]
     public function test_visit_octal_legacy_node(): void
     {
@@ -99,7 +117,7 @@ final class TextExplainerTest extends TestCase
         );
         $visitor = new TextExplainer();
 
-        $this->assertSame("'a' (zero or more times)", $node->accept($visitor));
+        $this->assertSame("'a', zero or more times", $node->accept($visitor));
     }
 
     #[Test]
@@ -163,7 +181,7 @@ final class TextExplainerTest extends TestCase
         $node = new PosixClassNode('alpha', 0, 8);
         $visitor = new TextExplainer();
 
-        $this->assertSame('POSIX Class: [[:alpha:]]', $node->accept($visitor));
+        $this->assertSame('POSIX Class [[:alpha:]]', $node->accept($visitor));
     }
 
     #[Test]

@@ -108,7 +108,7 @@ final class VisitorDepthScalingTest extends TestCase
     {
         yield '/(?:a|bc)*/' => ['/(?:a|bc)*/', implode("\n", [
             'Regex matches',
-            '  Quantified group (zero or more times)',
+            '  Quantified group, zero or more times',
             '    Non-capturing group',
             '      EITHER',
             '        \'a\'',
@@ -120,9 +120,9 @@ final class VisitorDepthScalingTest extends TestCase
         ])];
         yield '/(?:(?:ab)+c)*/' => ['/(?:(?:ab)+c)*/', implode("\n", [
             'Regex matches',
-            '  Quantified group (zero or more times)',
+            '  Quantified group, zero or more times',
             '    Non-capturing group',
-            '      Quantified group (one or more times)',
+            '      Quantified group, one or more times',
             '        Non-capturing group',
             '          \'a\'',
             '          \'b\'',
@@ -134,10 +134,10 @@ final class VisitorDepthScalingTest extends TestCase
         ])];
         yield '/(a(?:b|c)+)?d{2,3}/' => ['/(a(?:b|c)+)?d{2,3}/', implode("\n", [
             'Regex matches',
-            '  Quantified group (once or not at all)',
+            '  Quantified group, once or not at all',
             '    Capturing group',
             '      \'a\'',
-            '      Quantified group (one or more times)',
+            '      Quantified group, one or more times',
             '        Non-capturing group',
             '          EITHER',
             '            \'b\'',
@@ -147,15 +147,15 @@ final class VisitorDepthScalingTest extends TestCase
             '      End quantified group',
             '    End group',
             '  End quantified group',
-            '  \'d\' (at least 2 but not more than 3 times)',
+            '  \'d\', at least 2 but not more than 3 times',
         ])];
         yield '/(?:(?:(?:x)*)+)?/' => ['/(?:(?:(?:x)*)+)?/', implode("\n", [
             'Regex matches',
-            '  Quantified group (once or not at all)',
+            '  Quantified group, once or not at all',
             '    Non-capturing group',
-            '      Quantified group (one or more times)',
+            '      Quantified group, one or more times',
             '        Non-capturing group',
-            '          Quantified group (zero or more times)',
+            '          Quantified group, zero or more times',
             '            Non-capturing group',
             '              \'x\'',
             '            End group',

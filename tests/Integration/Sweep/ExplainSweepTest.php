@@ -123,7 +123,7 @@ final class ExplainSweepTest extends TestCase
         // Test quantifier with complex child (multiline output) to hit lines 149-159
         $ast = $this->regex->parse('/(a|b|c)+/');
         $result = $ast->accept($this->explainVisitor);
-        $this->assertStringContainsString('Quantified group (one or more times)', $result);
+        $this->assertStringContainsString('Quantified group, one or more times', $result);
         $this->assertStringContainsString('End quantified group', $result);
     }
 

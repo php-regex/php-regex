@@ -84,7 +84,7 @@ Hovering the pattern `/^\w+@\w+\.\w+$/` returns this markdown (abridged):
 
 Regex matches
   Anchor: the start of the subject
-  Character Type: A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C (one or more times)
+  Character Type: A word character [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C, one or more times
   …
   Anchor: the end of the subject, or just before a newline (\n) that ends it
 ````

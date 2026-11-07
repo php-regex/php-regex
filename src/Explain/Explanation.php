@@ -50,12 +50,18 @@ final class Explanation
 
     /**
      * The explanation on one line: a leaf's label and meaning, or the
-     * heading and the pieces of anything else, one after the other.
+     * heading and the pieces of anything else, one after the other. A
+     * meaning that is a bracket or an escape follows its label as a name
+     * does, without a colon: "POSIX Class [[:alpha:]]".
      */
     public function inline(): string
     {
         if (ExplanationKind::Leaf === $this->kind) {
-            return '' === $this->label ? $this->text : $this->label.': '.$this->text;
+            if ('' === $this->label) {
+                return $this->text;
+            }
+
+            return $this->label.(str_starts_with($this->text, '[') || str_starts_with($this->text, '\\') ? ' ' : ': ').$this->text;
         }
 
         $pieces = array_map(static fn (self $child): string => $child->inline(), $this->children);

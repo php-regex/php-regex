@@ -34,19 +34,19 @@ final class ExplainCharacterTypeTest extends TestCase
 {
     use PcreGates;
 
-    private const DIGIT = 'A digit: [0-9]';
+    private const DIGIT = 'A digit [0-9]';
 
-    private const NON_DIGIT = 'A non-digit: [^0-9]';
+    private const NON_DIGIT = 'A non-digit [^0-9]';
 
     private const UNICODE_DIGIT = 'A decimal digit: any Unicode decimal digit (\p{Nd})';
 
     private const UNICODE_NON_DIGIT = 'A non-digit: any character but a Unicode decimal digit (\P{Nd})';
 
-    private const WORD = 'A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C';
+    private const WORD = 'A word character [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C';
 
     private const UNICODE_WORD = 'A word character: a Unicode letter (\p{L}) or number (\p{N}), an underscore, and from PCRE2 10.43 a non-spacing mark (\p{Mn}) or connector punctuation (\p{Pc})';
 
-    private const SPACE = 'A whitespace character: [ \t\n\x0B\f\r]';
+    private const SPACE = 'A whitespace character [ \t\n\x0B\f\r]';
 
     private const UNICODE_SPACE = 'A whitespace character: a Unicode separator (\p{Z}), or a horizontal or vertical whitespace character (\h, \v)';
 
@@ -54,13 +54,13 @@ final class ExplainCharacterTypeTest extends TestCase
 
     private const BYTE = 'One code unit: a single byte, a newline included';
 
-    private const HSPACE = 'A horizontal whitespace character: [ \t\xA0]';
+    private const HSPACE = 'A horizontal whitespace character [ \t\xA0]';
 
-    private const UNICODE_HSPACE = 'A horizontal whitespace character: [ \t\xA0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]';
+    private const UNICODE_HSPACE = 'A horizontal whitespace character [ \t\xA0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]';
 
-    private const VSPACE = 'A vertical whitespace character: [\n\x0B\f\r\x85]';
+    private const VSPACE = 'A vertical whitespace character [\n\x0B\f\r\x85]';
 
-    private const UNICODE_VSPACE = 'A vertical whitespace character: [\n\x0B\f\r\x85\u2028\u2029]';
+    private const UNICODE_VSPACE = 'A vertical whitespace character [\n\x0B\f\r\x85\u2028\u2029]';
 
     private const LINEBREAK = 'Any linebreak sequence (\r\n|[\n\x0B\f\r\x85])';
 

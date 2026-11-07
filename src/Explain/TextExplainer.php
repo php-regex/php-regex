@@ -82,8 +82,8 @@ final class TextExplainer extends AbstractNodeVisitor
     }
 
     /**
-     * A construct on one line takes the count after it; anything longer is
-     * a block.
+     * A construct on one line takes the count after it, as a clause;
+     * anything longer is a block.
      *
      * @return list<string>
      */
@@ -92,11 +92,11 @@ final class TextExplainer extends AbstractNodeVisitor
         $indent = str_repeat('  ', $level);
         $repeated = $repetition->children[0];
         if (ExplanationKind::Leaf === $repeated->kind) {
-            return [\sprintf('%s%s (%s)', $indent, $repeated->inline(), $repetition->text)];
+            return [\sprintf('%s%s, %s', $indent, $repeated->inline(), $repetition->text)];
         }
 
         return [
-            \sprintf('%sQuantified group (%s)', $indent, $repetition->text),
+            \sprintf('%sQuantified group, %s', $indent, $repetition->text),
             $this->render($repeated, $level + 1),
             $indent.$repetition->end,
         ];

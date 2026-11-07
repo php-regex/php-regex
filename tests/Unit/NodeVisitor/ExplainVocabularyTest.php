@@ -88,7 +88,7 @@ final class ExplainVocabularyTest extends TestCase
         yield 'lowercase, by its long name' => ['name' => 'Lowercase', 'description' => 'A lowercase character (the Unicode Lowercase property)', 'subject' => 'ª', 'matches' => 1];
         yield 'upper' => ['name' => 'upper', 'description' => 'An uppercase character (the Unicode Uppercase property)', 'subject' => 'Ⅰ', 'matches' => 1];
         yield 'alpha' => ['name' => 'alpha', 'description' => 'An alphabetic character (the Unicode Alphabetic property)', 'subject' => 'Ⅰ', 'matches' => 1];
-        yield 'ascii' => ['name' => 'ascii', 'description' => 'An ASCII character: [\x00-\x7F]', 'subject' => 'é', 'matches' => 0];
+        yield 'ascii' => ['name' => 'ascii', 'description' => 'An ASCII character [\x00-\x7F]', 'subject' => 'é', 'matches' => 0];
         yield 'space' => ['name' => 'space', 'description' => 'A whitespace character (the Unicode White_Space property)', 'subject' => "\u{2028}", 'matches' => 1];
         yield 'white space, spelled with an underscore' => ['name' => 'White_Space', 'description' => 'A whitespace character (the Unicode White_Space property)', 'subject' => "\u{85}", 'matches' => 1];
         yield 'an uppercase letter' => ['name' => 'Lu', 'description' => 'An uppercase letter (category)', 'subject' => 'ǅ', 'matches' => 0];
