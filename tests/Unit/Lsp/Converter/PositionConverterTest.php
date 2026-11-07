@@ -217,7 +217,7 @@ final class PositionConverterTest extends TestCase
     {
         // Exercise split code points, malformed sequences and prefixes before
         // a malformed byte, including lookups in reverse order.
-        foreach (["é", "€", "\u{1F600}", "\xFF", "\xC0\xAF", "\xED\xA0\x80", "\xF4\x90\x80\x80", str_repeat("\x80", 8)] as $middle) {
+        foreach (['é', '€', "\u{1F600}", "\xFF", "\xC0\xAF", "\xED\xA0\x80", "\xF4\x90\x80\x80", str_repeat("\x80", 8)] as $middle) {
             $content = str_repeat('é', 127).$middle.str_repeat('z', 520)."\n".str_repeat('€', 180);
             $converter = new PositionConverter($content);
             for ($offset = \strlen($content) + 2; $offset >= -1; $offset--) {

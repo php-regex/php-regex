@@ -32,6 +32,7 @@ use PHPRegex\Parser\Engine\LibraryPcre;
 final class PositionConverter
 {
     private const CHECKPOINT_BYTES = 256;
+
     /**
      * @var array<int, int> Line number => byte offset of line start
      */
@@ -64,47 +65,6 @@ final class PositionConverter
             'line' => $line,
             'character' => $this->columnAt($line, $lineStart, max(0, min($offset, \strlen($this->content)) - $lineStart)),
         ];
-    }
-
-    /**
-     * Extend a line's index only once per block, then measure at most one
-     * block per lookup, even when offsets arrive out of order. Keep the
-     * prefix-based byte fallback, including offsets inside a code point.
-     */
-    private function columnAt(int $line, int $lineStart, int $bytes): int
-    {
-        $this->columnCheckpoints[$line] ??= [[0, 0]];
-        $checkpoints = &$this->columnCheckpoints[$line];
-        $block = intdiv($bytes, self::CHECKPOINT_BYTES);
-
-        while (\count($checkpoints) <= $block) {
-            $end = \count($checkpoints) * self::CHECKPOINT_BYTES;
-            // A UTF-8 sequence has at most three continuation bytes. Do not
-            // let malformed runs of continuation bytes make this unbounded.
-            for ($back = 0; $back < 3 && $end > 0; $back++) {
-                $byte = \ord($this->content[$lineStart + $end] ?? "\0");
-                if ($byte < 0x80 || $byte > 0xBF) {
-                    break;
-                }
-                $end--;
-            }
-
-            [$start, $units] = $checkpoints[\count($checkpoints) - 1];
-            if (null !== $units) {
-                $text = substr($this->content, $lineStart + $start, $end - $start);
-                $units = self::isUtf8($text) ? $units + self::utf16Length($text) : null;
-            }
-            $checkpoints[] = [$end, $units];
-        }
-
-        [$start, $units] = $checkpoints[$block];
-        if (null === $units) {
-            return $bytes;
-        }
-
-        $text = substr($this->content, $lineStart + $start, $bytes - $start);
-
-        return self::isUtf8($text) ? $units + self::utf16Length($text) : $bytes;
     }
 
     /**
@@ -179,6 +139,47 @@ final class PositionConverter
         $offset = $this->positionToOffset($line, $character);
 
         return $offset >= $byteStart && $offset <= $byteEnd;
+    }
+
+    /**
+     * Extend a line's index only once per block, then measure at most one
+     * block per lookup, even when offsets arrive out of order. Keep the
+     * prefix-based byte fallback, including offsets inside a code point.
+     */
+    private function columnAt(int $line, int $lineStart, int $bytes): int
+    {
+        $this->columnCheckpoints[$line] ??= [[0, 0]];
+        $checkpoints = &$this->columnCheckpoints[$line];
+        $block = intdiv($bytes, self::CHECKPOINT_BYTES);
+
+        while (\count($checkpoints) <= $block) {
+            $end = \count($checkpoints) * self::CHECKPOINT_BYTES;
+            // A UTF-8 sequence has at most three continuation bytes. Do not
+            // let malformed runs of continuation bytes make this unbounded.
+            for ($back = 0; $back < 3 && $end > 0; $back++) {
+                $byte = \ord($this->content[$lineStart + $end] ?? "\0");
+                if ($byte < 0x80 || $byte > 0xBF) {
+                    break;
+                }
+                $end--;
+            }
+
+            [$start, $units] = $checkpoints[\count($checkpoints) - 1];
+            if (null !== $units) {
+                $text = substr($this->content, $lineStart + $start, $end - $start);
+                $units = self::isUtf8($text) ? $units + self::utf16Length($text) : null;
+            }
+            $checkpoints[] = [$end, $units];
+        }
+
+        [$start, $units] = $checkpoints[$block];
+        if (null === $units) {
+            return $bytes;
+        }
+
+        $text = substr($this->content, $lineStart + $start, $bytes - $start);
+
+        return self::isUtf8($text) ? $units + self::utf16Length($text) : $bytes;
     }
 
     /**
