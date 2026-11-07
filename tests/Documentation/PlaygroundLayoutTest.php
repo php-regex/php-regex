@@ -153,6 +153,225 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     /**
+     * The window's name stands in the middle of its bar whatever the state
+     * beside Run says: the two outer tracks share what the name leaves, so
+     * "Ready" and "Sample · press Run" never slide it sideways.
+     */
+    #[Test]
+    public function test_the_title_stays_centred_whatever_the_state_says(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/(?<!,\n)^\.pg-titlebar \{([^}]*)\}/m', $stylesheet, $bar), 'The bar\'s own rule exists, not the one it shares with the terminal.');
+        $this->assertStringContainsString('grid-template-columns: 1fr minmax(0, max-content) 1fr;', $bar[1], 'Two outer tracks of one share, the name between them.');
+        $this->assertSame(1, preg_match('/^\.pg-controls \{([^}]*)\}/m', $stylesheet, $controls));
+        $this->assertStringContainsString('justify-self: end;', $controls[1], 'The controls keep to the bar\'s far edge.');
+    }
+
+    /**
+     * The state is a light and a word, not a pill: an outlined pill beside
+     * Run reads as a second button. The dot is drawn by a border, so a
+     * forced palette keeps it; it pulses while the engine works, unless
+     * less motion was asked for.
+     */
+    #[Test]
+    public function test_the_state_is_a_light_not_a_button(): void
+    {
+        $xpath = self::include();
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-state').'/'.self::self('pg-state-word')), 'The word has its own box, which a phone can hide.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-state').'[@title="Sample · press Run"]'), 'The light names itself from the first paint, before any script speaks.');
+
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-state \{([^}]*)\}/m', $stylesheet, $state));
+        $this->assertStringNotContainsString('border:', $state[1], 'No outline: the state is not a control.');
+        $this->assertSame(1, preg_match('/^\.pg-state::before \{([^}]*)\}/m', $stylesheet, $dot), 'The light is drawn before the word.');
+        $this->assertStringContainsString('border:', $dot[1], 'A border, so forced colors keep the dot.');
+        foreach (['is-busy', 'is-ok', 'is-error'] as $tone) {
+            $this->assertStringContainsString('.pg-state.'.$tone.'::before', $stylesheet, 'The light takes the '.$tone.' tone.');
+        }
+        $this->assertSame(1, preg_match('/@media \(prefers-reduced-motion: no-preference\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-state\.is-busy::before \{([^}]*)\}/', $stylesheet, $pulse), 'The pulse waits for a visitor who did not ask for less motion.');
+        $this->assertStringContainsString('animation:', $pulse[1]);
+
+        $script = self::source(self::SCRIPT);
+        $set = self::between($script, 'function setState(word, tone) {', "\n  }\n");
+        $this->assertStringContainsString('el.stateWord.textContent = word;', $set);
+        $this->assertStringContainsString('el.state.title = word;', $set, 'Where the word is hidden, the light still names itself.');
+        $this->assertStringNotContainsString("setState('Ready');", $script, 'Ready lights green, every time.');
+        $this->assertStringContainsString("setState('Ready', 'ok');", $script);
+    }
+
+    /**
+     * Below the side-by-side layout the bar is a wrapping row: the
+     * desktop's window lights go, the name keeps to the left where no
+     * state can move it, and controls too wide for one row — enlarged
+     * text, a narrow phone — drop under the name and then wrap among
+     * themselves, never past the frame that clips them. A phone also
+     * says the state by its light alone, its word still read by the live
+     * region.
+     */
+    #[Test]
+    public function test_the_title_bar_keeps_one_row_on_a_phone(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+        $narrow = '/@media \(max-width: 1023px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*';
+        $phone = '/@media \(max-width: 639px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*';
+
+        $this->assertStringNotContainsString('@media (max-width: 899px)', $stylesheet, 'At 660px and 800px with the text at 200%, a grid track for the controls pushed the state past the frame.');
+        $this->assertSame(1, preg_match($narrow.'\.pg-lights \{([^}]*)\}/', $stylesheet, $lights));
+        $this->assertStringContainsString('display: none;', $lights[1], 'The desktop metaphor gives its room to the controls.');
+        $this->assertSame(1, preg_match($narrow.'\.pg-titlebar \{([^}]*)\}/', $stylesheet, $bar));
+        $this->assertStringContainsString('display: flex;', $bar[1]);
+        $this->assertStringContainsString('flex-wrap: wrap;', $bar[1], 'The controls drop under the name rather than leave the frame.');
+        $this->assertSame(1, preg_match($narrow.'\.pg-controls \{([^}]*)\}/', $stylesheet, $controls));
+        $this->assertStringContainsString('flex-wrap: wrap;', $controls[1], 'And wrap among themselves when one row of them is too wide.');
+        $this->assertStringContainsString('margin-left: auto;', $controls[1], 'Kept to the far edge on either row.');
+        $this->assertSame(1, preg_match($narrow.'\.pg-title \{([^}]*)\}/', $stylesheet, $title));
+        $this->assertStringContainsString('flex: 1 0 auto;', $title[1], 'The name never shrinks to nothing to keep the controls beside it.');
+        $this->assertStringContainsString('text-align: left;', $title[1]);
+
+        $this->assertSame(1, preg_match($phone.'\.pg-state-word \{([^}]*)\}/', $stylesheet, $word));
+        $this->assertStringContainsString('clip-path: inset(50%);', $word[1], 'Hidden from the eye, not from the live region.');
+        $this->assertStringNotContainsString('display: none', $word[1]);
+        $this->assertSame(0, preg_match($phone.'\.pg-controls \{[^}]*grid-column: 1 \/ -1;/', $stylesheet), 'No second row for the controls while they fit.');
+
+        // The header above already says the brand: a phone's bar says
+        // "Playground" whole rather than the full name cut short.
+        $xpath = self::include();
+        $name = $xpath->evaluate('string('.self::byClass('pg-title').')');
+        $this->assertIsString($name);
+        $this->assertSame('PHPRegex playground', trim($name), 'A wide bar says the whole name.');
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-title').'/'.self::self('pg-title-brand')));
+        $this->assertSame(1, preg_match($phone.'\.pg-title-brand \{\s*display: none;/', $stylesheet), 'The brand word gives way on a phone.');
+        $this->assertSame(1, preg_match($phone.'\.pg-title::first-letter \{\s*text-transform: uppercase;/', $stylesheet), 'And the name left starts as a name.');
+    }
+
+    /**
+     * Run says its shortcut where there is room for it, in the platform's
+     * own words; a screen reader hears the shortcut from the attribute,
+     * not twice from the label.
+     */
+    #[Test]
+    public function test_run_shows_its_shortcut(): void
+    {
+        $xpath = self::include();
+        $run = $xpath->query(self::byClass('pg-run'));
+        $this->assertNotFalse($run);
+        $button = $run->item(0);
+        $this->assertInstanceOf(\DOMElement::class, $button);
+        $this->assertSame('Control+Enter Meta+Enter', $button->getAttribute('aria-keyshortcuts'));
+        $this->assertSame(1, self::nodes($xpath, self::byClass('pg-run').'/kbd'.self::has('pg-run-key').'[@aria-hidden="true"]'), 'The key is for the eye.');
+
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString("el.runKey.textContent = onApple ? '⌘↵' : 'Ctrl ↵';", $script, 'The platform\'s own modifier.');
+        $this->assertSame(1, preg_match('/@media \(max-width: 639px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-run-key \{\s*display: none;/', self::source(self::STYLESHEET)), 'A phone has no keyboard shortcut to show.');
+    }
+
+    /**
+     * Every control of the window shows the keyboard where it stands with
+     * the same two-pixel amber ring: a border that changes color is not a
+     * focus indicator.
+     */
+    #[Test]
+    public function test_the_window_controls_show_a_focus_ring(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+        foreach (['.pg-titlebar .pg-run:focus-visible', '.pg-example:focus-visible'] as $selector) {
+            $this->assertSame(1, preg_match('/(?<!,\n)^'.preg_quote($selector, '/').' \{([^}]*)\}/m', $stylesheet, $rule), $selector.' has a rule of its own.');
+            $this->assertStringContainsString('outline: 2px solid var(--amber);', $rule[1], $selector.' draws the ring.');
+        }
+    }
+
+    /**
+     * Under the column, the examples are a row: a name never folds over
+     * two lines inside its chip, and a row that scrolls fades on the edge
+     * where more examples wait, as the strip of tabs does.
+     */
+    #[Test]
+    public function test_an_example_chip_keeps_its_name_on_one_line(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-example \{([^}]*)\}/m', $stylesheet, $chip));
+        $this->assertStringContainsString('white-space: nowrap;', $chip[1], 'A name never wraps at its space.');
+        $this->assertSame(1, preg_match('/^\.pg-examples li \{([^}]*)\}/m', $stylesheet, $item));
+        $this->assertStringContainsString('flex: none;', $item[1], 'A chip never shrinks below its name.');
+        $this->assertSame(1, preg_match('/^\.pg-examples \.pg-findings-panel \{([^}]*)\}/m', $stylesheet, $panel), 'The projects list outranks the item rule, which would hold it beside the control.');
+        $this->assertStringContainsString('flex: 1 1 100%;', $panel[1], 'It takes a row of its own under the control.');
+        $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \.pg-example-name \{([^}]*)\}/', $stylesheet, $name), 'In the column, a long name is cut, never pushed past the box.');
+        $this->assertStringContainsString('text-overflow: ellipsis;', $name[1]);
+
+        $this->assertStringContainsString('.pg-examples.has-more-right', $stylesheet);
+        $this->assertStringContainsString('.pg-examples.has-more-left', $stylesheet);
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString('function syncExampleFades() {', $script);
+        $this->assertStringContainsString("el.examplesList.addEventListener('scroll', syncExampleFades, { passive: true });", $script);
+    }
+
+    /**
+     * The engine's first boot is said once to the eye: the loader's card
+     * names the stage, so the status line steps aside while it says that
+     * stage — still read by its live region. A warning the boot meets — a
+     * subject cut out of a link, a failed boot starting again — is the
+     * line's own: no stage overwrites it, and no clip hides it, until the
+     * engine answers.
+     */
+    #[Test]
+    public function test_the_loader_says_the_stage_once(): void
+    {
+        $script = self::source(self::SCRIPT);
+        $this->assertStringContainsString("root.classList.add('is-booting');", self::between($script, 'function showLoader(stage) {', "\n  }\n"));
+        $hide = self::between($script, 'function hideLoader() {', "\n  }\n");
+        $this->assertStringContainsString("root.classList.remove('is-booting');", $hide);
+        $this->assertStringContainsString("bootNotice = '';", $hide, 'A notice lasts as long as the boot it was met in.');
+
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.playground\.is-booting \.pg-status\.is-stage \{([^}]*)\}/m', $stylesheet, $status), 'The stage the card repeats, and nothing else.');
+        $this->assertStringContainsString('clip-path: inset(50%);', $status[1], 'Out of sight, never out of the accessibility tree.');
+        $this->assertSame(0, preg_match('/^\.playground\.is-booting \.pg-status(?:\.is-busy)? \{/m', $stylesheet), 'A busy or a warning line is never hidden behind the loader.');
+
+        $progress = self::between($script, "if (message.type === 'progress') {", "\n    }\n");
+        $this->assertStringContainsString('var notice = bootNotice || linkWarning();', $progress);
+        $this->assertStringContainsString("setStatus(notice || stage, notice ? 'warn' : 'stage');", $progress, 'A stage never overwrites a warning.');
+        $retry = self::between($script, 'if (failures[key] < 2) {', "\n    }\n");
+        $this->assertStringContainsString("bootNotice = reason + ' Starting the engine again…';", $retry);
+        $this->assertStringContainsString("setStatus(bootNotice, 'warn');", $retry);
+
+        // A subject cut out of a link warns for as long as the cut text is
+        // the one in the field — through the boot, after the answer, until
+        // the visitor's own hand or an example changes it.
+        $this->assertStringContainsString("linkNotice = { text: 'The subject in this link was cut at ' + SUBJECT_CAP + ' bytes.', subject: link.subject };", self::between($script, 'function noteCutLink(link) {', "\n  }\n"));
+        $this->assertStringContainsString('noteCutLink(fromHash);', $script, 'The link read at boot is the one noted.');
+        $this->assertStringContainsString('return linkNotice && el.subject.value === linkNotice.subject ? linkNotice.text : \'\';', self::between($script, 'function linkWarning() {', "\n  }\n"));
+        $set = self::between($script, 'function setStatus(message, tone) {', "\n  }\n");
+        $this->assertStringContainsString('if (!message && linkWarning()) {', $set, 'An empty line falls back to the link\'s warning.');
+    }
+
+    /**
+     * Before any run the status bar already says what judged the sample,
+     * so the bar is never a blank strip beside the privacy chip.
+     */
+    #[Test]
+    public function test_the_status_bar_names_the_sample_engine(): void
+    {
+        $caption = self::between(self::source(self::SCRIPT), 'function renderCaption(payload, prerendered) {', "\n  }\n");
+        $sample = self::between($caption, 'if (prerendered) {', 'return;');
+        $this->assertStringContainsString("chip('sample judged for', 'PHP ' + payload.target.php + ' · PCRE2 ' + payload.target.pcre)", $sample);
+    }
+
+    /**
+     * The privacy chip carries a lock, the sign every browser gives the
+     * same promise; and the projects filter's hint fits its field.
+     */
+    #[Test]
+    public function test_the_small_print_reads_whole(): void
+    {
+        $stylesheet = self::source(self::STYLESHEET);
+        $this->assertSame(1, preg_match('/^\.pg-privacy::before \{([^}]*)\}/m', $stylesheet, $lock));
+        $this->assertStringContainsString('mask:', $lock[1], 'A drawn lock in the chip\'s own ink.');
+
+        $xpath = self::include();
+        $this->assertSame('owner, repo or rule', $xpath->evaluate('string('.self::byClass('pg-findings-filter').'/@placeholder)'), 'A hint the narrow column shows whole.');
+    }
+
+    /**
      * The tint says a pattern is wrong to the eye; the field says it to a
      * screen reader too, with the error it is described by.
      */
@@ -303,6 +522,21 @@ final class PlaygroundLayoutTest extends TestCase
     }
 
     /**
+     * The strip scrolls sideways, and a scroll container's automatic
+     * minimum height is zero: in the panel's `auto 1fr` rows, a tree
+     * taller than a short screen's panel crushed the strip to its
+     * padding and the tabs were gone. The strip asks for its content's
+     * height outright.
+     */
+    #[Test]
+    public function test_a_full_panel_never_crushes_the_strip(): void
+    {
+        $this->assertSame(1, preg_match('/^\.pg-tabs \{([^}]*)\}/m', self::source(self::STYLESHEET), $strip));
+        $this->assertStringContainsString('overflow-x: auto;', $strip[1], 'The strip is a scroll container…');
+        $this->assertStringContainsString('min-height: max-content;', $strip[1], '…so its height is asked for, never left to the automatic minimum.');
+    }
+
+    /**
      * A tab never shrinks into two lines of text: "Step through" wrapped at
      * its space would make the one-line strip two lines tall again. The
      * whole tab scrolls instead.
@@ -386,7 +620,7 @@ final class PlaygroundLayoutTest extends TestCase
      * and its text. The pattern rides under the name — spelled in the
      * mono voice, hidden where the column folds back into a row — and the
      * window holds its three columns only where they fit; below that the
-     * list wraps above the fields (a phone scrolls it as one row).
+     * list is one row above the fields, which scrolls under its fade.
      */
     #[Test]
     public function test_the_examples_stand_in_their_own_column(): void
@@ -413,7 +647,8 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertSame(1, preg_match('/grid-template-columns:\s*minmax\([^;]*\)\s+minmax\(0, 2fr\)\s+minmax\(0, 3fr\);/', $wide[1]), 'Examples, fields, answers — three tracks.');
         $this->assertSame(1, preg_match('/@media \(min-width: 1280px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-example \{([^}]*)\}/', $stylesheet, $box), 'One column, one size of box.');
         $this->assertStringContainsString('width: 100%;', $box[1], 'A box fills its item: no example shrinks to its name.');
-        $this->assertSame(1, preg_match('/@media \(max-width: 1023px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \{([^}]*)\}/', $stylesheet, $narrow), 'Below the side-by-side layout, phones and tablets keep one row: the list scrolls, the fields stay near.');
+        $this->assertSame(1, preg_match('/@media \(max-width: 1279px\) \{(?:[^{}]*\{[^{}]*\})*?[^{}]*\.pg-examples \{([^}]*)\}/', $stylesheet, $narrow), 'Wherever the column folds back, phones, tablets and laptops keep one row: the list scrolls under its fade, the fields stay near — five wrapped rows pushed the pattern a hand down.');
+        $this->assertStringContainsString('flex-wrap: nowrap;', $narrow[1]);
         $this->assertStringContainsString('overflow-x: auto;', $narrow[1]);
     }
 

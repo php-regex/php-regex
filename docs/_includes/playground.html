@@ -9,7 +9,8 @@
   The data is embedded as JSON. Liquid writes "<" back when it re-encodes,
   so the include escapes it: a "<" could otherwise close the script element.
 
-  A window: the title bar holds the PHP version, Run and the state; the
+  A window: the title bar holds the window's name, the PHP version, Run
+  with its shortcut, and the state, a light and a word; the
   examples stand in a column of their own, each carrying its pattern
   under its name, then what the visitor writes (the pattern, the text);
   on the right, what the engine answers, behind one strip of tabs. Under
@@ -59,12 +60,12 @@
   <script type="application/json" id="playground-data">{{ site.data.playground | jsonify | replace: '<', '\u003C' }}</script>
   <div class="pg-titlebar">
     <span class="pg-lights" aria-hidden="true"><i></i><i></i><i></i></span>
-    <span class="pg-title">PHPRegex playground</span>
+    <span class="pg-title"><span class="pg-title-brand">PHPRegex </span>playground</span>
     <div class="pg-controls">
       <label class="visually-hidden" for="pg-version">PHP version</label>
       <select id="pg-version" class="pg-version"></select>
-      <button type="button" class="pg-run" title="Ctrl/⌘ Enter">Run</button>
-      <span class="pg-state" role="status" aria-live="polite">Sample · press Run</span>
+      <button type="button" class="pg-run" aria-keyshortcuts="Control+Enter Meta+Enter">Run<kbd class="pg-run-key" aria-hidden="true">Ctrl ↵</kbd></button>
+      <span class="pg-state" role="status" aria-live="polite" title="Sample · press Run"><span class="pg-state-word">Sample · press Run</span></span>
     </div>
   </div>
   <div class="pg-body">
@@ -90,7 +91,7 @@
       <li class="pg-findings-panel" hidden>
         <details class="pg-findings-browse">
           <summary>Browse <span class="pg-findings-count">the</span> projects</summary>
-          <input type="search" class="pg-findings-filter" placeholder="owner, repository or rule" aria-label="Filter by owner, repository or rule" spellcheck="false" autocapitalize="off" autocomplete="off">
+          <input type="search" class="pg-findings-filter" placeholder="owner, repo or rule" aria-label="Filter by owner, repository or rule" spellcheck="false" autocapitalize="off" autocomplete="off">
           <ul class="pg-findings-tree" role="tree" aria-label="Projects"></ul>
           <p class="pg-findings-empty" hidden>No project matches.</p>
           <p class="pg-findings-links"><a href="/findings/">All projects</a> <a href="https://github.com/php-regex/php-regex/issues/new?template=propose-project.yml">Propose a project</a></p>
