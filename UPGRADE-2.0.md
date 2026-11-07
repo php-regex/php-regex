@@ -25,7 +25,7 @@ The other packages (`regex-explain`, `regex-optimizer`, `regex-generator`,
 `regex-automata`, `regex-redos`, `regex-transpiler`, `regex-linter`) come with
 the toolkit, or alone when only that part is needed.
 
-`php-regex/php-regex`, the package that installs all eighteen at once,
+`php-regex/php-regex`, the package that installs all nineteen at once,
 carries the 1.x line as well: Packagist lists under that name the same
 v0.1.0 to v1.3.0 releases as `yoeunes/regex-parser`. Until 2.0.0 is tagged,
 `composer require php-regex/php-regex` with no version installs 1.3, and a

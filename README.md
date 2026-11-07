@@ -101,6 +101,7 @@ with one version number. Install the one you need; the
 | [`php-regex/regex-mcp`](src/Mcp) | the MCP server: regex judgement for a coding agent |
 | [`php-regex/regex-phpstan`](src/PHPStan) | the PHPStan extension |
 | [`php-regex/regex-phpunit`](src/PHPUnit) | match, compilation and proven-linearity assertions for your test suite |
+| [`php-regex/regex-infection`](src/Infection) | Infection mutators for regex literals, each mutant with the subject that kills it |
 | [`php-regex/regex-psalm`](src/Psalm) | the Psalm plugin: `$matches` typed from the pattern, invalid patterns reported |
 | [`php-regex/regex-rector`](src/Rector) | Rector rules: `preg_*` calls to the string functions they prove equal to |
 | [`php-regex/regex-symfony`](src/Symfony) | the Symfony bundle |
