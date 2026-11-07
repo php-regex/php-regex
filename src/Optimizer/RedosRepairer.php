@@ -46,6 +46,11 @@ use PHPRegex\Redos\RedosProof;
  */
 final class RedosRepairer
 {
+    // Bound the full-pattern copies retained while evaluating repairs.
+    private const MAX_CANDIDATES = 128;
+
+    private const MAX_CANDIDATE_BYTES = 1_048_576;
+
     private const FLATTENABLE = [GroupType::NonCapturing, GroupType::Capturing, GroupType::Named];
 
     /**
@@ -71,7 +76,8 @@ final class RedosRepairer
 
     /**
      * The repairs proven linear, certified ones first; none when the
-     * pattern is not open to catastrophic backtracking.
+     * pattern is not open to catastrophic backtracking or the candidate
+     * count or byte budget would be exceeded.
      *
      * @return list<RedosRepair>
      */
@@ -128,10 +134,22 @@ final class RedosRepairer
      */
     private function candidates(RegexNode $ast, string $pattern, RegexParser $parser): array
     {
+        $quantifiers = [];
+        foreach (self::quantifiers($ast->pattern) as $quantifier) {
+            $quantifiers[] = $quantifier;
+            // At most one flattening and one possessive per quantifier,
+            // plus the optimizer and the combined possessive rewrite.
+            $count = 2 * \count($quantifiers) + 2;
+            $bytes = \strlen($pattern) + \count($quantifiers);
+            if ($count > self::MAX_CANDIDATES || $bytes > intdiv(self::MAX_CANDIDATE_BYTES, $count)) {
+                return [];
+            }
+        }
+
         $source = $ast->source ?? '';
         $edits = [];
         $possessive = [];
-        foreach (self::quantifiers($ast->pattern) as $quantifier) {
+        foreach ($quantifiers as $quantifier) {
             $flat = self::flattened($quantifier, $source);
             if (null !== $flat) {
                 $edits[] = [$quantifier->getStartPosition(), $quantifier->getEndPosition(), $flat];
@@ -204,16 +222,16 @@ final class RedosRepairer
     }
 
     /**
-     * @return list<QuantifierNode>
+     * @return \Generator<int, QuantifierNode>
      */
-    private static function quantifiers(NodeInterface $node): array
+    private static function quantifiers(NodeInterface $node): \Generator
     {
-        $found = $node instanceof QuantifierNode ? [$node] : [];
-        foreach ($node->getChildren() as $child) {
-            $found = [...$found, ...self::quantifiers($child)];
+        if ($node instanceof QuantifierNode) {
+            yield $node;
         }
-
-        return $found;
+        foreach ($node->getChildren() as $child) {
+            yield from self::quantifiers($child);
+        }
     }
 
     private function sameSubjects(string $pattern, string $candidate): ?bool

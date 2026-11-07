@@ -140,6 +140,28 @@ final class RedosRepairerTest extends TestCase
         $this->assertSame([], (new RedosRepairer())->repair($pattern));
     }
 
+    #[Test]
+    #[DataProvider('providePatternsOverRepairBudget')]
+    public function test_candidate_allocation_is_bounded(string $pattern): void
+    {
+        $this->assertSame(1, preg_match($pattern, 'a'));
+        $this->assertSame(RedosComplexity::Exponential, (new RedosAnalyzer())->analyze($pattern)->complexity);
+
+        $parser = RegexParser::create();
+        $candidates = new \ReflectionMethod(RedosRepairer::class, 'candidates');
+        $this->assertSame([], $candidates->invoke(new RedosRepairer($parser), $parser->parse($pattern), $pattern, $parser));
+        $this->assertSame([], (new RedosRepairer($parser))->repair($pattern));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function providePatternsOverRepairBudget(): iterable
+    {
+        yield 'many quantifiers in a zero repeat' => ['pattern' => '/(?:'.str_repeat('x+', 1000).'){0}^(?:a+)+$/'];
+        yield 'large copies below the candidate count limit' => ['pattern' => '/(?#'.str_repeat('x', 20000).')(?:'.str_repeat('x+', 30).'){0}^(?:a+)+$/'];
+    }
+
     /**
      * @return iterable<string, array{pattern: string, repair: string, sameMatches: bool|null}>
      */
