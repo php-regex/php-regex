@@ -42,7 +42,7 @@ updates:
 
   # The workflows, the local action, and the workflow each package carries
   # for its read-only repository: one pull request per action, across every
-  # file that names it, so the eighteen package copies stay identical.
+  # file that names it, so the nineteen package copies stay identical.
   - package-ecosystem: github-actions
     directories:
       - /

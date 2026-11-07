@@ -1,6 +1,6 @@
 ---
 title: Guides
-description: "Choose the PHPRegex integration that fits your workflow: PHPStan, Psalm, Rector, PHPUnit, Laravel, Symfony, the language server, or the CLI."
+description: "Choose the PHPRegex integration that fits your workflow: PHPStan, Psalm, Rector, PHPUnit, Infection, Laravel, Symfony, the language server, or the CLI."
 ---
 
 # Guides
@@ -46,6 +46,14 @@ Rewrites a `preg_*` call into a cheaper string function only when the automata p
 ### [PHPUnit](phpunit.md)
 
 Four assertions for your test suite: what a pattern captures with exact capture semantics, that the running engine compiles it, and that it is proven linear.
+
+</div>
+
+<div class="guide-entry" markdown="1">
+
+### [Infection](infection.md)
+
+Mutation testing for your regexes: Infection mutators for the literals of `preg_*()` calls, no mutant the automata prove equivalent, each with the subject that kills it.
 
 </div>
 

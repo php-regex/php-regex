@@ -24,6 +24,7 @@ PHPRegex is developed as one family of focused packages. {% unless site.data.pro
 | Psalm types and findings | `php-regex/regex-psalm` | Types `$matches` from the pattern and reports patterns the target PHP refuses. |
 | Verified rewrites | `php-regex/regex-rector` | Rewrites a `preg_*` call only when the automata prove the replacement answers alike. |
 | Regex assertions in your test suite | `php-regex/regex-phpunit` | Asserts what a pattern captures with exact capture semantics, that the running engine compiles it, and that it is proven linear. |
+| Mutation testing of your regexes | `php-regex/regex-infection` | Infection mutators for the regex literals of `preg_*()` calls: no mutant the automata prove equivalent, each with the subject that kills it. |
 | Editor diagnostics | `php-regex/regex-language-server` | Serves diagnostics, hovers, completion, and code actions through the Language Server Protocol. |
 | Regex judgement for a coding agent | `php-regex/regex-mcp` | Serves validation, explanations, layout, translation and ReDoS verdicts to any MCP client, read-only, over stdio. |
 | Laravel commands and services | `php-regex/regex-laravel` | Adds the service, facade, and Artisan commands. |

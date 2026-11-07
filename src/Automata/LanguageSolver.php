@@ -191,7 +191,7 @@ final class LanguageSolver
      * from past the start of the subject, or the anchored retry that refuses
      * an empty match.
      *
-     * @internal the check of a rewrite asks it for each call a pattern may go to
+     * @internal the check of a rewrite and the judge of a mutant ask it for each call a pattern may go to
      *
      * @throws ComplexityException When a pattern leaves the fragment the match solver reads, or a limit is reached
      */
@@ -228,7 +228,7 @@ final class LanguageSolver
      * Two patterns that read alike (see readAlike()) run alike everywhere:
      * no run is needed.
      *
-     * @internal the check of a rewrite asks it for each call a pattern may go to
+     * @internal the check of a rewrite and the judge of a mutant ask it for each call a pattern may go to
      *
      * @return list<MatchRun>|null
      */

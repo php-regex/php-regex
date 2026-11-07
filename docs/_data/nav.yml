@@ -55,6 +55,8 @@
       url: /guides/rector/
     - title: PHPUnit
       url: /guides/phpunit/
+    - title: Infection
+      url: /guides/infection/
     - title: Laravel
       url: /guides/laravel/
     - title: Symfony

@@ -45,7 +45,7 @@ final class PcreEngine
      * pattern as it is when PHP refuses its delimiters, or when no delimiter
      * is left for it; the engine then turns the JIT off for the call.
      *
-     * @internal the ReDoS confirmation reads the pattern PCRE compiles
+     * @internal the ReDoS confirmation and the replay of a mutated call read the pattern PCRE compiles
      */
     public function prepare(string $regex): string
     {
@@ -135,6 +135,78 @@ final class PcreEngine
         }
 
         return $matches[0];
+    }
+
+    /**
+     * What a preg_*() call answers for the pattern and the subject, run as
+     * every call of the engine runs, serialized so that two answers of the
+     * same call compare as strings; null when the engine gives up or refuses
+     * the pattern.
+     *
+     * preg_match() and preg_match_all() answer the count, or the matches
+     * when the call passes $matches, shaped by the flags; preg_match() with
+     * no matches, flags nor offset is called with the pattern and the
+     * subject alone, as PHP then runs it otherwise; preg_replace() the
+     * subject replaced; preg_replace_callback() what the callback receives
+     * for each match and where that match stands; preg_split() the pieces.
+     *
+     * @internal the replay of a mutated call compares what the user's call answers for two patterns
+     *
+     * @param 'preg_match'|'preg_match_all'|'preg_replace'|'preg_replace_callback'|'preg_split'   $function
+     * @param array{matches?: bool, flags?: int, offset?: int, limit?: int, replacement?: string} $arguments
+     */
+    public function answer(string $function, string $regex, string $subject, array $arguments = [], ?PcreLimits $limits = null): ?string
+    {
+        $flags = $arguments['flags'] ?? 0;
+        $offset = $arguments['offset'] ?? 0;
+        $limit = $arguments['limit'] ?? -1;
+        $captures = (0 !== ($flags & \PREG_OFFSET_CAPTURE) ? \PREG_OFFSET_CAPTURE : 0) | (0 !== ($flags & \PREG_UNMATCHED_AS_NULL) ? \PREG_UNMATCHED_AS_NULL : 0);
+        $answer = null;
+
+        $this->run(
+            $regex,
+            static function (string $prepared) use ($function, $subject, $arguments, $captures, $flags, $offset, $limit, &$answer): int|false {
+                switch ($function) {
+                    case 'preg_match':
+                    case 'preg_match_all':
+                        // preg_match() given the pattern and the subject alone
+                        // retries an empty match where one passing $matches
+                        // does not (see test()): it is called as written. In
+                        // set order, no match leaves no group to count either.
+                        $matches = [];
+                        $found = match (true) {
+                            'preg_match_all' === $function => preg_match_all($prepared, $subject, $matches, $captures | ($flags & \PREG_SET_ORDER), $offset),
+                            [] === array_diff_key($arguments, ['matches' => false]) && !($arguments['matches'] ?? false) => preg_match($prepared, $subject),
+                            default => preg_match($prepared, $subject, $matches, $captures, $offset),
+                        };
+                        $answer = false === $found ? null : serialize(($arguments['matches'] ?? false) ? $matches : $found);
+
+                        break;
+                    case 'preg_replace':
+                        $replaced = preg_replace($prepared, $arguments['replacement'] ?? '', $subject, $limit);
+                        $answer = null === $replaced ? null : serialize($replaced);
+
+                        break;
+                    case 'preg_replace_callback':
+                        // The callback receives each match under the call's
+                        // flags; where it stands moves what it replaces.
+                        $answer = false === preg_match_all($prepared, $subject, $matches, \PREG_SET_ORDER | $captures)
+                            || false === preg_match_all($prepared, $subject, $spans, \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE)
+                            ? null
+                            : serialize(\array_slice(array_map(static fn (array $match, array $span): array => [$match, $span[0][1]], $matches, $spans), 0, $limit < 0 ? null : $limit));
+
+                        break;
+                    default:
+                        $pieces = preg_split($prepared, $subject, $limit, (0 !== ($flags & \PREG_SPLIT_NO_EMPTY) ? \PREG_SPLIT_NO_EMPTY : 0) | (0 !== ($flags & \PREG_SPLIT_DELIM_CAPTURE) ? \PREG_SPLIT_DELIM_CAPTURE : 0));
+                        $answer = false === $pieces ? null : serialize($pieces);
+                }
+
+                return null === $answer ? false : 0;
+            },
+            $limits,
+        );
+
+        return $answer;
     }
 
     private function withVerb(string $pattern): ?string

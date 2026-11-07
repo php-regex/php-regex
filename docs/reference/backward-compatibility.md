@@ -85,6 +85,7 @@ In short, the public surface is:
 | `regex-explain` | `TextExplainer`, `HtmlExplainer`, `AsciiTreeRenderer`, `MermaidRenderer`, `RailroadSvgRenderer`, `Highlighter\ConsoleHighlighter`, `Highlighter\HtmlHighlighter` |
 | `regex-optimizer` | `Optimizer`, `OptimizerOptions`, `OptimizationResult`, `Modernizer`, `RedosRepairer`, `RedosRepair` |
 | `regex-generator` | `SampleGenerator`, `TestCaseGenerator`, `Exception\SampleGenerationException` |
+| `regex-infection` | `Mutator\RegexQuantifier`, `Mutator\RegexAnchor`, `Mutator\RegexCharClass`, `Mutator\RegexAlternation`, `Mutator\RegexFlag`, `Mutator\RegexEscape` |
 | `regex-automata` | `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, `Solver\EquivalenceResult`, `Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Model\Dfa`, `Model\DfaState`, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `Exception\ComplexityException`, `TrivialMatchClassifier`, `TrivialMatch`, `TrivialMatchKind`, `Language` |
 | `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosSearchCost`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface`, `IgnoreList` |
 | `regex-transpiler` | `Transpiler`, `TranspileOptions`, `TranspileResult`, `Exception\TranspileException` |

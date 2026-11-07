@@ -151,6 +151,10 @@ deptrac:
       collectors:
         - type: classLike
           value: '^PHPRegex\\PHPUnit\\'
+    - name: Infection
+      collectors:
+        - type: classLike
+          value: '^PHPRegex\\Infection\\'
     - name: Psalm
       collectors:
         - type: classLike
@@ -190,6 +194,7 @@ deptrac:
     LanguageServerInternal: [LanguageServer, Toolkit, Parser, ParserInternal, Explain, ReDoS, Linter, LinterInternal]
     PHPStan: [Parser, ParserInternal, Linter, LinterInternal, ReDoS, Automata, Optimizer]
     PHPUnit: [Parser, ReDoS]
+    Infection: [Parser, ParserInternal, Automata, Generator, ReDoS]
     Psalm: [Parser, ParserInternal, Automata, Linter, LinterInternal]
     Rector: [Parser, Automata]
     Symfony: [Toolkit, Parser, ParserInternal, Optimizer, Automata, ReDoS, Transpiler, TranspilerInternal, Linter, LinterInternal]

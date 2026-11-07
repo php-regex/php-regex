@@ -22,6 +22,7 @@ License: MIT
 - [Psalm](https://php-regex.com/guides/psalm/): $matches typed from the pattern
 - [Rector](https://php-regex.com/guides/rector/): preg_* calls rewritten to the string functions they provably equal
 - [PHPUnit](https://php-regex.com/guides/phpunit/): match, compilation and proven-linearity assertions for your test suite
+- [Infection](https://php-regex.com/guides/infection/): mutators for the regex literals of preg_* calls, each mutant with the subject that kills it
 - [Laravel](https://php-regex.com/guides/laravel/): Regex service, facade, artisan commands
 - [Symfony](https://php-regex.com/guides/symfony/): bundle, service, console commands
 - [LSP](https://php-regex.com/guides/lsp/): diagnostics, hovers and code actions in any editor

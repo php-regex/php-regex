@@ -33,6 +33,7 @@ final class PackageManifestTest extends TestCase
         'Cli' => 'regex-cli',
         'Explain' => 'regex-explain',
         'Generator' => 'regex-generator',
+        'Infection' => 'regex-infection',
         'LanguageServer' => 'regex-language-server',
         'Laravel' => 'regex-laravel',
         'Linter' => 'regex-linter',
@@ -60,6 +61,7 @@ final class PackageManifestTest extends TestCase
         'Cli' => '>=8.1',
         'Explain' => '>=8.1',
         'Generator' => '>=8.1',
+        'Infection' => '>=8.1',
         'LanguageServer' => '>=8.1',
         'Laravel' => '>=8.1',
         'Linter' => '>=8.1',
@@ -134,6 +136,8 @@ final class PackageManifestTest extends TestCase
         // The generator draws a property as the running engine spells what
         // the target means.
         'Generator' => ['Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre', 'Parser\Cache\StaticCaches', 'Parser\Hir\ClassSetProvider'],
+        // A kill string escapes the delimiters the mutant is written in.
+        'Infection' => ['Parser\Syntax\Delimiters'],
         // The library's own regexes run under the PCRE floor in every
         // package that runs one: the floor helper is the one shared
         // internal they all use for it.
@@ -483,6 +487,21 @@ final class PackageManifestTest extends TestCase
         $this->assertNull(self::dig($manifest, 'require', 'nikic/php-parser'));
         $this->assertFileExists(self::root().'/src/Rector/config/sets/string-functions.php');
         $this->assertFileExists(self::root().'/src/Rector/config/sets/upgrade-2.0.php');
+    }
+
+    /**
+     * Infection carried the mutator interface itself until 0.28: installed
+     * through Composer beside infection/mutator, two interfaces of one name
+     * would meet, and Infection's own mutators would no longer fit the one
+     * loaded first.
+     */
+    #[Test]
+    public function test_infection_package_refuses_the_infection_releases_that_carry_their_own_mutator_interface(): void
+    {
+        $manifest = self::manifest('Infection');
+
+        $this->assertSame('^0.4', self::dig($manifest, 'require', 'infection/mutator'));
+        $this->assertSame('<0.29', self::dig($manifest, 'conflict', 'infection/infection'));
     }
 
     #[Test]
@@ -848,7 +867,7 @@ final class PackageManifestTest extends TestCase
 
     /**
      * Every package is a page of its own on Packagist: the author and the
-     * funding link the monorepo declares, the eighteen packages declare
+     * funding link the monorepo declares, the nineteen packages declare
      * too.
      */
     #[Test]
@@ -1080,6 +1099,7 @@ final class PackageManifestTest extends TestCase
             'Symfony' => 'Component' === $second && isset($segments[2]) ? 'symfony/'.$kebab($segments[2]) : null,
             'Illuminate' => 'illuminate/'.strtolower($second),
             'Mcp' => 'mcp/sdk',
+            'Infection' => 'infection/mutator',
             default => null,
         };
     }

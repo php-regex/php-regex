@@ -1,6 +1,6 @@
 name: Packages
 
-# Each of the eighteen packages as Packagist will serve it, out of the
+# Each of the nineteen packages as Packagist will serve it, out of the
 # monorepo.
 
 on:
@@ -50,7 +50,7 @@ concurrency:
 
 jobs:
   manifests:
-    # The root manifest and the eighteen package manifests, strictly: a
+    # The root manifest and the nineteen package manifests, strictly: a
     # warning Packagist would show, an unbound requirement or a schema
     # mistake fails here, before a tag publishes it. No lock file is
     # committed, so none is checked.
@@ -77,7 +77,7 @@ jobs:
             composer validate --strict --no-interaction --no-check-lock "$manifest" || status=1
           done
           exit "$status"
-      # One class under one name across the eighteen packages: two files
+      # One class under one name across the nineteen packages: two files
       # declaring the same class, between which an optimized autoloader
       # would pick silently, fail here.
       - name: Check no class is declared twice
@@ -95,7 +95,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [ Parser, Explain, Optimizer, Generator, Automata, Redos, Transpiler, Linter, Toolkit, Cli, LanguageServer, Mcp, PHPStan, PHPUnit, Psalm, Rector, Symfony, Laravel ]
+        package: [ Parser, Explain, Optimizer, Generator, Automata, Redos, Transpiler, Linter, Toolkit, Cli, LanguageServer, Mcp, PHPStan, PHPUnit, Infection, Psalm, Rector, Symfony, Laravel ]
 
     steps:
       - name: Checkout Code
@@ -197,6 +197,70 @@ jobs:
 
       - name: Check the four assertions answer and fail
         run: php tests/Tools/phpunit_bridge_selfcheck.php "$project"
+
+  infection-e2e:
+    # The mutators run by Infection itself, as a user runs them: installed
+    # through Composer, and as the PHAR, which exposes only the mutator
+    # interface and leaves the project's copy of it unloaded. Each cell
+    # installs the package alone in a bare project, runs Infection twice on a
+    # small suite and reads its log: only the six mutators, some mutants
+    # killed and some escaped, each escaped one with its kill string, the
+    # same mutants on both runs.
+    name: Infection mutators (${{ matrix.mode }}, PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [ composer, phar ]
+        php: [ '8.3', '8.4' ]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: pcov
+          dependencies: none
+
+      - name: Install the package in a bare project
+        env:
+          MODE: ${{ matrix.mode }}
+        run: |
+          project="$(mktemp -d)"
+          # shellcheck disable=SC2016 # the single quotes hold PHP, not shell
+          php -r '
+              $repositories = [];
+              foreach (glob("src/*/composer.json") as $manifest) {
+                  $repositories[] = ["type" => "path", "url" => realpath(dirname($manifest)), "options" => ["symlink" => false, "versions" => [json_decode(file_get_contents($manifest), true)["name"] => "2.x-dev"]]];
+              }
+              $require = ["php-regex/regex-infection" => "2.x-dev", "phpunit/phpunit" => "^12.0"];
+              if ("composer" === $argv[1]) {
+                  $require["infection/infection"] = "^0.35";
+              }
+              file_put_contents($argv[2]."/composer.json", json_encode(["repositories" => $repositories, "require-dev" => $require, "autoload" => ["psr-4" => ["Fixture\\" => "src/"]], "autoload-dev" => ["psr-4" => ["Fixture\\Tests\\" => "tests/"]], "minimum-stability" => "dev", "prefer-stable" => true, "config" => ["allow-plugins" => ["infection/extension-installer" => true]]], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+          ' "$MODE" "$project"
+          composer install -d "$project" --no-interaction --no-progress
+          echo "project=$project" >> "$GITHUB_ENV"
+
+      - name: Download the Infection PHAR
+        if: matrix.mode == 'phar'
+        run: |
+          curl -fsSL -o "$project/infection.phar" https://github.com/infection/infection/releases/download/0.35.9/infection.phar
+          echo "c9b332af194380b2043eb6e309b308653f221073f41825b54e862fbef606a094  $project/infection.phar" | sha256sum --check
+          echo "infection=$project/infection.phar" >> "$GITHUB_ENV"
+
+      - name: Locate the Composer-installed Infection
+        if: matrix.mode == 'composer'
+        run: echo "infection=$project/vendor/bin/infection" >> "$GITHUB_ENV"
+
+      - name: Run Infection with the six mutators
+        run: php tests/Tools/infection_bridge_selfcheck.php "$project" "$infection"
 
   phar:
     # The release path on every pull request: the phar built as the tag workflow
