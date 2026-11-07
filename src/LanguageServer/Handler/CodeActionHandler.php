@@ -145,7 +145,9 @@ final class CodeActionHandler
         $occurrences = [];
 
         foreach ($this->documents->getOccurrences($uri) as $occurrence) {
-            if ($this->rangesOverlap($occurrence->start, $occurrence->end, $range['start'], $range['end'])) {
+            // Each action edits the literal: an argument naming a pattern
+            // another file writes holds none.
+            if (null === $occurrence->writtenElsewhere && $this->rangesOverlap($occurrence->start, $occurrence->end, $range['start'], $range['end'])) {
                 $occurrences[] = $occurrence;
             }
         }

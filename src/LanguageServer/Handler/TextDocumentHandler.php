@@ -260,7 +260,7 @@ final class TextDocumentHandler
             $explainer = new TextExplainer($this->regex->target());
             $explanation = $ast->accept($explainer);
 
-            $markdown = "**Regex Pattern**\n\n```\n{$occurrence->pattern}\n```\n\n**Explanation**\n\n{$explanation}";
+            $markdown = "**Regex Pattern**\n\n```\n{$occurrence->pattern}\n```\n\n".(null === $occurrence->writtenElsewhere ? '' : "{$occurrence->writtenElsewhere}\n\n")."**Explanation**\n\n{$explanation}";
 
             $this->transport->success($message->id, [
                 'contents' => [
@@ -382,6 +382,24 @@ final class TextDocumentHandler
      */
     private function occurrenceDiagnostics(RegexOccurrence $occurrence, string $content, PositionConverter $positions, Regex $regex): array
     {
+        $diagnostics = $this->patternDiagnostics($occurrence, $content, $positions, $regex);
+        if (null === $occurrence->writtenElsewhere) {
+            return $diagnostics;
+        }
+
+        // A pattern another file writes is reported at the argument naming
+        // it: each message says which constant, and where it is written.
+        return array_map(static fn (array $diagnostic): array => ['message' => $occurrence->writtenElsewhere.': '.$diagnostic['message']] + $diagnostic, $diagnostics);
+    }
+
+    /**
+     * What `regex lint` reports for one pattern, before any marker, each
+     * diagnostic placed through the span of its pattern.
+     *
+     * @return list<Diagnostic>
+     */
+    private function patternDiagnostics(RegexOccurrence $occurrence, string $content, PositionConverter $positions, Regex $regex): array
+    {
         $diagnostics = [];
 
         // Offsets count in bytes of the pattern body; the span places
@@ -420,9 +438,10 @@ final class TextDocumentHandler
             }
 
             // A raw character the literal spells with an escape, as
-            // a double-quoted "\t", is no raw character in the source.
+            // a double-quoted "\t", is no raw character in the source; the
+            // literal of another file is that file's to report.
             if (InvisibleCharacterRule::ID === $issue->id
-                && !LiteralSpelling::holdsRaw($content, $occurrence->byteOffset, InvisibleCharacterRule::reportedCharacter($source, (int) $issue->offset))
+                && (null !== $occurrence->writtenElsewhere || !LiteralSpelling::holdsRaw($content, $occurrence->byteOffset, InvisibleCharacterRule::reportedCharacter($source, (int) $issue->offset)))
             ) {
                 continue;
             }

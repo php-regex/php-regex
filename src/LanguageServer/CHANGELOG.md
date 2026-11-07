@@ -48,6 +48,10 @@ CHANGELOG
    `regex.json` (one it cannot read, an unknown preset included, is an
    error shown to the user, and the file is ignored), and diagnoses a
    pattern held in a constant, a variable or a property at its literal.
+   A class constant or an enum case of another file of the workspace or of
+   `vendor/` is read as the lint reads it, and its pattern diagnosed at the
+   argument naming it, the message naming the constant and where it is
+   written; the hover shows the pattern, and no quick fix edits it.
    The declarations of `vendor/` are read too, 20,000 PHP files at most,
    with a warning logged past that.
  * PHP's own warnings go to stderr, never between the JSON-RPC frames on

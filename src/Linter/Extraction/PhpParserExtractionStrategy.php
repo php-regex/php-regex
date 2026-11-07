@@ -236,7 +236,9 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
                 continue;
             }
 
-            array_push($occurrences, ...$item->occurrences($values, $expressions[$index], $file, $content));
+            $place = $item->place;
+            $argument = $place->getStartFilePos() < 0 ? null : [$place->getStartFilePos(), $place->getEndFilePos() + 1 - $place->getStartFilePos()];
+            array_push($occurrences, ...$item->occurrences($values, $expressions[$index], $file, $content, $argument));
         }
 
         return $occurrences;

@@ -52,11 +52,14 @@ final class PendingPattern
 
     /**
      * The occurrences the file proves the argument holds, given what it
-     * reads as: each where its literal is written.
+     * reads as: each where its literal is written. One of another file
+     * carries where the argument stands in $content, when $argument says.
+     *
+     * @param array{int, int}|null $argument the argument's byte offset and length in $content
      *
      * @return list<PatternOccurrence>
      */
-    public function occurrences(InFileValueResolver $resolver, ValueExpr $value, string $file, string $content): array
+    public function occurrences(InFileValueResolver $resolver, ValueExpr $value, string $file, string $content, ?array $argument = null): array
     {
         $occurrences = [];
         foreach ($resolver->patterns($value, $this->function) as $pattern) {
@@ -71,6 +74,8 @@ final class PendingPattern
                 location: $pattern['location'],
                 column: null === $pattern['file'] ? self::column($content, $pattern['offset']) : $pattern['column'],
                 fileOffset: $pattern['offset'],
+                argumentOffset: null === $pattern['file'] ? null : $argument[0] ?? null,
+                argumentLength: null === $pattern['file'] ? null : $argument[1] ?? null,
             ))->guardedBy($pattern['guard']);
         }
 

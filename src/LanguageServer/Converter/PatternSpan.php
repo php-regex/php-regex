@@ -33,7 +33,8 @@ final class PatternSpan
     private const CLOSING = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
 
     /**
-     * @param list<int> $spelling where the literal spells each byte of the pattern, then its closing quote
+     * @param list<int>                                  $spelling where the literal spells each byte of the pattern, then its closing quote
+     * @param array{start: Position, end: Position}|null $whole    the range of every span, for a pattern another file writes
      */
     private function __construct(
         private readonly PositionConverter $positions,
@@ -42,8 +43,13 @@ final class PatternSpan
         private readonly string $pattern,
         private readonly int $bodyLength,
         private readonly int $delimiterOffset,
+        private readonly ?array $whole = null,
     ) {}
 
+    /**
+     * The span of an occurrence. One another file writes has no literal in
+     * the document: every range is the argument naming it.
+     */
     public static function of(RegexOccurrence $occurrence, PositionConverter $positions): self
     {
         $pattern = $occurrence->pattern;
@@ -56,7 +62,9 @@ final class PatternSpan
         $delimiter = $pattern[$at] ?? '';
         $close = '' === $delimiter ? false : strrpos($pattern, (string) (self::CLOSING[$delimiter] ?? $delimiter), $at + 1);
 
-        return new self($positions, $occurrence->byteOffset, $spelling, $pattern, false === $close ? $length - 1 - $at : $close - 1 - $at, $at);
+        $whole = null === $occurrence->writtenElsewhere ? null : ['start' => $occurrence->start, 'end' => $occurrence->end];
+
+        return new self($positions, $occurrence->byteOffset, $spelling, $pattern, false === $close ? $length - 1 - $at : $close - 1 - $at, $at, $whole);
     }
 
     /**
@@ -77,6 +85,10 @@ final class PatternSpan
      */
     public function range(int $from, ?int $to = null): array
     {
+        if (null !== $this->whole) {
+            return $this->whole;
+        }
+
         $from = max(0, min($from, $this->bodyLength));
         $to = null === $to || $to <= $from ? $from + 1 : min($to, $this->bodyLength + 1);
 
@@ -105,10 +117,14 @@ final class PatternSpan
      * ("\x5", "\u{e") has passed none of it — it maps down to the byte
      * before — and the bytes an escape spells together pass together.
      * Null outside the literal token, from its opening quote to its
-     * closing one.
+     * closing one, and for a pattern another file writes.
      */
     public function patternOffsetAt(int $documentByteOffset): ?int
     {
+        if (null !== $this->whole) {
+            return null;
+        }
+
         $at = $documentByteOffset - $this->literalOffset;
 
         // The token runs from its opening quote to its closing one, the

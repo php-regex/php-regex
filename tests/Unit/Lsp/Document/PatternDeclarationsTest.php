@@ -275,6 +275,26 @@ final class PatternDeclarationsTest extends TestCase
     }
 
     /**
+     * A file read again, from the disk or from the text an editor saved,
+     * gives its shadowing functions anew.
+     */
+    #[Test]
+    public function test_a_file_read_again_gives_its_shadowing_functions_anew(): void
+    {
+        $path = $this->write('src/Grep.php', "<?php\nnamespace App;\nfunction find() {}\n");
+        $declarations = new PatternDeclarations();
+        $declarations->scanWorkspace($this->root, ['src'], []);
+        $this->assertSame([], $declarations->plainFunctions(['grep']));
+
+        $this->assertTrue($declarations->readFile($path, "<?php\nnamespace App;\nfunction grep() {}\n"));
+        $this->assertSame(['app\\grep'], $declarations->plainFunctions(['grep']));
+
+        unlink($path);
+        $this->assertTrue($declarations->readFile($path));
+        $this->assertSame([], $declarations->plainFunctions(['grep']));
+    }
+
+    /**
      * After a new scan, the shadowing functions are unknown until they are
      * read again: forgetting a file that declares no pattern parameter
      * changes nothing the documents are read with.
@@ -303,6 +323,35 @@ final class PatternDeclarationsTest extends TestCase
         $this->assertSame('C:/work space/A.php', PatternDeclarations::pathOf(FileUri::of('C:/work space/A.php')));
         $this->assertSame('/home/a/x.php', PatternDeclarations::pathOf(FileUri::of('/home/a/x.php')));
         $this->assertNull(PatternDeclarations::pathOf('untitled:Untitled-1'));
+    }
+
+    /**
+     * The constants of the workspace and of its libraries follow their
+     * files: a file that declares none any more gives none, and an edit
+     * that moves a constant along its line changes nothing a call reads.
+     */
+    #[Test]
+    public function test_the_constants_follow_the_files_and_the_libraries(): void
+    {
+        $constants = "<?php\nnamespace App;\nfinal class Patterns\n{\n    public const RE = '/re/';\n}\n";
+        $file = $this->write('src/Patterns.php', $constants);
+        $library = $this->write('vendor/acme/Patterns.php', str_replace('namespace App', 'namespace Acme', $constants));
+        $declarations = new PatternDeclarations();
+        $declarations->scanWorkspace($this->root, ['src'], []);
+        $declarations->scanLibraries($this->root.'/vendor');
+
+        $this->assertSame('/re/', $declarations->constants()->constant('app\\patterns', 'RE')[0]->value ?? null);
+        $this->assertTrue($declarations->constants()->has('acme\\patterns'));
+
+        $this->assertFalse($declarations->readFile($file, str_replace("= '/re/'", "=   '/re/'", $constants)), 'The constant moved along its line.');
+        $this->assertTrue($declarations->readFile($file, "<?php\n"));
+        $this->assertFalse($declarations->constants()->has('app\\patterns'));
+
+        $this->assertTrue($declarations->readFile($library, "<?php\n"));
+        $this->assertFalse($declarations->constants()->has('acme\\patterns'));
+
+        $this->assertSame('src/Patterns.php', $declarations->displayPath($file));
+        $this->assertSame('/elsewhere/Patterns.php', $declarations->displayPath('/elsewhere/Patterns.php'));
     }
 
     private function write(string $relative, string $content): string

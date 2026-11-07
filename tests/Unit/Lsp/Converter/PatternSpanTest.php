@@ -78,6 +78,24 @@ final class PatternSpanTest extends TestCase
         yield 'modifiers — the closing quote' => ['literal' => '"/ab/i"', 'at' => 6, 'expected' => 5];
     }
 
+    /**
+     * A pattern another file writes stands at the argument naming it: every
+     * range is the argument, and no cursor in it stands in the pattern.
+     */
+    #[Test]
+    public function test_a_pattern_written_elsewhere_spans_its_argument(): void
+    {
+        $content = "<?php\npreg_match(Patterns::RE, \$s);\n";
+        $positions = new PositionConverter($content);
+        $start = $positions->offsetToPosition(17);
+        $end = $positions->offsetToPosition(29);
+        $span = PatternSpan::of(new RegexOccurrence('/(a/', $start, $end, 17, 'Patterns::RE', writtenElsewhere: 'Patterns::RE, written in src/Patterns.php on line 9'), $positions);
+
+        $this->assertSame(['start' => $start, 'end' => $end], $span->range(0));
+        $this->assertSame(['start' => $start, 'end' => $end], $span->range(1, 3));
+        $this->assertNull($span->patternOffsetAt(20));
+    }
+
     #[Test]
     #[DataProvider('provideCursorOffsets')]
     public function test_a_document_offset_maps_to_the_pattern_byte_the_cursor_passed(string $literal, int $at, ?int $expected): void

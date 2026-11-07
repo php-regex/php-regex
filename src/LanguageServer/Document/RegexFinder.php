@@ -18,6 +18,7 @@ use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\MemoryBudget;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpStringLiteral;
+use PHPRegex\Linter\Extraction\ProjectConstants;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Text\Ascii;
@@ -28,7 +29,8 @@ use PHPRegex\Parser\Text\Ascii;
  * configured functions), the functions and static methods that declare a
  * pattern parameter with #[RegexPattern] (see PatternDeclarations), and the
  * patterns the file proves through a constant, a variable or a property,
- * found at their literal.
+ * found at their literal. A pattern another file of the workspace writes,
+ * named through one of its constants, is found at the argument naming it.
  *
  * An occurrence is one string literal: a pattern built at the call from
  * several pieces, or written as a heredoc, is not found, as no single
@@ -61,6 +63,14 @@ final class RegexFinder
     private array $declaredWith = [[], []];
 
     /**
+     * The extractor told about the constants last read, and the extractor
+     * and the constants it was built from.
+     *
+     * @var array{TokenBasedExtractionStrategy, ProjectConstants, TokenBasedExtractionStrategy}|null
+     */
+    private ?array $withConstants = null;
+
+    /**
      * How many texts the finder read whole: an edit read in place is not
      * one.
      */
@@ -83,7 +93,7 @@ final class RegexFinder
     {
         $this->reads++;
 
-        return $this->findKnownCalls($content, $this->extractorOf($declarations));
+        return $this->findKnownCalls($content, $this->extractorOf($declarations), $declarations);
     }
 
     /**
@@ -103,10 +113,20 @@ final class RegexFinder
 
     private function extractorOf(?PatternDeclarations $declarations): TokenBasedExtractionStrategy
     {
-        return null === $declarations ? $this->extractor : $this->extractorFor(
+        if (null === $declarations) {
+            return $this->extractor;
+        }
+
+        $extractor = $this->extractorFor(
             $declarations->specs(),
             $declarations->plainFunctions($this->extractor->customGlobalFunctions()),
         );
+        $constants = $declarations->constants();
+        if (null === $this->withConstants || $this->withConstants[1] !== $constants || $this->withConstants[2] !== $extractor) {
+            $this->withConstants = [$extractor->withProjectConstants($constants), $constants, $extractor];
+        }
+
+        return $this->withConstants[0];
     }
 
     /**
@@ -197,6 +217,7 @@ final class RegexFinder
                     $occurrence->ignored,
                     $occurrence->line,
                     $occurrence->guard,
+                    $occurrence->writtenElsewhere,
                 );
             }
         }
@@ -362,12 +383,44 @@ final class RegexFinder
      *
      * @return list<RegexOccurrence>
      */
-    private function findKnownCalls(string $content, TokenBasedExtractionStrategy $extractor): array
+    private function findKnownCalls(string $content, TokenBasedExtractionStrategy $extractor, ?PatternDeclarations $declarations = null): array
     {
         $positions = null;
         $suppressed = null;
         $found = [];
         foreach ($extractor->extractSource($content) as $occurrence) {
+            // A pattern another file writes: at the argument naming it.
+            $argument = $occurrence->argumentOffset;
+            if (null !== $argument && null !== $occurrence->argumentLength) {
+                if (!self::opensWithADelimiter($occurrence->pattern)) {
+                    continue;
+                }
+
+                $positions ??= new PositionConverter($content);
+                $suppressed ??= InlineIgnores::suppressedLines($content);
+                $start = $positions->offsetToPosition($argument);
+                $literal = substr($content, $argument, $occurrence->argumentLength);
+                $location = $occurrence->location ?? $literal;
+                $found['@'.$argument."\0".$occurrence->pattern] = new RegexOccurrence(
+                    pattern: $occurrence->pattern,
+                    start: $start,
+                    end: $positions->offsetToPosition($argument + $occurrence->argumentLength),
+                    byteOffset: $argument,
+                    literal: $literal,
+                    ignored: isset($suppressed[$start['line'] + 1]),
+                    line: $start['line'] + 1,
+                    guard: $occurrence->guard,
+                    writtenElsewhere: \sprintf(
+                        '%s, written in %s on line %d',
+                        str_starts_with($location, 'via ') ? substr($location, 4) : $location,
+                        $declarations?->displayPath($occurrence->file) ?? $occurrence->file,
+                        $occurrence->line,
+                    ),
+                );
+
+                continue;
+            }
+
             $offset = $occurrence->fileOffset;
             if (null === $offset || isset($found[$offset."\0".$occurrence->pattern]) || !self::opensWithADelimiter($occurrence->pattern)) {
                 continue;
