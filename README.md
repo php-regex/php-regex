@@ -333,7 +333,7 @@ PHPRegex integrates with common PHP tooling:
   `preg_split()` into `explode()`, only where the automata prove them equal.
   See [the Rector guide](https://php-regex.com/guides/rector/)
 - **GitHub Actions**: `uses: php-regex/php-regex@v2.0.0` runs the lint from the
-  release PHAR, each finding an annotation on the pull request.
+  release PHAR, its findings annotated on the pull request.
   See [the CLI guide](https://php-regex.com/guides/cli/#cicd-integration)
 - **Demo applications**: complete Symfony and Laravel apps under [`demo/`](demo/),
   wired to this repository through a Composer path repository and run in CI;

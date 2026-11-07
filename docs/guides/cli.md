@@ -1986,9 +1986,10 @@ The `column` of a JSON result is a 1-based byte column in its line, and
 
 The action at the root of the repository downloads the PHAR of a release,
 checks it against the checksum the release carries, and runs `regex lint`
-with `--format=github` on the PHP of the runner (8.1 or later), so each
-finding is an annotation on the pull request. Nothing is installed in the
-project:
+with `--format=github` on the PHP of the runner (8.1 or later). GitHub
+shows the first ten errors and the first ten warnings of the step as
+annotations on the pull request; the log of the step lists every finding.
+Nothing is installed in the project:
 
 ```yaml
 name: regex-lint
