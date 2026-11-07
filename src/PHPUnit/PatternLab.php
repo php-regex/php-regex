@@ -153,44 +153,88 @@ final class PatternLab
     }
 
     /**
-     * A value as the failure messages show it, spelled the same whatever
-     * PHPUnit release renders the assertion. The depth is capped because a
-     * refusal renders what the caller handed over, and a circular or merely
-     * deep spelling must meet its refusal, not the stack floor.
+     * A value as the failure messages show it. All children share a work
+     * budget and an 8192-byte output ceiling, including the truncation
+     * marker. Depth alone cannot bound expansion of shared or cyclic arrays.
      */
     public static function export(mixed $value, int $depth = 0): string
     {
+        $remaining = 256;
+        $output = '';
+        if (!self::exportValue($value, $depth, $remaining, $output)) {
+            $output .= '…';
+        }
+
+        return $output;
+    }
+
+    private static function exportValue(mixed $value, int $depth, int &$remaining, string &$output): bool
+    {
+        if ($remaining <= 0) {
+            return false;
+        }
+        $remaining--;
+
         if (null === $value) {
-            return 'null';
+            return self::appendExport('null', $output);
         }
 
         if (\is_bool($value)) {
-            return true === $value ? 'true' : 'false';
+            return self::appendExport($value ? 'true' : 'false', $output);
         }
 
         if (\is_int($value) || \is_float($value)) {
-            return (string) $value;
+            return self::appendExport((string) $value, $output);
         }
 
         if (\is_string($value)) {
-            return "'".str_replace(['\\', "'"], ['\\\\', "\\'"], $value)."'";
+            // Slice before escaping so a large scalar or key cannot create
+            // an unbounded temporary string. This prefix already fills the cap.
+            return self::appendExport("'".str_replace(['\\', "'"], ['\\\\', "\\'"], substr($value, 0, 8192))."'", $output);
         }
 
         if (\is_array($value)) {
             if ($depth >= 8) {
-                return '[…]';
+                return self::appendExport('[…]', $output);
             }
 
+            if (!self::appendExport('[', $output)) {
+                return false;
+            }
             $list = array_is_list($value);
-            $parts = [];
+            $first = true;
             foreach ($value as $key => $part) {
-                $parts[] = ($list ? '' : self::export($key, $depth + 1).' => ').self::export($part, $depth + 1);
+                if (!$first && !self::appendExport(', ', $output)) {
+                    return false;
+                }
+                $first = false;
+                if (!$list && (!self::exportValue($key, $depth + 1, $remaining, $output)
+                    || !self::appendExport(' => ', $output))) {
+                    return false;
+                }
+                if (!self::exportValue($part, $depth + 1, $remaining, $output)) {
+                    return false;
+                }
             }
 
-            return '['.implode(', ', $parts).']';
+            return self::appendExport(']', $output);
         }
 
-        return get_debug_type($value);
+        return self::appendExport(get_debug_type($value), $output);
+    }
+
+    private static function appendExport(string $part, string &$output): bool
+    {
+        // Reserve three bytes for the UTF-8 ellipsis even on exact fits.
+        $available = 8192 - 3 - \strlen($output);
+        if (\strlen($part) > $available) {
+            $output .= substr($part, 0, $available);
+
+            return false;
+        }
+        $output .= $part;
+
+        return true;
     }
 
     /**

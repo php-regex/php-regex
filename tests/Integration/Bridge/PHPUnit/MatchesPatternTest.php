@@ -115,6 +115,29 @@ final class MatchesPatternTest extends TestCase
         $this->assertStringContainsString('unknown expectation for group 1', $failure);
     }
 
+    #[Test]
+    public function test_matches_pattern_bounds_branching_cyclic_diagnostics(): void
+    {
+        $circular = [];
+        for ($index = 0; $index < 16; $index++) {
+            $circular[$index] = &$circular;
+        }
+
+        $expectationFailure = $this->failingMessage(function () use ($circular): void {
+            $this->assertThat('a', new MatchesPattern('/(a)/', [1 => $circular]));
+        });
+        $subjectFailure = $this->failingMessage(function () use ($circular): void {
+            $this->assertThat($circular, new MatchesPattern('/a/'));
+        });
+
+        $this->assertStringContainsString('unknown expectation for group 1', $expectationFailure);
+        $this->assertStringContainsString('the subject must be a string, array given', $subjectFailure);
+        foreach ([$expectationFailure, $subjectFailure] as $failure) {
+            $this->assertLessThan(8500, \strlen($failure));
+            $this->assertStringContainsString('…', $failure);
+        }
+    }
+
     /**
      * The ten leading groups are written as repeated "(a)", so the digits
      * the refusal lists appear nowhere else but in the group numbers it

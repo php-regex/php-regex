@@ -53,4 +53,39 @@ final class PatternLabTest extends TestCase
         $this->assertNull($attempt->matched);
         $this->assertSame("Expected ) at end of input (found eof).\nLine 1: a(\n".str_repeat(' ', 10).'^', $attempt->failure);
     }
+
+    #[Test]
+    public function test_export_preserves_ordinary_values(): void
+    {
+        $this->assertSame("[true, false, null, 42, 1.5, 'a\\\\b\\'c']", PatternLab::export([true, false, null, 42, 1.5, "a\\b'c"]));
+        $this->assertSame("['name' => ['value', 2]]", PatternLab::export(['name' => ['value', 2]]));
+        $this->assertSame('[…]', PatternLab::export(['deep'], 8));
+    }
+
+    #[Test]
+    public function test_export_bounds_shared_children_and_resets_its_budget(): void
+    {
+        $value = ['leaf'];
+        for ($depth = 0; $depth < 5; $depth++) {
+            $value = array_fill(0, 10, $value);
+        }
+
+        $rendered = PatternLab::export($value);
+
+        $this->assertLessThanOrEqual(8192, \strlen($rendered));
+        $this->assertStringContainsString('…', $rendered);
+        $this->assertLessThanOrEqual(256, substr_count($rendered, 'leaf'));
+        $this->assertSame("['leaf']", PatternLab::export(['leaf']));
+    }
+
+    #[Test]
+    public function test_export_bounds_large_strings_and_keys_before_escaping(): void
+    {
+        $value = str_repeat("'\\", 100_000);
+        foreach ([$value, [$value => $value], array_fill(0, 1000, $value)] as $input) {
+            $rendered = PatternLab::export($input);
+            $this->assertLessThanOrEqual(8192, \strlen($rendered));
+            $this->assertStringContainsString('…', $rendered);
+        }
+    }
 }
