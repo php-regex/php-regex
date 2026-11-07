@@ -652,6 +652,19 @@ exit 1
     }
 
     #[Test]
+    public function test_status_reports_a_package_packagist_does_not_serve_as_missing(): void
+    {
+        $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+
+        // The stub answers no request, as Packagist answers 404 for a
+        // package nobody submitted.
+        [, $output] = $this->runScript('status', [], $this->fakeGitHub());
+
+        $this->assertMatchesRegularExpression('~^  php-regex/regex-infection .*✗ Packagist$~m', $output);
+        $this->assertStringNotContainsString('registered, no versions', $output);
+    }
+
+    #[Test]
     public function test_status_names_the_change_no_run_has_read(): void
     {
         $this->publishedWithRuns(['src/Other.php' => '<?php']);

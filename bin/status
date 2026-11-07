@@ -146,7 +146,9 @@ echo "Packages"
 # 200 with no versions, and a dev version the stable page never lists, are
 # both read as what they are.
 packagist_channel() { # <package> <url>
-    curl -sf "$2" 2>/dev/null | php -r '$d = json_decode(stream_get_contents(STDIN), true) ?: [];
+    local page
+    page=$(curl -sf "$2" 2>/dev/null) || return 0
+    printf '%s' "$page" | php -r '$d = json_decode(stream_get_contents(STDIN), true) ?: [];
         $versions = ($d["packages"] ?? [])[$argv[1]] ?? [];
         echo count($versions), "\t", $versions[0]["version"] ?? "";' "$1" 2>/dev/null
 }
