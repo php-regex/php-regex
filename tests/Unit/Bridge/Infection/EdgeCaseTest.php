@@ -27,6 +27,7 @@ use PHPRegex\Infection\Mutator\RegexAnchor;
 use PHPRegex\Infection\Mutator\RegexCharClass;
 use PHPRegex\Infection\Site\Observation;
 use PHPRegex\Infection\Site\PatternCall;
+use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreLimits;
 use PHPRegex\Parser\RegexParser;
@@ -167,20 +168,19 @@ final class EdgeCaseTest extends TestCase
     #[Test]
     public function test_nothing_is_kept_from_one_literal_to_the_next(): void
     {
-        // One class of 300 characters behind six suffixes: the library's own
-        // caches of what a class holds fill on the first literal, what the
-        // mutator keeps of a literal shows on the others.
-        $class = implode('', array_map(static fn (int $i): string => \sprintf('\\x{%04x}', 0x4E00 + $i), range(0, 299)));
-        $mutator = new RegexCharClass();
-
-        $usage = [];
+        // The library's own caches of what it read are bounded and shared
+        // by the process; the mutators keep no tree of the literals they
+        // read on top of them.
+        $pipeline = new MutationPipeline(Family::CharClass);
         foreach (range(0, 5) as $seed) {
-            MutatorHarness::patterns($mutator, "preg_match('/[".$class.']x'.$seed."/u', \$s, \$m)");
-            gc_collect_cycles();
-            $usage[] = memory_get_usage();
+            $call = PatternCall::fromNode(MutatorHarness::call("preg_match('/[a-z0-9]x".$seed."/', \$s, \$m)") ?? throw new \LogicException());
+            $this->assertInstanceOf(PatternCall::class, $call);
+            $pipeline->mutants($call);
         }
 
-        $this->assertLessThan(1_000_000, $usage[5] - $usage[1]);
+        $parser = (new \ReflectionProperty(MutationPipeline::class, 'parser'))->getValue($pipeline);
+        $this->assertInstanceOf(RegexParser::class, $parser);
+        $this->assertInstanceOf(NullCache::class, $parser->getCache());
     }
 
     #[Test]

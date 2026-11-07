@@ -26,6 +26,7 @@ use PHPRegex\Infection\Site\PatternCall;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Redos\RedosAnalyzer;
 
 /**
  * The mutants of one family for one call, in the order the family writes
@@ -62,13 +63,14 @@ final class MutationPipeline
 
     public function __construct(private readonly Family $family, private readonly int $budget = Budget::UNITS)
     {
-        // No tree is kept from one literal to the next.
+        // No tree is kept from one literal to the next: the ReDoS analysis
+        // and the sample generator read with the same parser.
         $this->parser = RegexParser::create(['cache' => null]);
         $this->generator = new CandidateGenerator($this->parser);
         $this->engine = new PcreEngine();
-        $this->redos = new RedosGuard();
+        $this->redos = new RedosGuard(new RedosAnalyzer($this->parser));
         $this->replay = new CallReplay($this->engine);
-        $this->fallback = new DifferentialFallback();
+        $this->fallback = new DifferentialFallback(parser: $this->parser);
         $this->hints = new HintWriter($this->parser, $this->engine);
     }
 
