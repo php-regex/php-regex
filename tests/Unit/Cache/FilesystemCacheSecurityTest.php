@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Cache;
 
 use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Cache\FilesystemCache;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
@@ -130,4 +131,90 @@ final class FilesystemCacheSecurityTest extends TestCase
         $this->assertNull($shared->load($key));
         $this->assertFileDoesNotExist($other);
     }
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_writable_shards_and_entries_are_cache_misses(): void
+    {
+        $cache = new FilesystemCache($this->directory);
+        $key = $cache->generateKey('/a/');
+        $tree = Regex::create(['cache' => null])->parse('/b/');
+        $cache->write($key, $tree);
+
+        foreach ([\dirname($key), $key] as $path) {
+            $mode = fileperms($path) & 0o777;
+            chmod($path, 0o777);
+            clearstatcache();
+            $this->assertNull($cache->load($key));
+            $cache->write($key, Regex::create(['cache' => null])->parse('/a/'));
+            $this->assertSame(serialize($tree), file_get_contents($key));
+            chmod($path, $mode);
+        }
+    }
+
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_symlinked_shards_and_entries_are_not_consumed(): void
+    {
+        $cache = new FilesystemCache($this->directory);
+        $key = $cache->generateKey('/a/');
+        $tree = Regex::create(['cache' => null])->parse('/b/');
+        $cache->write($key, $tree);
+        $target = $this->directory.'.marker';
+        rename($key, $target);
+        symlink($target, $key);
+        $this->assertNull($cache->load($key));
+        unlink($key);
+        unlink($target);
+
+        $shard = \dirname($key);
+        rename($shard, $target);
+        symlink($target, $shard);
+        file_put_contents($target.'/'.basename($key), serialize($tree));
+        try {
+            $this->assertNull($cache->load($key));
+            $cache->write($key, $tree);
+            $this->assertCount(1, array_diff(scandir($target), ['.', '..']));
+        } finally {
+            unlink($shard);
+            rename($target, $shard);
+        }
+    }
+
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_a_private_root_below_a_writable_parent_is_not_trusted(): void
+    {
+        $cache = new FilesystemCache($this->directory.'/private');
+        $key = $cache->generateKey('/a/');
+        $tree = Regex::create(['cache' => null])->parse('/b/');
+        $cache->write($key, $tree);
+        chmod($this->directory, 0o777);
+        try {
+            $this->assertNull($cache->load($key));
+            $cache->write($key, Regex::create(['cache' => null])->parse('/a/'));
+            $this->assertSame(serialize($tree), file_get_contents($key));
+        } finally {
+            chmod($this->directory, 0o700);
+            $cache->clear();
+        }
+    }
+
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_parser_reparses_instead_of_using_a_planted_tree(): void
+    {
+        $cache = new FilesystemCache($this->directory);
+        $regex = Regex::create(['cache' => $cache]);
+        $expected = Regex::create(['cache' => null])->parse('/a/');
+        $key = $cache->generateKey(RegexParser::cacheSeed('/a/', $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH));
+        $cache->write($key, Regex::create(['cache' => null])->parse('/b/'));
+        chmod(\dirname($key), 0o777);
+        try {
+            $this->assertEquals($expected, $regex->parse('/a/'));
+            $this->assertSame(['hits' => 0, 'misses' => 1], $cache->getStats());
+        } finally {
+            chmod(\dirname($key), 0o700);
+        }
+    }
+
 }

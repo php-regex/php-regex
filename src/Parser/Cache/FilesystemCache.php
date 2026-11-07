@@ -51,12 +51,19 @@ final class FilesystemCache implements RemovableCacheInterface
     #[\Override]
     public function write(string $key, RegexNode $ast): void
     {
-        if (!$this->isTrusted()) {
+        if (!$this->isTrusted($key)) {
+            if (is_file($this->directory) && !is_link($this->directory)) {
+                throw new CacheException(\sprintf('Unable to create the cache directory "%s".', $this->directory));
+            }
+
             return;
         }
 
         $directory = \dirname($key);
         $this->createDirectory($directory);
+        if (!$this->isTrusted($key)) {
+            return;
+        }
 
         // Written beside its final name, then moved there: a reader never sees
         // half a file, and nothing lands outside the owner's directory, as
@@ -72,7 +79,7 @@ final class FilesystemCache implements RemovableCacheInterface
     #[\Override]
     public function load(string $key): ?RegexNode
     {
-        $data = $this->isTrusted() && is_file($key) ? @file_get_contents($key) : false;
+        $data = $this->isTrusted($key) && is_file($key) ? @file_get_contents($key) : false;
         $ast = false === $data ? null : AstSerializer::unserialize($data);
 
         null === $ast ? $this->misses++ : $this->hits++;
@@ -91,7 +98,7 @@ final class FilesystemCache implements RemovableCacheInterface
         // they leave empty: a directory shared with anything else keeps it.
         foreach (self::entries($this->directory) as $shard) {
             $path = $this->directory.\DIRECTORY_SEPARATOR.$shard;
-            if (2 !== \strlen($shard) || !self::isHex($shard) || is_link($path) || !is_dir($path)) {
+            if (2 !== \strlen($shard) || !self::isHex($shard) || is_link($path) || !is_dir($path) || !$this->isTrusted($path)) {
                 continue;
             }
 
@@ -117,22 +124,65 @@ final class FilesystemCache implements RemovableCacheInterface
     }
 
     /**
-     * Whether the directory is its owner's alone: it belongs to the user
-     * running PHP, and neither its group nor others can write to it. Windows
-     * permissions are ACLs this check cannot read, and are left to the host.
+     * Validate every existing component, without following symbolic links.
+     * A trusted root alone does not protect a writable shard or file. Checking
+     * the parents too prevents another user replacing a checked directory.
+     * Root-owned sticky ancestors (such as /tmp) protect our owned children.
+     * Windows ACLs remain the host's responsibility.
      */
-    private function isTrusted(): bool
+    private function isTrusted(?string $key = null): bool
     {
-        if (Path::onWindows() || !is_dir($this->directory)) {
+        if (Path::onWindows()) {
             return true;
         }
 
-        $permissions = @fileperms($this->directory);
-        if (false === $permissions || 0 !== ($permissions & 0o022)) {
+        if (!\function_exists('posix_geteuid')) {
             return false;
         }
 
-        return !\function_exists('posix_geteuid') || @fileowner($this->directory) === posix_geteuid();
+        $path = $key ?? $this->directory;
+        if (!str_starts_with($path, '/')) {
+            $path = getcwd().'/'.$path;
+        }
+        $root = $this->directory;
+        if (!str_starts_with($root, '/')) {
+            $root = getcwd().'/'.$root;
+        }
+
+        $root = '/'.implode('/', array_filter(explode('/', $root), static fn (string $part): bool => '' !== $part && '.' !== $part));
+
+        $current = '';
+        $inside = false;
+        foreach (explode('/', $path) as $component) {
+            if ('' === $component || '.' === $component) {
+                continue;
+            }
+            if ('..' === $component) {
+                return false;
+            }
+            $current .= '/'.$component;
+            $inside = $inside || $current === rtrim($root, '/');
+            clearstatcache(true, $current);
+            $stat = @lstat($current);
+            if (false === $stat) {
+                // Missing descendants can be created only through the parents
+                // already checked, with owner-only permissions.
+                continue;
+            }
+            $type = $stat['mode'] & 0o170000;
+            if (0o040000 !== $type && (0o100000 !== $type || $current !== $path)) {
+                return false;
+            }
+            if ($stat['uid'] !== posix_geteuid() && ($inside || 0 !== $stat['uid'])) {
+                return false;
+            }
+            $stickyAncestor = !$inside && 0 === $stat['uid'] && 0o040000 === $type && 0 !== ($stat['mode'] & 0o1000);
+            if (0 !== ($stat['mode'] & 0o022) && !$stickyAncestor) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function createDirectory(string $directory): void
