@@ -357,6 +357,16 @@ final class LookbehindMeasureTimeTest extends TestCase
         $this->assertSame(ErrorCode::LookbehindTooComplex, Regex::create(['cache' => null])->validate(self::doublingCalls(30))->errorCode);
     }
 
+    #[Test]
+    public function test_complexity_error_precedes_compiled_size_estimation(): void
+    {
+        $pattern = str_replace('(a)/', '()(?i:[a-\\x{100}]){1}/u', self::doublingCalls(24));
+        $start = microtime(true);
+        $result = Regex::create(['cache' => null])->validate($pattern);
+        $this->assertSame(ErrorCode::LookbehindTooComplex, $result->errorCode);
+        $this->assertLessThan(self::BUDGET, microtime(true) - $start);
+    }
+
     /**
      * "(?(DEFINE)" holding $levels groups: group i is "((?i+1)(?i+1))", the
      * last "(a)", so group 1 is 2^($levels - 1) letters long.

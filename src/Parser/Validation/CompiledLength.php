@@ -1489,7 +1489,9 @@ final class CompiledLength
         foreach ($branches as $branch) {
             [$length] = $this->lookbehinds->branch($branch);
             if (null === $length[1]) {
-                return [self::BRACKETS, self::BRACKETS + 5 * \count($branches)]; // a branch of no bound is refused before any measure
+                // No bound, or the shared traversal budget ran out: keep the
+                // conservative frame range without expanding more calls.
+                return [self::BRACKETS, self::BRACKETS + 5 * \count($branches)];
             }
 
             $lengths[] = [$length[0], $length[1]];
