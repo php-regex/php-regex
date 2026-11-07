@@ -13,8 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Console;
 
+use PHPRegex\Linter\Formatter\ConsoleFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
+use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\LintReport;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -48,6 +51,46 @@ final class LinkFormatterTest extends TestCase
         } else {
             $_SERVER['IDEA_INITIAL_DIRECTORY'] = $this->envBackup['IDEA_INITIAL_DIRECTORY'];
         }
+    }
+
+    #[Test]
+    public function test_console_rejects_control_characters_in_editor_destinations(): void
+    {
+        $controls = ["\e\\\e]52;c;YXR0YWNr\x07", "\x07", "\n", "\r", "\t", "\0", "\x7f", "\x9c", "\u{009c}", "\u{009d}"];
+        foreach ($controls as $control) {
+            $output = $this->consoleWithTemplate('custom://%f'.$control.'suffix');
+
+            $this->assertStringContainsString('✏️', $output);
+            $this->assertStringNotContainsString("\e]8;;", $output);
+            $this->assertStringNotContainsString('suffix', $output);
+            $this->assertStringNotContainsString("\e]52;", $output);
+        }
+    }
+
+    #[Test]
+    public function test_console_preserves_custom_schemes_unicode_and_encoded_paths(): void
+    {
+        $output = $this->consoleWithTemplate('custom+editor://é/%f?line=%l&column=%c&encoded=%1B%07');
+
+        $this->assertStringContainsString("\e]8;;custom+editor://é//app/a%20b.php?line=10&column=2&encoded=%1B%07\e\\✏️\e]8;;\e\\", $output);
+    }
+
+    private function consoleWithTemplate(string $template): string
+    {
+        $formatter = new ConsoleFormatter(
+            config: new OutputConfiguration(ansi: false),
+            ide: $template,
+            linkFormatter: new LinkFormatter($template, new RelativePathHelper('/app')),
+        );
+
+        return $formatter->format(new LintReport([[
+            'file' => '/app/a b.php',
+            'line' => 10,
+            'column' => 2,
+            'pattern' => '/a/',
+            'issues' => [],
+            'optimizations' => [],
+        ]], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]));
     }
 
     #[Test]
