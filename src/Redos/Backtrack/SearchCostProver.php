@@ -691,7 +691,7 @@ final class SearchCostProver
         }
 
         $pairs = [];
-        foreach (self::pairsOf($automaton, array_keys($looped)) as $word) {
+        foreach (self::pairsOf($automaton, array_keys($looped), $budget) as $word) {
             $pairs[implode(',', $word)] ??= $word;
         }
 
@@ -704,31 +704,53 @@ final class SearchCostProver
      *
      * @param list<int> $classes
      *
+     * @throws ModelLimitException
+     *
      * @return list<non-empty-list<int>>
      */
-    private static function pairsOf(ItemAutomaton $automaton, array $classes): array
+    private static function pairsOf(ItemAutomaton $automaton, array $classes, Budget $budget): array
     {
         sort($classes);
-        $ranked = [];
-        foreach ($classes as $first) {
-            foreach ($classes as $second) {
-                if ($first === $second) {
-                    continue;
-                }
+        $contexts = [];
+        foreach ($classes as $class) {
+            $budget->step();
+            $contexts[$class] = self::contextOf($automaton, $automaton->representatives[$class]);
+        }
 
-                $kinds = [self::contextOf($automaton, $automaton->representatives[$first]), self::contextOf($automaton, $automaton->representatives[$second])];
+        // Each context shares its ordered second choices. Build these linear
+        // lists once, rather than storing the Cartesian product of classes.
+        $seconds = [];
+        foreach (array_unique($contexts) as $context) {
+            foreach ($contexts as $class => $other) {
+                $budget->step();
                 $rank = match (true) {
-                    ItemAutomaton::CONTEXT_WORD === $kinds[0] && $kinds[0] !== $kinds[1] => 0,
-                    $kinds[0] !== $kinds[1] => 1,
+                    ItemAutomaton::CONTEXT_WORD === $context && $context !== $other => 0,
+                    $context !== $other => 1,
                     default => 2,
                 };
-                $ranked[$rank][] = [$first, $second];
+                $seconds[$rank][$context][] = $class;
             }
         }
 
-        ksort($ranked);
+        $pairs = [];
+        for ($rank = 0; $rank < 3; $rank++) {
+            foreach ($contexts as $first => $context) {
+                $budget->step();
+                foreach ($seconds[$rank][$context] ?? [] as $second) {
+                    $budget->step();
+                    if ($first === $second) {
+                        continue;
+                    }
 
-        return \array_slice(array_merge(...array_values($ranked)), 0, self::MAX_MIXED_WORDS);
+                    $pairs[] = [$first, $second];
+                    if (\count($pairs) >= self::MAX_MIXED_WORDS) {
+                        return $pairs;
+                    }
+                }
+            }
+        }
+
+        return $pairs;
     }
 
     /**
