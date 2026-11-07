@@ -17,6 +17,7 @@ use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Parser\Text\Path;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\TestUtils\FileUri;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -99,6 +100,8 @@ final class ServerConstantsOfOtherFilesTest extends TestCase
     #[Test]
     public function test_a_pattern_of_another_file_is_reported_at_the_argument_naming_it(): void
     {
+        $this->assertFalse(EngineProbe::compiles('/(a/'), 'Oracle: PCRE refuses the broken pattern.');
+        $this->assertTrue(EngineProbe::compiles('/^[^@]+@[^@]+$/'), 'Oracle: PCRE compiles the other one.');
         $this->write('src/Support/Patterns.php', self::PATTERNS);
 
         $this->initialize();
