@@ -158,52 +158,26 @@ follow-up folds `preg_quote()` of a constant string to the literal it returns,
 as `CallTypes::quote` does.
 
 
-## Explanation wording
+## Pull requests to merge before the tag
 
-- `TextExplainer` reads "Character Type: A digit: [0-9] (exactly 4 times)":
-  a colon before the class, the repetition in brackets. The playground
-  reflows it for the eye ("A digit [0-9], exactly 4 times"); the CLI and
-  the API still print the library's sentence. Rewording it in
-  `Explain\Vocabulary` and `ExplanationBuilder` changes every caller's
-  output and the documented examples, so it needs its own decision.
-
-
-## Distribution
-
-- A composite GitHub Action that installs the phar and runs `regex lint`
-  with `--format=github`, so a workflow needs one `uses:` line.
-- Phive: a GPG-signed `regex.phar` with its `.asc` beside it on each
-  release, so `phive install php-regex/regex` works.
+- #234: a class read alone before a syntax error is no longer measured
+  against the whole pattern; the linear-time test of `(*pla:[a])` bodies
+  gets its margin back on a loaded runner.
+- #235: explanations read one sentence per line ("A digit [0-9], exactly
+  4 times"); the documented outputs follow. Regenerate the playground
+  bundle afterwards: its reflow then changes nothing and can go.
+- #237: the root `action.yml` (`uses: php-regex/php-regex@v2.0.0`) and the
+  Phive signature. Before the release candidate, create the release key,
+  set `PHAR_GPG_PRIVATE_KEY` and `PHAR_GPG_PASSPHRASE` as secrets of the
+  repository, and publish the key's fingerprint beside the Phive line of
+  `docs/guides/cli.md`; without the secret a release goes out unsigned.
+- #238: the language server reads a constant of another file and reports
+  its pattern at the argument naming it.
 
 
 ## Open questions
 
-- `regex-infection` requires `regex-generator` for one thing: the subjects
-  drawn when the automata find no kill string. On 400 literals they add one
-  to four points to the share of mutants that carry one
-  (`docs/guides/infection.md`, "Performance"). Keep the dependency for
-  those points, or drop the fallback and the `require` before the tag:
-  after it, dropping the fallback changes which mutants carry a hint, a
-  behavioural change for a minor.
 - The Psalm and PHPStan bridges require `regex-linter` whole, for the
   target resolution and the PHP-source helpers they import. Those need a
   home below it, a new split package or a lower one; dropping the
   `require` afterwards is never a break.
-- Four tests (`ValidationMemoTest`, `RegexApiTest` twice,
-  `RegexGenerateTest`) use `/(?:a[\x{100}-\x{10FFFF}\pL]{0}){1900}/u` as a
-  pattern only the engine refuses. Counting a class of every character past
-  255 plus a property exactly, one of the lengths "Patterns too large to
-  compile" in `docs/concepts/pcre.md` says the library does not know for
-  sure, makes the library refuse it too. The counting is ready (no difference from pcre2test 10.45–10.49 over
-  some 210,000 cases); the fixture needs another pattern, and on 10.45 and
-  later there may be none.
-- `AlphaAssertionBodyTest` reads `(*pla:[a])` bodies at 1,000 then 4,000
-  units and holds the ratio under the line a shared runner allows (11):
-  PHP 8.1 on a loaded runner read 15 once (0.29 s then 4.39 s), where PHP
-  8.4 reads 4.9 locally (0.15 s then 0.72 s) and 8,000 units take 2.5
-  times 4,000. The read grows a little faster than its text; whether the
-  growth is the validator's or the garbage collector's is not measured.
-- The language server reads the file it analyses on its own: a pattern
-  held in a constant of another file is the lint's. Reporting it at the
-  call in the open document needs the argument's range, which the
-  occurrence does not carry; decide whether to add it.
