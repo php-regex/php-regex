@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Functional\Cli;
 
 use PHPRegex\Cli\Exception\CliException;
 use PHPRegex\Cli\Output;
+use PHPRegex\Cli\SelfUpdate\Downloader;
 use PHPRegex\Cli\SelfUpdate\HttpDownloader;
 use PHPRegex\Cli\SelfUpdate\SelfUpdater;
 use PHPRegex\Tests\Support\LocalReleaseDownloader;
@@ -30,6 +31,56 @@ final class SelfUpdaterTest extends TestCase
     protected function tearDown(): void
     {
         SelfUpdateFunctionOverrides::reset();
+    }
+
+    #[Test]
+    public function test_staging_is_private_and_cleaned_after_success_or_download_failure(): void
+    {
+        foreach ([false, true] as $fail) {
+            $pharPath = $this->copyTemplatePhar();
+            $downloader = new class($pharPath, $fail) implements Downloader {
+                public ?string $destination = null;
+
+                public function __construct(private readonly string $source, private readonly bool $fail) {}
+
+                public function download(string $url, string $destination): void
+                {
+                    if (SelfUpdater::CHECKSUM_URL === $url) {
+                        file_put_contents($destination, hash_file('sha256', $this->source));
+
+                        return;
+                    }
+
+                    $this->destination = $destination;
+                    TestCase::assertDirectoryExists(\dirname($destination));
+                    TestCase::assertSame(0o700, fileperms(\dirname($destination)) & 0o777);
+                    TestCase::assertStringEndsWith('.phar', $destination);
+                    (new HttpDownloader())->download($this->source, $destination);
+                    if ($this->fail) {
+                        throw new CliException('Download interrupted.');
+                    }
+                }
+            };
+
+            try {
+                try {
+                    (new SelfUpdater($downloader, $pharPath))->run(new Output(false, true));
+                    $this->assertFalse($fail);
+                } catch (CliException $e) {
+                    $this->assertTrue($fail);
+                    $this->assertSame('Download interrupted.', $e->getMessage());
+                }
+                $this->assertNotNull($downloader->destination);
+                $this->assertFileDoesNotExist($downloader->destination);
+                $this->assertDirectoryDoesNotExist(\dirname($downloader->destination));
+            } finally {
+                @unlink($pharPath);
+                if (null !== $downloader->destination) {
+                    @unlink($downloader->destination);
+                    @rmdir(\dirname($downloader->destination));
+                }
+            }
+        }
     }
 
     #[Test]
@@ -464,8 +515,6 @@ final class SelfUpdaterTest extends TestCase
         $checksumFile = $this->writeChecksumFile($pharPath);
         $output = new Output(false, true);
 
-        $checksumTemp = sys_get_temp_dir().'/regex-update-'.bin2hex(random_bytes(4));
-        SelfUpdateFunctionOverrides::queueTempnam($checksumTemp);
         SelfUpdateFunctionOverrides::queueTempnam(false);
 
         $updater = self::updater($pharPath, $pharPath, $checksumFile);
