@@ -508,7 +508,7 @@ final class Lexer
         // character after the backslash, then what follows as pattern text.
         $text = $state->text;
         if ($text->badEscapeIsLiteral
-            && BadEscape::at($state->pattern, $at, $state->inCharClass, $text->utf, $this->syntax->target, null, ClassRanges::startsRangeEnd($text, $tokens, $at, $state->inCharClass ? $state->charClassStartPositions[\count($state->charClassStartPositions) - 1] : null))) {
+            && BadEscape::at($state->pattern, $at, $state->inCharClass, $text->utf, $this->syntax->target, null, $state->classRanges->startsRangeEnd($text, $tokens, $at, $state->inCharClass ? $state->charClassStartPositions[\count($state->charClassStartPositions) - 1] : null))) {
             $tokens[] = new Token(TokenType::LiteralEscaped, $state->pattern[$at + 1], $at, 2);
             $state->literalEscapes[$at] = true;
             $state->position += 2;

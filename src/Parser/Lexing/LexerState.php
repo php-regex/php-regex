@@ -38,6 +38,8 @@ final class LexerState
      */
     public PatternText $text;
 
+    public ClassRanges $classRanges;
+
     /**
      * The text read, its length and whether it is read byte by byte, as the
      * text holds them.
@@ -137,6 +139,7 @@ final class LexerState
     public function start(PatternText $text, string $flags, bool $extendedMore): void
     {
         $this->text = $text;
+        $this->classRanges = new ClassRanges();
         $this->pattern = $text->pattern;
         $this->length = $text->length;
         $this->byteMode = $text->byteMode;

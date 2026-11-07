@@ -81,13 +81,44 @@ final class ClassRangesTest extends TestCase
         $text = new PatternText($old, '[a-\d', '', '[a-\d', 0);
         $tokens = \array_slice(self::tokens('[a-\d]'), 0, 3);
 
-        $this->assertTrue(ClassRanges::startsRangeEnd($text, $tokens, 3, 0));
-        $this->assertFalse(ClassRanges::startsRangeEnd($text, $tokens, 3, null));
-        $this->assertFalse(ClassRanges::startsRangeEnd($text, \array_slice($tokens, 0, 2), 2, 0));
-        $this->assertFalse(ClassRanges::startsRangeEnd(self::text('[a-\d'), $tokens, 3, 0));
+        $this->assertTrue((new ClassRanges())->startsRangeEnd($text, $tokens, 3, 0));
+        $this->assertFalse((new ClassRanges())->startsRangeEnd($text, $tokens, 3, null));
+        $this->assertFalse((new ClassRanges())->startsRangeEnd($text, \array_slice($tokens, 0, 2), 2, 0));
+        $this->assertFalse((new ClassRanges())->startsRangeEnd(self::text('[a-\d'), $tokens, 3, 0));
 
         $plain = new PatternText($old, '[a-\x41', '', '[a-\x41', 0);
-        $this->assertFalse(ClassRanges::startsRangeEnd($plain, $tokens, 3, 0));
+        $this->assertFalse((new ClassRanges())->startsRangeEnd($plain, $tokens, 3, 0));
+    }
+
+    #[Test]
+    public function test_incremental_ranges_reset_between_classes_and_tokenizing_calls(): void
+    {
+        $lexer = new Lexer(PcreTarget::bundledWith(70300));
+        foreach ([
+            ['[a-\\d-\\w][\\d]', '', [3 => true]],
+            ['[\\Qa\\E-\\d-\\w]', '', [7 => true]],
+            ['[a-é-\\d]', '', [6 => true]],
+            ['[a-é-\\d]', 'u', []],
+            ['[\\d]', '', []],
+        ] as [$pattern, $flags, $expected]) {
+            $lexer->tokenize($pattern, $flags);
+            $this->assertSame($expected, $lexer->literalEscapesRead(), $pattern.$flags);
+        }
+    }
+
+    #[Test]
+    public function test_repeated_legacy_class_escapes_are_read_in_linear_time(): void
+    {
+        $count = 16000;
+        $lexer = new Lexer(PcreTarget::bundledWith(70300));
+        $start = hrtime(true);
+        $tokens = $lexer->tokenize('['.str_repeat('\\d', $count).']')->getTokens();
+        $elapsed = (hrtime(true) - $start) / 1e9;
+
+        $this->assertCount($count + 3, $tokens);
+        // A generous ceiling: replaying each growing prefix takes tens of
+        // seconds, while reading this class once takes a fraction of one.
+        $this->assertLessThan(5.0, $elapsed);
     }
 
     private static function text(string $pattern): PatternText
