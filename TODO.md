@@ -40,6 +40,8 @@ In this order.
    `self.version`: one missing tag leaves the others uninstallable), and the
    "Latest" release carries the 2.0 `regex.phar`, which `self-update` and
    `releases/latest` serve.
+   Run `uses: php-regex/php-regex@v2.0.0` once on a test repository: the
+   action downloads that phar and checks its checksum.
 6. `bin/bump --next 2.0.1`.
 7. Submit `src/Linter/regex.schema.json` to schemastore.org (`fileMatch`:
    `regex.json`, `regex.dist.json`) for editor support without setup: it
