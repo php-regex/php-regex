@@ -65,6 +65,32 @@ final class LineDiff
     }
 
     /**
+     * The bytes two lines share at the start, then at the end, the two
+     * never overlapping: what is left between is what changed.
+     *
+     * @return array{int, int} the length of the shared prefix, then of the shared suffix
+     */
+    public static function affixes(string $old, string $new): array
+    {
+        $oldLength = \strlen($old);
+        $newLength = \strlen($new);
+
+        $prefix = 0;
+        $shortest = min($oldLength, $newLength);
+        while ($prefix < $shortest && $old[$prefix] === $new[$prefix]) {
+            $prefix++;
+        }
+
+        $suffix = 0;
+        $room = $shortest - $prefix;
+        while ($suffix < $room && $old[$oldLength - 1 - $suffix] === $new[$newLength - 1 - $suffix]) {
+            $suffix++;
+        }
+
+        return [$prefix, $suffix];
+    }
+
+    /**
      * @param list<string> $old
      * @param list<string> $new
      *
@@ -117,31 +143,5 @@ final class LineDiff
         }
 
         return array_reverse($ops);
-    }
-
-    /**
-     * The bytes two lines share at the start, then at the end, the two
-     * never overlapping: what is left between is what changed.
-     *
-     * @return array{int, int} the length of the shared prefix, then of the shared suffix
-     */
-    public static function affixes(string $old, string $new): array
-    {
-        $oldLength = \strlen($old);
-        $newLength = \strlen($new);
-
-        $prefix = 0;
-        $shortest = min($oldLength, $newLength);
-        while ($prefix < $shortest && $old[$prefix] === $new[$prefix]) {
-            $prefix++;
-        }
-
-        $suffix = 0;
-        $room = $shortest - $prefix;
-        while ($suffix < $room && $old[$oldLength - 1 - $suffix] === $new[$newLength - 1 - $suffix]) {
-            $suffix++;
-        }
-
-        return [$prefix, $suffix];
     }
 }
