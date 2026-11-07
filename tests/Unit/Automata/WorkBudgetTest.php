@@ -20,12 +20,66 @@ use PHPRegex\Automata\Minimization\DfaMinimizer;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class WorkBudgetTest extends TestCase
 {
+    #[Test]
+    public function test_comparison_bounds_the_product_of_individually_small_dfas(): void
+    {
+        $solver = new LanguageSolver();
+        $options = new SolverOptions(maxDfaStates: 40, maxTransitionsProcessed: null);
+        $solver->compile('/(?:a{11})+/', $options);
+        $solver->compile('/(?:a{13})+/', $options);
+
+        $result = $solver->intersection('/(?:a{11})+/', '/(?:a{13})+/', new SolverOptions(maxDfaStates: 200));
+        $this->assertSame(str_repeat('a', 143), $result->example);
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessage('comparison');
+        $solver->intersection('/(?:a{11})+/', '/(?:a{13})+/', $options);
+    }
+
+    #[Test]
+    #[DataProvider('provideComparisons')]
+    public function test_comparison_charges_even_transitions_to_visited_pairs(string $method): void
+    {
+        // One pair is retained, but every alphabet range still takes work.
+        $dfa = new Dfa(0, [0 => new DfaState(0, [97 => 0, 98 => 0], false)], [[97, 97], [98, 98]], 97, 98);
+        $cache = new class($dfa) implements DfaCacheInterface {
+            public function __construct(private readonly Dfa $dfa) {}
+
+            public function get(string $key): ?Dfa
+            {
+                return $this->dfa;
+            }
+
+            public function set(string $key, Dfa $dfa): void {}
+        };
+        $solver = new LanguageSolver(dfaCache: $cache);
+
+        try {
+            $solver->$method('/a/', '/b/', new SolverOptions(maxTransitionsProcessed: 1));
+            $this->fail('Expected comparison work to exceed its budget.');
+        } catch (ComplexityException $exception) {
+            $this->assertSame('comparison', $exception->getDiagnostic()['phase'] ?? null);
+            $this->assertSame(2, $exception->getDiagnostic()['consumed'] ?? null);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function provideComparisons(): iterable
+    {
+        foreach (['intersection', 'subsetOf', 'equivalent'] as $method) {
+            yield $method => [$method];
+        }
+    }
+
     #[Test]
     public function test_determinize_budget_is_enforced(): void
     {

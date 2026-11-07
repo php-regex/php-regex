@@ -29,6 +29,7 @@ use PHPRegex\Automata\Solver\MatchEquivalenceResult;
 use PHPRegex\Automata\Solver\PrefixReader;
 use PHPRegex\Automata\Solver\RewriteSites;
 use PHPRegex\Automata\Solver\SubsetResult;
+use PHPRegex\Automata\Support\WorkBudget;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
@@ -113,6 +114,7 @@ final class LanguageSolver
             $leftDfa,
             $rightDfa,
             static fn (bool $leftAccept, bool $rightAccept): bool => $leftAccept && $rightAccept,
+            $options,
         );
 
         return new IntersectionResult(null === $example, $example);
@@ -133,6 +135,7 @@ final class LanguageSolver
             $leftDfa,
             $rightDfa,
             static fn (bool $leftAccept, bool $rightAccept): bool => $leftAccept && !$rightAccept,
+            $options,
         );
 
         return new SubsetResult(null === $example, $example);
@@ -153,12 +156,14 @@ final class LanguageSolver
             $leftDfa,
             $rightDfa,
             static fn (bool $leftAccept, bool $rightAccept): bool => $leftAccept && !$rightAccept,
+            $options,
         );
 
         $rightOnlyExample = $this->findExample(
             $leftDfa,
             $rightDfa,
             static fn (bool $leftAccept, bool $rightAccept): bool => !$leftAccept && $rightAccept,
+            $options,
         );
 
         return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample);
@@ -465,7 +470,7 @@ final class LanguageSolver
             // tells nothing. Branches of one length each stand on every
             // release, and the same strings give them the same lengths.
             if ($lookbehindBodies && self::branchesOfOneLength($leftPart) && self::branchesOfOneLength($rightPart)
-                && null === $this->findExample(self::partDfa($left, $leftPart, $unicode, $full), self::partDfa($right, $rightPart, $unicode, $full), static fn (bool $leftAccept, bool $rightAccept): bool => $leftAccept !== $rightAccept)) {
+                && null === $this->findExample(self::partDfa($left, $leftPart, $unicode, $full), self::partDfa($right, $rightPart, $unicode, $full), static fn (bool $leftAccept, bool $rightAccept): bool => $leftAccept !== $rightAccept, $full)) {
                 continue;
             }
 
@@ -499,7 +504,7 @@ final class LanguageSolver
             $rightDfa = self::partDfa($right, $rightPart, $unicode, $full);
 
             $differ = static fn (bool $leftAccept, bool $rightAccept): bool => $leftAccept !== $rightAccept;
-            if (null !== $this->findExample($leftDfa, $rightDfa, $differ)) {
+            if (null !== $this->findExample($leftDfa, $rightDfa, $differ, $full)) {
                 return false;
             }
 
@@ -774,7 +779,7 @@ final class LanguageSolver
     /**
      * @param callable(bool, bool): bool $acceptPredicate
      */
-    private function findExample(Dfa $left, Dfa $right, callable $acceptPredicate): ?string
+    private function findExample(Dfa $left, Dfa $right, callable $acceptPredicate, SolverOptions $options): ?string
     {
         $startLeft = $left->startState;
         $startRight = $right->startState;
@@ -789,6 +794,9 @@ final class LanguageSolver
         if ($acceptPredicate($left->getState($startLeft)->isAccepting, $right->getState($startRight)->isAccepting)) {
             return '';
         }
+
+        $budget = new WorkBudget($options->maxTransitionsProcessed, 'comparison', 1, 0, \count($alphabetRanges));
+        $transitions = 0;
 
         /** @var \SplQueue<array{int, int, int}> $queue */
         $queue = new \SplQueue();
@@ -806,6 +814,9 @@ final class LanguageSolver
             $rightState = self::DEAD === $rightStateId ? null : $right->getState($rightStateId);
 
             foreach ($alphabetRanges as [$start]) {
+                $budget->updateStats(\count($visited), $transitions, \count($alphabetRanges));
+                $budget->consume();
+                $transitions++;
                 $symbol = $start;
                 $nextLeft = null === $leftState ? self::DEAD : $leftState->transitionFor($symbol);
                 $nextLeft ??= self::DEAD;
@@ -816,6 +827,12 @@ final class LanguageSolver
 
                 if (isset($visited[$nextKey])) {
                     continue;
+                }
+
+                // Bound retained predecessors and the queue before allocation.
+                // A shortest witness follows at most this many predecessors.
+                if (\count($visited) >= $options->maxDfaStates) {
+                    throw new ComplexityException(\sprintf('The comparison explored more than %d pairs of DFA states.', $options->maxDfaStates), diagnostic: ['phase' => 'comparison', 'limit' => $options->maxDfaStates]);
                 }
 
                 $visited[$nextKey] = true;
