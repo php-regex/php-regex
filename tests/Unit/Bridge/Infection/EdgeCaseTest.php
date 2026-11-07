@@ -27,6 +27,8 @@ use PHPRegex\Infection\Mutator\RegexAnchor;
 use PHPRegex\Infection\Mutator\RegexCharClass;
 use PHPRegex\Infection\Site\Observation;
 use PHPRegex\Infection\Site\PatternCall;
+use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Engine\PcreLimits;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -165,18 +167,19 @@ final class EdgeCaseTest extends TestCase
     #[Test]
     public function test_nothing_is_kept_from_one_literal_to_the_next(): void
     {
+        // One class of 300 characters behind six suffixes: the library's own
+        // caches of what a class holds fill on the first literal, what the
+        // mutator keeps of a literal shows on the others.
+        $class = implode('', array_map(static fn (int $i): string => \sprintf('\\x{%04x}', 0x4E00 + $i), range(0, 299)));
         $mutator = new RegexCharClass();
-        $literal = static fn (int $seed): string => "preg_match('/[".implode('', array_map(static fn (int $i): string => \sprintf('\\x{%04x}', 0x4E00 + $seed * 300 + $i), range(0, 299)))."]/u', \$s, \$m)";
 
         $usage = [];
         foreach (range(0, 5) as $seed) {
-            MutatorHarness::patterns($mutator, $literal($seed));
+            MutatorHarness::patterns($mutator, "preg_match('/[".$class.']x'.$seed."/u', \$s, \$m)");
             gc_collect_cycles();
             $usage[] = memory_get_usage();
         }
 
-        // Each literal of the six reads about 2 KB of pattern: what is kept
-        // from one to the next stays under a megabyte, all of them together.
         $this->assertLessThan(1_000_000, $usage[5] - $usage[1]);
     }
 
@@ -294,6 +297,8 @@ final class EdgeCaseTest extends TestCase
     {
         // Only /^aa$/ matches "aa", only /^b$/ matches "b".
         $this->assertSame(['b', 'aa'], (new EquivalenceJudge())->judge(Observation::Match, '/^aa$/', '/^b$/', new Budget())->subjects);
+        $this->assertSame([0, 1], [preg_match('/^aa$/', 'b'), preg_match('/^b$/', 'b')]);
+        $this->assertSame([1, 0], [preg_match('/^aa$/', 'aa'), preg_match('/^b$/', 'aa')]);
     }
 
     #[Test]
@@ -305,6 +310,9 @@ final class EdgeCaseTest extends TestCase
 
         $this->assertFalse($verdict->alike);
         $this->assertSame(['a'], $verdict->subjects);
+        preg_match('/^a*/', 'a', $left);
+        preg_match('/^b*/', 'a', $right);
+        $this->assertSame([['a'], ['']], [$left, $right]);
     }
 
     #[Test]
@@ -322,6 +330,11 @@ final class EdgeCaseTest extends TestCase
     public function test_judge_proves_patterns_that_read_alike_without_running_them(): void
     {
         $this->assertTrue((new EquivalenceJudge())->judge(Observation::Matches, '/[0-9]/', '/\d/', new Budget())->alike);
+        foreach (range(0, 255) as $byte) {
+            preg_match('/[0-9]/', \chr($byte), $class);
+            preg_match('/\d/', \chr($byte), $type);
+            $this->assertSame($class, $type, (string) $byte);
+        }
     }
 
     #[Test]
@@ -331,6 +344,11 @@ final class EdgeCaseTest extends TestCase
         $this->assertNull((new RedosGuard())->catastrophic('/(a+)+$/', new Budget(0)));
         $this->assertTrue((new RedosGuard())->catastrophic('/(a+)+$/', new Budget()));
         $this->assertFalse((new RedosGuard())->catastrophic('/^a*a*\d*b$/', new Budget()));
+        // The engine agrees: the exponential pattern exhausts a hundred
+        // thousand backtracks on 30 bytes, the polynomial one does not.
+        $limits = new PcreLimits(100_000, 10_000);
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, (new PcreEngine())->match('/(a+)+$/', str_repeat('a', 29).'!', $limits)->errorCode);
+        $this->assertFalse((new PcreEngine())->match('/^a*a*\d*b$/', str_repeat('a', 29).'!', $limits)->matched);
         // A backreference leaves the complexity unknown, with no error.
         $this->assertNull((new RedosGuard())->catastrophic('/(a)\1+/', new Budget()));
     }
