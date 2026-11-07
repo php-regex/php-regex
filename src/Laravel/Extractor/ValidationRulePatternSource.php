@@ -158,14 +158,18 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         try {
             LibraryPcre::matchAll(self::RULE_PATTERN, $content, $matches, \PREG_OFFSET_CAPTURE);
 
+            $previousOffset = 0;
+            $lineNumber = 1;
             foreach ($matches[2] as $index => $match) {
                 $literal = $this->unescapeStringLiteral($match[0], $matches[1][$index][0]);
                 $offset = $match[1];
-                $lineNumber = substr_count(substr($content, 0, $offset), "\n") + 1;
+                // Match offsets increase: count each intervening byte only once.
+                $lineNumber += substr_count($content, "\n", $previousOffset, $offset - $previousOffset);
+                $previousOffset = $offset;
 
                 // Laravel splits a rules string on every "|", one inside a
                 // pattern included; an element of a rules array is one rule.
-                $rules = $this->isRulesString($literal, substr($content, 0, $offset - 1)) ? explode('|', $literal) : [$literal];
+                $rules = $this->isRulesString($literal, $content, $offset - 2) ? explode('|', $literal) : [$literal];
 
                 foreach ($rules as $rule) {
                     if (1 !== LibraryPcre::match(self::RULE, $rule, $name)) {
@@ -212,23 +216,36 @@ final class ValidationRulePatternSource implements PatternSourceInterface
      * assigned ($rules['a'] = '…'), where $rules['a'][] = '…' pushes one
      * element.
      */
-    private function isRulesString(string $literal, string $before): bool
+    private function isRulesString(string $literal, string $content, int $before): bool
     {
         if (1 !== LibraryPcre::match(self::RULE, $literal)) {
             return true;
         }
 
-        $before = rtrim($before, " \t\n\r\0\x0B");
-        if (str_ends_with($before, '=>')) {
+        $before = $this->previousNonWhitespace($content, $before);
+        if ($before >= 1 && '=>' === substr($content, $before - 1, 2)) {
             return true;
         }
 
         // "==", "!=", "<=" and ">=" compare; "=", ".=" and "??=" assign.
-        if (!str_ends_with($before, '=') || 1 === LibraryPcre::match('/[=!<>]=$/', $before)) {
+        if ($before < 0 || '=' !== $content[$before] || ($before > 0 && str_contains('=!<>', $content[$before - 1]))) {
             return false;
         }
 
-        return !str_ends_with(rtrim(substr($before, 0, -1), " \t\n\r\0\x0B"), '[]');
+        $before = $this->previousNonWhitespace($content, $before - 1);
+
+        return $before < 1 || '[]' !== substr($content, $before - 1, 2);
+    }
+
+    private function previousNonWhitespace(string $content, int $offset): int
+    {
+        // Only the whitespace immediately before this literal (or its assignment)
+        // is visited; earlier literals stop the walk without copying a prefix.
+        while ($offset >= 0 && str_contains(" \t\n\r\0\x0B", $content[$offset])) {
+            --$offset;
+        }
+
+        return $offset;
     }
 
     /**
