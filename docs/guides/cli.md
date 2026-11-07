@@ -63,7 +63,9 @@ phive install php-regex/php-regex
 ```
 {: data-copy="" }
 
-Phive asks you to trust the key the first time.
+Phive asks you to trust the key the first time. It installs a signed
+release only: for a release that carries no `regex.phar.asc`, download the
+PHAR as above.
 
 > **Note:** Replace `vendor/bin/regex` with `regex` in all examples below if using the PHAR.
 
