@@ -181,14 +181,14 @@ final class MatchEquivalenceTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, int}>
+     * @return iterable<string, array{pattern: string, states: int}>
      */
     public static function provideStateBudgetPatterns(): iterable
     {
-        yield 'literal' => ['/abcdef/', 7];
-        yield 'split' => ['/a|b/', 4];
-        yield 'capture tags' => ['/(a)/', 4];
-        yield 'anchor' => ['/^a/', 3];
+        yield 'literal' => ['pattern' => '/abcdef/', 'states' => 7];
+        yield 'split' => ['pattern' => '/a|b/', 'states' => 4];
+        yield 'capture tags' => ['pattern' => '/(a)/', 'states' => 4];
+        yield 'anchor' => ['pattern' => '/^a/', 'states' => 3];
     }
 
     #[Test]
