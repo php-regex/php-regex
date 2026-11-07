@@ -43,6 +43,22 @@ final class WorkBudgetTest extends TestCase
         }
     }
 
+    #[Test]
+    public function test_lookaround_body_preserves_the_transition_budget(): void
+    {
+        // In full mode the outer pattern accepts nothing, but its assertion
+        // body needs hundreds of subset states before it can be simplified.
+        try {
+            (new LanguageSolver())->compile('/(?=[ab]*a[ab]{8})/', new SolverOptions(maxTransitionsProcessed: 100));
+            $this->fail('Expected a ComplexityException to be thrown.');
+        } catch (ComplexityException $exception) {
+            $diagnostic = $exception->getDiagnostic();
+            $this->assertNotNull($diagnostic);
+            $this->assertSame('determinize', $diagnostic['phase'] ?? null);
+            $this->assertSame(100, $diagnostic['limit'] ?? null);
+        }
+    }
+
     /**
      * Each state of the DFA writes a transition per range of the alphabet,
      * and \pL splits the Unicode alphabet into hundreds of ranges: the

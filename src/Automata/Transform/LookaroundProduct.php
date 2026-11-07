@@ -95,6 +95,7 @@ final class LookaroundProduct
             matchMode: MatchMode::Full,
             maxNfaStates: $this->options->maxNfaStates,
             maxDfaStates: $this->options->maxDfaStates,
+            maxTransitionsProcessed: $this->options->maxTransitionsProcessed,
         );
 
         foreach ($marks as $state => $look) {
