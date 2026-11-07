@@ -45,9 +45,14 @@ final class SelfCheckScriptTest extends TestCase
     #[Test]
     public function test_the_script_leaves_a_project_whose_file_is_a_link_to_nothing(): void
     {
-        // A copy would write through the link, wherever it points.
+        // A copy would write through the link, wherever it points. Windows
+        // reads the target when it makes a link: it exists until the link
+        // does, then goes.
         $project = self::project();
+        file_put_contents($project.'/elsewhere.xml', '');
         $this->assertTrue(symlink($project.'/elsewhere.xml', $project.'/phpunit.xml.dist'));
+        unlink($project.'/elsewhere.xml');
+        $this->assertFileDoesNotExist($project.'/phpunit.xml.dist');
 
         try {
             [$status, $errors] = self::check($project);
