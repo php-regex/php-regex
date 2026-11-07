@@ -147,7 +147,9 @@ echo "Packages"
 # dev version the stable page never lists, are both read as what they are.
 packagist_channel() { # <package> <url>
     local page code
-    page=$(curl -s -w '\n%{http_code}' "$2" 2>/dev/null)
+    # curl writes the status it received even when the body then breaks off:
+    # only a transfer that completed is read.
+    page=$(curl -s -w '\n%{http_code}' "$2" 2>/dev/null) || { printf 'unanswered'; return 0; }
     code=${page##*$'\n'}
     case "$code" in
         200) ;;

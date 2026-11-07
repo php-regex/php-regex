@@ -667,6 +667,21 @@ exit 1
     }
 
     #[Test]
+    public function test_status_reads_a_page_cut_off_after_its_status_as_no_answer(): void
+    {
+        $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+        $environment = $this->fakeGitHub();
+        // The status came, then the transfer broke: curl still writes 200,
+        // and exits 18 for the partial body.
+        file_put_contents($this->root.'/fake/curl', "#!/usr/bin/env bash\necho \"curl \$*\" >> \"\$CURL_LOG\"\nprintf '{\"packages\":{\"php-regex/regex-infection\":[\\n200'\nexit 18\n");
+
+        [, $output] = $this->runScript('status', [], $environment);
+
+        $this->assertMatchesRegularExpression('~^  php-regex/regex-infection .*· Packagist did not answer$~m', $output);
+        $this->assertStringNotContainsString('registered, no versions', $output);
+    }
+
+    #[Test]
     public function test_status_tells_a_packagist_that_does_not_answer_from_a_missing_package(): void
     {
         $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
