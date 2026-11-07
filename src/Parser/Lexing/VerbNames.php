@@ -62,13 +62,14 @@ final class VerbNames
         // What PCRE reads as nothing between them, a comment, "\E", "\Q\E"
         // or under "x" a space or a line comment, does not count.
         $at = self::nothingReadBefore($text, $start, $extended);
-        while ([] !== $tokens && $tokens[\count($tokens) - 1]->position >= $at) {
-            array_pop($tokens);
+        $last = \count($tokens) - 1;
+        while ($last >= 0 && $tokens[$last]->position >= $at) {
+            $last--;
         }
 
-        $condition = self::opensCondition($tokens, $at);
+        $condition = self::opensCondition($tokens, $at, $last);
         if (!$text->syntax->readsAlphabeticAssertions && $condition) {
-            $previous = $tokens[\count($tokens) - 1] ?? null;
+            $previous = $tokens[$last] ?? null;
             if (null !== $previous && TokenType::GroupModifierOpen === $previous->type && $at === $start) {
                 throw self::conditionWantsAName($start + 1, $text->pattern);
             }
@@ -234,11 +235,12 @@ final class VerbNames
      * token of a long pattern.
      *
      * @param list<Token> $tokens the tokens read before $position
+     * @param int|null    $last   the last relevant token index, -1 for none
      */
-    public static function opensCondition(array $tokens, int $position): bool
+    public static function opensCondition(array $tokens, int $position, ?int $last = null): bool
     {
-        $last = array_key_last($tokens);
-        $previous = null === $last ? null : $tokens[$last];
+        $last ??= \count($tokens) - 1;
+        $previous = $tokens[$last] ?? null;
         if (null !== $previous && TokenType::Callout === $previous->type && $previous->end() === $position) {
             $position = $previous->position;
             $previous = $tokens[$last - 1] ?? null;

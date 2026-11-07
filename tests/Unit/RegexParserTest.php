@@ -78,6 +78,31 @@ final class RegexParserTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideTokenizationLimits')]
+    public function test_tokenization_enforces_the_configured_length_limit(bool $facade, string $pattern, bool $tooLong): void
+    {
+        $reader = $facade ? Regex::create(['max_pattern_length' => 10]) : RegexParser::create(['max_pattern_length' => 10]);
+        if ($tooLong) {
+            $this->expectException(\PHPRegex\Parser\Exception\ResourceLimitException::class);
+        }
+
+        $tokens = $reader->tokenize($pattern);
+        $this->assertNotEmpty($tokens);
+    }
+
+    /**
+     * @return iterable<string, array{bool, string, bool}>
+     */
+    public static function provideTokenizationLimits(): iterable
+    {
+        foreach ([false, true] as $facade) {
+            yield (int) $facade.' at limit' => [$facade, '/abcdefgh/', false];
+            yield (int) $facade.' past limit with modifier' => [$facade, '/abcdefgh/i', true];
+            yield (int) $facade.' past limit with leading space' => [$facade, ' /abcdefgh/', true];
+        }
+    }
+
+    #[Test]
     public function test_the_facade_shares_its_parser(): void
     {
         $regex = Regex::create(['cache' => null, 'php_version' => '8.3']);

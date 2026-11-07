@@ -73,7 +73,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-260379fd2a896541587c2da7a4096478';
+    public const CACHE_VERSION = 'ast-f59f51e3280fad4cb5b9591e92cb63ce';
 
     /**
      * ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, by the name the parser gave it first.
@@ -266,6 +266,8 @@ final class RegexParser
      */
     public function tokenize(string $regex): array
     {
+        $this->validateResourceLimits($regex);
+
         return LibraryPcre::run(function () use ($regex): array {
             [$pattern, $flags] = PatternParser::extractPatternAndFlags($regex, $this->target);
 
