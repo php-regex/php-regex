@@ -253,6 +253,7 @@ function findings(string $repo, string $corpus, string $clone, string $sha, arra
 {
     $root = (string) realpath($clone);
     $findings = [];
+    $sources = [];
     foreach ($results as $result) {
         if (!\is_array($result) || !\is_string($result['pattern'] ?? null) || !\is_string($result['file'] ?? null)) {
             continue;
@@ -318,6 +319,7 @@ function findings(string $repo, string $corpus, string $clone, string $sha, arra
                 break;
             }
         }
+        $sources[$path] ??= sourceIndex($path);
         $witness = null === $analysis ? null : witness($pattern, $analysis);
         $findings[] = [
             'file' => $file,
@@ -331,7 +333,7 @@ function findings(string $repo, string $corpus, string $clone, string $sha, arra
             'rewrite' => $rewrite,
             'witness' => $witness['shown'] ?? null,
             'subject' => $witness['raw'] ?? '',
-        ] + snippet($repo, $sha, $path, $file, $line, (int) ($result['column'] ?? 0), $pattern, $target, $analysis);
+        ] + snippet($repo, $sha, $sources[$path], $file, $line, (int) ($result['column'] ?? 0), $pattern, $target, $analysis);
     }
     usort($findings, static fn (array $a, array $b): int => [$a['file'], $a['line'], $a['column'], $a['pattern']] <=> [$b['file'], $b['line'], $b['column'], $b['pattern']]);
 
@@ -409,18 +411,19 @@ function witness(string $pattern, array $analysis): ?array
  * pattern's literal in the token colors of the pattern field when it
  * stands on the line as written.
  *
+ * @param array{lines: list<string>, literals: array<int, array<string, array<int, array{start: int, end: int, map: array<int, int>}>>>} $source
  * @param array{php: string, pcre: string, source: string} $target
  * @param array<mixed>|null                                $analysis
  *
  * @return array{permalink: string, snippet: list<array{number: int, focus: bool, runs: list<array{string, string}>}>}
  */
-function snippet(string $repo, string $sha, string $path, string $file, int $line, int $column, string $pattern, array $target, ?array $analysis): array
+function snippet(string $repo, string $sha, array $source, string $file, int $line, int $column, string $pattern, array $target, ?array $analysis): array
 {
-    $source = (string) file_get_contents($path);
-    $lines = explode("\n", $source);
+    $lines = $source['lines'];
     $first = max(1, $line - CONTEXT);
     $last = min(\count($lines), $line + CONTEXT);
-    $literal = locate($source, $line, $column, $pattern);
+    $matches = $source['literals'][$line][$pattern] ?? [];
+    $literal = $matches[$column] ?? ($matches[array_key_first($matches)] ?? null);
     $snippet = [];
     for ($number = $first; $number <= $last; ++$number) {
         $text = rtrim($lines[$number - 1], "\r");
@@ -439,50 +442,41 @@ function snippet(string $repo, string $sha, string $path, string $file, int $lin
 }
 
 /**
- * The PHP string literal on the line whose value is the pattern: its byte
- * span in the line and, byte for byte, which byte of the pattern each byte
- * of the literal spells. The literal at the column the linter names wins
- * over another spelling the same pattern on the line (a str_contains()
- * argument, a second call). Null when the pattern is not written there as
- * one literal (a constant, a concatenation, a template).
+ * Read and tokenize a source once per report repository. Index literals by
+ * line, value and column so findings never rescan the file or the line's
+ * other literals. Insertion order retains the first match as a fallback.
  *
- * @return array{start: int, end: int, map: array<int, int>}|null
+ * @return array{lines: list<string>, literals: array<int, array<string, array<int, array{start: int, end: int, map: array<int, int>}>>>}
  */
-function locate(string $source, int $line, int $column, string $pattern): ?array
+function sourceIndex(string $path): array
 {
+    $source = (string) file_get_contents($path);
+    $lines = explode("\n", $source);
+    $starts = [];
     $offset = 0;
-    $lineStart = lineOffset($source, $line);
-    $found = null;
+    foreach ($lines as $i => $text) {
+        $starts[$i + 1] = $offset;
+        $offset += \strlen($text) + 1;
+    }
+    $literals = [];
+    $offset = 0;
     foreach (@token_get_all($source) as $token) {
         $text = \is_array($token) ? $token[1] : $token;
-        if (\is_array($token) && \T_CONSTANT_ENCAPSED_STRING === $token[0] && $token[2] === $line && !str_contains($text, "\n")) {
+        if (\is_array($token) && \T_CONSTANT_ENCAPSED_STRING === $token[0] && !str_contains($text, "\n")) {
             $decoded = decodeLiteral($text);
-            if (null !== $decoded && $decoded['value'] === $pattern) {
-                $literal = ['start' => $offset - $lineStart, 'end' => $offset - $lineStart + \strlen($text), 'map' => $decoded['map']];
-                if ($literal['start'] + 1 === $column) {
-                    return $literal;
-                }
-                $found ??= $literal;
+            if (null !== $decoded) {
+                $start = $offset - ($starts[$token[2]] ?? \strlen($source));
+                $literals[$token[2]][$decoded['value']][$start + 1] = [
+                    'start' => $start,
+                    'end' => $start + \strlen($text),
+                    'map' => $decoded['map'],
+                ];
             }
         }
         $offset += \strlen($text);
     }
 
-    return $found;
-}
-
-function lineOffset(string $source, int $line): int
-{
-    $offset = 0;
-    for ($i = 1; $i < $line; ++$i) {
-        $next = strpos($source, "\n", $offset);
-        if (false === $next) {
-            return \strlen($source);
-        }
-        $offset = $next + 1;
-    }
-
-    return $offset;
+    return ['lines' => $lines, 'literals' => $literals];
 }
 
 /**

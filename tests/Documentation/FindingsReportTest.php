@@ -209,6 +209,53 @@ final class FindingsReportTest extends TestCase
     }
 
     #[Test]
+    public function test_many_findings_share_source_indexes_without_mixing_files_or_literals(): void
+    {
+        $results = [];
+        foreach (['First', 'Second'] as $name) {
+            $source = "<?php\n";
+            for ($i = 0; $i < 100; ++$i) {
+                // The second spelling wins by column, even though both decode
+                // to the same pattern. CRLF and UTF-8 keep byte offsets honest.
+                $text = '/* é '.$name.' */ preg_match(\'/a/s\', $x); preg_match("/a/s", $x);';
+                $source .= $text."\r\n";
+                $results[] = [
+                    'file' => $this->dir.'/corpus/acme/tool/src/'.$name.'.php',
+                    'line' => $i + 2,
+                    'column' => strpos($text, '"/a/s"') + 1,
+                    'pattern' => '/a/s',
+                    'issues' => [['severity' => 'warning', 'issue_id' => 'regex.lint.flag.useless.s']],
+                ];
+            }
+            $this->repository('acme/tool', ['src/'.$name.'.php' => $source], false);
+        }
+        // Alternate files so reuse cannot depend on adjacent report rows.
+        usort($results, static fn (array $a, array $b): int => $a['line'] <=> $b['line']);
+        file_put_contents($this->dir.'/parts/acme__tool.json', json_encode([
+            'head' => $this->head('acme/tool'),
+            'target' => ['php' => '8.1', 'pcre' => '10.42'],
+            'results' => $results,
+        ], \JSON_THROW_ON_ERROR));
+
+        [$exit, $output] = $this->report();
+        $this->assertSame(0, $exit, $output);
+        $findings = $this->repoFile()['findings'];
+        $this->assertCount(200, $findings);
+        foreach ($findings as $finding) {
+            $focus = array_values(array_filter($finding['snippet'], static fn (array $line): bool => $line['focus']))[0];
+            $plain = '';
+            foreach ($focus['runs'] as [$text, $class]) {
+                if (str_contains($class, 'pg-snippet-pattern')) {
+                    break;
+                }
+                $plain .= $text;
+            }
+            $this->assertSame($finding['column'], \strlen($plain) + 1);
+            $this->assertStringContainsString(pathinfo($finding['file'], \PATHINFO_FILENAME), $plain);
+        }
+    }
+
+    #[Test]
     public function test_a_finding_keeps_its_id_when_its_line_moves(): void
     {
         $this->report();
