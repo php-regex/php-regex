@@ -195,6 +195,7 @@ final class EdgeCaseTest extends TestCase
     public function test_pipeline_writes_nothing_for_a_pattern_the_parser_refuses(): void
     {
         // The engine compiles it; the parser stops at its length limit.
+        $this->assertFalse(self::refused('/a+(?#'.str_repeat('c', 100_000).')/'));
         $call = PatternCall::fromNode(MutatorHarness::call("preg_match('/a+(?#".str_repeat('c', 100_000).")/', \$s)") ?? throw new \LogicException());
         $this->assertInstanceOf(PatternCall::class, $call);
 
@@ -216,6 +217,7 @@ final class EdgeCaseTest extends TestCase
     public function test_pipeline_writes_nothing_for_a_pattern_only_the_parser_reads(): void
     {
         // The parser reads the bounds, the engine refuses them out of order.
+        $this->assertTrue(self::refused('/a{2,1}/'));
         $call = PatternCall::fromNode(MutatorHarness::call("preg_match('/a{2,1}/', \$s)") ?? throw new \LogicException());
         $this->assertInstanceOf(PatternCall::class, $call);
 
@@ -225,6 +227,7 @@ final class EdgeCaseTest extends TestCase
     #[Test]
     public function test_pipeline_writes_nothing_for_a_pattern_the_engine_refuses(): void
     {
+        $this->assertTrue(self::refused('/(/'));
         $call = PatternCall::fromNode(MutatorHarness::call("preg_match('/(/', \$s)") ?? throw new \LogicException());
         $this->assertInstanceOf(PatternCall::class, $call);
 
@@ -383,6 +386,7 @@ final class EdgeCaseTest extends TestCase
         // Even patterns that read alike wait for a unit.
         $this->assertNull($judge->judge(Observation::Matches, '/[0-9]/', '/\d/', new Budget(0))->alike);
         $this->assertNull($judge->judge(Observation::Match, '/a/', '/b/', new Budget(0))->alike);
+        $this->assertTrue(self::refused('/(/'));
         $this->assertNull($judge->judge(Observation::Matches, '/a/', '/(/', new Budget())->alike);
         $this->assertNull($judge->judge(Observation::Match, '/a/', '/(/', new Budget())->alike);
         // One unit asks which runs to compare, none is left to compare them.
@@ -482,5 +486,16 @@ final class EdgeCaseTest extends TestCase
         preg_match($pattern, $subject, $matches);
 
         return $matches;
+    }
+
+    /**
+     * Whether PHP refuses to compile the pattern, leaving no error behind.
+     */
+    private static function refused(string $pattern): bool
+    {
+        $refused = false === @preg_match($pattern, '');
+        error_clear_last();
+
+        return $refused;
     }
 }

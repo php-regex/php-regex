@@ -117,6 +117,33 @@ final class CallSiteTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideRefusedPatterns')]
+    public function test_php_refuses_each_pattern_these_calls_pass(string $pattern): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''));
+        error_clear_last();
+    }
+
+    /**
+     * The patterns of the refused and troublesome calls that PHP itself
+     * refuses to compile.
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideRefusedPatterns(): iterable
+    {
+        yield 'unbalanced group' => ['pattern' => '/^(a/'];
+        yield 'bad escape' => ['pattern' => '/^\\/'];
+        yield 'unclosed delimiter' => ['pattern' => '/^a'];
+        yield 'alphanumeric delimiter' => ['pattern' => 'a^ba'];
+        yield 'invalid UTF-8 under u' => ['pattern' => "/^\xff/u"];
+        yield 'NUL byte delimiter' => ['pattern' => "\0^a\0"];
+        yield 'no delimiter' => ['pattern' => '^a'];
+        yield 'empty string' => ['pattern' => ''];
+        yield 'unknown modifier' => ['pattern' => '/^a/g'];
+    }
+
+    #[Test]
     #[DataProvider('provideTroublesomeLiterals')]
     public function test_never_throws_on_a_literal_it_cannot_read(string $code): void
     {
