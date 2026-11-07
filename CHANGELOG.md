@@ -159,6 +159,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - `regex --cache-dir <dir>` keeps the running PCRE2's answers about Unicode classes between runs.
 - The JSON outputs name the target's locale and the PHP that ran the analysis, and the JSON of every command is written down in [the JSON output reference](docs/reference/json-output.md), frozen for 2.x.
 - `regex lint` names the file it is held on after 10 seconds, and writes a progress line every 30 seconds without a terminal.
+- A GitHub Action, `uses: php-regex/php-regex@v2.0.0`, runs `regex lint --format=github` from the PHAR of a release, checked against its checksum; a release signed with the project's key carries `regex.phar.asc`, so `phive install php-regex/php-regex` installs it.
 - `PHPRegex\Linter\Extraction\ExtractorInterface` is public: an application reads its own calls with it (the Symfony `extractor_service` setting), returning a list of `PatternOccurrence::found()`; the `@regex-ignore` markers of the files it reads apply to its patterns.
 
 #### Analysis

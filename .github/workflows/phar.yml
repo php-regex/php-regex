@@ -45,6 +45,8 @@ jobs:
     env:
       TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
       PUBLISH: ${{ github.event_name == 'push' || inputs.publish }}
+      # The release key, an armored private key, signs the phar for Phive.
+      SIGN: ${{ secrets.PHAR_GPG_PRIVATE_KEY != '' }}
     steps:
       # A run by hand names its tag: it becomes the ref checked out and the
       # release edited, so it is a version tag as bin/release makes, or
@@ -110,6 +112,22 @@ jobs:
           php -r 'echo hash_file("sha256", "bin/regex.phar"), "  regex.phar\n";' > bin/regex.phar.sha256
           cat bin/regex.phar.sha256
 
+      # Phive installs a phar it can check against the key that signed it:
+      # with the release key set, regex.phar.asc is attached beside the phar.
+      # The key is imported into a keyring of the step's own, removed after.
+      - name: Sign the phar
+        if: env.PUBLISH == 'true' && env.SIGN == 'true'
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.PHAR_GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.PHAR_GPG_PASSPHRASE }}
+        run: |
+          export GNUPGHOME="$RUNNER_TEMP/gnupg"
+          mkdir -m 700 "$GNUPGHOME"
+          trap 'rm -rf "$GNUPGHOME"' EXIT
+          printf '%s\n' "$GPG_PRIVATE_KEY" | gpg --batch --import
+          printf '%s' "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign --output bin/regex.phar.asc bin/regex.phar
+          gpg --batch --verify bin/regex.phar.asc bin/regex.phar
+
       - name: Attest the build provenance
         if: env.PUBLISH == 'true'
         uses: actions/attest-build-provenance@v4
@@ -123,5 +141,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh release upload "$TAG" bin/regex.phar bin/regex.phar.sha256 --clobber
+          assets=(bin/regex.phar bin/regex.phar.sha256)
+          if [ -f bin/regex.phar.asc ]; then
+            assets+=(bin/regex.phar.asc)
+          else
+            # A signature an earlier run of the draft attached signed
+            # another build: an unsigned release keeps none, and a draft
+            # whose assets cannot be read is not published.
+            attached=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+            if grep -qx regex.phar.asc <<< "$attached"; then
+              gh release delete-asset "$TAG" regex.phar.asc --yes
+            fi
+          fi
+          gh release upload "$TAG" "${assets[@]}" --clobber
           gh release edit "$TAG" --draft=false

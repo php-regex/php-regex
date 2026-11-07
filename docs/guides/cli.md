@@ -53,6 +53,20 @@ gh attestation verify ~/.local/bin/regex --repo php-regex/php-regex
 The release also carries `regex.phar.sha256`, which `regex self-update`
 checks before it replaces the PHAR.
 
+**Via Phive:**
+
+A release signed with the project's key also carries `regex.phar.asc`, the
+signature [Phive](https://phar.io) checks before it installs the PHAR:
+
+```bash
+phive install php-regex/php-regex
+```
+{: data-copy="" }
+
+Phive asks you to trust the key the first time. It installs a signed
+release only: for a release that carries no `regex.phar.asc`, download the
+PHAR as above.
+
 > **Note:** Replace `vendor/bin/regex` with `regex` in all examples below if using the PHAR.
 
 ---
@@ -1971,6 +1985,44 @@ The `column` of a JSON result is a 1-based byte column in its line, and
 ## CI/CD Integration
 
 ### GitHub Actions
+
+The action at the root of the repository downloads the PHAR of a release,
+checks it against the checksum the release carries, and runs `regex lint`
+with `--format=github` on the PHP of the runner (8.1 or later). GitHub
+shows the first ten errors and the first ten warnings of the step as
+annotations on the pull request; the log of the step lists every finding.
+Nothing is installed in the project:
+
+```yaml
+name: regex-lint
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  regex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: php-regex/php-regex@v2.0.0
+        with:
+          paths: src
+          args: --redos
+```
+{: data-file=".github/workflows/regex-lint.yml" data-copy="" }
+
+| Input     | Default  | Meaning                                                                  |
+|-----------|----------|--------------------------------------------------------------------------|
+| `paths`   | (none)   | The files and directories to lint, separated by spaces; those `regex.json` lists when empty |
+| `args`    | (none)   | More options of `regex lint`, separated by spaces, as `--redos --php-version=8.2` |
+| `version` | `latest` | The release whose PHAR runs, as `2.0.0`                                  |
+| `php`     | `php`    | The PHP binary that runs the PHAR: set up another PHP before the action to choose it |
+
+With the library in the project's `composer.json`, the same lint runs from
+`vendor/bin`:
 
 ```yaml
 name: regex-lint

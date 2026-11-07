@@ -20,7 +20,9 @@ use PHPUnit\Framework\TestCase;
 /**
  * Composer installs php-regex/php-regex from the archive git builds of a
  * commit: every tracked file but those export-ignore leaves out. The
- * archive holds the library and its manifest only. The scripts of bin/ run
+ * archive holds the library and its manifest only, and action.yml: GitHub
+ * builds the archive a workflow's "uses:" downloads the same way, so the
+ * action is never left out. The scripts of bin/ run
  * the repository's own tooling, some of them through links into tools/,
  * which an install does not have: the executables an install links are
  * the packages' own, under src/.
@@ -28,7 +30,7 @@ use PHPUnit\Framework\TestCase;
 #[Group('documentation')]
 final class MonorepoArchiveTest extends TestCase
 {
-    private const SHIPPED = ['CHANGELOG.md', 'LICENSE', 'README.md', 'UPGRADE-2.0.md', 'composer.json', 'src'];
+    private const SHIPPED = ['CHANGELOG.md', 'LICENSE', 'README.md', 'UPGRADE-2.0.md', 'action.yml', 'composer.json', 'src'];
 
     #[Test]
     public function test_the_monorepo_archive_ships_the_library_and_its_manifest_only(): void
