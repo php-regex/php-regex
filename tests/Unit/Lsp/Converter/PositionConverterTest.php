@@ -211,4 +211,27 @@ final class PositionConverterTest extends TestCase
     {
         $this->assertSame(5, (new PositionConverter("ab\ncd"))->positionToOffset(9, 0));
     }
+
+    #[Test]
+    public function test_checkpoint_boundaries_preserve_every_prefix_position(): void
+    {
+        // Exercise split code points, malformed sequences and prefixes before
+        // a malformed byte, including lookups in reverse order.
+        foreach (["é", "€", "\u{1F600}", "\xFF", "\xC0\xAF", "\xED\xA0\x80", "\xF4\x90\x80\x80", str_repeat("\x80", 8)] as $middle) {
+            $content = str_repeat('é', 127).$middle.str_repeat('z', 520)."\n".str_repeat('€', 180);
+            $converter = new PositionConverter($content);
+            for ($offset = \strlen($content) + 2; $offset >= -1; $offset--) {
+                $this->assertSame(PositionConverter::positionIn($content, $offset), $converter->offsetToPosition($offset), "Offset $offset");
+            }
+        }
+    }
+
+    #[Test]
+    public function test_many_boundaries_on_one_long_line(): void
+    {
+        $converter = new PositionConverter(str_repeat("é\u{1F600}x", 20000));
+        for ($i = 0; $i <= 20000; $i++) {
+            $this->assertSame(['line' => 0, 'character' => 4 * $i], $converter->offsetToPosition(7 * $i));
+        }
+    }
 }
