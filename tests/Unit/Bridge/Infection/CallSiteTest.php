@@ -147,11 +147,20 @@ final class CallSiteTest extends TestCase
     #[DataProvider('provideTroublesomeLiterals')]
     public function test_never_throws_on_a_literal_it_cannot_read(string $code): void
     {
-        $mutator = new RegexAnchor();
+        $this->assertReadQuietly($code);
+    }
 
-        $this->assertSame([], MutatorHarness::patterns($mutator, $code));
-        $this->assertNull(error_get_last());
-        $this->assertSame(\PREG_NO_ERROR, preg_last_error());
+    /**
+     * A warning or a PCRE error an earlier test left, in whatever order the
+     * suite runs, is not the mutator's.
+     */
+    #[Test]
+    #[DataProvider('provideRefusedPatterns')]
+    public function test_what_an_earlier_call_left_is_not_the_mutators(string $pattern): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''));
+
+        $this->assertReadQuietly("preg_match('/^(a/', \$s)");
     }
 
     /**
@@ -165,5 +174,19 @@ final class CallSiteTest extends TestCase
         yield 'alphanumeric delimiter' => ['code' => "preg_match('a^ba', \$s)"];
         yield 'invalid UTF-8 under u' => ['code' => 'preg_match("/^\\xff/u", $s)'];
         yield 'NUL byte delimiter' => ['code' => 'preg_match("\\0^a\\0", $s)'];
+    }
+
+    /**
+     * The mutator reads the call, mutates nothing, and leaves no warning and
+     * no PCRE error of its own.
+     */
+    private function assertReadQuietly(string $code): void
+    {
+        error_clear_last();
+        $this->assertSame(1, preg_match('/a/', 'a'), 'A call that compiles clears the PCRE error.');
+
+        $this->assertSame([], MutatorHarness::patterns(new RegexAnchor(), $code));
+        $this->assertNull(error_get_last());
+        $this->assertSame(\PREG_NO_ERROR, preg_last_error());
     }
 }
