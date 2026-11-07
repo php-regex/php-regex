@@ -62,6 +62,19 @@ final class FirstTriedStepTest extends TestCase
         yield 'define block lets the attempt through' => ['pattern' => '/(?(DEFINE)(a))(?R)|b/', 'expected' => 'R'];
         yield 'keep lets the attempt through' => ['pattern' => '/\K(?R)|b/', 'expected' => 'R'];
         yield 'opening option lets the attempt through' => ['pattern' => '/(*UTF)(?R)|b/', 'expected' => 'R'];
+        yield 'root ungreedy skips recursion' => ['pattern' => '/(?R)?(a+)+$/U', 'expected' => false];
+        yield 'bare ungreedy skips recursion' => ['pattern' => '/(?U)(?R)?(a+)+$/', 'expected' => false];
+        yield 'scoped ungreedy skips recursion' => ['pattern' => '/(?U:(?R)?(a+)+$)/', 'expected' => false];
+        yield 'bare cancellation tries recursion' => ['pattern' => '/(?-U)(?R)?a/U', 'expected' => 'R'];
+        yield 'scoped cancellation tries recursion' => ['pattern' => '/(?-U:(?R)?a)/U', 'expected' => 'R'];
+        yield 'ungreedy reverses lazy suffix' => ['pattern' => '/(?R)??a/U', 'expected' => 'R'];
+        yield 'possessive stays greedy under ungreedy' => ['pattern' => '/(?R)?+a/U', 'expected' => 'R'];
+        yield 'required repeat still enters body' => ['pattern' => '/(?R)+a/U', 'expected' => 'R'];
+        yield 'group restores outer options' => ['pattern' => '/(?:(?U))(?R)?a/', 'expected' => 'R'];
+        yield 'empty scope restores outer options' => ['pattern' => '/(?U:)(?R)?a/', 'expected' => 'R'];
+        yield 'empty cancellation restores ungreedy' => ['pattern' => '/(?-U:)(?R)?a/U', 'expected' => false];
+        yield 'caret preserves ungreedy' => ['pattern' => '/(?^)(?R)?a/U', 'expected' => false];
+        yield 'later cancellation wins' => ['pattern' => '/(?U)(?-U)(?R)?a/', 'expected' => 'R'];
         yield 'nothing but transparent steps' => ['pattern' => '/(?#one)(?#two)/', 'expected' => true];
         yield 'lookaround is a step of its own' => ['pattern' => '/(?=a)(?R)|b/', 'expected' => false];
     }
