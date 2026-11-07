@@ -165,9 +165,9 @@ as `CallTypes::quote` does.
 - #234: a class read alone before a syntax error is no longer measured
   against the whole pattern; the linear-time test of `(*pla:[a])` bodies
   gets its margin back on a loaded runner.
-- #235: explanations read one sentence per line ("A digit [0-9], exactly
-  4 times"); the documented outputs follow. Regenerate the playground
-  bundle afterwards: its reflow then changes nothing and can go.
+- The playground bundle predates the explanation wording of #235: run
+  `bin/playground-bundle` and commit it; its reflow then changes nothing
+  and can go.
 - #237: the root `action.yml` (`uses: php-regex/php-regex@v2.0.0`) and the
   Phive signature. Before the release candidate, create the release key,
   set `PHAR_GPG_PRIVATE_KEY` and `PHAR_GPG_PASSPHRASE` as secrets of the
