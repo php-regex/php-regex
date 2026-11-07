@@ -24,6 +24,7 @@ use PHPRegex\Parser\NewlineConvention;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -41,6 +42,8 @@ use PHPUnit\Framework\TestCase;
 final class PatternInfoAnalyzerTest extends TestCase
 {
     use PcreGates;
+
+    use PhpUnitForwardCompat;
 
     /**
      * Every row is read for one target, so that no row depends on the PHP
@@ -73,7 +76,7 @@ final class PatternInfoAnalyzerTest extends TestCase
         $this->assertSame(0, $analyzer->analyze($parser->parse(str_replace('(?|)', '', $pattern)))->maxLookbehind);
 
         $this->expectException(ResourceLimitException::class);
-        $this->expectExceptionMessage('Lookbehind analysis exceeded');
+        $this->expectExceptionMessageIsOrContains('Lookbehind analysis exceeded its node measurement budget.');
         $analyzer->analyze($ast);
     }
 

@@ -136,15 +136,15 @@ final class LookbehindLength
     private int $longestBranch = 0;
 
     /**
-     * @param bool                                                               $unicode        whether lengths count characters
-     * @param bool                                                               $variableLength whether the PCRE2 judged (10.43+) measures a group repeated zero times as empty
-     * @param (\Closure(GroupNode, array<int, true>): void)|null                 $onLookaround   told of a lookaround met inside a branch
-     * @param (\Closure(NodeInterface): void)|null                               $onGroupBody    told of each group body measured
-     * @param (\Closure(SubroutineNode|BackrefNode, list<GroupNode>): void)|null $onReference    told of each call or reference, with the groups it names
-     * @param bool                                                               $inLookaheads   whether the PCRE2 judged (10.34+) measures the lookbehinds inside a lookahead it meets
-     * @param bool                                                               $skipsDefine    whether the PCRE2 judged (10.35+) skips a "(?(DEFINE)" group
-     * @param bool                                                               $readsNesting   whether the PCRE2 judged reads an extended class that nests a class or a parenthesis whole (all but 10.45 to 10.47)
-     * @param bool                                                               $wrapsLengths   whether the PCRE2 judged (before 10.34) adds lengths up in a 32-bit integer that wraps around
+     * @param bool                                                               $unicode          whether lengths count characters
+     * @param bool                                                               $variableLength   whether the PCRE2 judged (10.43+) measures a group repeated zero times as empty
+     * @param (\Closure(GroupNode, array<int, true>): void)|null                 $onLookaround     told of a lookaround met inside a branch
+     * @param (\Closure(NodeInterface): void)|null                               $onGroupBody      told of each group body measured
+     * @param (\Closure(SubroutineNode|BackrefNode, list<GroupNode>): void)|null $onReference      told of each call or reference, with the groups it names
+     * @param bool                                                               $inLookaheads     whether the PCRE2 judged (10.34+) measures the lookbehinds inside a lookahead it meets
+     * @param bool                                                               $skipsDefine      whether the PCRE2 judged (10.35+) skips a "(?(DEFINE)" group
+     * @param bool                                                               $readsNesting     whether the PCRE2 judged reads an extended class that nests a class or a parenthesis whole (all but 10.45 to 10.47)
+     * @param bool                                                               $wrapsLengths     whether the PCRE2 judged (before 10.34) adds lengths up in a 32-bit integer that wraps around
      * @param int|null                                                           $measurementLimit maximum node measurements across all branches, null when the caller supplies its own budget
      */
     public function __construct(
