@@ -126,6 +126,36 @@ final class MutationCoverageTest extends TestCase
     }
 
     #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_a_planted_replacement_symlink_cannot_overwrite_another_file(): void
+    {
+        $victim = $this->root().'/victim';
+        file_put_contents($victim, 'keep this content');
+        $replacement = $this->root().'/coverage/Parser/Lexer.php.xml.reduced';
+        symlink($victim, $replacement);
+
+        MutationCoverage::reduce($this->root().'/coverage', $this->root(), ['src/Parser/Lexer.php']);
+
+        $this->assertSame('keep this content', file_get_contents($victim));
+        $this->assertTrue(is_link($replacement));
+        $this->assertSame(['LexerTest::test_a', 'LexerTest::test_b', 'ParserTest::test_c'], self::coveredBy($this->root().'/coverage/Parser/Lexer.php.xml')[12]);
+    }
+
+    #[Test]
+    public function test_a_malformed_report_is_not_replaced(): void
+    {
+        $report = $this->root().'/coverage/Parser/Lexer.php.xml';
+        file_put_contents($report, '<broken>');
+
+        try {
+            MutationCoverage::reduce($this->root().'/coverage', $this->root(), ['src/Parser/Lexer.php']);
+            $this->fail('Malformed XML must be refused.');
+        } catch (\UnexpectedValueException) {
+            $this->assertSame('<broken>', file_get_contents($report));
+        }
+    }
+
+    #[Test]
     public function test_a_file_left_out_of_the_index_is_not_rewritten(): void
     {
         $before = (string) file_get_contents($this->root().'/coverage/Cli/Command.php.xml');

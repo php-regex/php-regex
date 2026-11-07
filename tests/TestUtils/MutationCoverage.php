@@ -139,36 +139,66 @@ final class MutationCoverage
      */
     private static function collapseDataSets(string $file): void
     {
-        $input = @fopen($file, 'r');
-        $temporary = $file.'.reduced';
-        $output = @fopen($temporary, 'w');
-        if (false === $input || false === $output) {
-            throw new \UnexpectedValueException(\sprintf('Cannot rewrite %s.', $file));
+        // Keep the replacement outside the supplied coverage directory: its
+        // owner may have planted entries there, including replacement symlinks.
+        $private = rtrim(sys_get_temp_dir(), '/').'/mutation-coverage-'.bin2hex(random_bytes(16));
+        if (!@mkdir($private, 0o700)) {
+            throw new \UnexpectedValueException(\sprintf('Cannot create a private replacement for %s.', $file));
         }
 
-        $seen = [];
-        while (false !== ($line = fgets($input))) {
-            if (1 !== preg_match('~^(\s*<covered by=")([^"#]*)(?:#[^"]*)?(".*)$~s', $line, $match)) {
-                $seen = [];
-                fwrite($output, $line);
-
-                continue;
+        $temporary = $private.'/report.xml';
+        $input = false;
+        $output = false;
+        try {
+            // PHP falls back to copying on a cross-device rename. Require a
+            // real rename so a destination symlink can never redirect writes.
+            $destination = @stat(\dirname($file));
+            $staging = @stat($private);
+            if (false === $destination || false === $staging || $destination['dev'] !== $staging['dev']) {
+                throw new \UnexpectedValueException(\sprintf('The temporary directory must be on the same filesystem as %s.', $file));
             }
 
-            if (isset($seen[$match[2]])) {
-                continue;
+            $input = @fopen($file, 'r');
+            $output = @fopen($temporary, 'x+b');
+            if (false === $input || false === $output) {
+                throw new \UnexpectedValueException(\sprintf('Cannot rewrite %s.', $file));
             }
 
-            $seen[$match[2]] = true;
-            fwrite($output, $match[1].$match[2].$match[3]);
-        }
+            $seen = [];
+            while (false !== ($line = fgets($input))) {
+                if (1 !== preg_match('~^(\s*<covered by=")([^"#]*)(?:#[^"]*)?(".*)$~s', $line, $match)) {
+                    $seen = [];
+                } else {
+                    if (isset($seen[$match[2]])) {
+                        continue;
+                    }
 
-        fclose($input);
-        fclose($output);
+                    $seen[$match[2]] = true;
+                    $line = $match[1].$match[2].$match[3];
+                }
 
-        self::assertWellFormed($temporary);
-        if (!rename($temporary, $file)) {
-            throw new \UnexpectedValueException(\sprintf('Cannot replace %s.', $file));
+                if (fwrite($output, $line) !== \strlen($line)) {
+                    throw new \UnexpectedValueException(\sprintf('Cannot write %s.', $temporary));
+                }
+            }
+
+            if (!feof($input) || !fflush($output)) {
+                throw new \UnexpectedValueException(\sprintf('Cannot rewrite %s.', $file));
+            }
+
+            self::assertWellFormed($temporary);
+            if (!rename($temporary, $file)) {
+                throw new \UnexpectedValueException(\sprintf('Cannot replace %s.', $file));
+            }
+        } finally {
+            if (false !== $input) {
+                fclose($input);
+            }
+            if (false !== $output) {
+                fclose($output);
+            }
+            @unlink($temporary);
+            rmdir($private);
         }
     }
 
@@ -191,8 +221,6 @@ final class MutationCoverage
         }
 
         if (!$wellFormed) {
-            @unlink($file);
-
             throw new \UnexpectedValueException(\sprintf('The reduced report %s is not well-formed XML.', $file));
         }
     }
