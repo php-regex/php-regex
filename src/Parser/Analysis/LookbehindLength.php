@@ -73,8 +73,6 @@ final class LookbehindLength
     // the validator separately enforces PCRE's exact 2,001-branch limit.
     private const MAX_BRANCH_VISITS = 10000;
 
-    private int $branchVisits = 0;
-
     private const LOOKAROUNDS = [
         GroupType::LookaheadPositive,
         GroupType::LookaheadNegative,
@@ -86,6 +84,8 @@ final class LookbehindLength
         GroupType::LookaheadPositive,
         GroupType::LookaheadNegative,
     ];
+
+    private int $branchVisits = 0;
 
     /**
      * The length of each group measured, by node, with the groups its
