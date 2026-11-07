@@ -280,6 +280,11 @@
               "description": "Warn about duplicate branches in alternations.",
               "default": true
             },
+            "alternation.incomplete": {
+              "type": "boolean",
+              "description": "Report incomplete alternation overlap analysis when its work limit is reached.",
+              "default": true
+            },
             "alternation.overlap": {
               "type": "boolean",
               "description": "Warn about overlapping alternatives that may cause backtracking.",

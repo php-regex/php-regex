@@ -15,6 +15,7 @@ namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
+use PHPRegex\Linter\Rule\Support\QuestionBudget;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -52,12 +53,59 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
     public const ID_CHARSET = 'regex.lint.overlap.charset';
 
+    public const ID_INCOMPLETE = 'regex.lint.alternation.incomplete';
+
+    // Shared by every alternation, literal pair, semantic pair and PCRE
+    // probe in one pattern. Keep ordinary patterns complete while bounding
+    // adversarial all-pairs work independently of the parser length limit.
+    private readonly QuestionBudget $work;
+
+    private ?AlternationNode $incomplete = null;
+
+    public function __construct()
+    {
+        $this->work = new QuestionBudget(4096);
+    }
+
+    public function begin(LintContext $context): void
+    {
+        $this->work->reset();
+        $this->incomplete = null;
+    }
+
+    public function finish(LintContext $context): array
+    {
+        if (null === $this->incomplete) {
+            return [];
+        }
+
+        return [new RuleViolation(
+            self::ID_INCOMPLETE,
+            'Alternation overlap analysis is incomplete because its per-pattern work limit was reached.',
+            $this->incomplete->startPosition,
+            'Review the remaining alternatives for overlaps manually.',
+            end: $this->incomplete->getEndPosition(),
+        )];
+    }
+
+    private function allowsWork(AlternationNode $node): bool
+    {
+        if ($this->work->allows()) {
+            return true;
+        }
+
+        $this->incomplete ??= $node;
+
+        return false;
+    }
+
     public function getRuleIds(): array
     {
         return [
             self::ID_DOT_NEWLINE,
             self::ID_OVERLAP,
             self::ID_CHARSET,
+            self::ID_INCOMPLETE,
         ];
     }
 
@@ -115,6 +163,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 $total = \count($unique);
                 for ($i = 0; $i < $total; $i++) {
                     for ($j = $i + 1; $j < $total; $j++) {
+                        if (!$this->allowsWork($node)) {
+                            return $issues;
+                        }
+
                         [$a, $aCaseless] = $unique[$i];
                         [$b, $bCaseless] = $unique[$j];
                         if ('' === $a || '' === $b) {
@@ -181,6 +233,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
             $total = \count($charSets);
             for ($i = 0; $i < $total; $i++) {
                 for ($j = $i + 1; $j < $total; $j++) {
+                    if (!$this->allowsWork($node)) {
+                        return null;
+                    }
+
                     if (!$charSets[$i]->isEmpty() && !$charSets[$j]->isEmpty() && $charSets[$i]->intersects($charSets[$j])) {
                         if ($this->tellsApart($node, $i, $j, $caselessAt, $context)) {
                             continue;
@@ -311,6 +367,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 return null;
             }
 
+            if (!$this->allowsWork($node)) {
+                return null;
+            }
+
             $set = ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
             if (null === $set) {
                 return null;
@@ -322,6 +382,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
         $total = \count($sets);
         for ($i = 0; $i < $total; $i++) {
             for ($j = $i + 1; $j < $total; $j++) {
+                if (!$this->allowsWork($node)) {
+                    return null;
+                }
+
                 if (!$sets[$i]->intersect($sets[$j])->isEmpty() && !$this->tellsApart($node, $i, $j, $caselessAt, $context)) {
                     return $this->makeCharsetViolation($node, $i, $j, $context);
                 }

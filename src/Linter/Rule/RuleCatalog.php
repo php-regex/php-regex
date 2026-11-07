@@ -70,6 +70,7 @@ final class RuleCatalog
         LiteralMetacharInCharClassRule::ID => ['Warn about unescaped metacharacters in character classes.', true, 'https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class'],
         EmptyAlternationRule::ID => ['Warn about empty alternatives in alternations.', true, 'https://php-regex.com/reference/rules/#empty-alternatives'],
         DuplicateDisjunctionRule::ID => ['Warn about duplicate branches in alternations.', true, 'https://php-regex.com/reference/rules/#duplicate-alternation-branches'],
+        OverlappingAlternationRule::ID_INCOMPLETE => ['Report incomplete alternation overlap analysis when its work limit is reached.', true, 'https://php-regex.com/reference/rules/#overlapping-alternation-branches'],
         OverlappingAlternationRule::ID_OVERLAP => ['Warn about overlapping alternatives that may cause backtracking.', true, 'https://php-regex.com/reference/rules/#overlapping-alternation-branches'],
         OverlappingAlternationRule::ID_DOT_NEWLINE => ['Warn about (.|\n) anti-pattern for matching any character.', true, 'https://php-regex.com/reference/rules/#dot-or-newline-alternation'],
         UselessQuantifierRule::ID => ['Warn about useless quantifiers like {1}.', true, 'https://php-regex.com/reference/rules/#useless-quantifier'],

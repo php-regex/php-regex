@@ -43,7 +43,7 @@ final class LintRuleRegistryTest extends TestCase
             ['regex.lint.charclass.literalMetachar'],
             ['regex.lint.alternation.empty'],
             ['regex.lint.alternation.duplicateDisjunction'],
-            ['regex.lint.alternation.dotNewline', 'regex.lint.alternation.overlap', 'regex.lint.overlap.charset'],
+            ['regex.lint.alternation.dotNewline', 'regex.lint.alternation.overlap', 'regex.lint.overlap.charset', 'regex.lint.alternation.incomplete'],
             ['regex.lint.anchor.impossible.start', 'regex.lint.anchor.impossible.end', 'regex.lint.anchor.impossible.boundary'],
             ['regex.lint.quantifier.concatenation'],
             ['regex.lint.quantifier.zero'],
@@ -88,7 +88,7 @@ final class LintRuleRegistryTest extends TestCase
     }
 
     #[Test]
-    public function test_all_53_rule_ids_are_covered(): void
+    public function test_all_54_rule_ids_are_covered(): void
     {
         $ids = [];
         foreach ((new LintRuleRegistry())->all() as $rule) {
@@ -98,6 +98,6 @@ final class LintRuleRegistryTest extends TestCase
             }
         }
 
-        $this->assertCount(53, $ids);
+        $this->assertCount(54, $ids);
     }
 }
