@@ -104,6 +104,36 @@ final class LineDiffTest extends TestCase
         yield 'nothing in common' => ['old' => ['a', 'b'], 'new' => ['c', 'd', 'e'], 'longest' => 0];
     }
 
+    #[Test]
+    public function test_large_shared_layout_is_kept(): void
+    {
+        $layout = array_fill(0, 10_000, '');
+        $old = ['/[0-9]', ...$layout, '/x'];
+        $new = ['/\\d', ...$layout, '/x'];
+        $ops = LineDiff::lines($old, $new);
+
+        $this->assertSame(['type' => 'delete', 'line' => '/[0-9]'], $ops[0]);
+        $this->assertSame(['type' => 'insert', 'line' => '/\\d'], $ops[1]);
+        $this->assertCount(10_001, array_filter($ops, static fn (array $op): bool => 'equal' === $op['type']));
+        $this->assertCount(10_000, LineDiff::lines($layout, $layout));
+    }
+
+    #[Test]
+    public function test_large_changed_middle_preserves_both_inputs(): void
+    {
+        $old = ['start', ...array_fill(0, 10_000, 'old'), 'end'];
+        $new = ['start', ...array_fill(0, 10_000, 'new'), 'end'];
+        $ops = LineDiff::lines($old, $new);
+
+        $this->assertCount(20_002, $ops);
+        $this->assertSame(['type' => 'equal', 'line' => 'start'], $ops[0]);
+        $this->assertSame(['type' => 'delete', 'line' => 'old'], $ops[10_000]);
+        $this->assertSame(['type' => 'insert', 'line' => 'new'], $ops[10_001]);
+        $this->assertSame(['type' => 'equal', 'line' => 'end'], $ops[20_001]);
+        $this->assertSame($old, array_values(array_column(array_filter($ops, static fn (array $op): bool => 'insert' !== $op['type']), 'line')));
+        $this->assertSame($new, array_values(array_column(array_filter($ops, static fn (array $op): bool => 'delete' !== $op['type']), 'line')));
+    }
+
     /**
      * @param array{int, int} $expected the length of the shared prefix, then of the shared suffix
      */

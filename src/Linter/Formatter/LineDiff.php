@@ -22,10 +22,13 @@ namespace PHPRegex\Linter\Formatter;
  */
 final class LineDiff
 {
+    private const MAX_MATRIX_CELLS = 65_536;
+
     /**
      * The lines of $old turned into those of $new: each kept, deleted or
      * inserted, in order. Where two diffs are as short, the deletes come
-     * before the inserts.
+     * before the inserts. Above the matrix budget, the changed middle is
+     * deleted then inserted in full, without finding a shortest diff.
      *
      * @param list<string> $old
      * @param list<string> $new
@@ -36,6 +39,54 @@ final class LineDiff
     {
         $oldCount = \count($old);
         $newCount = \count($new);
+
+        $prefix = 0;
+        while ($prefix < $oldCount && $prefix < $newCount && $old[$prefix] === $new[$prefix]) {
+            $prefix++;
+        }
+
+        $suffix = 0;
+        while ($suffix < $oldCount - $prefix && $suffix < $newCount - $prefix && $old[$oldCount - 1 - $suffix] === $new[$newCount - 1 - $suffix]) {
+            $suffix++;
+        }
+
+        $ops = [];
+        for ($i = 0; $i < $prefix; $i++) {
+            $ops[] = ['type' => 'equal', 'line' => $old[$i]];
+        }
+        foreach (self::middle(array_slice($old, $prefix, $oldCount - $prefix - $suffix), array_slice($new, $prefix, $newCount - $prefix - $suffix)) as $op) {
+            $ops[] = $op;
+        }
+        for ($i = $oldCount - $suffix; $i < $oldCount; $i++) {
+            $ops[] = ['type' => 'equal', 'line' => $old[$i]];
+        }
+
+        return $ops;
+    }
+
+    /**
+     * @param list<string> $old
+     * @param list<string> $new
+     *
+     * @return list<array{type: 'delete'|'equal'|'insert', line: string}>
+     */
+    private static function middle(array $old, array $new): array
+    {
+        $oldCount = \count($old);
+        $newCount = \count($new);
+
+        // Include the boundary row and column, and divide to avoid overflow.
+        if (0 === $oldCount || 0 === $newCount || $oldCount + 1 > intdiv(self::MAX_MATRIX_CELLS, $newCount + 1)) {
+            $ops = [];
+            foreach ($old as $line) {
+                $ops[] = ['type' => 'delete', 'line' => $line];
+            }
+            foreach ($new as $line) {
+                $ops[] = ['type' => 'insert', 'line' => $line];
+            }
+
+            return $ops;
+        }
 
         // The length of the longest common run of each pair of prefixes.
         $lcs = array_fill(0, $oldCount + 1, array_fill(0, $newCount + 1, 0));
