@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Infection;
 
+use PhpParser\PrettyPrinter\Standard;
 use PHPRegex\Infection\Judge\CallReplay;
 use PHPRegex\Infection\Site\PatternCall;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -29,6 +30,10 @@ final class CallReplayTest extends TestCase
     #[DataProvider('provideReplays')]
     public function test_replay_answers_as_the_call_as_written(string $code, string $original, string $mutant, string $subject, bool $differs): void
     {
+        $left = self::native($code, $original, $subject);
+        $right = self::native($code, $mutant, $subject);
+        $this->assertSame($differs, null !== $left && null !== $right && $left !== $right, 'the call as PHP runs it');
+
         $this->assertSame($differs, (new CallReplay())->differs(self::call($code), $original, $mutant, $subject));
         $this->assertSame(\PREG_NO_ERROR, preg_last_error());
     }
@@ -171,6 +176,41 @@ final class CallReplayTest extends TestCase
 
         $this->assertFalse((new CallReplay())->differs(self::call("preg_match('/a/', \$s)"), '/a/', '/(/', 'a'));
         $this->assertNull(error_get_last());
+    }
+
+    /**
+     * What the call, written with the pattern, gives its caller when PHP runs
+     * it under the replay's limits: its result and the matches it fills; null
+     * when it fails. The callback hands back each match it receives, so the
+     * text between two matches tells where each one stands.
+     */
+    private static function native(string $code, string $pattern, string $subject): ?string
+    {
+        $printed = (new Standard())->prettyPrintExpr(self::call($code)->withPattern($pattern));
+        $s = $subject;
+        $list = [$subject];
+        $m = null;
+        $count = 0;
+        $f = static fn (array $match): string => '['.serialize($match).']';
+
+        $settings = ['pcre.backtrack_limit' => '100000', 'pcre.recursion_limit' => '10000', 'pcre.jit' => '0'];
+        $before = [];
+        foreach ($settings as $setting => $value) {
+            $before[$setting] = (string) ini_get($setting);
+            ini_set($setting, $value);
+        }
+
+        try {
+            $result = @eval('return '.$printed.';');
+            $failed = \PREG_NO_ERROR !== preg_last_error();
+        } finally {
+            foreach ($before as $setting => $value) {
+                ini_set($setting, $value);
+            }
+            error_clear_last();
+        }
+
+        return $failed ? null : serialize([$result, $m, $count]);
     }
 
     private static function call(string $code): PatternCall
