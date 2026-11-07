@@ -58,6 +58,12 @@ jobs:
         run: |
           "$RUNNER_TEMP/actionlint" -color .github/workflows/*.yml src/*/.github/workflows/*.yml
 
+      # actionlint reads workflows alone, and zizmor only warns on a file it
+      # cannot read: the runner's yq fails on an action that does not parse
+      # or is no composite one.
+      - name: Read the action at the root
+        run: yq --exit-status '.runs.using == "composite"' action.yml
+
   zizmor:
     name: zizmor
     runs-on: ubuntu-latest

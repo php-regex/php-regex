@@ -72,6 +72,20 @@ final class LintActionTest extends TestCase
     }
 
     /**
+     * zizmor only warns on a file it cannot read, and actionlint reads the
+     * workflows alone: the workflow checks read the action with yq, which
+     * fails on YAML that does not parse and on an action that is no
+     * composite one.
+     */
+    #[Test]
+    public function test_the_workflow_checks_fail_on_an_action_that_does_not_parse(): void
+    {
+        $workflows = (string) file_get_contents(\dirname(__DIR__, 3).'/.github/workflows/workflows.yml');
+
+        $this->assertMatchesRegularExpression("~- name: Read the action at the root\n +run: yq --exit-status '\\.runs\\.using == \"composite\"' action\\.yml\n~", $workflows);
+    }
+
+    /**
      * @return iterable<string, array{version: string, release: string}>
      */
     public static function provideReleases(): iterable
