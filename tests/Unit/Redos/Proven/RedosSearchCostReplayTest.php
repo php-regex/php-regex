@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Redos\Proven;
 
 use PHPRegex\Redos\Backtrack\SearchCostReplayer;
+use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
@@ -35,6 +36,32 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosSearchCostReplayTest extends TestCase
 {
+    #[Test]
+    #[DataProvider('provideRestrictivePolicies')]
+    public function test_confirmed_search_replay_respects_the_callers_engine_limits(ConfirmationOptions $options): void
+    {
+        $before = [ini_get('pcre.backtrack_limit'), ini_get('pcre.recursion_limit')];
+        $analyzer = new RedosAnalyzer();
+        $control = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $cost = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, $options)->searchCost;
+
+        $this->assertInstanceOf(RedosSearchCost::class, $control);
+        $this->assertTrue($control->replayed);
+        $this->assertInstanceOf(RedosSearchCost::class, $cost);
+        $this->assertFalse($cost->replayed);
+        $this->assertSame($control->toArray()['witness'], $cost->toArray()['witness']);
+        $this->assertSame($before, [ini_get('pcre.backtrack_limit'), ini_get('pcre.recursion_limit')]);
+    }
+
+    /**
+     * @return iterable<string, array{ConfirmationOptions}>
+     */
+    public static function provideRestrictivePolicies(): iterable
+    {
+        yield 'backtracking' => [new ConfirmationOptions(backtrackLimit: 1)];
+        yield 'recursion' => [new ConfirmationOptions(recursionLimit: 1)];
+    }
+
     /**
      * The step replay counts the attempts inside the run after the prefix,
      * with the breaker holding the last required code unit, and through a

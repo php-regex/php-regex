@@ -965,7 +965,7 @@ final class RedosSearchCostTest extends TestCase
         $failing = new class implements SearchCostReplayerInterface {
             public bool $called = false;
 
-            public function replays(string $pattern, string $prefix, string $run, string $breaker): bool
+            public function replays(string $pattern, string $prefix, string $run, string $breaker, ?\PHPRegex\Redos\ConfirmationOptions $options = null): bool
             {
                 $this->called = true;
 
@@ -997,7 +997,7 @@ final class RedosSearchCostTest extends TestCase
     public function test_search_cost_proof_lets_an_exception_from_outside_the_library_through(): void
     {
         $failing = new class implements SearchCostReplayerInterface {
-            public function replays(string $pattern, string $prefix, string $run, string $breaker): bool
+            public function replays(string $pattern, string $prefix, string $run, string $breaker, ?\PHPRegex\Redos\ConfirmationOptions $options = null): bool
             {
                 throw new \LogicException('A bug in the replay.');
             }

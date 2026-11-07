@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Backtrack;
 
+use PHPRegex\Redos\ConfirmationOptions;
+
 /**
  * The replay of a search-cost witness on an engine, which the search-cost
  * proof asks before it reports the witness as replayed. A replay may throw
@@ -27,5 +29,5 @@ interface SearchCostReplayerInterface
      * Whether the engine starts attempts inside the run that each read what
      * is left of it, and matches nowhere.
      */
-    public function replays(string $pattern, string $prefix, string $run, string $breaker): bool;
+    public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool;
 }

@@ -17,6 +17,7 @@ use PHPRegex\Parser\Engine\NoJit;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreLimits;
 use PHPRegex\Parser\Engine\PcreMatch;
+use PHPRegex\Redos\ConfirmationOptions;
 
 /**
  * Replays a search-cost witness on the running engine, in steps rather than
@@ -59,8 +60,9 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
      * that each read what is left of it, and matches nowhere.
      */
     #[\Override]
-    public function replays(string $pattern, string $prefix, string $run, string $breaker): bool
+    public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
     {
+        $options ??= new ConfirmationOptions();
         $counted = self::counted($pattern);
         if (null === $counted) {
             return false;
@@ -68,28 +70,36 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
 
         // A search that matches the witness fails none of its attempts there.
         $subject = $prefix.str_repeat($run, self::WORDS).$breaker;
-        if (false !== self::counts($counted, $subject, 0, self::MAX_STEPS)->matched) {
+        if (false !== self::counts($counted, $subject, 0, self::MAX_STEPS, $options)->matched) {
             return false;
         }
 
         $quarter = intdiv(self::WORDS, 4);
-        $far = self::steps($counted.'A', $subject, \strlen($prefix) + $quarter * \strlen($run));
-        $near = self::steps($counted.'A', $subject, \strlen($prefix) + 2 * $quarter * \strlen($run));
+        $far = self::steps($counted.'A', $subject, \strlen($prefix) + $quarter * \strlen($run), $options);
+        $near = self::steps($counted.'A', $subject, \strlen($prefix) + 2 * $quarter * \strlen($run), $options);
 
-        return $far - $near >= $quarter;
+        return null !== $far && null !== $near && $far - $near >= $quarter;
     }
 
     /**
      * The steps of the attempt pinned at the offset: one of the attempts of
      * a search that finished within the most steps, so it finishes too.
      */
-    private static function steps(string $pinned, string $subject, int $offset): int
+    private static function steps(string $pinned, string $subject, int $offset, ConfirmationOptions $options): ?int
     {
         $low = 1;
-        $high = self::MAX_STEPS;
+        $high = min(self::MAX_STEPS, $options->backtrackLimit);
+        if (null === self::counts($pinned, $subject, $offset, $high, $options)->matched) {
+            return null;
+        }
+
         while ($low < $high) {
             $middle = intdiv($low + $high, 2);
-            if (null === self::counts($pinned, $subject, $offset, $middle)->matched) {
+            $answer = self::counts($pinned, $subject, $offset, $middle, $options);
+            if (null === $answer->matched && \PREG_BACKTRACK_LIMIT_ERROR !== $answer->errorCode) {
+                return null;
+            }
+            if (null === $answer->matched) {
                 $low = $middle + 1;
             } else {
                 $high = $middle;
@@ -116,12 +126,12 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
 
     /**
      * The engine's answer for the attempts from the offset, under the step
-     * limit and the recursion limit the ini sets; the engine leaves the ini
-     * as it found it and keeps a warning from the output.
+     * limit capped by the caller's policy and its recursion limit. The engine
+     * leaves the ini as it found it and keeps a warning from the output.
      */
-    private static function counts(string $counted, string $subject, int $offset, int $limit): PcreMatch
+    private static function counts(string $counted, string $subject, int $offset, int $limit, ConfirmationOptions $options): PcreMatch
     {
-        $limits = new PcreLimits($limit, (int) \ini_get('pcre.recursion_limit'));
+        $limits = new PcreLimits(min($limit, $options->backtrackLimit), $options->recursionLimit);
 
         return (new PcreEngine())->match($counted, $subject, $limits, $offset);
     }
