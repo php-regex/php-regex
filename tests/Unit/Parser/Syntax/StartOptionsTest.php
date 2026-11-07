@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Syntax;
 
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
@@ -30,6 +31,39 @@ use PHPUnit\Framework\TestCase;
 final class StartOptionsTest extends TestCase
 {
     use PcreGates;
+
+    /**
+     * The last source read is kept, to answer again without reading its
+     * run; clearing the caches lets go of it, as of every other one.
+     */
+    #[Test]
+    public function test_the_last_source_read_goes_with_the_caches(): void
+    {
+        $source = str_repeat('(*UTF)', 1000).'a';
+        $this->assertSame(str_repeat('(*UTF)', 1000), StartOptions::of($source));
+        $this->assertSame(str_repeat('(*UTF)', 1000), StartOptions::of($source), 'Read again from what was kept.');
+
+        $last = new \ReflectionProperty(StartOptions::class, 'last');
+        $this->assertSame([$source, 6000, null], $last->getValue());
+
+        StaticCaches::clear();
+
+        $this->assertNull($last->getValue());
+        $this->assertSame('(*UCP)', StartOptions::of('(*UCP)b'));
+
+        // A name that is no option ends the run, and the answer kept for UTF
+        // is the run's own.
+        $unknown = '(*UCP)(*FOO)(*UTF)a';
+        $this->assertSame('(*UCP)', StartOptions::of($unknown));
+        $this->assertFalse(StartOptions::turnUtfOn($unknown));
+        $this->assertSame([$unknown, 6, false], $last->getValue());
+        $this->assertFalse(StartOptions::turnUtfOn($unknown));
+        $this->assertTrue(StartOptions::turnUtfOn('(*UTF8)a'));
+
+        // The next test starts with nothing kept.
+        StaticCaches::clear();
+        $this->assertNull($last->getValue());
+    }
 
     /**
      * Every start option PCRE2 10.49 lists, each one that PHP's PCRE

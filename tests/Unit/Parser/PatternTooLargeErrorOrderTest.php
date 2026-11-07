@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -150,6 +151,36 @@ final class PatternTooLargeErrorOrderTest extends TestCase
         // The lookbehinds are measured before the first pass.
         yield 'reference by name in a lookbehind after the item past the limit, 10.32' => ['pattern' => '/(?:[^a]){8634}|(?<=\\k<n>)/', 'php' => '7.3', 'release' => '10.32', 'error' => ErrorCode::BackrefMissingNamedGroup, 'offset' => 22];
         yield 'reference by name in a lookbehind after the item past the limit, 10.49' => ['pattern' => '/(?:[^a]){8634}|(?<=\\k<n>)/', 'php' => '8.5', 'release' => '10.49', 'error' => ErrorCode::BackrefMissingNamedGroup, 'offset' => 22];
+    }
+
+    /**
+     * A syntax error stops PCRE before its first pass measures anything: a
+     * class too large on its own, then a stray parenthesis, is refused at
+     * the parenthesis, on the running engine as for the library, which
+     * reads that class alone looking for an earlier error and does not
+     * measure it then. Up to PCRE2 10.44 the parenthesis is reported where
+     * it stands, from 10.47 past it: PHP 8.1 with 10.39, PHP 8.4 with 10.44
+     * and PCRE2 10.49 report this pattern so.
+     */
+    #[Test]
+    public function test_a_syntax_error_after_a_class_too_large_on_its_own_is_reported(): void
+    {
+        $class = '['.implode('', array_map(static fn (int $index): string => (string) mb_chr(0x100 + 2 * $index, 'UTF-8'), range(0, 59_999))).']';
+        $parser = RegexParser::create(['cache' => null, 'max_pattern_length' => 1_000_000, 'runtime_pcre_validation' => false]);
+
+        $this->assertStringContainsString('regular expression is too large', (string) EngineProbe::warning('/'.$class.'/u'), 'Oracle: the class alone is too large.');
+        $this->assertSame(ErrorCode::PatternTooLarge, $parser->validate('/'.$class.'/u')->errorCode);
+
+        $this->assertSame(1, preg_match('~^preg_match\(\): Compilation failed: unmatched closing parenthesis at offset (\d+)$~', (string) EngineProbe::warning('/'.$class.')/u'), $engine), 'Oracle: the parenthesis is refused.');
+        $result = $parser->validate('/'.$class.')/u');
+        $this->assertSame(ErrorCode::GroupUnmatchedClose, $result->errorCode, (string) $result->error);
+        $this->assertSame((int) $engine[1], $result->offset, 'The offset the running engine reports.');
+
+        foreach (['8.1/10.39' => \strlen($class), '8.4/10.44' => \strlen($class), '8.5/10.47' => \strlen($class) + 1, '8.5/10.49' => \strlen($class) + 1] as $target => $offset) {
+            [$php, $release] = explode('/', $target);
+            $result = RegexParser::create(['cache' => null, 'max_pattern_length' => 1_000_000, 'php_version' => $php, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate('/'.$class.')/u');
+            $this->assertSame([ErrorCode::GroupUnmatchedClose, $offset], [$result->errorCode, $result->offset], $target);
+        }
     }
 
     private static function validate(string $pattern, string $php, string $release): ValidationResult

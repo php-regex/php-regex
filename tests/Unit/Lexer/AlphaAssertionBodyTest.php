@@ -25,6 +25,7 @@ use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Lexing\BodyEnds;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
@@ -1109,7 +1110,13 @@ final class AlphaAssertionBodyTest extends TestCase
     /**
      * Looking for an earlier error inside each body does not read the
      * bodies again for each one: an error after many closed bodies is
-     * found in linear time.
+     * found in linear time. Nor is the size of the whole pattern measured
+     * again for each class read alone: measured when it was, 4 000 then
+     * 16 000 short lookaheads holding a POSIX class took 0.75 s then 7.3 s
+     * on PHP 8.4, where text bodies took 0.20 s then 0.86 s; at the size
+     * read here that part was small, yet a loaded runner read it past the
+     * line. The garbage collector played no part: the times were the same
+     * with it off.
      */
     #[Test]
     #[DataProvider('provideClosedBodiesBeforeAnError')]
@@ -1124,6 +1131,39 @@ final class AlphaAssertionBodyTest extends TestCase
             1_000,
             $unit,
         );
+    }
+
+    /**
+     * Each class read alone looks at the options the pattern opens with:
+     * the run is neither read nor copied again for every class, whether it
+     * turns UTF on or not. Measured when it was read again, 1 000 then
+     * 4 000 "(*UTF)" before as many classes and a stray parenthesis took
+     * 1.1 s then 15 s on PHP 8.4; when it was copied, 4 000 then 16 000
+     * "(*UCP)" took 1.2 s then 12 s. Read at 1 000 then 4 000 units, the
+     * size a shared runner on Windows or PHP 8.1 reads within the budget.
+     */
+    #[Test]
+    #[DataProvider('provideOpeningOptions')]
+    public function test_validate_reads_the_opening_options_once_for_many_classes(string $option): void
+    {
+        $this->assertFalse(EngineProbe::compiles('/'.$option.'[a])/'), 'Oracle: the stray parenthesis is refused.');
+
+        $this->assertLinearTime(
+            static function (int $size) use ($option): void {
+                Regex::create(['cache' => null, 'max_pattern_length' => 1_000_000])->validate('/'.str_repeat($option, $size).str_repeat('[a]', $size).')/');
+            },
+            1_000,
+            $option.' then [a]',
+        );
+    }
+
+    /**
+     * @return iterable<string, array{option: string}>
+     */
+    public static function provideOpeningOptions(): iterable
+    {
+        yield 'UTF on' => ['option' => '(*UTF)'];
+        yield 'UTF left off' => ['option' => '(*UCP)'];
     }
 
     /**

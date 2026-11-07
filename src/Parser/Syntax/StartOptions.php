@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Syntax;
 
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -46,33 +47,22 @@ final class StartOptions
     private const OPTION_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_=';
 
     /**
+     * The last source read, the length of its run and whether the run turns
+     * UTF on, once asked: the parser and the validator ask again for each
+     * class they read alone, and a run of thousands of options is neither
+     * read nor searched again each time. The source is the same string each
+     * time, which PHP compares at once.
+     *
+     * @var array{string, int, bool|null}|null
+     */
+    private static ?array $last = null;
+
+    /**
      * The run of options the source opens with, as written.
      */
     public static function of(string $source): string
     {
-        $end = 0;
-        // An option is read up to its ")" over the characters it is written
-        // with alone: anything else ends the run, and the rest of the source
-        // is not searched for a ")", nor copied, at every "(*" it opens with.
-        while ('(' === ($source[$end] ?? '') && '*' === ($source[$end + 1] ?? '')) {
-            $length = strspn($source, self::OPTION_CHARACTERS, $end + 2);
-            $close = $end + 2 + $length;
-            if (')' !== ($source[$close] ?? '')) {
-                break;
-            }
-
-            $item = substr($source, $end + 2, $length);
-            $equals = strpos($item, '=');
-            $name = false === $equals ? $item : substr($item, 0, $equals);
-            $value = false === $equals ? null : substr($item, $equals + 1);
-            if (!isset(self::NAMES[$name]) || (str_starts_with($name, 'LIMIT_') ? null === $value || !Ascii::isDigit($value) : null !== $value)) {
-                break;
-            }
-
-            $end = $close + 1;
-        }
-
-        return substr($source, 0, $end);
+        return substr($source, 0, self::end($source));
     }
 
     /**
@@ -110,8 +100,51 @@ final class StartOptions
      */
     public static function turnUtfOn(string $source): bool
     {
-        $options = self::of($source);
+        $end = self::end($source);
+        if (null === self::$last || null === self::$last[2]) {
+            $options = substr($source, 0, $end);
+            self::$last = [$source, $end, str_contains($options, '(*UTF)') || str_contains($options, '(*UTF8)')];
+        }
 
-        return str_contains($options, '(*UTF)') || str_contains($options, '(*UTF8)');
+        return self::$last[2];
+    }
+
+    /**
+     * The length of the run of options the source opens with.
+     */
+    private static function end(string $source): int
+    {
+        if (null !== self::$last && self::$last[0] === $source) {
+            return self::$last[1];
+        }
+
+        $end = 0;
+        // An option is read up to its ")" over the characters it is written
+        // with alone: anything else ends the run, and the rest of the source
+        // is not searched for a ")", nor copied, at every "(*" it opens with.
+        while ('(' === ($source[$end] ?? '') && '*' === ($source[$end + 1] ?? '')) {
+            $length = strspn($source, self::OPTION_CHARACTERS, $end + 2);
+            $close = $end + 2 + $length;
+            if (')' !== ($source[$close] ?? '')) {
+                break;
+            }
+
+            $item = substr($source, $end + 2, $length);
+            $equals = strpos($item, '=');
+            $name = false === $equals ? $item : substr($item, 0, $equals);
+            $value = false === $equals ? null : substr($item, $equals + 1);
+            if (!isset(self::NAMES[$name]) || (str_starts_with($name, 'LIMIT_') ? null === $value || !Ascii::isDigit($value) : null !== $value)) {
+                break;
+            }
+
+            $end = $close + 1;
+        }
+
+        self::$last = [$source, $end, null];
+        StaticCaches::register(self::class, static function (): void {
+            self::$last = null;
+        });
+
+        return $end;
     }
 }
