@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Automata;
 
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Parser\Hir\CharSet;
@@ -33,6 +34,10 @@ final class Language
 {
     private const LIMB = 1_000_000_000;
 
+    private const MAX_ENUMERATION_WORK = 1_000_000;
+
+    private const MAX_ENUMERATION_MEMO = 50_000;
+
     /**
      * @var array<string, array<int, true>> per side, inside or outside, the states that lead to acceptance
      */
@@ -42,11 +47,6 @@ final class Language
      * @var array<int, list<RangeTransition>> per state, its moves as [from, to, target], in order
      */
     private array $moves = [];
-
-    /**
-     * @var array<string, bool>
-     */
-    private array $reachesIn = [];
 
     private ?CharSet $universe = null;
 
@@ -135,7 +135,9 @@ final class Language
 
     /**
      * Every string of the language, shortest first, then in code point
-     * order; an infinite language never runs out.
+     * order, subject to enumeration budgets.
+     *
+     * @throws ComplexityException When enumeration exceeds its work or memory budget
      *
      * @return \Generator<int, string>
      */
@@ -147,8 +149,10 @@ final class Language
         }
 
         $max = $this->maxLength();
+        $work = 0;
         for ($length = $min; null === $max || $length <= $max; $length++) {
-            yield from $this->ofLength($this->dfa->startState, $length, '', false);
+            $memo = [];
+            yield from $this->ofLength($this->dfa->startState, $length, '', false, $memo, $work);
         }
     }
 
@@ -156,6 +160,8 @@ final class Language
      * Every string outside the language, shortest first, then in code point
      * order: each is proven out by the automaton. They run out when only
      * finitely many strings are outside, none for a language of every string.
+     *
+     * @throws ComplexityException When enumeration exceeds its work or memory budget
      *
      * @return \Generator<int, string>
      */
@@ -166,8 +172,10 @@ final class Language
         }
 
         $max = $this->maxLengthOn(true);
+        $work = 0;
         for ($length = 0; null === $max || $length <= $max; $length++) {
-            yield from $this->ofLength($this->dfa->startState, $length, '', true);
+            $memo = [];
+            yield from $this->ofLength($this->dfa->startState, $length, '', true, $memo, $work);
         }
     }
 
@@ -241,12 +249,16 @@ final class Language
     }
 
     /**
+     * @param array<string, bool> $memo
+     *
      * @return \Generator<int, string>
      */
-    private function ofLength(int $state, int $left, string $prefix, bool $outside): \Generator
+    private function ofLength(int $state, int $left, string $prefix, bool $outside, array &$memo, int &$work): \Generator
     {
+        $this->spendEnumerationWork($work);
         if (0 === $left) {
             if ($this->accepts($state, $outside)) {
+                $work = 0; // Bound the search between successive results.
                 yield $prefix;
             }
 
@@ -254,12 +266,12 @@ final class Language
         }
 
         foreach ($this->movesOf($state) as [$from, $to, $target]) {
-            if (!$this->reaches($target, $left - 1, $outside)) {
+            if (!$this->reaches($target, $left - 1, $outside, $memo, $work)) {
                 continue;
             }
 
             for ($codePoint = $from; $codePoint <= $to; $codePoint++) {
-                yield from $this->ofLength($target, $left - 1, $prefix.$this->character($codePoint), $outside);
+                yield from $this->ofLength($target, $left - 1, $prefix.$this->character($codePoint), $outside, $memo, $work);
             }
         }
     }
@@ -267,25 +279,51 @@ final class Language
     /**
      * Whether a string of exactly that many more characters leads from the
      * state to acceptance.
+     *
+     * @param array<string, bool> $memo
      */
-    private function reaches(int $state, int $left, bool $outside): bool
+    private function reaches(int $state, int $left, bool $outside, array &$memo, int &$work): bool
     {
-        $key = ($outside ? 'o' : 'i').$state.':'.$left;
-        if (isset($this->reachesIn[$key])) {
-            return $this->reachesIn[$key];
+        $this->spendEnumerationWork($work);
+        if (!isset($this->live($outside)[$state])) {
+            return false;
         }
+
+        $key = ($outside ? 'o' : 'i').$state.':'.$left;
+        if (isset($memo[$key])) {
+            return $memo[$key];
+        }
+
+        // Reserve before recursion, so active calls also count toward the cap.
+        if (\count($memo) >= self::MAX_ENUMERATION_MEMO) {
+            throw new ComplexityException('Language enumeration memo budget exceeded.');
+        }
+        $memo[$key] = false;
 
         if (0 === $left) {
-            return $this->reachesIn[$key] = $this->accepts($state, $outside);
+            return $memo[$key] = $this->accepts($state, $outside);
         }
 
+        $seen = [];
         foreach ($this->movesOf($state) as [, , $target]) {
-            if ($this->reaches($target, $left - 1, $outside)) {
-                return $this->reachesIn[$key] = true;
+            $this->spendEnumerationWork($work);
+            if (isset($seen[$target])) {
+                continue;
+            }
+            $seen[$target] = true;
+            if ($this->reaches($target, $left - 1, $outside, $memo, $work)) {
+                return $memo[$key] = true;
             }
         }
 
-        return $this->reachesIn[$key] = false;
+        return $memo[$key] = false;
+    }
+
+    private function spendEnumerationWork(int &$work): void
+    {
+        if (++$work > self::MAX_ENUMERATION_WORK) {
+            throw new ComplexityException('Language enumeration work budget exceeded.');
+        }
     }
 
     /**

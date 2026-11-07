@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Automata;
 
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
@@ -100,6 +101,27 @@ final class LanguageTest extends TestCase
         }
 
         $this->assertSame($take, $count);
+    }
+
+    #[Test]
+    public function test_a_long_gap_between_results_exhausts_a_finite_budget(): void
+    {
+        $language = (new LanguageSolver())->language('/^(?:b|a{400})$/');
+        $strings = $language->strings();
+        $this->assertSame('b', $strings->current());
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessage('Language enumeration');
+        $strings->next();
+    }
+
+    #[Test]
+    public function test_dead_states_do_not_obscure_a_long_single_result(): void
+    {
+        $language = (new LanguageSolver())->language('/^a{200}$/');
+
+        $this->assertSame([str_repeat('a', 200)], iterator_to_array($language->strings(), false));
+        $this->assertSame([str_repeat('a', 200)], iterator_to_array($language->strings(), false));
     }
 
     #[Test]
