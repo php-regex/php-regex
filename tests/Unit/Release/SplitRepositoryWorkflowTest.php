@@ -78,7 +78,7 @@ final class SplitRepositoryWorkflowTest extends TestCase
             $packages[] = \dirname($manifest);
         }
 
-        self::assertCount(18, $packages);
+        self::assertCount(19, $packages);
 
         return $packages;
     }
