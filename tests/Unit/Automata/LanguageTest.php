@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Automata;
 
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
@@ -45,6 +46,47 @@ final class LanguageTest extends TestCase
     public function test_a_language_counts_its_strings_of_a_length(string $pattern, int $length, string $count): void
     {
         $this->assertSame($count, (new LanguageSolver())->language($pattern)->countOfLength($length));
+    }
+
+    #[Test]
+    public function test_counting_a_huge_length_is_bounded_even_for_a_single_word_per_length(): void
+    {
+        $language = (new LanguageSolver())->language('/a*/');
+
+        $this->expectException(ComplexityException::class);
+        $language->countOfLength(\PHP_INT_MAX);
+    }
+
+    #[Test]
+    public function test_counting_growing_integers_is_bounded(): void
+    {
+        $language = (new LanguageSolver())->language('/[ab]*/');
+
+        $this->expectException(ComplexityException::class);
+        $language->countOfLength(\PHP_INT_MAX);
+    }
+
+    #[Test]
+    public function test_finite_total_counting_is_also_bounded(): void
+    {
+        $language = (new LanguageSolver())->language('/[ab]{0,100}/');
+
+        $this->expectException(ComplexityException::class);
+        $language->size();
+    }
+
+    #[Test]
+    public function test_a_failed_count_does_not_poison_later_counts(): void
+    {
+        $language = (new LanguageSolver())->language('/[ab]*/');
+        try {
+            $language->countOfLength(\PHP_INT_MAX);
+            $this->fail('Counting must exhaust its budget.');
+        } catch (ComplexityException $exception) {
+            $this->assertSame('language counting', $exception->getDiagnostic()['phase']);
+        }
+
+        $this->assertSame('1024', $language->countOfLength(10));
     }
 
     #[Test]

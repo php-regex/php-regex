@@ -347,7 +347,16 @@ $solver->language('/^[a-z]+$/')->countOfLength(20); // "199281488952094091523401
 iterator_to_array($solver->language('/^[ab]{2}$/')->strings(), false); // ['aa', 'ab', 'ba', 'bb']
 ```
 
-Counts are exact decimal strings, however large, with no extension needed. `strings()` and
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:8762f3ef065418dccdceeee315a440e1fca467e5e6225d3600165c4967ffa246 -->
+
+Counts are exact decimal strings, with no extension needed. Each `countOfLength()` or
+`size()` call is limited to 1,000,000 units of state and integer arithmetic work and
+100,000 simultaneously held integer limbs (including arithmetic temporaries).
+Exceeding either limit throws `ComplexityException`.
+
+<!-- /coderabbit-ai-generated:v1 --> `strings()` and
 `nonMembers()` are generators: shortest first, then in code point order; they end when
 the strings run out, `nonMembers()` at once for `/[\s\S]*/`, and an infinite set never
 does, so take what you need. Each string `nonMembers()` hands out is

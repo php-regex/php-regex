@@ -13,15 +13,18 @@ declare(strict_types=1);
 
 namespace PHPRegex\Automata;
 
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
+use PHPRegex\Automata\Support\WorkBudget;
 use PHPRegex\Parser\Hir\CharSet;
 
 /**
  * The set of strings a pattern matches, read off its automaton: whether it
  * is finite, how many strings of each length it holds, each of them in
  * order, and the strings it rejects. Counts are exact, as decimal strings,
- * however large; strings come shortest first, then in code point order.
+ * subject to finite counting work and storage limits; strings come shortest
+ * first, then in code point order.
  *
  *     $language = (new LanguageSolver())->language('/^[A-Z]{2}\d{4}$/');
  *     $language->isFinite();   // true
@@ -32,6 +35,11 @@ use PHPRegex\Parser\Hir\CharSet;
 final class Language
 {
     private const LIMB = 1_000_000_000;
+
+    // Per call: state visits and limb arithmetic, and simultaneously held limbs.
+    private const MAX_COUNT_WORK = 1_000_000;
+
+    private const MAX_COUNT_LIMBS = 100_000;
 
     /**
      * @var array<string, array<int, true>> per side, inside or outside, the states that lead to acceptance
@@ -108,15 +116,19 @@ final class Language
     /**
      * How many strings of the length the language holds, as a decimal
      * string.
+     *
+     * @throws ComplexityException When the counting work or storage limit is reached
      */
     public function countOfLength(int $length): string
     {
-        return self::decimal($this->countsUpTo($length)[$length]);
+        return self::decimal($this->count($length));
     }
 
     /**
      * How many strings the language holds, as a decimal string; null when
      * it holds infinitely many.
+     *
+     * @throws ComplexityException When the counting work or storage limit is reached
      */
     public function size(): ?string
     {
@@ -125,12 +137,7 @@ final class Language
             return $this->isEmpty() ? '0' : null;
         }
 
-        $total = [0];
-        foreach ($this->countsUpTo($max) as $count) {
-            $total = self::add($total, $count);
-        }
-
-        return self::decimal($total);
+        return self::decimal($this->count($max, true));
     }
 
     /**
@@ -329,37 +336,69 @@ final class Language
     }
 
     /**
-     * Per length up to the given one, how many strings of that length the
-     * language holds, as base 10^9 limbs.
+     * Rolling counts, optionally summed over all lengths. Charge for limb
+     * arithmetic before allocating its results, including temporary arrays.
      *
-     * @return list<list<int>>
+     * @return list<int>
      */
-    private function countsUpTo(int $length): array
+    private function count(int $length, bool $sum = false): array
     {
-        // ways[state]: how many strings of the current length lead from the
-        // state to acceptance; counted backwards from length 0.
+        if ($length < 0) {
+            throw new \InvalidArgumentException('The counting length must be non-negative.');
+        }
+
         $states = array_keys($this->dfa->states);
+        $budget = new WorkBudget(self::MAX_COUNT_WORK, 'language counting', \count($states), 0, 0);
+        $budget->consume(\count($states));
+        self::checkCountStorage(\count($states) + 1);
         $ways = [];
         foreach ($states as $state) {
             $ways[$state] = [$this->dfa->getState($state)->isAccepting ? 1 : 0];
         }
 
-        $counts = [$ways[$this->dfa->startState]];
-        for ($step = 1; $step <= $length; $step++) {
+        $result = $ways[$this->dfa->startState];
+        $waysLimbs = \count($states);
+        for ($step = 0; $step < $length; $step++) {
             $next = [];
+            $nextLimbs = 0;
             foreach ($states as $state) {
+                $budget->consume();
+                self::checkCountStorage($waysLimbs + $nextLimbs + \count($result) + 1);
                 $total = [0];
                 foreach ($this->movesOf($state) as [$from, $to, $target]) {
+                    // Multiplication can add a limb, and addition another.
+                    $width = max(\count($total), \count($ways[$target])) + 2;
+                    $budget->consume(3 * $width);
+                    self::checkCountStorage($waysLimbs + $nextLimbs + \count($result) + 4 * $width);
                     $total = self::add($total, self::times($ways[$target], $this->characters($from, $to)));
                 }
                 $next[$state] = $total;
+                $nextLimbs += \count($total);
             }
 
+            if ($sum) {
+                $width = max(\count($result), \count($next[$this->dfa->startState])) + 1;
+                $budget->consume($width);
+                self::checkCountStorage($waysLimbs + $nextLimbs + 2 * $width);
+                $result = self::add($result, $next[$this->dfa->startState]);
+            } else {
+                $result = $next[$this->dfa->startState];
+            }
             $ways = $next;
-            $counts[] = $ways[$this->dfa->startState];
+            $waysLimbs = $nextLimbs;
         }
 
-        return $counts;
+        return $result;
+    }
+
+    private static function checkCountStorage(int $limbs): void
+    {
+        if ($limbs > self::MAX_COUNT_LIMBS) {
+            throw new ComplexityException(
+                'Language counting storage limit exceeded.',
+                diagnostic: ['phase' => 'language counting', 'limit' => self::MAX_COUNT_LIMBS],
+            );
+        }
     }
 
     /**
