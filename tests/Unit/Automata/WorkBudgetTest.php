@@ -21,12 +21,15 @@ use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class WorkBudgetTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_comparison_bounds_the_product_of_individually_small_dfas(): void
     {
@@ -39,7 +42,7 @@ final class WorkBudgetTest extends TestCase
         $this->assertSame(str_repeat('a', 143), $result->example);
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('comparison');
+        $this->expectExceptionMessageIsOrContains('The comparison explored more than 40 pairs of DFA states.');
         $solver->intersection('/(?:a{11})+/', '/(?:a{13})+/', $options);
     }
 
@@ -52,7 +55,7 @@ final class WorkBudgetTest extends TestCase
         $cache = new class($dfa) implements DfaCacheInterface {
             public function __construct(private readonly Dfa $dfa) {}
 
-            public function get(string $key): ?Dfa
+            public function get(string $key): Dfa
             {
                 return $this->dfa;
             }
@@ -71,12 +74,12 @@ final class WorkBudgetTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * @return iterable<string, array{method: string}>
      */
     public static function provideComparisons(): iterable
     {
         foreach (['intersection', 'subsetOf', 'equivalent'] as $method) {
-            yield $method => [$method];
+            yield $method => ['method' => $method];
         }
     }
 

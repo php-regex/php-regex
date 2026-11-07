@@ -61,13 +61,7 @@ Every question takes an optional `SolverOptions` object as its last argument.
 | `determinizationAlgorithm` | `DeterminizationAlgorithm::SubsetIndexed`, `::Subset` | `SubsetIndexed` |
 | `maxTransitionsProcessed` | int, `null` to disable the guard | `1000000` |
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:5277ef934b36cf18bfcabb351b6d443f9b50b9e7fe005241313769c16a71777c -->
-
 Reaching a limit throws the same `ComplexityException` as an unsupported construct; only a limit names it in `getDiagnostic()['limit']`. `maxDfaStates` also bounds retained state pairs per comparison search, which bounds witness length. `maxTransitionsProcessed` also bounds comparison transition probes and the threads `matchEquivalent()` steps. The solver constructor also accepts a `DfaCacheInterface` (`InMemoryDfaCache` ships with the package) to reuse compiled DFAs across questions.
-
-<!-- /coderabbit-ai-generated:v1 -->
 
 Usage
 -----
