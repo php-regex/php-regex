@@ -159,11 +159,15 @@ final class MatchExplorer
             }
         }
 
+        $sets = array_values($sets);
         $symbols = [];
         foreach ($this->symbols as $symbol) {
+            $this->budget->consume(\count($sets) + 1);
             $signature = $newline && self::NEWLINE === $symbol ? 'n' : '';
-            foreach ($sets as $set) {
-                $signature .= $set->contains($symbol) ? '1' : '0';
+            foreach ($sets as $id => $set) {
+                if ($set->contains($symbol)) {
+                    $signature .= ':'.$id;
+                }
             }
             $symbols[$signature] ??= $symbol;
         }
@@ -484,12 +488,18 @@ final class MatchExplorer
         $bounds = [];
         foreach ([$universe, ...$sets] as $set) {
             foreach ($set->ranges as [$from, $to]) {
+                $this->budget->consume();
                 $bounds[$from] = true;
                 $bounds[$to + 1] = true;
             }
         }
         $bounds = array_keys($bounds);
         sort($bounds);
+
+        // Reserve the membership work before constructing any signatures.
+        // Sparse signatures retain only the sets a character belongs to;
+        // their total size is bounded by this work as well.
+        $this->budget->consume((\count($bounds) - 1) * \count($sets));
 
         // The sets a character belongs to name its class; the first printable
         // character of the class stands for it.
@@ -501,8 +511,10 @@ final class MatchExplorer
             }
 
             $signature = '';
-            foreach ($sets as $set) {
-                $signature .= $set->contains($symbol) ? '1' : '0';
+            foreach ($sets as $id => $set) {
+                if ($set->contains($symbol)) {
+                    $signature .= ':'.$id;
+                }
             }
 
             if (!isset($symbols[$signature]) || (!self::printable($symbols[$signature]) && self::printable($symbol))) {

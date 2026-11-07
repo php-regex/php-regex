@@ -169,6 +169,49 @@ final class MatchEquivalenceTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideStateBudgetPatterns')]
+    public function test_every_state_allocation_obeys_the_budget(string $pattern, int $states): void
+    {
+        $solver = new LanguageSolver();
+        $this->assertTrue($solver->matchEquivalent($pattern, $pattern, new SolverOptions(maxNfaStates: $states))->isEquivalent);
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('The match solver needs more than');
+        $solver->matchEquivalent($pattern, $pattern, new SolverOptions(maxNfaStates: $states - 1));
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function provideStateBudgetPatterns(): iterable
+    {
+        yield 'literal' => ['/abcdef/', 7];
+        yield 'split' => ['/a|b/', 4];
+        yield 'capture tags' => ['/(a)/', 4];
+        yield 'anchor' => ['/^a/', 3];
+    }
+
+    #[Test]
+    public function test_large_unicode_literal_stops_at_the_default_state_budget(): void
+    {
+        $literal = implode('', array_map(static fn (int $code): string => mb_chr($code, 'UTF-8'), range(0x1000, 0x1000 + 14999)));
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('The match solver needs more than 5000 states');
+        (new LanguageSolver())->matchEquivalent('/'.$literal.'/u', '/b/u');
+    }
+
+    #[Test]
+    public function test_unicode_alphabet_construction_obeys_the_work_budget(): void
+    {
+        $literal = implode('', array_map(static fn (int $code): string => mb_chr($code, 'UTF-8'), range(0x1000, 0x13FF)));
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('work budget exceeded during match exploration');
+        (new LanguageSolver())->matchEquivalent('/'.$literal.'/u', '/b/u', new SolverOptions(maxDfaStates: 1));
+    }
+
+    #[Test]
     public function test_patterns_that_read_alike_are_equivalent_without_a_search(): void
     {
         // [0-9] and \d, [a-zA-Z0-9_] and \w read as the same automaton: no
