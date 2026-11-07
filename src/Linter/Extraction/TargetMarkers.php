@@ -54,12 +54,16 @@ final class TargetMarkers
         }
 
         $tokens = token_get_all($content);
+        $statements = null;
         $markers = [];
         $offset = 0;
         foreach ($tokens as $index => $token) {
             $text = \is_array($token) ? $token[1] : $token;
             if (\is_array($token) && (\T_COMMENT === $token[0] || \T_DOC_COMMENT === $token[0])) {
-                $statement = \T_DOC_COMMENT === $token[0] && self::opensItsLine($tokens, $index) ? self::statementAfter($tokens, $index) : null;
+                if (\T_DOC_COMMENT === $token[0] && str_contains($token[1], '@regex-target') && self::opensItsLine($tokens, $index)) {
+                    $statements ??= self::statementRanges($tokens);
+                }
+                $statement = $statements[$index] ?? null;
                 array_push($markers, ...self::markersIn($token[1], $token[2], $offset, $content, $statement));
             }
             $offset += \strlen($text);
@@ -139,92 +143,72 @@ final class TargetMarkers
     }
 
     /**
-     * The first and last line of the statement after the token: from its
-     * first token past comments and attributes, to the ";" that ends it at
-     * its own depth, or to the "}" of a body it opens, "else", "elseif",
-     * "catch" and "finally" going on with it. Null when no statement
-     * follows.
+     * Resolve statement ranges once, including shared suffixes and nested
+     * bodies. Matching delimiters lets an outer statement skip its body;
+     * the reverse pass reuses the range after each balanced group.
      *
      * @param list<string|array{int, string, int}> $tokens
      *
-     * @return array{int, int}|null
+     * @return array<int, array{int, int}>
      */
-    private static function statementAfter(array $tokens, int $index): ?array
+    private static function statementRanges(array $tokens): array
     {
-        $count = \count($tokens);
-        $fromLine = null;
-        $last = null;
-        $depth = 0;
-        // A string token carries no line: it starts where the token
-        // before it ends.
-        $comment = $tokens[$index];
-        $next = \is_array($comment) ? $comment[2] + substr_count($comment[1], "\n") : 0;
-        for ($i = $index + 1; $i < $count; $i++) {
-            $token = $tokens[$i];
+        $lines = [];
+        $closing = [];
+        $stack = [];
+        $line = 1;
+        foreach ($tokens as $i => $token) {
             $text = \is_array($token) ? $token[1] : $token;
-            $line = \is_array($token) ? $token[2] : $next;
-            $next = $line + substr_count($text, "\n");
-            if (\is_array($token) && \in_array($token[0], [\T_WHITESPACE, \T_COMMENT, \T_DOC_COMMENT], true)) {
-                continue;
-            }
-            $fromLine ??= $line;
-            $last = $line;
-
-            if (\is_array($token) && \in_array($token[0], [\T_ATTRIBUTE, \T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES], true)) {
-                $depth++;
-
-                continue;
-            }
-
-            if ('(' === $text || '[' === $text || '{' === $text) {
-                $depth++;
-
-                continue;
-            }
-
-            if (')' === $text || ']' === $text || '}' === $text) {
-                $depth--;
-                if ($depth < 0) {
-                    // The end of the block holding the statement.
-                    return null === $fromLine || $fromLine > $line ? null : [$fromLine, $line];
-                }
-
-                if (0 === $depth && '}' === $text && !self::goesOn($tokens, $i)) {
-                    return [$fromLine, $line];
-                }
-
-                continue;
-            }
-
-            if (0 === $depth && ';' === $text) {
-                return [$fromLine, $line];
+            $line = \is_array($token) ? $token[2] : $line;
+            $lines[$i] = $line;
+            $line += substr_count($text, "\n");
+            if (\in_array($text, ['(', '[', '{'], true)
+                || (\is_array($token) && \in_array($token[0], [\T_ATTRIBUTE, \T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES], true))) {
+                $stack[] = $i;
+            } elseif (\in_array($text, [')', ']', '}'], true) && [] !== $stack) {
+                // Like the original depth counter, pair by depth even in
+                // incomplete or malformed source, without requiring a type match.
+                $closing[array_pop($stack)] = $i;
             }
         }
 
-        // The end of the file: the statement runs to its last token.
-        return null === $fromLine ? null : [$fromLine, $last ?? $fromLine];
-    }
-
-    /**
-     * Whether the statement goes on after the "}" at $index: an "else",
-     * "elseif", "catch" or "finally", or the ";" or the call of an
-     * expression the body was part of.
-     *
-     * @param list<string|array{int, string, int}> $tokens
-     */
-    private static function goesOn(array $tokens, int $index): bool
-    {
-        for ($i = $index + 1, $count = \count($tokens); $i < $count; $i++) {
+        $ranges = [];
+        $ends = [];
+        $after = [];
+        $next = null;
+        $lastLine = null;
+        for ($i = \count($tokens) - 1; $i >= 0; $i--) {
             $token = $tokens[$i];
             if (\is_array($token) && \in_array($token[0], [\T_WHITESPACE, \T_COMMENT, \T_DOC_COMMENT], true)) {
+                if (\T_DOC_COMMENT === $token[0] && null !== $next && str_contains($token[1], '@regex-target') && self::opensItsLine($tokens, $i)) {
+                    $ranges[$i] = [$lines[$next], $ends[$next]];
+                }
+
                 continue;
             }
 
-            return \is_array($token)
-                ? \in_array($token[0], [\T_ELSE, \T_ELSEIF, \T_CATCH, \T_FINALLY], true)
-                : \in_array($token, [';', ')', ',', '(', '-', '.'], true);
+            $text = \is_array($token) ? $token[1] : $token;
+            $lastLine ??= $lines[$i];
+            $end = null === $next ? $lastLine : $ends[$next];
+            if (\in_array($text, [';', ')', ']', '}'], true)) {
+                $end = $lines[$i];
+                $after[$i] = $next;
+            } elseif (isset($closing[$i])) {
+                $close = $closing[$i];
+                $following = $after[$close];
+                $continues = null !== $following && (\is_array($tokens[$following])
+                    ? \in_array($tokens[$following][0], [\T_ELSE, \T_ELSEIF, \T_CATCH, \T_FINALLY], true)
+                    : \in_array($tokens[$following], [';', ')', ',', '(', '-', '.'], true));
+                $end = ('}' === $tokens[$close] && !$continues) || null === $following
+                    ? $lines[$close] : $ends[$following];
+            } elseif (\in_array($text, ['(', '[', '{'], true)
+                || (\is_array($token) && \in_array($token[0], [\T_ATTRIBUTE, \T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES], true))) {
+                $end = $lastLine;
+            }
+            $ends[$i] = $end;
+            $next = $i;
         }
 
-        return false;
+        return $ranges;
     }
 }

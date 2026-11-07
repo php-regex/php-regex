@@ -211,6 +211,35 @@ final class TargetMarkersTest extends TestCase
     }
 
     #[Test]
+    public function test_many_comments_share_a_statement_boundary(): void
+    {
+        $count = 20_000;
+        $content = "<?php\n".str_repeat("/** ordinary comment */\n/** @regex-target php>=8.4 */\n", $count)."f();\n";
+        $start = microtime(true);
+        $markers = TargetMarkers::read($content);
+
+        $this->assertCount($count, $markers);
+        $this->assertSame(2 * $count + 2, $markers[0]->fromLine);
+        $this->assertSame($markers[0]->toLine, $markers[$count - 1]->toLine);
+        $this->assertLessThan(5.0, microtime(true) - $start, 'Adjacent comments must not repeatedly scan the remaining file.');
+    }
+
+    #[Test]
+    public function test_nested_marked_bodies_share_statement_boundaries(): void
+    {
+        $count = 10_000;
+        $content = "<?php\n".str_repeat("/** @regex-target php>=8.4 */\nif (true) {\n", $count)."f();\n".str_repeat("}\n", $count);
+        $start = microtime(true);
+        $markers = TargetMarkers::read($content);
+
+        $this->assertCount($count, $markers);
+        $this->assertSame(3, $markers[0]->fromLine);
+        $this->assertSame(3 * $count + 2, $markers[0]->toLine);
+        $this->assertSame(2 * $count + 3, $markers[$count - 1]->toLine);
+        $this->assertLessThan(5.0, microtime(true) - $start, 'Nested bodies must not be rescanned for each marker.');
+    }
+
+    #[Test]
     public function test_a_source_without_a_marker_is_not_tokenized(): void
     {
         $this->assertSame([], TargetMarkers::read("<?php\n// @regex-ignore\n"));
