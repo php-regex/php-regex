@@ -55,6 +55,20 @@ final class AnsiPatternHighlightTest extends TestCase
         $this->assertSame($echoedWithoutColours, str_contains($written, self::PATTERN));
     }
 
+    #[Test]
+    public function test_highlight_neutralizes_comment_controls_with_and_without_ansi(): void
+    {
+        $pattern = "/(?#café\\d\x1B]0;title\x07\r\x08\x7F\u{9B})a/";
+        foreach ([true, false] as $terminal) {
+            [$code, $written] = $this->runRegex(['highlight', $pattern], $terminal);
+            $plain = (string) preg_replace('/\\x1B\\[[0-9;]*m/', '', $written);
+
+            $this->assertSame(0, $code);
+            $this->assertStringContainsString('(?#café\\d\\x1B]0;title\\x07\\r\\x08\\x7F\\x{9B})a', $plain);
+            $this->assertSame(0, preg_match('/[\\x00-\\x08\\x0B-\\x1F\\x7F]/', $plain));
+        }
+    }
+
     /**
      * Explain echoes the pattern beside its banner alone, which a run
      * without colours leaves out.
