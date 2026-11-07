@@ -37,7 +37,7 @@ use Symfony\Component\Yaml\Yaml;
  *
  * The configuration carries no line numbers: each entry is located in the
  * security files by the value it is written with, and has no location (an
- * empty file, line 0) when no file writes it.
+ * empty file, line 0) when no file writes it or location work is exhausted.
  *
  * @internal
  *
@@ -64,6 +64,10 @@ use Symfony\Component\Yaml\Yaml;
 final class SecurityConfigExtractor
 {
     private const ROOT = 'security';
+
+    // Location metadata is best effort. Bound repeated scanning independently
+    // of both the number of rules and the size of their source lines.
+    private const LOCATION_SEARCH_BUDGET = 10_000_000;
 
     /**
      * The security configuration to analyze: the files named on the command
@@ -247,6 +251,7 @@ final class SecurityConfigExtractor
     {
         $sources = self::sources($files);
         $taken = [];
+        $budget = self::LOCATION_SEARCH_BUDGET;
 
         $accessControl = [];
         $firewalls = [];
@@ -266,7 +271,7 @@ final class SecurityConfigExtractor
                     'allowIf' => self::text($rule['allow_if'] ?? null),
                     'requestMatcher' => self::text($rule['request_matcher'] ?? null),
                     'requiresChannel' => self::text($rule['requires_channel'] ?? null),
-                ], $sources, $taken, $resolve);
+                ], $sources, $taken, $budget, $resolve);
             }
 
             // A later configuration adds to a firewall an earlier one declared.
@@ -286,7 +291,7 @@ final class SecurityConfigExtractor
                 'patterns' => \is_array($pattern) ? self::listOf($pattern) : (null === $single ? [] : [$single]),
                 'alternation' => \is_array($pattern),
                 'requestMatcher' => self::text($firewall['request_matcher'] ?? null),
-            ], $sources, $taken, $resolve);
+            ], $sources, $taken, $budget, $resolve);
         }
 
         return ['accessControl' => $accessControl, 'firewalls' => $firewallRules];
@@ -300,7 +305,7 @@ final class SecurityConfigExtractor
      *
      * @return AccessControlRule
      */
-    private function accessRule(array $rule, array $sources, array &$taken, \Closure $resolve): array
+    private function accessRule(array $rule, array $sources, array &$taken, int &$budget, \Closure $resolve): array
     {
         $matchers = [
             ...self::valueMatchers($rule['path'], 'path'),
@@ -319,7 +324,7 @@ final class SecurityConfigExtractor
             ]);
         }
 
-        [$file, $line] = self::locate($sources, $taken, $matchers);
+        [$file, $line] = self::locate($sources, $taken, $matchers, $budget);
 
         return [
             'file' => $file,
@@ -343,14 +348,14 @@ final class SecurityConfigExtractor
      *
      * @return FirewallRule
      */
-    private function firewallRule(string $name, array $firewall, array $sources, array &$taken, \Closure $resolve): array
+    private function firewallRule(string $name, array $firewall, array $sources, array &$taken, int &$budget, \Closure $resolve): array
     {
         $patterns = $firewall['patterns'];
 
         [$file, $line] = self::locate($sources, $taken, [
             ...self::valueMatchers($patterns[0] ?? null, 'pattern'),
             self::keyMatcher($name),
-        ]);
+        ], $budget);
 
         $pattern = null;
         if ($firewall['alternation']) {
@@ -401,8 +406,9 @@ final class SecurityConfigExtractor
     }
 
     /**
-     * The lines of each file, comments blanked out; none for a file that
-     * cannot be read.
+     * Candidate lines of each file, indexed by original line number.
+     * Discard comments and blank lines once, before looking up any rules;
+     * none for a file that cannot be read.
      *
      * @param list<string> $files
      *
@@ -414,9 +420,10 @@ final class SecurityConfigExtractor
         foreach ($files as $file) {
             $sources[] = [
                 'file' => $file,
-                'lines' => array_map(
-                    static fn (string $line): string => 1 === LibraryPcre::match('~^\s*(?:#|//)~', $line) ? '' : $line,
+                'lines' => array_filter(
                     @file($file, \FILE_IGNORE_NEW_LINES) ?: [],
+                    static fn (string $line): bool => '' !== trim($line)
+                        && 1 !== LibraryPcre::match('~^\s*(?:#|//)~', $line),
                 ),
             ];
         }
@@ -427,19 +434,30 @@ final class SecurityConfigExtractor
     /**
      * The first line a matcher accepts that no earlier entry took; when every
      * such line is taken (an alias repeats an entry), the first one taken.
+     * Once the shared byte budget is exhausted, leave the location unknown.
      *
      * @param list<array{file: string, lines: array<int, string>}> $sources
      * @param array<int, array<int, bool>>                         $taken    the lines taken, by source and line
      * @param list<\Closure(string): bool>                         $matchers in the order to try them
+     * @param int                                                 $budget   remaining location search work for this build
      *
      * @return array{0: string, 1: int}
      */
-    private static function locate(array $sources, array &$taken, array $matchers): array
+    private static function locate(array $sources, array &$taken, array $matchers, int &$budget): array
     {
         foreach ([true, false] as $free) {
             foreach ($matchers as $matches) {
                 foreach ($sources as $at => $source) {
                     foreach ($source['lines'] as $index => $line) {
+                        // Charge even taken lines: walking them is work too.
+                        $cost = 1 + \strlen($line);
+                        if ($cost > $budget) {
+                            $budget = 0;
+
+                            return ['', 0];
+                        }
+                        $budget -= $cost;
+
                         if (($free && ($taken[$at][$index] ?? false)) || !$matches($line)) {
                             continue;
                         }
@@ -468,7 +486,8 @@ final class SecurityConfigExtractor
             return [];
         }
 
-        $writes = static fn (string $line): bool => str_contains($line, $value) || str_contains($line, str_replace('\\', '\\\\', $value));
+        $escaped = str_replace('\\', '\\\\', $value);
+        $writes = static fn (string $line): bool => str_contains($line, $value) || str_contains($line, $escaped);
 
         // The key as YAML (path:), a PHP array ('path' =>) or a config
         // builder (->path() write it, and not as the end of a longer name:

@@ -66,6 +66,49 @@ final class SecurityConfigExtractorTest extends TestCase
     }
 
     #[Test]
+    public function test_location_work_is_bounded_without_dropping_rules(): void
+    {
+        $yaml = "security:\n    access_control:\n";
+        for ($i = 0; $i < 1200; ++$i) {
+            $yaml .= "        - { path: ^/route/$i, roles: ROLE_USER }\n";
+        }
+        $yaml .= "    firewalls:\n        main: { pattern: ^/main }\n";
+        $path = $this->makeProject(['security.yaml' => $yaml]).'/security.yaml';
+        $extractor = new SecurityConfigExtractor();
+
+        $result = $extractor->extract($path);
+
+        $this->assertCount(1200, $result['accessControl']);
+        $this->assertSame(3, $result['accessControl'][0]['line']);
+        $last = $result['accessControl'][1199];
+        $this->assertSame('^/route/1199', $last['path']);
+        $this->assertSame(['ROLE_USER'], $last['roles']);
+        $this->assertSame('', $last['file']);
+        $this->assertSame(0, $last['line']);
+        $this->assertSame('^/main', $result['firewalls'][0]['pattern']);
+        $this->assertSame(0, $result['firewalls'][0]['line']);
+
+        // The budget belongs to one extraction, not to the extractor instance.
+        $small = $this->makeProject(['security.yaml' => "security:\n    access_control: [{ path: ^/small }]\n"]).'/security.yaml';
+        $this->assertSame(2, $extractor->extract($small)['accessControl'][0]['line']);
+    }
+
+    #[Test]
+    public function test_comments_and_blank_lines_do_not_consume_location_work(): void
+    {
+        $padding = str_repeat("# ignored\n   \n", 4000);
+        $yaml = $padding."security:\n    access_control:\n";
+        for ($i = 0; $i < 30; ++$i) {
+            $yaml .= "        - { path: ^/route/$i }\n";
+        }
+        $path = $this->makeProject(['security.yaml' => $yaml]).'/security.yaml';
+
+        $result = (new SecurityConfigExtractor())->extract($path);
+
+        $this->assertSame(range(8003, 8032), array_column($result['accessControl'], 'line'));
+    }
+
+    #[Test]
     public function test_firewall_patterns_lose_their_yaml_quotes(): void
     {
         $path = dirname(__DIR__, 4).'/Fixtures/Symfony/security_quoted_patterns.yaml';
