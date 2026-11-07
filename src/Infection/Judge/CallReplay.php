@@ -50,7 +50,9 @@ final class CallReplay
 
     /**
      * Whether the call can be replayed: every argument that shapes the
-     * answer is written as a literal, the replacement a string.
+     * answer is absent or written as an integer, a sum of PREG_* flags
+     * included, and the replacement as a string. A numeric string, which
+     * PHP reads as a number outside strict types, is not.
      */
     public function replayable(PatternCall $call): bool
     {
@@ -61,7 +63,7 @@ final class CallReplay
             default => [],
         };
         foreach ($shaping as $parameter) {
-            if (!$call->literal($parameter)) {
+            if ($call->passes($parameter) && null === $call->integer($parameter)) {
                 return false;
             }
         }

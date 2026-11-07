@@ -117,7 +117,7 @@ The contract:
 
 A mutant carries no kill string when the literal would be longer than 120
 bytes, quotes aside, each `\xNN` counting four; when the call's offset, flags, limit or replacement is only known at
-run time; when the delimiter is `?`, `:` or `"`, or the pattern ends inside
+run time, or a number is written as a string; when the delimiter is `?`, `:` or `"`, or the pattern ends inside
 an open `\Q`, where no comment can be written safely; and when neither the
 automata nor the subjects drawn from the two patterns tell them apart — a
 pattern with a lookaround or a backreference, for instance, which the

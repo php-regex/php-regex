@@ -74,7 +74,7 @@ An escaped mutant then reads:
 * It is a subject for the `preg_*()` call as written — what reaches the call, not what reaches your function: a function that trims its input first needs a test that passes something the trim leaves.
 * It is a PHP double-quoted literal: `$`, `\`, `"`, the parentheses, the braces, `#` and the delimiters are written `\xNN`, as is every byte outside printable ASCII. It pastes into a test as is.
 * `preg_match_all()` without `$matches` gets the subject on which the count differs; `preg_replace_callback()` the one on which the callback receives other matches, as the call's flags shape them, or is called at other places; `preg_grep()` the element one pattern keeps and the other does not.
-* It is left out when the literal would be longer than 120 bytes, when the call's offset, flags, limit or replacement is only known at run time, when the pattern's delimiter is `?`, `:` or `"` or the pattern ends inside an open `\Q`, when neither the automata nor the sampled subjects tell the two patterns apart, and once the checks a pattern gets are spent.
+* It is left out when the literal would be longer than 120 bytes, when the call's offset, flags, limit or replacement is only known at run time, or a number is written as a string, when the pattern's delimiter is `?`, `:` or `"` or the pattern ends inside an open `\Q`, when neither the automata nor the sampled subjects tell the two patterns apart, and once the checks a pattern gets are spent.
 * With the `#` delimiter, which `(?#` would end, it is written `(?(DEFINE)kill: "…")`, every byte but letters, digits and spaces as `\xNN`.
 
 ### What is read

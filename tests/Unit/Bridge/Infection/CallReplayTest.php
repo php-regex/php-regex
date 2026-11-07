@@ -116,6 +116,9 @@ final class CallReplayTest extends TestCase
     {
         yield 'preg_match' => ['code' => "preg_match('/a/', \$s, \$m, PREG_OFFSET_CAPTURE, 2)", 'replayable' => true];
         yield 'preg_match, flags at run time' => ['code' => "preg_match('/a/', \$s, \$m, \$flags)", 'replayable' => false];
+        // A numeric string reads as a number only outside strict types.
+        yield 'preg_match, offset written as a string' => ['code' => "preg_match('/a/', \$s, \$m, 0, '1')", 'replayable' => false];
+        yield 'preg_split, limit written as a string' => ['code' => "preg_split('/a/', \$s, '2')", 'replayable' => false];
         yield 'preg_match, offset at run time' => ['code' => "preg_match('/a/', \$s, \$m, 0, \$offset)", 'replayable' => false];
         yield 'preg_match_all, flags at run time' => ['code' => "preg_match_all('/a/', \$s, \$m, \$flags)", 'replayable' => false];
         yield 'preg_replace' => ['code' => "preg_replace('/a/', 'b', \$s, 2)", 'replayable' => true];

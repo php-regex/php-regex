@@ -135,17 +135,6 @@ final class PatternCall
     }
 
     /**
-     * Whether the argument is absent, its default then applying, or written
-     * as a literal: an integer, a sum of PREG_* flags or a string.
-     */
-    public function literal(string $parameter): bool
-    {
-        $value = $this->arguments[$parameter] ?? null;
-
-        return null === $value || $value instanceof String_ || null !== self::integerOf($value);
-    }
-
-    /**
      * The string an argument is written as; null when it is not a literal
      * or the call does not pass it.
      */
