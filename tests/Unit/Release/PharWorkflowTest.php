@@ -363,22 +363,37 @@ final class PharWorkflowTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{signed: bool, attached: string}>
+     * A release whose phar is unsigned keeps no signature an earlier run of
+     * its draft attached: it signed another build, which Phive would read
+     * as a forged phar.
+     *
+     * @return iterable<string, array{signed: bool, attached: string, expected: list<string>}>
      */
     public static function provideSignatures(): iterable
     {
-        yield 'signed' => ['signed' => true, 'attached' => 'release upload v2.0.1 bin/regex.phar bin/regex.phar.sha256 bin/regex.phar.asc --clobber'];
-        yield 'no release key' => ['signed' => false, 'attached' => 'release upload v2.0.1 bin/regex.phar bin/regex.phar.sha256 --clobber'];
+        yield 'signed' => ['signed' => true, 'attached' => '', 'expected' => ['release upload v2.0.1 bin/regex.phar bin/regex.phar.sha256 bin/regex.phar.asc --clobber']];
+        yield 'no release key' => ['signed' => false, 'attached' => 'regex.phar regex.phar.sha256', 'expected' => [
+            'release view v2.0.1 --json assets --jq .assets[].name',
+            'release upload v2.0.1 bin/regex.phar bin/regex.phar.sha256 --clobber',
+        ]];
+        yield 'no release key, a signature of an earlier run attached' => ['signed' => false, 'attached' => 'regex.phar regex.phar.asc regex.phar.sha256', 'expected' => [
+            'release view v2.0.1 --json assets --jq .assets[].name',
+            'release delete-asset v2.0.1 regex.phar.asc --yes',
+            'release upload v2.0.1 bin/regex.phar bin/regex.phar.sha256 --clobber',
+        ]];
     }
 
+    /**
+     * @param list<string> $expected
+     */
     #[Test]
     #[DataProvider('provideSignatures')]
-    public function test_the_signature_is_attached_beside_the_phar_when_there_is_one(bool $signed, string $attached): void
+    public function test_the_signature_is_attached_beside_the_phar_when_there_is_one(bool $signed, string $attached, array $expected): void
     {
-        [$code, $output] = $this->runStep('Attach to the release and publish it', ['TAG' => 'v2.0.1'], $signed ? ['bin/regex.phar.asc' => 'signature'] : []);
+        [$code, $output] = $this->runStep('Attach to the release and publish it', ['TAG' => 'v2.0.1', 'FAKE_ASSETS' => $attached], $signed ? ['bin/regex.phar.asc' => 'signature'] : []);
 
         $this->assertSame(0, $code, $output);
-        $this->assertSame([$attached, 'release edit v2.0.1 --draft=false'], file($this->scratch.'/gh.log', \FILE_IGNORE_NEW_LINES));
+        $this->assertSame([...$expected, 'release edit v2.0.1 --draft=false'], file($this->scratch.'/gh.log', \FILE_IGNORE_NEW_LINES));
     }
 
     /**
@@ -405,7 +420,7 @@ final class PharWorkflowTest extends TestCase
 
         file_put_contents($this->scratch.'/output', '');
         file_put_contents($this->scratch.'/fake/php', self::FAKE_PHP);
-        file_put_contents($this->scratch.'/fake/gh', "#!/usr/bin/env bash\necho \"\$*\" >> \"\$LOGS/gh.log\"\ncase \"\$FAKE_DRAFT\" in missing) echo 'release not found' >&2; exit 1 ;; *) echo \"\$FAKE_DRAFT\" ;; esac\n");
+        file_put_contents($this->scratch.'/fake/gh', "#!/usr/bin/env bash\necho \"\$*\" >> \"\$LOGS/gh.log\"\ncase \"\$*\" in *'--json assets'*) printf '%s\\n' \$FAKE_ASSETS; exit 0 ;; esac\ncase \"\$FAKE_DRAFT\" in missing) echo 'release not found' >&2; exit 1 ;; *) echo \"\$FAKE_DRAFT\" ;; esac\n");
         file_put_contents($this->scratch.'/fake/gpg', self::FAKE_GPG);
         chmod($this->scratch.'/fake/php', 0o755);
         chmod($this->scratch.'/fake/gh', 0o755);

@@ -142,6 +142,12 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           assets=(bin/regex.phar bin/regex.phar.sha256)
-          if [ -f bin/regex.phar.asc ]; then assets+=(bin/regex.phar.asc); fi
+          if [ -f bin/regex.phar.asc ]; then
+            assets+=(bin/regex.phar.asc)
+          elif gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx regex.phar.asc; then
+            # A signature an earlier run of the draft attached signed
+            # another build: an unsigned release keeps none.
+            gh release delete-asset "$TAG" regex.phar.asc --yes
+          fi
           gh release upload "$TAG" "${assets[@]}" --clobber
           gh release edit "$TAG" --draft=false
