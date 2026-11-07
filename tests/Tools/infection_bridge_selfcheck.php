@@ -47,9 +47,9 @@ const ESCAPED = 24;
 
 $fixture = __DIR__.'/../Fixtures/Infection/project';
 $files = ['src/Slug.php', 'tests/SlugCheck.php', 'phpunit.xml.dist', 'infection.json5'];
-// The fixture goes into a project that holds none of it: a project's own
-// configuration is never written over.
-$taken = array_values(array_filter($files, static fn (string $file): bool => file_exists($project.'/'.$file)));
+// The fixture goes into a project that holds none of it, nor the report each
+// run clears and writes: a project's own files are never written over.
+$taken = array_values(array_filter([...$files, 'infection-log.json'], static fn (string $file): bool => file_exists($project.'/'.$file)));
 if ([] !== $taken) {
     fwrite(\STDERR, 'The project already holds '.implode(', ', $taken).": give a project of its own to the check.\n");
     exit(2);
