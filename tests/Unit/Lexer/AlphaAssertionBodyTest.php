@@ -25,6 +25,7 @@ use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Lexing\BodyEnds;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
@@ -1129,6 +1130,26 @@ final class AlphaAssertionBodyTest extends TestCase
             },
             1_000,
             $unit,
+        );
+    }
+
+    /**
+     * Each class read alone looks at the options the pattern opens with:
+     * the run is read once, not again for every class. Measured when it
+     * was, 1 000 then 4 000 "(*UTF)" before as many classes and a stray
+     * parenthesis took 1.1 s then 15 s on PHP 8.4.
+     */
+    #[Test]
+    public function test_validate_reads_the_opening_options_once_for_many_classes(): void
+    {
+        $this->assertFalse(EngineProbe::compiles('/(*UTF)[a])/'), 'Oracle: the stray parenthesis is refused.');
+
+        $this->assertLinearTime(
+            static function (int $size): void {
+                Regex::create(['cache' => null, 'max_pattern_length' => 1_000_000])->validate('/'.str_repeat('(*UTF)', $size).str_repeat('[a]', $size).')/');
+            },
+            1_000,
+            '(*UTF) then [a]',
         );
     }
 

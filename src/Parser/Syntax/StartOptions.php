@@ -46,10 +46,24 @@ final class StartOptions
     private const OPTION_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_=';
 
     /**
+     * The last source read and the length of its run: the parser and the
+     * validator ask again for each class they read alone, and a run of
+     * thousands of options is not read again each time. The source is the
+     * same string each time, which PHP compares at once.
+     *
+     * @var array{string, int}|null
+     */
+    private static ?array $last = null;
+
+    /**
      * The run of options the source opens with, as written.
      */
     public static function of(string $source): string
     {
+        if (null !== self::$last && self::$last[0] === $source) {
+            return substr($source, 0, self::$last[1]);
+        }
+
         $end = 0;
         // An option is read up to its ")" over the characters it is written
         // with alone: anything else ends the run, and the rest of the source
@@ -71,6 +85,8 @@ final class StartOptions
 
             $end = $close + 1;
         }
+
+        self::$last = [$source, $end];
 
         return substr($source, 0, $end);
     }
