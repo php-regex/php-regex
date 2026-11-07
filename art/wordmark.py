@@ -18,13 +18,17 @@ Fonts: Inter Display static TTFs (Black 900 / Bold 700) from the Inter
 release zip — https://github.com/rsms/inter/releases (extras/ttf/).
 
 The script only READS art/*.svg; it writes wordmark.json and two scratch
-renders to --out (default /tmp/phpregex-art). Paste the emitted group
+renders to --out (default: a fresh private temporary directory). Paste the emitted group
 strings into the SVGs by hand — never hand-draw the paths.
 """
 import argparse
+from contextlib import contextmanager
 import json
 import os
 import re
+import secrets
+import stat
+import tempfile
 
 from fontTools.misc.transform import Transform
 from fontTools.pens.boundsPen import BoundsPen
@@ -83,16 +87,69 @@ def lsb_px(font, ch, size):
     return bp.bounds[0] * size / upm
 
 
+@contextmanager
+def output_directory(path):
+    """Pin a directory reached only through trusted, non-symlink ancestors."""
+    if path is None:
+        path = tempfile.mkdtemp(prefix="phpregex-art-")
+    path = os.path.abspath(path)
+    fd = os.open("/", os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        parts = path.split(os.sep)[1:]
+        for part in parts:
+            parent = os.fstat(fd)
+            # Sticky directories such as /tmp protect entries owned by us/root.
+            if (parent.st_uid not in (0, os.geteuid()) or
+                    (parent.st_mode & 0o022 and not parent.st_mode & stat.S_ISVTX)):
+                raise ValueError("untrusted output directory ancestor")
+            try:
+                os.mkdir(part, mode=0o700, dir_fd=fd)
+            except FileExistsError:
+                pass
+            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+            os.close(fd)
+            fd = child
+            info = os.fstat(fd)
+            if info.st_uid not in (0, os.geteuid()):
+                raise ValueError("untrusted output directory owner")
+        info = os.fstat(fd)
+        if info.st_uid != os.geteuid() or info.st_mode & 0o022:
+            raise ValueError("output directory must be owned by you and not writable by others")
+        yield path, fd
+    finally:
+        os.close(fd)
+
+
+@contextmanager
+def output_file(directory_fd, name):
+    """Replace an entry without following existing symlinks or hard links."""
+    temporary = ".wordmark-" + secrets.token_hex(16)
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600,
+                 dir_fd=directory_fd)
+    try:
+        with os.fdopen(fd, "w") as fh:
+            yield fh
+        os.replace(temporary, name, src_dir_fd=directory_fd, dst_dir_fd=directory_fd)
+    finally:
+        try:
+            os.unlink(temporary, dir_fd=directory_fd)
+        except FileNotFoundError:
+            pass
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--black", required=True, help="InterDisplay-Black.ttf")
     ap.add_argument("--bold", required=True, help="InterDisplay-Bold.ttf")
-    ap.add_argument("--out", default="/tmp/phpregex-art", help="scratch dir (default /tmp/phpregex-art)")
+    ap.add_argument("--out", help="trusted scratch dir (default: fresh private temporary directory)")
     ap.add_argument("--art", default=os.path.join(os.path.dirname(os.path.abspath(__file__))),
                     help="art/ directory to read the current SVGs from")
     args = ap.parse_args()
-    os.makedirs(args.out, exist_ok=True)
+    with output_directory(args.out) as (args.out, directory_fd):
+        render(args, directory_fd)
 
+
+def render(args, directory_fd):
     black, bold = TTFont(args.black), TTFont(args.bold)
     social = open(os.path.join(args.art, "social.svg")).read()
 
@@ -126,20 +183,22 @@ def main():
 
     # -- scratch renders (square corners, current card shapes)
     style = '.paper{fill:#F8F7F2}.ink-f{fill:#182B45}.ink-s{stroke:#182B45;fill:none}.amber-f{fill:#A84A08}'
-    open(os.path.join(args.out, "scratch-banner.svg"), "w").write(
-        f'<svg viewBox="0 0 1000 200" width="1000" height="200" xmlns="http://www.w3.org/2000/svg" role="img">\n'
-        f'<title>PHPRegex</title>\n<style>{style}</style>\n'
-        f'<rect x="10" y="10" width="980" height="180" class="paper" stroke="#64748B" stroke-width="2.5"/>\n'
-        f'<g transform="translate({fmt(mark_x)} 100) scale({MARK_S})"><!-- mark --></g>\n'
-        f'{banner_group}\n</svg>\n'
-    )
-    open(os.path.join(args.out, "scratch-social.svg"), "w").write(
-        f'<svg viewBox="0 0 1280 640" width="1280" height="640" xmlns="http://www.w3.org/2000/svg" role="img">\n'
-        f'<title>PHPRegex</title>\n<style>{style}</style>\n'
-        f'<rect width="1280" height="640" class="paper"/>\n'
-        f'{social_line1}\n{social_line2}\n'
-        f'<g transform="translate(951.4 320) scale(1.00)"><!-- mark --></g>\n</svg>\n'
-    )
+    with output_file(directory_fd, "scratch-banner.svg") as fh:
+        fh.write(
+            f'<svg viewBox="0 0 1000 200" width="1000" height="200" xmlns="http://www.w3.org/2000/svg" role="img">\n'
+            f'<title>PHPRegex</title>\n<style>{style}</style>\n'
+            f'<rect x="10" y="10" width="980" height="180" class="paper" stroke="#64748B" stroke-width="2.5"/>\n'
+            f'<g transform="translate({fmt(mark_x)} 100) scale({MARK_S})"><!-- mark --></g>\n'
+            f'{banner_group}\n</svg>\n'
+        )
+    with output_file(directory_fd, "scratch-social.svg") as fh:
+        fh.write(
+            f'<svg viewBox="0 0 1280 640" width="1280" height="640" xmlns="http://www.w3.org/2000/svg" role="img">\n'
+            f'<title>PHPRegex</title>\n<style>{style}</style>\n'
+            f'<rect width="1280" height="640" class="paper"/>\n'
+            f'{social_line1}\n{social_line2}\n'
+            f'<g transform="translate(951.4 320) scale(1.00)"><!-- mark --></g>\n</svg>\n'
+        )
 
     data = {
         "trackingUnits": T_UNITS,
@@ -156,7 +215,7 @@ def main():
         "socialLine1": social_line1,
         "socialLine2": social_line2,
     }
-    with open(os.path.join(args.out, "wordmark.json"), "w") as fh:
+    with output_file(directory_fd, "wordmark.json") as fh:
         json.dump(data, fh, indent=2)
 
     print(f"tracking: {T_UNITS}u = {T_UNITS/upm*100:.4f}% em")
