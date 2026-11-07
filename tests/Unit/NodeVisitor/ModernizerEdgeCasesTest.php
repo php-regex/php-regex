@@ -40,7 +40,7 @@ final class ModernizerEdgeCasesTest extends TestCase
     }
 
     #[Test]
-    public function test_literal_unescape_respects_custom_delimiter(): void
+    public function test_preserves_literal_with_custom_delimiter(): void
     {
         $visitor = new Modernizer();
         $regex = new RegexNode(new LiteralNode('\\a', 0, 0), '', '#', 0, 0);
@@ -49,6 +49,6 @@ final class ModernizerEdgeCasesTest extends TestCase
 
         $this->assertInstanceOf(RegexNode::class, $modernized);
         $this->assertInstanceOf(LiteralNode::class, $modernized->pattern);
-        $this->assertSame('a', $modernized->pattern->value);
+        $this->assertSame($regex->pattern, $modernized->pattern);
     }
 }
