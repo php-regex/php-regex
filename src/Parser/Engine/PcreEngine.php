@@ -45,7 +45,7 @@ final class PcreEngine
      * pattern as it is when PHP refuses its delimiters, or when no delimiter
      * is left for it; the engine then turns the JIT off for the call.
      *
-     * @internal the ReDoS confirmation reads the pattern PCRE compiles
+     * @internal the ReDoS confirmation and the replay of a mutated call read the pattern PCRE compiles
      */
     public function prepare(string $regex): string
     {
