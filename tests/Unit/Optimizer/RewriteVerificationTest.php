@@ -31,6 +31,16 @@ use PHPUnit\Framework\TestCase;
 final class RewriteVerificationTest extends TestCase
 {
     #[Test]
+    public function test_a_large_alignment_leaves_the_rewrite_unproven(): void
+    {
+        $original = '/(?<!x)'.str_repeat('\\d', 4).str_repeat('b?c?', 3000).str_repeat('[e-g]', 4).'/';
+        $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
+
+        $this->assertNotSame($original, $optimizer->optimize($original, new OptimizerOptions(verifyWithAutomata: false))->optimized);
+        $this->assertSame($original, $optimizer->optimize($original)->optimized);
+    }
+
+    #[Test]
     #[DataProvider('provideRewrites')]
     public function test_a_rewrite_is_judged_on_the_matches_it_writes(string $original, string $rewrite, ?bool $verdict): void
     {
