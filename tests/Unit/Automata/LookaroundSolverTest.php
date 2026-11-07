@@ -105,7 +105,7 @@ final class LookaroundSolverTest extends TestCase
         $solver->compile('/(?=b{10})/', $options);
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('lookaround bodies');
+        $this->expectExceptionMessageIsOrContains('lookaround bodies');
 
         $solver->compile('/(?=a{10})(?=b{10})/', $options);
     }
@@ -122,7 +122,7 @@ final class LookaroundSolverTest extends TestCase
     public function test_zero_work_budget_applies_to_bodies(): void
     {
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('lookaround bodies');
+        $this->expectExceptionMessageIsOrContains('lookaround bodies');
 
         (new LanguageSolver())->compile('/(?=a{99})/', new SolverOptions(maxTransitionsProcessed: 0));
     }
