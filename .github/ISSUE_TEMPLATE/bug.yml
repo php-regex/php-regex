@@ -25,6 +25,7 @@ body:
         - php-regex/regex-language-server
         - php-regex/regex-phpstan
         - php-regex/regex-phpunit
+        - php-regex/regex-infection
         - php-regex/regex-psalm
         - php-regex/regex-rector
         - php-regex/regex-symfony

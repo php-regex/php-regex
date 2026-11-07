@@ -37,6 +37,7 @@ final class PublicSurface
             'Highlighter/ConsoleHighlighter', 'Highlighter/HtmlHighlighter',
         ],
         'Generator' => ['SampleGenerator', 'TestCaseGenerator', 'Exception/SampleGenerationException'],
+        'Infection' => ['Mutator/RegexQuantifier', 'Mutator/RegexAnchor', 'Mutator/RegexCharClass', 'Mutator/RegexAlternation', 'Mutator/RegexFlag', 'Mutator/RegexEscape'],
         'LanguageServer' => [],
         'Mcp' => [
             'Application', 'ToolCatalog', 'ToolDefinition', 'ToolInterface', 'ToolResult', 'ServerInterface',

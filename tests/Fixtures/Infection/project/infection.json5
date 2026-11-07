@@ -1,0 +1,17 @@
+{
+    "source": {
+        "directories": ["src"]
+    },
+    "logs": {
+        "json": "infection-log.json"
+    },
+    "mutators": {
+        "@default": false,
+        "PHPRegex\\Infection\\Mutator\\RegexQuantifier": true,
+        "PHPRegex\\Infection\\Mutator\\RegexAnchor": true,
+        "PHPRegex\\Infection\\Mutator\\RegexCharClass": true,
+        "PHPRegex\\Infection\\Mutator\\RegexAlternation": true,
+        "PHPRegex\\Infection\\Mutator\\RegexFlag": true,
+        "PHPRegex\\Infection\\Mutator\\RegexEscape": true
+    }
+}

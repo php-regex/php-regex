@@ -14,11 +14,18 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\TestUtils;
 
 use Illuminate\Support\ServiceProvider;
+use Infection\Mutator\Mutator;
+use PhpParser\Node\Arg;
+use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\String_;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Cli\ApplicationFactory;
 use PHPRegex\Cli\Output;
 use PHPRegex\Explain\TextExplainer;
 use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Infection\Mutator\RegexAnchor;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\PatternLinter;
@@ -63,6 +70,14 @@ final class PackageSmokeChecks
             'Cli' => [ApplicationFactory::class, static fn (): bool => [] !== ApplicationFactory::create(new Output(false, true))->registeredCommands()],
             'Explain' => [TextExplainer::class, static fn (): bool => str_contains((string) RegexParser::create()->parse('/a+/')->accept(new TextExplainer()), 'one or more times')],
             'Generator' => [SampleGenerator::class, static fn (): bool => 1 === preg_match('/^a+$/', (new SampleGenerator())->generate('/a+/'))],
+            // A mutator Infection would load by its class name, asked to
+            // mutate a call: the anchor goes, the mutant says what kills it.
+            'Infection' => [RegexAnchor::class, static function (): bool {
+                $call = new FuncCall(new Name('preg_match'), [new Arg(new String_('/^a/')), new Arg(new Variable('s'))]);
+                $mutants = (new RegexAnchor())->canMutate($call) ? [...(new RegexAnchor())->mutate($call)] : [];
+
+                return self::extends(RegexAnchor::class, Mutator::class) && 1 === \count($mutants);
+            }],
             // Read until the end of an empty input, the loop an editor's
             // session runs in.
             'LanguageServer' => [Server::class, static function (): bool {
