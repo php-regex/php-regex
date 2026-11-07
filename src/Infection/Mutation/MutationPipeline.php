@@ -16,6 +16,7 @@ namespace PHPRegex\Infection\Mutation;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Infection\Hint\HintWriter;
+use PHPRegex\Infection\Hint\KillString;
 use PHPRegex\Infection\Judge\Budget;
 use PHPRegex\Infection\Judge\CallReplay;
 use PHPRegex\Infection\Judge\DifferentialFallback;
@@ -140,17 +141,13 @@ final class MutationPipeline
 
     /**
      * Whether the candidate is proven alike a mutant of the same node
-     * already kept.
+     * already kept. With no check left to pay for, the judge proves nothing
+     * more: it pays before it reads the patterns.
      *
      * @param list<string> $kept
      */
     private function alikeAny(EquivalenceJudge $judge, Observation $observation, array $kept, string $candidate, Budget $budget): bool
     {
-        // With no check left to pay for, nothing more is proven.
-        if ($budget->spent()) {
-            return false;
-        }
-
         foreach ($kept as $earlier) {
             if (true === $judge->judge($observation, $earlier, $candidate, $budget)->alike) {
                 return true;
@@ -169,13 +166,20 @@ final class MutationPipeline
             return null;
         }
 
-        $offset = max(0, $call->integer('offset', 0) ?? 0);
+        // A kill string longer than a hint holds is written into none: the
+        // padding up to the offset alone may make it so, and none is then
+        // looked for, nor made printable a byte at a time.
+        $offset = max(0, $call->integer('offset') ?? 0);
+        if ($offset > KillString::MAX_BYTES) {
+            return null;
+        }
+
         $kill = $this->firstDiffering($call, $original, $mutant, $found, $offset);
         if (null === $kill && $budget->spend($original, $mutant)) {
             $kill = $this->firstDiffering($call, $original, $mutant, $this->fallback->subjects($original, $mutant), $offset);
         }
 
-        return null === $kill ? null : $this->printable($call, $original, $mutant, $kill);
+        return null === $kill || \strlen($kill) > KillString::MAX_BYTES ? null : $this->printable($call, $original, $mutant, $kill);
     }
 
     /**

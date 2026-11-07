@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Bridge\Infection;
 
 use PhpParser\Node\Expr\FuncCall;
 use PHPRegex\Infection\Hint\HintWriter;
+use PHPRegex\Infection\Hint\KillString;
 use PHPRegex\Infection\Judge\Budget;
 use PHPRegex\Infection\Judge\CallReplay;
 use PHPRegex\Infection\Judge\DifferentialFallback;
@@ -25,6 +26,7 @@ use PHPRegex\Infection\Mutation\Family;
 use PHPRegex\Infection\Mutation\MutationPipeline;
 use PHPRegex\Infection\Mutator\RegexAnchor;
 use PHPRegex\Infection\Mutator\RegexCharClass;
+use PHPRegex\Infection\Mutator\RegexQuantifier;
 use PHPRegex\Infection\Site\Observation;
 use PHPRegex\Infection\Site\PatternCall;
 use PHPRegex\Parser\Cache\NullCache;
@@ -246,6 +248,8 @@ final class EdgeCaseTest extends TestCase
         $call = PatternCall::fromNode(MutatorHarness::call($code) ?? throw new \LogicException());
         $this->assertInstanceOf(PatternCall::class, $call);
 
+        error_clear_last();
+
         // Invalid UTF-8 under /u: each call fails, none answers.
         $this->assertFalse((new CallReplay())->differs($call, '/a/u', '/b/u', "a\xff"));
         $this->assertSame(\PREG_NO_ERROR, preg_last_error());
@@ -274,7 +278,71 @@ final class EdgeCaseTest extends TestCase
         // From two bytes before the end: "ba" holds no "a" at its end for
         // /b$/, and one for /a$/.
         $this->assertTrue((new CallReplay())->differs($call, '/a$/', '/b$/', 'xba'));
-        $this->assertSame(-2, $call->integer('offset', 0));
+        $this->assertSame(-2, $call->integer('offset'));
+    }
+
+    #[Test]
+    public function test_an_argument_the_call_does_not_pass_reads_as_no_integer(): void
+    {
+        $call = PatternCall::fromNode(MutatorHarness::call("preg_match('/a/', \$s, \$m)") ?? throw new \LogicException());
+        $this->assertInstanceOf(PatternCall::class, $call);
+
+        $this->assertNull($call->integer('offset'));
+        $this->assertNull($call->integer('flags'));
+    }
+
+    #[Test]
+    public function test_a_kill_string_too_long_for_a_hint_is_not_looked_for(): void
+    {
+        // From 100,000 bytes in, every kill string is longer than a hint
+        // holds: none is replayed byte by byte to make it printable.
+        $start = hrtime(true);
+        $patterns = MutatorHarness::patterns(new RegexQuantifier(), "preg_match('/a+/', \$s, \$m, 0, 100000)");
+
+        $this->assertLessThan(2.0, (hrtime(true) - $start) / 1e9);
+        $this->assertSame(['/a*/', '/a/'], $patterns);
+    }
+
+    #[Test]
+    public function test_a_kill_string_as_long_as_a_hint_holds_is_written(): void
+    {
+        $kills = static fn (int $offset): array => array_map(static fn (string $pattern): ?string => MutatorHarness::split($pattern)[1], MutatorHarness::patterns(new RegexQuantifier(), "preg_match('/a+/', \$s, \$m, 0, {$offset})"));
+
+        // "aa" from the offset tells /a/ apart: two bytes past the last
+        // one a hint holds.
+        $this->assertSame([str_repeat('!', KillString::MAX_BYTES), null], $kills(KillString::MAX_BYTES));
+        $this->assertSame([null, null], $kills(KillString::MAX_BYTES + 1));
+    }
+
+    #[Test]
+    public function test_judge_gives_a_subject_two_runs_find_once(): void
+    {
+        $this->assertSame(['a'], (new EquivalenceJudge())->judge(Observation::Matches, '/a*/', '/b*/', new Budget())->subjects);
+    }
+
+    #[Test]
+    public function test_a_call_that_cannot_be_replayed_spends_nothing_on_a_kill_string(): void
+    {
+        // Twelve units prove /a+?b+c+/ alike the original, none of them
+        // taken by a search for a subject no replay could check.
+        $call = PatternCall::fromNode(MutatorHarness::call("preg_match('/a+b+c+/', \$s, \$m, 0, \$offset)") ?? throw new \LogicException());
+        $this->assertInstanceOf(PatternCall::class, $call);
+
+        $this->assertSame(['/a*b+c+/', '/ab+c+/', '/a+b*c+/', '/a+bc+/', '/a+b+?c+/', '/a+b+c*/', '/a+b+c/', '/a+b+c+?/'], (new MutationPipeline(Family::Quantifier, 12))->mutants($call));
+    }
+
+    #[Test]
+    public function test_a_budget_is_spent_once_its_last_unit_is(): void
+    {
+        $exact = new Budget(1);
+        $this->assertTrue($exact->spend('a'));
+        $this->assertTrue($exact->spent());
+
+        // A check that costs more than what is left takes it all.
+        $short = new Budget(2);
+        $this->assertFalse($short->spend(str_repeat('a', 512)));
+        $this->assertTrue($short->spent());
+        $this->assertFalse($short->spend('a'));
     }
 
     #[Test]
