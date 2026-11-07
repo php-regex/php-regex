@@ -60,7 +60,7 @@ final class RedosSearchCostPairsTest extends TestCase
     {
         $automaton = self::automaton();
         // All the same context: there are no higher-priority pairs.
-        $automaton->representatives = range(0x1000, 0x13ff);
+        $automaton->representatives = range(0x1000, 0x13FF);
         $pairs = new \ReflectionMethod(SearchCostProver::class, 'pairsOf');
         $actual = $pairs->invoke(null, $automaton, range(0, 1023), new Budget(10_000, 1));
 
