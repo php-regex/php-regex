@@ -67,6 +67,16 @@ final class PcreEngineAnswerTest extends TestCase
 
             return $matches;
         }];
+        yield 'preg_match_all, set order' => ['function' => 'preg_match_all', 'regex' => '/a(b)/', 'subject' => 'abab', 'arguments' => ['matches' => true, 'flags' => \PREG_SET_ORDER], 'native' => static function (): mixed {
+            preg_match_all('/a(b)/', 'abab', $matches, \PREG_SET_ORDER);
+
+            return $matches;
+        }];
+        yield 'preg_match_all, set order, no match' => ['function' => 'preg_match_all', 'regex' => '/a(b)/', 'subject' => 'x', 'arguments' => ['matches' => true, 'flags' => \PREG_SET_ORDER], 'native' => static function (): mixed {
+            preg_match_all('/a(b)/', 'x', $matches, \PREG_SET_ORDER);
+
+            return $matches;
+        }];
         yield 'preg_replace' => ['function' => 'preg_replace', 'regex' => '/a/', 'subject' => 'aba', 'arguments' => ['replacement' => '_', 'limit' => 1], 'native' => static fn (): mixed => preg_replace('/a/', '_', 'aba', 1)];
         yield 'preg_replace_callback' => ['function' => 'preg_replace_callback', 'regex' => '/(x)?a/', 'subject' => 'ba', 'arguments' => [], 'native' => static fn (): mixed => self::callbackSees('/(x)?a/', 'ba', -1)];
         yield 'preg_replace_callback, limited' => ['function' => 'preg_replace_callback', 'regex' => '/a/', 'subject' => 'aa', 'arguments' => ['limit' => 1], 'native' => static fn (): mixed => self::callbackSees('/a/', 'aa', 1)];

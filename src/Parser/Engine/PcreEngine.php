@@ -171,10 +171,11 @@ final class PcreEngine
                     case 'preg_match_all':
                         // preg_match() given the pattern and the subject alone
                         // retries an empty match where one passing $matches
-                        // does not (see test()): it is called as written.
+                        // does not (see test()): it is called as written. In
+                        // set order, no match leaves no group to count either.
                         $matches = [];
                         $found = match (true) {
-                            'preg_match_all' === $function => preg_match_all($prepared, $subject, $matches, $captures, $offset),
+                            'preg_match_all' === $function => preg_match_all($prepared, $subject, $matches, $captures | ($flags & \PREG_SET_ORDER), $offset),
                             [] === array_diff_key($arguments, ['matches' => false]) && !($arguments['matches'] ?? false) => preg_match($prepared, $subject),
                             default => preg_match($prepared, $subject, $matches, $captures, $offset),
                         };
