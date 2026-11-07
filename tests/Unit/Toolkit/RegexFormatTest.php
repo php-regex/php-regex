@@ -33,6 +33,22 @@ use PHPUnit\Framework\TestCase;
  */
 final class RegexFormatTest extends TestCase
 {
+    #[Test]
+    public function test_long_word_with_many_comments_has_bounded_output(): void
+    {
+        $long = str_repeat('a', 10_000);
+        $pattern = '/'.$long." # long\n".str_repeat("b # short\n", 2_000).'/x';
+        $regex = Regex::create(['cache' => null]);
+
+        $result = $regex->format($pattern);
+
+        $this->assertNull($result->refusal);
+        $this->assertLessThan(2 * \strlen($pattern), \strlen($result->pattern));
+        $this->assertStringContainsString($long."  # long\n", $result->pattern);
+        $this->assertSame(2_000, substr_count($result->pattern, 'b  # short'));
+        $this->assertSame($result->pattern, $regex->format($result->pattern)->pattern);
+    }
+
     private const URL = '#^(?<scheme>https?)://(?:(?<user>[^:@/]+)(?::(?<pass>[^@/]*))?@)?(?<host>\[[0-9a-f:.]+\]|[^:/?\#]+)(?::(?<port>\d+))?(?<path>/[^?\#]*)?(?:\?(?<query>[^\#]*))?(?:\#(?<fragment>.*))?$#i';
 
     private const URL_FORMATTED = <<<'REGEX'

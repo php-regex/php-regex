@@ -84,6 +84,13 @@ final class PatternLayout
     private const INDENT = '    ';
 
     /**
+     * Ignore oversized prefixes when aligning comments. Otherwise one long
+     * word can add its width in padding to every short line in the run.
+     * This bounds added padding to 122 spaces per line, independent of width.
+     */
+    private const MAX_COMMENT_ALIGN_COLUMNS = 120;
+
+    /**
      * Past this many indent levels the rest of a construct stays on one line:
      * a deep nest laid out one group per line would grow past the length the
      * parser reads back.
@@ -186,6 +193,7 @@ final class PatternLayout
     /**
      * The last pass over a laid-out pattern. Trailing comments on
      * consecutive lines line up on one column, the way gofmt aligns them.
+     * Prefixes wider than 120 columns use a two-space gap instead.
      * A line ending in an escaped space ends in "\x20" instead, which an
      * editor stripping trailing spaces leaves alone.
      *
@@ -206,12 +214,15 @@ final class PatternLayout
 
             $column = 0;
             for ($j = $i; $j < $count && str_contains($lines[$j], $trail); $j++) {
-                $column = max($column, self::columnsOf(explode($trail, $lines[$j], 2)[0], $countsCodePoints));
+                $columns = self::columnsOf(explode($trail, $lines[$j], 2)[0], $countsCodePoints);
+                if ($columns <= self::MAX_COMMENT_ALIGN_COLUMNS) {
+                    $column = max($column, $columns);
+                }
             }
 
             for ($k = $i; $k < $j; $k++) {
                 [$code, $comment] = explode($trail, $lines[$k], 2) + [1 => ''];
-                $lines[$k] = $code.str_repeat(' ', $column - self::columnsOf($code, $countsCodePoints) + 2).$comment;
+                $lines[$k] = $code.str_repeat(' ', max(0, $column - self::columnsOf($code, $countsCodePoints)) + 2).$comment;
             }
 
             $i = $j - 1;
