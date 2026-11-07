@@ -145,6 +145,29 @@ final class ServerInlineIgnoreTest extends TestCase
         $this->assertSame('The @regex-ignore marker names regex.lint.no.such.rule, which no issue reports on line 3. Remove the identifier.', $unmatched[1]['message'] ?? null);
     }
 
+    #[Test]
+    public function test_markers_keep_their_identity_across_lines_and_shared_occurrences(): void
+    {
+        $uri = $this->uri('src/Matcher.php');
+        $this->initialize();
+        $this->send($this->didOpen($uri, <<<'CODE'
+            <?php
+            // @regex-ignore
+            /* @regex-ignore-next-line regex.group.unclosed */
+            preg_match('/(a/', $s); preg_match('/(b/', $s); /* @regex-ignore regex.group.unclosed
+             * @regex-ignore regex.lint.no.such.rule */
+            preg_match('/(c/', $s); // @regex-ignore regex.group.unclosed
+            preg_match('/(d/', $s);
+            CODE));
+
+        $this->assertSame([
+            [1, 'regex.ignore.unmatched', 2],
+            [3, 'regex.ignore.unmatched', 2],
+            [4, 'regex.ignore.unmatched', 2],
+            [6, 'regex.group.unclosed', 1],
+        ], $this->diagnosed($uri));
+    }
+
     /**
      * "@regex-target" narrows the versions a pattern is judged for, as in
      * `regex lint`: under composer.json's "^8.2", "(?a)" (which PHP 8.2
