@@ -36,6 +36,10 @@ final class PcreEngine
      */
     private const FRESH_CACHE_KEY = "\v";
 
+    private const MAX_WHOLE_MATCHES = 10000;
+
+    private const MAX_WHOLE_MATCH_BYTES = 8 * 1024 * 1024;
+
     private const LIMITS_UNAVAILABLE = 'The PCRE limits could not be set: ini_set() is disabled';
 
     /**
@@ -115,7 +119,9 @@ final class PcreEngine
 
     /**
      * Every match of the whole pattern in the subject, in order; null when
-     * the engine refuses the pattern or gives up.
+     * the engine refuses the pattern or gives up. Collection is limited to
+     * 10,000 matches and 8 MiB of matched text; exceeding either returns null
+     * without a partial result. Captures are discarded after each match.
      *
      * @return list<string>|null
      */
@@ -125,7 +131,28 @@ final class PcreEngine
         $outcome = $this->run(
             $regex,
             static function (string $prepared) use ($subject, &$matches): int|false {
-                return preg_match_all($prepared, $subject, $matches);
+                $bytes = 0;
+                $exceeded = false;
+                // PHP handles empty-match retries and UTF/CRLF advancement
+                // as in preg_match_all(), without retaining a capture matrix.
+                $result = preg_replace_callback(
+                    $prepared,
+                    static function (array $groups) use (&$matches, &$bytes, &$exceeded): string {
+                        $bytes += \strlen($groups[0]);
+                        if (\count($matches) >= self::MAX_WHOLE_MATCHES || $bytes > self::MAX_WHOLE_MATCH_BYTES) {
+                            $exceeded = true;
+                        }
+                        if (!$exceeded) {
+                            $matches[] = $groups[0];
+                        }
+
+                        return '';
+                    },
+                    $subject,
+                    self::MAX_WHOLE_MATCHES + 1,
+                );
+
+                return null === $result || $exceeded ? false : \count($matches);
             },
             $limits,
         );
@@ -134,7 +161,7 @@ final class PcreEngine
             return null;
         }
 
-        return $matches[0];
+        return $matches;
     }
 
     /**
