@@ -80,6 +80,9 @@ final class ClassSetProvider
      */
     private const BLOCK_SIZE = 16384;
 
+    /** Remaining full Unicode scans in the current bounded operation. */
+    private static ?int $remainingScans = null;
+
     /**
      * The general categories caseless matching leaves as they are: all but
      * Lu, Ll and Lt, which it reads otherwise from PCRE2 10.45.
@@ -165,6 +168,48 @@ final class ClassSetProvider
      * Where the engine's answers are kept between processes, if anywhere.
      */
     private static ?ClassSetStore $store = null;
+
+    /**
+     * Allow at most 32 full Unicode scans across an operation, including
+     * derived sets (fewer than 36 million character positions in total).
+     * Cached answers and byte queries consume no scans. Exhaustion follows
+     * the same null refusal path as an engine resource limit, without caching
+     * that refusal. Restore the scope even when the operation throws.
+     *
+     * @template T
+     *
+     * @param callable(): T $operation
+     *
+     * @return T
+     */
+    public static function withScanLimit(callable $operation): mixed
+    {
+        $previous = self::$remainingScans;
+        self::$remainingScans ??= 32;
+
+        try {
+            return $operation();
+        } finally {
+            // Nested operations share the outer budget.
+            if (null === $previous) {
+                self::$remainingScans = null;
+            }
+        }
+    }
+
+    private static function allowUnicodeScan(): bool
+    {
+        if (null === self::$remainingScans) {
+            return true;
+        }
+        if (0 === self::$remainingScans) {
+            return false;
+        }
+
+        --self::$remainingScans;
+
+        return true;
+    }
 
     /**
      * Keep what the engine answers, its Unicode scans and its general
@@ -520,6 +565,10 @@ final class ClassSetProvider
      */
     private static function partition(array $names): array|false|null
     {
+        if (!self::allowUnicodeScan()) {
+            return null;
+        }
+
         // Captures, no backreference: the JIT may run it (see probe()), and
         // no start-up study.
         $pattern = '/'.(self::$jit ? '' : NoJit::VERB).self::NO_START_OPT.'(?:('.implode(')|(', array_map(static fn (string $name): string => '\\p{'.$name.'}++', $names)).'))/u';
@@ -816,6 +865,10 @@ final class ClassSetProvider
         $delimiter = self::delimiterFor($atom.$startVerbs);
         if (null === $delimiter) {
             return false;
+        }
+
+        if ($unicode && !self::allowUnicodeScan()) {
+            return null;
         }
 
         $pattern = self::probe($atom, $unicode, $modifiers, $global, $startVerbs, $delimiter);
