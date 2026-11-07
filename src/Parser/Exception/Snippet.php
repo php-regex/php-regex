@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Exception;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Text\Utf8;
 
 /**
@@ -95,6 +96,33 @@ final class Snippet
         $lineLabel = 'Line '.$lineNumber.': ';
 
         return $lineLabel.$excerpt."\n".str_repeat(' ', \strlen($lineLabel) + $caretOffset).'^';
+    }
+
+    /**
+     * Escape an existing diagnostic for a terminal, preserving its caret's
+     * column after control characters have been expanded to visible text.
+     */
+    public static function escapeForTerminal(string $snippet): string
+    {
+        if (1 !== LibraryPcre::match('/\\A(Line \\d+: )([^\\n]*)\\n( *)\\^\\z/', $snippet, $match)) {
+            return DisplayEscaper::escapeText($snippet);
+        }
+
+        [, $label, $excerpt, $indent] = $match;
+        $offset = max(0, \strlen($indent) - \strlen($label));
+        $before = '';
+        $columns = 0;
+        $characters = mb_check_encoding($excerpt, 'UTF-8') ? mb_str_split($excerpt, 1, 'UTF-8') : str_split($excerpt);
+        foreach ($characters as $character) {
+            if ($columns >= $offset) {
+                break;
+            }
+            $before .= $character;
+            $columns += mb_check_encoding($character, 'UTF-8') ? self::columns($character) : 1;
+        }
+        $width = self::columns(DisplayEscaper::escapeText($before)) + max(0, $offset - $columns);
+
+        return $label.DisplayEscaper::escapeText($excerpt)."\n".str_repeat(' ', \strlen($label) + $width).'^';
     }
 
     /**

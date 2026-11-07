@@ -55,6 +55,27 @@ final class AnsiPatternHighlightTest extends TestCase
         $this->assertSame($echoedWithoutColours, str_contains($written, self::PATTERN));
     }
 
+    #[Test]
+    public function test_validate_escapes_controls_before_styling_and_aligns_the_caret(): void
+    {
+        foreach ([false, true] as $terminal) {
+            foreach (["\e]52;c;YQ==\x07", "\r", "\t", "\u{202E}", "\x9B"] as $control) {
+                $pattern = '/a'.$control.'(/';
+                [$code, $written] = $this->runRegex(['validate', $pattern], $terminal);
+                $this->assertSame(1, $code);
+                $plain = (string) preg_replace('/\\x1B\\[[0-9;]*m/', '', $written);
+                $this->assertStringNotContainsString($control, $plain);
+                $this->assertSame(1, preg_match('/(Line 1: [^\\n]*)\\n( *)\\^/', $plain, $matches));
+                $this->assertSame(mb_strlen($matches[1]), strlen($matches[2]));
+
+                [$code, $written] = $this->runRegex(['validate', '/a'.$control.'/'], $terminal);
+                $this->assertSame(0, $code);
+                $plain = (string) preg_replace('/\\x1B\\[[0-9;]*m/', '', $written);
+                $this->assertStringNotContainsString($control, $plain);
+            }
+        }
+    }
+
     /**
      * Explain echoes the pattern beside its banner alone, which a run
      * without colours leaves out.

@@ -26,6 +26,16 @@ use PHPUnit\Framework\TestCase;
 final class SnippetTest extends TestCase
 {
     #[Test]
+    public function test_terminal_escaping_preserves_the_fault_column(): void
+    {
+        foreach (["a\e[2J", "界\t", "é\r", "a\u{202E}", "a\xFF", "\\d\t"] as $prefix) {
+            [$line, $caret] = explode("\n", Snippet::escapeForTerminal(Snippet::render($prefix.'Xafter', strlen($prefix))));
+            $this->assertSame(mb_strwidth(substr($line, 0, (int) strpos($line, 'X')), 'UTF-8'), strpos($caret, '^'));
+        }
+        $this->assertSame('raw\\n\\x1B', Snippet::escapeForTerminal("raw\n\e"));
+    }
+
+    #[Test]
     public function test_no_pattern_or_no_offset_draws_nothing(): void
     {
         $this->assertSame('', Snippet::render(null, 1));
