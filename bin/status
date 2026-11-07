@@ -142,11 +142,21 @@ esac
 echo
 echo "Packages"
 # What Packagist serves for one package on one channel: "<count><tab><latest>",
-# empty when Packagist does not answer at all — a package page that answers
-# 200 with no versions, and a dev version the stable page never lists, are
-# both read as what they are.
+# empty when it does not know the package (404), "unanswered" when it gives
+# no answer at all — a package page that answers 200 with no versions, and a
+# dev version the stable page never lists, are both read as what they are.
 packagist_channel() { # <package> <url>
-    curl -sf "$2" 2>/dev/null | php -r '$d = json_decode(stream_get_contents(STDIN), true) ?: [];
+    local page code
+    # curl writes the status it received even when the body then breaks off:
+    # only a transfer that completed is read.
+    page=$(curl -s -w '\n%{http_code}' "$2" 2>/dev/null) || { printf 'unanswered'; return 0; }
+    code=${page##*$'\n'}
+    case "$code" in
+        200) ;;
+        404) return 0 ;;
+        *) printf 'unanswered'; return 0 ;;
+    esac
+    printf '%s' "${page%$'\n'*}" | php -r '$d = json_decode(stream_get_contents(STDIN), true) ?: [];
         $versions = ($d["packages"] ?? [])[$argv[1]] ?? [];
         echo count($versions), "\t", $versions[0]["version"] ?? "";' "$1" 2>/dev/null
 }
@@ -168,7 +178,9 @@ for repository in $repositories; do
     dev=$(packagist_channel "php-regex/$repository" "https://repo.packagist.org/p2/php-regex/$repository~dev.json")
     stable_count=${stable%%$'\t'*}
     dev_count=${dev%%$'\t'*}
-    if [ -n "$stable$dev" ]; then
+    if [ "$stable" = unanswered ] || [ "$dev" = unanswered ]; then
+        packagist="· Packagist did not answer"
+    elif [ -n "$stable$dev" ]; then
         if [ "${stable_count:-0}" -gt 0 ] 2>/dev/null; then
             packagist="✓ Packagist ${stable#*$'\t'}"
             if [ "${dev_count:-0}" -gt 0 ] 2>/dev/null; then packagist="$packagist, ${dev#*$'\t'}"; fi

@@ -652,6 +652,86 @@ exit 1
     }
 
     #[Test]
+    public function test_status_reports_a_package_packagist_does_not_serve_as_missing(): void
+    {
+        $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+        $environment = $this->fakeGitHub();
+        // Packagist answers 404 for a package nobody submitted: the body,
+        // then the status curl writes after it.
+        file_put_contents($this->root.'/fake/curl', "#!/usr/bin/env bash\necho \"curl \$*\" >> \"\$CURL_LOG\"\nprintf '404 not found, no packages here\\n404'\n");
+
+        [, $output] = $this->runScript('status', [], $environment);
+
+        $this->assertMatchesRegularExpression('~^  php-regex/regex-infection .*✗ Packagist$~m', $output);
+        $this->assertStringNotContainsString('registered, no versions', $output);
+    }
+
+    #[Test]
+    public function test_status_reads_a_page_cut_off_after_its_status_as_no_answer(): void
+    {
+        $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+        $environment = $this->fakeGitHub();
+        // The status came, then the transfer broke: curl still writes 200,
+        // and exits 18 for the partial body.
+        file_put_contents($this->root.'/fake/curl', "#!/usr/bin/env bash\necho \"curl \$*\" >> \"\$CURL_LOG\"\nprintf '{\"packages\":{\"php-regex/regex-infection\":[\\n200'\nexit 18\n");
+
+        [, $output] = $this->runScript('status', [], $environment);
+
+        $this->assertMatchesRegularExpression('~^  php-regex/regex-infection .*· Packagist did not answer$~m', $output);
+        $this->assertStringNotContainsString('registered, no versions', $output);
+    }
+
+    #[Test]
+    public function test_status_tells_a_packagist_that_does_not_answer_from_a_missing_package(): void
+    {
+        $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+
+        // The stub fails every request, as curl does when it cannot connect.
+        [, $output] = $this->runScript('status', [], $this->fakeGitHub());
+
+        $this->assertMatchesRegularExpression('~^  php-regex/regex-infection .*· Packagist did not answer$~m', $output);
+        $this->assertDoesNotMatchRegularExpression('~^  php-regex/.*✗ Packagist~m', $output);
+    }
+
+    #[Test]
+    #[DataProvider('provideChannelsOneOfWhichDoesNotAnswer')]
+    public function test_status_tells_one_channel_that_does_not_answer_from_what_the_other_serves(string $stable, string $dev): void
+    {
+        $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+        $environment = $this->fakeGitHub();
+        $answers = [
+            'no answer' => 'exit 7',
+            '404' => "printf '404 not found, no packages here\\n404'",
+            '200' => "printf '{\"packages\":{\"php-regex/regex-infection\":[{\"version\":\"2.x-dev\"}]}}\\n200'",
+        ];
+        file_put_contents($this->root.'/fake/curl', <<<BASH
+            #!/usr/bin/env bash
+            echo "curl \$*" >> "\$CURL_LOG"
+            for url; do :; done
+            case "\$url" in
+                *'~dev.json') {$answers[$dev]} ;;
+                *) {$answers[$stable]} ;;
+            esac
+
+            BASH);
+
+        [, $output] = $this->runScript('status', [], $environment);
+
+        $this->assertMatchesRegularExpression('~^  php-regex/regex-infection .*· Packagist did not answer$~m', $output);
+    }
+
+    /**
+     * @return iterable<string, array{stable: string, dev: string}>
+     */
+    public static function provideChannelsOneOfWhichDoesNotAnswer(): iterable
+    {
+        yield 'stable unanswered, dev served' => ['stable' => 'no answer', 'dev' => '200'];
+        yield 'stable served, dev unanswered' => ['stable' => '200', 'dev' => 'no answer'];
+        yield 'stable unanswered, dev unknown' => ['stable' => 'no answer', 'dev' => '404'];
+        yield 'stable unknown, dev unanswered' => ['stable' => '404', 'dev' => 'no answer'];
+    }
+
+    #[Test]
     public function test_status_names_the_change_no_run_has_read(): void
     {
         $this->publishedWithRuns(['src/Other.php' => '<?php']);
