@@ -427,6 +427,36 @@ function isSafeRepo(string $repoPath, string $corpusDir): bool
     return str_starts_with($repoReal, $prefix) && is_dir($repoReal.'/.git');
 }
 
+/**
+ * Check existing destination components before mkdir or Git can follow them.
+ * Unlike isSafeRepo(), this also accepts directories not yet created.
+ */
+function isSafeRepoDestination(string $relPath, string $corpusDir): bool
+{
+    $root = realpath($corpusDir);
+    if (false === $root) {
+        return false;
+    }
+
+    $prefix = rtrim($root, \DIRECTORY_SEPARATOR).\DIRECTORY_SEPARATOR;
+    $path = $root;
+    foreach (explode('/', $relPath) as $segment) {
+        $path .= \DIRECTORY_SEPARATOR.$segment;
+        clearstatcache(true, $path);
+        if (!file_exists($path) && !is_link($path)) {
+            // All remaining components are missing too.
+            return true;
+        }
+
+        $resolved = realpath($path);
+        if (false === $resolved || !str_starts_with($resolved, $prefix) || !is_dir($resolved)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 function formatRepoLabel(string $repoPath, string $corpusDir): string
 {
     $repoReal = realpath($repoPath) ?: $repoPath;
@@ -849,6 +879,10 @@ function cloneRepo(string $relPath, array $entry, string $corpusDir, bool $debug
         'code' => $code,
         'log' => $log,
     ];
+
+    if (!isSafeRepoDestination($relPath, $corpusDir)) {
+        return $result('FAIL', 'Unsafe repository destination outside corpus or unresolved.', 'N/A', 1);
+    }
 
     if (is_dir($target.'/.git')) {
         return $result('SKIP', 'Already cloned.', 'N/A', 0);
@@ -2316,6 +2350,10 @@ function installRepo(string $relPath, array $entry, string $corpusDir, bool $for
     }
 
     $success = static fn (?string $change, string $head): array => $result('OK', '', $change, $head);
+
+    if (!isSafeRepoDestination($relPath, $corpusDir)) {
+        return $result('FAIL', 'Unsafe repository destination outside corpus or unresolved.', null, null, 1);
+    }
 
     if (!is_dir($repoPath.\DIRECTORY_SEPARATOR.'.git')) {
         if (!is_dir($repoPath) && !mkdir($repoPath, 0o777, true) && !is_dir($repoPath)) {
