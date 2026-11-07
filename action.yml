@@ -1,0 +1,74 @@
+name: PHPRegex Lint
+description: Lint the regex patterns of a PHP project with the PHPRegex phar, each finding an annotation on the pull request.
+author: Younes ENNAJI
+branding:
+  icon: check-square
+  color: orange
+
+# The phar of a release is downloaded with its checksum and run on the PHP
+# of the runner (8.1 or later; set one up before this action to choose it):
+# nothing is installed in the project, and no Composer is needed.
+#
+#   - uses: php-regex/php-regex@v2.0.0
+#     with:
+#       paths: src tests
+#       args: --redos --php-version=8.2
+
+inputs:
+  paths:
+    description: The files and directories to lint, separated by spaces; empty for those regex.json lists.
+    required: false
+    default: ''
+  args:
+    description: More options of regex lint, separated by spaces, as "--redos --php-version=8.2".
+    required: false
+    default: ''
+  version:
+    description: The release whose phar runs, as "2.0.0"; "latest" for the latest release.
+    required: false
+    default: latest
+  php:
+    description: The PHP binary that runs the phar.
+    required: false
+    default: php
+
+runs:
+  using: composite
+  steps:
+    # The checksum the release carries beside its phar is checked before
+    # the phar runs: a phar that does not match it is never run.
+    - name: Download the phar
+      id: download
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        PHP_BINARY: ${{ inputs.php }}
+        RELEASES: https://github.com/php-regex/php-regex/releases
+      run: |
+        if [ "$VERSION" = latest ]; then
+          url="$RELEASES/latest/download"
+        elif [[ "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-(BETA|RC)[0-9]+)?$ ]]; then
+          url="$RELEASES/download/v${VERSION#v}"
+        else
+          echo "\"$VERSION\" is not a release: use \"latest\" or a version, as \"2.0.0\"." >&2
+          exit 1
+        fi
+        dir="$RUNNER_TEMP/phpregex"
+        mkdir -p "$dir"
+        curl -fsSL --retry 3 "$url/regex.phar" -o "$dir/regex.phar"
+        curl -fsSL --retry 3 "$url/regex.phar.sha256" -o "$dir/regex.phar.sha256"
+        "$PHP_BINARY" -r '$expected = strtok((string) file_get_contents($argv[2]), " \n"); exit(is_string($expected) && hash_equals($expected, hash_file("sha256", $argv[1])) ? 0 : 1);' "$dir/regex.phar" "$dir/regex.phar.sha256" \
+          || { echo "regex.phar does not match the checksum of its release: it is not run." >&2; exit 1; }
+        echo "phar=$dir/regex.phar" >> "$GITHUB_OUTPUT"
+
+    - name: Lint the patterns
+      shell: bash
+      env:
+        PHAR: ${{ steps.download.outputs.phar }}
+        PATHS: ${{ inputs.paths }}
+        ARGS: ${{ inputs.args }}
+        PHP_BINARY: ${{ inputs.php }}
+      run: |
+        read -r -a paths <<< "$PATHS"
+        read -r -a args <<< "$ARGS"
+        "$PHP_BINARY" "$PHAR" lint --format=github --no-ansi "${args[@]}" "${paths[@]}"

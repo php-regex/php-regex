@@ -181,7 +181,7 @@ final class PullRequestScopeTest extends TestCase
         $block = self::pullRequestBlock('workflows.yml');
 
         $this->assertSame(
-            ['.github/workflows/**', '.github/actions/**', '.github/zizmor.yml', 'src/*/.github/**'],
+            ['.github/workflows/**', '.github/actions/**', '.github/zizmor.yml', 'src/*/.github/**', 'action.yml'],
             self::listUnder('paths', $block),
             'The checks read the workflows and the local actions: the community files under .github/ do not start them.',
         );

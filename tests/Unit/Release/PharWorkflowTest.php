@@ -52,6 +52,24 @@ final class PharWorkflowTest extends TestCase
         esac
         BASH;
 
+    /**
+     * A gpg that writes each call to gpg.log, with what it read on its
+     * standard input, signs a file as "signature of" its content, and
+     * verifies unless FAKE_GPG_VERIFY is "bad".
+     */
+    private const FAKE_GPG = <<<'BASH'
+        #!/usr/bin/env bash
+        case "$*" in
+            *--import*|*--passphrase-fd*) echo "$* < $(cat)" >> "$LOGS/gpg.log" ;;
+            *) echo "$*" >> "$LOGS/gpg.log" ;;
+        esac
+        [ -d "$GNUPGHOME" ] || { echo "GNUPGHOME $GNUPGHOME is missing" >&2; exit 2; }
+        case "$*" in
+            *--detach-sign*) printf 'signature of %s' "$(cat "${@: -1}")" > "${@: -2:1}" ;;
+            *--verify*) [ "$FAKE_GPG_VERIFY" != bad ] || exit 1 ;;
+        esac
+        BASH;
+
     private string $scratch = '';
 
     protected function tearDown(): void
@@ -93,7 +111,8 @@ final class PharWorkflowTest extends TestCase
         $workflow = self::workflow();
         $this->assertStringEndsWith('/regex.phar', SelfUpdater::UPDATE_URL);
         $this->assertStringEndsWith('/regex.phar.sha256', SelfUpdater::CHECKSUM_URL);
-        $this->assertStringContainsString('gh release upload "$TAG" bin/regex.phar bin/regex.phar.sha256 --clobber', $workflow);
+        $this->assertStringContainsString('assets=(bin/regex.phar bin/regex.phar.sha256)', $workflow);
+        $this->assertStringContainsString('gh release upload "$TAG" "${assets[@]}" --clobber', $workflow);
         $this->assertLessThan(
             strpos($workflow, 'gh release edit "$TAG" --draft=false'),
             strpos($workflow, 'gh release upload "$TAG"'),
@@ -308,26 +327,89 @@ final class PharWorkflowTest extends TestCase
     }
 
     /**
+     * Phive installs a phar it can check against the key that signed it.
+     * The release key is a secret of the repository: a release made while
+     * it is set carries regex.phar.asc, signed once the phar passed its
+     * checks and before anything is attached.
+     */
+    #[Test]
+    public function test_the_phar_is_signed_for_phive_with_the_release_key(): void
+    {
+        $workflow = self::workflow();
+
+        $this->assertStringContainsString("SIGN: \${{ secrets.PHAR_GPG_PRIVATE_KEY != '' }}", $workflow);
+        $this->assertMatchesRegularExpression("~- name: Sign the phar\n +if: env.PUBLISH == 'true' && env.SIGN == 'true'\n~", $workflow);
+        $this->assertLessThan(strpos($workflow, '- name: Sign the phar'), strpos($workflow, '- name: Check the phar'));
+        $this->assertLessThan(strpos($workflow, '- name: Attach to the release and publish it'), strpos($workflow, '- name: Sign the phar'));
+
+        [$code, $output] = $this->runStep('Sign the phar', ['GPG_PRIVATE_KEY' => 'the key', 'GPG_PASSPHRASE' => 'the passphrase']);
+
+        $this->assertSame(0, $code, $output);
+        $this->assertSame('signature of phar', file_get_contents($this->scratch.'/work/bin/regex.phar.asc'));
+        $this->assertSame([
+            '--batch --import < the key',
+            '--batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign --output bin/regex.phar.asc bin/regex.phar < the passphrase',
+            '--batch --verify bin/regex.phar.asc bin/regex.phar',
+        ], file($this->scratch.'/gpg.log', \FILE_IGNORE_NEW_LINES));
+        $this->assertDirectoryDoesNotExist($this->scratch.'/temp/gnupg', 'The imported key does not outlive the step.');
+    }
+
+    #[Test]
+    public function test_a_signature_that_does_not_verify_stops_the_release(): void
+    {
+        [$code] = $this->runStep('Sign the phar', ['GPG_PRIVATE_KEY' => 'the key', 'GPG_PASSPHRASE' => '', 'FAKE_GPG_VERIFY' => 'bad']);
+
+        $this->assertNotSame(0, $code);
+    }
+
+    /**
+     * @return iterable<string, array{signed: bool, attached: string}>
+     */
+    public static function provideSignatures(): iterable
+    {
+        yield 'signed' => ['signed' => true, 'attached' => 'release upload v2.0.1 bin/regex.phar bin/regex.phar.sha256 bin/regex.phar.asc --clobber'];
+        yield 'no release key' => ['signed' => false, 'attached' => 'release upload v2.0.1 bin/regex.phar bin/regex.phar.sha256 --clobber'];
+    }
+
+    #[Test]
+    #[DataProvider('provideSignatures')]
+    public function test_the_signature_is_attached_beside_the_phar_when_there_is_one(bool $signed, string $attached): void
+    {
+        [$code, $output] = $this->runStep('Attach to the release and publish it', ['TAG' => 'v2.0.1'], $signed ? ['bin/regex.phar.asc' => 'signature'] : []);
+
+        $this->assertSame(0, $code, $output);
+        $this->assertSame([$attached, 'release edit v2.0.1 --draft=false'], file($this->scratch.'/gh.log', \FILE_IGNORE_NEW_LINES));
+    }
+
+    /**
      * Runs the script of one step as GitHub runs it, in a scratch directory,
-     * with the fake php and a fake gh first on the PATH, and a file to hold
-     * what the step writes to GITHUB_OUTPUT.
+     * with the fake php, a fake gh and a fake gpg first on the PATH, and a
+     * file to hold what the step writes to GITHUB_OUTPUT. gh and gpg write
+     * the arguments of each call to gh.log and gpg.log.
      *
      * @param array<string, string> $env
+     * @param array<string, string> $files more files of the working directory, by path
      *
      * @return array{int, string}
      */
-    private function runStep(string $name, array $env): array
+    private function runStep(string $name, array $env, array $files = []): array
     {
         $this->scratch = sys_get_temp_dir().'/php-regex-phar-workflow-'.bin2hex(random_bytes(6));
         mkdir($this->scratch.'/fake', 0o777, true);
         mkdir($this->scratch.'/work/bin', 0o777, true);
         mkdir($this->scratch.'/temp');
         file_put_contents($this->scratch.'/work/bin/regex.phar', 'phar');
+        foreach ($files as $path => $content) {
+            file_put_contents($this->scratch.'/work/'.$path, $content);
+        }
+
         file_put_contents($this->scratch.'/output', '');
         file_put_contents($this->scratch.'/fake/php', self::FAKE_PHP);
-        file_put_contents($this->scratch.'/fake/gh', "#!/usr/bin/env bash\ncase \"\$FAKE_DRAFT\" in missing) echo 'release not found' >&2; exit 1 ;; *) echo \"\$FAKE_DRAFT\" ;; esac\n");
+        file_put_contents($this->scratch.'/fake/gh', "#!/usr/bin/env bash\necho \"\$*\" >> \"\$LOGS/gh.log\"\ncase \"\$FAKE_DRAFT\" in missing) echo 'release not found' >&2; exit 1 ;; *) echo \"\$FAKE_DRAFT\" ;; esac\n");
+        file_put_contents($this->scratch.'/fake/gpg', self::FAKE_GPG);
         chmod($this->scratch.'/fake/php', 0o755);
         chmod($this->scratch.'/fake/gh', 0o755);
+        chmod($this->scratch.'/fake/gpg', 0o755);
         file_put_contents($this->scratch.'/step.sh', self::step($name));
 
         $process = proc_open(
@@ -335,7 +417,7 @@ final class PharWorkflowTest extends TestCase
             [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
             $this->scratch.'/work',
-            $env + ['PATH' => $this->scratch.'/fake:'.getenv('PATH'), 'REAL_PHP' => \PHP_BINARY, 'RUNNER_TEMP' => $this->scratch.'/temp', 'GITHUB_OUTPUT' => $this->scratch.'/output', 'HOME' => (string) getenv('HOME')],
+            $env + ['PATH' => $this->scratch.'/fake:'.getenv('PATH'), 'LOGS' => $this->scratch, 'REAL_PHP' => \PHP_BINARY, 'RUNNER_TEMP' => $this->scratch.'/temp', 'GITHUB_OUTPUT' => $this->scratch.'/output', 'HOME' => (string) getenv('HOME')],
         );
         $this->assertIsResource($process);
         $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
