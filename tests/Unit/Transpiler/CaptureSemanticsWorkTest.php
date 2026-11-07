@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Transpiler;
 
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\JavaScript\CaptureSemantics;
 use PHPRegex\Transpiler\Transpiler;
@@ -23,12 +24,14 @@ use PHPUnit\Framework\TestCase;
 
 final class CaptureSemanticsWorkTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     #[DataProvider('provideSharedReferences')]
     public function test_shared_predecessors_complete(string $target, bool $empty): void
     {
         $body = $empty ? '()' : '(a)';
-        for ($number = 1; $number < 28; ++$number) {
+        for ($number = 1; $number < 28; $number++) {
             $reference = '\\g{'.$number.'}';
             $body .= '('.$reference.($empty ? '' : '|').$reference.')';
         }
@@ -59,6 +62,7 @@ final class CaptureSemanticsWorkTest extends TestCase
         $analysis = new CaptureSemantics();
         (new \ReflectionMethod($analysis, 'number'))->invoke($analysis, $ast->pattern);
         $groups = (new \ReflectionProperty($analysis, 'groups'))->getValue($analysis);
+        $this->assertIsArray($groups);
         $matchesEmpty = new \ReflectionMethod($analysis, 'matchesEmpty');
 
         // Group 2 provisionally reads empty while group 1 is active, but
@@ -76,7 +80,7 @@ final class CaptureSemanticsWorkTest extends TestCase
         (new \ReflectionProperty($analysis, 'emptinessSteps'))->setValue($analysis, $limit);
 
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('Capture emptiness analysis exceeded its work limit.');
+        $this->expectExceptionMessageIsOrContains('Capture emptiness analysis exceeded its work limit.');
         (new \ReflectionMethod($analysis, 'matchesEmpty'))->invoke($analysis, $ast->pattern);
     }
 }

@@ -400,7 +400,7 @@ final class CaptureSemantics
         }
 
         if (isset($this->reading[$number])) {
-            ++$this->cycles;
+            $this->cycles++;
 
             return true;
         }
