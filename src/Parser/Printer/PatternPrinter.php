@@ -2619,8 +2619,8 @@ final class PatternPrinter extends AbstractNodeVisitor
     /**
      * A mark the text does not hold, to stand in it for what can only be
      * written once the whole text is known: the first of $bytes the text
-     * does not hold, or else $mark, lengthened by $filler until the text
-     * holds no such text. $filler is not the first byte of $mark, so that
+     * does not hold, or else $mark followed by a fixed-width hexadecimal
+     * counter and $filler. $filler is not the first byte of $mark, so that
      * byte occurs nowhere else in the mark: no text before the mark can end
      * in a piece of it that the mark completes.
      *
@@ -2640,11 +2640,30 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $absent[0];
         }
 
-        while (str_contains($text, $mark)) {
-            $mark .= $filler;
+        if (!str_contains($text, $mark)) {
+            return $mark;
         }
 
-        return $mark;
+        // Index occupied candidates in one pass. Growing a run of filler
+        // lets source text choose the size copied at every bracket; repeated
+        // searches for numbered candidates would instead allow quadratic work.
+        $digits = 2 * PHP_INT_SIZE;
+        $length = \strlen($mark) + $digits + \strlen($filler);
+        $occupied = [];
+        $offset = 0;
+        while (false !== ($at = strpos($text, $mark, $offset))) {
+            $occupied[substr($text, $at, $length)] = true;
+            $offset = $at + \strlen($mark);
+        }
+
+        // There are fewer candidates in a PHP string than integers that can
+        // index it, so an unused counter is reached without overflowing.
+        $counter = 0;
+        do {
+            $candidate = $mark.str_pad(dechex($counter++), $digits, '0', \STR_PAD_LEFT).$filler;
+        } while (isset($occupied[$candidate]));
+
+        return $candidate;
     }
 
     /**
