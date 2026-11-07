@@ -76,7 +76,7 @@ final class CommandsWithoutIniGetTest extends TestCase
     {
         yield 'lint, console format' => ['args' => ['lint', 'patterns.php'], 'shown' => 'Duplicate alternation branch "a".'];
         yield 'lint, console format, one process' => ['args' => ['lint', 'patterns.php', '--jobs=1'], 'shown' => 'Duplicate alternation branch "a".'];
-        yield 'analyze' => ['args' => ['analyze', '/a+/'], 'shown' => "'a' (one or more times)"];
+        yield 'analyze' => ['args' => ['analyze', '/a+/'], 'shown' => "'a', one or more times"];
         yield 'debug' => ['args' => ['debug', '/a+/'], 'shown' => 'Heatmap'];
         yield 'redos' => ['args' => ['redos', '/a+/'], 'shown' => 'Final length'];
     }

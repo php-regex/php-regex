@@ -207,7 +207,7 @@ final class RegexTest extends TestCase
     public static function provideRegexForExplanation(): \Generator
     {
         yield 'simple literal' => ['/a/', "'a'"];
-        yield 'quantifier' => ['/a+/', "'a' (one or more times)"];
+        yield 'quantifier' => ['/a+/', "'a', one or more times"];
         yield 'character class' => ['/[a-z]/', "Character Class: any character in [ Range: from 'a' to 'z' ]"];
     }
 

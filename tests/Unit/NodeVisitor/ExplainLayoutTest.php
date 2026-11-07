@@ -45,7 +45,7 @@ final class ExplainLayoutTest extends TestCase
      */
     public static function provideWrittenConstructs(): iterable
     {
-        yield 'a character type' => ['pattern' => '/\d/', 'item' => '<li><span title="Character Type: A digit: [0-9]">Character Type: <strong>\d</strong> (A digit: [0-9])</span></li>'];
+        yield 'a character type' => ['pattern' => '/\d/', 'item' => '<li><span title="Character Type: A digit [0-9]">Character Type: <strong>\d</strong> (A digit [0-9])</span></li>'];
         yield 'an assertion' => ['pattern' => '/\b/', 'item' => '<li><span title="Assertion: a word boundary">Assertion: <strong>\b</strong> (a word boundary)</span></li>'];
         yield 'a non-word boundary' => ['pattern' => '/\B/', 'item' => 'Assertion: <strong>\B</strong> (a non-word boundary)'];
         yield 'a control character' => ['pattern' => '/\cA/', 'item' => 'Control Character: <strong>\cA</strong> (the character 0x01)'];
@@ -110,7 +110,7 @@ final class ExplainLayoutTest extends TestCase
 
         $this->assertSame("'\\xC3\\xA9'", (new LiteralNode('é', 0, 2))->accept($explainer));
         $this->assertSame('Anchor: the end of the subject, or just before a newline (\n) that ends it', (new AnchorNode('$', 0, 1))->accept($explainer));
-        $this->assertSame('Character Type: A digit: [0-9]', (new CharTypeNode('d', 0, 2))->accept($explainer));
+        $this->assertSame('Character Type: A digit [0-9]', (new CharTypeNode('d', 0, 2))->accept($explainer));
         $this->assertSame('Wildcard: any character but a newline (\n)', (new DotNode(0, 1))->accept($explainer));
     }
 }

@@ -75,7 +75,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $this->assertStringContainsString('Unicode Property: any character non-matching &quot;L&quot;', $output);
         $this->assertStringContainsString('Character with octal value 077', $output);
         // POSIX Class
-        $this->assertStringContainsString('POSIX Class: [[:alnum:]]', $output);
+        $this->assertStringContainsString('POSIX Class [[:alnum:]]', $output);
     }
 
     #[Test]
@@ -100,7 +100,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $output = $ast->accept($this->visitor);
 
         // This ensures the logic that wraps complex children in a new <ul>/<li> is hit
-        $this->assertStringContainsString('<li><strong>Quantified group (exactly 2 times):</strong>', $output);
+        $this->assertStringContainsString('<li><strong>Quantified group, exactly 2 times:</strong>', $output);
         $this->assertStringContainsString('<ul><li><strong>EITHER:</strong>', $output);
     }
 
@@ -113,7 +113,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $output = $ast->accept($this->visitor);
 
         // The count follows the literal in its item, and in its tooltip.
-        $this->assertStringContainsString('<li><span title="&#039;a&#039; (exactly 2 times)"><strong>&#039;a&#039;</strong></span> (exactly 2 times)</li>', $output);
+        $this->assertStringContainsString('<li><span title="&#039;a&#039;, exactly 2 times"><strong>&#039;a&#039;</strong></span>, exactly 2 times</li>', $output);
     }
 
     #[Test]

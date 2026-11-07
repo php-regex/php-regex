@@ -61,8 +61,8 @@ $ast = RegexParser::create()->parse('/[A-Z][a-z]+\d*/');
 echo $ast->accept(new TextExplainer());
 // Regex matches
 //   Character Class: any character in [ Range: from 'A' to 'Z' ]
-//   Character Class: any character in [ Range: from 'a' to 'z' ] (one or more times)
-//   Character Type: A digit: [0-9] (zero or more times)
+//   Character Class: any character in [ Range: from 'a' to 'z' ], one or more times
+//   Character Type: A digit [0-9], zero or more times
 ```
 
 A few readings moved across PCRE2 releases and locales: `\w` under `u` takes non-spacing marks from PCRE2 10.43,
@@ -78,7 +78,7 @@ $ast = RegexParser::create()->parse('/\w+/u');
 
 echo $ast->accept(new TextExplainer(new PcreTarget(80300, '10.42')));
 // Regex matches (with flags: u)
-//   Character Type: A word character: a Unicode letter (\p{L}) or number (\p{N}), or an underscore (one or more times)
+//   Character Type: A word character: a Unicode letter (\p{L}) or number (\p{N}), or an underscore, one or more times
 ```
 
 Print the AST itself as a tree:
@@ -122,7 +122,7 @@ use PHPRegex\Explain\HtmlExplainer;
 echo RegexParser::create()->parse('/\d{3}-\d{4}/')->accept(new HtmlExplainer());
 // <div class="regex-explain">
 // <strong>Regex matches:</strong>
-// <ul><li><span title="Character Type: A digit: [0-9] (exactly 3 times)">Character Type: <strong>\d</strong> (A digit: [0-9])</span> (exactly 3 times)</li>…
+// <ul><li><span title="Character Type: A digit [0-9], exactly 3 times">Character Type: <strong>\d</strong> (A digit [0-9])</span>, exactly 3 times</li>…
 // </ul>
 // </div>
 ```

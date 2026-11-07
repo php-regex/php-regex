@@ -678,7 +678,7 @@ plain language, the text the console prints. `--json` is short for
 ```json
 {
     "pattern": "/a+/",
-    "explanation": "Regex matches\n  'a' (one or more times)"
+    "explanation": "Regex matches\n  'a', one or more times"
 }
 ```
 

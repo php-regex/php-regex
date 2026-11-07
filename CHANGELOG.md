@@ -207,6 +207,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - The console commands name the author and ask for a GitHub star under `-v` only; `regex --help` lists the commands without every option.
 - Patterns are displayed so that they read back as the same pattern: control bytes and invalid UTF-8 as `\xHH`, non-ASCII characters kept.
 - Some messages are reworded: parse errors end with a period, `--php-version` errors name the option.
+- Explanations read one sentence per line: `Character Type: A digit [0-9], exactly 4 times`, where 1.x wrote `A digit: [0-9] (exactly 4 times)`, and `Quantified group, one or more times`.
 - Every exception lives in the `Exception` namespace of its package (`PHPRegex\Transpiler\Exception\TranspileException`, `PHPRegex\Generator\Exception\SampleGenerationException`, `PHPRegex\Linter\Exception\LintException`, `UnknownLintRuleException`, `UnsupportedTargetException`); `UnsupportedTargetException` and `PHPRegex\Parser\Exception\JsonEncodingException` are public. See [Breaking Changes](UPGRADE-2.0.md#every-exception-sits-in-the-exception-namespace-of-its-package).
 
 ### Removed
