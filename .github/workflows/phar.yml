@@ -144,10 +144,14 @@ jobs:
           assets=(bin/regex.phar bin/regex.phar.sha256)
           if [ -f bin/regex.phar.asc ]; then
             assets+=(bin/regex.phar.asc)
-          elif gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx regex.phar.asc; then
+          else
             # A signature an earlier run of the draft attached signed
-            # another build: an unsigned release keeps none.
-            gh release delete-asset "$TAG" regex.phar.asc --yes
+            # another build: an unsigned release keeps none, and a draft
+            # whose assets cannot be read is not published.
+            attached=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+            if grep -qx regex.phar.asc <<< "$attached"; then
+              gh release delete-asset "$TAG" regex.phar.asc --yes
+            fi
           fi
           gh release upload "$TAG" "${assets[@]}" --clobber
           gh release edit "$TAG" --draft=false

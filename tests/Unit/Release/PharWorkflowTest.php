@@ -397,6 +397,19 @@ final class PharWorkflowTest extends TestCase
     }
 
     /**
+     * The assets of the draft unread, a signature an earlier run attached
+     * may still be there: nothing is attached and nothing is published.
+     */
+    #[Test]
+    public function test_a_release_whose_assets_cannot_be_read_is_not_published(): void
+    {
+        [$code] = $this->runStep('Attach to the release and publish it', ['TAG' => 'v2.0.1', 'FAKE_ASSETS' => 'fail']);
+
+        $this->assertNotSame(0, $code);
+        $this->assertSame(['release view v2.0.1 --json assets --jq .assets[].name'], file($this->scratch.'/gh.log', \FILE_IGNORE_NEW_LINES));
+    }
+
+    /**
      * Runs the script of one step as GitHub runs it, in a scratch directory,
      * with the fake php, a fake gh and a fake gpg first on the PATH, and a
      * file to hold what the step writes to GITHUB_OUTPUT. gh and gpg write
@@ -420,7 +433,7 @@ final class PharWorkflowTest extends TestCase
 
         file_put_contents($this->scratch.'/output', '');
         file_put_contents($this->scratch.'/fake/php', self::FAKE_PHP);
-        file_put_contents($this->scratch.'/fake/gh', "#!/usr/bin/env bash\necho \"\$*\" >> \"\$LOGS/gh.log\"\ncase \"\$*\" in *'--json assets'*) printf '%s\\n' \$FAKE_ASSETS; exit 0 ;; esac\ncase \"\$FAKE_DRAFT\" in missing) echo 'release not found' >&2; exit 1 ;; *) echo \"\$FAKE_DRAFT\" ;; esac\n");
+        file_put_contents($this->scratch.'/fake/gh', "#!/usr/bin/env bash\necho \"\$*\" >> \"\$LOGS/gh.log\"\ncase \"\$*\" in *'--json assets'*) [ \"\$FAKE_ASSETS\" != fail ] || { echo 'HTTP 502' >&2; exit 1; }; printf '%s\\n' \$FAKE_ASSETS; exit 0 ;; esac\ncase \"\$FAKE_DRAFT\" in missing) echo 'release not found' >&2; exit 1 ;; *) echo \"\$FAKE_DRAFT\" ;; esac\n");
         file_put_contents($this->scratch.'/fake/gpg', self::FAKE_GPG);
         chmod($this->scratch.'/fake/php', 0o755);
         chmod($this->scratch.'/fake/gh', 0o755);
