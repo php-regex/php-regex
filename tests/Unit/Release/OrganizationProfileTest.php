@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * .github/organization is the php-regex/.github repository: the organization's profile and
  * the community files GitHub shows in every repository that has none of its
- * own, the eighteen read-only ones among them. bin/split pushes it to that
+ * own, the read-only splits among them. bin/split pushes it to that
  * repository's main branch.
  */
 #[Group('documentation')]
@@ -32,6 +32,7 @@ final class OrganizationProfileTest extends TestCase
      */
     private const COMMUNITY_FILES = [
         'CODE_OF_CONDUCT.md' => 'CODE_OF_CONDUCT.md',
+        'CONTRIBUTING.md' => 'CONTRIBUTING.md',
         'FUNDING.yml' => '.github/FUNDING.yml',
         'ISSUE_TEMPLATE/bug.yml' => '.github/ISSUE_TEMPLATE/bug.yml',
         'ISSUE_TEMPLATE/config.yml' => '.github/ISSUE_TEMPLATE/config.yml',
