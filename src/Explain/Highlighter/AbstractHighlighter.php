@@ -114,7 +114,7 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
             GroupType::BranchReset => $open.$this->wrap('?|', 'group').$child.$close,
             GroupType::ScanSubstring => $open
                 .$this->wrap('*', 'group')
-                .$this->wrap($node->name ?? 'scan_substring', 'keyword')
+                .$this->wrap($this->escape($node->name ?? 'scan_substring'), 'keyword')
                 .$this->wrap(':(', 'group')
                 .implode($this->wrap(',', 'group'), array_map($this->wrapReference(...), $node->scannedGroups))
                 .$this->wrap(')', 'group')

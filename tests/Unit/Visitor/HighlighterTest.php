@@ -15,7 +15,11 @@ namespace PHPRegex\Tests\Unit\Visitor;
 
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Explain\Highlighter\HtmlHighlighter;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -58,6 +62,32 @@ final class HighlighterTest extends TestCase
         $this->assertStringContainsString('&lt;', $highlighted);
         $this->assertStringContainsString('&gt;', $highlighted);
         $this->assertStringNotContainsString('<script>', $highlighted);
+    }
+
+    #[Test]
+    #[DataProvider('provideScanGroupNames')]
+    public function test_scan_group_name_is_escaped_for_html(?string $name, string $escaped): void
+    {
+        $node = new GroupNode(new LiteralNode('a', 0, 1), GroupType::ScanSubstring, $name);
+        $html = $node->accept(new HtmlHighlighter());
+
+        $this->assertStringContainsString('<span class="regex-token regex-meta regex-keyword">'.$escaped.'</span>', $html);
+        $this->assertSame('(*'.($name ?? 'scan_substring').':()a)', html_entity_decode(strip_tags($html), \ENT_QUOTES, 'UTF-8'));
+
+        $console = $node->accept(new ConsoleHighlighter());
+        $this->assertStringContainsString($name ?? 'scan_substring', $console);
+    }
+
+    /**
+     * @return iterable<string, array{name: ?string, escaped: string}>
+     */
+    public static function provideScanGroupNames(): iterable
+    {
+        yield 'HTML payload' => ['name' => '<img src=x onerror=alert(1)>', 'escaped' => '&lt;img src=x onerror=alert(1)&gt;'];
+        yield 'entities and quotes' => ['name' => '&lt;"\'&', 'escaped' => '&amp;lt;&quot;&#039;&amp;'];
+        yield 'short spelling' => ['name' => 'scs', 'escaped' => 'scs'];
+        yield 'long spelling' => ['name' => 'scan_substring', 'escaped' => 'scan_substring'];
+        yield 'default spelling' => ['name' => null, 'escaped' => 'scan_substring'];
     }
 
     /**
