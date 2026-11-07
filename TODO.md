@@ -19,21 +19,24 @@ In this order.
    `2.0.0-DEV` sample outputs of the docs report `2.0.0`. Read the diff,
    then commit it on its own branch. `bin/release` refuses a final version
    whose docs still install from the dev channel.
-3. **Before the tag**, check with `bin/status` that each of the seventeen
+3. **Before the tag**, check with `bin/status` that each of the nineteen
    split repositories carries a fresh 2.x head and a crawled dev version.
    The split pushes are not atomic: between the first and the last webhook
    after the tag, a `^2.0` resolution fails on missing siblings.
+   `php-regex/regex-infection` is not on Packagist yet: submit
+   `https://github.com/php-regex/regex-infection` and add its webhook
+   first, or `bin/status` keeps reporting it ✗.
 4. **Release candidate first.** The release path has never run on a real
    release (`v1.3.0` carries no checksum). `bin/release --dry-run
    2.0.0-RC1`, then `bin/release 2.0.0-RC1` (a GitHub pre-release): it
    drafts the release and pushes the tag; the phar workflow builds the
    phar, checks that its version is the tag's and that `regex.phar lsp`
    answers `initialize`, attests it, attaches it and its checksum, then
-   publishes the draft; the split workflow tags the seventeen packages.
+   publishes the draft; the split workflow tags the nineteen packages.
    Check both assets, `gh attestation verify regex.phar --repo
    php-regex/php-regex`, and the phar on PHP 8.1.
 5. **Tag 2.0.0** the same way. Then `bin/status` and Packagist show
-   `v2.0.0` for all seventeen packages (they require each other at
+   `v2.0.0` for all nineteen packages (they require each other at
    `self.version`: one missing tag leaves the others uninstallable), and the
    "Latest" release carries the 2.0 `regex.phar`, which `self-update` and
    `releases/latest` serve.
@@ -206,6 +209,13 @@ as `CallTypes::quote` does.
 
 ## Open questions
 
+- `regex-infection` requires `regex-generator` for one thing: the subjects
+  drawn when the automata find no kill string. On 400 literals they add one
+  to four points to the share of mutants that carry one
+  (`docs/guides/infection.md`, "Performance"). Keep the dependency for
+  those points, or drop the fallback and the `require` before the tag:
+  after it, dropping the fallback changes which mutants carry a hint, a
+  behavioural change for a minor.
 - The Psalm and PHPStan bridges require `regex-linter` whole, for the
   target resolution and the PHP-source helpers they import. Those need a
   home below it, a new split package or a lower one; dropping the
