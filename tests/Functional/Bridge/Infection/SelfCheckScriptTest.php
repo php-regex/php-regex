@@ -47,12 +47,14 @@ final class SelfCheckScriptTest extends TestCase
     {
         // A copy would write through the link, wherever it points. Windows
         // reads the target when it makes a link: it exists until the link
-        // does, then goes.
+        // does, then goes. file_exists() then answers false for the link
+        // on Linux and macOS, true on Windows.
         $project = self::project();
         file_put_contents($project.'/elsewhere.xml', '');
         $this->assertTrue(symlink($project.'/elsewhere.xml', $project.'/phpunit.xml.dist'));
         unlink($project.'/elsewhere.xml');
-        $this->assertFileDoesNotExist($project.'/phpunit.xml.dist');
+        $this->assertFileDoesNotExist($project.'/elsewhere.xml');
+        $this->assertTrue(is_link($project.'/phpunit.xml.dist'));
 
         try {
             [$status, $errors] = self::check($project);
