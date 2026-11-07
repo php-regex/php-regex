@@ -144,7 +144,9 @@ final class PcreEngine
      * the pattern.
      *
      * preg_match() and preg_match_all() answer the count, or the matches
-     * when the call passes $matches, shaped by the flags; preg_replace() the
+     * when the call passes $matches, shaped by the flags; preg_match() with
+     * no matches, flags nor offset is called with the pattern and the
+     * subject alone, as PHP then runs it otherwise; preg_replace() the
      * subject replaced; preg_replace_callback() what the callback receives
      * for each match and where that match stands; preg_split() the pieces.
      *
@@ -167,9 +169,15 @@ final class PcreEngine
                 switch ($function) {
                     case 'preg_match':
                     case 'preg_match_all':
-                        $found = 'preg_match' === $function
-                            ? preg_match($prepared, $subject, $matches, $captures, $offset)
-                            : preg_match_all($prepared, $subject, $matches, $captures, $offset);
+                        // preg_match() given the pattern and the subject alone
+                        // retries an empty match where one passing $matches
+                        // does not (see test()): it is called as written.
+                        $matches = [];
+                        $found = match (true) {
+                            'preg_match_all' === $function => preg_match_all($prepared, $subject, $matches, $captures, $offset),
+                            [] === array_diff_key($arguments, ['matches' => false]) && !($arguments['matches'] ?? false) => preg_match($prepared, $subject),
+                            default => preg_match($prepared, $subject, $matches, $captures, $offset),
+                        };
                         $answer = false === $found ? null : serialize(($arguments['matches'] ?? false) ? $matches : $found);
 
                         break;
