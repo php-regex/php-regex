@@ -197,18 +197,60 @@ final class PcreEngineDisabledIniTest extends TestCase
         $this->assertSame('123456', $result['returned']);
     }
 
+    #[Test]
+    public function test_a_refused_limit_stops_every_operation_and_restores_changed_settings(): void
+    {
+        foreach (['pcre.backtrack_limit', 'pcre.recursion_limit'] as $refused) {
+            $result = self::runWith('', <<<'PHP_WRAP'
+                $before = ini_get_all('pcre', false);
+                $engine = new \PHPRegex\Parser\Engine\PcreEngine();
+                $limits = new \PHPRegex\Parser\Engine\PcreLimits(10, 500);
+                $sentinel = static fn (): bool => true;
+                set_error_handler($sentinel);
+                $out = [];
+                foreach (['match', 'test', 'matchAll', 'answer'] as $method) {
+                    $answer = 'answer' === $method
+                        ? $engine->answer('preg_match', '/(a+)+$/', str_repeat('a', 12).'!', [], $limits)
+                        : $engine->{$method}('/(a+)+$/', str_repeat('a', 12).'!', $limits);
+                    $out[$method] = $answer instanceof \PHPRegex\Parser\Engine\PcreMatch
+                        ? [$answer->matched, $answer->groups, $answer->errorCode, $answer->error]
+                        : $answer;
+                }
+                $out['restored'] = $before === ini_get_all('pcre', false);
+                $out['handler'] = $sentinel === set_error_handler(static fn (): bool => true);
+                restore_error_handler();
+                restore_error_handler();
+                $out['calls'] = $GLOBALS['nativeCalls'] ?? 0;
+                return $out;
+                PHP_WRAP, 'namespace PHPRegex\\Parser\\Engine { function ini_set($key, $value) { return '
+                    .var_export($refused, true).' === $key ? false : \\ini_set($key, $value); } '
+                    .'function preg_match(...$args) { $GLOBALS["nativeCalls"] = ($GLOBALS["nativeCalls"] ?? 0) + 1; return \\preg_match(...$args); } '
+                    .'function preg_match_all(...$args) { $GLOBALS["nativeCalls"] = ($GLOBALS["nativeCalls"] ?? 0) + 1; return \\preg_match_all(...$args); } }');
+
+            foreach (['match', 'test'] as $method) {
+                $this->assertSame([null, [], \PREG_INTERNAL_ERROR], \array_slice($result[$method], 0, 3), $refused);
+                $this->assertStringContainsString('limits could not be set', $result[$method][3]);
+            }
+            $this->assertNull($result['matchAll']);
+            $this->assertNull($result['answer']);
+            $this->assertTrue($result['restored']);
+            $this->assertTrue($result['handler']);
+            $this->assertSame(0, $result['calls'], 'No native match runs after '.$refused.' is refused.');
+        }
+    }
+
     /**
      * Runs the code in a PHP process with the function disabled; the code
      * returns what it saw, printed back as JSON.
      *
      * @return array<array-key, mixed>
      */
-    private static function runWith(string $disabled, string $code): array
+    private static function runWith(string $disabled, string $code, string $prelude = ''): array
     {
-        $script = 'require '.var_export(\dirname(__DIR__, 3).'/vendor/autoload.php', true).';'
+        $script = $prelude.' namespace { require '.var_export(\dirname(__DIR__, 3).'/vendor/autoload.php', true).';'
             .'const NO_ROOM_BODY = '.var_export(self::NO_ROOM_BODY, true).';'
             .'$run = static function () { '.$code.' };'
-            .'echo json_encode($run(), JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);';
+            .'echo json_encode($run(), JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR); }';
 
         $process = proc_open(
             [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'disable_functions='.$disabled, '-r', $script],

@@ -24,7 +24,7 @@ use PHPRegex\Parser\Syntax\Delimiters;
  * after its opening delimiter. A warning the pattern raises is captured, not
  * silenced, and reported for the pattern as the caller wrote it. Limits asked
  * for are set for the call and the ini is left as it was found. Where ini_set()
- * is disabled, limits asked for are reported as not set, in the answer, and
+ * is disabled or refuses a limit, the call gets no answer, and
  * a pattern the verb finds no place in runs with the JIT as the caller left it.
  */
 final class PcreEngine
@@ -268,7 +268,7 @@ final class PcreEngine
      *
      * Each setting is put back from the value ini_set() returned when it was
      * changed, so a disabled ini_get() changes nothing. Where ini_set() is
-     * disabled, a call under limits gets no answer and an error saying so;
+     * disabled or refuses a limit, a call under limits gets no answer and an error saying so;
      * a pattern that needs the JIT off runs as it is, under the caller's
      * settings.
      *
@@ -329,6 +329,15 @@ final class PcreEngine
                 $previous = ini_set($key, $value);
                 if (false !== $previous) {
                     $saved[$key] = $previous;
+                } elseif (null !== $limits && 'pcre.jit' !== $key) {
+                    // A refused limit may leave a higher inherited budget.
+                    // Return inside the try so earlier changes are restored.
+                    return [
+                        'result' => false,
+                        'error' => null,
+                        'lastError' => \PREG_INTERNAL_ERROR,
+                        'lastErrorMessage' => 'The PCRE limits could not be set: ini_set() refused '.$key,
+                    ];
                 }
             }
 
