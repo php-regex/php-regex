@@ -14,6 +14,11 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -28,6 +33,26 @@ use PHPUnit\Framework\TestCase;
  */
 final class QuantifierAfterCommentTest extends TestCase
 {
+    #[Test]
+    public function test_many_trailing_comments_keep_their_order_and_positions(): void
+    {
+        $body = 'a';
+        $comments = [];
+        for ($index = 0; $index < 4096; $index++) {
+            $text = (string) $index;
+            $start = \strlen($body);
+            $body .= '(?#'.$text.')';
+            $comments[] = new CommentNode($text, $start, \strlen($body));
+        }
+
+        $sequence = Regex::create(['cache' => null])->parse('/'.$body.'+/')->pattern;
+
+        $this->assertInstanceOf(SequenceNode::class, $sequence);
+        $this->assertCount(4097, $sequence->children);
+        $this->assertEquals(new QuantifierNode(new LiteralNode('a', 0, 1), '+', QuantifierType::Greedy, 0, \strlen($body) + 1), $sequence->children[0]);
+        $this->assertEquals($comments, \array_slice($sequence->children, 1));
+    }
+
     #[Test]
     #[DataProvider('provideRejectedPatterns')]
     public function test_validate_rejects_a_quantifier_with_nothing_repeatable_before_the_comment(string $pattern): void
