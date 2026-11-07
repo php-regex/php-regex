@@ -93,6 +93,7 @@ final class CallReplayTest extends TestCase
         // preg_grep() keeps an element without retrying an empty match, as
         // preg_match() given $matches runs.
         yield 'grep, no retry of an empty match' => ['code' => "preg_grep('/(?:|(?:a+)+\$)/', \$list)", 'original' => '/(?:|(?:a+)+$)/', 'mutant' => '/x/', 'subject' => str_repeat('a', 17).'!', 'differs' => true];
+        yield 'grep, from the first byte' => ['code' => "preg_grep('/a/', \$list)", 'original' => '/a/', 'mutant' => '/b/', 'subject' => 'ab', 'differs' => false];
         yield 'grep, both keep it' => ['code' => "preg_grep('/a/', \$list)", 'original' => '/a/', 'mutant' => '/a|b/', 'subject' => 'a', 'differs' => false];
     }
 

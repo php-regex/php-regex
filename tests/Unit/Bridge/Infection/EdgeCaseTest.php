@@ -332,6 +332,17 @@ final class EdgeCaseTest extends TestCase
     }
 
     #[Test]
+    public function test_a_kill_string_too_long_for_a_hint_spends_nothing(): void
+    {
+        // From 200 bytes in, no kill string fits a hint: the units a search
+        // among sampled subjects would take still prove /^a+?|b+b*/ alike.
+        $call = PatternCall::fromNode(MutatorHarness::call("preg_match('/^a+|b+b*/', \$s, \$m, 0, 200)") ?? throw new \LogicException());
+        $this->assertInstanceOf(PatternCall::class, $call);
+
+        $this->assertNotContains('/^a+?|b+b*/', (new MutationPipeline(Family::Quantifier, 28))->mutants($call));
+    }
+
+    #[Test]
     public function test_a_budget_is_spent_once_its_last_unit_is(): void
     {
         $exact = new Budget(1);
