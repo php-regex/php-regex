@@ -173,7 +173,9 @@ final class TargetMarkers
         }
 
         $ranges = [];
+        /** @var array<int, int> $ends the last line of the statement each token starts */
         $ends = [];
+        /** @var array<int, int|null> $after the token after each closing one */
         $after = [];
         $next = null;
         $lastLine = null;
