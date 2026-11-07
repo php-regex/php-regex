@@ -1374,6 +1374,16 @@ final class CaptureShapeAnalyzerTest extends TestCase
         // preg_match('/(a{2,3}?)/', 'aaa') -> ['aa', 'aa'] (PHP 8.4.26).
         yield 'lazy bounded repeat' => ['pattern' => '/(a{2,3}?)/', 'group' => 1, 'values' => ['aa', 'aaa']];
         yield 'possessive bounded repeat' => ['pattern' => '/((?:ab){0,2}+)/', 'group' => 1, 'values' => ['', 'ab', 'abab']];
+        // Finite-value enumeration is bounded by bytes as well as count.
+        yield 'value at the byte limit' => ['pattern' => '/((?:(?:a{32}){32}){4})/', 'group' => 1, 'values' => [str_repeat('a', 4096)]];
+        yield 'nested repeats with gigabyte expansion' => ['pattern' => '/((?:(?:(?:(?:(?:a{32}){32}){32}){32}){32}){32})/', 'group' => 1, 'values' => null];
+        yield 'nested repeat past the byte limit' => ['pattern' => '/((?:(?:a{32}){32}){5})/', 'group' => 1, 'values' => null];
+        yield 'sequence past the byte limit' => ['pattern' => '/((?:(?:a{32}){32}){4}b)/', 'group' => 1, 'values' => null];
+        yield 'literal past the byte limit' => ['pattern' => '/('.str_repeat('a', 4097).')/', 'group' => 1, 'values' => null];
+        yield 'values at the aggregate byte limit' => ['pattern' => '/([a-p]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3})/', 'group' => 1, 'values' => array_map(static fn (string $letter): string => $letter.str_repeat('a', 4095), range('a', 'p'))];
+        yield 'product past the aggregate byte limit' => ['pattern' => '/([a-q]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3})/', 'group' => 1, 'values' => null];
+        yield 'union past the aggregate byte limit' => ['pattern' => '/([a-p]a{31}(?:a{32}){31}(?:(?:a{32}){32}){3}|b(?:(?:b{32}){32}){3})/', 'group' => 1, 'values' => null];
+        yield 'unicode limit counts bytes' => ['pattern' => '/((?:(?:é{32}){32}){3})/u', 'group' => 1, 'values' => null];
         yield 'exact repeat past four' => ['pattern' => '/(a{5})/', 'group' => 1, 'values' => ['aaaaa']];
         yield 'bounded repeat of an empty body' => ['pattern' => '/((?:){2,1000})/', 'group' => 1, 'values' => ['']];
         yield 'bounded repeat past the limit' => ['pattern' => '/(a{1,33})/', 'group' => 1, 'values' => null];

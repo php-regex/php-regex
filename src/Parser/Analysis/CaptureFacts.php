@@ -63,6 +63,13 @@ final class CaptureFacts
     public const MAX_VALUES = 32;
 
     /**
+     * Bound literal expansion independently of pattern size and nesting.
+     */
+    private const MAX_VALUE_BYTES = 4096;
+
+    private const MAX_TOTAL_VALUE_BYTES = 65536;
+
+    /**
      * \D, \W, \s, \h, \v and \R never match "0".
      */
     private const ZERO_FREE_TYPES = ['D', 'W', 's', 'h', 'v', 'R'];
@@ -274,7 +281,7 @@ final class CaptureFacts
     private function values(NodeInterface $node, bool $scan = false): ?array
     {
         return match (true) {
-            $node instanceof LiteralNode => $this->folds($node->value, $this->readsCaselessly($node)) ? null : [$node->value],
+            $node instanceof LiteralNode => \strlen($node->value) > self::MAX_VALUE_BYTES || $this->folds($node->value, $this->readsCaselessly($node)) ? null : [$node->value],
             $node instanceof CharLiteralNode => $this->character($node->codePoint, $this->readsCaselessly($node)),
             $node instanceof SequenceNode => $this->product(array_map(fn (NodeInterface $child): ?array => $this->values($child, $scan), $node->children)),
             $node instanceof AlternationNode => $this->alternationValues($node, $scan),
@@ -661,8 +668,18 @@ final class CaptureFacts
             }
 
             $next = [];
+            $bytes = 0;
             foreach ($strings as $prefix) {
                 foreach ($part as $suffix) {
+                    // Check before allocating, including intermediate products
+                    // of nested repeats. Count duplicate candidates too so the
+                    // temporary array is bounded before deduplication.
+                    $length = \strlen($prefix) + \strlen($suffix);
+                    if ($length > self::MAX_VALUE_BYTES || $length > self::MAX_TOTAL_VALUE_BYTES - $bytes) {
+                        return null;
+                    }
+
+                    $bytes += $length;
                     $next[] = $prefix.$suffix;
                 }
             }
@@ -684,17 +701,28 @@ final class CaptureFacts
     private function union(array $parts): ?array
     {
         $strings = [];
+        $bytes = 0;
         foreach ($parts as $part) {
             if (null === $part) {
                 return null;
             }
 
-            $strings = [...$strings, ...$part];
+            foreach ($part as $value) {
+                if (\in_array($value, $strings, true)) {
+                    continue;
+                }
+
+                $length = \strlen($value);
+                if (\count($strings) >= self::MAX_VALUES || $length > self::MAX_VALUE_BYTES || $length > self::MAX_TOTAL_VALUE_BYTES - $bytes) {
+                    return null;
+                }
+
+                $bytes += $length;
+                $strings[] = $value;
+            }
         }
 
-        $strings = array_values(array_unique($strings));
-
-        return \count($strings) > self::MAX_VALUES ? null : $strings;
+        return $strings;
     }
 
     /**
