@@ -1135,22 +1135,34 @@ final class AlphaAssertionBodyTest extends TestCase
 
     /**
      * Each class read alone looks at the options the pattern opens with:
-     * the run is read once, not again for every class. Measured when it
-     * was, 1 000 then 4 000 "(*UTF)" before as many classes and a stray
-     * parenthesis took 1.1 s then 15 s on PHP 8.4.
+     * the run is neither read nor copied again for every class, whether it
+     * turns UTF on or not. Measured when it was read again, 1 000 then
+     * 4 000 "(*UTF)" before as many classes and a stray parenthesis took
+     * 1.1 s then 15 s on PHP 8.4; when it was copied, 4 000 then 16 000
+     * "(*UCP)" took 1.2 s then 12 s.
      */
     #[Test]
-    public function test_validate_reads_the_opening_options_once_for_many_classes(): void
+    #[DataProvider('provideOpeningOptions')]
+    public function test_validate_reads_the_opening_options_once_for_many_classes(string $option): void
     {
-        $this->assertFalse(EngineProbe::compiles('/(*UTF)[a])/'), 'Oracle: the stray parenthesis is refused.');
+        $this->assertFalse(EngineProbe::compiles('/'.$option.'[a])/'), 'Oracle: the stray parenthesis is refused.');
 
         $this->assertLinearTime(
-            static function (int $size): void {
-                Regex::create(['cache' => null, 'max_pattern_length' => 1_000_000])->validate('/'.str_repeat('(*UTF)', $size).str_repeat('[a]', $size).')/');
+            static function (int $size) use ($option): void {
+                Regex::create(['cache' => null, 'max_pattern_length' => 1_000_000])->validate('/'.str_repeat($option, $size).str_repeat('[a]', $size).')/');
             },
-            1_000,
-            '(*UTF) then [a]',
+            2_000,
+            $option.' then [a]',
         );
+    }
+
+    /**
+     * @return iterable<string, array{option: string}>
+     */
+    public static function provideOpeningOptions(): iterable
+    {
+        yield 'UTF on' => ['option' => '(*UTF)'];
+        yield 'UTF left off' => ['option' => '(*UCP)'];
     }
 
     /**
