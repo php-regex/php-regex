@@ -67,6 +67,44 @@ final class LintCommandReportBytesTest extends TestCase
         rmdir($this->directory);
     }
 
+    #[Test]
+    #[DataProvider('provideConfigFailureFormats')]
+    public function test_config_keys_cannot_control_the_terminal_or_start_log_commands(string $format, bool $ansi): void
+    {
+        $key = "bad\x1B[2J\r\n::error::injected\t\u{202E}";
+        file_put_contents('regex.json', json_encode([$key => true], \JSON_THROW_ON_ERROR));
+        file_put_contents('regex.dist.json', '{"anotherUnknownKey": true}');
+
+        [$exitCode, $stdout, $stderr] = $this->lint(['--format='.$format], $ansi);
+
+        $this->assertSame(2, $exitCode);
+        if ('json' === $format) {
+            $this->assertSame('', $stderr);
+            $document = json_decode($stdout, true, 512, \JSON_THROW_ON_ERROR);
+            $this->assertSame('config', $document['stage']);
+            $this->assertStringContainsString($key, $document['error']);
+
+            return;
+        }
+
+        $this->assertSame('', $stdout);
+        $this->assertSame(1, substr_count($stderr, "\n"));
+        $this->assertStringContainsString('bad\\x1B[2J\\x0D\\x0A::error::injected\\x09\\x{202E}', $stderr);
+        $this->assertStringContainsString('anotherUnknownKey', $stderr);
+        $this->assertSame(0, preg_match('/[\x00-\x1F\x7F]/', rtrim($stderr, "\n")));
+    }
+
+    /**
+     * @return iterable<string, array{format: string, ansi: bool}>
+     */
+    public static function provideConfigFailureFormats(): iterable
+    {
+        yield from self::provideReadableFormats();
+        yield 'json' => ['format' => 'json', 'ansi' => false];
+        yield 'checkstyle' => ['format' => 'checkstyle', 'ansi' => false];
+        yield 'junit' => ['format' => 'junit', 'ansi' => false];
+    }
+
     /**
      * The pattern does not compile (an unclosed group), and the message
      * suggests another delimiter around its text: that text is spelled as

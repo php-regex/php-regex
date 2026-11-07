@@ -33,6 +33,7 @@ use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\Formatter\ReportSpelling;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintRunner;
@@ -549,7 +550,9 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         if ($json) {
             $output->writeDocument((new JsonFormatter())->formatError($message, $stage));
         } else {
-            $output->writeError('Error: '.$message."\n");
+            // Failures can quote project-controlled keys or paths. Keep them
+            // on one line so their bytes cannot drive the terminal or log.
+            $output->writeError('Error: '.ReportSpelling::displayField($message)."\n");
         }
 
         return $exitCode;
