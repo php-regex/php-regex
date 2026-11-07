@@ -17,6 +17,7 @@ use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\LanguageServer\Document\RegexFinder;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\Parser\Text\Path;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\TestUtils\FileUri;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\Test;
@@ -64,6 +65,10 @@ final class RegexFinderConstantsTest extends TestCase
     #[Test]
     public function test_each_argument_naming_a_pattern_of_another_file_is_found_as_written(): void
     {
+        foreach (['/(a/', '/(b/', '/(c/'] as $pattern) {
+            $this->assertFalse(EngineProbe::compiles($pattern), 'Oracle: PCRE refuses '.$pattern.'.');
+        }
+
         $content = <<<'CODE'
             <?php
             use App\Support\Patterns;
