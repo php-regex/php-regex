@@ -328,7 +328,7 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
         if (null === $node->identifier) {
             $label = 'Callout (?C)';
         } elseif ($node->isStringIdentifier) {
-            $label = 'Callout (?C="'.$node->identifier.'")';
+            $label = 'Callout (?C="'.DisplayEscaper::escapeText((string) $node->identifier).'")';
         } else {
             $label = 'Callout (?C'.$node->identifier.')';
         }

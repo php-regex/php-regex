@@ -21,6 +21,19 @@ use PHPUnit\Framework\TestCase;
 final class AsciiTreeRendererTest extends TestCase
 {
     #[Test]
+    public function test_callout_controls_are_escaped_before_rendering(): void
+    {
+        $pattern = "/(?C\"é\x1B[2J\r\n\t\x07\x7F\u{009B}\u{202E}\\path\")/u";
+        $this->assertSame(1, preg_match($pattern, ''));
+        $ast = Regex::create()->parse($pattern);
+
+        $this->assertSame(
+            "Regex (flags: u)\n".'\\-- Callout (?C="é\\x1B[2J\\r\\n\\t\\x07\\x7F\\x{9B}\\x{202E}\\\\path")',
+            $ast->accept(new AsciiTreeRenderer()),
+        );
+    }
+
+    #[Test]
     public function test_diagram_renders_basic_tree(): void
     {
         $ast = Regex::create()->parse('/^a+$/');
