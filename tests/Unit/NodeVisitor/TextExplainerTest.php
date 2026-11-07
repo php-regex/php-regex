@@ -39,6 +39,44 @@ use PHPUnit\Framework\TestCase;
 
 final class TextExplainerTest extends TestCase
 {
+    #[Test]
+    public function test_a_valid_pattern_cannot_amplify_text_past_the_output_limit(): void
+    {
+        $pattern = '/'.str_repeat('(?:', 200).str_repeat('\\d?', 2500).str_repeat(')', 200).'/';
+        $this->assertSame(1, preg_match($pattern, ''));
+        $regex = Regex::create();
+        $this->assertTrue($regex->validate($pattern)->isValid);
+
+        $this->expectException(\LengthException::class);
+        $this->expectExceptionMessage('output limit');
+        $regex->explain($pattern);
+    }
+
+    #[Test]
+    public function test_the_output_limit_counts_separators_and_indentation(): void
+    {
+        $visitor = new TextExplainer();
+        // Count the group headings, quotes, newlines and indentation too.
+        $node = new GroupNode(new LiteralNode(str_repeat('a', 1_048_546), 0, 1), GroupType::Capturing, null, null, 0, 1);
+        $output = $node->accept($visitor);
+        $this->assertSame(1_048_576, \strlen($output));
+
+        $this->expectException(\LengthException::class);
+        (new GroupNode(new LiteralNode(str_repeat('a', 1_048_547), 0, 1), GroupType::Capturing, null, null, 0, 1))->accept($visitor);
+    }
+
+    #[Test]
+    public function test_a_visitor_can_be_reused_after_exceeding_the_output_limit(): void
+    {
+        $visitor = new TextExplainer();
+        try {
+            (new LiteralNode(str_repeat('a', 1_048_576), 0, 1))->accept($visitor);
+            $this->fail('An oversized explanation must be refused.');
+        } catch (\LengthException) {
+            $this->assertSame("'a'", (new LiteralNode('a', 0, 1))->accept($visitor));
+        }
+    }
+
     /**
      * One sentence per line: a type names its characters with no colon
      * before them, and the count follows as a clause, not in brackets.

@@ -20,6 +20,9 @@ use PHPRegex\Parser\PcreTarget;
  * Generates a human-readable explanation of the regex: one line per
  * construct, what a group or a branch holds indented under it.
  *
+ * Text output is limited to 1 MiB, including indentation. Oversized
+ * explanations throw a \LengthException.
+ *
  * @extends AbstractNodeVisitor<string>
  */
 final class TextExplainer extends AbstractNodeVisitor
@@ -36,94 +39,92 @@ final class TextExplainer extends AbstractNodeVisitor
      */
     public function __construct(private readonly ?PcreTarget $target = null) {}
 
-    private function render(Explanation $explanation, int $level = 0): string
+    /** Maximum bytes returned, including indentation and line separators. */
+    private const MAX_OUTPUT_BYTES = 1_048_576;
+
+    private function render(Explanation $explanation): string
     {
-        $indent = str_repeat('  ', $level);
+        $output = '';
+        $this->writeExplanation($explanation, 0, $output);
+
+        return $output;
+    }
+
+    /** Write each line once; enclosing constructs never copy their subtrees. */
+    private function writeExplanation(Explanation $explanation, int $level, string &$output): void
+    {
         $children = $explanation->children;
+        switch ($explanation->kind) {
+            case ExplanationKind::Pattern:
+                $this->line($explanation->text, 0, $output);
+                $this->writeExplanation($children[0], 1, $output);
+                break;
 
-        $lines = match ($explanation->kind) {
-            // The pattern stands at the top, and holds one piece, as a block does.
-            ExplanationKind::Pattern => [$explanation->text, $this->render($children[0], 1)],
-            ExplanationKind::Sequence => $this->each($children, $level),
-            ExplanationKind::Alternation => $this->branches($children, $level),
-            ExplanationKind::Block => [$indent.$explanation->text, $this->render($children[0], $level + 1), $indent.$explanation->end],
-            ExplanationKind::Repetition => $this->repetition($explanation, $level),
-            ExplanationKind::Conditional => $this->conditional($children, $level),
-            ExplanationKind::Leaf => [$indent.$explanation->inline()],
-        };
+            case ExplanationKind::Sequence:
+                foreach ($children as $child) {
+                    $this->writeExplanation($child, $level, $output);
+                }
+                break;
 
-        return implode("\n", array_filter($lines, static fn (string $line): bool => '' !== $line));
+            case ExplanationKind::Alternation:
+                foreach ($children as $index => $branch) {
+                    $this->line(0 === $index ? 'EITHER' : 'OR', $level, $output);
+                    $this->writeExplanation($branch, $level + 1, $output);
+                }
+                break;
+
+            case ExplanationKind::Block:
+                $this->line($explanation->text, $level, $output);
+                $this->writeExplanation($children[0], $level + 1, $output);
+                $this->line($explanation->end, $level, $output);
+                break;
+
+            case ExplanationKind::Repetition:
+                if (ExplanationKind::Leaf === $children[0]->kind) {
+                    $this->line($children[0]->inline().', '.$explanation->text, $level, $output);
+                    break;
+                }
+                $this->line('Quantified group, '.$explanation->text, $level, $output);
+                $this->writeExplanation($children[0], $level + 1, $output);
+                $this->line($explanation->end, $level, $output);
+                break;
+
+            case ExplanationKind::Conditional:
+                [$condition, $yes] = $children;
+                if (ExplanationKind::Leaf === $condition->kind) {
+                    $this->line('IF ('.$condition->inline().') THEN', $level, $output);
+                } else {
+                    $this->line('IF', $level, $output);
+                    $this->writeExplanation($condition, $level + 1, $output);
+                    $this->line('THEN', $level, $output);
+                }
+                $this->writeExplanation($yes, $level + 1, $output);
+                if (isset($children[2])) {
+                    $this->line('ELSE', $level, $output);
+                    $this->writeExplanation($children[2], $level + 1, $output);
+                }
+                break;
+
+            case ExplanationKind::Leaf:
+                $this->line($explanation->inline(), $level, $output);
+                break;
+        }
     }
 
-    /**
-     * @param list<Explanation> $explanations
-     *
-     * @return list<string>
-     */
-    private function each(array $explanations, int $level): array
+    private function line(string $text, int $level, string &$output): void
     {
-        return array_map(fn (Explanation $explanation): string => $this->render($explanation, $level), $explanations);
-    }
-
-    /**
-     * @param list<Explanation> $branches
-     *
-     * @return list<string>
-     */
-    private function branches(array $branches, int $level): array
-    {
-        $lines = [];
-        foreach ($branches as $index => $branch) {
-            $lines[] = str_repeat('  ', $level).(0 === $index ? 'EITHER' : 'OR');
-            $lines[] = $this->render($branch, $level + 1);
+        // Match the renderer's omission of empty lines, including empty trees.
+        if ('' === $text && 0 === $level) {
+            return;
         }
 
-        return $lines;
-    }
-
-    /**
-     * A construct on one line takes the count after it, as a clause;
-     * anything longer is a block.
-     *
-     * @return list<string>
-     */
-    private function repetition(Explanation $repetition, int $level): array
-    {
-        $indent = str_repeat('  ', $level);
-        $repeated = $repetition->children[0];
-        if (ExplanationKind::Leaf === $repeated->kind) {
-            return [\sprintf('%s%s, %s', $indent, $repeated->inline(), $repetition->text)];
+        $separator = '' === $output ? '' : "\n";
+        $remaining = self::MAX_OUTPUT_BYTES - \strlen($output) - \strlen($separator) - \strlen($text);
+        // Check indentation before allocating it, even for directly supplied ASTs.
+        if ($remaining < 0 || $level > intdiv($remaining, 2)) {
+            throw new \LengthException('Text explanation exceeds the 1048576-byte output limit.');
         }
 
-        return [
-            \sprintf('%sQuantified group, %s', $indent, $repetition->text),
-            $this->render($repeated, $level + 1),
-            $indent.$repetition->end,
-        ];
-    }
-
-    /**
-     * A condition on one line stands in the line of the IF; a lookaround
-     * is a block under it.
-     *
-     * @param list<Explanation> $children
-     *
-     * @return list<string>
-     */
-    private function conditional(array $children, int $level): array
-    {
-        $indent = str_repeat('  ', $level);
-        [$condition, $yes] = $children;
-        $lines = ExplanationKind::Leaf === $condition->kind
-            ? [\sprintf('%sIF (%s) THEN', $indent, $condition->inline())]
-            : [$indent.'IF', $this->render($condition, $level + 1), $indent.'THEN'];
-        $lines[] = $this->render($yes, $level + 1);
-
-        if (isset($children[2])) {
-            $lines[] = $indent.'ELSE';
-            $lines[] = $this->render($children[2], $level + 1);
-        }
-
-        return $lines;
+        $output .= $separator.str_repeat('  ', $level).$text;
     }
 }
