@@ -137,6 +137,69 @@ final class PcreEngine
         return $matches[0];
     }
 
+    /**
+     * What a preg_*() call answers for the pattern and the subject, run as
+     * every call of the engine runs, serialized so that two answers of the
+     * same call compare as strings; null when the engine gives up or refuses
+     * the pattern.
+     *
+     * preg_match() and preg_match_all() answer the count, or the matches
+     * when the call passes $matches, shaped by the flags; preg_replace() the
+     * subject replaced; preg_replace_callback() what the callback receives
+     * for each match and where that match stands; preg_split() the pieces.
+     *
+     * @internal the replay of a mutated call compares what the user's call answers for two patterns
+     *
+     * @param 'preg_match'|'preg_match_all'|'preg_replace'|'preg_replace_callback'|'preg_split'   $function
+     * @param array{matches?: bool, flags?: int, offset?: int, limit?: int, replacement?: string} $arguments
+     */
+    public function answer(string $function, string $regex, string $subject, array $arguments = [], ?PcreLimits $limits = null): ?string
+    {
+        $flags = $arguments['flags'] ?? 0;
+        $offset = $arguments['offset'] ?? 0;
+        $limit = $arguments['limit'] ?? -1;
+        $captures = (0 !== ($flags & \PREG_OFFSET_CAPTURE) ? \PREG_OFFSET_CAPTURE : 0) | (0 !== ($flags & \PREG_UNMATCHED_AS_NULL) ? \PREG_UNMATCHED_AS_NULL : 0);
+        $answer = null;
+
+        $this->run(
+            $regex,
+            static function (string $prepared) use ($function, $subject, $arguments, $captures, $flags, $offset, $limit, &$answer): int|false {
+                switch ($function) {
+                    case 'preg_match':
+                    case 'preg_match_all':
+                        $found = 'preg_match' === $function
+                            ? preg_match($prepared, $subject, $matches, $captures, $offset)
+                            : preg_match_all($prepared, $subject, $matches, $captures, $offset);
+                        $answer = false === $found ? null : serialize(($arguments['matches'] ?? false) ? $matches : $found);
+
+                        break;
+                    case 'preg_replace':
+                        $replaced = preg_replace($prepared, $arguments['replacement'] ?? '', $subject, $limit);
+                        $answer = null === $replaced ? null : serialize($replaced);
+
+                        break;
+                    case 'preg_replace_callback':
+                        // The callback receives each match under the call's
+                        // flags; where it stands moves what it replaces.
+                        $answer = false === preg_match_all($prepared, $subject, $matches, \PREG_SET_ORDER | $captures)
+                            || false === preg_match_all($prepared, $subject, $spans, \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE)
+                            ? null
+                            : serialize(\array_slice(array_map(static fn (array $match, array $span): array => [$match, $span[0][1]], $matches, $spans), 0, $limit < 0 ? null : $limit));
+
+                        break;
+                    default:
+                        $pieces = preg_split($prepared, $subject, $limit, (0 !== ($flags & \PREG_SPLIT_NO_EMPTY) ? \PREG_SPLIT_NO_EMPTY : 0) | (0 !== ($flags & \PREG_SPLIT_DELIM_CAPTURE) ? \PREG_SPLIT_DELIM_CAPTURE : 0));
+                        $answer = false === $pieces ? null : serialize($pieces);
+                }
+
+                return null === $answer ? false : 0;
+            },
+            $limits,
+        );
+
+        return $answer;
+    }
+
     private function withVerb(string $pattern): ?string
     {
         $prepared = NoJit::pattern($pattern);
