@@ -19,6 +19,7 @@ use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Tests\Support\Newlines;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\Console\Output\BufferedOutput;
 
 /**
  * The security warning of "regex:explain" names the verdict as every other
@@ -26,6 +27,41 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class ExplainCommandRedosTest extends LaravelTestCase
 {
+    #[Test]
+    #[DataProvider('provideHtmlPatterns')]
+    public function test_html_output_encodes_pattern_derived_text(string $pattern, int $status): void
+    {
+        foreach ([false, true] as $decorated) {
+            foreach ([false, true] as $highlight) {
+                $output = new BufferedOutput(decorated: $decorated);
+                $this->assertSame($status, Artisan::call('regex:explain', [
+                    'pattern' => $pattern,
+                    '--format' => 'html',
+                    '--highlight' => $highlight,
+                ], $output));
+                $html = $output->fetch();
+
+                $this->assertStringNotContainsString('<img', $html);
+                $this->assertStringContainsString('&lt;img', $html);
+                if (0 === $status) {
+                    $this->assertStringContainsString(htmlspecialchars($pattern, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'), $html);
+                    $this->assertStringContainsString('<div class="regex-explain">', $html);
+                    $this->assertStringContainsString('Sample Match:', $html);
+                }
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function provideHtmlPatterns(): iterable
+    {
+        yield 'literal and sample' => ['#<img src=x onerror=alert`1`>&"#', 0];
+        yield 'optimization and security warning' => ['#(<img src=x onerror=alert`1`>)(a+)+$#', 0];
+        yield 'invalid pattern diagnostic' => ['#<img src=x onerror=alert`1`>[#', 1];
+    }
+
     #[Test]
     public function test_explain_prints_the_pattern_and_the_vulnerable_part_literally(): void
     {
