@@ -527,13 +527,8 @@ if (ErrorCode::LookbehindUnbounded === $result->errorCode) {
 Each value reads `regex.<area>.<problem>`. The one value without a problem segment is
 `regex.complexity`, raised when an analysis runs out of its work budget.
 
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:ebd40fcc4d8e6d0b3cbdfa8b80c6eb2861434930bef9733d27653b1256601555 -->
-
 | Code | Case | Meaning |
 |------|------|---------|
-| `regex.rendering.output_too_large` | `RenderingOutputTooLarge` | The expanded explanation exceeds the rendering output budget. |
 | `regex.assertion.invalid` | `AssertionInvalid` | An escape written as an assertion is not one PCRE knows. |
 | `regex.backref.invalid_syntax` | `BackrefInvalidSyntax` | A backreference is not written in a form PCRE reads. |
 | `regex.backref.missing_group` | `BackrefMissingGroup` | A backreference points to a group number the pattern does not have. |
@@ -622,6 +617,7 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.range.invalid_end` | `RangeInvalidEnd` | A range in a character class ends on more than one character. |
 | `regex.range.invalid_start` | `RangeInvalidStart` | A range in a character class starts on more than one character. |
 | `regex.range.reversed` | `RangeReversed` | A range in a character class runs from a higher code point to a lower one. |
+| `regex.rendering.output_too_large` | `RenderingOutputTooLarge` | The expanded explanation exceeds the rendering output budget. |
 | `regex.scan_substring.missing_list` | `ScanSubstringMissingList` | A scan substring assertion has no "(" to open its group list. |
 | `regex.subroutine.invalid_syntax` | `SubroutineInvalidSyntax` | A subroutine call is not written in a form PCRE reads. |
 | `regex.subroutine.missing_group` | `SubroutineMissingGroup` | A subroutine call points to a group number the pattern does not have. |
@@ -646,8 +642,6 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.verb.turkish_casing_without_utf` | `VerbTurkishCasingWithoutUtf` | "(*TURKISH_CASING)" is used without UTF mode. |
 | `regex.verb.unclosed` | `VerbUnclosed` | A verb such as "(*MARK:name" is not closed by ")". |
 
-
-<!-- /coderabbit-ai-generated:v1 -->
 The delimiter follows PHP: it must not be alphanumeric, a backslash or a NUL byte, and the
 leading whitespace before it (space, tab, newline, carriage return, vertical tab, form feed)
 is skipped, as PHP does. `"\f/a/"` is the pattern `a`; `"\0/a/"` is refused with

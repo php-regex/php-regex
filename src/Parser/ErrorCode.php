@@ -21,11 +21,6 @@ namespace PHPRegex\Parser;
 enum ErrorCode: string
 {
     /**
-     * The expanded explanation exceeds the rendering output budget.
-     */
-    case RenderingOutputTooLarge = 'regex.rendering.output_too_large';
-
-    /**
      * An escape written as an assertion is not one PCRE knows.
      */
     case AssertionInvalid = 'regex.assertion.invalid';
@@ -464,6 +459,11 @@ enum ErrorCode: string
      * A range in a character class runs from a higher code point to a lower one.
      */
     case RangeReversed = 'regex.range.reversed';
+
+    /**
+     * The expanded explanation exceeds the rendering output budget.
+     */
+    case RenderingOutputTooLarge = 'regex.rendering.output_too_large';
 
     /**
      * A scan substring assertion has no "(" to open its group list.

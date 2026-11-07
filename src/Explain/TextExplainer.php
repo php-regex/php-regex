@@ -63,31 +63,37 @@ final class TextExplainer extends AbstractNodeVisitor
             case ExplanationKind::Pattern:
                 yield [$explanation->text, 0];
                 yield from $this->renderLines($children[0], 1);
+
                 break;
             case ExplanationKind::Sequence:
                 foreach ($children as $child) {
                     yield from $this->renderLines($child, $level);
                 }
+
                 break;
             case ExplanationKind::Alternation:
                 foreach ($children as $index => $branch) {
                     yield [0 === $index ? 'EITHER' : 'OR', $level];
                     yield from $this->renderLines($branch, $level + 1);
                 }
+
                 break;
             case ExplanationKind::Block:
                 yield [$explanation->text, $level];
                 yield from $this->renderLines($children[0], $level + 1);
                 yield [$explanation->end, $level];
+
                 break;
             case ExplanationKind::Repetition:
                 if (ExplanationKind::Leaf === $children[0]->kind) {
                     yield [$children[0]->inline().', '.$explanation->text, $level];
+
                     break;
                 }
                 yield ['Quantified group, '.$explanation->text, $level];
                 yield from $this->renderLines($children[0], $level + 1);
                 yield [$explanation->end, $level];
+
                 break;
             case ExplanationKind::Conditional:
                 if (ExplanationKind::Leaf === $children[0]->kind) {
@@ -102,9 +108,11 @@ final class TextExplainer extends AbstractNodeVisitor
                     yield ['ELSE', $level];
                     yield from $this->renderLines($children[2], $level + 1);
                 }
+
                 break;
-            case ExplanationKind::Leaf:
+            default: // ExplanationKind::Leaf
                 yield [$explanation->inline(), $level];
+
                 break;
         }
     }

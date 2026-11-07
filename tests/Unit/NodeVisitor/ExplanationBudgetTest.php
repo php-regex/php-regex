@@ -14,8 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Explain\AsciiTreeRenderer;
-use PHPRegex\Explain\TextExplainer;
 use PHPRegex\Explain\RenderingBudget;
+use PHPRegex\Explain\TextExplainer;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\RegexParser;
@@ -42,13 +42,14 @@ final class ExplanationBudgetTest extends TestCase
         $small = $parser->parse('/a/');
         foreach ([new AsciiTreeRenderer(), new TextExplainer()] as $visitor) {
             $expected = $small->accept($visitor);
+
             try {
                 $large->accept($visitor);
-                self::fail('Expected a rendering resource limit.');
+                $this->fail('Expected a rendering resource limit.');
             } catch (ResourceLimitException $exception) {
-                self::assertSame(ErrorCode::RenderingOutputTooLarge, $exception->errorCode);
+                $this->assertSame(ErrorCode::RenderingOutputTooLarge, $exception->errorCode);
             }
-            self::assertSame($expected, $small->accept($visitor));
+            $this->assertSame($expected, $small->accept($visitor));
         }
     }
 }
