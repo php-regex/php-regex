@@ -150,14 +150,16 @@ final class Modernizer extends AbstractNodeVisitor
     #[\Override]
     public function visitGroup(GroupNode $node): NodeInterface
     {
-        // Unwrap redundant non-capturing groups: (?:expr) -> expr if not quantified
-        // Assume safe for non-capturing groups without name or flags
-        if (GroupType::NonCapturing === $node->type && null === $node->name && null === $node->flags) {
-            return $node->child->accept($this);
+        $child = $node->child->accept($this);
+
+        // Alternations need their group to keep surrounding sequence items
+        // (including anchors) bound to every alternative when printed.
+        if (GroupType::NonCapturing === $node->type && null === $node->name && null === $node->flags && !$child instanceof AlternationNode) {
+            return $child;
         }
 
         return new GroupNode(
-            $node->child->accept($this),
+            $child,
             $node->type,
             $node->name,
             $node->flags,

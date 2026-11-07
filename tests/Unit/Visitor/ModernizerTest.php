@@ -188,6 +188,34 @@ final class ModernizerTest extends TestCase
         yield 'negated' => ['pattern' => '/[^\t\n\x0B\f\r ]/', 'shorthand' => false];
     }
 
+    #[Test]
+    #[DataProvider('provideGroupedAlternations')]
+    public function test_preserves_grouped_alternation_behavior(string $pattern, string $accepted, string $rejected): void
+    {
+        $modernized = $this->modernize($pattern);
+
+        $this->assertSame(1, preg_match($pattern, $accepted));
+        $this->assertSame(0, preg_match($pattern, $rejected));
+        foreach ([$accepted, $rejected] as $subject) {
+            $this->assertSame(preg_match($pattern, $subject, $original), preg_match($modernized, $subject, $rewritten));
+            $this->assertSame($original, $rewritten);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string}>
+     */
+    public static function provideGroupedAlternations(): iterable
+    {
+        yield 'anchored validation' => ['/^(?:admin|user)$/', 'admin', 'admin-evil'];
+        yield 'absolute anchors' => ['/\\A(?:admin|user)\\z/', 'user', 'evil-user'];
+        yield 'nested groups' => ['/^(?:(?:admin|user))$/', 'user', 'evil-user'];
+        yield 'sequence prefix and suffix' => ['/^pre(?:foo|bar)post$/', 'prebarpost', 'prefoo'];
+        yield 'empty alternative' => ['/^(?:admin|)$/', '', 'admin-evil'];
+        yield 'quantified alternative' => ['/^(?:ab|cd)+$/', 'abcd', 'ab-evil'];
+        yield 'modernized children' => ['/^(?:[0-9]|user)$/', '1', '1-evil'];
+    }
+
     private function assertMatchesOriginalBehavior(string $original, string $modernized): void
     {
         // Simple test: both should match or not match the same test strings
