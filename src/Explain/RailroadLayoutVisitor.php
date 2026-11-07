@@ -573,21 +573,11 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
             $offsetY = $baselineY - (int) $layout['entryY'];
 
             $offsetLayout = $this->offsetLayout($layout, $x, $offsetY);
-            foreach ($offsetLayout['nodes'] as $node) {
-                $nodes[] = $node;
-            }
-            foreach ($offsetLayout['paths'] as $path) {
-                $paths[] = $path;
-            }
-            foreach ($offsetLayout['texts'] as $text) {
-                $texts[] = $text;
-            }
-            foreach ($offsetLayout['boxes'] as $box) {
-                $boxes[] = $box;
-            }
-            foreach ($offsetLayout['markers'] as $marker) {
-                $markers[] = $marker;
-            }
+            array_push($nodes, ...$offsetLayout['nodes']);
+            array_push($paths, ...$offsetLayout['paths']);
+            array_push($texts, ...$offsetLayout['texts']);
+            array_push($boxes, ...$offsetLayout['boxes']);
+            array_push($markers, ...$offsetLayout['markers']);
 
             if (null !== $prevLayout) {
                 $currEntryXAbs = $x + (int) $layout['entryX'];
@@ -654,21 +644,11 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         $bottomY = null;
         foreach ($layouts as $layout) {
             $offsetLayout = $this->offsetLayout($layout, self::BRANCH_GAP, $y);
-            foreach ($offsetLayout['nodes'] as $node) {
-                $nodes[] = $node;
-            }
-            foreach ($offsetLayout['paths'] as $path) {
-                $paths[] = $path;
-            }
-            foreach ($offsetLayout['texts'] as $text) {
-                $texts[] = $text;
-            }
-            foreach ($offsetLayout['boxes'] as $box) {
-                $boxes[] = $box;
-            }
-            foreach ($offsetLayout['markers'] as $marker) {
-                $markers[] = $marker;
-            }
+            array_push($nodes, ...$offsetLayout['nodes']);
+            array_push($paths, ...$offsetLayout['paths']);
+            array_push($texts, ...$offsetLayout['texts']);
+            array_push($boxes, ...$offsetLayout['boxes']);
+            array_push($markers, ...$offsetLayout['markers']);
 
             $centerY = $y + (int) $layout['entryY'];
             $topY ??= $centerY;

@@ -96,12 +96,12 @@ final class RailroadLayoutTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{bool}>
+     * @return iterable<string, array{alternation: bool}>
      */
     public static function provideWideLayouts(): iterable
     {
-        yield 'sequence' => [false];
-        yield 'alternation' => [true];
+        yield 'sequence' => ['alternation' => false];
+        yield 'alternation' => ['alternation' => true];
     }
 
     /**
