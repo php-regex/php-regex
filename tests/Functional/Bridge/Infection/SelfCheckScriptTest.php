@@ -58,6 +58,8 @@ final class SelfCheckScriptTest extends TestCase
 
         try {
             [$status, $errors] = self::check($project);
+            // What the script left, not what this process saw before it.
+            clearstatcache();
 
             $this->assertSame(2, $status, $errors);
             $this->assertStringContainsString('phpunit.xml.dist', $errors);
