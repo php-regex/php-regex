@@ -349,11 +349,11 @@ final class MutatorBehaviourTest extends TestCase
         $this->assertSame(['v0!0'], array_map(static fn (string $pattern): ?string => MutatorHarness::split($pattern)[1], MutatorHarness::patterns(new RegexEscape(), "preg_match('/^v\\d+\\.\\d+\$/', \$s)")));
         // A printable byte stays as found, a space as well.
         $spaced = MutatorHarness::patterns(new RegexAnchor(), "preg_match('/^[ -~]x\\d\$/', \$s)");
-        $this->assertSame(['! x0', ' x0!', " x0\n"], array_map(static fn (string $pattern): ?string => MutatorHarness::split($pattern)[1], $spaced));
         foreach ($spaced as $pattern) {
             [$mutant, $kill] = MutatorHarness::split($pattern);
             $this->assertNotSame(preg_match('/^[ -~]x\d$/', (string) $kill), preg_match($mutant, (string) $kill), $mutant);
         }
+        $this->assertSame(['! x0', ' x0!', " x0\n"], array_map(static fn (string $pattern): ?string => MutatorHarness::split($pattern)[1], $spaced));
         // A newline that tells $ from \z stays.
         $this->assertContains("0\n", array_map(static fn (string $pattern): ?string => MutatorHarness::split($pattern)[1], MutatorHarness::patterns(new RegexAnchor(), "preg_match('/^\\d+\$/', \$s)")));
     }
