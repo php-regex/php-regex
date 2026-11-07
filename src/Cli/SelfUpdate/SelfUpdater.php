@@ -45,12 +45,17 @@ final class SelfUpdater
         $checksum = $this->parseChecksum($this->fetchRemoteString(self::CHECKSUM_URL));
 
         $tempPath = $this->createTempFile();
-        $this->downloader->download(self::UPDATE_URL, $tempPath);
+        try {
+            $this->downloader->download(self::UPDATE_URL, $tempPath);
 
-        $this->verifyChecksum($tempPath, $checksum);
-        $this->validateDownloadedPhar($tempPath);
+            $this->verifyChecksum($tempPath, $checksum);
+            $this->validateDownloadedPhar($tempPath);
 
-        $this->replacePhar($pharPath, $tempPath);
+            $this->replacePhar($pharPath, $tempPath);
+        } finally {
+            @unlink($tempPath);
+            @rmdir(\dirname($tempPath));
+        }
 
         $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->success('PHPRegex updated successfully.')."\n");
     }
@@ -72,14 +77,32 @@ final class SelfUpdater
 
     private function createTempFile(): string
     {
-        $tempBase = tempnam(sys_get_temp_dir(), 'regex-phar-');
-        if (false === $tempBase) {
+        // Other accounts must not be able to supply or mutate the inode that
+        // is verified and later installed, even after its mode is restored.
+        $directory = sys_get_temp_dir().'/regex-phar-'.bin2hex(random_bytes(16));
+        if (!@mkdir($directory, 0o700)) {
+            throw new CliException('Unable to create a private temporary directory.');
+        }
+
+        $tempBase = tempnam($directory, 'release-');
+        if (false === $tempBase || \dirname($tempBase) !== $directory) {
+            if (false !== $tempBase) {
+                @unlink($tempBase);
+            }
+            @rmdir($directory);
+
             throw new CliException('Unable to create a temporary file.');
         }
 
-        @unlink($tempBase);
+        $tempPath = $tempBase.'.phar';
+        if (!@\rename($tempBase, $tempPath)) {
+            @unlink($tempBase);
+            @rmdir($directory);
 
-        return $tempBase.'.phar';
+            throw new CliException('Unable to prepare the temporary phar.');
+        }
+
+        return $tempPath;
     }
 
     private function verifyChecksum(string $tempPath, string $expectedChecksum): void

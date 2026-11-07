@@ -458,6 +458,79 @@ final class SelfUpdaterTest extends TestCase
     }
 
     #[Test]
+    public function test_staging_file_is_reserved_in_a_private_directory(): void
+    {
+        $method = new \ReflectionMethod(SelfUpdater::class, 'createTempFile');
+        $path = $method->invoke(new SelfUpdater());
+
+        try {
+            $this->assertFileExists($path);
+            $this->assertSame('phar', pathinfo($path, PATHINFO_EXTENSION));
+            $this->assertNotSame(sys_get_temp_dir(), \dirname($path));
+            $this->assertSame(0o700, fileperms(\dirname($path)) & 0o777);
+            $this->assertSame(fileowner(\dirname($path)), fileowner($path));
+        } finally {
+            @unlink($path);
+            if (sys_get_temp_dir() !== \dirname($path)) {
+                @rmdir(\dirname($path));
+            }
+        }
+    }
+
+    #[Test]
+    public function test_staging_rejects_tempnam_fallback_outside_private_directory(): void
+    {
+        $fallback = tempnam(sys_get_temp_dir(), 'regex-fallback-');
+        $this->assertNotFalse($fallback);
+        SelfUpdateFunctionOverrides::queueTempnam($fallback);
+        $method = new \ReflectionMethod(SelfUpdater::class, 'createTempFile');
+
+        try {
+            $method->invoke(new SelfUpdater());
+            $this->fail('A staging file outside the private directory was accepted.');
+        } catch (CliException $e) {
+            $this->assertSame('Unable to create a temporary file.', $e->getMessage());
+            $this->assertFileDoesNotExist($fallback);
+        } finally {
+            @unlink($fallback);
+            @unlink($fallback.'.phar');
+        }
+    }
+
+    #[Test]
+    public function test_run_cleans_private_staging_after_download_failure(): void
+    {
+        $pharPath = $this->copyTemplatePhar();
+        $downloader = new class implements \PHPRegex\Cli\SelfUpdate\Downloader {
+            public ?string $stagingPath = null;
+
+            public function download(string $url, string $destination): void
+            {
+                if (SelfUpdater::CHECKSUM_URL === $url) {
+                    file_put_contents($destination, str_repeat('a', 64));
+
+                    return;
+                }
+
+                $this->stagingPath = $destination;
+                throw new CliException('Download interrupted.');
+            }
+        };
+
+        try {
+            (new SelfUpdater($downloader, $pharPath))->run(new Output(false, true));
+            $this->fail('The download should fail.');
+        } catch (CliException $e) {
+            $this->assertSame('Download interrupted.', $e->getMessage());
+            $this->assertNotNull($downloader->stagingPath);
+            $this->assertFileDoesNotExist($downloader->stagingPath);
+            $this->assertDirectoryDoesNotExist(\dirname($downloader->stagingPath));
+        } finally {
+            @unlink($pharPath);
+        }
+    }
+
+    #[Test]
     public function test_run_throws_when_tempnam_fails(): void
     {
         $pharPath = $this->copyTemplatePhar();
