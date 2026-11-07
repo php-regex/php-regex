@@ -59,6 +59,12 @@ final class TestCaseGenerator extends AbstractNodeVisitor
 {
     private const MAX_SAMPLES = 3;
 
+    // Cumulative candidate bytes, including discarded intermediates. Charging
+    // before allocation also bounds strings retained by ancestor visitors.
+    private const MAX_GENERATED_BYTES = 8 * 1024 * 1024;
+
+    private int $remainingBytes = self::MAX_GENERATED_BYTES;
+
     /**
      * @param PcreEngine $engine Asks the running engine which characters a class holds
      */
@@ -73,9 +79,25 @@ final class TestCaseGenerator extends AbstractNodeVisitor
      * @param RegexNode $node the `RegexNode` representing the entire regular expression
      *
      * @return TestCases test cases
+     *
+     * @throws SampleGenerationException when cumulative candidate bytes exceed 8 MiB
      */
     #[\Override]
     public function visitRegex(RegexNode $node): array
+    {
+        $this->remainingBytes = self::MAX_GENERATED_BYTES;
+
+        try {
+            return $this->generateCases($node);
+        } finally {
+            $this->remainingBytes = self::MAX_GENERATED_BYTES;
+        }
+    }
+
+    /**
+     * @return TestCases
+     */
+    private function generateCases(RegexNode $node): array
     {
         // No case is kept for a pattern the engine refuses: none is built,
         // however long its counts would make each one.
@@ -95,10 +117,12 @@ final class TestCaseGenerator extends AbstractNodeVisitor
                 $generator = new SampleGenerator(engine: $this->engine, seed: $seed);
 
                 try {
-                    $samples[] = $node->accept($generator);
+                    $sample = $node->accept($generator);
                 } catch (SampleGenerationException) {
                     break;
                 }
+                $this->reserveBytes(\strlen($sample));
+                $samples[] = $sample;
             }
             $matching = $this->kept($pattern, [...$matching, ...$samples], true);
         }
@@ -108,7 +132,9 @@ final class TestCaseGenerator extends AbstractNodeVisitor
             // Strings near the matching ones, each checked the same way.
             $near = [''];
             foreach ($matching as $sample) {
+                $this->reserveBytes(\strlen($sample));
                 $near[] = substr($sample, 0, -1);
+                $this->reserveBytes(\strlen($sample));
                 $near[] = substr($sample, 1);
             }
             $near[] = "\x00";
@@ -167,13 +193,13 @@ final class TestCaseGenerator extends AbstractNodeVisitor
 
             foreach ($matching as $m) {
                 foreach ($childCases['matching'] as $cm) {
-                    $newMatching[] = $m.$cm;
+                    $newMatching[] = $this->concatenate($m, $cm);
                 }
             }
 
             foreach ($nonMatching as $nm) {
                 foreach ($childCases['non_matching'] as $cnm) {
-                    $newNonMatching[] = $nm.$cnm;
+                    $newNonMatching[] = $this->concatenate($nm, $cnm);
                 }
             }
 
@@ -215,20 +241,25 @@ final class TestCaseGenerator extends AbstractNodeVisitor
         $min = $range[0];
         $max = $range[1];
 
+        // Direct visitor calls can contain bounds larger than PCRE accepts.
+        if ($min > self::MAX_GENERATED_BYTES || (null !== $max && $max > self::MAX_GENERATED_BYTES)) {
+            throw new SampleGenerationException('Test case generation byte budget exceeded.');
+        }
+
         $matching = [];
         for ($i = $min; $i <= min($max ?? $min + 2, $min + 2); $i++) {
-            $sample = str_repeat($childCases['matching'][0] ?? '', $i);
+            $sample = $this->repeat($childCases['matching'][0] ?? '', $i);
             $matching[] = $sample;
         }
 
         $nonMatching = [];
         if ($min > 0) {
             // Too few
-            $nonMatching[] = str_repeat($childCases['matching'][0] ?? '', $min - 1);
+            $nonMatching[] = $this->repeat($childCases['matching'][0] ?? '', $min - 1);
         }
         if (null !== $max) {
             // Too many
-            $nonMatching[] = str_repeat($childCases['matching'][0] ?? '', $max + 1);
+            $nonMatching[] = $this->repeat($childCases['matching'][0] ?? '', $max + 1);
         }
 
         return [
@@ -248,6 +279,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     public function visitLiteral(LiteralNode $node): array
     {
         $value = $node->value;
+        $this->reserveBytes(\strlen($value));
         $matching = [$value];
         $nonMatching = [];
 
@@ -257,6 +289,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
             for ($i = 0; $i < min(\strlen($value), 2); $i++) {
                 $modified = $chars;
                 $modified[$i] = \chr((\ord($chars[$i]) + 1) & 0xFF);
+                $this->reserveBytes(\strlen($value));
                 $nonMatching[] = implode('', $modified);
             }
         }
@@ -562,6 +595,35 @@ final class TestCaseGenerator extends AbstractNodeVisitor
             'matching' => [''],
             'non_matching' => [''],
         ];
+    }
+
+    private function reserveBytes(int $bytes): void
+    {
+        if ($bytes > $this->remainingBytes) {
+            throw new SampleGenerationException('Test case generation byte budget exceeded.');
+        }
+
+        $this->remainingBytes -= $bytes;
+    }
+
+    private function repeat(string $value, int $count): string
+    {
+        $length = \strlen($value);
+        if (0 !== $length && $count > intdiv($this->remainingBytes, $length)) {
+            throw new SampleGenerationException('Test case generation byte budget exceeded.');
+        }
+
+        $this->reserveBytes($length * $count);
+
+        return str_repeat($value, $count);
+    }
+
+    private function concatenate(string $left, string $right): string
+    {
+        $this->reserveBytes(\strlen($left));
+        $this->reserveBytes(\strlen($right));
+
+        return $left.$right;
     }
 
     /**

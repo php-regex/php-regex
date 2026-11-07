@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
+use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\TestCaseGenerator;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CharClassNode;
@@ -27,6 +29,56 @@ use PHPUnit\Framework\TestCase;
 
 final class TestCaseGeneratorEdgeCasesTest extends TestCase
 {
+    #[Test]
+    public function test_nested_repetition_exceeds_shared_byte_budget(): void
+    {
+        $pattern = '/^(?:a{2000}){2000}$/';
+        $this->assertSame(0, preg_match($pattern, ''));
+        $ast = RegexParser::create()->parse($pattern);
+
+        $this->expectException(SampleGenerationException::class);
+        $this->expectExceptionMessage('byte budget exceeded');
+        $ast->accept(new TestCaseGenerator());
+    }
+
+    #[Test]
+    public function test_sequence_intermediates_share_the_byte_budget(): void
+    {
+        $pattern = '/^'.str_repeat('a{1000}', 100).'$/';
+        $this->assertSame(0, preg_match($pattern, ''));
+        $ast = RegexParser::create()->parse($pattern);
+
+        $this->expectException(SampleGenerationException::class);
+        $ast->accept(new TestCaseGenerator());
+    }
+
+    #[Test]
+    public function test_byte_budget_resets_after_failure_and_success(): void
+    {
+        $visitor = new TestCaseGenerator();
+        $parser = RegexParser::create();
+        try {
+            $parser->parse('/^(?:a{2000}){2000}$/')->accept($visitor);
+            $this->fail('Expected the byte budget to stop generation.');
+        } catch (SampleGenerationException) {
+            $this->assertSame(['abc'], $parser->parse('/^abc$/')->accept($visitor)['matching']);
+        }
+
+        $ast = $parser->parse('/^(?:a{500}){500}$/');
+        $first = $ast->accept($visitor);
+        $this->assertSame(250000, \strlen($first['matching'][0]));
+        $this->assertSame($first, $ast->accept($visitor));
+    }
+
+    #[Test]
+    public function test_direct_quantifier_visit_rejects_overflowing_counts(): void
+    {
+        $node = new QuantifierNode(new LiteralNode('aa', 0, 0), '{'.PHP_INT_MAX.'}', QuantifierType::Greedy, 0, 0);
+
+        $this->expectException(SampleGenerationException::class);
+        $node->accept(new TestCaseGenerator());
+    }
+
     #[Test]
     public function test_visit_assertion_returns_empty_cases(): void
     {
