@@ -98,6 +98,7 @@ final class MutatorBehaviourTest extends TestCase
     {
         // Whether a match exists: /a/ and /a+?/ answer as /a+/ does.
         $this->assertSame(['/a*/'], MutatorHarness::bare(new RegexQuantifier(), "preg_match('/a+/', \$s)"));
+        self::assertTheEngineAgrees(Family::Quantifier, '/a+/', ['/a*/'], static fn (string $p, string $s): mixed => preg_match($p, $s), 'ab!');
     }
 
     #[Test]
@@ -106,14 +107,17 @@ final class MutatorBehaviourTest extends TestCase
         // With $matches, "aa" tells /a/ from /a+/; /a+?/ stops at one "a"
         // as /a/ does, so it is the mutant already kept.
         $this->assertSame(['/a*/', '/a/'], MutatorHarness::bare(new RegexQuantifier(), "preg_match('/a+/', \$s, \$m)"));
+        self::assertTheEngineAgrees(Family::Quantifier, '/a+/', ['/a*/', '/a/'], self::capturedBy(...), 'ab!');
         // Followed by more pattern, the lazy repeat stops at the first ">".
         $this->assertSame(['/<.*>/', '/<.>/', '/<.+?>/'], MutatorHarness::bare(new RegexQuantifier(), "preg_match('/<.+>/', \$s, \$m)"));
+        self::assertTheEngineAgrees(Family::Quantifier, '/<.+>/', ['/<.*>/', '/<.>/', '/<.+?>/'], self::capturedBy(...), '<>a');
     }
 
     #[Test]
     public function test_preg_grep_reads_the_pattern_as_a_yes_or_no(): void
     {
         $this->assertSame(['/a*/'], MutatorHarness::bare(new RegexQuantifier(), "preg_grep('/a+/', \$list)"));
+        self::assertTheEngineAgrees(Family::Quantifier, '/a+/', ['/a*/'], static fn (string $p, string $s): mixed => preg_grep($p, [$s]), 'ab!');
     }
 
     /**
@@ -312,6 +316,7 @@ final class MutatorBehaviourTest extends TestCase
         // [^a] turned into [a] makes (a+a)+, which backtracks without end
         // where the original cannot.
         $this->assertSame([], MutatorHarness::bare(new RegexCharClass(), "preg_match('/^(?:a+[^a])+\$/', \$s)"));
+        $this->assertSame([1, false], self::underTheReplayLimit('/^(?:a+[^a])+$/', '/^(?:a+[a])+$/', str_repeat('a', 25).'!'));
     }
 
     #[Test]
@@ -320,6 +325,8 @@ final class MutatorBehaviourTest extends TestCase
         // \D* overlaps a* where \d* does not: a cubic rating, no timeout on
         // any subject a test passes, and "xb" kills it.
         $this->assertContains('/^a*a*\D*b$/', MutatorHarness::bare(new RegexCharClass(), "preg_match('/^a*a*\\d*b\$/', \$s, \$m)"));
+        $this->assertSame([0, 0], self::underTheReplayLimit('/^a*a*\d*b$/', '/^a*a*\D*b$/', str_repeat('a', 60).'!'));
+        $this->assertSame([0, 1], self::underTheReplayLimit('/^a*a*\d*b$/', '/^a*a*\D*b$/', 'xb'));
     }
 
     #[Test]
@@ -347,6 +354,7 @@ final class MutatorBehaviourTest extends TestCase
         // Dropping the first or the second "a" changes nothing; dropping
         // "b" does.
         $this->assertSame(['/^(?:a|a)$/'], MutatorHarness::bare(new RegexAlternation(), "preg_match('/^(?:a|a|b)\$/', \$s)"));
+        self::assertTheEngineAgrees(Family::Alternation, '/^(?:a|a|b)$/', ['/^(?:a|a)$/'], static fn (string $p, string $s): mixed => preg_match($p, $s), 'ab!');
     }
 
     #[Test]
@@ -380,6 +388,7 @@ final class MutatorBehaviourTest extends TestCase
         // a+a+ and a+a both take two a or more: the second adds nothing.
         // aa* and the lazy forms answer as the original does.
         $this->assertSame(['/^a*a*$/', '/^a+a+$/'], MutatorHarness::bare(new RegexQuantifier(), "preg_match('/^a+a*\$/', \$s)"));
+        self::assertTheEngineAgrees(Family::Quantifier, '/^a+a*$/', ['/^a*a*$/', '/^a+a+$/'], static fn (string $p, string $s): mixed => preg_match($p, $s), 'ab!');
     }
 
     /**
@@ -455,5 +464,77 @@ final class MutatorBehaviourTest extends TestCase
         }
 
         $this->assertSame([], $shared);
+    }
+
+    /**
+     * Every candidate the mutator dropped answers, on the engine, as the
+     * original or a mutant kept before it does on every subject up to four
+     * bytes of the alphabet; every mutant kept answers otherwise than the
+     * original on one of them.
+     *
+     * @param list<string>                    $kept
+     * @param \Closure(string, string): mixed $call
+     */
+    private static function assertTheEngineAgrees(Family $family, string $original, array $kept, \Closure $call, string $alphabet): void
+    {
+        $subjects = [''];
+        $longest = [''];
+        for ($length = 1; $length <= 4; $length++) {
+            $longer = [];
+            foreach ($longest as $prefix) {
+                foreach (str_split($alphabet) as $byte) {
+                    $longer[] = $prefix.$byte;
+                }
+            }
+            array_push($subjects, ...$longer);
+            $longest = $longer;
+        }
+
+        $answers = static fn (string $pattern): array => array_map(static fn (string $subject): string => serialize($call($pattern, $subject)), $subjects);
+        $originalAnswers = $answers($original);
+
+        $seen = [$originalAnswers];
+        foreach ((new CandidateGenerator())->candidates($family, $original) as $candidate) {
+            $candidateAnswers = $answers($candidate);
+            if (\in_array($candidate, $kept, true)) {
+                self::assertNotSame($originalAnswers, $candidateAnswers, $candidate.' answers as '.$original.' does');
+                $seen[] = $candidateAnswers;
+
+                continue;
+            }
+
+            self::assertContains($candidateAnswers, $seen, $candidate.' was dropped, yet answers otherwise');
+        }
+    }
+
+    /**
+     * What preg_match() answers for each pattern under the backtrack limit
+     * the kill strings are checked with, the JIT off as the engine runs it.
+     *
+     * @return list<false|int>
+     */
+    private static function underTheReplayLimit(string $original, string $mutant, string $subject): array
+    {
+        $limit = (string) ini_get('pcre.backtrack_limit');
+        $jit = (string) ini_get('pcre.jit');
+        ini_set('pcre.backtrack_limit', '100000');
+        ini_set('pcre.jit', '0');
+
+        try {
+            return [@preg_match($original, $subject), @preg_match($mutant, $subject)];
+        } finally {
+            ini_set('pcre.backtrack_limit', $limit);
+            ini_set('pcre.jit', $jit);
+        }
+    }
+
+    /**
+     * @return array<array-key, string>
+     */
+    private static function capturedBy(string $pattern, string $subject): array
+    {
+        preg_match($pattern, $subject, $matches);
+
+        return $matches;
     }
 }
