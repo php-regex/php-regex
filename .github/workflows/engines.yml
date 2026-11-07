@@ -55,6 +55,9 @@ jobs:
     # PHP with the PCRE2 php-src bundles, so each supported PHP runs here on
     # its own engine; the "tests" job runs them all on Ubuntu's system PCRE2.
     name: Tests (PHP ${{ matrix.php }}, bundled PCRE2 ${{ matrix.pcre }})
+    permissions:
+      contents: read
+      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 45
     container: php:${{ matrix.php }}-cli
@@ -143,6 +146,10 @@ jobs:
         # $matches this engine writes. Left out of the default suite.
         run: su tester --shell /bin/sh --command 'tools/phpunit/vendor/bin/phpunit --colors=always --group capture-shape-parity'
 
+      - name: Stop the pull request's other runs
+        if: failure() && github.event_name == 'pull_request'
+        uses: ./.github/actions/stop-pull-request-runs
+
   engine-claims:
     # Patterns are judged for targets down to PHP 7.3, which the library
     # cannot run on. tests/Fixtures/EngineClaims/engine-claims.json writes
@@ -155,6 +162,9 @@ jobs:
     # the claim and what the engine does. The 7.4 image runs PCRE2 10.35, not
     # the 10.33 of 7.4.0: claims are keyed by release, never by PHP version.
     name: Engine claims (PHP ${{ matrix.php }}, PCRE2 ${{ matrix.pcre }})
+    permissions:
+      contents: read
+      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -201,9 +211,16 @@ jobs:
           IMAGE: php:${{ matrix.php }}-cli
         run: docker run --rm --volume "$PWD/tests:/app/tests:ro" --workdir /app "$IMAGE" php tests/Tools/verify_engine_claims.php
 
+      - name: Stop the pull request's other runs
+        if: failure() && github.event_name == 'pull_request'
+        uses: ./.github/actions/stop-pull-request-runs
+
   engines-latest:
     # Every supported PHP on the latest PCRE2: on macOS, PHP links Homebrew's.
     name: Tests (PHP ${{ matrix.php }}, latest PCRE2)
+    permissions:
+      contents: read
+      actions: write
     runs-on: macos-latest
     timeout-minutes: 45
     strategy:
@@ -233,12 +250,19 @@ jobs:
       - name: Run Test Suite
         run: tools/phpunit/vendor/bin/phpunit --colors=always
 
+      - name: Stop the pull request's other runs
+        if: failure() && github.event_name == 'pull_request'
+        uses: ./.github/actions/stop-pull-request-runs
+
   pcre2-fixture:
     # The PCRE2 conformance fixture records what PCRE2 10.40 (the engine of the
     # oldest supported PHP) and PCRE2 10.49 (the pinned suite) do with every
     # case. Rebuild both engines from their release tarballs and re-observe the
     # committed records, so the published counts rest on real engine runs.
     name: PCRE2 Conformance Fixture
+    permissions:
+      contents: read
+      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -278,12 +302,19 @@ jobs:
           --floor-pcre2test="$RUNNER_TEMP/pcre2/pcre2-10.40/pcre2test"
           --pin-pcre2test="$RUNNER_TEMP/pcre2/pcre2-10.49/pcre2test"
 
+      - name: Stop the pull request's other runs
+        if: failure() && github.event_name == 'pull_request'
+        uses: ./.github/actions/stop-pull-request-runs
+
   pcre2-release-outcomes:
     # The release outcomes fixture records what every PCRE2 release from
     # 10.32 to 10.49 does with the cases of every release's own suite, where
     # they do not all agree. Rebuild each release from its tarball and build
     # the fixture again: it must be the committed one, byte for byte.
     name: PCRE2 Release Outcomes
+    permissions:
+      contents: read
+      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -325,3 +356,7 @@ jobs:
 
       - name: Build the Fixture Again and Compare
         run: php tests/Tools/extract_pcre2_release_outcomes.php --releases-dir="$RUNNER_TEMP/pcre2-releases" --check
+
+      - name: Stop the pull request's other runs
+        if: failure() && github.event_name == 'pull_request'
+        uses: ./.github/actions/stop-pull-request-runs
