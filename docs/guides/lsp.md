@@ -289,14 +289,15 @@ A pattern held in a constant, a local variable or a property of the same
 document is diagnosed where its literal is written, once, as `regex lint`
 reports it; `@regex-ignore` on that line silences it, and a marker on the
 call does not. A class constant or an enum case of another file of the
-workspace, or of `vendor/`, holding a pattern, `preg_match(Patterns::EMAIL, $s)`,
+workspace, or of `vendor/`, holding a pattern, `preg_match(Patterns::BROKEN, $s)`,
 is read as `regex lint` reads it, an open document standing for its file;
 the lint reports the pattern at its literal, the editor reports it at the
 argument naming it, each message saying which constant and where it is
-written:
+written. With `public const BROKEN = '/(a/';` on line 9 of
+`src/Support/Patterns.php`:
 
 ```
-Patterns::EMAIL, written in src/Support/Patterns.php on line 7: Expected ) at end of input (found eof).
+Patterns::BROKEN, written in src/Support/Patterns.php on line 9: Expected ) at end of input (found eof).
 ```
 
 A document naming the same constant twice is reported at the first
