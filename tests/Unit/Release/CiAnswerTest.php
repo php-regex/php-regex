@@ -530,6 +530,30 @@ final class CiAnswerTest extends TestCase
         $this->assertSame('unread '.$this->short($change).' src/dzs.php', rtrim($answer, "\n"), $output);
     }
 
+    /**
+     * @return iterable<string, array{path: string, initial: bool}>
+     */
+    public static function provideSpecialCharacterPaths(): iterable
+    {
+        foreach (["src/line\nbreak.php", 'src/quote".php', 'src/back\\slash.php', "src/tab\t.php", 'src/café.php'] as $path) {
+            yield $path.' in a diff' => ['path' => $path, 'initial' => false];
+            yield $path.' in the root commit' => ['path' => $path, 'initial' => true];
+        }
+    }
+
+    #[Test]
+    #[DataProvider('provideSpecialCharacterPaths')]
+    public function test_positive_filters_read_original_filenames(string $path, bool $initial): void
+    {
+        if (!$initial) {
+            $base = $this->commitFiles(['src/A.php' => 'a']);
+            $this->ranOn($base, 'demo.yml', 'completed success');
+        }
+        $head = $this->commitFiles([$path => 'changed']);
+
+        $this->assertSame('unread '.$this->short($head).' '.$path, $this->answer('demo.yml'));
+    }
+
     #[Test]
     public function test_a_workflow_is_required(): void
     {

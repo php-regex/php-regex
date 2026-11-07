@@ -214,17 +214,20 @@ while [ -n "$sha" ] && [ "$count" -lt "$limit" ]; do
     [ "$blob" = "$parsed" ] || read_filter "$blob"
 
     parent=$(git rev-parse -q --verify "$sha^1" 2>/dev/null || true)
-    if [ -n "$parent" ]; then
-        changed=$(git -c core.quotepath=off diff --name-only --no-renames "$parent" "$sha")
-    else
-        changed=$(git -c core.quotepath=off ls-tree -r --name-only "$sha")
-    fi
-    while IFS= read -r file; do
-        if [ -n "$file" ] && reads "$file"; then
+    # Keep original filenames: Git's display quoting can hide a matching
+    # prefix, and filenames may themselves contain newlines.
+    while IFS= read -r -d '' file; do
+        if reads "$file"; then
             echo "unread $(git rev-parse --short "$sha") $file"
             exit 0
         fi
-    done <<< "$changed"
+    done < <(
+        if [ -n "$parent" ]; then
+            git diff --name-only --no-renames -z "$parent" "$sha"
+        else
+            git ls-tree -r --name-only -z "$sha"
+        fi
+    )
     sha=$parent
 done
 echo "none $count"
