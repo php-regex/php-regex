@@ -257,6 +257,7 @@ final class Lexer
     {
         $this->wholePattern = $pattern;
         $this->state->bodies?->forget();
+        $this->state->copiedBodyBytes = 0;
         $this->state->bodiesInPlace = false;
 
         return $this->read($pattern, $flags, $extendedMore, 0);
@@ -275,6 +276,7 @@ final class Lexer
     {
         $this->wholePattern = $pattern;
         $this->state->bodies?->forget();
+        $this->state->copiedBodyBytes = 0;
         $this->state->bodiesInPlace = true;
 
         return $this->read($pattern, $flags, false, 0);
@@ -297,6 +299,7 @@ final class Lexer
         if ($pattern !== $this->wholePattern) {
             $this->wholePattern = $pattern;
             $this->state->bodies?->forget();
+            $this->state->copiedBodyBytes = 0;
         }
 
         $this->state->bodiesInPlace = false;

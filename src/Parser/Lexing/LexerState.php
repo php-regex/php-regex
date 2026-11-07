@@ -32,6 +32,14 @@ use PHPRegex\Parser\Text\Utf8;
  */
 final class LexerState
 {
+    public const MAX_COPIED_BODY_BYTES = 8_388_608;
+
+    /**
+     * Sum of closed body token sizes across recursive reads of one pattern.
+     * Reset by the lexer for a new whole pattern, never by start().
+     */
+    public int $copiedBodyBytes = 0;
+
     /**
      * The text read, how PCRE reads it, and where it stands in the whole
      * pattern.

@@ -50,6 +50,40 @@ final class AlphaAssertionBodyTest extends TestCase
     use PcreGates;
     use PhpUnitForwardCompat;
 
+    #[Test]
+    public function test_nested_closed_bodies_stop_at_the_copy_budget(): void
+    {
+        // The comment keeps the input below the default length limit without
+        // building a large AST. Depth alone does not bound retained strings.
+        $pattern = '/'.str_repeat('(*pla:', 150).'(?#'.str_repeat('a', 80_000).')'.str_repeat(')', 150).'/';
+        $regex = Regex::create(['cache' => null]);
+        $result = $regex->validate($pattern);
+
+        $this->assertFalse($result->isValid);
+        $this->assertSame(ErrorCode::BodyCopyLimit, $result->errorCode);
+        $this->assertStringContainsString('copied assertion bodies', (string) $result->error);
+        $this->assertTrue($regex->validate('/(*pla:a)/')->isValid);
+    }
+
+    #[Test]
+    public function test_copy_budget_is_shared_by_parts_and_reset_for_a_new_tokenization(): void
+    {
+        $lexer = new Lexer();
+        $body = '(*pla:(?#'.str_repeat('a', 80_000).'))';
+        $lexer->tokenize($body);
+        try {
+            for ($i = 0; $i < 110; ++$i) {
+                $lexer->tokenizePart($body, 0, \strlen($body));
+            }
+            $this->fail('Repeated parts must share the copy budget.');
+        } catch (\PHPRegex\Parser\Exception\LimitException $error) {
+            $this->assertSame(ErrorCode::BodyCopyLimit, $error->errorCode);
+        }
+
+        $this->assertNotEmpty($lexer->tokenize($body)->getTokens());
+        $this->assertNotEmpty($lexer->tokenizePart($body.'a', 0, \strlen($body))->getTokens());
+    }
+
     /**
      * The rows below hold what PCRE2 10.45 reports: the POSIX-class and
      * property errors inside a body and a stacked quantifier there, the

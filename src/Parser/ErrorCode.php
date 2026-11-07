@@ -26,6 +26,11 @@ enum ErrorCode: string
     case AssertionInvalid = 'regex.assertion.invalid';
 
     /**
+     * Copied assertion bodies exceed the library allocation budget.
+     */
+    case BodyCopyLimit = 'regex.body.copy_limit';
+
+    /**
      * A backreference is not written in a form PCRE reads.
      */
     case BackrefInvalidSyntax = 'regex.backref.invalid_syntax';

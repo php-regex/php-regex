@@ -16,6 +16,7 @@ namespace PHPRegex\Parser\Lexing;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Parser\Token\Token;
@@ -163,6 +164,21 @@ final class GroupOpeners
             // is judged on the characters up to the first one no name holds,
             // which are all a verb name is judged on.
             VerbNames::refuse($state->text, substr($state->pattern, $start + 2, strspn($state->pattern, PcreVerb::WORD_NAME, $start + 2) + 1), $start, $tokens, $state->extendedMode);
+            // Recursive tokenizing shares this counter. Bound the sum of
+            // body sizes before substr allocates: payload and part strings
+            // retain at most a constant multiple of this budget too.
+            $bytes = $end - $start - 3;
+            if ($bytes > LexerState::MAX_COPIED_BODY_BYTES - $state->copiedBodyBytes) {
+                throw LimitException::withContext(
+                    'The aggregate size of copied assertion bodies exceeds the library limit of 8388608 bytes.',
+                    ErrorCode::BodyCopyLimit,
+                    $state->text->offset + $start,
+                    $state->pattern,
+                    null,
+                    $start,
+                );
+            }
+            $state->copiedBodyBytes += $bytes;
             $state->position = $end;
             $tokens[] = new Token(TokenType::PcreVerb, substr($state->pattern, $start + 2, $end - $start - 3), $start, $end - $start);
 

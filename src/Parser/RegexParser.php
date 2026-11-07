@@ -649,10 +649,12 @@ final class RegexParser
                 ValidationErrorCategory::Limit,
                 $position,
                 '' !== $visualSnippet ? $visualSnippet : null,
-                \sprintf(
-                    'A limit of this library, not of PCRE: raise the "%s" option to analyze the pattern.',
-                    ErrorCode::PatternTooLong === $exception->errorCode ? 'max_pattern_length' : 'max_recursion_depth',
-                ),
+                ErrorCode::BodyCopyLimit === $exception->errorCode
+                    ? 'Reduce the size or nesting of alphabetic assertion bodies.'
+                    : \sprintf(
+                        'A limit of this library, not of PCRE: raise the "%s" option to analyze the pattern.',
+                        ErrorCode::PatternTooLong === $exception->errorCode ? 'max_pattern_length' : 'max_recursion_depth',
+                    ),
                 $errorCode,
             );
         }

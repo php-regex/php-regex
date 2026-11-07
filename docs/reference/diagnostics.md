@@ -503,6 +503,10 @@ invalid pattern.
 
 ---
 
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:8c7adc716591ed0b8958f8241a6f86a0e006b32fdfd06a0468a38e9bd4ad3587 -->
+
 ## Error Codes
 
 Every `RegexException` carries an `ErrorCode` (`RegexException::$errorCode`), and so does a
@@ -530,6 +534,7 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | Code | Case | Meaning |
 |------|------|---------|
 | `regex.assertion.invalid` | `AssertionInvalid` | An escape written as an assertion is not one PCRE knows. |
+| `regex.body.copy_limit` | `BodyCopyLimit` | Copied assertion bodies exceed the library allocation budget. |
 | `regex.backref.invalid_syntax` | `BackrefInvalidSyntax` | A backreference is not written in a form PCRE reads. |
 | `regex.backref.missing_group` | `BackrefMissingGroup` | A backreference points to a group number the pattern does not have. |
 | `regex.backref.missing_named_group` | `BackrefMissingNamedGroup` | A backreference names a group the pattern does not have. |
@@ -646,3 +651,6 @@ leading whitespace before it (space, tab, newline, carriage return, vertical tab
 is skipped, as PHP does. `"\f/a/"` is the pattern `a`; `"\0/a/"` is refused with
 `regex.delimiter.invalid`: `Invalid delimiter "\x00". Delimiters must not be alphanumeric,
 backslash, or NUL byte.`
+
+
+<!-- /coderabbit-ai-generated:v1 -->
