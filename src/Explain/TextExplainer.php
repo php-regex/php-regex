@@ -36,94 +36,76 @@ final class TextExplainer extends AbstractNodeVisitor
      */
     public function __construct(private readonly ?PcreTarget $target = null) {}
 
-    private function render(Explanation $explanation, int $level = 0): string
+    private function render(Explanation $explanation): string
     {
-        $indent = str_repeat('  ', $level);
-        $children = $explanation->children;
-
-        $lines = match ($explanation->kind) {
-            // The pattern stands at the top, and holds one piece, as a block does.
-            ExplanationKind::Pattern => [$explanation->text, $this->render($children[0], 1)],
-            ExplanationKind::Sequence => $this->each($children, $level),
-            ExplanationKind::Alternation => $this->branches($children, $level),
-            ExplanationKind::Block => [$indent.$explanation->text, $this->render($children[0], $level + 1), $indent.$explanation->end],
-            ExplanationKind::Repetition => $this->repetition($explanation, $level),
-            ExplanationKind::Conditional => $this->conditional($children, $level),
-            ExplanationKind::Leaf => [$indent.$explanation->inline()],
-        };
-
-        return implode("\n", array_filter($lines, static fn (string $line): bool => '' !== $line));
-    }
-
-    /**
-     * @param list<Explanation> $explanations
-     *
-     * @return list<string>
-     */
-    private function each(array $explanations, int $level): array
-    {
-        return array_map(fn (Explanation $explanation): string => $this->render($explanation, $level), $explanations);
-    }
-
-    /**
-     * @param list<Explanation> $branches
-     *
-     * @return list<string>
-     */
-    private function branches(array $branches, int $level): array
-    {
+        $budget = new RenderingBudget();
         $lines = [];
-        foreach ($branches as $index => $branch) {
-            $lines[] = str_repeat('  ', $level).(0 === $index ? 'EITHER' : 'OR');
-            $lines[] = $this->render($branch, $level + 1);
+        foreach ($this->renderLines($explanation) as [$text, $level]) {
+            if ('' === $text && 0 === $level) {
+                continue;
+            }
+            $budget->reserve(2 * $level + \strlen($text) + ([] === $lines ? 0 : 1));
+            $lines[] = str_repeat('  ', $level).$text;
         }
 
-        return $lines;
+        return implode("\n", $lines);
     }
 
     /**
-     * A construct on one line takes the count after it, as a clause;
-     * anything longer is a block.
+     * Yield unindented lines so the budget is checked before expansion.
      *
-     * @return list<string>
+     * @return \Generator<int, array{string, int}>
      */
-    private function repetition(Explanation $repetition, int $level): array
+    private function renderLines(Explanation $explanation, int $level = 0): \Generator
     {
-        $indent = str_repeat('  ', $level);
-        $repeated = $repetition->children[0];
-        if (ExplanationKind::Leaf === $repeated->kind) {
-            return [\sprintf('%s%s, %s', $indent, $repeated->inline(), $repetition->text)];
+        $children = $explanation->children;
+        switch ($explanation->kind) {
+            case ExplanationKind::Pattern:
+                yield [$explanation->text, 0];
+                yield from $this->renderLines($children[0], 1);
+                break;
+            case ExplanationKind::Sequence:
+                foreach ($children as $child) {
+                    yield from $this->renderLines($child, $level);
+                }
+                break;
+            case ExplanationKind::Alternation:
+                foreach ($children as $index => $branch) {
+                    yield [0 === $index ? 'EITHER' : 'OR', $level];
+                    yield from $this->renderLines($branch, $level + 1);
+                }
+                break;
+            case ExplanationKind::Block:
+                yield [$explanation->text, $level];
+                yield from $this->renderLines($children[0], $level + 1);
+                yield [$explanation->end, $level];
+                break;
+            case ExplanationKind::Repetition:
+                if (ExplanationKind::Leaf === $children[0]->kind) {
+                    yield [$children[0]->inline().', '.$explanation->text, $level];
+                    break;
+                }
+                yield ['Quantified group, '.$explanation->text, $level];
+                yield from $this->renderLines($children[0], $level + 1);
+                yield [$explanation->end, $level];
+                break;
+            case ExplanationKind::Conditional:
+                if (ExplanationKind::Leaf === $children[0]->kind) {
+                    yield ['IF ('.$children[0]->inline().') THEN', $level];
+                } else {
+                    yield ['IF', $level];
+                    yield from $this->renderLines($children[0], $level + 1);
+                    yield ['THEN', $level];
+                }
+                yield from $this->renderLines($children[1], $level + 1);
+                if (isset($children[2])) {
+                    yield ['ELSE', $level];
+                    yield from $this->renderLines($children[2], $level + 1);
+                }
+                break;
+            case ExplanationKind::Leaf:
+                yield [$explanation->inline(), $level];
+                break;
         }
-
-        return [
-            \sprintf('%sQuantified group, %s', $indent, $repetition->text),
-            $this->render($repeated, $level + 1),
-            $indent.$repetition->end,
-        ];
-    }
-
-    /**
-     * A condition on one line stands in the line of the IF; a lookaround
-     * is a block under it.
-     *
-     * @param list<Explanation> $children
-     *
-     * @return list<string>
-     */
-    private function conditional(array $children, int $level): array
-    {
-        $indent = str_repeat('  ', $level);
-        [$condition, $yes] = $children;
-        $lines = ExplanationKind::Leaf === $condition->kind
-            ? [\sprintf('%sIF (%s) THEN', $indent, $condition->inline())]
-            : [$indent.'IF', $this->render($condition, $level + 1), $indent.'THEN'];
-        $lines[] = $this->render($yes, $level + 1);
-
-        if (isset($children[2])) {
-            $lines[] = $indent.'ELSE';
-            $lines[] = $this->render($children[2], $level + 1);
-        }
-
-        return $lines;
     }
 }
