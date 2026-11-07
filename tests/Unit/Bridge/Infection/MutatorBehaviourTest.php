@@ -383,6 +383,11 @@ final class MutatorBehaviourTest extends TestCase
     {
         // "*a" repeats nothing: the engine refuses it.
         $this->assertSame([], MutatorHarness::bare(new RegexEscape(), "preg_match('/\\*a/', \$s, \$m)"));
+        // PHP compiles the original and refuses the mutant written.
+        $written = (new CandidateGenerator())->candidates(Family::Escape, '/\*a/');
+        $this->assertSame([1, false], [preg_match('/\*a/', '*a'), @preg_match($written[0] ?? '', '*a')]);
+        error_clear_last();
+        $this->assertSame(['/*a/'], $written);
     }
 
     #[Test]
