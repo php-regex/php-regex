@@ -90,7 +90,8 @@ final class CallReplay
      * What the call answers, as the engine runs the user's patterns, or null
      * when it fails. preg_filter() answers null where preg_replace() answers
      * the subject untouched, and preg_grep() keeps an element exactly where
-     * preg_match() finds a match, inverted or not: the same subjects tell two
+     * preg_match() given more than a pattern and a subject finds a match,
+     * inverted or not: the same subjects tell two
      * patterns apart, and preg_match() also fails where preg_grep() answers
      * an empty array before PHP 8.6. The offsets PREG_SPLIT_OFFSET_CAPTURE
      * adds tell nothing more apart: the same pieces sit at the same offsets.
@@ -103,13 +104,26 @@ final class CallReplay
             'preg_match', 'preg_match_all', 'preg_replace', 'preg_replace_callback' => $call->function,
             default => 'preg_split',
         };
-        $arguments = [
-            'matches' => \in_array($call->function, ['preg_match', 'preg_match_all'], true) && $call->passes('matches'),
-            'flags' => 'preg_grep' === $call->function ? 0 : $call->integer('flags', 0) ?? 0,
-            'offset' => $call->integer('offset', 0) ?? 0,
-            'limit' => $call->integer('limit', -1) ?? -1,
-            'replacement' => $call->string('replacement') ?? '',
-        ];
+        // The arguments the call passes, and only those: preg_match() given
+        // a pattern and a subject alone runs otherwise.
+        $arguments = ['matches' => \in_array($call->function, ['preg_match', 'preg_match_all'], true) && $call->passes('matches')];
+        if ('preg_grep' !== $call->function && $call->passes('flags')) {
+            $arguments['flags'] = $call->integer('flags', 0) ?? 0;
+        }
+        if ($call->passes('offset')) {
+            $arguments['offset'] = $call->integer('offset', 0) ?? 0;
+        }
+        if ('preg_grep' === $call->function) {
+            // preg_grep() retries no empty match: preg_match() runs alike
+            // once it is given more than the pattern and the subject.
+            $arguments['offset'] = 0;
+        }
+        if ($call->passes('limit')) {
+            $arguments['limit'] = $call->integer('limit', -1) ?? -1;
+        }
+        if (null !== $call->string('replacement')) {
+            $arguments['replacement'] = (string) $call->string('replacement');
+        }
 
         $answer = $this->engine->answer($function, $pattern, $subject, $arguments, new PcreLimits(self::BACKTRACK_LIMIT, self::RECURSION_LIMIT));
         if (null === $answer) {

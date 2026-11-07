@@ -40,6 +40,10 @@ final class CallReplayTest extends TestCase
     {
         // preg_match() with a pattern and a subject alone answers 1 or 0.
         yield 'yes or no' => ['code' => "preg_match('/a+/', \$s)", 'original' => '/a+/', 'mutant' => '/a/', 'subject' => 'aa', 'differs' => false];
+        // Without $matches, PHP retries an empty match anchored, which
+        // here backtracks past the replay's limit: the original gives no
+        // answer.
+        yield 'yes or no, no answer' => ['code' => "preg_match('/(?:|(?:a+)+\$)/', \$s)", 'original' => '/(?:|(?:a+)+$)/', 'mutant' => '/x/', 'subject' => str_repeat('a', 17).'!', 'differs' => false];
         yield 'matches' => ['code' => "preg_match('/a+/', \$s, \$m)", 'original' => '/a+/', 'mutant' => '/a/', 'subject' => 'aa', 'differs' => true];
         // Offsets are written only with PREG_OFFSET_CAPTURE.
         yield 'same text elsewhere' => ['code' => "preg_match('/a/', \$s, \$m)", 'original' => '/a/', 'mutant' => '/a(?=$)/', 'subject' => 'aa', 'differs' => false];
@@ -83,6 +87,9 @@ final class CallReplayTest extends TestCase
         yield 'no split limit' => ['code' => "preg_split('/,/', \$s)", 'original' => '/,/', 'mutant' => '/,|;/', 'subject' => 'a,b;c', 'differs' => true];
         yield 'grep' => ['code' => "preg_grep('/a/', \$list)", 'original' => '/a/', 'mutant' => '/b/', 'subject' => 'a', 'differs' => true];
         yield 'grep, inverted' => ['code' => "preg_grep('/a/', \$list, PREG_GREP_INVERT)", 'original' => '/a/', 'mutant' => '/b/', 'subject' => 'a', 'differs' => true];
+        // preg_grep() keeps an element without retrying an empty match, as
+        // preg_match() given $matches runs.
+        yield 'grep, no retry of an empty match' => ['code' => "preg_grep('/(?:|(?:a+)+\$)/', \$list)", 'original' => '/(?:|(?:a+)+$)/', 'mutant' => '/x/', 'subject' => str_repeat('a', 17).'!', 'differs' => true];
         yield 'grep, both keep it' => ['code' => "preg_grep('/a/', \$list)", 'original' => '/a/', 'mutant' => '/a|b/', 'subject' => 'a', 'differs' => false];
     }
 
