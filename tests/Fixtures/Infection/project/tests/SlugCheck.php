@@ -16,7 +16,11 @@ namespace Fixture\Tests;
 use Fixture\Slug;
 use PHPUnit\Framework\TestCase;
 
-final class SlugTest extends TestCase
+/**
+ * Named Check, not Test, so the library's own suite leaves it to the
+ * fixture project.
+ */
+final class SlugCheck extends TestCase
 {
     public function test_a_slug(): void
     {

@@ -5,7 +5,7 @@
          cacheDirectory=".phpunit.cache">
     <testsuites>
         <testsuite name="fixture">
-            <directory>tests</directory>
+            <directory suffix="Check.php">tests</directory>
         </testsuite>
     </testsuites>
     <source>

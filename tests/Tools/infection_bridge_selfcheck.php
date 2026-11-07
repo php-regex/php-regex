@@ -46,7 +46,7 @@ const KILLED = 8;
 const ESCAPED = 24;
 
 $fixture = __DIR__.'/../Fixtures/Infection/project';
-foreach (['src/Slug.php', 'tests/SlugTest.php', 'phpunit.xml.dist', 'infection.json5'] as $file) {
+foreach (['src/Slug.php', 'tests/SlugCheck.php', 'phpunit.xml.dist', 'infection.json5'] as $file) {
     @mkdir(\dirname($project.'/'.$file), 0o777, true);
     copy($fixture.'/'.$file, $project.'/'.$file) || $fail('Could not copy '.$file.' into '.$project.'.');
 }
