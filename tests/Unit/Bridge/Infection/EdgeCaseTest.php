@@ -311,6 +311,11 @@ final class EdgeCaseTest extends TestCase
         // "aa" from the offset tells /a/ apart: two bytes past the last
         // one a hint holds.
         $this->assertSame([str_repeat('!', KillString::MAX_BYTES), null], $kills(KillString::MAX_BYTES));
+        // From the offset, /a*/ matches the empty string and /a+/ nothing.
+        $kill = str_repeat('!', KillString::MAX_BYTES);
+        preg_match('/a+/', $kill, $original, 0, KillString::MAX_BYTES);
+        preg_match('/a*/', $kill, $mutant, 0, KillString::MAX_BYTES);
+        $this->assertSame([[], ['']], [$original, $mutant]);
         $this->assertSame([null, null], $kills(KillString::MAX_BYTES + 1));
     }
 
@@ -318,6 +323,8 @@ final class EdgeCaseTest extends TestCase
     public function test_judge_gives_a_subject_two_runs_find_once(): void
     {
         $this->assertSame(['a'], (new EquivalenceJudge())->judge(Observation::Matches, '/a*/', '/b*/', new Budget())->subjects);
+        // /a*/ takes the "a" where /b*/ takes the empty string before it.
+        $this->assertSame([['a'], ['']], [self::captures('/a*/', 'a'), self::captures('/b*/', 'a')]);
     }
 
     #[Test]
@@ -329,6 +336,10 @@ final class EdgeCaseTest extends TestCase
         $this->assertInstanceOf(PatternCall::class, $call);
 
         $this->assertSame(['/a*b+c+/', '/ab+c+/', '/a+b*c+/', '/a+bc+/', '/a+b+?c+/', '/a+b+c*/', '/a+b+c/', '/a+b+c+?/'], (new MutationPipeline(Family::Quantifier, 12))->mutants($call));
+        // The lazy a+? stretches to the "b" all the same.
+        foreach (['abc', 'aabbcc', 'xaabbbcc', 'ab', ''] as $subject) {
+            $this->assertSame(self::captures('/a+b+c+/', $subject), self::captures('/a+?b+c+/', $subject), $subject);
+        }
     }
 
     #[Test]
@@ -339,7 +350,14 @@ final class EdgeCaseTest extends TestCase
         $call = PatternCall::fromNode(MutatorHarness::call("preg_match('/^a+|b+b*/', \$s, \$m, 0, 200)") ?? throw new \LogicException());
         $this->assertInstanceOf(PatternCall::class, $call);
 
-        $this->assertNotContains('/^a+?|b+b*/', (new MutationPipeline(Family::Quantifier, 28))->mutants($call));
+        $mutants = (new MutationPipeline(Family::Quantifier, 28))->mutants($call);
+        $this->assertNotContains('/^a+?|b+b*/', $mutants);
+        // Alike /^a|b+b*/, kept before it: a lazy repeat with nothing after
+        // it takes one "a".
+        $this->assertContains('/^a|b+b*/', $mutants);
+        foreach (['a', 'aa', 'b', 'bb', 'xb', 'ab', ''] as $subject) {
+            $this->assertSame(self::captures('/^a|b+b*/', $subject), self::captures('/^a+?|b+b*/', $subject), $subject);
+        }
     }
 
     #[Test]
@@ -454,5 +472,15 @@ final class EdgeCaseTest extends TestCase
         foreach ($subjects as $subject) {
             $this->assertSame(1, preg_match('/^a+$/', $subject), $subject);
         }
+    }
+
+    /**
+     * @return array<array-key, string>
+     */
+    private static function captures(string $pattern, string $subject): array
+    {
+        preg_match($pattern, $subject, $matches);
+
+        return $matches;
     }
 }
