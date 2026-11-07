@@ -214,15 +214,17 @@ final class FindingsReportTest extends TestCase
         $results = [];
         foreach (['First', 'Second'] as $name) {
             $source = "<?php\n";
-            for ($i = 0; $i < 100; ++$i) {
+            for ($i = 0; $i < 100; $i++) {
                 // The second spelling wins by column, even though both decode
                 // to the same pattern. CRLF and UTF-8 keep byte offsets honest.
                 $text = '/* é '.$name.' */ preg_match(\'/a/s\', $x); preg_match("/a/s", $x);';
                 $source .= $text."\r\n";
+                $column = strpos($text, '"/a/s"');
+                $this->assertNotFalse($column);
                 $results[] = [
                     'file' => $this->dir.'/corpus/acme/tool/src/'.$name.'.php',
                     'line' => $i + 2,
-                    'column' => strpos($text, '"/a/s"') + 1,
+                    'column' => $column + 1,
                     'pattern' => '/a/s',
                     'issues' => [['severity' => 'warning', 'issue_id' => 'regex.lint.flag.useless.s']],
                 ];
