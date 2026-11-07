@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Syntax;
 
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -87,6 +88,9 @@ final class StartOptions
         }
 
         self::$last = [$source, $end];
+        StaticCaches::register(self::class, static function (): void {
+            self::$last = null;
+        });
 
         return substr($source, 0, $end);
     }
