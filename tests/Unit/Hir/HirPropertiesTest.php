@@ -148,6 +148,30 @@ final class HirPropertiesTest extends TestCase
     }
 
     #[Test]
+    public function test_concatenated_literals_respect_the_limit(): void
+    {
+        $atLimit = $this->properties('/a{128}b{128}/');
+        $expected = [...array_fill(0, 128, 0x61), ...array_fill(0, 128, 0x62)];
+
+        $this->assertSame($expected, $atLimit->literal);
+        $this->assertSame($expected, $atLimit->prefix);
+        $this->assertSame($expected, $atLimit->suffix);
+
+        $overLimit = $this->properties('/a{128}b{128}c(d)/');
+
+        $this->assertNull($overLimit->literal);
+        $this->assertSame(258, $overLimit->minLength);
+        $this->assertSame(258, $overLimit->maxLength);
+        $this->assertFalse($overLimit->nullable);
+        $this->assertSame($expected, $overLimit->prefix);
+        $this->assertSame([...array_fill(0, 126, 0x61), ...array_fill(0, 128, 0x62), 0x63, 0x64], $overLimit->suffix);
+        $this->assertSame(1, $overLimit->captureCount);
+        $this->assertTrue($overLimit->regular);
+        $this->assertSame([[0x61, 0x61]], $overLimit->first?->ranges);
+        $this->assertSame([[0x64, 0x64]], $overLimit->last?->ranges);
+    }
+
+    #[Test]
     public function test_huge_repeats_do_not_overflow(): void
     {
         $properties = $this->properties('/(?:(?:(?:(?:a{65535}){65535}){65535}){65535}){65535}/');
