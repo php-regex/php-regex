@@ -1,0 +1,52 @@
+{
+    "name": "php-regex/regex-infection",
+    "type": "library",
+    "description": "Infection mutators for the regex literals of preg_*() calls: no mutant the PHPRegex automata prove equivalent to the original, and each with the subject that kills it when one is found.",
+    "keywords": [
+        "regex",
+        "pcre",
+        "infection",
+        "mutation-testing",
+        "testing"
+    ],
+    "homepage": "https://php-regex.com",
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/php-regex/php-regex/issues",
+        "source": "https://github.com/php-regex/php-regex",
+        "docs": "https://php-regex.com/guides/infection/"
+    },
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/yoeunes"
+        }
+    ],
+    "authors": [
+        {
+            "name": "Younes ENNAJI",
+            "email": "younes.ennaji.pro@gmail.com",
+            "homepage": "https://www.linkedin.com/in/yoeunes/",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "infection/mutator": "^0.4",
+        "nikic/php-parser": "^5.0",
+        "php-regex/regex-automata": "self.version",
+        "php-regex/regex-generator": "self.version",
+        "php-regex/regex-parser": "self.version",
+        "php-regex/regex-redos": "self.version"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPRegex\\Infection\\": ""
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-2.x": "2.x-dev"
+        }
+    }
+}
