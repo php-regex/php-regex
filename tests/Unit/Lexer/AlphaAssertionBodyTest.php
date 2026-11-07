@@ -1109,7 +1109,13 @@ final class AlphaAssertionBodyTest extends TestCase
     /**
      * Looking for an earlier error inside each body does not read the
      * bodies again for each one: an error after many closed bodies is
-     * found in linear time.
+     * found in linear time. Nor is the size of the whole pattern measured
+     * again for each class read alone: measured when it was, 4 000 then
+     * 16 000 short lookaheads holding a POSIX class took 0.75 s then 7.3 s
+     * on PHP 8.4, where text bodies took 0.20 s then 0.86 s; at the size
+     * read here that part was small, yet a loaded runner read it past the
+     * line. The garbage collector played no part: the times were the same
+     * with it off.
      */
     #[Test]
     #[DataProvider('provideClosedBodiesBeforeAnError')]
