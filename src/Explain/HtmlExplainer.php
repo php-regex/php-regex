@@ -59,8 +59,8 @@ final class HtmlExplainer extends AbstractNodeVisitor
                 $this->each($children),
             ),
             ExplanationKind::Repetition => ExplanationKind::Leaf === $children[0]->kind
-                ? $this->leaf($children[0], ' ('.$explanation->text.')')
-                : $this->block(\sprintf('Quantified group (%s)', $explanation->text), $this->render($children[0])),
+                ? $this->leaf($children[0], ', '.$explanation->text)
+                : $this->block('Quantified group, '.$explanation->text, $this->render($children[0])),
             ExplanationKind::Conditional => $this->conditional($children),
             ExplanationKind::Leaf => $this->leaf($explanation),
         };

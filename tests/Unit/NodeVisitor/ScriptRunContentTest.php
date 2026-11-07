@@ -51,7 +51,7 @@ final class ScriptRunContentTest extends TestCase
     #[Test]
     public function test_the_explanation_says_what_a_script_run_holds(): void
     {
-        $this->assertStringContainsString("'a' (one or more times)", $this->tree('/(*sr:a+)/')->accept(new TextExplainer()));
+        $this->assertStringContainsString("'a', one or more times", $this->tree('/(*sr:a+)/')->accept(new TextExplainer()));
         $this->assertStringContainsString('one or more times', $this->tree('/(*sr:a+)/')->accept(new HtmlExplainer()));
     }
 

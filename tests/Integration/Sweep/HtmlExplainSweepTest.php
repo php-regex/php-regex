@@ -106,7 +106,7 @@ final class HtmlExplainSweepTest extends TestCase
         // Test quantifier with complex child to hit multiline quantifier explanation
         $ast = $this->regex->parse('/(a|b)+/');
         $result = $ast->accept($this->htmlExplainVisitor);
-        $this->assertStringContainsString('<strong>Quantified group (one or more times):</strong>', $result);
+        $this->assertStringContainsString('<strong>Quantified group, one or more times:</strong>', $result);
         $this->assertStringContainsString('one or more times', $result);
     }
 

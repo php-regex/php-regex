@@ -81,15 +81,15 @@ final class ExplainTargetTest extends TestCase
         yield 'a word character under a leading UCP, 10.42' => ['pattern' => '/(*UTF)(*UCP)\w/', 'pcre' => '10.42', 'locale' => 'C', 'description' => self::UNICODE_WORD_BEFORE_10_43];
         // The locale tables do not reach the types under Unicode properties.
         yield 'a word character under u, 10.44, Latin-1' => ['pattern' => '/\w/u', 'pcre' => '10.44', 'locale' => self::LATIN1, 'description' => self::UNICODE_WORD_FROM_10_43];
-        yield 'a word character without u, C' => ['pattern' => '/\w/', 'pcre' => '10.44', 'locale' => 'C', 'description' => 'A word character: [a-zA-Z_0-9]'];
-        yield 'a word character after every ASCII option, C' => ['pattern' => '/(?a)\w/u', 'pcre' => '10.44', 'locale' => 'C', 'description' => 'A word character: [a-zA-Z_0-9]'];
-        yield 'a word character without u, Latin-1' => ['pattern' => '/\w/', 'pcre' => '10.44', 'locale' => self::LATIN1, 'description' => 'A word character: [a-zA-Z_0-9], and the letters of the fr_FR.ISO8859-1 locale'];
+        yield 'a word character without u, C' => ['pattern' => '/\w/', 'pcre' => '10.44', 'locale' => 'C', 'description' => 'A word character [a-zA-Z_0-9]'];
+        yield 'a word character after every ASCII option, C' => ['pattern' => '/(?a)\w/u', 'pcre' => '10.44', 'locale' => 'C', 'description' => 'A word character [a-zA-Z_0-9]'];
+        yield 'a word character without u, Latin-1' => ['pattern' => '/\w/', 'pcre' => '10.44', 'locale' => self::LATIN1, 'description' => 'A word character [a-zA-Z_0-9], and the letters of the fr_FR.ISO8859-1 locale'];
         // An ASCII option keeps "\w" to the tables, which the locale gives.
-        yield 'a word character after every ASCII option, Latin-1' => ['pattern' => '/(?a)\w/u', 'pcre' => '10.44', 'locale' => self::LATIN1, 'description' => 'A word character: [a-zA-Z_0-9], and the letters of the fr_FR.ISO8859-1 locale'];
-        yield 'a whitespace character without u, C' => ['pattern' => '/\s/', 'pcre' => '10.44', 'locale' => 'C', 'description' => 'A whitespace character: [ \t\n\x0B\f\r]'];
-        yield 'a whitespace character without u, Latin-1' => ['pattern' => '/\s/', 'pcre' => '10.44', 'locale' => self::LATIN1, 'description' => 'A whitespace character: [ \t\n\x0B\f\r], and the whitespace characters of the fr_FR.ISO8859-1 locale'];
+        yield 'a word character after every ASCII option, Latin-1' => ['pattern' => '/(?a)\w/u', 'pcre' => '10.44', 'locale' => self::LATIN1, 'description' => 'A word character [a-zA-Z_0-9], and the letters of the fr_FR.ISO8859-1 locale'];
+        yield 'a whitespace character without u, C' => ['pattern' => '/\s/', 'pcre' => '10.44', 'locale' => 'C', 'description' => 'A whitespace character [ \t\n\x0B\f\r]'];
+        yield 'a whitespace character without u, Latin-1' => ['pattern' => '/\s/', 'pcre' => '10.44', 'locale' => self::LATIN1, 'description' => 'A whitespace character [ \t\n\x0B\f\r], and the whitespace characters of the fr_FR.ISO8859-1 locale'];
         // isdigit() takes the ASCII digits alone under every locale.
-        yield 'a digit without u, Latin-1' => ['pattern' => '/\d/', 'pcre' => '10.44', 'locale' => self::LATIN1, 'description' => 'A digit: [0-9]'];
+        yield 'a digit without u, Latin-1' => ['pattern' => '/\d/', 'pcre' => '10.44', 'locale' => self::LATIN1, 'description' => 'A digit [0-9]'];
         yield 'a version at least one, minor of one digit, 10.44' => ['pattern' => '/(?(VERSION>=10.4)a|b)/', 'pcre' => '10.44', 'locale' => 'C', 'description' => 'PCRE2 >= 10.4, read as 10.40, which holds for PCRE2 10.44'];
         yield 'a version at least one, minor of one digit, 10.42' => ['pattern' => '/(?(VERSION>=10.5)a|b)/', 'pcre' => '10.42', 'locale' => 'C', 'description' => 'PCRE2 >= 10.5, read as 10.50, which does not hold for PCRE2 10.42'];
         yield 'a version at least one, minor of one digit, 10.49' => ['pattern' => '/(?(VERSION>=10.5)a|b)/', 'pcre' => '10.49', 'locale' => 'C', 'description' => 'PCRE2 >= 10.5, read as 10.05, which holds for PCRE2 10.49'];
@@ -151,7 +151,7 @@ final class ExplainTargetTest extends TestCase
             foreach (['C', self::LATIN1] as $locale) {
                 $this->assertNotFalse(setlocale(\LC_CTYPE, $locale));
                 foreach (['d', 's', 'w'] as $type) {
-                    $this->assertSame(1, preg_match('/: (\[[^]]+\])/', $explained[$locale][$type], $class), $type);
+                    $this->assertSame(1, preg_match('/ (\[[^]]+\])/', $explained[$locale][$type], $class), $type);
                     $matched[$locale][$type] = [
                         'type' => array_values(array_filter(range(0, 255), static fn (int $byte): bool => 1 === preg_match('/\\'.$type.'/', \chr($byte)))),
                         'class' => array_values(array_filter(range(0, 255), static fn (int $byte): bool => 1 === preg_match('/'.$class[1].'/', \chr($byte)))),
@@ -199,7 +199,7 @@ final class ExplainTargetTest extends TestCase
         $this->assertStringContainsString(self::UNICODE_WORD_BEFORE_10_43, $older->explain('/\w/u'));
         $this->assertStringContainsString(self::UNICODE_WORD_FROM_10_43, $newer->explain('/\w/u'));
         $this->assertStringContainsString(self::UNICODE_WORD_FROM_10_43, html_entity_decode($newer->explain('/\w/u', ExplainFormat::Html), \ENT_QUOTES | \ENT_HTML5, 'UTF-8'));
-        $this->assertStringContainsString('A word character: [a-zA-Z_0-9]', $newer->explain('/\w/'));
+        $this->assertStringContainsString('A word character [a-zA-Z_0-9]', $newer->explain('/\w/'));
         $this->assertStringNotContainsString('locale', $newer->explain('/\w/'));
     }
 }
