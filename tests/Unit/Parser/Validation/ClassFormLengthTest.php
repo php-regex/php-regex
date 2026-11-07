@@ -31,6 +31,8 @@ use PHPRegex\Parser\Validation\ClassLength;
 use PHPRegex\Parser\Validation\CompiledLength;
 use PHPRegex\Parser\Validation\ExtendedClassLength;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -45,6 +47,27 @@ use PHPUnit\Framework\TestCase;
  */
 final class ClassFormLengthTest extends TestCase
 {
+    #[Test]
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function test_overlapping_caseless_ranges_do_not_multiply_expansion_memory(): void
+    {
+        $members = '';
+        for ($index = 0; $index < 1000; $index++) {
+            $members .= \sprintf('\\x{%x}-\\x{%x}', 0x100 + $index, 0x2000 + $index);
+        }
+
+        // Repetition makes the public validator measure the compiled size.
+        // The input remains well below the default 100,000 byte limit.
+        $parser = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false]);
+        $before = memory_get_peak_usage(true);
+        $result = $parser->validate('/['.$members.']{100}/iu');
+
+        $this->assertTrue($result->isValid);
+        $this->assertLessThan(32 * 1024 * 1024, memory_get_peak_usage(true) - $before);
+        $this->assertSame(self::lengthOf('/[\\x{100}-\\x{23e7}]{100}/iu', '10.49'), self::lengthOf('/['.$members.']{100}/iu', '10.49'));
+    }
+
     #[Test]
     #[DataProvider('provideLengths')]
     public function test_the_length_is_the_one_each_release_compiles(string $pattern, string $release, int $length): void
