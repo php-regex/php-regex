@@ -185,6 +185,52 @@ final class ClassSetStoreTest extends TestCase
         $this->assertCount(1, self::files($this->root));
     }
 
+    #[Test]
+    #[RequiresOperatingSystem('Linux|Darwin')]
+    public function test_unverifiable_ownership_disables_persistence(): void
+    {
+        $store = new ClassSetStore($this->root);
+        mkdir($store->directory(), 0o700, true);
+        $key = 'u|:\p{Han}';
+        $file = $store->directory().\DIRECTORY_SEPARATOR.hash('sha256', $key).'.set';
+        $forged = "class-set 1\n".$key."\nset 65-66\n";
+        file_put_contents($file, $forged);
+
+        $script = 'require '.var_export(\dirname(__DIR__, 3).'/vendor/autoload.php', true).';'
+            .'$root = '.var_export($this->root, true).';'
+            . <<<'PHP'
+                $store = new PHPRegex\Parser\Hir\ClassSetStore($root);
+                $loaded = $store->load('u|:\p{Han}');
+                PHPRegex\Parser\Hir\ClassSetProvider::persistIn($root);
+                $set = PHPRegex\Parser\Hir\ClassSetProvider::query('\p{Han}', true, '');
+                $store->save('u|:\p{Han}', ['set' => PHPRegex\Parser\Hir\CharSet::single(67)]);
+                $fresh = new PHPRegex\Parser\Hir\ClassSetStore($root, 'new engine');
+                $fresh->save('key', ['set' => PHPRegex\Parser\Hir\CharSet::single(67)]);
+                echo json_encode([
+                    function_exists('posix_geteuid'),
+                    $loaded,
+                    $set?->contains(0x4E00),
+                    $set?->contains(65),
+                    is_dir($fresh->directory()),
+                ]);
+                PHP;
+        $process = proc_open(
+            [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'disable_functions=posix_geteuid', '-r', $script],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+        );
+        self::assertIsResource($process);
+        $output = (string) stream_get_contents($pipes[1]);
+        $errors = (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $this->assertSame(0, proc_close($process), $errors.$output);
+        $this->assertSame([false, null, true, false, false], json_decode($output, true), $errors.$output);
+        $this->assertSame($forged, file_get_contents($file));
+        $this->assertSame([$file], self::files($this->root));
+    }
+
     /**
      * A file that cannot take its name, a directory standing there, is not
      * kept, and leaves nothing behind it.
