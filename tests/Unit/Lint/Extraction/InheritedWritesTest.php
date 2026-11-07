@@ -133,6 +133,46 @@ final class InheritedWritesTest extends TestCase
     }
 
     #[Test]
+    public function test_shared_trait_descendants_are_processed_in_bounded_time(): void
+    {
+        $code = "<?php\ntrait T0 {}\ntrait T1 {}\n";
+        // Each node shares both descendants with the next node. Following
+        // every path instead of every node takes exponentially many calls.
+        for ($i = 2; $i < 40; $i++) {
+            $code .= 'trait T'.$i.' { use T'.($i - 1).', T'.($i - 2)."; }\n";
+        }
+
+        $code .= <<<'PHP'
+            final class Matcher
+            {
+                use T39;
+                private $re = '/shared/';
+                public function check($s) { return preg_match($this->re, $s); }
+            }
+            PHP;
+
+        $this->assertExtractedByBoth([
+            ['pattern' => '/shared/', 'at' => "'/shared/'", 'location' => 'via $this->re'],
+        ], $code);
+    }
+
+    #[Test]
+    public function test_a_cycle_does_not_hide_a_foreign_trait_on_another_edge(): void
+    {
+        $this->assertExtractedByBoth([], <<<'PHP'
+            <?php
+            trait A { use B, Elsewhere; }
+            trait B { use A; }
+            final class Matcher
+            {
+                use A;
+                private $re = '/unknown/';
+                public function check($s) { return preg_match($this->re, $s); }
+            }
+            PHP);
+    }
+
+    #[Test]
     public function test_a_private_property_of_a_class_extending_another_is_read(): void
     {
         $this->assertExtractedByBoth([

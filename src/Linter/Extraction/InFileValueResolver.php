@@ -514,7 +514,7 @@ final class InFileValueResolver
         // A class the file declares twice proves no default: which one runs
         // is decided at run time.
         if (null === $class || !isset($this->classes[$class]) || isset($this->writtenProperties[$property->value])
-            || $this->anyClassWritten || isset($this->classesWritten[$class]) || $this->usesForeignTrait($class, [])) {
+            || $this->anyClassWritten || isset($this->classesWritten[$class]) || $this->usesForeignTrait($class)) {
             return null;
         }
 
@@ -527,17 +527,24 @@ final class InFileValueResolver
      * Whether the class or trait uses, directly or through a trait of the
      * file, a trait the file does not declare.
      *
-     * @param array<string, true> $seen the traits already looked into
+     * Each reachable node is expanded once, even when paths share traits
+     * or form a cycle. The work is bounded by the nodes and their edges.
      */
-    private function usesForeignTrait(string $user, array $seen): bool
+    private function usesForeignTrait(string $user): bool
     {
-        foreach ($this->traitUses[$user] ?? [] as $trait) {
-            if (!isset($this->traits[$trait])) {
-                return true;
-            }
+        $seen = [$user => true];
+        $pending = [$user];
+        while ([] !== $pending) {
+            $current = array_pop($pending);
+            foreach ($this->traitUses[$current] ?? [] as $trait) {
+                if (!isset($this->traits[$trait])) {
+                    return true;
+                }
 
-            if (!isset($seen[$trait]) && $this->usesForeignTrait($trait, $seen + [$trait => true])) {
-                return true;
+                if (!isset($seen[$trait])) {
+                    $seen[$trait] = true;
+                    $pending[] = $trait;
+                }
             }
         }
 
