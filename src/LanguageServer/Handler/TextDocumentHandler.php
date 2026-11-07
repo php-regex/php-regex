@@ -430,6 +430,7 @@ final class TextDocumentHandler
         }
 
         [, $source, $issues, $redos] = $analysis;
+        $spelling = null;
         foreach ($issues as $issue) {
             // The heuristic rules guess what the analysis just proved:
             // once it shows the pattern linear, their warnings go.
@@ -440,10 +441,15 @@ final class TextDocumentHandler
             // A raw character the literal spells with an escape, as
             // a double-quoted "\t", is no raw character in the source; the
             // literal of another file is that file's to report.
-            if (InvisibleCharacterRule::ID === $issue->id
-                && (null !== $occurrence->writtenElsewhere || !LiteralSpelling::holdsRaw($content, $occurrence->byteOffset, InvisibleCharacterRule::reportedCharacter($source, (int) $issue->offset)))
-            ) {
-                continue;
+            if (InvisibleCharacterRule::ID === $issue->id) {
+                if (null !== $occurrence->writtenElsewhere) {
+                    continue;
+                }
+
+                $spelling ??= LiteralSpelling::fromSource($content, $occurrence->byteOffset);
+                if (!$spelling->containsRaw(InvisibleCharacterRule::reportedCharacter($source, (int) $issue->offset))) {
+                    continue;
+                }
             }
 
             $diagnostics[] = $this->diagnosticConverter->convert($issue, $span);

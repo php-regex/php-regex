@@ -21,14 +21,26 @@ namespace PHPRegex\Linter\Extraction;
  */
 final class LiteralSpelling
 {
-    /**
-     * Whether the string literals of the expression that starts at the
-     * offset of the code, joined by ".", hold the character as written:
-     * the quotes, heredocs and nowdocs read up to the first token that is
-     * neither a literal, a ".", white space nor a comment. False when no
-     * literal starts there.
-     */
+    private function __construct(private readonly string $written) {}
+
     public static function holdsRaw(string $code, int $offset, string $character): bool
+    {
+        return self::fromSource($code, $offset)->containsRaw($character);
+    }
+
+    public function containsRaw(string $character): bool
+    {
+        return '' !== $character && str_contains($this->written, $character);
+    }
+
+    /**
+     * Read the literal expression at the offset, including concatenated
+     * quotes, heredocs and nowdocs, up to the first token that is neither
+     * a literal, a ".", white space nor a comment. The spelling is empty
+     * when no literal starts there. Reuse this object for every diagnostic
+     * of the occurrence so the source suffix is tokenized only once.
+     */
+    public static function fromSource(string $code, int $offset): self
     {
         $written = '';
         $expectsLiteral = true;
@@ -62,6 +74,6 @@ final class LiteralSpelling
             $expectsLiteral = false;
         }
 
-        return '' !== $character && str_contains($written, $character);
+        return new self($written);
     }
 }

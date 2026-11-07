@@ -63,6 +63,7 @@ final class InvisibleCharacterSourceTest extends TestCase
     public static function provideSpellings(): iterable
     {
         foreach (['php-parser' => PhpParserExtractionStrategy::class, 'tokens' => TokenBasedExtractionStrategy::class] as $name => $extractor) {
+            yield $name.': repeated raw and escaped characters' => ['extractor' => $extractor, 'literal' => '"/a'.str_repeat("\t\u{200B}", 20).'\\x01/"', 'expected' => 40];
             yield $name.': a raw tab in single quotes' => ['extractor' => $extractor, 'literal' => "'/a\tb/'", 'expected' => 1];
             yield $name.': a tab escape in double quotes' => ['extractor' => $extractor, 'literal' => '"/a\tb/"', 'expected' => 0];
             yield $name.': a raw tab beside a tab escape' => ['extractor' => $extractor, 'literal' => "\"/a\tb\\x01/\"", 'expected' => 1];

@@ -503,6 +503,7 @@ final class AnalysisService
         $ast->accept($linter);
 
         $issues = [];
+        $spelling = null;
         foreach ($linter->getIssues() as $issue) {
             if ($skipRiskAnalysis && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
                 continue;
@@ -513,7 +514,12 @@ final class AnalysisService
             // the source, the spelling is unknown.
             if (InvisibleCharacterRule::ID === $issue->id) {
                 $code = null === $occurrence->fileOffset ? '' : ($files[$occurrence->file] ??= (string) @file_get_contents($occurrence->file));
-                if ('' === $code || !LiteralSpelling::holdsRaw($code, $occurrence->fileOffset, InvisibleCharacterRule::reportedCharacter($ast->source ?? '', (int) $issue->offset))) {
+                if ('' === $code) {
+                    continue;
+                }
+
+                $spelling ??= LiteralSpelling::fromSource($code, $occurrence->fileOffset);
+                if (!$spelling->containsRaw(InvisibleCharacterRule::reportedCharacter($ast->source ?? '', (int) $issue->offset))) {
                     continue;
                 }
             }
