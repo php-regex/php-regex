@@ -103,6 +103,20 @@ def build(pkg_dir, display, black, bold, mark_markup, root_dir):
             "right": round(mark_x + MARK_HALF + GAP + text_ink, 2)}
 
 
+def extract_mark(lines):
+    # Keep the original single-line, greedy extraction and verbatim markup,
+    # without rescanning the suffix for every matching opening group.
+    opening = re.compile(r'<g transform="translate\([\d.]+ 100\) scale\(0\.52\)">')
+    closing = '</g></g>'
+    for line in lines:
+        start = opening.search(line)
+        if start is not None:
+            end = line.rfind(closing, start.end())
+            if end != -1:
+                return line[start.start():end + len(closing)]
+    raise ValueError("No banner mark found")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--black", required=True, help="InterDisplay-Black.ttf")
@@ -112,8 +126,8 @@ def main():
     args = ap.parse_args()
 
     black, bold = TTFont(args.black), TTFont(args.bold)
-    root_banner = open(os.path.join(args.root, "art", "banner.svg")).read()
-    mark_markup = re.search(r'<g transform="translate\([\d.]+ 100\) scale\(0\.52\)">.*</g></g>', root_banner).group(0)
+    with open(os.path.join(args.root, "art", "banner.svg")) as root_banner:
+        mark_markup = extract_mark(root_banner)
 
     rows = [build(pkg, display, black, bold, mark_markup, args.root) for pkg, display in PACKAGES]
     for r in rows:
