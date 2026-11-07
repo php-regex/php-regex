@@ -58,6 +58,8 @@ use PHPRegex\Parser\Node\VersionConditionNode;
  * literal holding such bytes also gives them as hexadecimal ("bytes").
  * Group numbers and the groups a reference or a call points to come from
  * the whole pattern: a subtree exported alone has none.
+ * Export throws \LengthException before expanding more than 100,000
+ * reference targets in one document, counted before deduplicating numbers.
  *
  * @extends AbstractNodeVisitor<array<string, mixed>>
  */
@@ -69,6 +71,12 @@ final class JsonDumper extends AbstractNodeVisitor
      */
     public const VERSION = 1;
 
+    // Bound both the work of resolving references and the retained lists.
+    // Count targets before deduplication: branch resets may share numbers.
+    private const MAX_REFERENCE_TARGETS = 100_000;
+
+    private int $referenceTargets = 0;
+
     private ?GroupIndex $groups = null;
 
     /**
@@ -77,6 +85,7 @@ final class JsonDumper extends AbstractNodeVisitor
     #[\Override]
     public function visitRegex(RegexNode $node): array
     {
+        $this->referenceTargets = 0;
         $this->groups = GroupIndex::of($node->pattern);
 
         try {
@@ -90,6 +99,7 @@ final class JsonDumper extends AbstractNodeVisitor
             ];
         } finally {
             $this->groups = null;
+            $this->referenceTargets = 0;
         }
     }
 
@@ -451,6 +461,12 @@ final class JsonDumper extends AbstractNodeVisitor
      */
     private function numbers(array $groups): array
     {
+        $count = \count($groups);
+        if ($count > self::MAX_REFERENCE_TARGETS - $this->referenceTargets) {
+            throw new \LengthException(\sprintf('JSON export exceeds the limit of %d resolved reference targets.', self::MAX_REFERENCE_TARGETS));
+        }
+        $this->referenceTargets += $count;
+
         $numbers = [];
         foreach ($groups as $group) {
             $number = $this->groups?->numberOf($group);

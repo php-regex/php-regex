@@ -32,6 +32,59 @@ use PHPUnit\Framework\TestCase;
  */
 final class JsonDumperTest extends TestCase
 {
+    #[Test]
+    #[DataProvider('provideAmplifyingReferences')]
+    public function test_reference_expansion_is_bounded(string $reference): void
+    {
+        $pattern = '/'.str_repeat('(?<n>a)', 1000).str_repeat($reference, 101).'/J';
+        $this->assertSame(0, preg_match($pattern, ''));
+        $tree = RegexParser::create(['cache' => null])->parse($pattern);
+
+        $this->expectException(\LengthException::class);
+        $this->expectExceptionMessage('JSON export exceeds the limit of 100000 resolved reference targets.');
+        $tree->accept(new JsonDumper());
+    }
+
+    /**
+     * @return iterable<string, array{reference: string}>
+     */
+    public static function provideAmplifyingReferences(): iterable
+    {
+        yield 'named backreferences' => ['reference' => '\\k<n>'];
+        yield 'named conditions' => ['reference' => '(?(n)a|b)'];
+        yield 'references across nested nodes' => ['reference' => '(?:\\k<n>)'];
+    }
+
+    #[Test]
+    public function test_reference_budget_allows_the_boundary_and_resets_between_exports(): void
+    {
+        $tree = RegexParser::create(['cache' => null])->parse('/'.str_repeat('(?<n>a)', 1000).str_repeat('\\k<n>', 100).'/J');
+        $dumper = new JsonDumper();
+        $document = $tree->accept($dumper);
+        $references = self::nodesOfType($document, 'backref');
+        $this->assertCount(100, $references);
+        foreach ($references as $reference) {
+            $this->assertSame(range(1, 1000), $reference['groups']);
+        }
+        $this->assertSame($document, $tree->accept($dumper));
+    }
+
+    #[Test]
+    public function test_a_failed_export_clears_its_state(): void
+    {
+        $parser = RegexParser::create(['cache' => null]);
+        $tree = $parser->parse('/'.str_repeat('(?<n>a)', 1000).str_repeat('\\k<n>', 101).'/J');
+        $dumper = new JsonDumper();
+        try {
+            $tree->accept($dumper);
+            $this->fail('The amplified export must be refused.');
+        } catch (\LengthException) {
+            $small = $parser->parse('/(?<n>a)\\k<n>/');
+            $this->assertSame(self::export('/(?<n>a)\\k<n>/'), $small->accept($dumper));
+            $this->assertSame([], self::nodesOfType($small->pattern->accept($dumper), 'backref')[0]['groups']);
+        }
+    }
+
     /**
      * Every comparison the parser reads after VERSION.
      */
