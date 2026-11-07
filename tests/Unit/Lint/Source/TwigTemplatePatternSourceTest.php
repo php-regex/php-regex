@@ -139,6 +139,24 @@ final class TwigTemplatePatternSourceTest extends TestCase
     }
 
     #[Test]
+    public function test_many_patterns_keep_byte_locations_after_comments_and_raw_text(): void
+    {
+        $prefix = "é\r\n{# comment\ncontinued #}{% verbatim %}\nraw{% endverbatim %}\n";
+        $row = "é{{ x matches '/a/' }}{{ y matches '/b/' }}\r\n";
+        $count = 5000;
+        $occurrences = TwigTemplatePatternSource::read($prefix.str_repeat($row, $count), 'many.twig');
+
+        $this->assertCount(2 * $count, $occurrences);
+        foreach ($occurrences as $index => $occurrence) {
+            $rowIndex = intdiv($index, 2);
+            $quote = 0 === $index % 2 ? strpos($row, "'/a/'") : strpos($row, "'/b/'");
+            $this->assertSame(5 + $rowIndex, $occurrence->line);
+            $this->assertSame($quote + 1, $occurrence->column);
+            $this->assertSame(\strlen($prefix) + $rowIndex * \strlen($row) + $quote, $occurrence->fileOffset);
+        }
+    }
+
+    #[Test]
     public function test_the_pattern_is_the_one_twig_hands_to_the_engine(): void
     {
         $occurrences = TwigTemplatePatternSource::read("{% if x matches '/\\d+/' %}{% endif %}", 'page.html.twig');
