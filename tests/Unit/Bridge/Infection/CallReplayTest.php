@@ -59,6 +59,8 @@ final class CallReplayTest extends TestCase
         // Without $matches, preg_match_all() answers the count alone.
         yield 'count of all matches' => ['code' => "preg_match_all('/ab?/', \$s)", 'original' => '/ab?/', 'mutant' => '/ab??/', 'subject' => 'ab', 'differs' => false];
         yield 'all matches' => ['code' => "preg_match_all('/a(b)/', \$s, \$m)", 'original' => '/a(b)/', 'mutant' => '/(a)b/', 'subject' => 'ab', 'differs' => true];
+        // In set order, no match leaves no group to count either.
+        yield 'all matches in set order, none' => ['code' => "preg_match_all('/a(b)/', \$s, \$m, PREG_SET_ORDER)", 'original' => '/a(b)/', 'mutant' => '/ab/', 'subject' => 'x', 'differs' => false];
         yield 'all matches from an offset' => ['code' => "preg_match_all('/a/', \$s, \$m, 0, 1)", 'original' => '/a/', 'mutant' => '/[ab]/', 'subject' => 'ab', 'differs' => true];
         // A replacement reads the groups it names, no more.
         yield 'replacement naming no group' => ['code' => "preg_replace('/a(b)/', '', \$s)", 'original' => '/a(b)/', 'mutant' => '/(a)b/', 'subject' => 'ab', 'differs' => false];
@@ -67,6 +69,7 @@ final class CallReplayTest extends TestCase
         yield 'no replacement limit' => ['code' => "preg_replace('/a/', '_', \$s)", 'original' => '/a/', 'mutant' => '/a|b/', 'subject' => 'ab', 'differs' => true];
         yield 'filter, nothing replaced' => ['code' => "preg_filter('/x/', '_', \$s)", 'original' => '/x/', 'mutant' => '/y/', 'subject' => 'z', 'differs' => false];
         yield 'filter, one replaces' => ['code' => "preg_filter('/z/', '_', \$s)", 'original' => '/z/', 'mutant' => '/y/', 'subject' => 'z', 'differs' => true];
+        yield 'filter, replacement naming a group' => ['code' => "preg_filter('/a(b)/', '\$1', \$s)", 'original' => '/a(b)/', 'mutant' => '/(a)b/', 'subject' => 'ab', 'differs' => true];
         // A callback receives each match with its offset.
         yield 'filter, the same subjects matched' => ['code' => "preg_filter('/a/', '_', \$s)", 'original' => '/a/', 'mutant' => '/a|b/', 'subject' => 'ab', 'differs' => true];
         yield 'callback, other offsets' => ['code' => "preg_replace_callback('/a(?=a)/', \$f, \$s)", 'original' => '/a(?=a)/', 'mutant' => '/a(?=b)/', 'subject' => 'aab', 'differs' => true];
@@ -116,6 +119,7 @@ final class CallReplayTest extends TestCase
         yield 'preg_filter, limit at run time' => ['code' => "preg_filter('/a/', 'b', \$s, \$limit)", 'replayable' => false];
         yield 'preg_replace_callback' => ['code' => "preg_replace_callback('/a/', \$f, \$s, 1)", 'replayable' => true];
         yield 'preg_replace_callback, limit at run time' => ['code' => "preg_replace_callback('/a/', \$f, \$s, \$limit)", 'replayable' => false];
+        yield 'preg_replace_callback, flags at run time' => ['code' => "preg_replace_callback('/a/', \$f, \$s, -1, \$count, \$flags)", 'replayable' => false];
         yield 'preg_split' => ['code' => "preg_split('/a/', \$s, 2, PREG_SPLIT_NO_EMPTY)", 'replayable' => true];
         yield 'preg_split, limit at run time' => ['code' => "preg_split('/a/', \$s, \$limit)", 'replayable' => false];
         yield 'preg_split, flags at run time' => ['code' => "preg_split('/a/', \$s, -1, \$flags)", 'replayable' => false];

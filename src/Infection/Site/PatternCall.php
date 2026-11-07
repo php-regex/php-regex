@@ -118,12 +118,12 @@ final class PatternCall
 
     /**
      * The integer an argument is written as, a sum of PREG_* flags
-     * included; the default when the call does not pass it; null when the
-     * value is only known at run time.
+     * included; null when the call does not pass it, or when the value is
+     * only known at run time.
      */
-    public function integer(string $parameter, int $default): ?int
+    public function integer(string $parameter): ?int
     {
-        return isset($this->arguments[$parameter]) ? self::integerOf($this->arguments[$parameter]) : $default;
+        return isset($this->arguments[$parameter]) ? self::integerOf($this->arguments[$parameter]) : null;
     }
 
     /**

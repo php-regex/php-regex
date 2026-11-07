@@ -245,6 +245,7 @@ final class MutatorBehaviourTest extends TestCase
     {
         yield 'offset from a variable' => ['code' => "preg_match('/a+/', \$s, \$m, 0, \$offset)"];
         yield 'flags from a variable' => ['code' => "preg_match_all('/a+/', \$s, \$m, \$flags)"];
+        yield 'callback flags from a variable' => ['code' => "preg_replace_callback('/a+/', \$f, \$s, -1, \$count, \$flags)"];
         yield 'replacement from a variable' => ['code' => "preg_replace('/a+/', \$replacement, \$s)"];
         yield 'limit from a variable' => ['code' => "preg_split('/,+/', \$s, \$limit)"];
         yield 'flags from a constant that is no PREG_ flag' => ['code' => "preg_match_all('/a+/', \$s, \$m, E_ALL)"];
@@ -320,6 +321,17 @@ final class MutatorBehaviourTest extends TestCase
     }
 
     #[Test]
+    public function test_a_node_keeps_its_mutants_past_one_redos_worse(): void
+    {
+        // [a-c] and [^b-c] both let a+ meet another "a"; [^a-b] does not,
+        // and "ac" kills it.
+        $this->assertSame(['/^(?:a+[^a-b])+$/'], MutatorHarness::bare(new RegexCharClass(), "preg_match('/^(?:a+[^a-c])+\$/', \$s)"));
+        $this->assertSame([1, false], self::underTheReplayLimit('/^(?:a+[^a-c])+$/', '/^(?:a+[a-c])+$/', str_repeat('a', 25).'!'));
+        $this->assertSame([0, false], self::underTheReplayLimit('/^(?:a+[^a-c])+$/', '/^(?:a+[^b-c])+$/', str_repeat('a', 25).'b'));
+        $this->assertSame([0, 1], self::underTheReplayLimit('/^(?:a+[^a-c])+$/', '/^(?:a+[^a-b])+$/', 'ac'));
+    }
+
+    #[Test]
     public function test_a_mutant_rated_polynomial_is_kept(): void
     {
         // \D* overlaps a* where \d* does not: a cubic rating, no timeout on
@@ -335,6 +347,8 @@ final class MutatorBehaviourTest extends TestCase
         // The shortest subject the automata find may hold a NUL where any
         // byte but a digit would do: a printable one is written instead.
         $this->assertSame(['v0!0'], array_map(static fn (string $pattern): ?string => MutatorHarness::split($pattern)[1], MutatorHarness::patterns(new RegexEscape(), "preg_match('/^v\\d+\\.\\d+\$/', \$s)")));
+        // A printable byte stays as found, a space as well.
+        $this->assertSame(['! x0', ' x0!', " x0\n"], array_map(static fn (string $pattern): ?string => MutatorHarness::split($pattern)[1], MutatorHarness::patterns(new RegexAnchor(), "preg_match('/^[ -~]x\\d\$/', \$s)")));
         // A newline that tells $ from \z stays.
         $this->assertContains("0\n", array_map(static fn (string $pattern): ?string => MutatorHarness::split($pattern)[1], MutatorHarness::patterns(new RegexAnchor(), "preg_match('/^\\d+\$/', \$s)")));
     }

@@ -86,6 +86,7 @@ final class CandidateGeneratorTest extends TestCase
         yield 'flat range' => ['family' => Family::CharClass, 'pattern' => '/[a-a]/', 'expected' => ['/[^a-a]/']];
         yield 'range ending before a class metacharacter' => ['family' => Family::CharClass, 'pattern' => '/[0-^]/', 'expected' => ['/[^0-^]/', '/[1-^]/']];
         yield 'one end escaped' => ['family' => Family::CharClass, 'pattern' => '/[a-\x7a]/', 'expected' => ['/[^a-\x7a]/']];
+        yield 'one end an escaped literal' => ['family' => Family::CharClass, 'pattern' => '/[+-\.]/', 'expected' => ['/[^+-\.]/']];
         yield 'printable bounds' => ['family' => Family::CharClass, 'pattern' => '/[ -~]/', 'expected' => ['/[^ -~]/', '/[!-~]/', '/[ -}]/']];
         yield 'delete is no printable end' => ['family' => Family::CharClass, 'pattern' => "/[a-\x7f]/", 'expected' => ["/[^a-\x7f]/"]];
         yield 'escaped low end' => ['family' => Family::CharClass, 'pattern' => '/[\x41-z]/', 'expected' => ['/[^\x41-z]/']];

@@ -57,8 +57,7 @@ final class CallReplay
         $shaping = match ($call->function) {
             'preg_match', 'preg_match_all' => ['flags', 'offset'],
             'preg_replace', 'preg_filter' => ['limit'],
-            'preg_replace_callback' => ['limit'],
-            'preg_split' => ['limit', 'flags'],
+            'preg_replace_callback', 'preg_split' => ['limit', 'flags'],
             default => [],
         };
         foreach ($shaping as $parameter) {
@@ -104,25 +103,26 @@ final class CallReplay
             'preg_match', 'preg_match_all', 'preg_replace', 'preg_replace_callback' => $call->function,
             default => 'preg_split',
         };
-        // The arguments the call passes, and only those: preg_match() given
-        // a pattern and a subject alone runs otherwise.
-        $arguments = ['matches' => \in_array($call->function, ['preg_match', 'preg_match_all'], true) && $call->passes('matches')];
-        if ('preg_grep' !== $call->function && $call->passes('flags')) {
-            $arguments['flags'] = $call->integer('flags', 0) ?? 0;
-        }
-        if ($call->passes('offset')) {
-            $arguments['offset'] = $call->integer('offset', 0) ?? 0;
-        }
         if ('preg_grep' === $call->function) {
-            // preg_grep() retries no empty match: preg_match() runs alike
-            // once it is given more than the pattern and the subject.
-            $arguments['offset'] = 0;
+            // Its flag only inverts which elements it keeps, and it retries
+            // no empty match: preg_match() runs alike once it is given more
+            // than the pattern and the subject.
+            $arguments = ['offset' => 0];
+        } else {
+            // The arguments the call passes, and only those: preg_match()
+            // given a pattern and a subject alone runs otherwise. Each one
+            // is a literal, replayable() has read them.
+            $arguments = ['matches' => \in_array($call->function, ['preg_match', 'preg_match_all'], true) && $call->passes('matches')];
+            foreach (['flags', 'offset', 'limit'] as $parameter) {
+                $value = $call->integer($parameter);
+                if (null !== $value) {
+                    $arguments[$parameter] = $value;
+                }
+            }
         }
-        if ($call->passes('limit')) {
-            $arguments['limit'] = $call->integer('limit', -1) ?? -1;
-        }
-        if (null !== $call->string('replacement')) {
-            $arguments['replacement'] = (string) $call->string('replacement');
+        $replacement = $call->string('replacement');
+        if (null !== $replacement) {
+            $arguments['replacement'] = $replacement;
         }
 
         $answer = $this->engine->answer($function, $pattern, $subject, $arguments, new PcreLimits(self::BACKTRACK_LIMIT, self::RECURSION_LIMIT));
