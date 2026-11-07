@@ -2,6 +2,13 @@
 
 🎉 **Thank you for your interest in contributing to PHPRegex!**
 
+## Where changes happen
+
+PHPRegex is developed in this repository, `php-regex/php-regex`: each
+`php-regex/regex-*` repository is a read-only split of it, kept in step by
+CI. Open your issues, discussions and pull requests here; a pull request
+opened on a split is closed with a pointer to this repository.
+
 ## Code of Conduct
 
 This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md):
@@ -210,7 +217,8 @@ To see what PCRE does with a pattern before you write the test:
 php -r 'var_dump(@preg_match("/a{2,1}/", ""), error_get_last()["message"] ?? null);'
 ```
 
-[tests/README.md](tests/README.md) describes the layout of the suite.
+[tests/README.md](https://github.com/php-regex/php-regex/blob/2.x/tests/README.md)
+describes the layout of the suite.
 [Extending](https://php-regex.com/extending/#adding-a-pcre-construct) walks
 through a new PCRE construct, and
 [Adding a Lint Rule](https://php-regex.com/adding-a-lint-rule/) through a new
