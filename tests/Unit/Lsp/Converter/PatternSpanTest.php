@@ -78,6 +78,52 @@ final class PatternSpanTest extends TestCase
         yield 'modifiers — the closing quote' => ['literal' => '"/ab/i"', 'at' => 6, 'expected' => 5];
     }
 
+    /**
+     * The body runs from the delimiter, past the spaces PHP skips before
+     * it, to the last closing delimiter, or to the end of a pattern that
+     * has none.
+     *
+     * @return iterable<string, array{pattern: string, length: int}>
+     */
+    public static function provideBodies(): iterable
+    {
+        yield 'closed' => ['pattern' => '/abc/i', 'length' => 3];
+        yield 'closed after spaces' => ['pattern' => '  /abc/i', 'length' => 3];
+        yield 'never closed' => ['pattern' => '/abc', 'length' => 3];
+        yield 'never closed after spaces' => ['pattern' => '  /abcd', 'length' => 4];
+        yield 'brackets' => ['pattern' => ' {ab}x', 'length' => 2];
+    }
+
+    #[Test]
+    #[DataProvider('provideBodies')]
+    public function test_the_body_runs_between_the_delimiters(string $pattern, int $length): void
+    {
+        $content = "<?php\n\$a = '".$pattern."';\n";
+        $positions = new PositionConverter($content);
+        $at = (int) strpos($content, "'");
+        $occurrence = new RegexOccurrence($pattern, $positions->offsetToPosition($at), $positions->offsetToPosition($at + \strlen($pattern) + 2), $at, "'".$pattern."'");
+
+        $this->assertSame($length, PatternSpan::of($occurrence, $positions)->bodyLength());
+    }
+
+    /**
+     * A pattern another file writes stands at the argument naming it: every
+     * range is the argument, and no cursor in it stands in the pattern.
+     */
+    #[Test]
+    public function test_a_pattern_written_elsewhere_spans_its_argument(): void
+    {
+        $content = "<?php\npreg_match(Patterns::RE, \$s);\n";
+        $positions = new PositionConverter($content);
+        $start = $positions->offsetToPosition(17);
+        $end = $positions->offsetToPosition(29);
+        $span = PatternSpan::of(new RegexOccurrence('/(a/', $start, $end, 17, 'Patterns::RE', writtenElsewhere: 'Patterns::RE, written in src/Patterns.php on line 9'), $positions);
+
+        $this->assertSame(['start' => $start, 'end' => $end], $span->range(0));
+        $this->assertSame(['start' => $start, 'end' => $end], $span->range(1, 3));
+        $this->assertNull($span->patternOffsetAt(20));
+    }
+
     #[Test]
     #[DataProvider('provideCursorOffsets')]
     public function test_a_document_offset_maps_to_the_pattern_byte_the_cursor_passed(string $literal, int $at, ?int $expected): void

@@ -96,6 +96,70 @@ final class CrossFileConstantsTest extends TestCase
     }
 
     /**
+     * A pattern of another file carries where the argument naming it
+     * stands in the file read, its byte offset and length: an editor
+     * showing that file reports there what the lint reports at the
+     * literal. A pattern of the file read carries none.
+     */
+    #[Test]
+    public function test_a_pattern_of_another_file_carries_the_argument_that_names_it(): void
+    {
+        $reader = <<<'PHP'
+            <?php
+
+            namespace App\Service;
+
+            use App\Patterns;
+            use App\Kind as K;
+
+            final class Reader
+            {
+                private const OWN = '/own/';
+
+                public function run(string $s): bool
+                {
+                    return 1 === preg_match(Patterns::EMAIL, $s)
+                        && 1 === preg_match( \App\Patterns::FULL , $s)
+                        && 1 === preg_match(K::Re->value, $s)
+                        && 1 === preg_match(self::OWN, $s)
+                        && 1 === preg_match('/literal/', $s);
+                }
+            }
+            PHP;
+
+        $directory = $this->makeProject(['Patterns.php' => self::PATTERNS, 'Reader.php' => $reader]);
+        $paths = [$directory.'/Patterns.php', $directory.'/Reader.php'];
+        $constants = ProjectConstants::of(array_map(ProjectConstants::scanFile(...), $paths));
+        $expected = [
+            ['/^[^@]+@[^@]+$/', 'Patterns.php', 'Patterns::EMAIL'],
+            ['/a/', 'Patterns.php', '\App\Patterns::FULL'],
+            ['/enum/', 'Patterns.php', 'K::Re->value'],
+            ['/own/', 'Reader.php', null],
+            ['/literal/', 'Reader.php', null],
+        ];
+
+        $strategies = [new TokenBasedExtractionStrategy([], PatternFunctionRegistry::native())];
+        if (class_exists(ParserFactory::class)) {
+            $strategies[] = new PhpParserExtractionStrategy([], PatternFunctionRegistry::native());
+        }
+
+        foreach ($strategies as $strategy) {
+            $read = [];
+            foreach ($this->withConstants($strategy, $constants)->extract([$directory.'/Reader.php']) as $occurrence) {
+                $this->assertSame(null === $occurrence->argumentOffset, null === $occurrence->argumentLength);
+                // A marker naming no issue, or the lint dropping its issues
+                // itself, keeps the argument.
+                foreach ([$occurrence->ignoredWhole(), $occurrence->analysed()] as $marked) {
+                    $this->assertSame([$occurrence->argumentOffset, $occurrence->argumentLength], [$marked->argumentOffset, $marked->argumentLength]);
+                }
+                $read[] = [$occurrence->pattern, basename($occurrence->file), null === $occurrence->argumentOffset ? null : substr($reader, $occurrence->argumentOffset, (int) $occurrence->argumentLength)];
+            }
+
+            $this->assertSame($expected, $read, $strategy::class);
+        }
+    }
+
+    /**
      * A constant of a parent class is named through that class: an
      * inherited constant read through static:: or self:: is not followed
      * up the hierarchy, in another file as in the file.

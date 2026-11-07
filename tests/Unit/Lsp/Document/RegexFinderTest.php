@@ -27,6 +27,16 @@ final class RegexFinderTest extends TestCase
         $this->finder = new RegexFinder();
     }
 
+    /**
+     * Without the declarations of a workspace, a constant of another file
+     * names nothing the finder knows: the call holds no pattern.
+     */
+    #[Test]
+    public function test_without_declarations_a_constant_of_another_file_is_not_read(): void
+    {
+        $this->assertSame([], $this->finder->find("<?php\npreg_match(\\App\\Patterns::RE, \$s);\n"));
+    }
+
     #[Test]
     public function test_finds_preg_match_pattern(): void
     {

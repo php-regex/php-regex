@@ -199,6 +199,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - The lint reads each pattern once, shares its automata between rules, skips a rule whose every identifier is off, and caps its workers by the CPU quota and memory limit of a container.
 - The lint shares its work between workers as each finishes, shows the progress on stderr in three steps, and defaults to the logical CPUs the process may use.
 - The language server analyses only the patterns a change touched.
+- The language server reads a class constant or an enum case of another file, `preg_match(Patterns::EMAIL, $s)`, as the lint does, and reports its pattern at the argument naming it; `PatternOccurrence` carries that argument (`argumentOffset`, `argumentLength`).
 - `ArrayCache` drops the tree used longest ago; a parser with a filesystem or PSR cache keeps the trees it read in memory in front of it.
 - `RegexParser::CACHE_VERSION` fingerprints the code that builds a tree, and DFA caches are keyed on it: caches written by an earlier release are rebuilt. See [Cached ASTs](UPGRADE-2.0.md#cached-asts-are-rebuilt).
 - A cache that throws while reading is a miss; an `\Error` it throws surfaces.

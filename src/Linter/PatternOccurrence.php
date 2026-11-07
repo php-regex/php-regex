@@ -34,6 +34,13 @@ use PHPRegex\Linter\Extraction\TargetMarker;
  * file read, holds its "@regex-target" markers, for the lint to report the
  * malformed ones and those that keep no version.
  *
+ * $argumentOffset and $argumentLength are set on a pattern whose literal
+ * another file holds, read through one of its constants: where the
+ * argument naming it stands in the file read, as a byte offset and a
+ * length. $file, $line and $fileOffset place the literal, where the lint
+ * reports the pattern; an editor showing the file read reports it at the
+ * argument.
+ *
  * $isIgnored is set on an occurrence whose line a marker naming no issue
  * silences: an analysis given it alone leaves it out. The lint, given the
  * markers of the file, analyses it and drops its issues itself.
@@ -68,6 +75,8 @@ final class PatternOccurrence
          * @var list<TargetMarker>
          */
         public readonly array $targets = [],
+        public readonly ?int $argumentOffset = null,
+        public readonly ?int $argumentLength = null,
     ) {}
 
     /**
@@ -105,7 +114,7 @@ final class PatternOccurrence
      */
     public function ignoredWhole(): self
     {
-        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, true, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets);
+        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, true, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength);
     }
 
     /**
@@ -116,7 +125,7 @@ final class PatternOccurrence
      */
     public function guardedBy(?TargetConstraint $guard): self
     {
-        return null === $guard ? $this : new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, $this->isIgnored, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard?->intersect($guard) ?? $guard, $this->targets);
+        return null === $guard ? $this : new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, $this->isIgnored, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard?->intersect($guard) ?? $guard, $this->targets, $this->argumentOffset, $this->argumentLength);
     }
 
     /**
@@ -127,7 +136,7 @@ final class PatternOccurrence
      */
     public function analysed(): self
     {
-        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, false, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets);
+        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, false, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength);
     }
 
     /**

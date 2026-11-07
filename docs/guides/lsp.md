@@ -288,7 +288,22 @@ regex.json ignored: Invalid "extraction.interop" in /app/regex.json: unknown pre
 A pattern held in a constant, a local variable or a property of the same
 document is diagnosed where its literal is written, once, as `regex lint`
 reports it; `@regex-ignore` on that line silences it, and a marker on the
-call does not. A marker may name the issues it silences
+call does not. A class constant or an enum case of another file of the
+workspace, or of `vendor/`, holding a pattern, `preg_match(Patterns::BROKEN, $s)`,
+is read as `regex lint` reads it, an open document standing for its file;
+the lint reports the pattern at its literal, the editor reports it at the
+argument naming it, each message saying which constant and where it is
+written. With `public const BROKEN = '/(a/';` on line 9 of
+`src/Support/Patterns.php`:
+
+```
+Patterns::BROKEN, written in src/Support/Patterns.php on line 9: Expected ) at end of input (found eof).
+```
+
+A document naming the same constant twice is reported at the first
+argument, as the lint reports the literal once. Hovering the argument shows
+the pattern and its explanation; it has no quick fix, which would edit the
+other file. A marker may name the issues it silences
 (`// @regex-ignore regex.lint.flag.useless.i`), and a marker that silences
 nothing is a warning on the marker, `regex.ignore.unmatched`, unless
 `"reportUnmatchedIgnores": false` in `regex.json` turns it off (see

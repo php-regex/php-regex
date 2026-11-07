@@ -183,7 +183,9 @@ final class CompletionHandler
 
         // Check if we're inside a regex pattern
         $occurrence = $this->documents->getOccurrenceAtPosition($uri, $line, $character);
-        if (null === $occurrence) {
+        // An argument naming a pattern another file writes holds no
+        // pattern text to complete.
+        if (null === $occurrence || null !== $occurrence->writtenElsewhere) {
             $this->transport->success($message->id, null);
 
             return;

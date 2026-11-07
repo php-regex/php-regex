@@ -306,7 +306,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             [$start, $end] = $item->place;
             $value = $values[$start.':'.$end] ?? null;
             if (null !== $value && $value->isResolvable()) {
-                array_push($occurrences, ...$item->occurrences($resolver, $value, $file, $content));
+                array_push($occurrences, ...$item->occurrences($resolver, $value, $file, $content, self::span($tokens, $tokenOffsets, $start, $end)));
             }
         }
 
@@ -897,6 +897,35 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         $occurrence = $this->createOccurrence($patternInfo, $file, $patternFunction);
         $occurrences[] = $occurrence;
         $sink?->append($occurrence);
+    }
+
+    /**
+     * Where the tokens $start to $end, $end excluded, stand in the content,
+     * the whitespace and the comments around them left out: their byte
+     * offset and length. A pattern is held only for tokens that name
+     * something, so some token holds code.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $tokenOffsets
+     *
+     * @return array{int, int}
+     */
+    private static function span(array $tokens, array $tokenOffsets, int $start, int $end): array
+    {
+        $first = $start;
+        while (PhpTokens::isIgnorable($tokens[$first])) {
+            $first++;
+        }
+
+        $last = $end - 1;
+        while (PhpTokens::isIgnorable($tokens[$last])) {
+            $last--;
+        }
+
+        $lastToken = $tokens[$last];
+        $offset = $tokenOffsets[$first];
+
+        return [$offset, $tokenOffsets[$last] + \strlen(\is_array($lastToken) ? $lastToken[1] : $lastToken) - $offset];
     }
 
     /**

@@ -15,6 +15,8 @@ namespace PHPRegex\LanguageServer\Document;
 
 use PHPRegex\Linter\Extraction\MemoryBudget;
 use PHPRegex\Linter\Extraction\PatternAttributeScanner;
+use PHPRegex\Linter\Extraction\ProjectConstants;
+use PHPRegex\Linter\Extraction\ValueExpr;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Path;
 
@@ -33,7 +35,11 @@ use PHPRegex\Parser\Text\Path;
  *
  * The same sources tell which namespaced functions are named as a global
  * pattern function: an unqualified call in their namespace reaches them,
- * and is not read.
+ * and is not read; and which class constants and enum cases a call may
+ * name from another file, `preg_match(Patterns::RE, $s)`, as `regex lint`
+ * reads them.
+ *
+ * @phpstan-import-type Contribution from ProjectConstants
  *
  * @internal
  */
@@ -138,6 +144,36 @@ final class PatternDeclarations
      */
     private array $customGlobals = [];
 
+    /**
+     * The constants each file declares, by path: the workspace's, the
+     * libraries', the open documents' (by path, or URI for a document with
+     * no file); a file declaring none has no entry.
+     *
+     * @var array<string, Contribution>
+     */
+    private array $constantFiles = [];
+
+    /**
+     * @var array<string, Contribution>
+     */
+    private array $constantLibraries = [];
+
+    /**
+     * @var array<string, Contribution>
+     */
+    private array $constantDocuments = [];
+
+    /**
+     * What each contribution above says, its offsets left out: an edit that
+     * moves a constant along its line changes no pattern a call reads, and
+     * reads no document again.
+     *
+     * @var array{files: array<string, string>, libraries: array<string, string>, documents: array<string, string>}
+     */
+    private array $constantPrints = ['files' => [], 'libraries' => [], 'documents' => []];
+
+    private ?ProjectConstants $constants = null;
+
     public function __construct(private readonly int $fileLimit = self::FILE_LIMIT) {}
 
     /**
@@ -165,6 +201,8 @@ final class PatternDeclarations
 
         $this->files = [];
         $this->workspacePaths = [];
+        $this->constantFiles = [];
+        $this->constantPrints['files'] = [];
         $this->forgetIndex();
         $this->plainNames = null;
         $read = 0;
@@ -175,10 +213,13 @@ final class PatternDeclarations
                 }
 
                 $this->workspacePaths[$file] = true;
-                $specs = self::scanFile($file);
+                $content = self::contentOf($file);
+                $specs = null === $content ? [] : self::scan($content);
                 if ([] !== $specs) {
                     $this->files[$file] = $specs;
                 }
+
+                $this->keepConstants('files', $file, $content);
             }
         }
 
@@ -197,6 +238,8 @@ final class PatternDeclarations
         $this->libraryDirectory = $directory;
         $this->libraries = [];
         $this->libraryPaths = [];
+        $this->constantLibraries = [];
+        $this->constantPrints['libraries'] = [];
         $this->forgetIndex();
         $this->plainNames = null;
 
@@ -226,10 +269,13 @@ final class PatternDeclarations
                     }
 
                     $this->libraryPaths[$path] = true;
-                    $specs = self::scanFile($path);
+                    $content = self::contentOf($path);
+                    $specs = null === $content ? [] : self::scan($content);
                     if ([] !== $specs) {
                         $this->libraries[$path] = $specs;
                     }
+
+                    $this->keepConstants('libraries', $path, $content);
                 }
             }
         }
@@ -270,13 +316,16 @@ final class PatternDeclarations
         }
 
         $before = $this->snapshot();
-        $specs = null === $content ? self::scanFile($path) : self::scan($content);
+        $content ??= self::contentOf($path);
+        $specs = null === $content ? [] : self::scan($content);
         if ($library) {
             $this->libraryPaths[$path] = true;
             $this->libraries[$path] = $specs;
             if ([] === $specs) {
                 unset($this->libraries[$path]);
             }
+
+            $this->keepConstants('libraries', $path, $content);
         }
 
         // A vendor subtree the workspace's regex.json names among its
@@ -288,12 +337,12 @@ final class PatternDeclarations
             if ([] === $specs) {
                 unset($this->files[$path]);
             }
+
+            $this->keepConstants('files', $path, $content);
         }
 
         if (null !== $this->plainNames && [] !== $this->plainNames) {
-            $this->plainFiles[$path] = null === $content
-                ? PatternAttributeScanner::namespacedFunctions([$path], $this->plainNames)
-                : PatternAttributeScanner::namespacedFunctionsIn($content, $this->plainNames);
+            $this->plainFiles[$path] = PatternAttributeScanner::namespacedFunctionsIn($content ?? '', $this->plainNames);
             if ([] === $this->plainFiles[$path]) {
                 unset($this->plainFiles[$path]);
             }
@@ -314,7 +363,7 @@ final class PatternDeclarations
         }
 
         $before = $this->snapshot();
-        unset($this->files[$path], $this->libraries[$path], $this->workspacePaths[$path], $this->libraryPaths[$path], $this->plainFiles[$path]);
+        unset($this->files[$path], $this->libraries[$path], $this->workspacePaths[$path], $this->libraryPaths[$path], $this->plainFiles[$path], $this->constantFiles[$path], $this->constantLibraries[$path], $this->constantPrints['files'][$path], $this->constantPrints['libraries'][$path]);
 
         return $this->changedSince($before);
     }
@@ -329,6 +378,7 @@ final class PatternDeclarations
         $key = self::keyOf($uri);
         $this->documents[$key] = self::scan($content);
         $this->texts[$key] = $content;
+        $this->keepConstants('documents', $key, $content);
         if (null !== $this->plainNames && [] !== $this->plainNames) {
             $this->plainDocuments[$key] = PatternAttributeScanner::namespacedFunctionsIn($content, $this->plainNames);
         }
@@ -344,7 +394,7 @@ final class PatternDeclarations
     {
         $before = $this->snapshot();
         $key = self::keyOf($uri);
-        unset($this->documents[$key], $this->texts[$key], $this->plainDocuments[$key]);
+        unset($this->documents[$key], $this->texts[$key], $this->plainDocuments[$key], $this->constantDocuments[$key], $this->constantPrints['documents'][$key]);
 
         return $this->changedSince($before);
     }
@@ -423,6 +473,29 @@ final class PatternDeclarations
     }
 
     /**
+     * The class constants and the enum cases of the workspace and of its
+     * libraries, an open document standing for its file, as `regex lint`
+     * reads them before the patterns.
+     */
+    public function constants(): ProjectConstants
+    {
+        return $this->constants ??= ProjectConstants::of(
+            array_values(array_diff_key($this->constantFiles, $this->constantDocuments) + $this->constantDocuments),
+            array_values(array_diff_key($this->constantLibraries, $this->constantDocuments)),
+        );
+    }
+
+    /**
+     * A path as the workspace names it, from its root: "src/Patterns.php".
+     */
+    public function displayPath(string $path): string
+    {
+        $path = self::normalize($path);
+
+        return null !== $this->root && str_starts_with($path, $this->root.'/') ? substr($path, \strlen($this->root) + 1) : $path;
+    }
+
+    /**
      * The local path a file:// URI names; null for another scheme.
      */
     public static function pathOf(string $uri): ?string
@@ -467,17 +540,73 @@ final class PatternDeclarations
     }
 
     /**
-     * The declarations of a file on the disk; one too large to tokenize in
-     * the memory left, or that cannot be read, declares none.
-     *
-     * @return list<string>
+     * The text of a file on the disk; null for one too large to tokenize in
+     * the memory left, or that cannot be read, which declares nothing.
      */
-    private static function scanFile(string $path): array
+    private static function contentOf(string $path): ?string
     {
         $size = @filesize($path);
         $content = false !== $size && MemoryBudget::allowsSize($size, MemoryBudget::TOKENIZE_FACTOR) ? @file_get_contents($path) : false;
 
-        return \is_string($content) ? self::scan($content) : [];
+        return \is_string($content) ? $content : null;
+    }
+
+    /**
+     * Keeps the constants a text declares, under its path in one of the
+     * three stores; a text declaring none, or none to read, leaves none.
+     *
+     * @param 'files'|'libraries'|'documents' $store
+     */
+    private function keepConstants(string $store, string $path, ?string $content): void
+    {
+        $contribution = null === $content ? ProjectConstants::nothing() : ProjectConstants::scan($content, $path);
+        // An open document stands for its file, even once it declares none
+        // where its file declares some.
+        $standsFor = 'documents' === $store && (isset($this->constantFiles[$path]) || isset($this->constantLibraries[$path]));
+        if ([] === $contribution['classes'] && !$standsFor) {
+            if ('files' === $store) {
+                unset($this->constantFiles[$path]);
+            } elseif ('libraries' === $store) {
+                unset($this->constantLibraries[$path]);
+            } else {
+                unset($this->constantDocuments[$path]);
+            }
+
+            unset($this->constantPrints[$store][$path]);
+
+            return;
+        }
+
+        if ('files' === $store) {
+            $this->constantFiles[$path] = $contribution;
+        } elseif ('libraries' === $store) {
+            $this->constantLibraries[$path] = $contribution;
+        } else {
+            $this->constantDocuments[$path] = $contribution;
+        }
+
+        $this->constantPrints[$store][$path] = md5(serialize([$contribution['classes'], array_map(static fn (array $constant): array => [self::shape($constant[0]), $constant[1]], $contribution['constants'])]));
+    }
+
+    /**
+     * What a value says, its offsets and columns left out.
+     */
+    private static function shape(ValueExpr $value): string
+    {
+        return serialize([
+            $value->kind,
+            $value->value,
+            $value->line,
+            $value->class,
+            $value->lateStatic,
+            $value->names,
+            $value->scope,
+            $value->written,
+            $value->file,
+            null === $value->guard ? null : serialize($value->guard),
+            array_map(self::shape(...), $value->parts),
+            array_map(static fn (array $item): array => [null === $item[0] ? null : self::shape($item[0]), self::shape($item[1])], $value->items),
+        ]);
     }
 
     /**
@@ -618,18 +747,26 @@ final class PatternDeclarations
     }
 
     /**
-     * What the documents are read with: the specs, and the shadowing
-     * namespaced functions once read.
+     * What the documents are read with: the specs, the shadowing
+     * namespaced functions once read, and what the constants of the
+     * project and of the libraries say.
      *
-     * @return array{list<string>, list<string>|null}
+     * @return array{list<string>, list<string>|null, array<string, string>}
      */
     private function snapshot(): array
     {
-        return [$this->current(), $this->mergedPlain()];
+        $prints = $this->constantPrints;
+
+        // An open document stands for its file, a library's as a workspace's;
+        // by path, whichever opened first.
+        $constants = array_diff_key($prints['files'] + $prints['libraries'], $prints['documents']) + $prints['documents'];
+        ksort($constants);
+
+        return [$this->current(), $this->mergedPlain(), $constants];
     }
 
     /**
-     * @param array{list<string>, list<string>|null} $before
+     * @param array{list<string>, list<string>|null, array<string, string>} $before
      */
     private function changedSince(array $before): bool
     {
@@ -698,6 +835,7 @@ final class PatternDeclarations
     {
         $this->index = null;
         $this->specs = null;
+        $this->constants = null;
     }
 
     /**
