@@ -245,7 +245,7 @@ final class ErrorFactory
      */
     public static function unreadableMarker(TargetMarker $marker): IdentifierRuleError
     {
-        return RuleErrorBuilder::message((string) $marker->error)
+        return RuleErrorBuilder::message(str_replace('<', '\\x3C', DisplayEscaper::escapeText((string) $marker->error)))
             ->line($marker->line)
             ->tip('Write the versions the code runs on as a Composer constraint after "php", "pcre", or both.')
             ->identifier(RegexPatternRule::IDENTIFIER_TARGET_INVALID)
@@ -260,7 +260,7 @@ final class ErrorFactory
      */
     public static function emptyMarker(TargetMarker $marker, string $judged): IdentifierRuleError
     {
-        return RuleErrorBuilder::message(\sprintf('The %s marker "%s" keeps no version the project is judged for (PHP %s): the patterns it covers are not judged.', $marker->marker, $marker->text, $judged))
+        return RuleErrorBuilder::message(\sprintf('The %s marker "%s" keeps no version the project is judged for (PHP %s): the patterns it covers are not judged.', $marker->marker, str_replace('<', '\\x3C', DisplayEscaper::escapeText($marker->text)), $judged))
             ->line($marker->line)
             ->tip('Widen the marker to versions of the range, or remove the code it covers if it never runs there.')
             ->identifier(RegexPatternRule::IDENTIFIER_TARGET_EMPTY)
