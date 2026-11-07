@@ -655,13 +655,27 @@ exit 1
     public function test_status_reports_a_package_packagist_does_not_serve_as_missing(): void
     {
         $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+        $environment = $this->fakeGitHub();
+        // Packagist answers 404 for a package nobody submitted: the body,
+        // then the status curl writes after it.
+        file_put_contents($this->root.'/fake/curl', "#!/usr/bin/env bash\necho \"curl \$*\" >> \"\$CURL_LOG\"\nprintf '404 not found, no packages here\\n404'\n");
 
-        // The stub answers no request, as Packagist answers 404 for a
-        // package nobody submitted.
-        [, $output] = $this->runScript('status', [], $this->fakeGitHub());
+        [, $output] = $this->runScript('status', [], $environment);
 
         $this->assertMatchesRegularExpression('~^  php-regex/regex-infection .*✗ Packagist$~m', $output);
         $this->assertStringNotContainsString('registered, no versions', $output);
+    }
+
+    #[Test]
+    public function test_status_tells_a_packagist_that_does_not_answer_from_a_missing_package(): void
+    {
+        $this->publishedWithRuns(['docs/guides/new.md' => 'prose']);
+
+        // The stub fails every request, as curl does when it cannot connect.
+        [, $output] = $this->runScript('status', [], $this->fakeGitHub());
+
+        $this->assertMatchesRegularExpression('~^  php-regex/regex-infection .*· Packagist did not answer$~m', $output);
+        $this->assertDoesNotMatchRegularExpression('~^  php-regex/.*✗ Packagist~m', $output);
     }
 
     #[Test]
