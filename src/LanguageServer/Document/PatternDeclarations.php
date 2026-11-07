@@ -751,17 +751,22 @@ final class PatternDeclarations
      * namespaced functions once read, and what the constants of the
      * project and of the libraries say.
      *
-     * @return array{list<string>, list<string>|null, array<string, string>, array<string, string>}
+     * @return array{list<string>, list<string>|null, array<string, string>}
      */
     private function snapshot(): array
     {
         $prints = $this->constantPrints;
 
-        return [$this->current(), $this->mergedPlain(), array_diff_key($prints['files'], $prints['documents']) + $prints['documents'], array_diff_key($prints['libraries'], $prints['documents'])];
+        // An open document stands for its file, a library's as a workspace's;
+        // by path, whichever opened first.
+        $constants = array_diff_key($prints['files'] + $prints['libraries'], $prints['documents']) + $prints['documents'];
+        ksort($constants);
+
+        return [$this->current(), $this->mergedPlain(), $constants];
     }
 
     /**
-     * @param array{list<string>, list<string>|null, array<string, string>, array<string, string>} $before
+     * @param array{list<string>, list<string>|null, array<string, string>} $before
      */
     private function changedSince(array $before): bool
     {

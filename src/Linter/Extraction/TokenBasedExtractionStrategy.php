@@ -912,9 +912,16 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private static function span(array $tokens, array $tokenOffsets, int $start, int $end): array
     {
-        $code = array_filter(range($start, $end - 1), static fn (int $index): bool => isset($tokens[$index]) && !PhpTokens::isIgnorable($tokens[$index]));
-        $first = min($code ?: [$start]);
-        $last = max($code ?: [$start]);
+        $first = $start;
+        while (PhpTokens::isIgnorable($tokens[$first])) {
+            $first++;
+        }
+
+        $last = $end - 1;
+        while (PhpTokens::isIgnorable($tokens[$last])) {
+            $last--;
+        }
+
         $lastToken = $tokens[$last];
         $offset = $tokenOffsets[$first];
 

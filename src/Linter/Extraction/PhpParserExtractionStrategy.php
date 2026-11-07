@@ -236,9 +236,9 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
                 continue;
             }
 
+            // The parser keeps the file positions of every expression.
             $place = $item->place;
-            $argument = $place->getStartFilePos() < 0 ? null : [$place->getStartFilePos(), $place->getEndFilePos() + 1 - $place->getStartFilePos()];
-            array_push($occurrences, ...$item->occurrences($values, $expressions[$index], $file, $content, $argument));
+            array_push($occurrences, ...$item->occurrences($values, $expressions[$index], $file, $content, [$place->getStartFilePos(), $place->getEndFilePos() + 1 - $place->getStartFilePos()]));
         }
 
         return $occurrences;

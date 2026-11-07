@@ -79,6 +79,34 @@ final class PatternSpanTest extends TestCase
     }
 
     /**
+     * The body runs from the delimiter, past the spaces PHP skips before
+     * it, to the last closing delimiter, or to the end of a pattern that
+     * has none.
+     *
+     * @return iterable<string, array{pattern: string, length: int}>
+     */
+    public static function provideBodies(): iterable
+    {
+        yield 'closed' => ['pattern' => '/abc/i', 'length' => 3];
+        yield 'closed after spaces' => ['pattern' => '  /abc/i', 'length' => 3];
+        yield 'never closed' => ['pattern' => '/abc', 'length' => 3];
+        yield 'never closed after spaces' => ['pattern' => '  /abcd', 'length' => 4];
+        yield 'brackets' => ['pattern' => ' {ab}x', 'length' => 2];
+    }
+
+    #[Test]
+    #[DataProvider('provideBodies')]
+    public function test_the_body_runs_between_the_delimiters(string $pattern, int $length): void
+    {
+        $content = "<?php\n\$a = '".$pattern."';\n";
+        $positions = new PositionConverter($content);
+        $at = (int) strpos($content, "'");
+        $occurrence = new RegexOccurrence($pattern, $positions->offsetToPosition($at), $positions->offsetToPosition($at + \strlen($pattern) + 2), $at, "'".$pattern."'");
+
+        $this->assertSame($length, PatternSpan::of($occurrence, $positions)->bodyLength());
+    }
+
+    /**
      * A pattern another file writes stands at the argument naming it: every
      * range is the argument, and no cursor in it stands in the pattern.
      */

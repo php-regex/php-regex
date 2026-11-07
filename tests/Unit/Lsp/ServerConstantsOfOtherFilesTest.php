@@ -193,6 +193,22 @@ final class ServerConstantsOfOtherFilesTest extends TestCase
     }
 
     /**
+     * The markers of the document read the argument's line: "@regex-ignore"
+     * there silences the pattern, and is no marker that silences nothing.
+     */
+    #[Test]
+    public function test_a_marker_on_the_line_of_the_argument_silences_it(): void
+    {
+        $this->write('src/Support/Patterns.php', self::PATTERNS);
+        $calls = $this->uri('src/Http/Controller.php');
+
+        $this->initialize();
+        $this->send($this->didOpen($calls, str_replace('$broken = preg_match(Patterns::BROKEN, $subject);', '$broken = preg_match(Patterns::BROKEN, $subject); // @regex-ignore', self::CALLS)));
+
+        $this->assertSame([], $this->diagnosedLines($calls));
+    }
+
+    /**
      * Closed, a document hands the constants back to its file on the disk.
      */
     #[Test]

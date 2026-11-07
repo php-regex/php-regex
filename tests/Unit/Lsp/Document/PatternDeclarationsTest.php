@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lsp\Document;
 use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\Parser\Text\Path;
 use PHPRegex\Tests\TestUtils\FileUri;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -352,6 +353,85 @@ final class PatternDeclarationsTest extends TestCase
 
         $this->assertSame('src/Patterns.php', $declarations->displayPath($file));
         $this->assertSame('/elsewhere/Patterns.php', $declarations->displayPath('/elsewhere/Patterns.php'));
+    }
+
+    /**
+     * The constants are gathered once, until a file changes what they say;
+     * a path beside the root that only starts like it is not under it.
+     */
+    #[Test]
+    public function test_the_constants_are_gathered_once(): void
+    {
+        $this->write('src/Patterns.php', "<?php\nnamespace App;\nfinal class Patterns\n{\n    public const RE = '/re/';\n}\n");
+        $declarations = new PatternDeclarations();
+        $declarations->scanWorkspace($this->root, ['src'], []);
+
+        $this->assertSame($declarations->constants(), $declarations->constants());
+        $this->assertSame($this->root.'-other/A.php', $declarations->displayPath($this->root.'-other/A.php'));
+    }
+
+    /**
+     * An open document stands for a library's file too: emptied, it takes
+     * that file's constants away.
+     */
+    #[Test]
+    public function test_an_open_document_stands_for_a_library_file(): void
+    {
+        $library = $this->write('vendor/acme/Patterns.php', "<?php\nnamespace Acme;\nfinal class Patterns\n{\n    public const RE = '/re/';\n}\n");
+        $declarations = new PatternDeclarations();
+        $declarations->scanLibraries($this->root.'/vendor');
+        $this->assertTrue($declarations->constants()->has('acme\\patterns'));
+
+        $this->assertTrue($declarations->readDocument(FileUri::of($library), "<?php\n"));
+        $this->assertFalse($declarations->constants()->has('acme\\patterns'));
+    }
+
+    /**
+     * Opened as it is on the disk, a file changes nothing the documents are
+     * read with, a library's as a workspace's.
+     */
+    #[Test]
+    public function test_a_document_opened_as_its_file_is_changes_nothing(): void
+    {
+        $constants = "<?php\nnamespace Acme;\nfinal class Patterns\n{\n    public const RE = '/re/';\n}\n";
+        $library = $this->write('vendor/acme/Patterns.php', $constants);
+        $file = $this->write('src/Patterns.php', str_replace('Acme', 'App', $constants));
+        $declarations = new PatternDeclarations();
+        $declarations->scanWorkspace($this->root, ['src'], []);
+        $declarations->scanLibraries($this->root.'/vendor');
+
+        $this->assertFalse($declarations->readDocument(FileUri::of($library), $constants));
+        $this->assertFalse($declarations->readDocument(FileUri::of($file), str_replace('Acme', 'App', $constants)));
+        $this->assertTrue($declarations->readDocument(FileUri::of($library), str_replace("'/re/'", "'/other/'", $constants)));
+    }
+
+    /**
+     * What a call reads through a constant changes the documents; where it
+     * stands on its line does not.
+     *
+     * @return iterable<string, array{before: string, after: string, changed: bool}>
+     */
+    public static function provideConstantEdits(): iterable
+    {
+        $class = static fn (string $body, string $final = 'final '): string => "<?php\nnamespace App;\n".$final."class Patterns\n{\n".$body."\n}\n";
+
+        yield 'a concatenation moved along its line' => ['before' => $class("    public const RE = '/'.'a'.'/';"), 'after' => $class("    public const RE =   '/'.'a'.'/';"), 'changed' => false];
+        yield 'a concatenation through another constant moved along its line' => ['before' => $class("    public const PART = 'a';\n    public const RE = '/'.self::PART.'/';"), 'after' => $class("    public const PART = 'a';\n    public const RE =   '/'.self::PART.'/';"), 'changed' => false];
+        yield 'an array moved along its line' => ['before' => $class("    public const RES = ['/a/', 'k' => '/b/'];"), 'after' => $class("    public const RES =   ['/a/', 'k' => '/b/'];"), 'changed' => false];
+        yield 'a key renamed' => ['before' => $class("    public const RES = ['k' => '/b/'];"), 'after' => $class("    public const RES = ['j' => '/b/'];"), 'changed' => true];
+        yield 'a part of a concatenation changed' => ['before' => $class("    public const RE = '/'.'a'.'/';"), 'after' => $class("    public const RE = '/'.'b'.'/';"), 'changed' => true];
+        yield 'the class no longer final' => ['before' => $class("    public const RE = '/a/';"), 'after' => $class("    public const RE = '/a/';", ''), 'changed' => true];
+    }
+
+    #[Test]
+    #[DataProvider('provideConstantEdits')]
+    public function test_an_edit_changes_the_documents_when_it_changes_a_constant(string $before, string $after, bool $changed): void
+    {
+        $file = $this->write('src/Patterns.php', $before);
+        $declarations = new PatternDeclarations();
+        $declarations->scanWorkspace($this->root, ['src'], []);
+
+        $this->assertSame($changed, $declarations->readFile($file, $after));
     }
 
     private function write(string $relative, string $content): string

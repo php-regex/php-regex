@@ -388,23 +388,26 @@ final class RegexFinder
         $positions = null;
         $suppressed = null;
         $found = [];
+        $elsewhere = [];
         foreach ($extractor->extractSource($content) as $occurrence) {
-            // A pattern another file writes: at the argument naming it.
-            $argument = $occurrence->argumentOffset;
-            if (null !== $argument && null !== $occurrence->argumentLength) {
+            // A pattern another file writes, which the extractor reports
+            // once: at the argument naming it, which it sets with its length.
+            $length = $occurrence->argumentLength;
+            if (null !== $length) {
                 if (!self::opensWithADelimiter($occurrence->pattern)) {
                     continue;
                 }
 
+                $argument = (int) $occurrence->argumentOffset;
                 $positions ??= new PositionConverter($content);
                 $suppressed ??= InlineIgnores::suppressedLines($content);
                 $start = $positions->offsetToPosition($argument);
-                $literal = substr($content, $argument, $occurrence->argumentLength);
+                $literal = substr($content, $argument, $length);
                 $location = $occurrence->location ?? $literal;
-                $found['@'.$argument."\0".$occurrence->pattern] = new RegexOccurrence(
+                $elsewhere[] = new RegexOccurrence(
                     pattern: $occurrence->pattern,
                     start: $start,
-                    end: $positions->offsetToPosition($argument + $occurrence->argumentLength),
+                    end: $positions->offsetToPosition($argument + $length),
                     byteOffset: $argument,
                     literal: $literal,
                     ignored: isset($suppressed[$start['line'] + 1]),
@@ -451,7 +454,7 @@ final class RegexFinder
 
         // In the order of the source; the readings of one literal in the
         // order of their calls.
-        $found = array_values($found);
+        $found = [...$found, ...$elsewhere];
         usort($found, static fn (RegexOccurrence $a, RegexOccurrence $b): int => $a->byteOffset <=> $b->byteOffset);
 
         return $found;
