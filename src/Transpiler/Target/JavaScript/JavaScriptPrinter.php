@@ -81,6 +81,8 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         ':' => true, ';' => true, '<' => true, '=' => true, '>' => true, '@' => true, '`' => true, '~' => true,
     ];
 
+    private const BYTE_SPACES = '\t-\r ';
+
     private const SUPPORTED_CHAR_TYPES = ['d', 's', 'w', 'D', 'S', 'W'];
 
     private bool $inCharClass = false;
@@ -299,6 +301,15 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         }
 
         if (!$this->unicode) {
+            // JavaScript's whitespace shorthand also includes Unicode spaces.
+            if ('s' === $node->value) {
+                return $this->inCharClass ? self::BYTE_SPACES : '['.self::BYTE_SPACES.']';
+            }
+
+            if ('S' === $node->value) {
+                return '[^'.self::BYTE_SPACES.']';
+            }
+
             return '\\'.$node->value;
         }
 
@@ -380,7 +391,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
         try {
             $negation = $node->isNegated ? '^' : '';
-            if ($this->unicode && !$this->unicodeSets && !$wasInCharClass) {
+            if (!$this->unicodeSets && !$wasInCharClass) {
                 $composed = $this->composeComplements($node);
                 if (null !== $composed) {
                     return $composed;
@@ -578,7 +589,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     }
 
     /**
-     * A class holding "\S" or "\W" under u, whose set JavaScript only
+     * A class holding "\S", or "\W" under u, whose set JavaScript only
      * writes as a negated class of its own, or null for any other class.
      */
     private function composeComplements(CharClassNode $node): ?string
@@ -587,8 +598,8 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         $kept = [];
         $complements = [];
         foreach ($members as $member) {
-            if ($member instanceof CharTypeNode && \in_array($member->value, ['S', 'W'], true)) {
-                $complements[] = $this->unicodeSet(Ascii::lower($member->value));
+            if ($member instanceof CharTypeNode && \in_array($member->value, $this->unicode ? ['S', 'W'] : ['S'], true)) {
+                $complements[] = $this->unicode ? $this->unicodeSet(Ascii::lower($member->value)) : self::BYTE_SPACES;
             } else {
                 $kept[] = $member;
             }
