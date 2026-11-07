@@ -736,6 +736,9 @@ final class CodeActionHandlerTest extends TestCase
         $unicode = ['code' => 'regex.lint.unicode.propertyWithoutU', 'message' => 'Unicode property without u'];
         $other = ['code' => 'regex.lint.flag.useless.i', 'message' => 'Useless i'];
         $source = self::source('/\p{L}+/', 0);
+        $this->documents->open(self::URI, $source);
+        $occurrence = $this->documents->getOccurrences(self::URI)[0];
+        $unicode['range'] = ['start' => $occurrence->start, 'end' => $occurrence->end];
 
         $fix = self::action($this->codeActionsOnLiteral($source, [$other, $unicode]), 'Add /u flag for Unicode support');
 
@@ -744,6 +747,40 @@ final class CodeActionHandlerTest extends TestCase
         $this->assertTrue($fix['isPreferred'] ?? null);
         $this->assertSame([$unicode], $fix['diagnostics'] ?? null);
         $this->assertSame(self::source('/\p{L}+/u', 0), self::applyEdit($source, $fix));
+    }
+
+    #[Test]
+    public function test_unicode_diagnostics_are_attached_only_to_their_occurrence(): void
+    {
+        // Include two literals on each line and diagnostics inside their bodies.
+        $source = "<?php\n".str_repeat("preg_match('/\\p{L}+/', \$s); preg_match('/[a-z]+/', \$s);\n", 24);
+        $this->documents->open(self::URI, $source);
+        $diagnostics = [];
+        foreach ($this->documents->getOccurrences(self::URI) as $i => $occurrence) {
+            if (0 !== $i % 2) {
+                continue;
+            }
+            $start = $occurrence->start;
+            $start['character'] += 2;
+            $end = $start;
+            $end['character'] += 5;
+            $diagnostics[] = [
+                'code' => 'regex.lint.unicode.propertyWithoutU',
+                'range' => ['start' => $start, 'end' => $end],
+                'message' => 'Unicode property without u',
+            ];
+        }
+        $unrelated = [
+            ['code' => 'regex.lint.unicode.propertyWithoutU'],
+            ['code' => 'regex.lint.unicode.propertyWithoutU', 'range' => ['start' => ['line' => 0, 'character' => 0], 'end' => ['line' => 100, 'character' => 0]]],
+        ];
+        $actions = $this->codeActions($source, ['line' => 0, 'character' => 0], ['line' => 25, 'character' => 0], [...array_reverse($diagnostics), ...$unrelated]);
+        $fixes = self::actionsTitled($actions, 'Add /u flag for Unicode support');
+
+        $this->assertCount(24, $fixes);
+        foreach ($fixes as $i => $fix) {
+            $this->assertSame([$diagnostics[$i]], $fix['diagnostics']);
+        }
     }
 
     /**

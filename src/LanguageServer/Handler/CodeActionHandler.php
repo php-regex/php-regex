@@ -110,24 +110,18 @@ final class CodeActionHandler
         // Find regex occurrences that overlap with the requested range
         $occurrences = $this->findOccurrencesInRange($uri, $range);
 
-        foreach ($occurrences as $occurrence) {
-            // Add Unicode fix actions
-            $codeActions = array_merge(
-                $codeActions,
-                $this->getUnicodeFixActions($occurrence, $uri, $context),
-            );
+        $diagnostics = $this->unicodeDiagnosticsByOccurrence($occurrences, $context['diagnostics'] ?? []);
 
-            // Add optimization actions
-            $codeActions = array_merge(
-                $codeActions,
-                $this->getOptimizationActions($occurrence, $uri),
-            );
-
-            // Add layout actions
-            $codeActions = array_merge(
-                $codeActions,
-                $this->getLayoutActions($occurrence, $uri),
-            );
+        foreach ($occurrences as $i => $occurrence) {
+            foreach ($this->getUnicodeFixActions($occurrence, $uri, $diagnostics[$i] ?? []) as $action) {
+                $codeActions[] = $action;
+            }
+            foreach ($this->getOptimizationActions($occurrence, $uri) as $action) {
+                $codeActions[] = $action;
+            }
+            foreach ($this->getLayoutActions($occurrence, $uri) as $action) {
+                $codeActions[] = $action;
+            }
         }
 
         $this->transport->success($message->id, $codeActions);
@@ -138,7 +132,7 @@ final class CodeActionHandler
      *
      * @param Range $range
      *
-     * @return array<RegexOccurrence>
+     * @return list<RegexOccurrence>
      */
     private function findOccurrencesInRange(string $uri, array $range): array
     {
@@ -181,28 +175,77 @@ final class CodeActionHandler
     }
 
     /**
+     * Assign each Unicode diagnostic to at most one containing literal.
+     * Occurrences are in source order (RegexFinder), so a binary search
+     * avoids scanning every diagnostic for every action. Diagnostics may
+     * cover a node inside the literal rather than the whole literal.
+     *
+     * @param list<RegexOccurrence> $occurrences
+     *
+     * @return array<int, list<array{code?: int|string|null}>>
+     */
+    private function unicodeDiagnosticsByOccurrence(array $occurrences, mixed $diagnostics): array
+    {
+        $indexed = [];
+        foreach (\is_array($diagnostics) ? $diagnostics : [] as $diagnostic) {
+            if (!\is_array($diagnostic) || !\in_array($diagnostic['code'] ?? null, self::UNICODE_LINT_IDS, true)) {
+                continue;
+            }
+            $range = $diagnostic['range'] ?? null;
+            if (!\is_array($range) || !self::isPosition($range['start'] ?? null) || !self::isPosition($range['end'] ?? null)) {
+                continue;
+            }
+            $start = [$range['start']['line'], $range['start']['character']];
+            $end = [$range['end']['line'], $range['end']['character']];
+            if ($end < $start) {
+                continue;
+            }
+
+            $low = 0;
+            $high = \count($occurrences);
+            while ($low < $high) {
+                $middle = intdiv($low + $high, 2);
+                $position = $occurrences[$middle]->start;
+                if ([$position['line'], $position['character']] <= $start) {
+                    $low = $middle + 1;
+                } else {
+                    $high = $middle;
+                }
+            }
+            $i = $low - 1;
+            if ($i >= 0) {
+                $position = $occurrences[$i]->end;
+                if ($end <= [$position['line'], $position['character']]) {
+                    $indexed[$i][] = $diagnostic;
+                }
+            }
+        }
+
+        return $indexed;
+    }
+
+    /**
+     * @phpstan-assert-if-true Position $position
+     */
+    private static function isPosition(mixed $position): bool
+    {
+        return \is_array($position)
+            && \is_int($position['line'] ?? null) && $position['line'] >= 0
+            && \is_int($position['character'] ?? null) && $position['character'] >= 0;
+    }
+
+    /**
      * Get code actions for fixing Unicode lint issues.
      *
-     * @param array{diagnostics?: list<array{code?: int|string|null}>} $context
+     * @param list<array{code?: int|string|null}> $diagnostics
      *
      * @return list<CodeAction>
      */
-    private function getUnicodeFixActions(RegexOccurrence $occurrence, string $uri, array $context): array
+    private function getUnicodeFixActions(RegexOccurrence $occurrence, string $uri, array $diagnostics): array
     {
         $actions = [];
 
-        // Check if there are Unicode-related diagnostics
-        $diagnostics = isset($context['diagnostics']) && \is_array($context['diagnostics']) ? $context['diagnostics'] : [];
-        $hasUnicodeIssue = false;
-
-        foreach ($diagnostics as $diagnostic) {
-            $code = $diagnostic['code'] ?? '';
-            if (\in_array($code, self::UNICODE_LINT_IDS, true)) {
-                $hasUnicodeIssue = true;
-
-                break;
-            }
-        }
+        $hasUnicodeIssue = [] !== $diagnostics;
 
         if (!$hasUnicodeIssue) {
             // Also check by running the linter
@@ -232,7 +275,7 @@ final class CodeActionHandler
                 $actions[] = [
                     'title' => 'Add /u flag for Unicode support',
                     'kind' => 'quickfix',
-                    'diagnostics' => array_values(array_filter($diagnostics, static fn ($d) => \in_array($d['code'] ?? '', self::UNICODE_LINT_IDS, true))),
+                    'diagnostics' => $diagnostics,
                     'isPreferred' => true,
                     'edit' => [
                         'changes' => [
