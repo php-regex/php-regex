@@ -4,10 +4,11 @@
 
 ## Where changes happen
 
-PHPRegex is developed in this repository, `php-regex/php-regex`: each
-`php-regex/regex-*` repository is a read-only split of it, kept in step by
-CI. Open your issues, discussions and pull requests here; a pull request
-opened on a split is closed with a pointer to this repository.
+PHPRegex is developed in the
+[`php-regex/php-regex`](https://github.com/php-regex/php-regex) monorepo:
+each `php-regex/regex-*` repository is a read-only split of it, kept in
+step by CI. Open your issues, discussions and pull requests there; a pull
+request opened on a split is closed with a pointer to the monorepo.
 
 ## Code of Conduct
 
