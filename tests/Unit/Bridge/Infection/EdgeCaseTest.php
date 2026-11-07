@@ -46,37 +46,46 @@ final class EdgeCaseTest extends TestCase
 {
     /**
      * @param list<string> $expected
+     * @param list<string> $means    the plain spelling of the pattern, then of each mutant
      */
     #[Test]
     #[DataProvider('provideSpellings')]
-    public function test_the_mutants_keep_the_spelling_php_accepts(Family $family, string $pattern, array $expected): void
+    public function test_the_mutants_keep_the_spelling_php_accepts(Family $family, string $pattern, array $expected, array $means): void
     {
+        // PHP reads the pattern, then each mutant, as the plain spelling it
+        // stands for.
+        foreach ([$pattern, ...$expected] as $i => $spelled) {
+            foreach (['', 'a', 'aa', 'A', 'b', 'ab', 'ba', "a\n", "\na", 'a b', ' ', 'c'] as $subject) {
+                $this->assertSame(self::captures($means[$i] ?? '', $subject), self::captures($spelled, $subject), $spelled.' on '.json_encode($subject));
+            }
+        }
+
         $this->assertSame($expected, (new CandidateGenerator())->candidates($family, $pattern));
     }
 
     /**
-     * @return iterable<string, array{family: Family, pattern: string, expected: list<string>}>
+     * @return iterable<string, array{family: Family, pattern: string, expected: list<string>, means: list<string>}>
      */
     public static function provideSpellings(): iterable
     {
         // PHP skips the bytes isspace() accepts before the delimiter, the
         // form feed and the vertical tab included.
-        yield 'form feed before the delimiter' => ['family' => Family::Quantifier, 'pattern' => "\f/a+/", 'expected' => ["\f/a*/", "\f/a/", "\f/a+?/"]];
-        yield 'vertical tab before the delimiter' => ['family' => Family::Anchor, 'pattern' => "\v/^a/", 'expected' => ["\v/a/"]];
+        yield 'form feed before the delimiter' => ['family' => Family::Quantifier, 'pattern' => "\f/a+/", 'expected' => ["\f/a*/", "\f/a/", "\f/a+?/"], 'means' => ['/a+/', '/a*/', '/a/', '/a+?/']];
+        yield 'vertical tab before the delimiter' => ['family' => Family::Anchor, 'pattern' => "\v/^a/", 'expected' => ["\v/a/"], 'means' => ['/^a/', '/a/']];
         // PHP skips spaces and newlines among the modifiers.
-        yield 'newline after the modifiers' => ['family' => Family::Flag, 'pattern' => "/a/is\n", 'expected' => ["/a/s\n", "/a/i\n"]];
-        yield 'space among the modifiers' => ['family' => Family::Flag, 'pattern' => '/a/i s', 'expected' => ['/a/ s', '/a/i ']];
+        yield 'newline after the modifiers' => ['family' => Family::Flag, 'pattern' => "/a/is\n", 'expected' => ["/a/s\n", "/a/i\n"], 'means' => ['/a/is', '/a/s', '/a/i']];
+        yield 'space among the modifiers' => ['family' => Family::Flag, 'pattern' => '/a/i s', 'expected' => ['/a/ s', '/a/i '], 'means' => ['/a/is', '/a/s', '/a/i']];
         // Under /x, white space may stand between an atom and its repeat,
         // and around the bar of an alternation.
-        yield 'space before a repeat under x' => ['family' => Family::Quantifier, 'pattern' => '/a +/x', 'expected' => ['/a */x', '/a /x', '/a +?/x']];
-        yield 'spaces around a bar under x' => ['family' => Family::Alternation, 'pattern' => '/a | b/x', 'expected' => ['/b/x', '/a/x', '/b | a/x']];
+        yield 'space before a repeat under x' => ['family' => Family::Quantifier, 'pattern' => '/a +/x', 'expected' => ['/a */x', '/a /x', '/a +?/x'], 'means' => ['/a+/', '/a*/', '/a/', '/a+?/']];
+        yield 'spaces around a bar under x' => ['family' => Family::Alternation, 'pattern' => '/a | b/x', 'expected' => ['/b/x', '/a/x', '/b | a/x'], 'means' => ['/a|b/', '/b/', '/a/', '/b|a/']];
         // "\E" outside "\Q" means nothing: it may stand before a bar.
-        yield 'inert \E before a bar' => ['family' => Family::Alternation, 'pattern' => '/a\E|b/', 'expected' => ['/b/', '/a/', '/b\E|a/']];
-        yield 'empty quote before a bar' => ['family' => Family::Alternation, 'pattern' => '/a\Q\E|b/', 'expected' => ['/b/', '/a/', '/b\Q\E|a/']];
+        yield 'inert \E before a bar' => ['family' => Family::Alternation, 'pattern' => '/a\E|b/', 'expected' => ['/b/', '/a/', '/b\E|a/'], 'means' => ['/a|b/', '/b/', '/a/', '/b|a/']];
+        yield 'empty quote before a bar' => ['family' => Family::Alternation, 'pattern' => '/a\Q\E|b/', 'expected' => ['/b/', '/a/', '/b\Q\E|a/'], 'means' => ['/a|b/', '/b/', '/a/', '/b|a/']];
         // A comment between an atom and its repeat: the repeat is left
         // alone rather than rewritten around text it does not own.
-        yield 'comment between an atom and its repeat' => ['family' => Family::Quantifier, 'pattern' => '/a(?#c)+/', 'expected' => []];
-        yield 'comment before a bar under x' => ['family' => Family::Alternation, 'pattern' => "/a # c\n|b/x", 'expected' => ['/b/x', "/a # c\n/x", "/b|a # c\n/x"]];
+        yield 'comment between an atom and its repeat' => ['family' => Family::Quantifier, 'pattern' => '/a(?#c)+/', 'expected' => [], 'means' => ['/a+/']];
+        yield 'comment before a bar under x' => ['family' => Family::Alternation, 'pattern' => "/a # c\n|b/x", 'expected' => ['/b/x', "/a # c\n/x", "/b|a # c\n/x"], 'means' => ['/a|b/', '/b/', '/a/', '/b|a/']];
     }
 
     #[Test]
