@@ -17,6 +17,7 @@ use PHPRegex\Parser\Cache\AstSerializer;
 use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetStore;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 use PHPUnit\Framework\Attributes\Test;
@@ -52,7 +53,7 @@ final class CacheOwnershipUnavailableTest extends TestCase
 
         try {
             // Owned by the running user, the same files load.
-            $this->assertNotNull($cache->load($files[0]));
+            $this->assertInstanceOf(RegexNode::class, $cache->load($files[0]));
             $this->assertNotNull($store->load('u|:\p{Han}'));
 
             $process = proc_open(
