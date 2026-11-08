@@ -394,6 +394,12 @@ Nothing is printed: the SVG goes to the file.
 vendor/bin/regex highlight '/^[a-z]+@[a-z]+\.[a-z]+$/i'
 ```
 
+A control character in the pattern, a comment's included, never reaches the
+terminal raw: coloured, each token spells it as an escape (`\x1B`, `\r`,
+`\x{202E}`); without colours the whole pattern is spelled in its mode, per
+byte without `u`, and a backslash before a raw control stays one escape
+(`/a\x1Bb/`).
+
 **HTML output:**
 
 ```bash
@@ -526,6 +532,13 @@ Error: Invalid "extraction.interop" in /app/regex.json: unknown preset "laravel-
 ```
 
 `regex debug` reads `regex.json` too, and stops on the same error.
+
+A warning or an error on stderr is one line: a line break, a tab or a
+control character it quotes from `regex.json` or the command line is
+written `\xHH` (`\x0A`, `\x1B`), and a character that moves or hides text,
+such as U+2028, `\x{2028}`, so that a value cannot open a line of its own,
+a `::error::` workflow command included. The `error` of `--format=json`
+keeps the text as found: JSON escapes it already.
 
 Wrappers are matched on their fully qualified name, using the file's `use`
 statements: a class of your own named `Preg` is left alone, and so is a
@@ -1559,6 +1572,12 @@ these placeholders, filled in for each link:
 ```
 
 A value that is no IDE name and holds no placeholder is refused.
+A link whose address is not valid UTF-8, or holds a control character (an
+escape, a line break, a C1 control) or a `>`, is not written: the pen, or
+the file name in the Symfony and Laravel `regex:lint` commands, is printed
+without it, so a template from a project's configuration cannot send the
+terminal a sequence of its own. Write such characters URL-encoded (`%1B`,
+`%3E`).
 
 ---
 

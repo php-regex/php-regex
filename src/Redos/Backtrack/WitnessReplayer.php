@@ -30,7 +30,8 @@ use PHPRegex\Redos\RedosWitness;
  * replay ends on the same call on every machine, and within seconds.
  *
  * Where ini_set() is disabled the engine can neither set the limits nor
- * turn the JIT off: nothing is run, and the confirmation says why.
+ * turn the JIT off, and where it refuses a limit the engine runs nothing:
+ * the confirmation says why.
  *
  * @internal
  */
@@ -94,6 +95,9 @@ final class WitnessReplayer
                 }
 
                 $sample = $this->sample($regex, $input, $limits, $options, $withoutMatches);
+                if (null === $sample) {
+                    return [self::unavailable($options), null];
+                }
                 if (\PREG_BACKTRACK_LIMIT_ERROR === $sample->pregErrorCode) {
                     return [$this->confirmation(true, [$sample], $options, $withoutMatches), $candidate];
                 }
@@ -116,6 +120,9 @@ final class WitnessReplayer
             }
 
             $sample = $this->sample($regex, $input, $limits, $options, $withoutMatches);
+            if (null === $sample) {
+                return [self::unavailable($options), null];
+            }
             if (\PREG_BACKTRACK_LIMIT_ERROR === $sample->pregErrorCode) {
                 return [$this->confirmation(true, [$sample], $options, $withoutMatches), $candidate];
             }
@@ -135,19 +142,32 @@ final class WitnessReplayer
         }
 
         // Reached only where ini_set() is disabled; the tests run that case in a child PHP process.
+        return self::unavailable($options);
+    }
+
+    /**
+     * The confirmation of a run the engine did not make, the limits of the
+     * options not set: ini_set() disabled, or refusing one of them.
+     */
+    public static function unavailable(ConfirmationOptions $options): Confirmation
+    {
         return new Confirmation(false, [], null, null, null, 0, $options->timeoutMs, false, Confirmation::LIMITS_UNAVAILABLE);
     }
 
     /**
-     * One call of the engine on the input, timed.
+     * One call of the engine on the input, timed; null when the engine ran
+     * nothing, the limits not set.
      */
-    private function sample(string $regex, string $input, PcreLimits $limits, ConfirmationOptions $options, bool $withoutMatches): ConfirmationSample
+    private function sample(string $regex, string $input, PcreLimits $limits, ConfirmationOptions $options, bool $withoutMatches): ?ConfirmationSample
     {
         $start = hrtime(true);
         $match = $withoutMatches
             ? $this->engine->test($regex, $input, $limits)
             : $this->engine->match($regex, $input, $limits);
         $durationMs = (hrtime(true) - $start) / 1_000_000;
+        if (PcreEngine::limitsWereNotSet($match)) {
+            return null;
+        }
         $preview = $options->previewLength > 0 ? substr($input, 0, $options->previewLength) : null;
         $code = \PREG_NO_ERROR === $match->errorCode ? null : $match->errorCode;
 
