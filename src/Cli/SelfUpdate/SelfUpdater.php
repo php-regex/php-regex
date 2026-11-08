@@ -45,6 +45,7 @@ final class SelfUpdater
         $checksum = $this->parseChecksum($this->fetchRemoteString(self::CHECKSUM_URL));
 
         $tempPath = $this->createTempFile();
+
         try {
             $this->downloader->download(self::UPDATE_URL, $tempPath);
 
