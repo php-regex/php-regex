@@ -300,7 +300,8 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
     #[\Override]
     public function visitPcreVerb(PcreVerbNode $node): string
     {
-        $this->addLine('PCREVerb (*'.$node->verb.')');
+        // A verb's name is pattern text: a control in it is spelled out.
+        $this->addLine('PCREVerb (*'.DisplayEscaper::escapeText($node->verb).')');
 
         return '';
     }
