@@ -87,7 +87,8 @@ final class AnsiPatternHighlightTest extends TestCase
     public function test_validate_keeps_the_caret_under_an_interior_fault_after_an_escape(): void
     {
         $pattern = "/a\t(?<=a+)b/";
-        $this->assertStringContainsString('length of lookbehind assertion is not limited', (string) EngineProbe::warning($pattern));
+        // PCRE2 10.39 to 10.42 say "not fixed length", 10.43 and later "not limited".
+        $this->assertFalse(EngineProbe::compiles($pattern));
 
         foreach ([false, true] as $terminal) {
             [$code, $written] = $this->runRegex(['validate', $pattern], $terminal);
