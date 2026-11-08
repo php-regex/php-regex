@@ -91,7 +91,7 @@ final class ErrorFactoryTest extends TestCase
         $this->assertNull($markers[0]->constraint);
 
         $this->assertError(
-            'The @regex-target marker holds "php>=bad\\x1B[2J\\rforged\\x08\\x7F\\x3Cerror>failure\\x3C/error>\\x{202E}", which names no PHP or PCRE2 version constraint: write "@regex-target php>=8.4", "@regex-target pcre>=10.43" or "@regex-target php>=8.4 pcre>=10.43".',
+            'The @regex-target marker holds "php>=bad\\x1B[2J\\rforged\\x08\\x7F<error>failure</error>\\x{202E}", which names no PHP or PCRE2 version constraint: write "@regex-target php>=8.4", "@regex-target pcre>=10.43" or "@regex-target php>=8.4 pcre>=10.43".',
             'regex.target.invalid',
             2,
             'Write the versions the code runs on as a Composer constraint after "php", "pcre", or both.',
@@ -104,10 +104,10 @@ final class ErrorFactoryTest extends TestCase
     {
         $markers = TargetMarkers::read("<?php\n/* @regex-target php>=9.0\t<10 */\n");
         $this->assertCount(1, $markers);
-        $this->assertNotNull($markers[0]->constraint);
+        $this->assertInstanceOf(TargetConstraint::class, $markers[0]->constraint);
 
         $this->assertError(
-            'The @regex-target marker "php>=9.0\\t\\x3C10" keeps no version the project is judged for (PHP 8.2 to 8.4): the patterns it covers are not judged.',
+            'The @regex-target marker "php>=9.0\\t<10" keeps no version the project is judged for (PHP 8.2 to 8.4): the patterns it covers are not judged.',
             'regex.target.empty',
             2,
             'Widen the marker to versions of the range, or remove the code it covers if it never runs there.',
