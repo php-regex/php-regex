@@ -21,8 +21,8 @@ use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
 use PHPRegex\Symfony\Analyzer\IssueDetail;
 use PHPRegex\Symfony\Analyzer\ReportSection;
-use PHPRegex\Symfony\Analyzer\SecurityReport;
 use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;
+use PHPRegex\Symfony\Analyzer\SecurityReport;
 use PHPRegex\Symfony\Command\SecurityCommand;
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
@@ -75,11 +75,11 @@ final class SecurityMarkupEscapingTest extends TestCase
     public function test_yaml_roles_are_escaped_only_for_console_display(): void
     {
         $project = $this->makeProject(['security.yaml' => <<<'YAML'
-security:
-  access_control:
-    - { path: ^/, roles: PUBLIC_ACCESS }
-    - { path: ^/admin, roles: "ROLE_ADMIN\nFORGED\e[2J" }
-YAML]);
+            security:
+              access_control:
+                - { path: ^/, roles: PUBLIC_ACCESS }
+                - { path: ^/admin, roles: "ROLE_ADMIN\nFORGED\e[2J" }
+            YAML]);
         $analyzer = new SecurityAnalyzer(
             new SecurityConfigExtractor(),
             new SecurityConfigLocator(),
@@ -95,8 +95,8 @@ YAML]);
         $this->assertStringContainsString('ROLE_ADMIN\\nFORGED\\x1B[2J', $display);
         $this->assertStringNotContainsString("\x1B[2J", $display);
         $this->assertStringNotContainsString("\nFORGED", $display);
-        $json = json_decode((new JsonReportFormatter())->format($report), true, 512, \JSON_THROW_ON_ERROR);
-        $this->assertStringContainsString("ROLE_ADMIN\nFORGED\x1B[2J", $json['sections'][0]['issues'][0]['details'][1]['value']);
+        // The JSON keeps the role as written: its newline and escape encoded, not spelled.
+        $this->assertStringContainsString('ROLE_ADMIN\\nFORGED\\u001b[2J', (new JsonReportFormatter())->format($report));
     }
 
     /**
