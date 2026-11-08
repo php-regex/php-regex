@@ -83,13 +83,13 @@ final class JavaScriptTranspilerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, string}>
+     * @return iterable<string, array{reference: string, target: string}>
      */
     public static function provideUnicodeNamedReferences(): iterable
     {
         foreach (['\\k<é>', '\\k{é}', "\\k'é'", '\\g{é}'] as $reference) {
             foreach (['javascript', 'html-pattern'] as $target) {
-                yield $target.' '.$reference => [$reference, $target];
+                yield $target.' '.$reference => ['reference' => $reference, 'target' => $target];
             }
         }
     }
