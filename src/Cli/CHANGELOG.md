@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex lint` writes the warnings and errors it prints on stderr in display
+   form: a line break, a tab or a control character quoted from the
+   configuration is `\xHH`, so a value can no longer start a line of its own
+   such as `::error::`. The JSON `error` keeps the text as found.
  * `regex mcp` runs the MCP server of `php-regex/regex-mcp` over stdio, as
    `regex lsp` runs the language server; the phar carries it. The CLI alone
    names what to install.
