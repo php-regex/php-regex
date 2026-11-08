@@ -945,13 +945,14 @@ final class ForkedWorkerPoolTest extends TestCase
         try {
             $path = (new \ReflectionMethod(ForkedWorkerPool::class, 'createLock'))->invoke(null);
             $this->assertIsString($path);
-            $this->assertSame(0600, fileperms($path) & 0777);
+            $this->assertSame(0o600, fileperms($path) & 0o777);
 
             // Independent opens must contend on the same inode.
             $first = fopen($path, 'r');
             $second = fopen($path, 'r');
             $this->assertIsResource($first);
             $this->assertIsResource($second);
+
             try {
                 $this->assertTrue(flock($first, \LOCK_EX | \LOCK_NB));
                 $this->assertFalse(flock($second, \LOCK_EX | \LOCK_NB));
