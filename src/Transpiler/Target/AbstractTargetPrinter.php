@@ -109,9 +109,9 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     /**
      * The pattern under u with each byte above 0x7F of its body read as a
      * plain letter: what PCRE thinks of the rest once the characters are
-     * written as UTF-8. Null without the body's spelling.
+     * written as UTF-8. A tree without its spelling reads as an empty body.
      */
-    private ?string $asciiUnderU = null;
+    private string $asciiUnderU = '//u';
 
     public function __construct(protected readonly TranspileContext $context) {}
 
@@ -166,8 +166,8 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         $this->dollarEndOnly = str_contains($node->flags, 'D');
         $this->unicode = str_contains($node->flags, 'u');
         $this->bodyIsUtf8 = mb_check_encoding($node->source ?? $this->context->sourcePattern, 'UTF-8');
-        $this->asciiUnderU = null === $node->source ? null
-            : $node->delimiter.(LibraryPcre::replace('/[\x80-\xFF]/', 'x', $node->source) ?? $node->source).Delimiters::closing($node->delimiter).$node->flags.'u';
+        $body = $node->source ?? '';
+        $this->asciiUnderU = $node->delimiter.(LibraryPcre::replace('/[\x80-\xFF]/', 'x', $body) ?? $body).Delimiters::closing($node->delimiter).$node->flags.'u';
     }
 
     /**
@@ -333,7 +333,7 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
      *
      * @throws TranspileException
      */
-    protected function refuseALoneByte(string $text, NodeInterface $node, bool $inCharClass = false): void
+    protected function refuseALoneByte(string $text, NodeInterface $node, bool $inCharClass): void
     {
         if (str_contains($this->context->sourceFlags, 'u') || 1 !== LibraryPcre::match('/[\x80-\xFF]/', $text)) {
             return;
@@ -401,7 +401,7 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
     private function utf8Advice(): string
     {
         $engine = new PcreEngine();
-        $restCompiles = null === $engine->compile($this->asciiUnderU ?? $this->context->sourcePattern.'u');
+        $restCompiles = null === $engine->compile($this->asciiUnderU);
 
         if (!$this->bodyIsUtf8) {
             return $restCompiles

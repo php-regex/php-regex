@@ -104,6 +104,8 @@ final class BytesWithoutUtfTest extends TestCase
         yield 'class before what u refuses' => ['pattern' => '/[é](?<=\C)/', 'fixed' => '/[é]/u', 'subject' => 'é', 'advice' => 'Add u, after rewriting what PCRE refuses under it: the pattern as written does not compile with u.'];
         // Both at once: the raw byte has to become UTF-8, and \C has to go.
         yield 'raw byte of invalid UTF-8 beside what u refuses' => ['pattern' => "/[\xE9](?<=\\C)/", 'fixed' => '/[é]/u', 'subject' => 'é', 'advice' => 'write the character as UTF-8 and rewrite what PCRE refuses under u, then add u.'];
+        // The flags count: under x the refused lookbehind is a comment, so u alone does.
+        yield 'class with what u refuses in an x comment' => ['pattern' => "/[é]#(?<=\\C)\n/x", 'fixed' => '/[é]/u', 'subject' => 'é', 'advice' => 'reads each of its bytes as a member of its own. Add u.'];
         // PCRE reads the body alone: a delimiter above 0x7F stays out of u.
         yield 'class between delimiters above 0x7F' => ['pattern' => "\xA7[é]\xA7", 'fixed' => "\xA7[é]\xA7u", 'subject' => 'é', 'advice' => 'reads each of its bytes as a member of its own. Add u.'];
     }
