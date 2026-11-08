@@ -42,10 +42,6 @@ use PHPRegex\Parser\Syntax\InlineFlags;
  */
 final class FirstTriedStep extends AbstractNodeVisitor
 {
-    private bool $ungreedy = false;
-
-    private ?string $source = null;
-
     /**
      * The verbs that set an option for the whole pattern: they stand at its
      * start and try nothing.
@@ -58,6 +54,10 @@ final class FirstTriedStep extends AbstractNodeVisitor
         'NO_AUTO_POSSESS' => true, 'NO_DOTSTAR_ANCHOR' => true, 'NO_JIT' => true, 'NO_START_OPT' => true,
         'CASELESS_RESTRICT' => true, 'TURKISH_CASING' => true,
     ];
+
+    private bool $ungreedy = false;
+
+    private ?string $source = null;
 
     #[\Override]
     public function visitRegex(RegexNode $node): SubroutineNode|bool
