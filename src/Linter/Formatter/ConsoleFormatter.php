@@ -334,9 +334,10 @@ final class ConsoleFormatter extends AbstractOutputFormatter
         // The link formatter gives a console tag, <href=URL>✏️</>: its URL
         // goes into the escape sequence the terminal reads.
         $href = $this->linkFormatter?->format($file, $line, '✏️', $column);
-        // Only a valid UTF-8 destination without terminal controls may
-        // become OSC syntax. Reject malformed input as well as C0/C1 controls.
-        if (LibraryPcre::match('/<href=([^>]+)>/', (string) $href, $matches)
+        // Only the whole tag, its destination valid UTF-8 without terminal
+        // controls, may become OSC syntax: a ">" in the destination ends the
+        // tag early, and a C0 or C1 control would reach the terminal.
+        if (LibraryPcre::match('/^<href=([^>]+)>✏️<\/>$/', (string) $href, $matches)
             && 0 === LibraryPcre::match('/\\p{Cc}/u', $matches[1])) {
             return "\e]8;;{$matches[1]}\e\\✏️\e]8;;\e\\";
         }

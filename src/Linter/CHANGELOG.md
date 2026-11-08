@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The console report's editor link is left out when its address holds a
+   control character or a `>`: an `ide` template could otherwise send the
+   terminal escape sequences of its own through the OSC 8 hyperlink.
  * The character-set overlap of an alternation is no longer reported for two
    branches whose leading literal texts tell them apart,
    `associative-array|array`: the second character already decides which

@@ -18,6 +18,7 @@ use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintReport;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -65,6 +66,30 @@ final class LinkFormatterTest extends TestCase
             $this->assertStringNotContainsString('suffix', $output);
             $this->assertStringNotContainsString("\e]52;", $output);
         }
+    }
+
+    /**
+     * A ">" ends the console tag early: the pen then links nothing rather
+     * than the part of the destination before it.
+     */
+    #[Test]
+    #[DataProvider('provideDestinationsBrokenByTheTagEnd')]
+    public function test_console_rejects_a_destination_the_tag_end_cuts(string $template): void
+    {
+        $output = $this->consoleWithTemplate($template);
+
+        $this->assertStringContainsString('✏️', $output);
+        $this->assertStringNotContainsString("\e]8;;", $output);
+        $this->assertStringNotContainsString('suffix', $output);
+    }
+
+    /**
+     * @return iterable<string, array{template: string}>
+     */
+    public static function provideDestinationsBrokenByTheTagEnd(): iterable
+    {
+        yield 'a tag end before an escape' => ['template' => "custom://%f>\esuffix"];
+        yield 'a tag end alone' => ['template' => 'custom://%f>suffix'];
     }
 
     #[Test]
