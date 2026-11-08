@@ -18,6 +18,7 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -40,7 +41,7 @@ final class ModernizerEdgeCasesTest extends TestCase
     }
 
     #[Test]
-    public function test_literal_unescape_respects_custom_delimiter(): void
+    public function test_preserves_literal_with_custom_delimiter(): void
     {
         $visitor = new Modernizer();
         $regex = new RegexNode(new LiteralNode('\\a', 0, 0), '', '#', 0, 0);
@@ -49,6 +50,12 @@ final class ModernizerEdgeCasesTest extends TestCase
 
         $this->assertInstanceOf(RegexNode::class, $modernized);
         $this->assertInstanceOf(LiteralNode::class, $modernized->pattern);
-        $this->assertSame('a', $modernized->pattern->value);
+        $this->assertSame($regex->pattern, $modernized->pattern);
+        // The backslash stays a character to match, whatever the printer spells.
+        foreach ([PatternPrinter::asWritten(), PatternPrinter::normalized()] as $printer) {
+            $printed = $modernized->accept($printer);
+            $this->assertSame(1, preg_match($printed, '\\a'), $printed);
+            $this->assertSame(0, preg_match($printed, 'a'), $printed);
+        }
     }
 }
