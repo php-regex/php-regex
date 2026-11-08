@@ -193,6 +193,12 @@ as `CallTypes::quote` does.
 
 ## Open questions
 
+- `ForkedWorkerPoolTest::test_run_ends_a_busy_worker_whatever_the_parent_does_with_sigterm`
+  measures wall time against 3 s and fails on a loaded runner (3.10 s and
+  3.94 s on PHP 8.6 cells, 2026-11-08, on #294 and #319, which do not touch
+  the worker pool). Bound what the worker did, not the clock, or give the
+  ceiling the margin the macOS runner needs.
+
 - Five real costs whose proposed bound refuses legitimate input, each
   answered in its pull request with the fix that keeps the answers: the
   ReDoS repair tries every quantifier (#249; try the ones the analysis
