@@ -341,8 +341,8 @@ final class PatternAttributeScanner
      * and its name, reading the parameter list that opens at $i.
      *
      * @param list<\PhpToken>       $tokens
-     * @param array<string, string> $uses
      * @param array<int, int>       $boundaries
+     * @param array<string, string> $uses
      *
      * @return list<array{int, string|null}>
      */

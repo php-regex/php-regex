@@ -81,7 +81,7 @@ final class PatternAttributeScannerTest extends TestCase
         $content = "<?php\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\n"
             ."function first(#[RegexPattern] \$pattern) {}\n"
             .str_repeat("function broken(\n", 20000)
-            ."function last(#[RegexPattern] \$pattern) {}";
+            .'function last(#[RegexPattern] $pattern) {}';
         $start = hrtime(true);
 
         $this->assertSame(['first#0$pattern', 'last#0$pattern'], PatternAttributeScanner::scan($content));
