@@ -19,6 +19,7 @@ The assertions run on PHP 8.1 or later and PHPUnit 9.6 to 13 (10 on PHP 8.1,
 
 ```php
 use PHPRegex\PHPUnit\RegexAssertions;
+use PHPUnit\Framework\TestCase;
 
 final class SlugTest extends TestCase
 {
