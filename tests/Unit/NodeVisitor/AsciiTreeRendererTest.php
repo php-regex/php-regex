@@ -28,7 +28,7 @@ final class AsciiTreeRendererTest extends TestCase
         $ast = Regex::create()->parse($pattern);
 
         $this->assertSame(
-            "Regex (flags: u)\n".'\\-- Callout (?C="é\\x1B[2J\\r\\n\\t\\x07\\x7F\\x{9B}\\x{202E}\\\\path")',
+            "Regex (flags: u)\n\\-- Callout (?C=\"é\\x1B[2J\\r\\n\\t\\x07\\x7F\\x{9B}\\x{202E}\\\\path\")",
             $ast->accept(new AsciiTreeRenderer()),
         );
     }
